@@ -1,0 +1,97 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1782453998337,
+      "tag": "0000_damp_baron_zemo",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782471976531,
+      "tag": "0001_smiling_imperial_guard",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782485783037,
+      "tag": "0002_right_maelstrom",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1782486668378,
+      "tag": "0003_nosy_oracle",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1782487682939,
+      "tag": "0004_cultured_agent_brand",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1782491647163,
+      "tag": "0005_violet_smiling_tiger",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1782501784372,
+      "tag": "0006_parched_morlun",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1782503386325,
+      "tag": "0007_purple_garia",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1782505984224,
+      "tag": "0008_chemical_black_bolt",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1782529173515,
+      "tag": "0009_even_kronos",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1782531212794,
+      "tag": "0010_amusing_newton_destine",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1782533052858,
+      "tag": "0011_perfect_amphibian",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1782535375189,
+      "tag": "0012_hesitant_black_bolt",
+      "breakpoints": true
+    }
+  ]
+}

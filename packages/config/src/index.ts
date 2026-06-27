@@ -1,0 +1,109 @@
+import { z } from 'zod';
+
+/**
+ * Runtime environment parsing. Fail fast at boot with a clear message rather than crash on
+ * first use. The API loads `apiEnvSchema`; the web app must only read NEXT_PUBLIC_* values.
+ */
+
+const bool = z
+  .enum(['true', 'false', '1', '0'])
+  .transform((v) => v === 'true' || v === '1')
+  .or(z.boolean());
+
+export const apiEnvSchema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+
+  DATABASE_URL: z.string().url(),
+  DATABASE_MIGRATION_URL: z.string().url().optional(),
+  REDIS_URL: z.string().url().default('redis://localhost:6379'),
+  /** Master switch for all Redis-backed concerns (rate limit, idempotency fast-path, queues). */
+  REDIS_ENABLED: bool.default(true),
+
+  // ── Rate limiting (Phase 10b) ──────────────────────────────────────────────
+  RATE_LIMIT_ENABLED: bool.default(true),
+  RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().positive().default(60),
+  /** Max requests per authenticated principal per window. */
+  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
+  /** Tighter cap per IP for unauthenticated routes (login etc.). */
+  RATE_LIMIT_MAX_UNAUTH: z.coerce.number().int().positive().default(30),
+
+  // ── AI usage limits (Phase 10b — closes the 9b deferral) ───────────────────
+  AI_RATE_LIMIT_ENABLED: bool.default(true),
+  /** Default daily AI-run ceiling per employee when a policy sets none. */
+  AI_MAX_RUNS_PER_EMPLOYEE_PER_DAY: z.coerce.number().int().positive().default(200),
+  /** Default daily AI-run ceiling per policy scope when a policy sets none. */
+  AI_MAX_RUNS_PER_SCOPE_PER_DAY: z.coerce.number().int().positive().default(1000),
+
+  // ── Background queues (Phase 10b / 10e) ────────────────────────────────────
+  /** Run BullMQ workers in this process. Off for web-only / migration containers. */
+  QUEUE_WORKERS_ENABLED: bool.default(true),
+
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_ANON_KEY: z.string().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  SUPABASE_JWT_SECRET: z.string().optional(),
+
+  API_PORT: z.coerce.number().int().positive().default(3001),
+  API_BASE_URL: z.string().url().default('http://localhost:3001'),
+  API_CORS_ORIGINS: z
+    .string()
+    .default('http://localhost:3000')
+    .transform((s) => s.split(',').map((o) => o.trim())),
+  SESSION_COOKIE_SECRET: z.string().min(16, 'SESSION_COOKIE_SECRET must be at least 16 chars'),
+  RECENT_AUTH_WINDOW_SECONDS: z.coerce.number().int().positive().default(900),
+
+  // ── Authentication (Phase 10a) ─────────────────────────────────────────────
+  /** Name of the HTTP-only session cookie carrying the API-signed session JWT. */
+  SESSION_COOKIE_NAME: z.string().default('edrion_session'),
+  /** Session lifetime before the cookie/JWT expires and a fresh login is required. */
+  SESSION_TTL_SECONDS: z.coerce.number().int().positive().default(28_800), // 8h
+  /**
+   * DEV ESCAPE HATCH. When true the legacy `x-employee-email` request header is honoured as an
+   * identity, bypassing real session auth. Off in production. Kept so the existing curl smoke
+   * still runs while the cookie flow is verified alongside it.
+   */
+  AUTH_DEV_HEADER: bool.default(false),
+  /**
+   * DEV ESCAPE HATCH. When true `POST /auth/login` accepts `{ email }` with no Supabase access
+   * token, minting a real server session for a known employee. Lets login + recent-auth be
+   * proven locally without a hosted Supabase Auth instance. Off in production.
+   */
+  AUTH_DEV_LOGIN: bool.default(false),
+  /** Failed logins for one employee within the window before the account is locked. */
+  AUTH_MAX_FAILED_LOGINS: z.coerce.number().int().positive().default(5),
+  /** How long an account stays locked after exceeding AUTH_MAX_FAILED_LOGINS. */
+  AUTH_LOCKOUT_SECONDS: z.coerce.number().int().positive().default(900),
+
+  SENTRY_DSN: z.string().optional(),
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+
+  ANTHROPIC_API_KEY: z.string().optional(),
+  COPILOT_PRIMARY_MODEL: z.string().default('claude-opus-4-8'),
+  COPILOT_FALLBACK_MODEL: z.string().default('claude-sonnet-4-6'),
+
+  BILLING_PROVIDER_SECRET: z.string().optional(),
+  BILLING_WEBHOOK_SIGNING_SECRET: z.string().optional(),
+});
+
+export type ApiEnv = z.infer<typeof apiEnvSchema>;
+
+/** Parse + validate, throwing a readable aggregated error. */
+export function loadApiEnv(raw: NodeJS.ProcessEnv = process.env): ApiEnv {
+  const parsed = apiEnvSchema.safeParse(raw);
+  if (!parsed.success) {
+    const issues = parsed.error.issues
+      .map((i) => `  - ${i.path.join('.')}: ${i.message}`)
+      .join('\n');
+    throw new Error(`Invalid API environment:\n${issues}`);
+  }
+  return parsed.data;
+}
+
+export const publicWebEnvSchema = z.object({
+  NEXT_PUBLIC_API_BASE_URL: z.string().url().default('http://localhost:3001'),
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
+});
+export type PublicWebEnv = z.infer<typeof publicWebEnvSchema>;
+
+export { bool };

@@ -1,0 +1,9 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "tooling/*"
+allowBuilds:
+  '@nestjs/core': false
+  '@scarf/scarf': false
+  esbuild: true
+  msgpackr-extract: set this to true or false

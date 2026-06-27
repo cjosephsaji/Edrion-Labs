@@ -1,0 +1,27 @@
+{
+  "extends": "@edrion/tsconfig/nestjs.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "dist",
+    "types": ["node", "reflect-metadata"],
+    "paths": {
+      "@edrion/shared-types": ["../../packages/shared-types/src/index.ts"],
+      "@edrion/permissions": ["../../packages/permissions/src/index.ts"],
+      "@edrion/schemas": ["../../packages/schemas/src/index.ts"],
+      "@edrion/config": ["../../packages/config/src/index.ts"],
+      "@edrion/database": ["../../packages/database/src/index.ts"],
+      "@edrion/audit": ["../../packages/audit/src/index.ts"],
+      "@edrion/auth": ["../../packages/auth/src/index.ts"]
+    }
+  },
+  "ts-node": {
+    "transpileOnly": true,
+    "require": ["tsconfig-paths/register"],
+    "compilerOptions": { "module": "CommonJS", "moduleResolution": "Node" },
+    "moduleTypes": {
+      "../../packages/**/*.ts": "cjs",
+      "src/**/*.ts": "cjs"
+    }
+  },
+  "include": ["src", "test"]
+}

@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS "audit_ai_run_idx" ON "audit_events" USING btree ("ai_run_id") WHERE "audit_events"."ai_run_id" IS NOT NULL;

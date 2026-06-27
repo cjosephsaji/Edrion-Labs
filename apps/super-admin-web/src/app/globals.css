@@ -1,0 +1,77 @@
+@import '../styles/tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background-color: var(--background);
+    color: var(--text-primary);
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
+  }
+  /* Visible focus everywhere for accessibility. */
+  :focus-visible {
+    outline: none;
+  }
+  ::selection {
+    background-color: var(--primary-soft);
+  }
+}
+
+@layer utilities {
+  .ease-standard {
+    transition-timing-function: var(--ease-standard);
+  }
+  /* Subtle page entrance per the motion spec (opacity + 4px translateY, ~160ms). */
+  .page-enter {
+    animation: page-enter 160ms var(--ease-standard);
+  }
+  @keyframes page-enter {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  /* Thin scrollbar for the sidebar / scroll regions. */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: var(--border-strong);
+    border-radius: 9999px;
+  }
+}
+
+/*
+ * Respect the user's reduced-motion preference: neutralise the page-enter, fade and slide
+ * animations (and any transition) to a single near-instant frame. Content still appears; it
+ * just doesn't move. Covers the Tailwind animate-* utilities and the page-enter keyframe.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

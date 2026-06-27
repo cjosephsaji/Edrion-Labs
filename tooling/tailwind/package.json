@@ -1,0 +1,17 @@
+{
+  "name": "@edrion/tailwind-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "preset.ts",
+  "exports": {
+    ".": "./preset.ts"
+  },
+  "dependencies": {
+    "@edrion/design-tokens": "workspace:*",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.13"
+  }
+}

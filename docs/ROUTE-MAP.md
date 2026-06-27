@@ -1,0 +1,113 @@
+# Route map — super-admin-web
+
+App Router structure. Every route group sits behind auth + permission gates. The permission
+in brackets is the minimum required to see the nav item and load the page; finer actions
+have their own permissions (see [PERMISSIONS.md](PERMISSIONS.md)). Routes the employee lacks
+permission for are hidden in the sidebar and return a permission-denied state if reached
+directly.
+
+```
+/(auth)
+  /login
+  /mfa
+  /forgot-password
+  /reset-password
+
+/(app)                                        app shell: sidebar + topnav + copilot dock
+  /                          → /dashboard
+
+  ── Overview ────────────────────────────────
+  /dashboard                                  [platform.dashboard.view]
+  /copilot                                    [platform.dashboard.view]
+  /pending-actions                            [platform.dashboard.view]
+  /activity                                   [audit.view]
+  /analytics                                  [platform.dashboard.view]
+
+  ── Customers ───────────────────────────────
+  /institutions                               [institutions.view]
+  /institutions/new                           [institutions.create]
+  /institutions/[id]                          [institutions.view]
+    ?tab=overview|campuses|users|subscription|billing|features|usage|
+         support|access-sessions|activity|audit|security|notes|settings
+  /campuses                                   [campuses.view]
+  /campuses/[id]                              [campuses.view]
+  /institution-users                          [institution_users.view]
+  /institution-users/[id]                     [institution_users.view]
+  /onboarding                                 [institutions.view]
+
+  ── Individual Product ──────────────────────
+  /independent-users                          [independent_users.view]
+  /independent-users/[id]                     [independent_users.view]
+  /individual-subscriptions                   [subscriptions.view]
+  /individual-usage                           [independent_users.view]
+
+  ── Edrion Team ─────────────────────────────
+  /employees                                  [employees.view]
+  /employees/[id]                             [employees.view]
+  /platform-roles                             [employees.view]
+  /access-reviews                             [security.view]
+
+  ── Commercial ──────────────────────────────
+  /plans                                      [plans.view]
+  /plans/[id]                                 [plans.view]
+  /subscriptions                              [subscriptions.view]
+  /subscriptions/[id]                         [subscriptions.view]
+  /campus-addons                              [campuses.view]
+  /invoices                                   [subscriptions.view]
+  /credits-discounts                          [subscriptions.view]
+  /usage-limits                               [subscriptions.view]
+
+  ── Product Control ─────────────────────────
+  /features                                   [features.view]
+  /features/[key]                             [features.view]
+  /entitlements                               [features.view]
+  /releases                                   [features.view]
+  /experiments                                [features.view]
+
+  ── Support & Operations ────────────────────
+  /support                                    [support.view]
+  /support/[id]                               [support.view]
+  /access-sessions                            [support.view]
+  /incidents                                  [support.view]
+  /jobs                                       [platform_settings.view]
+  /system-health                              [platform_settings.view]
+  /integrations                               [platform_settings.view]
+  /webhooks                                   [platform_settings.view]
+
+  ── Communication ───────────────────────────
+  /announcements                              [platform_settings.view]
+  /institution-communications                 [platform_settings.view]
+  /notification-delivery                      [platform_settings.view]
+
+  ── AI Administration ───────────────────────
+  /ai                                         [ai.view]
+  /ai/policies                                [ai.configure]
+  /ai/guardrails                              [ai.configure]
+  /ai/usage                                   [ai.view]
+  /ai/audit                                   [ai.view]
+  /ai/prompts                                 [ai.configure]
+
+  ── Administration ──────────────────────────
+  /settings                                   [platform_settings.view]
+  /security                                   [security.view]
+  /audit                                      [audit.view]
+  /data-management                            [platform_settings.manage]
+```
+
+## Support-mode overlay
+
+When an employee starts an Edrion Support Access Session for an institution, the app renders
+a persistent banner (employee identity + institution + countdown + "all actions recorded")
+above the shell. The session id + reason ride on every API request via headers and are
+written into each audit event. Ending or expiry tears down the banner and the session.
+
+## API base paths (apps/api)
+
+REST, versioned under `/v1`, documented at `/docs` (OpenAPI). One controller prefix per
+module, e.g. `/v1/institutions`, `/v1/campuses`, `/v1/institution-users`,
+`/v1/independent-users`, `/v1/employees`, `/v1/platform-roles`, `/v1/plans`,
+`/v1/subscriptions`, `/v1/billing`, `/v1/features`, `/v1/support`, `/v1/support-access`,
+`/v1/activity`, `/v1/audit`, `/v1/security`, `/v1/analytics`, `/v1/copilot`,
+`/v1/ai-governance`, `/v1/announcements`, `/v1/integrations`, `/v1/webhooks`,
+`/v1/platform-settings`. Aggregated dashboard data: `/v1/analytics/dashboard`.
+```

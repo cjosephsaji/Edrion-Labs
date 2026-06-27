@@ -1,0 +1,36 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# builds
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+
+# turbo
+.turbo/
+
+# env — never commit secrets
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# test
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# os / editor
+.DS_Store
+._*
+.idea/
+.vscode/*
+!.vscode/extensions.json
