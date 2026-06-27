@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, X } from 'lucide-react';
 import { Button, Label, FieldError, cn } from '@edrion/ui';
 import { useFocusTrap } from '@/lib/use-focus-trap';
@@ -39,8 +40,12 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const [reason, setReason] = useState('');
   const [touched, setTouched] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const ref = useRef<HTMLTextAreaElement>(null);
   const dialogRef = useFocusTrap<HTMLDivElement>(open);
+
+  // Portal target is only available on the client; render after mount.
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (open) {
@@ -58,10 +63,12 @@ export function ConfirmDialog({
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
   const reasonInvalid = requireReason && reason.trim().length < 5;
 
-  return (
+  // Portal to <body> so the fixed overlay centres on the viewport — a backdrop-filter
+  // ancestor (e.g. the topbar) would otherwise become its containing block and offset it.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 animate-fade-in" onClick={onClose} aria-hidden />
       <div
@@ -129,6 +136,7 @@ export function ConfirmDialog({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
