@@ -7,6 +7,7 @@
     "paths": {
       "@edrion/shared-types": ["../../packages/shared-types/src/index.ts"],
       "@edrion/permissions": ["../../packages/permissions/src/index.ts"],
+      "@edrion/permissions/institution": ["../../packages/permissions/src/institution/index.ts"],
       "@edrion/schemas": ["../../packages/schemas/src/index.ts"],
       "@edrion/config": ["../../packages/config/src/index.ts"],
       "@edrion/database": ["../../packages/database/src/index.ts"],

@@ -1,5 +1,5 @@
 import { Global, Module } from '@nestjs/common';
-import { createDatabase, type Database } from '@edrion/database';
+import { createDatabase, createTenantAwareDatabase, type Database } from '@edrion/database';
 import { createAuditWriter } from '@edrion/audit';
 import { loadApiEnv, type ApiEnv } from '@edrion/config';
 import { createErrorReporter, createLogger, type ErrorReporter, type Logger } from '@edrion/observability';
@@ -10,13 +10,18 @@ import { StructuredLogger } from './logger';
  * Global providers: validated env, the database pool, the append-only audit writer, and the
  * observability seam (structured logger + error reporter). One database connection is shared
  * process-wide; the API is the sole writer.
+ *
+ * The DATABASE handle is tenant-aware (see {@link createTenantAwareDatabase}): when the portal
+ * request path opens an institution-scoped transaction (PortalTenantInterceptor), every query —
+ * including the audit writer's — is routed there so Postgres RLS binds. Outside that context it is
+ * the plain pool, so the platform control-plane path is unchanged.
  */
 @Global()
 @Module({
   providers: [
     StructuredLogger,
     { provide: API_ENV, useFactory: (): ApiEnv => loadApiEnv() },
-    { provide: DATABASE, useFactory: (): Database => createDatabase() },
+    { provide: DATABASE, useFactory: (): Database => createTenantAwareDatabase(createDatabase()) },
     {
       provide: AUDIT_WRITER,
       useFactory: (db: Database) => createAuditWriter(db),

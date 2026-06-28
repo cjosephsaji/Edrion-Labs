@@ -1,0 +1,194 @@
+import { z } from 'zod';
+import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+
+/**
+ * Institution-Portal PEOPLE (Phase 4) request/response contracts: students, teachers, staff
+ * (non-teaching), parents/guardians, and the student↔guardian link. The same Zod schemas validate
+ * the API body (authoritative) and drive the institution-web forms.
+ *
+ * As with academics, tenancy (institution_id) and the active campus scope (campus_id) are NEVER
+ * taken from the request body — the API derives them from the authenticated principal + scope
+ * header. These schemas describe only the domain fields a user edits.
+ */
+
+// --- shared ------------------------------------------------------------------
+
+const personName = z.string().trim().min(1, 'Required').max(80);
+const optionalUuid = z.string().uuid().nullish();
+/** A calendar date as YYYY-MM-DD (matches the Postgres `date` column). */
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD').nullish();
+const email = z.string().trim().toLowerCase().email().nullish();
+const phone = z.string().trim().max(40).nullish();
+const shortText = (max = 120) => z.string().trim().max(max).nullish();
+
+export const GENDERS = ['male', 'female', 'other'] as const;
+export const genderSchema = z.enum(GENDERS);
+export type Gender = (typeof GENDERS)[number];
+
+export const STUDENT_STATUSES = ['enrolled', 'inactive', 'graduated', 'transferred', 'alumni'] as const;
+export const studentStatusSchema = z.enum(STUDENT_STATUSES);
+export type StudentStatus = (typeof STUDENT_STATUSES)[number];
+
+export const EMPLOYMENT_TYPES = ['full_time', 'part_time', 'contract', 'visiting'] as const;
+export const employmentTypeSchema = z.enum(EMPLOYMENT_TYPES);
+export type EmploymentType = (typeof EMPLOYMENT_TYPES)[number];
+
+export const STAFF_STATUSES = ['active', 'inactive', 'on_leave'] as const;
+export const staffStatusSchema = z.enum(STAFF_STATUSES);
+export type StaffStatus = (typeof STAFF_STATUSES)[number];
+
+export const GUARDIAN_RELATIONSHIPS = ['father', 'mother', 'guardian', 'other'] as const;
+export const guardianRelationshipSchema = z.enum(GUARDIAN_RELATIONSHIPS);
+export type GuardianRelationship = (typeof GUARDIAN_RELATIONSHIPS)[number];
+
+/** Which people resource a generic list/route targets. */
+export const PEOPLE_RESOURCES = ['students', 'teachers', 'staff', 'parents'] as const;
+export type PeopleResource = (typeof PEOPLE_RESOURCES)[number];
+
+/** Common list query for every people directory: page + sort + free-text search. */
+export const peopleListQuerySchema = paginationQuerySchema.merge(sortQuerySchema).extend({
+  search: z.string().trim().max(160).optional(),
+});
+export type PeopleListQuery = z.infer<typeof peopleListQuerySchema>;
+
+/** Sent on every mutating update/delete for optimistic concurrency. */
+const withVersion = { version: versionSchema };
+
+// --- students ----------------------------------------------------------------
+
+export const createStudentSchema = z.object({
+  admissionNo: z.string().trim().min(1, 'Required').max(40),
+  firstName: personName,
+  lastName: personName,
+  gender: genderSchema.nullish(),
+  dateOfBirth: isoDate,
+  email,
+  phone,
+  gradeLevelId: optionalUuid,
+  classId: optionalUuid,
+  rollNo: shortText(20),
+  address: shortText(300),
+  status: studentStatusSchema.default('enrolled'),
+  enrollmentDate: isoDate,
+});
+export type CreateStudentInput = z.infer<typeof createStudentSchema>;
+
+export const updateStudentSchema = z.object({
+  admissionNo: z.string().trim().min(1).max(40).optional(),
+  firstName: personName.optional(),
+  lastName: personName.optional(),
+  gender: genderSchema.nullish(),
+  dateOfBirth: isoDate,
+  email,
+  phone,
+  gradeLevelId: optionalUuid,
+  classId: optionalUuid,
+  rollNo: shortText(20),
+  address: shortText(300),
+  status: studentStatusSchema.optional(),
+  enrollmentDate: isoDate,
+  ...withVersion,
+});
+export type UpdateStudentInput = z.infer<typeof updateStudentSchema>;
+
+// --- teachers ----------------------------------------------------------------
+
+export const createTeacherSchema = z.object({
+  employeeNo: shortText(40),
+  firstName: personName,
+  lastName: personName,
+  email,
+  phone,
+  departmentId: optionalUuid,
+  designation: shortText(80),
+  employmentType: employmentTypeSchema.default('full_time'),
+  status: staffStatusSchema.default('active'),
+  joinDate: isoDate,
+  institutionUserId: optionalUuid,
+});
+export type CreateTeacherInput = z.infer<typeof createTeacherSchema>;
+
+export const updateTeacherSchema = z.object({
+  employeeNo: shortText(40),
+  firstName: personName.optional(),
+  lastName: personName.optional(),
+  email,
+  phone,
+  departmentId: optionalUuid,
+  designation: shortText(80),
+  employmentType: employmentTypeSchema.optional(),
+  status: staffStatusSchema.optional(),
+  joinDate: isoDate,
+  institutionUserId: optionalUuid,
+  ...withVersion,
+});
+export type UpdateTeacherInput = z.infer<typeof updateTeacherSchema>;
+
+// --- staff (non-teaching) ----------------------------------------------------
+
+export const createStaffSchema = z.object({
+  employeeNo: shortText(40),
+  firstName: personName,
+  lastName: personName,
+  email,
+  phone,
+  departmentId: optionalUuid,
+  designation: shortText(80),
+  employmentType: employmentTypeSchema.default('full_time'),
+  status: staffStatusSchema.default('active'),
+  joinDate: isoDate,
+  institutionUserId: optionalUuid,
+});
+export type CreateStaffInput = z.infer<typeof createStaffSchema>;
+
+export const updateStaffSchema = z.object({
+  employeeNo: shortText(40),
+  firstName: personName.optional(),
+  lastName: personName.optional(),
+  email,
+  phone,
+  departmentId: optionalUuid,
+  designation: shortText(80),
+  employmentType: employmentTypeSchema.optional(),
+  status: staffStatusSchema.optional(),
+  joinDate: isoDate,
+  institutionUserId: optionalUuid,
+  ...withVersion,
+});
+export type UpdateStaffInput = z.infer<typeof updateStaffSchema>;
+
+// --- parents / guardians -----------------------------------------------------
+
+export const createParentSchema = z.object({
+  firstName: personName,
+  lastName: personName,
+  email,
+  phone,
+  occupation: shortText(120),
+  address: shortText(300),
+  institutionUserId: optionalUuid,
+});
+export type CreateParentInput = z.infer<typeof createParentSchema>;
+
+export const updateParentSchema = z.object({
+  firstName: personName.optional(),
+  lastName: personName.optional(),
+  email,
+  phone,
+  occupation: shortText(120),
+  address: shortText(300),
+  institutionUserId: optionalUuid,
+  ...withVersion,
+});
+export type UpdateParentInput = z.infer<typeof updateParentSchema>;
+
+// --- student ↔ guardian link -------------------------------------------------
+
+/** Link (or re-configure) a parent as a guardian of a student. Upserts on (student, parent). */
+export const assignGuardianSchema = z.object({
+  parentId: z.string().uuid(),
+  relationship: guardianRelationshipSchema.default('guardian'),
+  isPrimary: z.boolean().default(false),
+  isEmergencyContact: z.boolean().default(false),
+});
+export type AssignGuardianInput = z.infer<typeof assignGuardianSchema>;

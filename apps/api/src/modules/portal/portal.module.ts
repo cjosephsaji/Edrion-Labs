@@ -1,0 +1,183 @@
+import './portal.types';
+import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { PortalController } from './portal.controller';
+import { PortalAuthService } from './portal-auth.service';
+import { PortalRepository } from './portal.repository';
+import { PortalDashboardService } from './portal-dashboard.service';
+import { InstitutionAuthGuard } from './portal-auth.guard';
+import { InstitutionPermissionsGuard } from './portal-permissions.guard';
+import { PortalAuthController } from './portal-auth.controller';
+import { PortalAuthLoginService } from './portal-auth-login.service';
+import { PortalSessionService } from './portal-session.service';
+import { PortalInviteService } from './portal-invite.service';
+import { EmailService } from './email.service';
+import { InstitutionRateLimiter } from './portal-rate-limit';
+import { PortalTenantInterceptor } from './portal-tenant.interceptor';
+import { SupabaseVerifier } from '../authentication/supabase-verifier';
+import { AcademicsController } from './academics.controller';
+import { AcademicsService } from './academics.service';
+import { AcademicsRepository } from './academics.repository';
+import { PeopleController } from './people.controller';
+import { PeopleService } from './people.service';
+import { PeopleRepository } from './people.repository';
+import { AdmissionsController } from './admissions.controller';
+import { AdmissionsService } from './admissions.service';
+import { AdmissionsRepository } from './admissions.repository';
+import { AttendanceController } from './attendance.controller';
+import { AttendanceService } from './attendance.service';
+import { AttendanceRepository } from './attendance.repository';
+import { TimetableController } from './timetable.controller';
+import { TimetableService } from './timetable.service';
+import { TimetableRepository } from './timetable.repository';
+import { ExamsController } from './exams.controller';
+import { ExamsService } from './exams.service';
+import { ExamsRepository } from './exams.repository';
+import { GradebookController } from './gradebook.controller';
+import { GradebookService } from './gradebook.service';
+import { GradebookRepository } from './gradebook.repository';
+import { AssignmentsController } from './assignments.controller';
+import { AssignmentsService } from './assignments.service';
+import { AssignmentsRepository } from './assignments.repository';
+import { FeesController } from './fees.controller';
+import { FeesService } from './fees.service';
+import { FeesRepository } from './fees.repository';
+import { PayrollController } from './payroll.controller';
+import { PayrollService } from './payroll.service';
+import { PayrollRepository } from './payroll.repository';
+import { LibraryController } from './library.controller';
+import { LibraryService } from './library.service';
+import { LibraryRepository } from './library.repository';
+import { TransportController } from './transport.controller';
+import { TransportService } from './transport.service';
+import { TransportRepository } from './transport.repository';
+import { InventoryController } from './inventory.controller';
+import { InventoryService } from './inventory.service';
+import { InventoryRepository } from './inventory.repository';
+import { HostelController } from './hostel.controller';
+import { HostelService } from './hostel.service';
+import { HostelRepository } from './hostel.repository';
+import { AnnouncementsController, NotificationsController } from './announcements.controller';
+import { AnnouncementsService, NotificationsService } from './announcements.service';
+import { AnnouncementsRepository } from './announcements.repository';
+import { MessagesController } from './messaging.controller';
+import { MessagingService } from './messaging.service';
+import { MessagingRepository } from './messaging.repository';
+import { ReportsController } from './reports.controller';
+import { ReportsService } from './reports.service';
+import { ReportsRepository } from './reports.repository';
+import { PortalCopilotController } from './portal-copilot.controller';
+import { PortalCopilotService } from './portal-copilot.service';
+import { PortalCopilotRepository } from './portal-copilot.repository';
+import { PortalCopilotToolRegistry } from './portal-copilot.tools';
+import { PortalCopilotPlanner } from './portal-copilot.planner';
+import { SettingsController } from './settings.controller';
+import { SettingsService } from './settings.service';
+import { SettingsRepository } from './settings.repository';
+import { RolesController } from './roles.controller';
+import { RolesService } from './roles.service';
+import { RolesRepository } from './roles.repository';
+import { UsersController } from './users.controller';
+import { UsersService } from './users.service';
+import { UsersRepository } from './users.repository';
+import { PortalAuditController } from './portal-audit.controller';
+import { PortalAuditService } from './portal-audit.service';
+import { PortalAuditRepository } from './portal-audit.repository';
+
+/**
+ * Institution Portal module — the tenant-facing API. Separate from the platform control-plane
+ * modules; shares the same database, audit writer and infrastructure. Its guards run at the
+ * controller level (the global platform AuthGuard is skipped via @Public on the controller).
+ */
+@Module({
+  controllers: [
+    PortalController,
+    PortalAuthController,
+    AcademicsController,
+    PeopleController,
+    AdmissionsController,
+    AttendanceController,
+    TimetableController,
+    ExamsController,
+    GradebookController,
+    AssignmentsController,
+    FeesController,
+    PayrollController,
+    LibraryController,
+    TransportController,
+    InventoryController,
+    HostelController,
+    AnnouncementsController,
+    NotificationsController,
+    MessagesController,
+    ReportsController,
+    PortalCopilotController,
+    SettingsController,
+    RolesController,
+    UsersController,
+    PortalAuditController,
+  ],
+  providers: [
+    PortalAuthService,
+    PortalSessionService,
+    PortalAuthLoginService,
+    PortalInviteService,
+    EmailService,
+    InstitutionRateLimiter,
+    SupabaseVerifier,
+    PortalRepository,
+    PortalDashboardService,
+    { provide: APP_INTERCEPTOR, useClass: PortalTenantInterceptor },
+    AcademicsService,
+    AcademicsRepository,
+    PeopleService,
+    PeopleRepository,
+    AdmissionsService,
+    AdmissionsRepository,
+    AttendanceService,
+    AttendanceRepository,
+    TimetableService,
+    TimetableRepository,
+    ExamsService,
+    ExamsRepository,
+    GradebookService,
+    GradebookRepository,
+    AssignmentsService,
+    AssignmentsRepository,
+    FeesService,
+    FeesRepository,
+    PayrollService,
+    PayrollRepository,
+    LibraryService,
+    LibraryRepository,
+    TransportService,
+    TransportRepository,
+    InventoryService,
+    InventoryRepository,
+    HostelService,
+    HostelRepository,
+    AnnouncementsService,
+    NotificationsService,
+    AnnouncementsRepository,
+    MessagingService,
+    MessagingRepository,
+    ReportsService,
+    ReportsRepository,
+    PortalCopilotService,
+    PortalCopilotRepository,
+    PortalCopilotToolRegistry,
+    PortalCopilotPlanner,
+    SettingsService,
+    SettingsRepository,
+    RolesService,
+    RolesRepository,
+    UsersService,
+    UsersRepository,
+    PortalAuditService,
+    PortalAuditRepository,
+    InstitutionAuthGuard,
+    InstitutionPermissionsGuard,
+  ],
+  exports: [PortalAuthService],
+})
+export class PortalModule {}

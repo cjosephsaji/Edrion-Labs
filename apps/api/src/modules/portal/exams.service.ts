@@ -1,0 +1,256 @@
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { resolveScopeFilter, type InstitutionScope, type ScopeFilter } from '@edrion/auth';
+import type { AuditWriter, AuditEventInput } from '@edrion/audit';
+import type {
+  CreateExamInput,
+  CreateExamScheduleInput,
+  ExamsListQuery,
+  UpdateExamInput,
+  UpdateExamScheduleInput,
+} from '@edrion/schemas';
+import { AUDIT_WRITER } from '../../common/tokens';
+import type { Page } from './academics.repository';
+import type { ListResult } from './academics.service';
+import { ExamsRepository, type ExamRefTable } from './exams.repository';
+import { basePortalAudit, type PortalActionContext } from './portal-action-context';
+
+const MODULE = 'portal-exams';
+
+/**
+ * Institution-portal Exams service (Phase 6). An exam is campus-scoped and version-guarded like
+ * every other portal resource; the scheduled papers inherit the exam's campus and are only reachable
+ * through an exam the caller can see (requireExamInScope). FKs are pre-checked for friendly 400s and
+ * every mutation is audited. One paper per (exam, class, subject) — a duplicate is a friendly 409.
+ */
+@Injectable()
+export class ExamsService {
+  constructor(
+    private readonly repo: ExamsRepository,
+    @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
+  ) {}
+
+  // === exams =================================================================
+
+  async list(ctx: PortalActionContext, q: ExamsListQuery) {
+    const f = this.filter(ctx);
+    return this.paginate(await this.repo.list(ctx.principal.institutionId, f.campusIds, q), q);
+  }
+
+  async create(ctx: PortalActionContext, input: CreateExamInput) {
+    await this.assertOptional(ctx, 'academicYears', input.academicYearId, 'academic year');
+    const campusId = this.createCampusId(ctx.scope);
+    const row = await this.repo.insert({
+      institutionId: ctx.principal.institutionId,
+      campusId,
+      name: input.name,
+      examType: input.examType,
+      academicYearId: input.academicYearId ?? null,
+      termLabel: input.termLabel ?? null,
+      startDate: input.startDate ?? null,
+      endDate: input.endDate ?? null,
+      status: input.status,
+      description: input.description ?? null,
+      createdBy: ctx.principal.institutionUserId,
+    });
+    await this.write(ctx, 'exam.create', 'exam', row.id, campusId, {
+      newState: { name: row.name, examType: row.examType, status: row.status },
+    });
+    return row;
+  }
+
+  async update(ctx: PortalActionContext, id: string, input: UpdateExamInput) {
+    const f = this.filter(ctx);
+    const existing = await this.repo.find(id, ctx.principal.institutionId);
+    this.assertInScope(existing?.campusId ?? null, existing, f);
+    await this.assertOptional(ctx, 'academicYears', input.academicYearId, 'academic year');
+    const updated = await this.repo.update(id, input.version, {
+      name: input.name ?? existing!.name,
+      examType: input.examType ?? existing!.examType,
+      academicYearId: input.academicYearId === undefined ? existing!.academicYearId : input.academicYearId,
+      termLabel: input.termLabel === undefined ? existing!.termLabel : input.termLabel,
+      startDate: input.startDate === undefined ? existing!.startDate : input.startDate,
+      endDate: input.endDate === undefined ? existing!.endDate : input.endDate,
+      status: input.status ?? existing!.status,
+      description: input.description === undefined ? existing!.description : input.description,
+      updatedBy: ctx.principal.institutionUserId,
+    });
+    if (!updated) throw this.versionConflict();
+    await this.write(ctx, 'exam.update', 'exam', id, updated.campusId, {
+      newState: { name: updated.name, status: updated.status },
+    });
+    return updated;
+  }
+
+  async delete(ctx: PortalActionContext, id: string, version: number) {
+    const f = this.filter(ctx);
+    const existing = await this.repo.find(id, ctx.principal.institutionId);
+    this.assertInScope(existing?.campusId ?? null, existing, f);
+    const ok = await this.repo.delete(id, version);
+    if (!ok) throw this.versionConflict();
+    await this.write(ctx, 'exam.delete', 'exam', id, existing!.campusId, {
+      previousState: { name: existing!.name, examType: existing!.examType },
+    });
+    return { deleted: true };
+  }
+
+  // === schedules (papers) ====================================================
+
+  async listSchedules(ctx: PortalActionContext, examId: string) {
+    await this.requireExamInScope(ctx, examId);
+    return this.repo.listSchedules(examId);
+  }
+
+  async createSchedule(ctx: PortalActionContext, examId: string, input: CreateExamScheduleInput) {
+    const exam = await this.requireExamInScope(ctx, examId);
+    await this.assertRef(ctx, 'classes', input.classId, 'class');
+    await this.assertRef(ctx, 'subjects', input.subjectId, 'subject');
+    const dupe = await this.repo.findScheduleByKey(examId, input.classId, input.subjectId);
+    if (dupe) {
+      throw new ConflictException({
+        code: 'SCHEDULE_EXISTS',
+        message: 'A paper already exists for this class and subject in this exam.',
+      });
+    }
+    const row = await this.repo.insertSchedule({
+      institutionId: ctx.principal.institutionId,
+      examId,
+      classId: input.classId,
+      subjectId: input.subjectId,
+      examDate: input.examDate ?? null,
+      startTime: input.startTime ?? null,
+      endTime: input.endTime ?? null,
+      maxMarks: input.maxMarks,
+      passMarks: input.passMarks ?? null,
+      room: input.room ?? null,
+      createdBy: ctx.principal.institutionUserId,
+    });
+    await this.write(ctx, 'exam.schedule.create', 'exam_schedule', row.id, exam.campusId, {
+      newState: { examId, classId: row.classId, subjectId: row.subjectId },
+    });
+    return row;
+  }
+
+  async updateSchedule(ctx: PortalActionContext, examId: string, scheduleId: string, input: UpdateExamScheduleInput) {
+    const exam = await this.requireExamInScope(ctx, examId);
+    const existing = await this.repo.findSchedule(scheduleId, examId);
+    if (!existing) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Exam paper not found' });
+    await this.assertOptional(ctx, 'classes', input.classId, 'class');
+    await this.assertOptional(ctx, 'subjects', input.subjectId, 'subject');
+    const nextClass = input.classId ?? existing.classId;
+    const nextSubject = input.subjectId ?? existing.subjectId;
+    if (nextClass !== existing.classId || nextSubject !== existing.subjectId) {
+      const dupe = await this.repo.findScheduleByKey(examId, nextClass, nextSubject);
+      if (dupe && dupe.id !== scheduleId) {
+        throw new ConflictException({
+          code: 'SCHEDULE_EXISTS',
+          message: 'A paper already exists for this class and subject in this exam.',
+        });
+      }
+    }
+    const updated = await this.repo.updateSchedule(scheduleId, input.version, {
+      classId: nextClass,
+      subjectId: nextSubject,
+      examDate: input.examDate === undefined ? existing.examDate : input.examDate,
+      startTime: input.startTime === undefined ? existing.startTime : input.startTime,
+      endTime: input.endTime === undefined ? existing.endTime : input.endTime,
+      maxMarks: input.maxMarks ?? existing.maxMarks,
+      passMarks: input.passMarks === undefined ? existing.passMarks : input.passMarks,
+      room: input.room === undefined ? existing.room : input.room,
+      updatedBy: ctx.principal.institutionUserId,
+    });
+    if (!updated) throw this.versionConflict();
+    await this.write(ctx, 'exam.schedule.update', 'exam_schedule', scheduleId, exam.campusId, {
+      newState: { classId: updated.classId, subjectId: updated.subjectId },
+    });
+    return updated;
+  }
+
+  async deleteSchedule(ctx: PortalActionContext, examId: string, scheduleId: string, version: number) {
+    const exam = await this.requireExamInScope(ctx, examId);
+    const existing = await this.repo.findSchedule(scheduleId, examId);
+    if (!existing) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Exam paper not found' });
+    const ok = await this.repo.deleteSchedule(scheduleId, version);
+    if (!ok) throw this.versionConflict();
+    await this.write(ctx, 'exam.schedule.delete', 'exam_schedule', scheduleId, exam.campusId, {
+      previousState: { classId: existing.classId, subjectId: existing.subjectId },
+    });
+    return { deleted: true };
+  }
+
+  // === helpers ===============================================================
+
+  private filter(ctx: PortalActionContext): ScopeFilter {
+    return resolveScopeFilter(ctx.principal, ctx.scope);
+  }
+
+  private createCampusId(scope: InstitutionScope): string | null {
+    return scope.mode === 'campus' ? scope.campusId : null;
+  }
+
+  private assertInScope<T>(campusId: string | null, row: T | undefined, filter: ScopeFilter): asserts row is T {
+    if (!row) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Not found' });
+    if (campusId === null) return;
+    if (filter.campusIds === null) return;
+    if (!filter.campusIds.includes(campusId)) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Not found in the current scope' });
+    }
+  }
+
+  private async requireExamInScope(ctx: PortalActionContext, examId: string) {
+    const f = this.filter(ctx);
+    const exam = await this.repo.find(examId, ctx.principal.institutionId);
+    this.assertInScope(exam?.campusId ?? null, exam, f);
+    return exam;
+  }
+
+  private async assertRef(ctx: PortalActionContext, table: ExamRefTable, id: string, label: string): Promise<void> {
+    const ok = await this.repo.existsInInstitution(table, id, ctx.principal.institutionId);
+    if (!ok) throw new BadRequestException({ code: 'INVALID_REFERENCE', message: `Unknown ${label}` });
+  }
+
+  private async assertOptional(
+    ctx: PortalActionContext,
+    table: ExamRefTable,
+    id: string | null | undefined,
+    label: string,
+  ): Promise<void> {
+    if (!id) return;
+    await this.assertRef(ctx, table, id, label);
+  }
+
+  private paginate<T>(page: Page<T>, q: ExamsListQuery): ListResult<T> {
+    return { ...page, page: q.page, pageSize: q.pageSize, hasMore: q.page * q.pageSize < page.total };
+  }
+
+  private async write(
+    ctx: PortalActionContext,
+    action: string,
+    entityType: string,
+    entityId: string,
+    campusId: string | null,
+    extra: Partial<AuditEventInput> = {},
+  ): Promise<void> {
+    await this.audit.logAudit({
+      ...basePortalAudit(ctx),
+      action,
+      module: MODULE,
+      entityType,
+      entityId,
+      campusId: campusId ?? undefined,
+      ...extra,
+    } as AuditEventInput);
+  }
+
+  private versionConflict() {
+    return new ConflictException({
+      code: 'VERSION_CONFLICT',
+      message: 'This record changed since you loaded it. Reload and try again.',
+    });
+  }
+}

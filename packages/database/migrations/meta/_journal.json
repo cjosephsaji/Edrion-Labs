@@ -92,6 +92,76 @@
       "when": 1782535375189,
       "tag": "0012_hesitant_black_bolt",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1782550730245,
+      "tag": "0013_complete_lethal_legion",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1782554523101,
+      "tag": "0014_chubby_harry_osborn",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1782559112888,
+      "tag": "0015_perpetual_frog_thor",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1782573333469,
+      "tag": "0016_far_speed_demon",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1782574747366,
+      "tag": "0017_demonic_jack_power",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1782576505395,
+      "tag": "0018_high_pride",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1782592374772,
+      "tag": "0019_reflective_ezekiel_stane",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1782620062230,
+      "tag": "0020_dusty_taskmaster",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1782621930715,
+      "tag": "0021_mighty_katie_power",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1782625308673,
+      "tag": "0022_closed_lyja",
+      "breakpoints": true
     }
   ]
 }

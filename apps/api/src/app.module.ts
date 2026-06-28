@@ -30,6 +30,7 @@ import { CopilotModule } from './modules/copilot/copilot.module';
 import { ObservabilityModule } from './modules/observability/observability.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
+import { PortalModule } from './modules/portal/portal.module';
 
 /**
  * Root module. Global guards run in order: AuthGuard (authenticate + attach principal) →
@@ -63,6 +64,7 @@ import { MaintenanceModule } from './modules/maintenance/maintenance.module';
     ObservabilityModule,
     IntegrationsModule,
     MaintenanceModule,
+    PortalModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },

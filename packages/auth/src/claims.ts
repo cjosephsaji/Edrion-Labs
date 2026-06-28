@@ -33,6 +33,28 @@ export interface SessionTokenPayload {
   iat: number;
 }
 
+/** Payload of the institution-portal session cookie (HS256, SESSION_COOKIE_SECRET). */
+export interface PortalSessionTokenPayload {
+  /** portal_sessions.id — the revocation + recent-auth authority for this portal session. */
+  sid: string;
+  /** institution_users.id. */
+  uid: string;
+  exp: number;
+  iat: number;
+}
+
+/** Payload of a signed portal invitation accept link (HS256, SESSION_COOKIE_SECRET). */
+export interface PortalInviteTokenPayload {
+  /** portal_invitations.id this link grants. */
+  inv: string;
+  /** institution_users.id being invited. */
+  uid: string;
+  /** Discriminator so an invite token can never be replayed as a session token. */
+  purpose: 'portal_invite';
+  exp: number;
+  iat: number;
+}
+
 class ClaimError extends Error {}
 
 /** Validate a decoded JWT payload as Supabase claims, throwing on anything malformed. */

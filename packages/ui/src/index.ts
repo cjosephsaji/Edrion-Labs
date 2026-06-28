@@ -5,3 +5,8 @@ export { Badge, StatusBadge, type BadgeTone, type BadgeProps } from './badge';
 export { Input, Label, FieldError } from './input';
 export { Skeleton, TableSkeleton } from './skeleton';
 export { EmptyState, ErrorState, PermissionDenied } from './states';
+export { DataTable, type Column, type DataTableProps, type SortDir } from './table';
+export { Drawer } from './drawer';
+export { Dialog, ConfirmDialog } from './dialog';
+export { useFocusTrap } from './use-focus-trap';
+export { Select, type SelectOption, type SelectProps } from './select';

@@ -24,6 +24,12 @@ export const institutionUsers = pgTable(
     mfaEnrolled: boolean('mfa_enrolled').notNull().default(false),
     /** Admin-enforced MFA: the user must enrol before they can next sign in. */
     requireMfa: boolean('require_mfa').notNull().default(false),
+    /** Last strong authentication (login or re-auth) — drives the sensitive-action recent-auth gate. */
+    lastAuthAt: timestamp('last_auth_at', { withTimezone: true }),
+    /** Consecutive failed logins; reset to 0 on success. Drives account lockout. */
+    failedLoginAttempts: integer('failed_login_attempts').notNull().default(0),
+    /** When set and in the future, sign-in is refused (account lockout). */
+    lockedUntil: timestamp('locked_until', { withTimezone: true }),
     /** Direct permission grants/denies layered on top of the user's institution roles. */
     directGrants: jsonb('direct_grants').$type<string[]>().notNull().default([]),
     directDenies: jsonb('direct_denies').$type<string[]>().notNull().default([]),
@@ -42,6 +48,9 @@ export const institutionUsers = pgTable(
     instIdx: index('institution_users_institution_idx').on(t.institutionId),
     emailUniq: index('institution_users_inst_email_uniq').on(t.institutionId, t.email),
     statusIdx: index('institution_users_status_idx').on(t.status),
+    // Portal login resolves identity by email across institutions (the composite above leads with
+    // institution_id, so it can't serve an email-only probe). (Phase 12 perf.)
+    emailLookupIdx: index('institution_users_email_idx').on(t.email),
   }),
 );
 

@@ -53,6 +53,10 @@ export const auditEvents = pgTable(
     occurredIdx: index('audit_occurred_idx').on(t.occurredAt),
     actorIdx: index('audit_actor_idx').on(t.actorType, t.actorId),
     institutionIdx: index('audit_institution_idx').on(t.institutionId),
+    // The institution-portal audit viewer + dashboard recent-activity both filter by institution_id
+    // and order by occurred_at desc; a composite satisfies the filter + sort from one index instead
+    // of an institution scan + sort over the append-only volume. (Phase 12 perf.)
+    institutionOccurredIdx: index('audit_institution_occurred_idx').on(t.institutionId, t.occurredAt),
     moduleIdx: index('audit_module_idx').on(t.module),
     sessionIdx: index('audit_session_idx').on(t.supportSessionId),
     correlationIdx: index('audit_correlation_idx').on(t.correlationId),

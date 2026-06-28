@@ -74,6 +74,30 @@ export const apiEnvSchema = z.object({
   /** How long an account stays locked after exceeding AUTH_MAX_FAILED_LOGINS. */
   AUTH_LOCKOUT_SECONDS: z.coerce.number().int().positive().default(900),
 
+  // ── Institution-portal authentication (Phase 12) ───────────────────────────
+  /** Name of the HTTP-only cookie carrying the portal session JWT (separate from the platform one). */
+  PORTAL_SESSION_COOKIE_NAME: z.string().default('edrion_portal_session'),
+  /**
+   * DEV ESCAPE HATCH. When true the `x-institution-user-email` request header is honoured as a
+   * portal identity, bypassing real session auth. Off in production. Kept so the existing portal
+   * curl smokes keep working while the cookie flow is verified alongside them.
+   */
+  PORTAL_AUTH_DEV_HEADER: bool.default(false),
+  /**
+   * DEV ESCAPE HATCH. When true `POST /v1/portal/auth/login` accepts `{ email }` with no Supabase
+   * access token, minting a real server session for a known institution user. Lets portal login +
+   * recent-auth be proven locally without a hosted Supabase Auth instance. Off in production.
+   */
+  PORTAL_AUTH_DEV_LOGIN: bool.default(false),
+  /** Base URL of the institution-portal web app — used to build invitation accept links. */
+  PORTAL_WEB_URL: z.string().url().default('http://localhost:3002'),
+
+  // ── Outbound email (Phase 12) ──────────────────────────────────────────────
+  /** SMTP connection string. When unset the EmailService logs messages (dev/offline transport). */
+  SMTP_URL: z.string().optional(),
+  /** From-address for transactional email (invitations, security notices). */
+  EMAIL_FROM: z.string().default('Edrion <no-reply@edrion.local>'),
+
   SENTRY_DSN: z.string().optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 

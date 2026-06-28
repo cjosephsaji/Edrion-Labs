@@ -33,7 +33,65 @@ BEGIN
       ('institution_users', 'institution_id'),
       ('subscriptions', 'institution_id'),
       ('invoices', 'institution_id'),
-      ('webhook_endpoints', 'institution_id')
+      ('webhook_endpoints', 'institution_id'),
+      -- Institution-portal academic structure (Phase 2): tenant-isolated under the API guard.
+      ('academic_years', 'institution_id'),
+      ('departments', 'institution_id'),
+      ('grade_levels', 'institution_id'),
+      ('subjects', 'institution_id'),
+      ('classes', 'institution_id'),
+      ('class_subject_teachers', 'institution_id'),
+      -- Institution-portal people directory (Phase 4): tenant-isolated under the API guard.
+      ('students', 'institution_id'),
+      ('teachers', 'institution_id'),
+      ('staff', 'institution_id'),
+      ('parents', 'institution_id'),
+      ('student_guardians', 'institution_id'),
+      -- Institution-portal admissions/attendance/timetable (Phase 5): tenant-isolated.
+      ('admission_applications', 'institution_id'),
+      ('attendance_sessions', 'institution_id'),
+      ('attendance_records', 'institution_id'),
+      ('timetable_slots', 'institution_id'),
+      -- Institution-portal exams/gradebook/assignments (Phase 6): tenant-isolated.
+      ('exams', 'institution_id'),
+      ('exam_schedules', 'institution_id'),
+      ('grade_entries', 'institution_id'),
+      ('assignments', 'institution_id'),
+      ('assignment_submissions', 'institution_id'),
+      -- Institution-portal fees/payroll (Phase 7): tenant-isolated under the API guard.
+      ('fee_structures', 'institution_id'),
+      ('fee_invoices', 'institution_id'),
+      ('fee_payments', 'institution_id'),
+      ('payroll_runs', 'institution_id'),
+      ('payroll_items', 'institution_id'),
+      -- Institution-portal library/transport/inventory/hostel (Phase 8): tenant-isolated.
+      ('library_books', 'institution_id'),
+      ('library_loans', 'institution_id'),
+      ('transport_routes', 'institution_id'),
+      ('transport_vehicles', 'institution_id'),
+      ('transport_assignments', 'institution_id'),
+      ('inventory_items', 'institution_id'),
+      ('inventory_movements', 'institution_id'),
+      ('hostel_blocks', 'institution_id'),
+      ('hostel_rooms', 'institution_id'),
+      ('hostel_allocations', 'institution_id'),
+      -- Institution-portal announcements/messages/notifications/reports (Phase 9): tenant-isolated.
+      ('announcements', 'institution_id'),
+      ('notifications', 'institution_id'),
+      ('message_threads', 'institution_id'),
+      ('message_posts', 'institution_id'),
+      ('report_definitions', 'institution_id'),
+      ('report_runs', 'institution_id'),
+      -- Institution-portal Copilot run lifecycle (Phase 10): tenant-isolated under the API guard.
+      ('portal_ai_runs', 'institution_id'),
+      ('portal_ai_tool_calls', 'institution_id'),
+      ('portal_ai_confirmations', 'institution_id'),
+      -- Institution-portal administration (Phase 11): settings tree + custom roles, tenant-isolated.
+      ('institution_settings', 'institution_id'),
+      ('institution_roles', 'institution_id'),
+      -- Institution-portal real auth (Phase 12): server sessions + invitations, tenant-isolated.
+      ('portal_sessions', 'institution_id'),
+      ('portal_invitations', 'institution_id')
     ) AS t(tbl, col)
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', spec.tbl);
