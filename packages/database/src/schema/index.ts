@@ -32,3 +32,11 @@ export * from './support';
 export * from './ai';
 export * from './jobs';
 export * from './integrations';
+// Phase 13: functional staff modules
+export * from './health';
+export * from './counseling';
+export * from './labs';
+export * from './front_desk';
+export * from './facilities';
+export * from './security';
+export * from './it';

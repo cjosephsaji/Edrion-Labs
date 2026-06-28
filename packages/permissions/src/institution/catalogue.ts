@@ -108,6 +108,7 @@ export const INSTITUTION_PERMISSIONS: readonly PermissionDef[] = [
   def('users.invite', 'User Management', 'Invite institution users.'),
   def('users.manage', 'User Management', 'Edit and disable institution users.', true),
   def('users.manage_roles', 'User Management', 'Assign roles and campus access.', true),
+  def('users.assign_scoped_roles', 'User Management', 'Assign a limited set of operational staff roles within own campuses.', true),
   def('roles.view', 'Roles & Permissions', 'View roles and permissions.'),
   def('roles.manage', 'Roles & Permissions', 'Create and edit roles.', true),
 
@@ -123,6 +124,63 @@ export const INSTITUTION_PERMISSIONS: readonly PermissionDef[] = [
   // Audit
   def('audit.view', 'Audit', 'View audit logs.'),
   def('audit.export', 'Audit', 'Export audit logs.', true),
+
+  // ── Phase 13: functional staff modules ────────────────────────────────────
+  // Reduced-projection people reads (name + class/role + contact only — NOT academic/financial/medical).
+  def('student_basic_profile.view', 'Students', 'View a student’s basic profile (name, class, contact).'),
+  def('staff_basic_profile.view', 'Staff', 'View a staff member’s basic profile (name, role, contact).'),
+
+  // Health (School Nurse). Medical data — sensitive on every write.
+  def('health_records.view', 'Health', 'View student health records.'),
+  def('health_records.create', 'Health', 'Create student health records.'),
+  def('health_records.update', 'Health', 'Edit student health records.', true),
+  def('medical_incidents.manage', 'Health', 'Record and manage medical incidents.', true),
+  def('medication_logs.manage', 'Health', 'Record and manage medication administration logs.', true),
+  def('emergency_contacts.view', 'Health', 'View student emergency contacts.'),
+  def('health_reports.view', 'Health', 'View health summary reports.'),
+
+  // Counseling (Counselor). Sensitive notes — read-access is audited.
+  def('counseling.view', 'Counseling', 'View counseling notes and sessions.'),
+  def('counseling.create', 'Counseling', 'Create counseling notes and sessions.'),
+  def('counseling.update', 'Counseling', 'Edit counseling notes and sessions.', true),
+  def('counseling_cases.manage', 'Counseling', 'Open, update and close counseling cases.', true),
+  def('wellbeing_reports.view', 'Counseling', 'View wellbeing summary reports.'),
+
+  // Labs (Lab Staff).
+  def('labs.view', 'Labs', 'View labs overview.'),
+  def('labs.manage_inventory', 'Labs', 'Manage lab consumables and inventory.'),
+  def('labs.manage_equipment', 'Labs', 'Manage lab equipment.'),
+  def('labs.view_schedule', 'Labs', 'View lab usage schedule.'),
+  def('labs.report_incidents', 'Labs', 'Report lab safety incidents.'),
+
+  // Front Desk (Receptionist; visitor logs also read by Security).
+  def('visitors.view', 'Front Desk', 'View the visitor log.'),
+  def('visitors.manage', 'Front Desk', 'Check visitors in and out.'),
+  def('appointments.manage', 'Front Desk', 'Manage front-desk appointments.'),
+
+  // Facilities (Maintenance Staff).
+  def('facilities.view', 'Facilities', 'View facilities.'),
+  def('work_orders.manage', 'Facilities', 'Create and manage work orders.'),
+  def('maintenance_tasks.manage', 'Facilities', 'Manage scheduled maintenance tasks.'),
+  def('assets.view', 'Facilities', 'View facility assets.'),
+  def('inventory.request', 'Facilities', 'Request inventory / supplies.'),
+
+  // Security (Security Staff).
+  def('gate_passes.manage', 'Security', 'Issue and manage gate passes.'),
+  def('security_incidents.manage', 'Security', 'Record and manage security incidents.', true),
+  def('emergency_alerts.view', 'Security', 'View emergency alerts.'),
+  def('campus_access_logs.view', 'Security', 'View campus access logs.'),
+
+  // IT (IT Staff).
+  def('devices.manage', 'IT', 'Register and manage devices.'),
+  def('users.reset_security', 'IT', 'Reset a user’s security (force re-auth, clear lockout).', true),
+  def('users.revoke_sessions', 'IT', 'Revoke a user’s active sessions.', true),
+  def('access_requests.manage', 'IT', 'Triage and resolve access requests.'),
+  def('integrations.view', 'IT', 'View configured integrations.'),
+  def('security_events.view_limited', 'IT', 'View a limited security-events feed.'),
+
+  // Attendance — front-desk check-in/out (shared Attendance group).
+  def('attendance.check_in_out', 'Attendance', 'Check students/staff in and out at the front desk.'),
 ] as const;
 
 /** Literal union of all valid institution permission keys. */

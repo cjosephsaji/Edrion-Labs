@@ -83,6 +83,23 @@ import { UsersRepository } from './users.repository';
 import { PortalAuditController } from './portal-audit.controller';
 import { PortalAuditService } from './portal-audit.service';
 import { PortalAuditRepository } from './portal-audit.repository';
+// Phase 13: functional staff modules
+import { PortalCrudEngine } from './portal-crud.engine';
+import { HealthController } from './health.controller';
+import { HealthService } from './health.service';
+import { CounselingController } from './counseling.controller';
+import { CounselingService } from './counseling.service';
+import { LabsController } from './labs.controller';
+import { LabsService } from './labs.service';
+import { FrontDeskController } from './front-desk.controller';
+import { FrontDeskService } from './front-desk.service';
+import { FacilitiesController } from './facilities.controller';
+import { FacilitiesService } from './facilities.service';
+import { SecurityController } from './security.controller';
+import { SecurityService } from './security.service';
+import { ItController } from './it.controller';
+import { ItService } from './it.service';
+import { DirectoryController, DirectoryService } from './directory.controller';
 
 /**
  * Institution Portal module — the tenant-facing API. Separate from the platform control-plane
@@ -116,6 +133,15 @@ import { PortalAuditRepository } from './portal-audit.repository';
     RolesController,
     UsersController,
     PortalAuditController,
+    // Phase 13: functional staff modules
+    HealthController,
+    CounselingController,
+    LabsController,
+    FrontDeskController,
+    FacilitiesController,
+    SecurityController,
+    ItController,
+    DirectoryController,
   ],
   providers: [
     PortalAuthService,
@@ -177,6 +203,16 @@ import { PortalAuditRepository } from './portal-audit.repository';
     PortalAuditRepository,
     InstitutionAuthGuard,
     InstitutionPermissionsGuard,
+    // Phase 13: functional staff modules
+    PortalCrudEngine,
+    HealthService,
+    CounselingService,
+    LabsService,
+    FrontDeskService,
+    FacilitiesService,
+    SecurityService,
+    ItService,
+    DirectoryService,
   ],
   exports: [PortalAuthService],
 })

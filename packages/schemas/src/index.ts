@@ -26,6 +26,14 @@ export * from './portal-roles';
 export * from './portal-users';
 export * from './portal-audit';
 export * from './portal-auth';
+// Phase 13: functional staff modules
+export * from './portal-health';
+export * from './portal-counseling';
+export * from './portal-labs';
+export * from './portal-front-desk';
+export * from './portal-facilities';
+export * from './portal-security';
+export * from './portal-it';
 export * from './independent-users';
 export * from './employees';
 export * from './plans';

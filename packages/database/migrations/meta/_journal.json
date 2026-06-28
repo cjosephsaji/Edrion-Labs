@@ -162,6 +162,13 @@
       "when": 1782625308673,
       "tag": "0022_closed_lyja",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1782651198261,
+      "tag": "0023_deep_tattoo",
+      "breakpoints": true
     }
   ]
 }

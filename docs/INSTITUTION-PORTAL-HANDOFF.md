@@ -981,3 +981,99 @@ DB tenancy convention for every academic table: `id, institution_id (always), ca
 > permission + scope guards, audited mutations, friendly errors), keep everything typecheck-clean
 > (`pnpm -r typecheck`), and add/extend a live smoke that runs 100% green (0 fail). When done, update this
 > handoff (add §2k, advance the roadmap/§7) and the persistent memory.
+
+---
+
+## Phase 13 — Seven functional staff roles (DONE, additive)
+
+Phase 13 adds **seven operational staff roles** to the portal — School Nurse, Counselor, Lab Staff,
+Receptionist, IT Staff, Maintenance Staff, Security Staff — each a **permission bundle only** (no code
+ever branches on a role name). Six new module areas ship as real, design-system pages backed by minimal
+real tables, proving the RLS/permission/audit wiring end-to-end. Everything is additive: the existing 12
+roles, their keys, and all current pages are unchanged.
+
+### Permissions & roles
+- ~40 new keys in [catalogue.ts](../packages/permissions/src/institution/catalogue.ts) under new groups
+  **Health, Counseling, Labs, Front Desk, Facilities, Security, IT** (+ shared `student_basic_profile.view`
+  / `staff_basic_profile.view`, `attendance.check_in_out`, and the governance key
+  `users.assign_scoped_roles`). Medical/counseling write keys + `users.reset_security` /
+  `users.revoke_sessions` / `security_incidents.manage` are `sensitive` (recent-auth enforced by the guard).
+- 7 roles appended to [roles.ts](../packages/permissions/src/institution/roles.ts) via the `view(...)` helper,
+  each campus-scoped (keys only; confinement comes from `campus_user_access` + the scope guard). Each also
+  gets `messages.use` + `ai.use`.
+
+### Campus-admin assignable-role governance
+- [assignable-roles.ts](../packages/permissions/src/institution/assignable-roles.ts) exports
+  `CAMPUS_ADMIN_ASSIGNABLE_ROLE_KEYS` (the 7 staff roles). `campus_admin` is granted the narrow
+  `users.assign_scoped_roles` (NOT the broad `users.manage_roles`). The Users `PUT :id/access` handler is
+  gated by `users.assign_scoped_roles` (held by Owner/Admin/Campus Admin).
+  [users.service.ts](../apps/api/src/modules/portal/users.service.ts) `validateRoleKeys` enforces: a
+  **non-institution-wide** principal may only assign keys in the allowlist (else `403 ROLE_NOT_ASSIGNABLE`)
+  and may NOT set direct overrides (else `403 OVERRIDES_NOT_PERMITTED`). Owner/Admin are unaffected. Scoped
+  assignments stamp `assignedBy: 'campus_admin'` into the `user.access.set` audit event.
+
+### IT security actions
+- `POST /v1/portal/users/:id/reset-security` (`users.reset_security`) clears lockout + failed-login
+  counters, forces a password reset, and revokes all sessions (`user.security.reset`).
+  `POST /v1/portal/users/:id/revoke-sessions` (`users.revoke_sessions`) revokes all live sessions
+  (`user.sessions.revoke`). Both reuse `PortalSessionService.revokeAllForUser`.
+
+### Database (migration 0023)
+- 7 schema files under `packages/database/src/schema/` (health, counseling, labs, front_desk, facilities,
+  security, it) → **20 flat, campus-scoped, version-guarded tables** following the announcements convention
+  (`primaryId`, `institutionId` notNull cascade, nullable `campusId` cascade, `version`, `status`,
+  `actorColumns`, `timestamps`, scope+status indexes). All exported from `schema/index.ts`; row types from
+  the db index.
+- **Generate the migration**: `pnpm --filter @edrion/database generate` produces `0023_*.sql` (+ snapshot +
+  journal). Every new table is already added to the RLS spec VALUES list in
+  [zzz_rls.sql](../packages/database/migrations/sql/zzz_rls.sql) under the "Phase 13" block, applied
+  post-migration by `migrate.ts`. (Note: the previous last migration is 0022; this is the first 0023.)
+
+### API
+- A generic **[PortalCrudEngine](../apps/api/src/modules/portal/portal-crud.engine.ts)** + abstract
+  **[PortalResourceService](../apps/api/src/modules/portal/portal-resource.service.ts)** provide
+  scope-confined, version-guarded, audited list/get/create/update/remove for every flat resource. New
+  modules describe their table with a `CrudConfig` (no copy-pasted repositories). The server permission
+  guard still gates every endpoint.
+- Controllers (`@RequireInstitutionPermissions(...)` per handler) under `/v1/portal/{health,counseling,labs,
+  front-desk,facilities,security,it,directory}`, registered in
+  [portal.module.ts](../apps/api/src/modules/portal/portal.module.ts). Counseling note GET sets
+  `auditReads` → writes a `counseling.note.view` audit event (read-access auditing). `directory/*` returns
+  reduced-projection people reads (name + class/role + contact only) gated by the `*_basic_profile.view`
+  keys — never academic/financial/medical fields.
+
+### Web
+- Hooks in [staff-modules.ts](../apps/institution-web/src/lib/staff-modules.ts) (one `makeResourceHooks`
+  namespace per area), row types in `staff-modules-types.ts`, and 21 permission-gated pages under
+  `app/(app)/{health,counseling,labs,front-desk,facilities,security,it}/...` built on the existing
+  `ResourceManager`/`ResourceForm` + `DataTable` (real empty/loading states). Nav groups **Health &
+  Wellbeing**, **Campus Operations**, **IT** added to [nav.ts](../apps/institution-web/src/lib/nav.ts);
+  the sidebar already filters by permission and hides empty groups.
+
+### Seed & smoke
+- [seed-portal.ts](../packages/database/src/seed-portal.ts) adds 7 campus-scoped demo users
+  (`nurse@`/`counselor@`/`lab@`/`reception@`/`it@`/`maintenance@`/`security@greenwood.edu`) + idempotent
+  sample rows per new table (pages render populated).
+- [scripts/portal-p13-smoke.sh](../scripts/portal-p13-smoke.sh): per-role gating (nurse → `health_records.view`
+  200 but `fees`/`payroll`/`gradebook`/`gate-passes` 403), a create + audit-row check per module, the
+  counseling `note.view` audit row, campus-admin allowlist (functional role 200, `finance_manager` 403,
+  overrides 403; Owner unaffected), and IT reset-security/revoke-sessions.
+
+### Verify
+1. `pnpm --filter @edrion/database generate` → review `0023_*.sql`; `pnpm --filter @edrion/database migrate`
+   on a clean DB → RLS policies created for the new tables.
+2. `pnpm -r typecheck` clean (permission/role literal unions compile).
+3. `pnpm --filter @edrion/database seed:portal` → 7 new users + sample rows.
+4. API up (:3001): `bash scripts/portal-p13-smoke.sh` → 0 fail.
+5. Web up (:3002): log in (dev-header) as each new demo user → sidebar shows only that role's groups; pages
+   load populated; a forbidden route (nurse → `/fees`) shows `PermissionDenied`.
+
+> **Status:** `drizzle-kit generate` was run → **`0023_deep_tattoo.sql`** (+ snapshot + journal entry),
+> purely additive (20 new tables, FKs to institutions/campuses/students; no DROP/ALTER of existing
+> tables). `typecheck` passes clean for **@edrion/permissions, @edrion/schemas, @edrion/database,
+> @edrion/api, @edrion/institution-web**. Still to run on a live env: `pnpm --filter @edrion/database
+> migrate` (needs Postgres), `seed:portal`, and `bash scripts/portal-p13-smoke.sh` (needs API :3001).
+>
+> **Env note:** the repo pins `pnpm@11.1.2` which needs Node ≥ 22; this machine has Node 20, so the
+> generate/typecheck commands were run via `corepack pnpm@9.15.9` (lockfile left frozen/unchanged). Use
+> the pinned pnpm on a Node-22 toolchain normally.

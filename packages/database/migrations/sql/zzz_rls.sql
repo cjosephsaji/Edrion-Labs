@@ -91,7 +91,28 @@ BEGIN
       ('institution_roles', 'institution_id'),
       -- Institution-portal real auth (Phase 12): server sessions + invitations, tenant-isolated.
       ('portal_sessions', 'institution_id'),
-      ('portal_invitations', 'institution_id')
+      ('portal_invitations', 'institution_id'),
+      -- Phase 13: functional staff modules (health/counseling/labs/front-desk/facilities/security/it).
+      ('health_records', 'institution_id'),
+      ('medical_incidents', 'institution_id'),
+      ('medication_logs', 'institution_id'),
+      ('counseling_records', 'institution_id'),
+      ('counseling_cases', 'institution_id'),
+      ('lab_assets', 'institution_id'),
+      ('lab_schedules', 'institution_id'),
+      ('lab_incidents', 'institution_id'),
+      ('visitors', 'institution_id'),
+      ('appointments', 'institution_id'),
+      ('facilities', 'institution_id'),
+      ('work_orders', 'institution_id'),
+      ('maintenance_tasks', 'institution_id'),
+      ('facility_assets', 'institution_id'),
+      ('gate_passes', 'institution_id'),
+      ('security_incidents', 'institution_id'),
+      ('emergency_alerts', 'institution_id'),
+      ('campus_access_logs', 'institution_id'),
+      ('devices', 'institution_id'),
+      ('access_requests', 'institution_id')
     ) AS t(tbl, col)
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', spec.tbl);

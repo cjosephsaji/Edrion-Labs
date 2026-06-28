@@ -26,7 +26,10 @@ import type { PortalActionContext } from './portal-action-context';
 /**
  * Institution-portal User Management API (Phase 11) — the directory over institution_users. Reads
  * need `users.view`; inviting needs `users.invite`; editing/disabling needs the sensitive
- * `users.manage`; assigning roles/campus access/overrides needs the sensitive `users.manage_roles`.
+ * `users.manage`; assigning roles/campus access needs the sensitive `users.assign_scoped_roles`
+ * (institution-wide principals assign anything + overrides; Campus Admins only the operational
+ * staff allowlist, no overrides — Phase 13). IT security resets/session revocation need
+ * `users.reset_security` / `users.revoke_sessions`.
  */
 @ApiTags('portal-users')
 @Controller('portal/users')
@@ -75,7 +78,7 @@ export class UsersController {
   }
 
   @Put(':id/access')
-  @RequireInstitutionPermissions('users.manage_roles')
+  @RequireInstitutionPermissions('users.assign_scoped_roles')
   setAccess(
     @Param('id') id: string,
     @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
@@ -84,6 +87,30 @@ export class UsersController {
     @Body(zodBody(setPortalUserAccessSchema)) body: SetPortalUserAccessInput,
   ) {
     return this.service.setAccess(this.ctx(p, s, r), id, body);
+  }
+
+  /** IT Staff: reset a user's security posture (clear lockout, force password reset, revoke sessions). */
+  @Post(':id/reset-security')
+  @RequireInstitutionPermissions('users.reset_security')
+  resetSecurity(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+  ) {
+    return this.service.resetSecurity(this.ctx(p, s, r), id);
+  }
+
+  /** IT Staff: revoke every live session for a user (forced sign-out everywhere). */
+  @Post(':id/revoke-sessions')
+  @RequireInstitutionPermissions('users.revoke_sessions')
+  revokeSessions(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+  ) {
+    return this.service.revokeSessions(this.ctx(p, s, r), id);
   }
 
   @Delete(':id')
