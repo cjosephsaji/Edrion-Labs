@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { createTransport, type Transporter } from 'nodemailer';
 import type { ApiEnv } from '@edrion/config';
 import type { Logger } from '@edrion/observability';
 import { API_ENV, LOGGER } from '../../common/tokens';
@@ -25,29 +26,36 @@ export interface SentEmail {
  */
 @Injectable()
 export class EmailService {
-  private readonly smtpConfigured: boolean;
+  private readonly transporter: Transporter | null;
 
   constructor(
     @Inject(API_ENV) private readonly env: ApiEnv,
     @Inject(LOGGER) private readonly logger: Logger,
   ) {
-    this.smtpConfigured = Boolean(this.env.SMTP_URL);
+    // Build the SMTP transport once from SMTP_URL. When unset, transporter stays null and `send`
+    // falls back to the dev/offline log transport — the caller and audit trail are identical either way.
+    this.transporter = this.env.SMTP_URL ? createTransport(this.env.SMTP_URL) : null;
   }
 
   async send(message: EmailMessage): Promise<SentEmail> {
-    const messageId = randomUUID();
-    if (this.smtpConfigured) {
-      // Production transport drops in here (nodemailer/SES). Kept behind the same interface so the
-      // caller and the audit trail are identical whether the transport is SMTP or the log fallback.
+    if (this.transporter) {
+      const info = await this.transporter.sendMail({
+        from: this.env.EMAIL_FROM,
+        to: message.to,
+        subject: message.subject,
+        text: message.text,
+        html: message.html,
+      });
       this.logger.info('Dispatched email via SMTP', {
         event: 'email.send',
         transport: 'smtp',
-        messageId,
+        messageId: info.messageId,
         to: message.to,
         subject: message.subject,
       });
-      return { messageId, transport: 'smtp' };
+      return { messageId: info.messageId, transport: 'smtp' };
     }
+    const messageId = randomUUID();
     this.logger.info('Email (log transport — set SMTP_URL to dispatch for real)', {
       event: 'email.send',
       transport: 'log',

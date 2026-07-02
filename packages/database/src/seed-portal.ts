@@ -17,8 +17,11 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: join(__dirname, '../../..', '.env') });
 
-import { and, asc, count, eq, schema as s } from './index';
+import { and, asc, count, eq, isNull, schema as s } from './index';
 import { createDatabase } from './client';
+
+/** Dev-only bcrypt hash of the password `password` (cost 10) for native portal login. Never prod. */
+const DEV_PASSWORD_HASH = '$2a$10$ByZT0oBbpXQboXG7ZlkzbOWfBfx9uAwu6Zf0HAt/G3yIcji9Rh.WG';
 
 interface DemoUser {
   email: string;
@@ -33,8 +36,11 @@ const DEMO_USERS: DemoUser[] = [
   { email: 'admin@greenwood.edu', fullName: 'Adam Admin', roleKey: 'institution_admin', campusCount: 0 },
   { email: 'campus.north@greenwood.edu', fullName: 'Cara Campus', roleKey: 'campus_admin', campusCount: 1 },
   { email: 'principal@greenwood.edu', fullName: 'Pat Principal', roleKey: 'principal', campusCount: 1 },
-  { email: 'finance@greenwood.edu', fullName: 'Fred Finance', roleKey: 'finance_manager', campusCount: 0 },
-  { email: 'hr@greenwood.edu', fullName: 'Hira HR', roleKey: 'hr_manager', campusCount: 0 },
+  // finance/hr are institution-level functional managers but are NOT in INSTITUTION_WIDE_ROLES,
+  // so without an explicit campus grant they resolve as confined-with-no-campus and see zero
+  // campus-scoped rows. Grant the first campus so their portal pages render populated in the demo.
+  { email: 'finance@greenwood.edu', fullName: 'Fred Finance', roleKey: 'finance_manager', campusCount: 1 },
+  { email: 'hr@greenwood.edu', fullName: 'Hira HR', roleKey: 'hr_manager', campusCount: 1 },
   { email: 'teacher@greenwood.edu', fullName: 'Tina Teacher', roleKey: 'teacher', campusCount: 1 },
   { email: 'parent@greenwood.edu', fullName: 'Paul Parent', roleKey: 'parent', campusCount: 1 },
   { email: 'student@greenwood.edu', fullName: 'Sam Student', roleKey: 'student', campusCount: 1 },
@@ -71,6 +77,9 @@ async function main() {
   // eslint-disable-next-line no-console
   console.log(`→ Seeding portal users for "${institution.name}" (${campuses.length} campuses)…`);
 
+  // email → institution_users.id, so People directory rows can link back to a portal login.
+  const userIdByEmail = new Map<string, string>();
+
   for (const demo of DEMO_USERS) {
     const email = demo.email.toLowerCase();
 
@@ -85,11 +94,20 @@ async function main() {
     if (!userId) {
       const [created] = await db
         .insert(s.institutionUsers)
-        .values({ institutionId: institution.id, email, fullName: demo.fullName, status: 'active' })
+        .values({
+          institutionId: institution.id,
+          email,
+          fullName: demo.fullName,
+          status: 'active',
+          // Dev password login: <email> / password (see DEV_PASSWORD_HASH).
+          passwordHash: DEV_PASSWORD_HASH,
+          activatedAt: new Date(),
+        })
         .returning({ id: s.institutionUsers.id });
       userId = created?.id;
     }
     if (!userId) continue;
+    userIdByEmail.set(email, userId);
 
     // Reset roles to exactly this demo role.
     await db.delete(s.institutionUserRoles).where(eq(s.institutionUserRoles.institutionUserId, userId));
@@ -109,6 +127,76 @@ async function main() {
     // eslint-disable-next-line no-console
     console.log(`  ✓ ${email} → ${demo.roleKey}${demo.campusCount ? ` (+${demo.campusCount} campus)` : ''}`);
   }
+
+  // Phase 4 People directory: students / teachers / staff / parents. The institution_users above
+  // are auth identities, NOT directory records — without these the People + staff pages render
+  // empty. Idempotent per table (seed only when the table has no rows for this institution). Some
+  // teacher/staff/parent rows link back to a portal login via institution_user_id.
+  const peopleCampusId = campuses[0]?.id ?? null;
+  const link = (e: string) => userIdByEmail.get(e.toLowerCase()) ?? null;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const seedPeople = async (table: any, rows: Record<string, unknown>[]): Promise<{ id: string }[]> => {
+    const [c] = await db.select({ v: count() }).from(table).where(eq(table.institutionId, institution.id));
+    if (Number(c?.v ?? 0) > 0) {
+      return db.select({ id: table.id }).from(table).where(eq(table.institutionId, institution.id));
+    }
+    return db
+      .insert(table)
+      .values(rows.map((r) => ({ institutionId: institution.id, campusId: peopleCampusId, ...r })))
+      .returning({ id: table.id });
+  };
+
+  const studentIds = await seedPeople(s.students, [
+    { admissionNo: 'ADM-001', firstName: 'Aarav', lastName: 'Sharma', gender: 'male', rollNo: '1', status: 'enrolled' },
+    { admissionNo: 'ADM-002', firstName: 'Bella', lastName: 'Ortiz', gender: 'female', rollNo: '2', status: 'enrolled' },
+    { admissionNo: 'ADM-003', firstName: 'Chen', lastName: 'Wei', gender: 'male', rollNo: '3', status: 'enrolled' },
+    { admissionNo: 'ADM-004', firstName: 'Diya', lastName: 'Patel', gender: 'female', rollNo: '4', status: 'enrolled' },
+    { admissionNo: 'ADM-005', firstName: 'Ethan', lastName: 'Brown', gender: 'male', rollNo: '5', status: 'enrolled' },
+  ]);
+
+  await seedPeople(s.teachers, [
+    { employeeNo: 'T-001', firstName: 'Tina', lastName: 'Teacher', email: 'teacher@greenwood.edu', designation: 'Senior Teacher', institutionUserId: link('teacher@greenwood.edu') },
+    { employeeNo: 'T-002', firstName: 'George', lastName: 'Gomez', email: 'g.gomez@greenwood.edu', designation: 'Mathematics Teacher' },
+    { employeeNo: 'T-003', firstName: 'Hana', lastName: 'Khan', email: 'h.khan@greenwood.edu', designation: 'HOD Science' },
+  ]);
+
+  await seedPeople(s.staff, [
+    { employeeNo: 'S-001', firstName: 'Hira', lastName: 'HR', email: 'hr@greenwood.edu', designation: 'HR Manager', institutionUserId: link('hr@greenwood.edu') },
+    { employeeNo: 'S-002', firstName: 'Ivan', lastName: 'IT', email: 'it@greenwood.edu', designation: 'IT Administrator', institutionUserId: link('it@greenwood.edu') },
+    { employeeNo: 'S-003', firstName: 'Rita', lastName: 'Reception', email: 'reception@greenwood.edu', designation: 'Front Office', institutionUserId: link('reception@greenwood.edu') },
+    { employeeNo: 'S-004', firstName: 'Nadia', lastName: 'Nurse', email: 'nurse@greenwood.edu', designation: 'School Nurse', institutionUserId: link('nurse@greenwood.edu') },
+    { employeeNo: 'S-005', firstName: 'Cory', lastName: 'Counselor', email: 'counselor@greenwood.edu', designation: 'Counselor', institutionUserId: link('counselor@greenwood.edu') },
+    { employeeNo: 'S-006', firstName: 'Liam', lastName: 'Lab', email: 'lab@greenwood.edu', designation: 'Lab Technician', institutionUserId: link('lab@greenwood.edu') },
+    { employeeNo: 'S-007', firstName: 'Mona', lastName: 'Maintenance', email: 'maintenance@greenwood.edu', designation: 'Maintenance Supervisor', institutionUserId: link('maintenance@greenwood.edu') },
+    { employeeNo: 'S-008', firstName: 'Sergio', lastName: 'Security', email: 'security@greenwood.edu', designation: 'Security Officer', institutionUserId: link('security@greenwood.edu') },
+    { employeeNo: 'S-009', firstName: 'Fred', lastName: 'Finance', email: 'finance@greenwood.edu', designation: 'Accountant', institutionUserId: link('finance@greenwood.edu') },
+  ]);
+
+  const parentIds = await seedPeople(s.parents, [
+    { firstName: 'Paul', lastName: 'Parent', email: 'parent@greenwood.edu', occupation: 'Engineer', institutionUserId: link('parent@greenwood.edu') },
+  ]);
+
+  // Link the first parent to the first student as primary guardian (idempotent).
+  if (studentIds[0] && parentIds[0]) {
+    const [g] = await db
+      .select({ v: count() })
+      .from(s.studentGuardians)
+      .where(eq(s.studentGuardians.institutionId, institution.id));
+    if (Number(g?.v ?? 0) === 0) {
+      await db.insert(s.studentGuardians).values({
+        institutionId: institution.id,
+        studentId: studentIds[0].id,
+        parentId: parentIds[0].id,
+        relationship: 'father',
+        isPrimary: true,
+        isEmergencyContact: true,
+      });
+    }
+  }
+
+  // eslint-disable-next-line no-console
+  console.log(`  ✓ People directory seeded (${studentIds.length} students + teachers/staff/parents).`);
 
   // Phase 13: sample rows per new module so pages render populated (not just empty-state).
   const campusId = campuses[0]?.id ?? null;
@@ -189,6 +277,17 @@ async function main() {
   await insertIfEmpty(s.accessRequests, [
     { requesterName: 'Tina Teacher', system: 'Staff Wi-Fi', reason: 'New laptop setup', priority: 'low', status: 'open' },
   ]);
+
+  // Backfill: Phase 13 rows that were inserted before any students existed got a null studentId.
+  // Now that the People directory is seeded, point those orphaned rows at the first student.
+  if (studentId) {
+    for (const t of [s.healthRecords, s.medicalIncidents, s.medicationLogs, s.counselingRecords, s.counselingCases]) {
+      await db
+        .update(t)
+        .set({ studentId })
+        .where(and(eq(t.institutionId, institution.id), isNull(t.studentId)));
+    }
+  }
 
   // eslint-disable-next-line no-console
   console.log('  ✓ Phase 13 sample rows ensured (health/counseling/labs/front-desk/facilities/security/it).');

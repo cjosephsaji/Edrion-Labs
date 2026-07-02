@@ -57,3 +57,18 @@ export interface HostelAllocationRow {
   version: number;
   createdAt: string;
 }
+
+/** A current resident row from GET /portal/hostel/hostellers (student × room × block). */
+export interface HostellerRow {
+  id: string;
+  studentId: string;
+  studentName: string | null;
+  admissionNo: string | null;
+  roomId: string;
+  roomNo: string | null;
+  blockId: string | null;
+  blockName: string | null;
+  bedNo: string | null;
+  fromDate: string | null;
+  status: string;
+}

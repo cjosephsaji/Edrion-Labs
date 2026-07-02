@@ -64,6 +64,8 @@ BEGIN
       ('fee_payments', 'institution_id'),
       ('payroll_runs', 'institution_id'),
       ('payroll_items', 'institution_id'),
+      -- School expenses (money out; Finance Manager): tenant-isolated under the API guard.
+      ('school_expenses', 'institution_id'),
       -- Institution-portal library/transport/inventory/hostel (Phase 8): tenant-isolated.
       ('library_books', 'institution_id'),
       ('library_loans', 'institution_id'),
@@ -112,7 +114,22 @@ BEGIN
       ('emergency_alerts', 'institution_id'),
       ('campus_access_logs', 'institution_id'),
       ('devices', 'institution_id'),
-      ('access_requests', 'institution_id')
+      ('access_requests', 'institution_id'),
+      -- Onboarding checklist generated on registration approval: tenant-isolated.
+      ('institution_onboarding_tasks', 'institution_id'),
+      -- Admin-redesign Phase 3: recipient targeting for announcements/notifications.
+      ('recipient_groups', 'institution_id'),
+      ('recipient_group_members', 'institution_id'),
+      ('announcement_targets', 'institution_id'),
+      -- Admin-redesign Phase 4: messaging v2 (conversations/participants/messages/attachments).
+      ('conversations', 'institution_id'),
+      ('conversation_participants', 'institution_id'),
+      ('messages', 'institution_id'),
+      ('message_attachments', 'institution_id'),
+      -- Institution-portal Documents & Policies (Administration).
+      ('institution_documents', 'institution_id'),
+      -- Institution-portal student conduct log (behaviour incidents + complaints).
+      ('student_incidents', 'institution_id')
     ) AS t(tbl, col)
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', spec.tbl);

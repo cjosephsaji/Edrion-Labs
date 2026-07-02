@@ -1,5 +1,6 @@
 /** Client-side mirrors of the portal Announcements + Notifications DTOs (Phase 9). The API is authoritative. */
 import type { Paged } from './academics-types';
+import type { DescribedTarget } from './recipients';
 
 export type { Paged };
 
@@ -24,6 +25,8 @@ export interface AnnouncementRow {
   pinned: boolean;
   publishAt: string | null;
   publishedAt: string | null;
+  /** Rich recipient targets, resolved to labels (Phase 3). */
+  targets: DescribedTarget[];
 }
 
 export interface NotificationRow {
@@ -40,4 +43,7 @@ export interface NotificationRow {
   announcementId: string | null;
   status: NotificationStatus;
   readAt: string | null;
+  /** Resolved fan-out from the publish bridge (Phase 3). */
+  recipientCount: number | null;
+  targetSummary: string | null;
 }

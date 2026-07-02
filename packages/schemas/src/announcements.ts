@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+import { targetsSchema } from './recipients';
 
 /**
  * Institution-Portal ANNOUNCEMENTS + NOTIFICATIONS (Phase 9) request/response contracts. Tenancy
@@ -47,6 +48,8 @@ export const createAnnouncementSchema = z.object({
   status: announcementStatusSchema.default('draft'),
   pinned: z.coerce.boolean().default(false),
   publishAt: isoDate,
+  /** Rich recipient targets (Phase 3). When empty, `audience` is the legacy broadcast fallback. */
+  targets: targetsSchema.optional(),
 });
 export type CreateAnnouncementInput = z.infer<typeof createAnnouncementSchema>;
 
@@ -59,6 +62,8 @@ export const updateAnnouncementSchema = z.object({
   status: announcementStatusSchema.optional(),
   pinned: z.coerce.boolean().optional(),
   publishAt: isoDate,
+  /** Replace the recipient targets (Phase 3). Omit to leave targets unchanged. */
+  targets: targetsSchema.optional(),
   ...withVersion,
 });
 export type UpdateAnnouncementInput = z.infer<typeof updateAnnouncementSchema>;

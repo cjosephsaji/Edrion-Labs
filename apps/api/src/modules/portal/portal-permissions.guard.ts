@@ -47,7 +47,8 @@ export class InstitutionPermissionsGuard implements CanActivate {
       });
     }
 
-    const needsRecent = required.some((k) => isInstitutionSensitive(k));
+    const needsRecent =
+      this.env.RECENT_AUTH_ENABLED && required.some((k) => isInstitutionSensitive(k));
     if (needsRecent && !isRecentAuth(ic.principal.lastAuthAt, this.env.RECENT_AUTH_WINDOW_SECONDS)) {
       throw new ForbiddenException({
         code: 'RECENT_AUTH_REQUIRED',

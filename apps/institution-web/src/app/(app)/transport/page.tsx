@@ -5,6 +5,7 @@ import { type Column } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
 import { RouteAssignmentsDrawer } from '@/components/transport/route-assignments-drawer';
+import { useFormat } from '@/lib/format';
 import { useTransportList, useTransportMutations, useTransportRouteOptions } from '@/lib/transport';
 import type { TransportRouteRow, TransportVehicleRow } from '@/lib/transport-types';
 
@@ -27,13 +28,14 @@ const VEHICLE_STATUSES = [
 const label = (opts: { value: string; label: string }[], v: string) => opts.find((o) => o.value === v)?.label ?? v;
 
 function RoutesTab() {
+  const fmt = useFormat();
   const [assignmentsFor, setAssignmentsFor] = useState<TransportRouteRow | null>(null);
 
   const fields = useMemo<FieldDef[]>(
     () => [
       { name: 'name', label: 'Name', type: 'text', required: true, placeholder: 'e.g. North Loop' },
       { name: 'code', label: 'Code', type: 'text', nullable: true, placeholder: 'Optional' },
-      { name: 'fare', label: 'Fare (minor units)', type: 'number', required: true, min: 0 },
+      { name: 'fare', label: 'Fare', type: 'money', required: true, min: 0 },
       { name: 'status', label: 'Status', type: 'select', required: true, options: ROUTE_STATUSES },
       { name: 'description', label: 'Description', type: 'textarea', nullable: true, placeholder: 'Optional' },
     ],
@@ -44,11 +46,11 @@ function RoutesTab() {
     () => [
       { key: 'name', header: 'Name', sortable: true, render: (r) => <span className="font-medium">{r.name}</span> },
       { key: 'code', header: 'Code', render: (r) => r.code ?? '—' },
-      { key: 'fare', header: 'Fare', align: 'right', sortable: true, render: (r) => <span className="tabular-nums">{r.fare}</span> },
+      { key: 'fare', header: 'Fare', align: 'right', sortable: true, render: (r) => <span className="tabular-nums">{fmt.money(r.fare)}</span> },
       { key: 'assignmentCount', header: 'Students', align: 'right', render: (r) => <span className="tabular-nums">{r.assignmentCount}</span> },
       { key: 'status', header: 'Status', sortable: true, render: (r) => label(ROUTE_STATUSES, r.status) },
     ],
-    [],
+    [fmt],
   );
 
   return (
@@ -106,7 +108,7 @@ function VehiclesTab() {
         help: 'Optional — the route this vehicle serves.',
       },
       { name: 'driverName', label: 'Driver name', type: 'text', nullable: true, placeholder: 'Optional' },
-      { name: 'driverPhone', label: 'Driver phone', type: 'text', nullable: true, placeholder: 'Optional' },
+      { name: 'driverPhone', label: 'Driver phone', type: 'phone', nullable: true },
       { name: 'status', label: 'Status', type: 'select', required: true, options: VEHICLE_STATUSES },
     ],
     [routes],

@@ -14,7 +14,16 @@ import { AUDIT_WRITER } from '../../common/tokens';
 import type { Page } from './academics.repository';
 import type { ListResult } from './academics.service';
 import { AnnouncementsRepository } from './announcements.repository';
+import { RecipientResolver } from './recipient-resolver.service';
 import { basePortalAudit, type PortalActionContext } from './portal-action-context';
+
+const BROADCAST_LABEL: Record<string, string> = {
+  all: 'Everyone',
+  teachers: 'All teachers',
+  students: 'All students',
+  parents: 'All parents',
+  staff: 'All staff',
+};
 
 const ANNOUNCEMENTS_MODULE = 'portal-announcements';
 const NOTIFICATIONS_MODULE = 'portal-notifications';
@@ -29,12 +38,30 @@ const NOTIFICATIONS_MODULE = 'portal-notifications';
 export class AnnouncementsService {
   constructor(
     private readonly repo: AnnouncementsRepository,
+    private readonly recipients: RecipientResolver,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
   ) {}
 
   async list(ctx: PortalActionContext, q: AnnouncementsListQuery) {
     const f = this.filter(ctx);
-    return this.paginate(await this.repo.listAnnouncements(ctx.principal.institutionId, f.campusIds, q), q);
+    const page = await this.repo.listAnnouncements(ctx.principal.institutionId, f.campusIds, q);
+    const items = await this.attachTargets(ctx.principal.institutionId, page.items);
+    return this.paginate({ items, total: page.total }, q);
+  }
+
+  /** Attach the labeled recipient targets to a page of announcements (one batched resolve). */
+  private async attachTargets<T extends { id: string }>(institutionId: string, rows: T[]) {
+    const map = await this.repo.getTargetsFor(institutionId, rows.map((r) => r.id));
+    const flat: Array<{ aid: string; kind: string; refId: string | null }> = [];
+    for (const [aid, targets] of map) for (const t of targets) flat.push({ aid, kind: t.kind, refId: t.refId });
+    const described = await this.recipients.describeTargets(institutionId, flat.map((f) => ({ kind: f.kind, refId: f.refId })));
+    const byAnn = new Map<string, Array<{ kind: string; refId: string | null; label: string }>>();
+    flat.forEach((f, i) => {
+      const arr = byAnn.get(f.aid) ?? [];
+      arr.push(described[i]!);
+      byAnn.set(f.aid, arr);
+    });
+    return rows.map((r) => ({ ...r, targets: byAnn.get(r.id) ?? [] }));
   }
 
   async create(ctx: PortalActionContext, input: CreateAnnouncementInput) {
@@ -57,6 +84,9 @@ export class AnnouncementsService {
       publishedAt: input.status === 'published' ? new Date() : null,
       createdBy: ctx.principal.institutionUserId,
     });
+    if (input.targets) {
+      await this.repo.setAnnouncementTargets(row.id, ctx.principal.institutionId, input.targets);
+    }
     await this.write(ctx, ANNOUNCEMENTS_MODULE, 'announcement.create', 'announcement', row.id, campusId, {
       newState: { title: row.title, referenceCode: row.referenceCode, status: row.status },
     });
@@ -88,6 +118,9 @@ export class AnnouncementsService {
       updatedBy: ctx.principal.institutionUserId,
     });
     if (!updated) throw this.versionConflict();
+    if (input.targets !== undefined) {
+      await this.repo.setAnnouncementTargets(id, ctx.principal.institutionId, input.targets);
+    }
     await this.write(ctx, ANNOUNCEMENTS_MODULE, 'announcement.update', 'announcement', id, updated.campusId, {
       newState: { title: updated.title, status: updated.status },
     });
@@ -121,6 +154,24 @@ export class AnnouncementsService {
     });
     if (!updated) throw this.versionConflict();
     const audience = input.audience ?? updated.audience;
+
+    // Resolve the rich targets (Phase 3) to a real recipient count + summary; fall back to the legacy
+    // audience broadcast when no targets were set.
+    const targets = (await this.repo.getTargetsFor(ctx.principal.institutionId, [id])).get(id) ?? [];
+    let recipientCount: number | null = null;
+    let targetSummary: string | null = null;
+    if (targets.length > 0) {
+      const resolved = await this.recipients.resolve(
+        ctx.principal.institutionId,
+        f.campusIds,
+        targets.map((t) => ({ kind: t.kind, refId: t.refId })),
+      );
+      recipientCount = resolved.count;
+      targetSummary = resolved.summary;
+    } else {
+      targetSummary = BROADCAST_LABEL[audience] ?? 'Everyone';
+    }
+
     const notification = await this.repo.insertNotification({
       institutionId: ctx.principal.institutionId,
       campusId: updated.campusId,
@@ -130,10 +181,12 @@ export class AnnouncementsService {
       audience,
       announcementId: updated.id,
       status: 'unread',
+      recipientCount,
+      targetSummary,
       createdBy: ctx.principal.institutionUserId,
     });
     await this.write(ctx, ANNOUNCEMENTS_MODULE, 'announcement.publish', 'announcement', id, updated.campusId, {
-      newState: { status: updated.status, notificationId: notification.id, audience },
+      newState: { status: updated.status, notificationId: notification.id, audience, recipientCount },
     });
     return { announcement: updated, notification };
   }

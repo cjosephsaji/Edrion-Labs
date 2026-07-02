@@ -2,6 +2,7 @@ import {
   Activity,
   Bot,
   Building2,
+  ClipboardList,
   CreditCard,
   LayoutDashboard,
   LifeBuoy,
@@ -47,6 +48,7 @@ export const NAV: NavGroup[] = [
     label: 'Customers',
     items: [
       { label: 'Institutions', href: '/institutions', icon: Building2, permission: 'institutions.view' },
+      { label: 'Registration Requests', href: '/registration-requests', icon: ClipboardList, permission: 'registration.view' },
       { label: 'Campuses', href: '/campuses', icon: School, permission: 'campuses.view' },
       { label: 'Institution Users', href: '/institution-users', icon: Users, permission: 'institution_users.view' },
     ],

@@ -1,12 +1,12 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { BedDouble } from 'lucide-react';
-import { type Column } from '@edrion/ui';
+import { BedDouble, Search } from 'lucide-react';
+import { DataTable, Input, type Column } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
 import { RoomAllocationsDrawer } from '@/components/hostel/room-allocations-drawer';
 import { useHostelBlockOptions, useHostelList, useHostelMutations } from '@/lib/hostel';
-import type { HostelBlockRow, HostelRoomRow } from '@/lib/hostel-types';
+import type { HostelBlockRow, HostelRoomRow, HostellerRow } from '@/lib/hostel-types';
 
 const PERMISSIONS: ResourcePermissions = {
   view: 'hostel.view',
@@ -153,13 +153,67 @@ function RoomsTab() {
   );
 }
 
+/** Read-only roster of current residents across all blocks/rooms (active allocations). */
+function HostellersTab() {
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const pageSize = 25;
+  const list = useHostelList<HostellerRow>('hostel/hostellers', { page, pageSize, sortDir: 'desc', search: search || undefined });
+
+  const columns = useMemo<Column<HostellerRow>[]>(
+    () => [
+      {
+        key: 'studentName',
+        header: 'Student',
+        render: (r) => (
+          <div>
+            <span className="font-medium">{r.studentName ?? '—'}</span>
+            {r.admissionNo && <span className="ml-1.5 text-xs text-text-muted">{r.admissionNo}</span>}
+          </div>
+        ),
+      },
+      { key: 'blockName', header: 'Block', render: (r) => <span className="text-text-secondary">{r.blockName ?? '—'}</span> },
+      { key: 'roomNo', header: 'Room', render: (r) => <span className="tabular-nums text-text-secondary">{r.roomNo ?? '—'}</span> },
+      { key: 'bedNo', header: 'Bed', render: (r) => <span className="tabular-nums">{r.bedNo ?? '—'}</span> },
+      { key: 'fromDate', header: 'Since', render: (r) => <span className="text-text-secondary">{r.fromDate ?? '—'}</span> },
+    ],
+    [],
+  );
+
+  return (
+    <div className="flex flex-col gap-3 p-5">
+      <div className="relative max-w-xs">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+        <Input
+          value={search}
+          placeholder="Search resident or admission no…"
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          className="pl-9"
+        />
+      </div>
+      <DataTable<HostellerRow>
+        columns={columns}
+        rows={list.data?.items ?? []}
+        rowKey={(r) => r.id}
+        loading={list.isLoading}
+        page={page}
+        pageSize={pageSize}
+        total={list.data?.total ?? 0}
+        onPageChange={setPage}
+        emptyTitle="No hostellers"
+        emptyDescription="Students allocated to a hostel room appear here."
+      />
+    </div>
+  );
+}
+
 export default function HostelPage() {
-  const [tab, setTab] = useState<'rooms' | 'blocks'>('rooms');
+  const [tab, setTab] = useState<'rooms' | 'blocks' | 'hostellers'>('rooms');
 
   return (
     <>
       <div className="flex gap-1 border-b border-border px-5 pt-3">
-        {(['rooms', 'blocks'] as const).map((t) => (
+        {(['rooms', 'blocks', 'hostellers'] as const).map((t) => (
           <button
             key={t}
             type="button"
@@ -173,7 +227,7 @@ export default function HostelPage() {
           </button>
         ))}
       </div>
-      {tab === 'rooms' ? <RoomsTab /> : <BlocksTab />}
+      {tab === 'rooms' ? <RoomsTab /> : tab === 'blocks' ? <BlocksTab /> : <HostellersTab />}
     </>
   );
 }

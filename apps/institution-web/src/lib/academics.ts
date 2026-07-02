@@ -22,6 +22,8 @@ export interface ListParams {
   sortBy?: string;
   sortDir: 'asc' | 'desc';
   search?: string;
+  /** Optional extra query facets (e.g. status, submittedVia). Empty values are dropped. */
+  filters?: Record<string, string | undefined>;
 }
 
 function scopeKey(scope: InstitutionScope): string {
@@ -35,6 +37,7 @@ function queryString(p: ListParams): string {
   sp.set('sortDir', p.sortDir);
   if (p.sortBy) sp.set('sortBy', p.sortBy);
   if (p.search) sp.set('search', p.search);
+  if (p.filters) for (const [k, v] of Object.entries(p.filters)) if (v) sp.set(k, v);
   return sp.toString();
 }
 

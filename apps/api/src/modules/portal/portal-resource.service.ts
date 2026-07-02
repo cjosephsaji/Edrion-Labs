@@ -1,4 +1,4 @@
-import { PortalCrudEngine, type CrudConfig, type CrudListQuery } from './portal-crud.engine';
+import { PortalCrudEngine, type CrudConfig, type CrudListQuery, type RefSpec } from './portal-crud.engine';
 import type { PortalActionContext } from './portal-action-context';
 
 /**
@@ -55,6 +55,11 @@ export function resourceConfig(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     snapshot?: (row: any) => Record<string, unknown>;
     auditReads?: boolean;
+    /** Declarative FK→display enrichment (see CrudConfig.refs). */
+    refs?: RefSpec[];
+    /** Bespoke enrichment run after refs (see CrudConfig.enrich). */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    enrich?: (rows: any[], ctx: PortalActionContext) => Promise<any[]>;
   },
 ): CrudConfig {
   return {
@@ -74,5 +79,7 @@ export function resourceConfig(
     sortable: opts.sortable,
     snapshot: opts.snapshot,
     auditReads: opts.auditReads,
+    refs: opts.refs,
+    enrich: opts.enrich,
   };
 }

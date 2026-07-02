@@ -7,6 +7,7 @@ import {
   Currency,
 } from '@edrion/shared-types';
 import { emailSchema, paginationQuerySchema, reasonSchema, sortQuerySchema, zEnumFromConst } from './common';
+import { countryCodeSchema, optionalE164PhoneSchema, timezoneSchema } from './geo/validators';
 
 export const institutionStatusSchema = zEnumFromConst(InstitutionStatus);
 export const institutionTypeSchema = zEnumFromConst(InstitutionType);
@@ -17,11 +18,8 @@ export const currencySchema = zEnumFromConst(Currency);
 export const contactSchema = z.object({
   name: z.string().trim().min(1).max(160),
   email: emailSchema,
-  phone: z
-    .string()
-    .trim()
-    .max(40)
-    .optional(),
+  // Normalized to E.164 when provided (component emits E.164; server re-validates).
+  phone: optionalE164PhoneSchema,
   title: z.string().trim().max(120).optional(),
 });
 export type ContactInput = z.infer<typeof contactSchema>;
@@ -30,9 +28,10 @@ export const addressSchema = z.object({
   line1: z.string().trim().min(1).max(200),
   line2: z.string().trim().max(200).optional(),
   city: z.string().trim().min(1).max(120),
+  // Stores an ISO 3166-2 subdivision code (legacy free-text tolerated).
   region: z.string().trim().max(120).optional(),
   postalCode: z.string().trim().max(40).optional(),
-  country: z.string().trim().length(2, 'ISO 3166-1 alpha-2 country code'),
+  country: countryCodeSchema,
 });
 export type AddressInput = z.infer<typeof addressSchema>;
 
@@ -41,9 +40,9 @@ export const createInstitutionSchema = z.object({
   legalName: z.string().trim().min(2).max(200),
   displayName: z.string().trim().min(2).max(160),
   type: institutionTypeSchema,
-  country: z.string().trim().length(2),
+  country: countryCodeSchema,
   region: z.string().trim().max(120).optional(),
-  timezone: z.string().trim().min(1).max(64).default('UTC'),
+  timezone: timezoneSchema.default('UTC'),
   currency: currencySchema.default(Currency.USD),
   primaryContact: contactSchema,
   billingContact: contactSchema.optional(),

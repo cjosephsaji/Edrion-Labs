@@ -81,6 +81,38 @@ export class PortalClient {
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   }
+
+  /**
+   * Upload a raw binary file. Sent as `application/octet-stream` (never JSON) with the name/type in
+   * headers, matching the API's raw-body attachment endpoint. Cookie + scope + dev-header still ride
+   * along; the JSON body parser leaves an octet-stream body untouched.
+   */
+  async upload<T>(path: string, scope: InstitutionScope, file: File): Promise<T> {
+    const headers = new Headers();
+    headers.set('content-type', 'application/octet-stream');
+    headers.set('x-institution-scope', scopeHeader(scope));
+    headers.set('x-file-name', encodeURIComponent(file.name));
+    if (file.type) headers.set('x-file-type', file.type);
+    if (this.devUserEmail) headers.set('x-institution-user-email', this.devUserEmail);
+
+    const res = await fetch(`${this.baseUrl}/v1${path}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers,
+      body: file,
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = body as ApiError;
+      throw new PortalClientError(res.status, err.code ?? 'ERROR', err.message ?? res.statusText, err.correlationId);
+    }
+    return body as T;
+  }
+
+  /** Absolute URL for a portal resource — used for `<a href>` downloads (cookie auth applies). */
+  fileUrl(path: string): string {
+    return `${this.baseUrl}/v1${path}`;
+  }
 }
 
 const PortalClientContext = createContext<PortalClient | null>(null);

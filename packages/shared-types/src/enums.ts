@@ -87,6 +87,8 @@ export const ActorType = {
   IndependentUser: 'independent_user',
   System: 'system',
   Ai: 'ai',
+  /** A public, unauthenticated registration applicant (institution onboarding funnel). */
+  Applicant: 'applicant',
 } as const;
 export type ActorType = (typeof ActorType)[keyof typeof ActorType];
 
@@ -287,6 +289,35 @@ export const PendingActionPriority = {
 } as const;
 export type PendingActionPriority =
   (typeof PendingActionPriority)[keyof typeof PendingActionPriority];
+
+/**
+ * Lifecycle of a public institution registration request. A request is NEVER an institution: an
+ * approved request *provisions* one. `info_requested` is reserved for the future "Request More
+ * Information" step (designed in, not yet exposed).
+ */
+export const RegistrationStatus = {
+  Draft: 'draft',
+  Submitted: 'submitted',
+  UnderReview: 'under_review',
+  Approved: 'approved',
+  Rejected: 'rejected',
+  Withdrawn: 'withdrawn',
+  InfoRequested: 'info_requested',
+} as const;
+export type RegistrationStatus = (typeof RegistrationStatus)[keyof typeof RegistrationStatus];
+
+/** A single reviewer action recorded against a registration request (review history + notes). */
+export const RegistrationReviewAction = {
+  Assigned: 'assigned',
+  StartedReview: 'started_review',
+  NoteAdded: 'note_added',
+  Approved: 'approved',
+  Rejected: 'rejected',
+  InfoRequested: 'info_requested',
+  StatusChanged: 'status_changed',
+} as const;
+export type RegistrationReviewAction =
+  (typeof RegistrationReviewAction)[keyof typeof RegistrationReviewAction];
 
 /** Supported display/billing currencies (ISO 4217). Extend as markets are added. */
 export const Currency = {

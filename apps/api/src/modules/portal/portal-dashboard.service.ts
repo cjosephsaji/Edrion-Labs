@@ -14,6 +14,8 @@ interface DashboardStat {
   value: number | string;
   hint?: string;
   pending?: boolean;
+  /** 'money' → value is integer MINOR units; the web formats it in the institution's currency. */
+  format?: 'money';
 }
 interface DashboardActivity {
   id: string;
@@ -107,14 +109,14 @@ export class PortalDashboardService {
       users: { key: 'users', label: 'Portal users', value: userCount },
     } satisfies Record<string, DashboardStat>;
 
-    // Real, scope-aware module metrics (institution/campus dashboards). `feesCollected` is in minor
-    // units; surfaced as a major-unit amount with a hint so the figure reads honestly.
+    // Real, scope-aware module metrics (institution/campus dashboards). `feesCollected` is in MINOR
+    // units; the web formats it in the institution's currency (format: 'money').
     const c = counts ?? { students: 0, staff: 0, attendanceToday: 0, feesCollected: 0, openAdmissions: 0, payrollDue: 0 };
     const m = {
       students: { key: 'students', label: 'Total students', value: c.students },
       staff: { key: 'staff', label: 'Total staff', value: c.staff },
       attendance: { key: 'attendance', label: 'Present today', value: c.attendanceToday },
-      fees: { key: 'fees', label: 'Fees collected', value: c.feesCollected, hint: 'minor units' },
+      fees: { key: 'fees', label: 'Fees collected', value: c.feesCollected, format: 'money' as const },
       admissions: { key: 'admissions', label: 'Open admissions', value: c.openAdmissions },
       payroll: { key: 'payroll', label: 'Payroll runs due', value: c.payrollDue },
     } satisfies Record<string, DashboardStat>;

@@ -2,6 +2,10 @@
 node_modules/
 .pnpm-store/
 
+# uploaded message attachments (local-disk storage; ATTACHMENT_STORAGE_DIR)
+var/
+apps/api/var/
+
 # builds
 dist/
 .next/

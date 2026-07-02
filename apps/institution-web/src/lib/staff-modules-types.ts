@@ -1,4 +1,5 @@
 /** Client-side mirrors of the Phase-13 functional-staff DTOs. The API is authoritative. */
+import type { StudentContext } from './types';
 
 interface BaseRow {
   id: string;
@@ -9,45 +10,60 @@ interface BaseRow {
   updatedAt: string;
 }
 
-// --- Health ------------------------------------------------------------------
-export interface HealthRecordRow extends BaseRow {
+/** A row linked to a student — carries the raw id + the resolver-enriched student card (Phase 1/2). */
+interface StudentLinkedRow extends BaseRow {
   studentId: string | null;
+  /** Resolved by the API's PortalEntityResolver; null when the student was removed. */
+  student?: StudentContext | null;
+}
+
+// --- Health ------------------------------------------------------------------
+export interface HealthRecordRow extends StudentLinkedRow {
   recordType: string;
   title: string;
   details: string | null;
   bloodGroup: string | null;
+  reason: string | null;
+  symptoms: string | null;
+  actionTaken: string | null;
+  treatment: string | null;
+  attendedBy: string | null;
+  followUpRequired: boolean;
+  followUpAt: string | null;
   status: string;
   recordedAt: string | null;
 }
-export interface MedicalIncidentRow extends BaseRow {
-  studentId: string | null;
+export interface MedicalIncidentRow extends StudentLinkedRow {
   title: string;
   description: string | null;
   severity: string;
   location: string | null;
+  actionTaken: string | null;
+  treatment: string | null;
+  attendedBy: string | null;
+  followUpRequired: boolean;
+  followUpAt: string | null;
   occurredAt: string | null;
   status: string;
 }
-export interface MedicationLogRow extends BaseRow {
-  studentId: string | null;
+export interface MedicationLogRow extends StudentLinkedRow {
   medication: string;
   dosage: string | null;
   administeredAt: string | null;
+  administeredBy: string | null;
   notes: string | null;
   status: string;
 }
 
 // --- Counseling --------------------------------------------------------------
-export interface CounselingRecordRow extends BaseRow {
-  studentId: string | null;
+export interface CounselingRecordRow extends StudentLinkedRow {
   sessionType: string;
   title: string;
   notes: string | null;
   sessionAt: string | null;
   status: string;
 }
-export interface CounselingCaseRow extends BaseRow {
-  studentId: string | null;
+export interface CounselingCaseRow extends StudentLinkedRow {
   title: string;
   summary: string | null;
   priority: string;

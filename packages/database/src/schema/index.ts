@@ -13,12 +13,14 @@ export * from './exams';
 export * from './gradebook';
 export * from './assignments';
 export * from './fees';
+export * from './expenses';
 export * from './payroll';
 export * from './library';
 export * from './transport';
 export * from './inventory';
 export * from './hostel';
 export * from './announcements';
+export * from './recipients';
 export * from './messaging';
 export * from './reports';
 export * from './copilot';
@@ -40,3 +42,9 @@ export * from './front_desk';
 export * from './facilities';
 export * from './security';
 export * from './it';
+// Institution registration & approval
+export * from './registration';
+// Institution-portal Documents & Policies (Administration)
+export * from './documents';
+// Institution-portal student conduct (behaviour incidents + complaints)
+export * from './conduct';

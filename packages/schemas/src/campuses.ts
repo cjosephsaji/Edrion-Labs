@@ -2,21 +2,17 @@ import { z } from 'zod';
 import { CampusBillingStatus } from '@edrion/shared-types';
 import { addressSchema, contactSchema } from './institutions';
 import { paginationQuerySchema, reasonSchema, sortQuerySchema, zEnumFromConst } from './common';
+import { optionalTimezoneSchema } from './geo/validators';
 
 export const campusBillingStatusSchema = zEnumFromConst(CampusBillingStatus);
 
 export const createCampusSchema = z.object({
   institutionId: z.string().uuid(),
   name: z.string().trim().min(2).max(160),
-  code: z
-    .string()
-    .trim()
-    .min(2)
-    .max(24)
-    .regex(/^[A-Za-z0-9_-]+$/, 'Letters, numbers, dash, underscore only'),
+  // `code` is system-generated and immutable (see buildCampusCode) — never accepted from the client.
   address: addressSchema.optional(),
   contact: contactSchema.optional(),
-  timezoneOverride: z.string().trim().max(64).optional(),
+  timezoneOverride: optionalTimezoneSchema,
   studentCapacity: z.number().int().positive().optional(),
   openingDate: z.string().datetime().optional(),
   /** Future-dated activation is allowed. */

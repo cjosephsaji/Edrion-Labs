@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+import { lenientPhoneSchema, optionalE164PhoneSchema } from './geo/validators';
 
 /**
  * Institution-Portal PEOPLE (Phase 4) request/response contracts: students, teachers, staff
@@ -18,7 +19,15 @@ const optionalUuid = z.string().uuid().nullish();
 /** A calendar date as YYYY-MM-DD (matches the Postgres `date` column). */
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD').nullish();
 const email = z.string().trim().toLowerCase().email().nullish();
-const phone = z.string().trim().max(40).nullish();
+/** Normalizes to E.164 when parseable; tolerates legacy values for existing records (UPDATE). */
+const phone = lenientPhoneSchema;
+/**
+ * Strict phone for NEW records: rejects anything libphonenumber can't validate for its country
+ * (wrong digit count, bad prefix …). Empty/omitted/null are allowed — phone stays optional. The
+ * InternationalPhoneInput emits E.164 for valid numbers and the raw text otherwise, so an
+ * out-of-range number surfaces as a field error here instead of being stored as-is.
+ */
+const phoneStrict = optionalE164PhoneSchema.nullable();
 const shortText = (max = 120) => z.string().trim().max(max).nullish();
 
 export const GENDERS = ['male', 'female', 'other'] as const;
@@ -63,7 +72,7 @@ export const createStudentSchema = z.object({
   gender: genderSchema.nullish(),
   dateOfBirth: isoDate,
   email,
-  phone,
+  phone: phoneStrict,
   gradeLevelId: optionalUuid,
   classId: optionalUuid,
   rollNo: shortText(20),
@@ -98,7 +107,7 @@ export const createTeacherSchema = z.object({
   firstName: personName,
   lastName: personName,
   email,
-  phone,
+  phone: phoneStrict,
   departmentId: optionalUuid,
   designation: shortText(80),
   employmentType: employmentTypeSchema.default('full_time'),
@@ -131,7 +140,7 @@ export const createStaffSchema = z.object({
   firstName: personName,
   lastName: personName,
   email,
-  phone,
+  phone: phoneStrict,
   departmentId: optionalUuid,
   designation: shortText(80),
   employmentType: employmentTypeSchema.default('full_time'),
@@ -163,7 +172,7 @@ export const createParentSchema = z.object({
   firstName: personName,
   lastName: personName,
   email,
-  phone,
+  phone: phoneStrict,
   occupation: shortText(120),
   address: shortText(300),
   institutionUserId: optionalUuid,

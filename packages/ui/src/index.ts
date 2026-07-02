@@ -10,6 +10,7 @@ export { DataTable, type Column, type DataTableProps, type SortDir } from './tab
 export { Drawer } from './drawer';
 export { DetailPanel, type DetailField, type DetailSection } from './detail-panel';
 export { Dialog, ConfirmDialog } from './dialog';
+export { Tabs, type TabItem } from './tabs';
 export { useFocusTrap } from './use-focus-trap';
 export { Select, type SelectOption, type SelectProps } from './select';
 

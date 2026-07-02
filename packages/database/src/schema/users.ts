@@ -17,7 +17,21 @@ export const institutionUsers = pgTable(
     authUserId: uuid('auth_user_id'),
     email: text('email').notNull(),
     fullName: text('full_name').notNull(),
+    /** bcrypt hash of the user's native password. Null until they activate / set a password. */
+    passwordHash: text('password_hash'),
+    /** SHA-256(token + pepper) of a single-use account-activation token (set-password link). */
+    activationTokenHash: text('activation_token_hash'),
+    activationTokenExpiresAt: timestamp('activation_token_expires_at', { withTimezone: true }),
+    /** SHA-256(token + pepper) of a single-use password-reset token. */
+    passwordResetTokenHash: text('password_reset_token_hash'),
+    passwordResetExpiresAt: timestamp('password_reset_expires_at', { withTimezone: true }),
+    /** Stamped when the user completes activation (first password set). */
+    activatedAt: timestamp('activated_at', { withTimezone: true }),
     phone: text('phone'),
+    /** Standardized companions for `phone`. `phone_e164` is constrained to E.164 shape
+     *  (see zzz_rls.sql / migration check); `phone` is retained for legacy/manual review. */
+    phoneE164: text('phone_e164'),
+    phoneCountryCode: text('phone_country_code'),
     status: accountStatusEnum('status').notNull().default('invited'),
     invitedAt: timestamp('invited_at', { withTimezone: true }),
     lastLoginAt: timestamp('last_login_at', { withTimezone: true }),

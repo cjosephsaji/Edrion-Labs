@@ -17,6 +17,8 @@ const CRITICAL = new Set([
 ]);
 
 const HIGH = new Set([
+  // Provisions a real institution + primary admin account from a public application.
+  'registration.approve',
   'institution.restrict',
   'institution.activate',
   'campus.configure_billing',
@@ -30,6 +32,8 @@ const HIGH = new Set([
 ]);
 
 const MEDIUM = new Set([
+  'registration.reject',
+  'registration.submitted',
   'institution.update',
   'campus.create',
   'campus.suspend',

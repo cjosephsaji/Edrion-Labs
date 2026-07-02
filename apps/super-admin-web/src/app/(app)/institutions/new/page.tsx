@@ -1,18 +1,23 @@
 'use client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronRight } from 'lucide-react';
 import {
+  AdministrativeDivisionSelect,
   Button,
   Card,
   CardContent,
   CardHeader,
   CardTitle,
+  CountrySelect,
   Input,
+  InternationalPhoneInput,
   Label,
   FieldError,
+  TimezoneSelect,
+  subdivisionLabel,
 } from '@edrion/ui';
 import { createInstitutionSchema, type CreateInstitutionInput } from '@edrion/schemas';
 import { InstitutionType, Currency } from '@edrion/shared-types';
@@ -27,11 +32,15 @@ export default function NewInstitutionPage() {
     register,
     handleSubmit,
     setError,
+    control,
+    watch,
     formState: { errors, isDirty },
   } = useForm<CreateInstitutionInput>({
     resolver: zodResolver(createInstitutionSchema),
     defaultValues: { timezone: 'UTC', currency: Currency.USD, type: InstitutionType.School },
   });
+
+  const country = watch('country');
 
   function onSubmit(values: CreateInstitutionInput) {
     create.mutate(values as unknown as Record<string, unknown>, {
@@ -82,11 +91,47 @@ export default function NewInstitutionPage() {
                   ))}
                 </select>
               </Field>
-              <Field label="Country (ISO-2)" error={errors.country?.message}>
-                <Input {...register('country')} placeholder="US" maxLength={2} />
+              <Field label="Country" error={errors.country?.message}>
+                <Controller
+                  control={control}
+                  name="country"
+                  render={({ field }) => (
+                    <CountrySelect
+                      value={field.value}
+                      invalid={!!errors.country}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+              </Field>
+              <Field label={subdivisionLabel(country)} error={errors.region?.message}>
+                <Controller
+                  control={control}
+                  name="region"
+                  render={({ field }) => (
+                    <AdministrativeDivisionSelect
+                      countryCode={country}
+                      value={field.value}
+                      invalid={!!errors.region}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
               </Field>
               <Field label="Time zone" error={errors.timezone?.message}>
-                <Input {...register('timezone')} placeholder="UTC" />
+                <Controller
+                  control={control}
+                  name="timezone"
+                  render={({ field }) => (
+                    <TimezoneSelect
+                      countryCode={country}
+                      value={field.value}
+                      invalid={!!errors.timezone}
+                      suggestDetected
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
               </Field>
               <Field label="Currency" error={errors.currency?.message}>
                 <select
@@ -113,6 +158,20 @@ export default function NewInstitutionPage() {
               </Field>
               <Field label="Email" error={errors.primaryContact?.email?.message}>
                 <Input {...register('primaryContact.email')} type="email" placeholder="admin@school.edu" />
+              </Field>
+              <Field label="Phone" error={errors.primaryContact?.phone?.message}>
+                <Controller
+                  control={control}
+                  name="primaryContact.phone"
+                  render={({ field }) => (
+                    <InternationalPhoneInput
+                      value={field.value}
+                      defaultCountry={country}
+                      invalid={!!errors.primaryContact?.phone}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
               </Field>
             </CardContent>
           </Card>

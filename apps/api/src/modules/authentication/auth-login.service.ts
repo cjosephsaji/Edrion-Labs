@@ -10,6 +10,7 @@ import type { EdrionRequestContext } from '../../common/request-context';
 import { AuthService } from './auth.service';
 import { SessionService } from './session.service';
 import { SupabaseVerifier } from './supabase-verifier';
+import { verifyPassword } from './password.util';
 
 const MODULE = 'authentication';
 
@@ -135,6 +136,21 @@ export class AuthLoginService {
         throw new UnauthorizedException({ code: 'UNAUTHENTICATED', message: 'No employee for this identity' });
       }
       return { employee, aal: claims.aal ?? 'aal1', idpSessionId: claims.session_id };
+    }
+
+    // Native password login: email + bcrypt password. Only active employees with a password hash.
+    if (input.email && input.password) {
+      const invalid = new UnauthorizedException({
+        code: 'UNAUTHENTICATED',
+        message: 'Incorrect email or password',
+      });
+      const employee = await this.auth.findActiveByEmail(input.email);
+      if (!employee) throw invalid;
+      if (!(await verifyPassword(input.password, employee.passwordHash))) {
+        await this.auth.registerFailedLogin(employee.id, employee.failedLoginAttempts);
+        throw invalid;
+      }
+      return { employee, aal: employee.mfaEnrolled ? 'aal2' : 'aal1' };
     }
 
     // Dev login: email-only, behind an explicit flag, so login can be exercised without Supabase.

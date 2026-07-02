@@ -31,6 +31,8 @@ import { ObservabilityModule } from './modules/observability/observability.modul
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
 import { PortalModule } from './modules/portal/portal.module';
+import { RegistrationModule } from './modules/registration/registration.module';
+import { AdmissionsPublicModule } from './modules/admissions-public/admissions-public.module';
 
 /**
  * Root module. Global guards run in order: AuthGuard (authenticate + attach principal) →
@@ -65,6 +67,8 @@ import { PortalModule } from './modules/portal/portal.module';
     IntegrationsModule,
     MaintenanceModule,
     PortalModule,
+    RegistrationModule,
+    AdmissionsPublicModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },

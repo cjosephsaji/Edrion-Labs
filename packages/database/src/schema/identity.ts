@@ -11,6 +11,11 @@ export const platformEmployees = pgTable(
     email: text('email').notNull().unique(),
     fullName: text('full_name').notNull(),
     title: text('title'),
+    /** bcrypt hash of the employee's native password (super-admin email+password login). */
+    passwordHash: text('password_hash'),
+    /** SHA-256(token + pepper) of a single-use password-reset token. */
+    passwordResetTokenHash: text('password_reset_token_hash'),
+    passwordResetExpiresAt: timestamp('password_reset_expires_at', { withTimezone: true }),
     status: accountStatusEnum('status').notNull().default('active'),
     mfaEnrolled: boolean('mfa_enrolled').notNull().default(false),
     lastLoginAt: timestamp('last_login_at', { withTimezone: true }),

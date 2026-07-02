@@ -1,20 +1,25 @@
 'use client';
 import { useState, type FormEvent } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GraduationCap } from 'lucide-react';
-import { Button, Input } from '@edrion/ui';
+import { Button, Input, Label } from '@edrion/ui';
 import { webEnv } from '@/lib/env';
 
 /**
- * Institution-portal sign-in. Posts to the real `POST /v1/portal/auth/login`, which sets the
- * HTTP-only portal session cookie; on success the user lands on the dashboard authenticated by
- * that cookie (no dev header needed). Two inputs: a Supabase access token (production) or, when the
- * API has PORTAL_AUTH_DEV_LOGIN on, an email-only dev login. Sits outside the (app) shell.
+ * Institution-portal sign-in. The primary path is native email + password, posted to
+ * `POST /v1/portal/auth/login`, which sets the HTTP-only portal session cookie; on success the user
+ * lands on the dashboard authenticated by that cookie. A secondary "developer" path keeps the
+ * email-only dev login and Supabase access-token flows working while real auth is rolled out (both
+ * are gated server-side behind flags). Sits outside the (app) shell.
  */
+type Mode = 'password' | 'dev' | 'token';
+
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<'email' | 'token'>('email');
+  const [mode, setMode] = useState<Mode>('password');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [token, setToken] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -24,7 +29,12 @@ export default function LoginPage() {
     setError(null);
     setBusy(true);
     try {
-      const body = mode === 'email' ? { email: email.trim() } : { accessToken: token.trim() };
+      const body =
+        mode === 'token'
+          ? { accessToken: token.trim() }
+          : mode === 'dev'
+            ? { email: email.trim() }
+            : { email: email.trim(), password };
       const res = await fetch(`${webEnv.apiBaseUrl}/v1/portal/auth/login`, {
         method: 'POST',
         credentials: 'include',
@@ -53,49 +63,15 @@ export default function LoginPage() {
             <GraduationCap className="h-5 w-5" aria-hidden />
           </span>
           <div className="leading-tight">
-            <h1 className="text-md font-semibold text-text-primary">Sign in</h1>
+            <h1 className="text-md font-semibold text-text-primary">Institution sign in</h1>
             <p className="text-xs text-text-secondary">Edrion Institution Portal</p>
           </div>
         </div>
 
-        <div className="mb-4 inline-flex rounded-md border border-border p-0.5" role="tablist" aria-label="Sign-in method">
-          {(['email', 'token'] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              role="tab"
-              aria-selected={mode === m}
-              onClick={() => setMode(m)}
-              className={`rounded px-3 py-1 text-sm transition-colors ${
-                mode === m ? 'bg-primary text-white' : 'text-text-secondary hover:text-text-primary'
-              }`}
-            >
-              {m === 'email' ? 'Dev login' : 'Access token'}
-            </button>
-          ))}
-        </div>
-
         <form onSubmit={onSubmit} className="space-y-3">
-          {mode === 'email' ? (
+          {mode === 'token' ? (
             <div>
-              <label htmlFor="login-email" className="mb-1 block text-sm font-medium text-text-secondary">
-                Email
-              </label>
-              <Input
-                id="login-email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@institution.edu"
-              />
-            </div>
-          ) : (
-            <div>
-              <label htmlFor="login-token" className="mb-1 block text-sm font-medium text-text-secondary">
-                Supabase access token
-              </label>
+              <Label htmlFor="login-token">Supabase access token</Label>
               <Input
                 id="login-token"
                 type="password"
@@ -105,6 +81,43 @@ export default function LoginPage() {
                 placeholder="eyJhbGciOi…"
               />
             </div>
+          ) : (
+            <>
+              <div>
+                <Label htmlFor="login-email">Email</Label>
+                <Input
+                  id="login-email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@institution.edu"
+                />
+              </div>
+              {mode === 'password' && (
+                <div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="login-password">Password</Label>
+                    <Link
+                      href="/forgot-password"
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
+                  <Input
+                    id="login-password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                  />
+                </div>
+              )}
+            </>
           )}
 
           {error && (
@@ -117,6 +130,24 @@ export default function LoginPage() {
             Sign in
           </Button>
         </form>
+
+        <div className="mt-4 flex items-center justify-center gap-3 text-xs text-text-muted">
+          {mode !== 'password' && (
+            <button type="button" className="hover:text-text-primary" onClick={() => setMode('password')}>
+              Password sign-in
+            </button>
+          )}
+          {mode !== 'dev' && (
+            <button type="button" className="hover:text-text-primary" onClick={() => setMode('dev')}>
+              Dev login
+            </button>
+          )}
+          {mode !== 'token' && (
+            <button type="button" className="hover:text-text-primary" onClick={() => setMode('token')}>
+              Access token
+            </button>
+          )}
+        </div>
       </div>
     </main>
   );

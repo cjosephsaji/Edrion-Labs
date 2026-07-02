@@ -21,10 +21,11 @@ import type { CampusFilter, Page } from './academics.repository';
 
 export interface AdmissionRow extends AdmissionApplication {
   gradeLevelName: string | null;
+  academicYearName: string | null;
 }
 
 /** Which referenceable table an FK points at (for friendly-400 pre-checks). */
-export type AdmissionRefTable = 'gradeLevels' | 'classes';
+export type AdmissionRefTable = 'gradeLevels' | 'classes' | 'academicYears';
 
 /**
  * Typed SQL for the institution-portal admissions table. Same contract as the other portal repos:
@@ -69,6 +70,7 @@ export class AdmissionsRepository {
     const t = schema.admissionApplications;
     const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
     if (q.status) conds.push(eq(t.status, q.status));
+    if (q.submittedVia) conds.push(eq(t.submittedVia, q.submittedVia));
     if (q.search) {
       const s = or(
         ilike(t.firstName, `%${q.search}%`),
@@ -90,16 +92,17 @@ export class AdmissionsRepository {
     const offset = (q.page - 1) * q.pageSize;
 
     const rows = await this.db
-      .select({ app: t, gradeLevelName: schema.gradeLevels.name })
+      .select({ app: t, gradeLevelName: schema.gradeLevels.name, academicYearName: schema.academicYears.name })
       .from(t)
       .leftJoin(schema.gradeLevels, eq(schema.gradeLevels.id, t.gradeLevelId))
+      .leftJoin(schema.academicYears, eq(schema.academicYears.id, t.academicYearId))
       .where(where)
       .orderBy(this.order(q.sortBy ? sortable[q.sortBy] : undefined, q.sortDir, t.createdAt))
       .limit(limit)
       .offset(offset);
     const [tot] = await this.db.select({ value: count() }).from(t).where(where);
     return {
-      items: rows.map((r) => ({ ...r.app, gradeLevelName: r.gradeLevelName })),
+      items: rows.map((r) => ({ ...r.app, gradeLevelName: r.gradeLevelName, academicYearName: r.academicYearName })),
       total: Number(tot?.value ?? 0),
     };
   }

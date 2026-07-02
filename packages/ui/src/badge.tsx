@@ -50,6 +50,13 @@ const STATUS_TONE: Record<string, BadgeTone> = {
   cancelled: 'danger',
   expired: 'danger',
   archived: 'neutral',
+  // Institution registration request statuses.
+  submitted: 'info',
+  under_review: 'primary',
+  approved: 'success',
+  rejected: 'danger',
+  withdrawn: 'neutral',
+  info_requested: 'warning',
 };
 
 export function StatusBadge({ status, className }: { status: string; className?: string }) {

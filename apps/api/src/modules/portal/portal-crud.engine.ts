@@ -18,6 +18,31 @@ import type { AuditWriter, AuditEventInput } from '@edrion/audit';
 import { AUDIT_WRITER, DATABASE } from '../../common/tokens';
 import type { ListResult } from './academics.service';
 import { basePortalAudit, type PortalActionContext } from './portal-action-context';
+import { PortalEntityResolver, type RefType, type ResolveRequest } from './portal-entity-resolver';
+
+/** Declares an FK column that should be resolved to a readable {@link EntityDisplay} on read. */
+export interface RefSpec {
+  /** Row property holding the UUID, e.g. 'studentId'. */
+  column: string;
+  /** What kind of entity the UUID points at. */
+  type: RefType;
+  /** Row property to attach the resolved display under, e.g. 'student'. */
+  as: string;
+}
+
+/** Maps a RefType to the resolver-request bucket that collects its ids. */
+const REF_BUCKET: Record<RefType, keyof ResolveRequest> = {
+  student: 'studentIds',
+  teacher: 'teacherIds',
+  staff: 'staffIds',
+  parent: 'parentIds',
+  class: 'classIds',
+  gradeLevel: 'gradeLevelIds',
+  department: 'departmentIds',
+  subject: 'subjectIds',
+  campus: 'campusIds',
+  user: 'userIds',
+};
 
 /** The standard portal columns every Phase-13 table carries (see schema/_helpers + announcements). */
 export interface CrudColumns {
@@ -49,6 +74,19 @@ export interface CrudConfig {
   snapshot?: (row: any) => Record<string, unknown>;
   /** When true, a GET-by-id writes a read audit event (e.g. sensitive counseling notes). */
   auditReads?: boolean;
+  /**
+   * Declarative FK→display enrichment applied on every list/get. Each spec resolves a UUID column
+   * to a readable {@link EntityDisplay} (batched, no N+1) and attaches it under `as`. The raw id
+   * column is left untouched, so the web can show a name and still edit by id.
+   */
+  refs?: RefSpec[];
+  /**
+   * Bespoke enrichment escape-hatch, run after `refs`. Receives the (already ref-enriched) page and
+   * returns it with any extra derived fields (e.g. a student's guardian + age for Health). Must be
+   * batched by the implementer. Mutating the rows in place and returning them is fine.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  enrich?: (rows: any[], ctx: PortalActionContext) => Promise<any[]>;
 }
 
 export interface CrudListQuery {
@@ -73,6 +111,7 @@ export class PortalCrudEngine {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
+    private readonly resolver: PortalEntityResolver,
   ) {}
 
   async list<TRow>(cfg: CrudConfig, ctx: PortalActionContext, q: CrudListQuery): Promise<ListResult<TRow>> {
@@ -100,7 +139,8 @@ export class PortalCrudEngine {
       .offset((q.page - 1) * q.pageSize);
     const [tot] = await this.db.select({ value: count() }).from(cfg.table).where(where);
     const total = Number(tot?.value ?? 0);
-    return { items: rows as TRow[], total, page: q.page, pageSize: q.pageSize, hasMore: q.page * q.pageSize < total };
+    const items = await this.enrichRows(cfg, ctx, rows);
+    return { items: items as TRow[], total, page: q.page, pageSize: q.pageSize, hasMore: q.page * q.pageSize < total };
   }
 
   /** Fetch one row by id, asserting it is inside the request scope. Optionally audits the read. */
@@ -109,7 +149,8 @@ export class PortalCrudEngine {
     if (cfg.auditReads) {
       await this.write(cfg, ctx, `${cfg.actionPrefix}.view`, id, row.campusId ?? null, {});
     }
-    return row as TRow;
+    const [enriched] = await this.enrichRows(cfg, ctx, [row]);
+    return enriched as TRow;
   }
 
   async create<TRow>(cfg: CrudConfig, ctx: PortalActionContext, values: Record<string, unknown>): Promise<TRow> {
@@ -168,6 +209,35 @@ export class PortalCrudEngine {
   }
 
   // === helpers ===============================================================
+
+  /**
+   * Turn FK UUIDs into readable {@link EntityDisplay} objects (declarative `refs`, one batched query
+   * per referenced kind), then run the optional bespoke `enrich`. Leaves the raw id columns in place
+   * so the web can render a name and still edit/delete by id. No-op when a config declares neither.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private async enrichRows(cfg: CrudConfig, ctx: PortalActionContext, rows: any[]): Promise<any[]> {
+    if (rows.length > 0 && cfg.refs && cfg.refs.length > 0) {
+      const req: ResolveRequest = {};
+      const bucket = (key: keyof ResolveRequest) => ((req[key] ??= new Set<string>()) as Set<string>);
+      for (const spec of cfg.refs) {
+        const set = bucket(REF_BUCKET[spec.type]);
+        for (const row of rows) {
+          const v = row[spec.column];
+          if (typeof v === 'string' && v) set.add(v);
+        }
+      }
+      const resolved = await this.resolver.resolve(ctx.principal.institutionId, req);
+      for (const row of rows) {
+        for (const spec of cfg.refs) {
+          const v = row[spec.column];
+          row[spec.as] = typeof v === 'string' && v ? (resolved[spec.type]?.[v] ?? null) : null;
+        }
+      }
+    }
+    if (cfg.enrich) return cfg.enrich(rows, ctx);
+    return rows;
+  }
 
   private filter(ctx: PortalActionContext): ScopeFilter {
     return resolveScopeFilter(ctx.principal, ctx.scope);

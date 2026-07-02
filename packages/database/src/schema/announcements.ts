@@ -71,6 +71,9 @@ export const notifications = pgTable(
     /** unread | read. */
     status: text('status').notNull().default('unread'),
     readAt: timestamp('read_at', { withTimezone: true }),
+    /** Redesign (P3): the resolved fan-out — how many people + a human target summary. */
+    recipientCount: integer('recipient_count'),
+    targetSummary: text('target_summary'),
     version: integer('version').notNull().default(0),
     ...actorColumns,
     ...timestamps,
@@ -83,7 +86,37 @@ export const notifications = pgTable(
   }),
 );
 
+/**
+ * Rich recipient targets attached to an announcement (admin-redesign Phase 3). Same `(kind, refId)`
+ * target shape as recipient_group_members (see schema/recipients.ts). Replaces the single `audience`
+ * enum for anything beyond the legacy broadcast; the RecipientResolver expands these to concrete
+ * people. Reachable only through the announcement that owns them (cascade delete).
+ */
+export const announcementTargets = pgTable(
+  'announcement_targets',
+  {
+    id: primaryId(),
+    institutionId: uuid('institution_id')
+      .notNull()
+      .references(() => institutions.id, { onDelete: 'cascade' }),
+    announcementId: uuid('announcement_id')
+      .notNull()
+      .references(() => announcements.id, { onDelete: 'cascade' }),
+    /** The target kind (see schema/recipients.ts header). */
+    kind: text('kind').notNull(),
+    /** The anchor/entity id for the kind; null for broadcast kinds. */
+    refId: uuid('ref_id'),
+    ...timestamps,
+  },
+  (t) => ({
+    instIdx: index('announcement_targets_institution_idx').on(t.institutionId),
+    announcementIdx: index('announcement_targets_announcement_idx').on(t.announcementId),
+  }),
+);
+
 export type Announcement = typeof announcements.$inferSelect;
 export type NewAnnouncement = typeof announcements.$inferInsert;
 export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
+export type AnnouncementTarget = typeof announcementTargets.$inferSelect;
+export type NewAnnouncementTarget = typeof announcementTargets.$inferInsert;

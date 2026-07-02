@@ -4,6 +4,7 @@ const nextConfig = {
   // Workspace packages ship TS source; let Next transpile them.
   transpilePackages: [
     '@edrion/ui',
+    '@edrion/schemas',
     '@edrion/shared-types',
     '@edrion/permissions',
     '@edrion/design-tokens',

@@ -13,6 +13,7 @@ import {
   Skeleton,
   ErrorState,
   cn,
+  countryName,
 } from '@edrion/ui';
 import {
   ApiClientError,
@@ -20,6 +21,8 @@ import {
   useInstitutionStatusAction,
   type InstitutionAction,
 } from '@edrion/api-client';
+import { canTransition } from '@edrion/schemas';
+import { InstitutionStatus } from '@edrion/shared-types';
 import { Topbar } from '@/components/app-shell/topbar';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { EnterPortalDialog } from '@/components/support/enter-portal-dialog';
@@ -46,11 +49,16 @@ const TABS = [
   'settings',
 ] as const;
 
-const ACTIONS: { action: InstitutionAction; label: string; tone: 'primary' | 'danger' }[] = [
-  { action: 'activate', label: 'Activate', tone: 'primary' },
-  { action: 'restrict', label: 'Restrict', tone: 'danger' },
-  { action: 'suspend', label: 'Suspend', tone: 'danger' },
-  { action: 'archive', label: 'Archive', tone: 'danger' },
+const ACTIONS: {
+  action: InstitutionAction;
+  label: string;
+  tone: 'primary' | 'danger';
+  target: InstitutionStatus;
+}[] = [
+  { action: 'activate', label: 'Activate', tone: 'primary', target: InstitutionStatus.Active },
+  { action: 'restrict', label: 'Restrict', tone: 'danger', target: InstitutionStatus.Restricted },
+  { action: 'suspend', label: 'Suspend', tone: 'danger', target: InstitutionStatus.Suspended },
+  { action: 'archive', label: 'Archive', tone: 'danger', target: InstitutionStatus.Archived },
 ];
 
 export default function InstitutionDetailPage() {
@@ -115,7 +123,11 @@ export default function InstitutionDetailPage() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <EnterPortalDialog institutionId={inst.id} institutionName={inst.displayName} />
-                {ACTIONS.map((a) => (
+                {/* Only offer status actions that are valid transitions from the current status, so
+                    e.g. Activate disappears once the institution is already Active. */}
+                {ACTIONS.filter((a) =>
+                  canTransition(inst.status as InstitutionStatus, a.target),
+                ).map((a) => (
                   <Button
                     key={a.action}
                     variant={a.tone === 'danger' ? 'outline' : 'primary'}
@@ -163,7 +175,7 @@ export default function InstitutionDetailPage() {
                     <Row label="Type" value={inst.type} />
                     <Row label="Support tier" value={inst.supportTier} />
                     <Row label="Onboarding" value={inst.onboardingStatus.replace(/_/g, ' ')} />
-                    <Row label="Country" value={inst.country} />
+                    <Row label="Country" value={inst.country ? countryName(inst.country) : '—'} />
                     <Row
                       label="Activated"
                       value={inst.activatedAt ? new Date(inst.activatedAt).toLocaleDateString() : '—'}

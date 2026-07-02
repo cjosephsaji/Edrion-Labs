@@ -68,6 +68,12 @@ export const hostelRoomsListQuerySchema = paginationQuerySchema.merge(sortQueryS
 });
 export type HostelRoomsListQuery = z.infer<typeof hostelRoomsListQuerySchema>;
 
+/** Institution-wide list of current (active) hostel residents — student × room × block. */
+export const hostelHostellersListQuerySchema = paginationQuerySchema.extend({
+  search: z.string().trim().max(160).optional(),
+});
+export type HostelHostellersListQuery = z.infer<typeof hostelHostellersListQuerySchema>;
+
 export const createHostelRoomSchema = z.object({
   blockId: optionalUuid,
   roomNo: z.string().trim().min(1, 'Required').max(40),

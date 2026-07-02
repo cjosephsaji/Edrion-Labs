@@ -5,6 +5,7 @@ import { StatusBadge, type Column } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
 import { StudentGuardiansDrawer } from '@/components/people/student-guardians-drawer';
+import { UserProfileDialog } from '@/components/people/user-profile-dialog';
 import { useClassOptions, useGradeLevelOptions } from '@/lib/academics';
 import { usePeopleList, usePeopleMutations, type StudentRow } from '@/lib/people';
 
@@ -67,7 +68,7 @@ export default function StudentsPage() {
       { name: 'rollNo', label: 'Roll no.', type: 'text', nullable: true, placeholder: 'Optional' },
       { name: 'enrollmentDate', label: 'Enrolment date', type: 'date', nullable: true },
       { name: 'email', label: 'Email', type: 'text', nullable: true, placeholder: 'Optional' },
-      { name: 'phone', label: 'Phone', type: 'text', nullable: true, placeholder: 'Optional' },
+      { name: 'phone', label: 'Phone', type: 'phone', nullable: true },
       { name: 'address', label: 'Address', type: 'textarea', nullable: true, placeholder: 'Optional' },
     ],
     [grades, classes],
@@ -103,6 +104,7 @@ export default function StudentsPage() {
         useList={usePeopleList}
         useMutations={usePeopleMutations}
         rowLabel={(r) => `${r.firstName} ${r.lastName}`}
+        renderDetail={(ctx) => <UserProfileDialog kind="student" {...ctx} />}
         toFormValues={(r) => ({
           admissionNo: r.admissionNo,
           firstName: r.firstName,

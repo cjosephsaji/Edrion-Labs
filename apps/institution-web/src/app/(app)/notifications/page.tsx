@@ -48,7 +48,16 @@ export default function NotificationsPage() {
     () => [
       { key: 'title', header: 'Title', sortable: true, render: (r) => <span className="font-medium">{r.title}</span> },
       { key: 'kind', header: 'Kind', sortable: true, render: (r) => label(KINDS, r.kind) },
-      { key: 'audience', header: 'Audience', render: (r) => label(AUDIENCES, r.audience) },
+      {
+        key: 'recipients',
+        header: 'Recipients',
+        render: (r) => (
+          <span className="text-text-secondary">
+            {r.targetSummary ?? label(AUDIENCES, r.audience)}
+            {r.recipientCount != null && <span className="text-text-muted"> · {r.recipientCount}</span>}
+          </span>
+        ),
+      },
       { key: 'status', header: 'Status', sortable: true, render: (r) => (r.status === 'read' ? 'Read' : 'Unread') },
     ],
     [],

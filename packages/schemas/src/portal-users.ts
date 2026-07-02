@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { AccountStatus } from '@edrion/shared-types';
 import { emailSchema, paginationQuerySchema, sortQuerySchema, versionSchema, zEnumFromConst } from './common';
+import { lenientPhoneSchema } from './geo/validators';
 
 /**
  * Institution-Portal USER MANAGEMENT (Phase 11) request/response contracts — the tenant-facing
@@ -17,11 +18,8 @@ import { emailSchema, paginationQuerySchema, sortQuerySchema, versionSchema, zEn
 const portalUserStatusSchema = zEnumFromConst(AccountStatus);
 
 const fullName = z.string().trim().min(2, 'Required').max(160);
-const phone = z
-  .string()
-  .trim()
-  .regex(/^\+?[0-9 ()-]{6,20}$/, 'Invalid phone number')
-  .nullish();
+/** Normalizes to E.164 when parseable; tolerates legacy values for existing records. */
+const phone = lenientPhoneSchema;
 const roleKeys = z.array(z.string().trim().min(1).max(64)).max(40);
 const campusIds = z.array(z.string().uuid()).max(200);
 const grantKeys = z.array(z.string().trim().min(1).max(80)).max(200);

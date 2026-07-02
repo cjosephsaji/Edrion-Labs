@@ -63,11 +63,19 @@ const preset: Omit<Config, 'content'> = {
           from: { opacity: '0', transform: 'translateX(16px)' },
           to: { opacity: '1', transform: 'translateX(0)' },
         },
+        // Transparent light sweep for skeleton/loading placeholders.
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
       },
       animation: {
         'fade-in-up': 'fade-in-up 160ms var(--ease-standard)',
         'fade-in': 'fade-in 140ms var(--ease-standard)',
         'slide-in-right': 'slide-in-right 180ms var(--ease-standard)',
+        shimmer: 'shimmer 1.5s ease-in-out infinite',
+        // Snappier button/action spinner (Tailwind's default is 1s) so clicks feel responsive.
+        spin: 'spin 0.6s linear infinite',
       },
     },
   },

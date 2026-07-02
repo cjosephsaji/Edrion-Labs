@@ -40,6 +40,19 @@ export interface HostelAllocationRow extends HostelAllocation {
   studentName: string | null;
   admissionNo: string | null;
 }
+export interface HostellerRow {
+  id: string;
+  studentId: string;
+  studentName: string | null;
+  admissionNo: string | null;
+  roomId: string;
+  roomNo: string | null;
+  blockId: string | null;
+  blockName: string | null;
+  bedNo: string | null;
+  fromDate: string | null;
+  status: string;
+}
 
 /** Which referenceable table an FK points at (for friendly-400 pre-checks). */
 export type HostelRefTable = 'hostelBlocks' | 'students';
@@ -204,6 +217,57 @@ export class HostelRepository {
       .where(eq(t.roomId, roomId))
       .orderBy(desc(t.createdAt));
     return rows.map((r) => ({ ...r.allocation, studentName: r.studentName, admissionNo: r.admissionNo }));
+  }
+
+  /** Institution-wide list of active residents, joined to their room + block + student. */
+  async listHostellers(
+    institutionId: string,
+    campusIds: CampusFilter,
+    q: { page: number; pageSize: number; search?: string },
+  ): Promise<Page<HostellerRow>> {
+    const a = schema.hostelAllocations;
+    const r = schema.hostelRooms;
+    const b = schema.hostelBlocks;
+    const conds: SQL[] = [eq(a.institutionId, institutionId), eq(a.status, 'active')];
+    if (campusIds) {
+      // Allocations inherit the room's campus — scope through it.
+      const inScope = or(isNull(r.campusId), inArray(r.campusId, campusIds));
+      if (inScope) conds.push(inScope);
+    }
+    if (q.search) {
+      const s = or(ilike(studentDisplayName, `%${q.search}%`), ilike(schema.students.admissionNo, `%${q.search}%`));
+      if (s) conds.push(s);
+    }
+    const where = and(...conds);
+    const rows = await this.db
+      .select({
+        id: a.id,
+        studentId: a.studentId,
+        studentName: studentDisplayName,
+        admissionNo: schema.students.admissionNo,
+        roomId: a.roomId,
+        roomNo: r.roomNo,
+        blockId: r.blockId,
+        blockName: b.name,
+        bedNo: a.bedNo,
+        fromDate: a.fromDate,
+        status: a.status,
+      })
+      .from(a)
+      .leftJoin(r, eq(r.id, a.roomId))
+      .leftJoin(b, eq(b.id, r.blockId))
+      .leftJoin(schema.students, eq(schema.students.id, a.studentId))
+      .where(where)
+      .orderBy(desc(a.createdAt))
+      .limit(q.pageSize)
+      .offset((q.page - 1) * q.pageSize);
+    const [tot] = await this.db
+      .select({ value: count() })
+      .from(a)
+      .leftJoin(r, eq(r.id, a.roomId))
+      .leftJoin(schema.students, eq(schema.students.id, a.studentId))
+      .where(where);
+    return { items: rows as HostellerRow[], total: Number(tot?.value ?? 0) };
   }
 
   async findAllocation(id: string, roomId: string): Promise<HostelAllocation | undefined> {

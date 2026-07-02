@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { paginationQuerySchema, reasonSchema, sortQuerySchema } from './common';
+import { optionalCountryCodeSchema } from './geo/validators';
 
 /** Independent (B2C) users — people who signed up directly, not through an institution. */
 export const listIndependentUsersQuerySchema = paginationQuerySchema
@@ -13,7 +14,7 @@ export type ListIndependentUsersQuery = z.infer<typeof listIndependentUsersQuery
 
 export const updateIndependentUserSchema = z.object({
   fullName: z.string().trim().min(1).max(160).optional(),
-  country: z.string().trim().max(2).optional(),
+  country: optionalCountryCodeSchema,
   aiUsageLimit: z.number().int().nonnegative().nullable().optional(),
   version: z.number().int().nonnegative(),
 });

@@ -479,13 +479,24 @@ function SecurityCard({ user, onAction }: { user: InstitutionUserDetailDto; onAc
             Enable
           </Button>
         ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onAction({ title: 'Disable user?', description: 'Immediately blocks this user from signing in. Logged to the audit trail.', tone: 'danger', action: 'disable', requireReason: true, buildBody: (reason) => ({ reason, version: user.version }) })}
-          >
-            Disable
-          </Button>
+          <>
+            {user.status === 'invited' && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => onAction({ title: 'Activate user?', description: 'Manually activates this invited user.', action: 'enable', requireReason: true, buildBody: (reason) => ({ reason, version: user.version }) })}
+              >
+                Activate
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onAction({ title: 'Disable user?', description: 'Immediately blocks this user from signing in. Logged to the audit trail.', tone: 'danger', action: 'disable', requireReason: true, buildBody: (reason) => ({ reason, version: user.version }) })}
+            >
+              Disable
+            </Button>
+          </>
         )}
         {locked && (
           <Button

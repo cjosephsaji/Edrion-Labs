@@ -20,10 +20,18 @@ export type HealthRecordsListQuery = z.infer<typeof healthRecordsListQuerySchema
 
 export const createHealthRecordSchema = z.object({
   studentId: z.string().uuid().nullish(),
-  recordType: z.enum(['allergy', 'condition', 'vaccination', 'note']).default('note'),
+  recordType: z.enum(['allergy', 'condition', 'vaccination', 'note', 'visit']).default('note'),
   title: z.string().trim().min(1, 'Required').max(200),
   details: text(2000),
   bloodGroup: text(8),
+  // Redesign (P2): clinical context — a legible nurse visit, not a bare id.
+  reason: text(500),
+  symptoms: text(1000),
+  actionTaken: text(1000),
+  treatment: text(1000),
+  attendedBy: text(160),
+  followUpRequired: z.boolean().default(false),
+  followUpAt: isoDate,
   status: z.enum(['active', 'resolved', 'archived']).default('active'),
   recordedAt: isoDate,
 });
@@ -42,6 +50,12 @@ export const createMedicalIncidentSchema = z.object({
   description: text(2000),
   severity: z.enum(['low', 'medium', 'high']).default('low'),
   location: text(160),
+  // Redesign (P2): what was done + by whom + follow-up.
+  actionTaken: text(1000),
+  treatment: text(1000),
+  attendedBy: text(160),
+  followUpRequired: z.boolean().default(false),
+  followUpAt: isoDate,
   occurredAt: ts,
   status: z.enum(['open', 'resolved']).default('open'),
 });
@@ -59,6 +73,8 @@ export const createMedicationLogSchema = z.object({
   medication: z.string().trim().min(1, 'Required').max(200),
   dosage: text(120),
   administeredAt: ts,
+  // Redesign (P2): who administered the dose.
+  administeredBy: text(160),
   notes: text(1000),
   status: z.enum(['administered', 'scheduled', 'missed']).default('administered'),
 });

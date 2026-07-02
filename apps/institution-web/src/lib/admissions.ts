@@ -4,7 +4,7 @@ import { usePortalClient } from './portal-client';
 import { useScope } from './scope';
 import type { InstitutionScope } from './types';
 import type { ListParams } from './academics';
-import type { Paged } from './admissions-types';
+import type { AdmissionDecision, Paged } from './admissions-types';
 
 function scopeKey(scope: InstitutionScope): string {
   return scope.mode === 'campus' ? `campus:${scope.campusId}` : 'institution';
@@ -17,6 +17,7 @@ function queryString(p: ListParams): string {
   sp.set('sortDir', p.sortDir);
   if (p.sortBy) sp.set('sortBy', p.sortBy);
   if (p.search) sp.set('search', p.search);
+  if (p.filters) for (const [k, v] of Object.entries(p.filters)) if (v) sp.set(k, v);
   return sp.toString();
 }
 
@@ -70,4 +71,21 @@ export function useEnrolAdmission() {
   });
 }
 
-export type { AdmissionRow } from './admissions-types';
+/** Record a decision (accept/reject/waitlist/request-info) with an optional note + guardian notify. */
+export function useDecideAdmission() {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      body,
+    }: {
+      id: string;
+      body: { decision: AdmissionDecision; note?: string; notify?: boolean; version: number };
+    }) => client.post(`/portal/admissions/${id}/decision`, scope, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admissions'] }),
+  });
+}
+
+export type { AdmissionRow, AdmissionDecision } from './admissions-types';

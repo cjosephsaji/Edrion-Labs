@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+import { lenientPhoneSchema } from './geo/validators';
 
 /**
  * Institution-Portal ADMISSIONS (Phase 5) request/response contracts. The same Zod schemas
@@ -15,7 +16,8 @@ const personName = z.string().trim().min(1, 'Required').max(80);
 const optionalUuid = z.string().uuid().nullish();
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD').nullish();
 const email = z.string().trim().toLowerCase().email().nullish();
-const phone = z.string().trim().max(40).nullish();
+/** Normalizes to E.164 when parseable; tolerates legacy values for existing records. */
+const phone = lenientPhoneSchema;
 const shortText = (max = 120) => z.string().trim().max(max).nullish();
 
 const ADMISSION_GENDERS = ['male', 'female', 'other'] as const;
@@ -24,6 +26,7 @@ export const admissionGenderSchema = z.enum(ADMISSION_GENDERS);
 export const ADMISSION_STATUSES = [
   'submitted',
   'under_review',
+  'info_requested',
   'accepted',
   'rejected',
   'waitlisted',
@@ -37,6 +40,7 @@ export type AdmissionStatus = (typeof ADMISSION_STATUSES)[number];
 export const ADMISSION_EDITABLE_STATUSES = [
   'submitted',
   'under_review',
+  'info_requested',
   'accepted',
   'rejected',
   'waitlisted',
@@ -44,10 +48,24 @@ export const ADMISSION_EDITABLE_STATUSES = [
 ] as const;
 export const admissionEditableStatusSchema = z.enum(ADMISSION_EDITABLE_STATUSES);
 
-/** Common list query for the admissions directory: page + sort + free-text search. */
+/** How an application entered the system — the list can filter on this. */
+export const ADMISSION_SUBMITTED_VIA = ['staff', 'portal'] as const;
+export const admissionSubmittedViaSchema = z.enum(ADMISSION_SUBMITTED_VIA);
+export type AdmissionSubmittedVia = (typeof ADMISSION_SUBMITTED_VIA)[number];
+
+/**
+ * Decision statuses reachable via the dedicated decide action. Enrolment (`enrolled`) is a separate
+ * bridge; `under_review` / `submitted` are workflow states, not decisions.
+ */
+export const ADMISSION_DECISIONS = ['accepted', 'rejected', 'waitlisted', 'info_requested'] as const;
+export const admissionDecisionSchema = z.enum(ADMISSION_DECISIONS);
+export type AdmissionDecision = (typeof ADMISSION_DECISIONS)[number];
+
+/** Common list query for the admissions directory: page + sort + free-text search + facets. */
 export const admissionsListQuerySchema = paginationQuerySchema.merge(sortQuerySchema).extend({
   search: z.string().trim().max(160).optional(),
   status: admissionStatusSchema.optional(),
+  submittedVia: admissionSubmittedViaSchema.optional(),
 });
 export type AdmissionsListQuery = z.infer<typeof admissionsListQuerySchema>;
 
@@ -64,6 +82,7 @@ export const createAdmissionSchema = z.object({
   email,
   phone,
   gradeLevelId: optionalUuid,
+  academicYearId: optionalUuid,
   previousSchool: shortText(160),
   guardianName: shortText(120),
   guardianPhone: phone,
@@ -83,6 +102,7 @@ export const updateAdmissionSchema = z.object({
   email,
   phone,
   gradeLevelId: optionalUuid,
+  academicYearId: optionalUuid,
   previousSchool: shortText(160),
   guardianName: shortText(120),
   guardianPhone: phone,
@@ -93,6 +113,19 @@ export const updateAdmissionSchema = z.object({
   ...withVersion,
 });
 export type UpdateAdmissionInput = z.infer<typeof updateAdmissionSchema>;
+
+/**
+ * Record a decision on an application (accept/reject/waitlist/request-info) with an optional note.
+ * The service stamps `decision_date`, updates `status`/`decision_note`, and — unless `notify` is
+ * false — fans out a notification to the guardian. Version-guarded like every other mutation.
+ */
+export const decideAdmissionSchema = z.object({
+  decision: admissionDecisionSchema,
+  note: shortText(500),
+  notify: z.coerce.boolean().default(true),
+  ...withVersion,
+});
+export type DecideAdmissionInput = z.infer<typeof decideAdmissionSchema>;
 
 /**
  * Enrol an accepted applicant: creates a students row from the application and links it back.

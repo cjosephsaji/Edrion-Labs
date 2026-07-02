@@ -49,7 +49,8 @@ export class PermissionsGuard implements CanActivate {
       ctx.getHandler(),
       ctx.getClass(),
     ]);
-    const needsRecent = explicitRecent || required.some((k) => isSensitive(k));
+    const needsRecent =
+      this.env.RECENT_AUTH_ENABLED && (explicitRecent || required.some((k) => isSensitive(k)));
     if (needsRecent && !isRecentAuth(pc.principal.lastAuthAt, this.env.RECENT_AUTH_WINDOW_SECONDS)) {
       throw new ForbiddenException({
         code: 'RECENT_AUTH_REQUIRED',

@@ -1,13 +1,19 @@
 import { cn } from './cn';
 
-/** Dimension-matched skeleton — prevents layout shift. Pass sizing via className. */
+/**
+ * Dimension-matched skeleton — prevents layout shift. Pass sizing via className. A transparent
+ * light bar sweeps across the muted base (the `shimmer` animation) so essential page loads read as
+ * "loading" rather than static. Falls back to a static block under prefers-reduced-motion.
+ */
 export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       aria-hidden
-      className={cn('animate-pulse rounded-md bg-background-secondary', className)}
+      className={cn('relative overflow-hidden rounded-md bg-background-secondary', className)}
       {...props}
-    />
+    >
+      <span className="absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+    </div>
   );
 }
 

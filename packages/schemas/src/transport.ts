@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+import { lenientPhoneSchema } from './geo/validators';
 
 /**
  * Institution-Portal TRANSPORT (Phase 8) request/response contracts: routes + vehicles (campus-scoped
@@ -69,7 +70,7 @@ export const createTransportVehicleSchema = z.object({
   capacity: count.default(0),
   routeId: optionalUuid,
   driverName: shortText(120),
-  driverPhone: shortText(40),
+  driverPhone: lenientPhoneSchema,
   status: transportVehicleStatusSchema.default('active'),
 });
 export type CreateTransportVehicleInput = z.infer<typeof createTransportVehicleSchema>;
@@ -80,7 +81,7 @@ export const updateTransportVehicleSchema = z.object({
   capacity: count.optional(),
   routeId: optionalUuid,
   driverName: shortText(120),
-  driverPhone: shortText(40),
+  driverPhone: lenientPhoneSchema,
   status: transportVehicleStatusSchema.optional(),
   ...withVersion,
 });

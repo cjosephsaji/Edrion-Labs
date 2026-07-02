@@ -3,11 +3,13 @@ import { ApiTags } from '@nestjs/swagger';
 import {
   admissionsListQuerySchema,
   createAdmissionSchema,
+  decideAdmissionSchema,
   enrolAdmissionSchema,
   updateAdmissionSchema,
   versionedDeleteSchema,
   type AdmissionsListQuery,
   type CreateAdmissionInput,
+  type DecideAdmissionInput,
   type EnrolAdmissionInput,
   type UpdateAdmissionInput,
   type VersionedDeleteInput,
@@ -81,6 +83,18 @@ export class AdmissionsController {
     @Body(zodBody(updateAdmissionSchema)) body: UpdateAdmissionInput,
   ) {
     return this.service.update(this.ctx(p, s, r), id, body);
+  }
+
+  @Post(':id/decision')
+  @RequireInstitutionPermissions('admissions.manage')
+  decide(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(decideAdmissionSchema)) body: DecideAdmissionInput,
+  ) {
+    return this.service.decide(this.ctx(p, s, r), id, body);
   }
 
   @Post(':id/enrol')

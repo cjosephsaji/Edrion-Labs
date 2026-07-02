@@ -5,6 +5,7 @@ import {
   createHostelBlockSchema,
   createHostelRoomSchema,
   hostelBlocksListQuerySchema,
+  hostelHostellersListQuerySchema,
   hostelRoomsListQuerySchema,
   updateHostelBlockSchema,
   updateHostelRoomSchema,
@@ -14,6 +15,7 @@ import {
   type CreateHostelBlockInput,
   type CreateHostelRoomInput,
   type HostelBlocksListQuery,
+  type HostelHostellersListQuery,
   type HostelRoomsListQuery,
   type UpdateHostelBlockInput,
   type UpdateHostelRoomInput,
@@ -59,6 +61,17 @@ export class HostelController {
     @Query(zodBody(hostelBlocksListQuerySchema)) q: HostelBlocksListQuery,
   ) {
     return this.service.listBlocks(this.ctx(p, s, r), q);
+  }
+
+  @Get('hostellers')
+  @RequireInstitutionPermissions('hostel.view')
+  listHostellers(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Query(zodBody(hostelHostellersListQuerySchema)) q: HostelHostellersListQuery,
+  ) {
+    return this.service.listHostellers(this.ctx(p, s, r), q);
   }
 
   @Post('blocks')

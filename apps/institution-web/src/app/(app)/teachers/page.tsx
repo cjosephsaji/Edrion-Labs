@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { StatusBadge, type Column } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
+import { UserProfileDialog } from '@/components/people/user-profile-dialog';
 import { useDepartmentOptions } from '@/lib/academics';
 import { usePeopleList, usePeopleMutations, type TeacherRow } from '@/lib/people';
 
@@ -45,7 +46,7 @@ export default function TeachersPage() {
       { name: 'status', label: 'Status', type: 'select', required: true, options: STATUS_OPTIONS },
       { name: 'joinDate', label: 'Join date', type: 'date', nullable: true },
       { name: 'email', label: 'Email', type: 'text', nullable: true, placeholder: 'Optional' },
-      { name: 'phone', label: 'Phone', type: 'text', nullable: true, placeholder: 'Optional' },
+      { name: 'phone', label: 'Phone', type: 'phone', nullable: true },
     ],
     [departments],
   );
@@ -73,6 +74,7 @@ export default function TeachersPage() {
       useList={usePeopleList}
       useMutations={usePeopleMutations}
       rowLabel={(r) => `${r.firstName} ${r.lastName}`}
+      renderDetail={(ctx) => <UserProfileDialog kind="teacher" {...ctx} />}
       toFormValues={(r) => ({
         firstName: r.firstName,
         lastName: r.lastName,

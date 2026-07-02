@@ -47,9 +47,15 @@ export const apiEnvSchema = z.object({
   API_BASE_URL: z.string().url().default('http://localhost:3001'),
   API_CORS_ORIGINS: z
     .string()
-    .default('http://localhost:3000')
+    .default('http://localhost:3000,http://localhost:3002,http://localhost:3003')
     .transform((s) => s.split(',').map((o) => o.trim())),
   SESSION_COOKIE_SECRET: z.string().min(16, 'SESSION_COOKIE_SECRET must be at least 16 chars'),
+  /**
+   * Master switch for the sensitive-action recent-auth gate. When false (default) no route ever
+   * returns RECENT_AUTH_REQUIRED — sensitive actions are allowed as long as the session is valid.
+   * Flip on to re-enable step-up re-authentication using RECENT_AUTH_WINDOW_SECONDS.
+   */
+  RECENT_AUTH_ENABLED: bool.default(false),
   RECENT_AUTH_WINDOW_SECONDS: z.coerce.number().int().positive().default(900),
 
   // ── Authentication (Phase 10a) ─────────────────────────────────────────────
@@ -91,12 +97,28 @@ export const apiEnvSchema = z.object({
   PORTAL_AUTH_DEV_LOGIN: bool.default(false),
   /** Base URL of the institution-portal web app — used to build invitation accept links. */
   PORTAL_WEB_URL: z.string().url().default('http://localhost:3002'),
+  /** Base URL of the super-admin web app — used to build employee password-reset links. */
+  SUPER_ADMIN_WEB_URL: z.string().url().default('http://localhost:3000'),
 
   // ── Outbound email (Phase 12) ──────────────────────────────────────────────
   /** SMTP connection string. When unset the EmailService logs messages (dev/offline transport). */
   SMTP_URL: z.string().optional(),
   /** From-address for transactional email (invitations, security notices). */
   EMAIL_FROM: z.string().default('Edrion <no-reply@edrion.local>'),
+
+  // ── Institution registration funnel ────────────────────────────────────────
+  /**
+   * Server-side pepper mixed into the SHA-256 of every registration OTP before storage, so a DB
+   * leak alone cannot brute-force codes. Falls back to SESSION_COOKIE_SECRET when unset.
+   */
+  REGISTRATION_OTP_PEPPER: z.string().optional(),
+  /** Base URL of the public registration web app (apps/public-web) — used in registration status emails. */
+  REGISTRATION_WEB_URL: z.string().url().default('http://localhost:3003'),
+  /**
+   * DEV ESCAPE HATCH. When true (and NODE_ENV != production) the OTP request endpoint returns the
+   * code in its response so E2E/smoke can verify without reading the mailbox. Off in production.
+   */
+  REGISTRATION_OTP_DEV_RETURN: bool.default(false),
 
   SENTRY_DSN: z.string().optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
@@ -107,6 +129,12 @@ export const apiEnvSchema = z.object({
 
   BILLING_PROVIDER_SECRET: z.string().optional(),
   BILLING_WEBHOOK_SIGNING_SECRET: z.string().optional(),
+
+  // ── Message attachments (real upload; local-disk store, swap for object store later) ───────
+  /** Directory uploaded message attachments are written to (resolved from the API process cwd). */
+  ATTACHMENT_STORAGE_DIR: z.string().default('./var/attachments'),
+  /** Max size (bytes) for a single uploaded attachment. Default 25 MiB. */
+  ATTACHMENT_MAX_BYTES: z.coerce.number().int().positive().default(26_214_400),
 });
 
 export type ApiEnv = z.infer<typeof apiEnvSchema>;

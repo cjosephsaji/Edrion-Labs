@@ -70,24 +70,28 @@ export class InstitutionAuthGuard implements CanActivate {
   private async resolvePrincipal(
     req: Request,
   ): Promise<{ principal: InstitutionPrincipal; authSessionId?: string }> {
-    // Dev escape hatch: explicit header identity, only when enabled. Always-recent (no session).
+    // A live portal session cookie ALWAYS wins. The dev `x-institution-user-email` header is sent
+    // on every request in development (NEXT_PUBLIC_DEV_INSTITUTION_USER), so it must not override a
+    // user who has actually signed in — otherwise every login resolves to the dev default user.
+    const token = readCookie(req.headers.cookie, this.sessions.cookieName);
+    if (token) {
+      const session = await this.sessions.verify(token);
+      const principal = await this.auth.resolveById(session.institutionUserId, session.lastAuthAt);
+      return { principal, authSessionId: session.id };
+    }
+
+    // Dev escape hatch (only when enabled, and only when there is no session cookie): trust the
+    // explicit header identity. No server session → treated as always-recent (lastAuthAt = now).
     if (this.env.PORTAL_AUTH_DEV_HEADER) {
       const email = req.header('x-institution-user-email');
       if (email) return { principal: await this.auth.resolveByEmail(email, new Date()) };
     }
 
-    // Production path: the HTTP-only portal session cookie.
-    const token = readCookie(req.headers.cookie, this.sessions.cookieName);
-    if (!token) {
-      throw new UnauthorizedException({
-        code: 'UNAUTHENTICATED',
-        message:
-          'No portal session. Sign in at /v1/portal/auth/login (or set PORTAL_AUTH_DEV_HEADER=true and send x-institution-user-email in development).',
-      });
-    }
-    const session = await this.sessions.verify(token);
-    const principal = await this.auth.resolveById(session.institutionUserId, session.lastAuthAt);
-    return { principal, authSessionId: session.id };
+    throw new UnauthorizedException({
+      code: 'UNAUTHENTICATED',
+      message:
+        'No portal session. Sign in at /v1/portal/auth/login (or set PORTAL_AUTH_DEV_HEADER=true and send x-institution-user-email in development).',
+    });
   }
 
   /** Parse `institution` | `campus:<id>` into an InstitutionScope. Defaults to institution. */

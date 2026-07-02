@@ -5,7 +5,8 @@ import type { Reflector } from '@nestjs/core';
 import { PermissionsGuard } from './permissions.guard';
 import { PERMISSIONS_KEY, RECENT_AUTH_KEY } from '../decorators';
 
-const ENV = { RECENT_AUTH_WINDOW_SECONDS: 900 } as never;
+// Recent-auth gate is opt-in (RECENT_AUTH_ENABLED). These specs exercise the gate, so enable it.
+const ENV = { RECENT_AUTH_ENABLED: true, RECENT_AUTH_WINDOW_SECONDS: 900 } as never;
 const NON_SENSITIVE = 'institutions.view';
 const SENSITIVE = 'institutions.suspend'; // sensitive: true in the catalogue
 
@@ -96,6 +97,15 @@ describe('PermissionsGuard — recent auth on sensitive permissions', () => {
       () => guard([SENSITIVE]).canActivate(ctx(principal([SENSITIVE], null))),
       'RECENT_AUTH_REQUIRED',
     );
+  });
+
+  it('skips the recent-auth gate entirely when RECENT_AUTH_ENABLED is false', () => {
+    const offGuard = new PermissionsGuard(
+      reflector([SENSITIVE]),
+      { RECENT_AUTH_ENABLED: false, RECENT_AUTH_WINDOW_SECONDS: 900 } as never,
+    );
+    expect(offGuard.canActivate(ctx(principal([SENSITIVE], null)))).toBe(true);
+    expect(offGuard.canActivate(ctx(principal([SENSITIVE], stale())))).toBe(true);
   });
 
   it('enforces recent auth when a handler opts in explicitly on a non-sensitive permission', () => {

@@ -33,6 +33,8 @@ export const INSTITUTION_PERMISSIONS: readonly PermissionDef[] = [
   def('students.create', 'Students', 'Enrol / create students.'),
   def('students.update', 'Students', 'Edit student records.'),
   def('students.delete', 'Students', 'Delete / archive students.', true),
+  def('student_conduct.view', 'Students', 'View student conduct: behaviour incidents and complaints.'),
+  def('student_conduct.manage', 'Students', 'Record and resolve student conduct incidents and complaints.', true),
 
   // Teachers
   def('teachers.view', 'Teachers', 'View teachers.'),
@@ -73,6 +75,10 @@ export const INSTITUTION_PERMISSIONS: readonly PermissionDef[] = [
   // Fees
   def('fees.view', 'Fees', 'View fee structures and invoices.'),
   def('fees.manage', 'Fees', 'Create fee structures, invoices and record payments.', true),
+
+  // Expenses (money out)
+  def('expenses.view', 'Expenses', 'View school expenses.'),
+  def('expenses.manage', 'Expenses', 'Record and edit school expenses.', true),
 
   // Payroll
   def('payroll.view', 'Payroll', 'View payroll.'),
@@ -116,6 +122,13 @@ export const INSTITUTION_PERMISSIONS: readonly PermissionDef[] = [
   def('institution_settings.view', 'Settings', 'View institution settings.'),
   def('institution_settings.manage', 'Settings', 'Manage institution settings.', true),
   def('campus_settings.manage', 'Settings', 'Manage campus-level settings.', true),
+
+  // Documents & Policies (handbooks, consent forms, policies)
+  def('documents.view', 'Documents', 'View institution documents and policies.'),
+  def('documents.manage', 'Documents', 'Upload and manage institution documents and policies.', true),
+
+  // Billing (read-only tenant view of the Edrion subscription & invoices)
+  def('billing.view', 'Billing', 'View the institution’s Edrion plan, subscription and invoices.'),
 
   // AI
   def('ai.use', 'AI', 'Use the AI Copilot.'),

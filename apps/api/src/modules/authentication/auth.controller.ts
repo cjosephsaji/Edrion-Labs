@@ -2,13 +2,23 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Post, Res, UnauthorizedExc
 import type { Response } from 'express';
 import { ApiTags } from '@nestjs/swagger';
 import { expandEffectiveKeys, ALL_PERMISSION_KEYS } from '@edrion/permissions';
-import { loginSchema, reauthSchema, type LoginInput, type ReauthInput } from '@edrion/schemas';
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  reauthSchema,
+  resetPasswordSchema,
+  type ForgotPasswordInput,
+  type LoginInput,
+  type ReauthInput,
+  type ResetPasswordInput,
+} from '@edrion/schemas';
 import type { EmployeePrincipal, PrincipalContext } from '@edrion/auth';
 import { CurrentPrincipal, PrincipalCtx, ReqContext } from '../../common/decorators';
 import { Public } from '../../common/guards/auth.guard';
 import { zodBody } from '../../common/zod-validation.pipe';
 import type { EdrionRequestContext } from '../../common/request-context';
 import { AuthLoginService } from './auth-login.service';
+import { CredentialService } from './credential.service';
 import { SessionService } from './session.service';
 
 @ApiTags('authentication')
@@ -16,6 +26,7 @@ import { SessionService } from './session.service';
 export class AuthController {
   constructor(
     private readonly login: AuthLoginService,
+    private readonly credentials: CredentialService,
     private readonly sessions: SessionService,
   ) {}
 
@@ -34,6 +45,30 @@ export class AuthController {
     const { token } = await this.login.login(body, req);
     res.cookie(this.sessions.cookieName, token, this.sessions.cookieOptions());
     return { authenticated: true };
+  }
+
+  /** Request a password-reset link. Always 200 (never reveals whether the email exists). */
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPasswordHandler(
+    @Body(zodBody(forgotPasswordSchema)) body: ForgotPasswordInput,
+    @ReqContext() req: EdrionRequestContext,
+  ) {
+    await this.credentials.forgotPassword(body, req);
+    return { ok: true };
+  }
+
+  /** Complete a password reset with the single-use token from the email link. */
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPasswordHandler(
+    @Body(zodBody(resetPasswordSchema)) body: ResetPasswordInput,
+    @ReqContext() req: EdrionRequestContext,
+  ) {
+    await this.credentials.resetPassword(body, req);
+    return { ok: true };
   }
 
   /** Strong re-authentication; refreshes the recent-auth window for sensitive actions. */

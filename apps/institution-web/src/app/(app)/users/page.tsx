@@ -5,6 +5,7 @@ import { Badge, type BadgeTone, type Column } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
 import { UserAccessDrawer } from '@/components/admin/user-access-drawer';
+import { UserProfileDialog } from '@/components/people/user-profile-dialog';
 import { usePermissions } from '@/lib/permissions';
 import { useUsersList, useUsersMutations } from '@/lib/users';
 import type { UserRow } from '@/lib/admin-types';
@@ -39,7 +40,7 @@ export default function UsersPage() {
     () => [
       { name: 'email', label: 'Email', type: 'text', required: true, placeholder: 'name@school.edu', help: 'Used to sign in. Cannot be changed after invite.' },
       { name: 'fullName', label: 'Full name', type: 'text', required: true, placeholder: 'e.g. Jordan Lee' },
-      { name: 'phone', label: 'Phone', type: 'text', nullable: true, placeholder: 'Optional' },
+      { name: 'phone', label: 'Phone', type: 'phone', nullable: true },
       { name: 'status', label: 'Status', type: 'select', options: STATUSES, help: 'Applies when editing; new users start as Invited.' },
       { name: 'requireMfa', label: 'Require MFA at next sign-in', type: 'checkbox' },
     ],
@@ -85,6 +86,7 @@ export default function UsersPage() {
         useList={useUsersList}
         useMutations={useUsersMutations}
         rowLabel={(r) => r.fullName}
+        renderDetail={(ctx) => <UserProfileDialog kind="user" {...ctx} />}
         toFormValues={(r) => ({
           email: r.email,
           fullName: r.fullName,

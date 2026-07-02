@@ -1,21 +1,33 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ChevronLeft, GraduationCap } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ChevronLeft, GraduationCap, LogOut, Rocket } from 'lucide-react';
 import { cn } from '@edrion/ui';
 import { usePortalMe } from '@/lib/hooks';
 import { usePermissions } from '@/lib/permissions';
+import { usePortalClient } from '@/lib/portal-client';
 import { NAV } from '@/lib/nav';
 
 const COLLAPSE_KEY = 'edrion.portal.sidebar.collapsed';
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const client = usePortalClient();
   const { data: me } = usePortalMe();
   const { can } = usePermissions();
   const [collapsed, setCollapsed] = useState(false);
   const [isNarrow, setIsNarrow] = useState(false);
+
+  async function handleLogout() {
+    try {
+      await client.post('/portal/auth/logout', { mode: 'institution' }, {});
+    } catch {
+      // session already gone — proceed anyway
+    }
+    router.push('/login');
+  }
 
   useEffect(() => {
     setCollapsed(localStorage.getItem(COLLAPSE_KEY) === '1');
@@ -31,6 +43,12 @@ export function Sidebar() {
   }, []);
 
   const effectiveCollapsed = collapsed || isNarrow;
+
+  // While the institution is still onboarding, admins get a pinned "Getting started" entry so
+  // they can return to the setup wizard at any point. Disappears the moment they go live.
+  const showOnboarding =
+    !!me && me.onboardingStatus !== 'completed' && me.institutionStatus === 'onboarding' && can('institution_settings.manage');
+  const onboardingActive = pathname === '/onboarding';
 
   function toggle() {
     setCollapsed((c) => {
@@ -64,6 +82,29 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav aria-label="Primary" className="scrollbar-thin flex-1 overflow-y-auto px-2 py-2">
+        {showOnboarding && (
+          <div className="mb-3">
+            <ul className="space-y-0.5">
+              <li>
+                <Link
+                  href="/onboarding"
+                  title={effectiveCollapsed ? 'Getting started' : undefined}
+                  aria-current={onboardingActive ? 'page' : undefined}
+                  className={cn(
+                    'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors duration-100',
+                    onboardingActive
+                      ? 'bg-sidebar-active text-white'
+                      : 'text-sidebar-text hover:bg-sidebar-hover',
+                    effectiveCollapsed && 'justify-center px-0',
+                  )}
+                >
+                  <Rocket className="h-[18px] w-[18px] shrink-0" />
+                  {!effectiveCollapsed && <span className="truncate">Getting started</span>}
+                </Link>
+              </li>
+            </ul>
+          </div>
+        )}
         {NAV.map((group) => {
           const items = group.items.filter((i) => can(i.permission));
           if (items.length === 0) return null;
@@ -105,7 +146,7 @@ export function Sidebar() {
       </nav>
 
       {/* Profile + collapse */}
-      <div className="shrink-0 border-t border-white/10 p-3">
+      <div className="relative shrink-0 border-t border-white/10 p-3">
         <div className={cn('flex items-center gap-3', effectiveCollapsed && 'justify-center')}>
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sidebar-active text-xs font-semibold text-white">
             {(me?.fullName ?? 'E A')
@@ -120,16 +161,35 @@ export function Sidebar() {
               <div className="truncate text-xs text-sidebar-muted">{me?.email ?? ''}</div>
             </div>
           )}
+          {/* Manual toggle only matters on md+; below md the sidebar is force-collapsed. */}
           {!isNarrow && (
             <button
               onClick={toggle}
               aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              className="rounded-md p-1.5 text-sidebar-muted hover:bg-sidebar-hover hover:text-white"
+              className={cn(
+                'text-sidebar-muted hover:text-white transition-colors duration-100',
+                effectiveCollapsed
+                  ? 'absolute -right-3 top-[28px] z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-sidebar shadow-md hover:bg-sidebar-hover'
+                  : 'rounded-md p-1.5 hover:bg-sidebar-hover',
+              )}
             >
               <ChevronLeft className={cn('h-4 w-4 transition-transform', collapsed && 'rotate-180')} />
             </button>
           )}
         </div>
+
+        <button
+          onClick={handleLogout}
+          aria-label="Sign out"
+          title="Sign out"
+          className={cn(
+            'mt-2 flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-text transition-colors hover:bg-sidebar-hover hover:text-white',
+            effectiveCollapsed && 'justify-center px-0',
+          )}
+        >
+          <LogOut className="h-[18px] w-[18px] shrink-0" />
+          {!effectiveCollapsed && <span className="truncate">Sign out</span>}
+        </button>
       </div>
     </aside>
   );

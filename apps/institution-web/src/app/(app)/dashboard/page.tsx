@@ -1,4 +1,6 @@
 'use client';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -10,6 +12,9 @@ import {
 } from '@edrion/ui';
 import { Topbar } from '@/components/app-shell/topbar';
 import { usePortalDashboard, usePortalMe } from '@/lib/hooks';
+import { usePermissions } from '@/lib/permissions';
+import { useFormat } from '@/lib/format';
+import { useAttention } from '@/lib/attention';
 import type { DashboardKind, PortalDashboardDto } from '@/lib/types';
 
 const KIND_HEADING: Record<DashboardKind, string> = {
@@ -22,8 +27,21 @@ const KIND_HEADING: Record<DashboardKind, string> = {
 };
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { data: me } = usePortalMe();
+  const { can } = usePermissions();
   const { data, isLoading, isError, refetch } = usePortalDashboard();
+
+  // A freshly approved institution lands here; steer its admins into the setup wizard until
+  // they go live. Only admins (who can actually complete onboarding) are redirected — other
+  // staff use the portal normally.
+  const needsOnboarding =
+    !!me && me.onboardingStatus !== 'completed' && me.institutionStatus === 'onboarding';
+  useEffect(() => {
+    if (needsOnboarding && can('institution_settings.manage')) {
+      router.replace('/onboarding');
+    }
+  }, [needsOnboarding, can, router]);
 
   return (
     <>
@@ -62,6 +80,12 @@ export default function DashboardPage() {
 }
 
 function DashboardBody({ data }: { data: PortalDashboardDto }) {
+  const fmt = useFormat();
+  const statValue = (s: PortalDashboardDto['stats'][number]) => {
+    if (s.pending) return '—';
+    if (s.format === 'money') return fmt.money(Number(s.value));
+    return s.value;
+  };
   return (
     <>
       {/* Stat grid */}
@@ -70,7 +94,7 @@ function DashboardBody({ data }: { data: PortalDashboardDto }) {
           <StatCard
             key={s.key}
             label={s.label}
-            value={s.pending ? '—' : s.value}
+            value={statValue(s)}
             hint={s.pending ? 'Module coming soon' : s.hint}
             className={s.pending ? 'opacity-70' : undefined}
           />
@@ -109,6 +133,7 @@ function DashboardBody({ data }: { data: PortalDashboardDto }) {
             value={data.pendingApprovals}
             hint="Actions awaiting your decision"
           />
+          <AttentionQuickView />
           {data.campusComparison && data.campusComparison.length > 0 && (
             <Card>
               <CardHeader>
@@ -129,6 +154,57 @@ function DashboardBody({ data }: { data: PortalDashboardDto }) {
         </div>
       </div>
     </>
+  );
+}
+
+/** A compact read-out of the Attention Centre: total open items + the top categories, linking through. */
+function AttentionQuickView() {
+  const router = useRouter();
+  const { data, isLoading } = useAttention();
+  const cats = (data?.categories ?? []).filter((c) => c.status === 'ok');
+  const total = cats.reduce((n, c) => n + c.count, 0);
+  const top = cats.filter((c) => c.count > 0).sort((a, b) => b.count - a.count).slice(0, 5);
+
+  return (
+    <Card>
+      <div className="flex items-center justify-between gap-2 p-5 pb-3">
+        <CardTitle>Needs attention</CardTitle>
+        <button
+          type="button"
+          onClick={() => router.push('/attention')}
+          className="shrink-0 text-xs font-medium text-primary transition-colors hover:text-primary-hover"
+        >
+          View all →
+        </button>
+      </div>
+      <CardContent>
+        {isLoading ? (
+          <p className="py-3 text-sm text-text-muted">Loading…</p>
+        ) : total === 0 ? (
+          <p className="py-3 text-sm text-text-muted">All clear — nothing needs attention. 🎉</p>
+        ) : (
+          <>
+            <p className="mb-2 text-2xl font-semibold text-text-primary">
+              {total} <span className="text-sm font-normal text-text-muted">item{total === 1 ? '' : 's'}</span>
+            </p>
+            <ul className="flex flex-col">
+              {top.map((c) => (
+                <li key={c.key}>
+                  <button
+                    type="button"
+                    onClick={() => router.push('/attention')}
+                    className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-background-secondary"
+                  >
+                    <span className="truncate text-text-primary">{c.label}</span>
+                    <span className="shrink-0 rounded-full bg-danger/10 px-2 py-0.5 text-xs font-semibold text-danger">{c.count}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

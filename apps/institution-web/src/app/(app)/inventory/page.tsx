@@ -32,7 +32,7 @@ export default function InventoryPage() {
       { name: 'unit', label: 'Unit', type: 'text', nullable: true, placeholder: 'e.g. pieces' },
       { name: 'quantity', label: 'Opening quantity', type: 'number', required: true, min: 0, help: 'Further changes go through movements.' },
       { name: 'reorderLevel', label: 'Reorder level', type: 'number', required: true, min: 0 },
-      { name: 'unitValue', label: 'Unit value (minor units)', type: 'number', required: true, min: 0 },
+      { name: 'unitValue', label: 'Unit value', type: 'money', required: true, min: 0 },
       { name: 'status', label: 'Status', type: 'select', required: true, options: ITEM_STATUSES },
       { name: 'description', label: 'Description', type: 'textarea', nullable: true, placeholder: 'Optional' },
     ],

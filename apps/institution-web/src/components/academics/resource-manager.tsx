@@ -1,12 +1,15 @@
 'use client';
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import {
   Button,
   ConfirmDialog,
   DataTable,
+  DetailPanel,
   PermissionDenied,
   type Column,
+  type DetailSection,
 } from '@edrion/ui';
 import { Topbar } from '@/components/app-shell/topbar';
 import { usePermissions } from '@/lib/permissions';
@@ -14,6 +17,15 @@ import { useScope } from '@/lib/scope';
 import { useAcademicList, useAcademicMutations, type ListParams } from '@/lib/academics';
 import { PortalClientError } from '@/lib/portal-client';
 import { ResourceForm, type FieldDef } from './resource-form';
+
+/** A toolbar facet dropdown; the chosen value is sent to the API as an extra list query param. */
+export interface FilterDef {
+  /** Query-param key sent to the API (e.g. "status", "submittedVia"). */
+  key: string;
+  /** Accessible label / placeholder ("All statuses"). */
+  label: string;
+  options: { value: string; label: string }[];
+}
 
 /** Per-action permission keys for a directory (academics collapses create/update/delete to `manage`). */
 export interface ResourcePermissions {
@@ -65,6 +77,8 @@ export interface ResourceManagerProps<TRow extends { id: string; version: number
   toFormValues: (row: TRow) => Record<string, unknown>;
   /** Extra per-row actions rendered before Edit/Delete (e.g. "Subjects" on a class). */
   extraActions?: (row: TRow) => React.ReactNode;
+  /** Optional toolbar facet dropdowns; selected values are sent to the list hook as extra params. */
+  filters?: FilterDef[];
   /** Human label for a row in confirm dialogs. */
   rowLabel?: (row: TRow) => string;
   /** Permission keys gating view/create/update/delete. Defaults to the academics keys. */
@@ -72,6 +86,68 @@ export interface ResourceManagerProps<TRow extends { id: string; version: number
   /** Data hooks. Default to the academics client; People injects its own (same shapes, /people/*). */
   useList?: ResourceListHook;
   useMutations?: ResourceMutationsHook;
+  /**
+   * Read-only detail shown on row click. When omitted, a sensible panel is auto-built from the
+   * columns + remaining scalar fields, so every list gets "view without editing" for free; pages
+   * pass `detail` to curate/group the fields. Set `disableDetail` to opt out entirely.
+   */
+  detail?: (row: TRow) => DetailSection[];
+  /** Optional avatar/name header block above the detail sections. */
+  detailHeader?: (row: TRow) => React.ReactNode;
+  /** Title for the detail panel (defaults to `rowLabel` / the record's name). */
+  detailTitle?: (row: TRow) => string;
+  /**
+   * Replace the built-in sliding {@link DetailPanel} shown on row click with a custom renderer
+   * (e.g. the tabbed user-details popup). Always mounted like the panel is; the renderer returns
+   * `null` while `open` is false. When set, `detail`/`detailHeader`/`detailTitle` are ignored.
+   */
+  renderDetail?: (ctx: {
+    row: TRow | null;
+    open: boolean;
+    onClose: () => void;
+    /** Close the popup and open the edit form for the current row (no-op if the user can't edit). */
+    edit: () => void;
+    canEdit: boolean;
+  }) => React.ReactNode;
+  disableDetail?: boolean;
+}
+
+const INTERNAL_KEYS = new Set([
+  'id',
+  'version',
+  'institutionId',
+  'campusId',
+  'createdBy',
+  'updatedBy',
+  'createdAt',
+  'updatedAt',
+]);
+
+const humanize = (key: string) =>
+  key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/^./, (c) => c.toUpperCase());
+
+/** Fallback detail sections when a page doesn't supply `detail`: the columns, then leftover scalars. */
+function autoDetail<TRow extends Record<string, unknown>>(row: TRow, columns: Column<TRow>[]): DetailSection[] {
+  const shown = new Set(columns.map((c) => c.key));
+  const overview: DetailSection = {
+    title: 'Overview',
+    fields: columns.map((c) => ({
+      label: c.header,
+      value: c.render ? c.render(row) : String(row[c.key as keyof TRow] ?? ''),
+    })),
+  };
+  const rest = Object.entries(row)
+    .filter(
+      ([k, v]) =>
+        !INTERNAL_KEYS.has(k) &&
+        !shown.has(k) &&
+        !k.endsWith('Id') && // raw FK UUIDs are never shown; their resolved sibling (e.g. `student`) is
+        (v === null || ['string', 'number', 'boolean'].includes(typeof v)),
+    )
+    .map(([k, v]) => ({ label: humanize(k), value: v as React.ReactNode, full: typeof v === 'string' && v.length > 60 }));
+  return rest.length > 0 ? [overview, { title: 'More', fields: rest }] : [overview];
 }
 
 const PAGE_SIZE = 20;
@@ -93,12 +169,22 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
   const canUpdate = can(perms.update);
   const canDelete = can(perms.delete);
 
+  // Global search deep-links here with `?q=`, so the list opens pre-filtered to the picked record.
+  const initialSearch = useSearchParams().get('q') ?? '';
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState(props.defaultSortBy);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>(props.defaultSortDir ?? 'asc');
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(initialSearch);
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
 
-  const params: ListParams = { page, pageSize: PAGE_SIZE, sortBy, sortDir, search: search || undefined };
+  const params: ListParams = {
+    page,
+    pageSize: PAGE_SIZE,
+    sortBy,
+    sortDir,
+    search: search || undefined,
+    filters: props.filters ? filterValues : undefined,
+  };
   const { data, isLoading, isError } = useList(props.resource, params);
   const { create, update, remove } = useMutations(props.resource);
   const rows = (data?.items ?? []) as TRow[];
@@ -107,7 +193,9 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
   const [editing, setEditing] = useState<TRow | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<TRow | null>(null);
+  const [viewing, setViewing] = useState<TRow | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const showDetail = !props.disableDetail;
 
   if (!can(perms.view)) {
     return (
@@ -190,10 +278,32 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
       />
 
       <div className="page-enter flex flex-1 flex-col gap-4 p-5">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm text-text-secondary">
-            Viewing <span className="font-medium text-text-primary">{activeLabel}</span>
-          </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm text-text-secondary">
+              Viewing <span className="font-medium text-text-primary">{activeLabel}</span>
+            </p>
+            {props.filters?.map((f) => (
+              <select
+                key={f.key}
+                aria-label={f.label}
+                value={filterValues[f.key] ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setFilterValues((prev) => ({ ...prev, [f.key]: v }));
+                  setPage(1);
+                }}
+                className="h-9 rounded-md border border-border bg-surface px-2.5 text-sm text-text-primary outline-none focus:border-border-strong"
+              >
+                <option value="">{f.label}</option>
+                {f.options.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            ))}
+          </div>
           {props.searchable !== false && (
             <div className="relative w-64 max-w-[60%]">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
@@ -228,6 +338,7 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
           pageSize={PAGE_SIZE}
           total={total}
           onPageChange={setPage}
+          onRowClick={showDetail ? (row) => setViewing(row) : undefined}
           emptyTitle={isError ? 'Couldn’t load this list' : `No ${props.title.toLowerCase()} yet`}
           emptyDescription={
             isError
@@ -281,6 +392,63 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
         onSubmit={submitUpdate}
         onClose={() => setEditing(null)}
       />
+
+      {/* Read-only detail (row click) — custom popup when provided, else the sliding panel. */}
+      {showDetail && props.renderDetail
+        ? props.renderDetail({
+            row: viewing,
+            open: !!viewing,
+            onClose: () => setViewing(null),
+            canEdit: canUpdate,
+            edit: () => {
+              if (!canUpdate || !viewing) return;
+              const row = viewing;
+              setViewing(null);
+              setFormError(null);
+              setEditing(row);
+            },
+          })
+        : null}
+
+      {showDetail && !props.renderDetail && (
+        <DetailPanel
+          open={!!viewing}
+          onClose={() => setViewing(null)}
+          title={
+            viewing
+              ? (props.detailTitle?.(viewing) ??
+                props.rowLabel?.(viewing) ??
+                (viewing as { name?: string }).name ??
+                props.noun)
+              : props.noun
+          }
+          header={viewing ? props.detailHeader?.(viewing) : undefined}
+          sections={
+            viewing
+              ? (props.detail?.(viewing) ?? autoDetail(viewing as Record<string, unknown>, columns as Column<Record<string, unknown>>[]))
+              : []
+          }
+          footer={
+            viewing && canUpdate ? (
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    const row = viewing;
+                    setViewing(null);
+                    setFormError(null);
+                    setEditing(row);
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </Button>
+              </div>
+            ) : undefined
+          }
+        />
+      )}
 
       <ConfirmDialog
         open={!!deleting}

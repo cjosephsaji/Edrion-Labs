@@ -41,6 +41,26 @@ export class PortalRepository {
     return row?.name ?? 'Your Institution';
   }
 
+  /** Name + lifecycle status the portal shell needs to gate the onboarding wizard. */
+  async getInstitutionMeta(
+    institutionId: string,
+  ): Promise<{ name: string; status: string; onboardingStatus: string }> {
+    const [row] = await this.db
+      .select({
+        name: schema.institutions.displayName,
+        status: schema.institutions.status,
+        onboardingStatus: schema.institutions.onboardingStatus,
+      })
+      .from(schema.institutions)
+      .where(eq(schema.institutions.id, institutionId))
+      .limit(1);
+    return {
+      name: row?.name ?? 'Your Institution',
+      status: row?.status ?? 'active',
+      onboardingStatus: row?.onboardingStatus ?? 'completed',
+    };
+  }
+
   /** All campuses in the institution, optionally narrowed to a set of ids (scope). */
   async listCampuses(institutionId: string, campusIds: string[] | null): Promise<CampusRow[]> {
     const where = campusIds

@@ -1,13 +1,44 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Button, Drawer, FieldError, Input, Label, Select, type SelectOption } from '@edrion/ui';
+import {
+  AdministrativeDivisionSelect,
+  Button,
+  Checkbox,
+  Combobox,
+  CountrySelect,
+  Drawer,
+  FieldError,
+  Input,
+  InternationalPhoneInput,
+  Label,
+  Select,
+  TimezoneSelect,
+  subdivisionLabel,
+  type ComboboxOption,
+  type SelectOption,
+} from '@edrion/ui';
+import { useFormat } from '@/lib/format';
 
 /** A declarative form field. The `name` must match the API body key for the resource. */
 export type FieldDef =
   | { name: string; label: string; type: 'text' | 'textarea' | 'date'; required?: boolean; nullable?: boolean; placeholder?: string; help?: string }
   | { name: string; label: string; type: 'number'; required?: boolean; nullable?: boolean; min?: number; placeholder?: string; help?: string }
+  // Money entered in MAJOR units (e.g. rupees) with the institution's currency shown; stored as
+  // integer MINOR units (×100). Keeps the DB's minor-unit convention while the user types real money.
+  | { name: string; label: string; type: 'money'; required?: boolean; nullable?: boolean; min?: number; placeholder?: string; help?: string }
   | { name: string; label: string; type: 'checkbox'; help?: string }
-  | { name: string; label: string; type: 'select'; required?: boolean; nullable?: boolean; options: SelectOption[]; placeholder?: string; help?: string };
+  | { name: string; label: string; type: 'select'; required?: boolean; nullable?: boolean; options: SelectOption[]; placeholder?: string; help?: string }
+  // Searchable single-select (e.g. a student/teacher picker). Options are supplied by the page.
+  | { name: string; label: string; type: 'combobox'; required?: boolean; nullable?: boolean; options: ComboboxOption[]; placeholder?: string; searchPlaceholder?: string; emptyText?: string; help?: string }
+  // Standardized location / contact selectors. `countryField` names the sibling field
+  // that holds the ISO country code this field depends on.
+  | { name: string; label: string; type: 'country'; required?: boolean; nullable?: boolean; help?: string }
+  | { name: string; label: string; type: 'division'; required?: boolean; nullable?: boolean; countryField: string; help?: string }
+  | { name: string; label: string; type: 'timezone'; required?: boolean; nullable?: boolean; countryField?: string; help?: string }
+  | { name: string; label: string; type: 'phone'; required?: boolean; nullable?: boolean; countryField?: string; help?: string }
+  // Escape hatch: a fully custom control (e.g. the RecipientPicker). The page supplies `render`,
+  // which receives the current value + an onChange; the raw value is sent to the API unchanged.
+  | { name: string; label: string; type: 'custom'; render: (value: unknown, onChange: (v: unknown) => void) => React.ReactNode; help?: string };
 
 type Values = Record<string, unknown>;
 
@@ -20,8 +51,17 @@ function buildBody(fields: FieldDef[], values: Values): Values {
   const body: Values = {};
   for (const f of fields) {
     const v = values[f.name];
-    if (f.type === 'checkbox') {
+    if (f.type === 'custom') {
+      body[f.name] = v;
+    } else if (f.type === 'checkbox') {
       body[f.name] = !!v;
+    } else if (f.type === 'money') {
+      if (v === '' || v === undefined || v === null) {
+        if (f.nullable) body[f.name] = null;
+      } else {
+        // Major units (rupees) → integer minor units (paise). Round to avoid FP drift (19.99 → 1999).
+        body[f.name] = Math.round(Number(v) * 100);
+      }
     } else if (f.type === 'number') {
       if (v === '' || v === undefined || v === null) {
         if (f.nullable) body[f.name] = null;
@@ -45,6 +85,9 @@ function initialFor(fields: FieldDef[], initial: Values): Values {
   for (const f of fields) {
     const provided = initial[f.name];
     if (f.type === 'checkbox') v[f.name] = !!provided;
+    else if (f.type === 'custom') v[f.name] = provided ?? undefined;
+    // Stored minor units → shown as major units for editing (150000 → "1500").
+    else if (f.type === 'money') v[f.name] = provided == null || provided === '' ? '' : String(Number(provided) / 100);
     else v[f.name] = provided ?? '';
   }
   return v;
@@ -127,7 +170,14 @@ export function ResourceForm({
           </div>
         )}
         {fields.map((f) => (
-          <Field key={f.name} field={f} value={values[f.name]} error={errors[f.name]} onChange={(v) => set(f.name, v)} />
+          <Field
+            key={f.name}
+            field={f}
+            value={values[f.name]}
+            values={values}
+            error={errors[f.name]}
+            onChange={(v) => set(f.name, v)}
+          />
         ))}
       </form>
     </Drawer>
@@ -137,37 +187,87 @@ export function ResourceForm({
 function Field({
   field,
   value,
+  values,
   error,
   onChange,
 }: {
   field: FieldDef;
   value: unknown;
+  values: Values;
   error?: string;
   onChange: (v: unknown) => void;
 }) {
+  const fmt = useFormat();
   if (field.type === 'checkbox') {
     return (
-      <label className="flex items-center gap-2.5">
-        <input
-          type="checkbox"
-          checked={!!value}
-          onChange={(e) => onChange(e.target.checked)}
-          className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
-        />
+      <label className="flex cursor-pointer items-center gap-2.5">
+        <Checkbox checked={!!value} onChange={(e) => onChange(e.target.checked)} />
         <span className="text-sm font-medium text-text-primary">{field.label}</span>
       </label>
     );
   }
 
+  if (field.type === 'custom') {
+    return (
+      <div>
+        <Label>{field.label}</Label>
+        <div className="mt-1">{field.render(value, onChange)}</div>
+        {field.help && <p className="mt-1 text-xs text-text-muted">{field.help}</p>}
+      </div>
+    );
+  }
+
   const requiredMark = 'required' in field && field.required ? <span className="text-danger"> *</span> : null;
+  const id = `f-${field.name}`;
+  const errId = error ? `${id}-error` : undefined;
+  const countryValue =
+    'countryField' in field && field.countryField ? String(values[field.countryField] ?? '') : '';
+  const labelText =
+    field.type === 'division' && countryValue ? subdivisionLabel(countryValue) : field.label;
 
   return (
     <div>
-      <Label htmlFor={`f-${field.name}`}>
-        {field.label}
+      <Label htmlFor={id}>
+        {labelText}
         {requiredMark}
       </Label>
-      {field.type === 'select' ? (
+      {field.type === 'country' ? (
+        <CountrySelect
+          id={id}
+          value={String(value ?? '')}
+          invalid={!!error}
+          aria-describedby={errId}
+          onChange={onChange}
+        />
+      ) : field.type === 'division' ? (
+        <AdministrativeDivisionSelect
+          id={id}
+          countryCode={countryValue}
+          value={String(value ?? '')}
+          invalid={!!error}
+          aria-describedby={errId}
+          onChange={onChange}
+        />
+      ) : field.type === 'timezone' ? (
+        <TimezoneSelect
+          id={id}
+          countryCode={countryValue || undefined}
+          value={String(value ?? '')}
+          invalid={!!error}
+          suggestDetected
+          aria-describedby={errId}
+          onChange={onChange}
+        />
+      ) : field.type === 'phone' ? (
+        <InternationalPhoneInput
+          id={id}
+          value={String(value ?? '')}
+          defaultCountry={countryValue || undefined}
+          invalid={!!error}
+          aria-describedby={errId}
+          onChange={onChange}
+        />
+      ) : field.type === 'select' ? (
         <Select
           id={`f-${field.name}`}
           value={String(value ?? '')}
@@ -175,6 +275,36 @@ function Field({
           options={field.options}
           placeholder={field.placeholder ?? (field.required ? 'Select…' : '—')}
         />
+      ) : field.type === 'combobox' ? (
+        <Combobox
+          id={id}
+          value={String(value ?? '')}
+          onChange={onChange}
+          options={field.options}
+          placeholder={field.placeholder ?? 'Select…'}
+          searchPlaceholder={field.searchPlaceholder}
+          emptyText={field.emptyText}
+          invalid={!!error}
+          aria-describedby={errId}
+        />
+      ) : field.type === 'money' ? (
+        <div className="relative">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-muted" aria-hidden="true">
+            {fmt.currencySymbol}
+          </span>
+          <Input
+            id={id}
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min={field.min ?? 0}
+            className="pl-9 tabular-nums"
+            value={String(value ?? '')}
+            aria-describedby={errId}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={field.placeholder ?? '0.00'}
+          />
+        </div>
       ) : field.type === 'textarea' ? (
         <textarea
           id={`f-${field.name}`}
@@ -195,7 +325,7 @@ function Field({
         />
       )}
       {field.help && !error && <p className="mt-1 text-xs text-text-muted">{field.help}</p>}
-      <FieldError>{error}</FieldError>
+      <FieldError id={errId}>{error}</FieldError>
     </div>
   );
 }

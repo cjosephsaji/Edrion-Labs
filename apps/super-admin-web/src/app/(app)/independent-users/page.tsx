@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search } from 'lucide-react';
-import { Card, StatusBadge, TableSkeleton, EmptyState, ErrorState, Button } from '@edrion/ui';
+import { Card, StatusBadge, TableSkeleton, EmptyState, ErrorState, Button, countryName } from '@edrion/ui';
 import { useIndependentUsers, useIndependentUserStatusAction, type IndependentUserDto } from '@edrion/api-client';
 import { errorMessage } from '@/lib/errors';
 import { Topbar } from '@/components/app-shell/topbar';
@@ -138,7 +138,7 @@ function Row({ user }: { user: IndependentUserDto }) {
     <tr className="border-b border-border last:border-0">
       <td className="p-3 text-text-primary">{user.fullName}</td>
       <td className="p-3 text-text-muted">{user.email}</td>
-      <td className="p-3 text-text-muted">{user.country ?? '—'}</td>
+      <td className="p-3 text-text-muted">{user.country ? countryName(user.country) : '—'}</td>
       <td className="p-3">
         <StatusBadge status={user.status} />
       </td>

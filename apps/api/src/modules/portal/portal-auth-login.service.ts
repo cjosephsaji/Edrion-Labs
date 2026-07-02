@@ -8,6 +8,7 @@ import type { ApiEnv } from '@edrion/config';
 import { API_ENV, AUDIT_WRITER } from '../../common/tokens';
 import type { EdrionRequestContext } from '../../common/request-context';
 import { SupabaseVerifier } from '../authentication/supabase-verifier';
+import { verifyPassword } from '../authentication/password.util';
 import { PortalAuthService } from './portal-auth.service';
 import { PortalSessionService } from './portal-session.service';
 
@@ -136,6 +137,22 @@ export class PortalAuthLoginService {
         throw new UnauthorizedException({ code: 'UNAUTHENTICATED', message: 'No portal user for this identity' });
       }
       return { user, aal: claims.aal ?? 'aal1', idpSessionId: claims.session_id };
+    }
+
+    // Native password login: email + bcrypt password. The account must be active (activated) and
+    // hold a password hash — invited-but-not-activated users have none, so they cannot sign in yet.
+    if (input.email && input.password) {
+      const invalid = new UnauthorizedException({
+        code: 'UNAUTHENTICATED',
+        message: 'Incorrect email or password',
+      });
+      const user = await this.auth.loadActiveByEmail(input.email);
+      if (!user || user.status !== 'active') throw invalid;
+      if (!(await verifyPassword(input.password, user.passwordHash))) {
+        await this.auth.registerFailedLogin(user.id, user.failedLoginAttempts);
+        throw invalid;
+      }
+      return { user, aal: user.mfaEnrolled ? 'aal2' : 'aal1' };
     }
 
     // Dev login: email-only, behind an explicit flag, so login can be exercised without Supabase.

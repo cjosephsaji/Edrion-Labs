@@ -13,10 +13,16 @@ import {
 import type { Response } from 'express';
 import { ApiTags } from '@nestjs/swagger';
 import {
+  portalActivateSchema,
+  portalForgotPasswordSchema,
   portalLoginSchema,
   portalReauthSchema,
+  portalResetPasswordSchema,
+  type PortalActivateInput,
+  type PortalForgotPasswordInput,
   type PortalLoginInput,
   type PortalReauthInput,
+  type PortalResetPasswordInput,
 } from '@edrion/schemas';
 import { isRecentAuth, recentAuthRemaining, type InstitutionContext } from '@edrion/auth';
 import { currentTenantInstitutionId, type Database } from '@edrion/database';
@@ -29,6 +35,7 @@ import { zodBody } from '../../common/zod-validation.pipe';
 import { InstitutionAuthGuard } from './portal-auth.guard';
 import { CurrentInstitutionContext } from './portal.decorators';
 import { PortalAuthLoginService } from './portal-auth-login.service';
+import { PortalCredentialService } from './portal-credential.service';
 import { PortalSessionService } from './portal-session.service';
 
 /**
@@ -45,6 +52,7 @@ import { PortalSessionService } from './portal-session.service';
 export class PortalAuthController {
   constructor(
     private readonly login: PortalAuthLoginService,
+    private readonly credentials: PortalCredentialService,
     private readonly sessions: PortalSessionService,
     @Inject(API_ENV) private readonly env: ApiEnv,
     @Inject(DATABASE) private readonly db: Database,
@@ -61,6 +69,41 @@ export class PortalAuthController {
     const { token } = await this.login.login(body, req);
     res.cookie(this.sessions.cookieName, token, this.sessions.cookieOptions());
     return { authenticated: true };
+  }
+
+  /** Activate an invited account: set the first password from the email token, then auto-login. */
+  @Post('activate')
+  @HttpCode(HttpStatus.OK)
+  async activateHandler(
+    @Body(zodBody(portalActivateSchema)) body: PortalActivateInput,
+    @ReqContext() req: EdrionRequestContext,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { token } = await this.credentials.activate(body, req);
+    res.cookie(this.sessions.cookieName, token, this.sessions.cookieOptions());
+    return { activated: true };
+  }
+
+  /** Request a password-reset link. Always 200 (never reveals whether the email exists). */
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPasswordHandler(
+    @Body(zodBody(portalForgotPasswordSchema)) body: PortalForgotPasswordInput,
+    @ReqContext() req: EdrionRequestContext,
+  ) {
+    await this.credentials.forgotPassword(body, req);
+    return { ok: true };
+  }
+
+  /** Complete a password reset with the single-use token from the email link. */
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPasswordHandler(
+    @Body(zodBody(portalResetPasswordSchema)) body: PortalResetPasswordInput,
+    @ReqContext() req: EdrionRequestContext,
+  ) {
+    await this.credentials.resetPassword(body, req);
+    return { ok: true };
   }
 
   /** Strong re-authentication; refreshes the recent-auth window for sensitive actions. */

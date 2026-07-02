@@ -20,6 +20,8 @@ import {
   OnboardingStatus,
   PlanAudience,
   PlanStatus,
+  RegistrationReviewAction,
+  RegistrationStatus,
   RiskLevel,
   SubscriptionStatus,
   SupportAccessSessionStatus,
@@ -66,6 +68,11 @@ export const featureDefinitionStatusEnum = pgEnum(
 );
 export const featureRolloutTypeEnum = pgEnum('feature_rollout_type', values(FeatureRolloutType));
 export const deliveryStatusEnum = pgEnum('delivery_status', values(DeliveryStatus));
+export const registrationStatusEnum = pgEnum('registration_status', values(RegistrationStatus));
+export const registrationReviewActionEnum = pgEnum(
+  'registration_review_action',
+  values(RegistrationReviewAction),
+);
 
 /** UUID primary key with DB-side default. */
 export const primaryId = () => uuid('id').primaryKey().defaultRandom();

@@ -8,6 +8,7 @@ import { InvoicePaymentsDrawer } from '@/components/fees/invoice-payments-drawer
 import { useAcademicYearOptions, useClassOptions, useGradeLevelOptions } from '@/lib/academics';
 import { useStudentOptions } from '@/lib/people';
 import { useFeesList, useFeesMutations, useFeeStructureOptions } from '@/lib/fees';
+import { useFormat } from '@/lib/format';
 import type { FeeInvoiceRow, FeeStructureRow } from '@/lib/fees-types';
 
 const PERMISSIONS: ResourcePermissions = {
@@ -46,6 +47,7 @@ const INVOICE_STATUSES = [
 const label = (opts: { value: string; label: string }[], v: string) => opts.find((o) => o.value === v)?.label ?? v;
 
 function StructuresTab() {
+  const fmt = useFormat();
   const { data: grades } = useGradeLevelOptions();
   const { data: classes } = useClassOptions();
   const { data: years } = useAcademicYearOptions();
@@ -54,7 +56,7 @@ function StructuresTab() {
     () => [
       { name: 'name', label: 'Name', type: 'text', required: true, placeholder: 'e.g. Term 1 Tuition' },
       { name: 'feeType', label: 'Type', type: 'select', required: true, options: FEE_TYPES },
-      { name: 'amount', label: 'Amount (minor units)', type: 'number', required: true, min: 0 },
+      { name: 'amount', label: 'Amount', type: 'money', required: true, min: 0 },
       { name: 'frequency', label: 'Frequency', type: 'select', required: true, options: FREQUENCIES },
       { name: 'status', label: 'Status', type: 'select', required: true, options: STRUCTURE_STATUSES },
       {
@@ -87,11 +89,11 @@ function StructuresTab() {
     () => [
       { key: 'name', header: 'Name', sortable: true, render: (r) => <span className="font-medium">{r.name}</span> },
       { key: 'feeType', header: 'Type', sortable: true, render: (r) => <span className="text-text-muted">{label(FEE_TYPES, r.feeType)}</span> },
-      { key: 'amount', header: 'Amount', align: 'right', sortable: true, render: (r) => <span className="tabular-nums">{r.amount}</span> },
+      { key: 'amount', header: 'Amount', align: 'right', sortable: true, render: (r) => <span className="tabular-nums">{fmt.money(r.amount)}</span> },
       { key: 'frequency', header: 'Frequency', render: (r) => label(FREQUENCIES, r.frequency) },
       { key: 'status', header: 'Status', sortable: true, render: (r) => label(STRUCTURE_STATUSES, r.status) },
     ],
-    [],
+    [fmt],
   );
 
   return (
@@ -122,6 +124,7 @@ function StructuresTab() {
 }
 
 function InvoicesTab() {
+  const fmt = useFormat();
   const { data: students } = useStudentOptions();
   const { data: structures } = useFeeStructureOptions();
   const [paymentsFor, setPaymentsFor] = useState<FeeInvoiceRow | null>(null);
@@ -144,7 +147,7 @@ function InvoicesTab() {
         options: (structures?.items ?? []).map((s) => ({ value: s.id, label: s.name })),
         help: 'Optional — link the charge to a template.',
       },
-      { name: 'amount', label: 'Amount (minor units)', type: 'number', required: true, min: 0 },
+      { name: 'amount', label: 'Amount', type: 'money', required: true, min: 0 },
       { name: 'status', label: 'Status', type: 'select', required: true, options: INVOICE_STATUSES },
       { name: 'issueDate', label: 'Issue date', type: 'date', nullable: true },
       { name: 'dueDate', label: 'Due date', type: 'date', nullable: true },
@@ -157,12 +160,12 @@ function InvoicesTab() {
     () => [
       { key: 'invoiceNo', header: 'Invoice', sortable: true, render: (r) => <span className="font-medium">{r.invoiceNo}</span> },
       { key: 'studentName', header: 'Student', render: (r) => r.studentName ?? '—' },
-      { key: 'amount', header: 'Billed', align: 'right', sortable: true, render: (r) => <span className="tabular-nums">{r.amount}</span> },
-      { key: 'amountPaid', header: 'Paid', align: 'right', render: (r) => <span className="tabular-nums">{r.amountPaid}</span> },
-      { key: 'balance', header: 'Balance', align: 'right', render: (r) => <span className="tabular-nums font-medium">{r.balance}</span> },
+      { key: 'amount', header: 'Billed', align: 'right', sortable: true, render: (r) => <span className="tabular-nums">{fmt.money(r.amount)}</span> },
+      { key: 'amountPaid', header: 'Paid', align: 'right', render: (r) => <span className="tabular-nums">{fmt.money(r.amountPaid)}</span> },
+      { key: 'balance', header: 'Balance', align: 'right', render: (r) => <span className="tabular-nums font-medium">{fmt.money(r.balance)}</span> },
       { key: 'status', header: 'Status', sortable: true, render: (r) => label(INVOICE_STATUSES, r.status) },
     ],
-    [],
+    [fmt],
   );
 
   return (

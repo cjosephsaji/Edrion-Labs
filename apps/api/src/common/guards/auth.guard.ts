@@ -64,21 +64,25 @@ export class AuthGuard implements CanActivate {
   }
 
   private async resolvePrincipal(req: Request): Promise<PrincipalContext> {
-    // Dev escape hatch: explicit header identity, only when enabled.
+    // A live session cookie ALWAYS wins. The dev `x-employee-email` header (and the
+    // DEV_DEFAULT_EMPLOYEE fallback) is sent on every request in development, so it must not
+    // override an employee who has actually signed in — otherwise login + logout are no-ops.
+    const token = readCookie(req.headers.cookie, this.env.SESSION_COOKIE_NAME);
+    if (token) {
+      const session = await this.sessions.verify(token);
+      const pc = await this.auth.resolveById(session.employeeId, session.lastAuthAt);
+      pc.authSessionId = session.id;
+      return pc;
+    }
+
+    // Dev escape hatch (only when enabled, and only when there is no session cookie): trust the
+    // explicit header identity (or DEV_DEFAULT_EMPLOYEE). No server session → resolveByEmail.
     if (this.env.AUTH_DEV_HEADER) {
       const email = req.header('x-employee-email') ?? process.env.DEV_DEFAULT_EMPLOYEE;
       if (email) return this.auth.resolveByEmail(email);
     }
 
-    // Production path: the HTTP-only session cookie.
-    const token = readCookie(req.headers.cookie, this.env.SESSION_COOKIE_NAME);
-    if (!token) {
-      throw new UnauthorizedException({ code: 'UNAUTHENTICATED', message: 'No session' });
-    }
-    const session = await this.sessions.verify(token);
-    const pc = await this.auth.resolveById(session.employeeId, session.lastAuthAt);
-    pc.authSessionId = session.id;
-    return pc;
+    throw new UnauthorizedException({ code: 'UNAUTHENTICATED', message: 'No session' });
   }
 }
 

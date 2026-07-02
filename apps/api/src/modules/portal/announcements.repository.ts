@@ -14,7 +14,7 @@ import {
   type PgColumn,
   type SQL,
 } from '@edrion/database';
-import type { Announcement, NewAnnouncement, NewNotification, Notification } from '@edrion/database';
+import type { Announcement, AnnouncementTarget, NewAnnouncement, NewNotification, Notification } from '@edrion/database';
 import type { AnnouncementsListQuery, NotificationsListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
@@ -108,6 +108,37 @@ export class AnnouncementsRepository {
     const t = schema.announcements;
     const rows = await this.db.delete(t).where(and(eq(t.id, id), eq(t.version, version))).returning({ id: t.id });
     return rows.length > 0;
+  }
+
+  // --- announcement targets (Phase 3) ----------------------------------------
+
+  /** Replace an announcement's target list (delete-then-insert; small lists). */
+  async setAnnouncementTargets(
+    announcementId: string,
+    institutionId: string,
+    targets: Array<{ kind: string; refId?: string | null }>,
+  ): Promise<void> {
+    const tt = schema.announcementTargets;
+    await this.db.delete(tt).where(and(eq(tt.announcementId, announcementId), eq(tt.institutionId, institutionId)));
+    if (targets.length === 0) return;
+    await this.db.insert(tt).values(targets.map((t) => ({ institutionId, announcementId, kind: t.kind, refId: t.refId ?? null })));
+  }
+
+  /** Targets for a page of announcements, keyed by announcement id (one query). */
+  async getTargetsFor(institutionId: string, announcementIds: string[]): Promise<Map<string, AnnouncementTarget[]>> {
+    const out = new Map<string, AnnouncementTarget[]>();
+    if (announcementIds.length === 0) return out;
+    const tt = schema.announcementTargets;
+    const rows = await this.db
+      .select()
+      .from(tt)
+      .where(and(eq(tt.institutionId, institutionId), inArray(tt.announcementId, announcementIds)));
+    for (const r of rows) {
+      const list = out.get(r.announcementId) ?? [];
+      list.push(r);
+      out.set(r.announcementId, list);
+    }
+    return out;
   }
 
   // --- notifications ---------------------------------------------------------

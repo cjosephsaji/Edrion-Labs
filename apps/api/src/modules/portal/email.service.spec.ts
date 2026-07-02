@@ -3,6 +3,14 @@ import type { ApiEnv } from '@edrion/config';
 import type { Logger } from '@edrion/observability';
 import { EmailService } from './email.service';
 
+// Mock nodemailer so the SMTP path is exercised without a real network connection (the offline test
+// box can't resolve the fake host). The transport selection logic is what we're asserting, not I/O.
+vi.mock('nodemailer', () => ({
+  createTransport: vi.fn(() => ({
+    sendMail: vi.fn(async () => ({ messageId: 'smtp-test-id' })),
+  })),
+}));
+
 function fakeLogger(): Logger {
   return { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn(), child: vi.fn() } as unknown as Logger;
 }

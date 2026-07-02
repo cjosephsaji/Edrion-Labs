@@ -5,13 +5,17 @@ import { PortalController } from './portal.controller';
 import { PortalAuthService } from './portal-auth.service';
 import { PortalRepository } from './portal.repository';
 import { PortalDashboardService } from './portal-dashboard.service';
+import { PortalSearchService } from './portal-search.service';
+import { PortalSearchRepository } from './portal-search.repository';
 import { InstitutionAuthGuard } from './portal-auth.guard';
 import { InstitutionPermissionsGuard } from './portal-permissions.guard';
 import { PortalAuthController } from './portal-auth.controller';
 import { PortalAuthLoginService } from './portal-auth-login.service';
+import { PortalCredentialService } from './portal-credential.service';
 import { PortalSessionService } from './portal-session.service';
 import { PortalInviteService } from './portal-invite.service';
 import { EmailService } from './email.service';
+import { RegistrationEmailService } from '../registration/registration-email.service';
 import { InstitutionRateLimiter } from './portal-rate-limit';
 import { PortalTenantInterceptor } from './portal-tenant.interceptor';
 import { SupabaseVerifier } from '../authentication/supabase-verifier';
@@ -42,6 +46,8 @@ import { AssignmentsRepository } from './assignments.repository';
 import { FeesController } from './fees.controller';
 import { FeesService } from './fees.service';
 import { FeesRepository } from './fees.repository';
+import { ExpensesController } from './expenses.controller';
+import { ExpensesService } from './expenses.service';
 import { PayrollController } from './payroll.controller';
 import { PayrollService } from './payroll.service';
 import { PayrollRepository } from './payroll.repository';
@@ -60,6 +66,11 @@ import { HostelRepository } from './hostel.repository';
 import { AnnouncementsController, NotificationsController } from './announcements.controller';
 import { AnnouncementsService, NotificationsService } from './announcements.service';
 import { AnnouncementsRepository } from './announcements.repository';
+import { RecipientResolver } from './recipient-resolver.service';
+import { RecipientsController, RecipientsService } from './recipients.controller';
+import { ConversationsController, ConversationsService } from './conversations.controller';
+import { AttachmentStorageService } from './attachment-storage.service';
+import { AttentionController, AttentionService } from './attention.controller';
 import { MessagesController } from './messaging.controller';
 import { MessagingService } from './messaging.service';
 import { MessagingRepository } from './messaging.repository';
@@ -85,6 +96,7 @@ import { PortalAuditService } from './portal-audit.service';
 import { PortalAuditRepository } from './portal-audit.repository';
 // Phase 13: functional staff modules
 import { PortalCrudEngine } from './portal-crud.engine';
+import { PortalEntityResolver } from './portal-entity-resolver';
 import { HealthController } from './health.controller';
 import { HealthService } from './health.service';
 import { CounselingController } from './counseling.controller';
@@ -100,6 +112,20 @@ import { SecurityService } from './security.service';
 import { ItController } from './it.controller';
 import { ItService } from './it.service';
 import { DirectoryController, DirectoryService } from './directory.controller';
+import { OnboardingController } from './onboarding.controller';
+import { OnboardingService } from './onboarding.service';
+import { OnboardingRepository } from './onboarding.repository';
+import { PortalCampusesController } from './portal-campuses.controller';
+import { PortalCampusesService } from './portal-campuses.service';
+import { DocumentsController } from './documents.controller';
+import { DocumentsService } from './documents.service';
+import { BillingController } from './billing.controller';
+import { BillingService } from './billing.service';
+import { ConductController } from './conduct.controller';
+import { ConductService } from './conduct.service';
+import { StudentProfileController } from './student-profile.controller';
+import { StudentProfileService } from './student-profile.service';
+import { AdmissionInfoController, AdmissionInfoService } from './admission-info.controller';
 
 /**
  * Institution Portal module — the tenant-facing API. Separate from the platform control-plane
@@ -119,6 +145,7 @@ import { DirectoryController, DirectoryService } from './directory.controller';
     GradebookController,
     AssignmentsController,
     FeesController,
+    ExpensesController,
     PayrollController,
     LibraryController,
     TransportController,
@@ -142,17 +169,31 @@ import { DirectoryController, DirectoryService } from './directory.controller';
     SecurityController,
     ItController,
     DirectoryController,
+    RecipientsController,
+    ConversationsController,
+    AttentionController,
+    OnboardingController,
+    PortalCampusesController,
+    DocumentsController,
+    BillingController,
+    ConductController,
+    StudentProfileController,
+    AdmissionInfoController,
   ],
   providers: [
     PortalAuthService,
     PortalSessionService,
     PortalAuthLoginService,
+    PortalCredentialService,
     PortalInviteService,
     EmailService,
+    RegistrationEmailService,
     InstitutionRateLimiter,
     SupabaseVerifier,
     PortalRepository,
     PortalDashboardService,
+    PortalSearchService,
+    PortalSearchRepository,
     { provide: APP_INTERCEPTOR, useClass: PortalTenantInterceptor },
     AcademicsService,
     AcademicsRepository,
@@ -171,6 +212,7 @@ import { DirectoryController, DirectoryService } from './directory.controller';
     AssignmentsService,
     AssignmentsRepository,
     FeesService,
+    ExpensesService,
     FeesRepository,
     PayrollService,
     PayrollRepository,
@@ -185,6 +227,11 @@ import { DirectoryController, DirectoryService } from './directory.controller';
     AnnouncementsService,
     NotificationsService,
     AnnouncementsRepository,
+    RecipientResolver,
+    RecipientsService,
+    ConversationsService,
+    AttachmentStorageService,
+    AttentionService,
     MessagingService,
     MessagingRepository,
     ReportsService,
@@ -204,6 +251,7 @@ import { DirectoryController, DirectoryService } from './directory.controller';
     InstitutionAuthGuard,
     InstitutionPermissionsGuard,
     // Phase 13: functional staff modules
+    PortalEntityResolver,
     PortalCrudEngine,
     HealthService,
     CounselingService,
@@ -213,6 +261,14 @@ import { DirectoryController, DirectoryService } from './directory.controller';
     SecurityService,
     ItService,
     DirectoryService,
+    OnboardingService,
+    OnboardingRepository,
+    PortalCampusesService,
+    DocumentsService,
+    BillingService,
+    ConductService,
+    StudentProfileService,
+    AdmissionInfoService,
   ],
   exports: [PortalAuthService],
 })

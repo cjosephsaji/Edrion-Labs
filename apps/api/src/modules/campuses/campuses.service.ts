@@ -13,6 +13,7 @@ import type { Campus } from '@edrion/database';
 import { AUDIT_WRITER } from '../../common/tokens';
 import { baseAudit, type ActionContext } from '../../common/action-context';
 import { CampusesRepository } from './campuses.repository';
+import { buildCampusCode } from './campus-code';
 
 const MODULE = 'campuses';
 
@@ -48,10 +49,13 @@ export class CampusesService {
       customDiscountBps: input.customDiscountBps,
     });
 
+    // Codes are system-assigned and immutable — generate a unique one for this institution.
+    const code = buildCampusCode(input.name, await this.repo.existingCodes(input.institutionId));
+
     const campus = await this.repo.insert({
       institutionId: input.institutionId,
       name: input.name,
-      code: input.code,
+      code,
       address: input.address ?? null,
       contact: input.contact ?? null,
       timezoneOverride: input.timezoneOverride ?? null,

@@ -6,6 +6,7 @@ import type {
   CreateHostelBlockInput,
   CreateHostelRoomInput,
   HostelBlocksListQuery,
+  HostelHostellersListQuery,
   HostelRoomsListQuery,
   UpdateHostelBlockInput,
   UpdateHostelRoomInput,
@@ -39,6 +40,12 @@ export class HostelService {
   async listBlocks(ctx: PortalActionContext, q: HostelBlocksListQuery) {
     const f = this.filter(ctx);
     return this.paginate(await this.repo.listBlocks(ctx.principal.institutionId, f.campusIds, q), q);
+  }
+
+  /** Institution-wide roster of current residents (active allocations). Read-only. */
+  async listHostellers(ctx: PortalActionContext, q: HostelHostellersListQuery) {
+    const f = this.filter(ctx);
+    return this.paginate(await this.repo.listHostellers(ctx.principal.institutionId, f.campusIds, q), q);
   }
 
   async createBlock(ctx: PortalActionContext, input: CreateHostelBlockInput) {

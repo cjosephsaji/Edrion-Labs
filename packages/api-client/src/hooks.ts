@@ -73,6 +73,11 @@ import type {
   EffectiveAiPolicyDto,
   AiRunDetailDto,
   AiRunPage,
+  RegistrationList,
+  RegistrationStatusSummary,
+  RegistrationDetailDto,
+  RegistrationRequestDto,
+  RegistrationApprovalResultDto,
 } from './types';
 
 /** A fresh idempotency key for a financial mutation. */
@@ -122,6 +127,9 @@ export const queryKeys = {
   feature: (id: string) => ['features', id] as const,
   featureResolve: (id: string, ctx: Record<string, unknown>) =>
     ['features', id, 'resolve', ctx] as const,
+  registrationRequests: (params: Record<string, unknown>) => ['registration-requests', params] as const,
+  registrationSummary: ['registration-requests', 'summary'] as const,
+  registrationRequest: (id: string) => ['registration-requests', id] as const,
 };
 
 export function useCurrentEmployee(options?: Partial<UseQueryOptions<CurrentEmployee>>) {
@@ -553,7 +561,7 @@ export function useCampusChargePreview() {
 export interface CreateCampusVars {
   institutionId: string;
   name: string;
-  code: string;
+  // `code` is system-generated server-side (immutable) — not part of the create payload.
   timezoneOverride?: string;
   studentCapacity?: number;
   openingDate?: string;
@@ -1635,5 +1643,125 @@ export function useSystemHealth() {
     queryKey: ['system', 'health'] as const,
     queryFn: () => client.get<SystemHealthDto>('/system/health'),
     refetchInterval: 30 * 1000,
+  });
+}
+
+// --- Institution registration requests (reviewer workspace) ------------------
+
+export interface RegistrationsFilter {
+  search?: string;
+  status?: string;
+  type?: string;
+  country?: string;
+  reviewerId?: string;
+  minStudents?: number;
+  maxStudents?: number;
+  submittedFrom?: string;
+  submittedTo?: string;
+  page?: number;
+  pageSize?: number;
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
+}
+
+export function useRegistrationRequests(filter: RegistrationsFilter) {
+  const client = useApiClient();
+  const params = filter as Record<string, unknown>;
+  return useQuery({
+    queryKey: queryKeys.registrationRequests(params),
+    queryFn: () => client.get<RegistrationList>(`/registration-requests${qs(params)}`),
+    placeholderData: (prev) => prev,
+  });
+}
+
+export function useRegistrationsSummary() {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.registrationSummary,
+    queryFn: () => client.get<RegistrationStatusSummary>('/registration-requests/summary'),
+  });
+}
+
+export function useRegistrationRequest(id: string) {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.registrationRequest(id),
+    queryFn: () => client.get<RegistrationDetailDto>(`/registration-requests/${id}`),
+    enabled: Boolean(id),
+  });
+}
+
+/** Invalidate the list, the summary and a request's detail after a reviewer mutation. */
+function useRegistrationInvalidate(id: string) {
+  const qc = useQueryClient();
+  return () => {
+    void qc.invalidateQueries({ queryKey: ['registration-requests'] });
+    void qc.invalidateQueries({ queryKey: queryKeys.registrationRequest(id) });
+  };
+}
+
+export function useStartRegistrationReview(id: string) {
+  const client = useApiClient();
+  const invalidate = useRegistrationInvalidate(id);
+  return useMutation({
+    mutationFn: (input: { version: number }) =>
+      client.post<RegistrationRequestDto>(`/registration-requests/${id}/start-review`, input),
+    onSuccess: invalidate,
+  });
+}
+
+export function useAssignRegistrationReviewer(id: string) {
+  const client = useApiClient();
+  const invalidate = useRegistrationInvalidate(id);
+  return useMutation({
+    mutationFn: (input: { reviewerId: string; version: number }) =>
+      client.post<RegistrationRequestDto>(`/registration-requests/${id}/assign`, input),
+    onSuccess: invalidate,
+  });
+}
+
+export function useAddRegistrationNote(id: string) {
+  const client = useApiClient();
+  const invalidate = useRegistrationInvalidate(id);
+  return useMutation({
+    mutationFn: (input: { note: string }) =>
+      client.post<RegistrationRequestDto>(`/registration-requests/${id}/notes`, input),
+    onSuccess: invalidate,
+  });
+}
+
+export interface ApproveRegistrationPayload {
+  version: number;
+  supportTier?: 'standard' | 'priority' | 'enterprise';
+  planKey?: string;
+  campus: { name: string; code?: string };
+  admin: {
+    fullName: string;
+    email: string;
+    roleKeys?: string[];
+    credentialDelivery?: 'activation' | 'temporary_password';
+  };
+  note?: string;
+}
+
+export function useApproveRegistration(id: string) {
+  const client = useApiClient();
+  const invalidate = useRegistrationInvalidate(id);
+  return useMutation({
+    mutationFn: (input: ApproveRegistrationPayload) =>
+      client.post<RegistrationApprovalResultDto>(`/registration-requests/${id}/approve`, input),
+    onSuccess: () => {
+      invalidate();
+    },
+  });
+}
+
+export function useRejectRegistration(id: string) {
+  const client = useApiClient();
+  const invalidate = useRegistrationInvalidate(id);
+  return useMutation({
+    mutationFn: (input: { version: number; reason: string; internalNote?: string }) =>
+      client.post<RegistrationRequestDto>(`/registration-requests/${id}/reject`, input),
+    onSuccess: invalidate,
   });
 }

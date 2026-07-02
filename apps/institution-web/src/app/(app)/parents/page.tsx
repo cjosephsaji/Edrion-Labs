@@ -2,6 +2,7 @@
 import { type Column } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
+import { UserProfileDialog } from '@/components/people/user-profile-dialog';
 import { usePeopleList, usePeopleMutations, type ParentRow } from '@/lib/people';
 
 const PERMISSIONS: ResourcePermissions = {
@@ -15,7 +16,7 @@ const fields: FieldDef[] = [
   { name: 'firstName', label: 'First name', type: 'text', required: true },
   { name: 'lastName', label: 'Last name', type: 'text', required: true },
   { name: 'email', label: 'Email', type: 'text', nullable: true, placeholder: 'Optional' },
-  { name: 'phone', label: 'Phone', type: 'text', nullable: true, placeholder: 'Optional' },
+  { name: 'phone', label: 'Phone', type: 'phone', nullable: true },
   { name: 'occupation', label: 'Occupation', type: 'text', nullable: true, placeholder: 'Optional' },
   { name: 'address', label: 'Address', type: 'textarea', nullable: true, placeholder: 'Optional' },
 ];
@@ -40,6 +41,7 @@ export default function ParentsPage() {
       useList={usePeopleList}
       useMutations={usePeopleMutations}
       rowLabel={(r) => `${r.firstName} ${r.lastName}`}
+      renderDetail={(ctx) => <UserProfileDialog kind="parent" {...ctx} />}
       toFormValues={(r) => ({
         firstName: r.firstName,
         lastName: r.lastName,

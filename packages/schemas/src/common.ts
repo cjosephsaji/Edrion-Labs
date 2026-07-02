@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { normalizePhone } from './geo/phone';
 
 /** Build a Zod enum from a `const` record (our enum style in @edrion/shared-types). */
 export function zEnumFromConst<T extends Record<string, string>>(obj: T) {
@@ -46,8 +47,18 @@ export const reasonSchema = z
 export const versionSchema = z.number().int().nonnegative();
 
 export const emailSchema = z.string().trim().toLowerCase().email();
+/**
+ * Phone — normalized to E.164 via libphonenumber when the value parses. Legacy values
+ * that don't parse are passed through (kept editable) rather than hard-rejected; the
+ * strict {@link e164PhoneSchema} in ./geo is used for greenfield account/auth flows.
+ * No generic regex is used as the primary validator.
+ */
 export const phoneSchema = z
   .string()
   .trim()
-  .regex(/^\+?[0-9 ()-]{6,20}$/, 'Invalid phone number')
+  .transform((s) => {
+    if (s === '') return undefined;
+    const res = normalizePhone(s);
+    return res.ok && res.e164 ? res.e164 : s;
+  })
   .optional();

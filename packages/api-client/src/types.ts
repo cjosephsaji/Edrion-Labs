@@ -4,6 +4,8 @@ import type {
   InstitutionType,
   OnboardingStatus,
   PaginatedResult,
+  RegistrationReviewAction,
+  RegistrationStatus,
   SupportTier,
 } from '@edrion/shared-types';
 
@@ -991,4 +993,127 @@ export interface SystemHealthDto {
     recent: BackgroundJobRunDto[];
   };
   queues: QueueCountsDto[];
+}
+
+// ── Institution registration & approval ──────────────────────────────────────
+
+export interface RegInstitutionInfoDto {
+  legalName: string;
+  displayName: string;
+  type: InstitutionType;
+  website?: string;
+  yearEstablished?: number;
+  registrationNumber?: string;
+  logoUrl?: string;
+}
+export interface RegLocationDto {
+  country: string;
+  region?: string;
+  city: string;
+  address: string;
+  postalCode?: string;
+  timezone: string;
+}
+export interface RegCampusInfoDto {
+  currentCampuses: number;
+  expectedCampusesNextYear?: number;
+  firstCampusName: string;
+  expectedStudents: number;
+  expectedStaff?: number;
+}
+export interface RegPrimaryContactDto {
+  fullName: string;
+  jobTitle?: string;
+  email: string;
+  phone?: string;
+  preferredContactMethod?: string;
+}
+export interface RegSubscriptionDto {
+  preferredPlan?: string;
+  launchTimeline?: string;
+  currentErp?: string;
+  hearAboutUs?: string;
+  additionalRequirements?: string;
+}
+export interface RegConsentDto {
+  termsAccepted: boolean;
+  privacyAccepted: boolean;
+  marketingOptIn?: boolean;
+  acceptedAt?: string;
+}
+
+export interface RegistrationRequestDto {
+  id: string;
+  publicRef: string | null;
+  status: RegistrationStatus;
+  legalName: string | null;
+  displayName: string | null;
+  type: InstitutionType | null;
+  country: string | null;
+  region: string | null;
+  contactName: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  campusesCount: number | null;
+  expectedStudents: number | null;
+  preferredPlanKey: string | null;
+  institutionInfo: RegInstitutionInfoDto | null;
+  location: RegLocationDto | null;
+  campusInfo: RegCampusInfoDto | null;
+  primaryContact: RegPrimaryContactDto | null;
+  subscription: RegSubscriptionDto | null;
+  consent: RegConsentDto | null;
+  emailVerifiedAt: string | null;
+  verifiedEmail: string | null;
+  assignedReviewerId: string | null;
+  decidedBy: string | null;
+  decisionAt: string | null;
+  rejectionReason: string | null;
+  linkedInstitutionId: string | null;
+  submittedAt: string | null;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type RegistrationList = PaginatedResult<RegistrationRequestDto>;
+export type RegistrationStatusSummary = Record<string, number>;
+
+export interface RegistrationReviewDto {
+  id: string;
+  requestId: string;
+  reviewerId: string | null;
+  action: RegistrationReviewAction;
+  fromStatus: string | null;
+  toStatus: string | null;
+  note: string | null;
+  rejectionReason: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface RegistrationAuditEventDto {
+  id: string;
+  action: string;
+  actorType: string;
+  actorName: string | null;
+  result: string;
+  riskLevel: string;
+  ip: string | null;
+  occurredAt: string;
+  previousState: Record<string, unknown> | null;
+  newState: Record<string, unknown> | null;
+}
+
+export interface RegistrationDetailDto {
+  request: RegistrationRequestDto;
+  reviews: RegistrationReviewDto[];
+  auditEvents: RegistrationAuditEventDto[];
+}
+
+export interface RegistrationApprovalResultDto {
+  institutionId: string;
+  institutionPublicId: string;
+  adminUserId: string;
+  publicRef: string | null;
 }

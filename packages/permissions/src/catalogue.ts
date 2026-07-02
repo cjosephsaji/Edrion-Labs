@@ -34,6 +34,21 @@ export const PERMISSIONS: readonly PermissionDef[] = [
   def('institutions.archive', 'Institutions', 'Archive an institution.', true),
   def('institutions.access_portal', 'Institutions', 'Start a support-access session.', true),
 
+  // Registration requests (public institution onboarding funnel → reviewer workflow)
+  def('registration.view', 'Registration', 'View institution registration requests and their details.'),
+  def(
+    'registration.review',
+    'Registration',
+    'Start review, assign a reviewer and add internal notes on registration requests.',
+  ),
+  def(
+    'registration.approve',
+    'Registration',
+    'Approve a registration and provision the institution + primary administrator.',
+    true,
+  ),
+  def('registration.reject', 'Registration', 'Reject a registration request.', true),
+
   // Campuses
   def('campuses.view', 'Campuses', 'View campuses.'),
   def('campuses.create', 'Campuses', 'Add campuses (may generate charges).', true),

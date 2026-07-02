@@ -11,6 +11,12 @@ import { createDatabase, closeDatabase } from './client';
 import * as s from './schema/index';
 
 /**
+ * Dev-only bcrypt hash of the password `password` (cost 10), so the seeded owner can sign in via the
+ * native email+password login locally without a hosted Supabase. NEVER use in production.
+ */
+const DEV_PASSWORD_HASH = '$2a$10$ByZT0oBbpXQboXG7ZlkzbOWfBfx9uAwu6Zf0HAt/G3yIcji9Rh.WG';
+
+/**
  * Development seed. Resets app tables (NOT a production operation) and inserts a coherent
  * dataset: permission catalogue, roles, a platform owner, plans, institutions with campuses +
  * subscriptions, sample users and a few activity rows. Re-runnable.
@@ -74,6 +80,8 @@ async function seed() {
       fullName: 'Platform Owner',
       title: 'Platform Owner',
       status: 'active',
+      // Dev password login: owner@edrion.dev / password (see DEV_PASSWORD_HASH).
+      passwordHash: DEV_PASSWORD_HASH,
       mfaEnrolled: true,
       // Dev convenience: fresh recent-auth so sensitive actions aren't blocked before the
       // MFA re-auth flow exists. In production this is set by an actual authentication.
@@ -187,6 +195,9 @@ async function seed() {
       email: `admin@${slug(sample.name)}.edu`,
       fullName: 'Priya Menon',
       status: 'active',
+      // Dev password login: admin@<slug>.edu / password (see DEV_PASSWORD_HASH).
+      passwordHash: DEV_PASSWORD_HASH,
+      activatedAt: new Date(),
     });
 
     await db.insert(s.activityEvents).values({

@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { Button, Label } from '@edrion/ui';
+import { Button, Label, TimezoneSelect } from '@edrion/ui';
 import {
   ApiClientError,
   useCampusChargePreview,
@@ -45,7 +45,6 @@ export function AddCampusDialog({
   const [error, setError] = useState<string | null>(null);
 
   const [name, setName] = useState('');
-  const [code, setCode] = useState('');
   const [capacity, setCapacity] = useState('');
   const [timezone, setTimezone] = useState('');
   const [effectiveDate, setEffectiveDate] = useState('');
@@ -57,7 +56,6 @@ export function AddCampusDialog({
     setCharge(null);
     setError(null);
     setName('');
-    setCode('');
     setCapacity('');
     setTimezone('');
     setEffectiveDate('');
@@ -70,9 +68,6 @@ export function AddCampusDialog({
   function runPreview() {
     setError(null);
     if (name.trim().length < 2) return setError('Campus name is required (min 2 characters).');
-    if (!/^[A-Za-z0-9_-]{2,24}$/.test(code.trim())) {
-      return setError('Code: 2–24 chars, letters, numbers, dash or underscore only.');
-    }
     if (discountBps !== undefined && (discountBps < 0 || discountBps > 10000)) {
       return setError('Discount must be between 0 and 100%.');
     }
@@ -104,7 +99,6 @@ export function AddCampusDialog({
       {
         institutionId,
         name: name.trim(),
-        code: code.trim(),
         studentCapacity: capacity ? Number(capacity) : undefined,
         timezoneOverride: timezone.trim() || undefined,
         effectiveBillingDate: toIso(effectiveDate),
@@ -152,10 +146,7 @@ export function AddCampusDialog({
               <div>
                 <Label htmlFor="campus-name">Campus name</Label>
                 <input id="campus-name" value={name} onChange={(e) => setName(e.target.value)} className={fieldClass} />
-              </div>
-              <div>
-                <Label htmlFor="campus-code">Code</Label>
-                <input id="campus-code" value={code} onChange={(e) => setCode(e.target.value)} placeholder="MAIN-01" className={fieldClass} />
+                <p className="mt-1 text-xs text-text-muted">A unique campus code is generated automatically.</p>
               </div>
               <div>
                 <Label htmlFor="campus-capacity">Student capacity</Label>
@@ -163,7 +154,7 @@ export function AddCampusDialog({
               </div>
               <div>
                 <Label htmlFor="campus-tz">Timezone override</Label>
-                <input id="campus-tz" value={timezone} onChange={(e) => setTimezone(e.target.value)} placeholder="Asia/Kolkata" className={fieldClass} />
+                <TimezoneSelect id="campus-tz" value={timezone} onChange={setTimezone} />
               </div>
               <div>
                 <Label htmlFor="campus-effective">Effective billing date</Label>
@@ -183,7 +174,7 @@ export function AddCampusDialog({
           <>
             <div className="rounded-md border border-border bg-surface p-3 text-sm">
               <div className="font-medium text-text-primary">{name.trim()}</div>
-              <div className="text-xs text-text-muted">Code {code.trim()}</div>
+              <div className="text-xs text-text-muted">Code auto-assigned on creation</div>
             </div>
             <CampusChargeBreakdown charge={charge} />
             <button

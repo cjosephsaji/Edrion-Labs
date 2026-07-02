@@ -40,6 +40,10 @@ export const DEFAULT_ROLES: readonly RoleDef[] = [
       'institutions.create',
       'institutions.update',
       'institutions.activate',
+      'registration.view',
+      'registration.review',
+      'registration.approve',
+      'registration.reject',
       'campuses.view',
       'campuses.create',
       'campuses.update',
@@ -60,6 +64,7 @@ export const DEFAULT_ROLES: readonly RoleDef[] = [
     permissions: view(
       'platform.dashboard.view',
       'institutions.view',
+      'registration.view',
       'institutions.access_portal',
       'campuses.view',
       'institution_users.view',
@@ -78,6 +83,7 @@ export const DEFAULT_ROLES: readonly RoleDef[] = [
     permissions: view(
       'platform.dashboard.view',
       'institutions.view',
+      'registration.view',
       'institutions.update',
       'campuses.view',
       'institution_users.view',
@@ -189,6 +195,7 @@ export const DEFAULT_ROLES: readonly RoleDef[] = [
     permissions: view(
       'platform.dashboard.view',
       'institutions.view',
+      'registration.view',
       'campuses.view',
       'institution_users.view',
       'independent_users.view',

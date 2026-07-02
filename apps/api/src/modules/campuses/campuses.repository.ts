@@ -34,6 +34,15 @@ export class CampusesRepository {
     return Number(rows[0]?.value ?? 0);
   }
 
+  /** Codes already taken within an institution — feeds the auto-generated, unique campus code. */
+  async existingCodes(institutionId: string): Promise<string[]> {
+    const rows = await this.db
+      .select({ code: schema.campuses.code })
+      .from(schema.campuses)
+      .where(eq(schema.campuses.institutionId, institutionId));
+    return rows.map((r) => r.code);
+  }
+
   async findById(id: string): Promise<Campus | undefined> {
     const [row] = await this.db.select().from(schema.campuses).where(eq(schema.campuses.id, id)).limit(1);
     return row;

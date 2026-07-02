@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Star, Trash2 } from 'lucide-react';
-import { Badge, Button, Drawer, Select, Skeleton } from '@edrion/ui';
+import { Badge, Button, Combobox, Drawer, Select, Skeleton } from '@edrion/ui';
 import { usePermissions } from '@/lib/permissions';
 import { useGuardianMutations, useGuardians, useParentOptions } from '@/lib/people';
 import { PortalClientError } from '@/lib/portal-client';
@@ -75,12 +75,20 @@ export function StudentGuardiansDrawer({
 
         {canManage && (
           <div className="flex flex-col gap-2 rounded-md border border-border p-3">
-            <Select
-              value={parentId}
-              onChange={(e) => setParentId(e.target.value)}
+            <Combobox
+              value={parentId || null}
+              onChange={setParentId}
               placeholder={available.length ? 'Choose a parent…' : 'All parents linked'}
-              options={available.map((p) => ({ value: p.id, label: `${p.firstName} ${p.lastName}` }))}
+              searchPlaceholder="Search parents by name, email or phone…"
+              emptyText="No matching parents"
               disabled={available.length === 0}
+              aria-label="Parent"
+              options={available.map((p) => ({
+                value: p.id,
+                label: `${p.firstName} ${p.lastName}`,
+                hint: p.phone ?? p.email ?? undefined,
+                keywords: [p.email, p.phone].filter((v): v is string => !!v),
+              }))}
             />
             <div className="flex items-center gap-2">
               <Select

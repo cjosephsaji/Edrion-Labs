@@ -10,6 +10,7 @@ import type { AuditWriter, AuditEventInput } from '@edrion/audit';
 import type {
   AdmissionsListQuery,
   CreateAdmissionInput,
+  DecideAdmissionInput,
   EnrolAdmissionInput,
   UpdateAdmissionInput,
 } from '@edrion/schemas';
@@ -17,7 +18,17 @@ import { AUDIT_WRITER } from '../../common/tokens';
 import type { Page } from './academics.repository';
 import type { ListResult } from './academics.service';
 import { AdmissionsRepository, type AdmissionRefTable } from './admissions.repository';
+import { AnnouncementsRepository } from './announcements.repository';
+import { EmailService } from './email.service';
 import { basePortalAudit, type PortalActionContext } from './portal-action-context';
+
+/** Human-facing label for each decision status (used in the guardian notification). */
+const DECISION_LABEL: Record<string, string> = {
+  accepted: 'Accepted',
+  rejected: 'Not successful',
+  waitlisted: 'Waitlisted',
+  info_requested: 'More information needed',
+};
 
 const MODULE = 'portal-admissions';
 
@@ -34,7 +45,9 @@ const MODULE = 'portal-admissions';
 export class AdmissionsService {
   constructor(
     private readonly repo: AdmissionsRepository,
+    private readonly announcements: AnnouncementsRepository,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
+    private readonly email: EmailService,
   ) {}
 
   async list(ctx: PortalActionContext, q: AdmissionsListQuery) {
@@ -44,6 +57,7 @@ export class AdmissionsService {
 
   async create(ctx: PortalActionContext, input: CreateAdmissionInput) {
     await this.assertOptional(ctx, 'gradeLevels', input.gradeLevelId, 'grade level');
+    await this.assertOptional(ctx, 'academicYears', input.academicYearId, 'academic year');
     const campusId = this.createCampusId(ctx.scope);
     const row = await this.repo.insert({
       institutionId: ctx.principal.institutionId,
@@ -56,6 +70,7 @@ export class AdmissionsService {
       email: input.email ?? null,
       phone: input.phone ?? null,
       gradeLevelId: input.gradeLevelId ?? null,
+      academicYearId: input.academicYearId ?? null,
       previousSchool: input.previousSchool ?? null,
       guardianName: input.guardianName ?? null,
       guardianPhone: input.guardianPhone ?? null,
@@ -76,6 +91,7 @@ export class AdmissionsService {
     const existing = await this.repo.find(id, ctx.principal.institutionId);
     this.assertInScope(existing?.campusId ?? null, existing, f);
     await this.assertOptional(ctx, 'gradeLevels', input.gradeLevelId, 'grade level');
+    await this.assertOptional(ctx, 'academicYears', input.academicYearId, 'academic year');
     const statusChanged = input.status !== undefined && input.status !== existing!.status;
     const updated = await this.repo.update(id, input.version, {
       applicationNo: input.applicationNo ?? existing!.applicationNo,
@@ -86,6 +102,7 @@ export class AdmissionsService {
       email: input.email === undefined ? existing!.email : input.email,
       phone: input.phone === undefined ? existing!.phone : input.phone,
       gradeLevelId: input.gradeLevelId === undefined ? existing!.gradeLevelId : input.gradeLevelId,
+      academicYearId: input.academicYearId === undefined ? existing!.academicYearId : input.academicYearId,
       previousSchool: input.previousSchool === undefined ? existing!.previousSchool : input.previousSchool,
       guardianName: input.guardianName === undefined ? existing!.guardianName : input.guardianName,
       guardianPhone: input.guardianPhone === undefined ? existing!.guardianPhone : input.guardianPhone,
@@ -103,6 +120,71 @@ export class AdmissionsService {
       newState: { name: this.fullName(updated), status: updated.status },
     });
     return updated;
+  }
+
+  /**
+   * Record a decision on an application (accept/reject/waitlist/request-info). Sets status +
+   * decision_note + decision_date, audits the action, and — unless `notify` is false — fans out a
+   * notification to the guardian (reusing the Phase-9 notifications feed, the decision→notify bridge).
+   */
+  async decide(ctx: PortalActionContext, id: string, input: DecideAdmissionInput) {
+    const f = this.filter(ctx);
+    const existing = await this.repo.find(id, ctx.principal.institutionId);
+    this.assertInScope(existing?.campusId ?? null, existing, f);
+    if (existing!.status === 'enrolled') {
+      throw new BadRequestException({
+        code: 'ALREADY_ENROLLED',
+        message: 'This applicant is already enrolled; a decision can no longer be recorded.',
+      });
+    }
+    const note = input.note ?? existing!.decisionNote ?? null;
+    const updated = await this.repo.update(id, input.version, {
+      status: input.decision,
+      decisionNote: note,
+      decisionDate: this.today(),
+      updatedBy: ctx.principal.institutionUserId,
+    });
+    if (!updated) throw this.versionConflict();
+
+    // Public-funnel applications carry the OTP-verified CONTACT email in `email`; the guardian step
+    // often has no email. Fall back so a decision still notifies whoever's email is on file.
+    const recipientEmail = updated.guardianEmail ?? updated.email;
+    let notificationId: string | null = null;
+    if (input.notify && recipientEmail) {
+      const label = DECISION_LABEL[input.decision] ?? input.decision;
+      const notification = await this.announcements.insertNotification({
+        institutionId: ctx.principal.institutionId,
+        campusId: updated.campusId,
+        title: `Admission update: ${label}`,
+        body: this.decisionBody(label, this.fullName(updated), updated.applicationNo, note),
+        kind: 'alert',
+        audience: 'parents',
+        status: 'unread',
+        recipientCount: 1,
+        targetSummary: recipientEmail,
+        createdBy: ctx.principal.institutionUserId,
+      });
+      notificationId = notification.id;
+    }
+
+    // Email the applicant the outcome (enabled by default for every decision).
+    if (input.notify && recipientEmail) {
+      const label = DECISION_LABEL[input.decision] ?? input.decision;
+      await this.email
+        .send({
+          to: recipientEmail,
+          subject: `Admission update for ${updated.applicationNo}: ${label}`,
+          text: `Hello,\n\nThere is an update on admission application ${updated.applicationNo} for ${this.fullName(updated)}: ${label}.${note ? `\n\n${note}` : ''}\n\nThank you.`,
+          html: `<p>Hello,</p><p>There is an update on admission application <strong>${updated.applicationNo}</strong> for ${this.fullName(updated)}: <strong>${label}</strong>.</p>${note ? `<p>${note}</p>` : ''}`,
+        })
+        .catch(() => undefined);
+    }
+
+    await this.write(ctx, 'admission.decision', 'admission_application', id, updated.campusId, {
+      previousState: { status: existing!.status },
+      newState: { status: updated.status, decision: input.decision, notificationId, notified: !!notificationId },
+    });
+    return { application: updated, notificationId };
   }
 
   async delete(ctx: PortalActionContext, id: string, version: number) {
@@ -190,7 +272,12 @@ export class AdmissionsService {
   }
 
   private isDecision(status: string): boolean {
-    return ['accepted', 'rejected', 'waitlisted', 'withdrawn'].includes(status);
+    return ['accepted', 'rejected', 'waitlisted', 'withdrawn', 'info_requested'].includes(status);
+  }
+
+  private decisionBody(label: string, name: string, applicationNo: string, note: string | null): string {
+    const head = `The application ${applicationNo} for ${name} has been updated to: ${label}.`;
+    return note ? `${head}\n\n${note}` : head;
   }
 
   private assertInScope<T>(campusId: string | null, row: T | undefined, filter: ScopeFilter): asserts row is T {

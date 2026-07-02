@@ -43,6 +43,48 @@
       transform: translateY(0);
     }
   }
+  /* A chat message bubble entering. Plays once when the node mounts (keyed by message id), so
+     existing bubbles don't re-animate on the thread's polling refetch. */
+  .message-in {
+    animation: message-in 200ms var(--ease-standard);
+  }
+  @keyframes message-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  /* The whole thread fading/sliding in when a conversation is opened (keyed remount). */
+  .chat-open {
+    animation: chat-open 220ms var(--ease-standard);
+  }
+  @keyframes chat-open {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  /* Pulsing dot while recording a voice message. */
+  .rec-pulse {
+    animation: rec-pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes rec-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.35;
+    }
+  }
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: var(--border-strong) transparent;
