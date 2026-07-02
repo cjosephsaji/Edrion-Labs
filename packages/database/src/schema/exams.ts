@@ -1,4 +1,4 @@
-import { date, index, integer, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, date, index, integer, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { campuses } from './campuses';
@@ -73,6 +73,12 @@ export const examSchedules = pgTable(
     maxMarks: integer('max_marks').notNull().default(100),
     passMarks: integer('pass_marks'),
     room: text('room'),
+    /** Parent-portal datesheet fields (§4.7): syllabus note, hall, seat info. */
+    syllabusNote: text('syllabus_note'),
+    hall: text('hall'),
+    seatInfo: text('seat_info'),
+    /** Datesheet visible to parents only when published. */
+    published: boolean('published').notNull().default(false),
     version: integer('version').notNull().default(0),
     ...actorColumns,
     ...timestamps,

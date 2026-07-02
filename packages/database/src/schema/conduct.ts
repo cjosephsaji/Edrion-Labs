@@ -33,6 +33,10 @@ export const studentIncidents = pgTable(
     reporterName: text('reporter_name'),
     /** True when the incident should be visible to the student's guardians. */
     notifyGuardians: boolean('notify_guardians').notNull().default(false),
+    /** Parent-portal behaviour flow (§4.4): published to guardians + acknowledgement tracking. */
+    publishedAt: timestamp('published_at', { withTimezone: true }),
+    parentAckRequired: boolean('parent_ack_required').notNull().default(false),
+    parentAcknowledgedAt: timestamp('parent_acknowledged_at', { withTimezone: true }),
     resolutionNote: text('resolution_note'),
     resolvedAt: timestamp('resolved_at', { withTimezone: true }),
     version: integer('version').notNull().default(0),

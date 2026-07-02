@@ -28,6 +28,10 @@ REVOKE UPDATE, DELETE, TRUNCATE ON security_events FROM edrion_app;
 REVOKE UPDATE, DELETE, TRUNCATE ON activity_events FROM edrion_app;
 -- Webhook deliveries: each attempt is an immutable record (insert/select only).
 REVOKE UPDATE, DELETE, TRUNCATE ON webhook_deliveries FROM edrion_app;
+-- Parent-portal immutable feeds: emergency broadcasts, gate exit events, digest deliveries.
+REVOKE UPDATE, DELETE, TRUNCATE ON parent_emergency_broadcasts FROM edrion_app;
+REVOKE UPDATE, DELETE, TRUNCATE ON gate_exit_events FROM edrion_app;
+REVOKE UPDATE, DELETE, TRUNCATE ON parent_digest_deliveries FROM edrion_app;
 
 -- Belt-and-braces: a trigger that hard-blocks UPDATE/DELETE regardless of role.
 CREATE OR REPLACE FUNCTION edrion_block_mutation() RETURNS trigger AS $$
@@ -39,7 +43,8 @@ $$ LANGUAGE plpgsql;
 DO $$
 DECLARE t text;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['audit_events', 'security_events', 'activity_events', 'webhook_deliveries'] LOOP
+  FOREACH t IN ARRAY ARRAY['audit_events', 'security_events', 'activity_events', 'webhook_deliveries',
+                           'parent_emergency_broadcasts', 'gate_exit_events', 'parent_digest_deliveries'] LOOP
     EXECUTE format('DROP TRIGGER IF EXISTS %I_append_only ON %I', t, t);
     EXECUTE format(
       'CREATE TRIGGER %I_append_only BEFORE UPDATE OR DELETE ON %I

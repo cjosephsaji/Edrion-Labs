@@ -129,7 +129,36 @@ BEGIN
       -- Institution-portal Documents & Policies (Administration).
       ('institution_documents', 'institution_id'),
       -- Institution-portal student conduct log (behaviour incidents + complaints).
-      ('student_incidents', 'institution_id')
+      ('student_incidents', 'institution_id'),
+      -- Parent Portal (all tenant-isolated; guardian-row scoping is enforced by GuardianScopeGuard).
+      ('parent_notices', 'institution_id'),
+      ('parent_notice_receipts', 'institution_id'),
+      ('parent_message_threads', 'institution_id'),
+      ('parent_messages', 'institution_id'),
+      ('parent_emergency_broadcasts', 'institution_id'),
+      ('calendar_events', 'institution_id'),
+      ('parent_consent_forms', 'institution_id'),
+      ('parent_consent_responses', 'institution_id'),
+      ('parent_ptm_events', 'institution_id'),
+      ('parent_ptm_slots', 'institution_id'),
+      ('parent_ptm_bookings', 'institution_id'),
+      ('parent_absence_notes', 'institution_id'),
+      ('parent_notifications', 'institution_id'),
+      ('parent_notification_preferences', 'institution_id'),
+      ('parent_digest_runs', 'institution_id'),
+      ('parent_digest_deliveries', 'institution_id'),
+      ('parent_health_profiles', 'institution_id'),
+      ('student_recognitions', 'institution_id'),
+      ('counseling_disclosures', 'institution_id'),
+      ('pickup_authorizations', 'institution_id'),
+      ('early_leave_requests', 'institution_id'),
+      ('gate_exit_events', 'institution_id'),
+      ('transport_incidents', 'institution_id'),
+      ('hostel_outing_requests', 'institution_id'),
+      ('parent_payment_intents', 'institution_id'),
+      ('student_documents', 'institution_id'),
+      ('document_requests', 'institution_id'),
+      ('profile_change_requests', 'institution_id')
     ) AS t(tbl, col)
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', spec.tbl);

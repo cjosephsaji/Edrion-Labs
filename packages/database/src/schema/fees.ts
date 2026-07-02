@@ -67,6 +67,11 @@ export const feeInvoices = pgTable(
       .notNull()
       .references(() => students.id, { onDelete: 'cascade' }),
     feeStructureId: uuid('fee_structure_id').references(() => feeStructures.id, { onDelete: 'set null' }),
+    /**
+     * Charge origin for the unified parent fees view (§4.3): tuition | fine | transport | hostel | other.
+     * Lets library fines and transport/hostel charges surface alongside tuition without a structure.
+     */
+    source: text('source').notNull().default('tuition'),
     /** Billed total, minor units. */
     amount: integer('amount').notNull().default(0),
     /** Running total paid, minor units. Maintained by the payment bridge; balance = amount − amount_paid. */

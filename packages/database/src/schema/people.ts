@@ -1,4 +1,4 @@
-import { boolean, date, index, integer, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, date, index, integer, jsonb, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { campuses } from './campuses';
@@ -190,6 +190,15 @@ export const studentGuardians = pgTable(
     /** The primary guardian for the student (typically exactly one). */
     isPrimary: boolean('is_primary').notNull().default(false),
     isEmergencyContact: boolean('is_emergency_contact').notNull().default(false),
+    /**
+     * Parent-portal per-guardian visibility restrictions (e.g. a court order blocking fees/health).
+     * Shape: { fees?: boolean; health?: boolean; behavior?: boolean; ... } — true = HIDE that section.
+     * Honored by GuardianScopeGuard when building the guardian context.
+     */
+    visibilityOverrides: jsonb('visibility_overrides')
+      .$type<Record<string, boolean>>()
+      .notNull()
+      .default({}),
     version: integer('version').notNull().default(0),
     ...actorColumns,
     ...timestamps,

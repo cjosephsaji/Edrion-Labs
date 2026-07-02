@@ -48,3 +48,11 @@ export * from './registration';
 export * from './documents';
 // Institution-portal student conduct (behaviour incidents + complaints)
 export * from './conduct';
+// Parent portal: communication, engagement, notifications, wellbeing, safety, money, documents
+export * from './parent-comm';
+export * from './parent-engage';
+export * from './parent-notify';
+export * from './parent-wellbeing';
+export * from './parent-safety';
+export * from './parent-money';
+export * from './parent-docs';
