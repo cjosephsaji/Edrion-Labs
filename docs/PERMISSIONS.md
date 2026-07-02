@@ -6,6 +6,9 @@ code branches on a role name. The catalogue lives in
 the source of truth (mirrored into `platform_permissions`). Default roles are in
 [`roles.ts`](../packages/permissions/src/roles.ts).
 
+For role-by-role notes across both the platform control plane and institution portal, see
+[`ROLE-PERMISSION-DEEP-DIVE.md`](./ROLE-PERMISSION-DEEP-DIVE.md).
+
 ## Evaluation (deterministic, pure)
 
 `evaluatePermissions({ roleKeys, directGrants, directDenies }, roleDefs)`:
