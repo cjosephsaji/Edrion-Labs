@@ -31,6 +31,7 @@ import { ObservabilityModule } from './modules/observability/observability.modul
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
 import { PortalModule } from './modules/portal/portal.module';
+import { ParentPortalModule } from './modules/parent-portal/parent-portal.module';
 import { RegistrationModule } from './modules/registration/registration.module';
 import { AdmissionsPublicModule } from './modules/admissions-public/admissions-public.module';
 
@@ -67,6 +68,7 @@ import { AdmissionsPublicModule } from './modules/admissions-public/admissions-p
     IntegrationsModule,
     MaintenanceModule,
     PortalModule,
+    ParentPortalModule,
     RegistrationModule,
     AdmissionsPublicModule,
   ],
