@@ -1,5 +1,13 @@
 import { z } from 'zod';
+import type { InstitutionType } from '@edrion/shared-types';
 import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+import { institutionTypeSchema } from './institutions';
+import {
+  countryCodeSchema,
+  optionalCountryCodeSchema,
+  timezoneSchema,
+  optionalE164PhoneSchema,
+} from './geo';
 
 /**
  * Institution-Portal SETTINGS tree (Phase 11) request/response contracts: a flat, campus-scoped
@@ -62,3 +70,166 @@ export const updatePortalSettingSchema = z.object({
   version: versionSchema,
 });
 export type UpdatePortalSettingInput = z.infer<typeof updatePortalSettingSchema>;
+
+// =============================================================================
+// Canonical global settings registry (admin-redesign Phase 6)
+// =============================================================================
+//
+// The retained institution-wide settings — the ONLY ones with a genuine global effect. Each is
+// typed + defaulted + documents where it applies. The `effective` API overlays stored overrides on
+// these defaults; the web renders a curated form from this registry (no free-form key/value editor).
+
+export type SettingType = 'string' | 'number' | 'boolean' | 'select';
+export interface SettingDef {
+  /** Registry grouping (also stored as the row `category`). */
+  category: string;
+  key: string;
+  label: string;
+  type: SettingType;
+  options?: { value: string; label: string }[];
+  default: string | number | boolean;
+  /** Where this setting takes effect (shown as help text). */
+  applies: string;
+}
+
+// The settings surfaced (as editable cards) in the portal Settings → Preferences screen. Every
+// registry category is shown so an institution admin can tune all institution-wide behaviour; the
+// order here is the display order.
+export const SETTINGS_CATEGORY_META: { key: string; label: string; description?: string }[] = [
+  { key: 'localization', label: 'Localization', description: 'Language, date/time and number formats.' },
+  { key: 'finance', label: 'Finance', description: 'Operating currency for fees, payroll and reports.' },
+  { key: 'academic', label: 'Academic', description: 'Academic year and grading defaults.' },
+  { key: 'attendance', label: 'Attendance', description: 'Attendance thresholds and lateness rules.' },
+  { key: 'notifications', label: 'Notifications', description: 'How announcements and alerts are delivered.' },
+  { key: 'communication', label: 'Communication', description: 'Parent and staff messaging.' },
+  { key: 'security', label: 'Security & Access', description: 'Sessions, passwords, MFA and lockout.' },
+  { key: 'privacy', label: 'Data & Privacy', description: 'Retention of archived records.' },
+];
+
+const DATE_FORMATS = [
+  { value: 'yyyy-MM-dd', label: '2026-07-01 (ISO)' },
+  { value: 'dd/MM/yyyy', label: '01/07/2026 (DD/MM/YYYY)' },
+  { value: 'MM/dd/yyyy', label: '07/01/2026 (MM/DD/YYYY)' },
+  { value: 'd MMM yyyy', label: '1 Jul 2026' },
+];
+const CURRENCIES = ['USD', 'EUR', 'GBP', 'INR', 'AUD', 'CAD', 'AED', 'SGD', 'ZAR', 'NGN', 'KES'].map((c) => ({ value: c, label: c }));
+
+export const SETTINGS_REGISTRY: SettingDef[] = [
+  // Localization
+  { category: 'localization', key: 'timezone', label: 'Institution timezone', type: 'string', default: 'UTC', applies: 'Schedules, attendance, messages, notifications, reports and activity logs.' },
+  { category: 'localization', key: 'locale', label: 'Language / locale', type: 'string', default: 'en', applies: 'Institution-wide language and number/date locale.' },
+  { category: 'localization', key: 'dateFormat', label: 'Date format', type: 'select', options: DATE_FORMATS, default: 'yyyy-MM-dd', applies: 'How dates render across every screen and report.' },
+  { category: 'localization', key: 'timeFormat', label: 'Time format', type: 'select', options: [{ value: '24h', label: '24-hour (14:30)' }, { value: '12h', label: '12-hour (2:30 PM)' }], default: '24h', applies: 'How times render across schedules, attendance and logs.' },
+  { category: 'localization', key: 'weekStart', label: 'Week starts on', type: 'select', options: [{ value: 'monday', label: 'Monday' }, { value: 'sunday', label: 'Sunday' }], default: 'monday', applies: 'Timetable and calendar week layout.' },
+  { category: 'localization', key: 'numberFormat', label: 'Number & decimal format', type: 'select', options: [{ value: 'en', label: '1,234.56' }, { value: 'eu', label: '1.234,56' }, { value: 'in', label: '1,23,456.78 (Indian)' }], default: 'en', applies: 'Grouping/decimal style for all numeric and financial displays.' },
+  // Finance
+  { category: 'finance', key: 'currency', label: 'Default currency', type: 'select', options: CURRENCIES, default: 'USD', applies: 'All fees, invoices, payments, payroll, reports and dashboards.' },
+  // Academic
+  { category: 'academic', key: 'academicYear', label: 'Current academic year', type: 'string', default: '', applies: 'Default academic-year context across academics.' },
+  { category: 'academic', key: 'gradingScale', label: 'Grading scale', type: 'select', options: [{ value: 'percentage', label: 'Percentage (0–100)' }, { value: 'gpa4', label: 'GPA (4.0)' }, { value: 'letter', label: 'Letter (A–F)' }, { value: 'points', label: 'Points' }], default: 'percentage', applies: 'Exams, gradebook, report cards and academic analytics.' },
+  { category: 'academic', key: 'defaultCampusId', label: 'Default campus', type: 'string', default: '', applies: 'The campus pre-selected where a scope isn’t specified.' },
+  // Attendance
+  { category: 'attendance', key: 'minAttendancePercent', label: 'Minimum attendance %', type: 'number', default: 75, applies: 'Attendance risk flags and the Attention Centre.' },
+  { category: 'attendance', key: 'lateThresholdMinutes', label: 'Late threshold (minutes)', type: 'number', default: 10, applies: 'When a check-in counts as “late” in attendance.' },
+  // Notifications
+  { category: 'notifications', key: 'emailNotifications', label: 'Email notifications', type: 'boolean', default: true, applies: 'Whether announcements/notifications send by email.' },
+  { category: 'notifications', key: 'smsNotifications', label: 'SMS notifications', type: 'boolean', default: false, applies: 'Whether announcements/notifications send by SMS.' },
+  // Communication
+  { category: 'communication', key: 'allowParentMessaging', label: 'Allow parent messaging', type: 'boolean', default: true, applies: 'Whether parents can be messaged / message staff.' },
+  // Security & Access
+  { category: 'security', key: 'sessionTimeoutMinutes', label: 'Session timeout (minutes)', type: 'number', default: 60, applies: 'Idle session expiry for portal logins.' },
+  { category: 'security', key: 'passwordMinLength', label: 'Minimum password length', type: 'number', default: 8, applies: 'Password policy on activation and reset.' },
+  { category: 'security', key: 'mfaRequired', label: 'Require multi-factor auth', type: 'boolean', default: false, applies: 'Whether MFA enrolment is enforced for all users.' },
+  { category: 'security', key: 'loginLockoutThreshold', label: 'Login lockout threshold', type: 'number', default: 5, applies: 'Failed logins before an account is locked.' },
+  // Data & Privacy
+  { category: 'privacy', key: 'dataRetentionDays', label: 'Data retention (days)', type: 'number', default: 365, applies: 'How long soft-deleted/archived records are retained.' },
+];
+
+/** Registry lookup by key. */
+export const SETTINGS_BY_KEY: Record<string, SettingDef> = Object.fromEntries(SETTINGS_REGISTRY.map((d) => [d.key, d]));
+
+/** A resolved effective settings object: registry keys → typed values. */
+export type EffectiveSettings = Record<string, string | number | boolean>;
+
+/** PUT body for the curated settings form — a partial map of known keys to values. */
+export const putEffectiveSettingsSchema = z.object({
+  values: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])),
+});
+export type PutEffectiveSettingsInput = z.infer<typeof putEffectiveSettingsSchema>;
+
+// =============================================================================
+// Institution profile (tenant-facing edit of the institutions row)
+// =============================================================================
+//
+// The institution admin edits their own institution's public identity, location and primary
+// contact from Settings. Platform-only fields (status, tier, trial dates, CS owner) are NOT
+// editable here. The operating currency is DERIVED from the country (never entered) and returned
+// read-only; the server also mirrors it into the `finance.currency` setting so fees/payroll/reports
+// resolve it. Reads need `institution_settings.view`; writes `institution_settings.manage`.
+
+const profileContactSchema = z.object({
+  name: z.string().trim().min(1, 'Required').max(160),
+  email: z.string().trim().email('Enter a valid email').max(200),
+  phone: optionalE164PhoneSchema,
+  title: z.string().trim().max(120).optional(),
+});
+
+const profileAddressSchema = z
+  .object({
+    line1: z.string().trim().max(200).optional(),
+    line2: z.string().trim().max(200).optional(),
+    city: z.string().trim().max(120).optional(),
+    region: z.string().trim().max(120).optional(),
+    postalCode: z.string().trim().max(40).optional(),
+    country: optionalCountryCodeSchema,
+  })
+  .optional();
+
+/** Empty string, a valid http(s) URL, or null. Kept lenient so "clear the logo" (→ null) works. */
+const logoUrlSchema = z
+  .union([z.literal(''), z.string().trim().url('Enter a valid URL (https://…)').max(2048), z.null()])
+  .transform((v) => (v === '' ? null : v))
+  .optional();
+
+export const updateInstitutionProfileSchema = z.object({
+  displayName: z.string().trim().min(1, 'Required').max(160),
+  legalName: z.string().trim().min(1, 'Required').max(200),
+  type: institutionTypeSchema,
+  logoUrl: logoUrlSchema,
+  country: countryCodeSchema,
+  region: z.string().trim().max(120).nullish(),
+  timezone: timezoneSchema,
+  address: profileAddressSchema,
+  primaryContact: profileContactSchema,
+  version: versionSchema,
+});
+export type UpdateInstitutionProfileInput = z.infer<typeof updateInstitutionProfileSchema>;
+
+/** GET response: the curated, editable profile + the derived (read-only) operating currency. */
+export interface InstitutionProfile {
+  id: string;
+  publicId: string;
+  displayName: string;
+  legalName: string;
+  type: InstitutionType;
+  logoUrl: string | null;
+  country: string;
+  region: string | null;
+  timezone: string;
+  address: {
+    line1?: string;
+    line2?: string;
+    city?: string;
+    region?: string;
+    postalCode?: string;
+    country?: string;
+  } | null;
+  primaryContact: { name: string; email: string; phone?: string; title?: string };
+  /** ISO-4217 derived from `country` (read-only confirmation), e.g. "INR". */
+  currency: string | null;
+  /** Human label for `currency`, e.g. "INR — Indian rupee (₹)". */
+  currencyLabel: string;
+  status: string;
+  onboardingStatus: string;
+  version: number;
+}

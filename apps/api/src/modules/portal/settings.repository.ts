@@ -14,7 +14,7 @@ import {
   type PgColumn,
   type SQL,
 } from '@edrion/database';
-import type { InstitutionSetting, NewInstitutionSetting } from '@edrion/database';
+import type { Institution, InstitutionSetting, NewInstitution, NewInstitutionSetting } from '@edrion/database';
 import type { PortalSettingsListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
@@ -115,5 +115,59 @@ export class SettingsRepository {
     const t = schema.institutionSettings;
     const rows = await this.db.delete(t).where(and(eq(t.id, id), eq(t.version, version))).returning({ id: t.id });
     return rows.length > 0;
+  }
+
+  // --- effective settings (Phase 6) ------------------------------------------
+
+  /** All settings rows in scope (institution-owned + campus), for overlaying on the registry defaults. */
+  async getAll(institutionId: string, campusIds: CampusFilter): Promise<InstitutionSetting[]> {
+    const t = schema.institutionSettings;
+    return this.db.select().from(t).where(and(...this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds)));
+  }
+
+  // --- institution profile (tenant-facing edit of the institutions row) ------
+
+  /** The principal's own institution row. Always exactly one institution. */
+  async getInstitution(institutionId: string): Promise<Institution | undefined> {
+    const [row] = await this.db
+      .select()
+      .from(schema.institutions)
+      .where(eq(schema.institutions.id, institutionId))
+      .limit(1);
+    return row;
+  }
+
+  /** Version-guarded update of the institution's own editable profile fields. */
+  async updateInstitution(
+    institutionId: string,
+    version: number,
+    patch: Partial<NewInstitution>,
+  ): Promise<Institution | undefined> {
+    const t = schema.institutions;
+    const [row] = await this.db
+      .update(t)
+      .set({ ...patch, version: version + 1, updatedAt: new Date() })
+      .where(and(eq(t.id, institutionId), eq(t.version, version)))
+      .returning();
+    return row;
+  }
+
+  /** Insert-or-update one setting value by its logical key (institution-owned or campus-scoped). */
+  async upsertValue(
+    institutionId: string,
+    campusId: string | null,
+    category: string,
+    key: string,
+    label: string,
+    valueType: string,
+    value: string | null,
+    userId: string | null,
+  ): Promise<void> {
+    const existing = await this.findByKey(institutionId, campusId, category, key);
+    if (existing) {
+      await this.update(existing.id, existing.version, { value, valueType, label, updatedBy: userId });
+    } else {
+      await this.insert({ institutionId, campusId, category, key, label, valueType, value, createdBy: userId });
+    }
   }
 }

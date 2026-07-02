@@ -70,6 +70,10 @@ export class PortalClient {
     return this.request<T>(path, scope, { method: 'PATCH', body: JSON.stringify(body ?? {}) });
   }
 
+  put<T>(path: string, scope: InstitutionScope, body: unknown): Promise<T> {
+    return this.request<T>(path, scope, { method: 'PUT', body: JSON.stringify(body ?? {}) });
+  }
+
   /** DELETE, optionally with a JSON body (the portal sends `{ version }` for concurrency). */
   del<T>(path: string, scope: InstitutionScope, body?: unknown): Promise<T> {
     return this.request<T>(path, scope, {

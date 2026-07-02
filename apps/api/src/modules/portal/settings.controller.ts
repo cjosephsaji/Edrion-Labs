@@ -1,12 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import {
   createPortalSettingSchema,
   portalSettingsListQuerySchema,
+  putEffectiveSettingsSchema,
+  updateInstitutionProfileSchema,
   updatePortalSettingSchema,
   versionedDeleteSchema,
   type CreatePortalSettingInput,
   type PortalSettingsListQuery,
+  type PutEffectiveSettingsInput,
+  type UpdateInstitutionProfileInput,
   type UpdatePortalSettingInput,
   type VersionedDeleteInput,
 } from '@edrion/schemas';
@@ -46,6 +50,50 @@ export class SettingsController {
     @Query(zodBody(portalSettingsListQuerySchema)) q: PortalSettingsListQuery,
   ) {
     return this.service.list(this.ctx(p, s, r), q);
+  }
+
+  /** The resolved, typed global settings (registry defaults overlaid with stored overrides). */
+  @Get('effective')
+  @RequireInstitutionPermissions('institution_settings.view')
+  effective(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+  ) {
+    return this.service.getEffective(this.ctx(p, s, r));
+  }
+
+  /** The institution's own editable profile (identity, location, primary contact, derived currency). */
+  @Get('profile')
+  @RequireInstitutionPermissions('institution_settings.view')
+  profile(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+  ) {
+    return this.service.getProfile(this.ctx(p, s, r));
+  }
+
+  @Put('profile')
+  @RequireInstitutionPermissions('institution_settings.manage')
+  saveProfile(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(updateInstitutionProfileSchema)) body: UpdateInstitutionProfileInput,
+  ) {
+    return this.service.updateProfile(this.ctx(p, s, r), body);
+  }
+
+  @Post('effective')
+  @RequireInstitutionPermissions('institution_settings.manage')
+  saveEffective(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(putEffectiveSettingsSchema)) body: PutEffectiveSettingsInput,
+  ) {
+    return this.service.putEffective(this.ctx(p, s, r), body);
   }
 
   @Post()
