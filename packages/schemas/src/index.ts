@@ -57,3 +57,5 @@ export * from './ai-governance';
 export * from './copilot';
 export * from './integrations';
 export * from './registration';
+// Parent Portal (/v1/parent/*) request + response contracts.
+export * from './parent-portal';
