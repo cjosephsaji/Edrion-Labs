@@ -8,6 +8,9 @@ import { ParentMeService } from './parent-me.service';
 import { ParentDashboardService } from './parent-dashboard.service';
 import { ParentAcademicsService } from './parent-academics.service';
 import { ParentFeesService } from './parent-fees.service';
+import { ParentWellbeingService } from './parent-wellbeing.service';
+import { ParentSafetyService } from './parent-safety.service';
+import { ParentLogisticsService } from './parent-logistics.service';
 import { MockPaymentProvider } from './mock-payment.provider';
 
 /**
@@ -24,6 +27,9 @@ import { MockPaymentProvider } from './mock-payment.provider';
     ParentDashboardService,
     ParentAcademicsService,
     ParentFeesService,
+    ParentWellbeingService,
+    ParentSafetyService,
+    ParentLogisticsService,
     MockPaymentProvider,
   ],
 })
