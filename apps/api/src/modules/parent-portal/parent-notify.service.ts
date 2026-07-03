@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { eq, inArray, schema, type Database } from '@edrion/database';
 import { DATABASE } from '../../common/tokens';
+import { ParentFanoutService } from './parent-fanout.service';
 
 export interface NotifyEvent {
   type: string;
@@ -20,7 +21,19 @@ export interface NotifyEvent {
  */
 @Injectable()
 export class ParentNotifyService {
-  constructor(@Inject(DATABASE) private readonly db: Database) {}
+  constructor(
+    @Inject(DATABASE) private readonly db: Database,
+    private readonly fanout: ParentFanoutService,
+  ) {}
+
+  /** Every guardian login in the institution (for institution-wide emergency broadcasts). */
+  async guardiansOfInstitution(institutionId: string): Promise<string[]> {
+    const rows = await this.db
+      .select({ uid: schema.parents.institutionUserId })
+      .from(schema.parents)
+      .where(eq(schema.parents.institutionId, institutionId));
+    return [...new Set(rows.map((r) => r.uid).filter((x): x is string => !!x))];
+  }
 
   /** The institution_user ids of every guardian linked to a student. */
   async guardiansOfStudent(studentId: string): Promise<string[]> {
@@ -70,6 +83,16 @@ export class ParentNotifyService {
         sourceEntity: evt.sourceEntity ?? null,
       })),
     );
+    // The in-app feed row above is always written. Immediate events also fan out to channels
+    // (email/push/…); digest-priority events wait for the weekly digest (M7).
+    if ((evt.priority ?? 'immediate') !== 'digest') {
+      const critical = ParentFanoutService.isCritical(evt.type);
+      await Promise.all(
+        unique.map((guardianUserId) =>
+          this.fanout.dispatch({ institutionId, guardianUserId, category: evt.type, title: evt.title, body: evt.body ?? null, deepLink: evt.deepLink ?? null, critical }),
+        ),
+      );
+    }
     return unique.length;
   }
 }

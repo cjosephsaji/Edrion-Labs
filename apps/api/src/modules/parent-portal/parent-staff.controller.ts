@@ -3,6 +3,7 @@ import { ApiTags } from '@nestjs/swagger';
 import type { InstitutionPrincipal, InstitutionScope } from '@edrion/auth';
 import {
   decideRequestSchema,
+  emergencyBroadcastSchema,
   fulfilDocumentRequestSchema,
   publishNoticeSchema,
   recordMedicalIncidentSchema,
@@ -10,6 +11,7 @@ import {
   staffRecognitionSchema,
   staffReplySchema,
   type DecideRequestInput,
+  type EmergencyBroadcastInput,
   type FulfilDocumentRequestInput,
   type PublishNoticeInput,
   type RecordMedicalIncidentInput,
@@ -26,6 +28,7 @@ import { InstitutionPermissionsGuard } from '../portal/portal-permissions.guard'
 import { CurrentInstitutionPrincipal, CurrentScope, RequireInstitutionPermissions } from '../portal/portal.decorators';
 import type { PortalActionContext } from '../portal/portal-action-context';
 import { ParentStaffService } from './parent-staff.service';
+import { ParentEmergencyService } from './parent-emergency.service';
 
 /**
  * Institution-side (staff) counterparts to the parent portal, under /v1/parent-staff/*. Uses the
@@ -38,7 +41,10 @@ import { ParentStaffService } from './parent-staff.service';
 @SkipRateLimit()
 @UseGuards(InstitutionAuthGuard, InstitutionPermissionsGuard)
 export class ParentStaffController {
-  constructor(private readonly staff: ParentStaffService) {}
+  constructor(
+    private readonly staff: ParentStaffService,
+    private readonly emergency: ParentEmergencyService,
+  ) {}
 
   private ctx(p: InstitutionPrincipal, s: InstitutionScope, r: EdrionRequestContext): PortalActionContext {
     return { principal: p, scope: s, request: r };
@@ -96,5 +102,12 @@ export class ParentStaffController {
   @RequireInstitutionPermissions('students.profile_changes.review')
   decideProfileChange(@CurrentInstitutionPrincipal() p: InstitutionPrincipal, @CurrentScope() s: InstitutionScope, @ReqContext() r: EdrionRequestContext, @Param('id') id: string, @Body(zodBody(decideRequestSchema)) body: DecideRequestInput) {
     return this.staff.decideProfileChange(this.ctx(p, s, r), id, body);
+  }
+
+  /** Emergency broadcast — sensitive key (recent-auth enforced by the guard) + typed confirmation. */
+  @Post('emergency-broadcasts')
+  @RequireInstitutionPermissions('parent_comm.emergency.send')
+  emergencyBroadcast(@CurrentInstitutionPrincipal() p: InstitutionPrincipal, @CurrentScope() s: InstitutionScope, @ReqContext() r: EdrionRequestContext, @Body(zodBody(emergencyBroadcastSchema)) body: EmergencyBroadcastInput) {
+    return this.emergency.send(this.ctx(p, s, r), body);
   }
 }

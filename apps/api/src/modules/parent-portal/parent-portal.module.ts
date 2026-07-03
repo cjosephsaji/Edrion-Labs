@@ -7,6 +7,9 @@ import { ParentWebhookController } from './parent-webhook.controller';
 import { ParentStaffController } from './parent-staff.controller';
 import { ParentStaffService } from './parent-staff.service';
 import { ParentNotifyService } from './parent-notify.service';
+import { ParentFanoutService } from './parent-fanout.service';
+import { ParentEmergencyService } from './parent-emergency.service';
+import { EmailChannel, SmsChannel, WebPushChannel, WhatsAppChannel } from './notification-channels';
 import { ParentMeService } from './parent-me.service';
 import { ParentDashboardService } from './parent-dashboard.service';
 import { ParentAcademicsService } from './parent-academics.service';
@@ -30,6 +33,12 @@ import { MockPaymentProvider } from './mock-payment.provider';
     GuardianScopeGuard,
     ParentStaffService,
     ParentNotifyService,
+    ParentFanoutService,
+    ParentEmergencyService,
+    EmailChannel,
+    WebPushChannel,
+    SmsChannel,
+    WhatsAppChannel,
     ParentMeService,
     ParentDashboardService,
     ParentAcademicsService,

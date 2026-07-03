@@ -272,6 +272,6 @@ import { AdmissionInfoController, AdmissionInfoService } from './admission-info.
   ],
   // InstitutionAuthGuard (+ its session/rate-limit deps) is reused by the Parent Portal module,
   // which layers GuardianScopeGuard on top. Export the guard's transitive deps so it resolves there.
-  exports: [PortalAuthService, InstitutionAuthGuard, PortalSessionService, InstitutionRateLimiter],
+  exports: [PortalAuthService, InstitutionAuthGuard, InstitutionPermissionsGuard, PortalSessionService, InstitutionRateLimiter, EmailService],
 })
 export class PortalModule {}
