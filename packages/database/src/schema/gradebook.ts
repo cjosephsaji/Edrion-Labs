@@ -1,4 +1,4 @@
-import { index, integer, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, index, integer, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { campuses } from './campuses';
@@ -41,6 +41,8 @@ export const gradeEntries = pgTable(
     /** Optional letter/grade, e.g. "A", "B+". */
     letterGrade: text('letter_grade'),
     remarks: text('remarks'),
+    /** Parent-portal publish gate: results are visible to guardians only when published. */
+    published: boolean('published').notNull().default(false),
     version: integer('version').notNull().default(0),
     ...actorColumns,
     ...timestamps,

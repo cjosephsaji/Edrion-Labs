@@ -21,7 +21,16 @@ async function bootstrap() {
   app.use(helmet());
   // CORS allowlist (comma-separated origins from API_CORS_ORIGINS); credentials for the cookie.
   app.enableCors({ origin: env.API_CORS_ORIGINS, credentials: true });
-  app.use(json({ limit: BODY_LIMIT }));
+  // Stash the raw request body so signed-webhook handlers (e.g. parent payment settlement) can verify
+  // an HMAC over the exact bytes received, before JSON parsing.
+  app.use(
+    json({
+      limit: BODY_LIMIT,
+      verify: (req, _res, buf) => {
+        (req as unknown as { rawBody?: Buffer }).rawBody = Buffer.from(buf);
+      },
+    }),
+  );
   app.use(urlencoded({ extended: true, limit: BODY_LIMIT }));
   app.setGlobalPrefix('v1');
 
