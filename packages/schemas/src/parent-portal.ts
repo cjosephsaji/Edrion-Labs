@@ -158,7 +158,6 @@ export type PutHealthProfileInput = z.infer<typeof putHealthProfileSchema>;
 
 // ── Safety / gate ─────────────────────────────────────────────────────────────
 export const createPickupAuthorizationSchema = z.object({
-  studentId: z.string().uuid(),
   personName: z.string().trim().min(1, 'Required').max(200),
   relationship: z.enum(PICKUP_AUTH_RELATIONSHIPS).default('relative'),
   phone: z.string().trim().max(40).nullish(),
@@ -168,13 +167,11 @@ export const createPickupAuthorizationSchema = z.object({
 });
 export type CreatePickupAuthorizationInput = z.infer<typeof createPickupAuthorizationSchema>;
 export const updatePickupAuthorizationSchema = createPickupAuthorizationSchema
-  .omit({ studentId: true })
   .partial()
   .extend({ version: versionSchema });
 export type UpdatePickupAuthorizationInput = z.infer<typeof updatePickupAuthorizationSchema>;
 
 export const createEarlyLeaveRequestSchema = z.object({
-  studentId: z.string().uuid(),
   leaveDate: z.string().trim().max(20),
   leaveTime: z.string().regex(/^\d{2}:\d{2}$/, 'HH:MM').nullish(),
   reason: z.string().trim().max(2000).nullish(),
@@ -183,7 +180,6 @@ export const createEarlyLeaveRequestSchema = z.object({
 export type CreateEarlyLeaveRequestInput = z.infer<typeof createEarlyLeaveRequestSchema>;
 
 export const createHostelOutingRequestSchema = z.object({
-  studentId: z.string().uuid(),
   type: z.enum(HOSTEL_OUTING_TYPES).default('outing'),
   fromAt: z.string().trim().max(40),
   toAt: z.string().trim().max(40),

@@ -84,12 +84,16 @@ export class ParentNotifyService {
       })),
     );
     // The in-app feed row above is always written. Immediate events also fan out to channels
-    // (email/push/…); digest-priority events wait for the weekly digest (M7).
+    // (email/push/…); digest-priority events wait for the weekly digest (M7). Channel dispatch is
+    // fire-and-forget: a queue/channel failure must NOT fail the originating domain action (the
+    // in-app notification is already persisted, and delivery retries live in the worker).
     if ((evt.priority ?? 'immediate') !== 'digest') {
       const critical = ParentFanoutService.isCritical(evt.type);
       await Promise.all(
         unique.map((guardianUserId) =>
-          this.fanout.dispatch({ institutionId, guardianUserId, category: evt.type, title: evt.title, body: evt.body ?? null, deepLink: evt.deepLink ?? null, critical }),
+          this.fanout
+            .dispatch({ institutionId, guardianUserId, category: evt.type, title: evt.title, body: evt.body ?? null, deepLink: evt.deepLink ?? null, critical })
+            .catch(() => undefined),
         ),
       );
     }

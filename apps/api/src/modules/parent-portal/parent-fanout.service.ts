@@ -12,6 +12,7 @@ import {
   type ChannelResult,
   type NotificationChannel,
 } from './notification-channels';
+import { CRITICAL_TYPES, resolveChannels } from './channel-resolution';
 
 export const FANOUT_JOB = 'parent.notification.fanout';
 
@@ -24,9 +25,6 @@ export interface FanoutJobData {
   deepLink?: string | null;
   critical: boolean;
 }
-
-/** Events that must always send on every enabled channel, ignoring quiet hours. */
-const CRITICAL_TYPES = new Set(['medical_incident', 'emergency_broadcast']);
 
 /**
  * Dispatches immediate notification channels for a guardian, honoring per-category preferences and
@@ -80,7 +78,7 @@ export class ParentFanoutService implements OnModuleInit {
       .where(eq(schema.parentNotificationPreferences.guardianUserId, data.guardianUserId))
       .limit(1);
 
-    const keys = this.resolveChannels(prefs?.channels ?? null, (prefs?.categoryOverrides ?? {}) as Record<string, Record<string, boolean>>, (prefs?.quietHours ?? {}) as Record<string, string>, data.category, data.critical);
+    const keys = resolveChannels(prefs?.channels ?? null, (prefs?.categoryOverrides ?? {}) as Record<string, Record<string, boolean>>, (prefs?.quietHours ?? {}) as Record<string, string>, data.category, data.critical);
     const payload = { to: { email: guardian?.email ?? null }, title: data.title, body: data.body, deepLink: data.deepLink };
 
     const results: ChannelResult[] = [];
@@ -96,34 +94,5 @@ export class ParentFanoutService implements OnModuleInit {
     }
     this.logger.debug(`fanout ${data.category} → ${data.guardianUserId}: ${results.map((r) => `${r.channel}:${r.status}`).join(', ') || 'no-channels'}`);
     return { results };
-  }
-
-  private resolveChannels(
-    base: Record<string, boolean> | null,
-    overrides: Record<string, Record<string, boolean>>,
-    quietHours: Record<string, string>,
-    category: string,
-    critical: boolean,
-  ): string[] {
-    const effectiveBase = base ?? { email: true, push: true, sms: false, whatsapp: false };
-    const merged = { ...effectiveBase, ...(overrides[category] ?? {}) };
-    const enabled = Object.keys(merged).filter((k) => merged[k]);
-    if (critical || CRITICAL_TYPES.has(category)) {
-      // Always deliver on enabled channels; guarantee email+push for safety-critical events.
-      return [...new Set([...enabled, 'email', 'push'])];
-    }
-    if (this.inQuietHours(quietHours)) return [];
-    return enabled;
-  }
-
-  private inQuietHours(qh: Record<string, string>): boolean {
-    if (!qh.start || !qh.end) return false;
-    const now = new Date();
-    const cur = now.getHours() * 60 + now.getMinutes();
-    const [sh, sm] = qh.start.split(':').map(Number);
-    const [eh, em] = qh.end.split(':').map(Number);
-    const start = (sh ?? 0) * 60 + (sm ?? 0);
-    const end = (eh ?? 0) * 60 + (em ?? 0);
-    return start <= end ? cur >= start && cur < end : cur >= start || cur < end; // handles overnight windows
   }
 }
