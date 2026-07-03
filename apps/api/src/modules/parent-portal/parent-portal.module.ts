@@ -9,6 +9,7 @@ import { ParentStaffService } from './parent-staff.service';
 import { ParentNotifyService } from './parent-notify.service';
 import { ParentFanoutService } from './parent-fanout.service';
 import { ParentEmergencyService } from './parent-emergency.service';
+import { ParentDigestService } from './parent-digest.service';
 import { EmailChannel, SmsChannel, WebPushChannel, WhatsAppChannel } from './notification-channels';
 import { ParentMeService } from './parent-me.service';
 import { ParentDashboardService } from './parent-dashboard.service';
@@ -35,6 +36,7 @@ import { MockPaymentProvider } from './mock-payment.provider';
     ParentNotifyService,
     ParentFanoutService,
     ParentEmergencyService,
+    ParentDigestService,
     EmailChannel,
     WebPushChannel,
     SmsChannel,

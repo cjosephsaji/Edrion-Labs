@@ -59,6 +59,7 @@ import { ParentSafetyService } from './parent-safety.service';
 import { ParentLogisticsService } from './parent-logistics.service';
 import { ParentCommService } from './parent-comm.service';
 import { ParentInboxService } from './parent-inbox.service';
+import { ParentDigestService } from './parent-digest.service';
 
 /**
  * Parent Portal API (/v1/parent/*). @Public so the platform AuthGuard skips it; the real boundary is
@@ -81,6 +82,7 @@ export class ParentController {
     private readonly logistics: ParentLogisticsService,
     private readonly comm: ParentCommService,
     private readonly inbox: ParentInboxService,
+    private readonly digest: ParentDigestService,
   ) {}
 
   private ctx(p: InstitutionPrincipal, s: InstitutionScope, r: EdrionRequestContext): PortalActionContext {
@@ -446,5 +448,11 @@ export class ParentController {
   @Get('profile-change-requests')
   profileChanges(@CurrentGuardian() g: GuardianContext, @Query('studentId') studentId?: string) {
     return this.inbox.profileChanges(g, studentId);
+  }
+
+  /** "Send me a preview digest now" — rate-limited to 1/hour in the service. */
+  @Post('digest/preview')
+  previewDigest(@CurrentGuardian() g: GuardianContext) {
+    return this.digest.preview(g.institutionId, g.guardianUserId);
   }
 }
