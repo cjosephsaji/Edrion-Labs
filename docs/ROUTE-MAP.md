@@ -110,4 +110,27 @@ module, e.g. `/v1/institutions`, `/v1/campuses`, `/v1/institution-users`,
 `/v1/activity`, `/v1/audit`, `/v1/security`, `/v1/analytics`, `/v1/copilot`,
 `/v1/ai-governance`, `/v1/announcements`, `/v1/integrations`, `/v1/webhooks`,
 `/v1/platform-settings`. Aggregated dashboard data: `/v1/analytics/dashboard`.
+
+Institution Portal: `/v1/portal/*`. Parent Portal: `/v1/parent/*` (guardian-scoped) and
+`/v1/parent-staff/*` (staff counterparts) — see [PARENT-PORTAL.md](PARENT-PORTAL.md) §8.
+```
+
+---
+
+## Parent Portal — apps/parent-web (:3004)
+
+Mobile-first installable PWA. Bottom tabs; guardianship-scoped (no permission nav gating). Full
+route + screen detail in [PARENT-PORTAL.md](PARENT-PORTAL.md) §7.
+
+```
+/                                     Home — dashboard for the active child
+/ward                                 → /child/[first]
+/child/[studentId]                    Ward hub
+  /attendance  /results  /health  /behavior  /transport  /library  /hostel  /pickup  /documents
+/fees                                 Unified fees + pay flow (webhook-confirmed)
+/inbox                                Alerts · Notices · Messages · Consents (+ emergency banner)
+/more                                 PTM · Calendar · New message · Document/Profile requests
+  /settings                           Channels · digest · quiet hours
+  /who-can-see                        Static "what we show / never show" explainer
+/invite/[token]                       (planned) onboarding
 ```
