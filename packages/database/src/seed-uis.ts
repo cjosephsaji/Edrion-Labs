@@ -10,7 +10,9 @@
  * Or directly:
  *   tsx packages/database/src/seed-uis.ts
  *
- * Requires the base platform seed to have run first (the institution + campus must exist).
+ * Creates/reuses the United Indian School institution + campus, then refreshes
+ * all institution-scoped portal data. Run the base platform seed first when you
+ * also need the shared platform reference data, employees, plans, and roles.
  */
 import dotenv from 'dotenv';
 import { join, dirname } from 'node:path';
@@ -39,30 +41,108 @@ function dateStr(d: Date) { return d.toISOString().slice(0, 10); }
 async function main() {
   const db = createDatabase();
 
-  // ── 1. Find the institution ──────────────────────────────────────────────
-  const [institution] = await db
+  // ── 1. Find or create the institution ────────────────────────────────────
+  let [institution] = await db
     .select()
     .from(s.institutions)
     .where(eq(s.institutions.displayName, INSTITUTION_NAME))
     .limit(1);
 
   if (!institution) {
-    throw new Error(`Institution "${INSTITUTION_NAME}" not found. Run platform seed first.`);
-  }
-  const instId = institution.id;
-  console.log(`✓ Found institution: ${institution.displayName} (${instId})`);
+    [institution] = await db
+      .insert(s.institutions)
+      .values({
+        publicId: 'INST-UIS-00001',
+        legalName: 'United Indian School Trust',
+        displayName: INSTITUTION_NAME,
+        type: 'school',
+        country: 'IN',
+        region: 'Kerala',
+        timezone: 'Asia/Kolkata',
+        currency: 'INR',
+        address: {
+          line1: 'Edappally Campus Road',
+          city: 'Kochi',
+          region: 'Kerala',
+          postalCode: '682024',
+          country: 'IN',
+        },
+        primaryContact: {
+          name: 'Rekha Nambiar',
+          email: 'admin@uis.edu.in',
+          phone: '+919876543210',
+          title: 'Administrator',
+        },
+        billingContact: {
+          name: 'Rajan Mathew',
+          email: 'finance@uis.edu.in',
+          phone: '+919876543211',
+          title: 'Finance Manager',
+        },
+        technicalContact: {
+          name: 'Pradeep George',
+          email: 'it@uis.edu.in',
+          phone: '+919876543212',
+          title: 'IT Manager',
+        },
+        status: 'active',
+        onboardingStatus: 'completed',
+        supportTier: 'standard',
+        activatedAt: now,
+        usageStats: { students: 18, staff: 12, campuses: 1 },
+        internalNotes: 'Created by the United Indian School full demo seed.',
+      })
+      .returning();
 
-  // ── 2. Find / verify campus ──────────────────────────────────────────────
-  const [campus] = await db
+    if (!institution) throw new Error(`Unable to create institution "${INSTITUTION_NAME}".`);
+    console.log(`✓ Created institution: ${institution.displayName} (${institution.id})`);
+  } else {
+    console.log(`✓ Found institution: ${institution.displayName} (${institution.id})`);
+  }
+
+  const instId = institution.id;
+
+  // ── 2. Find or create campus ─────────────────────────────────────────────
+  let [campus] = await db
     .select()
     .from(s.campuses)
     .where(eq(s.campuses.institutionId, instId))
     .orderBy(asc(s.campuses.code))
     .limit(1);
 
-  if (!campus) throw new Error('No campus found for this institution.');
+  if (!campus) {
+    [campus] = await db
+      .insert(s.campuses)
+      .values({
+        institutionId: instId,
+        name: 'Main Campus',
+        code: 'MAIN',
+        address: {
+          line1: 'Edappally Campus Road',
+          city: 'Kochi',
+          region: 'Kerala',
+          postalCode: '682024',
+          country: 'IN',
+        },
+        contact: {
+          phone: '+914842400001',
+          email: 'office@uis.edu.in',
+        },
+        timezoneOverride: 'Asia/Kolkata',
+        studentCapacity: 1200,
+        currentUserCount: 0,
+        billingStatus: 'included',
+        openingDate: new Date('2005-06-01T00:00:00.000Z'),
+      })
+      .returning();
+
+    if (!campus) throw new Error('Unable to create UIS main campus.');
+    console.log(`✓ Created campus: ${campus.name} (${campus.id})`);
+  } else {
+    console.log(`✓ Found campus: ${campus.name} (${campus.id})`);
+  }
+
   const campusId = campus.id;
-  console.log(`✓ Found campus: ${campus.name} (${campusId})`);
 
   // ── 3. CLEAR all institution-scoped data (dependency order — children first) ─
   console.log('\n→ Clearing all existing data for this institution…');
