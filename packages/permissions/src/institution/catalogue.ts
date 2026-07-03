@@ -194,6 +194,21 @@ export const INSTITUTION_PERMISSIONS: readonly PermissionDef[] = [
 
   // Attendance — front-desk check-in/out (shared Attendance group).
   def('attendance.check_in_out', 'Attendance', 'Check students/staff in and out at the front desk.'),
+
+  // Parent Portal — staff-side counterparts of the guardian-facing features.
+  def('parent_comm.notices.manage', 'Parent Portal', 'Compose and publish parent notices.'),
+  def('parent_comm.consents.manage', 'Parent Portal', 'Create consent forms and view responses.'),
+  def('parent_comm.ptm.manage', 'Parent Portal', 'Manage parent-teacher meetings and slots.'),
+  def('parent_comm.messages.respond', 'Parent Portal', 'Read and reply to parent message threads.'),
+  def('parent_comm.emergency.send', 'Parent Portal', 'Send emergency broadcasts to guardians.', true),
+  def('attendance.absence_notes.review', 'Attendance', 'Review guardian-submitted absence notes.'),
+  def('students.behavior.manage', 'Students', 'Record and publish behaviour incidents to guardians.', true),
+  def('students.recognitions.manage', 'Students', 'Award student recognitions.'),
+  def('students.documents.manage', 'Students', 'Publish student documents and fulfil certificate requests.'),
+  def('students.profile_changes.review', 'Students', 'Approve or reject guardian profile-change requests.'),
+  def('counseling.disclosure.manage', 'Wellbeing', 'Disclose or revoke counselor contact to guardians.', true),
+  def('frontdesk.pickup.verify', 'Front Desk', 'Verify guardian pickup authorizations.'),
+  def('frontdesk.gate.manage', 'Front Desk', 'Approve early-leave and record gate exit/entry events.'),
 ] as const;
 
 /** Literal union of all valid institution permission keys. */

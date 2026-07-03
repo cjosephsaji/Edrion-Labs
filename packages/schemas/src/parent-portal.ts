@@ -224,6 +224,64 @@ export const createProfileChangeRequestSchema = z.object({
 });
 export type CreateProfileChangeRequestInput = z.infer<typeof createProfileChangeRequestSchema>;
 
+// ── Institution-side (staff) counterpart contracts ─────────────────────────────
+export const reviewAbsenceNoteSchema = z.object({
+  decision: z.enum(['acknowledged', 'rejected']),
+  reviewNote: z.string().trim().max(2000).nullish(),
+});
+export type ReviewAbsenceNoteInput = z.infer<typeof reviewAbsenceNoteSchema>;
+
+export const recordMedicalIncidentSchema = z.object({
+  studentId: z.string().uuid(),
+  title: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(4000).nullish(),
+  severity: z.enum(['low', 'medium', 'high', 'critical']).default('low'),
+  location: z.string().trim().max(200).nullish(),
+  actionTaken: z.string().trim().max(2000).nullish(),
+});
+export type RecordMedicalIncidentInput = z.infer<typeof recordMedicalIncidentSchema>;
+
+export const staffReplySchema = z.object({ body: z.string().trim().min(1).max(8000), closeThread: z.coerce.boolean().default(false) });
+export type StaffReplyInput = z.infer<typeof staffReplySchema>;
+
+export const fulfilDocumentRequestSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  fileRef: z.string().trim().min(1).max(2000),
+  contentType: z.string().trim().max(160).default('application/pdf'),
+});
+export type FulfilDocumentRequestInput = z.infer<typeof fulfilDocumentRequestSchema>;
+
+export const staffRecognitionSchema = z.object({
+  studentId: z.string().uuid(),
+  type: z.enum(['merit', 'award', 'certificate', 'badge', 'sports', 'arts', 'academics']).default('merit'),
+  title: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(2000).nullish(),
+});
+export type StaffRecognitionInput = z.infer<typeof staffRecognitionSchema>;
+
+export const decideRequestSchema = z.object({
+  decision: z.enum(['approve', 'deny']),
+  note: z.string().trim().max(2000).nullish(),
+});
+export type DecideRequestInput = z.infer<typeof decideRequestSchema>;
+
+export const publishNoticeSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  body: z.string().trim().min(1).max(20000),
+  priority: z.enum(PARENT_NOTICE_PRIORITIES).default('normal'),
+  requiresAcknowledgement: z.coerce.boolean().default(false),
+});
+export type PublishNoticeInput = z.infer<typeof publishNoticeSchema>;
+
+export const emergencyBroadcastSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  body: z.string().trim().min(1).max(8000),
+  severity: z.enum(['urgent', 'critical']).default('urgent'),
+  /** Must equal "SEND EMERGENCY" — a typed confirmation phrase. */
+  confirmPhrase: z.string(),
+});
+export type EmergencyBroadcastInput = z.infer<typeof emergencyBroadcastSchema>;
+
 // ── Response shapes (typed for the api-client) ──────────────────────────────────
 export interface ParentChildSummary {
   studentId: string;

@@ -4,20 +4,38 @@ import type { InstitutionPrincipal, InstitutionScope } from '@edrion/auth';
 import {
   assignmentsQuerySchema,
   attendanceQuerySchema,
+  bookPtmSlotSchema,
+  createAbsenceNoteSchema,
+  createDocumentRequestSchema,
   createEarlyLeaveRequestSchema,
   createHostelOutingRequestSchema,
+  createParentThreadSchema,
   createPaymentIntentSchema,
   createPickupAuthorizationSchema,
+  createProfileChangeRequestSchema,
+  parentListQuerySchema,
   putHealthProfileSchema,
+  replyParentMessageSchema,
+  respondConsentSchema,
   updatePickupAuthorizationSchema,
+  updatePreferencesSchema,
   type AssignmentsQuery,
+  type BookPtmSlotInput,
+  type CreateAbsenceNoteInput,
+  type CreateDocumentRequestInput,
   type CreateEarlyLeaveRequestInput,
   type CreateHostelOutingRequestInput,
+  type CreateParentThreadInput,
   type CreatePaymentIntentInput,
   type CreatePickupAuthorizationInput,
+  type CreateProfileChangeRequestInput,
   type DateRangeQuery,
+  type ParentListQuery,
   type PutHealthProfileInput,
+  type ReplyParentMessageInput,
+  type RespondConsentInput,
   type UpdatePickupAuthorizationInput,
+  type UpdatePreferencesInput,
 } from '@edrion/schemas';
 import { Public } from '../../common/guards/auth.guard';
 import { ReqContext, SkipRateLimit } from '../../common/decorators';
@@ -39,6 +57,8 @@ import { ParentFeesService } from './parent-fees.service';
 import { ParentWellbeingService } from './parent-wellbeing.service';
 import { ParentSafetyService } from './parent-safety.service';
 import { ParentLogisticsService } from './parent-logistics.service';
+import { ParentCommService } from './parent-comm.service';
+import { ParentInboxService } from './parent-inbox.service';
 
 /**
  * Parent Portal API (/v1/parent/*). @Public so the platform AuthGuard skips it; the real boundary is
@@ -59,6 +79,8 @@ export class ParentController {
     private readonly wellbeing: ParentWellbeingService,
     private readonly safety: ParentSafetyService,
     private readonly logistics: ParentLogisticsService,
+    private readonly comm: ParentCommService,
+    private readonly inbox: ParentInboxService,
   ) {}
 
   private ctx(p: InstitutionPrincipal, s: InstitutionScope, r: EdrionRequestContext): PortalActionContext {
@@ -292,5 +314,137 @@ export class ParentController {
   @Get('students/:id/hostel/outing-requests')
   outings(@CurrentGuardian() g: GuardianContext, @Param('id') id: string) {
     return this.logistics.listOutings(g, id);
+  }
+
+  // ── Notices / consents ─────────────────────────────────────────────────────────
+  @Get('notices')
+  notices(@CurrentGuardian() g: GuardianContext) {
+    return this.comm.notices(g);
+  }
+
+  @Post('notices/:id/read')
+  readNotice(@CurrentGuardian() g: GuardianContext, @Param('id') id: string) {
+    return this.comm.readNotice(g, id);
+  }
+
+  @Post('notices/:id/acknowledge')
+  ackNotice(@CurrentGuardian() g: GuardianContext, @CurrentInstitutionPrincipal() p: InstitutionPrincipal, @CurrentScope() s: InstitutionScope, @ReqContext() r: EdrionRequestContext, @Param('id') id: string) {
+    return this.comm.acknowledgeNotice(this.ctx(p, s, r), g, id);
+  }
+
+  @Get('consents')
+  consents(@CurrentGuardian() g: GuardianContext) {
+    return this.comm.consents(g);
+  }
+
+  @Post('consents/:id/respond')
+  respondConsent(@CurrentGuardian() g: GuardianContext, @CurrentInstitutionPrincipal() p: InstitutionPrincipal, @CurrentScope() s: InstitutionScope, @ReqContext() r: EdrionRequestContext, @Param('id') id: string, @Body(zodBody(respondConsentSchema)) body: RespondConsentInput) {
+    return this.comm.respondConsent(this.ctx(p, s, r), g, id, body);
+  }
+
+  // ── PTM ────────────────────────────────────────────────────────────────────────
+  @Get('ptm/events')
+  ptmEvents(@CurrentGuardian() g: GuardianContext) {
+    return this.comm.ptmEvents(g);
+  }
+
+  @Get('ptm/events/:id/slots')
+  ptmSlots(@CurrentGuardian() g: GuardianContext, @Param('id') id: string) {
+    return this.comm.ptmSlots(g, id);
+  }
+
+  @Post('ptm/slots/:slotId/book')
+  bookPtm(@CurrentGuardian() g: GuardianContext, @CurrentInstitutionPrincipal() p: InstitutionPrincipal, @CurrentScope() s: InstitutionScope, @ReqContext() r: EdrionRequestContext, @Param('slotId') slotId: string, @Body(zodBody(bookPtmSlotSchema)) body: BookPtmSlotInput) {
+    return this.comm.bookPtm(this.ctx(p, s, r), g, slotId, body);
+  }
+
+  @Post('ptm/bookings/:bookingId/cancel')
+  cancelPtm(@CurrentGuardian() g: GuardianContext, @CurrentInstitutionPrincipal() p: InstitutionPrincipal, @CurrentScope() s: InstitutionScope, @ReqContext() r: EdrionRequestContext, @Param('bookingId') bookingId: string) {
+    return this.comm.cancelPtm(this.ctx(p, s, r), g, bookingId);
+  }
+
+  // ── Absence notes ────────────────────────────────────────────────────────────────
+  @Post('absence-notes')
+  createAbsence(@CurrentGuardian() g: GuardianContext, @CurrentInstitutionPrincipal() p: InstitutionPrincipal, @CurrentScope() s: InstitutionScope, @ReqContext() r: EdrionRequestContext, @Body(zodBody(createAbsenceNoteSchema)) body: CreateAbsenceNoteInput) {
+    return this.comm.createAbsenceNote(this.ctx(p, s, r), g, body);
+  }
+
+  @Get('absence-notes')
+  absenceNotes(@CurrentGuardian() g: GuardianContext, @Query('studentId') studentId?: string) {
+    return this.comm.absenceNotes(g, studentId);
+  }
+
+  // ── Messages ─────────────────────────────────────────────────────────────────────
+  @Post('messages/threads')
+  createThread(@CurrentGuardian() g: GuardianContext, @CurrentInstitutionPrincipal() p: InstitutionPrincipal, @CurrentScope() s: InstitutionScope, @ReqContext() r: EdrionRequestContext, @Body(zodBody(createParentThreadSchema)) body: CreateParentThreadInput) {
+    return this.comm.createThread(this.ctx(p, s, r), g, body);
+  }
+
+  @Get('messages/threads')
+  threads(@CurrentGuardian() g: GuardianContext) {
+    return this.comm.listThreads(g);
+  }
+
+  @Get('messages/threads/:id')
+  thread(@CurrentGuardian() g: GuardianContext, @Param('id') id: string) {
+    return this.comm.getThread(g, id);
+  }
+
+  @Post('messages/threads/:id/messages')
+  reply(@CurrentGuardian() g: GuardianContext, @CurrentInstitutionPrincipal() p: InstitutionPrincipal, @CurrentScope() s: InstitutionScope, @ReqContext() r: EdrionRequestContext, @Param('id') id: string, @Body(zodBody(replyParentMessageSchema)) body: ReplyParentMessageInput) {
+    return this.comm.replyThread(this.ctx(p, s, r), g, id, body);
+  }
+
+  // ── Preferences ────────────────────────────────────────────────────────────────
+  @Post('preferences')
+  updatePreferences(@CurrentGuardian() g: GuardianContext, @Body(zodBody(updatePreferencesSchema)) body: UpdatePreferencesInput) {
+    return this.comm.updatePreferences(g, body);
+  }
+
+  // ── Notifications / calendar ──────────────────────────────────────────────────────
+  @Get('notifications')
+  notifications(@CurrentGuardian() g: GuardianContext, @Query(zodBody(parentListQuerySchema)) q: ParentListQuery) {
+    return this.inbox.notifications(g, q);
+  }
+
+  @Post('notifications/:id/read')
+  readNotification(@CurrentGuardian() g: GuardianContext, @Param('id') id: string) {
+    return this.inbox.readNotification(g, id);
+  }
+
+  @Post('notifications/read-all')
+  readAllNotifications(@CurrentGuardian() g: GuardianContext) {
+    return this.inbox.readAllNotifications(g);
+  }
+
+  @Get('calendar')
+  calendar(@CurrentGuardian() g: GuardianContext, @Query('month') month?: string) {
+    return this.inbox.calendar(g, month);
+  }
+
+  // ── Documents / requests / profile changes ─────────────────────────────────────────
+  @Get('students/:id/documents')
+  documents(@CurrentGuardian() g: GuardianContext, @Param('id') id: string, @Query('type') type?: string) {
+    return this.inbox.documents(g, id, type);
+  }
+
+  @Post('document-requests')
+  createDocumentRequest(@CurrentGuardian() g: GuardianContext, @CurrentInstitutionPrincipal() p: InstitutionPrincipal, @CurrentScope() s: InstitutionScope, @ReqContext() r: EdrionRequestContext, @Body(zodBody(createDocumentRequestSchema)) body: CreateDocumentRequestInput) {
+    return this.inbox.createDocumentRequest(this.ctx(p, s, r), g, body);
+  }
+
+  @Get('document-requests')
+  documentRequests(@CurrentGuardian() g: GuardianContext, @Query('studentId') studentId?: string) {
+    return this.inbox.documentRequests(g, studentId);
+  }
+
+  @Post('profile-change-requests')
+  createProfileChange(@CurrentGuardian() g: GuardianContext, @CurrentInstitutionPrincipal() p: InstitutionPrincipal, @CurrentScope() s: InstitutionScope, @ReqContext() r: EdrionRequestContext, @Body(zodBody(createProfileChangeRequestSchema)) body: CreateProfileChangeRequestInput) {
+    return this.inbox.createProfileChange(this.ctx(p, s, r), g, body);
+  }
+
+  @Get('profile-change-requests')
+  profileChanges(@CurrentGuardian() g: GuardianContext, @Query('studentId') studentId?: string) {
+    return this.inbox.profileChanges(g, studentId);
   }
 }

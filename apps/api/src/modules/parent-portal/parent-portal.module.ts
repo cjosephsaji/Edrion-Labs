@@ -4,6 +4,9 @@ import { PortalModule } from '../portal/portal.module';
 import { GuardianScopeGuard } from './guardian-scope.guard';
 import { ParentController } from './parent.controller';
 import { ParentWebhookController } from './parent-webhook.controller';
+import { ParentStaffController } from './parent-staff.controller';
+import { ParentStaffService } from './parent-staff.service';
+import { ParentNotifyService } from './parent-notify.service';
 import { ParentMeService } from './parent-me.service';
 import { ParentDashboardService } from './parent-dashboard.service';
 import { ParentAcademicsService } from './parent-academics.service';
@@ -11,6 +14,8 @@ import { ParentFeesService } from './parent-fees.service';
 import { ParentWellbeingService } from './parent-wellbeing.service';
 import { ParentSafetyService } from './parent-safety.service';
 import { ParentLogisticsService } from './parent-logistics.service';
+import { ParentCommService } from './parent-comm.service';
+import { ParentInboxService } from './parent-inbox.service';
 import { MockPaymentProvider } from './mock-payment.provider';
 
 /**
@@ -20,9 +25,11 @@ import { MockPaymentProvider } from './mock-payment.provider';
  */
 @Module({
   imports: [PortalModule],
-  controllers: [ParentController, ParentWebhookController],
+  controllers: [ParentController, ParentWebhookController, ParentStaffController],
   providers: [
     GuardianScopeGuard,
+    ParentStaffService,
+    ParentNotifyService,
     ParentMeService,
     ParentDashboardService,
     ParentAcademicsService,
@@ -30,6 +37,8 @@ import { MockPaymentProvider } from './mock-payment.provider';
     ParentWellbeingService,
     ParentSafetyService,
     ParentLogisticsService,
+    ParentCommService,
+    ParentInboxService,
     MockPaymentProvider,
   ],
 })
