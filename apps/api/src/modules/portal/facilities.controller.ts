@@ -6,6 +6,8 @@ import {
   createMaintenanceTaskSchema,
   createWorkOrderSchema,
   facilitiesListQuerySchema,
+  reportFacilityIssueSchema,
+  type ReportFacilityIssueInput,
   facilityAssetsListQuerySchema,
   maintenanceTasksListQuerySchema,
   updateFacilityAssetSchema,
@@ -231,5 +233,20 @@ export class FacilitiesController {
     @Body(zodBody(versionedDeleteSchema)) body: VersionedDeleteInput,
   ) {
     return this.svc.remove('assets', this.ctx(p, s, r), id, body.version);
+  }
+
+  /**
+   * Cross-role issue report (`facilities.report_issue`): raises a triage work order in `open`
+   * status without granting work-order management. Same audited path Petros uses.
+   */
+  @Post('issue-reports')
+  @RequireInstitutionPermissions('facilities.report_issue')
+  reportIssue(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(reportFacilityIssueSchema)) body: ReportFacilityIssueInput,
+  ) {
+    return this.svc.create('work-orders', this.ctx(p, s, r), { ...body, status: 'open' });
   }
 }

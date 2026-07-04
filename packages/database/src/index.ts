@@ -263,6 +263,20 @@ export type {
   RegConsent,
   InstitutionDocument,
   NewInstitutionDocument,
+  PetrosConversation,
+  NewPetrosConversation,
+  PetrosMessage,
+  NewPetrosMessage,
+  PetrosArtifact,
+  NewPetrosArtifact,
+  PetrosAttachment,
+  NewPetrosAttachment,
+  PetrosPendingTurn,
+  NewPetrosPendingTurn,
+  DocumentTemplate,
+  NewDocumentTemplate,
+  DocumentRender,
+  NewDocumentRender,
 } from './schema/index';
 export { sql, eq, and, or, desc, asc, ilike, inArray, count, gte, lte, lt, gt, isNull, isNotNull } from 'drizzle-orm';
 export type { SQL } from 'drizzle-orm';

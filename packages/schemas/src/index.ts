@@ -59,3 +59,5 @@ export * from './integrations';
 export * from './registration';
 // Parent Portal (/v1/parent/*) request + response contracts.
 export * from './parent-portal';
+export * from './petros';
+export * from './doc-gen';

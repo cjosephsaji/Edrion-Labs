@@ -76,13 +76,15 @@ function makeService() {
     replaceRoles: vi.fn().mockResolvedValue(undefined),
     replaceCampusAccess: vi.fn().mockResolvedValue(undefined),
     insertRoles: vi.fn().mockResolvedValue(undefined),
+    customRolesForInstitution: vi.fn().mockResolvedValue([]),
   };
+  repo.findInstitution.mockResolvedValue(ACTIVE_INSTITUTION);
   const audit = { logAudit: vi.fn().mockResolvedValue(undefined) };
   const service = new InstitutionUsersService(repo as never, audit as never);
   return { service, repo, audit };
 }
 
-const ACTIVE_INSTITUTION = { id: INSTITUTION_ID, displayName: 'Riverside School', status: 'active' };
+const ACTIVE_INSTITUTION = { id: INSTITUTION_ID, displayName: 'Riverside School', status: 'active', type: 'school' };
 
 describe('InstitutionUsersService.invite', () => {
   let h: ReturnType<typeof makeService>;
@@ -186,18 +188,18 @@ describe('InstitutionUsersService.changeCampusAccess', () => {
 describe('InstitutionUsersService.addPermissionOverride', () => {
   it('a grant clears a conflicting deny and audits the override', async () => {
     const h = makeService();
-    h.repo.findById.mockResolvedValue(baseUser({ directDenies: ['inst.fees.view'] }));
+    h.repo.findById.mockResolvedValue(baseUser({ directDenies: ['fees.view'] }));
     h.repo.updateWithVersion.mockImplementation(async (_id, v, patch) => baseUser({ version: v + 1, ...patch }));
 
     const detail = await h.service.addPermissionOverride(
       USER_ID,
-      { key: 'inst.fees.view', effect: 'grant', reason: 'finance cover', version: 3 },
+      { key: 'fees.view', effect: 'grant', reason: 'finance cover', version: 3 },
       makeCtx(),
     );
     const patch = h.repo.updateWithVersion.mock.calls.at(-1)?.[2];
-    expect(patch.directGrants).toContain('inst.fees.view');
-    expect(patch.directDenies).not.toContain('inst.fees.view');
-    expect(detail.directGrants).toContain('inst.fees.view');
+    expect(patch.directGrants).toContain('fees.view');
+    expect(patch.directDenies).not.toContain('fees.view');
+    expect(detail.directGrants).toContain('fees.view');
     expect(h.audit.logAudit.mock.calls.at(-1)?.[0].action).toBe('institution_user.add_permission_override');
   });
 });

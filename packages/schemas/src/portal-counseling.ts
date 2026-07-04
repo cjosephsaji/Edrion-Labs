@@ -44,3 +44,16 @@ export type CreateCounselingCaseInput = z.infer<typeof createCounselingCaseSchem
 
 export const updateCounselingCaseSchema = createCounselingCaseSchema.partial().extend({ version: versionSchema });
 export type UpdateCounselingCaseInput = z.infer<typeof updateCounselingCaseSchema>;
+
+/**
+ * Restricted cross-role referral payload (`counseling.refer`): any staff member with the key may
+ * open a triage case, but never sets status or reads cases. Shared by the REST endpoint and the
+ * Petros `counseling_case_create` tool — one audited path.
+ */
+export const counselingReferralSchema = z.object({
+  studentId: z.string().uuid().nullish(),
+  title: z.string().trim().min(1, 'Required').max(200),
+  summary: text(2000),
+  priority: z.enum(['low', 'medium', 'high']).default('medium'),
+});
+export type CounselingReferralInput = z.infer<typeof counselingReferralSchema>;

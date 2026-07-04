@@ -261,6 +261,22 @@ export class InstitutionUsersRepository {
     });
   }
 
+  /** This institution's custom roles (institution_roles) — merged over the code defaults. */
+  async customRolesForInstitution(
+    institutionId: string,
+  ): Promise<{ key: string; name: string; description: string | null; permissions: string[] }[]> {
+    const rows = await this.db
+      .select({
+        key: schema.institutionRoles.key,
+        name: schema.institutionRoles.name,
+        description: schema.institutionRoles.description,
+        permissions: schema.institutionRoles.permissions,
+      })
+      .from(schema.institutionRoles)
+      .where(eq(schema.institutionRoles.institutionId, institutionId));
+    return rows;
+  }
+
   async insertRoles(userId: string, roleKeys: string[]): Promise<void> {
     if (!roleKeys.length) return;
     await this.db

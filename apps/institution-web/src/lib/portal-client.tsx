@@ -109,6 +109,54 @@ export class PortalClient {
     return body as T;
   }
 
+  /**
+   * Fetch-streamed POST that reads SSE frames (Petros turns). EventSource cannot send auth
+   * headers, so the stream rides a normal fetch; each `data:` frame is parsed and forwarded.
+   */
+  async stream(
+    path: string,
+    scope: InstitutionScope,
+    body: unknown,
+    onEvent: (event: Record<string, unknown>) => void,
+  ): Promise<void> {
+    const headers = new Headers();
+    headers.set('content-type', 'application/json');
+    headers.set('x-institution-scope', scopeHeader(scope));
+    if (this.devUserEmail) headers.set('x-institution-user-email', this.devUserEmail);
+    const res = await fetch(`${this.baseUrl}/v1${path}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers,
+      body: JSON.stringify(body ?? {}),
+    });
+    if (!res.ok || !res.body) {
+      const err = (await res.json().catch(() => ({}))) as ApiError;
+      throw new PortalClientError(res.status, err.code ?? 'ERROR', err.message ?? res.statusText, err.correlationId);
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let idx: number;
+      while ((idx = buffer.indexOf('\n\n')) >= 0) {
+        const frame = buffer.slice(0, idx);
+        buffer = buffer.slice(idx + 2);
+        const line = frame.split('\n').find((l) => l.startsWith('data: '));
+        if (!line) continue;
+        const payload = line.slice(6);
+        if (payload === '[DONE]') return;
+        try {
+          onEvent(JSON.parse(payload) as Record<string, unknown>);
+        } catch {
+          // skip malformed frame
+        }
+      }
+    }
+  }
+
   /** Absolute URL for a portal resource — used for `<a href>` downloads (cookie auth applies). */
   fileUrl(path: string): string {
     return `${this.baseUrl}/v1${path}`;

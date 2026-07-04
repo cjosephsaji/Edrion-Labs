@@ -74,7 +74,7 @@ export const NAV: NavGroup[] = [
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'portal.dashboard.view' },
       { label: 'Attention Centre', href: '/attention', icon: Gauge, permission: 'portal.dashboard.view' },
-      { label: 'AI Copilot', href: '/copilot', icon: Sparkles, permission: 'ai.use' },
+      { label: 'Petros', href: '/petros', icon: Sparkles, permission: 'ai.use' },
     ],
   },
   {

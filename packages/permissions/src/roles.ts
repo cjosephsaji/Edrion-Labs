@@ -6,11 +6,23 @@
  */
 import { ALL_PERMISSION_KEYS, WILDCARD_PERMISSION, type PermissionKey } from './catalogue';
 
+/**
+ * Institution types a role preset may be limited to. Mirrors `InstitutionType` in
+ * @edrion/shared-types (kept local — this package is dependency-free by design).
+ */
+export type RoleInstitutionType = 'school' | 'college' | 'university' | 'training_center';
+
 export interface RoleDef {
   key: string;
   name: string;
   description: string;
   permissions: string[];
+  /**
+   * Institution types this default role preset applies to. Absent = all types. This is the ONLY
+   * place `institutions.type` becomes behavioral: role presets filter by type; nothing anywhere
+   * branches on role names.
+   */
+  appliesTo?: readonly RoleInstitutionType[];
 }
 
 const view = (...keys: string[]) => keys;

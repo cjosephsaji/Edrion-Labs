@@ -133,3 +133,22 @@ hitting the same path is throttled identically. Fail-open if Redis is unavailabl
 > Status: rule, lifecycle and guardrail model are defined here and in `@edrion/shared-types`
 > (`AiActionStatus`, `AiMode`). The `copilot` + `ai-governance` modules are implemented in
 > Phase 8 on top of the existing audited service layer.
+
+## Petros (Phase 1–8 addendum)
+
+Petros is the user-facing chat assistant built on this guardrail substrate (OpenAI Responses API,
+manual tool loop — never an SDK auto-runner). Every `function_call` passes `evaluateGuardrail`;
+reads execute inline via the existing audited portal services; **every mutation creates a
+`portal_ai_run` and pauses on a human confirmation card**. THE invariant is never relaxed:
+`topicalityMode: 'off'` (super-admin freedom) affects the topicality pre-screen only — the
+mutation confirmation has no knob.
+
+Residual risks (accepted, documented):
+- **Prompt injection** via uploaded files / DB text: mitigated by the confirmation gate
+  (backstop), the charter, and permission-filtered tools. A poisoned document can at most
+  propose an action the human then sees on an exact-impact card.
+- **Classifier false positives**: the decline message offers a one-retry escape ("if this is
+  work-related, say so") that goes straight to the main model; watch `other_offtopic` spikes in
+  `petros_decline_stats`.
+- Decline audit events (`petros.topic_declined`) carry the FULL prompt — append-only, gated
+  `audit.view`. Institution admins only ever see aggregate counts by category (`ai.configure`).

@@ -1,19 +1,20 @@
 import { describe, expect, it } from 'vitest';
+import { INSTITUTION_DEFAULT_ROLES } from '@edrion/permissions/institution';
 import {
   applyProposedChange,
   computeEffectiveAccess,
-  INSTITUTION_ROLES,
+  institutionPermissionKeySchema,
+  institutionRoleKeySchema,
   previewAccessChangeSchema,
 } from './institution-users';
 
-const adminPerms = INSTITUTION_ROLES.find((r) => r.key === 'institution_admin')!.permissions;
-const teacherPerms = INSTITUTION_ROLES.find((r) => r.key === 'teacher')!.permissions;
+const teacherPerms = INSTITUTION_DEFAULT_ROLES.find((r) => r.key === 'teacher')!.permissions;
 
-describe('computeEffectiveAccess', () => {
+describe('computeEffectiveAccess (portal catalogue)', () => {
   it('unions the permissions of all assigned roles', () => {
     const eff = computeEffectiveAccess({ roleKeys: ['teacher', 'finance_manager'] });
-    expect(eff.permissionKeys).toContain('inst.grades.manage'); // teacher
-    expect(eff.permissionKeys).toContain('inst.fees.manage'); // finance
+    expect(eff.permissionKeys).toContain('gradebook.manage'); // teacher
+    expect(eff.permissionKeys).toContain('fees.manage'); // finance
     expect(eff.grantedByRole).toEqual(eff.permissionKeys); // no overrides yet
   });
 
@@ -23,25 +24,28 @@ describe('computeEffectiveAccess', () => {
   });
 
   it('adds direct grants beyond the roles and reports them', () => {
-    const eff = computeEffectiveAccess({ roleKeys: ['teacher'], directGrants: ['inst.fees.view'] });
-    expect(eff.permissionKeys).toContain('inst.fees.view');
-    expect(eff.addedByOverride).toEqual(['inst.fees.view']);
+    const eff = computeEffectiveAccess({ roleKeys: ['teacher'], directGrants: ['fees.view'] });
+    expect(eff.permissionKeys).toContain('fees.view');
+    expect(eff.addedByOverride).toEqual(['fees.view']);
   });
 
   it('does not double-count a grant the role already provides', () => {
-    const eff = computeEffectiveAccess({ roleKeys: ['teacher'], directGrants: ['inst.grades.manage'] });
+    const eff = computeEffectiveAccess({ roleKeys: ['teacher'], directGrants: ['gradebook.manage'] });
     expect(eff.addedByOverride).toEqual([]);
   });
 
   it('deny always wins, even over a role-granted key, and is reported', () => {
-    const eff = computeEffectiveAccess({ roleKeys: ['teacher'], directDenies: ['inst.grades.manage'] });
-    expect(eff.permissionKeys).not.toContain('inst.grades.manage');
-    expect(eff.removedByOverride).toEqual(['inst.grades.manage']);
+    const eff = computeEffectiveAccess({ roleKeys: ['teacher'], directDenies: ['gradebook.manage'] });
+    expect(eff.permissionKeys).not.toContain('gradebook.manage');
+    expect(eff.removedByOverride).toEqual(['gradebook.manage']);
   });
 
-  it('admin role grants every institution permission', () => {
-    const eff = computeEffectiveAccess({ roleKeys: ['institution_admin'] });
-    expect(eff.permissionKeys).toEqual([...adminPerms].sort());
+  it('resolves custom roles when passed as extra roleDefs', () => {
+    const eff = computeEffectiveAccess({ roleKeys: ['exam_officer'] }, [
+      ...INSTITUTION_DEFAULT_ROLES,
+      { key: 'exam_officer', permissions: ['exams.view', 'exams.manage'] },
+    ]);
+    expect(eff.permissionKeys).toEqual(['exams.manage', 'exams.view']);
   });
 
   it('carries campus access through and counts it', () => {
@@ -54,13 +58,20 @@ describe('computeEffectiveAccess', () => {
     });
     expect(eff.campusCount).toBe(2);
   });
+
+  it('student and parent default roles no longer include ai.use (Petros deferral)', () => {
+    for (const key of ['student', 'parent']) {
+      const eff = computeEffectiveAccess({ roleKeys: [key] });
+      expect(eff.permissionKeys).not.toContain('ai.use');
+    }
+  });
 });
 
 describe('applyProposedChange', () => {
   const current = {
     roleKeys: ['teacher'],
-    directGrants: ['inst.fees.view'],
-    directDenies: ['inst.timetable.manage'],
+    directGrants: ['fees.view'],
+    directDenies: ['timetable.manage'],
     campusAccess: [{ campusId: 'c1', accessLevel: 'manage' as const }],
   };
 
@@ -70,33 +81,43 @@ describe('applyProposedChange', () => {
   });
 
   it('adding a grant clears a conflicting deny', () => {
-    const merged = applyProposedChange(current, { addGrants: ['inst.timetable.manage'] });
-    expect(merged.directGrants).toContain('inst.timetable.manage');
-    expect(merged.directDenies).not.toContain('inst.timetable.manage');
+    const merged = applyProposedChange(current, { addGrants: ['timetable.manage'] });
+    expect(merged.directGrants).toContain('timetable.manage');
+    expect(merged.directDenies).not.toContain('timetable.manage');
   });
 
   it('adding a deny clears a conflicting grant', () => {
-    const merged = applyProposedChange(current, { addDenies: ['inst.fees.view'] });
-    expect(merged.directDenies).toContain('inst.fees.view');
-    expect(merged.directGrants).not.toContain('inst.fees.view');
+    const merged = applyProposedChange(current, { addDenies: ['fees.view'] });
+    expect(merged.directDenies).toContain('fees.view');
+    expect(merged.directGrants).not.toContain('fees.view');
   });
 
   it('removeOverrides drops a key from both grants and denies', () => {
-    const merged = applyProposedChange(current, { removeOverrides: ['inst.fees.view', 'inst.timetable.manage'] });
-    expect(merged.directGrants).not.toContain('inst.fees.view');
-    expect(merged.directDenies).not.toContain('inst.timetable.manage');
+    const merged = applyProposedChange(current, { removeOverrides: ['fees.view', 'timetable.manage'] });
+    expect(merged.directGrants).not.toContain('fees.view');
+    expect(merged.directDenies).not.toContain('timetable.manage');
   });
 
   it('a previewed change recomputes to the expected effective set', () => {
     const merged = applyProposedChange(current, { roleKeys: ['institution_admin'] });
     const eff = computeEffectiveAccess(merged);
     // admin grants timetable, but the carried-over deny still wins
-    expect(eff.permissionKeys).not.toContain('inst.timetable.manage');
+    expect(eff.permissionKeys).not.toContain('timetable.manage');
   });
 });
 
-describe('previewAccessChangeSchema', () => {
+describe('schemas', () => {
   it('defaults to an empty change', () => {
     expect(previewAccessChangeSchema.parse(undefined)).toEqual({});
+  });
+
+  it('rejects legacy inst.* permission keys', () => {
+    expect(institutionPermissionKeySchema.safeParse('inst.students.view').success).toBe(false);
+    expect(institutionPermissionKeySchema.safeParse('students.view').success).toBe(true);
+  });
+
+  it('role keys must be lower_snake_case', () => {
+    expect(institutionRoleKeySchema.safeParse('Exam Officer').success).toBe(false);
+    expect(institutionRoleKeySchema.safeParse('exam_officer').success).toBe(true);
   });
 });

@@ -41,6 +41,18 @@ export type CreateWorkOrderInput = z.infer<typeof createWorkOrderSchema>;
 export const updateWorkOrderSchema = createWorkOrderSchema.partial().extend({ version: versionSchema });
 export type UpdateWorkOrderInput = z.infer<typeof updateWorkOrderSchema>;
 
+/**
+ * Restricted issue-report payload (`facilities.report_issue`): any staff member with the key may
+ * raise a triage work order (status always opens as `open`, unassigned). Shared by the REST
+ * endpoint and the Petros `work_order_create` tool — one audited path.
+ */
+export const reportFacilityIssueSchema = z.object({
+  title: z.string().trim().min(1, 'Required').max(200),
+  description: text(2000),
+  priority: z.enum(['low', 'medium', 'high']).default('medium'),
+});
+export type ReportFacilityIssueInput = z.infer<typeof reportFacilityIssueSchema>;
+
 // --- maintenance tasks -------------------------------------------------------
 export const maintenanceTasksListQuerySchema = listQuery;
 export type MaintenanceTasksListQuery = z.infer<typeof maintenanceTasksListQuerySchema>;

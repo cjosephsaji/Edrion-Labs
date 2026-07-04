@@ -274,6 +274,34 @@
       "when": 1782900200000,
       "tag": "0038_grade_published",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1782900300000,
+      "tag": "0039_rbac_consolidation",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1782900400000,
+      "tag": "0040_petros_core",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1782900500000,
+      "tag": "0041_document_generation",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1782900600000,
+      "tag": "0042_petros_topicality",
+      "breakpoints": true
     }
   ]
 }

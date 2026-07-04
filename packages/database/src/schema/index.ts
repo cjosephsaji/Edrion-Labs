@@ -56,3 +56,9 @@ export * from './parent-wellbeing';
 export * from './parent-safety';
 export * from './parent-money';
 export * from './parent-docs';
+
+// Petros (AI assistant) conversations, messages, artifacts, attachments, paused turns
+export * from './petros';
+
+// Document generation engine (templates + renders)
+export * from './doc-gen';

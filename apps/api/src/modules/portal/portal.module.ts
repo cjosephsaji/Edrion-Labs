@@ -126,6 +126,17 @@ import { ConductService } from './conduct.service';
 import { StudentProfileController } from './student-profile.controller';
 import { StudentProfileService } from './student-profile.service';
 import { AdmissionInfoController, AdmissionInfoService } from './admission-info.controller';
+import { PetrosController } from './petros/petros.controller';
+import { PetrosConversationsService } from './petros/petros-conversations.service';
+import { PetrosAgentService } from './petros/petros-agent.service';
+import { PetrosRepository } from './petros/petros.repository';
+import { PetrosOpenAiService } from './petros/openai-client.service';
+import { PetrosToolRegistry } from './petros/tools/registry';
+import { PetrosAttachmentService } from './petros/petros-attachment.service';
+import { DocumentsGenModule } from '../documents/documents-gen.module';
+import { PortalReportQueriesService } from './portal-report-queries.service';
+import { PetrosTopicalityService } from './petros/petros-topicality.service';
+import { DocumentsGenController } from '../documents/documents-gen.controller';
 
 /**
  * Institution Portal module — the tenant-facing API. Separate from the platform control-plane
@@ -133,6 +144,7 @@ import { AdmissionInfoController, AdmissionInfoService } from './admission-info.
  * controller level (the global platform AuthGuard is skipped via @Public on the controller).
  */
 @Module({
+  imports: [DocumentsGenModule],
   controllers: [
     PortalController,
     PortalAuthController,
@@ -156,6 +168,8 @@ import { AdmissionInfoController, AdmissionInfoService } from './admission-info.
     MessagesController,
     ReportsController,
     PortalCopilotController,
+    PetrosController,
+    DocumentsGenController,
     SettingsController,
     RolesController,
     UsersController,
@@ -240,6 +254,14 @@ import { AdmissionInfoController, AdmissionInfoService } from './admission-info.
     PortalCopilotRepository,
     PortalCopilotToolRegistry,
     PortalCopilotPlanner,
+    PetrosConversationsService,
+    PetrosAgentService,
+    PetrosRepository,
+    PetrosOpenAiService,
+    PetrosToolRegistry,
+    PetrosAttachmentService,
+    PortalReportQueriesService,
+    PetrosTopicalityService,
     SettingsService,
     SettingsRepository,
     RolesService,

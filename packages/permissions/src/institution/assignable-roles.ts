@@ -15,6 +15,8 @@ export const CAMPUS_ADMIN_ASSIGNABLE_ROLE_KEYS = [
   'it_staff',
   'maintenance_staff',
   'security_staff',
+  'hostel_warden',
+  'clerk',
 ] as const;
 
 export type CampusAdminAssignableRoleKey = (typeof CAMPUS_ADMIN_ASSIGNABLE_ROLE_KEYS)[number];

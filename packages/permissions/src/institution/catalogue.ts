@@ -131,8 +131,21 @@ export const INSTITUTION_PERMISSIONS: readonly PermissionDef[] = [
   def('billing.view', 'Billing', 'View the institution’s Edrion plan, subscription and invoices.'),
 
   // AI
-  def('ai.use', 'AI', 'Use the AI Copilot.'),
+  def('ai.use', 'AI', 'Use Petros, the AI assistant.'),
   def('ai.configure', 'AI', 'Configure AI settings and guardrails.', true),
+  def('ai.assessments.generate', 'AI', 'Fully generate exams/assignments/tests with Petros.', true),
+  def('ai.files.upload', 'AI', 'Attach files to Petros conversations.'),
+
+  // Document generation (formatted institution documents — distinct from Documents & Policies)
+  def('documents.generate', 'Documents', 'Generate formatted documents from templates.'),
+  def('documents.templates.manage', 'Documents', 'Edit templates, branding, paper formats.', true),
+
+  // Official circulars
+  def('circulars.issue', 'Communication', 'Issue official circulars under letterhead.', true),
+
+  // Cross-role triage actions
+  def('counseling.refer', 'Counseling', 'Refer a student to counseling (creates triage case).'),
+  def('facilities.report_issue', 'Facilities', 'Report a facilities/classroom issue (triage work order).'),
 
   // Audit
   def('audit.view', 'Audit', 'View audit logs.'),

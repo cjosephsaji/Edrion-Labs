@@ -2,8 +2,11 @@
 import { useState } from 'react';
 import { UserPlus } from 'lucide-react';
 import { Button, Label } from '@edrion/ui';
-import { INSTITUTION_ROLES } from '@edrion/schemas';
-import { ApiClientError, useInviteInstitutionUser } from '@edrion/api-client';
+import {
+  ApiClientError,
+  useInstitutionAvailableRoles,
+  useInviteInstitutionUser,
+} from '@edrion/api-client';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 
 const fieldClass =
@@ -21,6 +24,7 @@ export function InviteUserDialog({
   onInvited?: () => void;
 }) {
   const invite = useInviteInstitutionUser();
+  const availableRoles = useInstitutionAvailableRoles(institutionId);
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
@@ -91,8 +95,8 @@ export function InviteUserDialog({
         </div>
         <div>
           <Label>Roles</Label>
-          <div className="mt-1 grid grid-cols-2 gap-1.5">
-            {INSTITUTION_ROLES.map((r) => (
+          <div className="mt-1 grid max-h-64 grid-cols-2 gap-1.5 overflow-y-auto">
+            {(availableRoles.data ?? []).map((r) => (
               <label
                 key={r.key}
                 className="flex cursor-pointer items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-sm text-text-secondary hover:bg-background-secondary"

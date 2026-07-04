@@ -46,6 +46,7 @@ export function resolveAiPolicy(
   const twoPersonThresholdMinor = firstDefined(layered, (p) => p.twoPersonThresholdMinor);
   const maxRunsPerDay = firstDefined(layered, (p) => p.maxRunsPerDay);
   const maxRunsPerEmployeePerDay = firstDefined(layered, (p) => p.maxRunsPerEmployeePerDay);
+  const topicalityMode = firstDefined(layered, (p) => p.topicalityMode);
 
   // Capabilities: apply least → most specific so the most specific override stands.
   const capabilities: Partial<Record<AiCapability, boolean>> = {};
@@ -70,6 +71,7 @@ export function resolveAiPolicy(
     secondApproverCapabilities,
     maxRunsPerDay: maxRunsPerDay ?? null,
     maxRunsPerEmployeePerDay: maxRunsPerEmployeePerDay ?? null,
+    topicalityMode: topicalityMode ?? 'enforce',
     killSwitch: !!killLayer,
     modeScope: modeLayer?.scope ?? FeatureScope.Global,
     modeScopeId: modeLayer?.scopeId ?? null,
@@ -117,10 +119,10 @@ function scopeMatchesContext(
 }
 
 /** First non-null/undefined value across the most→least specific layer list. */
-function firstDefined(
+function firstDefined<T>(
   layers: AiPolicyInput[],
-  pick: (p: AiPolicyInput) => number | null | undefined,
-): number | undefined {
+  pick: (p: AiPolicyInput) => T | null | undefined,
+): T | undefined {
   for (const p of layers) {
     const v = pick(p);
     if (v != null) return v;

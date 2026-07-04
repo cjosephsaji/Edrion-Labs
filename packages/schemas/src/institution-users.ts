@@ -1,120 +1,30 @@
 import { z } from 'zod';
 import { AccountStatus } from '@edrion/shared-types';
+import {
+  ALL_INSTITUTION_PERMISSION_KEYS,
+  INSTITUTION_DEFAULT_ROLES,
+} from '@edrion/permissions/institution';
 import { emailSchema, paginationQuerySchema, phoneSchema, reasonSchema, sortQuerySchema, zEnumFromConst } from './common';
 
 /**
- * Institution-side RBAC model.
+ * Institution-side RBAC request/preview contracts.
  *
- * These describe what an institution USER can do INSIDE their own institution — distinct from
- * the platform permission catalogue (@edrion/permissions) which governs Edrion employees. The
- * Super Admin platform manages these grants but never widens a user beyond a single institution
- * (see `campusAccessSchema` + the service invariant).
+ * Phase 0 (Petros): the legacy `inst.*` key list and its 6-role bundle are GONE. This module now
+ * validates against the single institution catalogue in `@edrion/permissions/institution` — the
+ * same registry the Institution Portal evaluates at runtime. Role keys are open strings because
+ * institutions can author custom roles (`institution_roles` table); the API validates a role key
+ * against defaults ∪ that institution's custom roles.
  *
  * Effective access = (union of role permissions ∪ directGrants) − directDenies, deny always
  * wins. The computation is pure and shared by the API (authoritative) and the client preview
  * so both agree before a change is committed (preview-before-confirm).
  */
 
-/** Granular institution-side permission keys. */
-export const INSTITUTION_PERMISSION_KEYS = [
-  'inst.dashboard.view',
-  'inst.students.view',
-  'inst.students.manage',
-  'inst.staff.view',
-  'inst.staff.manage',
-  'inst.classes.view',
-  'inst.classes.manage',
-  'inst.attendance.manage',
-  'inst.grades.manage',
-  'inst.timetable.manage',
-  'inst.fees.view',
-  'inst.fees.manage',
-  'inst.reports.view',
-  'inst.campus.manage',
-  'inst.users.manage',
-  'inst.settings.manage',
-] as const;
-export type InstitutionPermissionKey = (typeof INSTITUTION_PERMISSION_KEYS)[number];
-
-export interface InstitutionRoleDef {
+/** A role definition shape sufficient for effective-access computation. */
+export interface RoleBag {
   key: string;
-  name: string;
-  description: string;
-  permissions: InstitutionPermissionKey[];
+  permissions: readonly string[];
 }
-
-const ALL: InstitutionPermissionKey[] = [...INSTITUTION_PERMISSION_KEYS];
-const viewOnly = INSTITUTION_PERMISSION_KEYS.filter((k) => k.endsWith('.view')) as InstitutionPermissionKey[];
-
-/** Default institution roles — bags of permission keys; nothing branches on a role name. */
-export const INSTITUTION_ROLES: readonly InstitutionRoleDef[] = [
-  {
-    key: 'institution_admin',
-    name: 'Institution Administrator',
-    description: 'Full control across the institution and all its campuses.',
-    permissions: ALL,
-  },
-  {
-    key: 'campus_admin',
-    name: 'Campus Administrator',
-    description: 'Manages day-to-day operations within granted campuses.',
-    permissions: [
-      'inst.dashboard.view',
-      'inst.students.view',
-      'inst.students.manage',
-      'inst.staff.view',
-      'inst.staff.manage',
-      'inst.classes.view',
-      'inst.classes.manage',
-      'inst.attendance.manage',
-      'inst.grades.manage',
-      'inst.timetable.manage',
-      'inst.reports.view',
-      'inst.campus.manage',
-    ],
-  },
-  {
-    key: 'teacher',
-    name: 'Teacher',
-    description: 'Runs classes — attendance, grades and timetable for assigned classes.',
-    permissions: [
-      'inst.dashboard.view',
-      'inst.students.view',
-      'inst.classes.view',
-      'inst.classes.manage',
-      'inst.attendance.manage',
-      'inst.grades.manage',
-      'inst.timetable.manage',
-    ],
-  },
-  {
-    key: 'finance_manager',
-    name: 'Finance Manager',
-    description: 'Owns fees and financial reporting.',
-    permissions: ['inst.dashboard.view', 'inst.fees.view', 'inst.fees.manage', 'inst.reports.view'],
-  },
-  {
-    key: 'front_desk',
-    name: 'Front Desk',
-    description: 'Handles enrolment and attendance at reception.',
-    permissions: [
-      'inst.dashboard.view',
-      'inst.students.view',
-      'inst.students.manage',
-      'inst.attendance.manage',
-    ],
-  },
-  {
-    key: 'viewer',
-    name: 'Viewer',
-    description: 'Read-only visibility, no changes.',
-    permissions: ['inst.dashboard.view', ...viewOnly],
-  },
-] as const;
-
-export const INSTITUTION_ROLE_KEYS = INSTITUTION_ROLES.map((r) => r.key) as [string, ...string[]];
-
-const ROLE_BY_KEY = new Map(INSTITUTION_ROLES.map((r) => [r.key, r]));
 
 /** Campus access levels a grant may carry. */
 export const CAMPUS_ACCESS_LEVELS = ['manage', 'view'] as const;
@@ -147,15 +57,19 @@ export interface EffectiveAccess {
 }
 
 /**
- * Compute the effective access for an institution user. Pure — no IO. Used for the GET detail
- * "effective permissions" panel and the preview-before-confirm flow (where a proposed change is
- * merged in first, then this is recomputed).
+ * Compute the effective access for an institution user. Pure — no IO. `roleDefs` defaults to the
+ * code default institution roles; callers that know about custom roles (the API) pass
+ * defaults ∪ custom so DB-authored roles resolve too.
  */
-export function computeEffectiveAccess(input: EffectiveAccessInput): EffectiveAccess {
+export function computeEffectiveAccess(
+  input: EffectiveAccessInput,
+  roleDefs: readonly RoleBag[] = INSTITUTION_DEFAULT_ROLES,
+): EffectiveAccess {
   const roleKeys = [...new Set(input.roleKeys)];
+  const byKey = new Map(roleDefs.map((r) => [r.key, r]));
   const fromRoles = new Set<string>();
   for (const key of roleKeys) {
-    const role = ROLE_BY_KEY.get(key);
+    const role = byKey.get(key);
     if (!role) continue;
     for (const p of role.permissions) fromRoles.add(p);
   }
@@ -185,9 +99,26 @@ export function computeEffectiveAccess(input: EffectiveAccessInput): EffectiveAc
 // --- Zod request schemas ------------------------------------------------------
 
 export const accountStatusSchema = zEnumFromConst(AccountStatus);
-export const institutionRoleKeySchema = z.enum(INSTITUTION_ROLE_KEYS);
+
+const VALID_INSTITUTION_KEYS = new Set<string>(ALL_INSTITUTION_PERMISSION_KEYS);
+
+/**
+ * Role keys are open strings (custom roles live in the DB); shape-validated here, membership
+ * validated by the API against defaults ∪ the institution's custom roles.
+ */
+export const institutionRoleKeySchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(80)
+  .regex(/^[a-z][a-z0-9_]*$/, 'Role keys are lower_snake_case');
+
+/** Permission keys must be real institution catalogue keys. */
+export const institutionPermissionKeySchema = z
+  .string()
+  .refine((k) => VALID_INSTITUTION_KEYS.has(k), 'Unknown institution permission key');
+
 export const campusAccessLevelSchema = z.enum(CAMPUS_ACCESS_LEVELS);
-export const institutionPermissionKeySchema = z.enum(INSTITUTION_PERMISSION_KEYS);
 
 export const campusGrantSchema = z.object({
   campusId: z.string().uuid(),
@@ -330,4 +261,13 @@ export function applyProposedChange(
     directDenies: [...denies],
     campusAccess: change.campusAccess ?? current.campusAccess,
   };
+}
+
+/** An available role as served by GET /v1/institutions/:id/available-roles. */
+export interface AvailableRole {
+  key: string;
+  name: string;
+  description: string | null;
+  permissions: string[];
+  isSystem: boolean;
 }

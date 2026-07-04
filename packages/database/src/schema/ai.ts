@@ -43,6 +43,8 @@ export const aiPolicies = pgTable(
     maxRunsPerDay: integer('max_runs_per_day'),
     /** Daily AI-run ceiling per employee under this scope. Null = use the env default. */
     maxRunsPerEmployeePerDay: integer('max_runs_per_employee_per_day'),
+    /** Topicality pre-screen mode: 'enforce' | 'off'. Null = default (enforce). */
+    topicalityMode: text('topicality_mode'),
     /** Emergency kill switch — short-circuits every action under this scope to BLOCKED. */
     killSwitch: boolean('kill_switch').notNull().default(false),
     reason: text('reason'),

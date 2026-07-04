@@ -36,6 +36,22 @@ import { InstitutionUsersService } from './institution-users.service';
 
 const summaryQuerySchema = z.object({ institutionId: z.string().uuid().optional() });
 
+/**
+ * Roles assignable inside one institution: default presets filtered by the institution's type
+ * plus its custom roles. Consumed by the super-admin invite dialog (Phase 0.1.4).
+ */
+@ApiTags('institutions')
+@Controller('institutions')
+export class InstitutionAvailableRolesController {
+  constructor(private readonly service: InstitutionUsersService) {}
+
+  @Get(':id/available-roles')
+  @RequirePermissions('institution_users.view')
+  availableRoles(@Param('id') id: string) {
+    return this.service.availableRoles(id);
+  }
+}
+
 @ApiTags('institution-users')
 @Controller('institution-users')
 export class InstitutionUsersController {

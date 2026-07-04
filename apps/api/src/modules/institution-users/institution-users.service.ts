@@ -19,6 +19,7 @@ import {
   type UserStatusActionInput,
 } from '@edrion/schemas';
 import type { AuditWriter, AuditEventInput } from '@edrion/audit';
+import { getDefaultRolesForInstitutionType } from '@edrion/permissions/institution';
 import type { Institution, InstitutionUser } from '@edrion/database';
 import { AUDIT_WRITER } from '../../common/tokens';
 import { baseAudit, type ActionContext } from '../../common/action-context';
@@ -125,6 +126,7 @@ export class InstitutionUsersService {
         message: 'Cannot invite users into an archived institution',
       });
     }
+    await this.assertRolesExist(institution, input.roleKeys);
     const existing = await this.repo.findByEmail(input.institutionId, input.email);
     if (existing) {
       throw new ConflictException({
@@ -193,7 +195,9 @@ export class InstitutionUsersService {
   }
 
   async changeRole(id: string, input: ChangeRoleInput, ctx: ActionContext): Promise<InstitutionUserDetail> {
-    await this.requireUser(id);
+    const user = await this.requireUser(id);
+    const institution = await this.requireInstitution(user.institutionId);
+    await this.assertRolesExist(institution, input.roleKeys);
     const before = await this.repo.rolesForUser(id);
     const claimed = await this.repo.updateWithVersion(id, input.version, {
       updatedBy: ctx.principalContext.principal.employeeId,
@@ -201,10 +205,11 @@ export class InstitutionUsersService {
     if (!claimed) throw this.versionConflict();
     await this.repo.replaceRoles(id, input.roleKeys);
 
+    const roleDefs = await this.roleDefsFor(claimed.institutionId);
     await this.writeAudit(ctx, claimed, 'institution_user.change_role', {
       reason: input.reason,
-      previousState: { roleKeys: before, effective: this.effective(before, claimed).permissionKeys },
-      newState: { roleKeys: input.roleKeys, effective: this.effective(input.roleKeys, claimed).permissionKeys },
+      previousState: { roleKeys: before, effective: this.effective(before, claimed, roleDefs).permissionKeys },
+      newState: { roleKeys: input.roleKeys, effective: this.effective(input.roleKeys, claimed, roleDefs).permissionKeys },
     });
     return this.toDetail(claimed);
   }
@@ -298,8 +303,9 @@ export class InstitutionUsersService {
       directDenies: user.directDenies,
       campusAccess,
     };
-    const before = computeEffectiveAccess(current);
-    const after = computeEffectiveAccess(applyProposedChange(current, change));
+    const roleDefs = await this.roleDefsFor(user.institutionId);
+    const before = computeEffectiveAccess(current, roleDefs);
+    const after = computeEffectiveAccess(applyProposedChange(current, change), roleDefs);
     return { before, after };
   }
 
@@ -427,12 +433,67 @@ export class InstitutionUsersService {
     }
   }
 
-  private effective(roleKeys: string[], user: InstitutionUser): EffectiveAccess {
-    return computeEffectiveAccess({
-      roleKeys,
-      directGrants: user.directGrants,
-      directDenies: user.directDenies,
-    });
+  private effective(
+    roleKeys: string[],
+    user: InstitutionUser,
+    roleDefs: { key: string; permissions: readonly string[] }[],
+  ): EffectiveAccess {
+    return computeEffectiveAccess(
+      {
+        roleKeys,
+        directGrants: user.directGrants,
+        directDenies: user.directDenies,
+      },
+      roleDefs,
+    );
+  }
+
+  /**
+   * Role definitions valid for an institution: code default presets filtered by the institution's
+   * type, plus that institution's DB-authored custom roles (custom key wins on collision).
+   */
+  private async roleDefsFor(
+    institutionId: string,
+  ): Promise<{ key: string; name: string; description: string | null; permissions: string[]; isSystem: boolean }[]> {
+    const institution = await this.requireInstitution(institutionId);
+    const custom = await this.repo.customRolesForInstitution(institutionId);
+    const customKeys = new Set(custom.map((r) => r.key));
+    const defaults = getDefaultRolesForInstitutionType(institution.type)
+      .filter((r) => !customKeys.has(r.key))
+      .map((r) => ({
+        key: r.key,
+        name: r.name,
+        description: r.description ?? null,
+        permissions: [...r.permissions],
+        isSystem: true,
+      }));
+    return [
+      ...defaults,
+      ...custom.map((r) => ({
+        key: r.key,
+        name: r.name,
+        description: r.description,
+        permissions: r.permissions,
+        isSystem: false,
+      })),
+    ];
+  }
+
+  /** Roles assignable inside an institution — serves GET /v1/institutions/:id/available-roles. */
+  async availableRoles(institutionId: string) {
+    return this.roleDefsFor(institutionId);
+  }
+
+  private async assertRolesExist(institution: Institution, roleKeys: string[]): Promise<void> {
+    const valid = new Set((await this.roleDefsFor(institution.id)).map((r) => r.key));
+    const offending = roleKeys.filter((k) => !valid.has(k));
+    if (offending.length) {
+      throw new BadRequestException({
+        code: 'UNKNOWN_ROLE',
+        message: 'One or more role keys are not valid for this institution',
+        details: { roleKeys: offending },
+      });
+    }
   }
 
   private async toDetail(user: InstitutionUser): Promise<InstitutionUserDetail> {
@@ -443,12 +504,15 @@ export class InstitutionUsersService {
       campusName: c.campusName,
       accessLevel: c.accessLevel,
     }));
-    const effectiveAccess = computeEffectiveAccess({
-      roleKeys,
-      directGrants: user.directGrants,
-      directDenies: user.directDenies,
-      campusAccess: campusRows.map(toGrant),
-    });
+    const effectiveAccess = computeEffectiveAccess(
+      {
+        roleKeys,
+        directGrants: user.directGrants,
+        directDenies: user.directDenies,
+        campusAccess: campusRows.map(toGrant),
+      },
+      await this.roleDefsFor(user.institutionId),
+    );
 
     return {
       id: user.id,

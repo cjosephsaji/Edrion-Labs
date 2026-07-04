@@ -692,6 +692,24 @@ export function useInstitutionUsers(filter: InstitutionUsersFilter) {
   });
 }
 
+/** Roles assignable inside one institution: type-filtered default presets + its custom roles. */
+export interface AvailableRoleDto {
+  key: string;
+  name: string;
+  description: string | null;
+  permissions: string[];
+  isSystem: boolean;
+}
+
+export function useInstitutionAvailableRoles(institutionId: string | undefined) {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: ['institutions', institutionId, 'available-roles'] as const,
+    queryFn: () => client.get<AvailableRoleDto[]>(`/institutions/${institutionId}/available-roles`),
+    enabled: Boolean(institutionId),
+  });
+}
+
 export function useInstitutionUsersSummary(institutionId?: string) {
   const client = useApiClient();
   return useQuery({

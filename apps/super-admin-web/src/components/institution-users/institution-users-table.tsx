@@ -2,10 +2,10 @@
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, ShieldAlert } from 'lucide-react';
 import { StatusBadge } from '@edrion/ui';
-import { INSTITUTION_ROLES } from '@edrion/schemas';
+import { INSTITUTION_DEFAULT_ROLES } from '@edrion/permissions/institution';
 import type { InstitutionUserListItemDto } from '@edrion/api-client';
 
-const ROLE_NAME = new Map(INSTITUTION_ROLES.map((r) => [r.key, r.name]));
+const ROLE_NAME = new Map(INSTITUTION_DEFAULT_ROLES.map((r) => [r.key, r.name]));
 export function roleLabel(key: string): string {
   return ROLE_NAME.get(key) ?? key.replace(/_/g, ' ');
 }

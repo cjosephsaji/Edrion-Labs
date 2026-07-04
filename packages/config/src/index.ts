@@ -123,9 +123,15 @@ export const apiEnvSchema = z.object({
   SENTRY_DSN: z.string().optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 
-  ANTHROPIC_API_KEY: z.string().optional(),
-  COPILOT_PRIMARY_MODEL: z.string().default('claude-opus-4-8'),
-  COPILOT_FALLBACK_MODEL: z.string().default('claude-sonnet-4-6'),
+  // ── Petros (OpenAI) ─────────────────────────────────────────────────────────
+  /** OpenAI API key. Petros endpoints refuse turns with a clear error when unset. */
+  OPENAI_API_KEY: z.string().optional(),
+  /** Interactive agent loop: chat turns, tool orchestration, everyday drafting. */
+  OPENAI_MODEL: z.string().default('gpt-5.4-mini'),
+  /** Cheap classifier-style calls: topicality, titles, permission suggestions, summaries. */
+  OPENAI_SMALL_MODEL: z.string().default('gpt-5.4-nano'),
+  /** Quality-critical generation: exam/document content, format capture, role drafting. */
+  OPENAI_BIG_MODEL: z.string().default('gpt-5.4-2026-03-05'),
 
   BILLING_PROVIDER_SECRET: z.string().optional(),
   BILLING_WEBHOOK_SIGNING_SECRET: z.string().optional(),

@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { Card, StatCard, TableSkeleton, EmptyState, ErrorState } from '@edrion/ui';
 import { useInstitutionUsers, useInstitutionUsersSummary } from '@edrion/api-client';
-import { INSTITUTION_ROLES } from '@edrion/schemas';
+import { INSTITUTION_DEFAULT_ROLES } from '@edrion/permissions/institution';
 import { AccountStatus } from '@edrion/shared-types';
 import { Topbar } from '@/components/app-shell/topbar';
 import { InstitutionUsersTable } from '@/components/institution-users/institution-users-table';
@@ -106,7 +106,7 @@ export default function InstitutionUsersPage() {
           </select>
           <select value={roleKey} onChange={(e) => setParam({ roleKey: e.target.value, page: 1 })} className={selectClass}>
             <option value="">All roles</option>
-            {INSTITUTION_ROLES.map((r) => (
+            {INSTITUTION_DEFAULT_ROLES.map((r) => (
               <option key={r.key} value={r.key}>{r.name}</option>
             ))}
           </select>

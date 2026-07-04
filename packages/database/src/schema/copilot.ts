@@ -41,6 +41,9 @@ export const portalAiRuns = pgTable(
     /** Context sources the assistant drew on (for the audit surface). */
     contextSources: jsonb('context_sources').$type<string[]>().default([]),
     status: aiActionStatusEnum('status').notNull().default('proposed'),
+    /** Petros chat linkage: set when this run was raised from a conversation turn. */
+    conversationId: uuid('conversation_id'),
+    messageId: uuid('message_id'),
     /** Concise, user-facing summary. NEVER chain-of-thought. */
     summary: text('summary'),
     model: text('model').notNull().default('stub-planner'),

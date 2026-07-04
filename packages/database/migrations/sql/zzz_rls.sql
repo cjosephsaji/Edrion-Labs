@@ -130,6 +130,15 @@ BEGIN
       ('institution_documents', 'institution_id'),
       -- Institution-portal student conduct log (behaviour incidents + complaints).
       ('student_incidents', 'institution_id'),
+      -- Petros (AI assistant) chat persistence.
+      ('petros_conversations', 'institution_id'),
+      ('petros_messages', 'institution_id'),
+      ('petros_artifacts', 'institution_id'),
+      ('petros_attachments', 'institution_id'),
+      ('petros_pending_turns', 'institution_id'),
+      -- Document generation renders (templates stay unlisted: NULL institution_id = platform default).
+      ('document_renders', 'institution_id'),
+      ('petros_decline_stats', 'institution_id'),
       -- Parent Portal (all tenant-isolated; guardian-row scoping is enforced by GuardianScopeGuard).
       ('parent_notices', 'institution_id'),
       ('parent_notice_receipts', 'institution_id'),

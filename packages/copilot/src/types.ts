@@ -42,6 +42,12 @@ export interface AiPolicyInput {
   maxRunsPerEmployeePerDay?: number | null;
   /** Emergency kill switch — short-circuits every action under this scope to BLOCKED. */
   killSwitch?: boolean;
+  /**
+   * Topicality pre-screen mode (Phase 6). 'enforce' = classify user turns and decline off-topic;
+   * 'off' = topicality freedom (platform/super-admin scope). NO effect on the mutation
+   * confirmation invariant — that has no knob.
+   */
+  topicalityMode?: 'enforce' | 'off' | null;
   setByName?: string | null;
   setAt?: string | Date | null;
 }
@@ -109,6 +115,8 @@ export interface EffectiveAiPolicy {
   /** Daily AI-run ceilings (Phase 10b). null = no cap from policy (env default applies). */
   maxRunsPerDay: number | null;
   maxRunsPerEmployeePerDay: number | null;
+  /** Topicality pre-screen mode. Defaults to 'enforce' when no layer sets it. */
+  topicalityMode: 'enforce' | 'off';
   killSwitch: boolean;
   /** Most-specific scope that set the operating mode (provenance for the explainer). */
   modeScope: FeatureScope;

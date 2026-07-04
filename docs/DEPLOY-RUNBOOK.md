@@ -93,9 +93,10 @@ invalid. Defaults shown; **bold = must set explicitly in production**.
 
 | Var | Default | Prod guidance |
 |-----|---------|---------------|
-| `ANTHROPIC_API_KEY` | — | Required for Copilot. Server-only. |
-| `COPILOT_PRIMARY_MODEL` | `claude-opus-4-8` | |
-| `COPILOT_FALLBACK_MODEL` | `claude-sonnet-4-6` | |
+| `OPENAI_API_KEY` | — | Required for Petros (AI assistant). Server-only. |
+| `OPENAI_MODEL` | `gpt-5.4-mini` | Interactive agent loop. |
+| `OPENAI_SMALL_MODEL` | `gpt-5.4-nano` | Classifier/title calls. |
+| `OPENAI_BIG_MODEL` | `gpt-5.4-2026-03-05` | Quality-critical generation. |
 | `BILLING_PROVIDER_SECRET` / `BILLING_WEBHOOK_SIGNING_SECRET` | — | Set when the billing provider is wired. |
 
 ### Web (`NEXT_PUBLIC_*` only — the web app must read nothing else)

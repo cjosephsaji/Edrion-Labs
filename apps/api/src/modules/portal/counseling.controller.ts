@@ -2,6 +2,8 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } f
 import { ApiTags } from '@nestjs/swagger';
 import {
   counselingCasesListQuerySchema,
+  counselingReferralSchema,
+  type CounselingReferralInput,
   counselingRecordsListQuerySchema,
   createCounselingCaseSchema,
   createCounselingRecordSchema,
@@ -143,5 +145,24 @@ export class CounselingController {
     @Body(zodBody(versionedDeleteSchema)) body: VersionedDeleteInput,
   ) {
     return this.svc.remove('cases', this.ctx(p, s, r), id, body.version);
+  }
+
+  /**
+   * Cross-role referral (`counseling.refer`): opens a triage case in `open` status without
+   * granting any case management/read access. Same audited path Petros uses.
+   */
+  @Post('referrals')
+  @RequireInstitutionPermissions('counseling.refer')
+  refer(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(counselingReferralSchema)) body: CounselingReferralInput,
+  ) {
+    return this.svc.create('cases', this.ctx(p, s, r), {
+      ...body,
+      title: `Referral: ${body.title}`,
+      status: 'open',
+    });
   }
 }

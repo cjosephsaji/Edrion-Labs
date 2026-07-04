@@ -84,6 +84,10 @@ export const INSTITUTION_DEFAULT_ROLES: readonly RoleDef[] = [
       'gradebook.view', 'gradebook.manage',
       'assignments.view',
       'announcements.view', 'announcements.send',
+      'circulars.issue',
+      'documents.generate',
+      'counseling.refer',
+      'facilities.report_issue',
       'messages.use',
       'reports.view',
       'users.view',
@@ -107,6 +111,9 @@ export const INSTITUTION_DEFAULT_ROLES: readonly RoleDef[] = [
       'exams.view', 'exams.manage',
       'gradebook.view', 'gradebook.manage',
       'assignments.view', 'assignments.manage',
+      'documents.generate',
+      'counseling.refer',
+      'facilities.report_issue',
       'reports.view',
       'messages.use',
       'ai.use',
@@ -121,6 +128,7 @@ export const INSTITUTION_DEFAULT_ROLES: readonly RoleDef[] = [
       'students.view',
       'fees.view', 'fees.manage',
       'expenses.view', 'expenses.manage',
+      'documents.generate',
       'billing.view',
       'reports.view', 'reports.export',
       'messages.use',
@@ -137,6 +145,7 @@ export const INSTITUTION_DEFAULT_ROLES: readonly RoleDef[] = [
       'teachers.view', 'teachers.manage',
       'staff.view', 'staff.manage',
       'payroll.view', 'payroll.manage',
+      'documents.generate',
       'reports.view', 'reports.export',
       'messages.use',
       'ai.use',
@@ -157,6 +166,9 @@ export const INSTITUTION_DEFAULT_ROLES: readonly RoleDef[] = [
       'exams.view',
       'gradebook.view', 'gradebook.manage',
       'assignments.view', 'assignments.manage',
+      'documents.generate',
+      'counseling.refer',
+      'facilities.report_issue',
       'announcements.view',
       'messages.use',
       'ai.use',
@@ -197,7 +209,7 @@ export const INSTITUTION_DEFAULT_ROLES: readonly RoleDef[] = [
       'gradebook.view',
       'announcements.view',
       'messages.use',
-      'ai.use',
+      // NOTE: no 'ai.use' — student/parent Petros access is deliberately deferred (Phase 0.1.6).
     ),
   },
   {
@@ -212,7 +224,7 @@ export const INSTITUTION_DEFAULT_ROLES: readonly RoleDef[] = [
       'assignments.view',
       'announcements.view',
       'messages.use',
-      'ai.use',
+      // NOTE: no 'ai.use' — student/parent Petros access is deliberately deferred (Phase 0.1.6).
     ),
   },
 
@@ -229,6 +241,8 @@ export const INSTITUTION_DEFAULT_ROLES: readonly RoleDef[] = [
       'student_basic_profile.view', // pick which student a health record is for (name/class only)
       'emergency_contacts.view',
       'health_reports.view',
+      'counseling.refer',
+      'facilities.report_issue',
       'reports.view',
       'messages.use',
       'ai.use',
@@ -278,6 +292,8 @@ export const INSTITUTION_DEFAULT_ROLES: readonly RoleDef[] = [
       'attendance.check_in_out',
       'student_basic_profile.view',
       'staff_basic_profile.view',
+      'counseling.refer',
+      'facilities.report_issue',
       'announcements.view',
       'messages.use',
       'ai.use',
@@ -329,6 +345,176 @@ export const INSTITUTION_DEFAULT_ROLES: readonly RoleDef[] = [
       'ai.use',
     ),
   },
+
+  // ── Petros/RBAC-consolidation roles (Phase 0) ──────────────────────────────
+  {
+    key: 'viewer',
+    name: 'Viewer',
+    description: 'Read-only visibility across non-sensitive areas. No changes, no AI.',
+    permissions: view(
+      'portal.dashboard.view',
+      'academics.view',
+      'campuses.view',
+      'students.view',
+      'teachers.view',
+      'staff.view',
+      'parents.view',
+      'admissions.view',
+      'attendance.view',
+      'timetable.view',
+      'exams.view',
+      'gradebook.view',
+      'assignments.view',
+      'fees.view',
+      'expenses.view',
+      'library.view',
+      'transport.view',
+      'inventory.view',
+      'hostel.view',
+      'announcements.view',
+      'reports.view',
+      'documents.view',
+      // deliberately absent: health/counseling/payroll/audit views, ai.use
+    ),
+  },
+  {
+    key: 'clerk',
+    name: 'Clerk',
+    description: 'Administrative lookups, records and certificate preparation.',
+    permissions: view(
+      'portal.dashboard.view',
+      'students.view',
+      'admissions.view',
+      'attendance.view',
+      'documents.view',
+      'documents.generate',
+      'counseling.refer',
+      'facilities.report_issue',
+      'announcements.view',
+      'messages.use',
+      'ai.use',
+    ),
+  },
+  {
+    key: 'hostel_warden',
+    name: 'Hostel Warden',
+    description: 'Manages hostel blocks, rooms and allocations.',
+    permissions: view(
+      'portal.dashboard.view',
+      'hostel.view', 'hostel.manage',
+      'student_basic_profile.view',
+      'counseling.refer',
+      'facilities.report_issue',
+      'announcements.view',
+      'messages.use',
+      'ai.use',
+    ),
+  },
+  {
+    key: 'registrar',
+    name: 'Registrar',
+    description: 'Owns admissions, enrolment and academic records.',
+    appliesTo: ['college', 'university'],
+    permissions: view(
+      'portal.dashboard.view',
+      'academics.view',
+      'admissions.view', 'admissions.manage',
+      'students.view', 'students.create', 'students.update',
+      'attendance.view',
+      'exams.view',
+      'documents.view',
+      'documents.generate',
+      'reports.view',
+      'messages.use',
+      'ai.use',
+    ),
+  },
+  {
+    key: 'department_head',
+    name: 'Department Head',
+    description: 'Leads a department — academics, staff overview and reporting.',
+    appliesTo: ['college', 'university'],
+    permissions: view(
+      'portal.dashboard.view',
+      'academics.view', 'academics.manage',
+      'students.view',
+      'teachers.view',
+      'attendance.view',
+      'timetable.view', 'timetable.manage',
+      'exams.view', 'exams.manage',
+      'gradebook.view', 'gradebook.manage',
+      'assignments.view', 'assignments.manage',
+      'announcements.view', 'announcements.send',
+      'documents.generate',
+      'counseling.refer',
+      'facilities.report_issue',
+      'reports.view', 'reports.export',
+      'messages.use',
+      'ai.use',
+    ),
+  },
+  {
+    key: 'professor',
+    name: 'Professor',
+    description: 'Teaches courses; runs exams, grading and assignments.',
+    appliesTo: ['college', 'university'],
+    permissions: view(
+      'portal.dashboard.view',
+      'academics.view',
+      'students.view',
+      'student_conduct.view', 'student_conduct.manage',
+      'attendance.view', 'attendance.manage',
+      'timetable.view',
+      'exams.view', 'exams.manage',
+      'gradebook.view', 'gradebook.manage',
+      'assignments.view', 'assignments.manage',
+      'documents.generate',
+      'counseling.refer',
+      'facilities.report_issue',
+      'announcements.view',
+      'messages.use',
+      'ai.use',
+    ),
+  },
+  {
+    key: 'assistant_professor',
+    name: 'Assistant Professor',
+    description: 'Teaches courses under a professor; grading and assignments.',
+    appliesTo: ['college', 'university'],
+    permissions: view(
+      'portal.dashboard.view',
+      'academics.view',
+      'students.view',
+      'attendance.view', 'attendance.manage',
+      'timetable.view',
+      'exams.view',
+      'gradebook.view', 'gradebook.manage',
+      'assignments.view', 'assignments.manage',
+      'documents.generate',
+      'counseling.refer',
+      'facilities.report_issue',
+      'announcements.view',
+      'messages.use',
+      'ai.use',
+    ),
+  },
+  {
+    key: 'phd_scholar',
+    name: 'PhD Scholar',
+    description: 'Research scholar with TA duties — assignments, lab schedule, library.',
+    appliesTo: ['university'],
+    permissions: view(
+      'portal.dashboard.view',
+      'academics.view',
+      'assignments.view', 'assignments.manage',
+      'labs.view_schedule',
+      'library.view',
+      'documents.generate',
+      'announcements.view',
+      'messages.use',
+      'ai.use',
+    ),
+  },
 ] as const;
 
 export type InstitutionRoleKey = (typeof INSTITUTION_DEFAULT_ROLES)[number]['key'];
@@ -336,3 +522,25 @@ export type InstitutionRoleKey = (typeof INSTITUTION_DEFAULT_ROLES)[number]['key
 export function getInstitutionRole(key: string): RoleDef | undefined {
   return INSTITUTION_DEFAULT_ROLES.find((r) => r.key === key);
 }
+
+/**
+ * Default role presets applicable to an institution type. The ONLY behavioral use of
+ * `institutions.type` in the permission model — consumers: available-roles endpoint,
+ * roles UI, Petros role presets and prompt terminology.
+ */
+export function getDefaultRolesForInstitutionType(type: string): readonly RoleDef[] {
+  return INSTITUTION_DEFAULT_ROLES.filter(
+    (r) => !r.appliesTo || (r.appliesTo as readonly string[]).includes(type),
+  );
+}
+
+// Compile-time assurance the curated bundles only reference real institution permission keys.
+export type AssertInstitutionRolePermissionKeys = Exclude<
+  Exclude<
+    (typeof INSTITUTION_DEFAULT_ROLES)[number]['permissions'][number],
+    typeof WILDCARD_PERMISSION
+  >,
+  InstitutionPermissionKey
+> extends never
+  ? true
+  : ['Unknown permission key in INSTITUTION_DEFAULT_ROLES'];

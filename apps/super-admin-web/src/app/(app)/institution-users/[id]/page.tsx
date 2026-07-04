@@ -18,17 +18,18 @@ import {
 import {
   ApiClientError,
   useCampuses,
+  useInstitutionAvailableRoles,
   useInstitutionUser,
   useInstitutionUserAction,
   type InstitutionUserDetailDto,
 } from '@edrion/api-client';
-import { INSTITUTION_PERMISSION_KEYS, INSTITUTION_ROLES } from '@edrion/schemas';
+import { ALL_INSTITUTION_PERMISSION_KEYS } from '@edrion/permissions/institution';
 import { Topbar } from '@/components/app-shell/topbar';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { AccessChangeDialog } from '@/components/institution-users/access-change-dialog';
 import { roleLabel } from '@/components/institution-users/institution-users-table';
 
-const permLabel = (k: string) => k.replace(/^inst\./, '').replace(/\./g, ' · ').replace(/_/g, ' ');
+const permLabel = (k: string) => k.replace(/\./g, ' · ').replace(/_/g, ' ');
 
 interface AccessChange {
   title: string;
@@ -167,6 +168,7 @@ function Header({ user }: { user: InstitutionUserDetailDto }) {
 function RolesCard({ user, onChange }: { user: InstitutionUserDetailDto; onChange: (c: AccessChange) => void }) {
   const [editing, setEditing] = useState(false);
   const [selected, setSelected] = useState<string[]>(user.roleKeys);
+  const availableRoles = useInstitutionAvailableRoles(user.institutionId);
 
   return (
     <Card>
@@ -193,8 +195,8 @@ function RolesCard({ user, onChange }: { user: InstitutionUserDetailDto; onChang
           )
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-1.5">
-              {INSTITUTION_ROLES.map((r) => (
+            <div className="grid max-h-64 grid-cols-2 gap-1.5 overflow-y-auto">
+              {(availableRoles.data ?? []).map((r) => (
                 <label key={r.key} className="flex cursor-pointer items-center gap-2 rounded-md border border-border px-2.5 py-1.5 hover:bg-background-secondary">
                   <input
                     type="checkbox"
@@ -343,7 +345,7 @@ function CampusAccessCard({ user, onChange }: { user: InstitutionUserDetailDto; 
 }
 
 function OverridesCard({ user, onChange }: { user: InstitutionUserDetailDto; onChange: (c: AccessChange) => void }) {
-  const [key, setKey] = useState<string>(INSTITUTION_PERMISSION_KEYS[0]);
+  const [key, setKey] = useState<string>(ALL_INSTITUTION_PERMISSION_KEYS[0]!);
   const [effect, setEffect] = useState<'grant' | 'deny'>('grant');
 
   return (
@@ -399,7 +401,7 @@ function OverridesCard({ user, onChange }: { user: InstitutionUserDetailDto; onC
           <Label>Add override</Label>
           <div className="flex flex-wrap items-center gap-2">
             <select value={key} onChange={(e) => setKey(e.target.value)} className="h-input flex-1 rounded-md border border-border bg-surface px-2 text-xs">
-              {INSTITUTION_PERMISSION_KEYS.map((k) => (
+              {ALL_INSTITUTION_PERMISSION_KEYS.map((k) => (
                 <option key={k} value={k}>{permLabel(k)}</option>
               ))}
             </select>
