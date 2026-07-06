@@ -9,12 +9,21 @@ import type {
   ClassSubjectRow,
   DepartmentRow,
   GradeLevelRow,
+  DepartmentGradeLevelRow,
+  ProgrammeStructureDepartment,
   Paged,
   SubjectRow,
 } from './academics-types';
 
 /** Academic resource path segment (matches the API routes under /portal/academics/*). */
-export type Resource = 'academic-years' | 'departments' | 'grade-levels' | 'subjects' | 'classes';
+export type Resource =
+  | 'academic-years'
+  | 'departments'
+  | 'grade-levels'
+  | 'department-grade-levels'
+  | 'subjects'
+  | 'classes'
+  | 'academic-terms';
 
 export interface ListParams {
   page: number;
@@ -92,8 +101,46 @@ export function useGradeLevelOptions() {
 export function useSubjectOptions() {
   return useAcademicList<SubjectRow>('subjects', { ...OPTION_PARAMS, sortBy: 'name' });
 }
-export function useClassOptions() {
-  return useAcademicList<ClassRow>('classes', { ...OPTION_PARAMS, sortBy: 'name' });
+export function useClassOptions(filters?: Record<string, string | undefined>) {
+  return useAcademicList<ClassRow>('classes', { ...OPTION_PARAMS, sortBy: 'name', filters });
+}
+
+export function useProgrammeLevelOptions(departmentId?: string) {
+  return useAcademicList<DepartmentGradeLevelRow>('department-grade-levels', {
+    ...OPTION_PARAMS,
+    sortBy: 'sequence',
+    filters: departmentId ? { departmentId } : undefined,
+  });
+}
+
+export function useTermOptionsByProgrammeLevel(programmeLevelId?: string) {
+  return useAcademicList<import('./academics-types').AcademicTermRow>('academic-terms', {
+    ...OPTION_PARAMS,
+    sortBy: 'sequence',
+    filters: programmeLevelId ? { programmeLevelId } : undefined,
+  });
+}
+
+export function useSectionOptionsByProgrammeLevel(programmeLevelId?: string, termId?: string) {
+  return useAcademicList<ClassRow>('classes', {
+    ...OPTION_PARAMS,
+    sortBy: 'name',
+    filters: {
+      ...(programmeLevelId ? { programmeLevelId } : {}),
+      ...(termId ? { termId } : {}),
+    },
+  });
+}
+
+export function useProgrammeStructure(departmentId?: string) {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  const qs = departmentId ? `?departmentId=${departmentId}` : '';
+  return useQuery({
+    queryKey: ['academics', 'programme-structure', scopeKey(scope), departmentId ?? 'all'],
+    queryFn: () =>
+      client.get<ProgrammeStructureDepartment[]>(`/portal/academics/programme-structure${qs}`, scope),
+  });
 }
 
 // --- class ↔ subject assignments --------------------------------------------

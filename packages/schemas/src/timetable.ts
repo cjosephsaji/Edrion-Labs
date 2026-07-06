@@ -26,6 +26,9 @@ export const timetableListQuerySchema = paginationQuerySchema.merge(sortQuerySch
   search: z.string().trim().max(160).optional(),
   classId: z.string().uuid().optional(),
   dayOfWeek: dayOfWeekSchema.optional(),
+  departmentId: z.string().uuid().optional(),
+  programmeLevelId: z.string().uuid().optional(),
+  termId: z.string().uuid().optional(),
 });
 export type TimetableListQuery = z.infer<typeof timetableListQuerySchema>;
 
@@ -37,6 +40,7 @@ export const createTimetableSlotSchema = z
     subjectId: optionalUuid,
     teacherId: optionalUuid,
     academicYearId: optionalUuid,
+    termId: optionalUuid,
     dayOfWeek: dayOfWeekSchema,
     startTime: time,
     endTime: time,
@@ -54,6 +58,7 @@ export const updateTimetableSlotSchema = z
     subjectId: optionalUuid,
     teacherId: optionalUuid,
     academicYearId: optionalUuid,
+    termId: optionalUuid,
     dayOfWeek: dayOfWeekSchema.optional(),
     startTime: time.optional(),
     endTime: time.optional(),

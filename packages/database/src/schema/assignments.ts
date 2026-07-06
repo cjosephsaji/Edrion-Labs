@@ -1,9 +1,9 @@
-import { date, index, integer, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, date, index, integer, jsonb, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { campuses } from './campuses';
 import { classes, subjects } from './academics';
-import { students, teachers } from './people';
+import { students, staff } from './people';
 
 /**
  * INSTITUTION-PORTAL assignments (Phase 6). A two-level model, mirroring attendance/exams:
@@ -30,12 +30,17 @@ export const assignments = pgTable(
       .notNull()
       .references(() => classes.id, { onDelete: 'cascade' }),
     subjectId: uuid('subject_id').references(() => subjects.id, { onDelete: 'set null' }),
-    teacherId: uuid('teacher_id').references(() => teachers.id, { onDelete: 'set null' }),
+    teacherId: uuid('teacher_id').references(() => staff.id, { onDelete: 'set null' }),
     instructions: text('instructions'),
     dueDate: date('due_date'),
     maxPoints: integer('max_points').notNull().default(100),
     /** draft | published | closed. */
     status: text('status').notNull().default('draft'),
+    attachmentObjectIds: jsonb('attachment_object_ids').$type<string[]>().notNull().default([]),
+    latePolicy: jsonb('late_policy').$type<{ penaltyPercentPerDay: number; maxLateDays: number } | null>(),
+    allowResubmission: boolean('allow_resubmission').notNull().default(false),
+    aiPolicy: text('ai_policy').notNull().default('off'),
+    courseId: uuid('course_id'),
     version: integer('version').notNull().default(0),
     ...actorColumns,
     ...timestamps,

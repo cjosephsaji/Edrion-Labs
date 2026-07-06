@@ -295,6 +295,10 @@ export interface ParentChildSummary {
 
 export interface ParentMeResponse {
   guardian: { id: string; fullName: string; email: string };
+  institution: {
+    type: import('@edrion/shared-types').InstitutionType;
+    nomenclature: import('@edrion/shared-types').ResolvedNomenclature;
+  };
   children: ParentChildSummary[];
   preferences: {
     channels: Record<string, boolean>;

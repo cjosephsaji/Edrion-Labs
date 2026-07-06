@@ -1,12 +1,14 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { CalendarClock } from 'lucide-react';
 import { type Column } from '@edrion/ui';
-import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
+import { ResourceManager, type FilterDef, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
-import { ExamSchedulesDrawer } from '@/components/exams/exam-schedules-drawer';
+import { ExamSchedulesPanel } from '@/components/exams/exam-schedules-panel';
 import { useAcademicYearOptions } from '@/lib/academics';
 import { useExamsList, useExamsMutations } from '@/lib/exams';
+import { useProgrammeFacetFilters } from '@/lib/programme-facets';
+import { useAcademicContextFilters } from '@/lib/academic-context';
+import { useTerm } from '@/lib/term';
 import type { ExamRow } from '@/lib/exams-types';
 
 const PERMISSIONS: ResourcePermissions = {
@@ -36,18 +38,32 @@ const STATUSES = [
 const label = (opts: { value: string; label: string }[], v: string) => opts.find((o) => o.value === v)?.label ?? v;
 
 export default function ExamsPage() {
+  const { t } = useTerm();
+  const facets = useProgrammeFacetFilters();
+  const contextFilters = useAcademicContextFilters();
+  const [statusFilter, setStatusFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
   const { data: years } = useAcademicYearOptions();
-  const [schedulesFor, setSchedulesFor] = useState<ExamRow | null>(null);
 
   const fields = useMemo<FieldDef[]>(
     () => [
       { name: 'name', label: 'Name', type: 'text', required: true, placeholder: 'e.g. Term 1 Finals' },
       { name: 'examType', label: 'Type', type: 'select', required: true, options: EXAM_TYPES },
       { name: 'status', label: 'Status', type: 'select', required: true, options: STATUSES },
-      { name: 'termLabel', label: 'Term', type: 'text', nullable: true, placeholder: 'e.g. Term 1' },
+      ...(facets.showFacets
+        ? [
+            {
+              name: 'termId',
+              label: t('term'),
+              type: 'select' as const,
+              nullable: true,
+              options: facets.termOptions,
+            },
+          ]
+        : [{ name: 'termLabel', label: t('term'), type: 'text' as const, nullable: true, placeholder: 'e.g. Term 1' }]),
       {
         name: 'academicYearId',
-        label: 'Academic year',
+        label: t('academicYear'),
         type: 'select',
         nullable: true,
         options: (years?.items ?? []).map((y) => ({ value: y.id, label: y.name })),
@@ -56,14 +72,18 @@ export default function ExamsPage() {
       { name: 'endDate', label: 'End date', type: 'date', nullable: true },
       { name: 'description', label: 'Description', type: 'textarea', nullable: true, placeholder: 'Optional' },
     ],
-    [years],
+    [years, facets.showFacets, facets.termOptions, t],
   );
 
   const columns = useMemo<Column<ExamRow>[]>(
     () => [
       { key: 'name', header: 'Name', sortable: true, render: (r) => <span className="font-medium">{r.name}</span> },
       { key: 'examType', header: 'Type', sortable: true, render: (r) => <span className="text-text-muted">{label(EXAM_TYPES, r.examType)}</span> },
-      { key: 'termLabel', header: 'Term', render: (r) => r.termLabel ?? '—' },
+      {
+        key: 'termLabel',
+        header: t('term'),
+        render: (r) => r.termName ?? r.termLabel ?? '—',
+      },
       { key: 'status', header: 'Status', sortable: true, render: (r) => label(STATUSES, r.status) },
       { key: 'startDate', header: 'Starts', sortable: true, render: (r) => <span className="tabular-nums">{r.startDate ?? '—'}</span> },
       {
@@ -73,47 +93,62 @@ export default function ExamsPage() {
         render: (r) => <span className="tabular-nums">{r.scheduleCount || '—'}</span>,
       },
     ],
-    [],
+    [t],
   );
 
-  return (
-    <>
-      <ResourceManager<ExamRow>
-        resource="exams"
-        title="Exams"
-        noun="exam"
-        columns={columns}
-        fields={fields}
-        defaultSortBy="startDate"
-        defaultSortDir="desc"
-        permissions={PERMISSIONS}
-        useList={useExamsList}
-        useMutations={useExamsMutations}
-        rowLabel={(r) => r.name}
-        toFormValues={(r) => ({
-          name: r.name,
-          examType: r.examType,
-          status: r.status,
-          termLabel: r.termLabel ?? '',
-          academicYearId: r.academicYearId ?? '',
-          startDate: r.startDate ?? '',
-          endDate: r.endDate ?? '',
-          description: r.description ?? '',
-        })}
-        extraActions={(row) => (
-          <button
-            type="button"
-            aria-label="Exam papers"
-            title="Exam papers"
-            onClick={() => setSchedulesFor(row)}
-            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-background-secondary hover:text-primary"
-          >
-            <CalendarClock className="h-4 w-4" />
-          </button>
-        )}
-      />
+  const toolbarFilters = useMemo<FilterDef[]>(
+    () => [
+      ...facets.filters,
+      { key: 'status', label: 'All statuses', options: STATUSES },
+      { key: 'examType', label: 'All types', options: EXAM_TYPES },
+    ],
+    [facets.filters],
+  );
 
-      <ExamSchedulesDrawer exam={schedulesFor} open={!!schedulesFor} onClose={() => setSchedulesFor(null)} />
-    </>
+  const listFilterValues = useMemo(
+    () => ({
+      ...facets.filterValues,
+      status: statusFilter,
+      examType: typeFilter,
+    }),
+    [facets.filterValues, statusFilter, typeFilter],
+  );
+
+  function onListFilterChange(key: string, value: string) {
+    if (key === 'status') setStatusFilter(value);
+    else if (key === 'examType') setTypeFilter(value);
+    else facets.onFilterChange(key, value);
+  }
+
+  return (
+    <ResourceManager<ExamRow>
+      resource="exams"
+      title="Exams"
+      noun="exam"
+      columns={columns}
+      fields={fields}
+      filters={toolbarFilters}
+      filterValues={listFilterValues}
+      onFilterChange={onListFilterChange}
+      extraFilters={contextFilters}
+      defaultSortBy="startDate"
+      defaultSortDir="desc"
+      permissions={PERMISSIONS}
+      useList={useExamsList}
+      useMutations={useExamsMutations}
+      rowLabel={(r) => r.name}
+      renderFormExtra={({ row }) => <ExamSchedulesPanel examId={row.id} examName={row.name} />}
+      toFormValues={(r) => ({
+        name: r.name,
+        examType: r.examType,
+        status: r.status,
+        termId: r.termId ?? '',
+        termLabel: r.termLabel ?? '',
+        academicYearId: r.academicYearId ?? '',
+        startDate: r.startDate ?? '',
+        endDate: r.endDate ?? '',
+        description: r.description ?? '',
+      })}
+    />
   );
 }

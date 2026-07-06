@@ -32,6 +32,10 @@ REVOKE UPDATE, DELETE, TRUNCATE ON webhook_deliveries FROM edrion_app;
 REVOKE UPDATE, DELETE, TRUNCATE ON parent_emergency_broadcasts FROM edrion_app;
 REVOKE UPDATE, DELETE, TRUNCATE ON gate_exit_events FROM edrion_app;
 REVOKE UPDATE, DELETE, TRUNCATE ON parent_digest_deliveries FROM edrion_app;
+REVOKE UPDATE, DELETE, TRUNCATE ON learning_events FROM edrion_app;
+REVOKE UPDATE, DELETE, TRUNCATE ON learn_ai_calls FROM edrion_app;
+REVOKE UPDATE, DELETE, TRUNCATE ON flashcard_reviews FROM edrion_app;
+REVOKE UPDATE, DELETE, TRUNCATE ON achievement_awards FROM edrion_app;
 
 -- Belt-and-braces: a trigger that hard-blocks UPDATE/DELETE regardless of role.
 CREATE OR REPLACE FUNCTION edrion_block_mutation() RETURNS trigger AS $$
@@ -44,7 +48,8 @@ DO $$
 DECLARE t text;
 BEGIN
   FOREACH t IN ARRAY ARRAY['audit_events', 'security_events', 'activity_events', 'webhook_deliveries',
-                           'parent_emergency_broadcasts', 'gate_exit_events', 'parent_digest_deliveries'] LOOP
+                           'parent_emergency_broadcasts', 'gate_exit_events', 'parent_digest_deliveries',
+                           'learning_events', 'learn_ai_calls', 'flashcard_reviews', 'achievement_awards'] LOOP
     EXECUTE format('DROP TRIGGER IF EXISTS %I_append_only ON %I', t, t);
     EXECUTE format(
       'CREATE TRIGGER %I_append_only BEFORE UPDATE OR DELETE ON %I

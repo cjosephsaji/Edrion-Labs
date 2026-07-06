@@ -22,8 +22,8 @@ export function Topbar({ title, actions }: { title: string; actions?: React.Reac
   const router = useRouter();
 
   return (
-    <header className="sticky top-0 z-20 flex h-topbar shrink-0 items-center gap-3 border-b border-border bg-surface/80 px-5 backdrop-blur">
-      <h1 className="text-md font-semibold text-text-primary">{title}</h1>
+    <header className="sticky top-0 z-20 flex h-topbar shrink-0 items-center gap-3 border-b border-border bg-surface/90 px-5 shadow-xs backdrop-blur">
+      <h1 className="text-md font-semibold tracking-[0.01em] text-text-primary">{title}</h1>
 
       <div className="ml-auto flex items-center gap-2">
         <GlobalSearch />
@@ -85,7 +85,7 @@ function IconMenu({
         {badge}
       </Button>
       {open && (
-        <div className="absolute right-0 top-full z-30 mt-2 w-80 overflow-hidden rounded-lg border border-border bg-surface-elevated shadow-lg animate-fade-in-up">
+        <div className="absolute right-0 top-full z-30 mt-2 w-80 overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-lg animate-fade-in-up">
           {children(() => setOpen(false))}
         </div>
       )}
@@ -124,7 +124,7 @@ function NotificationsMenu() {
             <ul className="max-h-80 overflow-y-auto py-1">
               {top.map((item) => (
                 <li key={item.id}>
-                  <Link href={item.href} onClick={close} className="block px-4 py-2 hover:bg-background-secondary">
+                  <Link href={item.href} onClick={close} className="block px-4 py-2 transition-colors hover:bg-primary-soft/55">
                     <span className="flex items-center gap-2">
                       <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', PRIORITY_DOT[item.priority])} />
                       <span className="truncate text-sm text-text-primary">{item.title}</span>
@@ -138,7 +138,7 @@ function NotificationsMenu() {
           <Link
             href="/pending-actions"
             onClick={close}
-            className="block border-t border-border px-4 py-2.5 text-center text-sm font-medium text-primary hover:bg-background-secondary"
+            className="block border-t border-border px-4 py-2.5 text-center text-sm font-medium text-primary transition-colors hover:bg-primary-soft/55"
           >
             View all pending actions
           </Link>
@@ -167,7 +167,7 @@ function HelpMenu() {
               key={l.href}
               href={l.href}
               onClick={close}
-              className="flex items-center gap-2.5 px-4 py-2 text-sm text-text-secondary hover:bg-background-secondary hover:text-text-primary"
+              className="flex items-center gap-2.5 px-4 py-2 text-sm text-text-secondary transition-colors hover:bg-primary-soft/55 hover:text-text-primary"
             >
               <l.icon className="h-4 w-4 text-text-muted" />
               {l.label}

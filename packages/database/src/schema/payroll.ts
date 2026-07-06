@@ -2,7 +2,7 @@ import { date, index, integer, pgTable, text, uuid } from 'drizzle-orm/pg-core';
 import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { campuses } from './campuses';
-import { staff, teachers } from './people';
+import { staff } from './people';
 
 /**
  * INSTITUTION-PORTAL payroll (Phase 7). A two-level model, mirroring exams/assignments:
@@ -58,7 +58,7 @@ export const payrollItems = pgTable(
       .references(() => payrollRuns.id, { onDelete: 'cascade' }),
     /** teacher | staff — which FK below identifies the employee. */
     employeeType: text('employee_type').notNull().default('teacher'),
-    teacherId: uuid('teacher_id').references(() => teachers.id, { onDelete: 'set null' }),
+    teacherId: uuid('teacher_id').references(() => staff.id, { onDelete: 'set null' }),
     staffId: uuid('staff_id').references(() => staff.id, { onDelete: 'set null' }),
     /** Gross pay, minor units. */
     gross: integer('gross').notNull().default(0),

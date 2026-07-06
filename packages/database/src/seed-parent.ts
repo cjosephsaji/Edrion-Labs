@@ -45,9 +45,9 @@ async function main() {
   const ward2 = students[1]!;
   const ward3 = students[2]!;
 
-  const teacher = await db.query.teachers.findFirst({
-    where: eq(s.teachers.institutionId, inst.id),
-    orderBy: asc(s.teachers.createdAt),
+  const teacher = await db.query.staff.findFirst({
+    where: eq(s.staff.institutionId, inst.id),
+    orderBy: asc(s.staff.createdAt),
   });
 
   /** Create (or fetch) a guardian institution_user + parent record, return both ids. */

@@ -1,8 +1,16 @@
 'use client';
 import { Badge, StatusBadge, type Column } from '@edrion/ui';
-import { ResourceManager } from '@/components/academics/resource-manager';
+import { ResourceManager, type FilterDef } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
 import type { AcademicYearRow } from '@/lib/academics';
+import { useTerm } from '@/lib/term';
+import { useMemo } from 'react';
+
+const STATUS_OPTIONS = [
+  { value: 'planning', label: 'Planning' },
+  { value: 'active', label: 'Active' },
+  { value: 'archived', label: 'Archived' },
+];
 
 const fields: FieldDef[] = [
   { name: 'name', label: 'Name', type: 'text', required: true, placeholder: 'e.g. 2025–2026' },
@@ -13,11 +21,7 @@ const fields: FieldDef[] = [
     label: 'Status',
     type: 'select',
     required: true,
-    options: [
-      { value: 'planning', label: 'Planning' },
-      { value: 'active', label: 'Active' },
-      { value: 'archived', label: 'Archived' },
-    ],
+    options: STATUS_OPTIONS,
   },
   { name: 'isCurrent', label: 'Mark as the current year', type: 'checkbox', help: 'Only one year is current per scope.' },
 ];
@@ -37,6 +41,8 @@ const columns: Column<AcademicYearRow>[] = [
   { key: 'startDate', header: 'Starts', sortable: true, render: (r) => fmtDate(r.startDate) },
   { key: 'endDate', header: 'Ends', render: (r) => fmtDate(r.endDate) },
   { key: 'status', header: 'Status', sortable: true, render: (r) => <StatusBadge status={r.status} /> },
+  { key: 'termCount', header: 'Terms', align: 'right', render: (r) => <span className="tabular-nums">{r.termCount ?? '—'}</span> },
+  { key: 'classCount', header: 'Classes', align: 'right', render: (r) => <span className="tabular-nums">{r.classCount ?? '—'}</span> },
   {
     key: 'scope',
     header: 'Applies to',
@@ -45,13 +51,28 @@ const columns: Column<AcademicYearRow>[] = [
 ];
 
 export default function AcademicYearsPage() {
+  const { t, tp } = useTerm();
+
+  const filters = useMemo<FilterDef[]>(
+    () => [
+      { key: 'status', label: 'All statuses', options: STATUS_OPTIONS },
+      {
+        key: 'isCurrent',
+        label: 'Current year',
+        options: [{ value: 'true', label: 'Current only' }],
+      },
+    ],
+    [],
+  );
+
   return (
     <ResourceManager<AcademicYearRow>
       resource="academic-years"
-      title="Academic Years"
-      noun="academic year"
+      title={tp('academicYear')}
+      noun={t('academicYear').toLowerCase()}
       columns={columns}
       fields={fields}
+      filters={filters}
       defaultSortBy="startDate"
       defaultSortDir="desc"
       toFormValues={(r) => ({

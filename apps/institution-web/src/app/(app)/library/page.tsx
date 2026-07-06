@@ -1,10 +1,9 @@
 'use client';
-import { useMemo, useState } from 'react';
-import { BookCopy } from 'lucide-react';
+import { useMemo } from 'react';
 import { type Column } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
-import { BookLoansDrawer } from '@/components/library/book-loans-drawer';
+import { BookLoansPanel } from '@/components/library/book-loans-panel';
 import { useLibraryList, useLibraryMutations } from '@/lib/library';
 import type { LibraryBookRow } from '@/lib/library-types';
 
@@ -22,8 +21,6 @@ const BOOK_STATUSES = [
 const label = (opts: { value: string; label: string }[], v: string) => opts.find((o) => o.value === v)?.label ?? v;
 
 export default function LibraryPage() {
-  const [loansFor, setLoansFor] = useState<LibraryBookRow | null>(null);
-
   const fields = useMemo<FieldDef[]>(
     () => [
       { name: 'title', label: 'Title', type: 'text', required: true, placeholder: 'e.g. Things Fall Apart' },
@@ -51,42 +48,36 @@ export default function LibraryPage() {
   );
 
   return (
-    <>
-      <ResourceManager<LibraryBookRow>
-        resource="library/books"
-        title="Library"
-        noun="book"
-        columns={columns}
-        fields={fields}
-        defaultSortBy="title"
-        permissions={PERMISSIONS}
-        useList={useLibraryList}
-        useMutations={useLibraryMutations}
-        rowLabel={(r) => r.title}
-        toFormValues={(r) => ({
-          title: r.title,
-          author: r.author ?? '',
-          isbn: r.isbn ?? '',
-          category: r.category ?? '',
-          publisher: r.publisher ?? '',
-          totalCopies: r.totalCopies,
-          status: r.status,
-          description: r.description ?? '',
-        })}
-        extraActions={(row) => (
-          <button
-            type="button"
-            aria-label="Loans"
-            title="Loans"
-            onClick={() => setLoansFor(row)}
-            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-background-secondary hover:text-primary"
-          >
-            <BookCopy className="h-4 w-4" />
-          </button>
-        )}
-      />
-
-      <BookLoansDrawer book={loansFor} open={!!loansFor} onClose={() => setLoansFor(null)} />
-    </>
+    <ResourceManager<LibraryBookRow>
+      resource="library/books"
+      title="Library"
+      noun="book"
+      columns={columns}
+      fields={fields}
+      defaultSortBy="title"
+      permissions={PERMISSIONS}
+      useList={useLibraryList}
+      useMutations={useLibraryMutations}
+      rowLabel={(r) => r.title}
+      renderDetailExtra={({ row }) => (
+        <BookLoansPanel
+          bookId={row.id}
+          title={row.title}
+          totalCopies={row.totalCopies}
+          availableCopies={row.availableCopies}
+          activeLoans={row.activeLoans}
+        />
+      )}
+      toFormValues={(r) => ({
+        title: r.title,
+        author: r.author ?? '',
+        isbn: r.isbn ?? '',
+        category: r.category ?? '',
+        publisher: r.publisher ?? '',
+        totalCopies: r.totalCopies,
+        status: r.status,
+        description: r.description ?? '',
+      })}
+    />
   );
 }

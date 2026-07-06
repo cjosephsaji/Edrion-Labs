@@ -1,0 +1,146 @@
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  PayloadTooLargeException,
+} from '@nestjs/common';
+import { eq, schema, type Database } from '@edrion/database';
+import type { StorageObjectDto } from '@edrion/schemas';
+import type { ApiEnv } from '@edrion/config';
+import { API_ENV, DATABASE } from '../../../common/tokens';
+import type { StudentPrincipal } from '../student.types';
+import { LocalDiskDriver } from './drivers/local-disk.driver';
+
+const IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']);
+const DOC_MIMES = new Set([
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]);
+
+@Injectable()
+export class StudentStorageService {
+  private readonly driver: LocalDiskDriver;
+
+  constructor(
+    @Inject(DATABASE) private readonly db: Database,
+    @Inject(API_ENV) private readonly env: ApiEnv,
+  ) {
+    if (env.STUDENT_STORAGE_DRIVER !== 'local') {
+      throw new Error(`STUDENT_STORAGE_DRIVER "${env.STUDENT_STORAGE_DRIVER}" is not configured yet`);
+    }
+    this.driver = new LocalDiskDriver(env);
+  }
+
+  async upload(
+    principal: StudentPrincipal,
+    kind: string,
+    filename: string | undefined,
+    mimeType: string,
+    buffer: Buffer,
+  ): Promise<StorageObjectDto> {
+    if (buffer.length === 0) {
+      throw new BadRequestException({ code: 'EMPTY_FILE', message: 'The file is empty.' });
+    }
+    this.validateKind(kind, mimeType, buffer.length);
+
+    const scopeKey =
+      principal.kind === 'institutional'
+        ? `inst/${principal.institutionId}/student/${principal.studentId}`
+        : `indep/${principal.independentUserId}`;
+
+    const storageKey = await this.driver.put(scopeKey, buffer);
+    const [row] = await this.db
+      .insert(schema.storageObjects)
+      .values({
+        institutionId: principal.kind === 'institutional' ? principal.institutionId : null,
+        ownerStudentId: principal.kind === 'institutional' ? principal.studentId : null,
+        ownerIndependentUserId: principal.kind === 'independent' ? principal.independentUserId : null,
+        kind,
+        driver: 'local',
+        storageKey,
+        filename: filename ?? null,
+        mimeType,
+        sizeBytes: buffer.length,
+        processingStatus: 'ready',
+        derived: {},
+      })
+      .returning();
+
+    if (!row) throw new Error('Failed to create storage object');
+    return this.toDto(row);
+  }
+
+  async getOwned(principal: StudentPrincipal, id: string) {
+    const [row] = await this.db
+      .select()
+      .from(schema.storageObjects)
+      .where(eq(schema.storageObjects.id, id))
+      .limit(1);
+    if (!row) throw new NotFoundException({ code: 'NOT_FOUND', message: 'File not found' });
+    if (!this.isOwner(principal, row)) {
+      throw new ForbiddenException({ code: 'FORBIDDEN', message: 'You do not own this file' });
+    }
+    return row;
+  }
+
+  stream(key: string) {
+    return this.driver.stream(key);
+  }
+
+  private isOwner(
+    principal: StudentPrincipal,
+    row: typeof schema.storageObjects.$inferSelect,
+  ): boolean {
+    if (principal.kind === 'institutional') {
+      return row.ownerStudentId === principal.studentId;
+    }
+    return row.ownerIndependentUserId === principal.independentUserId;
+  }
+
+  private validateKind(kind: string, mimeType: string, size: number): void {
+    const allowed = [
+      'library_upload',
+      'homework_answer',
+      'assignment_file',
+      'practice_photo',
+      'mock_answer',
+      'class_material',
+      'report_card_pdf',
+      'content_page_attachment',
+      'debate_exhibit',
+      'avatar',
+    ];
+    if (!allowed.includes(kind)) {
+      throw new BadRequestException({ code: 'INVALID_KIND', message: `Unknown upload kind: ${kind}` });
+    }
+
+    if (IMAGE_MIMES.has(mimeType)) {
+      if (size > this.env.STUDENT_UPLOAD_MAX_BYTES_IMAGE) {
+        throw new PayloadTooLargeException({ code: 'FILE_TOO_LARGE', message: 'Image exceeds size limit.' });
+      }
+      return;
+    }
+    if (DOC_MIMES.has(mimeType)) {
+      if (size > this.env.STUDENT_UPLOAD_MAX_BYTES_DOC) {
+        throw new PayloadTooLargeException({ code: 'FILE_TOO_LARGE', message: 'Document exceeds size limit.' });
+      }
+      return;
+    }
+    throw new BadRequestException({ code: 'INVALID_MIME', message: `MIME type not allowed: ${mimeType}` });
+  }
+
+  private toDto(row: typeof schema.storageObjects.$inferSelect): StorageObjectDto {
+    return {
+      id: row.id,
+      kind: row.kind,
+      filename: row.filename,
+      mimeType: row.mimeType,
+      sizeBytes: row.sizeBytes,
+      processingStatus: row.processingStatus as StorageObjectDto['processingStatus'],
+      derived: row.derived ?? {},
+      createdAt: row.createdAt.toISOString(),
+    };
+  }
+}

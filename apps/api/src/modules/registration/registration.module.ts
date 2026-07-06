@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { GeoLookupService } from '../../common/geo-lookup.service';
 import { EmailService } from '../portal/email.service';
 import { PublicRegistrationController } from './public-registration.controller';
 import { RegistrationRequestsController } from './registration-requests.controller';
@@ -22,6 +23,7 @@ import { RegistrationRepository } from './registration.repository';
     OtpService,
     RegistrationRepository,
     EmailService,
+    GeoLookupService,
   ],
 })
 export class RegistrationModule {}

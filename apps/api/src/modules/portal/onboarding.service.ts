@@ -8,17 +8,15 @@ import { basePortalAudit, type PortalActionContext } from './portal-action-conte
 const MODULE = 'portal-onboarding';
 
 /** The onboarding journey, in order. Every step is completed by entering real data in the wizard. */
-const STEPS: { key: keyof OnboardingSignals; label: string }[] = [
-  { key: 'academicYears', label: 'Academic Years' },
-  { key: 'departments', label: 'Departments' },
-  { key: 'subjects', label: 'Subjects' },
-  { key: 'students', label: 'Students' },
-  { key: 'teachers', label: 'Teachers' },
-  { key: 'staff', label: 'Staff' },
+const STEPS: { key: keyof OnboardingSignals; label: string; required: number }[] = [
+  { key: 'academicYears', label: 'Academic Years', required: 1 },
+  { key: 'departments', label: 'Departments', required: 0 },
+  { key: 'academicTerms', label: 'Terms', required: 0 },
+  { key: 'subjects', label: 'Subjects', required: 1 },
+  { key: 'students', label: 'Students', required: 1 },
+  { key: 'teachers', label: 'Teachers', required: 1 },
+  { key: 'staff', label: 'Staff', required: 1 },
 ];
-
-/** Minimum records for a step to count as done. One of each is enough to go live. */
-const REQUIRED_PER_STEP = 1;
 
 export interface OnboardingStepDto {
   key: string;
@@ -99,10 +97,12 @@ export class OnboardingService {
   ): OnboardingSummary {
     const steps: OnboardingStepDto[] = STEPS.map((s) => {
       const value = signals[s.key];
-      return { key: s.key, label: s.label, count: value, required: REQUIRED_PER_STEP, done: value >= REQUIRED_PER_STEP };
+      const done = s.required === 0 ? true : value >= s.required;
+      return { key: s.key, label: s.label, count: value, required: s.required, done };
     });
-    const total = steps.length;
-    const done = steps.filter((s) => s.done).length;
+    const mandatory = steps.filter((s) => s.required > 0);
+    const total = mandatory.length;
+    const done = mandatory.filter((s) => s.done).length;
     return {
       institution: {
         displayName: meta.displayName,

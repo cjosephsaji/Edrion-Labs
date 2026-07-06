@@ -9,6 +9,7 @@ import { PetrosOpenAiService, extractUsage, type PetrosUsage } from './openai-cl
 import { PetrosToolRegistry } from './tools/registry';
 import { buildInstructions, PETROS_PROMPT_VERSION } from './petros-prompt';
 import { PortalCopilotRepository } from '../portal-copilot.repository';
+import { SettingsService } from '../settings.service';
 import { PetrosAttachmentService } from './petros-attachment.service';
 import { PetrosTopicalityService } from './petros-topicality.service';
 import { resolveAiPolicy } from '@edrion/copilot';
@@ -73,6 +74,7 @@ export class PetrosAgentService {
     private readonly runs: PortalCopilotRepository,
     private readonly attachments: PetrosAttachmentService,
     private readonly topicality: PetrosTopicalityService,
+    private readonly settings: SettingsService,
   ) {}
 
   // ── Turn entrypoints ─────────────────────────────────────────────────────────
@@ -282,10 +284,12 @@ export class PetrosAgentService {
 
   private async runLoop(ctx: PortalActionContext, state: LoopState, emit: Emit): Promise<void> {
     const institution = await this.repo.institutionBasics(ctx.principal.institutionId);
+    const effective = await this.settings.getEffective(ctx);
     const tools = this.registry.availableFor(ctx.principal.permissions, institution?.type ?? 'school');
     const instructions = buildInstructions({
       institutionName: institution?.name ?? 'this institution',
       institutionType: institution?.type ?? 'school',
+      nomenclature: effective.nomenclature,
       fullName: ctx.principal.fullName,
       roleKeys: ctx.principal.roleKeys,
       permissions: ctx.principal.permissions,

@@ -30,21 +30,6 @@ export interface StudentRow extends PersonBase {
   enrollmentDate: string | null;
 }
 
-export interface TeacherRow extends PersonBase {
-  employeeNo: string | null;
-  firstName: string;
-  lastName: string;
-  email: string | null;
-  phone: string | null;
-  departmentId: string | null;
-  departmentName: string | null;
-  designation: string | null;
-  employmentType: 'full_time' | 'part_time' | 'contract' | 'visiting';
-  status: 'active' | 'inactive' | 'on_leave';
-  joinDate: string | null;
-  institutionUserId: string | null;
-}
-
 export interface StaffRow extends PersonBase {
   employeeNo: string | null;
   firstName: string;
@@ -58,6 +43,17 @@ export interface StaffRow extends PersonBase {
   status: 'active' | 'inactive' | 'on_leave';
   joinDate: string | null;
   institutionUserId: string | null;
+  isTeaching?: boolean;
+  roleKeys?: string[];
+}
+
+/** Lightweight row returned by GET /portal/people/staff/teaching-options. */
+export interface TeachingStaffOption {
+  id: string;
+  firstName: string;
+  lastName: string;
+  designation: string | null;
+  departmentName: string | null;
 }
 
 export interface ParentRow extends PersonBase {
@@ -68,6 +64,7 @@ export interface ParentRow extends PersonBase {
   occupation: string | null;
   address: string | null;
   institutionUserId: string | null;
+  childrenCount?: number;
 }
 
 export interface GuardianRow {
@@ -81,4 +78,63 @@ export interface GuardianRow {
   isPrimary: boolean;
   isEmergencyContact: boolean;
   version: number;
+}
+
+export interface StaffProfile {
+  overview: {
+    id: string;
+    name: string;
+    employeeNo: string | null;
+    departmentName: string | null;
+    designation: string | null;
+    employmentType: string;
+    status: string;
+    joinDate: string | null;
+    email: string | null;
+    phone: string | null;
+    roleKeys: string[];
+    isTeaching: boolean;
+  };
+  teaching: {
+    classTeacherOf: { id: string; name: string; studentCount: number }[];
+    subjectAssignments: { className: string; subjectName: string }[];
+    timetableSlots: number;
+  } | null;
+  account: {
+    institutionUserId: string | null;
+    userStatus: string | null;
+    lastLoginAt: string | null;
+    mfaEnrolled: boolean;
+  } | null;
+}
+
+export interface ParentProfile {
+  details: {
+    id: string;
+    name: string;
+    email: string | null;
+    phone: string | null;
+    occupation: string | null;
+    address: string | null;
+  };
+  children:
+    | {
+        id: string;
+        name: string;
+        admissionNo: string;
+        className: string | null;
+        relationship: string;
+        isPrimary: boolean;
+      }[]
+    | null;
+  fees: { invoices: number; outstandingMinor: number; overdue: number } | null;
+}
+
+export interface ClassRosterEntry {
+  id: string;
+  admissionNo: string;
+  firstName: string;
+  lastName: string;
+  rollNo: string | null;
+  status: string;
 }

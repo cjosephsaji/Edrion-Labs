@@ -120,7 +120,7 @@ export class PortalRepository {
     const scope = (instCol: PgColumn, campusCol: PgColumn) =>
       this.scopeWhere(institutionId, instCol, campusCol, campusIds);
 
-    const [students, staffRows, teacherRows, attendance, fees, admissions, payroll] = await Promise.all([
+    const [students, staffRows, attendance, fees, admissions, payroll] = await Promise.all([
       this.scalar(
         this.db
           .select({ value: count() })
@@ -138,17 +138,6 @@ export class PortalRepository {
           .from(schema.staff)
           .where(
             and(scope(schema.staff.institutionId, schema.staff.campusId), eq(schema.staff.status, 'active')),
-          ),
-      ),
-      this.scalar(
-        this.db
-          .select({ value: count() })
-          .from(schema.teachers)
-          .where(
-            and(
-              scope(schema.teachers.institutionId, schema.teachers.campusId),
-              eq(schema.teachers.status, 'active'),
-            ),
           ),
       ),
       this.scalar(
@@ -201,7 +190,7 @@ export class PortalRepository {
 
     return {
       students,
-      staff: staffRows + teacherRows,
+      staff: staffRows,
       attendanceToday: attendance,
       feesCollected: fees,
       openAdmissions: admissions,

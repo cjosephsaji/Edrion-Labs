@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Bell, Building2, Save, School, ScrollText, ShieldCheck, SlidersHorizontal, UserCog } from 'lucide-react';
+import { ArrowRight, Bell, BookOpen, Building2, GraduationCap, Save, School, ScrollText, ShieldCheck, SlidersHorizontal, UserCog } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -19,13 +19,17 @@ import {
   Select,
   Skeleton,
   TimezoneSelect,
+  NOMENCLATURE_PRESETS,
   SETTINGS_CATEGORY_META,
   SETTINGS_REGISTRY,
+  TERM_KEYS,
   currencyForCountry,
   currencyLabel,
   type EffectiveSettings,
   type InstitutionProfile,
+  type NomenclatureOverrides,
   type SettingDef,
+  type TermKey,
   type UpdateInstitutionProfileInput,
 } from '@edrion/ui';
 import { Topbar } from '@/components/app-shell/topbar';
@@ -35,13 +39,15 @@ import {
   useInstitutionProfile,
   useSaveEffectiveSettings,
   useSaveInstitutionProfile,
+  useSaveNomenclatureOverrides,
 } from '@/lib/settings';
 
-type Section = 'profile' | 'preferences' | 'administration';
+type Section = 'profile' | 'preferences' | 'nomenclature' | 'administration';
 
 const SECTIONS: { key: Section; label: string; icon: typeof Building2 }[] = [
   { key: 'profile', label: 'Institution Profile', icon: Building2 },
   { key: 'preferences', label: 'Preferences', icon: SlidersHorizontal },
+  { key: 'nomenclature', label: 'Nomenclature', icon: BookOpen },
   { key: 'administration', label: 'Administration', icon: ShieldCheck },
 ];
 
@@ -89,6 +95,7 @@ export default function SettingsPage() {
 
         {section === 'profile' && <ProfileSection canManage={canManage} />}
         {section === 'preferences' && <PreferencesSection canManage={canManage} />}
+        {section === 'nomenclature' && <NomenclatureSection canManage={canManage} />}
         {section === 'administration' && <AdministrationSection />}
       </div>
     </>
@@ -402,7 +409,7 @@ function PreferencesSection({ canManage }: { canManage: boolean }) {
       {isLoading && <Skeleton className="h-40 w-full" />}
 
       <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {SETTINGS_CATEGORY_META.map((cat) => {
+        {SETTINGS_CATEGORY_META.filter((c) => c.key !== 'nomenclature').map((cat) => {
           const defs = byCategory.get(cat.key) ?? [];
           if (defs.length === 0) return null;
           return (
@@ -478,6 +485,161 @@ function SettingField({
 }
 
 // =============================================================================
+// Nomenclature (institution-type labels + tenant overrides)
+// =============================================================================
+
+const TERM_LABELS: Record<TermKey, string> = {
+  academicYear: 'Academic year',
+  department: 'Department / programme',
+  gradeLevel: 'Grade / year level',
+  class: 'Class / section',
+  section: 'Section',
+  subject: 'Subject / course',
+  term: 'Term / semester',
+  student: 'Student',
+  teacher: 'Teacher / lecturer',
+  staff: 'Staff',
+  admission: 'Admission',
+  enrolment: 'Enrolment',
+  programmeStructure: 'Programme structure page',
+};
+
+function NomenclatureSection({ canManage }: { canManage: boolean }) {
+  const { data: profile } = useInstitutionProfile();
+  const { data: effective, isLoading } = useEffectiveSettings();
+  const save = useSaveNomenclatureOverrides();
+  const [overrides, setOverrides] = useState<NomenclatureOverrides>({});
+  const [dirty, setDirty] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const institutionType = profile?.type ?? 'school';
+  const preset = NOMENCLATURE_PRESETS[institutionType] ?? NOMENCLATURE_PRESETS.school;
+
+  useEffect(() => {
+    if (effective?.nomenclatureOverrides) {
+      setOverrides(effective.nomenclatureOverrides);
+      setDirty(false);
+    }
+  }, [effective?.nomenclatureOverrides]);
+
+  function setTerm(key: TermKey, field: 'singular' | 'plural', value: string) {
+    setError(null);
+    setOverrides((prev: NomenclatureOverrides) => {
+      const next = { ...(prev[key] ?? {}), [field]: value };
+      const hasValue = !!(next.singular?.trim() || next.plural?.trim());
+      if (!hasValue) {
+        const copy = { ...prev };
+        delete copy[key];
+        return copy;
+      }
+      return { ...prev, [key]: next };
+    });
+    setDirty(true);
+  }
+
+  function resetRow(key: TermKey) {
+    setOverrides((prev: NomenclatureOverrides) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    setDirty(true);
+  }
+
+  function resetAll() {
+    setOverrides({});
+    setDirty(true);
+  }
+
+  async function onSave() {
+    setError(null);
+    try {
+      await save.mutateAsync(overrides);
+      setDirty(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Couldn’t save nomenclature. Please try again.');
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Nomenclature</CardTitle>
+          <CardDescription>
+            Your institution type is <strong className="text-text-primary">{institutionType.replace('_', ' ')}</strong>.
+            Labels below default from that preset; override any row to customise what staff and families see.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
+      {isLoading && <Skeleton className="h-40 w-full" />}
+
+      <div className="overflow-hidden rounded-lg border border-border">
+        <table className="w-full text-sm">
+          <thead className="bg-surface-muted/60 text-left text-xs uppercase tracking-wide text-text-muted">
+            <tr>
+              <th className="px-4 py-3 font-semibold">Concept</th>
+              <th className="px-4 py-3 font-semibold">Singular</th>
+              <th className="px-4 py-3 font-semibold">Plural</th>
+              <th className="px-4 py-3 font-semibold w-24" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {TERM_KEYS.map((key: TermKey) => {
+              const override = overrides[key];
+              return (
+                <tr key={key}>
+                  <td className="px-4 py-3 font-medium text-text-primary">{TERM_LABELS[key]}</td>
+                  <td className="px-4 py-3">
+                    <Input
+                      value={override?.singular ?? ''}
+                      placeholder={preset[key].singular}
+                      disabled={!canManage}
+                      onChange={(e) => setTerm(key, 'singular', e.target.value)}
+                    />
+                  </td>
+                  <td className="px-4 py-3">
+                    <Input
+                      value={override?.plural ?? ''}
+                      placeholder={preset[key].plural}
+                      disabled={!canManage}
+                      onChange={(e) => setTerm(key, 'plural', e.target.value)}
+                    />
+                  </td>
+                  <td className="px-4 py-3">
+                    {override && canManage && (
+                      <button type="button" onClick={() => resetRow(key)} className="text-xs text-primary hover:underline">
+                        Reset
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {canManage && (
+        <div className="flex flex-wrap items-center gap-3">
+          <Button onClick={onSave} loading={save.isPending} disabled={!dirty}>
+            <Save className="mr-1.5 h-4 w-4" /> Save nomenclature
+          </Button>
+          <Button type="button" variant="secondary" onClick={resetAll} disabled={!dirty}>
+            Reset all to preset
+          </Button>
+          {save.isSuccess && !dirty && (
+            <span className="text-sm text-success">Nomenclature saved — labels update across the portal.</span>
+          )}
+          {error && <span className="text-sm text-danger">{error}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
 // Administration (links to related management modules)
 // =============================================================================
 
@@ -487,6 +649,7 @@ const ADMIN_LINKS: { label: string; href: string; permission: string; descriptio
   { label: 'Roles & Permissions', href: '/roles', permission: 'roles.view', description: 'Define custom roles and what they can do.', icon: ShieldCheck },
   { label: 'Notifications', href: '/notifications', permission: 'announcements.view', description: 'Delivery of announcements and alerts.', icon: Bell },
   { label: 'Audit Logs', href: '/audit', permission: 'audit.view', description: 'Review every change made in the portal.', icon: ScrollText },
+  { label: 'Student portal', href: '/settings/student-portal', permission: 'student_portal.manage', description: 'Invite students and control what they can see.', icon: GraduationCap },
 ];
 
 function AdministrationSection() {

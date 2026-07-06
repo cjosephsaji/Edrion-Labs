@@ -35,7 +35,8 @@ function makeService() {
     update: vi.fn(),
     updateWithVersion: vi.fn(),
     findActiveByEmail: vi.fn().mockResolvedValue(undefined),
-    countRefsForYear: vi.fn().mockResolvedValue(0),
+    maxRefSeqForYear: vi.fn().mockResolvedValue(0),
+    publicRefExists: vi.fn().mockResolvedValue(false),
     insertReview: vi.fn().mockResolvedValue({}),
     reviewsFor: vi.fn().mockResolvedValue([]),
     auditEventsFor: vi.fn().mockResolvedValue([]),
@@ -48,7 +49,8 @@ function makeService() {
   };
   const audit = { logAudit: vi.fn().mockResolvedValue(undefined) };
   const env = { SESSION_COOKIE_SECRET: SECRET } as never;
-  const service = new RegistrationService(repo as never, otp as never, emails as never, audit as never, env);
+  const geoLookup = { detectLocation: vi.fn().mockResolvedValue({}) };
+  const service = new RegistrationService(repo as never, otp as never, emails as never, audit as never, env, geoLookup as never);
   return { service, repo, otp, emails, audit };
 }
 

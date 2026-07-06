@@ -7,6 +7,7 @@ import {
   eq,
   ilike,
   inArray,
+  isNotNull,
   isNull,
   or,
   schema,
@@ -20,12 +21,10 @@ import type {
   NewStaff,
   NewStudent,
   NewStudentGuardian,
-  NewTeacher,
   Parent,
   Staff,
   Student,
   StudentGuardian,
-  Teacher,
 } from '@edrion/database';
 import type { PeopleListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
@@ -37,9 +36,6 @@ export interface StudentRow extends Student {
   gradeLevelName: string | null;
   className: string | null;
 }
-export interface TeacherRow extends Teacher {
-  departmentName: string | null;
-}
 export interface StaffRow extends Staff {
   departmentName: string | null;
 }
@@ -50,18 +46,37 @@ export interface GuardianRow extends StudentGuardian {
   parentPhone: string | null;
 }
 
+export interface ClassRosterRow {
+  id: string;
+  admissionNo: string;
+  firstName: string;
+  lastName: string;
+  rollNo: string | null;
+  status: string;
+  gender: string | null;
+}
+
+export interface StaffProfileData {
+  staff: Staff;
+  departmentName: string | null;
+  campusName: string | null;
+  roleKeys: string[];
+  classTeacherOf: Array<{ id: string; name: string }>;
+  subjectTeaching: Array<{ classId: string; className: string; subjectId: string; subjectName: string }>;
+}
+
 /** Which referenceable table an FK points at (for friendly-400 pre-checks). */
 export type RefTable =
   | 'gradeLevels'
   | 'classes'
   | 'departments'
   | 'institutionUsers'
-  | 'teachers'
+  | 'staff'
   | 'students'
   | 'parents';
 
 /**
- * Typed SQL for the institution-portal people tables (students, teachers, staff, parents + the
+ * Typed SQL for the institution-portal people tables (students, staff, parents + the
  * student↔guardian join). Same contract as AcademicsRepository: every query is confined to one
  * institution; campus-scoped reads also include institution-owned (campus_id IS NULL) rows. No
  * business rules here — the service owns scope assertions, versioning, FK pre-checks and audit.
@@ -93,13 +108,26 @@ export class PeopleRepository {
     return { limit: q.pageSize, offset: (q.page - 1) * q.pageSize };
   }
 
+  /** Join staff to institution user roles when filtering by roleKey. */
+  private listStaffWithRoleFilter(
+    t: typeof schema.staff,
+    roleKey: string,
+  ): { join: SQL | undefined; cond: SQL } {
+    const iu = schema.institutionUsers;
+    const iur = schema.institutionUserRoles;
+    return {
+      join: and(eq(iu.id, t.institutionUserId), eq(iur.institutionUserId, iu.id)),
+      cond: eq(iur.roleKey, roleKey),
+    };
+  }
+
   /** Confirm a referenced row exists in the institution (FK pre-check for friendly errors). */
   async existsInInstitution(table: RefTable, id: string, institutionId: string): Promise<boolean> {
-    const t = schema[table];
+    const tbl = schema[table];
     const [row] = await this.db
-      .select({ id: t.id })
-      .from(t)
-      .where(and(eq(t.id, id), eq(t.institutionId, institutionId)))
+      .select({ id: tbl.id })
+      .from(tbl)
+      .where(and(eq(tbl.id, id), eq(tbl.institutionId, institutionId)))
       .limit(1);
     return !!row;
   }
@@ -166,67 +194,14 @@ export class PeopleRepository {
 
   deleteStudent = (id: string, version: number) => this.del(schema.students, id, version);
 
-  // --- teachers --------------------------------------------------------------
-
-  async listTeachers(institutionId: string, campusIds: CampusFilter, q: PeopleListQuery): Promise<Page<TeacherRow>> {
-    const t = schema.teachers;
-    const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
-    if (q.search) {
-      const s = or(
-        ilike(t.firstName, `%${q.search}%`),
-        ilike(t.lastName, `%${q.search}%`),
-        ilike(t.email, `%${q.search}%`),
-        ilike(t.employeeNo, `%${q.search}%`),
-      );
-      if (s) conds.push(s);
-    }
-    const where = and(...conds);
-    const sortable: Record<string, PgColumn> = {
-      firstName: t.firstName,
-      lastName: t.lastName,
-      status: t.status,
-      createdAt: t.createdAt,
-    };
-    const { limit, offset } = this.pageBounds(q);
-
-    const rows = await this.db
-      .select({ teacher: t, departmentName: schema.departments.name })
-      .from(t)
-      .leftJoin(schema.departments, eq(schema.departments.id, t.departmentId))
-      .where(where)
-      .orderBy(this.order(q.sortBy ? sortable[q.sortBy] : undefined, q.sortDir, t.lastName))
-      .limit(limit)
-      .offset(offset);
-    const [tot] = await this.db.select({ value: count() }).from(t).where(where);
-    return { items: rows.map((r) => ({ ...r.teacher, departmentName: r.departmentName })), total: Number(tot?.value ?? 0) };
-  }
-
-  async findTeacher(id: string, institutionId: string): Promise<Teacher | undefined> {
-    const t = schema.teachers;
-    const [row] = await this.db.select().from(t).where(and(eq(t.id, id), eq(t.institutionId, institutionId))).limit(1);
-    return row;
-  }
-
-  async insertTeacher(values: NewTeacher): Promise<Teacher> {
-    const [row] = await this.db.insert(schema.teachers).values(values).returning();
-    return row!;
-  }
-
-  async updateTeacher(id: string, version: number, patch: Partial<NewTeacher>): Promise<Teacher | undefined> {
-    const t = schema.teachers;
-    const [row] = await this.db
-      .update(t)
-      .set({ ...patch, version: version + 1, updatedAt: new Date() })
-      .where(and(eq(t.id, id), eq(t.version, version)))
-      .returning();
-    return row;
-  }
-
-  deleteTeacher = (id: string, version: number) => this.del(schema.teachers, id, version);
-
   // --- staff -----------------------------------------------------------------
 
-  async listStaff(institutionId: string, campusIds: CampusFilter, q: PeopleListQuery): Promise<Page<StaffRow>> {
+  async listStaff(
+    institutionId: string,
+    campusIds: CampusFilter,
+    q: PeopleListQuery,
+    teachingUserIds: string[] | null = null,
+  ): Promise<Page<StaffRow>> {
     const t = schema.staff;
     const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
     if (q.search) {
@@ -238,6 +213,22 @@ export class PeopleRepository {
       );
       if (s) conds.push(s);
     }
+    if (q.status) conds.push(eq(t.status, q.status));
+    if (q.employmentType) conds.push(eq(t.employmentType, q.employmentType));
+    if (q.departmentId) conds.push(eq(t.departmentId, q.departmentId));
+    if (q.teaching === 'true') {
+      if (teachingUserIds && teachingUserIds.length === 0) return { items: [], total: 0 };
+      if (teachingUserIds) conds.push(inArray(t.institutionUserId, teachingUserIds));
+      else conds.push(isNotNull(t.institutionUserId));
+    } else if (q.teaching === 'false' && teachingUserIds) {
+      if (teachingUserIds.length > 0) {
+        conds.push(or(isNull(t.institutionUserId), sql`${t.institutionUserId} not in (${sql.join(teachingUserIds.map((id) => sql`${id}`), sql`, `)})`)!);
+      }
+    }
+
+    const roleFilter = q.roleKey ? this.listStaffWithRoleFilter(t, q.roleKey) : null;
+    if (roleFilter) conds.push(roleFilter.cond);
+
     const where = and(...conds);
     const sortable: Record<string, PgColumn> = {
       firstName: t.firstName,
@@ -247,22 +238,108 @@ export class PeopleRepository {
     };
     const { limit, offset } = this.pageBounds(q);
 
-    const rows = await this.db
+    const base = this.db
       .select({ staff: t, departmentName: schema.departments.name })
       .from(t)
-      .leftJoin(schema.departments, eq(schema.departments.id, t.departmentId))
+      .leftJoin(schema.departments, eq(schema.departments.id, t.departmentId));
+
+    const rows = await (roleFilter
+      ? base
+          .innerJoin(schema.institutionUsers, eq(schema.institutionUsers.id, t.institutionUserId))
+          .innerJoin(schema.institutionUserRoles, eq(schema.institutionUserRoles.institutionUserId, schema.institutionUsers.id))
+      : base
+    )
       .where(where)
       .orderBy(this.order(q.sortBy ? sortable[q.sortBy] : undefined, q.sortDir, t.lastName))
       .limit(limit)
       .offset(offset);
-    const [tot] = await this.db.select({ value: count() }).from(t).where(where);
-    return { items: rows.map((r) => ({ ...r.staff, departmentName: r.departmentName })), total: Number(tot?.value ?? 0) };
+
+    const countBase = this.db.select({ value: count() }).from(t);
+    const [tot] = await (roleFilter
+      ? countBase
+          .innerJoin(schema.institutionUsers, eq(schema.institutionUsers.id, t.institutionUserId))
+          .innerJoin(schema.institutionUserRoles, eq(schema.institutionUserRoles.institutionUserId, schema.institutionUsers.id))
+      : countBase
+    ).where(where);
+
+    return {
+      items: rows.map((r) => ({ ...r.staff, departmentName: r.departmentName })),
+      total: Number(tot?.value ?? 0),
+    };
+  }
+
+  /** Staff whose linked institution user holds academics.teach (teaching staff picker). */
+  async listTeachingStaff(institutionId: string, campusIds: CampusFilter, teachingUserIds: string[]): Promise<StaffRow[]> {
+    if (teachingUserIds.length === 0) return [];
+    const t = schema.staff;
+    const conds = [...this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds), eq(t.status, 'active')];
+    conds.push(inArray(t.institutionUserId, teachingUserIds));
+    const rows = await this.db
+      .select({ staff: t, departmentName: schema.departments.name })
+      .from(t)
+      .leftJoin(schema.departments, eq(schema.departments.id, t.departmentId))
+      .where(and(...conds))
+      .orderBy(asc(t.lastName), asc(t.firstName));
+    return rows.map((r) => ({ ...r.staff, departmentName: r.departmentName }));
   }
 
   async findStaff(id: string, institutionId: string): Promise<Staff | undefined> {
     const t = schema.staff;
     const [row] = await this.db.select().from(t).where(and(eq(t.id, id), eq(t.institutionId, institutionId))).limit(1);
     return row;
+  }
+
+  async getStaffProfile(id: string, institutionId: string): Promise<StaffProfileData | undefined> {
+    const t = schema.staff;
+    const [base] = await this.db
+      .select({
+        staff: t,
+        departmentName: schema.departments.name,
+        campusName: schema.campuses.name,
+      })
+      .from(t)
+      .leftJoin(schema.departments, eq(schema.departments.id, t.departmentId))
+      .leftJoin(schema.campuses, eq(schema.campuses.id, t.campusId))
+      .where(and(eq(t.id, id), eq(t.institutionId, institutionId)))
+      .limit(1);
+    if (!base) return undefined;
+
+    const roleKeys = base.staff.institutionUserId
+      ? (
+          await this.db
+            .select({ roleKey: schema.institutionUserRoles.roleKey })
+            .from(schema.institutionUserRoles)
+            .where(eq(schema.institutionUserRoles.institutionUserId, base.staff.institutionUserId))
+        ).map((r) => r.roleKey)
+      : [];
+
+    const classTeacherOf = await this.db
+      .select({ id: schema.classes.id, name: schema.classes.name })
+      .from(schema.classes)
+      .where(and(eq(schema.classes.institutionId, institutionId), eq(schema.classes.classTeacherId, id)))
+      .orderBy(asc(schema.classes.name));
+
+    const subjectTeaching = await this.db
+      .select({
+        classId: schema.classSubjectTeachers.classId,
+        className: schema.classes.name,
+        subjectId: schema.classSubjectTeachers.subjectId,
+        subjectName: schema.subjects.name,
+      })
+      .from(schema.classSubjectTeachers)
+      .innerJoin(schema.classes, eq(schema.classes.id, schema.classSubjectTeachers.classId))
+      .innerJoin(schema.subjects, eq(schema.subjects.id, schema.classSubjectTeachers.subjectId))
+      .where(and(eq(schema.classSubjectTeachers.institutionId, institutionId), eq(schema.classSubjectTeachers.teacherId, id)))
+      .orderBy(asc(schema.classes.name), asc(schema.subjects.name));
+
+    return {
+      staff: base.staff,
+      departmentName: base.departmentName,
+      campusName: base.campusName,
+      roleKeys,
+      classTeacherOf,
+      subjectTeaching,
+    };
   }
 
   async insertStaff(values: NewStaff): Promise<Staff> {
@@ -318,6 +395,29 @@ export class PeopleRepository {
     const t = schema.parents;
     const [row] = await this.db.select().from(t).where(and(eq(t.id, id), eq(t.institutionId, institutionId))).limit(1);
     return row;
+  }
+
+  async listParentChildren(parentId: string, institutionId: string) {
+    const sg = schema.studentGuardians;
+    const rows = await this.db
+      .select({
+        studentId: sg.studentId,
+        relationship: sg.relationship,
+        isPrimary: sg.isPrimary,
+        admissionNo: schema.students.admissionNo,
+        firstName: schema.students.firstName,
+        lastName: schema.students.lastName,
+        className: schema.classes.name,
+        gradeLevelName: schema.gradeLevels.name,
+        status: schema.students.status,
+      })
+      .from(sg)
+      .innerJoin(schema.students, eq(schema.students.id, sg.studentId))
+      .leftJoin(schema.classes, eq(schema.classes.id, schema.students.classId))
+      .leftJoin(schema.gradeLevels, eq(schema.gradeLevels.id, schema.students.gradeLevelId))
+      .where(and(eq(sg.parentId, parentId), eq(sg.institutionId, institutionId)))
+      .orderBy(desc(sg.isPrimary), asc(schema.students.lastName));
+    return rows;
   }
 
   async insertParent(values: NewParent): Promise<Parent> {
@@ -397,11 +497,7 @@ export class PeopleRepository {
 
   /** Version-guarded hard delete; returns false on a version mismatch (→ 409 in the service). */
   private async del(
-    table:
-      | typeof schema.students
-      | typeof schema.teachers
-      | typeof schema.staff
-      | typeof schema.parents,
+    table: typeof schema.students | typeof schema.staff | typeof schema.parents,
     id: string,
     version: number,
   ): Promise<boolean> {

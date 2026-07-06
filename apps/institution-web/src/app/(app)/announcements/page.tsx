@@ -1,7 +1,7 @@
 'use client';
 import { useMemo } from 'react';
 import { Send } from 'lucide-react';
-import { StatusBadge, type Column, type DetailSection } from '@edrion/ui';
+import { Button, StatusBadge, type Column, type DetailSection } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
 import { RecipientPicker } from '@/components/recipients/recipient-picker';
@@ -123,17 +123,11 @@ export default function AnnouncementsPage() {
         status: r.status,
         publishAt: r.publishAt ?? '',
       })}
-      extraActions={(row) =>
+      detailActions={({ row }) =>
         canSend && row.status !== 'published' ? (
-          <button
-            type="button"
-            aria-label="Publish"
-            title="Publish"
-            onClick={() => publish.mutate(row.id)}
-            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-background-secondary hover:text-primary"
-          >
-            <Send className="h-4 w-4" />
-          </button>
+          <Button size="sm" variant="secondary" onClick={() => publish.mutate(row.id)}>
+            <Send className="h-4 w-4" /> Publish
+          </Button>
         ) : null
       }
     />

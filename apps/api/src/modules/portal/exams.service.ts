@@ -44,6 +44,7 @@ export class ExamsService {
 
   async create(ctx: PortalActionContext, input: CreateExamInput) {
     await this.assertOptional(ctx, 'academicYears', input.academicYearId, 'academic year');
+    await this.assertOptional(ctx, 'academicTerms', input.termId, 'term');
     const campusId = this.createCampusId(ctx.scope);
     const row = await this.repo.insert({
       institutionId: ctx.principal.institutionId,
@@ -51,6 +52,7 @@ export class ExamsService {
       name: input.name,
       examType: input.examType,
       academicYearId: input.academicYearId ?? null,
+      termId: input.termId ?? null,
       termLabel: input.termLabel ?? null,
       startDate: input.startDate ?? null,
       endDate: input.endDate ?? null,
@@ -69,10 +71,12 @@ export class ExamsService {
     const existing = await this.repo.find(id, ctx.principal.institutionId);
     this.assertInScope(existing?.campusId ?? null, existing, f);
     await this.assertOptional(ctx, 'academicYears', input.academicYearId, 'academic year');
+    await this.assertOptional(ctx, 'academicTerms', input.termId, 'term');
     const updated = await this.repo.update(id, input.version, {
       name: input.name ?? existing!.name,
       examType: input.examType ?? existing!.examType,
       academicYearId: input.academicYearId === undefined ? existing!.academicYearId : input.academicYearId,
+      termId: input.termId === undefined ? existing!.termId : input.termId,
       termLabel: input.termLabel === undefined ? existing!.termLabel : input.termLabel,
       startDate: input.startDate === undefined ? existing!.startDate : input.startDate,
       endDate: input.endDate === undefined ? existing!.endDate : input.endDate,

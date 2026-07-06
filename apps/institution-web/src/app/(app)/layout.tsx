@@ -16,7 +16,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         Skip to content
       </a>
       <Sidebar />
-      <main id="main-content" tabIndex={-1} className="flex min-w-0 flex-1 flex-col overflow-y-auto focus:outline-none">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="relative flex min-w-0 flex-1 flex-col overflow-y-auto bg-[radial-gradient(circle_at_top_left,rgb(222_238_228_/_0.65),transparent_34rem),linear-gradient(180deg,var(--background),var(--background-secondary))] focus:outline-none"
+      >
         <AppErrorBoundary>{children}</AppErrorBoundary>
       </main>
     </div>

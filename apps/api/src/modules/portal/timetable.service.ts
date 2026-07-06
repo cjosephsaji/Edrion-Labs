@@ -40,8 +40,9 @@ export class TimetableService {
   async create(ctx: PortalActionContext, input: CreateTimetableSlotInput) {
     await this.assertRef(ctx, 'classes', input.classId, 'class');
     await this.assertOptional(ctx, 'subjects', input.subjectId, 'subject');
-    await this.assertOptional(ctx, 'teachers', input.teacherId, 'teacher');
+    await this.assertOptional(ctx, 'staff', input.teacherId, 'teacher');
     await this.assertOptional(ctx, 'academicYears', input.academicYearId, 'academic year');
+    await this.assertOptional(ctx, 'academicTerms', input.termId, 'term');
     const campusId = this.createCampusId(ctx.scope);
     const row = await this.repo.insert({
       institutionId: ctx.principal.institutionId,
@@ -50,6 +51,7 @@ export class TimetableService {
       subjectId: input.subjectId ?? null,
       teacherId: input.teacherId ?? null,
       academicYearId: input.academicYearId ?? null,
+      termId: input.termId ?? null,
       dayOfWeek: input.dayOfWeek,
       startTime: input.startTime,
       endTime: input.endTime,
@@ -68,13 +70,15 @@ export class TimetableService {
     this.assertInScope(existing?.campusId ?? null, existing, f);
     await this.assertOptional(ctx, 'classes', input.classId, 'class');
     await this.assertOptional(ctx, 'subjects', input.subjectId, 'subject');
-    await this.assertOptional(ctx, 'teachers', input.teacherId, 'teacher');
+    await this.assertOptional(ctx, 'staff', input.teacherId, 'teacher');
     await this.assertOptional(ctx, 'academicYears', input.academicYearId, 'academic year');
+    await this.assertOptional(ctx, 'academicTerms', input.termId, 'term');
     const updated = await this.repo.update(id, input.version, {
       classId: input.classId ?? existing!.classId,
       subjectId: input.subjectId === undefined ? existing!.subjectId : input.subjectId,
       teacherId: input.teacherId === undefined ? existing!.teacherId : input.teacherId,
       academicYearId: input.academicYearId === undefined ? existing!.academicYearId : input.academicYearId,
+      termId: input.termId === undefined ? existing!.termId : input.termId,
       dayOfWeek: input.dayOfWeek ?? existing!.dayOfWeek,
       startTime: input.startTime ?? existing!.startTime,
       endTime: input.endTime ?? existing!.endTime,

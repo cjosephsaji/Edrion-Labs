@@ -6,12 +6,12 @@ import {
   Button,
   ConfirmDialog,
   DataTable,
-  DetailPanel,
   PermissionDenied,
   type Column,
   type DetailSection,
 } from '@edrion/ui';
 import { Topbar } from '@/components/app-shell/topbar';
+import { RecordDetailDialog } from '@/components/common/record-detail-dialog';
 import { usePermissions } from '@/lib/permissions';
 import { useScope } from '@/lib/scope';
 import { useAcademicList, useAcademicMutations, type ListParams } from '@/lib/academics';
@@ -70,6 +70,8 @@ export interface ResourceManagerProps<TRow extends { id: string; version: number
   noun: string;
   columns: Column<TRow>[];
   fields: FieldDef[];
+  /** Extra fields shown only in the create drawer (e.g. createLogin, roleKeys on staff). */
+  createFields?: FieldDef[];
   defaultSortBy?: string;
   defaultSortDir?: 'asc' | 'desc';
   searchable?: boolean;
@@ -79,6 +81,12 @@ export interface ResourceManagerProps<TRow extends { id: string; version: number
   extraActions?: (row: TRow) => React.ReactNode;
   /** Optional toolbar facet dropdowns; selected values are sent to the list hook as extra params. */
   filters?: FilterDef[];
+  /** Controlled facet values (use with `onFilterChange` for cascading programme filters). */
+  filterValues?: Record<string, string>;
+  /** Controlled facet handler; when set, facet state is owned by the parent. */
+  onFilterChange?: (key: string, value: string) => void;
+  /** Always-applied facet values merged into list params (e.g. global academic context). */
+  extraFilters?: Record<string, string | undefined>;
   /** Human label for a row in confirm dialogs. */
   rowLabel?: (row: TRow) => string;
   /** Permission keys gating view/create/update/delete. Defaults to the academics keys. */
@@ -109,6 +117,12 @@ export interface ResourceManagerProps<TRow extends { id: string; version: number
     edit: () => void;
     canEdit: boolean;
   }) => React.ReactNode;
+  /** Optional block below the standard fields in the edit drawer (e.g. guardians, role permissions). */
+  renderFormExtra?: (ctx: { row: TRow; mode: 'edit' }) => React.ReactNode;
+  /** Rich content below detail sections in the row-click popup. */
+  renderDetailExtra?: (ctx: { row: TRow }) => React.ReactNode;
+  /** Extra header actions in the row-click popup (publish, mark read, …). */
+  detailActions?: (ctx: { row: TRow }) => React.ReactNode;
   disableDetail?: boolean;
 }
 
@@ -175,7 +189,9 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
   const [sortBy, setSortBy] = useState(props.defaultSortBy);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>(props.defaultSortDir ?? 'asc');
   const [search, setSearch] = useState(initialSearch);
-  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+  const [internalFilterValues, setInternalFilterValues] = useState<Record<string, string>>({});
+  const controlledFilters = props.onFilterChange !== undefined;
+  const filterValues = controlledFilters ? (props.filterValues ?? {}) : internalFilterValues;
 
   const params: ListParams = {
     page,
@@ -183,7 +199,9 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
     sortBy,
     sortDir,
     search: search || undefined,
-    filters: props.filters ? filterValues : undefined,
+    filters: props.filters || props.extraFilters
+      ? { ...props.extraFilters, ...(props.filters ? filterValues : undefined) }
+      : undefined,
   };
   const { data, isLoading, isError } = useList(props.resource, params);
   const { create, update, remove } = useMutations(props.resource);
@@ -290,7 +308,8 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
                 value={filterValues[f.key] ?? ''}
                 onChange={(e) => {
                   const v = e.target.value;
-                  setFilterValues((prev) => ({ ...prev, [f.key]: v }));
+                  if (controlledFilters) props.onFilterChange!(f.key, v);
+                  else setInternalFilterValues((prev) => ({ ...prev, [f.key]: v }));
                   setPage(1);
                 }}
                 className="h-9 rounded-md border border-border bg-surface px-2.5 text-sm text-text-primary outline-none focus:border-border-strong"
@@ -373,8 +392,8 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
       <ResourceForm
         open={creating}
         title={`New ${props.noun}`}
-        fields={props.fields}
-        initial={{}}
+        fields={[...props.fields, ...(props.createFields ?? [])]}
+        initial={{ createLogin: true, roleKeys: [] }}
         submitting={create.isPending}
         error={formError}
         onSubmit={submitCreate}
@@ -391,6 +410,7 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
         error={formError}
         onSubmit={submitUpdate}
         onClose={() => setEditing(null)}
+        extra={editing && props.renderFormExtra ? props.renderFormExtra({ row: editing, mode: 'edit' }) : undefined}
       />
 
       {/* Read-only detail (row click) — custom popup when provided, else the sliding panel. */}
@@ -410,42 +430,30 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
           })
         : null}
 
-      {showDetail && !props.renderDetail && (
-        <DetailPanel
+      {showDetail && !props.renderDetail && viewing && (
+        <RecordDetailDialog
           open={!!viewing}
           onClose={() => setViewing(null)}
           title={
-            viewing
-              ? (props.detailTitle?.(viewing) ??
-                props.rowLabel?.(viewing) ??
-                (viewing as { name?: string }).name ??
-                props.noun)
-              : props.noun
+            props.detailTitle?.(viewing) ??
+            props.rowLabel?.(viewing) ??
+            (viewing as { name?: string }).name ??
+            props.noun
           }
-          header={viewing ? props.detailHeader?.(viewing) : undefined}
-          sections={
-            viewing
-              ? (props.detail?.(viewing) ?? autoDetail(viewing as Record<string, unknown>, columns as Column<Record<string, unknown>>[]))
-              : []
-          }
-          footer={
-            viewing && canUpdate ? (
-              <div className="flex justify-end">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => {
-                    const row = viewing;
-                    setViewing(null);
-                    setFormError(null);
-                    setEditing(row);
-                  }}
-                >
-                  <Pencil className="h-4 w-4" />
-                  Edit
-                </Button>
-              </div>
-            ) : undefined
+          header={props.detailHeader?.(viewing)}
+          sections={props.detail?.(viewing) ?? autoDetail(viewing as Record<string, unknown>, columns as Column<Record<string, unknown>>[])}
+          extra={props.renderDetailExtra?.({ row: viewing })}
+          headerActions={props.detailActions?.({ row: viewing })}
+          canEdit={canUpdate}
+          onEdit={
+            canUpdate
+              ? () => {
+                  const row = viewing;
+                  setViewing(null);
+                  setFormError(null);
+                  setEditing(row);
+                }
+              : undefined
           }
         />
       )}

@@ -25,7 +25,7 @@ import type { AssignmentsListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
 
-const teacherDisplayName = sql<string>`concat_ws(' ', ${schema.teachers.firstName}, ${schema.teachers.lastName})`;
+const teacherDisplayName = sql<string>`concat_ws(' ', ${schema.staff.firstName}, ${schema.staff.lastName})`;
 const studentDisplayName = sql<string>`concat_ws(' ', ${schema.students.firstName}, ${schema.students.lastName})`;
 
 export interface AssignmentRow extends Assignment {
@@ -41,7 +41,7 @@ export interface AssignmentSubmissionRow extends AssignmentSubmission {
 }
 
 /** Which referenceable table an FK points at (for friendly-400 pre-checks). */
-export type AssignmentRefTable = 'classes' | 'subjects' | 'teachers' | 'students';
+export type AssignmentRefTable = 'classes' | 'subjects' | 'staff' | 'students';
 
 /**
  * Typed SQL for the institution-portal assignments tables (assignments + per-student submissions).
@@ -117,7 +117,7 @@ export class AssignmentsRepository {
       .from(t)
       .leftJoin(schema.classes, eq(schema.classes.id, t.classId))
       .leftJoin(schema.subjects, eq(schema.subjects.id, t.subjectId))
-      .leftJoin(schema.teachers, eq(schema.teachers.id, t.teacherId))
+      .leftJoin(schema.staff, eq(schema.staff.id, t.teacherId))
       .where(where)
       .orderBy(this.order(q.sortBy ? sortable[q.sortBy] : undefined, q.sortDir, t.createdAt))
       .limit(limit)

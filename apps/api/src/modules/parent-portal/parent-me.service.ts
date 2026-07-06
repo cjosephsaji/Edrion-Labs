@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, count, eq, inArray, isNull, isNotNull, schema, type Database } from '@edrion/database';
 import type { ParentChildSummary, ParentMeResponse } from '@edrion/schemas';
+import { resolveNomenclature, type InstitutionType } from '@edrion/shared-types';
 import { DATABASE } from '../../common/tokens';
 import type { GuardianContext } from './guardian-context';
 
@@ -10,27 +11,39 @@ export class ParentMeService {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
 
   async getMe(guardian: GuardianContext): Promise<ParentMeResponse> {
-    const [guardianRow] = await this.db
-      .select({
-        id: schema.institutionUsers.id,
-        fullName: schema.institutionUsers.fullName,
-        email: schema.institutionUsers.email,
-      })
-      .from(schema.institutionUsers)
-      .where(eq(schema.institutionUsers.id, guardian.guardianUserId))
-      .limit(1);
-
-    const [children, preferences, unread] = await Promise.all([
+    const [guardianRow, institutionRow, children, preferences, unread] = await Promise.all([
+      this.db
+        .select({
+          id: schema.institutionUsers.id,
+          fullName: schema.institutionUsers.fullName,
+          email: schema.institutionUsers.email,
+        })
+        .from(schema.institutionUsers)
+        .where(eq(schema.institutionUsers.id, guardian.guardianUserId))
+        .limit(1)
+        .then((rows) => rows[0]),
+      this.db
+        .select({ type: schema.institutions.type })
+        .from(schema.institutions)
+        .where(eq(schema.institutions.id, guardian.institutionId))
+        .limit(1)
+        .then((rows) => rows[0]),
       this.buildChildren(guardian),
       this.getPreferences(guardian.guardianUserId),
       this.getUnread(guardian),
     ]);
+
+    const institutionType = (institutionRow?.type ?? 'school') as InstitutionType;
 
     return {
       guardian: {
         id: guardianRow?.id ?? guardian.guardianUserId,
         fullName: guardianRow?.fullName ?? '',
         email: guardianRow?.email ?? '',
+      },
+      institution: {
+        type: institutionType,
+        nomenclature: resolveNomenclature(institutionType),
       },
       children,
       preferences,

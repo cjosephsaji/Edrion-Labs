@@ -9,7 +9,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-full overflow-hidden bg-background">
       <Sidebar />
-      <main className="flex min-w-0 flex-1 flex-col overflow-y-auto">
+      <main className="relative flex min-w-0 flex-1 flex-col overflow-y-auto bg-[radial-gradient(circle_at_top_left,rgb(222_238_228_/_0.65),transparent_34rem),linear-gradient(180deg,var(--background),var(--background-secondary))]">
         <AppErrorBoundary>{children}</AppErrorBoundary>
       </main>
     </div>

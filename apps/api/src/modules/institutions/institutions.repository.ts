@@ -112,7 +112,26 @@ export class InstitutionsRepository {
   }
 
   async nextPublicId(): Promise<string> {
-    const rows = await this.db.select({ value: count() }).from(schema.institutions);
-    return `INST-${String(1000 + Number(rows[0]?.value ?? 0) + 1).padStart(5, '0')}`;
+    // Gap-safe: base on the highest INST- id in use, not count() — a deleted row makes count()
+    // reissue an existing id and collide on institutions_public_id_unique. Pre-check for races.
+    const [top] = await this.db
+      .select({ publicId: schema.institutions.publicId })
+      .from(schema.institutions)
+      .where(ilike(schema.institutions.publicId, 'INST-%'))
+      .orderBy(desc(schema.institutions.publicId))
+      .limit(1);
+    let seq = top?.publicId ? Number.parseInt(top.publicId.slice('INST-'.length), 10) : 1000;
+    if (!Number.isFinite(seq)) seq = 1000;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      seq += 1;
+      const candidate = `INST-${String(seq).padStart(5, '0')}`;
+      const [dupe] = await this.db
+        .select({ id: schema.institutions.id })
+        .from(schema.institutions)
+        .where(eq(schema.institutions.publicId, candidate))
+        .limit(1);
+      if (!dupe) return candidate;
+    }
+    return `INST-${Date.now().toString(36).toUpperCase()}`;
   }
 }

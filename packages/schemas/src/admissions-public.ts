@@ -113,3 +113,5 @@ export const submitAdmissionSchema = z.object({
   additional: additionalSection.optional(),
 });
 export type SubmitAdmissionInput = z.infer<typeof submitAdmissionSchema>;
+
+// Cross-device resume reuses resumeRequestSchema / resumeVerifySchema from `./registration`.

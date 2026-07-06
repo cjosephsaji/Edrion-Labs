@@ -5,18 +5,22 @@ import {
   admissionDraftPatchSchema,
   otpRequestSchema,
   otpVerifySchema,
+  resumeRequestSchema,
+  resumeVerifySchema,
   startAdmissionSchema,
   submitAdmissionSchema,
   submitInfoResponsesSchema,
   type AdmissionDraftPatchInput,
   type OtpRequestInput,
   type OtpVerifyInput,
+  type ResumeRequestInput,
+  type ResumeVerifyInput,
   type StartAdmissionInput,
   type SubmitAdmissionInput,
   type SubmitInfoResponsesInput,
 } from '@edrion/schemas';
 import { Public } from '../../common/guards/auth.guard';
-import { RateLimit, ReqContext } from '../../common/decorators';
+import { ReqContext, SkipRateLimit } from '../../common/decorators';
 import { zodBody } from '../../common/zod-validation.pipe';
 import type { EdrionRequestContext } from '../../common/request-context';
 import { AdmissionsPublicService } from './admissions-public.service';
@@ -47,12 +51,13 @@ function readRawBody(req: ExpressRequest): Promise<Buffer> {
 
 /**
  * Public parent admission-apply funnel. Unauthenticated (`@Public`) so it bypasses the platform
- * AuthGuard; protected instead by the global IP rate-limiter (tightened per-handler here), a signed
- * resume token (`x-admission-token`, only its SHA-256 hash is stored), the OTP lifecycle, and full
- * server-side re-validation on submit. Mirrors the institution-registration funnel.
+ * AuthGuard; protected instead by a signed resume token (`x-admission-token`, only its SHA-256
+ * hash is stored), the OTP lifecycle, and full server-side re-validation on submit. Mirrors the
+ * institution-registration funnel.
  */
 @ApiTags('admissions-public')
 @Public()
+@SkipRateLimit()
 @Controller('admissions/apply')
 export class AdmissionsPublicController {
   constructor(private readonly service: AdmissionsPublicService) {}
@@ -71,12 +76,35 @@ export class AdmissionsPublicController {
 
   /** Start a draft application. Returns the resume token the client stores to continue later. */
   @Post()
-  @RateLimit(10)
   start(
     @Body(zodBody(startAdmissionSchema)) body: StartAdmissionInput,
     @ReqContext() ctx: EdrionRequestContext,
   ) {
     return this.service.start(body, ctx);
+  }
+
+  /** Best-effort IP-based location guess to pre-fill the funnel. Declared before `:id`. */
+  @Get('geo')
+  geo(@ReqContext() ctx: EdrionRequestContext) {
+    return this.service.geo(ctx);
+  }
+
+  /** Cross-device resume — email a code to the draft owning this address. Declared before `:id`. */
+  @Post('resume')
+  resumeRequest(
+    @Body(zodBody(resumeRequestSchema)) body: ResumeRequestInput,
+    @ReqContext() ctx: EdrionRequestContext,
+  ) {
+    return this.service.resumeRequest(body, ctx);
+  }
+
+  /** Cross-device resume — verify the code, returning a fresh resume token + the draft. */
+  @Post('resume/verify')
+  resumeVerify(
+    @Body(zodBody(resumeVerifySchema)) body: ResumeVerifyInput,
+    @ReqContext() ctx: EdrionRequestContext,
+  ) {
+    return this.service.resumeVerify(body, ctx);
   }
 
   /** Resume a draft (the signed token must match this id). */
@@ -98,7 +126,6 @@ export class AdmissionsPublicController {
 
   /** Generate + email a verification code for the contact email. */
   @Post(':id/otp')
-  @RateLimit(5)
   requestOtp(
     @Param('id') id: string,
     @Headers('x-admission-token') token: string,
@@ -110,7 +137,6 @@ export class AdmissionsPublicController {
 
   /** Verify the code. On success the contact email is marked verified. */
   @Post(':id/otp/verify')
-  @RateLimit(10)
   verifyOtp(
     @Param('id') id: string,
     @Headers('x-admission-token') token: string,
@@ -122,7 +148,6 @@ export class AdmissionsPublicController {
 
   /** Final submission. Re-validates everything; requires a verified contact email. */
   @Post(':id/submit')
-  @RateLimit(5)
   submit(
     @Param('id') id: string,
     @Headers('x-admission-token') token: string,
@@ -142,7 +167,6 @@ export class AdmissionsPublicController {
 
   /** Upload one file for a `file` field (raw binary body; name/type in headers). */
   @Post('info/:requestId/files')
-  @RateLimit(30)
   async uploadInfoFile(
     @Param('requestId') requestId: string,
     @Headers('x-admission-token') token: string,
@@ -157,7 +181,6 @@ export class AdmissionsPublicController {
 
   /** Submit the completed form. Moves the application back to review + emails a confirmation. */
   @Post('info/:requestId/submit')
-  @RateLimit(10)
   submitInfo(
     @Param('requestId') requestId: string,
     @Headers('x-admission-token') token: string,

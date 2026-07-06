@@ -47,7 +47,7 @@ export const apiEnvSchema = z.object({
   API_BASE_URL: z.string().url().default('http://localhost:3001'),
   API_CORS_ORIGINS: z
     .string()
-    .default('http://localhost:3000,http://localhost:3002,http://localhost:3003')
+    .default('http://localhost:3000,http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:3005')
     .transform((s) => s.split(',').map((o) => o.trim())),
   SESSION_COOKIE_SECRET: z.string().min(16, 'SESSION_COOKIE_SECRET must be at least 16 chars'),
   /**
@@ -97,6 +97,25 @@ export const apiEnvSchema = z.object({
   PORTAL_AUTH_DEV_LOGIN: bool.default(false),
   /** Base URL of the institution-portal web app — used to build invitation accept links. */
   PORTAL_WEB_URL: z.string().url().default('http://localhost:3002'),
+
+  // ── Student-portal authentication (Plan 01) ────────────────────────────────
+  /** Name of the HTTP-only cookie carrying the student session JWT. */
+  STUDENT_SESSION_COOKIE_NAME: z.string().default('edrion_student_session'),
+  /**
+   * DEV ESCAPE HATCH. When true the `x-student-email` request header is honoured as a student
+   * identity, bypassing real session auth. Off in production.
+   */
+  STUDENT_AUTH_DEV_HEADER: bool.default(false),
+  /** Base URL of the student-portal web app — used to build activation/reset links. */
+  STUDENT_WEB_URL: z.string().url().default('http://localhost:3005'),
+  /** Storage driver for student uploads: `local` (default) or `supabase`. */
+  STUDENT_STORAGE_DRIVER: z.enum(['local', 'supabase']).default('local'),
+  /** Directory for local-disk student object storage (resolved from the API process cwd). */
+  STUDENT_STORAGE_DIR: z.string().default('./var/student-storage'),
+  /** Max size (bytes) for a single student image upload. Default 15 MiB. */
+  STUDENT_UPLOAD_MAX_BYTES_IMAGE: z.coerce.number().int().positive().default(15_728_640),
+  /** Max size (bytes) for a single student document upload. Default 40 MiB. */
+  STUDENT_UPLOAD_MAX_BYTES_DOC: z.coerce.number().int().positive().default(41_943_040),
   /** Base URL of the super-admin web app — used to build employee password-reset links. */
   SUPER_ADMIN_WEB_URL: z.string().url().default('http://localhost:3000'),
 

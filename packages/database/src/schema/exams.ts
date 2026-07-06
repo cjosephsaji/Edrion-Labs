@@ -2,7 +2,7 @@ import { boolean, date, index, integer, pgTable, text, uniqueIndex, uuid } from 
 import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { campuses } from './campuses';
-import { academicYears, classes, subjects } from './academics';
+import { academicYears, classes, subjects, academicTerms } from './academics';
 
 /**
  * INSTITUTION-PORTAL exams (Phase 6). A two-level model, mirroring attendance:
@@ -33,6 +33,8 @@ export const exams = pgTable(
     }),
     /** Free-text term label, e.g. "Term 1" or "Semester 2". */
     termLabel: text('term_label'),
+    /** Optional link to a structured academic term period. */
+    termId: uuid('term_id').references(() => academicTerms.id, { onDelete: 'set null' }),
     startDate: date('start_date'),
     endDate: date('end_date'),
     /** draft | scheduled | ongoing | completed | published | cancelled. */

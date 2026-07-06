@@ -48,9 +48,12 @@ export interface PublicInstitution {
   publicId: string;
   logoUrl: string | null;
   country: string;
+  type: string;
 }
 
 export interface InstitutionOptions {
+  institutionType: string;
+  nomenclature: import('@edrion/shared-types').ResolvedNomenclature;
   campuses: { id: string; name: string }[];
   academicYears: { id: string; name: string }[];
   gradeLevels: { id: string; name: string; level: number }[];
@@ -74,17 +77,34 @@ export interface AdmissionDraftView {
   updatedAt: string;
 }
 
+export interface GeoGuess {
+  country?: string;
+  city?: string;
+  timezone?: string;
+}
+
 export const applyApi = {
   institutions: (q?: string) =>
     call<PublicInstitution[]>(`/institutions${q ? `?q=${encodeURIComponent(q)}` : ''}`, { method: 'GET' }),
   options: (institutionId: string) =>
     call<InstitutionOptions>(`/institutions/${institutionId}/options`, { method: 'GET' }),
+  geo: () => call<GeoGuess>('/geo', { method: 'GET' }),
   start: (institutionId: string, contactEmail: string) =>
     call<{ id: string; token: string; status: string }>('', {
       method: 'POST',
       body: JSON.stringify({ institutionId, contactEmail }),
     }),
   resume: (id: string, token: string) => call<AdmissionDraftView>(`/${id}`, { method: 'GET' }, token),
+  resumeRequest: (email: string) =>
+    call<{ sent: true; expiresInSeconds: number; resendAvailableInSeconds: number; devCode?: string }>(
+      '/resume',
+      { method: 'POST', body: JSON.stringify({ email }) },
+    ),
+  resumeVerify: (email: string, code: string) =>
+    call<{ id: string; token: string; draft: AdmissionDraftView }>(
+      '/resume/verify',
+      { method: 'POST', body: JSON.stringify({ email, code }) },
+    ),
   patch: (id: string, token: string, body: Record<string, unknown>) =>
     call<AdmissionDraftView>(`/${id}`, { method: 'PATCH', body: JSON.stringify(body) }, token),
   requestOtp: (id: string, token: string, email: string) =>

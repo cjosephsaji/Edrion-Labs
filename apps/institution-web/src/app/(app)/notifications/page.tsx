@@ -1,7 +1,7 @@
 'use client';
 import { useMemo } from 'react';
 import { Check } from 'lucide-react';
-import { type Column } from '@edrion/ui';
+import { Button, type Column } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
 import { useMarkNotificationRead, useNotificationsList, useNotificationsMutations } from '@/lib/announcements';
@@ -82,17 +82,11 @@ export default function NotificationsPage() {
         kind: r.kind,
         audience: r.audience,
       })}
-      extraActions={(row) =>
+      detailActions={({ row }) =>
         canSend && row.status !== 'read' ? (
-          <button
-            type="button"
-            aria-label="Mark read"
-            title="Mark read"
-            onClick={() => markRead.mutate(row.id)}
-            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-background-secondary hover:text-primary"
-          >
-            <Check className="h-4 w-4" />
-          </button>
+          <Button size="sm" variant="secondary" onClick={() => markRead.mutate(row.id)}>
+            <Check className="h-4 w-4" /> Mark read
+          </Button>
         ) : null
       }
     />

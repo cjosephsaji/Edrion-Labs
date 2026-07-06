@@ -60,6 +60,19 @@ export {
   type SettingDef,
   type SettingType,
   type EffectiveSettings,
+  type EffectiveSettingsResponse,
   type InstitutionProfile,
   type UpdateInstitutionProfileInput,
+  putNomenclatureOverridesSchema,
+  type NomenclatureOverrideInput,
+  type PutNomenclatureOverridesInput,
 } from '@edrion/schemas';
+export {
+  NOMENCLATURE_PRESETS,
+  TERM_KEYS,
+  resolveNomenclature,
+  type TermKey,
+  type TermLabel,
+  type ResolvedNomenclature,
+  type NomenclatureOverrides,
+} from '@edrion/shared-types';

@@ -62,3 +62,13 @@ export * from './petros';
 
 // Document generation engine (templates + renders)
 export * from './doc-gen';
+
+// Student portal (Plan 01)
+export * from './student';
+
+// Plan 03 — institutional bridge
+export * from './institutional-bridge';
+// Student Library / Lab / Achievements (Plan 04)
+export * from './student-knowledge';
+// Learn engine (Plan 02)
+export * from './learn';

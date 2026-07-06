@@ -20,8 +20,7 @@ import type { PayrollRunsListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
 
-const teacherName = sql<string>`concat_ws(' ', ${schema.teachers.firstName}, ${schema.teachers.lastName})`;
-const staffName = sql<string>`concat_ws(' ', ${schema.staff.firstName}, ${schema.staff.lastName})`;
+const employeeName = sql<string>`concat_ws(' ', ${schema.staff.firstName}, ${schema.staff.lastName})`;
 
 export interface PayrollRunRow extends PayrollRun {
   itemCount: number;
@@ -32,7 +31,7 @@ export interface PayrollItemRow extends PayrollItem {
 }
 
 /** Which referenceable table an FK points at (for friendly-400 pre-checks). */
-export type PayrollRefTable = 'teachers' | 'staff';
+export type PayrollRefTable = 'staff';
 
 /**
  * Typed SQL for the institution-portal payroll tables (runs + per-employee items). Same contract as
@@ -145,17 +144,15 @@ export class PayrollRepository {
     const rows = await this.db
       .select({
         item: t,
-        teacherName,
-        staffName,
+        employeeName,
       })
       .from(t)
-      .leftJoin(schema.teachers, eq(schema.teachers.id, t.teacherId))
-      .leftJoin(schema.staff, eq(schema.staff.id, t.staffId))
+      .leftJoin(schema.staff, sql`${schema.staff.id} = coalesce(${t.staffId}, ${t.teacherId})`)
       .where(eq(t.payrollRunId, runId))
       .orderBy(desc(t.createdAt));
     return rows.map((r) => ({
       ...r.item,
-      employeeName: r.item.employeeType === 'staff' ? r.staffName : r.teacherName,
+      employeeName: r.employeeName,
     }));
   }
 

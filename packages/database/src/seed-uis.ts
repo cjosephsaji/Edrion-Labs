@@ -169,12 +169,12 @@ async function main() {
     s.attendanceRecords, s.attendanceSessions,
     s.admissionApplications,
     s.studentGuardians,
-    s.parents, s.students, s.staff, s.teachers,
+    s.parents, s.students, s.staff,
     // portal users
     s.institutionUsers,
     // academic structure
     s.classSubjectTeachers, s.classes,
-    s.subjects, s.gradeLevels, s.departments, s.academicYears,
+    s.subjects, s.gradeLevels, s.departments, s.academicYears, s.academicTerms,
     // campus operations
     s.facilityAssets, s.maintenanceTasks, s.workOrders, s.facilities,
     s.visitors, s.appointments,
@@ -217,6 +217,46 @@ async function main() {
     .returning();
   const ayId = ay2526!.id;
   console.log('  ✓ Academic Years: 2024–2025, 2025–2026 (current)');
+
+  await db.insert(s.academicTerms).values([
+    {
+      institutionId: instId,
+      campusId,
+      academicYearId: ayId,
+      name: 'Term 1',
+      kind: 'term',
+      sequence: 1,
+      startDate: '2025-06-01',
+      endDate: '2025-09-30',
+      isCurrent: true,
+      status: 'active',
+    },
+    {
+      institutionId: instId,
+      campusId,
+      academicYearId: ayId,
+      name: 'Term 2',
+      kind: 'term',
+      sequence: 2,
+      startDate: '2025-10-01',
+      endDate: '2026-01-31',
+      isCurrent: false,
+      status: 'planning',
+    },
+    {
+      institutionId: instId,
+      campusId,
+      academicYearId: ayId,
+      name: 'Term 3',
+      kind: 'term',
+      sequence: 3,
+      startDate: '2026-02-01',
+      endDate: '2026-03-31',
+      isCurrent: false,
+      status: 'planning',
+    },
+  ]);
+  console.log('  ✓ Academic Terms: Term 1–3');
 
   // ── Departments ───────────────────────────────────────────────────────────
   const deptRows = await db
@@ -289,7 +329,7 @@ async function main() {
   // ─────────────────────────────────────────────────────────────────────────
   // SECTION 2: TEACHERS (needed before classes for classTeacherId)
   // ─────────────────────────────────────────────────────────────────────────
-  console.log('\n→ Seeding teachers…');
+  console.log('\n→ Seeding teaching staff…');
 
   const teacherData = [
     { employeeNo: 'T-001', firstName: 'Rajesh', lastName: 'Kumar', email: 'r.kumar@uis.edu.in', phone: '9876543201', designation: 'HOD Mathematics', departmentId: deptByCode['MATH'], employmentType: 'full_time', joinDate: '2018-06-01' },
@@ -310,12 +350,12 @@ async function main() {
   ];
 
   const teacherRows = await db
-    .insert(s.teachers)
+    .insert(s.staff)
     .values(teacherData.map((t) => ({ institutionId: instId, campusId, status: 'active', ...t })))
     .returning();
   const teacherByNo: Record<string, string> = {};
   for (const t of teacherRows) if (t.employeeNo) teacherByNo[t.employeeNo] = t.id;
-  console.log(`  ✓ Teachers: ${teacherRows.length}`);
+  console.log(`  ✓ Teaching staff: ${teacherRows.length}`);
 
   // Update department heads now that we have teacher IDs
   await db.update(s.departments).set({ headUserId: teacherByNo['T-001'] }).where(eq(s.departments.id, deptByCode['MATH']!));

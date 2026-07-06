@@ -23,7 +23,7 @@ export function Dialog({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 animate-fade-in" onClick={onClose} aria-hidden />
+      <div className="absolute inset-0 bg-[#17150f]/45 backdrop-blur-[2px] animate-fade-in" onClick={onClose} aria-hidden />
       <div
         ref={panelRef}
         role="dialog"
@@ -31,7 +31,7 @@ export function Dialog({
         aria-label={title}
         tabIndex={-1}
         className={cn(
-          'relative w-full max-w-md rounded-lg border border-border bg-surface-elevated shadow-xl animate-fade-in-up focus:outline-none',
+          'relative w-full max-w-md rounded-xl border border-border bg-surface-elevated shadow-lg animate-fade-in-up focus:outline-none',
           className,
         )}
       >

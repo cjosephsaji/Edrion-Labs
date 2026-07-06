@@ -32,6 +32,7 @@ import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
 import { PortalModule } from './modules/portal/portal.module';
 import { ParentPortalModule } from './modules/parent-portal/parent-portal.module';
+import { StudentModule } from './modules/student/student.module';
 import { RegistrationModule } from './modules/registration/registration.module';
 import { AdmissionsPublicModule } from './modules/admissions-public/admissions-public.module';
 
@@ -69,6 +70,7 @@ import { AdmissionsPublicModule } from './modules/admissions-public/admissions-p
     MaintenanceModule,
     PortalModule,
     ParentPortalModule,
+    StudentModule,
     RegistrationModule,
     AdmissionsPublicModule,
   ],

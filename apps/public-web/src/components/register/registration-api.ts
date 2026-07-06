@@ -66,10 +66,27 @@ export interface PublicPlan {
   perCampusPriceMinor: number;
 }
 
+export interface GeoGuess {
+  country?: string;
+  city?: string;
+  timezone?: string;
+}
+
 export const registrationApi = {
   plans: () => call<PublicPlan[]>('/plans', { method: 'GET' }),
+  geo: () => call<GeoGuess>('/geo', { method: 'GET' }),
   start: () => call<{ id: string; resumeToken: string; status: string }>('', { method: 'POST', body: '{}' }),
   resume: (id: string, token: string) => call<DraftView>(`/${id}`, { method: 'GET' }, token),
+  resumeRequest: (email: string) =>
+    call<{ sent: true; expiresInSeconds: number; resendAvailableInSeconds: number; devCode?: string }>(
+      '/resume',
+      { method: 'POST', body: JSON.stringify({ email }) },
+    ),
+  resumeVerify: (email: string, code: string) =>
+    call<{ id: string; resumeToken: string; draft: DraftView }>(
+      '/resume/verify',
+      { method: 'POST', body: JSON.stringify({ email, code }) },
+    ),
   patch: (id: string, token: string, body: Record<string, unknown>) =>
     call<DraftView>(`/${id}`, { method: 'PATCH', body: JSON.stringify(body) }, token),
   requestOtp: (id: string, token: string, email: string) =>

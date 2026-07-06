@@ -2,16 +2,22 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePortalClient } from './portal-client';
 import { useScope } from './scope';
-import type { InstitutionScope } from './types';
 import type { ListParams } from './academics';
-import type { GuardianRow, Paged, ParentRow, StaffRow, StudentRow, TeacherRow } from './people-types';
+import type {
+  ClassRosterEntry,
+  GuardianRow,
+  Paged,
+  ParentProfile,
+  ParentRow,
+  StaffProfile,
+  StaffRow,
+  StudentRow,
+  TeachingStaffOption,
+} from './people-types';
+import { scopeKey } from './admin';
 
 /** People resource path segment (matches the API routes under /portal/people/*). */
-export type PeopleResource = 'students' | 'teachers' | 'staff' | 'parents';
-
-function scopeKey(scope: InstitutionScope): string {
-  return scope.mode === 'campus' ? `campus:${scope.campusId}` : 'institution';
-}
+export type PeopleResource = 'students' | 'staff' | 'parents';
 
 function queryString(p: ListParams): string {
   const sp = new URLSearchParams();
@@ -20,6 +26,7 @@ function queryString(p: ListParams): string {
   sp.set('sortDir', p.sortDir);
   if (p.sortBy) sp.set('sortBy', p.sortBy);
   if (p.search) sp.set('search', p.search);
+  if (p.filters) for (const [k, v] of Object.entries(p.filters)) if (v) sp.set(k, v);
   return sp.toString();
 }
 
@@ -60,10 +67,17 @@ export function usePeopleMutations(resource: string) {
 
 const OPTION_PARAMS: ListParams = { page: 1, pageSize: 100, sortDir: 'asc' };
 
-/** Teacher options for the academics pickers (class teacher, dept head, subject teacher). */
-export function useTeacherOptions() {
-  return usePeopleList<TeacherRow>('teachers', { ...OPTION_PARAMS, sortBy: 'lastName' });
+/** Teaching staff options for academics pickers (class teacher, dept head, subject teacher). */
+export function useTeachingStaffOptions() {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  return useQuery({
+    queryKey: ['people', 'staff', 'teaching-options', scopeKey(scope)],
+    queryFn: () => client.get<TeachingStaffOption[]>('/portal/people/staff/teaching-options', scope),
+    staleTime: 60_000,
+  });
 }
+
 /** Parent options for the student guardian picker. */
 export function useParentOptions() {
   return usePeopleList<ParentRow>('parents', { ...OPTION_PARAMS, sortBy: 'lastName' });
@@ -75,6 +89,36 @@ export function useStudentOptions() {
 /** Staff options for the payroll employee picker. */
 export function useStaffOptions() {
   return usePeopleList<StaffRow>('staff', { ...OPTION_PARAMS, sortBy: 'lastName' });
+}
+
+export function useStaffProfile(staffId: string | null) {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  return useQuery({
+    queryKey: ['staff-profile', scopeKey(scope), staffId],
+    queryFn: () => client.get<StaffProfile>(`/portal/people/staff/${staffId}/profile`, scope),
+    enabled: !!staffId,
+  });
+}
+
+export function useParentProfile(parentId: string | null) {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  return useQuery({
+    queryKey: ['parent-profile', scopeKey(scope), parentId],
+    queryFn: () => client.get<ParentProfile>(`/portal/people/parents/${parentId}/profile`, scope),
+    enabled: !!parentId,
+  });
+}
+
+export function useClassRoster(classId: string | null) {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  return useQuery({
+    queryKey: ['class-roster', scopeKey(scope), classId],
+    queryFn: () => client.get<ClassRosterEntry[]>(`/portal/academics/classes/${classId}/roster`, scope),
+    enabled: !!classId,
+  });
 }
 
 // --- student ↔ guardian links -----------------------------------------------
@@ -109,4 +153,13 @@ export function useGuardianMutations(studentId: string) {
   return { assign, remove };
 }
 
-export type { GuardianRow, ParentRow, StaffRow, StudentRow, TeacherRow } from './people-types';
+export type {
+  ClassRosterEntry,
+  GuardianRow,
+  ParentProfile,
+  ParentRow,
+  StaffProfile,
+  StaffRow,
+  StudentRow,
+  TeachingStaffOption,
+} from './people-types';

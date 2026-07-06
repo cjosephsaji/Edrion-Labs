@@ -18,12 +18,12 @@ function Shell({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border ' +
-          'bg-surface px-6 py-14 text-center',
+        'flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border ' +
+          'bg-surface/80 px-6 py-14 text-center shadow-xs',
         className,
       )}
     >
-      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-background-secondary text-text-muted">
+      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-soft text-primary shadow-xs">
         <Icon className="h-5 w-5" aria-hidden />
       </span>
       <div>

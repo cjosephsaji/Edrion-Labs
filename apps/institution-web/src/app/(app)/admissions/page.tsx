@@ -1,15 +1,13 @@
 'use client';
-import { useMemo, useState } from 'react';
-import { FileQuestion, Gavel, UserPlus } from 'lucide-react';
+import { useMemo } from 'react';
 import { StatusBadge, type Column, type DetailSection } from '@edrion/ui';
 import { ResourceManager, type FilterDef, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
-import { AdmissionEnrolDrawer } from '@/components/admissions/admission-enrol-drawer';
-import { AdmissionDecisionDrawer } from '@/components/admissions/admission-decision-drawer';
-import { AdmissionInfoDrawer } from '@/components/admissions/admission-info-drawer';
+import { AdmissionWorkflowPanel } from '@/components/admissions/admission-workflow-panel';
 import { useAcademicYearOptions, useGradeLevelOptions } from '@/lib/academics';
 import { usePermissions } from '@/lib/permissions';
 import { useAdmissionsList, useAdmissionsMutations, type AdmissionRow } from '@/lib/admissions';
+import { useTerm } from '@/lib/term';
 
 const PERMISSIONS: ResourcePermissions = {
   view: 'admissions.view',
@@ -44,13 +42,11 @@ function SubmittedViaBadge({ via }: { via: AdmissionRow['submittedVia'] }) {
 }
 
 export default function AdmissionsPage() {
+  const { t, tp } = useTerm();
   const { data: grades } = useGradeLevelOptions();
   const { data: years } = useAcademicYearOptions();
   const { can } = usePermissions();
   const canManage = can('admissions.manage');
-  const [enrolFor, setEnrolFor] = useState<AdmissionRow | null>(null);
-  const [decisionFor, setDecisionFor] = useState<AdmissionRow | null>(null);
-  const [infoFor, setInfoFor] = useState<AdmissionRow | null>(null);
 
   const yearOptions = useMemo(() => (years?.items ?? []).map((y) => ({ value: y.id, label: y.name })), [years]);
   const gradeOptions = useMemo(() => (grades?.items ?? []).map((g) => ({ value: g.id, label: g.name })), [grades]);
@@ -61,8 +57,8 @@ export default function AdmissionsPage() {
       { name: 'firstName', label: 'First name', type: 'text', required: true },
       { name: 'lastName', label: 'Last name', type: 'text', required: true },
       { name: 'status', label: 'Status', type: 'select', required: true, options: STATUS_OPTIONS },
-      { name: 'gradeLevelId', label: 'Applying for grade', type: 'select', nullable: true, options: gradeOptions },
-      { name: 'academicYearId', label: 'Academic year', type: 'select', nullable: true, options: yearOptions },
+      { name: 'gradeLevelId', label: `Applying for ${t('gradeLevel').toLowerCase()}`, type: 'select', nullable: true, options: gradeOptions },
+      { name: 'academicYearId', label: t('academicYear'), type: 'select', nullable: true, options: yearOptions },
       {
         name: 'gender',
         label: 'Gender',
@@ -84,15 +80,15 @@ export default function AdmissionsPage() {
       { name: 'phone', label: 'Applicant phone', type: 'phone', nullable: true },
       { name: 'decisionNote', label: 'Decision note', type: 'textarea', nullable: true, placeholder: 'Optional' },
     ],
-    [gradeOptions, yearOptions],
+    [gradeOptions, yearOptions, t],
   );
 
   const columns = useMemo<Column<AdmissionRow>[]>(
     () => [
       { key: 'applicationNo', header: 'Application', sortable: true, render: (r) => <span className="font-mono text-text-secondary">{r.applicationNo}</span> },
       { key: 'lastName', header: 'Applicant', sortable: true, render: (r) => <span className="font-medium">{r.firstName} {r.lastName}</span> },
-      { key: 'gradeLevelName', header: 'Grade', render: (r) => r.gradeLevelName ?? '—' },
-      { key: 'academicYearName', header: 'Year', render: (r) => r.academicYearName ?? '—' },
+      { key: 'gradeLevelName', header: t('gradeLevel'), render: (r) => r.gradeLevelName ?? '—' },
+      { key: 'academicYearName', header: t('academicYear'), render: (r) => r.academicYearName ?? '—' },
       { key: 'submittedVia', header: 'Source', render: (r) => <SubmittedViaBadge via={r.submittedVia} /> },
       { key: 'appliedDate', header: 'Applied', sortable: true, render: (r) => <span className="tabular-nums text-text-muted">{r.appliedDate ?? '—'}</span> },
       { key: 'status', header: 'Status', sortable: true, render: (r) => <StatusBadge status={r.status} /> },
@@ -112,7 +108,7 @@ export default function AdmissionsPage() {
         ],
       },
     ],
-    [],
+    [t],
   );
 
   const detail = useMemo(
@@ -125,8 +121,8 @@ export default function AdmissionsPage() {
             { label: 'Application no.', value: r.applicationNo },
             { label: 'Status', value: <StatusBadge status={r.status} /> },
             { label: 'Source', value: <SubmittedViaBadge via={r.submittedVia} /> },
-            { label: 'Grade', value: r.gradeLevelName ?? '—' },
-            { label: 'Academic year', value: r.academicYearName ?? '—' },
+            { label: t('gradeLevel'), value: r.gradeLevelName ?? '—' },
+            { label: t('academicYear'), value: r.academicYearName ?? '—' },
             { label: 'Gender', value: r.gender ?? '—' },
             { label: 'Date of birth', value: r.dateOfBirth ?? '—' },
             { label: 'Previous school', value: r.previousSchool ?? '—' },
@@ -175,87 +171,43 @@ export default function AdmissionsPage() {
           ],
         },
       ],
-    [],
+    [t],
   );
 
   return (
-    <>
-      <ResourceManager<AdmissionRow>
-        resource="admissions"
-        title="Admissions"
-        noun="application"
-        columns={columns}
-        fields={fields}
-        filters={filters}
-        detail={detail}
-        defaultSortBy="appliedDate"
-        defaultSortDir="desc"
-        permissions={PERMISSIONS}
-        useList={useAdmissionsList}
-        useMutations={useAdmissionsMutations}
-        rowLabel={(r) => `${r.firstName} ${r.lastName} (${r.applicationNo})`}
-        toFormValues={(r) => ({
-          applicationNo: r.applicationNo,
-          firstName: r.firstName,
-          lastName: r.lastName,
-          status: r.status === 'enrolled' ? 'accepted' : r.status,
-          gradeLevelId: r.gradeLevelId ?? '',
-          academicYearId: r.academicYearId ?? '',
-          gender: r.gender ?? '',
-          dateOfBirth: r.dateOfBirth ?? '',
-          appliedDate: r.appliedDate ?? '',
-          previousSchool: r.previousSchool ?? '',
-          guardianName: r.guardianName ?? '',
-          guardianPhone: r.guardianPhone ?? '',
-          guardianEmail: r.guardianEmail ?? '',
-          email: r.email ?? '',
-          phone: r.phone ?? '',
-          decisionNote: r.decisionNote ?? '',
-        })}
-        extraActions={(row) =>
-          canManage ? (
-            <>
-              {row.status !== 'enrolled' && (
-                <button
-                  type="button"
-                  aria-label="Record decision"
-                  title="Record decision"
-                  onClick={() => setDecisionFor(row)}
-                  className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-background-secondary hover:text-primary"
-                >
-                  <Gavel className="h-4 w-4" />
-                </button>
-              )}
-              {row.status !== 'enrolled' && (
-                <button
-                  type="button"
-                  aria-label="Request more information"
-                  title="Request info"
-                  onClick={() => setInfoFor(row)}
-                  className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-background-secondary hover:text-primary"
-                >
-                  <FileQuestion className="h-4 w-4" />
-                </button>
-              )}
-              {row.status === 'accepted' && !row.enrolledStudentId && (
-                <button
-                  type="button"
-                  aria-label="Enrol applicant"
-                  title="Enrol"
-                  onClick={() => setEnrolFor(row)}
-                  className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-background-secondary hover:text-primary"
-                >
-                  <UserPlus className="h-4 w-4" />
-                </button>
-              )}
-            </>
-          ) : null
-        }
-      />
-
-      <AdmissionDecisionDrawer application={decisionFor} open={!!decisionFor} onClose={() => setDecisionFor(null)} />
-      <AdmissionEnrolDrawer application={enrolFor} open={!!enrolFor} onClose={() => setEnrolFor(null)} />
-      <AdmissionInfoDrawer application={infoFor} open={!!infoFor} onClose={() => setInfoFor(null)} />
-    </>
+    <ResourceManager<AdmissionRow>
+      resource="admissions"
+      title={tp('admission')}
+      noun={t('admission').toLowerCase()}
+      columns={columns}
+      fields={fields}
+      filters={filters}
+      detail={detail}
+      defaultSortBy="appliedDate"
+      defaultSortDir="desc"
+      permissions={PERMISSIONS}
+      useList={useAdmissionsList}
+      useMutations={useAdmissionsMutations}
+      rowLabel={(r) => `${r.firstName} ${r.lastName} (${r.applicationNo})`}
+      renderDetailExtra={canManage ? ({ row }) => <AdmissionWorkflowPanel application={row} /> : undefined}
+      toFormValues={(r) => ({
+        applicationNo: r.applicationNo,
+        firstName: r.firstName,
+        lastName: r.lastName,
+        status: r.status === 'enrolled' ? 'accepted' : r.status,
+        gradeLevelId: r.gradeLevelId ?? '',
+        academicYearId: r.academicYearId ?? '',
+        gender: r.gender ?? '',
+        dateOfBirth: r.dateOfBirth ?? '',
+        appliedDate: r.appliedDate ?? '',
+        previousSchool: r.previousSchool ?? '',
+        guardianName: r.guardianName ?? '',
+        guardianPhone: r.guardianPhone ?? '',
+        guardianEmail: r.guardianEmail ?? '',
+        email: r.email ?? '',
+        phone: r.phone ?? '',
+        decisionNote: r.decisionNote ?? '',
+      })}
+    />
   );
 }

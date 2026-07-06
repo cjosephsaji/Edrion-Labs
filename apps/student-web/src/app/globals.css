@@ -1,0 +1,50 @@
+@import '../styles/tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  html.text-size-s {
+    font-size: 15px;
+  }
+  html.text-size-m {
+    font-size: 16px;
+  }
+  html.text-size-l {
+    font-size: 17px;
+  }
+  body {
+    @apply bg-st-page font-body text-st-ink;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+  ::selection {
+    background-color: var(--st-selection);
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--st-bd1) transparent;
+  }
+  .shimmer {
+    background: linear-gradient(90deg, var(--st-surface2) 25%, var(--st-bd1) 37%, var(--st-surface2) 63%);
+    background-size: 400% 100%;
+    animation: shimmer 1.2s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

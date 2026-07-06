@@ -17,6 +17,8 @@ export interface ExamRow {
   examType: ExamType;
   academicYearId: string | null;
   academicYearName: string | null;
+  termId: string | null;
+  termName: string | null;
   termLabel: string | null;
   startDate: string | null;
   endDate: string | null;

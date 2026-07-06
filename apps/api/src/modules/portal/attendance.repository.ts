@@ -24,7 +24,7 @@ import type { AttendanceListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
 
-const teacherDisplayName = sql<string>`concat_ws(' ', ${schema.teachers.firstName}, ${schema.teachers.lastName})`;
+const teacherDisplayName = sql<string>`concat_ws(' ', ${schema.staff.firstName}, ${schema.staff.lastName})`;
 const studentDisplayName = sql<string>`concat_ws(' ', ${schema.students.firstName}, ${schema.students.lastName})`;
 
 export interface AttendanceSessionRow extends AttendanceSession {
@@ -40,7 +40,7 @@ export interface AttendanceRecordRow extends AttendanceRecord {
 }
 
 /** Which referenceable table an FK points at (for friendly-400 pre-checks). */
-export type AttendanceRefTable = 'classes' | 'subjects' | 'teachers' | 'students';
+export type AttendanceRefTable = 'classes' | 'subjects' | 'staff' | 'students';
 
 /**
  * Typed SQL for the institution-portal attendance tables (sessions + per-student records). Every
@@ -107,7 +107,7 @@ export class AttendanceRepository {
       .from(t)
       .leftJoin(schema.classes, eq(schema.classes.id, t.classId))
       .leftJoin(schema.subjects, eq(schema.subjects.id, t.subjectId))
-      .leftJoin(schema.teachers, eq(schema.teachers.id, t.takenById))
+      .leftJoin(schema.staff, eq(schema.staff.id, t.takenById))
       .where(where)
       .orderBy(this.order(q.sortBy ? sortable[q.sortBy] : undefined, q.sortDir, t.date))
       .limit(limit)

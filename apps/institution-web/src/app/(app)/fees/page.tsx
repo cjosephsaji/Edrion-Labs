@@ -1,14 +1,16 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { Wallet } from 'lucide-react';
 import { type Column } from '@edrion/ui';
-import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
+import { ResourceManager, type FilterDef, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
-import { InvoicePaymentsDrawer } from '@/components/fees/invoice-payments-drawer';
+import { InvoicePaymentsPanel } from '@/components/fees/invoice-payments-panel';
 import { useAcademicYearOptions, useClassOptions, useGradeLevelOptions } from '@/lib/academics';
 import { useStudentOptions } from '@/lib/people';
 import { useFeesList, useFeesMutations, useFeeStructureOptions } from '@/lib/fees';
 import { useFormat } from '@/lib/format';
+import { useProgrammeFacetFilters } from '@/lib/programme-facets';
+import { useAcademicContextFilters } from '@/lib/academic-context';
+import { useTerm } from '@/lib/term';
 import type { FeeInvoiceRow, FeeStructureRow } from '@/lib/fees-types';
 
 const PERMISSIONS: ResourcePermissions = {
@@ -48,8 +50,13 @@ const label = (opts: { value: string; label: string }[], v: string) => opts.find
 
 function StructuresTab() {
   const fmt = useFormat();
+  const { t } = useTerm();
+  const facets = useProgrammeFacetFilters();
+  const contextFilters = useAcademicContextFilters();
+  const [statusFilter, setStatusFilter] = useState('');
+  const [feeTypeFilter, setFeeTypeFilter] = useState('');
   const { data: grades } = useGradeLevelOptions();
-  const { data: classes } = useClassOptions();
+  const { data: classes } = useClassOptions(facets.classFilters);
   const { data: years } = useAcademicYearOptions();
 
   const fields = useMemo<FieldDef[]>(
@@ -61,29 +68,64 @@ function StructuresTab() {
       { name: 'status', label: 'Status', type: 'select', required: true, options: STRUCTURE_STATUSES },
       {
         name: 'gradeLevelId',
-        label: 'Grade',
+        label: t('gradeLevel'),
         type: 'select',
         nullable: true,
         options: (grades?.items ?? []).map((g) => ({ value: g.id, label: g.name })),
       },
       {
         name: 'classId',
-        label: 'Class',
+        label: t('class'),
         type: 'select',
         nullable: true,
         options: (classes?.items ?? []).map((c) => ({ value: c.id, label: c.name })),
       },
       {
         name: 'academicYearId',
-        label: 'Academic year',
+        label: t('academicYear'),
         type: 'select',
         nullable: true,
         options: (years?.items ?? []).map((y) => ({ value: y.id, label: y.name })),
       },
+      ...(facets.showFacets
+        ? [
+            {
+              name: 'termId',
+              label: t('term'),
+              type: 'select' as const,
+              nullable: true,
+              options: facets.termOptions,
+            },
+          ]
+        : []),
       { name: 'description', label: 'Description', type: 'textarea', nullable: true, placeholder: 'Optional' },
     ],
-    [grades, classes, years],
+    [grades, classes, years, facets.showFacets, facets.termOptions, t],
   );
+
+  const toolbarFilters = useMemo<FilterDef[]>(
+    () => [
+      ...facets.filters,
+      { key: 'status', label: 'All statuses', options: STRUCTURE_STATUSES },
+      { key: 'feeType', label: 'All types', options: FEE_TYPES },
+    ],
+    [facets.filters],
+  );
+
+  const listFilterValues = useMemo(
+    () => ({
+      ...facets.filterValues,
+      status: statusFilter,
+      feeType: feeTypeFilter,
+    }),
+    [facets.filterValues, statusFilter, feeTypeFilter],
+  );
+
+  function onListFilterChange(key: string, value: string) {
+    if (key === 'status') setStatusFilter(value);
+    else if (key === 'feeType') setFeeTypeFilter(value);
+    else facets.onFilterChange(key, value);
+  }
 
   const columns = useMemo<Column<FeeStructureRow>[]>(
     () => [
@@ -103,6 +145,10 @@ function StructuresTab() {
       noun="fee structure"
       columns={columns}
       fields={fields}
+      filters={toolbarFilters}
+      filterValues={listFilterValues}
+      onFilterChange={onListFilterChange}
+      extraFilters={contextFilters}
       defaultSortBy="name"
       permissions={PERMISSIONS}
       useList={useFeesList}
@@ -117,6 +163,7 @@ function StructuresTab() {
         gradeLevelId: r.gradeLevelId ?? '',
         classId: r.classId ?? '',
         academicYearId: r.academicYearId ?? '',
+        termId: r.termId ?? '',
         description: r.description ?? '',
       })}
     />
@@ -125,9 +172,9 @@ function StructuresTab() {
 
 function InvoicesTab() {
   const fmt = useFormat();
+  const contextFilters = useAcademicContextFilters();
   const { data: students } = useStudentOptions();
   const { data: structures } = useFeeStructureOptions();
-  const [paymentsFor, setPaymentsFor] = useState<FeeInvoiceRow | null>(null);
 
   const fields = useMemo<FieldDef[]>(
     () => [
@@ -169,44 +216,39 @@ function InvoicesTab() {
   );
 
   return (
-    <>
-      <ResourceManager<FeeInvoiceRow>
-        resource="fees/invoices"
-        title="Fees"
-        noun="invoice"
-        columns={columns}
-        fields={fields}
-        defaultSortBy="createdAt"
-        defaultSortDir="desc"
-        permissions={PERMISSIONS}
-        useList={useFeesList}
-        useMutations={useFeesMutations}
-        rowLabel={(r) => `Invoice ${r.invoiceNo}`}
-        toFormValues={(r) => ({
-          invoiceNo: r.invoiceNo,
-          studentId: r.studentId,
-          feeStructureId: r.feeStructureId ?? '',
-          amount: r.amount,
-          status: r.status,
-          issueDate: r.issueDate ?? '',
-          dueDate: r.dueDate ?? '',
-          notes: r.notes ?? '',
-        })}
-        extraActions={(row) => (
-          <button
-            type="button"
-            aria-label="Payments"
-            title="Payments"
-            onClick={() => setPaymentsFor(row)}
-            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-background-secondary hover:text-primary"
-          >
-            <Wallet className="h-4 w-4" />
-          </button>
-        )}
-      />
-
-      <InvoicePaymentsDrawer invoice={paymentsFor} open={!!paymentsFor} onClose={() => setPaymentsFor(null)} />
-    </>
+    <ResourceManager<FeeInvoiceRow>
+      resource="fees/invoices"
+      title="Fees"
+      noun="invoice"
+      columns={columns}
+      fields={fields}
+      extraFilters={contextFilters}
+      defaultSortBy="createdAt"
+      defaultSortDir="desc"
+      permissions={PERMISSIONS}
+      useList={useFeesList}
+      useMutations={useFeesMutations}
+      rowLabel={(r) => `Invoice ${r.invoiceNo}`}
+      renderDetailExtra={({ row }) => (
+        <InvoicePaymentsPanel
+          invoiceId={row.id}
+          invoiceNo={row.invoiceNo}
+          amount={row.amount}
+          amountPaid={row.amountPaid}
+          balance={row.balance}
+        />
+      )}
+      toFormValues={(r) => ({
+        invoiceNo: r.invoiceNo,
+        studentId: r.studentId,
+        feeStructureId: r.feeStructureId ?? '',
+        amount: r.amount,
+        status: r.status,
+        issueDate: r.issueDate ?? '',
+        dueDate: r.dueDate ?? '',
+        notes: r.notes ?? '',
+      })}
+    />
   );
 }
 

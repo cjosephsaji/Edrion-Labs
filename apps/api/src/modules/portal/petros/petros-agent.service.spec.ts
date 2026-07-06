@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+import { NOMENCLATURE_PRESETS } from '@edrion/shared-types';
 import { PetrosAgentService } from './petros-agent.service';
 import type { PetrosTool } from './tools/types';
 import type { PortalActionContext } from '../portal-action-context';
@@ -124,6 +125,13 @@ function makeHarness(tools: PetrosTool[], streams: Record<string, unknown>[][]) 
     recordDecline: vi.fn(),
     declineMessage: 'declined',
   };
+  const settings = {
+    getEffective: vi.fn().mockResolvedValue({
+      values: {},
+      nomenclature: NOMENCLATURE_PRESETS.school,
+      nomenclatureOverrides: {},
+    }),
+  };
   const service = new PetrosAgentService(
     repo as never,
     openai as never,
@@ -131,6 +139,7 @@ function makeHarness(tools: PetrosTool[], streams: Record<string, unknown>[][]) 
     runs as never,
     attachments as never,
     topicality as never,
+    settings as never,
   );
   return { service, repo, openai, runs, conversation, runRows, topicality };
 }

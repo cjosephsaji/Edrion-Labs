@@ -28,6 +28,12 @@ export const portalUsersListQuerySchema = paginationQuerySchema.merge(sortQueryS
   search: z.string().trim().max(160).optional(),
   status: portalUserStatusSchema.optional(),
   roleKey: z.string().trim().max(64).optional(),
+  campusId: z.string().uuid().optional(),
+  mfa: z.coerce.boolean().optional(),
+  /** Filter to users whose effective permissions include this catalogue key. */
+  permission: z.string().trim().max(80).optional(),
+  /** When true, only users linked from a staff directory row (staff.institution_user_id). */
+  provisionedFromStaff: z.coerce.boolean().optional(),
 });
 export type PortalUsersListQuery = z.infer<typeof portalUsersListQuerySchema>;
 

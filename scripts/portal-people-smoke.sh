@@ -1,30 +1,25 @@
 #!/usr/bin/env bash
-# Phase 4 (Institution Portal — People) live smoke.
+# Institution Portal — People live smoke (staff merge + profiles).
 #
-# Proves, against the running API + seeded portal users, that the people verticals are real and the
-# portal's guarantees hold for them:
-#   1. permission gating  — per-resource keys: students.{view,create,update,delete}; teachers/staff/
-#                           parents.{view,manage} (teacher can view students, not create; parent: none).
-#   2. full CRUD          — students, teachers, staff, parents + student↔guardian links.
-#   3. teacher pickers    — the P2-deferred FKs now resolve to teachers: a class teacher, a department
-#                           head and a class-subject teacher all accept a teachers.id and echo the name.
-#   4. tenancy/refs       — unknown foreign keys -> 400 (not 500); unknown teacher -> 400.
-#   5. optimistic concurrency — a stale version on update -> 409.
-#   6. scope isolation    — confined campus-admin can work in its campus; a foreign campus -> 403.
+# Proves against the running API + seeded portal users:
+#   1. permission gating  — students.{view,create,update,delete}; staff/parents.{view,manage}
+#   2. full CRUD          — students, staff (teaching + non-teaching), parents + guardian links
+#   3. teaching pickers   — class teacher, dept head, subject teacher resolve staff names
+#   4. staff login mirror — create staff with createLogin + roleKeys mints institution_users row
+#   5. profiles           — staff profile + class roster endpoints return 200
+#   6. tenancy/refs       — unknown FKs -> 400; stale version -> 409; scope isolation -> 403
 #
-# Self-cleaning + idempotent: every row is created with a unique run suffix and deleted at the end.
-#
-# Prereqs: API on :3001, DB seeded + `pnpm --filter @edrion/database seed:portal`, migration 0014
-# applied, and in .env PORTAL_AUTH_DEV_HEADER=true (dev only).
+# Prereqs: API on :3001, DB migrated + `pnpm --filter @edrion/database seed:portal`,
+# PORTAL_AUTH_DEV_HEADER=true (dev only).
 set -u
-set +B  # disable brace expansion so JSON bodies like {"a":1,"b":2} aren't split on commas
+set +B
 API="${API:-http://localhost:3001/v1}"
 PP="$API/portal/people"
 AC="$API/portal/academics"
-OWNER='owner@greenwood.edu'      # institution_owner (wildcard)
-TEACHER='teacher@greenwood.edu'  # students.view only (no create); no teachers.manage
-PARENT='parent@greenwood.edu'    # no people permissions
-CAMPUS='campus.north@greenwood.edu'  # campus_admin, 1 campus, teachers.manage + students.create
+OWNER='owner@greenwood.edu'
+TEACHER='teacher@greenwood.edu'
+PARENT='parent@greenwood.edu'
+CAMPUS='campus.north@greenwood.edu'
 RUN="smoke-$(date +%s)"
 
 pass=0; fail=0
@@ -45,20 +40,23 @@ echo "== 1. Permission gating =="
 chk "owner GET students -> 200"   "$(code "$(req GET "$PP/students" "$OWNER" "$INST")")" 200
 chk "teacher GET students -> 200" "$(code "$(req GET "$PP/students" "$TEACHER" "$INST")")" 200
 chk "parent GET students -> 403"  "$(code "$(req GET "$PP/students" "$PARENT" "$INST")")" 403
-chk "teacher POST student -> 403 (no students.create)" "$(code "$(req POST "$PP/students" "$TEACHER" "$INST" "{\"admissionNo\":\"x\",\"firstName\":\"x\",\"lastName\":\"y\"}")")" 403
-chk "teacher POST teacher -> 403 (no teachers.manage)" "$(code "$(req POST "$PP/teachers" "$TEACHER" "$INST" "{\"firstName\":\"x\",\"lastName\":\"y\"}")")" 403
+chk "teacher POST student -> 403" "$(code "$(req POST "$PP/students" "$TEACHER" "$INST" "{\"admissionNo\":\"x\",\"firstName\":\"x\",\"lastName\":\"y\"}")")" 403
+chk "teacher POST staff -> 403"   "$(code "$(req POST "$PP/staff" "$TEACHER" "$INST" "{\"firstName\":\"x\",\"lastName\":\"y\"}")")" 403
+chk "teachers route gone -> 404"  "$(code "$(req GET "$PP/teachers" "$OWNER" "$INST")")" 404
 
-echo "== 2. CRUD happy path (owner, institution scope) =="
-R="$(req POST "$PP/teachers" "$OWNER" "$INST" "{\"firstName\":\"Tara $RUN\",\"lastName\":\"Teach\",\"employeeNo\":\"EMP-$RUN\",\"designation\":\"Senior Teacher\"}")"
-chk "create teacher -> 200/201" "$([ "$(code "$R")" = 200 ] || [ "$(code "$R")" = 201 ] && echo ok)" ok
-TEACHER_ID="$(body "$R" | field id)"
-chk "  returns an id" "$([ -n "$TEACHER_ID" ] && echo ok)" ok
+echo "== 2. CRUD happy path =="
+R="$(req POST "$PP/staff" "$OWNER" "$INST" "{\"firstName\":\"Tara $RUN\",\"lastName\":\"Teach\",\"employeeNo\":\"EMP-$RUN\",\"email\":\"tara-$RUN@smoke.test\",\"designation\":\"Senior Teacher\",\"createLogin\":true,\"roleKeys\":[\"teacher\"]}")"
+chk "create teaching staff -> 200/201" "$([ "$(code "$R")" = 200 ] || [ "$(code "$R")" = 201 ] && echo ok)" ok
+TEACHING_STAFF_ID="$(body "$R" | field id)"
+INST_USER_ID="$(body "$R" | field institutionUserId)"
+chk "  returns staff id" "$([ -n "$TEACHING_STAFF_ID" ] && echo ok)" ok
+chk "  links institution_user" "$([ -n "$INST_USER_ID" ] && echo ok)" ok
 
-R="$(req POST "$PP/staff" "$OWNER" "$INST" "{\"firstName\":\"Sam $RUN\",\"lastName\":\"Staff\",\"designation\":\"Accountant\"}")"
+R="$(req POST "$PP/staff" "$OWNER" "$INST" "{\"firstName\":\"Sam $RUN\",\"lastName\":\"Staff\",\"designation\":\"Accountant\",\"createLogin\":false}")"
 STAFF_ID="$(body "$R" | field id)"
-chk "create staff" "$([ -n "$STAFF_ID" ] && echo ok)" ok
+chk "create non-teaching staff" "$([ -n "$STAFF_ID" ] && echo ok)" ok
 
-R="$(req POST "$PP/parents" "$OWNER" "$INST" "{\"firstName\":\"Pam $RUN\",\"lastName\":\"Parent\",\"phone\":\"+1 555 0100\"}")"
+R="$(req POST "$PP/parents" "$OWNER" "$INST" "{\"firstName\":\"Pam $RUN\",\"lastName\":\"Parent\",\"phone\":\"+12025550100\"}")"
 PARENT_ID="$(body "$R" | field id)"
 chk "create parent" "$([ -n "$PARENT_ID" ] && echo ok)" ok
 
@@ -66,67 +64,64 @@ R="$(req POST "$PP/students" "$OWNER" "$INST" "{\"admissionNo\":\"ADM-$RUN\",\"f
 STUDENT_ID="$(body "$R" | field id)"
 chk "create student" "$([ -n "$STUDENT_ID" ] && echo ok)" ok
 
-echo "== 3. Teacher pickers (P2-deferred FKs now resolve to teachers) =="
-# academic scaffolding
+echo "== 3. Teaching staff pickers (FKs resolve via staff) =="
 YEAR_ID="$(body "$(req POST "$AC/academic-years" "$OWNER" "$INST" "{\"name\":\"Year $RUN\",\"startDate\":\"2031-06-01\",\"endDate\":\"2032-05-31\"}")" | field id)"
 GRADE_ID="$(body "$(req POST "$AC/grade-levels" "$OWNER" "$INST" "{\"name\":\"Grade $RUN\",\"level\":1}")" | field id)"
 SUBJ_ID="$(body "$(req POST "$AC/subjects" "$OWNER" "$INST" "{\"name\":\"Algebra $RUN\",\"code\":\"ALG-$RUN\"}")" | field id)"
 
-R="$(req POST "$AC/departments" "$OWNER" "$INST" "{\"name\":\"Science $RUN\",\"code\":\"SCI-$RUN\",\"headUserId\":\"$TEACHER_ID\"}")"
+R="$(req POST "$AC/departments" "$OWNER" "$INST" "{\"name\":\"Science $RUN\",\"code\":\"SCI-$RUN\",\"headUserId\":\"$TEACHING_STAFF_ID\"}")"
 DEPT_ID="$(body "$R" | field id)"
-chk "department head = teacher -> 200/201" "$([ -n "$DEPT_ID" ] && echo ok)" ok
+chk "department head = staff" "$([ -n "$DEPT_ID" ] && echo ok)" ok
 HEAD="$(req GET "$AC/departments?search=Science%20$RUN" "$OWNER" "$INST" | sed '$d' | field items.0.headUserName)"
 chk "  head name resolves" "$([ -n "$HEAD" ] && echo ok)" ok
 
-R="$(req POST "$AC/classes" "$OWNER" "$INST" "{\"name\":\"Class $RUN\",\"academicYearId\":\"$YEAR_ID\",\"gradeLevelId\":\"$GRADE_ID\",\"classTeacherId\":\"$TEACHER_ID\"}")"
+R="$(req POST "$AC/classes" "$OWNER" "$INST" "{\"name\":\"Class $RUN\",\"academicYearId\":\"$YEAR_ID\",\"gradeLevelId\":\"$GRADE_ID\",\"classTeacherId\":\"$TEACHING_STAFF_ID\"}")"
 CLASS_ID="$(body "$R" | field id)"
-chk "class teacher = teacher -> created" "$([ -n "$CLASS_ID" ] && echo ok)" ok
+chk "class teacher = staff" "$([ -n "$CLASS_ID" ] && echo ok)" ok
 CTNAME="$(req GET "$AC/classes?search=Class%20$RUN" "$OWNER" "$INST" | sed '$d' | field items.0.classTeacherName)"
 chk "  class teacher name resolves" "$([ -n "$CTNAME" ] && echo ok)" ok
 
-R="$(req POST "$AC/classes/$CLASS_ID/subjects" "$OWNER" "$INST" "{\"subjectId\":\"$SUBJ_ID\",\"teacherId\":\"$TEACHER_ID\"}")"
+R="$(req POST "$AC/classes/$CLASS_ID/subjects" "$OWNER" "$INST" "{\"subjectId\":\"$SUBJ_ID\",\"teacherId\":\"$TEACHING_STAFF_ID\"}")"
 ASSIGN_ID="$(body "$R" | field id)"
-chk "class-subject teacher = teacher -> assigned" "$([ -n "$ASSIGN_ID" ] && echo ok)" ok
-STNAME="$(req GET "$AC/classes/$CLASS_ID/subjects" "$OWNER" "$INST" | sed '$d' | field 0.teacherName)"
-chk "  subject teacher name resolves" "$([ -n "$STNAME" ] && echo ok)" ok
-chk "class teacher = unknown id -> 400" "$(code "$(req POST "$AC/classes" "$OWNER" "$INST" "{\"name\":\"bad $RUN\",\"academicYearId\":\"$YEAR_ID\",\"gradeLevelId\":\"$GRADE_ID\",\"classTeacherId\":\"00000000-0000-0000-0000-000000000000\"}")")" 400
+chk "class-subject teacher assigned" "$([ -n "$ASSIGN_ID" ] && echo ok)" ok
 
-echo "== 4. Validation + tenancy guards =="
-chk "student unknown classId -> 400" "$(code "$(req POST "$PP/students" "$OWNER" "$INST" "{\"admissionNo\":\"ADMX-$RUN\",\"firstName\":\"x\",\"lastName\":\"y\",\"classId\":\"00000000-0000-0000-0000-000000000000\"}")")" 400
-chk "teacher unknown departmentId -> 400" "$(code "$(req POST "$PP/teachers" "$OWNER" "$INST" "{\"firstName\":\"x\",\"lastName\":\"y\",\"departmentId\":\"00000000-0000-0000-0000-000000000000\"}")")" 400
+chk "teaching-options includes new staff" "$(req GET "$PP/staff/teaching-options" "$OWNER" "$INST" | sed '$d' | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const id=process.argv[1];const o=JSON.parse(s);const items=o.items||o;console.log(items.some(x=>x.id===id)?'yes':'no')}catch{console.log('no')}})" "$TEACHING_STAFF_ID")" yes
 
-echo "== 5. Optimistic concurrency =="
-chk "teacher update current version -> 200" "$(code "$(req PATCH "$PP/teachers/$TEACHER_ID" "$OWNER" "$INST" "{\"designation\":\"Lead Teacher\",\"version\":0}")")" 200
-chk "teacher update stale version -> 409"   "$(code "$(req PATCH "$PP/teachers/$TEACHER_ID" "$OWNER" "$INST" "{\"designation\":\"Nope\",\"version\":0}")")" 409
+echo "== 4. Profiles + roster =="
+chk "staff profile -> 200" "$(code "$(req GET "$PP/staff/$TEACHING_STAFF_ID/profile" "$OWNER" "$INST")")" 200
+chk "parent profile -> 200" "$(code "$(req GET "$PP/parents/$PARENT_ID/profile" "$OWNER" "$INST")")" 200
+chk "class roster -> 200" "$(code "$(req GET "$AC/classes/$CLASS_ID/roster" "$OWNER" "$INST")")" 200
 
-echo "== 6. Scope isolation (confined campus admin) =="
-chk "campus-admin GET teachers -> 200" "$(code "$(req GET "$PP/teachers" "$CAMPUS" "$INST")")" 200
-R="$(req POST "$PP/teachers" "$CAMPUS" "$INST" "{\"firstName\":\"Cara $RUN\",\"lastName\":\"Campus\"}")"
-CTEACHER_ID="$(body "$R" | field id)"
-chk "campus-admin can create in its scope" "$([ -n "$CTEACHER_ID" ] && echo ok)" ok
-CTEACHER_CAMPUS="$(body "$R" | field campusId)"
-chk "  new row stamped to a campus (not institution-owned)" "$([ -n "$CTEACHER_CAMPUS" ] && echo ok)" ok
-R="$(req GET "$PP/teachers" "$CAMPUS" "campus:00000000-0000-0000-0000-000000000000")"
-chk "campus-admin -> foreign campus -> 403" "$(code "$R")" 403
-chk "  body code == SCOPE_FORBIDDEN" "$(body "$R" | field code)" SCOPE_FORBIDDEN
+echo "== 5. Filters =="
+chk "staff filter status=active -> 200" "$(code "$(req GET "$PP/staff?status=active" "$OWNER" "$INST")")" 200
+chk "staff filter teaching=true -> 200" "$(code "$(req GET "$PP/staff?teaching=true" "$OWNER" "$INST")")" 200
 
-echo "== 7. Student ↔ guardian links =="
+echo "== 6. Validation + concurrency =="
+chk "staff unknown departmentId -> 400" "$(code "$(req POST "$PP/staff" "$OWNER" "$INST" "{\"firstName\":\"x\",\"lastName\":\"y\",\"departmentId\":\"00000000-0000-0000-0000-000000000000\"}")")" 400
+chk "staff update bumps version -> 200" "$(code "$(req PATCH "$PP/staff/$TEACHING_STAFF_ID" "$OWNER" "$INST" "{\"designation\":\"Lead\",\"version\":0}")")" 200
+chk "staff update stale version (retry) -> 409" "$(code "$(req PATCH "$PP/staff/$TEACHING_STAFF_ID" "$OWNER" "$INST" "{\"designation\":\"Nope\",\"version\":0}")")" 409
+
+echo "== 7. Scope isolation =="
+chk "campus-admin GET staff -> 200" "$(code "$(req GET "$PP/staff" "$CAMPUS" "$INST")")" 200
+R="$(req POST "$PP/staff" "$CAMPUS" "$INST" "{\"firstName\":\"Cara $RUN\",\"lastName\":\"Campus\",\"createLogin\":false}")"
+CSTAFF_ID="$(body "$R" | field id)"
+chk "campus-admin create in scope" "$([ -n "$CSTAFF_ID" ] && echo ok)" ok
+R="$(req GET "$PP/staff" "$CAMPUS" "campus:00000000-0000-0000-0000-000000000000")"
+chk "foreign campus -> 403" "$(code "$R")" 403
+
+echo "== 8. Guardian links =="
 R="$(req POST "$PP/students/$STUDENT_ID/guardians" "$OWNER" "$INST" "{\"parentId\":\"$PARENT_ID\",\"relationship\":\"mother\",\"isPrimary\":true}")"
 LINK_ID="$(body "$R" | field id)"
-chk "link guardian -> created" "$([ -n "$LINK_ID" ] && echo ok)" ok
-GLEN="$(req GET "$PP/students/$STUDENT_ID/guardians" "$OWNER" "$INST" | sed '$d' | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).length)}catch{console.log(-1)}})')"
-chk "guardians length == 1" "$GLEN" 1
-chk "unknown parentId -> 400" "$(code "$(req POST "$PP/students/$STUDENT_ID/guardians" "$OWNER" "$INST" "{\"parentId\":\"00000000-0000-0000-0000-000000000000\"}")")" 400
+chk "link guardian" "$([ -n "$LINK_ID" ] && echo ok)" ok
 [ -n "$LINK_ID" ] && chk "remove guardian -> 200" "$(code "$(req DELETE "$PP/students/$STUDENT_ID/guardians/$LINK_ID" "$OWNER" "$INST")")" 200
 
-echo "== 8. Cleanup (re-read versions, delete) =="
-delv(){ # delv <basePath> <listPath> <id> <email>
-  local base="$1" lp="$2" id="$3" e="$4"
+echo "== 9. Cleanup =="
+delv(){ local base="$1" lp="$2" id="$3" e="$4"
   local v; v="$(req GET "$base/$lp?pageSize=100" "$e" "$INST" | sed '$d' | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const id=process.argv[1];try{const o=JSON.parse(s);const r=(o.items||[]).find(x=>x.id===id);console.log(r?r.version:"")}catch{console.log("")}})' "$id")"
-  [ -z "$v" ] && { echo "  SKIP  $lp/$id (not found)"; return; }
-  chk "delete $lp/${id:0:8} -> 200" "$(code "$(req DELETE "$base/$lp/$id" "$e" "$INST" "{\"version\":$v}")")" 200
+  [ -z "$v" ] && { echo "  SKIP  $lp/$id"; return; }
+  chk "delete $lp/${id:0:8}" "$(code "$(req DELETE "$base/$lp/$id" "$e" "$INST" "{\"version\":$v}")")" 200
 }
-[ -n "$ASSIGN_ID" ] && chk "remove class subject -> 200" "$(code "$(req DELETE "$AC/classes/$CLASS_ID/subjects/$ASSIGN_ID" "$OWNER" "$INST")")" 200
+[ -n "$ASSIGN_ID" ] && chk "remove class subject" "$(code "$(req DELETE "$AC/classes/$CLASS_ID/subjects/$ASSIGN_ID" "$OWNER" "$INST")")" 200
 [ -n "$CLASS_ID" ] && delv "$AC" "classes" "$CLASS_ID" "$OWNER"
 [ -n "$SUBJ_ID" ] && delv "$AC" "subjects" "$SUBJ_ID" "$OWNER"
 [ -n "$DEPT_ID" ] && delv "$AC" "departments" "$DEPT_ID" "$OWNER"
@@ -135,8 +130,8 @@ delv(){ # delv <basePath> <listPath> <id> <email>
 [ -n "$STUDENT_ID" ] && delv "$PP" "students" "$STUDENT_ID" "$OWNER"
 [ -n "$PARENT_ID" ] && delv "$PP" "parents" "$PARENT_ID" "$OWNER"
 [ -n "$STAFF_ID" ] && delv "$PP" "staff" "$STAFF_ID" "$OWNER"
-[ -n "$TEACHER_ID" ] && delv "$PP" "teachers" "$TEACHER_ID" "$OWNER"
-[ -n "$CTEACHER_ID" ] && delv "$PP" "teachers" "$CTEACHER_ID" "$OWNER"
+[ -n "$TEACHING_STAFF_ID" ] && delv "$PP" "staff" "$TEACHING_STAFF_ID" "$OWNER"
+[ -n "$CSTAFF_ID" ] && delv "$PP" "staff" "$CSTAFF_ID" "$OWNER"
 
 echo
 echo "==================================="

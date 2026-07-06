@@ -63,7 +63,7 @@ export class PortalSearchRepository {
   }
 
   searchTeachers(institutionId: string, campusIds: string[] | null, term: string, limit: number) {
-    const t = s.teachers;
+    const t = s.staff;
     return this.run({
       table: t,
       instCol: t.institutionId,

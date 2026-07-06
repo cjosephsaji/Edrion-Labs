@@ -2,9 +2,12 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   and,
   asc,
+  desc,
   eq,
+  gt,
   ilike,
   inArray,
+  isNull,
   or,
   schema,
   type Database,
@@ -28,13 +31,18 @@ export interface PublicInstitutionView {
   publicId: string;
   logoUrl: string | null;
   country: string;
+  type: string;
 }
 
 export interface PublicInstitutionOptions {
+  institutionType: string;
+  nomenclature: import('@edrion/shared-types').ResolvedNomenclature;
   campuses: { id: string; name: string }[];
   academicYears: { id: string; name: string }[];
   gradeLevels: { id: string; name: string; level: number }[];
 }
+
+export type PublicInstitutionOptionsBase = Omit<PublicInstitutionOptions, 'institutionType' | 'nomenclature'>;
 
 /** Typed SQL only for the public admission funnel — no business rules (those live in the service). */
 @Injectable()
@@ -57,6 +65,7 @@ export class AdmissionsPublicRepository {
         publicId: t.publicId,
         logoUrl: t.logoUrl,
         country: t.country,
+        type: t.type,
       })
       .from(t)
       .where(where)
@@ -80,7 +89,7 @@ export class AdmissionsPublicRepository {
     return row;
   }
 
-  async institutionOptions(institutionId: string): Promise<PublicInstitutionOptions> {
+  async institutionOptions(institutionId: string): Promise<PublicInstitutionOptionsBase> {
     const [campuses, academicYears, gradeLevels] = await Promise.all([
       this.db
         .select({ id: schema.campuses.id, name: schema.campuses.name })
@@ -119,6 +128,25 @@ export class AdmissionsPublicRepository {
       .select()
       .from(schema.admissionApplicationDrafts)
       .where(eq(schema.admissionApplicationDrafts.id, id))
+      .limit(1);
+    return row;
+  }
+
+  /** Most-recently-touched editable draft for this contact email — for OTP resume. */
+  async findLatestDraftByEmail(email: string): Promise<AdmissionApplicationDraft | undefined> {
+    const t = schema.admissionApplicationDrafts;
+    const now = new Date();
+    const [row] = await this.db
+      .select()
+      .from(t)
+      .where(
+        and(
+          eq(t.contactEmail, email),
+          eq(t.status, 'draft'),
+          or(isNull(t.expiresAt), gt(t.expiresAt, now)),
+        ),
+      )
+      .orderBy(desc(t.updatedAt))
       .limit(1);
     return row;
   }

@@ -7,16 +7,25 @@ import {
   eq,
   ilike,
   inArray,
+  isNotNull,
   or,
   schema,
+  sql,
   type Database,
   type PgColumn,
   type SQL,
 } from '@edrion/database';
-import type { InstitutionUser, NewInstitutionUser } from '@edrion/database';
+import type { InstitutionUser, NewInstitutionUser, Staff } from '@edrion/database';
+import { WILDCARD_PERMISSION } from '@edrion/permissions';
+import { INSTITUTION_DEFAULT_ROLES } from '@edrion/permissions/institution';
 import type { PortalUsersListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { Page } from './academics.repository';
+
+const teachingRoleKeysFor = (permissionKey: string) =>
+  INSTITUTION_DEFAULT_ROLES.filter(
+    (r) => r.permissions.includes(permissionKey) || r.permissions.includes(WILDCARD_PERMISSION),
+  ).map((r) => r.key);
 
 /**
  * Typed SQL for the institution-portal user directory (Phase 11) over institution_users +
@@ -33,14 +42,37 @@ export class UsersRepository {
     return dir === 'asc' ? asc(c) : desc(c);
   }
 
-  async list(institutionId: string, roleKeyUserIds: string[] | null, q: PortalUsersListQuery): Promise<Page<InstitutionUser>> {
+  async list(
+    institutionId: string,
+    roleKeyUserIds: string[] | null,
+    permissionUserIds: string[] | null,
+    provisionedUserIds: string[] | null,
+    q: PortalUsersListQuery,
+  ): Promise<Page<InstitutionUser>> {
     const t = schema.institutionUsers;
     const conds: SQL[] = [eq(t.institutionId, institutionId)];
     if (q.status) conds.push(eq(t.status, q.status));
+    if (q.mfa !== undefined) conds.push(eq(t.requireMfa, q.mfa));
     if (roleKeyUserIds) {
-      // filtering by role: restrict to the matching user-id set (empty → no rows)
       if (roleKeyUserIds.length === 0) return { items: [], total: 0 };
       conds.push(inArray(t.id, roleKeyUserIds));
+    }
+    if (permissionUserIds) {
+      if (permissionUserIds.length === 0) return { items: [], total: 0 };
+      conds.push(inArray(t.id, permissionUserIds));
+    }
+    if (provisionedUserIds) {
+      if (provisionedUserIds.length === 0) return { items: [], total: 0 };
+      conds.push(inArray(t.id, provisionedUserIds));
+    }
+    if (q.campusId) {
+      const campusUsers = await this.db
+        .select({ userId: schema.campusUserAccess.institutionUserId })
+        .from(schema.campusUserAccess)
+        .where(eq(schema.campusUserAccess.campusId, q.campusId));
+      const ids = campusUsers.map((r) => r.userId);
+      if (ids.length === 0) return { items: [], total: 0 };
+      conds.push(inArray(t.id, ids));
     }
     if (q.search) {
       const s = or(ilike(t.fullName, `%${q.search}%`), ilike(t.email, `%${q.search}%`));
@@ -71,6 +103,16 @@ export class UsersRepository {
     return row;
   }
 
+  async findStaffByInstitutionUserId(institutionUserId: string, institutionId: string): Promise<Staff | undefined> {
+    const t = schema.staff;
+    const [row] = await this.db
+      .select()
+      .from(t)
+      .where(and(eq(t.institutionUserId, institutionUserId), eq(t.institutionId, institutionId)))
+      .limit(1);
+    return row;
+  }
+
   async findByEmail(institutionId: string, email: string): Promise<InstitutionUser | undefined> {
     const t = schema.institutionUsers;
     const [row] = await this.db
@@ -98,7 +140,6 @@ export class UsersRepository {
 
   async delete(id: string, version: number): Promise<boolean> {
     const t = schema.institutionUsers;
-    // roles + campus access cascade via FK ON DELETE CASCADE
     const rows = await this.db.delete(t).where(and(eq(t.id, id), eq(t.version, version))).returning({ id: t.id });
     return rows.length > 0;
   }
@@ -145,6 +186,56 @@ export class UsersRepository {
     return rows.map((r) => r.id);
   }
 
+  /** Institution users whose effective permissions include the given catalogue key. */
+  async userIdsWithPermission(institutionId: string, permissionKey: string): Promise<string[]> {
+    const customRoleRows = await this.db
+      .select({ key: schema.institutionRoles.key })
+      .from(schema.institutionRoles)
+      .where(
+        and(
+          eq(schema.institutionRoles.institutionId, institutionId),
+          or(
+            sql`${schema.institutionRoles.permissions} @> ${JSON.stringify([permissionKey])}::jsonb`,
+            sql`${schema.institutionRoles.permissions} @> ${JSON.stringify([WILDCARD_PERMISSION])}::jsonb`,
+          ),
+        ),
+      );
+    const roleKeys = [...new Set([...teachingRoleKeysFor(permissionKey), ...customRoleRows.map((r) => r.key)])];
+
+    const roleRows =
+      roleKeys.length === 0
+        ? []
+        : await this.db
+            .select({ id: schema.institutionUserRoles.institutionUserId })
+            .from(schema.institutionUserRoles)
+            .innerJoin(schema.institutionUsers, eq(schema.institutionUserRoles.institutionUserId, schema.institutionUsers.id))
+            .where(and(eq(schema.institutionUsers.institutionId, institutionId), inArray(schema.institutionUserRoles.roleKey, roleKeys)));
+
+    const grantRows = await this.db
+      .select({ id: schema.institutionUsers.id })
+      .from(schema.institutionUsers)
+      .where(
+        and(
+          eq(schema.institutionUsers.institutionId, institutionId),
+          or(
+            sql`${schema.institutionUsers.directGrants} @> ${JSON.stringify([permissionKey])}::jsonb`,
+            sql`${schema.institutionUsers.directGrants} @> ${JSON.stringify([WILDCARD_PERMISSION])}::jsonb`,
+          ),
+        ),
+      );
+
+    return [...new Set([...roleRows.map((r) => r.id), ...grantRows.map((r) => r.id)])];
+  }
+
+  /** Users linked from a staff directory row in this institution. */
+  async userIdsProvisionedFromStaff(institutionId: string): Promise<string[]> {
+    const rows = await this.db
+      .select({ id: schema.staff.institutionUserId })
+      .from(schema.staff)
+      .where(and(eq(schema.staff.institutionId, institutionId), isNotNull(schema.staff.institutionUserId)));
+    return rows.map((r) => r.id!).filter(Boolean);
+  }
+
   /** Which of the given campus ids actually belong to this institution (FK pre-check). */
   async validCampusIds(institutionId: string, campusIds: string[]): Promise<Set<string>> {
     if (campusIds.length === 0) return new Set();
@@ -177,7 +268,7 @@ export class UsersRepository {
         })
         .where(and(eq(t.id, id), eq(t.version, version)))
         .returning();
-      if (!user) return undefined; // version conflict — roll back
+      if (!user) return undefined;
 
       await tx.delete(schema.institutionUserRoles).where(eq(schema.institutionUserRoles.institutionUserId, id));
       if (args.roleKeys.length > 0) {

@@ -8,6 +8,7 @@
  */
 import { WILDCARD_PERMISSION } from '../catalogue';
 import type { RoleDef } from '../roles';
+import { ALL_STUDENT_PERMISSION_KEYS } from '../student/catalogue';
 import {
   ALL_INSTITUTION_PERMISSION_KEYS,
   type InstitutionPermissionKey,
@@ -159,6 +160,7 @@ export const INSTITUTION_DEFAULT_ROLES: readonly RoleDef[] = [
     permissions: view(
       'portal.dashboard.view',
       'academics.view',
+      'academics.teach',
       'students.view',
       'student_conduct.view', 'student_conduct.manage',
       'attendance.view', 'attendance.manage',
@@ -215,17 +217,8 @@ export const INSTITUTION_DEFAULT_ROLES: readonly RoleDef[] = [
   {
     key: 'student',
     name: 'Student',
-    description: 'Views their own classes, timetable, grades and assignments.',
-    permissions: view(
-      'portal.dashboard.view',
-      'timetable.view',
-      'exams.view',
-      'gradebook.view',
-      'assignments.view',
-      'announcements.view',
-      'messages.use',
-      // NOTE: no 'ai.use' — student/parent Petros access is deliberately deferred (Phase 0.1.6).
-    ),
+    description: 'Student portal learner — Learn, institutional surfaces (flag-gated), and account.',
+    permissions: [...ALL_STUDENT_PERMISSION_KEYS],
   },
 
   // ── Phase 13: functional staff roles (all campus-scoped permission bundles) ──
@@ -461,6 +454,7 @@ export const INSTITUTION_DEFAULT_ROLES: readonly RoleDef[] = [
     permissions: view(
       'portal.dashboard.view',
       'academics.view',
+      'academics.teach',
       'students.view',
       'student_conduct.view', 'student_conduct.manage',
       'attendance.view', 'attendance.manage',
@@ -484,6 +478,7 @@ export const INSTITUTION_DEFAULT_ROLES: readonly RoleDef[] = [
     permissions: view(
       'portal.dashboard.view',
       'academics.view',
+      'academics.teach',
       'students.view',
       'attendance.view', 'attendance.manage',
       'timetable.view',

@@ -26,6 +26,7 @@ import type {
 import type { FeeInvoicesListQuery, FeeStructuresListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
+import { programmeListFilterConds } from './programme-list-filters';
 
 const studentDisplayName = sql<string>`concat_ws(' ', ${schema.students.firstName}, ${schema.students.lastName})`;
 
@@ -33,6 +34,7 @@ export interface FeeStructureRow extends FeeStructure {
   gradeLevelName: string | null;
   className: string | null;
   academicYearName: string | null;
+  termName: string | null;
 }
 export interface FeeInvoiceRow extends FeeInvoice {
   balance: number;
@@ -43,7 +45,13 @@ export interface FeeInvoiceRow extends FeeInvoice {
 export interface FeePaymentRow extends FeePayment {}
 
 /** Which referenceable table an FK points at (for friendly-400 pre-checks). */
-export type FeeRefTable = 'gradeLevels' | 'classes' | 'academicYears' | 'students' | 'feeStructures';
+export type FeeRefTable =
+  | 'gradeLevels'
+  | 'classes'
+  | 'academicYears'
+  | 'academicTerms'
+  | 'students'
+  | 'feeStructures';
 
 /**
  * Typed SQL for the institution-portal fees tables (structures + invoices + payments). Same contract
@@ -95,6 +103,15 @@ export class FeesRepository {
     const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
     if (q.status) conds.push(eq(t.status, q.status));
     if (q.feeType) conds.push(eq(t.feeType, q.feeType));
+    if (q.gradeLevelId) conds.push(eq(t.gradeLevelId, q.gradeLevelId));
+    if (q.classId) conds.push(eq(t.classId, q.classId));
+    conds.push(
+      ...programmeListFilterConds(this.db, q, {
+        termId: t.termId,
+        gradeLevelId: t.gradeLevelId,
+        classId: t.classId,
+      }),
+    );
     if (q.search) {
       const s = ilike(t.name, `%${q.search}%`);
       if (s) conds.push(s);
@@ -115,11 +132,13 @@ export class FeesRepository {
         gradeLevelName: schema.gradeLevels.name,
         className: schema.classes.name,
         academicYearName: schema.academicYears.name,
+        termName: schema.academicTerms.name,
       })
       .from(t)
       .leftJoin(schema.gradeLevels, eq(schema.gradeLevels.id, t.gradeLevelId))
       .leftJoin(schema.classes, eq(schema.classes.id, t.classId))
       .leftJoin(schema.academicYears, eq(schema.academicYears.id, t.academicYearId))
+      .leftJoin(schema.academicTerms, eq(schema.academicTerms.id, t.termId))
       .where(where)
       .orderBy(this.order(q.sortBy ? sortable[q.sortBy] : undefined, q.sortDir, t.createdAt))
       .limit(limit)
@@ -131,6 +150,7 @@ export class FeesRepository {
         gradeLevelName: r.gradeLevelName,
         className: r.className,
         academicYearName: r.academicYearName,
+        termName: r.termName,
       })),
       total: Number(tot?.value ?? 0),
     };
@@ -285,5 +305,31 @@ export class FeesRepository {
       .from(t)
       .where(eq(t.invoiceId, invoiceId));
     return Number(row?.total ?? 0);
+  }
+
+  /** Fee rollup for a student (shared by student/parent profile views). */
+  async aggregateStudentInvoices(studentId: string) {
+    const t = schema.feeInvoices;
+    const [agg] = await this.db
+      .select({
+        n: count(),
+        billed: sql<number>`coalesce(sum(${t.amount}),0)`,
+        paid: sql<number>`coalesce(sum(${t.amountPaid}),0)`,
+      })
+      .from(t)
+      .where(eq(t.studentId, studentId));
+    const [overdue] = await this.db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(t)
+      .where(and(eq(t.studentId, studentId), eq(t.status, 'overdue')));
+    const billedMinor = Number(agg?.billed ?? 0);
+    const paidMinor = Number(agg?.paid ?? 0);
+    return {
+      invoices: Number(agg?.n ?? 0),
+      billedMinor,
+      paidMinor,
+      outstandingMinor: Math.max(0, billedMinor - paidMinor),
+      overdue: Number(overdue?.n ?? 0),
+    };
   }
 }

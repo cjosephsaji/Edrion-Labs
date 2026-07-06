@@ -1,13 +1,15 @@
 'use client';
-import { useMemo, useState } from 'react';
-import { Users } from 'lucide-react';
+import { useMemo } from 'react';
 import { StatusBadge, type Column } from '@edrion/ui';
-import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
+import { ResourceManager, type FilterDef, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
-import { StudentGuardiansDrawer } from '@/components/people/student-guardians-drawer';
+import { StudentGuardiansPanel } from '@/components/people/student-guardians-panel';
+import { StudentPortalInviteDialog } from '@/components/students/student-portal-invite-dialog';
 import { UserProfileDialog } from '@/components/people/user-profile-dialog';
+import { usePermissions } from '@/lib/permissions';
 import { useClassOptions, useGradeLevelOptions } from '@/lib/academics';
 import { usePeopleList, usePeopleMutations, type StudentRow } from '@/lib/people';
+import { useTerm } from '@/lib/term';
 
 const PERMISSIONS: ResourcePermissions = {
   view: 'students.view',
@@ -16,10 +18,46 @@ const PERMISSIONS: ResourcePermissions = {
   delete: 'students.delete',
 };
 
+const STATUS_OPTIONS = [
+  { value: 'enrolled', label: 'Enrolled' },
+  { value: 'inactive', label: 'Inactive' },
+  { value: 'graduated', label: 'Graduated' },
+  { value: 'transferred', label: 'Transferred' },
+  { value: 'alumni', label: 'Alumni' },
+];
+
 export default function StudentsPage() {
+  const { t, tp } = useTerm();
+  const { can } = usePermissions();
+  const canInvitePortal = can('student_portal.manage');
   const { data: grades } = useGradeLevelOptions();
   const { data: classes } = useClassOptions();
-  const [guardiansFor, setGuardiansFor] = useState<StudentRow | null>(null);
+
+  const filters = useMemo<FilterDef[]>(
+    () => [
+      { key: 'status', label: 'All statuses', options: STATUS_OPTIONS },
+      {
+        key: 'gradeLevelId',
+        label: `All ${t('gradeLevel').toLowerCase()}s`,
+        options: (grades?.items ?? []).map((g) => ({ value: g.id, label: g.name })),
+      },
+      {
+        key: 'classId',
+        label: `All ${t('class').toLowerCase()}es`,
+        options: (classes?.items ?? []).map((c) => ({ value: c.id, label: c.name })),
+      },
+      {
+        key: 'gender',
+        label: 'All genders',
+        options: [
+          { value: 'male', label: 'Male' },
+          { value: 'female', label: 'Female' },
+          { value: 'other', label: 'Other' },
+        ],
+      },
+    ],
+    [grades, classes, t],
+  );
 
   const fields = useMemo<FieldDef[]>(
     () => [
@@ -31,13 +69,7 @@ export default function StudentsPage() {
         label: 'Status',
         type: 'select',
         required: true,
-        options: [
-          { value: 'enrolled', label: 'Enrolled' },
-          { value: 'inactive', label: 'Inactive' },
-          { value: 'graduated', label: 'Graduated' },
-          { value: 'transferred', label: 'Transferred' },
-          { value: 'alumni', label: 'Alumni' },
-        ],
+        options: STATUS_OPTIONS,
       },
       {
         name: 'gender',
@@ -92,53 +124,50 @@ export default function StudentsPage() {
   );
 
   return (
-    <>
-      <ResourceManager<StudentRow>
-        resource="students"
-        title="Students"
-        noun="student"
-        columns={columns}
-        fields={fields}
-        defaultSortBy="lastName"
-        permissions={PERMISSIONS}
-        useList={usePeopleList}
-        useMutations={usePeopleMutations}
-        rowLabel={(r) => `${r.firstName} ${r.lastName}`}
-        renderDetail={(ctx) => <UserProfileDialog kind="student" {...ctx} />}
-        toFormValues={(r) => ({
-          admissionNo: r.admissionNo,
-          firstName: r.firstName,
-          lastName: r.lastName,
-          status: r.status,
-          gender: r.gender ?? '',
-          dateOfBirth: r.dateOfBirth ?? '',
-          gradeLevelId: r.gradeLevelId ?? '',
-          classId: r.classId ?? '',
-          rollNo: r.rollNo ?? '',
-          enrollmentDate: r.enrollmentDate ?? '',
-          email: r.email ?? '',
-          phone: r.phone ?? '',
-          address: r.address ?? '',
-        })}
-        extraActions={(row) => (
-          <button
-            type="button"
-            aria-label="Manage guardians"
-            title="Guardians"
-            onClick={() => setGuardiansFor(row)}
-            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-background-secondary hover:text-primary"
-          >
-            <Users className="h-4 w-4" />
-          </button>
-        )}
-      />
-
-      <StudentGuardiansDrawer
-        studentId={guardiansFor?.id ?? null}
-        studentName={guardiansFor ? `${guardiansFor.firstName} ${guardiansFor.lastName}` : ''}
-        open={!!guardiansFor}
-        onClose={() => setGuardiansFor(null)}
-      />
-    </>
+    <ResourceManager<StudentRow>
+      resource="students"
+      title={tp('student')}
+      noun={t('student').toLowerCase()}
+      columns={columns}
+      fields={fields}
+      filters={filters}
+      defaultSortBy="lastName"
+      permissions={PERMISSIONS}
+      useList={usePeopleList}
+      useMutations={usePeopleMutations}
+      rowLabel={(r) => `${r.firstName} ${r.lastName}`}
+      renderDetail={(ctx) => <UserProfileDialog kind="student" {...ctx} />}
+      renderFormExtra={({ row }) => (
+        <>
+          {canInvitePortal && (
+            <div className="mb-6 rounded-lg border border-border bg-surface-muted/30 p-4">
+              <h3 className="mb-2 text-sm font-medium text-text-primary">Student portal</h3>
+              <StudentPortalInviteDialog
+                studentId={row.id}
+                studentName={`${row.firstName} ${row.lastName}`}
+                studentEmail={row.email}
+                guardians={[]}
+              />
+            </div>
+          )}
+          <StudentGuardiansPanel studentId={row.id} studentName={`${row.firstName} ${row.lastName}`} />
+        </>
+      )}
+      toFormValues={(r) => ({
+        admissionNo: r.admissionNo,
+        firstName: r.firstName,
+        lastName: r.lastName,
+        status: r.status,
+        gender: r.gender ?? '',
+        dateOfBirth: r.dateOfBirth ?? '',
+        gradeLevelId: r.gradeLevelId ?? '',
+        classId: r.classId ?? '',
+        rollNo: r.rollNo ?? '',
+        enrollmentDate: r.enrollmentDate ?? '',
+        email: r.email ?? '',
+        phone: r.phone ?? '',
+        address: r.address ?? '',
+      })}
+    />
   );
 }

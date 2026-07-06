@@ -186,14 +186,20 @@ export function buildDomainTools(s: DomainToolDeps): PetrosTool[] {
     read({
       name: 'staff_search',
       description: 'Search teachers and non-teaching staff.',
-      requiredPermissions: ['staff.view', 'teachers.view'],
+      requiredPermissions: ['staff.view'],
       humanStatus: 'Searching staff…',
       execute: async (ctx, args) => {
-        const [teachers, staff] = await Promise.all([
-          s.people.listTeachers(ctx, page({ search: q(args) })),
-          s.people.listStaff(ctx, page({ search: q(args) })),
-        ]);
-        return { teachers: teachers.items, staff: staff.items };
+        const teaching = await s.people.listTeachingStaff(ctx);
+        const staff = await s.people.listStaff(ctx, page({ search: q(args) }));
+        const search = (q(args) ?? '').toLowerCase();
+        const teachingItems = search
+          ? teaching.items.filter(
+              (t) =>
+                `${t.firstName} ${t.lastName}`.toLowerCase().includes(search) ||
+                (t.email ?? '').toLowerCase().includes(search),
+            )
+          : teaching.items;
+        return { teachers: teachingItems, staff: staff.items };
       },
     }),
     read({

@@ -19,9 +19,11 @@ import type { Exam, ExamSchedule, NewExam, NewExamSchedule } from '@edrion/datab
 import type { ExamsListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
+import { programmeListFilterConds } from './programme-list-filters';
 
 export interface ExamRow extends Exam {
   academicYearName: string | null;
+  termName: string | null;
   scheduleCount: number;
 }
 export interface ExamScheduleRow extends ExamSchedule {
@@ -30,7 +32,7 @@ export interface ExamScheduleRow extends ExamSchedule {
 }
 
 /** Which referenceable table an FK points at (for friendly-400 pre-checks). */
-export type ExamRefTable = 'academicYears' | 'classes' | 'subjects';
+export type ExamRefTable = 'academicYears' | 'academicTerms' | 'classes' | 'subjects';
 
 /**
  * Typed SQL for the institution-portal exams tables (exams + scheduled papers). Same contract as the
@@ -77,6 +79,12 @@ export class ExamsRepository {
     const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
     if (q.status) conds.push(eq(t.status, q.status));
     if (q.examType) conds.push(eq(t.examType, q.examType));
+    if (q.academicYearId) conds.push(eq(t.academicYearId, q.academicYearId));
+    conds.push(
+      ...programmeListFilterConds(this.db, q, {
+        termId: t.termId,
+      }),
+    );
     if (q.search) {
       const s = or(ilike(t.name, `%${q.search}%`), ilike(t.termLabel, `%${q.search}%`));
       if (s) conds.push(s);
@@ -94,9 +102,10 @@ export class ExamsRepository {
 
     const scheduleCount = sql<number>`(select count(*) from ${schema.examSchedules} es where es.exam_id = ${t.id})`;
     const rows = await this.db
-      .select({ exam: t, academicYearName: schema.academicYears.name, scheduleCount })
+      .select({ exam: t, academicYearName: schema.academicYears.name, termName: schema.academicTerms.name, scheduleCount })
       .from(t)
       .leftJoin(schema.academicYears, eq(schema.academicYears.id, t.academicYearId))
+      .leftJoin(schema.academicTerms, eq(schema.academicTerms.id, t.termId))
       .where(where)
       .orderBy(this.order(q.sortBy ? sortable[q.sortBy] : undefined, q.sortDir, t.createdAt))
       .limit(limit)
@@ -106,6 +115,7 @@ export class ExamsRepository {
       items: rows.map((r) => ({
         ...r.exam,
         academicYearName: r.academicYearName,
+        termName: r.termName,
         scheduleCount: Number(r.scheduleCount ?? 0),
       })),
       total: Number(tot?.value ?? 0),

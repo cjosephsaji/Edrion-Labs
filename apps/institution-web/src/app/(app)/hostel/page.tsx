@@ -1,10 +1,10 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { BedDouble, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { DataTable, Input, type Column } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
-import { RoomAllocationsDrawer } from '@/components/hostel/room-allocations-drawer';
+import { RoomAllocationsPanel } from '@/components/hostel/room-allocations-panel';
 import { useHostelBlockOptions, useHostelList, useHostelMutations } from '@/lib/hostel';
 import type { HostelBlockRow, HostelRoomRow, HostellerRow } from '@/lib/hostel-types';
 
@@ -81,7 +81,6 @@ function BlocksTab() {
 
 function RoomsTab() {
   const { data: blocks } = useHostelBlockOptions();
-  const [allocationsFor, setAllocationsFor] = useState<HostelRoomRow | null>(null);
 
   const fields = useMemo<FieldDef[]>(
     () => [
@@ -115,41 +114,35 @@ function RoomsTab() {
   );
 
   return (
-    <>
-      <ResourceManager<HostelRoomRow>
-        resource="hostel/rooms"
-        title="Hostel"
-        noun="room"
-        columns={columns}
-        fields={fields}
-        defaultSortBy="roomNo"
-        permissions={PERMISSIONS}
-        useList={useHostelList}
-        useMutations={useHostelMutations}
-        rowLabel={(r) => `Room ${r.roomNo}`}
-        toFormValues={(r) => ({
-          blockId: r.blockId ?? '',
-          roomNo: r.roomNo,
-          floor: r.floor ?? '',
-          capacity: r.capacity,
-          roomType: r.roomType ?? '',
-          status: r.status,
-        })}
-        extraActions={(row) => (
-          <button
-            type="button"
-            aria-label="Allocations"
-            title="Allocations"
-            onClick={() => setAllocationsFor(row)}
-            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-background-secondary hover:text-primary"
-          >
-            <BedDouble className="h-4 w-4" />
-          </button>
-        )}
-      />
-
-      <RoomAllocationsDrawer room={allocationsFor} open={!!allocationsFor} onClose={() => setAllocationsFor(null)} />
-    </>
+    <ResourceManager<HostelRoomRow>
+      resource="hostel/rooms"
+      title="Hostel"
+      noun="room"
+      columns={columns}
+      fields={fields}
+      defaultSortBy="roomNo"
+      permissions={PERMISSIONS}
+      useList={useHostelList}
+      useMutations={useHostelMutations}
+      rowLabel={(r) => `Room ${r.roomNo}`}
+      renderFormExtra={({ row }) => (
+        <RoomAllocationsPanel
+          roomId={row.id}
+          roomNo={row.roomNo}
+          capacity={row.capacity}
+          occupied={row.occupied}
+          available={row.available}
+        />
+      )}
+      toFormValues={(r) => ({
+        blockId: r.blockId ?? '',
+        roomNo: r.roomNo,
+        floor: r.floor ?? '',
+        capacity: r.capacity,
+        roomType: r.roomType ?? '',
+        status: r.status,
+      })}
+    />
   );
 }
 

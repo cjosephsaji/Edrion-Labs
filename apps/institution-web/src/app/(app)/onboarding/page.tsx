@@ -1,5 +1,5 @@
 'use client';
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Check, PartyPopper, Plus, Rocket } from 'lucide-react';
 import {
@@ -11,20 +11,24 @@ import {
   Input,
   InternationalPhoneInput,
   Label,
+  Select,
   Skeleton,
 } from '@edrion/ui';
 import { Topbar } from '@/components/app-shell/topbar';
+import { useAcademicYearOptions } from '@/lib/academics';
 import { usePermissions } from '@/lib/permissions';
 import { useCompleteOnboarding, useOnboarding, useStepCreate, useStepList } from '@/lib/onboarding';
 import type { OnboardingStep, OnboardingSummary } from '@/lib/onboarding-types';
+import { useTerm } from '@/lib/term';
 
-type FieldType = 'text' | 'date' | 'email' | 'phone';
+type FieldType = 'text' | 'date' | 'email' | 'phone' | 'select';
 interface FieldCfg {
   name: string;
   label: string;
   type: FieldType;
   required?: boolean;
   placeholder?: string;
+  options?: { value: string; label: string }[];
 }
 interface StepCfg {
   endpoint: string;
@@ -76,8 +80,8 @@ const STEP_CFG: Record<string, StepCfg> = {
     rowLabel: (r) => `${r.firstName ?? ''} ${r.lastName ?? ''}`.trim(),
   },
   teachers: {
-    endpoint: 'people/teachers',
-    itemLabel: 'teacher',
+    endpoint: 'people/staff',
+    itemLabel: 'teaching staff',
     fields: [
       { name: 'firstName', label: 'First name', type: 'text', required: true },
       { name: 'lastName', label: 'Last name', type: 'text', required: true },
@@ -85,6 +89,17 @@ const STEP_CFG: Record<string, StepCfg> = {
       { name: 'phone', label: 'Phone', type: 'phone' },
     ],
     rowLabel: (r) => `${r.firstName ?? ''} ${r.lastName ?? ''}`.trim(),
+  },
+  academicTerms: {
+    endpoint: 'academics/academic-terms',
+    itemLabel: 'term',
+    fields: [
+      { name: 'academicYearId', label: 'Academic year', type: 'select', required: true, options: [] },
+      { name: 'name', label: 'Name', type: 'text', required: true, placeholder: 'e.g. Term 1' },
+      { name: 'startDate', label: 'Start date', type: 'date', required: true },
+      { name: 'endDate', label: 'End date', type: 'date', required: true },
+    ],
+    rowLabel: (r) => String(r.name ?? ''),
   },
   staff: {
     endpoint: 'people/staff',
@@ -136,7 +151,9 @@ export default function OnboardingPage() {
 
 function Wizard({ data, canManage }: { data: OnboardingSummary; canManage: boolean }) {
   const complete = useCompleteOnboarding();
-  const readyToLaunch = data.progress.done === data.progress.total;
+  const mandatory = data.steps.filter((s) => s.required > 0);
+  const mandatoryDone = mandatory.filter((s) => s.done).length;
+  const readyToLaunch = mandatoryDone === mandatory.length;
 
   return (
     <>
@@ -148,12 +165,12 @@ function Wizard({ data, canManage }: { data: OnboardingSummary; canManage: boole
           <h1 className="text-lg font-semibold text-text-primary">Welcome to Edrion, {data.institution.displayName}</h1>
         </div>
         <p className="mt-1.5 text-sm text-text-secondary">
-          Set up the essentials right here. Add at least one of each and you’re ready to go live.
+          Set up the essentials right here. Add at least one record to each required step to go live — departments are optional.
         </p>
 
         <div className="mt-4">
           <div className="mb-1.5 flex items-center justify-between text-xs text-text-muted">
-            <span>{data.progress.done} of {data.progress.total} steps complete</span>
+            <span>{mandatoryDone} of {mandatory.length} required steps complete</span>
             <span>{data.progress.percent}%</span>
           </div>
           <div
@@ -183,8 +200,8 @@ function Wizard({ data, canManage }: { data: OnboardingSummary; canManage: boole
             <p className="text-sm font-semibold text-text-primary">Ready to go live?</p>
             <p className="text-sm text-text-secondary">
               {readyToLaunch
-                ? 'Every step has data. Launch your institution to unlock the full portal.'
-                : 'Add at least one record to every step above to go live.'}
+                ? 'Every required step has data. Launch your institution to unlock the full portal.'
+                : 'Add at least one record to every required step above to go live.'}
             </p>
           </div>
           <Button
@@ -207,8 +224,24 @@ function Wizard({ data, canManage }: { data: OnboardingSummary; canManage: boole
 }
 
 function StepSection({ step, index, canManage }: { step: OnboardingStep; index: number; canManage: boolean }) {
+  const { t, tp } = useTerm();
+  const { data: years } = useAcademicYearOptions();
   // Every backend step key has a config here; assert so the hooks below get a stable endpoint.
   const cfg = STEP_CFG[step.key]!;
+  const fields = useMemo(() => {
+    if (step.key !== 'academicTerms') return cfg.fields;
+    return cfg.fields.map((f) =>
+      f.name === 'academicYearId'
+        ? {
+            ...f,
+            label: t('academicYear'),
+            options: (years?.items ?? []).map((y) => ({ value: y.id, label: y.name })),
+          }
+        : f.name === 'name'
+          ? { ...f, placeholder: `e.g. ${t('term')} 1` }
+          : f,
+    );
+  }, [cfg.fields, step.key, t, years]);
   const create = useStepCreate(cfg.endpoint);
   const list = useStepList<Record<string, unknown>>(cfg.endpoint);
   const [values, setValues] = useState<Record<string, string>>({});
@@ -218,7 +251,7 @@ function StepSection({ step, index, canManage }: { step: OnboardingStep; index: 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     const body: Record<string, unknown> = {};
-    for (const f of cfg.fields) {
+    for (const f of fields) {
       const v = (values[f.name] ?? '').trim();
       if (v) body[f.name] = v;
     }
@@ -241,7 +274,24 @@ function StepSection({ step, index, canManage }: { step: OnboardingStep; index: 
               {step.done ? <Check className="h-4 w-4" /> : index}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-text-primary">{step.label}</p>
+              <p className="text-sm font-medium text-text-primary">
+                {step.key === 'departments'
+                  ? tp('department')
+                  : step.key === 'subjects'
+                    ? tp('subject')
+                    : step.key === 'students'
+                      ? tp('student')
+                      : step.key === 'teachers'
+                        ? tp('teacher')
+                        : step.key === 'academicYears'
+                          ? tp('academicYear')
+                          : step.key === 'academicTerms'
+                            ? tp('term')
+                            : step.label}
+              </p>
+              {step.required === 0 && (
+                <p className="text-xs text-text-muted">Optional</p>
+              )}
             </div>
             {step.count > 0 && (
               <Badge tone={step.done ? 'success' : 'neutral'}>
@@ -269,10 +319,10 @@ function StepSection({ step, index, canManage }: { step: OnboardingStep; index: 
 
           {/* Inline add form */}
           <form onSubmit={onSubmit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {cfg.fields.map((f) => (
+            {fields.map((f) => (
               <div key={f.name} className={f.type === 'phone' ? 'sm:col-span-2' : undefined}>
                 <Label htmlFor={`${step.key}-${f.name}`}>
-                  {f.label}
+                  {f.name === 'academicYearId' ? t('academicYear') : f.label}
                   {f.required && <span className="text-danger"> *</span>}
                 </Label>
                 {f.type === 'phone' ? (
@@ -281,6 +331,16 @@ function StepSection({ step, index, canManage }: { step: OnboardingStep; index: 
                     value={values[f.name] ?? ''}
                     onChange={(v) => setField(f.name, v)}
                     disabled={!canManage}
+                  />
+                ) : f.type === 'select' ? (
+                  <Select
+                    id={`${step.key}-${f.name}`}
+                    required={f.required}
+                    disabled={!canManage}
+                    value={values[f.name] ?? ''}
+                    placeholder="Select…"
+                    options={f.options ?? []}
+                    onChange={(e) => setField(f.name, e.target.value)}
                   />
                 ) : (
                   <Input
@@ -298,7 +358,12 @@ function StepSection({ step, index, canManage }: { step: OnboardingStep; index: 
 
             <div className="flex items-center gap-3 sm:col-span-2">
               <Button type="submit" size="sm" loading={create.isPending} disabled={!canManage}>
-                <Plus className="mr-1 h-4 w-4" /> Add {cfg.itemLabel}
+                <Plus className="mr-1 h-4 w-4" /> Add{' '}
+                {step.key === 'departments'
+                  ? t('department').toLowerCase()
+                  : step.key === 'academicTerms'
+                    ? t('term').toLowerCase()
+                    : cfg.itemLabel}
               </Button>
               {create.isError && (
                 <span role="alert" className="text-sm text-danger">

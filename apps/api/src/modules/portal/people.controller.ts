@@ -5,23 +5,19 @@ import {
   createParentSchema,
   createStaffSchema,
   createStudentSchema,
-  createTeacherSchema,
   peopleListQuerySchema,
   updateParentSchema,
   updateStaffSchema,
   updateStudentSchema,
-  updateTeacherSchema,
   versionedDeleteSchema,
   type AssignGuardianInput,
   type CreateParentInput,
   type CreateStaffInput,
   type CreateStudentInput,
-  type CreateTeacherInput,
   type PeopleListQuery,
   type UpdateParentInput,
   type UpdateStaffInput,
   type UpdateStudentInput,
-  type UpdateTeacherInput,
   type VersionedDeleteInput,
 } from '@edrion/schemas';
 import type { InstitutionPrincipal, InstitutionScope } from '@edrion/auth';
@@ -40,11 +36,11 @@ import { PeopleService } from './people.service';
 import type { PortalActionContext } from './portal-action-context';
 
 /**
- * Institution-portal People API (Phase 4) — students, teachers, staff (non-teaching), parents +
+ * Institution-portal People API (Phase 4) — students, staff (teaching + non-teaching), parents +
  * the student↔guardian links. Same boundary as the rest of the portal: @Public (skips the platform
  * AuthGuard) then InstitutionAuthGuard (identity + scope) → InstitutionPermissionsGuard. Each
- * resource uses its own permission keys: students.{view,create,update,delete}; teachers/staff/parents
- * use {view, manage}. Guardian links are nested under a student and gated by students.{view,update}.
+ * resource uses its own permission keys: students.{view,create,update,delete}; staff/parents use
+ * {view, manage}. Guardian links are nested under a student and gated by students.{view,update}.
  */
 @ApiTags('portal-people')
 @Controller('portal/people')
@@ -147,55 +143,28 @@ export class PeopleController {
     return this.service.removeGuardian(this.ctx(p, s, r), id, linkId);
   }
 
-  // === teachers ==============================================================
-
-  @Get('teachers')
-  @RequireInstitutionPermissions('teachers.view')
-  listTeachers(
-    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
-    @CurrentScope() s: InstitutionScope,
-    @ReqContext() r: EdrionRequestContext,
-    @Query(zodBody(peopleListQuerySchema)) q: PeopleListQuery,
-  ) {
-    return this.service.listTeachers(this.ctx(p, s, r), q);
-  }
-
-  @Post('teachers')
-  @RequireInstitutionPermissions('teachers.manage')
-  createTeacher(
-    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
-    @CurrentScope() s: InstitutionScope,
-    @ReqContext() r: EdrionRequestContext,
-    @Body(zodBody(createTeacherSchema)) body: CreateTeacherInput,
-  ) {
-    return this.service.createTeacher(this.ctx(p, s, r), body);
-  }
-
-  @Patch('teachers/:id')
-  @RequireInstitutionPermissions('teachers.manage')
-  updateTeacher(
-    @Param('id') id: string,
-    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
-    @CurrentScope() s: InstitutionScope,
-    @ReqContext() r: EdrionRequestContext,
-    @Body(zodBody(updateTeacherSchema)) body: UpdateTeacherInput,
-  ) {
-    return this.service.updateTeacher(this.ctx(p, s, r), id, body);
-  }
-
-  @Delete('teachers/:id')
-  @RequireInstitutionPermissions('teachers.manage')
-  deleteTeacher(
-    @Param('id') id: string,
-    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
-    @CurrentScope() s: InstitutionScope,
-    @ReqContext() r: EdrionRequestContext,
-    @Body(zodBody(versionedDeleteSchema)) body: VersionedDeleteInput,
-  ) {
-    return this.service.deleteTeacher(this.ctx(p, s, r), id, body.version);
-  }
-
   // === staff =================================================================
+
+  @Get('staff/teaching-options')
+  @RequireInstitutionPermissions('staff.view')
+  listTeachingStaff(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+  ) {
+    return this.service.listTeachingStaff(this.ctx(p, s, r));
+  }
+
+  @Get('staff/:id/profile')
+  @RequireInstitutionPermissions('staff.view')
+  getStaffProfile(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+  ) {
+    return this.service.getStaffProfile(this.ctx(p, s, r), id);
+  }
 
   @Get('staff')
   @RequireInstitutionPermissions('staff.view')
@@ -244,6 +213,17 @@ export class PeopleController {
   }
 
   // === parents ===============================================================
+
+  @Get('parents/:id/profile')
+  @RequireInstitutionPermissions('parents.view')
+  getParentProfile(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+  ) {
+    return this.service.getParentProfile(this.ctx(p, s, r), id);
+  }
 
   @Get('parents')
   @RequireInstitutionPermissions('parents.view')

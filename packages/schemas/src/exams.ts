@@ -29,6 +29,10 @@ export const examsListQuerySchema = paginationQuerySchema.merge(sortQuerySchema)
   search: z.string().trim().max(160).optional(),
   status: examStatusSchema.optional(),
   examType: examTypeSchema.optional(),
+  departmentId: z.string().uuid().optional(),
+  programmeLevelId: z.string().uuid().optional(),
+  termId: z.string().uuid().optional(),
+  academicYearId: z.string().uuid().optional(),
 });
 export type ExamsListQuery = z.infer<typeof examsListQuerySchema>;
 
@@ -36,6 +40,7 @@ export const createExamSchema = z.object({
   name: z.string().trim().min(1, 'Required').max(120),
   examType: examTypeSchema.default('term'),
   academicYearId: optionalUuid,
+  termId: optionalUuid,
   termLabel: shortText(60),
   startDate: isoDate,
   endDate: isoDate,
@@ -48,6 +53,7 @@ export const updateExamSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
   examType: examTypeSchema.optional(),
   academicYearId: optionalUuid,
+  termId: optionalUuid,
   termLabel: shortText(60),
   startDate: isoDate,
   endDate: isoDate,

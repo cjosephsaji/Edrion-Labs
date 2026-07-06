@@ -3,7 +3,7 @@ import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { campuses } from './campuses';
 import { classes, subjects } from './academics';
-import { students, teachers } from './people';
+import { students, staff } from './people';
 
 /**
  * INSTITUTION-PORTAL attendance (Phase 5). A two-level model:
@@ -32,7 +32,7 @@ export const attendanceSessions = pgTable(
     /** Period label, e.g. "1" or "full_day". Part of the per-day uniqueness key. */
     period: text('period').notNull().default('full_day'),
     /** Who took the register — a teacher. */
-    takenById: uuid('taken_by_id').references(() => teachers.id, { onDelete: 'set null' }),
+    takenById: uuid('taken_by_id').references(() => staff.id, { onDelete: 'set null' }),
     notes: text('notes'),
     version: integer('version').notNull().default(0),
     ...actorColumns,

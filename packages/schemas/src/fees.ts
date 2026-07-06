@@ -43,6 +43,11 @@ export const feeStructuresListQuerySchema = paginationQuerySchema.merge(sortQuer
   search: z.string().trim().max(160).optional(),
   status: feeStructureStatusSchema.optional(),
   feeType: feeTypeSchema.optional(),
+  departmentId: z.string().uuid().optional(),
+  programmeLevelId: z.string().uuid().optional(),
+  termId: z.string().uuid().optional(),
+  gradeLevelId: z.string().uuid().optional(),
+  classId: z.string().uuid().optional(),
 });
 export type FeeStructuresListQuery = z.infer<typeof feeStructuresListQuerySchema>;
 
@@ -52,6 +57,7 @@ export const createFeeStructureSchema = z.object({
   gradeLevelId: optionalUuid,
   classId: optionalUuid,
   academicYearId: optionalUuid,
+  termId: optionalUuid,
   amount: money.default(0),
   frequency: feeFrequencySchema.default('one_time'),
   description: shortText(500),
@@ -65,6 +71,7 @@ export const updateFeeStructureSchema = z.object({
   gradeLevelId: optionalUuid,
   classId: optionalUuid,
   academicYearId: optionalUuid,
+  termId: optionalUuid,
   amount: money.optional(),
   frequency: feeFrequencySchema.optional(),
   description: shortText(500),

@@ -160,6 +160,16 @@ export const otpVerifySchema = z.object({
 });
 export type OtpVerifyInput = z.infer<typeof otpVerifySchema>;
 
+/** Resume an existing draft cross-device: email + a code we send to it (no resume token needed). */
+export const resumeRequestSchema = z.object({ email: emailSchema });
+export type ResumeRequestInput = z.infer<typeof resumeRequestSchema>;
+
+export const resumeVerifySchema = z.object({
+  email: emailSchema,
+  code: z.string().trim().regex(/^\d{6}$/, 'Enter the 6-digit code'),
+});
+export type ResumeVerifyInput = z.infer<typeof resumeVerifySchema>;
+
 // ── Reviewer / admin payloads ────────────────────────────────────────────────
 
 export const listRegistrationsQuerySchema = paginationQuerySchema.merge(sortQuerySchema).extend({

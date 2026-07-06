@@ -52,6 +52,9 @@ export interface UserRow {
   roleKeys: string[];
   campusIds: string[];
   campusCount: number;
+  /** Set when the user account was provisioned from a staff record. */
+  provisionedFromStaffId?: string | null;
+  provisionedFromStaffName?: string | null;
 }
 
 export interface AuditRow {

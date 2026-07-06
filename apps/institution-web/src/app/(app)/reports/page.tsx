@@ -1,10 +1,9 @@
 'use client';
-import { useMemo, useState } from 'react';
-import { Download } from 'lucide-react';
+import { useMemo } from 'react';
 import { type Column } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
-import { ReportRunsDrawer } from '@/components/reports/report-runs-drawer';
+import { ReportRunsPanel } from '@/components/reports/report-runs-panel';
 import { useReportsList, useReportsMutations } from '@/lib/reports';
 import type { ReportDefinitionRow } from '@/lib/reports-types';
 
@@ -30,8 +29,6 @@ const STATUSES = [
 const label = (opts: { value: string; label: string }[], v: string) => opts.find((o) => o.value === v)?.label ?? v;
 
 export default function ReportsPage() {
-  const [runsFor, setRunsFor] = useState<ReportDefinitionRow | null>(null);
-
   const fields = useMemo<FieldDef[]>(
     () => [
       { name: 'name', label: 'Name', type: 'text', required: true, placeholder: 'e.g. Term attendance summary' },
@@ -56,41 +53,27 @@ export default function ReportsPage() {
   );
 
   return (
-    <>
-      <ResourceManager<ReportDefinitionRow>
-        resource="reports"
-        title="Reports"
-        noun="report"
-        columns={columns}
-        fields={fields}
-        defaultSortBy="createdAt"
-        defaultSortDir="desc"
-        permissions={PERMISSIONS}
-        useList={useReportsList}
-        useMutations={useReportsMutations}
-        rowLabel={(r) => r.name}
-        toFormValues={(r) => ({
-          name: r.name,
-          referenceCode: r.referenceCode,
-          reportType: r.reportType,
-          description: r.description ?? '',
-          config: r.config ?? '',
-          status: r.status,
-        })}
-        extraActions={(row) => (
-          <button
-            type="button"
-            aria-label="Exports"
-            title="Exports"
-            onClick={() => setRunsFor(row)}
-            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-background-secondary hover:text-primary"
-          >
-            <Download className="h-4 w-4" />
-          </button>
-        )}
-      />
-
-      <ReportRunsDrawer report={runsFor} open={!!runsFor} onClose={() => setRunsFor(null)} />
-    </>
+    <ResourceManager<ReportDefinitionRow>
+      resource="reports"
+      title="Reports"
+      noun="report"
+      columns={columns}
+      fields={fields}
+      defaultSortBy="createdAt"
+      defaultSortDir="desc"
+      permissions={PERMISSIONS}
+      useList={useReportsList}
+      useMutations={useReportsMutations}
+      rowLabel={(r) => r.name}
+      renderDetailExtra={({ row }) => <ReportRunsPanel reportId={row.id} reportName={row.name} />}
+      toFormValues={(r) => ({
+        name: r.name,
+        referenceCode: r.referenceCode,
+        reportType: r.reportType,
+        description: r.description ?? '',
+        config: r.config ?? '',
+        status: r.status,
+      })}
+    />
   );
 }

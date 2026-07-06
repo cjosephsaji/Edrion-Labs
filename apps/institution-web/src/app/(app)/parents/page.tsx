@@ -1,6 +1,7 @@
 'use client';
+import { useMemo } from 'react';
 import { type Column } from '@edrion/ui';
-import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
+import { ResourceManager, type FilterDef, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
 import { UserProfileDialog } from '@/components/people/user-profile-dialog';
 import { usePeopleList, usePeopleMutations, type ParentRow } from '@/lib/people';
@@ -21,14 +22,40 @@ const fields: FieldDef[] = [
   { name: 'address', label: 'Address', type: 'textarea', nullable: true, placeholder: 'Optional' },
 ];
 
-const columns: Column<ParentRow>[] = [
-  { key: 'lastName', header: 'Name', sortable: true, render: (r) => <span className="font-medium">{r.firstName} {r.lastName}</span> },
-  { key: 'email', header: 'Email', render: (r) => <span className="text-text-muted">{r.email ?? '—'}</span> },
-  { key: 'phone', header: 'Phone', render: (r) => r.phone ?? '—' },
-  { key: 'occupation', header: 'Occupation', render: (r) => <span className="text-text-muted">{r.occupation ?? '—'}</span> },
-];
-
 export default function ParentsPage() {
+  const filters = useMemo<FilterDef[]>(
+    () => [
+      {
+        key: 'hasChildren',
+        label: 'Linked children',
+        options: [
+          { value: 'true', label: 'Has children' },
+          { value: 'false', label: 'No children' },
+        ],
+      },
+      {
+        key: 'hasLogin',
+        label: 'Portal login',
+        options: [
+          { value: 'true', label: 'Has login' },
+          { value: 'false', label: 'No login' },
+        ],
+      },
+    ],
+    [],
+  );
+
+  const columns = useMemo<Column<ParentRow>[]>(
+    () => [
+      { key: 'lastName', header: 'Name', sortable: true, render: (r) => <span className="font-medium">{r.firstName} {r.lastName}</span> },
+      { key: 'email', header: 'Email', render: (r) => <span className="text-text-muted">{r.email ?? '—'}</span> },
+      { key: 'phone', header: 'Phone', render: (r) => r.phone ?? '—' },
+      { key: 'childrenCount', header: 'Children', align: 'right', render: (r) => <span className="tabular-nums">{r.childrenCount ?? '—'}</span> },
+      { key: 'occupation', header: 'Occupation', render: (r) => <span className="text-text-muted">{r.occupation ?? '—'}</span> },
+    ],
+    [],
+  );
+
   return (
     <ResourceManager<ParentRow>
       resource="parents"
@@ -36,6 +63,7 @@ export default function ParentsPage() {
       noun="parent"
       columns={columns}
       fields={fields}
+      filters={filters}
       defaultSortBy="lastName"
       permissions={PERMISSIONS}
       useList={usePeopleList}

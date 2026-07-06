@@ -236,9 +236,9 @@ export class PortalEntityResolver {
     );
   }
 
-  private async people(institutionId: string, ids: string[], kind: 'teacher' | 'staff') {
+  private async people(institutionId: string, ids: string[], _kind: 'teacher' | 'staff') {
     if (ids.length === 0) return undefined;
-    const t = kind === 'teacher' ? schema.teachers : schema.staff;
+    const t = schema.staff;
     const rows = await this.db
       .select({
         id: t.id,

@@ -2,8 +2,8 @@ import { index, integer, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg
 import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { campuses } from './campuses';
-import { academicYears, classes, subjects } from './academics';
-import { teachers } from './people';
+import { academicYears, classes, subjects, academicTerms } from './academics';
+import { staff } from './people';
 
 /**
  * INSTITUTION-PORTAL timetable (Phase 5). A recurring weekly slot: a class is taught a subject by
@@ -25,11 +25,13 @@ export const timetableSlots = pgTable(
       .notNull()
       .references(() => classes.id, { onDelete: 'cascade' }),
     subjectId: uuid('subject_id').references(() => subjects.id, { onDelete: 'set null' }),
-    teacherId: uuid('teacher_id').references(() => teachers.id, { onDelete: 'set null' }),
+    teacherId: uuid('teacher_id').references(() => staff.id, { onDelete: 'set null' }),
     /** Optional academic year this timetable belongs to. */
     academicYearId: uuid('academic_year_id').references(() => academicYears.id, {
       onDelete: 'set null',
     }),
+    /** Optional link to a structured academic term period. */
+    termId: uuid('term_id').references(() => academicTerms.id, { onDelete: 'set null' }),
     /** 1 = Monday … 7 = Sunday. */
     dayOfWeek: integer('day_of_week').notNull(),
     /** "HH:MM" 24-hour. */

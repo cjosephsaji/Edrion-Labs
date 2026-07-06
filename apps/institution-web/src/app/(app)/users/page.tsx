@@ -1,14 +1,16 @@
 'use client';
-import { useMemo, useState } from 'react';
-import { KeyRound } from 'lucide-react';
+import { useMemo } from 'react';
 import { Badge, type BadgeTone, type Column } from '@edrion/ui';
-import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
+import { ResourceManager, type FilterDef, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
-import { UserAccessDrawer } from '@/components/admin/user-access-drawer';
+import { RoleMultiSelect } from '@/components/admin/role-multi-select';
+import { UserAccessPanel } from '@/components/admin/user-access-panel';
 import { UserProfileDialog } from '@/components/people/user-profile-dialog';
 import { usePermissions } from '@/lib/permissions';
+import { useRoleCatalogue, useRolesList } from '@/lib/roles';
+import { useScope } from '@/lib/scope';
 import { useUsersList, useUsersMutations } from '@/lib/users';
-import type { UserRow } from '@/lib/admin-types';
+import type { RoleRow, UserRow } from '@/lib/admin-types';
 
 const PERMISSIONS: ResourcePermissions = {
   view: 'users.view',
@@ -34,7 +36,9 @@ const STATUS_TONE: Record<string, BadgeTone> = {
 export default function UsersPage() {
   const { can } = usePermissions();
   const canManageRoles = can('users.manage_roles');
-  const [accessFor, setAccessFor] = useState<UserRow | null>(null);
+  const { campuses } = useScope();
+  const { data: roles } = useRolesList<RoleRow>('roles', { page: 1, pageSize: 100, sortDir: 'asc' });
+  const { data: catalogue } = useRoleCatalogue();
 
   const fields = useMemo<FieldDef[]>(
     () => [
@@ -45,6 +49,59 @@ export default function UsersPage() {
       { name: 'requireMfa', label: 'Require MFA at next sign-in', type: 'checkbox' },
     ],
     [],
+  );
+
+  const createFields = useMemo<FieldDef[]>(
+    () => [
+      {
+        name: 'roleKeys',
+        label: 'Roles',
+        type: 'custom',
+        help: 'At least one role is required for new users.',
+        render: (value, onChange) => (
+          <RoleMultiSelect value={(value as string[]) ?? []} onChange={(keys) => onChange(keys)} />
+        ),
+      },
+    ],
+    [],
+  );
+
+  const filters = useMemo<FilterDef[]>(
+    () => [
+      { key: 'status', label: 'All statuses', options: STATUSES },
+      {
+        key: 'roleKey',
+        label: 'All roles',
+        options: (roles?.items ?? []).map((r) => ({ value: r.key, label: r.name })),
+      },
+      {
+        key: 'campusId',
+        label: 'All campuses',
+        options: campuses.map((c) => ({ value: c.id, label: c.name })),
+      },
+      {
+        key: 'mfaEnrolled',
+        label: 'MFA',
+        options: [
+          { value: 'true', label: 'MFA enrolled' },
+          { value: 'false', label: 'No MFA' },
+        ],
+      },
+      {
+        key: 'permission',
+        label: 'All permissions',
+        options: (catalogue?.permissions ?? []).map((p) => ({ value: p.key, label: p.key })),
+      },
+      {
+        key: 'provisionedFromStaff',
+        label: 'Provisioned from staff',
+        options: [
+          { value: 'true', label: 'From staff' },
+          { value: 'false', label: 'Not from staff' },
+        ],
+      },
+    ],
+    [roles, campuses, catalogue],
   );
 
   const columns = useMemo<Column<UserRow>[]>(
@@ -73,45 +130,29 @@ export default function UsersPage() {
   );
 
   return (
-    <>
-      <ResourceManager<UserRow>
-        resource="users"
-        title="User Management"
-        noun="user"
-        columns={columns}
-        fields={fields}
-        defaultSortBy="createdAt"
-        defaultSortDir="desc"
-        permissions={PERMISSIONS}
-        useList={useUsersList}
-        useMutations={useUsersMutations}
-        rowLabel={(r) => r.fullName}
-        renderDetail={(ctx) => <UserProfileDialog kind="user" {...ctx} />}
-        toFormValues={(r) => ({
-          email: r.email,
-          fullName: r.fullName,
-          phone: r.phone ?? '',
-          status: r.status,
-          requireMfa: r.requireMfa,
-        })}
-        extraActions={
-          canManageRoles
-            ? (row) => (
-                <button
-                  type="button"
-                  aria-label="Roles & access"
-                  title="Roles & access"
-                  onClick={() => setAccessFor(row)}
-                  className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-background-secondary hover:text-primary"
-                >
-                  <KeyRound className="h-4 w-4" />
-                </button>
-              )
-            : undefined
-        }
-      />
-
-      <UserAccessDrawer user={accessFor} open={!!accessFor} onClose={() => setAccessFor(null)} canManage={canManageRoles} />
-    </>
+    <ResourceManager<UserRow>
+      resource="users"
+      title="User Management"
+      noun="user"
+      columns={columns}
+      fields={fields}
+      createFields={createFields}
+      filters={filters}
+      defaultSortBy="createdAt"
+      defaultSortDir="desc"
+      permissions={PERMISSIONS}
+      useList={useUsersList}
+      useMutations={useUsersMutations}
+      rowLabel={(r) => r.fullName}
+      renderDetail={(ctx) => <UserProfileDialog kind="user" {...ctx} />}
+      renderFormExtra={canManageRoles ? ({ row }) => <UserAccessPanel user={row} canManage={canManageRoles} /> : undefined}
+      toFormValues={(r) => ({
+        email: r.email,
+        fullName: r.fullName,
+        phone: r.phone ?? '',
+        status: r.status,
+        requireMfa: r.requireMfa,
+      })}
+    />
   );
 }

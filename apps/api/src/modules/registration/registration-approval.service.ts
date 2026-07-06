@@ -13,7 +13,7 @@ import {
   RegistrationStatus,
 } from '@edrion/shared-types';
 import type { ApproveRegistrationInput } from '@edrion/schemas';
-import { and, count, desc, eq, schema, type Database } from '@edrion/database';
+import { and, desc, eq, ilike, schema, type Database } from '@edrion/database';
 import type { InstitutionRegistrationRequest } from '@edrion/database';
 import type { AuditWriter, AuditEventInput } from '@edrion/audit';
 import type { ApiEnv } from '@edrion/config';
@@ -98,9 +98,27 @@ export class RegistrationApprovalService {
     const activationToken = tempPassword ? undefined : makeToken();
 
     const result = await this.db.transaction(async (tx) => {
-      const countRows = await tx.select({ value: count() }).from(schema.institutions);
-      const existing = Number(countRows[0]?.value ?? 0);
-      const institutionPublicId = `INST-${String(1000 + existing + 1).padStart(5, '0')}`;
+      // Gap-safe public id: base on the highest INST- id in use (count() reissues a deleted number
+      // and collides on institutions_public_id_unique), then pre-check each candidate for races.
+      const [topInst] = await tx
+        .select({ publicId: schema.institutions.publicId })
+        .from(schema.institutions)
+        .where(ilike(schema.institutions.publicId, 'INST-%'))
+        .orderBy(desc(schema.institutions.publicId))
+        .limit(1);
+      let seq = topInst?.publicId ? Number.parseInt(topInst.publicId.slice('INST-'.length), 10) : 1000;
+      if (!Number.isFinite(seq)) seq = 1000;
+      let institutionPublicId = `INST-${String(seq + 1).padStart(5, '0')}`;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        seq += 1;
+        institutionPublicId = `INST-${String(seq).padStart(5, '0')}`;
+        const [dupe] = await tx
+          .select({ id: schema.institutions.id })
+          .from(schema.institutions)
+          .where(eq(schema.institutions.publicId, institutionPublicId))
+          .limit(1);
+        if (!dupe) break;
+      }
 
       const [institution] = await tx
         .insert(schema.institutions)
@@ -126,10 +144,11 @@ export class RegistrationApprovalService {
             phone: contact.phone,
             title: contact.jobTitle,
           },
-          // Temp-password delivery hands over working credentials now, so the institution is live
-          // immediately. Activation delivery keeps it in Onboarding until the admin sets a password.
-          status: tempPassword ? InstitutionStatus.Active : InstitutionStatus.Onboarding,
-          activatedAt: tempPassword ? new Date() : null,
+          // Every newly approved institution starts in Onboarding regardless of credential delivery,
+          // so its admin is steered through the setup wizard. Go-live is the sole Onboarding→Active
+          // transition; `activatedAt` is stamped there.
+          status: InstitutionStatus.Onboarding,
+          activatedAt: null,
           onboardingStatus: OnboardingStatus.InProgress,
           supportTier: input.supportTier,
           customerSuccessOwnerId: employeeId,

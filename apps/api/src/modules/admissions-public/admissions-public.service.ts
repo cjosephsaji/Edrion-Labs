@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { createHash, randomBytes, randomInt } from 'node:crypto';
-import { ActorType } from '@edrion/shared-types';
+import { ActorType, resolveNomenclature, type InstitutionType } from '@edrion/shared-types';
 import { schema } from '@edrion/database';
 import type {
   AdmissionApplicationDraft,
@@ -19,11 +19,14 @@ import type { AuditWriter, AuditEventInput } from '@edrion/audit';
 import type { ApiEnv } from '@edrion/config';
 import type {
   AdmissionDraftPatchInput,
+  ResumeRequestInput,
+  ResumeVerifyInput,
   StartAdmissionInput,
   SubmitAdmissionInput,
 } from '@edrion/schemas';
 import { API_ENV, AUDIT_WRITER } from '../../common/tokens';
 import type { EdrionRequestContext } from '../../common/request-context';
+import { GeoLookupService } from '../../common/geo-lookup.service';
 import { OtpService, type OtpTarget } from '../registration/otp.service';
 import { EmailService } from '../portal/email.service';
 import { AttachmentStorageService } from '../portal/attachment-storage.service';
@@ -67,6 +70,7 @@ export class AdmissionsPublicService {
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
     @Inject(API_ENV) private readonly env: ApiEnv,
     private readonly storage: AttachmentStorageService,
+    private readonly geoLookup: GeoLookupService,
   ) {}
 
   // ── Info requests (staff-built form the parent fills over a token link) ──────
@@ -141,8 +145,14 @@ export class AdmissionsPublicService {
   }
 
   async institutionOptions(id: string): Promise<PublicInstitutionOptions> {
-    await this.requireApplicable(id);
-    return this.repo.institutionOptions(id);
+    const institution = await this.requireApplicable(id);
+    const base = await this.repo.institutionOptions(id);
+    const institutionType = institution.type as InstitutionType;
+    return {
+      ...base,
+      institutionType,
+      nomenclature: resolveNomenclature(institutionType),
+    };
   }
 
   // ── Draft lifecycle ─────────────────────────────────────────────────────────
@@ -247,6 +257,54 @@ export class AdmissionsPublicService {
     await this.otp.verify(this.otpSubject(draft, email), code, email, reqCtx, this.otpTarget);
     await this.repo.updateDraft(id, { emailVerifiedAt: new Date() });
     return { verified: true };
+  }
+
+  /** Best-effort location guess from the applicant's IP. */
+  geo(reqCtx: EdrionRequestContext): Promise<{ country?: string; city?: string; timezone?: string }> {
+    return this.geoLookup.detectLocation(reqCtx);
+  }
+
+  /**
+   * Cross-device resume — step 1: email a fresh code to whatever draft this address owns. Returns
+   * the same shape whether or not a draft exists (no enumeration).
+   */
+  async resumeRequest(
+    input: ResumeRequestInput,
+    reqCtx: EdrionRequestContext,
+  ): Promise<{ sent: true; expiresInSeconds: number; resendAvailableInSeconds: number; devCode?: string }> {
+    const draft = await this.repo.findLatestDraftByEmail(input.email);
+    if (!draft) {
+      return { sent: true, expiresInSeconds: 600, resendAvailableInSeconds: 60 };
+    }
+    const { code, expiresInSeconds, resendAvailableInSeconds } = await this.otp.issue(
+      this.otpSubject(draft, input.email),
+      input.email,
+      reqCtx,
+      this.otpTarget,
+    );
+    await this.sendOtpEmail(input.email, code);
+    const devCode =
+      this.env.REGISTRATION_OTP_DEV_RETURN && this.env.NODE_ENV !== 'production' ? code : undefined;
+    return { sent: true, expiresInSeconds, resendAvailableInSeconds, devCode };
+  }
+
+  /**
+   * Cross-device resume — step 2: verify the code, rotate the resume token, return the draft.
+   */
+  async resumeVerify(
+    input: ResumeVerifyInput,
+    reqCtx: EdrionRequestContext,
+  ): Promise<{ id: string; token: string; draft: PublicAdmissionDraftView }> {
+    const draft = await this.repo.findLatestDraftByEmail(input.email);
+    if (!draft) {
+      throw new BadRequestException({ code: 'INVALID_CODE', message: 'Invalid or expired code. Please try again.' });
+    }
+    await this.otp.verify(this.otpSubject(draft, input.email), input.code, input.email, reqCtx, this.otpTarget);
+    const token = randomBytes(32).toString('base64url');
+    const updated = await this.repo.updateDraft(draft.id, { resumeTokenHash: this.hashToken(token) });
+    const view = updated ?? draft;
+    await this.publicAudit(view, null, 'admission.resumed', reqCtx);
+    return { id: draft.id, token, draft: this.toPublicView(view) };
   }
 
   async submit(

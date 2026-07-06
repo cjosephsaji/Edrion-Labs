@@ -103,6 +103,7 @@ export function ResourceForm({
   error,
   onSubmit,
   onClose,
+  extra,
 }: {
   open: boolean;
   title: string;
@@ -112,6 +113,8 @@ export function ResourceForm({
   error?: string | null;
   onSubmit: (body: Values) => void;
   onClose: () => void;
+  /** Optional section below the standard fields (edit-only related data). */
+  extra?: React.ReactNode;
 }) {
   const [values, setValues] = useState<Values>(() => initialFor(fields, initial));
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -179,6 +182,11 @@ export function ResourceForm({
             onChange={(v) => set(f.name, v)}
           />
         ))}
+        {extra && (
+          <div className="border-t border-border pt-4">
+            {extra}
+          </div>
+        )}
       </form>
     </Drawer>
   );

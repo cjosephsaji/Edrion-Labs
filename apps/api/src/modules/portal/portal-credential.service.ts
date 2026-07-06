@@ -4,7 +4,6 @@ import {
   AccountStatus,
   ActorType,
   AuditResult,
-  InstitutionStatus,
   RiskLevel,
 } from '@edrion/shared-types';
 import type {
@@ -12,7 +11,6 @@ import type {
   PortalForgotPasswordInput,
   PortalResetPasswordInput,
 } from '@edrion/schemas';
-import { canTransition } from '@edrion/schemas';
 import type { AuditWriter } from '@edrion/audit';
 import type { ApiEnv } from '@edrion/config';
 import { API_ENV, AUDIT_WRITER, DATABASE } from '../../common/tokens';
@@ -83,7 +81,7 @@ export class PortalCredentialService {
       })
       .where(eq(schema.institutionUsers.id, user.id));
 
-    const institutionName = await this.activateInstitution(user.institutionId, user.id, req);
+    const institutionName = await this.institutionName(user.institutionId);
 
     await this.logAudit(user, req, 'user.activate', AuditResult.Success, RiskLevel.Low, {
       entityType: 'institution_user',
@@ -170,51 +168,18 @@ export class PortalCredentialService {
     });
   }
 
-  /** Flip the parent institution Onboarding→Active on first admin activation. Returns its name. */
-  private async activateInstitution(
-    institutionId: string,
-    actingUserId: string,
-    req: EdrionRequestContext,
-  ): Promise<string | null> {
+  /**
+   * The parent institution's display name, for the welcome email. Activation no longer flips the
+   * institution live — it stays in Onboarding so the admin is steered through the setup wizard;
+   * go-live (OnboardingService.complete) is the sole Onboarding→Active transition.
+   */
+  private async institutionName(institutionId: string): Promise<string | null> {
     const [inst] = await this.db
-      .select({
-        id: schema.institutions.id,
-        status: schema.institutions.status,
-        displayName: schema.institutions.displayName,
-      })
+      .select({ displayName: schema.institutions.displayName })
       .from(schema.institutions)
       .where(eq(schema.institutions.id, institutionId))
       .limit(1);
-    if (!inst) return null;
-
-    if (
-      inst.status !== InstitutionStatus.Active &&
-      canTransition(inst.status as InstitutionStatus, InstitutionStatus.Active)
-    ) {
-      await this.db
-        .update(schema.institutions)
-        .set({ status: InstitutionStatus.Active, activatedAt: new Date() })
-        .where(eq(schema.institutions.id, institutionId));
-      await this.audit.logAudit({
-        actorType: ActorType.InstitutionUser,
-        actorId: actingUserId,
-        institutionId,
-        institutionName: inst.displayName,
-        action: 'institution.activate',
-        module: MODULE,
-        entityType: 'institution',
-        entityId: institutionId,
-        result: AuditResult.Success,
-        riskLevel: RiskLevel.Low,
-        ip: req.ip,
-        userAgent: req.userAgent,
-        requestId: req.requestId,
-        correlationId: req.correlationId,
-        previousState: { status: inst.status },
-        newState: { status: InstitutionStatus.Active, source: 'admin_activation' },
-      } as Parameters<AuditWriter['logAudit']>[0]);
-    }
-    return inst.displayName;
+    return inst?.displayName ?? null;
   }
 
   private async logAudit(

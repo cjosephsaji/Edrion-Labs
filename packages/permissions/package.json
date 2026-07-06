@@ -7,7 +7,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./institution": "./src/institution/index.ts"
+    "./institution": "./src/institution/index.ts",
+    "./student": "./src/student/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

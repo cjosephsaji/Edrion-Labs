@@ -19,17 +19,19 @@ import type { NewTimetableSlot, TimetableSlot } from '@edrion/database';
 import type { TimetableListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
+import { programmeListFilterConds } from './programme-list-filters';
 
-const teacherDisplayName = sql<string>`concat_ws(' ', ${schema.teachers.firstName}, ${schema.teachers.lastName})`;
+const teacherDisplayName = sql<string>`concat_ws(' ', ${schema.staff.firstName}, ${schema.staff.lastName})`;
 
 export interface TimetableSlotRow extends TimetableSlot {
   className: string | null;
   subjectName: string | null;
   teacherName: string | null;
+  termName: string | null;
 }
 
 /** Which referenceable table an FK points at (for friendly-400 pre-checks). */
-export type TimetableRefTable = 'classes' | 'subjects' | 'teachers' | 'academicYears';
+export type TimetableRefTable = 'classes' | 'subjects' | 'staff' | 'academicYears' | 'academicTerms';
 
 /**
  * Typed SQL for the institution-portal timetable table. Every query is confined to one institution;
@@ -74,6 +76,12 @@ export class TimetableRepository {
     const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
     if (q.classId) conds.push(eq(t.classId, q.classId));
     if (q.dayOfWeek) conds.push(eq(t.dayOfWeek, q.dayOfWeek));
+    conds.push(
+      ...programmeListFilterConds(this.db, q, {
+        termId: t.termId,
+        classId: t.classId,
+      }),
+    );
     if (q.search) {
       const s = or(ilike(t.room, `%${q.search}%`), ilike(t.startTime, `%${q.search}%`));
       if (s) conds.push(s);
@@ -93,11 +101,13 @@ export class TimetableRepository {
         className: schema.classes.name,
         subjectName: schema.subjects.name,
         teacherName: teacherDisplayName,
+        termName: schema.academicTerms.name,
       })
       .from(t)
       .leftJoin(schema.classes, eq(schema.classes.id, t.classId))
       .leftJoin(schema.subjects, eq(schema.subjects.id, t.subjectId))
-      .leftJoin(schema.teachers, eq(schema.teachers.id, t.teacherId))
+      .leftJoin(schema.staff, eq(schema.staff.id, t.teacherId))
+      .leftJoin(schema.academicTerms, eq(schema.academicTerms.id, t.termId))
       .where(where)
       // a stable weekly ordering: day, then start time
       .orderBy(asc(t.dayOfWeek), this.order(q.sortBy ? sortable[q.sortBy] : undefined, q.sortDir, t.startTime))
@@ -110,6 +120,7 @@ export class TimetableRepository {
         className: r.className,
         subjectName: r.subjectName,
         teacherName: r.teacherName,
+        termName: r.termName,
       })),
       total: Number(tot?.value ?? 0),
     };

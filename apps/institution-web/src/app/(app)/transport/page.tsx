@@ -1,10 +1,9 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { Users } from 'lucide-react';
 import { type Column } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
-import { RouteAssignmentsDrawer } from '@/components/transport/route-assignments-drawer';
+import { RouteAssignmentsPanel } from '@/components/transport/route-assignments-panel';
 import { useFormat } from '@/lib/format';
 import { useTransportList, useTransportMutations, useTransportRouteOptions } from '@/lib/transport';
 import type { TransportRouteRow, TransportVehicleRow } from '@/lib/transport-types';
@@ -29,7 +28,6 @@ const label = (opts: { value: string; label: string }[], v: string) => opts.find
 
 function RoutesTab() {
   const fmt = useFormat();
-  const [assignmentsFor, setAssignmentsFor] = useState<TransportRouteRow | null>(null);
 
   const fields = useMemo<FieldDef[]>(
     () => [
@@ -54,40 +52,26 @@ function RoutesTab() {
   );
 
   return (
-    <>
-      <ResourceManager<TransportRouteRow>
-        resource="transport/routes"
-        title="Transport"
-        noun="route"
-        columns={columns}
-        fields={fields}
-        defaultSortBy="name"
-        permissions={PERMISSIONS}
-        useList={useTransportList}
-        useMutations={useTransportMutations}
-        rowLabel={(r) => r.name}
-        toFormValues={(r) => ({
-          name: r.name,
-          code: r.code ?? '',
-          fare: r.fare,
-          status: r.status,
-          description: r.description ?? '',
-        })}
-        extraActions={(row) => (
-          <button
-            type="button"
-            aria-label="Assignments"
-            title="Assignments"
-            onClick={() => setAssignmentsFor(row)}
-            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-background-secondary hover:text-primary"
-          >
-            <Users className="h-4 w-4" />
-          </button>
-        )}
-      />
-
-      <RouteAssignmentsDrawer route={assignmentsFor} open={!!assignmentsFor} onClose={() => setAssignmentsFor(null)} />
-    </>
+    <ResourceManager<TransportRouteRow>
+      resource="transport/routes"
+      title="Transport"
+      noun="route"
+      columns={columns}
+      fields={fields}
+      defaultSortBy="name"
+      permissions={PERMISSIONS}
+      useList={useTransportList}
+      useMutations={useTransportMutations}
+      rowLabel={(r) => r.name}
+      renderFormExtra={({ row }) => <RouteAssignmentsPanel routeId={row.id} routeName={row.name} />}
+      toFormValues={(r) => ({
+        name: r.name,
+        code: r.code ?? '',
+        fare: r.fare,
+        status: r.status,
+        description: r.description ?? '',
+      })}
+    />
   );
 }
 

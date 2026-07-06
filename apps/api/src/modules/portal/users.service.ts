@@ -53,7 +53,10 @@ export class UsersService {
   async list(ctx: PortalActionContext, q: PortalUsersListQuery): Promise<ListResult<UserView>> {
     const institutionId = ctx.principal.institutionId;
     const roleFilterIds = q.roleKey ? await this.repo.userIdsWithRole(institutionId, q.roleKey) : null;
-    const page = await this.repo.list(institutionId, roleFilterIds, q);
+    const permissionFilterIds = q.permission ? await this.repo.userIdsWithPermission(institutionId, q.permission) : null;
+    const provisionedIds =
+      q.provisionedFromStaff === true ? await this.repo.userIdsProvisionedFromStaff(institutionId) : null;
+    const page = await this.repo.list(institutionId, roleFilterIds, permissionFilterIds, provisionedIds, q);
     const ids = page.items.map((u) => u.id);
     const [roleMap, campusMap] = await Promise.all([this.repo.rolesForUsers(ids), this.repo.campusIdsForUsers(ids)]);
     const items = page.items.map((u) => this.toView(u, roleMap.get(u.id) ?? [], campusMap.get(u.id) ?? []));
@@ -236,6 +239,19 @@ export class UsersService {
     await this.write(ctx, 'user.sessions.revoke', id, { newState: { sessionsRevoked: true } });
     const [roleKeys, campusIds] = await Promise.all([this.repo.getRoleKeys(id), this.repo.getCampusIds(id)]);
     return this.toView(updated, roleKeys, campusIds);
+  }
+
+  async assignRoleKeys(ctx: PortalActionContext, userId: string, roleKeys: string[], campusIds: string[] = []) {
+    if (roleKeys.length === 0) return;
+    const existing = await this.require(ctx, userId);
+    const campuses = campusIds.length > 0 ? campusIds : await this.repo.getCampusIds(userId);
+    return this.setAccess(ctx, userId, {
+      roleKeys,
+      campusIds: campuses,
+      directGrants: existing.directGrants,
+      directDenies: existing.directDenies,
+      version: existing.version,
+    });
   }
 
   // === helpers ===============================================================

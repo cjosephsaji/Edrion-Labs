@@ -5,13 +5,17 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
   Check,
+  ClipboardList,
   FileText,
+  History,
   Loader2,
   Paperclip,
   Pin,
   Plus,
   Send,
+  ShieldCheck,
   Sparkles,
+  Wand2,
   X,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -166,10 +170,19 @@ export function PetrosShell({ conversationId }: { conversationId: string | null 
   const messages = detail.data?.messages ?? [];
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
+    <div className="flex h-[calc(100vh-3.5rem)] bg-transparent p-4">
       {/* Conversation rail */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-surface md:flex">
-        <div className="p-3">
+      <aside className="hidden w-72 shrink-0 flex-col overflow-hidden rounded-2xl border border-border bg-surface/90 shadow-sm md:flex">
+        <div className="border-b border-border p-4">
+          <div className="mb-3 flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-soft text-primary">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-text-primary">Petros</p>
+              <p className="text-xs text-text-muted">Institution assistant</p>
+            </div>
+          </div>
           <Button
             size="sm"
             className="w-full"
@@ -178,20 +191,23 @@ export function PetrosShell({ conversationId }: { conversationId: string | null 
               router.push(`/petros/${created.id}`);
             }}
           >
-            <Plus className="h-4 w-4" /> New chat
+            <Plus className="h-4 w-4" /> New task
           </Button>
         </div>
-        <div className="flex-1 overflow-y-auto px-2 pb-4">
+        <div className="flex items-center gap-2 px-4 pb-2 pt-4 text-xs font-semibold uppercase tracking-wide text-text-muted">
+          <History className="h-3.5 w-3.5" /> Recent conversations
+        </div>
+        <div className="flex-1 overflow-y-auto px-3 pb-4">
           {conversations.isLoading ? (
-            <Skeleton className="m-2 h-24" />
+            <Skeleton className="m-2 h-24 rounded-xl" />
           ) : (
             (conversations.data?.items ?? []).map((c) => (
               <button
                 key={c.id}
                 onClick={() => router.push(`/petros/${c.id}`)}
                 className={cn(
-                  'group flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
-                  c.id === conversationId ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-background-secondary',
+                  'group flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-[background-color,color,box-shadow]',
+                  c.id === conversationId ? 'bg-primary-soft text-primary shadow-xs' : 'text-text-secondary hover:bg-primary-soft/55 hover:text-text-primary',
                 )}
               >
                 {c.pinned && <Pin className="h-3 w-3 shrink-0" />}
@@ -213,10 +229,26 @@ export function PetrosShell({ conversationId }: { conversationId: string | null 
         </div>
       </aside>
 
-      {/* Thread */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex-1 overflow-y-auto px-4 py-6">
-          <div className="mx-auto flex max-w-3xl flex-col gap-4">
+      {/* Workspace */}
+      <div className="ml-0 flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-surface-elevated/95 shadow-sm md:ml-4">
+        <div className="border-b border-border bg-surface px-5 py-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Operations copilot</p>
+              <h1 className="mt-1 text-xl font-semibold text-text-primary">Petros workspace</h1>
+              <p className="mt-1 max-w-2xl text-sm text-text-secondary">
+                Lookups, announcements, reports, letters, follow-up drafts, policy summaries, and scheduling help.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 rounded-full border border-border bg-surface-elevated px-3 py-1.5 text-xs font-medium text-text-muted shadow-xs">
+              <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+              Confirmation required for actions
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 py-5">
+          <div className="mx-auto flex max-w-4xl flex-col gap-4">
             {!conversationId && !streaming ? (
               <PetrosEmptyState
                 suggestions={capabilities.data?.suggestions ?? []}
@@ -262,11 +294,11 @@ export function PetrosShell({ conversationId }: { conversationId: string | null 
 
         {/* Composer */}
         <div className="border-t border-border bg-surface p-4">
-          <div className="mx-auto max-w-3xl">
+          <div className="mx-auto max-w-4xl">
             {attachments.length > 0 && (
               <div className="mb-2 flex flex-wrap gap-2">
                 {attachments.map((a) => (
-                  <span key={a.id} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background-secondary px-2.5 py-1 text-xs">
+                  <span key={a.id} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background-secondary px-2.5 py-1 text-xs shadow-xs">
                     <Paperclip className="h-3 w-3" /> {a.filename}
                     <button onClick={() => setAttachments((prev) => prev.filter((x) => x.id !== a.id))}>
                       <X className="h-3 w-3 text-text-muted hover:text-danger" />
@@ -275,7 +307,7 @@ export function PetrosShell({ conversationId }: { conversationId: string | null 
                 ))}
               </div>
             )}
-            <div className="flex items-end gap-2">
+            <div className="flex items-end gap-2 rounded-2xl border border-border bg-surface-elevated p-2 shadow-sm">
               {capabilities.data?.canUploadFiles && (
                 <>
                   <input
@@ -303,14 +335,15 @@ export function PetrosShell({ conversationId }: { conversationId: string | null 
                 rows={Math.min(6, Math.max(1, draft.split('\n').length))}
                 placeholder={streaming ? 'Petros is working…' : 'Message Petros…'}
                 disabled={streaming || Boolean(pending) || Boolean(live.question) || Boolean(live.confirmation)}
-                className="min-h-[42px] flex-1 resize-none rounded-md border border-border bg-background px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                className="min-h-[42px] flex-1 resize-none rounded-xl border-0 bg-transparent px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-0"
               />
               <Button onClick={() => void send()} disabled={streaming || !draft.trim()}>
                 {streaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
-            <p className="mt-2 text-center text-[11px] text-text-muted">
-              Petros can make mistakes — actions always require your confirmation.
+            <p className="mt-2 flex items-center justify-center gap-1.5 text-center text-[11px] text-text-muted">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Petros can make mistakes - actions always require your confirmation.
             </p>
           </div>
         </div>
@@ -322,25 +355,78 @@ export function PetrosShell({ conversationId }: { conversationId: string | null 
 // ── Pieces ─────────────────────────────────────────────────────────────────────
 
 function PetrosEmptyState({ suggestions, onPick }: { suggestions: string[]; onPick: (s: string) => void }) {
+  const workflows = [
+    {
+      title: 'Draft a parent update',
+      description: 'Turn attendance, fee, or conduct context into a ready-to-review message.',
+      icon: FileText,
+    },
+    {
+      title: 'Summarize operations',
+      description: 'Ask for a quick report from available portal records and recent activity.',
+      icon: ClipboardList,
+    },
+    {
+      title: 'Find the next step',
+      description: 'Get help with admissions, approvals, follow-ups, or policy questions.',
+      icon: Wand2,
+    },
+  ];
+
   return (
-    <div className="flex flex-col items-center gap-4 py-16 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-        <Sparkles className="h-7 w-7 text-primary" />
+    <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="rounded-2xl border border-border bg-surface p-6 shadow-xs">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+            <Sparkles className="h-6 w-6" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-text-primary">What should Petros help with?</h2>
+            <p className="mt-1 text-sm text-text-secondary">
+              Start from a workflow, then review every action before anything changes.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3">
+          {workflows.map((w) => (
+            <button
+              key={w.title}
+              type="button"
+              onClick={() => onPick(w.title)}
+              className="flex items-start gap-3 rounded-xl border border-border bg-surface-elevated p-4 text-left shadow-xs transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                <w.icon className="h-4 w-4" />
+              </span>
+              <span>
+                <span className="block text-sm font-semibold text-text-primary">{w.title}</span>
+                <span className="mt-0.5 block text-xs text-text-muted">{w.description}</span>
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
-      <div>
-        <h2 className="text-lg font-semibold text-text-primary">Petros</h2>
-        <p className="text-sm text-text-secondary">Your institution&apos;s assistant — lookups, drafting, documents and reports.</p>
-      </div>
-      <div className="flex max-w-md flex-wrap justify-center gap-2">
-        {suggestions.map((s) => (
-          <button
-            key={s}
-            onClick={() => onPick(s)}
-            className="rounded-full border border-border bg-surface px-3.5 py-1.5 text-sm text-text-secondary transition-colors hover:border-primary hover:text-primary"
-          >
-            {s}
-          </button>
-        ))}
+
+      <div className="rounded-2xl border border-border bg-surface p-6 shadow-xs">
+        <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Suggested actions</p>
+        <div className="mt-4 flex flex-col gap-2">
+          {suggestions.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-border bg-surface-elevated p-4 text-sm text-text-muted">
+              Suggested actions will appear when capabilities load.
+            </p>
+          ) : (
+            suggestions.map((s) => (
+              <button
+                key={s}
+                onClick={() => onPick(s)}
+                className="rounded-xl border border-border bg-surface-elevated px-3.5 py-2.5 text-left text-sm text-text-secondary shadow-xs transition-[border-color,color,box-shadow] hover:border-primary hover:text-primary hover:shadow-sm"
+              >
+                {s}
+              </button>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
@@ -349,7 +435,7 @@ function PetrosEmptyState({ suggestions, onPick }: { suggestions: string[]; onPi
 function UserBubble({ text }: { text: string }) {
   return (
     <div className="flex justify-end">
-      <div className="max-w-[80%] rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-sm text-white">{text}</div>
+      <div className="max-w-[80%] rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-sm text-white shadow-sm">{text}</div>
     </div>
   );
 }

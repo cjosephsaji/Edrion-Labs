@@ -1,0 +1,41 @@
+{
+  "name": "@edrion/student-web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "gen:tokens": "tsx scripts/gen-tokens.ts",
+    "predev": "pnpm gen:tokens",
+    "dev": "next dev -p 3005",
+    "prebuild": "pnpm gen:tokens",
+    "build": "next build",
+    "start": "next start -p 3005",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint",
+    "clean": "rm -rf .next .turbo"
+  },
+  "dependencies": {
+    "@edrion/schemas": "workspace:*",
+    "@edrion/shared-types": "workspace:*",
+    "@edrion/ui": "workspace:*",
+    "@tanstack/react-query": "^5.59.0",
+    "katex": "^0.16.47",
+    "lucide-react": "^0.451.0",
+    "next": "14.2.13",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@edrion/design-tokens": "workspace:*",
+    "@edrion/tailwind-config": "workspace:*",
+    "@edrion/tsconfig": "workspace:*",
+    "@types/katex": "^0.16.8",
+    "@types/node": "^20.16.5",
+    "@types/react": "^18.3.10",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
+  }
+}

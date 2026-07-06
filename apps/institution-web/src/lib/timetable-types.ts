@@ -17,6 +17,8 @@ export interface TimetableSlotRow {
   teacherId: string | null;
   teacherName: string | null;
   academicYearId: string | null;
+  termId: string | null;
+  termName: string | null;
   dayOfWeek: number;
   startTime: string;
   endTime: string;

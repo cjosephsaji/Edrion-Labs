@@ -18,6 +18,7 @@ export function queryString(p: ListParams): string {
   sp.set('sortDir', p.sortDir);
   if (p.sortBy) sp.set('sortBy', p.sortBy);
   if (p.search) sp.set('search', p.search);
+  if (p.filters) for (const [k, v] of Object.entries(p.filters)) if (v) sp.set(k, v);
   return sp.toString();
 }
 

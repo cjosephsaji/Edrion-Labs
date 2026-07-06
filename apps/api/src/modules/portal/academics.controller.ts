@@ -4,27 +4,37 @@ import {
   academicsListQuerySchema,
   assignClassSubjectSchema,
   createAcademicYearSchema,
+  createAcademicTermSchema,
   createClassSchema,
   createDepartmentSchema,
+  createDepartmentGradeLevelSchema,
   createGradeLevelSchema,
   createSubjectSchema,
   updateAcademicYearSchema,
+  updateAcademicTermSchema,
   updateClassSchema,
   updateDepartmentSchema,
+  updateDepartmentGradeLevelSchema,
   updateGradeLevelSchema,
+  programmeStructureQuerySchema,
   updateSubjectSchema,
   versionedDeleteSchema,
   type AcademicsListQuery,
   type AssignClassSubjectInput,
   type CreateAcademicYearInput,
+  type CreateAcademicTermInput,
   type CreateClassInput,
   type CreateDepartmentInput,
+  type CreateDepartmentGradeLevelInput,
   type CreateGradeLevelInput,
   type CreateSubjectInput,
   type UpdateAcademicYearInput,
+  type UpdateAcademicTermInput,
   type UpdateClassInput,
   type UpdateDepartmentInput,
+  type UpdateDepartmentGradeLevelInput,
   type UpdateGradeLevelInput,
+  type ProgrammeStructureQuery,
   type UpdateSubjectInput,
   type VersionedDeleteInput,
 } from '@edrion/schemas';
@@ -112,6 +122,54 @@ export class AcademicsController {
     @Body(zodBody(versionedDeleteSchema)) body: VersionedDeleteInput,
   ) {
     return this.service.deleteAcademicYear(this.ctx(p, s, r), id, body.version);
+  }
+
+  // === academic terms ========================================================
+
+  @Get('academic-terms')
+  @RequireInstitutionPermissions('academics.view')
+  listAcademicTerms(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Query(zodBody(academicsListQuerySchema)) q: AcademicsListQuery,
+  ) {
+    return this.service.listAcademicTerms(this.ctx(p, s, r), q);
+  }
+
+  @Post('academic-terms')
+  @RequireInstitutionPermissions('academics.manage')
+  createAcademicTerm(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(createAcademicTermSchema)) body: CreateAcademicTermInput,
+  ) {
+    return this.service.createAcademicTerm(this.ctx(p, s, r), body);
+  }
+
+  @Patch('academic-terms/:id')
+  @RequireInstitutionPermissions('academics.manage')
+  updateAcademicTerm(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(updateAcademicTermSchema)) body: UpdateAcademicTermInput,
+  ) {
+    return this.service.updateAcademicTerm(this.ctx(p, s, r), id, body);
+  }
+
+  @Delete('academic-terms/:id')
+  @RequireInstitutionPermissions('academics.manage')
+  deleteAcademicTerm(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(versionedDeleteSchema)) body: VersionedDeleteInput,
+  ) {
+    return this.service.deleteAcademicTerm(this.ctx(p, s, r), id, body.version);
   }
 
   // === departments ===========================================================
@@ -210,6 +268,65 @@ export class AcademicsController {
     return this.service.deleteGradeLevel(this.ctx(p, s, r), id, body.version);
   }
 
+  // === department grade levels (programme ↔ year) =============================
+
+  @Get('department-grade-levels')
+  @RequireInstitutionPermissions('academics.view')
+  listDepartmentGradeLevels(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Query(zodBody(academicsListQuerySchema)) q: AcademicsListQuery,
+  ) {
+    return this.service.listDepartmentGradeLevels(this.ctx(p, s, r), q);
+  }
+
+  @Post('department-grade-levels')
+  @RequireInstitutionPermissions('academics.manage')
+  createDepartmentGradeLevel(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(createDepartmentGradeLevelSchema)) body: CreateDepartmentGradeLevelInput,
+  ) {
+    return this.service.createDepartmentGradeLevel(this.ctx(p, s, r), body);
+  }
+
+  @Patch('department-grade-levels/:id')
+  @RequireInstitutionPermissions('academics.manage')
+  updateDepartmentGradeLevel(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(updateDepartmentGradeLevelSchema)) body: UpdateDepartmentGradeLevelInput,
+  ) {
+    return this.service.updateDepartmentGradeLevel(this.ctx(p, s, r), id, body);
+  }
+
+  @Delete('department-grade-levels/:id')
+  @RequireInstitutionPermissions('academics.manage')
+  deleteDepartmentGradeLevel(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(versionedDeleteSchema)) body: VersionedDeleteInput,
+  ) {
+    return this.service.deleteDepartmentGradeLevel(this.ctx(p, s, r), id, body.version);
+  }
+
+  @Get('programme-structure')
+  @RequireInstitutionPermissions('academics.view')
+  getProgrammeStructure(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Query(zodBody(programmeStructureQuerySchema)) q: ProgrammeStructureQuery,
+  ) {
+    return this.service.getProgrammeStructure(this.ctx(p, s, r), q.departmentId);
+  }
+
   // === subjects ==============================================================
 
   @Get('subjects')
@@ -269,6 +386,17 @@ export class AcademicsController {
     @Query(zodBody(academicsListQuerySchema)) q: AcademicsListQuery,
   ) {
     return this.service.listClasses(this.ctx(p, s, r), q);
+  }
+
+  @Get('classes/:id/roster')
+  @RequireInstitutionPermissions('academics.view')
+  listClassRoster(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+  ) {
+    return this.service.listClassRoster(this.ctx(p, s, r), id);
   }
 
   @Post('classes')

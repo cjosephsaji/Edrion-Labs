@@ -125,6 +125,8 @@ import { ConductController } from './conduct.controller';
 import { ConductService } from './conduct.service';
 import { StudentProfileController } from './student-profile.controller';
 import { StudentProfileService } from './student-profile.service';
+import { StudentPortalController, StudentPortalStudentsController } from './student-portal.controller';
+import { StudentPortalInviteService } from './student-portal.service';
 import { AdmissionInfoController, AdmissionInfoService } from './admission-info.controller';
 import { PetrosController } from './petros/petros.controller';
 import { PetrosConversationsService } from './petros/petros-conversations.service';
@@ -134,9 +136,20 @@ import { PetrosOpenAiService } from './petros/openai-client.service';
 import { PetrosToolRegistry } from './petros/tools/registry';
 import { PetrosAttachmentService } from './petros/petros-attachment.service';
 import { DocumentsGenModule } from '../documents/documents-gen.module';
+import { FeatureControlsModule } from '../feature-controls/feature-controls.module';
 import { PortalReportQueriesService } from './portal-report-queries.service';
 import { PetrosTopicalityService } from './petros/petros-topicality.service';
 import { DocumentsGenController } from '../documents/documents-gen.controller';
+import { PortalHomeworkController } from './homework/portal-homework.controller';
+import { PortalHomeworkService } from './homework/portal-homework.service';
+import { PortalCourseContentController } from './course-content/portal-course-content.controller';
+import { PortalCourseContentService } from './course-content/portal-course-content.service';
+import { PortalCoursesController } from './courses/portal-courses.controller';
+import { PortalCoursesService } from './courses/portal-courses.service';
+import { PortalReportCardsController } from './report-cards/portal-report-cards.controller';
+import { PortalLearningSummaryService, PortalReportCardsService } from './report-cards/portal-report-cards.service';
+import { PortalCalendarEventsController } from './calendar-events/portal-calendar-events.controller';
+import { PortalCalendarEventsService } from './calendar-events/portal-calendar-events.service';
 
 /**
  * Institution Portal module — the tenant-facing API. Separate from the platform control-plane
@@ -144,7 +157,7 @@ import { DocumentsGenController } from '../documents/documents-gen.controller';
  * controller level (the global platform AuthGuard is skipped via @Public on the controller).
  */
 @Module({
-  imports: [DocumentsGenModule],
+  imports: [DocumentsGenModule, FeatureControlsModule],
   controllers: [
     PortalController,
     PortalAuthController,
@@ -192,7 +205,14 @@ import { DocumentsGenController } from '../documents/documents-gen.controller';
     BillingController,
     ConductController,
     StudentProfileController,
+    StudentPortalController,
+    StudentPortalStudentsController,
     AdmissionInfoController,
+    PortalHomeworkController,
+    PortalCourseContentController,
+    PortalCoursesController,
+    PortalReportCardsController,
+    PortalCalendarEventsController,
   ],
   providers: [
     PortalAuthService,
@@ -290,7 +310,14 @@ import { DocumentsGenController } from '../documents/documents-gen.controller';
     BillingService,
     ConductService,
     StudentProfileService,
+    StudentPortalInviteService,
     AdmissionInfoService,
+    PortalHomeworkService,
+    PortalCourseContentService,
+    PortalCoursesService,
+    PortalReportCardsService,
+    PortalLearningSummaryService,
+    PortalCalendarEventsService,
   ],
   // InstitutionAuthGuard (+ its session/rate-limit deps) is reused by the Parent Portal module,
   // which layers GuardianScopeGuard on top. Export the guard's transitive deps so it resolves there.

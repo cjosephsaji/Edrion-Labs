@@ -16,6 +16,7 @@ import type {
   OtpVerifyInput,
   PublicPlanView,
   RejectRegistrationInput,
+  ResumeVerifyInput,
   StartRegistrationInput,
   StartReviewInput,
   SubmitRegistrationInput,
@@ -34,6 +35,7 @@ import type { ApiEnv } from '@edrion/config';
 import { API_ENV, AUDIT_WRITER } from '../../common/tokens';
 import { baseAudit, type ActionContext } from '../../common/action-context';
 import type { EdrionRequestContext } from '../../common/request-context';
+import { GeoLookupService } from '../../common/geo-lookup.service';
 import { JwtError, signHs256, verifyHs256 } from '../../common/jwt';
 import { RegistrationRepository } from './registration.repository';
 import { OtpService } from './otp.service';
@@ -74,6 +76,7 @@ export class RegistrationService {
     private readonly emails: RegistrationEmailService,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
     @Inject(API_ENV) private readonly env: ApiEnv,
+    private readonly geoLookup: GeoLookupService,
   ) {}
 
   // ── Public funnel ──────────────────────────────────────────────────────────
@@ -192,6 +195,64 @@ export class RegistrationService {
     await this.otp.verify(request, input.code, email, reqCtx);
     await this.repo.update(id, { emailVerifiedAt: new Date(), verifiedEmail: email });
     return { verified: true };
+  }
+
+  /**
+   * Cross-device resume — step 1: email a fresh code to whatever draft this address owns. Returns
+   * the same shape whether or not a draft exists (no account/draft enumeration); a real code is only
+   * issued+sent when a draft is found.
+   */
+  async resumeRequest(
+    input: OtpRequestInput,
+    reqCtx: EdrionRequestContext,
+  ): Promise<{ sent: true; expiresInSeconds: number; resendAvailableInSeconds: number; devCode?: string }> {
+    const draft = await this.repo.findLatestDraftByEmail(input.email);
+    if (!draft) {
+      return { sent: true, expiresInSeconds: 600, resendAvailableInSeconds: 60 };
+    }
+    const { code, expiresInSeconds, resendAvailableInSeconds } = await this.otp.issue(
+      { ...draft, contactEmail: input.email },
+      input.email,
+      reqCtx,
+    );
+    await this.emails.sendOtp(input.email, code);
+    const devCode =
+      this.env.REGISTRATION_OTP_DEV_RETURN && this.env.NODE_ENV !== 'production' ? code : undefined;
+    return { sent: true, expiresInSeconds, resendAvailableInSeconds, devCode };
+  }
+
+  /**
+   * Cross-device resume — step 2: verify the code and hand back a fresh resume token + the draft.
+   * Verifying the code also (re)confirms the email. Errors are generic so a wrong email can't be
+   * distinguished from a wrong code.
+   */
+  async resumeVerify(
+    input: ResumeVerifyInput,
+    reqCtx: EdrionRequestContext,
+  ): Promise<{ id: string; resumeToken: string; draft: PublicDraftView }> {
+    const draft = await this.repo.findLatestDraftByEmail(input.email);
+    if (!draft) {
+      throw new BadRequestException({ code: 'INVALID_CODE', message: 'Invalid or expired code. Please try again.' });
+    }
+    await this.otp.verify(draft, input.code, input.email, reqCtx);
+    const updated = await this.repo.update(draft.id, { emailVerifiedAt: new Date(), verifiedEmail: input.email });
+    await this.publicAudit(updated ?? draft, 'registration.resumed', reqCtx);
+    return {
+      id: draft.id,
+      resumeToken: this.issueToken(draft.id),
+      draft: this.toPublicView(updated ?? draft),
+    };
+  }
+
+  /**
+   * Best-effort location guess from the applicant's IP, used to pre-fill the funnel. Returns only
+   * ISO-safe fields (alpha-2 country, IANA timezone, free-text city); region is intentionally
+   * omitted because providers return names, not the ISO 3166-2 codes the picker expects.
+   */
+  detectLocation(
+    reqCtx: EdrionRequestContext,
+  ): Promise<{ country?: string; city?: string; timezone?: string }> {
+    return this.geoLookup.detectLocation(reqCtx);
   }
 
   async submit(
@@ -441,8 +502,17 @@ export class RegistrationService {
 
   private async nextPublicRef(): Promise<string> {
     const year = new Date().getUTCFullYear();
-    const seq = (await this.repo.countRefsForYear(year)) + 1;
-    return `EDR-REG-${year}-${String(seq).padStart(6, '0')}`;
+    // Base the next sequence on the highest ref used this year (gap-safe — count() reissues a
+    // deleted number and collides on the unique constraint), then pre-check each candidate so a
+    // concurrent submit can't hand out the same ref.
+    let seq = (await this.repo.maxRefSeqForYear(year)) + 1;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const ref = `EDR-REG-${year}-${String(seq).padStart(6, '0')}`;
+      if (!(await this.repo.publicRefExists(ref))) return ref;
+      seq++;
+    }
+    // Extremely unlikely; time-seed to guarantee forward progress.
+    return `EDR-REG-${year}-${Date.now().toString(36).toUpperCase()}`;
   }
 
   private derivedColumns(s: {

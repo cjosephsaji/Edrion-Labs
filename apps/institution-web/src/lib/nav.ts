@@ -16,6 +16,7 @@ import {
   FileText,
   FlaskConical,
   FolderKanban,
+  GitBranch,
   GraduationCap,
   Hammer,
   HeartHandshake,
@@ -44,11 +45,11 @@ import {
   TriangleAlert,
   Users,
   UserCog,
-  UserSquare2,
   Wallet,
   Wrench,
   type LucideIcon,
 } from 'lucide-react';
+import type { InstitutionType } from '@edrion/shared-types';
 
 export interface NavItem {
   label: string;
@@ -56,6 +57,12 @@ export interface NavItem {
   icon: LucideIcon;
   /** Minimum permission to see this item; hidden if the user lacks it. */
   permission: string;
+  /** When set, the sidebar resolves the label via useTerm() instead of the static label. */
+  termKey?: import('@edrion/shared-types').TermKey;
+  /** Use plural form when true (default singular). */
+  termPlural?: boolean;
+  /** When set, only show for these institution types (e.g. hide programme structure from schools). */
+  institutionTypes?: InstitutionType[];
 }
 
 export interface NavGroup {
@@ -80,32 +87,45 @@ export const NAV: NavGroup[] = [
   {
     label: 'Academic Setup',
     items: [
-      { label: 'Academic Years', href: '/academics/years', icon: CalendarRange, permission: 'academics.view' },
-      { label: 'Departments', href: '/academics/departments', icon: Building2, permission: 'academics.view' },
-      { label: 'Grades', href: '/academics/grades', icon: Layers3, permission: 'academics.view' },
-      { label: 'Subjects', href: '/academics/subjects', icon: BookOpen, permission: 'academics.view' },
-      { label: 'Classes', href: '/academics/classes', icon: School, permission: 'academics.view' },
+      { label: 'Academic Years', href: '/academics/years', icon: CalendarRange, permission: 'academics.view', termKey: 'academicYear', termPlural: true },
+      { label: 'Departments', href: '/academics/departments', icon: Building2, permission: 'academics.view', termKey: 'department', termPlural: true },
+      {
+        label: 'Programme Structure',
+        href: '/academics/programme-structure',
+        icon: GitBranch,
+        permission: 'academics.view',
+        termKey: 'programmeStructure',
+        institutionTypes: ['college', 'university', 'training_center'],
+      },
+      { label: 'Grades', href: '/academics/grades', icon: Layers3, permission: 'academics.view', termKey: 'gradeLevel', termPlural: true, institutionTypes: ['school'] },
+      { label: 'Subjects', href: '/academics/subjects', icon: BookOpen, permission: 'academics.view', termKey: 'subject', termPlural: true },
+      { label: 'Classes', href: '/academics/classes', icon: School, permission: 'academics.view', termKey: 'class', termPlural: true },
+      { label: 'Terms', href: '/academics/terms', icon: CalendarDays, permission: 'academics.view', termKey: 'term', termPlural: true },
     ],
   },
   {
     label: 'People',
     items: [
-      { label: 'Students', href: '/students', icon: GraduationCap, permission: 'students.view' },
+      { label: 'Students', href: '/students', icon: GraduationCap, permission: 'students.view', termKey: 'student', termPlural: true },
       { label: 'Student Conduct', href: '/conduct', icon: ShieldAlert, permission: 'student_conduct.view' },
-      { label: 'Teachers', href: '/teachers', icon: UserSquare2, permission: 'teachers.view' },
-      { label: 'Staff', href: '/staff', icon: Users, permission: 'staff.view' },
+      { label: 'Staff', href: '/staff', icon: Users, permission: 'staff.view', termKey: 'staff', termPlural: true },
       { label: 'Parents', href: '/parents', icon: Users, permission: 'parents.view' },
     ],
   },
   {
     label: 'Academics',
     items: [
-      { label: 'Admissions', href: '/admissions', icon: ClipboardList, permission: 'admissions.view' },
+      { label: 'Admissions', href: '/admissions', icon: ClipboardList, permission: 'admissions.view', termKey: 'admission', termPlural: true },
       { label: 'Attendance', href: '/attendance', icon: ClipboardCheck, permission: 'attendance.view' },
       { label: 'Timetable', href: '/timetable', icon: CalendarDays, permission: 'timetable.view' },
+      { label: 'Homework', href: '/homework', icon: ClipboardList, permission: 'homework.manage', institutionTypes: ['school'] },
+      { label: 'Class content', href: '/class-content', icon: Megaphone, permission: 'class_content.manage' },
+      { label: 'Courses', href: '/courses', icon: BookOpen, permission: 'courses.manage', institutionTypes: ['college', 'university', 'training_center'] },
       { label: 'Exams', href: '/exams', icon: FileBarChart, permission: 'exams.view' },
       { label: 'Gradebook', href: '/gradebook', icon: BookOpen, permission: 'gradebook.view' },
+      { label: 'Report cards', href: '/report-cards', icon: FileText, permission: 'report_cards.view' },
       { label: 'Assignments', href: '/assignments', icon: ClipboardList, permission: 'assignments.view' },
+      { label: 'Calendar events', href: '/calendar-events', icon: CalendarDays, permission: 'calendar_events.manage' },
     ],
   },
   {

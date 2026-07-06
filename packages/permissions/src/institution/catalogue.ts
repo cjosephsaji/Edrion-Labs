@@ -23,6 +23,7 @@ export const INSTITUTION_PERMISSIONS: readonly PermissionDef[] = [
   // Academic structure (years, departments, grade levels, classes/sections, subjects)
   def('academics.view', 'Academics', 'View academic structure (years, departments, grades, classes, subjects).'),
   def('academics.manage', 'Academics', 'Create and edit academic structure.', true),
+  def('academics.teach', 'Academics', 'Eligible to be assigned as class/subject teacher or department head.'),
 
   // Campuses
   def('campuses.view', 'Campuses', 'View campuses in the institution.'),
@@ -222,6 +223,20 @@ export const INSTITUTION_PERMISSIONS: readonly PermissionDef[] = [
   def('counseling.disclosure.manage', 'Wellbeing', 'Disclose or revoke counselor contact to guardians.', true),
   def('frontdesk.pickup.verify', 'Front Desk', 'Verify guardian pickup authorizations.'),
   def('frontdesk.gate.manage', 'Front Desk', 'Approve early-leave and record gate exit/entry events.'),
+
+  // Student portal (Plan 01) — institution staff management of student portal access.
+  def('student_portal.manage', 'Student Portal', 'Invite students to the portal and configure surfaces.', true),
+
+  // Plan 03 — institutional bridge
+  def('homework.manage', 'Homework', 'Create and assign homework.'),
+  def('homework.grade', 'Homework', 'Grade and return homework submissions.', true),
+  def('class_content.manage', 'Class content', 'Manage class/course stream posts and materials.'),
+  def('courses.manage', 'Courses', 'Create and manage college courses.'),
+  def('syllabus.manage', 'Courses', 'Manage course syllabus modules.'),
+  def('report_cards.manage', 'Report cards', 'Create and edit report cards.'),
+  def('report_cards.publish', 'Report cards', 'Publish report cards to students.', true),
+  def('report_cards.view', 'Report cards', 'View report cards.'),
+  def('calendar_events.manage', 'Calendar', 'Manage institution calendar events.'),
 ] as const;
 
 /** Literal union of all valid institution permission keys. */

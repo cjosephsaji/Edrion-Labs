@@ -64,12 +64,12 @@ export function GlobalSearch() {
         }}
         aria-label="Search institutions, users, plans"
         placeholder="Search institutions, users, plans…"
-        className="h-9 w-64 rounded-md border border-border bg-background-secondary pl-8 pr-3 text-sm text-text-primary placeholder:text-text-muted focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+        className="h-9 w-64 rounded-full border border-border bg-surface-elevated pl-8 pr-3 text-sm text-text-primary shadow-xs placeholder:text-text-muted transition-[border-color,box-shadow] focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
       />
 
       {open && active && <SearchResults query={debounced} onSelect={go} />}
       {open && !active && query.length > 0 && (
-        <div className="absolute right-0 top-full z-30 mt-2 w-96 rounded-lg border border-border bg-surface-elevated px-4 py-6 text-sm text-text-muted shadow-lg animate-fade-in-up">
+        <div className="absolute right-0 top-full z-30 mt-2 w-96 rounded-xl border border-border bg-surface-elevated px-4 py-6 text-sm text-text-muted shadow-lg animate-fade-in-up">
           Keep typing to search…
         </div>
       )}
@@ -125,7 +125,7 @@ function SearchResults({ query, onSelect }: { query: string; onSelect: (href: st
   }, [results, activeIndex, onSelect]);
 
   return (
-    <div className="absolute right-0 top-full z-30 mt-2 w-96 overflow-hidden rounded-lg border border-border bg-surface-elevated shadow-lg animate-fade-in-up">
+    <div className="absolute right-0 top-full z-30 mt-2 w-96 overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-lg animate-fade-in-up">
       {loading && results.length === 0 ? (
         <div className="flex items-center gap-2 px-4 py-6 text-sm text-text-muted">
           <Loader2 className="h-4 w-4 animate-spin" /> Searching…
@@ -153,7 +153,7 @@ function SearchResults({ query, onSelect }: { query: string; onSelect: (href: st
                     onClick={() => onSelect(r.href)}
                     className={cn(
                       'flex w-full items-center gap-3 px-3 py-2 text-left transition-colors',
-                      idx === activeIndex ? 'bg-background-secondary' : 'hover:bg-background-secondary',
+                      idx === activeIndex ? 'bg-primary-soft/55' : 'hover:bg-primary-soft/55',
                     )}
                   >
                     <Icon className="h-4 w-4 shrink-0 text-text-muted" />

@@ -93,6 +93,31 @@ export async function runInInstitutionTenant<T>(
   });
 }
 
+/** Run fn inside a transaction scoped to an institutional student (institution + student GUCs). */
+export async function runInStudentTenant<T>(
+  db: Database,
+  input: { institutionId: string; studentId: string },
+  fn: () => Promise<T>,
+): Promise<T> {
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`select set_config('app.institution_id', ${input.institutionId}, true)`);
+    await tx.execute(sql`select set_config('app.student_id', ${input.studentId}, true)`);
+    return tenantStore.run({ db: tx as unknown as Database }, fn);
+  });
+}
+
+/** Run fn inside a transaction scoped to an independent learner. */
+export async function runInIndependentStudentTenant<T>(
+  db: Database,
+  independentUserId: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`select set_config('app.independent_user_id', ${independentUserId}, true)`);
+    return tenantStore.run({ db: tx as unknown as Database }, fn);
+  });
+}
+
 /** The institution id the active tenant transaction is bound to, if any (for diagnostics/tests). */
 export async function currentTenantInstitutionId(db: Database): Promise<string | null> {
   const [row] = await db.execute<{ v: string | null }>(

@@ -155,13 +155,10 @@ async function main() {
     { admissionNo: 'ADM-005', firstName: 'Ethan', lastName: 'Brown', gender: 'male', rollNo: '5', status: 'enrolled' },
   ]);
 
-  await seedPeople(s.teachers, [
+  await seedPeople(s.staff, [
     { employeeNo: 'T-001', firstName: 'Tina', lastName: 'Teacher', email: 'teacher@greenwood.edu', designation: 'Senior Teacher', institutionUserId: link('teacher@greenwood.edu') },
     { employeeNo: 'T-002', firstName: 'George', lastName: 'Gomez', email: 'g.gomez@greenwood.edu', designation: 'Mathematics Teacher' },
     { employeeNo: 'T-003', firstName: 'Hana', lastName: 'Khan', email: 'h.khan@greenwood.edu', designation: 'HOD Science' },
-  ]);
-
-  await seedPeople(s.staff, [
     { employeeNo: 'S-001', firstName: 'Hira', lastName: 'HR', email: 'hr@greenwood.edu', designation: 'HR Manager', institutionUserId: link('hr@greenwood.edu') },
     { employeeNo: 'S-002', firstName: 'Ivan', lastName: 'IT', email: 'it@greenwood.edu', designation: 'IT Administrator', institutionUserId: link('it@greenwood.edu') },
     { employeeNo: 'S-003', firstName: 'Rita', lastName: 'Reception', email: 'reception@greenwood.edu', designation: 'Front Office', institutionUserId: link('reception@greenwood.edu') },
@@ -196,7 +193,7 @@ async function main() {
   }
 
   // eslint-disable-next-line no-console
-  console.log(`  ✓ People directory seeded (${studentIds.length} students + teachers/staff/parents).`);
+  console.log(`  ✓ People directory seeded (${studentIds.length} students + staff/parents).`);
 
   // Phase 13: sample rows per new module so pages render populated (not just empty-state).
   const campusId = campuses[0]?.id ?? null;

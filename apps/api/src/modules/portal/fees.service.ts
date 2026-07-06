@@ -51,6 +51,7 @@ export class FeesService {
     await this.assertOptional(ctx, 'gradeLevels', input.gradeLevelId, 'grade level');
     await this.assertOptional(ctx, 'classes', input.classId, 'class');
     await this.assertOptional(ctx, 'academicYears', input.academicYearId, 'academic year');
+    await this.assertOptional(ctx, 'academicTerms', input.termId, 'term');
     const campusId = this.createCampusId(ctx.scope);
     const row = await this.repo.insertStructure({
       institutionId: ctx.principal.institutionId,
@@ -60,6 +61,7 @@ export class FeesService {
       gradeLevelId: input.gradeLevelId ?? null,
       classId: input.classId ?? null,
       academicYearId: input.academicYearId ?? null,
+      termId: input.termId ?? null,
       amount: input.amount,
       frequency: input.frequency,
       description: input.description ?? null,
@@ -79,12 +81,14 @@ export class FeesService {
     await this.assertOptional(ctx, 'gradeLevels', input.gradeLevelId, 'grade level');
     await this.assertOptional(ctx, 'classes', input.classId, 'class');
     await this.assertOptional(ctx, 'academicYears', input.academicYearId, 'academic year');
+    await this.assertOptional(ctx, 'academicTerms', input.termId, 'term');
     const updated = await this.repo.updateStructure(id, input.version, {
       name: input.name ?? existing!.name,
       feeType: input.feeType ?? existing!.feeType,
       gradeLevelId: input.gradeLevelId === undefined ? existing!.gradeLevelId : input.gradeLevelId,
       classId: input.classId === undefined ? existing!.classId : input.classId,
       academicYearId: input.academicYearId === undefined ? existing!.academicYearId : input.academicYearId,
+      termId: input.termId === undefined ? existing!.termId : input.termId,
       amount: input.amount ?? existing!.amount,
       frequency: input.frequency ?? existing!.frequency,
       description: input.description === undefined ? existing!.description : input.description,

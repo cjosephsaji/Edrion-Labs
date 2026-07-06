@@ -1,5 +1,6 @@
 'use client';
 import { useState, type ReactNode } from 'react';
+import Link from 'next/link';
 import { BedDouble, HeartPulse, Home, Pencil, ShieldAlert, X } from 'lucide-react';
 import {
   Badge,
@@ -20,8 +21,10 @@ import {
 import { EntityRef } from '@/components/common/entity-ref';
 import { useFormat } from '@/lib/format';
 import { usePermissions } from '@/lib/permissions';
+import { useTerm } from '@/lib/term';
 import { useLogIncident, useStudentProfile } from '@/lib/student-profile';
-import type { ParentRow, StaffRow, StudentRow, TeacherRow } from '@/lib/people-types';
+import { useParentProfile, useStaffProfile } from '@/lib/people';
+import type { ParentRow, StaffRow, StudentRow } from '@/lib/people-types';
 import type { UserRow } from '@/lib/admin-types';
 
 // ── Shared lookups (mirrors the former /students/[id] profile page) ─────────────
@@ -65,7 +68,6 @@ interface Common {
 export type UserProfileDialogProps = Common &
   (
     | { kind: 'student'; row: StudentRow | null }
-    | { kind: 'teacher'; row: TeacherRow | null }
     | { kind: 'staff'; row: StaffRow | null }
     | { kind: 'parent'; row: ParentRow | null }
     | { kind: 'user'; row: UserRow | null }
@@ -97,9 +99,7 @@ export function UserProfileDialog(props: UserProfileDialogProps) {
         <X className="h-5 w-5" />
       </button>
       {props.kind === 'student' && <StudentBody row={props.row} edit={props.edit} canEdit={props.canEdit} />}
-      {(props.kind === 'teacher' || props.kind === 'staff') && (
-        <EmployeeBody row={props.row} edit={props.edit} canEdit={props.canEdit} />
-      )}
+      {props.kind === 'staff' && <StaffBody row={props.row} edit={props.edit} canEdit={props.canEdit} />}
       {props.kind === 'parent' && <ParentBody row={props.row} edit={props.edit} canEdit={props.canEdit} />}
       {props.kind === 'user' && <UserBody row={props.row} edit={props.edit} canEdit={props.canEdit} />}
     </Dialog>
@@ -482,60 +482,246 @@ function StudentBody({ row, edit, canEdit }: { row: StudentRow; edit: () => void
   );
 }
 
-// ── Teacher / Staff ─────────────────────────────────────────────────────────────
-function EmployeeBody({ row, edit, canEdit }: { row: TeacherRow | StaffRow; edit: () => void; canEdit: boolean }) {
+// ── Staff (merged teachers + non-teaching) ────────────────────────────────────
+function StaffBody({ row, edit, canEdit }: { row: StaffRow; edit: () => void; canEdit: boolean }) {
   const fmt = useFormat();
+  const { t } = useTerm();
+  const { data, isLoading, isError } = useStaffProfile(row.id);
+
   const header = (
     <PersonHeader
       id={row.id}
       name={`${row.firstName} ${row.lastName}`}
       sub={row.employeeNo ?? undefined}
-      trailing={<StatusBadge status={row.status} />}
+      trailing={
+        <>
+          <StatusBadge status={row.status} />
+          {row.isTeaching && <Badge tone="info">Teaching</Badge>}
+        </>
+      }
       meta={<Chips items={[row.designation, row.departmentName]} />}
     />
   );
+  const actions = <EditButton canEdit={canEdit} edit={edit} />;
+
+  if (isLoading) {
+    return (
+      <Shell header={header} actions={actions}>
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-9 w-64" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+      </Shell>
+    );
+  }
+  if (isError || !data) {
+    return (
+      <Shell header={header} actions={actions}>
+        <div className="flex flex-col gap-6">
+          <Section title="Employment">
+            <FieldGrid
+              fields={[
+                { label: 'Employee no.', value: row.employeeNo ? <span className="font-mono">{row.employeeNo}</span> : null },
+                { label: t('department'), value: row.departmentName },
+                { label: 'Designation', value: row.designation },
+                { label: 'Employment', value: EMPLOYMENT_LABEL[row.employmentType] ?? row.employmentType },
+                { label: 'Status', value: <StatusBadge status={row.status} /> },
+                { label: 'Join date', value: row.joinDate ? fmt.date(row.joinDate) : null },
+              ]}
+            />
+          </Section>
+          <Section title="Contact">
+            <FieldGrid fields={[{ label: 'Email', value: row.email }, { label: 'Phone', value: row.phone }]} />
+          </Section>
+        </div>
+      </Shell>
+    );
+  }
+
+  const tabs: TabItem[] = [
+    {
+      key: 'overview',
+      label: 'Overview',
+      content: (
+        <div className="flex flex-col gap-6">
+          <Section title="Employment">
+            <FieldGrid
+              fields={[
+                { label: 'Employee no.', value: data.overview.employeeNo ? <span className="font-mono">{data.overview.employeeNo}</span> : null },
+                { label: t('department'), value: data.overview.departmentName },
+                { label: 'Designation', value: data.overview.designation },
+                { label: 'Employment', value: EMPLOYMENT_LABEL[data.overview.employmentType] ?? data.overview.employmentType },
+                { label: 'Status', value: <StatusBadge status={data.overview.status} /> },
+                { label: 'Join date', value: data.overview.joinDate ? fmt.date(data.overview.joinDate) : null },
+                {
+                  label: 'Roles',
+                  value: data.overview.roleKeys.length ? (
+                    <span className="flex flex-wrap gap-1">
+                      {data.overview.roleKeys.map((k) => (
+                        <Badge key={k} tone="neutral">{k}</Badge>
+                      ))}
+                    </span>
+                  ) : null,
+                  full: true,
+                },
+              ]}
+            />
+          </Section>
+          <Section title="Contact">
+            <FieldGrid fields={[{ label: 'Email', value: data.overview.email }, { label: 'Phone', value: data.overview.phone }]} />
+          </Section>
+        </div>
+      ),
+    },
+    {
+      key: 'teaching',
+      label: 'Teaching load',
+      content: data.teaching ? (
+        <div className="flex flex-col gap-4">
+          <Panel title={`${t('class')} teacher`}>
+            {data.teaching.classTeacherOf.length === 0 ? (
+              <p className="text-sm text-text-muted">Not assigned as a class teacher.</p>
+            ) : (
+              <ul className="space-y-1 text-sm">
+                {data.teaching.classTeacherOf.map((c) => (
+                  <li key={c.id} className="flex justify-between gap-3">
+                    <span className="text-text-primary">{c.name}</span>
+                    <span className="tabular-nums text-text-muted">{c.studentCount} students</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+          <Panel title="Subject assignments">
+            {data.teaching.subjectAssignments.length === 0 ? (
+              <p className="text-sm text-text-muted">No subject assignments.</p>
+            ) : (
+              <ul className="space-y-1 text-sm">
+                {data.teaching.subjectAssignments.map((a, i) => (
+                  <li key={i} className="text-text-secondary">
+                    <span className="font-medium text-text-primary">{a.subjectName}</span>
+                    <span className="text-text-muted"> · {a.className}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+          <p className="text-sm text-text-muted">{data.teaching.timetableSlots} timetable slots this week.</p>
+        </div>
+      ) : (
+        <p className="py-6 text-center text-sm text-text-muted">Teaching load not visible for your role.</p>
+      ),
+    },
+    {
+      key: 'account',
+      label: 'Account',
+      content: data.account ? (
+        <FieldGrid
+          fields={[
+            { label: 'Portal user', value: data.account.institutionUserId ? 'Linked' : 'No login' },
+            { label: 'Status', value: data.account.userStatus },
+            { label: 'MFA', value: data.account.mfaEnrolled ? 'Enrolled' : 'Not enrolled' },
+            { label: 'Last sign-in', value: data.account.lastLoginAt ? fmt.date(data.account.lastLoginAt) : 'Never' },
+          ]}
+        />
+      ) : (
+        <p className="py-6 text-center text-sm text-text-muted">Account details not visible for your role.</p>
+      ),
+    },
+  ];
+
   return (
-    <Shell header={header} actions={<EditButton canEdit={canEdit} edit={edit} />}>
-      <div className="flex flex-col gap-6">
-        <Section title="Employment">
-          <FieldGrid
-            fields={[
-              { label: 'Employee no.', value: row.employeeNo ? <span className="font-mono">{row.employeeNo}</span> : null },
-              { label: 'Department', value: row.departmentName },
-              { label: 'Designation', value: row.designation },
-              { label: 'Employment', value: EMPLOYMENT_LABEL[row.employmentType] ?? row.employmentType },
-              { label: 'Status', value: <StatusBadge status={row.status} /> },
-              { label: 'Join date', value: row.joinDate ? fmt.date(row.joinDate) : null },
-            ]}
-          />
-        </Section>
-        <Section title="Contact">
-          <FieldGrid fields={[{ label: 'Email', value: row.email }, { label: 'Phone', value: row.phone }]} />
-        </Section>
-      </div>
+    <Shell header={header} actions={actions}>
+      <Tabs items={tabs} />
     </Shell>
   );
 }
 
 // ── Parent / Guardian ───────────────────────────────────────────────────────────
 function ParentBody({ row, edit, canEdit }: { row: ParentRow; edit: () => void; canEdit: boolean }) {
+  const fmt = useFormat();
+  const { data, isLoading, isError } = useParentProfile(row.id);
+
   const header = <PersonHeader id={row.id} name={`${row.firstName} ${row.lastName}`} sub={row.occupation ?? 'Parent / guardian'} />;
+  const actions = <EditButton canEdit={canEdit} edit={edit} />;
+
+  if (isLoading) {
+    return (
+      <Shell header={header} actions={actions}>
+        <Skeleton className="h-24 w-full" />
+      </Shell>
+    );
+  }
+
+  const tabs: TabItem[] = [
+    {
+      key: 'details',
+      label: 'Details',
+      content: (
+        <div className="flex flex-col gap-6">
+          <Section title="Details">
+            <FieldGrid fields={[{ label: 'Occupation', value: data?.details.occupation ?? row.occupation }]} />
+          </Section>
+          <Section title="Contact">
+            <FieldGrid
+              fields={[
+                { label: 'Email', value: data?.details.email ?? row.email },
+                { label: 'Phone', value: data?.details.phone ?? row.phone },
+                { label: 'Address', value: data?.details.address ?? row.address, full: true },
+              ]}
+            />
+          </Section>
+        </div>
+      ),
+    },
+    {
+      key: 'children',
+      label: 'Children',
+      content: data?.children ? (
+        data.children.length === 0 ? (
+          <p className="py-6 text-center text-sm text-text-muted">No linked children.</p>
+        ) : (
+          <ul className="divide-y divide-border rounded-md border border-border">
+            {data.children.map((c) => (
+              <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-sm">
+                <span>
+                  <span className="font-medium text-text-primary">{c.name}</span>
+                  <span className="text-text-muted"> · {c.relationship}</span>
+                  {c.isPrimary && <Badge tone="info" className="ml-1.5">Primary</Badge>}
+                </span>
+                <span className="text-text-secondary">
+                  {[c.admissionNo && `Adm ${c.admissionNo}`, c.className].filter(Boolean).join(' · ') || '—'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : isError ? (
+        <p className="py-6 text-center text-sm text-text-muted">Couldn’t load children.</p>
+      ) : (
+        <p className="py-6 text-center text-sm text-text-muted">Children not visible for your role.</p>
+      ),
+    },
+    {
+      key: 'fees',
+      label: 'Fees',
+      content: data?.fees ? (
+        <FieldGrid
+          fields={[
+            { label: 'Invoices', value: data.fees.invoices },
+            { label: 'Outstanding', value: fmt.money(data.fees.outstandingMinor) },
+            { label: 'Overdue', value: data.fees.overdue },
+          ]}
+        />
+      ) : (
+        <p className="py-6 text-center text-sm text-text-muted">Fee summary not visible for your role.</p>
+      ),
+    },
+  ];
+
   return (
-    <Shell header={header} actions={<EditButton canEdit={canEdit} edit={edit} />}>
-      <div className="flex flex-col gap-6">
-        <Section title="Details">
-          <FieldGrid fields={[{ label: 'Occupation', value: row.occupation }]} />
-        </Section>
-        <Section title="Contact">
-          <FieldGrid
-            fields={[
-              { label: 'Email', value: row.email },
-              { label: 'Phone', value: row.phone },
-              { label: 'Address', value: row.address, full: true },
-            ]}
-          />
-        </Section>
-      </div>
+    <Shell header={header} actions={actions}>
+      <Tabs items={tabs} />
     </Shell>
   );
 }
@@ -548,7 +734,16 @@ function UserBody({ row, edit, canEdit }: { row: UserRow; edit: () => void; canE
       id={row.id}
       name={row.fullName}
       sub={row.email}
-      trailing={<Badge tone={USER_STATUS_TONE[row.status] ?? 'neutral'}>{row.status}</Badge>}
+      trailing={
+        <>
+          <Badge tone={USER_STATUS_TONE[row.status] ?? 'neutral'}>{row.status}</Badge>
+          {row.provisionedFromStaffId && (
+            <Link href={`/staff?q=${encodeURIComponent(row.provisionedFromStaffName ?? '')}`}>
+              <Badge tone="info">From staff · {row.provisionedFromStaffName ?? 'View record'}</Badge>
+            </Link>
+          )}
+        </>
+      }
     />
   );
   return (

@@ -9,7 +9,10 @@ import {
   Check,
   CheckCircle2,
   ChevronRight,
+  FilePlus2,
+  KeyRound,
   Mail,
+  RotateCcw,
   Search,
   ShieldCheck,
 } from 'lucide-react';
@@ -25,7 +28,8 @@ import {
   cn,
   subdivisionLabel,
 } from '@edrion/ui';
-import { applyApi, ApplyApiError, type InstitutionOptions, type PublicInstitution } from './apply-api';
+import { applyApi, ApplyApiError, type AdmissionDraftView, type GeoGuess, type InstitutionOptions, type PublicInstitution } from './apply-api';
+import { termsFor } from '@/lib/term';
 
 const STORAGE_KEY = 'edrion_admission_v1';
 
@@ -95,10 +99,23 @@ const ADDITIONAL_FIELDS: FieldDef[] = [
   { key: 'notes', label: 'Anything else we should know?', type: 'textarea', placeholder: 'Optional', maxLength: 2000 },
 ];
 
-const STEP_TITLES = ['Institution', 'Programme', 'Student', 'Guardian', 'Contact', 'Health', 'Review', 'Verify'];
 const ADDITIONAL_STEP = 5;
 const REVIEW_STEP = 6;
 const VERIFY_STEP = 7;
+
+function stepTitlesFor(type?: PublicInstitution['type']) {
+  const labels = termsFor(type);
+  return [
+    'Institution',
+    labels.t('admission'),
+    labels.t('student'),
+    'Guardian',
+    'Contact',
+    'Health',
+    'Review',
+    'Verify',
+  ];
+}
 
 type Data = {
   target: Record<string, string>;
@@ -132,7 +149,12 @@ export function ApplyFlow({ resumeDraftId }: { resumeDraftId?: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [phase, setPhase] = useState<'choose' | 'form'>('choose');
+  const [hasLocal, setHasLocal] = useState(false);
   const draftRef = useRef<{ id: string | null; token: string | null }>({ id: null, token: null });
+  const geoRef = useRef(false);
+  const stepTitles = useMemo(() => stepTitlesFor(institution?.type), [institution?.type]);
+  const labels = useMemo(() => termsFor(institution?.type), [institution?.type]);
 
   // ── Persistence ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -141,17 +163,20 @@ export function ApplyFlow({ resumeDraftId }: { resumeDraftId?: string }) {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         const s = raw ? JSON.parse(raw) : {};
-        // A ?draft=<id> link (with the token from this device) resumes server-side.
-        const wantId = resumeDraftId ?? s.draftId;
-        if (wantId && s.resumeToken && (resumeDraftId ? resumeDraftId === s.draftId : true)) {
+        const wantId = resumeDraftId ?? null;
+        if (wantId && s.resumeToken && s.draftId === wantId) {
           try {
             const view = await applyApi.resume(wantId, s.resumeToken);
-            if (!cancelled) hydrateFromServer(view.id, s.resumeToken, view);
+            if (!cancelled) {
+              hydrateFromServer(view.id, s.resumeToken, view);
+              setPhase('form');
+            }
           } catch {
             if (!cancelled) hydrateFromLocal(s);
           }
-        } else if (!cancelled) {
-          hydrateFromLocal(s);
+        } else {
+          if (s.draftId && s.resumeToken) setHasLocal(true);
+          if (!cancelled) hydrateFromLocal(s);
         }
       } catch {
         /* corrupt storage — start fresh */
@@ -174,7 +199,7 @@ export function ApplyFlow({ resumeDraftId }: { resumeDraftId?: string }) {
     if (typeof s.step === 'number') setStep(Math.min(s.step, VERIFY_STEP));
   };
 
-  const hydrateFromServer = (id: string, token: string, view: Awaited<ReturnType<typeof applyApi.resume>>) => {
+  const hydrateFromServer = (id: string, token: string, view: AdmissionDraftView) => {
     draftRef.current = { id, token };
     const p = view.payload ?? {};
     setContactEmail(view.contactEmail ?? '');
@@ -187,7 +212,6 @@ export function ApplyFlow({ resumeDraftId }: { resumeDraftId?: string }) {
       address: (p.address as Record<string, string>) ?? {},
       additional: (p.additional as Record<string, string>) ?? {},
     });
-    // Cache the institution row for the summary if we can fetch it lazily.
     applyApi
       .institutions()
       .then((list) => setInstitution(list.find((i) => i.id === view.institutionId) ?? null))
@@ -203,6 +227,53 @@ export function ApplyFlow({ resumeDraftId }: { resumeDraftId?: string }) {
       /* storage unavailable — non-fatal */
     }
   }, []);
+
+  const startNew = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+    draftRef.current = { id: null, token: null };
+    geoRef.current = false;
+    setInstitution(null);
+    setContactEmail('');
+    setData(emptyData());
+    setEmailVerified(false);
+    setErrors({});
+    setStep(0);
+    setPhase('form');
+  };
+
+  const resumeOnThisDevice = () => {
+    setErrors({});
+    setPhase('form');
+  };
+
+  const onResumedByCode = (view: AdmissionDraftView, id: string, token: string) => {
+    draftRef.current = { id, token };
+    persist({ draftId: id, resumeToken: token });
+    hydrateFromServer(id, token, view);
+    setPhase('form');
+  };
+
+  const handleEmailChange = useCallback(
+    (v: string) => {
+      setContactEmail((prev) => {
+        if (emailVerified && v !== prev) {
+          setEmailVerified(false);
+          persist({ emailVerified: false });
+        }
+        return v;
+      });
+      persist({ contactEmail: v });
+      setErrors((e) => ({ ...e, contactEmail: '', email: '' }));
+      if (draftRef.current.id && draftRef.current.token && emailValid(v)) {
+        void applyApi.patch(draftRef.current.id, draftRef.current.token, { contact: { email: v } }).catch(() => {});
+      }
+    },
+    [emailVerified, persist],
+  );
 
   const setField = (section: SectionKey, key: string, value: string) => {
     setData((d) => {
@@ -245,6 +316,32 @@ export function ApplyFlow({ resumeDraftId }: { resumeDraftId?: string }) {
     },
     [data, contactEmail, ensureDraft],
   );
+
+  // Auto-detect location when the applicant first reaches Contact & address (step 4).
+  useEffect(() => {
+    if (!hydrated || phase !== 'form' || step !== 4 || geoRef.current || data.address.country) return;
+    geoRef.current = true;
+    void (async () => {
+      const g = await applyApi.geo().catch(() => ({}) as GeoGuess);
+      let country = g.country;
+      const city = g.city;
+      if (!country) {
+        try {
+          country = new Intl.Locale(navigator.language).maximize().region ?? undefined;
+        } catch {
+          /* ignore */
+        }
+      }
+      setData((d) => {
+        const addr = { ...d.address };
+        if (country && !addr.country) addr.country = country;
+        if (city && !addr.city) addr.city = city;
+        const next = { ...d, address: addr };
+        persist({ data: next });
+        return next;
+      });
+    })();
+  }, [hydrated, phase, step, data.address.country, persist]);
 
   // ── Navigation / validation ───────────────────────────────────────────────────
   const goNext = async () => {
@@ -290,7 +387,7 @@ export function ApplyFlow({ resumeDraftId }: { resumeDraftId?: string }) {
     setSubmitError(null);
     if (!data.student.firstName?.trim() || !data.student.lastName?.trim()) {
       jumpTo(2);
-      setErrors({ firstName: 'Student name is required.' });
+      setErrors({ firstName: `${labels.t('student')} name is required.` });
       return;
     }
     if (!emailVerified) {
@@ -323,7 +420,19 @@ export function ApplyFlow({ resumeDraftId }: { resumeDraftId?: string }) {
     return <div className="h-64 animate-pulse rounded-2xl border border-border bg-surface" aria-hidden />;
   }
 
-  const totalSteps = STEP_TITLES.length;
+  if (phase === 'choose') {
+    return (
+      <LandingChooser
+        hasLocal={hasLocal}
+        contactEmail={contactEmail}
+        onStartNew={startNew}
+        onResumeLocal={resumeOnThisDevice}
+        onResumedByCode={onResumedByCode}
+      />
+    );
+  }
+
+  const totalSteps = stepTitles.length;
   const progress = Math.round(((step + 1) / totalSteps) * 100);
 
   return (
@@ -349,7 +458,7 @@ export function ApplyFlow({ resumeDraftId }: { resumeDraftId?: string }) {
           />
         </div>
         <ol className="mt-4 hidden flex-wrap items-center gap-x-2.5 gap-y-1 text-xs sm:flex">
-          {STEP_TITLES.map((title, i) => (
+          {stepTitles.map((title, i) => (
             <li key={title} className="flex items-center gap-2.5">
               <span
                 className={cn(
@@ -360,7 +469,7 @@ export function ApplyFlow({ resumeDraftId }: { resumeDraftId?: string }) {
                 {i < step ? <Check className="h-3 w-3 shrink-0" /> : null}
                 <span>{title}</span>
               </span>
-              {i < STEP_TITLES.length - 1 && <ChevronRight className="h-3 w-3 shrink-0 text-text-muted/40" />}
+              {i < stepTitles.length - 1 && <ChevronRight className="h-3 w-3 shrink-0 text-text-muted/40" />}
             </li>
           ))}
         </ol>
@@ -379,15 +488,7 @@ export function ApplyFlow({ resumeDraftId }: { resumeDraftId?: string }) {
               persist({ institution: inst, data: { ...data, target: {} }, draftId: null, resumeToken: null });
               setErrors((e) => ({ ...e, institution: '' }));
             }}
-            onEmail={(v) => {
-              setContactEmail(v);
-              persist({ contactEmail: v });
-              if (emailVerified && v !== contactEmail) {
-                setEmailVerified(false);
-                persist({ emailVerified: false });
-              }
-              setErrors((e) => ({ ...e, contactEmail: '' }));
-            }}
+            onEmail={handleEmailChange}
           />
         )}
 
@@ -401,7 +502,7 @@ export function ApplyFlow({ resumeDraftId }: { resumeDraftId?: string }) {
 
         {step === 2 && (
           <FieldGrid
-            title="Student details"
+            title={`${labels.t('student')} details`}
             blurb="Tell us about the applicant."
             fields={STUDENT_FIELDS}
             values={data.student}
@@ -463,6 +564,7 @@ export function ApplyFlow({ resumeDraftId }: { resumeDraftId?: string }) {
             verified={emailVerified}
             error={errors.email}
             ensureDraft={ensureDraft}
+            onEmail={handleEmailChange}
             onVerified={() => {
               setEmailVerified(true);
               persist({ emailVerified: true });
@@ -651,11 +753,15 @@ function ProgrammeStep({
     };
   }, [institutionId]);
 
+  const labels = termsFor(opts?.institutionType, opts?.nomenclature);
+
   return (
     <div className="page-enter space-y-5">
       <div>
-        <h3 className="text-lg font-semibold text-text-primary">Programme</h3>
-        <p className="text-sm text-text-secondary">Which campus, year and grade are you applying for?</p>
+        <h3 className="text-lg font-semibold text-text-primary">{labels.t('admission')}</h3>
+        <p className="text-sm text-text-secondary">
+          Which campus, {labels.t('academicYear').toLowerCase()} and {labels.t('gradeLevel').toLowerCase()} are you applying for?
+        </p>
       </div>
       {error ? (
         <p role="alert" className="rounded-md border border-danger/30 bg-danger/5 px-3 py-2 text-sm text-danger">
@@ -675,18 +781,18 @@ function ProgrammeStep({
           />
           <SelectField
             id="year"
-            label="Academic year"
+            label={labels.t('academicYear')}
             value={value.academicYearId ?? ''}
             options={opts.academicYears.map((y) => ({ value: y.id, label: y.name }))}
-            empty="No academic years listed"
+            empty={`No ${labels.tp('academicYear').toLowerCase()} listed`}
             onChange={(v) => onChange('academicYearId', v)}
           />
           <SelectField
             id="grade"
-            label="Grade level"
+            label={labels.t('gradeLevel')}
             value={value.gradeLevelId ?? ''}
             options={opts.gradeLevels.map((g) => ({ value: g.id, label: g.name }))}
-            empty="No grade levels listed"
+            empty={`No ${labels.tp('gradeLevel').toLowerCase()} listed`}
             onChange={(v) => onChange('gradeLevelId', v)}
             className="sm:col-span-2"
           />
@@ -857,19 +963,23 @@ function VerifyStep({
   verified,
   error,
   ensureDraft,
+  onEmail,
   onVerified,
 }: {
   email: string;
   verified: boolean;
   error?: string;
   ensureDraft: () => Promise<{ id: string; token: string }>;
+  onEmail: (v: string) => void;
   onVerified: () => void;
 }) {
-  const [sent, setSent] = useState(false);
+  const [sentEmail, setSentEmail] = useState<string | null>(null);
+  const [editingEmail, setEditingEmail] = useState(false);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(0);
+  const sent = sentEmail !== null && sentEmail === email;
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -883,7 +993,8 @@ function VerifyStep({
     try {
       const { id, token } = await ensureDraft();
       const res = await applyApi.requestOtp(id, token, email);
-      setSent(true);
+      setSentEmail(email);
+      setCode('');
       setResendIn(res.resendAvailableInSeconds);
     } catch (e) {
       setLocalError((e as ApplyApiError).message);
@@ -906,23 +1017,77 @@ function VerifyStep({
     }
   };
 
+  const changeEmail = (v: string) => {
+    onEmail(v);
+    setSentEmail(null);
+    setCode('');
+    setEditingEmail(false);
+  };
+
   return (
     <div className="page-enter space-y-5">
       <div>
         <h3 className="text-lg font-semibold text-text-primary">Verify your email</h3>
         <p className="text-sm text-text-secondary">
-          We need to confirm you own <strong className="text-text-primary">{email}</strong> before submitting.
+          We need to confirm you own this address before submitting.
         </p>
       </div>
 
       <div className="rounded-xl border border-border bg-background-secondary p-4">
+        {editingEmail ? (
+          <div className="space-y-2">
+            <Label htmlFor="verify-email">Email address</Label>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                id="verify-email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => changeEmail(e.target.value)}
+                className="sm:flex-1"
+              />
+              <Button variant="ghost" size="sm" onClick={() => setEditingEmail(false)}>
+                Done
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-secondary">
+            <span>
+              Sending codes to <strong className="text-text-primary">{email}</strong>
+            </span>
+            {!verified && (
+              <button
+                type="button"
+                className="font-medium text-primary hover:underline"
+                onClick={() => setEditingEmail(true)}
+              >
+                Wrong email? Change it
+              </button>
+            )}
+          </div>
+        )}
+
         {verified ? (
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-success-soft px-3 py-2 text-sm font-medium text-success">
-            <CheckCircle2 className="h-4 w-4" /> Email verified — you’re ready to submit.
-          </span>
+          <>
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-success-soft px-3 py-2 text-sm font-medium text-success">
+              <CheckCircle2 className="h-4 w-4" /> Email verified — you&apos;re ready to submit.
+            </span>
+            <p className="mt-2 text-xs text-text-muted">
+              <button
+                type="button"
+                className="font-medium text-primary hover:underline"
+                onClick={() => setEditingEmail(true)}
+              >
+                Wrong email?
+              </button>{' '}
+              Change it and we&apos;ll send a fresh code.
+            </p>
+          </>
         ) : (
           <>
             <Button
+              className="mt-3"
               variant="secondary"
               onClick={request}
               loading={busy && !sent}
@@ -975,6 +1140,7 @@ function ReviewStep({
   emailVerified: boolean;
   onEdit: (step: number) => void;
 }) {
+  const labels = termsFor(institution?.type);
   const sections = useMemo(
     () => [
       {
@@ -985,8 +1151,8 @@ function ReviewStep({
           ['Your email', contactEmail || '—'],
         ] as [string, string][],
       },
-      { step: 1, title: 'Programme', items: Object.entries(clean(data.target)) as [string, string][] },
-      { step: 2, title: 'Student', items: Object.entries(clean(data.student)) as [string, string][] },
+      { step: 1, title: labels.t('admission'), items: Object.entries(clean(data.target)) as [string, string][] },
+      { step: 2, title: labels.t('student'), items: Object.entries(clean(data.student)) as [string, string][] },
       { step: 3, title: 'Guardian', items: Object.entries(clean(data.guardian)) as [string, string][] },
       {
         step: 4,
@@ -995,7 +1161,7 @@ function ReviewStep({
       },
       { step: 5, title: 'Health & additional', items: Object.entries(clean(data.additional)) as [string, string][] },
     ],
-    [institution, contactEmail, data],
+    [institution, contactEmail, data, labels],
   );
 
   return (
@@ -1042,4 +1208,196 @@ function labelize(k: string): string {
     .replace(/Id$/, '')
     .replace(/([A-Z])/g, ' $1')
     .replace(/^./, (c) => c.toUpperCase());
+}
+
+/** Opening screen: resume an in-progress application (this device or via a code) or start fresh. */
+function LandingChooser({
+  hasLocal,
+  contactEmail,
+  onStartNew,
+  onResumeLocal,
+  onResumedByCode,
+}: {
+  hasLocal: boolean;
+  contactEmail: string;
+  onStartNew: () => void;
+  onResumeLocal: () => void;
+  onResumedByCode: (view: AdmissionDraftView, id: string, token: string) => void;
+}) {
+  const [mode, setMode] = useState<'menu' | 'code'>('menu');
+
+  const Option = ({
+    icon,
+    title,
+    desc,
+    onClick,
+    highlight,
+  }: {
+    icon: React.ReactNode;
+    title: string;
+    desc: string;
+    onClick: () => void;
+    highlight?: boolean;
+  }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex w-full items-center gap-4 rounded-xl border p-4 text-left transition-colors',
+        highlight ? 'border-primary bg-primary/5 hover:bg-primary/10' : 'border-border hover:border-primary/40 hover:bg-background-secondary',
+      )}
+    >
+      <span
+        className={cn(
+          'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
+          highlight ? 'bg-primary text-white' : 'bg-background-secondary text-primary',
+        )}
+      >
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold text-text-primary">{title}</span>
+        <span className="block text-xs text-text-secondary">{desc}</span>
+      </span>
+      <ArrowRight className="h-4 w-4 shrink-0 text-text-muted" />
+    </button>
+  );
+
+  return (
+    <div className="rounded-2xl border border-border bg-surface-elevated p-6 shadow-sm sm:p-8">
+      <h2 className="text-xl font-semibold text-text-primary">Apply for admission</h2>
+      <p className="mt-1 text-sm text-text-secondary">
+        Start a new application, or continue one you already began.
+      </p>
+
+      {mode === 'menu' ? (
+        <div className="page-enter mt-6 space-y-3">
+          {hasLocal && (
+            <Option
+              highlight
+              icon={<RotateCcw className="h-5 w-5" />}
+              title="Resume on this device"
+              desc={contactEmail ? `Pick up your draft for ${contactEmail}.` : 'Pick up where you left off.'}
+              onClick={onResumeLocal}
+            />
+          )}
+          <Option
+            icon={<KeyRound className="h-5 w-5" />}
+            title="Continue with a code"
+            desc="Get a code emailed to your application address to continue on any device."
+            onClick={() => setMode('code')}
+          />
+          <Option
+            icon={<FilePlus2 className="h-5 w-5" />}
+            title="Start a new application"
+            desc="Begin a fresh admission application."
+            onClick={onStartNew}
+          />
+        </div>
+      ) : (
+        <div className="page-enter mt-6">
+          <ResumePanel onResumed={onResumedByCode} onBack={() => setMode('menu')} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Cross-device resume: verify ownership of a draft with an emailed code, then continue it. */
+function ResumePanel({
+  onResumed,
+  onBack,
+}: {
+  onResumed: (view: AdmissionDraftView, id: string, token: string) => void;
+  onBack: () => void;
+}) {
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [resendIn, setResendIn] = useState(0);
+
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = setInterval(() => setResendIn((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [resendIn]);
+
+  const request = async () => {
+    setErr(null);
+    setBusy(true);
+    try {
+      const res = await applyApi.resumeRequest(email);
+      setSent(true);
+      setCode('');
+      setResendIn(res.resendAvailableInSeconds);
+    } catch (e) {
+      setErr((e as ApplyApiError).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const verify = async () => {
+    setErr(null);
+    setBusy(true);
+    try {
+      const res = await applyApi.resumeVerify(email, code.trim());
+      onResumed(res.draft, res.id, res.token);
+    } catch (e) {
+      setErr((e as ApplyApiError).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-border bg-background-secondary p-4">
+      <Label htmlFor="resume-email">Application email</Label>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Input
+          id="resume-email"
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setSent(false);
+          }}
+          className="sm:flex-1"
+        />
+        <Button variant="secondary" onClick={request} loading={busy && !sent} disabled={!emailValid(email) || busy || resendIn > 0}>
+          <Mail className="h-4 w-4" /> {sent ? (resendIn > 0 ? `Resend in ${resendIn}s` : 'Resend code') : 'Send code'}
+        </Button>
+      </div>
+
+      {sent && (
+        <div className="page-enter mt-3 border-t border-border pt-3">
+          <p className="mb-2 flex items-center gap-1.5 text-sm text-text-secondary">
+            <ShieldCheck className="h-4 w-4 text-primary" /> If an application exists for{' '}
+            <strong className="text-text-primary">{email}</strong>, we&apos;ve emailed it a 6-digit code.
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Input
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="123456"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+              className="font-mono tracking-[0.4em] sm:max-w-[180px]"
+            />
+            <Button onClick={verify} loading={busy} disabled={code.length !== 6 || busy}>
+              Continue <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <FieldError>{err}</FieldError>
+      <button className="mt-3 flex items-center gap-1 text-xs font-medium text-primary hover:underline" onClick={onBack}>
+        <ArrowLeft className="h-3 w-3" /> Back to options
+      </button>
+    </div>
+  );
 }

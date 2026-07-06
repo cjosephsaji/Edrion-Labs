@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { GeoLookupService } from '../../common/geo-lookup.service';
 import { EmailService } from '../portal/email.service';
 import { AttachmentStorageService } from '../portal/attachment-storage.service';
 import { OtpService } from '../registration/otp.service';
@@ -14,6 +15,6 @@ import { AdmissionsPublicRepository } from './admissions-public.repository';
  */
 @Module({
   controllers: [AdmissionsPublicController],
-  providers: [AdmissionsPublicService, AdmissionsPublicRepository, OtpService, EmailService, AttachmentStorageService],
+  providers: [AdmissionsPublicService, AdmissionsPublicRepository, OtpService, EmailService, AttachmentStorageService, GeoLookupService],
 })
 export class AdmissionsPublicModule {}

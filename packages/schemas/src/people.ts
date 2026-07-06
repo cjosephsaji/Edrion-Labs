@@ -3,8 +3,8 @@ import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common'
 import { lenientPhoneSchema, optionalE164PhoneSchema } from './geo/validators';
 
 /**
- * Institution-Portal PEOPLE (Phase 4) request/response contracts: students, teachers, staff
- * (non-teaching), parents/guardians, and the student↔guardian link. The same Zod schemas validate
+ * Institution-Portal PEOPLE (Phase 4) request/response contracts: students, staff (teaching +
+ * non-teaching), parents/guardians, and the student↔guardian link. The same Zod schemas validate
  * the API body (authoritative) and drive the institution-web forms.
  *
  * As with academics, tenancy (institution_id) and the active campus scope (campus_id) are NEVER
@@ -29,6 +29,7 @@ const phone = lenientPhoneSchema;
  */
 const phoneStrict = optionalE164PhoneSchema.nullable();
 const shortText = (max = 120) => z.string().trim().max(max).nullish();
+const roleKeys = z.array(z.string().trim().min(1).max(64)).max(40);
 
 export const GENDERS = ['male', 'female', 'other'] as const;
 export const genderSchema = z.enum(GENDERS);
@@ -51,12 +52,18 @@ export const guardianRelationshipSchema = z.enum(GUARDIAN_RELATIONSHIPS);
 export type GuardianRelationship = (typeof GUARDIAN_RELATIONSHIPS)[number];
 
 /** Which people resource a generic list/route targets. */
-export const PEOPLE_RESOURCES = ['students', 'teachers', 'staff', 'parents'] as const;
+export const PEOPLE_RESOURCES = ['students', 'staff', 'parents'] as const;
 export type PeopleResource = (typeof PEOPLE_RESOURCES)[number];
 
-/** Common list query for every people directory: page + sort + free-text search. */
+/** Common list query for every people directory: page + sort + free-text search + staff filters. */
 export const peopleListQuerySchema = paginationQuerySchema.merge(sortQuerySchema).extend({
   search: z.string().trim().max(160).optional(),
+  status: staffStatusSchema.optional(),
+  employmentType: employmentTypeSchema.optional(),
+  departmentId: z.string().uuid().optional(),
+  roleKey: z.string().trim().max(64).optional(),
+  /** When set, restrict staff to those with (true) or without (false) academics.teach. */
+  teaching: z.enum(['true', 'false']).optional(),
 });
 export type PeopleListQuery = z.infer<typeof peopleListQuerySchema>;
 
@@ -100,40 +107,7 @@ export const updateStudentSchema = z.object({
 });
 export type UpdateStudentInput = z.infer<typeof updateStudentSchema>;
 
-// --- teachers ----------------------------------------------------------------
-
-export const createTeacherSchema = z.object({
-  employeeNo: shortText(40),
-  firstName: personName,
-  lastName: personName,
-  email,
-  phone: phoneStrict,
-  departmentId: optionalUuid,
-  designation: shortText(80),
-  employmentType: employmentTypeSchema.default('full_time'),
-  status: staffStatusSchema.default('active'),
-  joinDate: isoDate,
-  institutionUserId: optionalUuid,
-});
-export type CreateTeacherInput = z.infer<typeof createTeacherSchema>;
-
-export const updateTeacherSchema = z.object({
-  employeeNo: shortText(40),
-  firstName: personName.optional(),
-  lastName: personName.optional(),
-  email,
-  phone,
-  departmentId: optionalUuid,
-  designation: shortText(80),
-  employmentType: employmentTypeSchema.optional(),
-  status: staffStatusSchema.optional(),
-  joinDate: isoDate,
-  institutionUserId: optionalUuid,
-  ...withVersion,
-});
-export type UpdateTeacherInput = z.infer<typeof updateTeacherSchema>;
-
-// --- staff (non-teaching) ----------------------------------------------------
+// --- staff (teaching + non-teaching) -----------------------------------------
 
 export const createStaffSchema = z.object({
   employeeNo: shortText(40),
@@ -147,6 +121,10 @@ export const createStaffSchema = z.object({
   status: staffStatusSchema.default('active'),
   joinDate: isoDate,
   institutionUserId: optionalUuid,
+  /** When true and no institutionUserId, invite a portal login using email + roleKeys. */
+  createLogin: z.boolean().default(true),
+  /** Roles to assign on invite or when linking an existing institution user. */
+  roleKeys: roleKeys.default([]),
 });
 export type CreateStaffInput = z.infer<typeof createStaffSchema>;
 

@@ -4,7 +4,7 @@ export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
   return (
     <div
       className={cn(
-        'rounded-lg border border-border bg-surface-elevated shadow-sm',
+        'rounded-xl border border-border bg-surface-elevated shadow-sm transition-[border-color,box-shadow,transform] duration-150 ease-standard',
         className,
       )}
       {...props}
@@ -13,11 +13,11 @@ export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
 }
 
 export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('flex flex-col gap-1 p-5 pb-3', className)} {...props} />;
+  return <div className={cn('flex flex-col gap-1.5 p-5 pb-3', className)} {...props} />;
 }
 
 export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn('text-md font-semibold text-text-primary', className)} {...props} />;
+  return <h3 className={cn('text-md font-semibold tracking-[0.01em] text-text-primary', className)} {...props} />;
 }
 
 export function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
@@ -41,9 +41,12 @@ export function StatCard({
   className?: string;
 }) {
   return (
-    <Card className={cn('p-4', className)}>
-      <div className="text-sm font-medium text-text-secondary">{label}</div>
-      <div className="mt-1 text-2xl font-semibold text-text-primary">{value}</div>
+    <Card className={cn('group overflow-hidden p-4 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md', className)}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-xs font-semibold uppercase tracking-wide text-text-muted">{label}</div>
+        <span className="h-1.5 w-1.5 rounded-full bg-primary/30 transition-colors group-hover:bg-primary" aria-hidden />
+      </div>
+      <div className="mt-2 text-2xl font-semibold text-text-primary">{value}</div>
       {hint ? <div className="mt-1 text-xs text-text-muted">{hint}</div> : null}
     </Card>
   );

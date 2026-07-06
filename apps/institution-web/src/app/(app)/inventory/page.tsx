@@ -1,10 +1,9 @@
 'use client';
-import { useMemo, useState } from 'react';
-import { ArrowLeftRight } from 'lucide-react';
+import { useMemo } from 'react';
 import { type Column } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
-import { ItemMovementsDrawer } from '@/components/inventory/item-movements-drawer';
+import { ItemMovementsPanel } from '@/components/inventory/item-movements-panel';
 import { useInventoryList, useInventoryMutations } from '@/lib/inventory';
 import type { InventoryItemRow } from '@/lib/inventory-types';
 
@@ -22,8 +21,6 @@ const ITEM_STATUSES = [
 const label = (opts: { value: string; label: string }[], v: string) => opts.find((o) => o.value === v)?.label ?? v;
 
 export default function InventoryPage() {
-  const [movementsFor, setMovementsFor] = useState<InventoryItemRow | null>(null);
-
   const fields = useMemo<FieldDef[]>(
     () => [
       { name: 'name', label: 'Name', type: 'text', required: true, placeholder: 'e.g. Whiteboard marker' },
@@ -58,43 +55,37 @@ export default function InventoryPage() {
   );
 
   return (
-    <>
-      <ResourceManager<InventoryItemRow>
-        resource="inventory/items"
-        title="Inventory"
-        noun="item"
-        columns={columns}
-        fields={fields}
-        defaultSortBy="name"
-        permissions={PERMISSIONS}
-        useList={useInventoryList}
-        useMutations={useInventoryMutations}
-        rowLabel={(r) => r.name}
-        toFormValues={(r) => ({
-          name: r.name,
-          sku: r.sku,
-          category: r.category ?? '',
-          unit: r.unit ?? '',
-          quantity: r.quantity,
-          reorderLevel: r.reorderLevel,
-          unitValue: r.unitValue,
-          status: r.status,
-          description: r.description ?? '',
-        })}
-        extraActions={(row) => (
-          <button
-            type="button"
-            aria-label="Movements"
-            title="Movements"
-            onClick={() => setMovementsFor(row)}
-            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-background-secondary hover:text-primary"
-          >
-            <ArrowLeftRight className="h-4 w-4" />
-          </button>
-        )}
-      />
-
-      <ItemMovementsDrawer item={movementsFor} open={!!movementsFor} onClose={() => setMovementsFor(null)} />
-    </>
+    <ResourceManager<InventoryItemRow>
+      resource="inventory/items"
+      title="Inventory"
+      noun="item"
+      columns={columns}
+      fields={fields}
+      defaultSortBy="name"
+      permissions={PERMISSIONS}
+      useList={useInventoryList}
+      useMutations={useInventoryMutations}
+      rowLabel={(r) => r.name}
+      renderDetailExtra={({ row }) => (
+        <ItemMovementsPanel
+          itemId={row.id}
+          name={row.name}
+          quantity={row.quantity}
+          reorderLevel={row.reorderLevel}
+          sku={row.sku}
+        />
+      )}
+      toFormValues={(r) => ({
+        name: r.name,
+        sku: r.sku,
+        category: r.category ?? '',
+        unit: r.unit ?? '',
+        quantity: r.quantity,
+        reorderLevel: r.reorderLevel,
+        unitValue: r.unitValue,
+        status: r.status,
+        description: r.description ?? '',
+      })}
+    />
   );
 }

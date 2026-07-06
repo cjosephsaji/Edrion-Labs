@@ -1,6 +1,6 @@
 'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { EffectiveSettings, InstitutionProfile, UpdateInstitutionProfileInput } from '@edrion/ui';
+import type { EffectiveSettings, EffectiveSettingsResponse, InstitutionProfile, NomenclatureOverrides, UpdateInstitutionProfileInput } from '@edrion/ui';
 import { makeCrudHooks } from './admin';
 import { usePortalClient } from './portal-client';
 import { useScope } from './scope';
@@ -21,7 +21,7 @@ export function useEffectiveSettings() {
   const { scope } = useScope();
   return useQuery({
     queryKey: ['settings', 'effective', scopeKey(scope)],
-    queryFn: () => client.get<{ values: EffectiveSettings }>('/portal/settings/effective', scope),
+    queryFn: () => client.get<EffectiveSettingsResponse>('/portal/settings/effective', scope),
     staleTime: 60_000,
   });
 }
@@ -31,7 +31,7 @@ export function useSaveEffectiveSettings() {
   const { scope } = useScope();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (values: EffectiveSettings) => client.post<{ values: EffectiveSettings }>('/portal/settings/effective', scope, { values }),
+    mutationFn: (values: EffectiveSettings) => client.post<EffectiveSettingsResponse>('/portal/settings/effective', scope, { values }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['settings', 'effective'] }),
   });
 }
@@ -59,5 +59,16 @@ export function useSaveInstitutionProfile() {
       // The operating currency is mirrored into finance.currency, so refresh effective settings too.
       qc.invalidateQueries({ queryKey: ['settings', 'effective'] });
     },
+  });
+}
+
+export function useSaveNomenclatureOverrides() {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (overrides: NomenclatureOverrides) =>
+      client.post<EffectiveSettingsResponse>('/portal/settings/nomenclature', scope, { overrides }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['settings', 'effective'] }),
   });
 }

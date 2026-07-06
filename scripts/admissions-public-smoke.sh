@@ -13,6 +13,8 @@
 #   6. idempotent — re-submitting the same draft returns the same application_no.
 #   7. audit      — admission.* rows are written for the draft.
 #   8. permission — every endpoint is @Public (no auth header needed).
+#   9. cross-device resume — POST /resume + /resume/verify rotates the resume token.
+#  10. geo           — GET /geo returns a JSON object (may be empty on localhost).
 #
 # Prereqs: API on :3001 booted with REGISTRATION_OTP_DEV_RETURN=true; Postgres with at least one
 # institution in an applicable status (active/trial) that has campuses/years/grades; migrations
@@ -44,6 +46,13 @@ pub(){ local m="$1" p="$2" sc="${3:-}" b="${4:-}"
     curl -s -w '\n%{http_code}' -X "$m" "$API/admissions/apply$p" -H "x-admission-token: $sc" -H 'content-type: application/json' -d "$b"
   else
     curl -s -w '\n%{http_code}' -X "$m" "$API/admissions/apply$p" -H "x-admission-token: $sc"
+  fi
+}
+pub_noauth(){ local m="$1" p="$2" b="${3:-}"
+  if [ -n "$b" ]; then
+    curl -s -w '\n%{http_code}' -X "$m" "$API/admissions/apply$p" -H 'content-type: application/json' -d "$b"
+  else
+    curl -s -w '\n%{http_code}' -X "$m" "$API/admissions/apply$p"
   fi
 }
 
@@ -86,6 +95,23 @@ has "  status draft" "$(body "$R")" '"status":"draft"'
 R=$(pub PATCH "/$ID" "$TOKEN" '{"student":{"firstName":"Ava","lastName":"Applicant","gender":"female","dateOfBirth":"2015-04-01"},"guardian":{"name":"Riya Applicant","phone":"+919876543210","relationship":"mother"}}')
 chk "autosave sections" "$(code "$R")" 200
 has "  payload persisted" "$(body "$R")" '"firstName":"Ava"'
+
+# 7b. Geo endpoint (best-effort; localhost may return {}).
+R=$(pub_noauth GET "/geo"); chk "geo endpoint" "$(code "$R")" 200
+
+# 7c. Cross-device resume rotates the resume token.
+OLD_TOKEN="$TOKEN"
+reset_throttle
+R=$(pub_noauth POST "/resume" "{\"email\":\"$EMAIL\"}"); chk "resume request" "$(code "$R")" 201
+RESUME_OTP=$(body "$R" | field devCode)
+[ -n "$RESUME_OTP" ] && echo "  .. resume otp=$RESUME_OTP" || echo "  !! no devCode — set REGISTRATION_OTP_DEV_RETURN=true"
+R=$(pub_noauth POST "/resume/verify" "{\"email\":\"$EMAIL\",\"code\":\"$RESUME_OTP\"}"); chk "resume verify" "$(code "$R")" 201
+NEW_TOKEN=$(body "$R" | field token)
+has "  resume returns draft" "$(body "$R")" '"draft"'
+[ "$NEW_TOKEN" != "$OLD_TOKEN" ] && { echo "  PASS  resume token rotated"; pass=$((pass+1)); } || { echo "  FAIL  resume token not rotated"; fail=$((fail+1)); }
+R=$(pub GET "/$ID" "$NEW_TOKEN"); chk "resume with new token" "$(code "$R")" 200
+R=$(pub GET "/$ID" "$OLD_TOKEN"); chk "old token invalidated -> 403" "$(code "$R")" 403
+TOKEN="$NEW_TOKEN"
 
 SUBMIT=$(cat <<JSON
 {

@@ -7,6 +7,8 @@ import { useClassOptions, useSubjectOptions } from '@/lib/academics';
 import { useStudentOptions } from '@/lib/people';
 import { useExamOptions } from '@/lib/exams';
 import { useGradebookList, useGradebookMutations } from '@/lib/gradebook';
+import { useAcademicContextFilters } from '@/lib/academic-context';
+import { useTerm } from '@/lib/term';
 import type { GradeEntryRow } from '@/lib/gradebook-types';
 
 const PERMISSIONS: ResourcePermissions = {
@@ -17,6 +19,8 @@ const PERMISSIONS: ResourcePermissions = {
 };
 
 export default function GradebookPage() {
+  const { t } = useTerm();
+  const contextFilters = useAcademicContextFilters();
   const { data: students } = useStudentOptions();
   const { data: subjects } = useSubjectOptions();
   const { data: classes } = useClassOptions();
@@ -26,14 +30,14 @@ export default function GradebookPage() {
     () => [
       {
         name: 'studentId',
-        label: 'Student',
+        label: t('student'),
         type: 'select',
         required: true,
         options: (students?.items ?? []).map((s) => ({ value: s.id, label: `${s.firstName} ${s.lastName} (${s.admissionNo})` })),
       },
       {
         name: 'subjectId',
-        label: 'Subject',
+        label: t('subject'),
         type: 'select',
         required: true,
         options: (subjects?.items ?? []).map((s) => ({ value: s.id, label: s.name })),
@@ -48,7 +52,7 @@ export default function GradebookPage() {
       },
       {
         name: 'classId',
-        label: 'Class',
+        label: t('class'),
         type: 'select',
         nullable: true,
         options: (classes?.items ?? []).map((c) => ({ value: c.id, label: c.name })),
@@ -59,13 +63,13 @@ export default function GradebookPage() {
       { name: 'letterGrade', label: 'Grade', type: 'text', nullable: true, placeholder: 'e.g. A' },
       { name: 'remarks', label: 'Remarks', type: 'textarea', nullable: true, placeholder: 'Optional' },
     ],
-    [students, subjects, classes, exams],
+    [students, subjects, classes, exams, t],
   );
 
   const columns = useMemo<Column<GradeEntryRow>[]>(
     () => [
-      { key: 'studentName', header: 'Student', render: (r) => <span className="font-medium">{r.studentName ?? '—'}</span> },
-      { key: 'subjectName', header: 'Subject', render: (r) => r.subjectName ?? '—' },
+      { key: 'studentName', header: t('student'), render: (r) => <span className="font-medium">{r.studentName ?? '—'}</span> },
+      { key: 'subjectName', header: t('subject'), render: (r) => r.subjectName ?? '—' },
       { key: 'assessmentName', header: 'Assessment', sortable: true, render: (r) => <span className="text-text-muted">{r.assessmentName}</span> },
       { key: 'examName', header: 'Exam', render: (r) => <span className="text-text-muted">{r.examName ?? '—'}</span> },
       {
@@ -77,23 +81,24 @@ export default function GradebookPage() {
       },
       { key: 'letterGrade', header: 'Grade', align: 'right', render: (r) => r.letterGrade ?? '—' },
     ],
-    [],
+    [t],
   );
 
   return (
     <ResourceManager<GradeEntryRow>
       resource="gradebook"
       title="Gradebook"
-      noun="grade"
+      noun={t('gradeLevel').toLowerCase()}
       columns={columns}
       fields={fields}
+      extraFilters={contextFilters}
       defaultSortBy="createdAt"
       defaultSortDir="desc"
       searchable
       permissions={PERMISSIONS}
       useList={useGradebookList}
       useMutations={useGradebookMutations}
-      rowLabel={(r) => `${r.studentName ?? 'Student'} · ${r.assessmentName}`}
+      rowLabel={(r) => `${r.studentName ?? t('student')} · ${r.assessmentName}`}
       toFormValues={(r) => ({
         studentId: r.studentId,
         subjectId: r.subjectId,

@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PortalClientProvider } from '@/lib/portal-client';
 import { ScopeProvider } from '@/lib/scope';
+import { AcademicContextProvider } from '@/lib/academic-context';
 import { webEnv } from '@/lib/env';
 
 /**
@@ -26,7 +27,9 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <PortalClientProvider baseUrl={webEnv.apiBaseUrl} devUserEmail={webEnv.devUserEmail}>
-        <ScopeProvider>{children}</ScopeProvider>
+        <ScopeProvider>
+          <AcademicContextProvider>{children}</AcademicContextProvider>
+        </ScopeProvider>
       </PortalClientProvider>
     </QueryClientProvider>
   );

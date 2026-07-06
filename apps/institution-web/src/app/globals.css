@@ -97,6 +97,30 @@
     background-color: var(--border-strong);
     border-radius: 9999px;
   }
+  /* Programme structure tree: expand/collapse + staggered children */
+  .tree-expand {
+    animation: tree-expand 220ms var(--ease-standard);
+    transform-origin: top center;
+  }
+  @keyframes tree-expand {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .tree-chevron {
+    transition: transform 200ms var(--ease-standard);
+  }
+  .tree-chevron[data-open='true'] {
+    transform: rotate(0deg);
+  }
+  .tree-chevron[data-open='false'] {
+    transform: rotate(-90deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

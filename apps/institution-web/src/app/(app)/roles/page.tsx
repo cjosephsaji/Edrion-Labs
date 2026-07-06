@@ -1,10 +1,9 @@
 'use client';
-import { useMemo, useState } from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { useMemo } from 'react';
 import { Badge, type Column } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
-import { RolePermissionsDrawer } from '@/components/admin/role-permissions-drawer';
+import { RolePermissionsPanel } from '@/components/admin/role-permissions-panel';
 import { usePermissions } from '@/lib/permissions';
 import { useRolesList, useRolesMutations } from '@/lib/roles';
 import type { RoleRow } from '@/lib/admin-types';
@@ -19,7 +18,6 @@ const PERMISSIONS: ResourcePermissions = {
 export default function RolesPage() {
   const { can } = usePermissions();
   const canManage = can('roles.manage');
-  const [permsFor, setPermsFor] = useState<RoleRow | null>(null);
 
   const fields = useMemo<FieldDef[]>(
     () => [
@@ -46,34 +44,20 @@ export default function RolesPage() {
   );
 
   return (
-    <>
-      <ResourceManager<RoleRow>
-        resource="roles"
-        title="Roles & Permissions"
-        noun="role"
-        columns={columns}
-        fields={fields}
-        defaultSortBy="name"
-        defaultSortDir="asc"
-        permissions={PERMISSIONS}
-        useList={useRolesList}
-        useMutations={useRolesMutations}
-        rowLabel={(r) => r.name}
-        toFormValues={(r) => ({ key: r.key, name: r.name, description: r.description ?? '' })}
-        extraActions={(row) => (
-          <button
-            type="button"
-            aria-label="Permissions"
-            title="Permissions"
-            onClick={() => setPermsFor(row)}
-            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-background-secondary hover:text-primary"
-          >
-            <ShieldCheck className="h-4 w-4" />
-          </button>
-        )}
-      />
-
-      <RolePermissionsDrawer role={permsFor} open={!!permsFor} onClose={() => setPermsFor(null)} canManage={canManage} />
-    </>
+    <ResourceManager<RoleRow>
+      resource="roles"
+      title="Roles & Permissions"
+      noun="role"
+      columns={columns}
+      fields={fields}
+      defaultSortBy="name"
+      defaultSortDir="asc"
+      permissions={PERMISSIONS}
+      useList={useRolesList}
+      useMutations={useRolesMutations}
+      rowLabel={(r) => r.name}
+      renderFormExtra={({ row }) => <RolePermissionsPanel role={row} canManage={canManage} />}
+      toFormValues={(r) => ({ key: r.key, name: r.name, description: r.description ?? '' })}
+    />
   );
 }

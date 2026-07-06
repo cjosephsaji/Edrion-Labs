@@ -24,6 +24,8 @@ export interface FeeStructureRow {
   className: string | null;
   academicYearId: string | null;
   academicYearName: string | null;
+  termId: string | null;
+  termName: string | null;
   amount: number;
   frequency: FeeFrequency;
   description: string | null;

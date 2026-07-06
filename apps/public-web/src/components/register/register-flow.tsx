@@ -8,7 +8,10 @@ import {
   Check,
   CheckCircle2,
   ChevronRight,
+  FilePlus2,
+  KeyRound,
   Mail,
+  RotateCcw,
   ShieldCheck,
 } from 'lucide-react';
 import {
@@ -33,7 +36,13 @@ import {
   subscriptionInfoSchema,
 } from '@edrion/schemas';
 import { InstitutionType } from '@edrion/shared-types';
-import { registrationApi, RegistrationApiError, type PublicPlan } from './registration-api';
+import {
+  registrationApi,
+  RegistrationApiError,
+  type DraftView,
+  type GeoGuess,
+  type PublicPlan,
+} from './registration-api';
 
 const STORAGE_KEY = 'edrion_registration_v1';
 
@@ -176,6 +185,16 @@ const emptyData = (): Data => ({
   consent: {},
 });
 
+/** Flatten a server JSONB section into form-field values (scalars → strings, booleans kept). */
+function toFormValues(obj: Record<string, unknown>): Record<string, string | boolean> {
+  const out: Record<string, string | boolean> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === null || v === undefined) continue;
+    out[k] = typeof v === 'boolean' ? v : String(v);
+  }
+  return out;
+}
+
 /** Drop empty-string / undefined keys so optional fields aren't coerced to 0/''. */
 function clean(obj: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
@@ -198,9 +217,13 @@ export function RegisterFlow() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [hp, setHp] = useState(''); // honeypot
   const [hydrated, setHydrated] = useState(false);
+  // 'choose' = the landing chooser (continue vs. start new); 'form' = the multi-step form.
+  const [phase, setPhase] = useState<'choose' | 'form'>('choose');
+  const [hasLocal, setHasLocal] = useState(false);
   const draftRef = useRef<{ id: string | null; token: string | null }>({ id: null, token: null });
+  const geoRef = useRef(false);
 
-  // ── Persistence ────────────────────────────────────────────────────────────
+  // ── Persistence ──────────────────────────────────────────────────────────────
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -211,12 +234,65 @@ export function RegisterFlow() {
         if (s.resumeToken) draftRef.current.token = s.resumeToken;
         if (s.emailVerified) setEmailVerified(true);
         if (s.verifiedEmail) setVerifiedEmail(s.verifiedEmail);
+        // Both id + token means this device can resume straight into the form (no code needed).
+        if (s.draftId && s.resumeToken) setHasLocal(true);
       }
     } catch {
       /* ignore corrupt storage */
     }
     setHydrated(true);
   }, []);
+
+  /** Rehydrate the whole form from a server draft (used on cross-device resume). */
+  const hydrateFromView = useCallback((v: DraftView) => {
+    const next = emptyData();
+    const secs: SectionKey[] = ['institutionInfo', 'location', 'campusInfo', 'primaryContact', 'subscription', 'consent'];
+    for (const k of secs) {
+      const src = v[k] as Record<string, unknown> | null;
+      if (src) next[k] = { ...next[k], ...toFormValues(src) };
+    }
+    setData(next);
+    persist({ data: next });
+    if (v.emailVerified) {
+      setEmailVerified(true);
+      setVerifiedEmail(v.verifiedEmail);
+      persist({ emailVerified: true, verifiedEmail: v.verifiedEmail });
+      setStep(1); // email already done — drop them at the first content step
+    } else {
+      setStep(0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Landing chooser actions ──────────────────────────────────────────────────
+  const startNew = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+    draftRef.current = { id: null, token: null };
+    geoRef.current = false;
+    setData(emptyData());
+    setEmailVerified(false);
+    setVerifiedEmail(null);
+    setErrors({});
+    setStep(0);
+    setPhase('form');
+  };
+
+  const resumeOnThisDevice = () => {
+    setErrors({});
+    setStep(emailVerified ? 1 : 0);
+    setPhase('form');
+  };
+
+  const onResumedByCode = (view: DraftView, id: string, token: string) => {
+    draftRef.current = { id, token };
+    persist({ draftId: id, resumeToken: token });
+    hydrateFromView(view);
+    setPhase('form');
+  };
 
   const persist = useCallback(
     (next: Partial<{ data: Data; draftId: string | null; resumeToken: string | null; emailVerified: boolean; verifiedEmail: string | null }>) => {
@@ -287,24 +363,67 @@ export function RegisterFlow() {
     return false;
   };
 
-  const lastStep = step === STEPS.length; // review screen index — past the last STEPS entry
-  const current = STEPS[step]; // undefined on the review screen; only read when !lastStep
-  const isContact = current?.key === 'primaryContact';
+  // Step 0 = email, steps 1..N = the section forms, step N+1 = review.
+  const REVIEW_STEP = STEPS.length + 1;
+  const isEmailStep = step === 0;
+  const isReview = step === REVIEW_STEP;
+  const current = isEmailStep || isReview ? undefined : STEPS[step - 1];
   const isConsent = current?.key === 'consent';
   const isSubscription = current?.key === 'subscription';
 
+  // Auto-detect location when the applicant first reaches the Location step (step index 2),
+  // filling only fields they haven't set. Best-effort: server IP geo → browser locale/timezone.
+  useEffect(() => {
+    if (!hydrated || step !== 2 || geoRef.current || data.location.country) return;
+    geoRef.current = true;
+    void (async () => {
+      const g = await registrationApi.geo().catch(() => ({}) as GeoGuess);
+      let country = g.country;
+      let timezone = g.timezone;
+      const city = g.city;
+      if (!country) {
+        try {
+          country = new Intl.Locale(navigator.language).maximize().region ?? undefined;
+        } catch {
+          /* ignore */
+        }
+      }
+      if (!timezone) {
+        try {
+          timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        } catch {
+          /* ignore */
+        }
+      }
+      setData((d) => {
+        const loc = { ...d.location };
+        if (country && !loc.country) loc.country = country;
+        if (city && !loc.city) loc.city = city;
+        if (timezone && (!loc.timezone || loc.timezone === 'UTC')) loc.timezone = timezone;
+        const next = { ...d, location: loc };
+        persist({ data: next });
+        return next;
+      });
+    })();
+  }, [hydrated, step, data.location.country, persist]);
+
   const goNext = async () => {
-    if (!lastStep) {
-      const s = STEPS[step]!;
-      if (!validateSection(s)) return;
-      if (s.key === 'primaryContact' && !emailVerified) {
+    if (isEmailStep) {
+      if (!emailVerified) {
         setErrors((e) => ({ ...e, email: 'Please verify your email to continue.' }));
         return;
       }
+      setErrors({});
+      setStep(1);
+      return;
+    }
+    if (!isReview) {
+      const s = STEPS[step - 1]!;
+      if (!validateSection(s)) return;
       void autosave(s.key);
     }
     setErrors({});
-    setStep((x) => Math.min(x + 1, STEPS.length));
+    setStep((x) => Math.min(x + 1, REVIEW_STEP));
   };
   const goBack = () => {
     setErrors({});
@@ -319,13 +438,13 @@ export function RegisterFlow() {
       const s = STEPS[i]!;
       const res = s.schema.safeParse(coerce(data[s.key]));
       if (!res.success) {
-        setStep(i);
+        setStep(i + 1); // section i renders at step i+1 (step 0 is the email step)
         validateSection(s);
         return;
       }
     }
     if (!emailVerified) {
-      setStep(3);
+      setStep(0);
       setErrors({ email: 'Please verify your email to continue.' });
       return;
     }
@@ -355,7 +474,19 @@ export function RegisterFlow() {
     return <div className="h-64 animate-pulse rounded-2xl border border-border bg-surface" aria-hidden />;
   }
 
-  const totalSteps = STEPS.length + 1; // + review
+  if (phase === 'choose') {
+    return (
+      <LandingChooser
+        hasLocal={hasLocal}
+        verifiedEmail={verifiedEmail}
+        onStartNew={startNew}
+        onResumeLocal={resumeOnThisDevice}
+        onResumedByCode={onResumedByCode}
+      />
+    );
+  }
+
+  const totalSteps = STEPS.length + 2; // email + sections + review
   const progress = Math.round(((step + 1) / totalSteps) * 100);
 
   return (
@@ -372,8 +503,8 @@ export function RegisterFlow() {
           <div className="h-full rounded-full bg-primary transition-all duration-300 ease-standard" style={{ width: `${progress}%` }} />
         </div>
         <ol className="mt-4 hidden flex-wrap items-center gap-x-2.5 gap-y-1 text-xs sm:flex">
-          {STEPS.map((s, i) => (
-            <li key={s.key} className="flex items-center gap-2.5">
+          {['Email', ...STEPS.map((s) => s.title), 'Review'].map((title, i, arr) => (
+            <li key={title} className="flex items-center gap-2.5">
               <span
                 className={cn(
                   'flex items-center gap-1',
@@ -381,17 +512,40 @@ export function RegisterFlow() {
                 )}
               >
                 {i < step ? <Check className="h-3 w-3 shrink-0" /> : null}
-                <span>{s.title}</span>
+                <span>{title}</span>
               </span>
-              <ChevronRight className="h-3 w-3 text-text-muted/40 shrink-0" />
+              {i < arr.length - 1 && <ChevronRight className="h-3 w-3 text-text-muted/40 shrink-0" />}
             </li>
           ))}
-          <li className={lastStep ? 'font-semibold text-primary' : 'text-text-muted'}>Review</li>
         </ol>
       </div>
 
       <div className="p-5 sm:p-6">
-        {current ? (
+        {isEmailStep ? (
+          <div className="page-enter space-y-5">
+            <div>
+              <h3 className="text-lg font-semibold text-text-primary">Let&apos;s start with your email</h3>
+              <p className="text-sm text-text-secondary">
+                We&apos;ll verify it and email you a link so you can continue this registration on any device.
+              </p>
+            </div>
+            <EmailVerify
+              email={(data.primaryContact.email as string) ?? ''}
+              verified={emailVerified}
+              error={errors.email}
+              onEmailChange={(v) => setField('primaryContact', 'email', v)}
+              ensureDraft={ensureDraft}
+              onSavedEmail={async (id, token, email) => {
+                await registrationApi.patch(id, token, { primaryContact: clean({ ...data.primaryContact, email }) });
+              }}
+              onVerified={(email) => {
+                setEmailVerified(true);
+                setVerifiedEmail(email);
+                persist({ emailVerified: true, verifiedEmail: email });
+              }}
+            />
+          </div>
+        ) : current ? (
           <div className="page-enter space-y-5">
             <div>
               <h3 className="text-lg font-semibold text-text-primary">{current.title}</h3>
@@ -421,24 +575,6 @@ export function RegisterFlow() {
               ))}
             </div>
 
-            {isContact && (
-              <EmailVerify
-                email={(data.primaryContact.email as string) ?? ''}
-                verified={emailVerified}
-                error={errors.email}
-                onEmailChange={(v) => setField('primaryContact', 'email', v)}
-                ensureDraft={ensureDraft}
-                onSavedEmail={async (id, token, email) => {
-                  await registrationApi.patch(id, token, { primaryContact: clean({ ...data.primaryContact, email }) });
-                }}
-                onVerified={(email) => {
-                  setEmailVerified(true);
-                  setVerifiedEmail(email);
-                  persist({ emailVerified: true, verifiedEmail: email });
-                }}
-              />
-            )}
-
             {isConsent && (
               <ConsentStep
                 values={data.consent}
@@ -448,7 +584,7 @@ export function RegisterFlow() {
             )}
           </div>
         ) : (
-          <ReviewStep data={data} emailVerified={emailVerified} onEdit={setStep} />
+          <ReviewStep data={data} emailVerified={emailVerified} verifiedEmail={verifiedEmail} onEdit={setStep} />
         )}
 
         {/* Honeypot — hidden from humans + screen readers. */}
@@ -469,7 +605,7 @@ export function RegisterFlow() {
           <Button variant="ghost" size="sm" onClick={goBack} disabled={step === 0 || submitting} className={step === 0 ? 'invisible' : ''}>
             <ArrowLeft className="h-4 w-4" /> Back
           </Button>
-          {!lastStep ? (
+          {!isReview ? (
             <Button onClick={goNext}>
               Continue <ArrowRight className="h-4 w-4" />
             </Button>
@@ -598,11 +734,13 @@ function EmailVerify({
   onSavedEmail: (id: string, token: string, email: string) => Promise<void>;
   onVerified: (email: string) => void;
 }) {
-  const [sent, setSent] = useState(false);
+  const [sentEmail, setSentEmail] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(0);
+  // The code box only applies to the address we actually sent to — editing the email hides it.
+  const sent = sentEmail !== null && sentEmail === email;
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -619,7 +757,8 @@ function EmailVerify({
       const { id, token } = await ensureDraft();
       await onSavedEmail(id, token, email);
       const res = await registrationApi.requestOtp(id, token, email);
-      setSent(true);
+      setSentEmail(email);
+      setCode('');
       setResendIn(res.resendAvailableInSeconds);
     } catch (e) {
       setLocalError((e as RegistrationApiError).message);
@@ -653,7 +792,6 @@ function EmailVerify({
           type="email"
           placeholder="principal@greenwood.edu"
           value={email}
-          disabled={verified}
           onChange={(e) => onEmailChange(e.target.value)}
           className="sm:flex-1"
         />
@@ -667,6 +805,15 @@ function EmailVerify({
           </Button>
         )}
       </div>
+      {verified ? (
+        <p className="mt-2 rounded-md border border-border bg-surface px-3 py-2 text-xs text-text-secondary">
+          <span className="font-medium text-text-primary">Wrong email?</span> Edit the address above and we&apos;ll send a fresh verification code.
+        </p>
+      ) : sent ? (
+        <p className="mt-2 text-xs text-text-muted">
+          <span className="font-medium text-primary">Wrong email?</span> Edit the address above before entering the code.
+        </p>
+      ) : null}
       <FieldError>{error ?? localError}</FieldError>
 
       {sent && !verified && (
@@ -731,14 +878,17 @@ function ConsentStep({
 function ReviewStep({
   data,
   emailVerified,
+  verifiedEmail,
   onEdit,
 }: {
   data: Data;
   emailVerified: boolean;
+  verifiedEmail: string | null;
   onEdit: (step: number) => void;
 }) {
+  // Section i is edited at UI step i+1 (step 0 is the email step).
   const rows: { step: number; title: string; items: [string, unknown][] }[] = STEPS.map((s, i) => ({
-    step: i,
+    step: i + 1,
     title: s.title,
     items: Object.entries(coerce(data[s.key])),
   }));
@@ -748,10 +898,14 @@ function ReviewStep({
         <h3 className="text-lg font-semibold text-text-primary">Review &amp; submit</h3>
         <p className="text-sm text-text-secondary">Check everything looks right before submitting.</p>
       </div>
-      {!emailVerified && (
+      {emailVerified ? (
+        <p className="rounded-md border border-success/30 bg-success-soft px-3 py-2 text-sm text-success">
+          Email verified{verifiedEmail ? <>: <strong>{verifiedEmail}</strong></> : ''}.
+        </p>
+      ) : (
         <p className="rounded-md border border-danger/30 bg-danger/5 px-3 py-2 text-sm text-danger">
           Your email isn't verified yet.{' '}
-          <button className="font-medium underline" onClick={() => onEdit(3)}>
+          <button className="font-medium underline" onClick={() => onEdit(0)}>
             Verify it now
           </button>
           .
@@ -787,6 +941,200 @@ function ReviewStep({
 
 function labelize(k: string): string {
   return k.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase());
+}
+
+/** Opening screen: resume an in-progress registration (this device or via a code) or start fresh. */
+function LandingChooser({
+  hasLocal,
+  verifiedEmail,
+  onStartNew,
+  onResumeLocal,
+  onResumedByCode,
+}: {
+  hasLocal: boolean;
+  verifiedEmail: string | null;
+  onStartNew: () => void;
+  onResumeLocal: () => void;
+  onResumedByCode: (view: DraftView, id: string, token: string) => void;
+}) {
+  const [mode, setMode] = useState<'menu' | 'code'>('menu');
+
+  const Option = ({
+    icon,
+    title,
+    desc,
+    onClick,
+    highlight,
+  }: {
+    icon: React.ReactNode;
+    title: string;
+    desc: string;
+    onClick: () => void;
+    highlight?: boolean;
+  }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex w-full items-center gap-4 rounded-xl border p-4 text-left transition-colors',
+        highlight ? 'border-primary bg-primary/5 hover:bg-primary/10' : 'border-border hover:border-primary/40 hover:bg-background-secondary',
+      )}
+    >
+      <span
+        className={cn(
+          'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
+          highlight ? 'bg-primary text-white' : 'bg-background-secondary text-primary',
+        )}
+      >
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold text-text-primary">{title}</span>
+        <span className="block text-xs text-text-secondary">{desc}</span>
+      </span>
+      <ArrowRight className="h-4 w-4 shrink-0 text-text-muted" />
+    </button>
+  );
+
+  return (
+    <div className="rounded-2xl border border-border bg-surface-elevated p-6 shadow-sm sm:p-8">
+      <h2 className="text-xl font-semibold text-text-primary">Register your institution</h2>
+      <p className="mt-1 text-sm text-text-secondary">
+        Start a new application, or continue one you already began.
+      </p>
+
+      {mode === 'menu' ? (
+        <div className="page-enter mt-6 space-y-3">
+          {hasLocal && (
+            <Option
+              highlight
+              icon={<RotateCcw className="h-5 w-5" />}
+              title="Resume on this device"
+              desc={verifiedEmail ? `Pick up your draft for ${verifiedEmail}.` : 'Pick up where you left off.'}
+              onClick={onResumeLocal}
+            />
+          )}
+          <Option
+            icon={<KeyRound className="h-5 w-5" />}
+            title="Continue with a code"
+            desc="Get a code emailed to your registration address to continue on any device."
+            onClick={() => setMode('code')}
+          />
+          <Option
+            icon={<FilePlus2 className="h-5 w-5" />}
+            title="Start a new registration"
+            desc="Begin a fresh institution application."
+            onClick={onStartNew}
+          />
+        </div>
+      ) : (
+        <div className="page-enter mt-6">
+          <ResumePanel onResumed={onResumedByCode} onBack={() => setMode('menu')} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Cross-device resume: verify ownership of a draft with an emailed code, then continue it. */
+function ResumePanel({
+  onResumed,
+  onBack,
+}: {
+  onResumed: (view: DraftView, id: string, token: string) => void;
+  onBack: () => void;
+}) {
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [resendIn, setResendIn] = useState(0);
+
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = setInterval(() => setResendIn((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [resendIn]);
+
+  const emailValid = z.string().email().safeParse(email).success;
+
+  const request = async () => {
+    setErr(null);
+    setBusy(true);
+    try {
+      const res = await registrationApi.resumeRequest(email);
+      setSent(true);
+      setCode('');
+      setResendIn(res.resendAvailableInSeconds);
+    } catch (e) {
+      setErr((e as RegistrationApiError).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const verify = async () => {
+    setErr(null);
+    setBusy(true);
+    try {
+      const res = await registrationApi.resumeVerify(email, code.trim());
+      onResumed(res.draft, res.id, res.resumeToken);
+    } catch (e) {
+      setErr((e as RegistrationApiError).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-border bg-background-secondary p-4">
+      <Label htmlFor="resume-email">Registration email</Label>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Input
+          id="resume-email"
+          type="email"
+          placeholder="principal@greenwood.edu"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setSent(false);
+          }}
+          className="sm:flex-1"
+        />
+        <Button variant="secondary" onClick={request} loading={busy && !sent} disabled={!emailValid || busy || resendIn > 0}>
+          <Mail className="h-4 w-4" /> {sent ? (resendIn > 0 ? `Resend in ${resendIn}s` : 'Resend code') : 'Send code'}
+        </Button>
+      </div>
+
+      {sent && (
+        <div className="page-enter mt-3 border-t border-border pt-3">
+          <p className="mb-2 flex items-center gap-1.5 text-sm text-text-secondary">
+            <ShieldCheck className="h-4 w-4 text-primary" /> If a registration exists for{' '}
+            <strong className="text-text-primary">{email}</strong>, we&apos;ve emailed it a 6-digit code.
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Input
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="123456"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+              className="font-mono tracking-[0.4em] sm:max-w-[180px]"
+            />
+            <Button onClick={verify} loading={busy} disabled={code.length !== 6 || busy}>
+              Continue <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <FieldError>{err}</FieldError>
+      <button className="mt-3 flex items-center gap-1 text-xs font-medium text-primary hover:underline" onClick={onBack}>
+        <ArrowLeft className="h-3 w-3" /> Back to options
+      </button>
+    </div>
+  );
 }
 
 function formatPrice(minor: number, currency: string): string {

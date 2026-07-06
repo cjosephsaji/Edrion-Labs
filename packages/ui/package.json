@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@edrion/schemas": "workspace:*",
+    "@edrion/shared-types": "workspace:*",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.451.0",

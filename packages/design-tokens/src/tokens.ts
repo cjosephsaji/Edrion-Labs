@@ -5,41 +5,41 @@
  * variables generated in css.ts), never raw hex values. Adjust the palette here and every
  * surface updates coherently.
  *
- * Colour direction: warm light ivory (lighter than the legacy cream), dark-green sidebar,
- * green primary actions, muted secondary text, soft borders.
+ * Colour direction: warm ivory, composed dark-green navigation, refined primary actions,
+ * muted olive/brown secondary text, soft warm borders.
  */
 
 /** Raw brand palette. Starting values from the brief — tune here, nowhere else. */
 export const palette = {
   // Surfaces (warm ivory)
-  background: '#faf9f5',
-  backgroundSecondary: '#f6f3eb',
-  surface: '#fffdf8',
+  background: '#f8f5ee',
+  backgroundSecondary: '#f1ecdf',
+  surface: '#fffaf1',
   surfaceElevated: '#ffffff',
 
   // Sidebar (dark green)
-  sidebar: '#103b30',
-  sidebarHover: '#194b3e',
-  sidebarActive: '#2d6a55',
-  sidebarText: '#dbe9e2',
-  sidebarMuted: '#86a497',
+  sidebar: '#0d3229',
+  sidebarHover: '#17473b',
+  sidebarActive: '#e3f0e8',
+  sidebarText: '#e8f1ec',
+  sidebarMuted: '#9db9ad',
 
   // Primary (green)
-  primary: '#23664f',
-  primaryHover: '#1c5844',
-  primarySoft: '#e2f0e9',
+  primary: '#1f604a',
+  primaryHover: '#164f3d',
+  primarySoft: '#deeee4',
   primaryForeground: '#ffffff',
 
   // Text
-  textPrimary: '#25251f',
-  textSecondary: '#6f6b60',
+  textPrimary: '#25241d',
+  textSecondary: '#686355',
   // Darkened from #989181 (2.8–3.1:1, below WCAG AA) to meet AA on the reading surfaces:
   // ≥4.7:1 on surface/background, ≥3:1 (AA large/UI) on secondary panels. (Phase 9c.)
-  textMuted: '#776f60',
+  textMuted: '#7a725f',
 
   // Borders
-  border: '#e5dfd2',
-  borderStrong: '#d8cfbf',
+  border: '#e2d9c8',
+  borderStrong: '#cfc4af',
 
   // Status
   success: '#37825f',
@@ -52,7 +52,7 @@ export const palette = {
   infoSoft: '#e0ecf2',
 
   // Focus ring
-  ring: '#2d6a55',
+  ring: '#1f604a',
 } as const;
 
 /**
@@ -155,10 +155,10 @@ export const sizing = {
 
 /** Soft shadows — subtle, never heavy. */
 export const shadow = {
-  xs: '0 1px 2px 0 rgb(37 37 31 / 0.04)',
-  sm: '0 1px 3px 0 rgb(37 37 31 / 0.06), 0 1px 2px -1px rgb(37 37 31 / 0.05)',
-  md: '0 4px 10px -2px rgb(37 37 31 / 0.07), 0 2px 4px -2px rgb(37 37 31 / 0.05)',
-  lg: '0 12px 28px -6px rgb(37 37 31 / 0.10), 0 4px 8px -4px rgb(37 37 31 / 0.06)',
+  xs: '0 1px 2px 0 rgb(42 38 29 / 0.04)',
+  sm: '0 2px 8px -4px rgb(42 38 29 / 0.16), 0 1px 2px -1px rgb(42 38 29 / 0.08)',
+  md: '0 12px 26px -18px rgb(42 38 29 / 0.28), 0 2px 6px -3px rgb(42 38 29 / 0.10)',
+  lg: '0 22px 48px -28px rgb(42 38 29 / 0.34), 0 10px 20px -16px rgb(42 38 29 / 0.18)',
   focus: `0 0 0 3px ${palette.primarySoft}`,
 } as const;
 

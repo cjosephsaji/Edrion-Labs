@@ -3,6 +3,7 @@
  * the web app's global stylesheet. Components read these via Tailwind utilities, never hex.
  */
 import { darkTheme, lightTheme, motion, radius, shadow, sizing, type ColorTokens } from './tokens';
+import { studentThemes, type StudentThemeName } from './student';
 
 function colorVars(theme: ColorTokens): string {
   return Object.entries(theme)
@@ -24,7 +25,23 @@ function staticVars(): string {
   return lines.join('\n');
 }
 
-/** Full CSS string: :root (light) + [data-theme='dark'] + reduced-motion. */
+function studentThemeVars(themeName: StudentThemeName): string {
+  const theme = studentThemes[themeName];
+  return Object.entries(theme)
+    .map(([key, value]) => `    --st-${key}: ${value};`)
+    .join('\n');
+}
+
+function studentThemeBlocks(): string {
+  const names: StudentThemeName[] = ['standard', 'dim', 'dark'];
+  return names
+    .map(
+      (name) => `  [data-student-theme='${name}'] {\n${studentThemeVars(name)}\n  }`,
+    )
+    .join('\n\n');
+}
+
+/** Full CSS string: :root (light) + [data-theme='dark'] + student themes + reduced-motion. */
 export function generateTokenCss(): string {
   return `:root {
 ${colorVars(lightTheme)}
@@ -35,6 +52,8 @@ ${staticVars()}
 ${colorVars(darkTheme)}
   }
 
+${studentThemeBlocks()}
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
@@ -42,6 +61,12 @@ ${colorVars(darkTheme)}
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+  }
+
+  [data-reduced-motion='true'] *, [data-reduced-motion='true'] *::before, [data-reduced-motion='true'] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 `;
 }

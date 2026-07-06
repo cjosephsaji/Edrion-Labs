@@ -4,7 +4,7 @@ import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { campuses } from './campuses';
 import { students } from './people';
-import { teachers } from './people';
+import { staff } from './people';
 import { institutionUsers } from './users';
 
 /**
@@ -120,7 +120,7 @@ export const parentPtmSlots = pgTable(
       .references(() => parentPtmEvents.id, { onDelete: 'cascade' }),
     teacherId: uuid('teacher_id')
       .notNull()
-      .references(() => teachers.id, { onDelete: 'cascade' }),
+      .references(() => staff.id, { onDelete: 'cascade' }),
     startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
     endsAt: timestamp('ends_at', { withTimezone: true }).notNull(),
     /** Bookable capacity (usually 1). */

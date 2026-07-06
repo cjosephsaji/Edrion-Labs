@@ -32,14 +32,19 @@ export const ACADEMIC_RESOURCES = [
   'academic-years',
   'departments',
   'grade-levels',
+  'department-grade-levels',
   'subjects',
   'classes',
+  'academic-terms',
 ] as const;
 export type AcademicResource = (typeof ACADEMIC_RESOURCES)[number];
 
 /** Common list query for every academic directory: page + sort + free-text search. */
 export const academicsListQuerySchema = paginationQuerySchema.merge(sortQuerySchema).extend({
   search: z.string().trim().max(160).optional(),
+  departmentId: z.string().uuid().optional(),
+  programmeLevelId: z.string().uuid().optional(),
+  termId: z.string().uuid().optional(),
 });
 export type AcademicsListQuery = z.infer<typeof academicsListQuerySchema>;
 
@@ -113,6 +118,30 @@ export const updateGradeLevelSchema = z.object({
 });
 export type UpdateGradeLevelInput = z.infer<typeof updateGradeLevelSchema>;
 
+// --- department grade levels (programme ↔ year links) ------------------------
+
+export const DEPARTMENT_GRADE_LEVEL_STATUSES = ['active', 'inactive'] as const;
+export const departmentGradeLevelStatusSchema = z.enum(DEPARTMENT_GRADE_LEVEL_STATUSES);
+
+export const createDepartmentGradeLevelSchema = z.object({
+  departmentId: z.string().uuid(),
+  gradeLevelId: z.string().uuid(),
+  sequence: z.coerce.number().int().min(0).max(100).default(0),
+  durationLabel: z.string().trim().max(64).nullish(),
+  status: departmentGradeLevelStatusSchema.default('active'),
+});
+export type CreateDepartmentGradeLevelInput = z.infer<typeof createDepartmentGradeLevelSchema>;
+
+export const updateDepartmentGradeLevelSchema = z.object({
+  departmentId: z.string().uuid().optional(),
+  gradeLevelId: z.string().uuid().optional(),
+  sequence: z.coerce.number().int().min(0).max(100).optional(),
+  durationLabel: z.string().trim().max(64).nullish(),
+  status: departmentGradeLevelStatusSchema.optional(),
+  ...withVersion,
+});
+export type UpdateDepartmentGradeLevelInput = z.infer<typeof updateDepartmentGradeLevelSchema>;
+
 // --- subjects ----------------------------------------------------------------
 
 export const createSubjectSchema = z.object({
@@ -137,6 +166,8 @@ export type UpdateSubjectInput = z.infer<typeof updateSubjectSchema>;
 export const createClassSchema = z.object({
   academicYearId: z.string().uuid(),
   gradeLevelId: z.string().uuid(),
+  programmeLevelId: optionalUuid,
+  termId: optionalUuid,
   name,
   section: z.string().trim().max(32).nullish(),
   classTeacherId: optionalUuid,
@@ -148,6 +179,8 @@ export type CreateClassInput = z.infer<typeof createClassSchema>;
 export const updateClassSchema = z.object({
   academicYearId: z.string().uuid().optional(),
   gradeLevelId: z.string().uuid().optional(),
+  programmeLevelId: optionalUuid,
+  termId: optionalUuid,
   name: name.optional(),
   section: z.string().trim().max(32).nullish(),
   classTeacherId: optionalUuid,
@@ -167,3 +200,59 @@ export type AssignClassSubjectInput = z.infer<typeof assignClassSubjectSchema>;
 /** Delete (and other version-guarded mutations sent with just a version). */
 export const versionedDeleteSchema = z.object({ ...withVersion });
 export type VersionedDeleteInput = z.infer<typeof versionedDeleteSchema>;
+
+// --- academic terms (periods within an academic year) ----------------------
+
+export const ACADEMIC_TERM_KINDS = ['term', 'semester', 'trimester', 'quarter'] as const;
+export const academicTermKindSchema = z.enum(ACADEMIC_TERM_KINDS);
+export type AcademicTermKind = (typeof ACADEMIC_TERM_KINDS)[number];
+
+export const ACADEMIC_TERM_STATUSES = ['planning', 'active', 'archived'] as const;
+export const academicTermStatusSchema = z.enum(ACADEMIC_TERM_STATUSES);
+export type AcademicTermStatus = (typeof ACADEMIC_TERM_STATUSES)[number];
+
+export const createAcademicTermSchema = z
+  .object({
+    academicYearId: z.string().uuid(),
+    programmeLevelId: optionalUuid,
+    departmentId: optionalUuid,
+    gradeLevelId: optionalUuid,
+    name,
+    kind: academicTermKindSchema.default('term'),
+    sequence: z.coerce.number().int().min(1).max(20).default(1),
+    startDate: isoDate,
+    endDate: isoDate,
+    status: academicTermStatusSchema.default('planning'),
+    isCurrent: z.boolean().default(false),
+  })
+  .refine((v) => v.endDate > v.startDate, {
+    message: 'End date must be after the start date',
+    path: ['endDate'],
+  });
+export type CreateAcademicTermInput = z.infer<typeof createAcademicTermSchema>;
+
+export const updateAcademicTermSchema = z
+  .object({
+    academicYearId: z.string().uuid().optional(),
+    programmeLevelId: optionalUuid,
+    departmentId: optionalUuid,
+    gradeLevelId: optionalUuid,
+    name: name.optional(),
+    kind: academicTermKindSchema.optional(),
+    sequence: z.coerce.number().int().min(1).max(20).optional(),
+    startDate: isoDate.optional(),
+    endDate: isoDate.optional(),
+    status: academicTermStatusSchema.optional(),
+    isCurrent: z.boolean().optional(),
+    ...withVersion,
+  })
+  .refine((v) => !v.startDate || !v.endDate || v.endDate > v.startDate, {
+    message: 'End date must be after the start date',
+    path: ['endDate'],
+  });
+export type UpdateAcademicTermInput = z.infer<typeof updateAcademicTermSchema>;
+
+export const programmeStructureQuerySchema = z.object({
+  departmentId: z.string().uuid().optional(),
+});
+export type ProgrammeStructureQuery = z.infer<typeof programmeStructureQuerySchema>;

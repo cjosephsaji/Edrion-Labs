@@ -70,12 +70,12 @@ export function DataTable<T>({
     a === 'right' ? 'text-right' : a === 'center' ? 'text-center' : 'text-left';
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-surface-elevated">
+    <div className="overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
+        <table className="w-full border-separate border-spacing-0 text-sm">
           {caption && <caption className="sr-only">{caption}</caption>}
           <thead>
-            <tr className="border-b border-border bg-surface text-left">
+            <tr className="text-left">
               {columns.map((c) => {
                 const active = c.sortable && sortBy === c.key;
                 const Icon = !c.sortable
@@ -91,7 +91,7 @@ export function DataTable<T>({
                     scope="col"
                     aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : c.sortable ? 'none' : undefined}
                     className={cn(
-                      'h-table-row whitespace-nowrap px-4 text-xs font-semibold uppercase tracking-wide text-text-muted',
+                      'h-table-header whitespace-nowrap border-b border-border bg-background-secondary/70 px-4 text-[11px] font-semibold uppercase tracking-wide text-text-muted first:pl-5 last:pr-5',
                       align(c.align),
                     )}
                   >
@@ -121,27 +121,31 @@ export function DataTable<T>({
             </tr>
           </thead>
           {!loading && rows.length > 0 && (
-            <tbody className="divide-y divide-border">
+            <tbody>
               {rows.map((row) => (
                 <tr
                   key={rowKey(row)}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   className={cn(
-                    'transition-colors',
-                    onRowClick && 'cursor-pointer hover:bg-background-secondary',
+                    'transition-[background-color,box-shadow] duration-100',
+                    onRowClick && 'cursor-pointer hover:bg-primary-soft/45',
                   )}
                 >
                   {columns.map((c) => (
                     <td
                       key={c.key}
-                      className={cn('h-table-row px-4 text-text-primary', align(c.align), c.className)}
+                      className={cn(
+                        'h-table-row border-b border-border/80 px-4 text-text-primary first:pl-5 last:pr-5',
+                        align(c.align),
+                        c.className,
+                      )}
                     >
                       {c.render ? c.render(row) : String((row as Record<string, unknown>)[c.key] ?? '')}
                     </td>
                   ))}
                   {rowActions && (
                     <td
-                      className="h-table-row px-4 text-right"
+                      className="h-table-row border-b border-border/80 px-4 text-right"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {rowActions(row)}
@@ -164,7 +168,7 @@ export function DataTable<T>({
       {/* Footer / pagination */}
       <nav
         aria-label="Table pagination"
-        className="flex items-center justify-between gap-3 border-t border-border px-4 py-2.5 text-sm text-text-muted"
+        className="flex items-center justify-between gap-3 bg-surface px-4 py-3 text-sm text-text-muted"
       >
         <span aria-live="polite">
           {total === 0 ? 'No results' : `${from}–${to} of ${total}`}
@@ -200,8 +204,8 @@ function PagerButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'rounded-md border border-border px-2.5 py-1 text-sm font-medium text-text-secondary transition-colors',
-        'hover:bg-background-secondary hover:text-text-primary disabled:pointer-events-none disabled:opacity-40',
+        'rounded-full border border-border bg-surface-elevated px-3 py-1 text-sm font-medium text-text-secondary transition-[background-color,color,border-color]',
+        'hover:border-border-strong hover:bg-background-secondary hover:text-text-primary disabled:pointer-events-none disabled:opacity-40',
       )}
     >
       {children}

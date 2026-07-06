@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { InstitutionType } from '@edrion/shared-types';
+import { TERM_KEYS } from '@edrion/shared-types';
 import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
 import { institutionTypeSchema } from './institutions';
 import {
@@ -99,6 +100,7 @@ export const SETTINGS_CATEGORY_META: { key: string; label: string; description?:
   { key: 'localization', label: 'Localization', description: 'Language, date/time and number formats.' },
   { key: 'finance', label: 'Finance', description: 'Operating currency for fees, payroll and reports.' },
   { key: 'academic', label: 'Academic', description: 'Academic year and grading defaults.' },
+  { key: 'nomenclature', label: 'Nomenclature', description: 'Labels for academic structure and people (Years vs Grades, etc.).' },
   { key: 'attendance', label: 'Attendance', description: 'Attendance thresholds and lateness rules.' },
   { key: 'notifications', label: 'Notifications', description: 'How announcements and alerts are delivered.' },
   { key: 'communication', label: 'Communication', description: 'Parent and staff messaging.' },
@@ -150,6 +152,58 @@ export const SETTINGS_BY_KEY: Record<string, SettingDef> = Object.fromEntries(SE
 
 /** A resolved effective settings object: registry keys → typed values. */
 export type EffectiveSettings = Record<string, string | number | boolean>;
+
+// =============================================================================
+// Nomenclature (institution-type presets + per-tenant overrides)
+// =============================================================================
+
+/** One side of a label pair may be omitted — the server falls back to the type preset for blanks. */
+const termLabelOverrideSchema = z.object({
+  singular: z.string().trim().min(1).max(40).optional(),
+  plural: z.string().trim().min(1).max(40).optional(),
+});
+
+/** Drop empty / whitespace-only entries before Zod runs (the UI may briefly hold cleared fields). */
+function sanitizeNomenclatureOverridesInput(raw: unknown): import('@edrion/shared-types').NomenclatureOverrides {
+  if (!raw || typeof raw !== 'object') return {};
+  const cleaned: import('@edrion/shared-types').NomenclatureOverrides = {};
+  for (const [key, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (!(TERM_KEYS as readonly string[]).includes(key)) continue;
+    if (!v || typeof v !== 'object') continue;
+    const o = v as { singular?: string; plural?: string };
+    const singular = o.singular?.trim();
+    const plural = o.plural?.trim();
+    if (!singular && !plural) continue;
+    cleaned[key as (typeof TERM_KEYS)[number]] = {
+      ...(singular ? { singular } : {}),
+      ...(plural ? { plural } : {}),
+    };
+  }
+  return cleaned;
+}
+
+export const nomenclatureOverrideSchema = z.object(
+  Object.fromEntries(TERM_KEYS.map((k) => [k, termLabelOverrideSchema.optional()])) as Record<
+    (typeof TERM_KEYS)[number],
+    z.ZodOptional<typeof termLabelOverrideSchema>
+  >,
+);
+export type NomenclatureOverrideInput = z.infer<typeof nomenclatureOverrideSchema>;
+
+export type { NomenclatureOverrides } from '@edrion/shared-types';
+
+export const putNomenclatureOverridesSchema = z.object({
+  overrides: z.preprocess(sanitizeNomenclatureOverridesInput, nomenclatureOverrideSchema),
+});
+export type PutNomenclatureOverridesInput = z.infer<typeof putNomenclatureOverridesSchema>;
+
+/** Effective settings response includes resolved nomenclature alongside scalar registry values. */
+export interface EffectiveSettingsResponse {
+  values: EffectiveSettings;
+  nomenclature: import('@edrion/shared-types').ResolvedNomenclature;
+  /** Stored tenant overrides (empty object when none). */
+  nomenclatureOverrides: import('@edrion/shared-types').NomenclatureOverrides;
+}
 
 /** PUT body for the curated settings form — a partial map of known keys to values. */
 export const putEffectiveSettingsSchema = z.object({

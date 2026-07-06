@@ -8,7 +8,10 @@ import {
   useClassOptions,
   useSubjectOptions,
 } from '@/lib/academics';
-import { useTeacherOptions } from '@/lib/people';
+import { useTeachingStaffOptions } from '@/lib/people';
+import { useProgrammeFacetFilters } from '@/lib/programme-facets';
+import { useAcademicContextFilters } from '@/lib/academic-context';
+import { useTerm } from '@/lib/term';
 import { useTimetableList, useTimetableMutations, type TimetableSlotRow } from '@/lib/timetable';
 
 const PERMISSIONS: ResourcePermissions = {
@@ -38,47 +41,61 @@ const DAY_LABEL: Record<number, string> = {
 };
 
 export default function TimetablePage() {
-  const { data: classes } = useClassOptions();
+  const { t } = useTerm();
+  const facets = useProgrammeFacetFilters();
+  const contextFilters = useAcademicContextFilters();
+  const { data: classes } = useClassOptions(facets.classFilters);
   const { data: subjects } = useSubjectOptions();
-  const { data: teachers } = useTeacherOptions();
+  const { data: teachers } = useTeachingStaffOptions();
   const { data: years } = useAcademicYearOptions();
 
   const fields = useMemo<FieldDef[]>(
     () => [
       {
         name: 'classId',
-        label: 'Class',
+        label: t('class'),
         type: 'select',
         required: true,
         options: (classes?.items ?? []).map((c) => ({ value: c.id, label: c.name })),
       },
       {
         name: 'subjectId',
-        label: 'Subject',
+        label: t('subject'),
         type: 'select',
         nullable: true,
         options: (subjects?.items ?? []).map((s) => ({ value: s.id, label: s.name })),
       },
       {
         name: 'teacherId',
-        label: 'Teacher',
+        label: t('teacher'),
         type: 'select',
         nullable: true,
-        options: (teachers?.items ?? []).map((t) => ({ value: t.id, label: `${t.firstName} ${t.lastName}` })),
+        options: (teachers ?? []).map((te) => ({ value: te.id, label: `${te.firstName} ${te.lastName}` })),
       },
       { name: 'dayOfWeek', label: 'Day', type: 'select', required: true, options: DAYS },
       { name: 'startTime', label: 'Start (HH:MM)', type: 'text', required: true, placeholder: 'e.g. 09:00' },
       { name: 'endTime', label: 'End (HH:MM)', type: 'text', required: true, placeholder: 'e.g. 09:45' },
       {
         name: 'academicYearId',
-        label: 'Academic year',
+        label: t('academicYear'),
         type: 'select',
         nullable: true,
         options: (years?.items ?? []).map((y) => ({ value: y.id, label: y.name })),
       },
+      ...(facets.showFacets
+        ? [
+            {
+              name: 'termId',
+              label: t('term'),
+              type: 'select' as const,
+              nullable: true,
+              options: facets.termOptions,
+            },
+          ]
+        : []),
       { name: 'room', label: 'Room', type: 'text', nullable: true, placeholder: 'Optional' },
     ],
-    [classes, subjects, teachers, years],
+    [classes, subjects, teachers, years, facets.showFacets, facets.termOptions, t],
   );
 
   const columns = useMemo<Column<TimetableSlotRow>[]>(
@@ -90,12 +107,12 @@ export default function TimetablePage() {
         sortable: true,
         render: (r) => <span className="tabular-nums">{r.startTime}–{r.endTime}</span>,
       },
-      { key: 'className', header: 'Class', render: (r) => r.className ?? '—' },
-      { key: 'subjectName', header: 'Subject', render: (r) => <span className="text-text-muted">{r.subjectName ?? '—'}</span> },
-      { key: 'teacherName', header: 'Teacher', render: (r) => <span className="text-text-muted">{r.teacherName ?? 'Unassigned'}</span> },
+      { key: 'className', header: t('class'), render: (r) => r.className ?? '—' },
+      { key: 'subjectName', header: t('subject'), render: (r) => <span className="text-text-muted">{r.subjectName ?? '—'}</span> },
+      { key: 'teacherName', header: t('teacher'), render: (r) => <span className="text-text-muted">{r.teacherName ?? 'Unassigned'}</span> },
       { key: 'room', header: 'Room', render: (r) => r.room ?? '—' },
     ],
-    [],
+    [t],
   );
 
   return (
@@ -105,6 +122,10 @@ export default function TimetablePage() {
       noun="slot"
       columns={columns}
       fields={fields}
+      filters={facets.showFacets ? facets.filters : undefined}
+      filterValues={facets.showFacets ? facets.filterValues : undefined}
+      onFilterChange={facets.showFacets ? facets.onFilterChange : undefined}
+      extraFilters={contextFilters}
       defaultSortBy="startTime"
       searchable={false}
       permissions={PERMISSIONS}
@@ -119,6 +140,7 @@ export default function TimetablePage() {
         startTime: r.startTime,
         endTime: r.endTime,
         academicYearId: r.academicYearId ?? '',
+        termId: r.termId ?? '',
         room: r.room ?? '',
       })}
     />

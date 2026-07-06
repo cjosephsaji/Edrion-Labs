@@ -54,29 +54,24 @@ export default function ApplyPage() {
         </div>
       </header>
 
-      {/* Form + reassurance */}
-      <section className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-5 py-12 lg:grid-cols-[1.4fr_1fr]">
+      {/* Form */}
+      <section className="mx-auto w-full max-w-2xl px-5 py-12">
         <ApplyFlow resumeDraftId={resumeDraftId} />
+      </section>
 
-        <aside className="space-y-6">
-          <div className="rounded-2xl border border-border bg-surface p-6">
-            <h2 className="text-md font-semibold text-text-primary">How it works</h2>
-            <ul className="mt-4 space-y-4">
-              {BENEFITS.map((b) => (
-                <li key={b.title} className="flex gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
-                    <b.icon className="h-5 w-5" aria-hidden />
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium text-text-primary">{b.title}</p>
-                    <p className="text-sm text-text-secondary">{b.body}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="rounded-2xl border border-border bg-primary-soft/40 p-6">
+      {/* Benefits */}
+      <section className="mx-auto max-w-5xl px-5 pb-12">
+        <div className="grid gap-4 sm:grid-cols-3">
+          {BENEFITS.map((b) => (
+            <div key={b.title} className="rounded-2xl border border-border bg-surface p-5">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                <b.icon className="h-5 w-5" aria-hidden />
+              </span>
+              <p className="mt-3 text-sm font-semibold text-text-primary">{b.title}</p>
+              <p className="mt-1 text-sm text-text-secondary">{b.body}</p>
+            </div>
+          ))}
+          <div className="rounded-2xl border border-border bg-primary-soft/40 p-5 sm:col-span-3">
             <div className="flex items-center gap-2 text-primary">
               <Lock className="h-4 w-4" />
               <span className="text-sm font-semibold">Your data is safe</span>
@@ -86,7 +81,7 @@ export default function ApplyPage() {
               limiting protect against fraud and spam.
             </p>
           </div>
-        </aside>
+        </div>
       </section>
 
       {/* FAQ */}

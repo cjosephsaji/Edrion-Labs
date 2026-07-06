@@ -44,7 +44,7 @@ export class AssignmentsService {
   async create(ctx: PortalActionContext, input: CreateAssignmentInput) {
     await this.assertRef(ctx, 'classes', input.classId, 'class');
     await this.assertOptional(ctx, 'subjects', input.subjectId, 'subject');
-    await this.assertOptional(ctx, 'teachers', input.teacherId, 'teacher');
+    await this.assertOptional(ctx, 'staff', input.teacherId, 'teacher');
     const campusId = this.createCampusId(ctx.scope);
     const row = await this.repo.insert({
       institutionId: ctx.principal.institutionId,
@@ -71,7 +71,7 @@ export class AssignmentsService {
     this.assertInScope(existing?.campusId ?? null, existing, f);
     await this.assertOptional(ctx, 'classes', input.classId, 'class');
     await this.assertOptional(ctx, 'subjects', input.subjectId, 'subject');
-    await this.assertOptional(ctx, 'teachers', input.teacherId, 'teacher');
+    await this.assertOptional(ctx, 'staff', input.teacherId, 'teacher');
     const updated = await this.repo.update(id, input.version, {
       title: input.title ?? existing!.title,
       classId: input.classId ?? existing!.classId,

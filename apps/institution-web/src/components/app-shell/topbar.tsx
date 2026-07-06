@@ -7,6 +7,7 @@ import { NAV } from '@/lib/nav';
 import { usePermissions } from '@/lib/permissions';
 import { useGlobalSearch } from '@/lib/search';
 import { ScopeSwitcher } from './scope-switcher';
+import { AcademicContextSwitcher } from './academic-context-switcher';
 
 /**
  * Top navigation. Title is page-supplied; the scope switcher, global search, Copilot and
@@ -16,11 +17,12 @@ export function Topbar({ title, actions }: { title: string; actions?: React.Reac
   const router = useRouter();
 
   return (
-    <header className="sticky top-0 z-20 flex h-topbar shrink-0 items-center gap-3 border-b border-border bg-surface/80 px-5 backdrop-blur">
-      <h1 className="text-md shrink-0 font-semibold text-text-primary">{title}</h1>
+    <header className="sticky top-0 z-20 flex h-topbar shrink-0 items-center gap-3 border-b border-border bg-surface/90 px-5 shadow-xs backdrop-blur">
+      <h1 className="text-md shrink-0 font-semibold tracking-[0.01em] text-text-primary">{title}</h1>
 
-      <div className="ml-2">
+      <div className="ml-2 flex items-center gap-2">
         <ScopeSwitcher />
+        <AcademicContextSwitcher />
       </div>
 
       <div className="ml-auto flex items-center gap-2">
@@ -111,10 +113,10 @@ function GlobalSearch() {
           if (e.key === 'Escape') setOpen(false);
         }}
         placeholder="Search people, classes, staff…"
-        className="h-9 w-72 rounded-md border border-border bg-surface pl-8 pr-8 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-border-strong"
+        className="h-9 w-72 rounded-full border border-border bg-surface-elevated pl-8 pr-8 text-sm text-text-primary shadow-xs outline-none placeholder:text-text-muted transition-[border-color,box-shadow] focus:border-border-strong focus:shadow-sm"
       />
       {open && hasQuery && (
-        <div className="absolute right-0 top-full z-30 mt-2 max-h-[70vh] w-80 overflow-y-auto overscroll-contain rounded-lg border border-border bg-surface-elevated shadow-lg animate-fade-in-up">
+        <div className="absolute right-0 top-full z-30 mt-2 max-h-[70vh] w-80 overflow-y-auto overscroll-contain rounded-xl border border-border bg-surface-elevated shadow-lg animate-fade-in-up">
           {groups.map((grp) => (
             <div key={grp.type} className="border-b border-border last:border-b-0">
               <p className="px-3 pb-1 pt-2 text-xs font-medium uppercase tracking-wide text-text-muted">{grp.label}</p>
@@ -123,7 +125,7 @@ function GlobalSearch() {
                   <li key={`${grp.type}:${h.id}`}>
                     <button
                       onClick={() => go(h.href)}
-                      className="flex w-full flex-col items-start gap-0.5 px-3 py-1.5 text-left hover:bg-background-secondary"
+                      className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left transition-colors hover:bg-primary-soft/55"
                     >
                       <span className="truncate text-sm text-text-primary">{h.label}</span>
                       {h.sublabel && <span className="truncate text-xs text-text-muted">{h.sublabel}</span>}
@@ -144,7 +146,7 @@ function GlobalSearch() {
                     <li key={r.href}>
                       <button
                         onClick={() => go(r.href)}
-                        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-text-secondary hover:bg-background-secondary hover:text-text-primary"
+                        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-text-secondary transition-colors hover:bg-primary-soft/55 hover:text-text-primary"
                       >
                         <Icon className="h-4 w-4 text-text-muted" />
                         {r.label}
@@ -186,7 +188,7 @@ function Notifications() {
         <Bell className="h-[18px] w-[18px]" />
       </Button>
       {open && (
-        <div className="absolute right-0 top-full z-30 mt-2 w-72 overflow-hidden rounded-lg border border-border bg-surface-elevated shadow-lg animate-fade-in-up">
+        <div className="absolute right-0 top-full z-30 mt-2 w-72 overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-lg animate-fade-in-up">
           <div className="border-b border-border px-4 py-2.5 text-sm font-semibold text-text-primary">
             Notifications
           </div>

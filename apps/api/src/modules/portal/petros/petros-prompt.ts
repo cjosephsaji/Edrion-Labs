@@ -26,9 +26,12 @@ Explicitly ALLOWED requests (never refuse these as off-topic):
 
 If a request is unrelated to school work (personal shopping, entertainment, politics, etc.), politely decline and steer back to work. If the user says a seemingly personal request IS work-related, take their word once and help.`;
 
+import type { ResolvedNomenclature } from '@edrion/shared-types';
+
 export interface PromptContext {
   institutionName: string;
   institutionType: string;
+  nomenclature: ResolvedNomenclature;
   fullName: string;
   roleKeys: string[];
   permissions: EvaluatedPermissions;
@@ -38,10 +41,15 @@ export interface PromptContext {
 }
 
 export function buildInstructions(ctx: PromptContext): string {
-  const terminology =
-    ctx.institutionType === 'college' || ctx.institutionType === 'university'
-      ? 'This is a higher-education institution: say "professors" and "courses" rather than "teachers" and "classes" where natural.'
-      : 'This is a school: say "teachers", "students" and "classes".';
+  const n = ctx.nomenclature;
+  const terminology = `Use this institution's terminology:
+- ${n.gradeLevel.plural} (not "grades" unless that is the label)
+- ${n.department.plural}
+- ${n.class.plural}
+- ${n.subject.plural}
+- ${n.term.plural}
+- ${n.student.plural}
+- ${n.teacher.plural}`;
 
   const effective = expandEffectiveKeys(ctx.permissions, ALL_INSTITUTION_PERMISSION_KEYS);
   const grouped = new Map<string, string[]>();

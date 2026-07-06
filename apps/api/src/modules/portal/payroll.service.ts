@@ -107,7 +107,7 @@ export class PayrollService {
     const run = await this.requireRunInScope(ctx, runId);
     const employeeId = this.employeeId(input.employeeType, input.teacherId, input.staffId);
     const net = this.netOf(input.gross, input.deductions);
-    await this.assertRef(ctx, input.employeeType === 'staff' ? 'staff' : 'teachers', employeeId, input.employeeType);
+    await this.assertRef(ctx, 'staff', employeeId, input.employeeType);
     const dupe = await this.repo.findItemByEmployee(runId, input.employeeType, employeeId);
     if (dupe) {
       throw new ConflictException({
@@ -143,7 +143,7 @@ export class PayrollService {
       input.teacherId !== undefined || input.staffId !== undefined || input.employeeType !== undefined
         ? this.employeeId(employeeType, input.teacherId ?? null, input.staffId ?? null)
         : (currentEmployeeId as string);
-    await this.assertRef(ctx, employeeType === 'staff' ? 'staff' : 'teachers', employeeId, employeeType);
+    await this.assertRef(ctx, 'staff', employeeId, employeeType);
     if (employeeType !== existing.employeeType || employeeId !== currentEmployeeId) {
       const dupe = await this.repo.findItemByEmployee(runId, employeeType, employeeId);
       if (dupe && dupe.id !== itemId) {

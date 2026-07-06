@@ -29,7 +29,6 @@ export class PortalSearchService {
     const r = this.repo;
     return [
       { type: 'student', label: 'Students', permission: 'students.view', href: '/students', fetch: (i, c, t, l) => r.searchStudents(i, c, t, l) },
-      { type: 'teacher', label: 'Teachers', permission: 'teachers.view', href: '/teachers', fetch: (i, c, t, l) => r.searchTeachers(i, c, t, l) },
       { type: 'staff', label: 'Staff', permission: 'staff.view', href: '/staff', fetch: (i, c, t, l) => r.searchStaff(i, c, t, l) },
       { type: 'parent', label: 'Parents', permission: 'parents.view', href: '/parents', fetch: (i, c, t, l) => r.searchParents(i, c, t, l) },
       { type: 'class', label: 'Classes', permission: 'academics.view', href: '/academics/classes', fetch: (i, c, t, l) => r.searchClasses(i, c, t, l) },

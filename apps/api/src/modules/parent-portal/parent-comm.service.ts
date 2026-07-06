@@ -143,9 +143,9 @@ export class ParentCommService {
 
   async ptmSlots(guardian: GuardianContext, eventId: string) {
     const rows = await this.db
-      .select({ id: schema.parentPtmSlots.id, teacherId: schema.parentPtmSlots.teacherId, startsAt: schema.parentPtmSlots.startsAt, endsAt: schema.parentPtmSlots.endsAt, capacity: schema.parentPtmSlots.capacity, bookedCount: schema.parentPtmSlots.bookedCount, teacherFirst: schema.teachers.firstName, teacherLast: schema.teachers.lastName })
+      .select({ id: schema.parentPtmSlots.id, teacherId: schema.parentPtmSlots.teacherId, startsAt: schema.parentPtmSlots.startsAt, endsAt: schema.parentPtmSlots.endsAt, capacity: schema.parentPtmSlots.capacity, bookedCount: schema.parentPtmSlots.bookedCount, teacherFirst: schema.staff.firstName, teacherLast: schema.staff.lastName })
       .from(schema.parentPtmSlots)
-      .leftJoin(schema.teachers, eq(schema.teachers.id, schema.parentPtmSlots.teacherId))
+      .leftJoin(schema.staff, eq(schema.staff.id, schema.parentPtmSlots.teacherId))
       .where(and(eq(schema.parentPtmSlots.eventId, eventId), eq(schema.parentPtmSlots.institutionId, guardian.institutionId)))
       .orderBy(schema.parentPtmSlots.startsAt);
     return { items: rows.map((r) => ({ ...r, available: r.bookedCount < r.capacity })) };
@@ -223,7 +223,7 @@ export class ParentCommService {
       if (student?.classId) {
         const [cls] = await this.db.select({ classTeacherId: schema.classes.classTeacherId }).from(schema.classes).where(eq(schema.classes.id, student.classId)).limit(1);
         const teacherUserId = cls?.classTeacherId
-          ? (await this.db.select({ uid: schema.teachers.institutionUserId }).from(schema.teachers).where(eq(schema.teachers.id, cls.classTeacherId)).limit(1))[0]?.uid ?? null
+          ? (await this.db.select({ uid: schema.staff.institutionUserId }).from(schema.staff).where(eq(schema.staff.id, cls.classTeacherId)).limit(1))[0]?.uid ?? null
           : null;
         assignedTo = teacherUserId;
       }

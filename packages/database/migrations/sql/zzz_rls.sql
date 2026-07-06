@@ -38,12 +38,13 @@ BEGIN
       ('academic_years', 'institution_id'),
       ('departments', 'institution_id'),
       ('grade_levels', 'institution_id'),
+      ('department_grade_levels', 'institution_id'),
+      ('academic_terms', 'institution_id'),
       ('subjects', 'institution_id'),
       ('classes', 'institution_id'),
       ('class_subject_teachers', 'institution_id'),
       -- Institution-portal people directory (Phase 4): tenant-isolated under the API guard.
       ('students', 'institution_id'),
-      ('teachers', 'institution_id'),
       ('staff', 'institution_id'),
       ('parents', 'institution_id'),
       ('student_guardians', 'institution_id'),
@@ -167,7 +168,16 @@ BEGIN
       ('parent_payment_intents', 'institution_id'),
       ('student_documents', 'institution_id'),
       ('document_requests', 'institution_id'),
-      ('profile_change_requests', 'institution_id')
+      ('profile_change_requests', 'institution_id'),
+      -- Student portal (Plan 01): tenant-isolated institutional tables.
+      ('storage_objects', 'institution_id'),
+      ('student_content_pages', 'institution_id'),
+      -- Student portal (Plan 03): institutional bridge tables.
+      ('homework', 'institution_id'),
+      ('class_stream_posts', 'institution_id'),
+      ('class_materials', 'institution_id'),
+      ('courses', 'institution_id'),
+      ('report_cards', 'institution_id')
     ) AS t(tbl, col)
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', spec.tbl);

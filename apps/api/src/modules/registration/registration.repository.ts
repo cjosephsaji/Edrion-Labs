@@ -109,6 +109,22 @@ export class RegistrationRepository {
     return rows.find((r) => r.id !== exceptId);
   }
 
+  /** Most-recently-touched editable (draft) request for this contact email — for OTP resume. */
+  async findLatestDraftByEmail(email: string): Promise<InstitutionRegistrationRequest | undefined> {
+    const [row] = await this.db
+      .select()
+      .from(schema.institutionRegistrationRequests)
+      .where(
+        and(
+          eq(schema.institutionRegistrationRequests.contactEmail, email),
+          eq(schema.institutionRegistrationRequests.status, 'draft'),
+        ),
+      )
+      .orderBy(desc(schema.institutionRegistrationRequests.updatedAt))
+      .limit(1);
+    return row;
+  }
+
   private buildWhere(q: ListRegistrationsQuery): SQL | undefined {
     const t = schema.institutionRegistrationRequests;
     const clauses: SQL[] = [];
@@ -204,13 +220,29 @@ export class RegistrationRepository {
     return Object.fromEntries(rows.map((r) => [r.status, Number(r.value)]));
   }
 
-  /** Count of requests already assigned a public ref for the given year (for the next sequence). */
-  async countRefsForYear(year: number): Promise<number> {
-    const rows = await this.db
-      .select({ value: count() })
+  /** Highest sequence number already used in public refs for the year (0 if none). Gap-safe basis
+   *  for the next ref — unlike count(), a deleted row won't make the next value collide. */
+  async maxRefSeqForYear(year: number): Promise<number> {
+    const prefix = `EDR-REG-${year}-`;
+    const [row] = await this.db
+      .select({ publicRef: schema.institutionRegistrationRequests.publicRef })
       .from(schema.institutionRegistrationRequests)
-      .where(ilike(schema.institutionRegistrationRequests.publicRef, `EDR-REG-${year}-%`));
-    return Number(rows[0]?.value ?? 0);
+      .where(ilike(schema.institutionRegistrationRequests.publicRef, `${prefix}%`))
+      .orderBy(desc(schema.institutionRegistrationRequests.publicRef))
+      .limit(1);
+    if (!row?.publicRef) return 0;
+    const n = Number.parseInt(row.publicRef.slice(prefix.length), 10);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  /** Whether a public ref is already taken — a pre-check for the ref generator's retry loop. */
+  async publicRefExists(ref: string): Promise<boolean> {
+    const [row] = await this.db
+      .select({ id: schema.institutionRegistrationRequests.id })
+      .from(schema.institutionRegistrationRequests)
+      .where(eq(schema.institutionRegistrationRequests.publicRef, ref))
+      .limit(1);
+    return Boolean(row);
   }
 
   // ── Reviews (history + internal notes) ─────────────────────────────────────

@@ -2,7 +2,7 @@ import { date, index, integer, pgTable, text, uniqueIndex, uuid } from 'drizzle-
 import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { campuses } from './campuses';
-import { academicYears, classes, gradeLevels } from './academics';
+import { academicYears, classes, gradeLevels, academicTerms } from './academics';
 import { students } from './people';
 
 /**
@@ -34,6 +34,8 @@ export const feeStructures = pgTable(
     gradeLevelId: uuid('grade_level_id').references(() => gradeLevels.id, { onDelete: 'set null' }),
     classId: uuid('class_id').references(() => classes.id, { onDelete: 'set null' }),
     academicYearId: uuid('academic_year_id').references(() => academicYears.id, { onDelete: 'set null' }),
+    /** Optional link to a structured academic term period (when frequency = term). */
+    termId: uuid('term_id').references(() => academicTerms.id, { onDelete: 'set null' }),
     /** Default amount in minor units. */
     amount: integer('amount').notNull().default(0),
     /** one_time | monthly | term | annual. */

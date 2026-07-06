@@ -7,25 +7,28 @@ import {
 } from '@nestjs/common';
 import { resolveScopeFilter, type InstitutionScope, type ScopeFilter } from '@edrion/auth';
 import type { AuditWriter, AuditEventInput } from '@edrion/audit';
+import { can as hasPerm } from '@edrion/permissions';
 import type {
   AssignGuardianInput,
   CreateParentInput,
   CreateStaffInput,
   CreateStudentInput,
-  CreateTeacherInput,
   PeopleListQuery,
   UpdateParentInput,
   UpdateStaffInput,
   UpdateStudentInput,
-  UpdateTeacherInput,
 } from '@edrion/schemas';
 import { AUDIT_WRITER } from '../../common/tokens';
 import type { Page } from './academics.repository';
 import type { ListResult } from './academics.service';
+import { FeesRepository } from './fees.repository';
 import { PeopleRepository, type RefTable } from './people.repository';
 import { basePortalAudit, type PortalActionContext } from './portal-action-context';
+import { UsersRepository } from './users.repository';
+import { UsersService } from './users.service';
 
 const MODULE = 'portal-people';
+const TEACH_PERMISSION = 'academics.teach';
 
 /**
  * Institution-portal People service (Phase 4). Owns the same tenant invariants as AcademicsService:
@@ -38,6 +41,9 @@ const MODULE = 'portal-people';
 export class PeopleService {
   constructor(
     private readonly repo: PeopleRepository,
+    private readonly users: UsersService,
+    private readonly usersRepo: UsersRepository,
+    private readonly feesRepo: FeesRepository,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
   ) {}
 
@@ -117,85 +123,51 @@ export class PeopleService {
     return ok;
   }
 
-  // === teachers ==============================================================
-
-  async listTeachers(ctx: PortalActionContext, q: PeopleListQuery) {
-    const f = this.filter(ctx);
-    return this.paginate(await this.repo.listTeachers(ctx.principal.institutionId, f.campusIds, q), q);
-  }
-
-  async createTeacher(ctx: PortalActionContext, input: CreateTeacherInput) {
-    await this.assertOptional(ctx, 'departments', input.departmentId, 'department');
-    await this.assertOptional(ctx, 'institutionUsers', input.institutionUserId, 'user');
-    const campusId = this.createCampusId(ctx.scope);
-    const row = await this.repo.insertTeacher({
-      institutionId: ctx.principal.institutionId,
-      campusId,
-      employeeNo: input.employeeNo ?? null,
-      firstName: input.firstName,
-      lastName: input.lastName,
-      email: input.email ?? null,
-      phone: input.phone ?? null,
-      departmentId: input.departmentId ?? null,
-      designation: input.designation ?? null,
-      employmentType: input.employmentType,
-      status: input.status,
-      joinDate: input.joinDate ?? null,
-      institutionUserId: input.institutionUserId ?? null,
-      createdBy: ctx.principal.institutionUserId,
-    });
-    await this.write(ctx, 'teacher.create', 'teacher', row.id, campusId, { newState: { name: this.fullName(row) } });
-    return row;
-  }
-
-  async updateTeacher(ctx: PortalActionContext, id: string, input: UpdateTeacherInput) {
-    const f = this.filter(ctx);
-    const existing = await this.repo.findTeacher(id, ctx.principal.institutionId);
-    this.assertInScope(existing?.campusId ?? null, existing, f);
-    await this.assertOptional(ctx, 'departments', input.departmentId, 'department');
-    await this.assertOptional(ctx, 'institutionUsers', input.institutionUserId, 'user');
-    const updated = await this.repo.updateTeacher(id, input.version, {
-      employeeNo: input.employeeNo === undefined ? existing!.employeeNo : input.employeeNo,
-      firstName: input.firstName ?? existing!.firstName,
-      lastName: input.lastName ?? existing!.lastName,
-      email: input.email === undefined ? existing!.email : input.email,
-      phone: input.phone === undefined ? existing!.phone : input.phone,
-      departmentId: input.departmentId === undefined ? existing!.departmentId : input.departmentId,
-      designation: input.designation === undefined ? existing!.designation : input.designation,
-      employmentType: input.employmentType ?? existing!.employmentType,
-      status: input.status ?? existing!.status,
-      joinDate: input.joinDate === undefined ? existing!.joinDate : input.joinDate,
-      institutionUserId: input.institutionUserId === undefined ? existing!.institutionUserId : input.institutionUserId,
-      updatedBy: ctx.principal.institutionUserId,
-    });
-    if (!updated) throw this.versionConflict();
-    await this.write(ctx, 'teacher.update', 'teacher', id, updated.campusId, {
-      previousState: { name: this.fullName(existing!) },
-      newState: { name: this.fullName(updated) },
-    });
-    return updated;
-  }
-
-  async deleteTeacher(ctx: PortalActionContext, id: string, version: number) {
-    const f = this.filter(ctx);
-    const existing = await this.repo.findTeacher(id, ctx.principal.institutionId);
-    this.assertInScope(existing?.campusId ?? null, existing, f);
-    const ok = await this.guardDelete(() => this.repo.deleteTeacher(id, version));
-    await this.write(ctx, 'teacher.delete', 'teacher', id, existing!.campusId, { previousState: { name: this.fullName(existing!) } });
-    return ok;
-  }
-
   // === staff =================================================================
 
   async listStaff(ctx: PortalActionContext, q: PeopleListQuery) {
     const f = this.filter(ctx);
-    return this.paginate(await this.repo.listStaff(ctx.principal.institutionId, f.campusIds, q), q);
+    const teachingUserIds =
+      q.teaching !== undefined ? await this.usersRepo.userIdsWithPermission(ctx.principal.institutionId, TEACH_PERMISSION) : null;
+    return this.paginate(
+      await this.repo.listStaff(ctx.principal.institutionId, f.campusIds, q, teachingUserIds),
+      q,
+    );
+  }
+
+  async listTeachingStaff(ctx: PortalActionContext) {
+    const f = this.filter(ctx);
+    const teachingUserIds = await this.usersRepo.userIdsWithPermission(ctx.principal.institutionId, TEACH_PERMISSION);
+    const items = await this.repo.listTeachingStaff(ctx.principal.institutionId, f.campusIds, teachingUserIds);
+    return { items, total: items.length };
   }
 
   async createStaff(ctx: PortalActionContext, input: CreateStaffInput) {
     await this.assertOptional(ctx, 'departments', input.departmentId, 'department');
-    await this.assertOptional(ctx, 'institutionUsers', input.institutionUserId, 'user');
+    let institutionUserId = input.institutionUserId ?? null;
     const campusId = this.createCampusId(ctx.scope);
+    const campusIds = campusId ? [campusId] : [];
+
+    if (input.createLogin && !institutionUserId) {
+      if (!input.email) {
+        throw new BadRequestException({ code: 'EMAIL_REQUIRED', message: 'Email is required to create a portal login.' });
+      }
+      const invited = await this.users.invite(ctx, {
+        email: input.email,
+        fullName: `${input.firstName} ${input.lastName}`.trim(),
+        phone: input.phone ?? null,
+        roleKeys: input.roleKeys ?? [],
+        campusIds,
+        requireMfa: false,
+      });
+      institutionUserId = invited.id;
+    } else if (institutionUserId) {
+      await this.assertOptional(ctx, 'institutionUsers', institutionUserId, 'user');
+      if (input.roleKeys && input.roleKeys.length > 0) {
+        await this.users.assignRoleKeys(ctx, institutionUserId, input.roleKeys, campusIds);
+      }
+    }
+
     const row = await this.repo.insertStaff({
       institutionId: ctx.principal.institutionId,
       campusId,
@@ -209,7 +181,7 @@ export class PeopleService {
       employmentType: input.employmentType,
       status: input.status,
       joinDate: input.joinDate ?? null,
-      institutionUserId: input.institutionUserId ?? null,
+      institutionUserId,
       createdBy: ctx.principal.institutionUserId,
     });
     await this.write(ctx, 'staff.create', 'staff', row.id, campusId, { newState: { name: this.fullName(row) } });
@@ -251,6 +223,85 @@ export class PeopleService {
     const ok = await this.guardDelete(() => this.repo.deleteStaff(id, version));
     await this.write(ctx, 'staff.delete', 'staff', id, existing!.campusId, { previousState: { name: this.fullName(existing!) } });
     return ok;
+  }
+
+  async getStaffProfile(ctx: PortalActionContext, id: string) {
+    const f = this.filter(ctx);
+    const data = await this.repo.getStaffProfile(id, ctx.principal.institutionId);
+    if (!data) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Staff not found' });
+    this.assertInScope(data.staff.campusId, data.staff, f);
+
+    const s = data.staff;
+    return {
+      overview: {
+        id: s.id,
+        name: this.fullName(s),
+        employeeNo: s.employeeNo,
+        email: s.email,
+        phone: s.phone,
+        designation: s.designation,
+        employmentType: s.employmentType,
+        status: s.status,
+        joinDate: s.joinDate,
+        departmentName: data.departmentName,
+        campusName: data.campusName,
+        institutionUserId: s.institutionUserId,
+        roleKeys: data.roleKeys,
+      },
+      teaching: hasPerm(ctx.principal.permissions, TEACH_PERMISSION) || data.roleKeys.length > 0
+        ? {
+            classTeacherOf: data.classTeacherOf,
+            subjectTeaching: data.subjectTeaching,
+          }
+        : null,
+    };
+  }
+
+  async getParentProfile(ctx: PortalActionContext, id: string) {
+    const f = this.filter(ctx);
+    const parent = await this.repo.findParent(id, ctx.principal.institutionId);
+    this.assertInScope(parent?.campusId ?? null, parent, f);
+
+    const children = await this.repo.listParentChildren(id, ctx.principal.institutionId);
+    const fees =
+      hasPerm(ctx.principal.permissions, 'fees.view')
+        ? await Promise.all(
+            children.map(async (c) => ({
+              studentId: c.studentId,
+              name: `${c.firstName} ${c.lastName}`.trim(),
+              ...((await this.feesRepo.aggregateStudentInvoices(c.studentId)) ?? {
+                invoices: 0,
+                billedMinor: 0,
+                paidMinor: 0,
+                outstandingMinor: 0,
+                overdue: 0,
+              }),
+            })),
+          )
+        : null;
+
+    return {
+      overview: {
+        id: parent!.id,
+        name: this.fullName(parent!),
+        email: parent!.email,
+        phone: parent!.phone,
+        occupation: parent!.occupation,
+        address: parent!.address,
+        institutionUserId: parent!.institutionUserId,
+      },
+      children: children.map((c) => ({
+        studentId: c.studentId,
+        name: `${c.firstName} ${c.lastName}`.trim(),
+        admissionNo: c.admissionNo,
+        relationship: c.relationship,
+        isPrimary: c.isPrimary,
+        className: c.className,
+        gradeLevelName: c.gradeLevelName,
+        status: c.status,
+      })),
+      fees,
+    };
   }
 
   // === parents ===============================================================
@@ -364,7 +415,6 @@ export class PeopleService {
     return resolveScopeFilter(ctx.principal, ctx.scope);
   }
 
-  /** New rows belong to the active campus, or are institution-owned when viewing the whole institution. */
   private createCampusId(scope: InstitutionScope): string | null {
     return scope.mode === 'campus' ? scope.campusId : null;
   }
@@ -373,11 +423,10 @@ export class PeopleService {
     return `${p.firstName} ${p.lastName}`.trim();
   }
 
-  /** 404 when a row is missing or outside the active campus scope (don't leak existence). */
   private assertInScope<T>(campusId: string | null, row: T | undefined, filter: ScopeFilter): asserts row is T {
     if (!row) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Not found' });
-    if (campusId === null) return; // institution-owned: visible in every scope
-    if (filter.campusIds === null) return; // institution-wide principal: all campuses
+    if (campusId === null) return;
+    if (filter.campusIds === null) return;
     if (!filter.campusIds.includes(campusId)) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Not found in the current scope' });
     }
@@ -390,7 +439,6 @@ export class PeopleService {
     return student;
   }
 
-  /** Validate that a referenced row exists inside the institution (friendly 400 instead of FK 500). */
   private async assertRef(ctx: PortalActionContext, table: RefTable, id: string, label: string): Promise<void> {
     const ok = await this.repo.existsInInstitution(table, id, ctx.principal.institutionId);
     if (!ok) throw new BadRequestException({ code: 'INVALID_REFERENCE', message: `Unknown ${label}` });

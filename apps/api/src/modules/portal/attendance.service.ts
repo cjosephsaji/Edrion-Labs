@@ -44,7 +44,7 @@ export class AttendanceService {
   async createSession(ctx: PortalActionContext, input: CreateAttendanceSessionInput) {
     await this.assertRef(ctx, 'classes', input.classId, 'class');
     await this.assertOptional(ctx, 'subjects', input.subjectId, 'subject');
-    await this.assertOptional(ctx, 'teachers', input.takenById, 'teacher');
+    await this.assertOptional(ctx, 'staff', input.takenById, 'teacher');
     const dupe = await this.repo.findSessionByKey(
       ctx.principal.institutionId,
       input.classId,
@@ -81,7 +81,7 @@ export class AttendanceService {
     this.assertInScope(existing?.campusId ?? null, existing, f);
     await this.assertOptional(ctx, 'classes', input.classId, 'class');
     await this.assertOptional(ctx, 'subjects', input.subjectId, 'subject');
-    await this.assertOptional(ctx, 'teachers', input.takenById, 'teacher');
+    await this.assertOptional(ctx, 'staff', input.takenById, 'teacher');
     const updated = await this.repo.updateSession(id, input.version, {
       classId: input.classId ?? existing!.classId,
       subjectId: input.subjectId === undefined ? existing!.subjectId : input.subjectId,

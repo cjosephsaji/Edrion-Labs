@@ -8,14 +8,16 @@ import {
   currencyLabel,
   type CreatePortalSettingInput,
   type EffectiveSettings,
+  type EffectiveSettingsResponse,
   type InstitutionProfile,
   type PortalSettingsListQuery,
   type PutEffectiveSettingsInput,
+  type PutNomenclatureOverridesInput,
   type SettingDef,
   type UpdateInstitutionProfileInput,
   type UpdatePortalSettingInput,
 } from '@edrion/schemas';
-import { Currency } from '@edrion/shared-types';
+import { Currency, resolveNomenclature, type InstitutionType, type NomenclatureOverrides } from '@edrion/shared-types';
 import type { Institution, NewInstitution } from '@edrion/database';
 import { AUDIT_WRITER } from '../../common/tokens';
 import type { Page } from './academics.repository';
@@ -24,6 +26,9 @@ import { SettingsRepository } from './settings.repository';
 import { basePortalAudit, type PortalActionContext } from './portal-action-context';
 
 const MODULE = 'portal-settings';
+
+const NOMENCLATURE_CATEGORY = 'nomenclature';
+const NOMENCLATURE_KEY = 'overrides';
 
 /** The currencies the platform billing enum (`institutions.currency`) actually accepts. */
 const SUPPORTED_BILLING_CURRENCIES = new Set<string>(Object.values(Currency));
@@ -54,18 +59,21 @@ export class SettingsService {
    * beats the institution-owned value; in institution scope only institution-owned rows apply (a
    * single campus's override must not leak into the institution-wide view).
    */
-  async getEffective(ctx: PortalActionContext): Promise<{ values: EffectiveSettings }> {
+  async getEffective(ctx: PortalActionContext): Promise<EffectiveSettingsResponse> {
     const f = this.filter(ctx);
     const activeCampusId = ctx.scope.mode === 'campus' ? ctx.scope.campusId : null;
-    const rows = await this.repo.getAll(ctx.principal.institutionId, f.campusIds);
+    const [rows, inst] = await Promise.all([
+      this.repo.getAll(ctx.principal.institutionId, f.campusIds),
+      this.repo.getInstitution(ctx.principal.institutionId),
+    ]);
     // Keep the institution-owned row and (in campus scope) the active-campus row; ignore other campuses.
-    const stored = new Map<string, { value: string | null; campusId: string | null }>();
+    const stored = new Map<string, { value: string | null; campusId: string | null; category?: string }>();
     for (const r of rows) {
       if (r.campusId !== null && r.campusId !== activeCampusId) continue;
       const prev = stored.get(r.key);
       // Active-campus override beats institution-owned.
       if (!prev || (prev.campusId === null && r.campusId === activeCampusId)) {
-        stored.set(r.key, { value: r.value, campusId: r.campusId });
+        stored.set(r.key, { value: r.value, campusId: r.campusId, category: r.category });
       }
     }
     const values: EffectiveSettings = {};
@@ -73,11 +81,43 @@ export class SettingsService {
       const override = stored.get(def.key);
       values[def.key] = override && override.value !== null ? this.parse(def, override.value) : def.default;
     }
-    return { values };
+    const nomenclatureOverrides = this.parseNomenclatureOverrides(stored.get(NOMENCLATURE_KEY)?.value);
+    const institutionType = (inst?.type ?? 'school') as InstitutionType;
+    return {
+      values,
+      nomenclature: resolveNomenclature(institutionType, nomenclatureOverrides),
+      nomenclatureOverrides,
+    };
+  }
+
+  /** Persist tenant nomenclature label overrides (institution- or campus-scoped). */
+  async putNomenclatureOverrides(
+    ctx: PortalActionContext,
+    input: PutNomenclatureOverridesInput,
+  ): Promise<EffectiveSettingsResponse> {
+    const campusId = this.createCampusId(ctx.scope);
+    const cleaned = Object.fromEntries(
+      Object.entries(input.overrides).filter(([, v]) => v && (v.singular?.trim() || v.plural?.trim())),
+    ) as NomenclatureOverrides;
+    const value = Object.keys(cleaned).length > 0 ? JSON.stringify(cleaned) : null;
+    await this.repo.upsertValue(
+      ctx.principal.institutionId,
+      campusId,
+      NOMENCLATURE_CATEGORY,
+      NOMENCLATURE_KEY,
+      'Nomenclature overrides',
+      'json',
+      value,
+      ctx.principal.institutionUserId,
+    );
+    await this.write(ctx, 'setting.nomenclature_update', 'institution_setting', NOMENCLATURE_KEY, campusId, {
+      newState: { keys: Object.keys(cleaned) },
+    });
+    return this.getEffective(ctx);
   }
 
   /** Upsert the curated form's known keys; unknown keys are ignored. Institution- or campus-scoped. */
-  async putEffective(ctx: PortalActionContext, input: PutEffectiveSettingsInput): Promise<{ values: EffectiveSettings }> {
+  async putEffective(ctx: PortalActionContext, input: PutEffectiveSettingsInput): Promise<EffectiveSettingsResponse> {
     const campusId = this.createCampusId(ctx.scope);
     for (const [key, raw] of Object.entries(input.values)) {
       const def = SETTINGS_BY_KEY[key];
@@ -205,6 +245,16 @@ export class SettingsService {
     }
     if (def.type === 'boolean') return value === 'true' || value === '1';
     return value;
+  }
+
+  private parseNomenclatureOverrides(raw: string | null | undefined): NomenclatureOverrides {
+    if (!raw) return {};
+    try {
+      const parsed = JSON.parse(raw) as NomenclatureOverrides;
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
   }
 
   async create(ctx: PortalActionContext, input: CreatePortalSettingInput) {

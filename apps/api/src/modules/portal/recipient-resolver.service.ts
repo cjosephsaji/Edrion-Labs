@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, inArray, isNull, or, schema, type Database, type PgColumn, type SQL } from '@edrion/database';
+import { and, eq, inArray, isNull, or, schema, sql, type Database, type PgColumn, type SQL } from '@edrion/database';
 import { DATABASE } from '../../common/tokens';
 import { PortalEntityResolver } from './portal-entity-resolver';
 
@@ -71,7 +71,7 @@ export class RecipientResolver {
     if (ids('campus').length) {
       const cs = this.intersectCampus(ids('campus'), campusIds);
       (await this.allPeople('students', institutionId, cs)).forEach((v) => students.add(v));
-      (await this.allPeople('teachers', institutionId, cs)).forEach((v) => teachers.add(v));
+      (await this.allPeople('staff', institutionId, cs, 'teacher')).forEach((v) => teachers.add(v));
       (await this.allPeople('staff', institutionId, cs)).forEach((v) => staff.add(v));
       (await this.allPeople('parents', institutionId, cs)).forEach((v) => parents.add(v));
     }
@@ -79,7 +79,7 @@ export class RecipientResolver {
     // --- derived: teachers of a class/grade/department; students of a subject ---
     if (ids('teachers_of_class').length) (await this.teachersOfClass(ids('teachers_of_class'), institutionId, campusIds)).forEach((v) => teachers.add(v));
     if (ids('teachers_of_grade').length) (await this.teachersOfGrade(ids('teachers_of_grade'), institutionId, campusIds)).forEach((v) => teachers.add(v));
-    if (ids('teachers_of_department').length) (await this.teachersBy('departmentId', ids('teachers_of_department'), 'teachers', institutionId, campusIds)).forEach((v) => teachers.add(v));
+    if (ids('teachers_of_department').length) (await this.teachersBy('departmentId', ids('teachers_of_department'), institutionId, campusIds)).forEach((v) => teachers.add(v));
     if (ids('students_of_class').length) (await this.studentsBy('classId', ids('students_of_class'), institutionId, campusIds)).forEach((v) => students.add(v));
     if (ids('students_of_grade').length) (await this.studentsBy('gradeLevelId', ids('students_of_grade'), institutionId, campusIds)).forEach((v) => students.add(v));
     if (ids('students_of_department').length) (await this.studentsByDept(ids('students_of_department'), institutionId, campusIds)).forEach((v) => students.add(v));
@@ -94,7 +94,7 @@ export class RecipientResolver {
 
     // --- broadcasts ---
     if (has('all') || has('all_students')) (await this.allPeople('students', institutionId, campusIds)).forEach((v) => students.add(v));
-    if (has('all') || has('all_teachers')) (await this.allPeople('teachers', institutionId, campusIds)).forEach((v) => teachers.add(v));
+    if (has('all') || has('all_teachers')) (await this.allPeople('staff', institutionId, campusIds, 'teacher')).forEach((v) => teachers.add(v));
     if (has('all') || has('all_staff')) (await this.allPeople('staff', institutionId, campusIds)).forEach((v) => staff.add(v));
     if (has('all') || has('all_parents')) (await this.allPeople('parents', institutionId, campusIds)).forEach((v) => parents.add(v));
 
@@ -102,8 +102,8 @@ export class RecipientResolver {
     const [vStudents, vParents, vTeachers, vStaff] = await Promise.all([
       this.validate('students', [...students], institutionId, campusIds),
       this.validate('parents', [...parents], institutionId, campusIds),
-      this.validate('teachers', [...teachers], institutionId, campusIds),
-      this.validate('staff', [...staff], institutionId, campusIds),
+      this.validateStaff([...teachers], institutionId, campusIds, 'teacher'),
+      this.validateStaff([...staff], institutionId, campusIds, 'staff'),
     ]);
 
     const count = vStudents.length + vParents.length + vTeachers.length + vStaff.length;
@@ -183,8 +183,8 @@ export class RecipientResolver {
     return this.studentsBy('classId', classIds, institutionId, campusIds);
   }
 
-  private async teachersBy(col: 'departmentId', anchorIds: string[], tableName: 'teachers', institutionId: string, campusIds: string[] | null) {
-    const t = schema[tableName];
+  private async teachersBy(col: 'departmentId', anchorIds: string[], institutionId: string, campusIds: string[] | null) {
+    const t = schema.staff;
     const rows = await this.db
       .select({ id: t.id })
       .from(t)
@@ -206,7 +206,7 @@ export class RecipientResolver {
       .from(cl)
       .where(and(eq(cl.institutionId, institutionId), inArray(cl.id, classIds)));
     classTeachers.forEach((r) => r.teacherId && out.add(r.teacherId));
-    return this.validate('teachers', [...out], institutionId, campusIds);
+    return this.validateStaff([...out], institutionId, campusIds, 'teacher');
   }
 
   private async teachersOfGrade(gradeIds: string[], institutionId: string, campusIds: string[] | null) {
@@ -229,20 +229,49 @@ export class RecipientResolver {
     return [...new Set(rows.map((r) => r.parentId))];
   }
 
-  private async allPeople(tableName: 'students' | 'teachers' | 'staff' | 'parents', institutionId: string, campusIds: string[] | null) {
+  private async allPeople(
+    tableName: 'students' | 'staff' | 'parents',
+    institutionId: string,
+    campusIds: string[] | null,
+    staffKind?: 'teacher' | 'staff',
+  ) {
     if (campusIds !== null && campusIds.length === 0) return [];
     const t = schema[tableName];
+    const conds = this.scopeConds(t, institutionId, campusIds);
+    if (tableName === 'staff' && staffKind === 'teacher') {
+      conds.push(
+        sql`${t.id} in (
+          select class_teacher_id from classes where institution_id = ${institutionId} and class_teacher_id is not null
+          union select teacher_id from class_subject_teachers where institution_id = ${institutionId} and teacher_id is not null
+        )`,
+      );
+    }
     const rows = await this.db
       .select({ id: t.id })
       .from(t)
-      .where(and(...this.scopeConds(t, institutionId, campusIds)));
+      .where(and(...conds));
     return rows.map((r) => r.id);
   }
 
   /** Keep only the ids that exist in this institution + campus scope. */
-  private async validate(tableName: 'students' | 'teachers' | 'staff' | 'parents', candidateIds: string[], institutionId: string, campusIds: string[] | null) {
+  private async validate(tableName: 'students' | 'parents', candidateIds: string[], institutionId: string, campusIds: string[] | null) {
     if (candidateIds.length === 0) return [];
     const t = schema[tableName];
+    const rows = await this.db
+      .select({ id: t.id })
+      .from(t)
+      .where(and(...this.scopeConds(t, institutionId, campusIds), inArray(t.id, candidateIds)));
+    return rows.map((r) => r.id);
+  }
+
+  private async validateStaff(
+    candidateIds: string[],
+    institutionId: string,
+    campusIds: string[] | null,
+    _kind: 'teacher' | 'staff',
+  ) {
+    if (candidateIds.length === 0) return [];
+    const t = schema.staff;
     const rows = await this.db
       .select({ id: t.id })
       .from(t)

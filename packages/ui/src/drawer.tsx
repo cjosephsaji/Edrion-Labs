@@ -43,7 +43,7 @@ export function Drawer({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/40 animate-fade-in" onClick={onClose} aria-hidden />
+      <div className="absolute inset-0 bg-[#17150f]/45 backdrop-blur-[2px] animate-fade-in" onClick={onClose} aria-hidden />
       <div
         ref={panelRef}
         role="dialog"
@@ -52,11 +52,11 @@ export function Drawer({
         aria-describedby={description ? descId : undefined}
         tabIndex={-1}
         className={cn(
-          'relative flex h-full w-full max-w-md flex-col bg-surface-elevated shadow-xl animate-slide-in-right focus:outline-none sm:max-w-md',
+          'relative flex h-full w-full max-w-md flex-col border-l border-border bg-surface-elevated shadow-lg animate-slide-in-right focus:outline-none sm:max-w-md',
           className,
         )}
       >
-        <header className="flex items-start justify-between gap-3 border-b border-border p-5">
+        <header className="flex items-start justify-between gap-3 border-b border-border bg-surface p-5">
           <div className="min-w-0">
             <h2 id={titleId} className="text-md font-semibold text-text-primary">{title}</h2>
             {description && <p id={descId} className="mt-0.5 text-sm text-text-secondary">{description}</p>}
@@ -71,7 +71,7 @@ export function Drawer({
           </button>
         </header>
         <div className="flex-1 overflow-y-auto p-5">{children}</div>
-        {footer && <footer className="border-t border-border p-4">{footer}</footer>}
+        {footer && <footer className="border-t border-border bg-surface p-4">{footer}</footer>}
       </div>
     </div>
   );
