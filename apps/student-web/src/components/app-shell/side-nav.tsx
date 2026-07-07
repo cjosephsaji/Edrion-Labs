@@ -11,22 +11,27 @@ import {
   type NavItem,
 } from '@/lib/nav';
 import { useT } from '@/i18n/use-t';
+import { PetrosMark } from '@/components/ui/primitives';
 
 export function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   const active = pathname === item.href || (item.href !== '/home' && pathname.startsWith(item.href));
   return (
     <Link
       href={item.href}
-      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+      className={`flex items-center gap-[11px] rounded-[10px] px-3 py-[9px] text-[13.5px] font-medium transition ${
         active
-          ? 'bg-st-accentDeep/10 text-st-accentDeep'
-          : 'text-st-muted hover:bg-st-accentDeep/5 hover:text-st-ink'
+          ? 'bg-st-accentDeep/[0.07] text-st-accentDeep'
+          : 'text-st-inkSoft hover:bg-st-accentDeep/[0.07] hover:text-st-ink'
       }`}
     >
-      <item.icon size={18} strokeWidth={active ? 2.2 : 1.8} aria-hidden />
-      <span className="flex items-center gap-1">
+      <item.icon size={17} strokeWidth={active ? 2 : 1.7} aria-hidden />
+      <span className="flex flex-1 items-center gap-1">
         {item.label}
-        {item.sparkle && <span className="text-st-amber">✦</span>}
+        {item.sparkle && (
+          <span className="ml-auto">
+            <PetrosMark />
+          </span>
+        )}
       </span>
     </Link>
   );
@@ -59,34 +64,32 @@ export function SideNav() {
       : t('shell.independentLearner');
 
   return (
-    <aside className="hidden min-[921px]:flex w-[238px] shrink-0 flex-col border-r border-st-bd1 bg-st-surface2">
-      <div className="border-b border-st-bd1 px-5 py-5">
-        <div className="flex items-center gap-3">
-          <span className="grid h-10 w-10 place-items-center rounded-xl bg-st-accent text-sm font-bold text-white">
-            E
-          </span>
-          <div className="leading-tight">
-            <p className="font-display text-base font-semibold text-st-ink">Edrion</p>
-            <p className="text-[10px] font-semibold tracking-[0.14em] text-st-faint">
-              {t('shell.portalLabel')}
-            </p>
-          </div>
+    <aside className="hidden min-[921px]:flex w-[238px] shrink-0 flex-col border-r border-st-bd1 bg-st-sidebar">
+      <div className="flex items-center gap-2.5 px-4 pb-3 pt-[18px]">
+        <span className="grid h-[34px] w-[34px] place-items-center rounded-[10px] bg-st-accentDeep font-display text-[17px] font-bold text-[#F2EFE3]">
+          E
+        </span>
+        <div className="leading-tight">
+          <p className="font-display text-base font-bold text-st-accentDeep">Edrion</p>
+          <p className="font-mono-ui text-[9.5px] font-medium tracking-[0.09em] text-st-faint">
+            {t('shell.portalLabel')}
+          </p>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-6 overflow-y-auto p-3">
-        <div className="space-y-1">
+      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2.5 pb-2.5">
+        <div className="space-y-0.5">
           {coreNav.map((item) => (
             <NavLink key={item.href} item={item} pathname={pathname} />
           ))}
         </div>
 
         {instItems.length > 0 && (
-          <div>
-            <p className="mb-2 px-3 text-[10px] font-semibold tracking-[0.12em] text-st-faint">
+          <div className="mt-1">
+            <p className="px-3 pb-1.5 pt-3.5 font-mono-ui text-[9.5px] font-semibold tracking-[0.1em] text-[#A5AF9F]">
               {terms.instLabel}
             </p>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {[...instItems, ...surfaceItems].map((item) => (
                 <NavLink key={item.href} item={item} pathname={pathname} />
               ))}
@@ -94,9 +97,11 @@ export function SideNav() {
           </div>
         )}
 
-        <div>
-          <p className="mb-2 px-3 text-[10px] font-semibold tracking-[0.12em] text-st-faint">YOU</p>
-          <div className="space-y-1">
+        <div className="mt-1">
+          <p className="px-3 pb-1.5 pt-3.5 font-mono-ui text-[9.5px] font-semibold tracking-[0.1em] text-[#A5AF9F]">
+            YOU
+          </p>
+          <div className="space-y-0.5">
             {youNav.map((item) => (
               <NavLink key={item.href} item={item} pathname={pathname} />
             ))}
@@ -105,25 +110,23 @@ export function SideNav() {
       </nav>
 
       {me && (
-        <div className="border-t border-st-bd1 p-3">
-          <div className="rounded-xl bg-st-card p-3">
-            <div className="flex items-center gap-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-st-accentSoft text-sm font-bold text-st-accentDeep">
-                {me.initial}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-st-ink">{me.fullName}</p>
-                <p className="truncate text-xs text-st-muted">{sub}</p>
-              </div>
+        <div className="border-t border-st-bd1 p-3.5">
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-st-accentDeep font-display text-sm font-semibold text-[#F2EFE3]">
+              {me.initial}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-semibold text-st-ink">{me.fullName}</p>
+              <p className="truncate text-[11px] text-st-faint">{sub}</p>
             </div>
-            <button
-              type="button"
-              onClick={() => void logout()}
-              className="mt-3 w-full rounded-lg px-2 py-2 text-left text-xs font-medium text-st-muted hover:bg-st-accentSoft/50 hover:text-st-ink"
-            >
-              {t('shell.logout')}
-            </button>
           </div>
+          <button
+            type="button"
+            onClick={() => void logout()}
+            className="mt-2.5 w-full rounded-[9px] border border-st-bd2 bg-st-card px-2.5 py-[7px] text-[11.5px] font-semibold text-st-inkSoft transition hover:border-st-accent hover:text-st-accentDeep"
+          >
+            {t('shell.logout')}
+          </button>
         </div>
       )}
     </aside>

@@ -7,7 +7,7 @@ import type {
   PracticeAnswerInput,
   SessionBlockDto,
 } from '@edrion/schemas';
-import { useStudentClient } from '../student-client';
+import { useStudentClient, type SseConnection } from '../student-client';
 
 const sessionKey = (id: string) => ['student', 'learn', 'session', id] as const;
 
@@ -15,7 +15,7 @@ export function useLearnSession(sessionId: string | undefined) {
   const client = useStudentClient();
   const qc = useQueryClient();
   const [streaming, setStreaming] = useState(false);
-  const esRef = useRef<EventSource | null>(null);
+  const esRef = useRef<SseConnection | null>(null);
 
   const query = useQuery({
     queryKey: sessionId ? sessionKey(sessionId) : ['student', 'learn', 'session', 'none'],
@@ -32,7 +32,13 @@ export function useLearnSession(sessionId: string | undefined) {
     setStreaming(true);
     const es = client.sse(`/learn/sessions/${sessionId}/stream`, {
       onMessage: (data) => {
-        if (data === '[DONE]') return;
+        if (data === '[DONE]') {
+          setStreaming(false);
+          esRef.current?.close();
+          esRef.current = null;
+          invalidate();
+          return;
+        }
         const event = data as { type?: string; block?: SessionBlockDto };
         if (event.type === 'block.done' || event.type === 'session.done') {
           invalidate();
@@ -44,14 +50,6 @@ export function useLearnSession(sessionId: string | undefined) {
       },
     });
     esRef.current = es;
-    es.addEventListener('message', (ev) => {
-      if (ev.data === '[DONE]') {
-        setStreaming(false);
-        es.close();
-        esRef.current = null;
-        invalidate();
-      }
-    });
   }, [client, sessionId, invalidate]);
 
   useEffect(() => {

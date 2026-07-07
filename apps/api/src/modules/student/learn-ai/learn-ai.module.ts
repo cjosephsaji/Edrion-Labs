@@ -10,6 +10,7 @@ import { NullLearnAiProvider } from './null.provider';
 import { OpenAiLearnProvider } from './openai.provider';
 import { PlannerService } from './planner.service';
 import { RouterService } from './router.service';
+import { DefaultHomeworkPolicyPort, HOMEWORK_POLICY_PORT } from './homework-policy.port';
 
 @Module({
   providers: [
@@ -28,15 +29,19 @@ import { RouterService } from './router.service';
         env.OPENAI_API_KEY ? openai : nil,
       inject: [API_ENV, OpenAiLearnProvider, NullLearnAiProvider],
     },
+    { provide: HOMEWORK_POLICY_PORT, useClass: DefaultHomeworkPolicyPort },
   ],
   exports: [
     LEARN_AI_PROVIDER,
+    HOMEWORK_POLICY_PORT,
     BudgetsService,
+    LearnAiCallLogger,
     EvaluatorService,
     RouterService,
     PlannerService,
     BlockGeneratorService,
     AtomCacheService,
+    OpenAiLearnProvider,
   ],
 })
 export class LearnAiModule {}

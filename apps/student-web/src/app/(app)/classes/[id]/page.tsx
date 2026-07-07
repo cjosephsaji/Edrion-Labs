@@ -50,7 +50,7 @@ export default function ClassDetailPage({ params }: { params: { id: string } }) 
         <h2 className="text-[10px] font-semibold tracking-wide text-st-faint">CLASS STREAM</h2>
         {streamItems.length === 0 ? (
           <EmptyState
-            icon="📋"
+            eyebrow="EMPTY STREAM"
             title="Nothing posted yet"
             description="Your teacher hasn't shared updates for this class."
           />
@@ -81,7 +81,7 @@ export default function ClassDetailPage({ params }: { params: { id: string } }) 
         <h2 className="text-[10px] font-semibold tracking-wide text-st-faint">MATERIALS</h2>
         {materialItems.length === 0 ? (
           <EmptyState
-            icon="📎"
+            eyebrow="NO MATERIALS"
             title="No materials yet"
             description="Handouts and readings will show up here when your teacher adds them."
           />

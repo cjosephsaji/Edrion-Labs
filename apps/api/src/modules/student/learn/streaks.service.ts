@@ -12,8 +12,8 @@ function isoWeekStart(d = new Date()): string {
   return date.toISOString().slice(0, 10);
 }
 
-function dayKey(d: Date): string {
-  return d.toISOString().slice(0, 10);
+function dayKey(d: Date | string): string {
+  return (typeof d === 'string' ? d : d.toISOString()).slice(0, 10);
 }
 
 @Injectable()
@@ -46,7 +46,7 @@ export class StreaksService {
 
     const weekStart = isoWeekStart();
     const weekEvents = await this.repo.listLearningEvents(principal, [...WEEKLY_GOAL_EVENT_TYPES]);
-    const done = weekEvents.filter((e) => e.occurredAt.toISOString().slice(0, 10) >= weekStart).length;
+    const done = weekEvents.filter((e) => dayKey(e.occurredAt) >= weekStart).length;
     const target = await this.repo.loadPreferencesWeeklyGoal(principal);
 
     if (done >= target) {

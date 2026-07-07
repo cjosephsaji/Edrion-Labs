@@ -23,6 +23,8 @@ export class OpenAiLearnProvider implements LearnAiProvider {
   private client: OpenAI | null = null;
   private readonly apiKey: string | undefined;
   private readonly models: Record<'nano' | 'small' | 'big', string>;
+  private readonly configuredModels: { chat: string; small: string; big: string };
+  private lastError: string | null = null;
 
   constructor(@Inject(API_ENV) env: ApiEnv) {
     this.apiKey = env.OPENAI_API_KEY;
@@ -31,10 +33,29 @@ export class OpenAiLearnProvider implements LearnAiProvider {
       small: env.OPENAI_SMALL_MODEL,
       big: env.OPENAI_BIG_MODEL,
     };
+    this.configuredModels = {
+      chat: env.OPENAI_MODEL,
+      small: env.OPENAI_SMALL_MODEL,
+      big: env.OPENAI_BIG_MODEL,
+    };
   }
 
   get available(): boolean {
     return Boolean(this.apiKey);
+  }
+
+  getLastError(): string | null {
+    return this.lastError;
+  }
+
+  getConfiguredModels(): { chat: string; small: string; big: string } {
+    return this.configuredModels;
+  }
+
+  private recordError(modelId: string, err: unknown): void {
+    const status = (err as { status?: number }).status;
+    const message = (err as Error).message ?? String(err);
+    this.lastError = `model=${modelId} status=${status ?? 'n/a'}: ${message}`;
   }
 
   private sdk(): OpenAI {
@@ -49,34 +70,46 @@ export class OpenAiLearnProvider implements LearnAiProvider {
 
   async completeJson<T>(opts: LearnAiCompleteOpts<T>): Promise<{ result: T; usage: LearnAiUsage }> {
     const started = Date.now();
-    const response = (await this.withRetry(() =>
-      this.sdk().responses.create({
-        model: this.modelFor(opts.tier),
-        instructions: opts.system,
-        input: this.buildInput(opts),
-        max_output_tokens: opts.maxOutputTokens,
-        text: {
-          format: {
-            type: 'json_schema',
-            name: opts.schemaName,
-            strict: false,
-            schema: { type: 'object' },
-          },
-        },
-      } as never),
-    )) as { output_text?: string; usage?: { input_tokens?: number; output_tokens?: number } };
+    const modelId = this.modelFor(opts.tier);
 
-    const text = response.output_text ?? '{}';
-    const parsed = opts.schema.parse(JSON.parse(text));
-    return {
-      result: parsed,
-      usage: {
-        inputTokens: response.usage?.input_tokens ?? 0,
-        outputTokens: response.usage?.output_tokens ?? 0,
-        model: this.modelFor(opts.tier),
-        durationMs: Date.now() - started,
-      },
-    };
+    try {
+      const response = (await this.withRetry(
+        () =>
+          this.sdk().responses.create({
+            model: modelId,
+            instructions: opts.system,
+            input: this.buildInput(opts),
+            max_output_tokens: opts.maxOutputTokens,
+            text: {
+              format: {
+                type: 'json_schema',
+                name: opts.schemaName,
+                strict: false,
+                schema: { type: 'object' },
+              },
+            },
+          } as never),
+        modelId,
+      )) as { output_text?: string; usage?: { input_tokens?: number; output_tokens?: number } };
+
+      const text = response.output_text?.trim();
+      if (!text) {
+        throw new Error(`OpenAI returned empty output (model=${modelId})`);
+      }
+      const parsed = opts.schema.parse(JSON.parse(text));
+      return {
+        result: parsed,
+        usage: {
+          inputTokens: response.usage?.input_tokens ?? 0,
+          outputTokens: response.usage?.output_tokens ?? 0,
+          model: modelId,
+          durationMs: Date.now() - started,
+        },
+      };
+    } catch (err) {
+      this.recordError(modelId, err);
+      throw err;
+    }
   }
 
   async *streamJsonArray<T>(opts: LearnAiStreamOpts<T>): AsyncIterable<T> {
@@ -112,13 +145,13 @@ export class OpenAiLearnProvider implements LearnAiProvider {
     ];
   }
 
-  private async withRetry<T>(fn: () => Promise<T>): Promise<T> {
+  private async withRetry<T>(fn: () => Promise<T>, modelId: string): Promise<T> {
     try {
       return await fn();
     } catch (e) {
       const status = (e as { status?: number }).status;
       if (status === 429 || (typeof status === 'number' && status >= 500)) {
-        this.logger.warn(`OpenAI ${status} — retrying once`);
+        this.logger.warn(`OpenAI ${status} (model=${modelId}) — retrying once`);
         await new Promise((r) => setTimeout(r, 750));
         return fn();
       }

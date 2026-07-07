@@ -1,11 +1,16 @@
 import type { NoteCardBlock } from '@edrion/schemas';
+import { Pin } from 'lucide-react';
+import { BlockCard } from '../BlockCard';
+import { PetrosMark } from '@/components/ui/primitives';
 
 export function NoteCard({ content }: { content: NoteCardBlock }) {
   return (
-    <article className="rounded-xl border border-st-amber/30 bg-st-amberSoft/30 p-4 animate-st-block-in">
-      <p className="text-[10px] font-semibold tracking-wide text-st-amber">Pinned note</p>
-      <p className="mt-2 text-sm font-semibold text-st-ink">{content.question}</p>
-      <p className="mt-2 text-sm text-st-muted">{content.answer}</p>
-    </article>
+    <BlockCard eyebrow="PINNED NOTE" tone="amber" icon={Pin}>
+      <div className="flex items-center gap-1 text-st-amberInk">
+        <PetrosMark />
+        <p className="text-sm font-semibold text-st-ink">{content.question}</p>
+      </div>
+      <p className="mt-2 text-sm leading-relaxed text-st-muted">{content.answer}</p>
+    </BlockCard>
   );
 }

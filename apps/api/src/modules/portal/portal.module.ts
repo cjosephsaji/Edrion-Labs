@@ -137,6 +137,7 @@ import { PetrosToolRegistry } from './petros/tools/registry';
 import { PetrosAttachmentService } from './petros/petros-attachment.service';
 import { DocumentsGenModule } from '../documents/documents-gen.module';
 import { FeatureControlsModule } from '../feature-controls/feature-controls.module';
+import { LearningEventsModule } from '../student/ledger/learning-events.module';
 import { PortalReportQueriesService } from './portal-report-queries.service';
 import { PetrosTopicalityService } from './petros/petros-topicality.service';
 import { DocumentsGenController } from '../documents/documents-gen.controller';
@@ -157,7 +158,7 @@ import { PortalCalendarEventsService } from './calendar-events/portal-calendar-e
  * controller level (the global platform AuthGuard is skipped via @Public on the controller).
  */
 @Module({
-  imports: [DocumentsGenModule, FeatureControlsModule],
+  imports: [DocumentsGenModule, FeatureControlsModule, LearningEventsModule],
   controllers: [
     PortalController,
     PortalAuthController,

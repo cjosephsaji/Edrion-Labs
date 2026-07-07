@@ -2,45 +2,43 @@
 import Link from 'next/link';
 import { useClasses } from '@/lib/hooks';
 import { useStudentTerm } from '@/lib/persona';
-import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Eyebrow, PageHeader } from '@/components/ui/primitives';
 
 export default function ClassesPage() {
   const terms = useStudentTerm();
   const { data, isLoading } = useClasses();
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 animate-st-block-in">
-      <p className="text-[10px] font-semibold tracking-wide text-st-faint">{terms.instLabel}</p>
-      <h1 className="font-display text-2xl font-semibold text-st-ink">{terms.unitP}</h1>
+    <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
+      <PageHeader eyebrow={<Eyebrow>{terms.instLabel}</Eyebrow>} title={terms.unitP} />
 
       {isLoading ? (
-        <div className="mt-8 h-32 shimmer rounded-2xl" />
+        <div className="mt-8 h-32 shimmer rounded-[15px]" />
       ) : (data?.items ?? []).length === 0 ? (
         <EmptyState
-          icon="🏫"
+          className="mt-8"
+          eyebrow="NO CLASSES"
           title="No classes yet"
           description="Your timetable subjects will show up here once you're enrolled."
         />
       ) : (
-        <div className="mt-6 space-y-3">
+        <div className="mt-6 space-y-2">
           {(data?.items ?? []).map((cls) => (
             <Link key={cls.subjectClassId} href={`/classes/${cls.subjectClassId}`}>
-              <Card className="flex items-center gap-4 transition hover:border-st-accent/40">
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-st-accentSoft font-display text-lg font-bold text-st-accentDeep">
+              <div className="flex items-center gap-4 rounded-[15px] border border-st-bd1 bg-st-card px-4 py-3.5 transition hover:border-st-accent/40">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[10px] bg-st-accentSoft font-display text-base font-bold text-st-accentDeep">
                   {cls.initial}
                 </span>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="font-semibold text-st-ink">{cls.name}</p>
                   <p className="text-xs text-st-muted">
                     {cls.teacherName}
                     {cls.nextMeta && ` · ${cls.nextMeta}`}
                   </p>
-                  {cls.liveToday && (
-                    <span className="mt-1 inline-block text-[10px] font-semibold text-st-green">Live today</span>
-                  )}
                 </div>
-              </Card>
+                <span className="text-xs font-semibold text-st-accent">Open →</span>
+              </div>
             </Link>
           ))}
         </div>

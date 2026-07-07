@@ -24,8 +24,8 @@ export default function LoginPage() {
     setBusy(true);
     try {
       const body = useAdmission
-        ? { institutionCode: institutionCode.trim(), admissionNo: admissionNo.trim(), password }
-        : { email: email.trim(), password };
+        ? { identifier: admissionNo.trim(), institutionCode: institutionCode.trim(), password }
+        : { identifier: email.trim(), password };
       await client.post('/auth/login', body);
       router.replace('/home');
     } catch (err) {

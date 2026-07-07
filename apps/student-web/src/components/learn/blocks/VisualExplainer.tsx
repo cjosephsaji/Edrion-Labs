@@ -1,7 +1,10 @@
 'use client';
 import { useState } from 'react';
 import type { VisualExplainerBlock } from '@edrion/schemas';
+import { Eye } from 'lucide-react';
 import { GraphCanvas } from '../GraphCanvas';
+import { BlockCard } from '../BlockCard';
+import { PillChip } from '@/components/ui/primitives';
 
 export function VisualExplainer({
   content,
@@ -14,43 +17,33 @@ export function VisualExplainer({
   const view = content.views[viewIdx];
 
   return (
-    <article className="space-y-4 animate-st-block-in">
+    <BlockCard eyebrow="VISUAL EXPLAINER" tone="blue" icon={Eye}>
       {content.views.length > 1 && (
-        <div className="flex gap-2">
+        <div className="mb-4 flex flex-wrap gap-2">
           {content.views.map((v, i) => (
-            <button
-              key={v.title}
-              type="button"
-              onClick={() => setViewIdx(i)}
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                i === viewIdx ? 'bg-st-accent text-white' : 'bg-st-surface2 text-st-muted'
-              }`}
-            >
+            <PillChip key={v.title} variant={i === viewIdx ? 'primary' : 'default'} onClick={() => setViewIdx(i)}>
               {v.title}
-            </button>
+            </PillChip>
           ))}
         </div>
       )}
       {view && (
         <>
           <h2 className="font-display text-xl font-semibold text-st-ink">{view.title}</h2>
-          <GraphCanvas viewBox={view.svgSpec.viewBox} elements={view.svgSpec.elements} />
+          <div className="mt-4 rounded-xl border border-st-bd1 bg-st-blueSoft/30 p-3">
+            <GraphCanvas viewBox={view.svgSpec.viewBox} elements={view.svgSpec.elements} />
+          </div>
         </>
       )}
       {onAsk && content.suggestedQuestions.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap gap-2">
           {content.suggestedQuestions.map((q) => (
-            <button
-              key={q}
-              type="button"
-              onClick={() => onAsk(q)}
-              className="rounded-full border border-st-bd1 px-3 py-1.5 text-xs text-st-muted hover:border-st-accent/40"
-            >
+            <PillChip key={q} onClick={() => onAsk(q)}>
               {q}
-            </button>
+            </PillChip>
           ))}
         </div>
       )}
-    </article>
+    </BlockCard>
   );
 }

@@ -4,6 +4,7 @@ import { useExams } from '@/lib/hooks';
 import { CountdownCard } from '@/components/institutional/CountdownCard';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Eyebrow, PageHeader } from '@/components/ui/primitives';
 import { PillButton } from '@/components/ui/pill-button';
 
 function mockExamHref(exam: { examName: string; subject: string | null; syllabusNote: string | null }) {
@@ -18,15 +19,19 @@ export default function ExamsPage() {
   const items = data?.items ?? [];
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 animate-st-block-in">
-      <h1 className="font-display text-2xl font-semibold text-st-ink">Exams</h1>
-      <p className="mt-1 text-sm text-st-muted">Upcoming institutional exams.</p>
+    <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
+      <PageHeader
+        eyebrow={<Eyebrow>SCHOOL</Eyebrow>}
+        title="Exams"
+        subtitle="Upcoming institutional exams with prep links."
+      />
 
       {isLoading ? (
-        <div className="mt-8 h-32 shimmer rounded-2xl" />
+        <div className="mt-8 h-32 shimmer rounded-[15px]" />
       ) : items.length === 0 ? (
         <EmptyState
-          icon="📝"
+          className="mt-8"
+          eyebrow="NO EXAMS"
           title="No exams published yet"
           description="When your school posts exam dates, they'll show up here with a prep plan."
         />
@@ -42,16 +47,18 @@ export default function ExamsPage() {
                   sub={[exam.subject, exam.hall, exam.seatInfo].filter(Boolean).join(' · ')}
                 />
               ) : (
-                <Card>
-                  <p className="font-semibold text-st-ink">{exam.examName}</p>
-                  <p className="text-xs text-st-muted">
-                    {exam.date}
-                    {exam.time && ` · ${exam.time}`}
-                    {exam.subject && ` · ${exam.subject}`}
-                  </p>
-                  {exam.syllabusNote && (
-                    <p className="mt-2 text-xs text-st-muted">{exam.syllabusNote}</p>
-                  )}
+                <Card noPadding>
+                  <div className="p-4">
+                    <p className="font-semibold text-st-ink">{exam.examName}</p>
+                    <p className="text-xs text-st-muted">
+                      {exam.date}
+                      {exam.time && ` · ${exam.time}`}
+                      {exam.subject && ` · ${exam.subject}`}
+                    </p>
+                    {exam.syllabusNote && (
+                      <p className="mt-2 text-xs text-st-muted">{exam.syllabusNote}</p>
+                    )}
+                  </div>
                 </Card>
               )}
               <Link href={mockExamHref(exam)} className="mt-2 inline-block">

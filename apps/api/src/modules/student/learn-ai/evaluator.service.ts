@@ -1,8 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
+import type { ApiEnv } from '@edrion/config';
 import type { CheckpointBlock, PracticeItemBlock } from '@edrion/schemas';
 import type { StudentPrincipal } from '../student.types';
-import { LEARN_AI_PROVIDER } from '../../../common/tokens';
+import { API_ENV, LEARN_AI_PROVIDER } from '../../../common/tokens';
 import type { LearnAiProvider } from './provider';
 import { BudgetsService } from './budgets.service';
 import { LearnAiCallLogger } from './learn-ai-call.logger';
@@ -26,8 +27,11 @@ const evalSchema = z.object({
 
 @Injectable()
 export class EvaluatorService {
+  private readonly logger = new Logger(EvaluatorService.name);
+
   constructor(
     @Inject(LEARN_AI_PROVIDER) private readonly ai: LearnAiProvider,
+    @Inject(API_ENV) private readonly env: ApiEnv,
     private readonly budgets: BudgetsService,
     private readonly callLog: LearnAiCallLogger,
   ) {}
@@ -160,7 +164,13 @@ export class EvaluatorService {
           });
           await this.callLog.log(principal, 'mock_eval', usage);
           out.push({ correct: result.correct, note: result.note });
-        } catch {
+        } catch (err) {
+          const status = (err as { status?: number }).status;
+          const message = (err as Error).message ?? String(err);
+          const modelId = this.env.OPENAI_BIG_MODEL;
+          this.logger.error(
+            `OpenAI error (model=${modelId}, status=${status ?? 'n/a'}): ${message}; falling back to heuristic routing`,
+          );
           out.push({ correct: false, note: 'Could not read the photo.' });
         }
         continue;
@@ -186,7 +196,13 @@ export class EvaluatorService {
         });
         await this.callLog.log(principal, 'mock_eval', usage);
         out.push({ correct: result.correct, note: result.note });
-      } catch {
+      } catch (err) {
+        const status = (err as { status?: number }).status;
+        const message = (err as Error).message ?? String(err);
+        const modelId = this.env.OPENAI_SMALL_MODEL;
+        this.logger.error(
+          `OpenAI error (model=${modelId}, status=${status ?? 'n/a'}): ${message}; falling back to heuristic routing`,
+        );
         out.push({ correct: false, note: 'Answer recorded.' });
       }
     }

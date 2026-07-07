@@ -1,10 +1,10 @@
 'use client';
-import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { CreateMockExamInput } from '@edrion/schemas';
 import { useCreateMockExam, useMockExamDefaults } from '@/lib/hooks';
 import { PillButton } from '@/components/ui/pill-button';
+import { Eyebrow, PageHeader, PetrosMark, PillChip } from '@/components/ui/primitives';
 
 const DURATIONS = [30, 60, 90] as const;
 
@@ -51,53 +51,43 @@ export default function MockExamSetupPage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 animate-st-block-in">
-      <Link href="/lab" className="text-sm text-st-accent">← The Lab</Link>
-      <h1 className="mt-4 font-display text-2xl font-semibold text-st-ink">Build a mock exam</h1>
-      <p className="mt-2 text-sm text-st-muted">Timed practice with counts-only results — no letter grades.</p>
+    <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
+      <PageHeader
+        backHref="/lab"
+        backLabel="The Lab"
+        eyebrow={<Eyebrow color="amber">INSTRUMENT 02</Eyebrow>}
+        title="Build a mock exam"
+        subtitle="Timed practice with counts-only results — no letter grades."
+      />
 
       <section className="mt-8">
-        <h2 className="text-[10px] font-semibold tracking-wide text-st-faint">SUBJECT</h2>
+        <Eyebrow>SUBJECT</Eyebrow>
         <input
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           placeholder={defaults?.subjectLabel ?? 'Subject'}
-          className="mt-3 w-full rounded-xl border border-st-bd1 bg-st-card px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-st-accent/30"
+          className="mt-3 w-full rounded-[14px] border border-st-bd2 bg-st-card px-4 py-3 text-sm outline-none focus:border-st-accent"
         />
       </section>
 
       <section className="mt-8">
-        <h2 className="text-[10px] font-semibold tracking-wide text-st-faint">TOPICS</h2>
+        <Eyebrow>TOPICS</Eyebrow>
         <div className="mt-3 flex flex-wrap gap-2">
           {(defaults?.topics ?? []).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => toggleTopic(t)}
-              className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-                topics.includes(t) ? 'bg-st-accent text-white' : 'bg-st-surface2 text-st-muted'
-              }`}
-            >
+            <PillChip key={t} variant={topics.includes(t) ? 'primary' : 'default'} onClick={() => toggleTopic(t)}>
               {t}
-            </button>
+            </PillChip>
           ))}
         </div>
       </section>
 
       <section className="mt-8">
-        <h2 className="text-[10px] font-semibold tracking-wide text-st-faint">DURATION</h2>
+        <Eyebrow>DURATION</Eyebrow>
         <div className="mt-3 flex gap-2">
           {DURATIONS.map((d) => (
-            <button
-              key={d}
-              type="button"
-              onClick={() => setDuration(d)}
-              className={`rounded-full px-4 py-2 text-xs font-semibold ${
-                duration === d ? 'bg-st-accent text-white' : 'bg-st-surface2 text-st-muted'
-              }`}
-            >
+            <PillChip key={d} variant={duration === d ? 'primary' : 'default'} onClick={() => setDuration(d)}>
               {d} min
-            </button>
+            </PillChip>
           ))}
         </div>
       </section>
@@ -107,7 +97,11 @@ export default function MockExamSetupPage() {
         onClick={() => void handleCreate()}
         disabled={create.isPending || topics.length === 0}
       >
-        {create.isPending ? 'Generating…' : 'Generate exam ✦'}
+        {create.isPending ? 'Generating…' : (
+          <>
+            Generate exam <PetrosMark className="ml-1" />
+          </>
+        )}
       </PillButton>
     </div>
   );

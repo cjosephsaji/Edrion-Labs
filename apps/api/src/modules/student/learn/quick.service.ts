@@ -41,7 +41,7 @@ export class QuickService {
         user: input.question,
         schema: quickOutputSchema,
         schemaName: 'quick_answer',
-        maxOutputTokens: 600,
+        maxOutputTokens: 8192,
       });
       await this.callLog.log(principal, 'quick', usage);
       answerShort = result.answerShort;

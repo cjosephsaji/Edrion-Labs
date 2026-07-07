@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useHistory } from '@/lib/hooks';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Eyebrow, PageHeader, PillChip } from '@/components/ui/primitives';
 
 const FILTERS = [
   { key: 'all', label: 'All' },
@@ -17,22 +18,18 @@ export default function HistoryPage() {
   const { data, isLoading } = useHistory(filter === 'all' ? undefined : filter);
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 animate-st-block-in">
-      <h1 className="font-display text-2xl font-semibold text-st-ink">History</h1>
-      <p className="mt-1 text-sm text-st-muted">Your learning activity over time.</p>
+    <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
+      <PageHeader
+        eyebrow={<Eyebrow>HISTORY</Eyebrow>}
+        title="History"
+        subtitle="Your learning activity over time."
+      />
 
       <div className="mt-4 flex flex-wrap gap-2">
         {FILTERS.map((f) => (
-          <button
-            key={f.key}
-            type="button"
-            onClick={() => setFilter(f.key)}
-            className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-              filter === f.key ? 'bg-st-accent text-white' : 'bg-st-surface2 text-st-muted'
-            }`}
-          >
+          <PillChip key={f.key} variant={filter === f.key ? 'primary' : 'default'} onClick={() => setFilter(f.key)}>
             {f.label}
-          </button>
+          </PillChip>
         ))}
       </div>
 
@@ -46,25 +43,27 @@ export default function HistoryPage() {
         <div className="mt-8 space-y-6">
           {(data?.groups ?? []).map((group) => (
             <section key={group.day}>
-              <p className="text-[10px] font-semibold tracking-wide text-st-faint">
+              <Eyebrow className="mb-2">
                 {new Date(group.day).toLocaleDateString(undefined, {
                   weekday: 'long',
                   month: 'short',
                   day: 'numeric',
-                })}
-              </p>
-              <ul className="mt-2 space-y-2">
+                }).toUpperCase()}
+              </Eyebrow>
+              <ul className="space-y-2">
                 {group.items.map((item) => (
                   <li key={item.cursor}>
                     <Link
                       href={item.reopen.route}
-                      className="flex items-center justify-between rounded-xl border border-st-bd1 bg-st-card px-4 py-3 transition hover:border-st-accent/40"
+                      className="flex items-center justify-between rounded-[15px] border border-st-bd1 bg-st-card px-4 py-3 transition hover:border-st-accent/40"
                     >
-                      <div>
-                        <p className="text-sm font-medium text-st-ink">{item.title}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-st-ink">{item.title}</p>
                         <p className="text-xs text-st-muted">{item.meta}</p>
                       </div>
-                      <span className="text-[10px] font-semibold uppercase text-st-faint">{item.kind}</span>
+                      <span className="shrink-0 font-mono-ui text-[10px] font-semibold uppercase tracking-wide text-st-faint">
+                        {item.kind}
+                      </span>
                     </Link>
                   </li>
                 ))}
@@ -73,7 +72,7 @@ export default function HistoryPage() {
           ))}
           {(data?.groups ?? []).length === 0 && (
             <EmptyState
-              icon="🕐"
+              eyebrow="NO HISTORY"
               title={filter === 'mock' || filter === 'debate' ? 'Nothing here yet' : 'No history yet'}
               description={
                 filter === 'mock' || filter === 'debate'

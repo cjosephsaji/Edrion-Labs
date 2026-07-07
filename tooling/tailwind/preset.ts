@@ -12,9 +12,10 @@ const colors = Object.fromEntries(
 ) as Record<string, string>;
 
 const stColors = [
-  'page', 'card', 'cardAlt', 'surface2', 'bd1', 'ink', 'inkSoft', 'muted', 'faint',
-  'accent', 'accentDeep', 'accentSoft', 'amber', 'amberSoft', 'danger', 'dangerSoft',
-  'violet', 'violetSoft', 'blue', 'blueSoft', 'gold', 'selection', 'success', 'sidebar',
+  'page', 'card', 'cardAlt', 'surface2', 'bd1', 'bd2', 'divider', 'ink', 'inkSoft', 'muted', 'faint', 'faint2',
+  'accent', 'accentDeep', 'accentSoft', 'accentSoft2', 'accentBd', 'accentLine', 'amber', 'amberSoft', 'amberBd', 'amberInk',
+  'danger', 'dangerSoft', 'violet', 'violetSoft', 'blue', 'blueSoft', 'gold', 'goldSoftBg', 'goldBd', 'goldInk', 'mintBg',
+  'selection', 'success', 'sidebar',
 ].reduce(
   (acc, key) => {
     acc[`st-${key}`] = `var(--st-${key})`;
@@ -120,6 +121,14 @@ const preset: Omit<Config, 'content'> = {
           '0%, 80%, 100%': { transform: 'translateY(0)' },
           '40%': { transform: 'translateY(-4px)' },
         },
+        'st-shimmer': {
+          '0%': { backgroundPosition: '-260px 0' },
+          '100%': { backgroundPosition: '260px 0' },
+        },
+        'st-blink': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.15' },
+        },
       },
       animation: {
         'fade-in-up': 'fade-in-up 160ms var(--ease-standard)',
@@ -136,6 +145,8 @@ const preset: Omit<Config, 'content'> = {
         'st-slide-in-drawer': 'st-slide-in-drawer 280ms ease-out',
         'st-sheet-in': 'st-sheet-in 320ms ease-out',
         'st-dot-bounce': 'st-dot-bounce 1.2s ease-in-out infinite',
+        'st-shimmer': 'st-shimmer 1.4s ease-in-out infinite',
+        'st-blink': 'st-blink 1.1s ease-in-out infinite',
       },
     },
   },

@@ -94,9 +94,9 @@ invalid. Defaults shown; **bold = must set explicitly in production**.
 | Var | Default | Prod guidance |
 |-----|---------|---------------|
 | `OPENAI_API_KEY` | — | Required for Petros (AI assistant). Server-only. |
-| `OPENAI_MODEL` | `gpt-5.4-mini` | Interactive agent loop. |
-| `OPENAI_SMALL_MODEL` | `gpt-5.4-nano` | Classifier/title calls. |
-| `OPENAI_BIG_MODEL` | `gpt-5.4-2026-03-05` | Quality-critical generation. |
+| `OPENAI_MODEL` | `gpt-5.2` | Interactive agent loop. |
+| `OPENAI_SMALL_MODEL` | `gpt-5-nano-2025-08-07` | Classifier/title calls. |
+| `OPENAI_BIG_MODEL` | `gpt-5.5-pro` | Quality-critical generation. |
 | `BILLING_PROVIDER_SECRET` / `BILLING_WEBHOOK_SIGNING_SECRET` | — | Set when the billing provider is wired. |
 
 ### Web (`NEXT_PUBLIC_*` only — the web app must read nothing else)

@@ -371,7 +371,7 @@ export class LearnRepository {
       conditions.push(inArray(schema.learningEvents.eventType, eventTypes));
     }
     if (since) {
-      conditions.push(sql`${schema.learningEvents.occurredAt} >= ${since}`);
+      conditions.push(sql`${schema.learningEvents.occurredAt} >= ${since.toISOString()}`);
     }
     return this.db
       .select()

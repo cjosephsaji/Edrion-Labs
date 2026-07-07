@@ -83,6 +83,87 @@
     --ring: #1f604a;
   }
 
+  [data-student-theme='standard'] {
+    --st-page: #F3F0E7;
+    --st-card: #FFFFFF;
+    --st-cardAlt: #FBFAF4;
+    --st-surface2: #F5F2E8;
+    --st-bd1: #E6E2D4;
+    --st-ink: #17251F;
+    --st-inkSoft: #43514A;
+    --st-muted: #55645C;
+    --st-faint: #8A968F;
+    --st-accent: #1E7A5E;
+    --st-accentDeep: #0C3F31;
+    --st-accentSoft: #E3EFE8;
+    --st-amber: #B9741F;
+    --st-amberSoft: #FCF6EB;
+    --st-danger: #A8472B;
+    --st-dangerSoft: #F6E6DF;
+    --st-violet: #5B4A78;
+    --st-violetSoft: #EFEAF5;
+    --st-blue: #3A5A78;
+    --st-blueSoft: #E3EAF1;
+    --st-gold: #8A7440;
+    --st-selection: #CFE4D6;
+    --st-success: #14614B;
+    --st-sidebar: #F8F5EC;
+  }
+
+  [data-student-theme='dim'] {
+    --st-page: #221E18;
+    --st-card: #302A23;
+    --st-cardAlt: #2A251E;
+    --st-surface2: #2C271F;
+    --st-bd1: #443D33;
+    --st-ink: #ECE7DC;
+    --st-inkSoft: #CEC7BB;
+    --st-muted: #A9A296;
+    --st-faint: #938C80;
+    --st-accent: #48B78C;
+    --st-accentDeep: #48B78C;
+    --st-accentSoft: #22392F;
+    --st-amber: #D79E54;
+    --st-amberSoft: #3A3120;
+    --st-danger: #B85538;
+    --st-dangerSoft: #3C2822;
+    --st-violet: #2E2838;
+    --st-violetSoft: #2E2838;
+    --st-blue: #243038;
+    --st-blueSoft: #243038;
+    --st-gold: #C6A76A;
+    --st-selection: #2E4A3C;
+    --st-success: #48B78C;
+    --st-sidebar: #2C271F;
+  }
+
+  [data-student-theme='dark'] {
+    --st-page: #14110D;
+    --st-card: #221D17;
+    --st-cardAlt: #1B1710;
+    --st-surface2: #251F18;
+    --st-bd1: #332C22;
+    --st-ink: #EDE7DB;
+    --st-inkSoft: #CBC4B7;
+    --st-muted: #A49D91;
+    --st-faint: #8B8478;
+    --st-accent: #5FCB9E;
+    --st-accentDeep: #5FCB9E;
+    --st-accentSoft: #183328;
+    --st-amber: #E3A758;
+    --st-amberSoft: #2E2413;
+    --st-danger: #B85538;
+    --st-dangerSoft: #331E17;
+    --st-violet: #251E30;
+    --st-violetSoft: #251E30;
+    --st-blue: #1A2632;
+    --st-blueSoft: #1A2632;
+    --st-gold: #CBAC6D;
+    --st-selection: #2F5443;
+    --st-success: #5FCB9E;
+    --st-sidebar: #251F18;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
@@ -90,4 +171,10 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+  }
+
+  [data-reduced-motion='true'] *, [data-reduced-motion='true'] *::before, [data-reduced-motion='true'] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }

@@ -2,10 +2,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FlaskConical, Home, Library, MoreHorizontal, Sparkles } from 'lucide-react';
+import { PetrosMark } from '@/components/ui/primitives';
 
 const tabs = [
   { href: '/home', label: 'Home', icon: Home, match: (p: string) => p === '/home' || p === '/' },
-  { href: '/learn', label: 'Learn', icon: Sparkles, match: (p: string) => p.startsWith('/learn') },
+  { href: '/learn', label: 'Learn', icon: Sparkles, match: (p: string) => p.startsWith('/learn'), sparkle: true },
   { href: '/library', label: 'Library', icon: Library, match: (p: string) => p.startsWith('/library') },
   { href: '/lab', label: 'Lab', icon: FlaskConical, match: (p: string) => p.startsWith('/lab') },
   {
@@ -23,7 +24,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-30 border-t border-st-bd1 bg-st-card/95 backdrop-blur min-[921px]:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-st-bd1 bg-st-sidebar/95 backdrop-blur min-[921px]:hidden">
       <div className="mx-auto grid max-w-lg grid-cols-5 px-1">
         {tabs.map((t) => {
           const active = t.match(pathname);
@@ -35,8 +36,13 @@ export function BottomNav() {
                 active ? 'text-st-accentDeep' : 'text-st-muted'
               }`}
             >
-              <span className={`rounded-full p-1.5 ${active ? 'bg-st-accentDeep/10' : ''}`}>
-                <t.icon size={20} strokeWidth={active ? 2.4 : 1.8} />
+              <span className={`relative rounded-full p-1.5 ${active ? 'bg-st-accentDeep/[0.07]' : ''}`}>
+                <t.icon size={20} strokeWidth={active ? 2.2 : 1.8} />
+                {'sparkle' in t && t.sparkle && active && (
+                  <span className="absolute -right-0.5 -top-0.5">
+                    <PetrosMark className="text-[8px]" />
+                  </span>
+                )}
               </span>
               {t.label}
             </Link>

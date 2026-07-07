@@ -155,6 +155,17 @@ async function main() {
     { admissionNo: 'ADM-005', firstName: 'Ethan', lastName: 'Brown', gender: 'male', rollNo: '5', status: 'enrolled' },
   ]);
 
+  // Link the demo student portal login to the first directory student (idempotent).
+  const studentPortalUserId = userIdByEmail.get('student@greenwood.edu');
+  if (studentPortalUserId && studentIds[0]) {
+    await db
+      .update(s.students)
+      .set({ institutionUserId: studentPortalUserId })
+      .where(
+        and(eq(s.students.id, studentIds[0].id), isNull(s.students.institutionUserId)),
+      );
+  }
+
   await seedPeople(s.staff, [
     { employeeNo: 'T-001', firstName: 'Tina', lastName: 'Teacher', email: 'teacher@greenwood.edu', designation: 'Senior Teacher', institutionUserId: link('teacher@greenwood.edu') },
     { employeeNo: 'T-002', firstName: 'George', lastName: 'Gomez', email: 'g.gomez@greenwood.edu', designation: 'Mathematics Teacher' },

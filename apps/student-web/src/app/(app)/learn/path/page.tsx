@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { useCreateSession, usePath } from '@/lib/hooks';
 import { FreshnessChip } from '@/components/learn/FreshnessChip';
 import { PillButton } from '@/components/ui/pill-button';
-import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Eyebrow, PageHeader } from '@/components/ui/primitives';
 
 export default function PathPage() {
   const { data: path, isLoading } = usePath();
@@ -20,51 +21,100 @@ export default function PathPage() {
   };
 
   if (isLoading) {
-    return <div className="mx-auto max-w-2xl px-4 py-10"><div className="h-48 shimmer rounded-2xl" /></div>;
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-10">
+        <div className="h-48 shimmer rounded-[15px]" />
+      </div>
+    );
   }
 
   if (!path) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-10 text-center">
-        <h1 className="font-display text-2xl font-semibold text-st-ink">No learning path yet</h1>
-        <p className="mt-2 text-sm text-st-muted">Start from Learn home to build your path.</p>
-        <Link href="/learn" className="mt-4 inline-block text-st-accent">Go to Learn</Link>
+      <div className="mx-auto max-w-2xl px-4 py-10">
+        <EmptyState
+          eyebrow="NO PATH YET"
+          title="Your learning path will grow here"
+          description="Start from Learn home — Petros will build a path as you go."
+          action={
+            <Link href="/learn">
+              <PillButton>Go to Learn</PillButton>
+            </Link>
+          }
+        />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 animate-st-block-in">
-      <Link href="/learn" className="text-sm text-st-muted hover:text-st-accent">← Learn</Link>
-      <p className="mt-4 text-[10px] font-semibold tracking-wide text-st-faint">{path.subjectLabel}</p>
-      <h1 className="font-display text-2xl font-semibold text-st-ink">{path.title}</h1>
-      {path.metaLine && <p className="mt-1 text-sm text-st-muted">{path.metaLine}</p>}
+    <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
+      <PageHeader
+        backHref="/learn"
+        eyebrow={<Eyebrow>{path.subjectLabel}</Eyebrow>}
+        title={path.title}
+        subtitle={path.metaLine ?? undefined}
+      />
 
-      <div className="mt-8 space-y-3">
+      <div className="relative mt-8 space-y-0">
         {path.items
           .filter((i) => i.status !== 'removed')
-          .map((item) => (
-            <Card key={item.id} className={item.status === 'current' ? 'border-st-accent/40' : ''}>
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="font-display font-semibold text-st-ink">{item.title}</p>
-                  {item.whyHere && <p className="mt-1 text-xs text-st-muted">{item.whyHere}</p>}
-                </div>
-                {item.freshness && <FreshnessChip freshness={item.freshness} />}
-              </div>
-              {item.status === 'current' && (
-                <PillButton
-                  className="mt-3"
-                  onClick={() => void startItem(item.id, item.title, item.topicKey)}
-                  disabled={createSession.isPending}
+          .map((item, index, arr) => (
+            <div key={item.id} className="relative flex gap-4 pb-6">
+              <div className="flex flex-col items-center">
+                <div
+                  className={`z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 ${
+                    item.status === 'completed'
+                      ? 'border-st-accent bg-st-accent text-white'
+                      : item.status === 'current'
+                        ? 'border-st-accent bg-st-card'
+                        : 'border-dashed border-st-faint2 bg-st-card'
+                  }`}
                 >
-                  Start
-                </PillButton>
-              )}
-              {item.status === 'completed' && (
-                <p className="mt-2 text-xs font-semibold text-st-green">Completed</p>
-              )}
-            </Card>
+                  {item.status === 'completed' && (
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden>
+                      <path
+                        d="M2 6.5l2.6 2.6L10 3.5"
+                        stroke="currentColor"
+                        strokeWidth="2.4"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  )}
+                  {item.status === 'current' && (
+                    <span className="h-2 w-2 rounded-full bg-st-accent" />
+                  )}
+                </div>
+                {index < arr.length - 1 && (
+                  <div className="mt-1 w-px flex-1 bg-st-bd1" />
+                )}
+              </div>
+              <div
+                className={`min-w-0 flex-1 rounded-[15px] border p-4 ${
+                  item.status === 'current'
+                    ? 'border-st-accentBd bg-st-accentSoft'
+                    : 'border-st-bd1 bg-st-card'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-display font-semibold text-st-ink">{item.title}</p>
+                    {item.whyHere && <p className="mt-1 text-xs text-st-muted">{item.whyHere}</p>}
+                  </div>
+                  {item.freshness && <FreshnessChip freshness={item.freshness} />}
+                </div>
+                {item.status === 'current' && (
+                  <PillButton
+                    className="mt-3"
+                    onClick={() => void startItem(item.id, item.title, item.topicKey)}
+                    disabled={createSession.isPending}
+                  >
+                    Start
+                  </PillButton>
+                )}
+                {item.status === 'completed' && (
+                  <p className="mt-2 text-xs font-semibold text-st-success">Completed</p>
+                )}
+              </div>
+            </div>
           ))}
       </div>
     </div>

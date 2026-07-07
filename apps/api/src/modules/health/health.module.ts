@@ -1,5 +1,9 @@
 import { Module } from '@nestjs/common';
 import { HealthController } from './health.controller';
+import { LearnAiModule } from '../student/learn-ai/learn-ai.module';
 
-@Module({ controllers: [HealthController] })
+@Module({
+  imports: [LearnAiModule],
+  controllers: [HealthController],
+})
 export class HealthModule {}

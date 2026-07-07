@@ -1,9 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useCreateDebate, useDebateMotions } from '@/lib/hooks';
 import { PillButton } from '@/components/ui/pill-button';
+import { Eyebrow, PageHeader, PillChip } from '@/components/ui/primitives';
 
 const SIDES = ['for', 'against', 'surprise'] as const;
 const FORMATS = [
@@ -32,21 +32,25 @@ export default function DebateSetupPage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 animate-st-block-in">
-      <Link href="/lab" className="text-sm text-st-accent">← The Lab</Link>
-      <h1 className="mt-4 font-display text-2xl font-semibold text-st-ink">Set up a debate</h1>
-      <p className="mt-2 text-sm text-st-muted">Pick a motion, choose your side, and argue with Petros.</p>
+    <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
+      <PageHeader
+        backHref="/lab"
+        backLabel="The Lab"
+        eyebrow={<Eyebrow color="blue">INSTRUMENT 03</Eyebrow>}
+        title="Set up a debate"
+        subtitle="Pick a motion, choose your side, and argue with Petros."
+      />
 
       <section className="mt-8">
-        <h2 className="text-[10px] font-semibold tracking-wide text-st-faint">PICK A MOTION</h2>
+        <Eyebrow>PICK A MOTION</Eyebrow>
         <div className="mt-3 space-y-2">
           {(motions?.motions ?? []).slice(0, 4).map((m) => (
             <button
               key={m}
               type="button"
               onClick={() => setMotion(m)}
-              className={`w-full rounded-xl border px-4 py-3 text-left text-sm transition ${
-                motion === m ? 'border-st-accent bg-st-accentSoft' : 'border-st-bd1 bg-st-card'
+              className={`w-full rounded-[15px] border px-4 py-3 text-left text-sm transition ${
+                motion === m ? 'border-st-blue bg-st-blueSoft' : 'border-st-bd1 bg-st-card hover:border-st-blue/40'
               }`}
             >
               {m}
@@ -56,39 +60,32 @@ export default function DebateSetupPage() {
             value={motion}
             onChange={(e) => setMotion(e.target.value)}
             placeholder="Or write your own motion…"
-            className="w-full rounded-xl border border-st-bd1 bg-st-card px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-st-accent/30"
+            className="w-full rounded-[14px] border border-st-bd2 bg-st-card px-4 py-3 text-sm outline-none focus:border-st-accent"
           />
         </div>
       </section>
 
       <section className="mt-8">
-        <h2 className="text-[10px] font-semibold tracking-wide text-st-faint">YOUR SIDE</h2>
+        <Eyebrow>YOUR SIDE</Eyebrow>
         <div className="mt-3 flex flex-wrap gap-2">
           {SIDES.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setSide(s)}
-              className={`rounded-full px-4 py-2 text-xs font-semibold capitalize ${
-                side === s ? 'bg-st-accent text-white' : 'bg-st-surface2 text-st-muted'
-              }`}
-            >
+            <PillChip key={s} variant={side === s ? 'primary' : 'default'} onClick={() => setSide(s)}>
               {s === 'surprise' ? 'Surprise me' : s}
-            </button>
+            </PillChip>
           ))}
         </div>
       </section>
 
       <section className="mt-8">
-        <h2 className="text-[10px] font-semibold tracking-wide text-st-faint">FORMAT</h2>
+        <Eyebrow>FORMAT</Eyebrow>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           {FORMATS.map((f) => (
             <button
               key={f.key}
               type="button"
               onClick={() => setFormat(f.key)}
-              className={`rounded-xl border p-4 text-left ${
-                format === f.key ? 'border-st-accent bg-st-accentSoft' : 'border-st-bd1 bg-st-card'
+              className={`rounded-[15px] border p-4 text-left ${
+                format === f.key ? 'border-st-blue bg-st-blueSoft' : 'border-st-bd1 bg-st-card'
               }`}
             >
               <p className="font-semibold text-st-ink">{f.label}</p>

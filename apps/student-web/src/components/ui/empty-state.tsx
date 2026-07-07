@@ -1,23 +1,30 @@
 import type { ReactNode } from 'react';
-import { Card } from '@/components/ui/card';
+import { Eyebrow, PetrosMark } from './primitives';
 
 export function EmptyState({
-  icon,
+  eyebrow = 'NOTHING HERE YET',
   title,
   description,
   action,
+  className = '',
 }: {
-  icon?: string;
+  eyebrow?: string;
   title: string;
   description?: string;
   action?: ReactNode;
+  className?: string;
 }) {
   return (
-    <Card className="mt-8 text-center">
-      {icon && <p className="text-4xl">{icon}</p>}
-      <p className={`font-display text-lg font-semibold text-st-ink ${icon ? 'mt-3' : ''}`}>{title}</p>
-      {description && <p className="mt-2 text-sm text-st-muted">{description}</p>}
-      {action && <div className="mt-4 flex justify-center">{action}</div>}
-    </Card>
+    <div
+      className={`rounded-[15px] border border-dashed border-st-bd2 bg-st-cardAlt px-6 py-10 text-center ${className}`}
+    >
+      <div className="flex items-center justify-center gap-1.5">
+        <PetrosMark />
+        <Eyebrow color="faint">{eyebrow}</Eyebrow>
+      </div>
+      <p className="mt-3 font-display text-lg font-semibold text-st-ink">{title}</p>
+      {description && <p className="mx-auto mt-2 max-w-sm text-sm text-st-muted">{description}</p>}
+      {action && <div className="mt-5 flex justify-center">{action}</div>}
+    </div>
   );
 }

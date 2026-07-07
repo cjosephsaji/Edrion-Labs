@@ -7,15 +7,23 @@ export type StudentColorToken =
   | 'cardAlt'
   | 'surface2'
   | 'bd1'
+  | 'bd2'
+  | 'divider'
   | 'ink'
   | 'inkSoft'
   | 'muted'
   | 'faint'
+  | 'faint2'
   | 'accent'
   | 'accentDeep'
   | 'accentSoft'
+  | 'accentSoft2'
+  | 'accentBd'
+  | 'accentLine'
   | 'amber'
   | 'amberSoft'
+  | 'amberBd'
+  | 'amberInk'
   | 'danger'
   | 'dangerSoft'
   | 'violet'
@@ -23,6 +31,10 @@ export type StudentColorToken =
   | 'blue'
   | 'blueSoft'
   | 'gold'
+  | 'goldSoftBg'
+  | 'goldBd'
+  | 'goldInk'
+  | 'mintBg'
   | 'selection'
   | 'success'
   | 'sidebar';
@@ -36,15 +48,23 @@ export const studentThemes: Record<StudentThemeName, StudentTheme> = {
     cardAlt: '#FBFAF4',
     surface2: '#F5F2E8',
     bd1: '#E6E2D4',
+    bd2: '#DDD8C8',
+    divider: '#F0EDE1',
     ink: '#17251F',
     inkSoft: '#43514A',
     muted: '#55645C',
     faint: '#8A968F',
+    faint2: '#B9B4A2',
     accent: '#1E7A5E',
     accentDeep: '#0C3F31',
     accentSoft: '#E3EFE8',
+    accentSoft2: '#D5E7DD',
+    accentBd: '#C8DDD1',
+    accentLine: '#7FBA9E',
     amber: '#B9741F',
     amberSoft: '#FCF6EB',
+    amberBd: '#EAD9BC',
+    amberInk: '#8F5716',
     danger: '#A8472B',
     dangerSoft: '#F6E6DF',
     violet: '#5B4A78',
@@ -52,6 +72,10 @@ export const studentThemes: Record<StudentThemeName, StudentTheme> = {
     blue: '#3A5A78',
     blueSoft: '#E3EAF1',
     gold: '#8A7440',
+    goldSoftBg: '#F7F1DE',
+    goldBd: '#E8DDBB',
+    goldInk: '#6E5B2E',
+    mintBg: '#F0F6F1',
     selection: '#CFE4D6',
     success: '#14614B',
     sidebar: '#F8F5EC',
@@ -62,15 +86,23 @@ export const studentThemes: Record<StudentThemeName, StudentTheme> = {
     cardAlt: '#2A251E',
     surface2: '#2C271F',
     bd1: '#443D33',
+    bd2: '#443D33',
+    divider: '#3A342C',
     ink: '#ECE7DC',
     inkSoft: '#CEC7BB',
     muted: '#A9A296',
     faint: '#938C80',
+    faint2: '#807A6E',
     accent: '#48B78C',
     accentDeep: '#48B78C',
     accentSoft: '#22392F',
+    accentSoft2: '#2A4538',
+    accentBd: '#2E4A3C',
+    accentLine: '#48B78C',
     amber: '#D79E54',
     amberSoft: '#3A3120',
+    amberBd: '#5A4528',
+    amberInk: '#D79E54',
     danger: '#B85538',
     dangerSoft: '#3C2822',
     violet: '#2E2838',
@@ -78,6 +110,10 @@ export const studentThemes: Record<StudentThemeName, StudentTheme> = {
     blue: '#243038',
     blueSoft: '#243038',
     gold: '#C6A76A',
+    goldSoftBg: '#3A3120',
+    goldBd: '#5A4D30',
+    goldInk: '#C6A76A',
+    mintBg: '#1F3328',
     selection: '#2E4A3C',
     success: '#48B78C',
     sidebar: '#2C271F',
@@ -88,15 +124,23 @@ export const studentThemes: Record<StudentThemeName, StudentTheme> = {
     cardAlt: '#1B1710',
     surface2: '#251F18',
     bd1: '#332C22',
+    bd2: '#332C22',
+    divider: '#2C261E',
     ink: '#EDE7DB',
     inkSoft: '#CBC4B7',
     muted: '#A49D91',
     faint: '#8B8478',
+    faint2: '#736D61',
     accent: '#5FCB9E',
     accentDeep: '#5FCB9E',
     accentSoft: '#183328',
+    accentSoft2: '#1E3D30',
+    accentBd: '#2F5443',
+    accentLine: '#5FCB9E',
     amber: '#E3A758',
     amberSoft: '#2E2413',
+    amberBd: '#4A3820',
+    amberInk: '#E3A758',
     danger: '#B85538',
     dangerSoft: '#331E17',
     violet: '#251E30',
@@ -104,6 +148,10 @@ export const studentThemes: Record<StudentThemeName, StudentTheme> = {
     blue: '#1A2632',
     blueSoft: '#1A2632',
     gold: '#CBAC6D',
+    goldSoftBg: '#2E2413',
+    goldBd: '#4A3D22',
+    goldInk: '#CBAC6D',
+    mintBg: '#152820',
     selection: '#2F5443',
     success: '#5FCB9E',
     sidebar: '#251F18',

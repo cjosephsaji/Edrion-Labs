@@ -36,6 +36,10 @@
     background-size: 400% 100%;
     animation: shimmer 1.2s ease-in-out infinite;
   }
+  [data-reduced-motion='true'] .animate-st-soft-pulse,
+  [data-reduced-motion='true'] .shimmer {
+    animation: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

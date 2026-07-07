@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import type { StudentAssignmentListItemDto } from '@edrion/schemas';
 import { useAssignmentsList, useStudentMe } from '@/lib/hooks';
 import { GovernancePill } from '@/components/institutional/GovernancePill';
-import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Eyebrow, PageHeader, PillChip } from '@/components/ui/primitives';
 
 const FILTERS = ['all', 'progress', 'submitted', 'returned'] as const;
 
@@ -22,42 +23,46 @@ export default function AssignmentsPage() {
   if (me?.persona === 'school') return null;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 animate-st-block-in">
-      <p className="text-[10px] font-semibold tracking-wide text-st-faint">YOUR COLLEGE</p>
-      <h1 className="font-display text-2xl font-semibold text-st-ink">Assignments</h1>
+    <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
+      <PageHeader
+        eyebrow={<Eyebrow>YOUR COLLEGE</Eyebrow>}
+        title="Assignments"
+        subtitle="Problem sets and coursework with clear due dates."
+      />
 
       <div className="mt-4 flex flex-wrap gap-2">
         {FILTERS.map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => setFilter(f)}
-            className={`rounded-full px-3 py-1.5 text-xs font-semibold capitalize ${
-              filter === f ? 'bg-st-accent text-white' : 'bg-st-surface2 text-st-muted'
-            }`}
-          >
+          <PillChip key={f} variant={filter === f ? 'primary' : 'default'} onClick={() => setFilter(f)}>
             {f}
-          </button>
+          </PillChip>
         ))}
       </div>
 
       {isLoading ? (
-        <div className="mt-8 h-32 shimmer rounded-2xl" />
+        <div className="mt-8 h-32 shimmer rounded-[15px]" />
+      ) : (data?.items ?? []).length === 0 ? (
+        <EmptyState
+          className="mt-8"
+          eyebrow="NO ASSIGNMENTS"
+          title="No assignments yet"
+          description="When your professor posts work, it will show up here."
+        />
       ) : (
-        <div className="mt-6 space-y-3">
+        <div className="mt-6 space-y-2">
           {((data?.items ?? []) as StudentAssignmentListItemDto[]).map((item) => (
             <Link key={item.id} href={`/assignments/${item.id}`}>
-              <Card className="transition hover:border-st-accent/40">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-semibold text-st-ink">{item.title}</p>
-                    <p className="text-xs text-st-muted">
-                      {item.courseCode} · {item.professorName} · {item.dueLabel}
-                    </p>
-                  </div>
-                  <GovernancePill label={item.badge.label} tone={item.badge.tone} />
+              <div className="flex items-center gap-4 rounded-[15px] border border-st-bd1 bg-st-card px-4 py-3.5 transition hover:border-st-accent/40">
+                <div className="w-16 shrink-0 font-mono-ui text-[10.5px] font-medium leading-snug text-st-faint">
+                  {item.dueLabel.split(' ').slice(0, 2).join('\n')}
                 </div>
-              </Card>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-st-ink">{item.title}</p>
+                  <p className="text-xs text-st-muted">
+                    {item.courseCode} · {item.professorName}
+                  </p>
+                </div>
+                <GovernancePill label={item.badge.label} tone={item.badge.tone} />
+              </div>
             </Link>
           ))}
         </div>

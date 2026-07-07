@@ -38,3 +38,7 @@ test-results/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# cookies
+cookies.txt
+

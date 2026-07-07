@@ -146,11 +146,11 @@ export const apiEnvSchema = z.object({
   /** OpenAI API key. Petros endpoints refuse turns with a clear error when unset. */
   OPENAI_API_KEY: z.string().optional(),
   /** Interactive agent loop: chat turns, tool orchestration, everyday drafting. */
-  OPENAI_MODEL: z.string().default('gpt-5.4-mini'),
+  OPENAI_MODEL: z.string().default('gpt-5.2'),
   /** Cheap classifier-style calls: topicality, titles, permission suggestions, summaries. */
-  OPENAI_SMALL_MODEL: z.string().default('gpt-5.4-nano'),
+  OPENAI_SMALL_MODEL: z.string().default('gpt-5-nano-2025-08-07'),
   /** Quality-critical generation: exam/document content, format capture, role drafting. */
-  OPENAI_BIG_MODEL: z.string().default('gpt-5.4-2026-03-05'),
+  OPENAI_BIG_MODEL: z.string().default('gpt-5.5-pro'),
 
   BILLING_PROVIDER_SECRET: z.string().optional(),
   BILLING_WEBHOOK_SIGNING_SECRET: z.string().optional(),

@@ -7,6 +7,7 @@ import { useT } from '@/i18n/use-t';
 import { useToast } from '@/components/ui/toast';
 import { Card } from '@/components/ui/card';
 import { PillButton } from '@/components/ui/pill-button';
+import { Eyebrow, PageHeader, PillChip } from '@/components/ui/primitives';
 import { useStudentClient } from '@/lib/student-client';
 import { useStudentTerm } from '@/lib/persona';
 
@@ -41,8 +42,8 @@ function ThemeCard({
     <button
       type="button"
       onClick={onSelect}
-      className={`rounded-2xl border p-4 text-left transition ${
-        active ? 'border-st-accent ring-2 ring-st-accent/30' : 'border-st-bd1 hover:border-st-accent/40'
+      className={`rounded-[15px] border p-4 text-left transition ${
+        active ? 'border-st-accent bg-st-accentSoft/40 ring-2 ring-st-accent/20' : 'border-st-bd2 bg-st-card hover:border-st-accent/40'
       }`}
     >
       <div className="flex gap-1">
@@ -95,15 +96,15 @@ export default function SettingsPage() {
   const prefs = profile?.preferences;
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-6 md:flex-row md:py-10">
-      <nav className="flex gap-2 overflow-x-auto md:w-44 md:flex-col md:overflow-visible">
+    <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-6 pb-24 md:flex-row md:py-10">
+      <nav className="flex gap-2 overflow-x-auto md:w-48 md:flex-col md:overflow-visible">
         {sections.map((s) => (
           <button
             key={s.id}
             type="button"
             onClick={() => setSection(s.id)}
-            className={`shrink-0 rounded-full px-4 py-2 text-left text-sm font-medium md:rounded-xl ${
-              section === s.id ? 'bg-st-accentDeep/10 text-st-accentDeep' : 'text-st-muted hover:bg-st-accentSoft/40'
+            className={`shrink-0 rounded-[10px] px-4 py-2.5 text-left text-sm font-medium md:w-full ${
+              section === s.id ? 'bg-st-accentDeep/[0.07] text-st-accentDeep' : 'text-st-muted hover:bg-st-accentSoft/40'
             }`}
           >
             {s.label}
@@ -112,7 +113,7 @@ export default function SettingsPage() {
       </nav>
 
       <div className="min-w-0 flex-1 space-y-4">
-        <h1 className="font-display text-2xl font-semibold text-st-ink">{t('settings.title')}</h1>
+        <PageHeader eyebrow={<Eyebrow>SETTINGS</Eyebrow>} title={t('settings.title')} />
 
         {section === 'appearance' && (
           <div className="space-y-6">
@@ -146,16 +147,9 @@ export default function SettingsPage() {
               <p className="text-sm font-medium text-st-ink">{t('settings.appearance.textSize')}</p>
               <div className="mt-2 flex gap-2">
                 {(['S', 'M', 'L'] as const).map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => setTextSize(size)}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold ${
-                      textSize === size ? 'bg-st-accent text-white' : 'bg-st-surface2 text-st-muted'
-                    }`}
-                  >
+                  <PillChip key={size} variant={textSize === size ? 'primary' : 'default'} onClick={() => setTextSize(size)}>
                     {size}
-                  </button>
+                  </PillChip>
                 ))}
               </div>
             </div>
@@ -367,7 +361,7 @@ function ToggleRow({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-st-bd1 p-4">
+    <label className="flex cursor-pointer items-start justify-between gap-4 rounded-[15px] border border-st-bd1 bg-st-card p-4">
       <div>
         <p className="text-sm font-medium text-st-ink">{label}</p>
         {hint && <p className="text-xs text-st-muted">{hint}</p>}
@@ -401,16 +395,9 @@ function ChipGroup({
       {helper && <p className="text-xs text-st-muted">{helper}</p>}
       <div className="mt-2 flex flex-wrap gap-2">
         {options.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => onChange(opt.value)}
-            className={`rounded-full px-3 py-1.5 text-sm ${
-              value === opt.value ? 'bg-st-accent text-white' : 'bg-st-surface2 text-st-muted'
-            }`}
-          >
+          <PillChip key={opt.value} variant={value === opt.value ? 'primary' : 'default'} onClick={() => onChange(opt.value)}>
             {opt.label}
-          </button>
+          </PillChip>
         ))}
       </div>
     </div>

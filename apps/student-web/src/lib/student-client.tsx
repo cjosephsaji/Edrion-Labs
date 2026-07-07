@@ -16,8 +16,12 @@ export class StudentClientError extends Error {
 
 export type SseHandlers = {
   onMessage?: (data: unknown) => void;
-  onError?: (err: Event) => void;
+  onError?: (err: unknown) => void;
   onOpen?: () => void;
+};
+
+export type SseConnection = {
+  close: () => void;
 };
 
 /**
@@ -105,22 +109,70 @@ export class StudentClient {
     return `${this.baseUrl}/v1/student/storage/${id}/download`;
   }
 
-  /** EventSource wrapper for SSE endpoints (Plan 02). */
-  sse(path: string, handlers: SseHandlers): EventSource {
+  /**
+   * Fetch-based SSE reader — supports cookie auth and dev `x-student-email` header
+   * (native EventSource cannot send custom headers).
+   */
+  sse(path: string, handlers: SseHandlers): SseConnection {
     const url = `${this.baseUrl}/v1/student${path}`;
-    const es = new EventSource(url, { withCredentials: true });
-    if (handlers.onOpen) es.addEventListener('open', handlers.onOpen);
-    if (handlers.onError) es.addEventListener('error', handlers.onError);
-    if (handlers.onMessage) {
-      es.addEventListener('message', (ev) => {
-        try {
-          handlers.onMessage?.(JSON.parse(ev.data));
-        } catch {
-          handlers.onMessage?.(ev.data);
+    const controller = new AbortController();
+    let closed = false;
+
+    const close = () => {
+      if (closed) return;
+      closed = true;
+      controller.abort();
+    };
+
+    void (async () => {
+      try {
+        const res = await fetch(url, {
+          credentials: 'include',
+          headers: this.headers(undefined, false),
+          signal: controller.signal,
+        });
+        if (!res.ok || !res.body) {
+          handlers.onError?.(new Error(`SSE failed: ${res.status}`));
+          return;
         }
-      });
-    }
-    return es;
+        handlers.onOpen?.();
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (!closed) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const frames = buffer.split('\n\n');
+          buffer = frames.pop() ?? '';
+
+          for (const frame of frames) {
+            const line = frame
+              .split('\n')
+              .find((l) => l.startsWith('data: '));
+            if (!line) continue;
+            const payload = line.slice(6).trim();
+            if (payload === '[DONE]') {
+              handlers.onMessage?.('[DONE]');
+              close();
+              return;
+            }
+            try {
+              handlers.onMessage?.(JSON.parse(payload));
+            } catch {
+              handlers.onMessage?.(payload);
+            }
+          }
+        }
+      } catch (err) {
+        if (!closed && (err as Error).name !== 'AbortError') {
+          handlers.onError?.(err);
+        }
+      }
+    })();
+
+    return { close };
   }
 }
 

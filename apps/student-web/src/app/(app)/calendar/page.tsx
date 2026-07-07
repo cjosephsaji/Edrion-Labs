@@ -3,6 +3,8 @@ import { useCalendar } from '@/lib/hooks';
 import { MonthGrid, AgendaList } from '@/components/institutional/MonthGrid';
 import { CountdownCard } from '@/components/institutional/CountdownCard';
 import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Eyebrow, PageHeader } from '@/components/ui/primitives';
 
 export default function CalendarPage() {
   const { data, isLoading } = useCalendar();
@@ -10,11 +12,15 @@ export default function CalendarPage() {
   const todayEvents = data?.days.find((d) => d.date === new Date().toISOString().slice(0, 10))?.events ?? [];
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 animate-st-block-in">
-      <h1 className="font-display text-2xl font-semibold text-st-ink">Calendar</h1>
+    <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
+      <PageHeader
+        eyebrow={<Eyebrow>CALENDAR</Eyebrow>}
+        title="Calendar"
+        subtitle="Exams, due dates, and your school schedule in one view."
+      />
 
       {isLoading ? (
-        <div className="mt-8 h-48 shimmer rounded-2xl" />
+        <div className="mt-8 h-48 shimmer rounded-[15px]" />
       ) : (
         <>
           {data?.nextExam && (
@@ -28,15 +34,26 @@ export default function CalendarPage() {
             </div>
           )}
 
-          <Card className="mt-6">
-            <MonthGrid days={data?.days ?? []} />
+          <Card className="mt-6" eyebrow="MONTH" noPadding>
+            <div className="p-4">
+              <MonthGrid days={data?.days ?? []} />
+            </div>
           </Card>
 
           <div className="mt-6">
-            <p className="text-xs font-semibold text-st-faint">TODAY</p>
-            <div className="mt-2">
-              <AgendaList events={todayEvents} />
-            </div>
+            <Eyebrow>TODAY</Eyebrow>
+            {todayEvents.length > 0 ? (
+              <div className="mt-3 rounded-[15px] border border-st-bd1 bg-st-card p-4">
+                <AgendaList events={todayEvents} />
+              </div>
+            ) : (
+              <EmptyState
+                className="mt-3"
+                eyebrow="CLEAR DAY"
+                title="Nothing on today"
+                description="Events from homework, exams, and your timetable appear here."
+              />
+            )}
           </div>
         </>
       )}

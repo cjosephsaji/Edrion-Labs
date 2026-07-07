@@ -1,7 +1,6 @@
-import '../student.types';
+import './student.types';
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { LEARNING_EVENTS_WRITER } from '../../common/tokens';
 import { FeatureControlsModule } from '../feature-controls/feature-controls.module';
 import { PortalModule } from '../portal/portal.module';
 import { StudentAuthController } from './auth/student-auth.controller';
@@ -19,10 +18,23 @@ import { SurfacesService } from './surfaces/surfaces.service';
 import { FeesSummaryService } from './surfaces/fees-summary.service';
 import { StudentStorageController } from './storage/student-storage.controller';
 import { StudentStorageService } from './storage/student-storage.service';
-import { LearningEventsRepository } from './ledger/learning-events.repository';
-import { LearningEventsWriter } from './ledger/learning-events.writer';
+import { LearningEventsModule } from './ledger/learning-events.module';
 import { LearnAiModule } from './learn-ai/learn-ai.module';
 import { LearnRepository } from './learn/learn.repository';
+import { SessionsController } from './learn/sessions.controller';
+import { SessionsService } from './learn/sessions.service';
+import { AskController } from './learn/ask.controller';
+import { AskService } from './learn/ask.service';
+import { QuickController } from './learn/quick.controller';
+import { QuickService } from './learn/quick.service';
+import { PathController } from './learn/path.controller';
+import { PathService } from './learn/path.service';
+import { RevisionController } from './learn/revision.controller';
+import { RevisionService } from './learn/revision.service';
+import { StreaksController } from './learn/streaks.controller';
+import { StreaksService } from './learn/streaks.service';
+import { NotesController } from './learn/notes.controller';
+import { NotesService } from './learn/notes.service';
 import { HistoryController } from './learn/history.controller';
 import { HistoryService } from './learn/history.service';
 import { LibraryController } from './library/library.controller';
@@ -39,12 +51,19 @@ import { AchievementsController } from './achievements/achievements.controller';
 import { AchievementsService } from './achievements/achievements.service';
 
 @Module({
-  imports: [FeatureControlsModule, PortalModule, LearnAiModule],
+  imports: [FeatureControlsModule, PortalModule, LearnAiModule, LearningEventsModule],
   controllers: [
     StudentAuthController,
     StudentMeController,
     StudentHomeController,
     StudentStorageController,
+    SessionsController,
+    AskController,
+    QuickController,
+    PathController,
+    RevisionController,
+    StreaksController,
+    NotesController,
     HistoryController,
     LibraryController,
     LabVisualController,
@@ -63,9 +82,14 @@ import { AchievementsService } from './achievements/achievements.service';
     SurfacesService,
     FeesSummaryService,
     StudentStorageService,
-    LearningEventsRepository,
-    LearningEventsWriter,
     LearnRepository,
+    SessionsService,
+    AskService,
+    QuickService,
+    PathService,
+    RevisionService,
+    StreaksService,
+    NotesService,
     HistoryService,
     LibraryRepository,
     LibraryService,
@@ -74,9 +98,8 @@ import { AchievementsService } from './achievements/achievements.service';
     LabDebateService,
     AchievementsService,
     AchievementsProcessor,
-    { provide: LEARNING_EVENTS_WRITER, useExisting: LearningEventsWriter },
     { provide: APP_INTERCEPTOR, useClass: StudentTenantInterceptor },
   ],
-  exports: [StudentSessionService, StudentAuthGuard, StudentPermissionsGuard, LEARNING_EVENTS_WRITER],
+  exports: [StudentSessionService, StudentAuthGuard, StudentPermissionsGuard, LearningEventsModule],
 })
 export class StudentModule {}

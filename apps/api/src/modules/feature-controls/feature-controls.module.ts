@@ -6,6 +6,6 @@ import { FeatureControlsRepository } from './feature-controls.repository';
 @Module({
   controllers: [FeatureControlsController],
   providers: [FeatureControlsService, FeatureControlsRepository],
-  exports: [FeatureControlsService],
+  exports: [FeatureControlsService, FeatureControlsRepository],
 })
 export class FeatureControlsModule {}

@@ -1,8 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
+import type { ApiEnv } from '@edrion/config';
 import type { IntentResponseDto } from '@edrion/schemas';
 import type { StudentPrincipal } from '../student.types';
-import { LEARN_AI_PROVIDER } from '../../../common/tokens';
+import { API_ENV, LEARN_AI_PROVIDER } from '../../../common/tokens';
 import type { LearnAiProvider } from './provider';
 import { BudgetsService } from './budgets.service';
 import { LearnAiCallLogger } from './learn-ai-call.logger';
@@ -18,8 +19,11 @@ const routerOutputSchema = z.object({
 
 @Injectable()
 export class RouterService {
+  private readonly logger = new Logger(RouterService.name);
+
   constructor(
     @Inject(LEARN_AI_PROVIDER) private readonly ai: LearnAiProvider,
+    @Inject(API_ENV) private readonly env: ApiEnv,
     private readonly budgets: BudgetsService,
     private readonly callLog: LearnAiCallLogger,
   ) {}
@@ -29,21 +33,33 @@ export class RouterService {
       return this.heuristicRoute(text);
     }
 
-    await this.budgets.spend(principal, 'route', 400);
-    const persona = principal.kind === 'independent' ? 'independent learner' : 'school student';
-    const { result, usage } = await this.ai.completeJson({
-      purpose: 'route',
-      tier: 'nano',
-      system:
-        'Classify the student learning intent. Return JSON with intent, subjectLabel?, topicTitle?, depth (quick|deep), visualWarranted, archetype (domain archetype slug).',
-      user: `Persona: ${persona}\nStudent text: ${text}`,
-      schema: routerOutputSchema,
-      schemaName: 'intent_router',
-      maxOutputTokens: 300,
-    });
-    await this.callLog.log(principal, 'route', usage);
+    try {
+      await this.budgets.spend(principal, 'route', 400);
+      const persona = principal.kind === 'independent' ? 'independent learner' : 'school student';
+      const { result, usage } = await this.ai.completeJson({
+        purpose: 'route',
+        tier: 'nano',
+        system:
+          'Classify the student learning intent. Return JSON only. ' +
+          'intent MUST be exactly one of: quick_question, learn_topic, practice, revise, prepare_exam, continue. ' +
+          'Also include subjectLabel?, topicTitle?, depth (quick|deep), visualWarranted, archetype (domain archetype slug).',
+        user: `Persona: ${persona}\nStudent text: ${text}`,
+        schema: routerOutputSchema,
+        schemaName: 'intent_router',
+        maxOutputTokens: 8192,
+      });
+      await this.callLog.log(principal, 'route', usage);
 
-    return this.toResponse(result, text);
+      return this.toResponse(result, text);
+    } catch (err) {
+      const status = (err as { status?: number }).status;
+      const message = (err as Error).message ?? String(err);
+      const modelId = this.env.OPENAI_SMALL_MODEL;
+      this.logger.error(
+        `OpenAI error (model=${modelId}, status=${status ?? 'n/a'}): ${message}; falling back to heuristic routing`,
+      );
+      return this.heuristicRoute(text);
+    }
   }
 
   private heuristicRoute(text: string): IntentResponseDto {

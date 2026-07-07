@@ -4,30 +4,31 @@ import { useLibrary } from '@/lib/hooks';
 import { FreshnessChip } from '@/components/learn/FreshnessChip';
 import { LibraryUploadButton } from '@/components/library/library-upload-button';
 import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Eyebrow, PageHeader } from '@/components/ui/primitives';
 
 export default function LibraryPage() {
   const { data, isLoading } = useLibrary();
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 animate-st-block-in">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-semibold tracking-[0.14em] text-st-faint">LIBRARY</p>
-          <h1 className="mt-1 font-display text-3xl font-semibold text-st-ink">Your knowledge space</h1>
-          <p className="mt-2 text-sm text-st-muted">Upload notes, save materials, and let Petros help you learn from them.</p>
-        </div>
-        <LibraryUploadButton className="shrink-0 gap-1.5" />
-      </div>
+    <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
+      <PageHeader
+        eyebrow={<Eyebrow>LIBRARY</Eyebrow>}
+        title="Your knowledge space"
+        subtitle="Upload notes, save materials, and let Petros help you learn from them."
+        right={<LibraryUploadButton className="shrink-0 gap-1.5" />}
+      />
 
       {isLoading ? (
-        <div className="mt-8 h-40 shimmer rounded-2xl" />
+        <div className="mt-8 h-40 shimmer rounded-[15px]" />
       ) : !data?.uploads.length && !data?.generated.length ? (
-        <Card className="mt-8 text-center">
-          <p className="text-4xl">📚</p>
-          <p className="mt-3 font-display text-lg font-semibold text-st-ink">Your library starts with your first upload</p>
-          <p className="mt-2 text-sm text-st-muted">Take a photo of notes or upload a PDF — Petros will read it.</p>
-          <LibraryUploadButton label="📷 Take a photo of notes" capture className="mt-4" />
-        </Card>
+        <EmptyState
+          className="mt-8"
+          eyebrow="START HERE"
+          title="Your library starts with your first upload"
+          description="Take a photo of notes or upload a PDF — Petros will read it."
+          action={<LibraryUploadButton label="Upload notes" capture />}
+        />
       ) : (
         <div className="mt-8 space-y-8">
           {data.collections.length > 0 && (

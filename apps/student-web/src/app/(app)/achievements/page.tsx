@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useAchievements } from '@/lib/hooks';
 import { Card } from '@/components/ui/card';
+import { Eyebrow, PageHeader, PillChip } from '@/components/ui/primitives';
 
 export default function AchievementsPage() {
   const { data, isLoading } = useAchievements();
@@ -10,12 +11,12 @@ export default function AchievementsPage() {
   const activeFamily = data?.families.find((f) => f.key === family) ?? data?.families[0];
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 animate-st-block-in">
-      <p className="text-[11px] font-semibold tracking-[0.14em] text-st-faint">ACHIEVEMENTS</p>
-      <h1 className="mt-1 font-display text-3xl font-semibold text-st-ink">Earned, with evidence</h1>
-      <p className="mt-2 text-sm text-st-muted">
-        Every badge names what you actually did — tap one to see why.
-      </p>
+    <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
+      <PageHeader
+        eyebrow={<Eyebrow>ACHIEVEMENTS</Eyebrow>}
+        title="Earned, with evidence"
+        subtitle="Every badge names what you actually did — tap one to see why."
+      />
 
       {data && (
         <Card className="mt-6 inline-block px-4 py-2">
@@ -30,16 +31,13 @@ export default function AchievementsPage() {
         <>
           <div className="mt-6 flex flex-wrap gap-2">
             {(data?.families ?? []).map((f) => (
-              <button
+              <PillChip
                 key={f.key}
-                type="button"
+                variant={activeFamily?.key === f.key ? 'primary' : 'default'}
                 onClick={() => setFamily(f.key)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-                  activeFamily?.key === f.key ? 'bg-st-accent text-white' : 'bg-st-surface2 text-st-muted'
-                }`}
               >
                 {f.label}
-              </button>
+              </PillChip>
             ))}
           </div>
 
@@ -47,9 +45,10 @@ export default function AchievementsPage() {
             {(activeFamily?.badges ?? []).map((badge) => (
               <Card
                 key={badge.key}
-                className={badge.earned ? '' : 'opacity-60'}
+                className={badge.earned ? '' : 'border-dashed border-st-bd2 bg-st-cardAlt opacity-80'}
+                noPadding
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 p-4">
                   <span className="text-2xl">{badge.glyph}</span>
                   <div>
                     <p className="font-semibold text-st-ink">{badge.name}</p>

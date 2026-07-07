@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { StatSlot } from '@/components/ui/primitives';
 
 type StatCardProps = {
   label: string;
@@ -7,12 +8,7 @@ type StatCardProps = {
   className?: string;
 };
 
+/** @deprecated Use StatSlot directly */
 export function StatCard({ label, value, from, className = '' }: StatCardProps) {
-  return (
-    <div className={`rounded-2xl border border-st-bd1 bg-st-card p-4 ${className}`}>
-      <p className="text-[10px] font-semibold tracking-[0.12em] text-st-faint">{label}</p>
-      <p className="mt-1 font-display text-2xl font-semibold text-st-ink">{value}</p>
-      <p className="mt-1 text-xs text-st-muted">{from}</p>
-    </div>
-  );
+  return <StatSlot label={label} value={value} from={from} className={className} />;
 }
