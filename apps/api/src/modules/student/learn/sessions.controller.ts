@@ -91,6 +91,15 @@ export class SessionsController {
     return this.sessions.answer(principal, id, blockId, body);
   }
 
+  @Post('sessions/:id/blocks/:blockId/continue')
+  continueBlock(
+    @CurrentStudent() principal: StudentPrincipal,
+    @Param('id') id: string,
+    @Param('blockId') blockId: string,
+  ) {
+    return this.sessions.continueBlock(principal, id, blockId);
+  }
+
   @Post('sessions/:id/blocks/:blockId/hint')
   hint(
     @CurrentStudent() principal: StudentPrincipal,

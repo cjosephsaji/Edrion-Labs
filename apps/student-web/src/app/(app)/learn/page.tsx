@@ -1,10 +1,11 @@
 'use client';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Flame } from 'lucide-react';
 import {
   useCalendar,
+  useCreatePath,
   useCreateSession,
   useHome,
   useIntent,
@@ -12,7 +13,11 @@ import {
   useRevisionQueue,
   useStreaks,
 } from '@/lib/hooks';
+import { useAskQuick } from '@/lib/hooks/useQuick';
 import { usePersona } from '@/lib/persona';
+import { intentPreviewLabel, isAmbiguousIntent } from '@/lib/intent-preview';
+import { useStudentClient } from '@/lib/student-client';
+import type { IntentResponseDto } from '@edrion/schemas';
 import { FreshnessChip } from '@/components/learn/FreshnessChip';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -81,14 +86,21 @@ export default function LearnPage() {
   const searchParams = useSearchParams();
   const { me } = usePersona();
   const [intentText, setIntentText] = useState('');
-  const [intentLabel, setIntentLabel] = useState<string | null>(null);
+  const [previewLabel, setPreviewLabel] = useState<string | null>(null);
+  const [disambiguationText, setDisambiguationText] = useState<string | null>(null);
+  const [forcedMode, setForcedMode] = useState<'quick_question' | 'learn_topic' | 'practice' | null>(null);
+  const [routingStatus, setRoutingStatus] = useState<string | null>(null);
   const { data: streaks } = useStreaks();
   const { data: path } = usePath();
   const { data: revision } = useRevisionQueue();
   const { data: home } = useHome();
   const { data: calendar } = useCalendar();
   const intent = useIntent();
+  const askQuick = useAskQuick();
   const createSession = useCreateSession();
+  const createPath = useCreatePath();
+  const client = useStudentClient();
+  const previewRequestId = useRef(0);
 
   const resumeTile = home?.tiles.find((t) => t.key === 'continue_learning');
   const hasResumable =
@@ -110,23 +122,162 @@ export default function LearnPage() {
     if (topic) setIntentText(topic);
   }, [searchParams]);
 
+  useEffect(() => {
+    const trimmed = intentText.trim();
+    if (trimmed.length < 8) {
+      setPreviewLabel(null);
+      return;
+    }
+
+    const requestId = ++previewRequestId.current;
+    const timer = setTimeout(() => {
+      void client
+        .post<IntentResponseDto>('/learn/intent', { text: trimmed })
+        .then((routed) => {
+          if (requestId !== previewRequestId.current) return;
+          setPreviewLabel(intentPreviewLabel(routed));
+        })
+        .catch(() => {
+          if (requestId !== previewRequestId.current) return;
+          setPreviewLabel(null);
+        });
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [client, intentText]);
+
+  const routeIntent = useCallback(
+    async (
+      text: string,
+      forced?: 'quick_question' | 'learn_topic' | 'practice',
+      topicGuess?: string,
+    ) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+
+      setForcedMode(null);
+      setRoutingStatus(null);
+
+      if (forced === 'quick_question') {
+        setRoutingStatus('Getting your answer…');
+        const quick = await askQuick.mutateAsync({ question: trimmed, from: 'home' });
+        router.push(`/learn/quick/${quick.id}`);
+        return;
+      }
+
+      if (forced === 'practice') {
+        setRoutingStatus('Starting practice session…');
+        const session = await createSession.mutateAsync({
+          topicTitle: topicGuess ?? trimmed,
+          source: 'refresh',
+          kind: 'refresh10',
+        });
+        router.push(`/learn/session/${session.id}`);
+        return;
+      }
+
+      if (forced === 'learn_topic') {
+        if (me?.kind === 'independent') {
+          setRoutingStatus('Building your path…');
+          const pathResult = await createPath.mutateAsync({ goalStatement: trimmed });
+          const firstItem = pathResult.items[0];
+          if (!firstItem) return;
+          setRoutingStatus('Starting your first session…');
+          const session = await createSession.mutateAsync({
+            topicTitle: firstItem.title,
+            source: 'intent',
+            pathItemId: firstItem.id,
+          });
+          router.push(`/learn/session/${session.id}`);
+        } else {
+          setRoutingStatus('Starting your session…');
+          const session = await createSession.mutateAsync({
+            topicTitle: topicGuess ?? trimmed,
+            source: 'intent',
+          });
+          router.push(`/learn/session/${session.id}`);
+        }
+        return;
+      }
+
+      setRoutingStatus('Understanding what you need…');
+      const routed = await intent.mutateAsync({ text: trimmed });
+
+      switch (routed.intent) {
+        case 'learn_topic': {
+          if (me?.kind === 'independent') {
+            setRoutingStatus('Building your path…');
+            const pathResult = await createPath.mutateAsync({ goalStatement: trimmed });
+            const firstItem = pathResult.items[0];
+            if (!firstItem) return;
+            setRoutingStatus('Starting your first session…');
+            const session = await createSession.mutateAsync({
+              topicTitle: firstItem.title,
+              source: 'intent',
+              pathItemId: firstItem.id,
+            });
+            router.push(`/learn/session/${session.id}`);
+          } else {
+            setRoutingStatus('Starting your session…');
+            const session = await createSession.mutateAsync({
+              topicTitle: routed.topicGuess ?? trimmed,
+              source: 'intent',
+            });
+            router.push(`/learn/session/${session.id}`);
+          }
+          break;
+        }
+        case 'quick_question': {
+          setRoutingStatus('Getting your answer…');
+          const quick = await askQuick.mutateAsync({ question: trimmed, from: 'home' });
+          router.push(`/learn/quick/${quick.id}`);
+          break;
+        }
+        case 'practice': {
+          setRoutingStatus('Starting practice session…');
+          const session = await createSession.mutateAsync({
+            topicTitle: routed.topicGuess ?? trimmed,
+            source: 'refresh',
+            kind: 'refresh10',
+          });
+          router.push(`/learn/session/${session.id}`);
+          break;
+        }
+        case 'revise':
+          router.push('/learn/revision');
+          break;
+        case 'prepare_exam':
+          router.push('/lab/mock-exams/new');
+          break;
+        case 'continue':
+          router.push(resumeTile?.route ?? '/learn/path');
+          break;
+        default:
+          router.push('/learn');
+      }
+    },
+    [askQuick, createPath, createSession, intent, me?.kind, resumeTile?.route, router],
+  );
+
   const handleSubmit = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed) return;
-    const routed = await intent.mutateAsync({ text: trimmed });
-    setIntentLabel(routed.helperCopy ?? routed.intent.replace(/_/g, ' '));
-    if (routed.route.startsWith('/')) {
-      router.push(routed.route);
-    } else if (routed.intent === 'learn_topic') {
-      const session = await createSession.mutateAsync({
-        topicTitle: routed.topicGuess ?? trimmed,
-        source: 'intent',
-      });
-      router.push(`/learn/session/${session.id}`);
-    } else {
-      router.push(routed.route);
+    setDisambiguationText(null);
+
+    if (isAmbiguousIntent(trimmed)) {
+      setDisambiguationText(trimmed);
+      setPreviewLabel(null);
+      return;
     }
+
+    await routeIntent(trimmed, forcedMode ?? undefined);
   };
+
+  const isRouting =
+    intent.isPending ||
+    askQuick.isPending ||
+    createSession.isPending ||
+    createPath.isPending;
 
   const isInst = me?.kind === 'institutional';
   const isIndie = me?.kind === 'independent';
@@ -175,10 +326,14 @@ export default function LearnPage() {
             value={intentText}
             onChange={(e) => {
               setIntentText(e.target.value);
-              if (!e.target.value.trim()) setIntentLabel(null);
+              if (!e.target.value.trim()) {
+                setPreviewLabel(null);
+                setDisambiguationText(null);
+              }
             }}
             placeholder="Ask anything, or tell Petros what you want to learn…"
-            className="w-full rounded-[14px] border-[1.5px] border-st-bd2 bg-st-card py-4 pl-[18px] pr-[92px] text-[15px] text-st-ink shadow-[0_1px_2px_rgba(23,37,31,0.04)] outline-none transition focus:border-st-accent focus:shadow-[0_0_0_3px_rgba(30,122,94,0.13)]"
+            disabled={isRouting}
+            className="w-full rounded-[14px] border-[1.5px] border-st-bd2 bg-st-card py-4 pl-[18px] pr-[92px] text-[15px] text-st-ink shadow-[0_1px_2px_rgba(23,37,31,0.04)] outline-none transition focus:border-st-accent focus:shadow-[0_0_0_3px_rgba(30,122,94,0.13)] disabled:opacity-60"
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
@@ -191,11 +346,42 @@ export default function LearnPage() {
           </div>
         </div>
 
-        {intentLabel && (
+        {routingStatus && (
+          <p className="mt-2 text-sm text-st-muted">{routingStatus}</p>
+        )}
+
+        {previewLabel && !disambiguationText && !forcedMode && (
           <div className="mt-2 inline-flex animate-st-fade-up items-center gap-1.5 rounded-lg border border-st-amberBd bg-st-amberSoft px-2.5 py-1.5 text-xs font-medium text-st-amberInk">
             <PetrosMark />
-            {intentLabel}
+            {previewLabel}
           </div>
+        )}
+
+        {disambiguationText && (
+          <div className="mt-3 max-w-[730px] animate-st-fade-up rounded-xl border border-st-bd2 bg-st-card p-4">
+            <p className="text-sm text-st-muted">
+              &ldquo;{disambiguationText}&rdquo; could go either way — what do you want?
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <PillChip
+                variant="primary"
+                onClick={() => void routeIntent(disambiguationText, 'quick_question')}
+              >
+                Quick answer
+              </PillChip>
+              <PillChip onClick={() => void routeIntent(disambiguationText, 'learn_topic')}>
+                Learn it properly
+              </PillChip>
+            </div>
+          </div>
+        )}
+
+        {forcedMode && (
+          <p className="mt-2 text-sm text-st-muted">
+            {forcedMode === 'learn_topic' && 'Type a topic — Petros will build a path and start your first session'}
+            {forcedMode === 'quick_question' && 'Type your question — Petros will answer it directly'}
+            {forcedMode === 'practice' && 'Type a topic — Petros will start a quick practice session'}
+          </p>
         )}
 
         <div className="mt-3.5 flex flex-wrap gap-2">
@@ -204,16 +390,36 @@ export default function LearnPage() {
               ↻ Continue where I left off
             </PillChip>
           )}
-          <PillChip onClick={() => router.push('/learn/path')}>Learn something new</PillChip>
           <PillChip
+            variant={forcedMode === 'learn_topic' ? 'primary' : undefined}
             onClick={() => {
-              setIntentText('Quick question: ');
+              setForcedMode('learn_topic');
+              setDisambiguationText(null);
+              document.querySelector<HTMLInputElement>('input')?.focus();
+            }}
+          >
+            Learn something new
+          </PillChip>
+          <PillChip
+            variant={forcedMode === 'quick_question' ? 'primary' : undefined}
+            onClick={() => {
+              setForcedMode('quick_question');
+              setDisambiguationText(null);
               document.querySelector<HTMLInputElement>('input')?.focus();
             }}
           >
             Quick question
           </PillChip>
-          <PillChip onClick={() => router.push('/learn/path')}>Practice</PillChip>
+          <PillChip
+            variant={forcedMode === 'practice' ? 'primary' : undefined}
+            onClick={() => {
+              setForcedMode('practice');
+              setDisambiguationText(null);
+              document.querySelector<HTMLInputElement>('input')?.focus();
+            }}
+          >
+            Practice
+          </PillChip>
           <PillChip onClick={() => router.push('/learn/revision')}>Revise</PillChip>
           {isInst && (
             <PillChip onClick={() => router.push('/lab/mock-exams/new')}>Prepare for exam</PillChip>

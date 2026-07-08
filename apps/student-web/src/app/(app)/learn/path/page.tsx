@@ -28,7 +28,9 @@ export default function PathPage() {
     );
   }
 
-  if (!path) {
+  const items = path?.items ?? [];
+
+  if (!path?.id) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-10">
         <EmptyState
@@ -55,7 +57,7 @@ export default function PathPage() {
       />
 
       <div className="relative mt-8 space-y-0">
-        {path.items
+        {items
           .filter((i) => i.status !== 'removed')
           .map((item, index, arr) => (
             <div key={item.id} className="relative flex gap-4 pb-6">

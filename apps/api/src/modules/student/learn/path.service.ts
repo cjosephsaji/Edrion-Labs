@@ -2,6 +2,7 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { z } from 'zod';
@@ -10,6 +11,7 @@ import { LEARN_AI_PROVIDER, LEARNING_EVENTS_WRITER } from '../../../common/token
 import type { LearnAiProvider } from '../learn-ai/provider';
 import { BudgetsService } from '../learn-ai/budgets.service';
 import { LearnAiCallLogger } from '../learn-ai/learn-ai-call.logger';
+import { PATH_SYSTEM_PROMPT } from '../learn-ai/prompts/path.prompt';
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import type { InstitutionalStudentPrincipal, StudentPrincipal } from '../student.types';
 import { LearnRepository } from './learn.repository';
@@ -37,6 +39,8 @@ function slugify(text: string): string {
 
 @Injectable()
 export class PathService {
+  private readonly logger = new Logger(PathService.name);
+
   constructor(
     private readonly repo: LearnRepository,
     @Inject(LEARN_AI_PROVIDER) private readonly ai: LearnAiProvider,
@@ -58,6 +62,11 @@ export class PathService {
       throw new ForbiddenException('Institutional paths are seeded automatically');
     }
 
+    const existingPath = await this.repo.getPath(principal);
+    if (existingPath) {
+      await this.repo.updatePath(existingPath.id, { status: 'archived' });
+    }
+
     let plan: z.infer<typeof pathPlanSchema> = {
       title: 'Your learning path',
       subjectLabel: 'General',
@@ -66,18 +75,23 @@ export class PathService {
     };
 
     if (this.ai.available) {
-      await this.budgets.spend(principal, 'session_plan', 2000);
-      const { result, usage } = await this.ai.completeJson({
-        purpose: 'session_plan',
-        tier: 'large',
-        system: 'Generate a 5-8 item learning path with why_here lines. No scores.',
-        user: JSON.stringify(input),
-        schema: pathPlanSchema,
-        schemaName: 'learning_path',
-        maxOutputTokens: 1500,
-      });
-      await this.callLog.log(principal, 'session_plan', usage);
-      plan = result;
+      try {
+        await this.budgets.spend(principal, 'session_plan', 2000);
+        const { result, usage } = await this.ai.completeJson({
+          purpose: 'session_plan',
+          tier: 'large',
+          system: PATH_SYSTEM_PROMPT,
+          user: JSON.stringify(input),
+          schema: pathPlanSchema,
+          schemaName: 'learning_path',
+          maxOutputTokens: 2000,
+          reasoningEffort: 'low',
+        });
+        await this.callLog.log(principal, 'session_plan', usage);
+        plan = result;
+      } catch (err) {
+        this.logger.error(`Path planner AI failed — using default plan: ${(err as Error).message}`);
+      }
     }
 
     const path = await this.repo.createPath({

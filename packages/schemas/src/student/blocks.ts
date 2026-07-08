@@ -108,7 +108,7 @@ export const practiceItemBlockSchema = z.object({
   statement: z.string(),
   math: z.string().optional(),
   expectedForm: z.string().optional(),
-  hints: z.tuple([z.string(), z.string(), z.string()]),
+  hints: z.array(z.string()).min(3).max(3),
   questionIndex: z.number().int().optional(),
   questionTotal: z.number().int().optional(),
   suggestedQuestions: z.array(z.string()).default([]),

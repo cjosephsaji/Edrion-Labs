@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useHomework } from '@/lib/hooks';
+import { aiPolicyPill } from '@/lib/ai-policy';
 import { GovernancePill } from '@/components/institutional/GovernancePill';
 import { Card } from '@/components/ui/card';
 
@@ -11,12 +12,14 @@ export default function HomeworkDetailPage({ params }: { params: { id: string } 
     return <div className="mx-auto max-w-2xl px-4 py-10"><div className="h-48 shimmer rounded-2xl" /></div>;
   }
 
+  const policy = aiPolicyPill(hw.aiPolicy);
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 animate-st-block-in">
       <Link href="/homework" className="text-sm text-st-muted hover:text-st-accent">← Homework</Link>
-      <div className="mt-4 flex items-start justify-between gap-2">
+      <div className="mt-4 flex flex-wrap items-start justify-between gap-2">
         <h1 className="font-display text-2xl font-semibold text-st-ink">{hw.title}</h1>
-        <GovernancePill label={hw.status} tone="info" />
+        <GovernancePill label={policy.label} tone={policy.tone} />
       </div>
       {hw.instructions && <p className="mt-2 text-sm text-st-muted">{hw.instructions}</p>}
       <p className="mt-1 text-xs text-st-faint">Due {new Date(hw.dueAt).toLocaleString()}</p>

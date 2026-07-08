@@ -14,7 +14,9 @@ export function ConceptCard({
   return (
     <BlockCard eyebrow="CONCEPT" tone="accent" icon={Lightbulb}>
       <h2 className="font-display text-2xl font-semibold text-st-ink">{content.title}</h2>
-      <p className="mt-3 text-sm leading-relaxed text-st-ink">{content.summary}</p>
+      <p className="mt-3 text-sm leading-relaxed text-st-ink">
+        <MathText>{content.summary}</MathText>
+      </p>
 
       {content.keyPoints[0] && (
         <div className="mt-4 rounded-xl border border-st-accentBd bg-st-mintBg p-4">
@@ -37,7 +39,9 @@ export function ConceptCard({
       {content.goDeeper?.map((section) => (
         <details key={section.heading} className="mt-3 rounded-xl border border-st-bd1 bg-st-surface2 p-4">
           <summary className="cursor-pointer font-semibold text-st-ink">{section.heading}</summary>
-          <p className="mt-2 text-sm text-st-muted">{section.body}</p>
+          <p className="mt-2 text-sm text-st-muted">
+            <MathText>{section.body}</MathText>
+          </p>
         </details>
       ))}
 
@@ -53,7 +57,7 @@ export function ConceptCard({
           <div className="mt-2 flex flex-wrap gap-2">
             {content.suggestedQuestions.map((q) => (
               <PillChip key={q} onClick={() => onAsk(q)}>
-                {q}
+                <MathText>{q}</MathText>
               </PillChip>
             ))}
           </div>

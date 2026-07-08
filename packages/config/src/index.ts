@@ -150,7 +150,7 @@ export const apiEnvSchema = z.object({
   /** Cheap classifier-style calls: topicality, titles, permission suggestions, summaries. */
   OPENAI_SMALL_MODEL: z.string().default('gpt-5-nano-2025-08-07'),
   /** Quality-critical generation: exam/document content, format capture, role drafting. */
-  OPENAI_BIG_MODEL: z.string().default('gpt-5.5-pro'),
+  OPENAI_BIG_MODEL: z.string().default('gpt-5.4-mini'),
 
   BILLING_PROVIDER_SECRET: z.string().optional(),
   BILLING_WEBHOOK_SIGNING_SECRET: z.string().optional(),

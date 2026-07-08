@@ -111,8 +111,7 @@ export function useDebateLobby(id: string | undefined) {
 export function useGenerateVisual() {
   const client = useStudentClient();
   return useMutation({
-    mutationFn: (input: GenerateVisualInput) =>
-      client.post<{ spec: GraphSpec }>('/lab/visuals', input),
+    mutationFn: (input: GenerateVisualInput) => client.post<GraphSpec>('/lab/visuals', input),
   });
 }
 
@@ -195,7 +194,7 @@ export function useRegenerateVisual() {
   const client = useStudentClient();
   return useMutation({
     mutationFn: ({ spec, direction }: { spec: GraphSpec; direction: string }) =>
-      client.post<{ spec: GraphSpec }>('/lab/visuals/regenerate', { spec, direction }),
+      client.post<GraphSpec>('/lab/visuals/regenerate', { spec, direction }),
   });
 }
 
@@ -266,6 +265,50 @@ export function useLibraryQuiz(itemId: string) {
 export function useLibraryTutor(itemId: string) {
   const client = useStudentClient();
   return useMutation({
-    mutationFn: () => client.post<{ sessionId: string }>(`/library/items/${itemId}/tutor`),
+    mutationFn: (input?: { focusConcept?: string }) =>
+      client.post<{ sessionId: string }>(`/library/items/${itemId}/tutor`, input ?? {}),
+  });
+}
+
+export function useLibraryConceptMap(itemId: string) {
+  const client = useStudentClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      client.post<{ id: string; kind: string; title: string }>(`/library/items/${itemId}/concept-map`),
+    onSuccess: () => {
+      invalidateLibrary(qc);
+      qc.invalidateQueries({ queryKey: ['student', 'library', 'item', itemId] });
+    },
+  });
+}
+
+export function useLibraryGlossary(itemId: string) {
+  const client = useStudentClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      client.post<{ id: string; kind: string; title: string }>(`/library/items/${itemId}/glossary`),
+    onSuccess: () => {
+      invalidateLibrary(qc);
+      qc.invalidateQueries({ queryKey: ['student', 'library', 'item', itemId] });
+    },
+  });
+}
+
+export function useLibraryArtifact(id: string | undefined) {
+  const client = useStudentClient();
+  return useQuery({
+    queryKey: ['student', 'library', 'artifact', id],
+    queryFn: () =>
+      client.get<{
+        id: string;
+        itemId: string | null;
+        kind: string;
+        title: string;
+        fromLabel: string;
+        content: unknown;
+      }>(`/library/artifacts/${id}`),
+    enabled: !!id,
   });
 }

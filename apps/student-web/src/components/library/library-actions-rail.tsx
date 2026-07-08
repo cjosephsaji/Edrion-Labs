@@ -1,7 +1,9 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import {
+  useLibraryConceptMap,
   useLibraryFlashcards,
+  useLibraryGlossary,
   useLibraryQuiz,
   useLibrarySummarize,
   useLibraryTutor,
@@ -13,12 +15,20 @@ export function LibraryActionsRail({ itemId }: { itemId: string }) {
   const summarize = useLibrarySummarize(itemId);
   const flashcards = useLibraryFlashcards(itemId);
   const quiz = useLibraryQuiz(itemId);
+  const conceptMap = useLibraryConceptMap(itemId);
+  const glossary = useLibraryGlossary(itemId);
   const tutor = useLibraryTutor(itemId);
 
-  const busy = summarize.isPending || flashcards.isPending || quiz.isPending || tutor.isPending;
+  const busy =
+    summarize.isPending ||
+    flashcards.isPending ||
+    quiz.isPending ||
+    conceptMap.isPending ||
+    glossary.isPending ||
+    tutor.isPending;
 
   const handleTutor = async () => {
-    const result = await tutor.mutateAsync();
+    const result = await tutor.mutateAsync({});
     router.push(`/learn/session/${result.sessionId}`);
   };
 
@@ -27,16 +37,27 @@ export function LibraryActionsRail({ itemId }: { itemId: string }) {
     router.push(`/library/decks/${result.deckId}`);
   };
 
+  const handleConceptMap = async () => {
+    const result = await conceptMap.mutateAsync();
+    router.push(`/library/maps/${result.id}`);
+  };
+
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
+    <div className="mt-6 grid gap-2 sm:grid-cols-2">
       <PillButton variant="soft" disabled={busy} onClick={() => void summarize.mutateAsync()}>
-        {summarize.isPending ? 'Summarizing…' : 'Summarize'}
+        {summarize.isPending ? 'Summarizing…' : '✦ Summarize'}
       </PillButton>
       <PillButton variant="soft" disabled={busy} onClick={() => void handleFlashcards()}>
-        {flashcards.isPending ? 'Building…' : 'Make flashcards'}
+        {flashcards.isPending ? 'Building…' : '✦ Make flashcards'}
       </PillButton>
       <PillButton variant="soft" disabled={busy} onClick={() => void quiz.mutateAsync()}>
-        {quiz.isPending ? 'Building…' : 'Make a quiz'}
+        {quiz.isPending ? 'Building…' : '✦ Make a quiz'}
+      </PillButton>
+      <PillButton variant="soft" disabled={busy} onClick={() => void handleConceptMap()}>
+        {conceptMap.isPending ? 'Mapping…' : '✦ Concept map'}
+      </PillButton>
+      <PillButton variant="soft" disabled={busy} onClick={() => void glossary.mutateAsync()}>
+        {glossary.isPending ? 'Extracting…' : '✦ Key-terms glossary'}
       </PillButton>
       <PillButton disabled={busy} onClick={() => void handleTutor()}>
         {tutor.isPending ? 'Starting…' : '✦ Tutor me on this'}

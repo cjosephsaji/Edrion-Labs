@@ -6,12 +6,15 @@ import {
 } from '@nestjs/common';
 import { z } from 'zod';
 import {
+  conceptMapContentSchema,
   createCollectionSchema,
   createFlashcardSchema,
   createKnowledgeItemSchema,
   deckFromSessionSchema,
   deckGenerationSchema,
   flashcardReviewSchema,
+  glossaryContentSchema,
+  libraryTutorInputSchema,
   patchCollectionSchema,
   patchDeckSchema,
   patchFlashcardSchema,
@@ -98,7 +101,7 @@ export class LibraryService {
     const generated = [
       ...artifacts.map((a) => ({
         id: a.id,
-        kind: a.kind as 'summary' | 'quiz' | 'topic_pack' | 'visual',
+        kind: a.kind as 'summary' | 'quiz' | 'topic_pack' | 'visual' | 'concept_map' | 'glossary',
         title: a.title,
         fromLabel: a.fromLabel,
         freshness: undefined as 'fresh' | 'fading' | 'due' | undefined,
@@ -282,7 +285,52 @@ export class LibraryService {
     });
   }
 
-  async tutor(principal: StudentPrincipal, itemId: string) {
+  async conceptMap(principal: StudentPrincipal, itemId: string) {
+    const item = await this.requireItem(principal, itemId);
+    const text = await this.extractedText(item);
+    const content = await this.generateConceptMap(principal, text, item.title);
+    return this.repo.insertArtifact({
+      ...this.repo.owner(principal),
+      itemId: item.id,
+      kind: 'concept_map',
+      title: content.title,
+      content,
+      fromLabel: `From: ${item.title}`,
+    });
+  }
+
+  async glossary(principal: StudentPrincipal, itemId: string) {
+    const item = await this.requireItem(principal, itemId);
+    const text = await this.extractedText(item);
+    const content = await this.generateGlossary(principal, text, item.title);
+    return this.repo.insertArtifact({
+      ...this.repo.owner(principal),
+      itemId: item.id,
+      kind: 'glossary',
+      title: content.title,
+      content,
+      fromLabel: `From: ${item.title}`,
+    });
+  }
+
+  async getArtifact(principal: StudentPrincipal, artifactId: string) {
+    const artifact = await this.repo.getArtifact(principal, artifactId);
+    if (!artifact) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Artifact not found' });
+    }
+    return {
+      id: artifact.id,
+      itemId: artifact.itemId,
+      kind: artifact.kind,
+      title: artifact.title,
+      fromLabel: artifact.fromLabel,
+      content: artifact.content,
+      createdAt: artifact.createdAt.toISOString(),
+    };
+  }
+
+  async tutor(principal: StudentPrincipal, itemId: string, body?: unknown) {
+    const focus = libraryTutorInputSchema.parse(body ?? {});
     const item = await this.requireItem(principal, itemId);
     if (!item.extractedTextReady) {
       throw new BadRequestException({
@@ -306,7 +354,11 @@ export class LibraryService {
       groundingKnowledgeItemId: item.id,
       status: 'active',
       spine: [],
-      sessionPlan: { source: 'tutor_grounded', knowledgeItemId: item.id },
+      sessionPlan: {
+        source: 'tutor_grounded',
+        knowledgeItemId: item.id,
+        focusConcept: focus.focusConcept,
+      },
     });
     if (!session) throw new Error('Failed to create session');
     await this.ledger.log({
@@ -617,6 +669,117 @@ export class LibraryService {
     });
     await this.callLog.log(principal, 'library_gen', usage);
     return result;
+  }
+
+  private async generateConceptMap(principal: StudentPrincipal, text: string, sourceTitle: string) {
+    if (!this.ai.available) {
+      return this.stubConceptMap(sourceTitle);
+    }
+    await this.budgets.spend(principal, 'library_gen', 2000);
+    try {
+      const { result, usage } = await this.ai.completeJson({
+        purpose: 'library_gen',
+        tier: 'large',
+        system:
+          'Extract how ideas in the source connect into a concept map. Choose layout web for interconnected ideas or flowchart for process-heavy sources. Include 8–20 nodes. Each node needs id, label, miniDefinition grounded in the source (never the final answer), sourceLocation (page/passage reference like "p. 3" or "Section 2"), and optional x/y (0–100). Edges need from, to, relation (depends_on|part_of|step).',
+        user: text.slice(0, 12_000),
+        schema: conceptMapContentSchema,
+        schemaName: 'concept_map',
+        maxOutputTokens: 4000,
+      });
+      await this.callLog.log(principal, 'library_gen', usage);
+      return result;
+    } catch {
+      return this.stubConceptMap(sourceTitle);
+    }
+  }
+
+  private async generateGlossary(principal: StudentPrincipal, text: string, sourceTitle: string) {
+    if (!this.ai.available) {
+      return this.stubGlossary(sourceTitle);
+    }
+    await this.budgets.spend(principal, 'library_gen', 1500);
+    try {
+      const { result, usage } = await this.ai.completeJson({
+        purpose: 'library_gen',
+        tier: 'large',
+        system:
+          'Extract only terms the source actually defines — no invented vocabulary. Each entry: term, definition (from source wording), sourceLocation (page/passage reference).',
+        user: text.slice(0, 12_000),
+        schema: glossaryContentSchema,
+        schemaName: 'glossary',
+        maxOutputTokens: 3000,
+      });
+      await this.callLog.log(principal, 'library_gen', usage);
+      return result;
+    } catch {
+      return this.stubGlossary(sourceTitle);
+    }
+  }
+
+  private stubConceptMap(sourceTitle: string) {
+    return {
+      title: `Concept map — ${sourceTitle}`,
+      layout: 'web' as const,
+      nodes: [
+        {
+          id: '1',
+          label: sourceTitle,
+          miniDefinition: 'The central topic from your source.',
+          sourceLocation: 'p. 1',
+          x: 50,
+          y: 18,
+        },
+        {
+          id: '2',
+          label: 'Key idea A',
+          miniDefinition: 'A supporting concept linked to the topic.',
+          sourceLocation: 'p. 2',
+          x: 22,
+          y: 55,
+        },
+        {
+          id: '3',
+          label: 'Key idea B',
+          miniDefinition: 'Another connected idea from the source.',
+          sourceLocation: 'p. 3',
+          x: 78,
+          y: 55,
+        },
+        {
+          id: '4',
+          label: 'Application',
+          miniDefinition: 'How the ideas come together in practice.',
+          sourceLocation: 'p. 4',
+          x: 50,
+          y: 85,
+        },
+      ],
+      edges: [
+        { from: '1', to: '2', relation: 'depends_on' as const },
+        { from: '1', to: '3', relation: 'depends_on' as const },
+        { from: '2', to: '4', relation: 'step' as const },
+        { from: '3', to: '4', relation: 'step' as const },
+      ],
+    };
+  }
+
+  private stubGlossary(sourceTitle: string) {
+    return {
+      title: `Glossary — ${sourceTitle}`,
+      entries: [
+        {
+          term: sourceTitle,
+          definition: 'The main subject of this document.',
+          sourceLocation: 'p. 1',
+        },
+        {
+          term: 'Key term',
+          definition: 'An important defined term from the source.',
+          sourceLocation: 'p. 2',
+        },
+      ],
+    };
   }
 
   private async deckFreshness(deckId: string): Promise<'fresh' | 'fading' | 'due'> {

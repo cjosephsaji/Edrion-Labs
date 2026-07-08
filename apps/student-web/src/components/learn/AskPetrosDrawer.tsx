@@ -1,35 +1,154 @@
 'use client';
-import { useState } from 'react';
+
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AskInput } from '@edrion/schemas';
-import { X } from 'lucide-react';
-import { useAsk } from '@/lib/hooks';
+import { Pin, X } from 'lucide-react';
+import { useAskStreamClient, usePinAsk } from '@/lib/hooks/useAsk';
 import { PillButton } from '@/components/ui/pill-button';
 import { Eyebrow, PetrosMark } from '@/components/ui/primitives';
+import type { SseConnection } from '@/lib/student-client';
 
 type AskPetrosDrawerProps = {
   open: boolean;
   onClose: () => void;
   context: AskInput['context'];
+  /** When set on open, Petros asks and answers automatically without user input. */
   initialQuestion?: string;
+  onPinned?: () => void;
 };
 
-export function AskPetrosDrawer({ open, onClose, context, initialQuestion }: AskPetrosDrawerProps) {
-  const [question, setQuestion] = useState(initialQuestion ?? '');
+function canPin(context: AskInput['context']): boolean {
+  return context.kind === 'session' || context.kind === 'concept' || context.kind === 'practice';
+}
+
+export function AskPetrosDrawer({
+  open,
+  onClose,
+  context,
+  initialQuestion,
+  onPinned,
+}: AskPetrosDrawerProps) {
+  const [question, setQuestion] = useState('');
   const [conversation, setConversation] = useState<{ q: string; a: string }[]>([]);
-  const ask = useAsk();
+  const [pinnedTurns, setPinnedTurns] = useState<Set<number>>(new Set());
+  const [streaming, setStreaming] = useState(false);
+  const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
+  const [partialAnswer, setPartialAnswer] = useState('');
+  const { streamAsk } = useAskStreamClient();
+  const pinAsk = usePinAsk();
+  const esRef = useRef<SseConnection | null>(null);
+  const conversationRef = useRef(conversation);
+  const streamingRef = useRef(false);
+  const lastAutoAskedRef = useRef<string | null>(null);
+
+  conversationRef.current = conversation;
+  streamingRef.current = streaming;
+
+  const submitQuestion = useCallback(
+    (q: string) => {
+      const trimmed = q.trim();
+      if (!trimmed || streamingRef.current) return;
+
+      setQuestion('');
+      setPendingQuestion(trimmed);
+      setStreaming(true);
+      setPartialAnswer('');
+      esRef.current?.close();
+
+      let answer = '';
+      const es = streamAsk(
+        { context, question: trimmed, conversation: conversationRef.current },
+        {
+          onMessage: (data) => {
+            if (data === '[DONE]') {
+              setStreaming(false);
+              setPartialAnswer('');
+              setPendingQuestion(null);
+              setConversation((prev) => [...prev, { q: trimmed, a: answer }]);
+              esRef.current = null;
+              return;
+            }
+            const event = data as {
+              type?: string;
+              delta?: string;
+              answer?: string;
+              refused?: boolean;
+              refusalNote?: string;
+            };
+            if (event.type === 'text_delta' && event.delta) {
+              answer += event.delta;
+              setPartialAnswer(answer);
+            } else if (event.type === 'done') {
+              if (event.answer) answer = event.answer;
+              if (event.refused && event.refusalNote) answer = event.refusalNote;
+            }
+          },
+          onError: () => {
+            setStreaming(false);
+            setPartialAnswer('');
+            setPendingQuestion(null);
+            esRef.current = null;
+          },
+        },
+      );
+      esRef.current = es;
+    },
+    [context, streamAsk],
+  );
+
+  useEffect(() => {
+    if (!open) {
+      lastAutoAskedRef.current = null;
+      return;
+    }
+    const q = initialQuestion?.trim();
+    if (!q || q === lastAutoAskedRef.current) return;
+    lastAutoAskedRef.current = q;
+    submitQuestion(q);
+  }, [open, initialQuestion, submitQuestion]);
+
+  useEffect(() => {
+    return () => {
+      esRef.current?.close();
+      esRef.current = null;
+    };
+  }, []);
 
   if (!open) return null;
 
-  const submit = async () => {
-    if (!question.trim()) return;
-    const q = question.trim();
-    setQuestion('');
-    const res = await ask.mutateAsync({
-      context,
+  const pinEnabled = canPin(context);
+
+  const handlePin = async (turnIndex: number, q: string, a: string) => {
+    if (!pinEnabled || pinnedTurns.has(turnIndex) || pinAsk.isPending) return;
+    await pinAsk.mutateAsync({
+      sessionId: context.id,
+      blockAfterId: context.blockId,
       question: q,
-      conversation,
+      answer: a,
     });
-    setConversation((prev) => [...prev, { q, a: res.answer }]);
+    setPinnedTurns((prev) => new Set(prev).add(turnIndex));
+    onPinned?.();
+    onClose();
+  };
+
+  const handleManualSubmit = () => {
+    submitQuestion(question);
+  };
+
+  const renderPinAction = (turnIndex: number, q: string, a: string) => {
+    if (!pinEnabled || !a.trim()) return null;
+    const pinned = pinnedTurns.has(turnIndex);
+    return (
+      <button
+        type="button"
+        disabled={pinned || pinAsk.isPending}
+        onClick={() => void handlePin(turnIndex, q, a)}
+        className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-st-violet/30 bg-st-violetSoft/40 px-3 py-2 text-xs font-semibold text-st-violet disabled:opacity-60"
+      >
+        <Pin size={14} />
+        {pinned ? 'Pinned ✓' : 'Pin to lesson'}
+      </button>
+    );
   };
 
   return (
@@ -41,7 +160,7 @@ export function AskPetrosDrawer({ open, onClose, context, initialQuestion }: Ask
               <PetrosMark />
               <Eyebrow color="amber">ASK PETROS</Eyebrow>
             </div>
-            <p className="text-sm font-semibold text-st-amberInk">{context.contextLabel}</p>
+            <p className="text-sm font-semibold text-st-amberInk">Asking about: {context.contextLabel}</p>
           </div>
           <button
             type="button"
@@ -58,9 +177,25 @@ export function AskPetrosDrawer({ open, onClose, context, initialQuestion }: Ask
                 {turn.q}
               </p>
               <p className="rounded-xl bg-st-surface2 px-3 py-2 text-sm text-st-muted">{turn.a}</p>
+              {renderPinAction(i, turn.q, turn.a)}
             </div>
           ))}
-          {ask.isPending && <p className="text-sm text-st-muted">Petros is thinking…</p>}
+          {streaming && partialAnswer && pendingQuestion && (
+            <div className="space-y-2">
+              <p className="rounded-xl border border-st-amberBd bg-st-amberSoft px-3 py-2 text-sm text-st-ink">
+                {pendingQuestion}
+              </p>
+              <p className="rounded-xl bg-st-surface2 px-3 py-2 text-sm text-st-muted">{partialAnswer}</p>
+            </div>
+          )}
+          {streaming && !partialAnswer && pendingQuestion && (
+            <div className="space-y-2">
+              <p className="rounded-xl border border-st-amberBd bg-st-amberSoft px-3 py-2 text-sm text-st-ink">
+                {pendingQuestion}
+              </p>
+              <p className="text-sm text-st-muted">Petros is thinking…</p>
+            </div>
+          )}
         </div>
         <div className="border-t border-st-amberBd bg-st-card p-4">
           <textarea
@@ -70,7 +205,11 @@ export function AskPetrosDrawer({ open, onClose, context, initialQuestion }: Ask
             className="w-full rounded-xl border border-st-bd2 bg-st-page p-3 text-sm"
             rows={2}
           />
-          <PillButton onClick={submit} disabled={ask.isPending || !question.trim()} className="mt-2 w-full">
+          <PillButton
+            onClick={handleManualSubmit}
+            disabled={streaming || !question.trim()}
+            className="mt-2 w-full"
+          >
             Ask
           </PillButton>
         </div>

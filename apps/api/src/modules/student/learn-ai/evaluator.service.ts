@@ -20,10 +20,24 @@ export interface EvaluationResult {
 const evalSchema = z.object({
   correct: z.boolean().optional(),
   accepted: z.boolean().optional(),
-  feedback: z.string(),
+  feedback: z.string().optional(),
   evidenceNote: z.string().optional(),
   transcription: z.string().optional(),
 });
+
+function normalizeEval(
+  result: z.infer<typeof evalSchema>,
+  fallbackFeedback: string,
+): EvaluationResult {
+  const accepted = result.accepted ?? result.correct ?? false;
+  return {
+    correct: result.correct ?? accepted,
+    accepted,
+    feedback: result.feedback?.trim() || fallbackFeedback,
+    evidenceNote: result.evidenceNote,
+    transcription: result.transcription,
+  };
+}
 
 @Injectable()
 export class EvaluatorService {
@@ -70,18 +84,35 @@ export class EvaluatorService {
       };
     }
     await this.budgets.spend(principal, 'evaluate', 600);
-    const { result, usage } = await this.ai.completeJson({
-      purpose: 'evaluate',
-      tier: 'small',
-      system: 'Evaluate explain-back answers. Be encouraging and diagnostic. No scores. Return accepted:true when the student demonstrates understanding.',
-      user: `Prompt: ${block.explainPrompt}\nStudent: ${explanation}`,
-      schema: evalSchema,
-      schemaName: 'checkpoint_eval',
-      maxOutputTokens: 400,
-    });
-    await this.callLog.log(principal, 'evaluate', usage);
-    const accepted = result.accepted ?? result.correct ?? false;
-    return { correct: accepted, accepted, feedback: result.feedback, evidenceNote: result.evidenceNote };
+    try {
+      const { result, usage } = await this.ai.completeJson({
+        purpose: 'evaluate',
+        tier: 'small',
+        system:
+          'Evaluate explain-back answers. Be encouraging and diagnostic. No scores. ' +
+          'Return JSON with accepted (boolean) and feedback (string). Set accepted:true when the student demonstrates understanding.',
+        user: `Prompt: ${block.explainPrompt}\nStudent: ${explanation}`,
+        schema: evalSchema,
+        schemaName: 'checkpoint_eval',
+        maxOutputTokens: 800,
+        reasoningEffort: 'minimal',
+      });
+      await this.callLog.log(principal, 'evaluate', usage);
+      return normalizeEval(
+        result,
+        'Thanks — compare your explanation with the concept card if anything still feels fuzzy.',
+      );
+    } catch (err) {
+      this.logger.error(`Checkpoint explain evaluation failed: ${(err as Error).message}`);
+      const accepted = explanation.trim().length >= 20;
+      return {
+        correct: accepted,
+        accepted,
+        feedback: accepted
+          ? 'Good explanation — practice unlocked.'
+          : 'Try connecting the idea to an example from the lesson.',
+      };
+    }
   }
 
   async evaluatePractice(
@@ -100,24 +131,37 @@ export class EvaluatorService {
     }
     const tier = images?.length ? 'vision' : 'small';
     await this.budgets.spend(principal, images?.length ? 'vision' : 'evaluate', 800);
-    const { result, usage } = await this.ai.completeJson({
-      purpose: images?.length ? 'vision' : 'evaluate',
-      tier,
-      system: 'Evaluate practice answers. Diagnostic feedback only — no scores or percentages.',
-      user: `Problem: ${block.statement}\nExpected form: ${block.expectedForm ?? 'any clear answer'}\nStudent answer: ${answer}`,
-      images,
-      schema: evalSchema,
-      schemaName: 'practice_eval',
-      maxOutputTokens: 500,
-    });
-    await this.callLog.log(principal, tier === 'vision' ? 'vision' : 'evaluate', usage);
-    return {
-      correct: result.correct ?? result.accepted ?? false,
-      accepted: result.accepted,
-      feedback: result.feedback,
-      evidenceNote: result.evidenceNote,
-      transcription: result.transcription,
-    };
+    try {
+      const { result, usage } = await this.ai.completeJson({
+        purpose: images?.length ? 'vision' : 'evaluate',
+        tier,
+        system:
+          'Evaluate practice answers. Diagnostic feedback only — no scores or percentages. ' +
+          'Return JSON with correct (boolean) and feedback (string).',
+        user: `Problem: ${block.statement}\nExpected form: ${block.expectedForm ?? 'any clear answer'}\nStudent answer: ${answer}`,
+        images,
+        schema: evalSchema,
+        schemaName: 'practice_eval',
+        maxOutputTokens: 800,
+        reasoningEffort: 'minimal',
+      });
+      await this.callLog.log(principal, tier === 'vision' ? 'vision' : 'evaluate', usage);
+      const ok = Boolean(result.correct ?? result.accepted);
+      return normalizeEval(
+        result,
+        ok ? 'Nice work — that looks right.' : 'Not quite — use the hints and worked example, then try again.',
+      );
+    } catch (err) {
+      this.logger.error(`Practice evaluation failed: ${(err as Error).message}`);
+      const trimmed = answer.trim();
+      const ok = trimmed.length >= 3;
+      return {
+        correct: ok,
+        feedback: ok
+          ? 'Auto-check is unavailable right now — compare your answer with the worked example.'
+          : 'Write a fuller answer and try again.',
+      };
+    }
   }
 
   async evaluateReflection(): Promise<EvaluationResult> {

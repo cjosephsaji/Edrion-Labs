@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Res, UseGuards } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiTags } from '@nestjs/swagger';
 import { createPathInputSchema, patchPathInputSchema } from '@edrion/schemas';
 import { Public } from '../../../common/guards/auth.guard';
@@ -19,8 +20,10 @@ export class PathController {
   constructor(private readonly path: PathService) {}
 
   @Get()
-  get(@CurrentStudent() principal: StudentPrincipal) {
-    return this.path.get(principal);
+  async get(@CurrentStudent() principal: StudentPrincipal, @Res() res: Response) {
+    const path = await this.path.get(principal);
+    // Nest's default serializer drops `null` to an empty body; express json(null) is explicit.
+    return void res.status(200).json(path);
   }
 
   @Post()

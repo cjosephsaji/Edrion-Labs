@@ -49,6 +49,27 @@ import { LabDebateService } from './lab-debate/lab-debate.service';
 import { AchievementsProcessor } from './jobs/achievements.processor';
 import { AchievementsController } from './achievements/achievements.controller';
 import { AchievementsService } from './achievements/achievements.service';
+import { StudentAnalyticsController } from './analytics/student-analytics.controller';
+import { StudentAnalyticsService } from './analytics/student-analytics.service';
+import { StudentAssignmentsController } from './assignments/student-assignments.controller';
+import { StudentAssignmentsService } from './assignments/student-assignments.service';
+import { StudentCalendarController } from './calendar/student-calendar.controller';
+import { StudentCalendarService } from './calendar/student-calendar.service';
+import { StudentClassesController } from './classes/student-classes.controller';
+import { StudentClassesService } from './classes/student-classes.service';
+import { StudentCoursesController } from './courses/student-courses.controller';
+import { StudentCoursesService } from './courses/student-courses.service';
+import { StudentExamsController } from './exams/student-exams.controller';
+import { StudentExamsService } from './exams/student-exams.service';
+import { StudentReportCardsController } from './report-cards/student-report-cards.controller';
+import { StudentReportCardsService } from './report-cards/student-report-cards.service';
+import { StudentHomeworkController } from './homework/homework.controller';
+import { StudentHomeworkService } from './homework/homework.service';
+import { HomeworkRepository } from './homework/homework.repository';
+import { HomeworkPolicyService } from './homework/homework-policy.service';
+import { StudentSurfacesController } from './surfaces/student-surfaces.controller';
+import { StudentSurfacesReadService } from './surfaces/student-surfaces-read.service';
+import { SurfaceGateService } from './surfaces/surface-gate.service';
 
 @Module({
   imports: [FeatureControlsModule, PortalModule, LearnAiModule, LearningEventsModule],
@@ -70,6 +91,15 @@ import { AchievementsService } from './achievements/achievements.service';
     LabMockController,
     LabDebateController,
     AchievementsController,
+    StudentAnalyticsController,
+    StudentAssignmentsController,
+    StudentCalendarController,
+    StudentClassesController,
+    StudentCoursesController,
+    StudentExamsController,
+    StudentReportCardsController,
+    StudentHomeworkController,
+    StudentSurfacesController,
   ],
   providers: [
     StudentSessionService,
@@ -98,6 +128,18 @@ import { AchievementsService } from './achievements/achievements.service';
     LabDebateService,
     AchievementsService,
     AchievementsProcessor,
+    StudentAnalyticsService,
+    StudentAssignmentsService,
+    StudentCalendarService,
+    StudentClassesService,
+    StudentCoursesService,
+    StudentExamsService,
+    StudentReportCardsService,
+    StudentHomeworkService,
+    HomeworkRepository,
+    HomeworkPolicyService,
+    SurfaceGateService,
+    StudentSurfacesReadService,
     { provide: APP_INTERCEPTOR, useClass: StudentTenantInterceptor },
   ],
   exports: [StudentSessionService, StudentAuthGuard, StudentPermissionsGuard, LearningEventsModule],

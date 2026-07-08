@@ -50,15 +50,27 @@ function slugify(text: string): string {
     .slice(0, 80);
 }
 
-function buildSpine(currentStep: SpineStep = 'understand'): SpineEntry[] {
+function buildSpine(currentStep: SpineStep = 'understand', steps: SpineStep[] = SPINE_ORDER): SpineEntry[] {
   let passed = true;
-  return SPINE_ORDER.map((step) => {
+  return steps.map((step) => {
     if (step === currentStep) {
       passed = false;
       return { step, label: SPINE_LABELS[step], status: 'current' as const };
     }
     return { step, label: SPINE_LABELS[step], status: passed ? ('done' as const) : ('up' as const) };
   });
+}
+
+function spineStepsFromPlan(blocks: Array<{ spineStep: SpineStep }>): SpineStep[] {
+  const seen = new Set<SpineStep>();
+  const steps: SpineStep[] = [];
+  for (const b of blocks) {
+    if (!seen.has(b.spineStep)) {
+      seen.add(b.spineStep);
+      steps.push(b.spineStep);
+    }
+  }
+  return steps.length ? steps : SPINE_ORDER;
 }
 
 @Injectable()
@@ -97,9 +109,16 @@ export class SessionsService {
       (topic.domainArchetype as DomainArchetype) ?? 'procedural_quantitative',
       stage,
     );
-    const plan = await this.planner.plan(principal, topic.id, topic.title, topic.subjectLabel, directives);
+    const plan = await this.planner.plan(
+      principal,
+      topic.id,
+      topic.title,
+      topic.subjectLabel,
+      directives,
+      input.kind ?? 'standard',
+    );
 
-    const spine = buildSpine('understand');
+    const spine = buildSpine('understand', spineStepsFromPlan(plan.blocks));
     const owner =
       principal.kind === 'institutional'
         ? {
@@ -124,13 +143,14 @@ export class SessionsService {
     });
     if (!session) throw new Error('Failed to create session');
 
-    const initialSpecs = plan.blocks.slice(0, 3);
+    const initialSpecs = plan.blocks.slice(0, 1);
     let seq = 1;
     for (const spec of initialSpecs) {
       const content = await this.blocks.generate(
         principal,
         topic.id,
         topic.title,
+        topic.subjectLabel,
         spec.blockType,
         spec.brief,
         directives,
@@ -180,8 +200,7 @@ export class SessionsService {
 
     const plan = session.sessionPlan as { blocks?: Array<{ blockType: BlockType; spineStep: SpineStep; brief: string }> };
     const existing = await this.repo.listBlocks(sessionId);
-    const existingTypes = new Set(existing.map((b) => b.blockType));
-    const pending = (plan.blocks ?? []).filter((b) => !existingTypes.has(b.blockType));
+    const pending = (plan.blocks ?? []).slice(existing.length);
 
     const stage = resolveLearnerStage(principal.kind === 'independent' ? 'independent' : 'school');
     const directives = getPedagogyDirectives(
@@ -190,20 +209,22 @@ export class SessionsService {
     );
 
     let seq = await this.repo.nextBlockSequence(sessionId);
+    let pendingIndex = 0;
     for await (const generated of this.blocks.generateStream(
       principal,
       topic.id,
       topic.title,
+      topic.subjectLabel,
       pending,
       directives,
     )) {
+      const spec = pending[pendingIndex++];
       emit({ type: 'block.delta', blockType: generated.blockType });
       const block = await this.repo.insertBlock({
         sessionId,
         sequence: seq++,
         blockType: generated.blockType,
-        spineStep:
-          pending.find((p) => p.blockType === generated.blockType)?.spineStep ?? 'understand',
+        spineStep: spec?.spineStep ?? 'understand',
         content: generated.content,
         state: {},
       });
@@ -240,23 +261,29 @@ export class SessionsService {
 
     if (block.blockType === 'checkpoint') {
       const content = checkpointBlockSchema.parse(block.content);
-      if (body.choice) {
+      const explanation = typeof body.explanation === 'string' ? body.explanation.trim() : '';
+      const choice = typeof body.choice === 'string' ? body.choice : '';
+
+      if (explanation) {
+        const mcq = await this.evaluator.evaluateCheckpointMcq(content, choice);
+        if (!mcq.correct) {
+          evaluation = { ...mcq };
+          advanceSpine = false;
+        } else {
+          evaluation = {
+            ...(await this.evaluator.evaluateCheckpointExplain(principal, content, explanation)),
+          };
+          advanceSpine = Boolean(evaluation.correct || evaluation.accepted);
+        }
+      } else if (choice) {
         evaluation = {
-          ...(await this.evaluator.evaluateCheckpointMcq(content, String(body.choice))),
+          ...(await this.evaluator.evaluateCheckpointMcq(content, choice)),
         };
-      } else if (body.explanation) {
-        evaluation = {
-          ...(await this.evaluator.evaluateCheckpointExplain(
-            principal,
-            content,
-            String(body.explanation),
-          )),
-        };
+        advanceSpine = false;
       } else {
         throw new BadRequestException('Provide choice or explanation');
       }
       const correct = Boolean(evaluation.correct || evaluation.accepted);
-      advanceSpine = correct;
       const tries = (await this.repo.countAttemptsForBlock(blockId)) + 1;
       await this.ledger.log({
         principal,
@@ -266,7 +293,7 @@ export class SessionsService {
           blockId,
           correct,
           tries,
-          method: body.choice ? 'mcq' : 'explained',
+          method: explanation ? 'explained' : 'mcq',
         },
       });
     } else if (block.blockType === 'practice_item') {
@@ -323,6 +350,36 @@ export class SessionsService {
     }
 
     return { evaluation, session: await this.toDto(sessionId, principal) };
+  }
+
+  private static readonly READ_THROUGH_BLOCKS: BlockType[] = [
+    'concept_card',
+    'visual_explainer',
+    'worked_example',
+    'note_card',
+  ];
+
+  async continueBlock(principal: StudentPrincipal, sessionId: string, blockId: string) {
+    const session = await this.requireMutableSession(principal, sessionId);
+    const block = await this.repo.getBlock(sessionId, blockId);
+    if (!block) throw new NotFoundException('Block not found');
+    if (!SessionsService.READ_THROUGH_BLOCKS.includes(block.blockType as BlockType)) {
+      throw new BadRequestException('This block must be completed via an answer');
+    }
+    if (block.completedAt) {
+      return { session: await this.toDto(sessionId, principal) };
+    }
+
+    await this.repo.updateBlock(blockId, { completedAt: new Date() });
+    const spine = this.advanceSpine(session.spine as SpineEntry[], block.spineStep as SpineStep);
+    await this.repo.updateSession(sessionId, { spine });
+    await this.ledger.log({
+      principal,
+      eventType: 'session.block_completed',
+      payload: { sessionId, blockId, blockType: block.blockType },
+    });
+
+    return { session: await this.toDto(sessionId, principal) };
   }
 
   async hint(principal: StudentPrincipal, sessionId: string, blockId: string, rung: 2 | 3) {
@@ -449,10 +506,11 @@ export class SessionsService {
     return lines.length ? lines : ['Session completed'];
   }
 
-  private advanceSpine(_spine: SpineEntry[], completedStep: SpineStep): SpineEntry[] {
-    const idx = SPINE_ORDER.indexOf(completedStep);
-    const nextStep = SPINE_ORDER[Math.min(idx + 1, SPINE_ORDER.length - 1)];
-    return buildSpine(nextStep);
+  private advanceSpine(spine: SpineEntry[], completedStep: SpineStep): SpineEntry[] {
+    const steps = spine.map((s) => s.step);
+    const idx = steps.indexOf(completedStep);
+    const nextStep = steps[Math.min(idx + 1, steps.length - 1)] ?? completedStep;
+    return buildSpine(nextStep, steps);
   }
 
   private async requireSession(principal: StudentPrincipal, sessionId: string) {

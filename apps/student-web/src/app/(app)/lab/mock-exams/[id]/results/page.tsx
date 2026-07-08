@@ -19,6 +19,9 @@ export default function MockExamResultsPage({ params }: { params: { id: string }
       <p className="mt-2 font-display text-4xl font-semibold text-st-accent">
         {results?.correct ?? 0}/{results?.total ?? 0}
       </p>
+      <p className="mt-2 text-sm text-st-muted">
+        Private rehearsal — mock marks stay with you and are never shared with your institution.
+      </p>
 
       {results?.byTopic && (
         <div className="mt-8 space-y-2 text-left">

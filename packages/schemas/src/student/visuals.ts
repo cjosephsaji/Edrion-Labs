@@ -5,7 +5,10 @@ export const graphNodeSchema = z.object({
   label: z.string(),
   detail: z.string().optional(),
   color: z.string().optional(),
-  kind: z.enum(['process', 'decision', 'terminal']).optional(),
+  kind: z.enum(['process', 'decision', 'terminal', 'part']).optional(),
+  shape: z.enum(['rect', 'ellipse']).optional(),
+  x: z.number().min(0).max(100).optional(),
+  y: z.number().min(0).max(100).optional(),
 });
 
 export const graphEdgeSchema = z.object({
@@ -15,7 +18,7 @@ export const graphEdgeSchema = z.object({
 });
 
 export const graphSpecSchema = z.object({
-  layout: z.enum(['mind_map', 'flowchart']),
+  layout: z.enum(['mind_map', 'flowchart', 'diagram']),
   center: z.object({ label: z.string() }).optional(),
   nodes: z.array(graphNodeSchema),
   edges: z.array(graphEdgeSchema),

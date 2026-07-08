@@ -1,9 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { MessageCircle } from 'lucide-react';
 import { useLearnSession } from '@/lib/hooks';
+import { nextBlockRoute } from '@/lib/learn-navigation';
 import { SpineRail } from '@/components/learn/SpineRail';
 import { BlockRenderer } from '@/components/learn/BlockRenderer';
+import { StreamingIndicator } from '@/components/learn/StreamingIndicator';
 import { AskPetrosDrawer } from '@/components/learn/AskPetrosDrawer';
 import { Eyebrow, PageHeader, PetrosMark } from '@/components/ui/primitives';
 
@@ -12,15 +15,74 @@ export default function PracticeBlockPage({
 }: {
   params: { id: string; blockId: string };
 }) {
-  const { data: session, isLoading, answer } = useLearnSession(params.id);
+  const router = useRouter();
+  const { data: session, isLoading, streaming, startStream, answer, hint, invalidate } =
+    useLearnSession(params.id);
   const [askOpen, setAskOpen] = useState(false);
 
-  const block = session?.blocks.find((b) => b.id === params.blockId);
+  useEffect(() => {
+    if (session && session.status === 'active' && !session.readOnly) {
+      startStream();
+    }
+  }, [session, startStream]);
 
-  if (isLoading || !session || !block) {
+  const block = session?.blocks.find((b) => b.id === params.blockId);
+  const activeBlock = session?.blocks.find((b) => !b.completedAt) ?? block;
+
+  useEffect(() => {
+    if (!session || !block) return;
+    if (block.completedAt) {
+      const route = nextBlockRoute(params.id, session);
+      if (route !== `/learn/session/${params.id}/practice/${params.blockId}`) {
+        router.replace(route);
+      }
+    }
+  }, [session, block, params.id, params.blockId, router]);
+
+  useEffect(() => {
+    if (!session || block) return;
+    const next = session.blocks.find((b) => !b.completedAt);
+    if (next && next.id !== params.blockId) {
+      router.replace(nextBlockRoute(params.id, session));
+    }
+  }, [session, block, params.id, params.blockId, router]);
+
+  const fetchHint = async (blockId: string, rung: 2 | 3) => {
+    const res = await hint.mutateAsync({ blockId, rung });
+    return res.hint;
+  };
+
+  const handleFinishSession = async () => {
+    try {
+      await finish.mutateAsync();
+    } catch {
+      // Session may already be completed — still return to Learn home.
+    }
+    router.push('/learn');
+  };
+
+  const handleContinue = () => {
+    if (!session) return;
+    router.push(nextBlockRoute(params.id, session));
+  };
+
+  const renderBlock = block ?? activeBlock;
+
+  if (isLoading || !session) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-10">
         <div className="h-48 shimmer rounded-[15px]" />
+      </div>
+    );
+  }
+
+  if (!renderBlock) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-10">
+        {streaming ? <StreamingIndicator /> : null}
+        <p className="mt-4 text-center text-sm text-st-muted">
+          Petros is preparing your next step…
+        </p>
       </div>
     );
   }
@@ -52,15 +114,24 @@ export default function PracticeBlockPage({
       <div className="mt-6 flex flex-col gap-4 min-[920px]:flex-row min-[920px]:gap-8">
         <SpineRail spine={session.spine} />
         <div className="min-w-0 flex-1">
+          {streaming && (
+            <div className="mb-4">
+              <StreamingIndicator />
+            </div>
+          )}
           <BlockRenderer
-            block={block}
+            block={renderBlock}
             readOnly={session.readOnly}
+            sessionId={params.id}
+            onFetchHint={fetchHint}
             onCheckpointAnswer={(choice, explanation) =>
-              answer.mutate({ blockId: block.id, body: { choice, explanation } })
+              answer.mutateAsync({ blockId: renderBlock.id, body: { choice, explanation } })
             }
             onPracticeSubmit={(ans, hintsUsed) =>
-              answer.mutate({ blockId: block.id, body: { answer: ans, hintsUsed } })
+              answer.mutateAsync({ blockId: renderBlock.id, body: { answer: ans, hintsUsed } })
             }
+            onContinue={handleContinue}
+            onFinish={() => void handleFinishSession()}
           />
         </div>
       </div>
@@ -68,10 +139,11 @@ export default function PracticeBlockPage({
       <AskPetrosDrawer
         open={askOpen}
         onClose={() => setAskOpen(false)}
+        onPinned={invalidate}
         context={{
           kind: 'practice',
           id: params.id,
-          blockId: params.blockId,
+          blockId: renderBlock.id,
           contextLabel: session.topicTitle,
         }}
       />

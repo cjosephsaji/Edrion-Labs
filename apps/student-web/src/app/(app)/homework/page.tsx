@@ -68,7 +68,9 @@ export default function HomeworkPage() {
                   </p>
                   <p className="mt-1 text-xs text-st-faint">
                     {item.answeredCount}/{item.questionCount} answered
-                    {item.late && ' · Late'}
+                    {item.late && (
+                      <span className="ml-1 font-medium text-st-amberInk">· Late</span>
+                    )}
                   </p>
                 </div>
                 <GovernancePill label={item.badge.label} tone={item.badge.tone} />

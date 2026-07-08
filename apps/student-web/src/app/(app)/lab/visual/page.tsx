@@ -6,7 +6,6 @@ import { useGenerateVisual, useRegenerateVisual, useSaveVisual } from '@/lib/hoo
 import { GraphCanvas } from '@/components/lab/GraphCanvas';
 import { PillButton } from '@/components/ui/pill-button';
 import { Card } from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
 import { Eyebrow, PageHeader, PetrosMark, PillChip } from '@/components/ui/primitives';
 import type { GraphSpec } from '@edrion/schemas';
 
@@ -31,9 +30,9 @@ export default function VisualStudioPage() {
   }, [searchParams]);
 
   const handleGenerate = async () => {
-    if (!topic.trim() || format === 'diagram') return;
+    if (!topic.trim()) return;
     const result = await generate.mutateAsync({ topic: topic.trim(), format });
-    setSpec(result.spec);
+    setSpec(result);
   };
 
   return (
@@ -53,7 +52,7 @@ export default function VisualStudioPage() {
           placeholder="Topic or concept…"
           className="flex-1 rounded-[14px] border border-st-bd2 bg-st-card px-4 py-3 text-sm text-st-ink outline-none focus:border-st-accent focus:shadow-[0_0_0_3px_rgba(30,122,94,0.13)]"
         />
-        <PillButton onClick={() => void handleGenerate()} disabled={generate.isPending || format === 'diagram'}>
+        <PillButton onClick={() => void handleGenerate()} disabled={generate.isPending || !topic.trim()}>
           Generate <PetrosMark className="ml-1" />
         </PillButton>
       </div>
@@ -66,16 +65,7 @@ export default function VisualStudioPage() {
         ))}
       </div>
 
-      {format === 'diagram' && (
-        <EmptyState
-          className="mt-6"
-          eyebrow="COMING SOON"
-          title="Diagram mode is on the way"
-          description="Mind maps and flowcharts work today."
-        />
-      )}
-
-      {spec && format !== 'diagram' && (
+      {spec && (
         <Card className="mt-6" eyebrow="OUTPUT" icon={GitBranch} iconTone="violet" noPadding>
           <div className="space-y-4 p-5">
             <GraphCanvas spec={spec} />
@@ -84,10 +74,10 @@ export default function VisualStudioPage() {
                 variant="soft"
                 disabled={regenerate.isPending}
                 onClick={() =>
-                  void regenerate.mutateAsync({ spec, direction: 'simpler' }).then((r) => setSpec(r.spec))
+                  void regenerate.mutateAsync({ spec, direction: 'show it differently' }).then(setSpec)
                 }
               >
-                Simpler
+                Show differently
               </PillButton>
               <PillButton
                 variant="soft"

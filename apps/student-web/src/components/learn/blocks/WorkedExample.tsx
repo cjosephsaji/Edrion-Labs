@@ -23,7 +23,9 @@ export function WorkedExample({
           <MathText display>{content.equation}</MathText>
         </div>
       )}
-      <p className="mt-4 text-sm text-st-ink">{content.problem}</p>
+      <p className="mt-4 text-sm text-st-ink">
+        <MathText>{content.problem}</MathText>
+      </p>
 
       <div className="mt-5 flex gap-1.5 overflow-x-auto pb-1">
         {content.steps.map((step, i) => (
@@ -50,7 +52,9 @@ export function WorkedExample({
               <MathText display>{content.steps[activeStep].math}</MathText>
             </div>
           )}
-          <p className="mt-2 text-sm text-st-ink">{content.steps[activeStep].explanation}</p>
+          <p className="mt-2 text-sm text-st-ink">
+            <MathText>{content.steps[activeStep].explanation}</MathText>
+          </p>
           {content.steps[activeStep].why && (
             <div className="mt-3">
               <button
@@ -61,7 +65,9 @@ export function WorkedExample({
                 Why does this work? {openWhy === activeStep ? '↑' : '↓'}
               </button>
               {openWhy === activeStep && (
-                <p className="mt-2 text-sm text-st-muted">{content.steps[activeStep].why}</p>
+                <p className="mt-2 text-sm text-st-muted">
+                  <MathText>{content.steps[activeStep].why!}</MathText>
+                </p>
               )}
             </div>
           )}
@@ -72,7 +78,7 @@ export function WorkedExample({
         <div className="mt-4 flex flex-wrap gap-2">
           {content.suggestedQuestions.map((q) => (
             <PillChip key={q} onClick={() => onAsk(q)}>
-              {q}
+              <MathText>{q}</MathText>
             </PillChip>
           ))}
         </div>

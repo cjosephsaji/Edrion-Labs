@@ -8,7 +8,14 @@ export const knowledgeItemKindSchema = z.enum([
   'topic_pack',
 ]);
 
-export const knowledgeArtifactKindSchema = z.enum(['summary', 'quiz', 'topic_pack', 'visual']);
+export const knowledgeArtifactKindSchema = z.enum([
+  'summary',
+  'quiz',
+  'topic_pack',
+  'visual',
+  'concept_map',
+  'glossary',
+]);
 
 export const freshnessBucketSchema = z.enum(['fresh', 'fading', 'due']);
 
@@ -53,6 +60,43 @@ export const quizItemSchema = z.object({
 
 export const quizContentSchema = z.object({
   items: z.array(quizItemSchema),
+});
+
+export const conceptMapNodeSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  miniDefinition: z.string(),
+  sourceLocation: z.string(),
+  x: z.number().min(0).max(100).optional(),
+  y: z.number().min(0).max(100).optional(),
+});
+
+export const conceptMapEdgeSchema = z.object({
+  from: z.string(),
+  to: z.string(),
+  relation: z.enum(['depends_on', 'part_of', 'step']),
+});
+
+export const conceptMapContentSchema = z.object({
+  title: z.string(),
+  layout: z.enum(['web', 'flowchart']),
+  nodes: z.array(conceptMapNodeSchema),
+  edges: z.array(conceptMapEdgeSchema),
+});
+
+export const glossaryEntrySchema = z.object({
+  term: z.string(),
+  definition: z.string(),
+  sourceLocation: z.string(),
+});
+
+export const glossaryContentSchema = z.object({
+  title: z.string(),
+  entries: z.array(glossaryEntrySchema),
+});
+
+export const libraryTutorInputSchema = z.object({
+  focusConcept: z.string().min(1).max(200).optional(),
 });
 
 export const quizAttemptSchema = z.object({
@@ -131,3 +175,6 @@ export const libraryOverviewSchema = z.object({
 
 export type CreateKnowledgeItemInput = z.infer<typeof createKnowledgeItemSchema>;
 export type LibraryOverviewDto = z.infer<typeof libraryOverviewSchema>;
+export type ConceptMapContent = z.infer<typeof conceptMapContentSchema>;
+export type GlossaryContent = z.infer<typeof glossaryContentSchema>;
+export type LibraryTutorInput = z.infer<typeof libraryTutorInputSchema>;

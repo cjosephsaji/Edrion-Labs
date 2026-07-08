@@ -1,9 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { MessageCircle } from 'lucide-react';
 import { useLearnSession } from '@/lib/hooks';
+import { nextBlockRoute, isReadThroughBlock } from '@/lib/learn-navigation';
 import { SpineRail } from '@/components/learn/SpineRail';
 import { BlockRenderer } from '@/components/learn/BlockRenderer';
+import { StreamingIndicator } from '@/components/learn/StreamingIndicator';
 import { AskPetrosDrawer } from '@/components/learn/AskPetrosDrawer';
 import { Eyebrow, PageHeader, PetrosMark } from '@/components/ui/primitives';
 
@@ -12,11 +15,34 @@ export default function ConceptBlockPage({
 }: {
   params: { id: string; blockId: string };
 }) {
-  const { data: session, isLoading, answer } = useLearnSession(params.id);
+  const router = useRouter();
+  const { data: session, isLoading, streaming, startStream, answer, hint, continueBlock, invalidate } =
+    useLearnSession(params.id);
   const [askOpen, setAskOpen] = useState(false);
   const [prefill, setPrefill] = useState<string | undefined>();
 
   const block = session?.blocks.find((b) => b.id === params.blockId);
+
+  useEffect(() => {
+    if (session && session.status === 'active' && !session.readOnly) {
+      startStream();
+    }
+  }, [session, startStream]);
+
+  const handleContinue = async () => {
+    if (!session || !block) return;
+    if (isReadThroughBlock(block.blockType)) {
+      const { session: updated } = await continueBlock.mutateAsync(block.id);
+      router.push(nextBlockRoute(params.id, updated));
+      return;
+    }
+    router.push(nextBlockRoute(params.id, session));
+  };
+
+  const fetchHint = async (blockId: string, rung: 2 | 3) => {
+    const res = await hint.mutateAsync({ blockId, rung });
+    return res.hint;
+  };
 
   if (isLoading || !session || !block) {
     return (
@@ -53,23 +79,39 @@ export default function ConceptBlockPage({
       <div className="mt-6 flex flex-col gap-4 min-[920px]:flex-row min-[920px]:gap-8">
         <SpineRail spine={session.spine} />
         <div className="min-w-0 flex-1">
+          {streaming && (
+            <div className="mb-4">
+              <StreamingIndicator />
+            </div>
+          )}
           <BlockRenderer
             block={block}
             readOnly={session.readOnly}
+            sessionId={params.id}
             onAsk={(q) => {
               setPrefill(q);
               setAskOpen(true);
             }}
+            onFetchHint={fetchHint}
             onCheckpointAnswer={(choice, explanation) =>
-              answer.mutate({ blockId: block.id, body: { choice, explanation } })
+              answer.mutateAsync({ blockId: block.id, body: { choice, explanation } })
             }
+            onPracticeSubmit={(ans, hintsUsed) =>
+              answer.mutateAsync({ blockId: block.id, body: { answer: ans, hintsUsed } })
+            }
+            onContinue={() => void handleContinue()}
+            continueLoading={continueBlock.isPending}
           />
         </div>
       </div>
 
       <AskPetrosDrawer
         open={askOpen}
-        onClose={() => setAskOpen(false)}
+        onClose={() => {
+          setAskOpen(false);
+          setPrefill(undefined);
+        }}
+        onPinned={invalidate}
         context={{
           kind: 'concept',
           id: params.id,

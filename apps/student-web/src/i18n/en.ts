@@ -67,7 +67,7 @@ export const en = {
     privacy: {
       institutionalTitle: 'What they see',
       institutionalNever: 'Teachers never see your independent practice or private notes.',
-      independent: 'Independent learners share nothing with anyone unless you choose to later.',
+      independent: 'Nothing is shared with anyone.',
     },
     account: {
       export: 'Export my data',

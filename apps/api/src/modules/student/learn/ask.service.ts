@@ -10,6 +10,7 @@ import {
   type HomeworkPolicyPort,
 } from '../learn-ai/homework-policy.port';
 import { LearnAiCallLogger } from '../learn-ai/learn-ai-call.logger';
+import { ASK_FULL_SYSTEM_PROMPT, ASK_HINTS_ONLY_SYSTEM_PROMPT } from '../learn-ai/prompts/ask.prompt';
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import type { StudentPrincipal } from '../student.types';
 import { SessionsService } from './sessions.service';
@@ -32,14 +33,87 @@ export class AskService {
   ) {}
 
   async ask(principal: StudentPrincipal, input: AskInput): Promise<AskResponseDto> {
+    const prepared = await this.prepareAsk(principal, input);
+    if (prepared.refused) return prepared.response;
+    if (!this.ai.available) return prepared.response;
+
+    const { result, usage } = await this.ai.completeJson({
+      purpose: 'ask',
+      tier: 'small',
+      system: prepared.system,
+      user: prepared.user,
+      schema: askOutputSchema,
+      schemaName: 'ask_drawer',
+      maxOutputTokens: 2000,
+      reasoningEffort: 'minimal',
+    });
+    await this.callLog.log(principal, 'ask', usage);
+    await this.logAskEvent(principal, input);
+
+    return {
+      answer: result.answer,
+      refused: result.refused,
+      refusalNote: result.refusalNote,
+      policyNotice: prepared.policyNotice,
+    };
+  }
+
+  async streamAsk(
+    principal: StudentPrincipal,
+    input: AskInput,
+    emit: (event: Record<string, unknown>) => void,
+  ): Promise<AskResponseDto> {
+    const prepared = await this.prepareAsk(principal, input);
+    if (prepared.refused) {
+      emit({ type: 'done', ...prepared.response });
+      return prepared.response;
+    }
+    if (!this.ai.available) {
+      emit({ type: 'done', ...prepared.response });
+      return prepared.response;
+    }
+
+    let answer = '';
+    for await (const event of this.ai.streamText({
+      purpose: 'ask',
+      tier: 'small',
+      system: prepared.system,
+      user: prepared.user,
+      maxOutputTokens: 2000,
+      reasoningEffort: 'minimal',
+    })) {
+      if (event.type === 'delta') {
+        answer += event.text;
+        emit({ type: 'text_delta', delta: event.text });
+      } else {
+        await this.callLog.log(principal, 'ask', event.usage);
+      }
+    }
+
+    await this.logAskEvent(principal, input);
+    const response: AskResponseDto = {
+      answer,
+      policyNotice: prepared.policyNotice,
+    };
+    emit({ type: 'done', ...response });
+    return response;
+  }
+
+  private async prepareAsk(principal: StudentPrincipal, input: AskInput) {
     const policy = await this.homeworkPolicy.resolve(input.context.kind, input.context.id);
 
     if (input.context.kind === 'homework' && policy === 'off') {
       return {
-        answer: '',
-        refused: true,
-        refusalNote: AI_POLICY_UNAVAILABLE,
-        policyNotice: 'AI assistance is turned off for this homework.',
+        refused: true as const,
+        response: {
+          answer: '',
+          refused: true,
+          refusalNote: AI_POLICY_UNAVAILABLE,
+          policyNotice: 'AI assistance is turned off for this homework.',
+        },
+        system: '',
+        user: '',
+        policyNotice: undefined as string | undefined,
       };
     }
 
@@ -47,31 +121,30 @@ export class AskService {
     const convo = (input.conversation ?? [])
       .map((t) => `Q: ${t.q}\nA: ${t.a}`)
       .join('\n');
+    const system =
+      policyMode === 'hints_only' ? ASK_HINTS_ONLY_SYSTEM_PROMPT : ASK_FULL_SYSTEM_PROMPT;
+    const user = `Context (${input.context.contextLabel}): ${input.context.kind}/${input.context.id}\n${convo}\nQuestion: ${input.question}`;
+    const policyNotice =
+      policyMode === 'hints_only' ? 'Hints-only mode — direct solutions are not provided.' : undefined;
 
     if (!this.ai.available) {
       return {
-        answer: 'Petros is not available right now — try again later or pin a note from your textbook.',
-        policyNotice: policyMode === 'hints_only' ? 'Hints-only mode is active for this context.' : undefined,
+        refused: false as const,
+        response: {
+          answer: 'Petros is not available right now — try again later or pin a note from your textbook.',
+          policyNotice: policyMode === 'hints_only' ? 'Hints-only mode is active for this context.' : undefined,
+        },
+        system,
+        user,
+        policyNotice,
       };
     }
 
     await this.budgets.spend(principal, 'ask', 800);
-    const system =
-      policyMode === 'hints_only'
-        ? 'You may only give conceptual hints — never direct solutions or final answers.'
-        : 'Answer the student question in context. Be concise and helpful.';
+    return { refused: false as const, response: {} as AskResponseDto, system, user, policyNotice };
+  }
 
-    const { result, usage } = await this.ai.completeJson({
-      purpose: 'ask',
-      tier: 'small',
-      system,
-      user: `Context (${input.context.contextLabel}): ${input.context.kind}/${input.context.id}\n${convo}\nQuestion: ${input.question}`,
-      schema: askOutputSchema,
-      schemaName: 'ask_drawer',
-      maxOutputTokens: 700,
-    });
-    await this.callLog.log(principal, 'ask', usage);
-
+  private async logAskEvent(principal: StudentPrincipal, input: AskInput) {
     await this.ledger.log({
       principal,
       eventType: 'drawer.asked',
@@ -81,13 +154,6 @@ export class AskService {
         pinned: false,
       },
     });
-
-    return {
-      answer: result.answer,
-      refused: result.refused,
-      refusalNote: result.refusalNote,
-      policyNotice: policyMode === 'hints_only' ? 'Hints-only mode — direct solutions are not provided.' : undefined,
-    };
   }
 
   async pin(principal: StudentPrincipal, input: PinAskInput) {

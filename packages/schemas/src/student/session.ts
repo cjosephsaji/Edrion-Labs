@@ -8,6 +8,7 @@ export const createSessionInputSchema = z.object({
   topicTitle: z.string().optional(),
   pathItemId: z.string().uuid().optional(),
   source: sessionSourceSchema,
+  kind: z.enum(['standard', 'refresh10']).optional(),
   grounding: z.object({ knowledgeItemId: z.string().uuid() }).optional(),
 });
 

@@ -1,10 +1,11 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { z } from 'zod';
-import type { QuickAnswerDto, QuickAnswerInput } from '@edrion/schemas';
+import { svgSpecSchema, type QuickAnswerDto, type QuickAnswerInput } from '@edrion/schemas';
 import { LEARN_AI_PROVIDER, LEARNING_EVENTS_WRITER } from '../../../common/tokens';
 import type { LearnAiProvider } from '../learn-ai/provider';
 import { BudgetsService } from '../learn-ai/budgets.service';
 import { LearnAiCallLogger } from '../learn-ai/learn-ai-call.logger';
+import { QUICK_SYSTEM_PROMPT } from '../learn-ai/prompts/quick.prompt';
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import type { StudentPrincipal } from '../student.types';
 import { LearnRepository } from './learn.repository';
@@ -12,7 +13,7 @@ import { LearnRepository } from './learn.repository';
 const quickOutputSchema = z.object({
   answerShort: z.string(),
   answerDetail: z.string(),
-  visual: z.record(z.unknown()).optional(),
+  visual: svgSpecSchema.optional(),
   visualOffer: z.boolean(),
 });
 
@@ -37,11 +38,12 @@ export class QuickService {
       const { result, usage } = await this.ai.completeJson({
         purpose: 'quick',
         tier: 'small',
-        system: 'Answer briefly. No lesson plan. No scores. Return answerShort, answerDetail, optional visual svgSpec, visualOffer boolean.',
+        system: QUICK_SYSTEM_PROMPT,
         user: input.question,
         schema: quickOutputSchema,
         schemaName: 'quick_answer',
-        maxOutputTokens: 8192,
+        maxOutputTokens: 2000,
+        reasoningEffort: 'low',
       });
       await this.callLog.log(principal, 'quick', usage);
       answerShort = result.answerShort;

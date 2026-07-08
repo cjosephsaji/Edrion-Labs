@@ -7,6 +7,7 @@ import { API_ENV, LEARN_AI_PROVIDER } from '../../../common/tokens';
 import type { LearnAiProvider } from './provider';
 import { BudgetsService } from './budgets.service';
 import { LearnAiCallLogger } from './learn-ai-call.logger';
+import { ROUTER_SYSTEM_PROMPT } from './prompts/router.prompt';
 
 const routerOutputSchema = z.object({
   intent: z.enum(['quick_question', 'learn_topic', 'practice', 'revise', 'prepare_exam', 'continue']),
@@ -39,14 +40,13 @@ export class RouterService {
       const { result, usage } = await this.ai.completeJson({
         purpose: 'route',
         tier: 'nano',
-        system:
-          'Classify the student learning intent. Return JSON only. ' +
-          'intent MUST be exactly one of: quick_question, learn_topic, practice, revise, prepare_exam, continue. ' +
-          'Also include subjectLabel?, topicTitle?, depth (quick|deep), visualWarranted, archetype (domain archetype slug).',
+        system: ROUTER_SYSTEM_PROMPT,
         user: `Persona: ${persona}\nStudent text: ${text}`,
         schema: routerOutputSchema,
         schemaName: 'intent_router',
-        maxOutputTokens: 8192,
+        maxOutputTokens: 1000,
+        reasoningEffort: 'minimal',
+        verbosity: 'low',
       });
       await this.callLog.log(principal, 'route', usage);
 
@@ -70,7 +70,7 @@ export class RouterService {
       return {
         intent: 'learn_topic',
         topicGuess: trimmed,
-        route: '/learn/path',
+        route: '/learn',
         depth: 'deep',
         helperCopy: 'Petros will map a learning path for this — press Enter',
       };
@@ -78,7 +78,7 @@ export class RouterService {
     if (isQuestion || trimmed.length < 80) {
       return {
         intent: 'quick_question',
-        route: '/learn/quick/new',
+        route: '/learn',
         depth: 'quick',
         helperCopy: 'Quick answer, no lesson attached — press Enter',
       };
@@ -86,7 +86,7 @@ export class RouterService {
     return {
       intent: 'learn_topic',
       topicGuess: trimmed,
-      route: '/learn/path',
+      route: '/learn',
       depth: 'deep',
       helperCopy: 'Petros will map a learning path for this — press Enter',
     };
@@ -97,9 +97,9 @@ export class RouterService {
     text: string,
   ): IntentResponseDto {
     const routeMap: Record<string, string> = {
-      quick_question: '/learn/quick/new',
-      learn_topic: '/learn/path',
-      practice: '/learn/practice/new',
+      quick_question: '/learn',
+      learn_topic: '/learn',
+      practice: '/learn/revision',
       revise: '/learn/revision',
       prepare_exam: '/lab/mock-exams/new',
       continue: '/learn',

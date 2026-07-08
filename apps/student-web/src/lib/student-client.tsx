@@ -49,7 +49,19 @@ export class StudentClient {
     });
 
     if (res.status === 204) return undefined as T;
-    const body = await res.json().catch(() => ({}));
+    const text = await res.text();
+    if (!text.trim()) {
+      if (!res.ok) {
+        throw new StudentClientError(res.status, 'ERROR', res.statusText);
+      }
+      return undefined as T;
+    }
+    let body: unknown;
+    try {
+      body = JSON.parse(text);
+    } catch {
+      throw new StudentClientError(res.status, 'INVALID_JSON', 'Response was not valid JSON');
+    }
     if (!res.ok) {
       const err = body as ApiError;
       throw new StudentClientError(
@@ -113,7 +125,7 @@ export class StudentClient {
    * Fetch-based SSE reader — supports cookie auth and dev `x-student-email` header
    * (native EventSource cannot send custom headers).
    */
-  sse(path: string, handlers: SseHandlers): SseConnection {
+  sse(path: string, handlers: SseHandlers, init?: { method?: 'GET' | 'POST'; body?: unknown }): SseConnection {
     const url = `${this.baseUrl}/v1/student${path}`;
     const controller = new AbortController();
     let closed = false;
@@ -126,9 +138,12 @@ export class StudentClient {
 
     void (async () => {
       try {
+        const method = init?.method ?? 'GET';
         const res = await fetch(url, {
+          method,
           credentials: 'include',
-          headers: this.headers(undefined, false),
+          headers: this.headers(undefined, method === 'POST'),
+          body: method === 'POST' && init?.body !== undefined ? JSON.stringify(init.body) : undefined,
           signal: controller.signal,
         });
         if (!res.ok || !res.body) {

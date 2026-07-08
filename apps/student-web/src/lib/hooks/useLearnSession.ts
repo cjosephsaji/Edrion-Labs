@@ -7,6 +7,7 @@ import type {
   PracticeAnswerInput,
   SessionBlockDto,
 } from '@edrion/schemas';
+import type { BlockAnswerResult } from '../learn-session-types';
 import { useStudentClient, type SseConnection } from '../student-client';
 
 const sessionKey = (id: string) => ['student', 'learn', 'session', id] as const;
@@ -61,13 +62,18 @@ export function useLearnSession(sessionId: string | undefined) {
 
   const answer = useMutation({
     mutationFn: ({ blockId, body }: { blockId: string; body: Record<string, unknown> }) =>
-      client.post(`/learn/sessions/${sessionId}/blocks/${blockId}/answer`, body),
-    onSuccess: invalidate,
+      client.post<BlockAnswerResult>(`/learn/sessions/${sessionId}/blocks/${blockId}/answer`, body),
+    onSuccess: (data) => {
+      if (sessionId) qc.setQueryData(sessionKey(sessionId), data.session);
+    },
   });
 
   const hint = useMutation({
     mutationFn: ({ blockId, rung }: { blockId: string; rung: 2 | 3 }) =>
-      client.post(`/learn/sessions/${sessionId}/blocks/${blockId}/hint`, { rung }),
+      client.post<{ rung: number; hint: string }>(
+        `/learn/sessions/${sessionId}/blocks/${blockId}/hint`,
+        { rung },
+      ),
   });
 
   const pause = useMutation({
@@ -87,6 +93,16 @@ export function useLearnSession(sessionId: string | undefined) {
     },
   });
 
+  const continueBlock = useMutation({
+    mutationFn: (blockId: string) =>
+      client.post<{ session: LearnSessionDto }>(
+        `/learn/sessions/${sessionId}/blocks/${blockId}/continue`,
+      ),
+    onSuccess: (data) => {
+      if (sessionId) qc.setQueryData(sessionKey(sessionId), data.session);
+    },
+  });
+
   return {
     ...query,
     streaming,
@@ -96,6 +112,8 @@ export function useLearnSession(sessionId: string | undefined) {
     pause,
     resume,
     finish,
+    continueBlock,
+    invalidate,
   };
 }
 

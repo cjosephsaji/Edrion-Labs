@@ -95,10 +95,26 @@ export class LibraryController {
     return this.library.quiz(principal, id);
   }
 
+  @Post('library/items/:id/concept-map')
+  @RequireStudentPermissions('student.library.use')
+  conceptMap(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {
+    return this.library.conceptMap(principal, id);
+  }
+
+  @Post('library/items/:id/glossary')
+  @RequireStudentPermissions('student.library.use')
+  glossary(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {
+    return this.library.glossary(principal, id);
+  }
+
   @Post('library/items/:id/tutor')
   @RequireStudentPermissions('student.library.use')
-  tutor(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {
-    return this.library.tutor(principal, id);
+  tutor(
+    @CurrentStudent() principal: StudentPrincipal,
+    @Param('id') id: string,
+    @Body() body: unknown,
+  ) {
+    return this.library.tutor(principal, id, body);
   }
 
   @Post('classes/materials/:materialId/save-to-library')
@@ -120,6 +136,12 @@ export class LibraryController {
   @RequireStudentPermissions('student.library.use')
   getDeck(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {
     return this.library.getDeck(principal, id);
+  }
+
+  @Get('library/artifacts/:id')
+  @RequireStudentPermissions('student.library.use')
+  getArtifact(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {
+    return this.library.getArtifact(principal, id);
   }
 
   @Post('library/decks/:id/review')

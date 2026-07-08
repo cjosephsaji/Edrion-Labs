@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { VisualExplainerBlock } from '@edrion/schemas';
 import { Eye } from 'lucide-react';
 import { GraphCanvas } from '../GraphCanvas';
+import { MathText } from '../MathText';
 import { BlockCard } from '../BlockCard';
 import { PillChip } from '@/components/ui/primitives';
 
@@ -39,7 +40,7 @@ export function VisualExplainer({
         <div className="mt-4 flex flex-wrap gap-2">
           {content.suggestedQuestions.map((q) => (
             <PillChip key={q} onClick={() => onAsk(q)}>
-              {q}
+              <MathText>{q}</MathText>
             </PillChip>
           ))}
         </div>

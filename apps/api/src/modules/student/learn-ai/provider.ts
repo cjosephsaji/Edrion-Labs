@@ -2,6 +2,9 @@ import type { ZodSchema } from 'zod';
 
 export type LearnAiTier = 'nano' | 'small' | 'large' | 'vision';
 
+export type LearnAiReasoningEffort = 'minimal' | 'low' | 'medium' | 'high';
+export type LearnAiVerbosity = 'low' | 'medium' | 'high';
+
 export type LearnAiPurpose =
   | 'route'
   | 'intent'
@@ -35,16 +38,33 @@ export interface LearnAiCompleteOpts<T> {
   schema: ZodSchema<T>;
   schemaName: string;
   maxOutputTokens: number;
+  reasoningEffort?: LearnAiReasoningEffort;
+  verbosity?: LearnAiVerbosity;
 }
 
 export interface LearnAiStreamOpts<T> extends LearnAiCompleteOpts<T> {
   arrayKey?: string;
 }
 
+export interface LearnAiStreamTextOpts {
+  purpose: LearnAiPurpose;
+  tier: LearnAiTier;
+  system: string;
+  user: string;
+  maxOutputTokens: number;
+  reasoningEffort?: LearnAiReasoningEffort;
+  verbosity?: LearnAiVerbosity;
+}
+
+export type LearnAiTextStreamEvent =
+  | { type: 'delta'; text: string }
+  | { type: 'done'; usage: LearnAiUsage };
+
 export interface LearnAiProvider {
   readonly available: boolean;
   completeJson<T>(opts: LearnAiCompleteOpts<T>): Promise<{ result: T; usage: LearnAiUsage }>;
   streamJsonArray<T>(opts: LearnAiStreamOpts<T>): AsyncIterable<T>;
+  streamText(opts: LearnAiStreamTextOpts): AsyncIterable<LearnAiTextStreamEvent>;
 }
 
 export class AiUnavailableError extends Error {
