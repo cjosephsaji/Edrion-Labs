@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+import { createQuestionSchema, updateQuestionSchema } from './questions';
+import { previewRecipientsSchema, targetsSchema } from './recipients';
 
 /**
  * Institution-Portal EXAMS (Phase 6) request/response contracts: exam events + their scheduled
@@ -46,6 +48,8 @@ export const createExamSchema = z.object({
   endDate: isoDate,
   status: examStatusSchema.default('draft'),
   description: shortText(500),
+  audience: targetsSchema.default([]),
+  durationMin: z.coerce.number().int().min(1).max(480).nullish(),
 });
 export type CreateExamInput = z.infer<typeof createExamSchema>;
 
@@ -59,6 +63,8 @@ export const updateExamSchema = z.object({
   endDate: isoDate,
   status: examStatusSchema.optional(),
   description: shortText(500),
+  audience: targetsSchema.optional(),
+  durationMin: z.coerce.number().int().min(1).max(480).nullish(),
   ...withVersion,
 });
 export type UpdateExamInput = z.infer<typeof updateExamSchema>;
@@ -99,3 +105,13 @@ export const updateExamScheduleSchema = z
     path: ['endTime'],
   });
 export type UpdateExamScheduleInput = z.infer<typeof updateExamScheduleSchema>;
+
+// --- exam paper questions ----------------------------------------------------
+
+export const examQuestionSchema = createQuestionSchema;
+export type ExamQuestionInput = z.infer<typeof examQuestionSchema>;
+export const updateExamQuestionSchema = updateQuestionSchema;
+export type UpdateExamQuestionInput = z.infer<typeof updateExamQuestionSchema>;
+
+export const examAudiencePreviewSchema = previewRecipientsSchema;
+export type ExamAudiencePreviewInput = z.infer<typeof examAudiencePreviewSchema>;

@@ -4,11 +4,13 @@ import { type Column } from '@edrion/ui';
 import { ResourceManager, type FilterDef, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
 import { ExamSchedulesPanel } from '@/components/exams/exam-schedules-panel';
+import { RecipientPicker } from '@/components/recipients/recipient-picker';
 import { useAcademicYearOptions } from '@/lib/academics';
 import { useExamsList, useExamsMutations } from '@/lib/exams';
 import { useProgrammeFacetFilters } from '@/lib/programme-facets';
 import { useAcademicContextFilters } from '@/lib/academic-context';
 import { useTerm } from '@/lib/term';
+import type { Target } from '@/lib/recipients';
 import type { ExamRow } from '@/lib/exams-types';
 
 const PERMISSIONS: ResourcePermissions = {
@@ -70,6 +72,16 @@ export default function ExamsPage() {
       },
       { name: 'startDate', label: 'Start date', type: 'date', nullable: true },
       { name: 'endDate', label: 'End date', type: 'date', nullable: true },
+      { name: 'durationMin', label: 'Duration (minutes)', type: 'number', nullable: true, min: 1, placeholder: 'Optional timed attempt' },
+      {
+        name: 'audience',
+        label: 'Student audience',
+        type: 'custom',
+        render: (value, onChange) => (
+          <RecipientPicker value={(value as Target[]) ?? []} onChange={onChange} studentsOnly />
+        ),
+        help: 'Who can attempt this exam online. Leave empty to skip online attempts.',
+      },
       { name: 'description', label: 'Description', type: 'textarea', nullable: true, placeholder: 'Optional' },
     ],
     [years, facets.showFacets, facets.termOptions, t],
@@ -147,6 +159,8 @@ export default function ExamsPage() {
         academicYearId: r.academicYearId ?? '',
         startDate: r.startDate ?? '',
         endDate: r.endDate ?? '',
+        durationMin: r.durationMin ?? '',
+        audience: r.audience ?? [],
         description: r.description ?? '',
       })}
     />

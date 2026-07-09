@@ -3,11 +3,14 @@ import { useMemo } from 'react';
 import { type Column } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
+import { AssignmentQuestionEditor } from '@/components/assignments/assignment-question-editor';
 import { AssignmentSubmissionsPanel } from '@/components/assignments/assignment-submissions-panel';
+import { RecipientPicker } from '@/components/recipients/recipient-picker';
 import { useClassOptions, useSubjectOptions } from '@/lib/academics';
 import { useTeachingStaffOptions } from '@/lib/people';
 import { useAssignmentsList, useAssignmentsMutations } from '@/lib/assignments';
 import type { AssignmentRow } from '@/lib/assignments-types';
+import type { Target } from '@/lib/recipients';
 import { useTerm } from '@/lib/term';
 
 const PERMISSIONS: ResourcePermissions = {
@@ -21,6 +24,10 @@ const STATUSES = [
   { value: 'draft', label: 'Draft' },
   { value: 'published', label: 'Published' },
   { value: 'closed', label: 'Closed' },
+];
+const DELIVERY_MODES = [
+  { value: 'file', label: 'File submission' },
+  { value: 'quiz', label: 'Online quiz' },
 ];
 const label = (v: string) => STATUSES.find((o) => o.value === v)?.label ?? v;
 
@@ -55,7 +62,24 @@ export default function AssignmentsPage() {
         options: (teachers ?? []).map((t) => ({ value: t.id, label: `${t.firstName} ${t.lastName}` })),
       },
       { name: 'status', label: 'Status', type: 'select', required: true, options: STATUSES },
+      {
+        name: 'deliveryMode',
+        label: 'Delivery mode',
+        type: 'select',
+        required: true,
+        options: DELIVERY_MODES,
+      },
       { name: 'dueDate', label: 'Due date', type: 'date', nullable: true },
+      { name: 'durationMin', label: 'Duration (minutes)', type: 'number', nullable: true, min: 1, placeholder: 'Optional timed attempt' },
+      {
+        name: 'audience',
+        label: 'Student audience',
+        type: 'custom',
+        render: (value, onChange) => (
+          <RecipientPicker value={(value as Target[]) ?? []} onChange={onChange} studentsOnly />
+        ),
+        help: 'Defaults to the selected class when left empty.',
+      },
       { name: 'maxPoints', label: 'Max points', type: 'number', required: true, min: 1 },
       { name: 'instructions', label: 'Instructions', type: 'textarea', nullable: true, placeholder: 'Optional' },
     ],
@@ -68,6 +92,11 @@ export default function AssignmentsPage() {
       { key: 'className', header: t('class'), render: (r) => r.className ?? '—' },
       { key: 'subjectName', header: t('subject'), render: (r) => <span className="text-text-muted">{r.subjectName ?? '—'}</span> },
       { key: 'status', header: 'Status', sortable: true, render: (r) => label(r.status) },
+      {
+        key: 'deliveryMode',
+        header: 'Mode',
+        render: (r) => DELIVERY_MODES.find((o) => o.value === r.deliveryMode)?.label ?? r.deliveryMode,
+      },
       { key: 'dueDate', header: 'Due', sortable: true, render: (r) => <span className="tabular-nums">{r.dueDate ?? '—'}</span> },
       {
         key: 'submissionCount',
@@ -105,13 +134,25 @@ export default function AssignmentsPage() {
           maxPoints={row.maxPoints}
         />
       )}
+      renderFormExtra={({ row }) =>
+        row.deliveryMode === 'quiz' ? (
+          <div className="flex flex-col gap-2">
+            <h3 className="text-sm font-semibold text-text-primary">Quiz questions</h3>
+            <p className="text-xs text-text-muted">Questions for {row.title}.</p>
+            <AssignmentQuestionEditor assignmentId={row.id} />
+          </div>
+        ) : null
+      }
       toFormValues={(r) => ({
         title: r.title,
         classId: r.classId,
         subjectId: r.subjectId ?? '',
         teacherId: r.teacherId ?? '',
         status: r.status,
+        deliveryMode: r.deliveryMode,
         dueDate: r.dueDate ?? '',
+        durationMin: r.durationMin ?? '',
+        audience: r.audience ?? [],
         maxPoints: r.maxPoints,
         instructions: r.instructions ?? '',
       })}

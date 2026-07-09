@@ -96,9 +96,8 @@ export interface StaffProfile {
     isTeaching: boolean;
   };
   teaching: {
-    classTeacherOf: { id: string; name: string; studentCount: number }[];
-    subjectAssignments: { className: string; subjectName: string }[];
-    timetableSlots: number;
+    classTeacherOf: { id: string; name: string; studentCount?: number }[];
+    subjectTeaching: { classId: string; className: string; subjectId: string; subjectName: string }[];
   } | null;
   account: {
     institutionUserId: string | null;

@@ -586,19 +586,21 @@ function StaffBody({ row, edit, canEdit }: { row: StaffRow; edit: () => void; ca
                 {data.teaching.classTeacherOf.map((c) => (
                   <li key={c.id} className="flex justify-between gap-3">
                     <span className="text-text-primary">{c.name}</span>
-                    <span className="tabular-nums text-text-muted">{c.studentCount} students</span>
+                    <span className="tabular-nums text-text-muted">
+                      {c.studentCount != null ? `${c.studentCount} students` : null}
+                    </span>
                   </li>
                 ))}
               </ul>
             )}
           </Panel>
           <Panel title="Subject assignments">
-            {data.teaching.subjectAssignments.length === 0 ? (
+            {(data.teaching.subjectTeaching ?? []).length === 0 ? (
               <p className="text-sm text-text-muted">No subject assignments.</p>
             ) : (
               <ul className="space-y-1 text-sm">
-                {data.teaching.subjectAssignments.map((a, i) => (
-                  <li key={i} className="text-text-secondary">
+                {data.teaching.subjectTeaching.map((a) => (
+                  <li key={`${a.classId}-${a.subjectId}`} className="text-text-secondary">
                     <span className="font-medium text-text-primary">{a.subjectName}</span>
                     <span className="text-text-muted"> · {a.className}</span>
                   </li>
@@ -606,7 +608,6 @@ function StaffBody({ row, edit, canEdit }: { row: StaffRow; edit: () => void; ca
               </ul>
             )}
           </Panel>
-          <p className="text-sm text-text-muted">{data.teaching.timetableSlots} timetable slots this week.</p>
         </div>
       ) : (
         <p className="py-6 text-center text-sm text-text-muted">Teaching load not visible for your role.</p>

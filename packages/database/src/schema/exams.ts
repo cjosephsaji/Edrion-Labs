@@ -1,8 +1,10 @@
-import { boolean, date, index, integer, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, date, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { campuses } from './campuses';
 import { academicYears, classes, subjects, academicTerms } from './academics';
+import { students } from './people';
+import { storageObjects } from './student';
 
 /**
  * INSTITUTION-PORTAL exams (Phase 6). A two-level model, mirroring attendance:
@@ -40,6 +42,10 @@ export const exams = pgTable(
     /** draft | scheduled | ongoing | completed | published | cancelled. */
     status: text('status').notNull().default('draft'),
     description: text('description'),
+    /** Raw recipient targets for re-rendering the picker on edit. */
+    audience: jsonb('audience').$type<Array<{ kind: string; refId?: string | null }>>().notNull().default([]),
+    /** Online attempt duration in minutes (null = no timed attempt). */
+    durationMin: integer('duration_min'),
     version: integer('version').notNull().default(0),
     ...actorColumns,
     ...timestamps,
@@ -97,3 +103,106 @@ export type Exam = typeof exams.$inferSelect;
 export type NewExam = typeof exams.$inferInsert;
 export type ExamSchedule = typeof examSchedules.$inferSelect;
 export type NewExamSchedule = typeof examSchedules.$inferInsert;
+
+/** A question within an exam paper (per schedule). */
+export const examPaperQuestions = pgTable(
+  'exam_paper_questions',
+  {
+    id: primaryId(),
+    examScheduleId: uuid('exam_schedule_id')
+      .notNull()
+      .references(() => examSchedules.id, { onDelete: 'cascade' }),
+    sequence: integer('sequence').notNull(),
+    qtype: text('qtype').notNull(),
+    prompt: text('prompt').notNull(),
+    promptImageObjectId: uuid('prompt_image_object_id').references(() => storageObjects.id, { onDelete: 'set null' }),
+    options: jsonb('options').$type<Array<{ key: string; label: string; imageObjectId?: string }>>(),
+    correctKey: text('correct_key'),
+    markingNote: text('marking_note'),
+    marks: integer('marks').notNull().default(1),
+    version: integer('version').notNull().default(0),
+    ...actorColumns,
+    ...timestamps,
+  },
+  (t) => ({
+    scheduleIdx: index('exam_paper_questions_schedule_idx').on(t.examScheduleId),
+    uniq: uniqueIndex('exam_paper_questions_schedule_sequence_uq').on(t.examScheduleId, t.sequence),
+  }),
+);
+
+/** Materialized student roster for an exam (from resolved audience targets). */
+export const examAssignees = pgTable(
+  'exam_assignees',
+  {
+    id: primaryId(),
+    examId: uuid('exam_id')
+      .notNull()
+      .references(() => exams.id, { onDelete: 'cascade' }),
+    studentId: uuid('student_id')
+      .notNull()
+      .references(() => students.id, { onDelete: 'cascade' }),
+  },
+  (t) => ({
+    uniq: uniqueIndex('exam_assignees_exam_student_uq').on(t.examId, t.studentId),
+  }),
+);
+
+/** Per-student attempt on an exam paper. */
+export const examAttempts = pgTable(
+  'exam_attempts',
+  {
+    id: primaryId(),
+    examScheduleId: uuid('exam_schedule_id')
+      .notNull()
+      .references(() => examSchedules.id, { onDelete: 'cascade' }),
+    studentId: uuid('student_id')
+      .notNull()
+      .references(() => students.id, { onDelete: 'cascade' }),
+    attemptNo: integer('attempt_no').notNull().default(1),
+    startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+    endsAt: timestamp('ends_at', { withTimezone: true }).notNull(),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+    autoScore: integer('auto_score'),
+    maxScore: integer('max_score'),
+    status: text('status').notNull().default('in_progress'),
+    results: jsonb('results'),
+  },
+  (t) => ({
+    scheduleIdx: index('exam_attempts_schedule_idx').on(t.examScheduleId),
+    studentIdx: index('exam_attempts_student_idx').on(t.studentId),
+    uniq: uniqueIndex('exam_attempts_schedule_student_attempt_uq').on(t.examScheduleId, t.studentId, t.attemptNo),
+  }),
+);
+
+/** Per-question answer within an exam attempt. */
+export const examAnswers = pgTable(
+  'exam_answers',
+  {
+    id: primaryId(),
+    attemptId: uuid('attempt_id')
+      .notNull()
+      .references(() => examAttempts.id, { onDelete: 'cascade' }),
+    questionId: uuid('question_id')
+      .notNull()
+      .references(() => examPaperQuestions.id, { onDelete: 'cascade' }),
+    choiceKey: text('choice_key'),
+    answerText: text('answer_text'),
+    answerObjectId: uuid('answer_object_id').references(() => storageObjects.id, { onDelete: 'set null' }),
+    autoCorrect: boolean('auto_correct'),
+    awardedMarks: integer('awarded_marks'),
+    teacherMarks: integer('teacher_marks'),
+    teacherFeedback: text('teacher_feedback'),
+    aiNote: text('ai_note'),
+    needsReview: boolean('needs_review').notNull().default(false),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    uniq: uniqueIndex('exam_answers_attempt_question_uq').on(t.attemptId, t.questionId),
+  }),
+);
+
+export type ExamPaperQuestion = typeof examPaperQuestions.$inferSelect;
+export type NewExamPaperQuestion = typeof examPaperQuestions.$inferInsert;
+export type ExamAssignee = typeof examAssignees.$inferSelect;
+export type ExamAttempt = typeof examAttempts.$inferSelect;
+export type ExamAnswer = typeof examAnswers.$inferSelect;

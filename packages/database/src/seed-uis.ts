@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: join(__dirname, '../../..', '.env') });
 
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, isNull } from 'drizzle-orm';
 import { createDatabase } from './client';
 import * as s from './schema/index';
 
@@ -565,6 +565,47 @@ async function main() {
     }
   }
   console.log(`  ✓ Portal users: ${portalUsers.length}`);
+
+  // Link demo portal logins to directory rows (staff email ≠ portal login email for teachers).
+  const [teacherPortal] = await db
+    .select({ id: s.institutionUsers.id })
+    .from(s.institutionUsers)
+    .where(and(eq(s.institutionUsers.institutionId, instId), eq(s.institutionUsers.email, 'teacher@uis.edu.in')))
+    .limit(1);
+  if (teacherPortal?.id && teacherByNo['T-001']) {
+    await db
+      .update(s.staff)
+      .set({ institutionUserId: teacherPortal.id })
+      .where(and(eq(s.staff.id, teacherByNo['T-001']), isNull(s.staff.institutionUserId)));
+  }
+  for (const st of staffRows) {
+    if (!st.email) continue;
+    const [portalUser] = await db
+      .select({ id: s.institutionUsers.id })
+      .from(s.institutionUsers)
+      .where(and(eq(s.institutionUsers.institutionId, instId), eq(s.institutionUsers.email, st.email)))
+      .limit(1);
+    if (portalUser?.id) {
+      await db
+        .update(s.staff)
+        .set({ institutionUserId: portalUser.id })
+        .where(and(eq(s.staff.id, st.id), isNull(s.staff.institutionUserId)));
+    }
+  }
+
+  // Link demo student portal login to Arjun Sharma (UIS-2025-001).
+  const [studentPortal] = await db
+    .select({ id: s.institutionUsers.id })
+    .from(s.institutionUsers)
+    .where(and(eq(s.institutionUsers.institutionId, instId), eq(s.institutionUsers.email, 'student@uis.edu.in')))
+    .limit(1);
+  const arjunId = studentByAdm['UIS-2025-001'];
+  if (studentPortal?.id && arjunId) {
+    await db
+      .update(s.students)
+      .set({ institutionUserId: studentPortal.id })
+      .where(and(eq(s.students.id, arjunId), isNull(s.students.institutionUserId)));
+  }
 
   // ══════════════════════════════════════════════════════════════════════════
   // SECTION 7: ADMISSIONS

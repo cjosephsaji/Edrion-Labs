@@ -96,4 +96,63 @@ export function useExamScheduleMutations(examId: string) {
   return { create, remove };
 }
 
+// --- paper questions ---------------------------------------------------------
+
+import type { QuestionDraft, QuestionRow } from './question-types';
+import type { Target } from './recipients';
+
+export interface ExamAudiencePreview {
+  count: number;
+  sample: string[];
+  studentCount: number;
+}
+
+export function useExamQuestions(examId: string | null, scheduleId: string | null) {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  return useQuery({
+    queryKey: ['exams', examId, 'schedules', scheduleId, 'questions', scopeKey(scope)],
+    queryFn: () =>
+      client.get<QuestionRow[]>(`/portal/exams/${examId}/schedules/${scheduleId}/questions`, scope),
+    enabled: !!examId && !!scheduleId,
+  });
+}
+
+export function useExamQuestionMutations(examId: string, scheduleId: string) {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  const qc = useQueryClient();
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['exams', examId, 'schedules', scheduleId, 'questions'] });
+  };
+
+  const create = useMutation({
+    mutationFn: (body: QuestionDraft) =>
+      client.post(`/portal/exams/${examId}/schedules/${scheduleId}/questions`, scope, body),
+    onSuccess: invalidate,
+  });
+  const update = useMutation({
+    mutationFn: ({ id, body }: { id: string; body: QuestionDraft & { version: number } }) =>
+      client.patch(`/portal/exams/${examId}/schedules/${scheduleId}/questions/${id}`, scope, body),
+    onSuccess: invalidate,
+  });
+  const remove = useMutation({
+    mutationFn: ({ id, version }: { id: string; version: number }) =>
+      client.del(`/portal/exams/${examId}/schedules/${scheduleId}/questions/${id}`, scope, { version }),
+    onSuccess: invalidate,
+  });
+  return { create, update, remove };
+}
+
+export function useExamAudiencePreview(targets: Target[], enabled = true) {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  return useQuery({
+    queryKey: ['exams', 'audience-preview', scopeKey(scope), targets],
+    queryFn: () => client.post<ExamAudiencePreview>('/portal/exams/audience/preview', scope, { targets }),
+    enabled: enabled && targets.length > 0,
+    placeholderData: keepPreviousData,
+  });
+}
+
 export type { ExamRow, ExamScheduleRow } from './exams-types';

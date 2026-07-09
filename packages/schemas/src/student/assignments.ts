@@ -23,12 +23,20 @@ export const assignmentVersionSchema = z.object({
   note: z.string().nullable(),
 });
 
-export const studentAssignmentDetailSchema = z.object({
+const studentAssignmentDetailBaseSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
   instructions: z.string().nullable(),
   dueDate: z.string().nullable(),
   maxPoints: z.number().int(),
+});
+
+export const studentQuizAssignmentDetailSchema = studentAssignmentDetailBaseSchema.extend({
+  deliveryMode: z.literal('quiz'),
+});
+
+export const studentFileAssignmentDetailSchema = studentAssignmentDetailBaseSchema.extend({
+  deliveryMode: z.literal('file'),
   aiPolicy: aiPolicySchema,
   attachmentUrls: z.array(z.object({ objectId: z.string().uuid(), url: z.string() })),
   latePolicyLine: z.string().nullable(),
@@ -38,6 +46,11 @@ export const studentAssignmentDetailSchema = z.object({
   pointsAwarded: z.number().int().nullable(),
   feedback: z.string().nullable(),
 });
+
+export const studentAssignmentDetailSchema = z.discriminatedUnion('deliveryMode', [
+  studentQuizAssignmentDetailSchema,
+  studentFileAssignmentDetailSchema,
+]);
 
 export const submitAssignmentSchema = z.object({
   fileObjectIds: z.array(z.string().uuid()).min(1),

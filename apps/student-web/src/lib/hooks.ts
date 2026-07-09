@@ -68,3 +68,4 @@ export * from './hooks/useHistory';
 export * from './hooks/useAsk';
 export * from './hooks/institutional';
 export * from './hooks/library';
+export * from './hooks/quiz-attempts';

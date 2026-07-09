@@ -63,6 +63,7 @@ import { StudentCoursesController } from './courses/student-courses.controller';
 import { StudentCoursesService } from './courses/student-courses.service';
 import { StudentExamsController } from './exams/student-exams.controller';
 import { StudentExamsService } from './exams/student-exams.service';
+import { StudentQuizAttemptService } from './quiz-attempt.service';
 import { StudentReportCardsController } from './report-cards/student-report-cards.controller';
 import { StudentReportCardsService } from './report-cards/student-report-cards.service';
 import { StudentHomeworkController } from './homework/homework.controller';
@@ -138,6 +139,7 @@ import { SurfaceGateService } from './surfaces/surface-gate.service';
     StudentClassesService,
     StudentCoursesService,
     StudentExamsService,
+    StudentQuizAttemptService,
     StudentReportCardsService,
     StudentHomeworkService,
     HomeworkRepository,

@@ -24,6 +24,8 @@ export interface ExamRow {
   endDate: string | null;
   status: ExamStatus;
   description: string | null;
+  audience: Array<{ kind: string; refId?: string | null }>;
+  durationMin: number | null;
   scheduleCount: number;
 }
 

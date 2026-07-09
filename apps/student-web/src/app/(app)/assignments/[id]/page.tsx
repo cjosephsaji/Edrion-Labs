@@ -4,12 +4,34 @@ import { useAssignment } from '@/lib/hooks';
 import { aiPolicyPill } from '@/lib/ai-policy';
 import { GovernancePill } from '@/components/institutional/GovernancePill';
 import { Card } from '@/components/ui/card';
+import { PillButton } from '@/components/ui/pill-button';
 
 export default function AssignmentDetailPage({ params }: { params: { id: string } }) {
   const { data: item, isLoading } = useAssignment(params.id);
 
   if (isLoading || !item) {
     return <div className="mx-auto max-w-2xl px-4 py-10"><div className="h-48 shimmer rounded-2xl" /></div>;
+  }
+
+  if (item.deliveryMode === 'quiz') {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-6 animate-st-block-in">
+        <Link href="/assignments" className="text-sm text-st-muted hover:text-st-accent">← Assignments</Link>
+        <div className="mt-4">
+          <h1 className="font-display text-2xl font-semibold text-st-ink">{item.title}</h1>
+          {item.instructions && <p className="mt-2 text-sm text-st-muted">{item.instructions}</p>}
+          <p className="mt-1 text-xs text-st-faint">
+            Quiz · Max {item.maxPoints} points
+            {item.dueDate && ` · Due ${item.dueDate}`}
+          </p>
+        </div>
+        <div className="mt-8 flex justify-center">
+          <Link href={`/assignments/${params.id}/quiz`}>
+            <PillButton>Open quiz</PillButton>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const policy = aiPolicyPill(item.aiPolicy);

@@ -97,4 +97,61 @@ export function useAssignmentGradeMutations(assignmentId: string) {
   return { grade, remove };
 }
 
+// --- quiz questions ----------------------------------------------------------
+
+import type { QuestionDraft, QuestionRow } from './question-types';
+import type { Target } from './recipients';
+
+export interface AssignmentAudiencePreview {
+  count: number;
+  sample: string[];
+  studentCount: number;
+}
+
+export function useAssignmentQuestions(assignmentId: string | null) {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  return useQuery({
+    queryKey: ['assignments', assignmentId, 'questions', scopeKey(scope)],
+    queryFn: () => client.get<QuestionRow[]>(`/portal/assignments/${assignmentId}/questions`, scope),
+    enabled: !!assignmentId,
+  });
+}
+
+export function useAssignmentQuestionMutations(assignmentId: string) {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  const qc = useQueryClient();
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['assignments', assignmentId, 'questions'] });
+  };
+
+  const create = useMutation({
+    mutationFn: (body: QuestionDraft) => client.post(`/portal/assignments/${assignmentId}/questions`, scope, body),
+    onSuccess: invalidate,
+  });
+  const update = useMutation({
+    mutationFn: ({ id, body }: { id: string; body: QuestionDraft & { version: number } }) =>
+      client.patch(`/portal/assignments/${assignmentId}/questions/${id}`, scope, body),
+    onSuccess: invalidate,
+  });
+  const remove = useMutation({
+    mutationFn: ({ id, version }: { id: string; version: number }) =>
+      client.del(`/portal/assignments/${assignmentId}/questions/${id}`, scope, { version }),
+    onSuccess: invalidate,
+  });
+  return { create, update, remove };
+}
+
+export function useAssignmentAudiencePreview(targets: Target[], enabled = true) {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  return useQuery({
+    queryKey: ['assignments', 'audience-preview', scopeKey(scope), targets],
+    queryFn: () => client.post<AssignmentAudiencePreview>('/portal/assignments/audience/preview', scope, { targets }),
+    enabled: enabled && targets.length > 0,
+    placeholderData: keepPreviousData,
+  });
+}
+
 export type { AssignmentRow, AssignmentSubmissionRow, SubmissionStatus } from './assignments-types';

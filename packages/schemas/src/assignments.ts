@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+import { createQuestionSchema, updateQuestionSchema } from './questions';
+import { previewRecipientsSchema, targetsSchema } from './recipients';
 
 /**
  * Institution-Portal ASSIGNMENTS (Phase 6) request/response contracts: assignments + the per-student
@@ -13,6 +15,10 @@ const shortText = (max = 120) => z.string().trim().max(max).nullish();
 export const ASSIGNMENT_STATUSES = ['draft', 'published', 'closed'] as const;
 export const assignmentStatusSchema = z.enum(ASSIGNMENT_STATUSES);
 export type AssignmentStatus = (typeof ASSIGNMENT_STATUSES)[number];
+
+export const DELIVERY_MODES = ['file', 'quiz'] as const;
+export const deliveryModeSchema = z.enum(DELIVERY_MODES);
+export type DeliveryMode = (typeof DELIVERY_MODES)[number];
 
 export const SUBMISSION_STATUSES = ['assigned', 'submitted', 'late', 'graded', 'missing'] as const;
 export const submissionStatusSchema = z.enum(SUBMISSION_STATUSES);
@@ -38,6 +44,9 @@ export const createAssignmentSchema = z.object({
   dueDate: isoDate,
   maxPoints: z.coerce.number().int().min(1).max(1000).default(100),
   status: assignmentStatusSchema.default('draft'),
+  audience: targetsSchema.default([]),
+  durationMin: z.coerce.number().int().min(1).max(480).nullish(),
+  deliveryMode: deliveryModeSchema.default('file'),
 });
 export type CreateAssignmentInput = z.infer<typeof createAssignmentSchema>;
 
@@ -50,6 +59,9 @@ export const updateAssignmentSchema = z.object({
   dueDate: isoDate,
   maxPoints: z.coerce.number().int().min(1).max(1000).optional(),
   status: assignmentStatusSchema.optional(),
+  audience: targetsSchema.optional(),
+  durationMin: z.coerce.number().int().min(1).max(480).nullish(),
+  deliveryMode: deliveryModeSchema.optional(),
   ...withVersion,
 });
 export type UpdateAssignmentInput = z.infer<typeof updateAssignmentSchema>;
@@ -71,3 +83,13 @@ export const gradeSubmissionsSchema = z.object({
   submissions: z.array(submissionGradeSchema).min(1, 'Add at least one student').max(500),
 });
 export type GradeSubmissionsInput = z.infer<typeof gradeSubmissionsSchema>;
+
+// --- assignment questions ----------------------------------------------------
+
+export const assignmentQuestionSchema = createQuestionSchema;
+export type AssignmentQuestionInput = z.infer<typeof assignmentQuestionSchema>;
+export const updateAssignmentQuestionSchema = updateQuestionSchema;
+export type UpdateAssignmentQuestionInput = z.infer<typeof updateAssignmentQuestionSchema>;
+
+export const assignmentAudiencePreviewSchema = previewRecipientsSchema;
+export type AssignmentAudiencePreviewInput = z.infer<typeof assignmentAudiencePreviewSchema>;

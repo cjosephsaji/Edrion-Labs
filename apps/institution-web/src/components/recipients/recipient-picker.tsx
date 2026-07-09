@@ -48,7 +48,15 @@ const name = (p: { firstName: string; lastName: string }) => `${p.firstName} ${p
  * broadcasts and saved groups; shows a live recipient count + sample before sending, and can save the
  * current selection as a reusable group. Emits `Target[]` for the API.
  */
-export function RecipientPicker({ value, onChange }: { value: Target[]; onChange: (targets: Target[]) => void }) {
+export function RecipientPicker({
+  value,
+  onChange,
+  studentsOnly = false,
+}: {
+  value: Target[];
+  onChange: (targets: Target[]) => void;
+  studentsOnly?: boolean;
+}) {
   const { tp } = useTerm();
   const broadcastLabel: Record<string, string> = useMemo(
     () => ({
@@ -61,20 +69,25 @@ export function RecipientPicker({ value, onChange }: { value: Target[]; onChange
     [tp],
   );
   const tabs: { key: TabKey; label: string }[] = useMemo(
-    () => [
-      { key: 'broadcast', label: 'Broadcast' },
-      { key: 'students', label: tp('student') },
-      { key: 'parents', label: 'Parents' },
-      { key: 'teachers', label: tp('teacher') },
-      { key: 'staff', label: tp('staff') },
-      { key: 'classes', label: tp('class') },
-      { key: 'grades', label: tp('gradeLevel') },
-      { key: 'departments', label: tp('department') },
-      { key: 'subjects', label: tp('subject') },
-      { key: 'campuses', label: 'Campuses' },
-      { key: 'groups', label: 'Saved groups' },
-    ],
-    [tp],
+    () => {
+      const all: { key: TabKey; label: string }[] = [
+        { key: 'broadcast', label: 'Broadcast' },
+        { key: 'students', label: tp('student') },
+        { key: 'parents', label: 'Parents' },
+        { key: 'teachers', label: tp('teacher') },
+        { key: 'staff', label: tp('staff') },
+        { key: 'classes', label: tp('class') },
+        { key: 'grades', label: tp('gradeLevel') },
+        { key: 'departments', label: tp('department') },
+        { key: 'subjects', label: tp('subject') },
+        { key: 'campuses', label: 'Campuses' },
+        { key: 'groups', label: 'Saved groups' },
+      ];
+      if (!studentsOnly) return all;
+      const keep = new Set<TabKey>(['broadcast', 'students', 'classes', 'grades', 'departments', 'campuses', 'groups']);
+      return all.filter((t) => keep.has(t.key));
+    },
+    [tp, studentsOnly],
   );
   const [tab, setTab] = useState<TabKey>('broadcast');
   const [q, setQ] = useState('');
@@ -94,6 +107,14 @@ export function RecipientPicker({ value, onChange }: { value: Target[]; onChange
   const groupMut = useRecipientGroupMutations();
 
   const preview = useRecipientPreview(value);
+
+  const broadcastEntries = useMemo(
+    () =>
+      studentsOnly
+        ? Object.entries(broadcastLabel).filter(([kind]) => kind === 'all_students')
+        : Object.entries(broadcastLabel),
+    [broadcastLabel, studentsOnly],
+  );
 
   const selected = useMemo(() => new Set(value.map(key)), [value]);
   const add = (t: Target) => {
@@ -216,7 +237,7 @@ export function RecipientPicker({ value, onChange }: { value: Target[]; onChange
       <div className="max-h-60 overflow-y-auto rounded-md border border-border">
         {tab === 'broadcast' && (
           <div className="flex flex-col">
-            {Object.entries(broadcastLabel).map(([kind, lbl]) => (
+            {broadcastEntries.map(([kind, lbl]) => (
               <Row key={kind} label={lbl} onAdd={() => add({ kind })} added={selected.has(key({ kind }))} />
             ))}
           </div>
@@ -234,24 +255,54 @@ export function RecipientPicker({ value, onChange }: { value: Target[]; onChange
           <Row key={s.id} label={name(s)} sub={s.designation ?? undefined} onAdd={() => add({ kind: 'staff', refId: s.id })} added={selected.has(`staff:${s.id}`)} />
         ))}
         {tab === 'classes' && filtered(classes.data?.items, (c) => c.name).map((c) => (
-          <DerivedRow key={c.id} label={c.name} actions={[
-            { label: tp('student'), target: { kind: 'students_of_class', refId: c.id } },
-            { label: 'Parents', target: { kind: 'parents_of_class', refId: c.id } },
-            { label: tp('teacher'), target: { kind: 'teachers_of_class', refId: c.id } },
-          ]} selected={selected} onAdd={add} />
+          <DerivedRow
+            key={c.id}
+            label={c.name}
+            actions={
+              studentsOnly
+                ? [{ label: tp('student'), target: { kind: 'students_of_class', refId: c.id } }]
+                : [
+                    { label: tp('student'), target: { kind: 'students_of_class', refId: c.id } },
+                    { label: 'Parents', target: { kind: 'parents_of_class', refId: c.id } },
+                    { label: tp('teacher'), target: { kind: 'teachers_of_class', refId: c.id } },
+                  ]
+            }
+            selected={selected}
+            onAdd={add}
+          />
         ))}
         {tab === 'grades' && filtered(grades.data?.items, (g) => g.name).map((g) => (
-          <DerivedRow key={g.id} label={g.name} actions={[
-            { label: tp('student'), target: { kind: 'students_of_grade', refId: g.id } },
-            { label: 'Parents', target: { kind: 'parents_of_grade', refId: g.id } },
-            { label: tp('teacher'), target: { kind: 'teachers_of_grade', refId: g.id } },
-          ]} selected={selected} onAdd={add} />
+          <DerivedRow
+            key={g.id}
+            label={g.name}
+            actions={
+              studentsOnly
+                ? [{ label: tp('student'), target: { kind: 'students_of_grade', refId: g.id } }]
+                : [
+                    { label: tp('student'), target: { kind: 'students_of_grade', refId: g.id } },
+                    { label: 'Parents', target: { kind: 'parents_of_grade', refId: g.id } },
+                    { label: tp('teacher'), target: { kind: 'teachers_of_grade', refId: g.id } },
+                  ]
+            }
+            selected={selected}
+            onAdd={add}
+          />
         ))}
         {tab === 'departments' && filtered(departments.data?.items, (d) => d.name).map((d) => (
-          <DerivedRow key={d.id} label={d.name} actions={[
-            { label: tp('student'), target: { kind: 'students_of_department', refId: d.id } },
-            { label: tp('teacher'), target: { kind: 'teachers_of_department', refId: d.id } },
-          ]} selected={selected} onAdd={add} />
+          <DerivedRow
+            key={d.id}
+            label={d.name}
+            actions={
+              studentsOnly
+                ? [{ label: tp('student'), target: { kind: 'students_of_department', refId: d.id } }]
+                : [
+                    { label: tp('student'), target: { kind: 'students_of_department', refId: d.id } },
+                    { label: tp('teacher'), target: { kind: 'teachers_of_department', refId: d.id } },
+                  ]
+            }
+            selected={selected}
+            onAdd={add}
+          />
         ))}
         {tab === 'subjects' && filtered(subjects.data?.items, (s) => s.name).map((s) => (
           <DerivedRow key={s.id} label={s.name} actions={[

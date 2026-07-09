@@ -13,6 +13,7 @@ export * from './admission-info';
 export * from './attendance';
 export * from './timetable';
 export * from './exams';
+export * from './questions';
 export * from './gradebook';
 export * from './assignments';
 export * from './fees';

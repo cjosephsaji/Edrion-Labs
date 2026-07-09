@@ -73,7 +73,10 @@ export function useTeachingStaffOptions() {
   const { scope } = useScope();
   return useQuery({
     queryKey: ['people', 'staff', 'teaching-options', scopeKey(scope)],
-    queryFn: () => client.get<TeachingStaffOption[]>('/portal/people/staff/teaching-options', scope),
+    queryFn: async () => {
+      const res = await client.get<{ items: TeachingStaffOption[]; total: number }>('/portal/people/staff/teaching-options', scope);
+      return res.items ?? [];
+    },
     staleTime: 60_000,
   });
 }

@@ -15,7 +15,7 @@ import {
   type PgColumn,
   type SQL,
 } from '@edrion/database';
-import type { Exam, ExamSchedule, NewExam, NewExamSchedule } from '@edrion/database';
+import type { Exam, ExamSchedule, NewExam, NewExamSchedule, ExamPaperQuestion, NewExamPaperQuestion, ExamAttempt, ExamAnswer } from '@edrion/database';
 import type { ExamsListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
@@ -199,5 +199,83 @@ export class ExamsRepository {
     const t = schema.examSchedules;
     const rows = await this.db.delete(t).where(and(eq(t.id, id), eq(t.version, version))).returning({ id: t.id });
     return rows.length > 0;
+  }
+
+  // --- paper questions -------------------------------------------------------
+
+  async listQuestions(scheduleId: string): Promise<ExamPaperQuestion[]> {
+    return this.db
+      .select()
+      .from(schema.examPaperQuestions)
+      .where(eq(schema.examPaperQuestions.examScheduleId, scheduleId))
+      .orderBy(asc(schema.examPaperQuestions.sequence));
+  }
+
+  async findQuestion(id: string, scheduleId: string): Promise<ExamPaperQuestion | undefined> {
+    const [row] = await this.db
+      .select()
+      .from(schema.examPaperQuestions)
+      .where(and(eq(schema.examPaperQuestions.id, id), eq(schema.examPaperQuestions.examScheduleId, scheduleId)))
+      .limit(1);
+    return row;
+  }
+
+  async insertQuestion(values: NewExamPaperQuestion): Promise<ExamPaperQuestion> {
+    const [row] = await this.db.insert(schema.examPaperQuestions).values(values).returning();
+    return row!;
+  }
+
+  async updateQuestion(id: string, version: number, patch: Partial<NewExamPaperQuestion>): Promise<ExamPaperQuestion | undefined> {
+    const t = schema.examPaperQuestions;
+    const [row] = await this.db
+      .update(t)
+      .set({ ...patch, version: version + 1, updatedAt: new Date() })
+      .where(and(eq(t.id, id), eq(t.version, version)))
+      .returning();
+    return row;
+  }
+
+  async deleteQuestion(id: string, version: number): Promise<boolean> {
+    const t = schema.examPaperQuestions;
+    const rows = await this.db.delete(t).where(and(eq(t.id, id), eq(t.version, version))).returning({ id: t.id });
+    return rows.length > 0;
+  }
+
+  // --- attempts (grading) ----------------------------------------------------
+
+  async listAttempts(scheduleId: string): Promise<Array<ExamAttempt & { studentName: string | null }>> {
+    const rows = await this.db
+      .select({
+        attempt: schema.examAttempts,
+        firstName: schema.students.firstName,
+        lastName: schema.students.lastName,
+      })
+      .from(schema.examAttempts)
+      .leftJoin(schema.students, eq(schema.students.id, schema.examAttempts.studentId))
+      .where(eq(schema.examAttempts.examScheduleId, scheduleId))
+      .orderBy(desc(schema.examAttempts.startedAt));
+    return rows.map((r) => ({
+      ...r.attempt,
+      studentName: r.firstName ? `${r.firstName} ${r.lastName ?? ''}`.trim() : null,
+    }));
+  }
+
+  async listAttemptAnswers(attemptId: string): Promise<Array<ExamAnswer & { question: ExamPaperQuestion }>> {
+    const rows = await this.db
+      .select({ answer: schema.examAnswers, question: schema.examPaperQuestions })
+      .from(schema.examAnswers)
+      .innerJoin(schema.examPaperQuestions, eq(schema.examPaperQuestions.id, schema.examAnswers.questionId))
+      .where(eq(schema.examAnswers.attemptId, attemptId))
+      .orderBy(asc(schema.examPaperQuestions.sequence));
+    return rows.map((r) => ({ ...r.answer, question: r.question }));
+  }
+
+  async updateAnswerGrade(answerId: string, patch: { teacherMarks?: number | null; teacherFeedback?: string | null }) {
+    const [row] = await this.db
+      .update(schema.examAnswers)
+      .set({ ...patch, updatedAt: new Date() })
+      .where(eq(schema.examAnswers.id, answerId))
+      .returning();
+    return row;
   }
 }

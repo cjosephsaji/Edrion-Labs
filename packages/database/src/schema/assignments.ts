@@ -1,9 +1,10 @@
-import { boolean, date, index, integer, jsonb, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, date, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { campuses } from './campuses';
 import { classes, subjects } from './academics';
 import { students, staff } from './people';
+import { storageObjects } from './student';
 
 /**
  * INSTITUTION-PORTAL assignments (Phase 6). A two-level model, mirroring attendance/exams:
@@ -41,6 +42,12 @@ export const assignments = pgTable(
     allowResubmission: boolean('allow_resubmission').notNull().default(false),
     aiPolicy: text('ai_policy').notNull().default('off'),
     courseId: uuid('course_id'),
+    /** Raw recipient targets for re-rendering the picker on edit. */
+    audience: jsonb('audience').$type<Array<{ kind: string; refId?: string | null }>>().notNull().default([]),
+    /** Online attempt duration in minutes (null = no timed attempt). */
+    durationMin: integer('duration_min'),
+    /** file = file-submission flow; quiz = question/attempt flow. */
+    deliveryMode: text('delivery_mode').notNull().default('file'),
     version: integer('version').notNull().default(0),
     ...actorColumns,
     ...timestamps,
@@ -88,3 +95,106 @@ export type Assignment = typeof assignments.$inferSelect;
 export type NewAssignment = typeof assignments.$inferInsert;
 export type AssignmentSubmission = typeof assignmentSubmissions.$inferSelect;
 export type NewAssignmentSubmission = typeof assignmentSubmissions.$inferInsert;
+
+/** A question within a quiz-mode assignment. */
+export const assignmentQuestions = pgTable(
+  'assignment_questions',
+  {
+    id: primaryId(),
+    assignmentId: uuid('assignment_id')
+      .notNull()
+      .references(() => assignments.id, { onDelete: 'cascade' }),
+    sequence: integer('sequence').notNull(),
+    qtype: text('qtype').notNull(),
+    prompt: text('prompt').notNull(),
+    promptImageObjectId: uuid('prompt_image_object_id').references(() => storageObjects.id, { onDelete: 'set null' }),
+    options: jsonb('options').$type<Array<{ key: string; label: string; imageObjectId?: string }>>(),
+    correctKey: text('correct_key'),
+    markingNote: text('marking_note'),
+    marks: integer('marks').notNull().default(1),
+    version: integer('version').notNull().default(0),
+    ...actorColumns,
+    ...timestamps,
+  },
+  (t) => ({
+    assignmentIdx: index('assignment_questions_assignment_idx').on(t.assignmentId),
+    uniq: uniqueIndex('assignment_questions_assignment_sequence_uq').on(t.assignmentId, t.sequence),
+  }),
+);
+
+/** Materialized student roster for an assignment (from resolved audience targets). */
+export const assignmentAssignees = pgTable(
+  'assignment_assignees',
+  {
+    id: primaryId(),
+    assignmentId: uuid('assignment_id')
+      .notNull()
+      .references(() => assignments.id, { onDelete: 'cascade' }),
+    studentId: uuid('student_id')
+      .notNull()
+      .references(() => students.id, { onDelete: 'cascade' }),
+  },
+  (t) => ({
+    uniq: uniqueIndex('assignment_assignees_assignment_student_uq').on(t.assignmentId, t.studentId),
+  }),
+);
+
+/** Per-student attempt on a quiz-mode assignment. */
+export const assignmentAttempts = pgTable(
+  'assignment_attempts',
+  {
+    id: primaryId(),
+    assignmentId: uuid('assignment_id')
+      .notNull()
+      .references(() => assignments.id, { onDelete: 'cascade' }),
+    studentId: uuid('student_id')
+      .notNull()
+      .references(() => students.id, { onDelete: 'cascade' }),
+    attemptNo: integer('attempt_no').notNull().default(1),
+    startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+    endsAt: timestamp('ends_at', { withTimezone: true }).notNull(),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+    autoScore: integer('auto_score'),
+    maxScore: integer('max_score'),
+    status: text('status').notNull().default('in_progress'),
+    results: jsonb('results'),
+  },
+  (t) => ({
+    assignmentIdx: index('assignment_attempts_assignment_idx').on(t.assignmentId),
+    studentIdx: index('assignment_attempts_student_idx').on(t.studentId),
+    uniq: uniqueIndex('assignment_attempts_assignment_student_attempt_uq').on(t.assignmentId, t.studentId, t.attemptNo),
+  }),
+);
+
+/** Per-question answer within an assignment attempt. */
+export const assignmentAnswers = pgTable(
+  'assignment_answers',
+  {
+    id: primaryId(),
+    attemptId: uuid('attempt_id')
+      .notNull()
+      .references(() => assignmentAttempts.id, { onDelete: 'cascade' }),
+    questionId: uuid('question_id')
+      .notNull()
+      .references(() => assignmentQuestions.id, { onDelete: 'cascade' }),
+    choiceKey: text('choice_key'),
+    answerText: text('answer_text'),
+    answerObjectId: uuid('answer_object_id').references(() => storageObjects.id, { onDelete: 'set null' }),
+    autoCorrect: boolean('auto_correct'),
+    awardedMarks: integer('awarded_marks'),
+    teacherMarks: integer('teacher_marks'),
+    teacherFeedback: text('teacher_feedback'),
+    aiNote: text('ai_note'),
+    needsReview: boolean('needs_review').notNull().default(false),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    uniq: uniqueIndex('assignment_answers_attempt_question_uq').on(t.attemptId, t.questionId),
+  }),
+);
+
+export type AssignmentQuestion = typeof assignmentQuestions.$inferSelect;
+export type NewAssignmentQuestion = typeof assignmentQuestions.$inferInsert;
+export type AssignmentAssignee = typeof assignmentAssignees.$inferSelect;
+export type AssignmentAttempt = typeof assignmentAttempts.$inferSelect;
+export type AssignmentAnswer = typeof assignmentAnswers.$inferSelect;

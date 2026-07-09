@@ -36,6 +36,7 @@ import { TimetableService } from './timetable.service';
 import { TimetableRepository } from './timetable.repository';
 import { ExamsController } from './exams.controller';
 import { ExamsService } from './exams.service';
+import { PortalAudienceService } from './portal-audience.service';
 import { ExamsRepository } from './exams.repository';
 import { GradebookController } from './gradebook.controller';
 import { GradebookService } from './gradebook.service';
@@ -263,6 +264,7 @@ import { PortalCalendarEventsService } from './calendar-events/portal-calendar-e
     NotificationsService,
     AnnouncementsRepository,
     RecipientResolver,
+    PortalAudienceService,
     RecipientsService,
     ConversationsService,
     AttachmentStorageService,

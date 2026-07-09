@@ -10,8 +10,12 @@ import type { AuditWriter, AuditEventInput } from '@edrion/audit';
 import type {
   CreateExamInput,
   CreateExamScheduleInput,
+  ExamAudiencePreviewInput,
+  ExamQuestionInput,
   ExamsListQuery,
+  GradeAnswerInput,
   UpdateExamInput,
+  UpdateExamQuestionInput,
   UpdateExamScheduleInput,
 } from '@edrion/schemas';
 import { AUDIT_WRITER } from '../../common/tokens';
@@ -19,6 +23,7 @@ import type { Page } from './academics.repository';
 import type { ListResult } from './academics.service';
 import { ExamsRepository, type ExamRefTable } from './exams.repository';
 import { basePortalAudit, type PortalActionContext } from './portal-action-context';
+import { PortalAudienceService } from './portal-audience.service';
 
 const MODULE = 'portal-exams';
 
@@ -32,6 +37,7 @@ const MODULE = 'portal-exams';
 export class ExamsService {
   constructor(
     private readonly repo: ExamsRepository,
+    private readonly audience: PortalAudienceService,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
   ) {}
 
@@ -58,8 +64,13 @@ export class ExamsService {
       endDate: input.endDate ?? null,
       status: input.status,
       description: input.description ?? null,
+      audience: input.audience ?? [],
+      durationMin: input.durationMin ?? null,
       createdBy: ctx.principal.institutionUserId,
     });
+    if (input.audience?.length) {
+      await this.audience.materializeExamAssignees(ctx, row.id, input.audience);
+    }
     await this.write(ctx, 'exam.create', 'exam', row.id, campusId, {
       newState: { name: row.name, examType: row.examType, status: row.status },
     });
@@ -82,9 +93,14 @@ export class ExamsService {
       endDate: input.endDate === undefined ? existing!.endDate : input.endDate,
       status: input.status ?? existing!.status,
       description: input.description === undefined ? existing!.description : input.description,
+      audience: input.audience === undefined ? existing!.audience : input.audience,
+      durationMin: input.durationMin === undefined ? existing!.durationMin : input.durationMin,
       updatedBy: ctx.principal.institutionUserId,
     });
     if (!updated) throw this.versionConflict();
+    if (input.audience !== undefined) {
+      await this.audience.materializeExamAssignees(ctx, id, input.audience);
+    }
     await this.write(ctx, 'exam.update', 'exam', id, updated.campusId, {
       newState: { name: updated.name, status: updated.status },
     });
@@ -187,6 +203,111 @@ export class ExamsService {
     return { deleted: true };
   }
 
+  // === audience preview ======================================================
+
+  previewAudience(ctx: PortalActionContext, input: ExamAudiencePreviewInput) {
+    return this.audience.previewStudents(ctx, input.targets);
+  }
+
+  // === paper questions ========================================================
+
+  async listQuestions(ctx: PortalActionContext, examId: string, scheduleId: string) {
+    await this.requireScheduleInScope(ctx, examId, scheduleId);
+    return this.repo.listQuestions(scheduleId);
+  }
+
+  async createQuestion(ctx: PortalActionContext, examId: string, scheduleId: string, input: ExamQuestionInput) {
+    const exam = await this.requireScheduleInScope(ctx, examId, scheduleId);
+    const row = await this.repo.insertQuestion({
+      examScheduleId: scheduleId,
+      sequence: input.sequence,
+      qtype: input.qtype,
+      prompt: input.prompt,
+      promptImageObjectId: input.promptImageObjectId ?? null,
+      options: input.options ?? null,
+      correctKey: input.correctKey ?? null,
+      markingNote: input.markingNote ?? null,
+      marks: input.marks,
+      createdBy: ctx.principal.institutionUserId,
+    });
+    await this.write(ctx, 'exam.question.create', 'exam_paper_question', row.id, exam.campusId, {
+      newState: { scheduleId, sequence: row.sequence, qtype: row.qtype },
+    });
+    return row;
+  }
+
+  async updateQuestion(
+    ctx: PortalActionContext,
+    examId: string,
+    scheduleId: string,
+    questionId: string,
+    input: UpdateExamQuestionInput,
+  ) {
+    const exam = await this.requireScheduleInScope(ctx, examId, scheduleId);
+    const existing = await this.repo.findQuestion(questionId, scheduleId);
+    if (!existing) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Question not found' });
+    const updated = await this.repo.updateQuestion(questionId, input.version, {
+      sequence: input.sequence ?? existing.sequence,
+      qtype: input.qtype ?? existing.qtype,
+      prompt: input.prompt ?? existing.prompt,
+      promptImageObjectId: input.promptImageObjectId === undefined ? existing.promptImageObjectId : input.promptImageObjectId,
+      options: input.options === undefined ? existing.options : input.options,
+      correctKey: input.correctKey === undefined ? existing.correctKey : input.correctKey,
+      markingNote: input.markingNote === undefined ? existing.markingNote : input.markingNote,
+      marks: input.marks ?? existing.marks,
+      updatedBy: ctx.principal.institutionUserId,
+    });
+    if (!updated) throw this.versionConflict();
+    await this.write(ctx, 'exam.question.update', 'exam_paper_question', questionId, exam.campusId, {
+      newState: { sequence: updated.sequence },
+    });
+    return updated;
+  }
+
+  async deleteQuestion(ctx: PortalActionContext, examId: string, scheduleId: string, questionId: string, version: number) {
+    const exam = await this.requireScheduleInScope(ctx, examId, scheduleId);
+    const existing = await this.repo.findQuestion(questionId, scheduleId);
+    if (!existing) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Question not found' });
+    const ok = await this.repo.deleteQuestion(questionId, version);
+    if (!ok) throw this.versionConflict();
+    await this.write(ctx, 'exam.question.delete', 'exam_paper_question', questionId, exam.campusId, {
+      previousState: { sequence: existing.sequence },
+    });
+    return { deleted: true };
+  }
+
+  // === attempts (grading) ===================================================
+
+  async listAttempts(ctx: PortalActionContext, examId: string, scheduleId: string) {
+    await this.requireScheduleInScope(ctx, examId, scheduleId);
+    return this.repo.listAttempts(scheduleId);
+  }
+
+  async getAttemptDetail(ctx: PortalActionContext, examId: string, scheduleId: string, attemptId: string) {
+    await this.requireScheduleInScope(ctx, examId, scheduleId);
+    return this.repo.listAttemptAnswers(attemptId);
+  }
+
+  async gradeAnswer(
+    ctx: PortalActionContext,
+    examId: string,
+    scheduleId: string,
+    _attemptId: string,
+    answerId: string,
+    input: GradeAnswerInput,
+  ) {
+    const exam = await this.requireScheduleInScope(ctx, examId, scheduleId);
+    const updated = await this.repo.updateAnswerGrade(answerId, {
+      teacherMarks: input.teacherMarks ?? null,
+      teacherFeedback: input.teacherFeedback ?? null,
+    });
+    if (!updated) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Answer not found' });
+    await this.write(ctx, 'exam.answer.grade', 'exam_answer', answerId, exam.campusId, {
+      newState: { teacherMarks: updated.teacherMarks },
+    });
+    return updated;
+  }
+
   // === helpers ===============================================================
 
   private filter(ctx: PortalActionContext): ScopeFilter {
@@ -210,6 +331,13 @@ export class ExamsService {
     const f = this.filter(ctx);
     const exam = await this.repo.find(examId, ctx.principal.institutionId);
     this.assertInScope(exam?.campusId ?? null, exam, f);
+    return exam;
+  }
+
+  private async requireScheduleInScope(ctx: PortalActionContext, examId: string, scheduleId: string) {
+    const exam = await this.requireExamInScope(ctx, examId);
+    const sched = await this.repo.findSchedule(scheduleId, examId);
+    if (!sched) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Exam paper not found' });
     return exam;
   }
 

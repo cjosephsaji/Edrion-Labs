@@ -20,6 +20,10 @@ import type {
   AssignmentSubmission,
   NewAssignment,
   NewAssignmentSubmission,
+  AssignmentQuestion,
+  NewAssignmentQuestion,
+  AssignmentAttempt,
+  AssignmentAnswer,
 } from '@edrion/database';
 import type { AssignmentsListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
@@ -206,5 +210,83 @@ export class AssignmentsRepository {
     const t = schema.assignmentSubmissions;
     const rows = await this.db.delete(t).where(eq(t.id, id)).returning({ id: t.id });
     return rows.length > 0;
+  }
+
+  // --- questions -------------------------------------------------------------
+
+  async listQuestions(assignmentId: string): Promise<AssignmentQuestion[]> {
+    return this.db
+      .select()
+      .from(schema.assignmentQuestions)
+      .where(eq(schema.assignmentQuestions.assignmentId, assignmentId))
+      .orderBy(asc(schema.assignmentQuestions.sequence));
+  }
+
+  async findQuestion(id: string, assignmentId: string): Promise<AssignmentQuestion | undefined> {
+    const [row] = await this.db
+      .select()
+      .from(schema.assignmentQuestions)
+      .where(and(eq(schema.assignmentQuestions.id, id), eq(schema.assignmentQuestions.assignmentId, assignmentId)))
+      .limit(1);
+    return row;
+  }
+
+  async insertQuestion(values: NewAssignmentQuestion): Promise<AssignmentQuestion> {
+    const [row] = await this.db.insert(schema.assignmentQuestions).values(values).returning();
+    return row!;
+  }
+
+  async updateQuestion(id: string, version: number, patch: Partial<NewAssignmentQuestion>): Promise<AssignmentQuestion | undefined> {
+    const t = schema.assignmentQuestions;
+    const [row] = await this.db
+      .update(t)
+      .set({ ...patch, version: version + 1, updatedAt: new Date() })
+      .where(and(eq(t.id, id), eq(t.version, version)))
+      .returning();
+    return row;
+  }
+
+  async deleteQuestion(id: string, version: number): Promise<boolean> {
+    const t = schema.assignmentQuestions;
+    const rows = await this.db.delete(t).where(and(eq(t.id, id), eq(t.version, version))).returning({ id: t.id });
+    return rows.length > 0;
+  }
+
+  // --- quiz attempts (grading) -----------------------------------------------
+
+  async listAttempts(assignmentId: string): Promise<Array<AssignmentAttempt & { studentName: string | null }>> {
+    const rows = await this.db
+      .select({
+        attempt: schema.assignmentAttempts,
+        firstName: schema.students.firstName,
+        lastName: schema.students.lastName,
+      })
+      .from(schema.assignmentAttempts)
+      .leftJoin(schema.students, eq(schema.students.id, schema.assignmentAttempts.studentId))
+      .where(eq(schema.assignmentAttempts.assignmentId, assignmentId))
+      .orderBy(desc(schema.assignmentAttempts.startedAt));
+    return rows.map((r) => ({
+      ...r.attempt,
+      studentName: r.firstName ? `${r.firstName} ${r.lastName ?? ''}`.trim() : null,
+    }));
+  }
+
+  async listAttemptAnswers(attemptId: string): Promise<Array<AssignmentAnswer & { question: AssignmentQuestion }>> {
+    const rows = await this.db
+      .select({ answer: schema.assignmentAnswers, question: schema.assignmentQuestions })
+      .from(schema.assignmentAnswers)
+      .innerJoin(schema.assignmentQuestions, eq(schema.assignmentQuestions.id, schema.assignmentAnswers.questionId))
+      .where(eq(schema.assignmentAnswers.attemptId, attemptId))
+      .orderBy(asc(schema.assignmentQuestions.sequence));
+    return rows.map((r) => ({ ...r.answer, question: r.question }));
+  }
+
+  async updateAnswerGrade(answerId: string, patch: { teacherMarks?: number | null; teacherFeedback?: string | null }) {
+    const [row] = await this.db
+      .update(schema.assignmentAnswers)
+      .set({ ...patch, updatedAt: new Date() })
+      .where(eq(schema.assignmentAnswers.id, answerId))
+      .returning();
+    return row;
   }
 }

@@ -1,7 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { Button, Input, Label, Select, Skeleton } from '@edrion/ui';
+import { ExamQuestionEditor } from '@/components/exams/exam-question-editor';
+import { ExamAttemptsPanel } from '@/components/exams/exam-attempts-panel';
 import { usePermissions } from '@/lib/permissions';
 import { useClassOptions, useSubjectOptions } from '@/lib/academics';
 import { useExamScheduleMutations, useExamSchedules } from '@/lib/exams';
@@ -24,6 +26,7 @@ export function ExamSchedulesPanel({ examId, examName }: { examId: string; examN
   const [maxMarks, setMaxMarks] = useState('100');
   const [room, setRoom] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   function reset() {
     setClassId('');
@@ -133,30 +136,52 @@ export function ExamSchedulesPanel({ examId, examName }: { examId: string; examN
         <p className="py-4 text-center text-sm text-text-muted">No papers scheduled in this exam yet.</p>
       ) : (
         <ul className="divide-y divide-border rounded-md border border-border">
-          {(schedules ?? []).map((s) => (
-            <li key={s.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-text-primary">
-                  {s.subjectName ?? 'Subject'} · {s.className ?? 'Class'}
-                </p>
-                <p className="truncate text-xs text-text-muted">
-                  {[s.examDate, s.startTime && s.endTime ? `${s.startTime}–${s.endTime}` : null, `${s.maxMarks} marks`, s.room]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </p>
-              </div>
-              {canManage && (
-                <button
-                  type="button"
-                  aria-label="Remove paper"
-                  onClick={() => drop(s.id, s.version)}
-                  className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-background-secondary hover:text-danger"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              )}
-            </li>
-          ))}
+          {(schedules ?? []).map((s) => {
+            const expanded = expandedId === s.id;
+            return (
+              <li key={s.id}>
+                <div className="flex items-center justify-between gap-3 px-3 py-2.5">
+                  <button
+                    type="button"
+                    className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                    onClick={() => setExpandedId(expanded ? null : s.id)}
+                  >
+                    {expanded ? (
+                      <ChevronDown className="h-4 w-4 shrink-0 text-text-muted" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 shrink-0 text-text-muted" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-text-primary">
+                        {s.subjectName ?? 'Subject'} · {s.className ?? 'Class'}
+                      </p>
+                      <p className="truncate text-xs text-text-muted">
+                        {[s.examDate, s.startTime && s.endTime ? `${s.startTime}–${s.endTime}` : null, `${s.maxMarks} marks`, s.room]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </p>
+                    </div>
+                  </button>
+                  {canManage && (
+                    <button
+                      type="button"
+                      aria-label="Remove paper"
+                      onClick={() => drop(s.id, s.version)}
+                      className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-background-secondary hover:text-danger"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+                {expanded && (
+                  <div className="px-3 pb-3">
+                    <ExamQuestionEditor examId={examId} scheduleId={s.id} />
+                    <ExamAttemptsPanel examId={examId} scheduleId={s.id} />
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

@@ -1,5 +1,5 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { and, desc, eq, inArray, schema, sql, type Database } from '@edrion/database';
+import { and, desc, eq, inArray, or, schema, sql, type Database } from '@edrion/database';
 import type { AssignmentListFilter, SubmitAssignmentInput } from '@edrion/schemas';
 import { DATABASE, LEARNING_EVENTS_WRITER } from '../../../common/tokens';
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
@@ -15,15 +15,33 @@ export class StudentAssignmentsService {
   ) {}
 
   async list(principal: InstitutionalStudentPrincipal, filter: AssignmentListFilter) {
+    const [student] = await this.db
+      .select({ classId: schema.students.classId })
+      .from(schema.students)
+      .where(eq(schema.students.id, principal.studentId))
+      .limit(1);
+
     const enrolled = await this.db
       .select({ courseId: schema.courseEnrollments.courseId })
       .from(schema.courseEnrollments)
       .where(eq(schema.courseEnrollments.studentId, principal.studentId));
     const courseIds = enrolled.map((e) => e.courseId);
-    if (!courseIds.length) return { items: [] };
 
     const t = schema.assignments;
-    const conds = [inArray(t.courseId, courseIds), eq(t.status, 'published')];
+    const classAssigneeIds = await this.db
+      .select({ assignmentId: schema.assignmentAssignees.assignmentId })
+      .from(schema.assignmentAssignees)
+      .where(eq(schema.assignmentAssignees.studentId, principal.studentId));
+    const assigneeIds = classAssigneeIds.map((a) => a.assignmentId);
+
+    const visibilityParts = [
+      student?.classId ? eq(t.classId, student.classId) : undefined,
+      courseIds.length ? inArray(t.courseId, courseIds) : undefined,
+      assigneeIds.length ? inArray(t.id, assigneeIds) : undefined,
+    ].filter((c): c is NonNullable<typeof c> => !!c);
+    if (!visibilityParts.length) return { items: [] };
+    const visibility = visibilityParts.length === 1 ? visibilityParts[0]! : or(...visibilityParts);
+
     const rows = await this.db
       .select({
         id: t.id,
@@ -34,15 +52,16 @@ export class StudentAssignmentsService {
         professorName: profName,
         status: schema.assignmentSubmissions.status,
         submittedDate: schema.assignmentSubmissions.submittedDate,
+        deliveryMode: t.deliveryMode,
       })
       .from(t)
-      .innerJoin(schema.courses, eq(t.courseId, schema.courses.id))
+      .leftJoin(schema.courses, eq(t.courseId, schema.courses.id))
       .leftJoin(schema.staff, eq(t.teacherId, schema.staff.id))
       .leftJoin(
         schema.assignmentSubmissions,
         and(eq(schema.assignmentSubmissions.assignmentId, t.id), eq(schema.assignmentSubmissions.studentId, principal.studentId)),
       )
-      .where(and(...conds))
+      .where(and(eq(t.status, 'published'), visibility))
       .orderBy(t.dueDate);
 
     const items = rows
@@ -60,6 +79,7 @@ export class StudentAssignmentsService {
           status: r.status ?? 'assigned',
           late,
           latePenaltyLabel: penalty,
+          deliveryMode: r.deliveryMode,
         };
       });
     return { items };
@@ -69,14 +89,45 @@ export class StudentAssignmentsService {
     const [row] = await this.db
       .select({ assignment: schema.assignments, course: schema.courses })
       .from(schema.assignments)
-      .innerJoin(schema.courses, eq(schema.assignments.courseId, schema.courses.id))
-      .innerJoin(
-        schema.courseEnrollments,
-        and(eq(schema.courseEnrollments.courseId, schema.courses.id), eq(schema.courseEnrollments.studentId, principal.studentId)),
-      )
+      .leftJoin(schema.courses, eq(schema.assignments.courseId, schema.courses.id))
       .where(eq(schema.assignments.id, assignmentId))
       .limit(1);
     if (!row) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Assignment not found' });
+
+    const [student] = await this.db
+      .select({ classId: schema.students.classId })
+      .from(schema.students)
+      .where(eq(schema.students.id, principal.studentId))
+      .limit(1);
+    const [assignee] = await this.db
+      .select({ id: schema.assignmentAssignees.id })
+      .from(schema.assignmentAssignees)
+      .where(and(eq(schema.assignmentAssignees.assignmentId, assignmentId), eq(schema.assignmentAssignees.studentId, principal.studentId)))
+      .limit(1);
+    const classMatch = student?.classId === row.assignment.classId;
+    let courseMatch = false;
+    if (row.assignment.courseId) {
+      const [enrolled] = await this.db
+        .select({ id: schema.courseEnrollments.id })
+        .from(schema.courseEnrollments)
+        .where(and(eq(schema.courseEnrollments.courseId, row.assignment.courseId), eq(schema.courseEnrollments.studentId, principal.studentId)))
+        .limit(1);
+      courseMatch = !!enrolled;
+    }
+    if (!assignee && !classMatch && !courseMatch) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Assignment not found' });
+    }
+
+    if (row.assignment.deliveryMode === 'quiz') {
+      return {
+        id: row.assignment.id,
+        title: row.assignment.title,
+        deliveryMode: 'quiz' as const,
+        dueDate: row.assignment.dueDate,
+        maxPoints: row.assignment.maxPoints,
+        instructions: row.assignment.instructions,
+      };
+    }
 
     const [sub] = await this.db
       .select()
@@ -100,6 +151,7 @@ export class StudentAssignmentsService {
     return {
       id: row.assignment.id,
       title: row.assignment.title,
+      deliveryMode: 'file' as const,
       instructions: row.assignment.instructions,
       dueDate: row.assignment.dueDate,
       maxPoints: row.assignment.maxPoints,

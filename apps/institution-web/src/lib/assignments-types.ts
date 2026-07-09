@@ -4,6 +4,7 @@ import type { Paged } from './academics-types';
 export type { Paged };
 
 export type AssignmentStatus = 'draft' | 'published' | 'closed';
+export type DeliveryMode = 'file' | 'quiz';
 export type SubmissionStatus = 'assigned' | 'submitted' | 'late' | 'graded' | 'missing';
 
 export interface AssignmentRow {
@@ -24,6 +25,9 @@ export interface AssignmentRow {
   dueDate: string | null;
   maxPoints: number;
   status: AssignmentStatus;
+  audience: Array<{ kind: string; refId?: string | null }>;
+  durationMin: number | null;
+  deliveryMode: DeliveryMode;
   submissionCount: number;
   gradedCount: number;
 }
