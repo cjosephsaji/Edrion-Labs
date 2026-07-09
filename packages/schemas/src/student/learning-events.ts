@@ -91,8 +91,7 @@ export const learningEventPayloadSchemas = {
   }),
   'quiz.completed': basePayload.extend({
     artifactId: z.string().uuid(),
-    total: z.number().int(),
-    correct: z.number().int(),
+    attemptId: z.string().uuid(),
   }),
   'mock.completed': basePayload.extend({
     mockId: z.string().uuid(),

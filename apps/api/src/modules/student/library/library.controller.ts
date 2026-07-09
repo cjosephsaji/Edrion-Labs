@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -32,6 +33,12 @@ export class LibraryController {
     return this.library.getOverview(principal, q);
   }
 
+  @Get('library/collections/:id')
+  @RequireStudentPermissions('student.library.use')
+  getCollection(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {
+    return this.library.getCollection(principal, id);
+  }
+
   @Post('library/items')
   @RequireStudentPermissions('student.library.use')
   createItem(@CurrentStudent() principal: StudentPrincipal, @Body() body: unknown) {
@@ -53,6 +60,35 @@ export class LibraryController {
   ) {
     const { objectIds } = body as { objectIds: string[] };
     return this.library.patchItemPages(principal, id, objectIds);
+  }
+
+  @Patch('library/items/:id/pages/:pageIndex')
+  @RequireStudentPermissions('student.library.use')
+  patchPageText(
+    @CurrentStudent() principal: StudentPrincipal,
+    @Param('id') id: string,
+    @Param('pageIndex', ParseIntPipe) pageIndex: number,
+    @Body() body: unknown,
+  ) {
+    return this.library.patchPageText(principal, id, pageIndex, body);
+  }
+
+  @Post('library/items/:id/confirm-ocr')
+  @RequireStudentPermissions('student.library.use')
+  confirmOcr(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {
+    return this.library.confirmOcr(principal, id);
+  }
+
+  @Post('library/items/:id/retry')
+  @RequireStudentPermissions('student.library.use')
+  retry(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {
+    return this.library.retryIngest(principal, id);
+  }
+
+  @Delete('library/items/:id')
+  @RequireStudentPermissions('student.library.use')
+  deleteItem(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {
+    return this.library.deleteItem(principal, id);
   }
 
   @Post('library/collections')
@@ -142,6 +178,16 @@ export class LibraryController {
   @RequireStudentPermissions('student.library.use')
   getArtifact(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {
     return this.library.getArtifact(principal, id);
+  }
+
+  @Get('library/artifacts/:id/attempts/:attemptId')
+  @RequireStudentPermissions('student.library.use')
+  getQuizAttempt(
+    @CurrentStudent() principal: StudentPrincipal,
+    @Param('id') id: string,
+    @Param('attemptId') attemptId: string,
+  ) {
+    return this.library.getQuizAttempt(principal, id, attemptId);
   }
 
   @Post('library/decks/:id/review')

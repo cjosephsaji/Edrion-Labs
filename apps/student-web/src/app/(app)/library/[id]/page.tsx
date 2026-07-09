@@ -1,80 +1,138 @@
-'use client';
-import Link from 'next/link';
-import type { GlossaryContent } from '@edrion/schemas';
-import { useLibraryArtifact, useLibraryItem } from '@/lib/hooks';
-import { LibraryActionsRail } from '@/components/library/library-actions-rail';
-import { GlossaryPanel } from '@/components/library/GlossaryPanel';
-import { Card } from '@/components/ui/card';
-
-type LibraryItemResponse = {
-  item: {
-    id: string;
-    title: string;
-    kind: string;
-    aiRead: boolean;
-  };
-  artifacts: { id: string; kind: string; title: string; fromLabel: string }[];
-};
-
-function GlossaryArtifactView({ artifactId }: { artifactId: string }) {
-  const { data } = useLibraryArtifact(artifactId);
-  if (!data || data.kind !== 'glossary') return null;
-  return <GlossaryPanel content={data.content as GlossaryContent} fromLabel={data.fromLabel} />;
-}
-
-export default function LibraryItemPage({ params }: { params: { id: string } }) {
-  const { data, isLoading } = useLibraryItem(params.id);
-
-  if (isLoading) return <div className="mx-auto max-w-2xl p-6 h-64 shimmer rounded-2xl" />;
-
-  const record = data as LibraryItemResponse | undefined;
-  if (!record?.item) {
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-6">
-        <p className="text-st-muted">Item not found.</p>
-        <Link href="/library" className="mt-4 text-sm text-st-accent">← Back to Library</Link>
-      </div>
-    );
-  }
-
-  const { item, artifacts } = record;
-  const glossaryArtifact = artifacts.find((a) => a.kind === 'glossary');
-
-  return (
-    <div className="mx-auto max-w-2xl px-4 py-6 animate-st-block-in pb-24">
-      <Link href="/library" className="text-sm text-st-accent">← Library</Link>
-      <p className="mt-4 text-[10px] font-semibold tracking-wide text-st-faint">{item.kind.replace(/_/g, ' ').toUpperCase()}</p>
-      <h1 className="font-display text-2xl font-semibold text-st-ink">{item.title}</h1>
-      {item.aiRead && <p className="mt-1 text-xs text-st-amber">Read by Petros ✦</p>}
-
-      <LibraryActionsRail itemId={item.id} />
-
-      {artifacts.length > 0 && (
-        <section className="mt-8">
-          <h2 className="text-[10px] font-semibold tracking-wide text-st-faint">
-            ALREADY MADE FROM THIS · {artifacts.length}
-          </h2>
-          <div className="mt-3 space-y-2">
-            {artifacts.map((a) => (
-              <Card key={a.id}>
-                <p className="text-xs font-medium text-st-violet">✦ {a.kind.replace(/_/g, ' ')}</p>
-                <p className="font-medium text-st-ink">
-                  {a.kind === 'concept_map' ? (
-                    <Link href={`/library/maps/${a.id}`} className="hover:text-st-accent">
-                      {a.title}
-                    </Link>
-                  ) : (
-                    a.title
-                  )}
-                </p>
-                <p className="mt-1 text-xs text-st-muted">Made from: {a.fromLabel.replace(/^From:\s*/i, '')}</p>
-              </Card>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {glossaryArtifact && <GlossaryArtifactView artifactId={glossaryArtifact.id} />}
-    </div>
-  );
-}
+'use client';
+import { useRouter } from 'next/navigation';
+import { useDeleteLibraryItem, useLibraryItem, useRetryIngest } from '@/lib/hooks';
+import { AlreadyMade } from '@/components/library/AlreadyMade';
+import { DocViewer } from '@/components/library/DocViewer';
+import { IngestionCard } from '@/components/library/IngestionCard';
+import { LibraryActionsRail } from '@/components/library/library-actions-rail';
+import { EmptyState } from '@/components/ui/empty-state';
+import { PillButton } from '@/components/ui/pill-button';
+import { useToast } from '@/components/ui/toast';
+import { Eyebrow, PageHeader } from '@/components/ui/primitives';
+import { ingestStatusLine } from '@/lib/library-ingest';
+import Link from 'next/link';
+
+export default function LibraryItemPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
+  const { data, isLoading, isError } = useLibraryItem(params.id);
+  const retry = useRetryIngest(params.id);
+  const remove = useDeleteLibraryItem();
+  const { say } = useToast();
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-6">
+        <div className="h-48 shimmer rounded-[15px]" />
+      </div>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-6">
+        <EmptyState
+          eyebrow="NOT FOUND"
+          title="This source isn’t here"
+          action={
+            <Link href="/library" className="text-sm font-semibold text-st-accent">
+              Back to library
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
+
+  const { item, pages, artifacts } = data;
+  const ready = item.status === 'ready';
+  const ingestLine = ingestStatusLine(item).line;
+
+  return (
+    <div className="mx-auto max-w-5xl px-4 py-6 pb-24 animate-st-block-in">
+      <PageHeader
+        backHref="/library"
+        eyebrow={<Eyebrow>{item.kind.replace(/_/g, ' ').toUpperCase()}</Eyebrow>}
+        title={item.title}
+        subtitle={
+          item.aiRead
+            ? `Read by Petros ✦ · ${item.pageCount ?? (pages.some((p) => p.text) ? pages.length : '…')} pages`
+            : item.pageCount
+              ? `${item.pageCount} pages`
+              : item.status === 'queued' || item.status === 'reading'
+                ? ingestLine
+                : pages.some((p) => p.text)
+                  ? `${pages.length} pages`
+                  : undefined
+        }
+        right={
+          <PillButton
+            type="button"
+            variant="ghost"
+            disabled={remove.isPending}
+            onClick={() => {
+              if (!window.confirm(`Delete “${item.title}”? This can’t be undone.`)) return;
+              remove.mutate(item.id, {
+                onSuccess: () => router.push('/library'),
+                onError: (e) => say((e as Error).message ?? 'Could not delete'),
+              });
+            }}
+          >
+            Delete
+          </PillButton>
+        }
+      />
+
+      {(item.status === 'queued' || item.status === 'reading') && (
+        <div className="mt-4">
+          <IngestionCard
+            title={item.title}
+            status={item.status}
+            pagesDone={item.pagesDone}
+            pageCount={item.pageCount}
+            updatedAt={item.updatedAt}
+            itemId={item.id}
+            onRetry={() => retry.mutate()}
+          />
+        </div>
+      )}
+
+      {item.status === 'error' && (
+        <div className="mt-4">
+          <IngestionCard
+            title={item.title}
+            status="error"
+            error={item.errorMessage}
+            itemId={item.id}
+            onRetry={() => retry.mutate()}
+          />
+        </div>
+      )}
+
+      {item.status === 'needs_ocr_confirm' && (
+        <div className="mt-4">
+          <IngestionCard
+            title={item.title}
+            status="needs_ocr_confirm"
+            confirmHref={`/library/${item.id}/confirm`}
+            itemId={item.id}
+          />
+        </div>
+      )}
+
+      <div className="mt-6 grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+        <DocViewer pages={pages} kind={item.kind} pageCount={item.pageCount} />
+        <div className="space-y-6">
+          <LibraryActionsRail itemId={item.id} ready={ready} />
+          <div>
+            <h2 className="text-[10px] font-semibold tracking-wide text-st-faint">
+              ALREADY MADE FROM THIS
+            </h2>
+            <div className="mt-3">
+              <AlreadyMade artifacts={artifacts} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

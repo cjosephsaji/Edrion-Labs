@@ -30,8 +30,8 @@ export function LibraryUploadButton({
         onChange={(e) => {
           const files = Array.from(e.target.files ?? []);
           if (files.length > 0) {
-            void upload.mutateAsync(files).then((item) => {
-              if (item?.id) router.push(`/library/${item.id}`);
+            void upload.mutateAsync(files).then((result) => {
+              if (result?.item?.id) router.push(`/library/${result.item.id}`);
             });
           }
           e.target.value = '';

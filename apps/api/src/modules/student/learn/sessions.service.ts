@@ -20,6 +20,7 @@ import { BlockGeneratorService } from '../learn-ai/block-generator.service';
 import { EvaluatorService } from '../learn-ai/evaluator.service';
 import { PlannerService } from '../learn-ai/planner.service';
 import { getPedagogyDirectives, resolveLearnerStage, type DomainArchetype } from '../learn-ai/pedagogy-matrix';
+import { LibraryService } from '../library/library.service';
 import { LearnRepository } from './learn.repository';
 
 const SPINE_LABELS: Record<SpineStep, string> = {
@@ -80,6 +81,7 @@ export class SessionsService {
     private readonly planner: PlannerService,
     private readonly blocks: BlockGeneratorService,
     private readonly evaluator: EvaluatorService,
+    private readonly library: LibraryService,
     @Inject(LEARNING_EVENTS_WRITER) private readonly ledger: LearningEventsWriter,
   ) {}
 
@@ -463,6 +465,9 @@ export class SessionsService {
         evidence,
       },
     });
+
+    // Auto-deposit Library artifacts from session evidence (best-effort).
+    void this.library.depositFromSession(principal, sessionId).catch(() => undefined);
 
     return { ...((await this.toDto(sessionId, principal)) as object), evidence };
   }

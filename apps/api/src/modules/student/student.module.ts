@@ -38,8 +38,10 @@ import { NotesService } from './learn/notes.service';
 import { HistoryController } from './learn/history.controller';
 import { HistoryService } from './learn/history.service';
 import { LibraryController } from './library/library.controller';
+import { LibraryStreamController } from './library/library-stream.controller';
 import { LibraryRepository } from './library/library.repository';
 import { LibraryService } from './library/library.service';
+import { LibraryIngestWorker } from './library/library-ingest.worker';
 import { LabVisualController } from './lab-visual/lab-visual.controller';
 import { LabVisualService } from './lab-visual/lab-visual.service';
 import { LabMockController } from './lab-mock/lab-mock.controller';
@@ -87,6 +89,7 @@ import { SurfaceGateService } from './surfaces/surface-gate.service';
     NotesController,
     HistoryController,
     LibraryController,
+    LibraryStreamController,
     LabVisualController,
     LabMockController,
     LabDebateController,
@@ -123,6 +126,7 @@ import { SurfaceGateService } from './surfaces/surface-gate.service';
     HistoryService,
     LibraryRepository,
     LibraryService,
+    LibraryIngestWorker,
     LabVisualService,
     LabMockService,
     LabDebateService,

@@ -118,7 +118,16 @@ export class StudentClient {
   }
 
   fileUrl(id: string): string {
-    return `${this.baseUrl}/v1/student/storage/${id}/download`;
+    return `${this.baseUrl}/v1/student/files/${id}`;
+  }
+
+  /** Fetch file bytes with auth headers (pdf.js must not fetch cross-origin itself). */
+  async fetchBytes(id: string): Promise<ArrayBuffer> {
+    const headers = new Headers();
+    if (this.devStudentUser) headers.set('x-student-email', this.devStudentUser);
+    const res = await fetch(this.fileUrl(id), { credentials: 'include', headers });
+    if (!res.ok) throw new StudentClientError(res.status, 'FILE_FETCH_FAILED', res.statusText);
+    return res.arrayBuffer();
   }
 
   /**

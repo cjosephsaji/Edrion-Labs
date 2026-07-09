@@ -428,6 +428,20 @@
       "when": 1782902300000,
       "tag": "0059_debate_achievements",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1782902400000,
+      "tag": "0060_library_ingestion",
+      "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1782902500000,
+      "tag": "0061_library_ingest_runs",
+      "breakpoints": true
     }
   ]
 }

@@ -1,95 +1,122 @@
 'use client';
-import Link from 'next/link';
-import { useLibrary } from '@/lib/hooks';
-import { FreshnessChip } from '@/components/learn/FreshnessChip';
-import { LibraryUploadButton } from '@/components/library/library-upload-button';
-import { Card } from '@/components/ui/card';
+import { useState } from 'react';
+import { useDeleteLibraryItem, useLibrary } from '@/lib/hooks';
+import { usePersona } from '@/lib/persona';
+import { ArtifactCard, SourceCard } from '@/components/library/SourceCard';
+import { CollectionsRow } from '@/components/library/CollectionsRow';
+import { RecentlyAdded } from '@/components/library/RecentlyAdded';
+import { SearchBar } from '@/components/library/SearchBar';
+import { UploadFlow } from '@/components/library/UploadFlow';
 import { EmptyState } from '@/components/ui/empty-state';
+import { useToast } from '@/components/ui/toast';
 import { Eyebrow, PageHeader } from '@/components/ui/primitives';
 
+function leadLine(persona: string | undefined) {
+  if (persona === 'independent') {
+    return 'Your private study space — nothing is shared with anyone.';
+  }
+  if (persona === 'college') {
+    return 'Upload notes, save materials, and let Petros help you learn from them.';
+  }
+  return 'Upload notes, save materials, and let Petros help you learn from them.';
+}
+
 export default function LibraryPage() {
-  const { data, isLoading } = useLibrary();
+  const [q, setQ] = useState('');
+  const { data, isLoading, isError } = useLibrary(q);
+  const { me } = usePersona();
+  const remove = useDeleteLibraryItem();
+  const { say } = useToast();
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
       <PageHeader
         eyebrow={<Eyebrow>LIBRARY</Eyebrow>}
         title="Your knowledge space"
-        subtitle="Upload notes, save materials, and let Petros help you learn from them."
-        right={<LibraryUploadButton className="shrink-0 gap-1.5" />}
+        subtitle={leadLine(me?.persona)}
+        right={<UploadFlow />}
       />
+
+      <SearchBar value={q} onChange={setQ} />
 
       {isLoading ? (
         <div className="mt-8 h-40 shimmer rounded-[15px]" />
-      ) : !data?.uploads.length && !data?.generated.length ? (
+      ) : isError ? (
+        <EmptyState
+          className="mt-8"
+          eyebrow="SOMETHING WENT WRONG"
+          title="Couldn’t load your library"
+          description="Check your connection and try again."
+        />
+      ) : !data?.uploads.length && !data?.generated.length && !q ? (
         <EmptyState
           className="mt-8"
           eyebrow="START HERE"
           title="Your library starts with your first upload"
           description="Take a photo of notes or upload a PDF — Petros will read it."
-          action={<LibraryUploadButton label="Upload notes" capture />}
+          action={<UploadFlow />}
         />
       ) : (
         <div className="mt-8 space-y-8">
-          {data.collections.length > 0 && (
-            <section>
-              <h2 className="text-[10px] font-semibold tracking-wide text-st-faint">COLLECTIONS</h2>
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {data.collections.map((c) => (
-                  <Card key={c.id} className="text-sm">
-                    <span
-                      className="inline-block h-2 w-2 rounded-full"
-                      style={{ background: c.color ?? 'var(--st-accent)' }}
-                    />
-                    <p className="mt-2 font-medium text-st-ink">{c.name}</p>
-                    <p className="text-xs text-st-muted">{c.count} items</p>
-                  </Card>
-                ))}
-              </div>
-            </section>
-          )}
+          {!q && <CollectionsRow collections={data?.collections ?? []} />}
+          {!q && <RecentlyAdded items={data?.recentAdded ?? []} />}
 
-          {data.uploads.length > 0 && (
+          {(data?.uploads.length ?? 0) > 0 && (
             <section>
               <h2 className="text-[10px] font-semibold tracking-wide text-st-faint">MY UPLOADS</h2>
               <div className="mt-3 space-y-2">
-                {data.uploads.map((item) => (
-                  <Link key={item.id} href={`/library/${item.id}`}>
-                    <Card className="transition hover:border-st-accent/40">
-                      <div className="flex items-center justify-between gap-2">
-                        <div>
-                          <p className="font-semibold text-st-ink">{item.title}</p>
-                          <p className="text-xs text-st-muted">
-                            {item.kind.replace('upload_', '').toUpperCase()} · {item.meta}
-                            {item.aiRead && ' · read by Petros ✦'}
-                          </p>
-                        </div>
-                      </div>
-                    </Card>
-                  </Link>
+                {data!.uploads.map((item) => (
+                  <SourceCard
+                    key={item.id}
+                    id={item.id}
+                    title={item.title}
+                    status={item.status}
+                    pagesDone={item.pagesDone}
+                    pageCount={item.pageCount}
+                    updatedAt={item.updatedAt}
+                    meta={`${item.kind.replace('upload_', '').toUpperCase()}${item.meta ? ` · ${item.meta}` : ''}${
+                      item.aiRead ? ' · read by Petros ✦' : ''
+                    }`}
+                    deleting={remove.isPending && remove.variables === item.id}
+                    onDelete={() => {
+                      if (!window.confirm(`Delete “${item.title}”? This can’t be undone.`)) return;
+                      remove.mutate(item.id, {
+                        onError: (e) => say((e as Error).message ?? 'Could not delete'),
+                      });
+                    }}
+                  />
                 ))}
               </div>
             </section>
           )}
 
-          {data.generated.length > 0 && (
+          {(data?.generated.length ?? 0) > 0 && (
             <section>
-              <h2 className="text-[10px] font-semibold tracking-wide text-st-faint">GENERATED FOR ME ✦</h2>
+              <h2 className="text-[10px] font-semibold tracking-wide text-st-faint">
+                GENERATED FOR ME ✦
+              </h2>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                {data.generated.map((g) => (
-                  <Card key={g.id}>
-                    <p className="text-[10px] font-semibold text-st-amber">✦ {g.kind}</p>
-                    <p className="mt-1 font-medium text-st-ink">{g.title}</p>
-                    <p className="text-xs text-st-muted">{g.fromLabel}</p>
-                    {g.freshness && (
-                      <div className="mt-2">
-                        <FreshnessChip freshness={g.freshness} />
-                      </div>
-                    )}
-                  </Card>
+                {data!.generated.map((g) => (
+                  <ArtifactCard
+                    key={`${g.kind}-${g.id}`}
+                    id={g.id}
+                    kind={g.kind}
+                    title={g.title}
+                    fromLabel={g.fromLabel}
+                    freshness={g.freshness}
+                    meta={g.meta}
+                  />
                 ))}
               </div>
             </section>
+          )}
+
+          {q && !data?.uploads.length && !data?.generated.length && (
+            <EmptyState
+              eyebrow="NO MATCHES"
+              title={`Nothing matched “${q}”`}
+              description="Try another word from a title or source."
+            />
           )}
         </div>
       )}

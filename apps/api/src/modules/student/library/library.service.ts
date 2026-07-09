@@ -18,16 +18,17 @@ import {
   patchCollectionSchema,
   patchDeckSchema,
   patchFlashcardSchema,
+  patchItemPageTextSchema,
   patchKnowledgeItemPagesSchema,
   quizAttemptSchema,
   quizContentSchema,
+  quizItemSchema,
   summaryContentSchema,
+  summarySectionSchema,
   type CreateKnowledgeItemInput,
 } from '@edrion/schemas';
 import {
   FLASHCARD_AGAIN_DELAY_MINUTES,
-  FLASHCARD_INTERVAL_MULTIPLIER,
-  FLASHCARD_MIN_INTERVAL_DAYS,
   FRESHNESS_FRESH_DAYS,
 } from '@edrion/shared-types';
 import { LEARNING_EVENTS_WRITER, LEARN_AI_PROVIDER } from '../../../common/tokens';
@@ -45,6 +46,8 @@ const PDF_MIMES = new Set(['application/pdf']);
 const DOC_MIMES = new Set(['application/vnd.openxmlformats-officedocument.wordprocessingml.document']);
 const IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']);
 
+type Emit = (event: Record<string, unknown>) => void;
+
 @Injectable()
 export class LibraryService {
   constructor(
@@ -61,24 +64,57 @@ export class LibraryService {
   async getOverview(principal: StudentPrincipal, q?: string) {
     if (q?.trim()) {
       const hits = await this.repo.search(principal, q.trim());
+      const deckIds = hits.decks.map((d) => d.id);
+      const [dueMap, countMap, earliestMap] = await Promise.all([
+        this.repo.dueCountsForDecks(deckIds),
+        this.repo.cardCountsForDecks(deckIds),
+        this.repo.earliestDueForDecks(deckIds),
+      ]);
+      const collectionCounts = await Promise.all(
+        hits.collections.map(async (c) => ({
+          id: c.id,
+          name: c.name,
+          color: c.color,
+          count: await this.repo.countItemsInCollection(c.id),
+        })),
+      );
       return {
-        collections: [],
+        collections: collectionCounts,
         uploads: hits.items.map((i) => ({
           id: i.id,
           kind: i.kind,
           title: i.title,
-          meta: '',
-          aiRead: false,
-          createdAt: new Date().toISOString(),
+          meta: i.pageCount ? `${i.pageCount} pages` : '',
+          aiRead: i.aiRead,
+          status: i.status,
+          pagesDone: i.pagesDone,
+          pageCount: i.pageCount,
+          createdAt: i.createdAt.toISOString(),
+          updatedAt: i.updatedAt.toISOString(),
         })),
-        generated: hits.artifacts.map((a) => ({
-          id: a.id,
-          kind: a.kind as 'summary',
-          title: a.title,
-          fromLabel: '',
-          createdAt: new Date().toISOString(),
-        })),
-        recentAdded: [],
+        generated: [
+          ...hits.artifacts.map((a) => ({
+            id: a.id,
+            kind: a.kind as 'summary' | 'quiz' | 'topic_pack' | 'visual' | 'concept_map' | 'glossary',
+            title: a.title,
+            fromLabel: a.fromLabel,
+            freshness: this.artifactFreshness(a.createdAt, a.lastInteractedAt),
+            meta: a.kind,
+            createdAt: a.createdAt.toISOString(),
+            itemId: a.itemId,
+          })),
+          ...hits.decks.map((d) => ({
+            id: d.id,
+            kind: 'deck' as const,
+            title: d.title,
+            fromLabel: d.fromLabel,
+            freshness: this.deckFreshnessFromMaps(d.id, dueMap, earliestMap),
+            meta: `${countMap.get(d.id) ?? 0} cards`,
+            createdAt: d.createdAt.toISOString(),
+            itemId: d.itemId,
+          })),
+        ],
+        recentAdded: hits.items.slice(0, 8).map((u) => ({ id: u.id, title: u.title, kind: u.kind })),
       };
     }
 
@@ -98,27 +134,34 @@ export class LibraryService {
       })),
     );
 
+    const deckIds = decks.map((d) => d.id);
+    const [dueMap, countMap, earliestMap] = await Promise.all([
+      this.repo.dueCountsForDecks(deckIds),
+      this.repo.cardCountsForDecks(deckIds),
+      this.repo.earliestDueForDecks(deckIds),
+    ]);
+
     const generated = [
       ...artifacts.map((a) => ({
         id: a.id,
         kind: a.kind as 'summary' | 'quiz' | 'topic_pack' | 'visual' | 'concept_map' | 'glossary',
         title: a.title,
         fromLabel: a.fromLabel,
-        freshness: undefined as 'fresh' | 'fading' | 'due' | undefined,
+        freshness: this.artifactFreshness(a.createdAt, a.lastInteractedAt),
         meta: a.kind,
         createdAt: a.createdAt.toISOString(),
+        itemId: a.itemId,
       })),
-      ...(await Promise.all(
-        decks.map(async (d) => ({
-          id: d.id,
-          kind: 'deck' as const,
-          title: d.title,
-          fromLabel: d.fromLabel,
-          freshness: await this.deckFreshness(d.id),
-          meta: `${await this.repo.listCards(d.id).then((c) => c.length)} cards`,
-          createdAt: d.createdAt.toISOString(),
-        })),
-      )),
+      ...decks.map((d) => ({
+        id: d.id,
+        kind: 'deck' as const,
+        title: d.title,
+        fromLabel: d.fromLabel,
+        freshness: this.deckFreshnessFromMaps(d.id, dueMap, earliestMap),
+        meta: `${countMap.get(d.id) ?? 0} cards`,
+        createdAt: d.createdAt.toISOString(),
+        itemId: d.itemId,
+      })),
     ];
 
     return {
@@ -127,12 +170,65 @@ export class LibraryService {
         id: u.id,
         kind: u.kind,
         title: u.title,
-        meta: u.pageCount ? `${u.pageCount} pages` : '',
+        meta: u.pageCount
+          ? `${u.pageCount} page${u.pageCount === 1 ? '' : 's'}`
+          : u.status === 'reading' || u.status === 'queued'
+            ? 'Reading…'
+            : '',
         aiRead: u.aiRead,
+        status: u.status,
+        pagesDone: u.pagesDone,
+        pageCount: u.pageCount,
         createdAt: u.createdAt.toISOString(),
+        updatedAt: u.updatedAt.toISOString(),
       })),
       generated,
       recentAdded: uploads.slice(0, 8).map((u) => ({ id: u.id, title: u.title, kind: u.kind })),
+    };
+  }
+
+  async getCollection(principal: StudentPrincipal, id: string) {
+    const collection = await this.requireCollection(principal, id);
+    const items = await this.repo.listItemsInCollection(principal, id);
+    const derived = await Promise.all(
+      items.map(async (item) => {
+        const [artifacts, decks] = await Promise.all([
+          this.repo.artifactsForItem(item.id),
+          this.repo.decksForItem(item.id),
+        ]);
+        return {
+          item: {
+            id: item.id,
+            kind: item.kind,
+            title: item.title,
+            status: item.status,
+            pageCount: item.pageCount,
+            aiRead: item.aiRead,
+            createdAt: item.createdAt.toISOString(),
+          },
+          artifacts: artifacts.map((a) => ({
+            id: a.id,
+            kind: a.kind,
+            title: a.title,
+            fromLabel: a.fromLabel,
+            freshness: this.artifactFreshness(a.createdAt, a.lastInteractedAt),
+            createdAt: a.createdAt.toISOString(),
+          })),
+          decks: decks.map((d) => ({
+            id: d.id,
+            title: d.title,
+            fromLabel: d.fromLabel,
+            createdAt: d.createdAt.toISOString(),
+          })),
+        };
+      }),
+    );
+    return {
+      id: collection.id,
+      name: collection.name,
+      color: collection.color,
+      count: items.length,
+      items: derived,
     };
   }
 
@@ -152,6 +248,8 @@ export class LibraryService {
 
     const kind = this.inferKind(objects);
     const title = parsed.title ?? objects[0]?.filename ?? 'Untitled upload';
+    // pageCount stays null until ingestion opens the PDF and learns numPages.
+    // Never use objectIds.length — one PDF file is N pages, not 1.
     const item = await this.repo.insertItem({
       ...owner,
       collectionId: parsed.collectionId ?? null,
@@ -159,19 +257,41 @@ export class LibraryService {
       title,
       objectIds: parsed.objectIds,
       origin: { source: 'upload' },
-      pageCount: objects.length,
+      pageCount: null,
+      pagesDone: 0,
+      status: 'queued',
       extractedTextReady: false,
       aiRead: false,
+      ingestAttempts: 0,
+      ingestStage: null,
+      ingestErrorDetail: null,
     });
 
     await this.ledger.log({
       eventType: 'library.item_uploaded',
-      payload: { itemId: item.id },
+      payload: {
+        itemId: item.id,
+        mime: objects[0]?.mimeType ?? 'unknown',
+        pages: undefined,
+      },
       principal,
     });
 
-    void this.processItemText(principal, item.id);
     return this.getItem(principal, item.id);
+  }
+
+  private async queueIngest(itemId: string) {
+    await this.repo.updateItem(itemId, {
+      status: 'queued',
+      pagesDone: 0,
+      pageCount: null,
+      errorMessage: null,
+      extractedTextReady: false,
+      aiRead: false,
+      ingestAttempts: 0,
+      ingestStage: null,
+      ingestErrorDetail: null,
+    });
   }
 
   async patchItemPages(principal: StudentPrincipal, id: string, objectIds: string[]) {
@@ -179,17 +299,68 @@ export class LibraryService {
     const item = await this.requireItem(principal, id);
     const objects = await this.repo.getStorageObjects(objectIds);
     for (const obj of objects) await this.storage.getOwned(principal, obj.id);
-    await this.repo.updateItem(item.id, { objectIds, pageCount: objectIds.length, extractedTextReady: false, aiRead: false });
-    void this.processItemText(principal, item.id);
+    await this.repo.updateItem(item.id, { objectIds });
+    await this.queueIngest(item.id);
     return this.getItem(principal, id);
+  }
+
+  async patchPageText(principal: StudentPrincipal, id: string, pageIndex: number, body: unknown) {
+    const { text } = patchItemPageTextSchema.parse(body);
+    await this.requireItem(principal, id);
+    const updated = await this.repo.updatePageText(id, pageIndex, text);
+    if (!updated) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Page not found' });
+    return {
+      pageIndex: updated.pageIndex,
+      text: updated.text,
+      needsConfirm: updated.needsConfirm,
+      ocrConfidence: updated.ocrConfidence === null ? null : Number(updated.ocrConfidence),
+    };
+  }
+
+  async confirmOcr(principal: StudentPrincipal, id: string) {
+    const item = await this.requireItem(principal, id);
+    if (item.status !== 'needs_ocr_confirm' && item.status !== 'ready') {
+      throw new BadRequestException({
+        code: 'NOT_READY',
+        message: 'This document is still being read.',
+      });
+    }
+    await this.repo.confirmAllPages(item.id);
+    await this.repo.updateItem(item.id, {
+      status: 'ready',
+      extractedTextReady: true,
+      aiRead: true,
+      errorMessage: null,
+    });
+    return this.getItem(principal, id);
+  }
+
+  async retryIngest(principal: StudentPrincipal, id: string) {
+    await this.requireItem(principal, id);
+    await this.queueIngest(id);
+    return this.getItem(principal, id);
+  }
+
+  async deleteItem(principal: StudentPrincipal, id: string) {
+    const item = await this.requireItem(principal, id);
+    const objects = await this.repo.getStorageObjects(item.objectIds);
+    await this.repo.deleteItem(item.id);
+    for (const obj of objects) {
+      await this.storage.removeFile(obj.storageKey);
+    }
+    await this.repo.deleteStorageObjects(objects.map((o) => o.id));
+    return { ok: true as const };
   }
 
   async getItem(principal: StudentPrincipal, id: string) {
     const item = await this.requireItem(principal, id);
-    const [artifacts, objects] = await Promise.all([
+    const [artifacts, decks, pages, objects] = await Promise.all([
       this.repo.artifactsForItem(item.id),
-      this.repo.getStorageObjects(item.objectIds),
+      this.repo.decksForItem(item.id),
+      this.repo.listPages(item.id),
+      this.repo.getStorageObjects(item.objectIds ?? []),
     ]);
+    const objById = new Map(objects.map((o) => [o.id, o]));
     return {
       item: {
         id: item.id,
@@ -197,23 +368,54 @@ export class LibraryService {
         title: item.title,
         collectionId: item.collectionId,
         pageCount: item.pageCount,
+        pagesDone: item.pagesDone,
+        status: item.status,
+        ingestStage: item.ingestStage,
+        errorMessage: item.errorMessage,
         extractedTextReady: item.extractedTextReady,
         aiRead: item.aiRead,
         origin: item.origin,
         createdAt: item.createdAt.toISOString(),
+        updatedAt: item.updatedAt.toISOString(),
       },
-      pages: objects.map((o) => ({
-        id: o.id,
-        mimeType: o.mimeType,
-        filename: o.filename,
-      })),
-      artifacts: artifacts.map((a) => ({
-        id: a.id,
-        kind: a.kind,
-        title: a.title,
-        fromLabel: a.fromLabel,
-        createdAt: a.createdAt.toISOString(),
-      })),
+      pages: pages.length
+        ? pages.map((p) => {
+            const obj = objById.get(p.objectId);
+            return {
+              pageIndex: p.pageIndex,
+              objectId: p.objectId,
+              text: p.text,
+              ocrConfidence: p.ocrConfidence === null ? null : Number(p.ocrConfidence),
+              needsConfirm: p.needsConfirm,
+              mimeType: obj?.mimeType,
+              filename: obj?.filename ?? undefined,
+            };
+          })
+        : objects.map((o, i) => ({
+            pageIndex: i,
+            objectId: o.id,
+            text: '',
+            ocrConfidence: null,
+            needsConfirm: false,
+            mimeType: o.mimeType,
+            filename: o.filename ?? undefined,
+          })),
+      artifacts: [
+        ...artifacts.map((a) => ({
+          id: a.id,
+          kind: a.kind,
+          title: a.title,
+          fromLabel: a.fromLabel,
+          createdAt: a.createdAt.toISOString(),
+        })),
+        ...decks.map((d) => ({
+          id: d.id,
+          kind: 'deck' as const,
+          title: d.title,
+          fromLabel: d.fromLabel,
+          createdAt: d.createdAt.toISOString(),
+        })),
+      ],
     };
   }
 
@@ -235,10 +437,10 @@ export class LibraryService {
   }
 
   async summarize(principal: StudentPrincipal, itemId: string) {
-    const item = await this.requireItem(principal, itemId);
+    const item = await this.requireReadyItem(principal, itemId);
     const text = await this.extractedText(item);
     const content = await this.generateSummary(principal, text, item.title);
-    return this.repo.insertArtifact({
+    const artifact = await this.repo.insertArtifact({
       ...this.repo.owner(principal),
       itemId: item.id,
       kind: 'summary',
@@ -246,10 +448,12 @@ export class LibraryService {
       content,
       fromLabel: `From: ${item.title}`,
     });
+    await this.logArtifact(principal, item.id, artifact.id, 'summary');
+    return artifact;
   }
 
   async flashcards(principal: StudentPrincipal, itemId: string) {
-    const item = await this.requireItem(principal, itemId);
+    const item = await this.requireReadyItem(principal, itemId);
     const text = await this.extractedText(item);
     const deck = await this.generateDeck(principal, text, item.title);
     const row = await this.repo.insertDeck({
@@ -264,18 +468,23 @@ export class LibraryService {
         sequence: i + 1,
         prompt: c.prompt,
         answer: c.answer,
+        sourcePage: c.sourcePage ?? null,
         nextDueAt: new Date(),
         intervalDays: '0',
+        ease: '2.50',
+        reps: 0,
+        lapses: 0,
       })),
     );
+    await this.logArtifact(principal, item.id, row.id, 'deck');
     return { deckId: row.id, title: row.title };
   }
 
   async quiz(principal: StudentPrincipal, itemId: string) {
-    const item = await this.requireItem(principal, itemId);
+    const item = await this.requireReadyItem(principal, itemId);
     const text = await this.extractedText(item);
     const content = await this.generateQuiz(principal, text);
-    return this.repo.insertArtifact({
+    const artifact = await this.repo.insertArtifact({
       ...this.repo.owner(principal),
       itemId: item.id,
       kind: 'quiz',
@@ -283,13 +492,15 @@ export class LibraryService {
       content,
       fromLabel: `From: ${item.title}`,
     });
+    await this.logArtifact(principal, item.id, artifact.id, 'quiz');
+    return artifact;
   }
 
   async conceptMap(principal: StudentPrincipal, itemId: string) {
-    const item = await this.requireItem(principal, itemId);
+    const item = await this.requireReadyItem(principal, itemId);
     const text = await this.extractedText(item);
     const content = await this.generateConceptMap(principal, text, item.title);
-    return this.repo.insertArtifact({
+    const artifact = await this.repo.insertArtifact({
       ...this.repo.owner(principal),
       itemId: item.id,
       kind: 'concept_map',
@@ -297,13 +508,15 @@ export class LibraryService {
       content,
       fromLabel: `From: ${item.title}`,
     });
+    await this.logArtifact(principal, item.id, artifact.id, 'concept_map');
+    return artifact;
   }
 
   async glossary(principal: StudentPrincipal, itemId: string) {
-    const item = await this.requireItem(principal, itemId);
+    const item = await this.requireReadyItem(principal, itemId);
     const text = await this.extractedText(item);
     const content = await this.generateGlossary(principal, text, item.title);
-    return this.repo.insertArtifact({
+    const artifact = await this.repo.insertArtifact({
       ...this.repo.owner(principal),
       itemId: item.id,
       kind: 'glossary',
@@ -311,6 +524,158 @@ export class LibraryService {
       content,
       fromLabel: `From: ${item.title}`,
     });
+    await this.logArtifact(principal, item.id, artifact.id, 'glossary');
+    return artifact;
+  }
+
+  async streamSummarize(principal: StudentPrincipal, itemId: string, emit: Emit) {
+    const item = await this.requireReadyItem(principal, itemId);
+    const text = await this.extractedText(item);
+    const fromLabel = `From: ${item.title}`;
+    emit({ type: 'start', title: item.title, fromLabel, kind: 'summary' });
+
+    const sections: z.infer<typeof summarySectionSchema>[] = [];
+    if (!this.ai.available) {
+      const stub = { heading: 'Summary', body: text.slice(0, 1200), sourcePage: 1 };
+      sections.push(stub);
+      emit({ type: 'section', section: stub, index: 0 });
+    } else {
+      await this.budgets.spend(principal, 'library_gen', 1200);
+      let index = 0;
+      for await (const section of this.ai.streamJsonArray({
+        purpose: 'library_gen',
+        tier: 'small',
+        system: GROUNDING_SYSTEM + ' Summarize into sections. Cite sourcePage from [p.N] markers. Preserve student wording. Never invent beyond the source.',
+        user: text.slice(0, 14_000),
+        schema: summarySectionSchema,
+        schemaName: 'summary_stream',
+        arrayKey: 'sections',
+        maxOutputTokens: 3000,
+      })) {
+        sections.push(section);
+        emit({ type: 'section', section, index });
+        index += 1;
+      }
+    }
+
+    const content = { title: item.title, sections };
+    const artifact = await this.repo.insertArtifact({
+      ...this.repo.owner(principal),
+      itemId: item.id,
+      kind: 'summary',
+      title: content.title,
+      content,
+      fromLabel,
+    });
+    await this.logArtifact(principal, item.id, artifact.id, 'summary');
+    emit({ type: 'saved', artifactId: artifact.id, kind: 'summary' });
+  }
+
+  async streamFlashcards(principal: StudentPrincipal, itemId: string, emit: Emit) {
+    const item = await this.requireReadyItem(principal, itemId);
+    const text = await this.extractedText(item);
+    const fromLabel = `From: ${item.title}`;
+    emit({ type: 'start', title: `Flashcards — ${item.title}`, fromLabel, kind: 'flashcards' });
+
+    const cardSchema = z.object({
+      prompt: z.string(),
+      answer: z.string(),
+      sourcePage: z.number().int().positive().optional(),
+    });
+    const cards: z.infer<typeof cardSchema>[] = [];
+
+    if (!this.ai.available) {
+      const stub = { prompt: 'Key idea?', answer: text.slice(0, 200), sourcePage: 1 };
+      cards.push(stub);
+      emit({ type: 'card', card: stub, index: 0 });
+    } else {
+      await this.budgets.spend(principal, 'library_gen', 1500);
+      let index = 0;
+      for await (const card of this.ai.streamJsonArray({
+        purpose: 'library_gen',
+        tier: 'small',
+        system: GROUNDING_SYSTEM + ' Create 8–24 flashcards. Cite sourcePage from [p.N]. Preserve student wording.',
+        user: text.slice(0, 14_000),
+        schema: cardSchema,
+        schemaName: 'deck_stream',
+        arrayKey: 'cards',
+        maxOutputTokens: 4000,
+      })) {
+        cards.push(card);
+        emit({ type: 'card', card, index });
+        index += 1;
+      }
+    }
+
+    const row = await this.repo.insertDeck({
+      ...this.repo.owner(principal),
+      itemId: item.id,
+      title: `Flashcards — ${item.title}`,
+      fromLabel,
+    });
+    await this.repo.insertCards(
+      cards.map((c, i) => ({
+        deckId: row.id,
+        sequence: i + 1,
+        prompt: c.prompt,
+        answer: c.answer,
+        sourcePage: c.sourcePage ?? null,
+        nextDueAt: new Date(),
+        intervalDays: '0',
+        ease: '2.50',
+        reps: 0,
+        lapses: 0,
+      })),
+    );
+    await this.logArtifact(principal, item.id, row.id, 'deck');
+    emit({ type: 'saved', deckId: row.id, kind: 'flashcards' });
+  }
+
+  async streamQuiz(principal: StudentPrincipal, itemId: string, emit: Emit) {
+    const item = await this.requireReadyItem(principal, itemId);
+    const text = await this.extractedText(item);
+    const fromLabel = `From: ${item.title}`;
+    emit({ type: 'start', title: `Quiz — ${item.title}`, fromLabel, kind: 'quiz' });
+
+    const items: z.infer<typeof quizItemSchema>[] = [];
+    if (!this.ai.available) {
+      const stub = {
+        qtype: 'short' as const,
+        prompt: 'What is the main idea?',
+        markingNote: 'Any reasonable summary grounded in the source.',
+        sourcePage: 1,
+      };
+      items.push(stub);
+      emit({ type: 'item', item: stub, index: 0 });
+    } else {
+      await this.budgets.spend(principal, 'library_gen', 1500);
+      let index = 0;
+      for await (const quizItem of this.ai.streamJsonArray({
+        purpose: 'library_gen',
+        tier: 'small',
+        system: GROUNDING_SYSTEM + ' Create 10–15 quiz items (mcq+short). Cite sourcePage from [p.N]. Never invent beyond the source.',
+        user: text.slice(0, 14_000),
+        schema: quizItemSchema,
+        schemaName: 'quiz_stream',
+        arrayKey: 'items',
+        maxOutputTokens: 4000,
+      })) {
+        items.push(quizItem);
+        emit({ type: 'item', item: quizItem, index });
+        index += 1;
+      }
+    }
+
+    const artifact = await this.repo.insertArtifact({
+      ...this.repo.owner(principal),
+      itemId: item.id,
+      kind: 'quiz',
+      title: `Quiz — ${item.title}`,
+      content: { items },
+      fromLabel,
+    });
+    await this.logArtifact(principal, item.id, artifact.id, 'quiz');
+    emit({ type: 'saved', artifactId: artifact.id, kind: 'quiz' });
   }
 
   async getArtifact(principal: StudentPrincipal, artifactId: string) {
@@ -331,13 +696,7 @@ export class LibraryService {
 
   async tutor(principal: StudentPrincipal, itemId: string, body?: unknown) {
     const focus = libraryTutorInputSchema.parse(body ?? {});
-    const item = await this.requireItem(principal, itemId);
-    if (!item.extractedTextReady) {
-      throw new BadRequestException({
-        code: 'NOT_READY',
-        message: 'Petros is still reading this document — try again shortly.',
-      });
-    }
+    const item = await this.requireReadyItem(principal, itemId);
     const topic = await this.learn.upsertTopicByKey(
       `doc:${item.id.slice(0, 8)}`,
       item.title,
@@ -391,10 +750,16 @@ export class LibraryService {
         label,
       },
       pageCount: 1,
+      pagesDone: 1,
+      status: 'ready',
       extractedTextReady: true,
       aiRead: true,
     });
-    await this.ledger.log({ eventType: 'library.item_uploaded', payload: { itemId: item.id }, principal });
+    await this.ledger.log({
+      eventType: 'library.item_uploaded',
+      payload: { itemId: item.id, mime: 'class_material', pages: 1 },
+      principal,
+    });
     return { itemId: item.id };
   }
 
@@ -417,20 +782,81 @@ export class LibraryService {
         sequence: i + 1,
         prompt: c.prompt,
         answer: c.answer,
+        sourcePage: c.sourcePage ?? null,
         nextDueAt: new Date(),
         intervalDays: '0',
+        ease: '2.50',
+        reps: 0,
+        lapses: 0,
       })),
     );
     return { deckId: row.id };
   }
 
+  /** Deposit summary + deck + quiz from a completed Learn session (auto-artifacts). */
+  async depositFromSession(principal: StudentPrincipal, sessionId: string) {
+    const session = await this.learn.getSession(principal, sessionId);
+    if (!session) return null;
+    const evidence = (session.evidence as string[]) ?? [];
+    if (!evidence.length) return null;
+    const text = evidence.join('\n');
+    const fromLabel = 'From your Learn session';
+    const owner = this.repo.owner(principal);
+
+    const summary = await this.generateSummary(principal, text, 'Session summary');
+    const summaryArt = await this.repo.insertArtifact({
+      ...owner,
+      sourceSessionId: sessionId,
+      kind: 'summary',
+      title: summary.title,
+      content: summary,
+      fromLabel,
+    });
+
+    const deck = await this.generateDeck(principal, text, 'Session flashcards');
+    const deckRow = await this.repo.insertDeck({
+      ...owner,
+      sourceSessionId: sessionId,
+      title: deck.title,
+      fromLabel,
+    });
+    await this.repo.insertCards(
+      deck.cards.map((c, i) => ({
+        deckId: deckRow.id,
+        sequence: i + 1,
+        prompt: c.prompt,
+        answer: c.answer,
+        sourcePage: c.sourcePage ?? null,
+        nextDueAt: new Date(),
+        intervalDays: '0',
+        ease: '2.50',
+        reps: 0,
+        lapses: 0,
+      })),
+    );
+
+    const quiz = await this.generateQuiz(principal, text);
+    const quizArt = await this.repo.insertArtifact({
+      ...owner,
+      sourceSessionId: sessionId,
+      kind: 'quiz',
+      title: 'Session quiz',
+      content: quiz,
+      fromLabel,
+    });
+
+    return { summaryId: summaryArt.id, deckId: deckRow.id, quizId: quizArt.id };
+  }
+
   async getDeck(principal: StudentPrincipal, deckId: string) {
     const deck = await this.requireDeck(principal, deckId);
     const [cards, dueToday] = await Promise.all([this.repo.listCards(deck.id), this.repo.dueCount(deck.id)]);
+    const now = Date.now();
     return {
       id: deck.id,
       title: deck.title,
       fromLabel: deck.fromLabel,
+      itemId: deck.itemId,
       cardCount: cards.length,
       dueToday,
       freshness: await this.deckFreshness(deck.id),
@@ -439,7 +865,12 @@ export class LibraryService {
         sequence: c.sequence,
         prompt: c.prompt,
         answer: c.answer,
+        sourcePage: c.sourcePage,
         nextDueAt: c.nextDueAt.toISOString(),
+        dueNow: c.nextDueAt.getTime() <= now,
+        ease: Number(c.ease),
+        reps: c.reps,
+        lapses: c.lapses,
       })),
     };
   }
@@ -458,30 +889,62 @@ export class LibraryService {
       result: parsed.result,
     });
 
-    const interval = Number(card.intervalDays);
+    const q = parsed.result === 'got_it' ? 4 : 2;
+    const easePrev = Number(card.ease) || 2.5;
+    const intervalPrev = Number(card.intervalDays) || 0;
+    let reps = card.reps ?? 0;
+    let lapses = card.lapses ?? 0;
     let nextDue = new Date();
-    let nextInterval = interval;
-    if (parsed.result === 'again') {
-      nextDue = new Date(Date.now() + FLASHCARD_AGAIN_DELAY_MINUTES * 60_000);
-      nextInterval = 0;
-    } else {
-      nextInterval = Math.max(FLASHCARD_MIN_INTERVAL_DAYS, interval <= 0 ? 1 : interval * FLASHCARD_INTERVAL_MULTIPLIER);
-      nextDue = new Date(Date.now() + nextInterval * 86_400_000);
-    }
-    await this.repo.updateCard(card.id, { nextDueAt: nextDue, intervalDays: String(nextInterval) });
+    let nextInterval = intervalPrev;
+    let ease = easePrev;
 
+    if (parsed.result === 'again') {
+      reps = 0;
+      lapses += 1;
+      nextInterval = 0;
+      nextDue = new Date(Date.now() + FLASHCARD_AGAIN_DELAY_MINUTES * 60_000);
+      ease = Math.max(1.3, easePrev + 0.1 - (5 - q) * (0.08 + (5 - q) * 0.02));
+    } else {
+      reps += 1;
+      if (reps === 1) nextInterval = 1;
+      else if (reps === 2) nextInterval = 6;
+      else nextInterval = Math.max(1, Math.round(intervalPrev * easePrev));
+      nextDue = new Date(Date.now() + nextInterval * 86_400_000);
+      ease = Math.max(1.3, easePrev + 0.1 - (5 - q) * (0.08 + (5 - q) * 0.02));
+    }
+
+    await this.repo.updateCard(card.id, {
+      nextDueAt: nextDue,
+      intervalDays: String(nextInterval),
+      ease: ease.toFixed(2),
+      reps,
+      lapses,
+    });
+
+    const dueToday = await this.repo.dueCount(deck.id);
     await this.ledger.log({
       eventType: 'flashcards.reviewed',
-      payload: { deckId: deck.id, cardId: card.id },
+      payload: {
+        deckId: deck.id,
+        cards: 1,
+        gotIt: parsed.result === 'got_it' ? 1 : 0,
+        again: parsed.result === 'again' ? 1 : 0,
+      },
       principal,
     });
-    return { ok: true, nextDueAt: nextDue.toISOString() };
+    return { ok: true, nextDueAt: nextDue.toISOString(), dueToday };
   }
 
   async patchDeck(principal: StudentPrincipal, deckId: string, body: unknown) {
     const parsed = patchDeckSchema.parse(body);
     await this.requireDeck(principal, deckId);
-    return this.repo.updateDeck(deckId, parsed);
+    if (parsed.cardOrder?.length) {
+      await this.repo.reorderCards(deckId, parsed.cardOrder);
+    }
+    if (parsed.title) {
+      await this.repo.updateDeck(deckId, { title: parsed.title });
+    }
+    return this.getDeck(principal, deckId);
   }
 
   async addCard(principal: StudentPrincipal, deckId: string, body: unknown) {
@@ -495,8 +958,12 @@ export class LibraryService {
         sequence: seq,
         prompt: parsed.prompt,
         answer: parsed.answer,
+        sourcePage: parsed.sourcePage ?? null,
         nextDueAt: new Date(),
         intervalDays: '0',
+        ease: '2.50',
+        reps: 0,
+        lapses: 0,
       },
     ]);
     return created;
@@ -527,24 +994,70 @@ export class LibraryService {
       const ans = parsed.answers.find((a) => a.itemIndex === idx);
       return {
         qtype: item.qtype,
+        prompt: item.prompt,
         correctKey: item.correctKey,
         markingNote: item.markingNote,
         choiceKey: ans?.choiceKey,
         answerText: ans?.answerText,
+        sourcePage: item.sourcePage,
       };
     });
-    const result = await this.evaluator.evaluateQuizItems(principal, items);
+    const diagnostic = await this.evaluator.evaluateQuizDiagnostic(principal, items);
+    const owner = this.repo.owner(principal);
+    const attempt = await this.repo.insertQuizAttempt({
+      artifactId,
+      institutionId: owner.institutionId,
+      studentId: owner.studentId,
+      independentUserId: owner.independentUserId,
+      answers: parsed.answers,
+      results: diagnostic.results,
+      patterns: diagnostic.patterns,
+    });
+    await this.repo.updateArtifact(artifactId, { lastInteractedAt: new Date() });
     await this.ledger.log({
       eventType: 'quiz.completed',
-      payload: { artifactId, total: result.total, correct: result.correct },
+      payload: { artifactId, attemptId: attempt.id },
       principal,
     });
-    return result;
+    return {
+      attemptId: attempt.id,
+      results: diagnostic.results,
+      patterns: diagnostic.patterns,
+    };
+  }
+
+  async getQuizAttempt(principal: StudentPrincipal, artifactId: string, attemptId: string) {
+    const attempt = await this.repo.getQuizAttempt(principal, artifactId, attemptId);
+    if (!attempt) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Attempt not found' });
+    return {
+      attemptId: attempt.id,
+      artifactId: attempt.artifactId,
+      results: attempt.results,
+      patterns: attempt.patterns,
+      finishedAt: attempt.finishedAt.toISOString(),
+    };
   }
 
   private async requireItem(principal: StudentPrincipal, id: string) {
     const item = await this.repo.getItem(principal, id);
     if (!item) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Item not found' });
+    return item;
+  }
+
+  private async requireReadyItem(principal: StudentPrincipal, id: string) {
+    const item = await this.requireItem(principal, id);
+    if (item.status === 'needs_ocr_confirm') {
+      throw new BadRequestException({
+        code: 'NEEDS_CONFIRM',
+        message: 'Confirm the extracted text before generating artifacts.',
+      });
+    }
+    if (item.status !== 'ready') {
+      throw new BadRequestException({
+        code: 'NOT_READY',
+        message: 'Petros is still reading this document — try again shortly.',
+      });
+    }
     return item;
   }
 
@@ -567,60 +1080,39 @@ export class LibraryService {
     return 'upload_scan';
   }
 
-  private async processItemText(principal: StudentPrincipal, itemId: string) {
-    const item = await this.repo.getItem(principal, itemId);
-    if (!item) return;
-    const objects = await this.repo.getStorageObjects(item.objectIds);
-    let text = '';
-    for (const obj of objects) {
-      const derived = obj.derived as { extractedText?: string };
-      if (derived.extractedText) text += derived.extractedText + '\n';
+  private async extractedText(item: { id: string; title: string }) {
+    const pages = await this.repo.listPages(item.id);
+    if (pages.length) {
+      return pages.map((p) => `[p.${p.pageIndex + 1}]\n${p.text}`).join('\n\n');
     }
-    if (!text.trim() && this.ai.available) {
-      try {
-        await this.budgets.spend(principal, 'ocr', 800);
-        const { result, usage } = await this.ai.completeJson({
-          purpose: 'ocr',
-          tier: 'vision',
-          system: 'Extract plain text from document images. Preserve student notation.',
-          user: 'Extract all readable text.',
-          schema: z.object({ text: z.string() }),
-          schemaName: 'ocr',
-          maxOutputTokens: 4000,
-        });
-        await this.callLog.log(principal, 'ocr', usage);
-        text = result.text;
-      } catch {
-        text = '';
-      }
-    }
-    await this.repo.updateItem(item.id, {
-      extractedTextReady: true,
-      aiRead: text.trim().length > 0,
-    });
+    return `Document: ${item.title}`;
+  }
+
+  private async logArtifact(
+    principal: StudentPrincipal,
+    itemId: string | undefined,
+    artifactId: string,
+    artifactKind: string,
+  ) {
     await this.ledger.log({
-      eventType: 'library.item_processed',
-      payload: { itemId: item.id },
+      eventType: 'library.artifact_generated',
+      payload: { itemId, artifactId, artifactKind },
       principal,
     });
   }
 
-  private async extractedText(item: { objectIds: string[]; title: string }) {
-    const objects = await this.repo.getStorageObjects(item.objectIds);
-    const chunks = objects.map((o) => (o.derived as { extractedText?: string }).extractedText ?? '').filter(Boolean);
-    if (chunks.length) return chunks.join('\n\n');
-    return `Document: ${item.title}`;
-  }
-
   private async generateSummary(principal: StudentPrincipal, text: string, fallbackTitle: string) {
     if (!this.ai.available) {
-      return { title: fallbackTitle, sections: [{ heading: 'Summary', body: text.slice(0, 1200) }] };
+      return {
+        title: fallbackTitle,
+        sections: [{ heading: 'Summary', body: text.slice(0, 1200), sourcePage: 1 }],
+      };
     }
     await this.budgets.spend(principal, 'library_gen', 1200);
     const { result, usage } = await this.ai.completeJson({
       purpose: 'library_gen',
       tier: 'small',
-      system: 'Summarize preserving the student own symbols and wording.',
+      system: GROUNDING_SYSTEM + ' Summarize preserving student wording. Cite sourcePage from [p.N].',
       user: text.slice(0, 12_000),
       schema: summaryContentSchema,
       schemaName: 'summary',
@@ -634,14 +1126,14 @@ export class LibraryService {
     if (!this.ai.available) {
       return {
         title: fallbackTitle,
-        cards: [{ prompt: 'Key idea?', answer: text.slice(0, 200) }],
+        cards: [{ prompt: 'Key idea?', answer: text.slice(0, 200), sourcePage: 1 }],
       };
     }
     await this.budgets.spend(principal, 'library_gen', 1500);
     const { result, usage } = await this.ai.completeJson({
       purpose: 'library_gen',
       tier: 'small',
-      system: 'Create 8-24 flashcards preserving student wording.',
+      system: GROUNDING_SYSTEM + ' Create 8-24 flashcards preserving student wording. Cite sourcePage from [p.N].',
       user: text.slice(0, 12_000),
       schema: deckGenerationSchema,
       schemaName: 'deck',
@@ -654,14 +1146,21 @@ export class LibraryService {
   private async generateQuiz(principal: StudentPrincipal, text: string) {
     if (!this.ai.available) {
       return {
-        items: [{ qtype: 'short' as const, prompt: 'What is the main idea?', markingNote: 'Any reasonable summary.' }],
+        items: [
+          {
+            qtype: 'short' as const,
+            prompt: 'What is the main idea?',
+            markingNote: 'Any reasonable summary.',
+            sourcePage: 1,
+          },
+        ],
       };
     }
     await this.budgets.spend(principal, 'library_gen', 1500);
     const { result, usage } = await this.ai.completeJson({
       purpose: 'library_gen',
       tier: 'small',
-      system: 'Create 10-15 quiz items (mcq+short mix).',
+      system: GROUNDING_SYSTEM + ' Create 10-15 quiz items (mcq+short mix). Cite sourcePage from [p.N].',
       user: text.slice(0, 12_000),
       schema: quizContentSchema,
       schemaName: 'quiz',
@@ -672,16 +1171,15 @@ export class LibraryService {
   }
 
   private async generateConceptMap(principal: StudentPrincipal, text: string, sourceTitle: string) {
-    if (!this.ai.available) {
-      return this.stubConceptMap(sourceTitle);
-    }
+    if (!this.ai.available) return this.stubConceptMap(sourceTitle);
     await this.budgets.spend(principal, 'library_gen', 2000);
     try {
       const { result, usage } = await this.ai.completeJson({
         purpose: 'library_gen',
         tier: 'large',
         system:
-          'Extract how ideas in the source connect into a concept map. Choose layout web for interconnected ideas or flowchart for process-heavy sources. Include 8–20 nodes. Each node needs id, label, miniDefinition grounded in the source (never the final answer), sourceLocation (page/passage reference like "p. 3" or "Section 2"), and optional x/y (0–100). Edges need from, to, relation (depends_on|part_of|step).',
+          GROUNDING_SYSTEM +
+          ' Extract how ideas connect into a concept map. Layout web or flowchart. 8–20 nodes with sourceLocation like "p. 3".',
         user: text.slice(0, 12_000),
         schema: conceptMapContentSchema,
         schemaName: 'concept_map',
@@ -695,16 +1193,15 @@ export class LibraryService {
   }
 
   private async generateGlossary(principal: StudentPrincipal, text: string, sourceTitle: string) {
-    if (!this.ai.available) {
-      return this.stubGlossary(sourceTitle);
-    }
+    if (!this.ai.available) return this.stubGlossary(sourceTitle);
     await this.budgets.spend(principal, 'library_gen', 1500);
     try {
       const { result, usage } = await this.ai.completeJson({
         purpose: 'library_gen',
         tier: 'large',
         system:
-          'Extract only terms the source actually defines — no invented vocabulary. Each entry: term, definition (from source wording), sourceLocation (page/passage reference).',
+          GROUNDING_SYSTEM +
+          ' Extract only terms the source defines. Each entry: term, definition, sourceLocation.',
         user: text.slice(0, 12_000),
         schema: glossaryContentSchema,
         schemaName: 'glossary',
@@ -768,18 +1265,33 @@ export class LibraryService {
     return {
       title: `Glossary — ${sourceTitle}`,
       entries: [
-        {
-          term: sourceTitle,
-          definition: 'The main subject of this document.',
-          sourceLocation: 'p. 1',
-        },
-        {
-          term: 'Key term',
-          definition: 'An important defined term from the source.',
-          sourceLocation: 'p. 2',
-        },
+        { term: sourceTitle, definition: 'The main subject of this document.', sourceLocation: 'p. 1' },
+        { term: 'Key term', definition: 'An important defined term from the source.', sourceLocation: 'p. 2' },
       ],
     };
+  }
+
+  private artifactFreshness(
+    createdAt: Date,
+    lastInteractedAt: Date | null,
+  ): 'fresh' | 'fading' | 'due' {
+    const anchor = lastInteractedAt ?? createdAt;
+    const days = (Date.now() - anchor.getTime()) / 86_400_000;
+    if (days > FRESHNESS_FRESH_DAYS * 3) return 'due';
+    if (days > FRESHNESS_FRESH_DAYS) return 'fading';
+    return 'fresh';
+  }
+
+  private deckFreshnessFromMaps(
+    deckId: string,
+    dueMap: Map<string, number>,
+    earliestMap: Map<string, Date>,
+  ): 'fresh' | 'fading' | 'due' {
+    if ((dueMap.get(deckId) ?? 0) > 0) return 'due';
+    const earliest = earliestMap.get(deckId);
+    if (!earliest) return 'fresh';
+    const days = (Date.now() - earliest.getTime()) / 86_400_000;
+    return days > FRESHNESS_FRESH_DAYS ? 'fading' : 'fresh';
   }
 
   private async deckFreshness(deckId: string): Promise<'fresh' | 'fading' | 'due'> {
@@ -792,3 +1304,6 @@ export class LibraryService {
     return days > FRESHNESS_FRESH_DAYS ? 'fading' : 'fresh';
   }
 }
+
+const GROUNDING_SYSTEM =
+  'You are Petros helping a student study their own material. Ground every claim in the provided source text marked with [p.N] page markers. If the source does not cover something, say so. Never invent facts beyond the source.';

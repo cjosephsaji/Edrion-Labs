@@ -119,7 +119,7 @@ export function PageHeader({
 }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1 overflow-hidden">
         {backHref && (
           <Link
             href={backHref}
@@ -129,10 +129,10 @@ export function PageHeader({
           </Link>
         )}
         {eyebrow}
-        <PageTitle className={eyebrow ? 'mt-2' : ''}>{title}</PageTitle>
+        <PageTitle className={`break-words ${eyebrow ? 'mt-2' : ''}`}>{title}</PageTitle>
         {subtitle && <p className="mt-2 text-sm text-st-muted">{subtitle}</p>}
       </div>
-      {right}
+      {right ? <div className="shrink-0">{right}</div> : null}
     </div>
   );
 }

@@ -8,6 +8,23 @@ export const knowledgeItemKindSchema = z.enum([
   'topic_pack',
 ]);
 
+export const knowledgeItemStatusSchema = z.enum([
+  'queued',
+  'reading',
+  'needs_ocr_confirm',
+  'ready',
+  'error',
+]);
+
+export const knowledgeItemIngestStageSchema = z.enum([
+  'claimed',
+  'loading_files',
+  'extracting',
+  'ocr',
+  'writing_pages',
+  'finalizing',
+]);
+
 export const knowledgeArtifactKindSchema = z.enum([
   'summary',
   'quiz',
@@ -29,6 +46,14 @@ export const patchKnowledgeItemPagesSchema = z.object({
   objectIds: z.array(z.string().uuid()).min(1),
 });
 
+export const confirmOcrSchema = z.object({
+  confirmed: z.literal(true).optional(),
+});
+
+export const patchItemPageTextSchema = z.object({
+  text: z.string().max(100_000),
+});
+
 export const createCollectionSchema = z.object({
   name: z.string().min(1).max(80),
   color: z.string().max(20).optional(),
@@ -40,14 +65,27 @@ export const patchCollectionSchema = z.object({
   sequence: z.number().int().optional(),
 });
 
+export const summarySectionSchema = z.object({
+  heading: z.string(),
+  body: z.string(),
+  deeper: z.string().optional(),
+  sourcePage: z.number().int().positive().optional(),
+});
+
 export const summaryContentSchema = z.object({
   title: z.string(),
-  sections: z.array(z.object({ heading: z.string(), body: z.string() })),
+  sections: z.array(summarySectionSchema),
+});
+
+export const deckCardSchema = z.object({
+  prompt: z.string(),
+  answer: z.string(),
+  sourcePage: z.number().int().positive().optional(),
 });
 
 export const deckGenerationSchema = z.object({
   title: z.string(),
-  cards: z.array(z.object({ prompt: z.string(), answer: z.string() })),
+  cards: z.array(deckCardSchema),
 });
 
 export const quizItemSchema = z.object({
@@ -56,6 +94,7 @@ export const quizItemSchema = z.object({
   options: z.array(z.object({ key: z.string(), label: z.string() })).optional(),
   correctKey: z.string().optional(),
   markingNote: z.string().optional(),
+  sourcePage: z.number().int().positive().optional(),
 });
 
 export const quizContentSchema = z.object({
@@ -109,6 +148,21 @@ export const quizAttemptSchema = z.object({
   ),
 });
 
+export const quizAttemptVerdictSchema = z.enum(['solid', 'slipped', 'missed']);
+
+export const quizAttemptResultSchema = z.object({
+  index: z.number().int().nonnegative(),
+  verdict: quizAttemptVerdictSchema,
+  note: z.string(),
+  sourcePage: z.number().int().positive().optional(),
+});
+
+export const quizAttemptResponseSchema = z.object({
+  attemptId: z.string().uuid(),
+  results: z.array(quizAttemptResultSchema),
+  patterns: z.array(z.string()),
+});
+
 export const flashcardReviewSchema = z.object({
   cardId: z.string().uuid(),
   result: z.enum(['got_it', 'again']),
@@ -116,6 +170,7 @@ export const flashcardReviewSchema = z.object({
 
 export const patchDeckSchema = z.object({
   title: z.string().min(1).max(200).optional(),
+  cardOrder: z.array(z.string().uuid()).optional(),
 });
 
 export const patchFlashcardSchema = z.object({
@@ -128,10 +183,21 @@ export const createFlashcardSchema = z.object({
   prompt: z.string().min(1),
   answer: z.string().min(1),
   sequence: z.number().int().optional(),
+  sourcePage: z.number().int().positive().optional(),
 });
 
 export const deckFromSessionSchema = z.object({
   sessionId: z.string().uuid(),
+});
+
+export const knowledgeItemPageSchema = z.object({
+  pageIndex: z.number().int().nonnegative(),
+  objectId: z.string().uuid(),
+  text: z.string(),
+  ocrConfidence: z.number().nullable(),
+  needsConfirm: z.boolean(),
+  mimeType: z.string().optional(),
+  filename: z.string().optional(),
 });
 
 export const libraryGeneratedItemSchema = z.object({
@@ -142,6 +208,7 @@ export const libraryGeneratedItemSchema = z.object({
   freshness: freshnessBucketSchema.optional(),
   meta: z.string().optional(),
   createdAt: z.string(),
+  itemId: z.string().uuid().nullable().optional(),
 });
 
 export const libraryOverviewSchema = z.object({
@@ -160,7 +227,11 @@ export const libraryOverviewSchema = z.object({
       title: z.string(),
       meta: z.string(),
       aiRead: z.boolean(),
+      status: knowledgeItemStatusSchema.optional(),
+      pagesDone: z.number().int().optional(),
+      pageCount: z.number().int().nullable().optional(),
       createdAt: z.string(),
+      updatedAt: z.string().optional(),
     }),
   ),
   generated: z.array(libraryGeneratedItemSchema),
@@ -178,3 +249,7 @@ export type LibraryOverviewDto = z.infer<typeof libraryOverviewSchema>;
 export type ConceptMapContent = z.infer<typeof conceptMapContentSchema>;
 export type GlossaryContent = z.infer<typeof glossaryContentSchema>;
 export type LibraryTutorInput = z.infer<typeof libraryTutorInputSchema>;
+export type QuizAttemptResult = z.infer<typeof quizAttemptResultSchema>;
+export type KnowledgeItemStatus = z.infer<typeof knowledgeItemStatusSchema>;
+export type SummaryContent = z.infer<typeof summaryContentSchema>;
+export type QuizContent = z.infer<typeof quizContentSchema>;

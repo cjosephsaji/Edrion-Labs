@@ -89,6 +89,21 @@ export class StudentStorageService {
     return this.driver.stream(key);
   }
 
+  /** Read full object bytes (for OCR / PDF extraction). Caller must already own the object. */
+  async readBuffer(storageKey: string): Promise<Buffer> {
+    return this.driver.read(storageKey);
+  }
+
+  /** Remove bytes from disk. Safe if the key is already gone. */
+  async removeFile(storageKey: string): Promise<void> {
+    await this.driver.remove(storageKey);
+  }
+
+  /** Absolute path to a stored object on disk. */
+  resolvePath(storageKey: string): string {
+    return this.driver.resolvePath(storageKey);
+  }
+
   private isOwner(
     principal: StudentPrincipal,
     row: typeof schema.storageObjects.$inferSelect,

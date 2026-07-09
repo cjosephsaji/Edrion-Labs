@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
-import type { ZodSchema } from 'zod';
+import { z, type ZodSchema } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import type { ApiEnv } from '@edrion/config';
 import { API_ENV } from '../../../common/tokens';
@@ -163,6 +163,12 @@ export class OpenAiLearnProvider implements LearnAiProvider {
     const modelId = this.modelFor(opts.tier);
     const arrayKey = opts.arrayKey ?? 'blocks';
     const parser = new IncrementalJsonArrayParser(arrayKey);
+    // OpenAI needs the wrapper object; each yielded element is parsed with opts.schema.
+    const wrapperSchema = z.object({
+      title: z.string().optional(),
+      fromLabel: z.string().optional(),
+      [arrayKey]: z.array(opts.schema),
+    });
 
     try {
       const stream = (await this.withRetry(
@@ -179,7 +185,7 @@ export class OpenAiLearnProvider implements LearnAiProvider {
                 type: 'json_schema',
                 name: opts.schemaName,
                 strict: false,
-                schema: this.jsonSchemaFor(opts.schemaName, opts.schema),
+                schema: this.jsonSchemaFor(opts.schemaName, wrapperSchema),
               },
               verbosity: opts.verbosity,
             },
@@ -281,20 +287,28 @@ export class OpenAiLearnProvider implements LearnAiProvider {
   }
 
   private buildInput(opts: LearnAiCompleteOpts<unknown>): string | OpenAI.Responses.ResponseInput {
-    if (!opts.images?.length) return opts.user;
-    return [
-      { role: 'user', content: [{ type: 'input_text', text: opts.user }] },
-      ...opts.images.map((img) => ({
-        role: 'user' as const,
-        content: [
-          {
-            type: 'input_image' as const,
-            image_url: `data:${img.mimeType};base64,${img.base64}`,
-            detail: 'auto' as const,
-          },
-        ],
-      })),
+    const hasImages = Boolean(opts.images?.length);
+    const hasFiles = Boolean(opts.files?.length);
+    if (!hasImages && !hasFiles) return opts.user;
+
+    const content: OpenAI.Responses.ResponseInputContent[] = [
+      { type: 'input_text', text: opts.user },
     ];
+    for (const img of opts.images ?? []) {
+      content.push({
+        type: 'input_image',
+        image_url: `data:${img.mimeType};base64,${img.base64}`,
+        detail: 'auto',
+      });
+    }
+    for (const file of opts.files ?? []) {
+      content.push({
+        type: 'input_file',
+        filename: file.filename,
+        file_data: `data:${file.mimeType ?? 'application/pdf'};base64,${file.base64}`,
+      } as OpenAI.Responses.ResponseInputContent);
+    }
+    return [{ role: 'user', content }];
   }
 
   private async withRetry<T>(fn: () => Promise<T>, modelId: string): Promise<T> {

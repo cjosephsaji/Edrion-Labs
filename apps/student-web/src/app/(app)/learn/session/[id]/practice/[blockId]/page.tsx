@@ -16,7 +16,7 @@ export default function PracticeBlockPage({
   params: { id: string; blockId: string };
 }) {
   const router = useRouter();
-  const { data: session, isLoading, streaming, startStream, answer, hint, invalidate } =
+  const { data: session, isLoading, streaming, startStream, answer, hint, finish, invalidate } =
     useLearnSession(params.id);
   const [askOpen, setAskOpen] = useState(false);
 

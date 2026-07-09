@@ -261,18 +261,119 @@ export class EvaluatorService {
       markingNote?: string;
       choiceKey?: string;
       answerText?: string;
+      prompt?: string;
     }>,
   ): Promise<{ total: number; correct: number; notes: string[] }> {
     const evals = await this.evaluateMockBatch(
       principal,
-      items.map((i) => ({ ...i, qtype: i.qtype, prompt: '' })),
+      items.map((i) => ({ ...i, qtype: i.qtype, prompt: i.prompt ?? '' })),
     );
     const notes = evals.map((e) => e.note).filter((n): n is string => !!n);
     return { total: items.length, correct: evals.filter((e) => e.correct).length, notes };
+  }
+
+  /** Score-free diagnostic evaluation for Library quizzes. */
+  async evaluateQuizDiagnostic(
+    principal: StudentPrincipal,
+    items: Array<{
+      qtype: 'mcq' | 'short';
+      prompt: string;
+      correctKey?: string;
+      markingNote?: string;
+      choiceKey?: string;
+      answerText?: string;
+      sourcePage?: number;
+    }>,
+  ): Promise<{
+    results: Array<{ index: number; verdict: 'solid' | 'slipped' | 'missed'; note: string; sourcePage?: number }>;
+    patterns: string[];
+  }> {
+    const results: Array<{
+      index: number;
+      verdict: 'solid' | 'slipped' | 'missed';
+      note: string;
+      sourcePage?: number;
+    }> = [];
+
+    for (let index = 0; index < items.length; index += 1) {
+      const item = items[index]!;
+      if (item.qtype === 'mcq') {
+        const solid = Boolean(item.correctKey) && item.correctKey === item.choiceKey;
+        results.push({
+          index,
+          verdict: solid ? 'solid' : item.choiceKey ? 'missed' : 'missed',
+          note: solid
+            ? 'You picked the option that matches the source.'
+            : item.markingNote
+              ? `Look again: ${item.markingNote}`
+              : 'That option doesn’t match what the source says.',
+          sourcePage: item.sourcePage,
+        });
+        continue;
+      }
+
+      if (!this.ai.available) {
+        const hasAnswer = Boolean(item.answerText?.trim());
+        results.push({
+          index,
+          verdict: hasAnswer ? 'slipped' : 'missed',
+          note: hasAnswer
+            ? 'Answer recorded — compare it with the source when you review.'
+            : 'No answer given for this one.',
+          sourcePage: item.sourcePage,
+        });
+        continue;
+      }
+
+      try {
+        await this.budgets.spend(principal, 'evaluate', 400);
+        const { result, usage } = await this.ai.completeJson({
+          purpose: 'evaluate',
+          tier: 'small',
+          system:
+            'You are Petros giving diagnostic feedback on a quiz answer. Use verdict solid|slipped|missed. No scores or percentages. Be specific and kind. Ground notes in the marking note / source.',
+          user: JSON.stringify({
+            prompt: item.prompt,
+            markingNote: item.markingNote,
+            studentAnswer: item.answerText ?? '',
+          }),
+          schema: quizDiagnosticSchema,
+          schemaName: 'quiz_diagnostic',
+          maxOutputTokens: 400,
+        });
+        await this.callLog.log(principal, 'evaluate', usage);
+        results.push({
+          index,
+          verdict: result.verdict,
+          note: result.note,
+          sourcePage: item.sourcePage,
+        });
+      } catch {
+        results.push({
+          index,
+          verdict: item.answerText?.trim() ? 'slipped' : 'missed',
+          note: 'Answer recorded — review against the source.',
+          sourcePage: item.sourcePage,
+        });
+      }
+    }
+
+    const patterns: string[] = [];
+    const missed = results.filter((r) => r.verdict === 'missed').length;
+    const slipped = results.filter((r) => r.verdict === 'slipped').length;
+    if (missed >= 2) patterns.push('A few questions need another look at the source pages.');
+    if (slipped >= 2) patterns.push('Several answers were close — tighten the wording against the source.');
+    if (missed === 0 && slipped === 0) patterns.push('You stayed close to the source throughout.');
+    return { results, patterns };
   }
 }
 
 const mockEvalSchema = z.object({
   correct: z.boolean(),
   note: z.string().optional(),
+});
+
+const quizDiagnosticSchema = z.object({
+  verdict: z.enum(['solid', 'slipped', 'missed']),
+  note: z.string(),
 });

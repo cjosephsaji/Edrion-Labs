@@ -16,7 +16,7 @@ export default function ConceptBlockPage({
   params: { id: string; blockId: string };
 }) {
   const router = useRouter();
-  const { data: session, isLoading, streaming, startStream, answer, hint, continueBlock, invalidate } =
+  const { data: session, isLoading, streaming, startStream, answer, hint, continueBlock, finish, invalidate } =
     useLearnSession(params.id);
   const [askOpen, setAskOpen] = useState(false);
   const [prefill, setPrefill] = useState<string | undefined>();
@@ -28,6 +28,15 @@ export default function ConceptBlockPage({
       startStream();
     }
   }, [session, startStream]);
+
+  const handleFinishSession = async () => {
+    try {
+      await finish.mutateAsync();
+    } catch {
+      // Session may already be completed — still return to Learn home.
+    }
+    router.push('/learn');
+  };
 
   const handleContinue = async () => {
     if (!session || !block) return;
@@ -100,6 +109,7 @@ export default function ConceptBlockPage({
               answer.mutateAsync({ blockId: block.id, body: { answer: ans, hintsUsed } })
             }
             onContinue={() => void handleContinue()}
+            onFinish={() => void handleFinishSession()}
             continueLoading={continueBlock.isPending}
           />
         </div>

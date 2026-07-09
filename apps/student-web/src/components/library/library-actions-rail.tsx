@@ -1,67 +1,111 @@
 'use client';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   useLibraryConceptMap,
-  useLibraryFlashcards,
   useLibraryGlossary,
-  useLibraryQuiz,
-  useLibrarySummarize,
   useLibraryTutor,
 } from '@/lib/hooks';
+import { GenerationStream } from './GenerationStream';
 import { PillButton } from '@/components/ui/pill-button';
+import { useToast } from '@/components/ui/toast';
+import type { GenerationKind } from '@/lib/hooks/library';
 
-export function LibraryActionsRail({ itemId }: { itemId: string }) {
+export function LibraryActionsRail({
+  itemId,
+  ready,
+}: {
+  itemId: string;
+  ready: boolean;
+}) {
   const router = useRouter();
-  const summarize = useLibrarySummarize(itemId);
-  const flashcards = useLibraryFlashcards(itemId);
-  const quiz = useLibraryQuiz(itemId);
+  const { say } = useToast();
+  const tutor = useLibraryTutor(itemId);
   const conceptMap = useLibraryConceptMap(itemId);
   const glossary = useLibraryGlossary(itemId);
-  const tutor = useLibraryTutor(itemId);
+  const [streaming, setStreaming] = useState<GenerationKind | null>(null);
+  const busy = tutor.isPending || conceptMap.isPending || glossary.isPending;
 
-  const busy =
-    summarize.isPending ||
-    flashcards.isPending ||
-    quiz.isPending ||
-    conceptMap.isPending ||
-    glossary.isPending ||
-    tutor.isPending;
-
-  const handleTutor = async () => {
-    const result = await tutor.mutateAsync({});
-    router.push(`/learn/session/${result.sessionId}`);
-  };
-
-  const handleFlashcards = async () => {
-    const result = await flashcards.mutateAsync();
-    router.push(`/library/decks/${result.deckId}`);
-  };
-
-  const handleConceptMap = async () => {
-    const result = await conceptMap.mutateAsync();
-    router.push(`/library/maps/${result.id}`);
-  };
+  const hint = ready ? undefined : 'Confirm OCR / wait until ready';
 
   return (
-    <div className="mt-6 grid gap-2 sm:grid-cols-2">
-      <PillButton variant="soft" disabled={busy} onClick={() => void summarize.mutateAsync()}>
-        {summarize.isPending ? 'Summarizing…' : '✦ Summarize'}
-      </PillButton>
-      <PillButton variant="soft" disabled={busy} onClick={() => void handleFlashcards()}>
-        {flashcards.isPending ? 'Building…' : '✦ Make flashcards'}
-      </PillButton>
-      <PillButton variant="soft" disabled={busy} onClick={() => void quiz.mutateAsync()}>
-        {quiz.isPending ? 'Building…' : '✦ Make a quiz'}
-      </PillButton>
-      <PillButton variant="soft" disabled={busy} onClick={() => void handleConceptMap()}>
-        {conceptMap.isPending ? 'Mapping…' : '✦ Concept map'}
-      </PillButton>
-      <PillButton variant="soft" disabled={busy} onClick={() => void glossary.mutateAsync()}>
-        {glossary.isPending ? 'Extracting…' : '✦ Key-terms glossary'}
-      </PillButton>
-      <PillButton disabled={busy} onClick={() => void handleTutor()}>
-        {tutor.isPending ? 'Starting…' : '✦ Tutor me on this'}
-      </PillButton>
+    <div className="space-y-3">
+      <h2 className="text-[10px] font-semibold tracking-wide text-st-amber">
+        DO SOMETHING WITH THIS ✦
+      </h2>
+      <div className="flex flex-wrap gap-2">
+        <PillButton
+          type="button"
+          disabled={!ready || busy}
+          title={hint}
+          onClick={async () => {
+            try {
+              const r = await tutor.mutateAsync({});
+              router.push(`/learn/session/${r.sessionId}`);
+            } catch (e) {
+              say((e as Error).message ?? 'Could not start tutoring');
+            }
+          }}
+        >
+          Tutor me
+        </PillButton>
+        {(['summarize', 'flashcards', 'quiz'] as GenerationKind[]).map((kind) => (
+          <PillButton
+            key={kind}
+            type="button"
+            variant="soft"
+            disabled={!ready || busy || streaming !== null}
+            title={hint}
+            onClick={() => setStreaming(kind)}
+          >
+            {kind === 'summarize' ? 'Summarize' : kind === 'flashcards' ? 'Flashcards' : 'Quiz'}
+          </PillButton>
+        ))}
+        <PillButton
+          type="button"
+          variant="ghost"
+          disabled={!ready || busy}
+          title={hint}
+          onClick={async () => {
+            try {
+              const r = await conceptMap.mutateAsync();
+              router.push(`/library/maps/${r.id}`);
+            } catch (e) {
+              say((e as Error).message ?? 'Concept map failed');
+            }
+          }}
+        >
+          Concept map
+        </PillButton>
+        <PillButton
+          type="button"
+          variant="ghost"
+          disabled={!ready || busy}
+          title={hint}
+          onClick={async () => {
+            try {
+              await glossary.mutateAsync();
+              say('Glossary ready — see Already made');
+            } catch (e) {
+              say((e as Error).message ?? 'Glossary failed');
+            }
+          }}
+        >
+          Glossary
+        </PillButton>
+      </div>
+      {!ready && (
+        <p className="text-xs text-st-muted">
+          Actions unlock when this source is ready.
+        </p>
+      )}
+      {streaming && (
+        <GenerationStream
+          itemId={itemId}
+          kind={streaming}
+          onClose={() => setStreaming(null)}
+        />
+      )}
     </div>
   );
 }

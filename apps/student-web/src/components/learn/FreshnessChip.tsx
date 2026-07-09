@@ -1,7 +1,7 @@
 const toneMap = {
-  fresh: 'bg-st-greenSoft text-st-green',
+  fresh: 'bg-st-mintBg text-st-success',
   fading: 'bg-st-amberSoft text-st-amber',
-  due: 'bg-st-redSoft text-st-red',
+  due: 'bg-st-dangerSoft text-st-danger',
 } as const;
 
 const labelMap = {

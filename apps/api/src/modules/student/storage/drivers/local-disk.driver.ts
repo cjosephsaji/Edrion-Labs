@@ -1,5 +1,5 @@
 import { createReadStream, type ReadStream } from 'node:fs';
-import { mkdir, stat, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve, sep } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { ApiEnv } from '@edrion/config';
@@ -24,12 +24,21 @@ export class LocalDiskDriver {
     return createReadStream(this.absolute(key));
   }
 
+  async read(key: string): Promise<Buffer> {
+    return readFile(this.absolute(key));
+  }
+
   async size(key: string): Promise<number> {
     return (await stat(this.absolute(key))).size;
   }
 
   async remove(key: string): Promise<void> {
     await unlink(this.absolute(key)).catch(() => undefined);
+  }
+
+  /** Absolute filesystem path for a storage key (used by PDF ingest worker). */
+  resolvePath(key: string): string {
+    return this.absolute(key);
   }
 
   private absolute(key: string): string {

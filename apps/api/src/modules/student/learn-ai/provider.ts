@@ -35,6 +35,8 @@ export interface LearnAiCompleteOpts<T> {
   system: string;
   user: string;
   images?: { objectId: string; base64: string; mimeType: string }[];
+  /** PDF / other files as base64 input_file blocks (OpenAI Responses API). */
+  files?: { filename: string; base64: string; mimeType?: string }[];
   schema: ZodSchema<T>;
   schemaName: string;
   maxOutputTokens: number;

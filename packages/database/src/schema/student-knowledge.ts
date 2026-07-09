@@ -55,12 +55,46 @@ export const knowledgeItems = pgTable(
     pageCount: integer('page_count'),
     extractedTextReady: boolean('extracted_text_ready').notNull().default(false),
     aiRead: boolean('ai_read').notNull().default(false),
+    /** queued | reading | needs_ocr_confirm | ready | error */
+    status: text('status').notNull().default('ready'),
+    pagesDone: integer('pages_done').notNull().default(0),
+    errorMessage: text('error_message'),
+    /** claimed | loading_files | extracting | ocr | writing_pages | finalizing */
+    ingestStage: text('ingest_stage'),
+    ingestHeartbeatAt: timestamp('ingest_heartbeat_at', { withTimezone: true }),
+    ingestAttempts: integer('ingest_attempts').notNull().default(0),
+    ingestErrorDetail: text('ingest_error_detail'),
     version: integer('version').notNull().default(1),
     ...timestamps,
   },
   (t) => ({
     ownerIdx: index('knowledge_items_owner_idx').on(t.studentId, t.createdAt),
     ownerIndepIdx: index('knowledge_items_owner_i_idx').on(t.independentUserId, t.createdAt),
+  }),
+);
+
+export const knowledgeItemPages = pgTable(
+  'knowledge_item_pages',
+  {
+    id: primaryId(),
+    itemId: uuid('item_id')
+      .notNull()
+      .references(() => knowledgeItems.id, { onDelete: 'cascade' }),
+    pageIndex: integer('page_index').notNull(),
+    objectId: uuid('object_id')
+      .notNull()
+      .references(() => storageObjects.id, { onDelete: 'cascade' }),
+    text: text('text').notNull().default(''),
+    /** null = digital extract (no OCR); otherwise 0–1 confidence */
+    ocrConfidence: numeric('ocr_confidence', { precision: 4, scale: 3 }),
+    needsConfirm: boolean('needs_confirm').notNull().default(false),
+    confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    itemPageUq: uniqueIndex('knowledge_item_pages_item_page_uq').on(t.itemId, t.pageIndex),
+    itemIdx: index('knowledge_item_pages_item_idx').on(t.itemId),
   }),
 );
 
@@ -80,6 +114,7 @@ export const knowledgeArtifacts = pgTable(
     content: jsonb('content').$type<Record<string, unknown>>().notNull(),
     topicId: uuid('topic_id'),
     fromLabel: text('from_label').notNull(),
+    lastInteractedAt: timestamp('last_interacted_at', { withTimezone: true }),
     version: integer('version').notNull().default(1),
     ...timestamps,
   },
@@ -123,9 +158,37 @@ export const flashcards = pgTable(
     answer: text('answer').notNull(),
     nextDueAt: timestamp('next_due_at', { withTimezone: true }).notNull().defaultNow(),
     intervalDays: numeric('interval_days', { precision: 6, scale: 2 }).notNull().default('0'),
+    ease: numeric('ease', { precision: 4, scale: 2 }).notNull().default('2.50'),
+    reps: integer('reps').notNull().default(0),
+    lapses: integer('lapses').notNull().default(0),
+    sourcePage: integer('source_page'),
   },
   (t) => ({
     deckSeqUq: uniqueIndex('flashcards_deck_seq_uq').on(t.deckId, t.sequence),
+  }),
+);
+
+export const libraryQuizAttempts = pgTable(
+  'library_quiz_attempts',
+  {
+    id: primaryId(),
+    artifactId: uuid('artifact_id')
+      .notNull()
+      .references(() => knowledgeArtifacts.id, { onDelete: 'cascade' }),
+    institutionId: uuid('institution_id').references(() => institutions.id, { onDelete: 'cascade' }),
+    studentId: uuid('student_id').references(() => students.id, { onDelete: 'cascade' }),
+    independentUserId: uuid('independent_user_id').references(() => independentUsers.id, {
+      onDelete: 'cascade',
+    }),
+    answers: jsonb('answers').$type<Record<string, unknown>[]>().notNull().default([]),
+    results: jsonb('results').$type<Record<string, unknown>[]>().notNull().default([]),
+    patterns: jsonb('patterns').$type<string[]>().notNull().default([]),
+    finishedAt: timestamp('finished_at', { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    artifactIdx: index('library_quiz_attempts_artifact_idx').on(t.artifactId, t.finishedAt),
+    ownerIdx: index('library_quiz_attempts_owner_idx').on(t.studentId, t.finishedAt),
   }),
 );
 
