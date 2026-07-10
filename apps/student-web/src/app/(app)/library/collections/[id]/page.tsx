@@ -40,7 +40,7 @@ export default function CollectionPage({ params }: { params: { id: string } }) {
       ) : (
         <div className="mt-8 space-y-6">
           {data.items.map((row: {
-            item: { id: string; title: string; status: string; kind: string; pageCount: number | null };
+            item: { id: string; title: string; status: string; errorMessage?: string | null; kind: string; pageCount: number | null };
             artifacts: Array<{ id: string; kind: string; title: string; fromLabel: string; freshness?: 'fresh' | 'fading' | 'due' }>;
             decks: Array<{ id: string; title: string; fromLabel: string }>;
           }) => (
@@ -49,6 +49,7 @@ export default function CollectionPage({ params }: { params: { id: string } }) {
                 id={row.item.id}
                 title={row.item.title}
                 status={row.item.status}
+                errorMessage={row.item.errorMessage}
                 meta={row.item.pageCount ? `${row.item.pageCount} pages` : row.item.kind}
               />
               <div className="grid gap-2 sm:grid-cols-2">

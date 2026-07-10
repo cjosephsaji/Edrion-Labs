@@ -71,6 +71,7 @@ export default function LibraryPage() {
                     id={item.id}
                     title={item.title}
                     status={item.status}
+                    errorMessage={item.errorMessage}
                     pagesDone={item.pagesDone}
                     pageCount={item.pageCount}
                     updatedAt={item.updatedAt}

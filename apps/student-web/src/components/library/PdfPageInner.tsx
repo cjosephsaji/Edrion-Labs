@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { useStudentClient } from '@/lib/student-client';
-import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
 // Use the exact pdfjs version react-pdf depends on (avoids worker/API mismatch).

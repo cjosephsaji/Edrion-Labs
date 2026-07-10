@@ -1,5 +1,6 @@
 import { exec } from 'node:child_process';
 import { spawn, type ChildProcess } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { Inject, Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
@@ -489,6 +490,15 @@ export class LibraryIngestWorker implements OnModuleInit, OnModuleDestroy {
 
   private extractPdfInChild(absPath: string, itemId: string): Promise<PdfExtractResult> {
     return new Promise((resolve, reject) => {
+      if (!existsSync(this.workerScript)) {
+        // tsc only emits .js — the build must copy the .cjs child scripts (scripts/copy-build-assets.mjs).
+        reject(
+          new Error(
+            `PDF worker script missing at ${this.workerScript} — the build did not copy .cjs assets into dist.`,
+          ),
+        );
+        return;
+      }
       const child = spawn(process.execPath, [this.workerScript, absPath], {
         stdio: ['ignore', 'pipe', 'pipe'],
         windowsHide: true,

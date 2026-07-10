@@ -228,6 +228,7 @@ export const libraryOverviewSchema = z.object({
       meta: z.string(),
       aiRead: z.boolean(),
       status: knowledgeItemStatusSchema.optional(),
+      errorMessage: z.string().nullable().optional(),
       pagesDone: z.number().int().optional(),
       pageCount: z.number().int().nullable().optional(),
       createdAt: z.string(),

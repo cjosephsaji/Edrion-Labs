@@ -110,6 +110,7 @@ export type LibraryCollectionDto = {
       kind: string;
       title: string;
       status: string;
+      errorMessage?: string | null;
       pageCount: number | null;
       aiRead: boolean;
       createdAt: string;

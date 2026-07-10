@@ -87,6 +87,7 @@ export class LibraryService {
           meta: i.pageCount ? `${i.pageCount} pages` : '',
           aiRead: i.aiRead,
           status: i.status,
+          errorMessage: i.errorMessage,
           pagesDone: i.pagesDone,
           pageCount: i.pageCount,
           createdAt: i.createdAt.toISOString(),
@@ -177,6 +178,7 @@ export class LibraryService {
             : '',
         aiRead: u.aiRead,
         status: u.status,
+        errorMessage: u.errorMessage,
         pagesDone: u.pagesDone,
         pageCount: u.pageCount,
         createdAt: u.createdAt.toISOString(),
@@ -202,6 +204,7 @@ export class LibraryService {
             kind: item.kind,
             title: item.title,
             status: item.status,
+            errorMessage: item.errorMessage,
             pageCount: item.pageCount,
             aiRead: item.aiRead,
             createdAt: item.createdAt.toISOString(),
@@ -545,7 +548,7 @@ export class LibraryService {
       for await (const section of this.ai.streamJsonArray({
         purpose: 'library_gen',
         tier: 'small',
-        system: GROUNDING_SYSTEM + ' Summarize into sections. Cite sourcePage from [p.N] markers. Preserve student wording. Never invent beyond the source.',
+        system: SUMMARY_SYSTEM,
         user: text.slice(0, 14_000),
         schema: summarySectionSchema,
         schemaName: 'summary_stream',
@@ -594,7 +597,7 @@ export class LibraryService {
       for await (const card of this.ai.streamJsonArray({
         purpose: 'library_gen',
         tier: 'small',
-        system: GROUNDING_SYSTEM + ' Create 8–24 flashcards. Cite sourcePage from [p.N]. Preserve student wording.',
+        system: DECK_SYSTEM,
         user: text.slice(0, 14_000),
         schema: cardSchema,
         schemaName: 'deck_stream',
@@ -653,7 +656,7 @@ export class LibraryService {
       for await (const quizItem of this.ai.streamJsonArray({
         purpose: 'library_gen',
         tier: 'small',
-        system: GROUNDING_SYSTEM + ' Create 10–15 quiz items (mcq+short). Cite sourcePage from [p.N]. Never invent beyond the source.',
+        system: QUIZ_SYSTEM,
         user: text.slice(0, 14_000),
         schema: quizItemSchema,
         schemaName: 'quiz_stream',
@@ -1088,6 +1091,13 @@ export class LibraryService {
     return `Document: ${item.title}`;
   }
 
+  /** Page text with [p.N] markers for grounding tutor sessions; empty string when no pages exist. */
+  async groundingTextForItem(itemId: string): Promise<string> {
+    const pages = await this.repo.listPages(itemId);
+    if (!pages.length) return '';
+    return pages.map((p) => `[p.${p.pageIndex + 1}]\n${p.text}`).join('\n\n');
+  }
+
   private async logArtifact(
     principal: StudentPrincipal,
     itemId: string | undefined,
@@ -1112,7 +1122,7 @@ export class LibraryService {
     const { result, usage } = await this.ai.completeJson({
       purpose: 'library_gen',
       tier: 'small',
-      system: GROUNDING_SYSTEM + ' Summarize preserving student wording. Cite sourcePage from [p.N].',
+      system: SUMMARY_SYSTEM,
       user: text.slice(0, 12_000),
       schema: summaryContentSchema,
       schemaName: 'summary',
@@ -1133,7 +1143,7 @@ export class LibraryService {
     const { result, usage } = await this.ai.completeJson({
       purpose: 'library_gen',
       tier: 'small',
-      system: GROUNDING_SYSTEM + ' Create 8-24 flashcards preserving student wording. Cite sourcePage from [p.N].',
+      system: DECK_SYSTEM,
       user: text.slice(0, 12_000),
       schema: deckGenerationSchema,
       schemaName: 'deck',
@@ -1160,7 +1170,7 @@ export class LibraryService {
     const { result, usage } = await this.ai.completeJson({
       purpose: 'library_gen',
       tier: 'small',
-      system: GROUNDING_SYSTEM + ' Create 10-15 quiz items (mcq+short mix). Cite sourcePage from [p.N].',
+      system: QUIZ_SYSTEM,
       user: text.slice(0, 12_000),
       schema: quizContentSchema,
       schemaName: 'quiz',
@@ -1307,3 +1317,28 @@ export class LibraryService {
 
 const GROUNDING_SYSTEM =
   'You are Petros helping a student study their own material. Ground every claim in the provided source text marked with [p.N] page markers. If the source does not cover something, say so. Never invent facts beyond the source.';
+
+const SUMMARY_SYSTEM = `${GROUNDING_SYSTEM}
+Write a structured study summary of the source document.
+- title: the document's actual subject in plain words (not "Summary").
+- 4-8 sections in the document's own order. Each heading names a specific idea from the source (never "Introduction" or "Overview" alone).
+- Each body is 2-5 plain-language sentences a secondary-school student understands; define technical terms at first use, keeping the source's own terminology.
+- Use "deeper" for an optional extra nuance worth knowing, not a repeat of body.
+- Every section sets sourcePage to the page number N from the [p.N] marker its content came from.`;
+
+const DECK_SYSTEM = `${GROUNDING_SYSTEM}
+Create 8-24 flashcards covering the whole document, most important ideas first.
+- One atomic fact, definition, or relationship per card — never two ideas in one card.
+- prompt is a direct question that stands alone without the document open (never "What does the text say about X?" — ask about X itself).
+- answer is at most 2 sentences, precise, in the source's terminology.
+- Include the key definitions, claims, numbers, and cause-effect relationships from the source.
+- Every card sets sourcePage to the page number N from the [p.N] marker it came from.
+- title: short deck name naming the document's subject.`;
+
+const QUIZ_SYSTEM = `${GROUNDING_SYSTEM}
+Create 10-15 quiz items testing understanding of the document: roughly 60% qtype "mcq", 40% qtype "short", ordered easy to hard.
+- Every prompt stands alone without the document open — name the concept, don't say "according to the text".
+- mcq items: exactly 4 options with keys "a","b","c","d"; exactly one correct — set correctKey to it; wrong options are plausible misconceptions about this material, never joke answers; also set markingNote briefly explaining why the correct answer is right.
+- short items: no options/correctKey; markingNote states exactly what a correct answer must include so it can be marked fairly.
+- Mix recall (definitions, facts) with understanding (why, compare, apply).
+- Every item sets sourcePage to the page number N from the [p.N] marker it tests.`;

@@ -200,15 +200,38 @@ export class SessionsService {
     const topic = await this.repo.getTopic(session.topicId);
     if (!topic) throw new NotFoundException('Topic not found');
 
-    const plan = session.sessionPlan as { blocks?: Array<{ blockType: BlockType; spineStep: SpineStep; brief: string }> };
+    const plan = session.sessionPlan as {
+      source?: string;
+      knowledgeItemId?: string;
+      focusConcept?: string;
+      blocks?: Array<{ blockType: BlockType; spineStep: SpineStep; brief: string }>;
+    };
     const existing = await this.repo.listBlocks(sessionId);
-    const pending = (plan.blocks ?? []).slice(existing.length);
 
     const stage = resolveLearnerStage(principal.kind === 'independent' ? 'independent' : 'school');
     const directives = getPedagogyDirectives(
       (topic.domainArchetype as DomainArchetype) ?? 'procedural_quantitative',
       stage,
     );
+
+    // Grounded tutor sessions (Library → "Tutor me") are created with only a source marker —
+    // the plan is built here, on first stream, from the document's extracted text.
+    let groundingText: string | undefined;
+    if (plan.knowledgeItemId) {
+      const text = await this.library.groundingTextForItem(plan.knowledgeItemId);
+      groundingText = text || undefined;
+    }
+    if (!plan.blocks?.length && plan.source === 'tutor_grounded') {
+      const grounded = groundingText
+        ? await this.planner.planGrounded(principal, topic.title, groundingText, plan.focusConcept, directives)
+        : await this.planner.plan(principal, topic.id, topic.title, topic.subjectLabel, directives, 'standard');
+      plan.blocks = grounded.blocks;
+      await this.repo.updateSession(sessionId, {
+        sessionPlan: { ...plan, kind: grounded.kind, spineMeta: grounded.spineMeta, blocks: grounded.blocks },
+        spine: buildSpine('understand', spineStepsFromPlan(grounded.blocks)),
+      });
+    }
+    const pending = (plan.blocks ?? []).slice(existing.length);
 
     let seq = await this.repo.nextBlockSequence(sessionId);
     let pendingIndex = 0;
@@ -219,6 +242,7 @@ export class SessionsService {
       topic.subjectLabel,
       pending,
       directives,
+      groundingText,
     )) {
       const spec = pending[pendingIndex++];
       emit({ type: 'block.delta', blockType: generated.blockType });

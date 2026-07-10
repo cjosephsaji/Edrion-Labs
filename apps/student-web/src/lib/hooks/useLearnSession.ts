@@ -31,17 +31,21 @@ export function useLearnSession(sessionId: string | undefined) {
   const startStream = useCallback(() => {
     if (!sessionId || esRef.current) return;
     setStreaming(true);
+    // Refetch only when this stream actually built blocks — an empty stream that
+    // still invalidated would refetch, re-trigger the page effect, and loop forever.
+    let producedBlocks = false;
     const es = client.sse(`/learn/sessions/${sessionId}/stream`, {
       onMessage: (data) => {
         if (data === '[DONE]') {
           setStreaming(false);
           esRef.current?.close();
           esRef.current = null;
-          invalidate();
+          if (producedBlocks) invalidate();
           return;
         }
         const event = data as { type?: string; block?: SessionBlockDto };
-        if (event.type === 'block.done' || event.type === 'session.done') {
+        if (event.type === 'block.done') {
+          producedBlocks = true;
           invalidate();
         }
       },

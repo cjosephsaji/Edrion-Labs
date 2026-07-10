@@ -242,9 +242,14 @@ export class BlockGeneratorService {
 
     cacheable = true,
 
+    groundingText?: string,
+
   ): Promise<Record<string, unknown>> {
 
-    const cacheKinds: BlockType[] = ['concept_card', 'visual_explainer', 'worked_example', 'checkpoint'];
+    // Grounded blocks are document-specific — never share them through the topic atom cache.
+    const cacheKinds: BlockType[] = groundingText
+      ? []
+      : ['concept_card', 'visual_explainer', 'worked_example', 'checkpoint'];
 
     if (cacheable && cacheKinds.includes(blockType)) {
 
@@ -276,15 +281,27 @@ export class BlockGeneratorService {
 
     try {
 
+      const groundingRule = groundingText
+
+        ? '\nGround every fact, example, and question in the SOURCE TEXT the student uploaded (page markers [p.N]). Use its terminology and examples. If the source does not cover something, do not invent it.'
+
+        : '';
+
+      const groundingBlock = groundingText
+
+        ? `\n\nSOURCE TEXT (with [p.N] page markers):\n${groundingText.slice(0, 12_000)}`
+
+        : '';
+
       const { result, usage } = await this.ai.completeJson({
 
         purpose: 'block_gen',
 
         tier: 'nano',
 
-        system: buildBlockSystemPrompt(blockType, directives),
+        system: buildBlockSystemPrompt(blockType, directives) + groundingRule,
 
-        user: `Topic: ${topicTitle}\nSubject: ${subjectLabel}\nThis block's brief: ${brief}`,
+        user: `Topic: ${topicTitle}\nSubject: ${subjectLabel}\nThis block's brief: ${brief}${groundingBlock}`,
 
         schema,
 
@@ -338,6 +355,8 @@ export class BlockGeneratorService {
 
     directives: PedagogyDirectives,
 
+    groundingText?: string,
+
   ): AsyncIterable<{ blockType: BlockType; content: Record<string, unknown> }> {
 
     for (const spec of specs) {
@@ -359,6 +378,8 @@ export class BlockGeneratorService {
         directives,
 
         spec.blockType !== 'practice_item',
+
+        groundingText,
 
       );
 
