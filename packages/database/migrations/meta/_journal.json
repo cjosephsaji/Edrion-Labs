@@ -449,6 +449,20 @@
       "when": 1782902600000,
       "tag": "0062_exam_assignment_questions",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1782902650000,
+      "tag": "0063_visual_studio",
+      "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1782902700000,
+      "tag": "0064_exam_engine",
+      "breakpoints": true
     }
   ]
 }

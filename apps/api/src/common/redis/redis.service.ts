@@ -103,6 +103,126 @@ export class RedisService implements OnModuleDestroy {
     }
   }
 
+  async incr(key: string): Promise<number | null> {
+    if (!this.client || !this.healthy) return null;
+    try {
+      return await this.client.incr(key);
+    } catch {
+      return null;
+    }
+  }
+
+  async expire(key: string, ttlSeconds: number): Promise<void> {
+    if (!this.client || !this.healthy) return;
+    try {
+      await this.client.expire(key, ttlSeconds);
+    } catch {
+      /* fail-open */
+    }
+  }
+
+  async getInt(key: string): Promise<number | null> {
+    const raw = await this.get(key);
+    if (raw === null) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  /** Append a JSON-serialized value to a list and refresh TTL. Returns new list length or null. */
+  async jsonListAppend(key: string, value: unknown, ttlSeconds: number): Promise<number | null> {
+    if (!this.client || !this.healthy) return null;
+    try {
+      const len = await this.client.rpush(key, JSON.stringify(value));
+      await this.client.expire(key, ttlSeconds);
+      return len;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Read list entries [start, end] (inclusive). Returns null when Redis is unavailable. */
+  async jsonListRange(key: string, start: number, end: number): Promise<unknown[] | null> {
+    if (!this.client || !this.healthy) return null;
+    try {
+      const rows = await this.client.lrange(key, start, end);
+      return rows.map((row) => {
+        try {
+          return JSON.parse(row) as unknown;
+        } catch {
+          return row;
+        }
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Atomically acquire a student AI quota slot. Idempotent on `idempotencyKey` so BullMQ retries
+   * do not double-charge. Returns null when Redis is unavailable (fail-open).
+   */
+  async acquireStudentQuota(opts: {
+    globalKey: string;
+    scopeKey: string;
+    idempotencyKey: string;
+    globalLimit: number;
+    scopeLimit: number;
+    ttlSeconds: number;
+  }): Promise<{
+    allowed: boolean;
+    globalUsed: number;
+    scopeUsed: number;
+    deduplicated: boolean;
+  } | null> {
+    if (!this.client || !this.healthy) return null;
+    const script = `
+      local idemKey = KEYS[3]
+      local existing = redis.call('GET', idemKey)
+      if existing then
+        local parsed = cjson.decode(existing)
+        parsed.deduplicated = 1
+        return { parsed.allowed, parsed.globalUsed, parsed.scopeUsed, 1 }
+      end
+      local globalCount = tonumber(redis.call('GET', KEYS[1]) or '0')
+      local scopeCount = tonumber(redis.call('GET', KEYS[2]) or '0')
+      local globalLimit = tonumber(ARGV[1])
+      local scopeLimit = tonumber(ARGV[2])
+      local ttl = tonumber(ARGV[3])
+      if globalCount >= globalLimit or scopeCount >= scopeLimit then
+        local denied = cjson.encode({ allowed = 0, globalUsed = globalCount, scopeUsed = scopeCount })
+        redis.call('SET', idemKey, denied, 'EX', ttl)
+        return { 0, globalCount, scopeCount, 0 }
+      end
+      local newGlobal = redis.call('INCR', KEYS[1])
+      if newGlobal == 1 then redis.call('EXPIRE', KEYS[1], ttl) end
+      local newScope = redis.call('INCR', KEYS[2])
+      if newScope == 1 then redis.call('EXPIRE', KEYS[2], ttl) end
+      local granted = cjson.encode({ allowed = 1, globalUsed = newGlobal, scopeUsed = newScope })
+      redis.call('SET', idemKey, granted, 'EX', ttl)
+      return { 1, newGlobal, newScope, 0 }
+    `;
+    try {
+      const result = (await this.client.eval(
+        script,
+        3,
+        opts.globalKey,
+        opts.scopeKey,
+        opts.idempotencyKey,
+        String(opts.globalLimit),
+        String(opts.scopeLimit),
+        String(opts.ttlSeconds),
+      )) as [number, number, number, number];
+      return {
+        allowed: result[0] === 1,
+        globalUsed: result[1],
+        scopeUsed: result[2],
+        deduplicated: result[3] === 1,
+      };
+    } catch {
+      return null;
+    }
+  }
+
   /** Liveness probe for System Health. */
   async ping(): Promise<boolean> {
     if (!this.client) return false;

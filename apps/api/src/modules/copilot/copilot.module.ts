@@ -28,6 +28,6 @@ import { COPILOT_PLANNER } from './copilot.tokens';
     IdempotencyService,
     { provide: COPILOT_PLANNER, useValue: new StubPlanner() },
   ],
-  exports: [CopilotService],
+  exports: [CopilotService, AiUsageLimiter],
 })
 export class CopilotModule {}

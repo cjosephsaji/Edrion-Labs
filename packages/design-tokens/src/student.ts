@@ -37,7 +37,11 @@ export type StudentColorToken =
   | 'mintBg'
   | 'selection'
   | 'success'
-  | 'sidebar';
+  | 'sidebar'
+  | 'canvasGrid'
+  | 'canvasEdge'
+  | 'canvasAlternative'
+  | 'canvasMissing';
 
 export type StudentTheme = Record<StudentColorToken, string>;
 
@@ -79,6 +83,10 @@ export const studentThemes: Record<StudentThemeName, StudentTheme> = {
     selection: '#CFE4D6',
     success: '#14614B',
     sidebar: '#F8F5EC',
+    canvasGrid: '#D8D2C2',
+    canvasEdge: '#7D897F',
+    canvasAlternative: '#5B4A78',
+    canvasMissing: '#3A5A78',
   },
   dim: {
     page: '#221E18',
@@ -117,6 +125,10 @@ export const studentThemes: Record<StudentThemeName, StudentTheme> = {
     selection: '#2E4A3C',
     success: '#48B78C',
     sidebar: '#2C271F',
+    canvasGrid: '#443D33',
+    canvasEdge: '#938C80',
+    canvasAlternative: '#B9A7D4',
+    canvasMissing: '#7CA6C8',
   },
   dark: {
     page: '#14110D',
@@ -155,6 +167,10 @@ export const studentThemes: Record<StudentThemeName, StudentTheme> = {
     selection: '#2F5443',
     success: '#5FCB9E',
     sidebar: '#251F18',
+    canvasGrid: '#332C22',
+    canvasEdge: '#8B8478',
+    canvasAlternative: '#C2ACE0',
+    canvasMissing: '#83B4D9',
   },
 };
 

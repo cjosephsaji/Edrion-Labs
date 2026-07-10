@@ -14,6 +14,7 @@ import { ASK_FULL_SYSTEM_PROMPT, ASK_HINTS_ONLY_SYSTEM_PROMPT } from '../learn-a
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import type { StudentPrincipal } from '../student.types';
 import { SessionsService } from './sessions.service';
+import { VisualGroundingService } from '../visual-studio/visual-grounding.service';
 
 const askOutputSchema = z.object({
   answer: z.string(),
@@ -28,8 +29,9 @@ export class AskService {
     @Inject(HOMEWORK_POLICY_PORT) private readonly homeworkPolicy: HomeworkPolicyPort,
     private readonly budgets: BudgetsService,
     private readonly callLog: LearnAiCallLogger,
-    @Inject(LEARNING_EVENTS_WRITER) private readonly ledger: LearningEventsWriter,
+    @Inject(LEARNING_EVENTS_WRITER)     private readonly ledger: LearningEventsWriter,
     private readonly sessions: SessionsService,
+    private readonly visualGrounding: VisualGroundingService,
   ) {}
 
   async ask(principal: StudentPrincipal, input: AskInput): Promise<AskResponseDto> {
@@ -123,7 +125,19 @@ export class AskService {
       .join('\n');
     const system =
       policyMode === 'hints_only' ? ASK_HINTS_ONLY_SYSTEM_PROMPT : ASK_FULL_SYSTEM_PROMPT;
-    const user = `Context (${input.context.contextLabel}): ${input.context.kind}/${input.context.id}\n${convo}\nQuestion: ${input.question}`;
+
+    let user: string;
+    if (input.context.kind === 'visual_node') {
+      const canvasId = input.context.canvasId ?? input.context.id;
+      const grounding = await this.visualGrounding.forNode(
+        principal,
+        canvasId,
+        input.context.nodeId,
+      );
+      user = `${this.visualGrounding.formatAskUserPrompt(grounding, input.question)}\n${convo ? `${convo}\n` : ''}`;
+    } else {
+      user = `Context (${input.context.contextLabel}): ${input.context.kind}/${input.context.id}\n${convo}\nQuestion: ${input.question}`;
+    }
     const policyNotice =
       policyMode === 'hints_only' ? 'Hints-only mode — direct solutions are not provided.' : undefined;
 

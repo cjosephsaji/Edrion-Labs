@@ -1,0 +1,17 @@
+---
+description: Restrict Task subagent models to Composer or Grok 4.5 only
+alwaysApply: true
+---
+
+# Subagent model policy
+
+When launching Task subagents (`explore`, `generalPurpose`, `shell`, `bugbot`, `security-review`, etc.):
+
+- **Allowed models only:** `composer-2.5`, `composer-2.5-fast`, or `grok-4.5-medium`.
+- **Never use:** Opus, GPT, Sonnet, or any other model slug for subagents.
+- If calling Task with an explicit `model`, it must be one of the allowed slugs above. Prefer `composer-2.5`.
+- If unsure, **omit `model`** so the subagent inherits the main chat model (Composer).
+- Do not parallelize implementation across subagents unless the user explicitly asks.
+- Prefer implementing in the main agent thread for cohesive multi-file features.
+
+`explore` subagents already use Composer 2.5 by default — keep using them for codebase search only.

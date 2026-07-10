@@ -55,6 +55,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<StudentThemeName>('standard');
   const [matchSystem, setMatchSystemState] = useState(false);
   const [reducedMotion, setReducedMotionState] = useState(false);
+  const [systemReducedMotion, setSystemReducedMotion] = useState(false);
   const [textSize, setTextSizeState] = useState<StudentPreferencesDto['textSize']>('M');
   const [hydrated, setHydrated] = useState(false);
 
@@ -77,14 +78,24 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const effectiveTheme = useMemo(() => resolveTheme(theme, matchSystem), [theme, matchSystem]);
 
   useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const sync = () => setSystemReducedMotion(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
+  const effectiveReducedMotion = reducedMotion || systemReducedMotion;
+
+  useEffect(() => {
     if (!hydrated) return;
     const root = document.documentElement;
     root.setAttribute('data-student-theme', effectiveTheme);
-    root.setAttribute('data-reduced-motion', reducedMotion ? 'true' : 'false');
+    root.setAttribute('data-reduced-motion', effectiveReducedMotion ? 'true' : 'false');
     root.setAttribute('data-persona', me?.persona ?? 'independent');
     root.classList.remove('text-size-s', 'text-size-m', 'text-size-l');
     root.classList.add(textSizeClass(textSize));
-  }, [effectiveTheme, reducedMotion, textSize, me?.persona, hydrated]);
+  }, [effectiveTheme, effectiveReducedMotion, textSize, me?.persona, hydrated]);
 
   useEffect(() => {
     if (!matchSystem) return;
@@ -144,7 +155,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     () => ({
       theme,
       matchSystem,
-      reducedMotion,
+      reducedMotion: effectiveReducedMotion,
       textSize,
       setTheme,
       setMatchSystem,
@@ -152,7 +163,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       setTextSize,
       effectiveTheme,
     }),
-    [theme, matchSystem, reducedMotion, textSize, setTheme, setMatchSystem, setReducedMotion, setTextSize, effectiveTheme],
+    [
+      theme,
+      matchSystem,
+      effectiveReducedMotion,
+      textSize,
+      setTheme,
+      setMatchSystem,
+      setReducedMotion,
+      setTextSize,
+      effectiveTheme,
+    ],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

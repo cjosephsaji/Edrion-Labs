@@ -11,15 +11,15 @@ const INSTRUMENTS = [
     icon: GitBranch,
     tone: 'violet' as const,
     title: 'Visual Studio',
-    desc: 'Mind maps and flowcharts from any topic — structured, not generated images.',
+    desc: 'Interactive thinking canvases — build one with Petros or from memory.',
   },
   {
     tag: 'INSTRUMENT 02',
-    href: '/lab/mock-exams/new',
+    href: '/lab/mock-exams',
     icon: PenLine,
     tone: 'amber' as const,
     title: 'Mock exams',
-    desc: 'Timed practice tests with counts-only results — evidence, not scores.',
+    desc: 'Blueprint-driven timed practice — marks and qualitative verdicts.',
   },
   {
     tag: 'INSTRUMENT 03',

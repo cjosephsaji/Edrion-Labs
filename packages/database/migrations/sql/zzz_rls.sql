@@ -191,3 +191,178 @@ BEGIN
   END LOOP;
 END
 $$;
+
+-- Visual Studio: strict student-private policies (not institution-wide).
+CREATE OR REPLACE FUNCTION edrion_current_student() RETURNS text AS $$
+  SELECT NULLIF(current_setting('app.student_id', true), '');
+$$ LANGUAGE sql STABLE;
+
+CREATE OR REPLACE FUNCTION edrion_current_independent_user() RETURNS text AS $$
+  SELECT NULLIF(current_setting('app.independent_user_id', true), '');
+$$ LANGUAGE sql STABLE;
+
+ALTER TABLE visual_canvases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE visual_canvases FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS visual_canvases_student_private ON visual_canvases;
+CREATE POLICY visual_canvases_student_private ON visual_canvases FOR ALL
+USING (
+  (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
+  OR
+  (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+)
+WITH CHECK (
+  (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
+  OR
+  (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+);
+
+ALTER TABLE visual_canvas_revisions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE visual_canvas_revisions FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS visual_canvas_revisions_student_private ON visual_canvas_revisions;
+CREATE POLICY visual_canvas_revisions_student_private ON visual_canvas_revisions FOR ALL
+USING (EXISTS (
+  SELECT 1 FROM visual_canvases vc
+  WHERE vc.id = visual_canvas_revisions.canvas_id
+    AND (
+      (edrion_current_student() IS NOT NULL AND vc.student_id::text = edrion_current_student())
+      OR
+      (edrion_current_independent_user() IS NOT NULL AND vc.independent_user_id::text = edrion_current_independent_user())
+    )
+))
+WITH CHECK (EXISTS (
+  SELECT 1 FROM visual_canvases vc
+  WHERE vc.id = visual_canvas_revisions.canvas_id
+    AND (
+      (edrion_current_student() IS NOT NULL AND vc.student_id::text = edrion_current_student())
+      OR
+      (edrion_current_independent_user() IS NOT NULL AND vc.independent_user_id::text = edrion_current_independent_user())
+    )
+));
+
+-- Exam engine: student-private mock exams / blueprints (never institution-readable via RLS).
+-- When student GUCs are unset (platform/migration), policies allow all (same pattern as visual when GUC empty would block —
+-- FORCE RLS with empty GUC denies; API sets GUCs in student tenant interceptor. For migrate/seed superuser bypasses RLS.)
+
+ALTER TABLE exam_blueprints ENABLE ROW LEVEL SECURITY;
+ALTER TABLE exam_blueprints FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS exam_blueprints_student_private ON exam_blueprints;
+CREATE POLICY exam_blueprints_student_private ON exam_blueprints FOR ALL
+USING (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+  OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
+  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+)
+WITH CHECK (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+  OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
+  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+);
+
+ALTER TABLE mock_exams ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mock_exams FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS mock_exams_student_private ON mock_exams;
+CREATE POLICY mock_exams_student_private ON mock_exams FOR ALL
+USING (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+  OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
+  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+)
+WITH CHECK (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+  OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
+  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+);
+
+ALTER TABLE mock_exam_questions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mock_exam_questions FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS mock_exam_questions_student_private ON mock_exam_questions;
+CREATE POLICY mock_exam_questions_student_private ON mock_exam_questions FOR ALL
+USING (EXISTS (
+  SELECT 1 FROM mock_exams me WHERE me.id = mock_exam_questions.mock_exam_id
+    AND (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_student() IS NOT NULL AND me.student_id::text = edrion_current_student())
+      OR (edrion_current_independent_user() IS NOT NULL AND me.independent_user_id::text = edrion_current_independent_user())
+    )
+))
+WITH CHECK (EXISTS (
+  SELECT 1 FROM mock_exams me WHERE me.id = mock_exam_questions.mock_exam_id
+    AND (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_student() IS NOT NULL AND me.student_id::text = edrion_current_student())
+      OR (edrion_current_independent_user() IS NOT NULL AND me.independent_user_id::text = edrion_current_independent_user())
+    )
+));
+
+ALTER TABLE mock_exam_attempts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mock_exam_attempts FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS mock_exam_attempts_student_private ON mock_exam_attempts;
+CREATE POLICY mock_exam_attempts_student_private ON mock_exam_attempts FOR ALL
+USING (EXISTS (
+  SELECT 1 FROM mock_exams me WHERE me.id = mock_exam_attempts.mock_exam_id
+    AND (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_student() IS NOT NULL AND me.student_id::text = edrion_current_student())
+      OR (edrion_current_independent_user() IS NOT NULL AND me.independent_user_id::text = edrion_current_independent_user())
+    )
+))
+WITH CHECK (EXISTS (
+  SELECT 1 FROM mock_exams me WHERE me.id = mock_exam_attempts.mock_exam_id
+    AND (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_student() IS NOT NULL AND me.student_id::text = edrion_current_student())
+      OR (edrion_current_independent_user() IS NOT NULL AND me.independent_user_id::text = edrion_current_independent_user())
+    )
+));
+
+ALTER TABLE mock_exam_answers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mock_exam_answers FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS mock_exam_answers_student_private ON mock_exam_answers;
+CREATE POLICY mock_exam_answers_student_private ON mock_exam_answers FOR ALL
+USING (EXISTS (
+  SELECT 1 FROM mock_exam_attempts a
+  JOIN mock_exams me ON me.id = a.mock_exam_id
+  WHERE a.id = mock_exam_answers.attempt_id
+    AND (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_student() IS NOT NULL AND me.student_id::text = edrion_current_student())
+      OR (edrion_current_independent_user() IS NOT NULL AND me.independent_user_id::text = edrion_current_independent_user())
+    )
+))
+WITH CHECK (EXISTS (
+  SELECT 1 FROM mock_exam_attempts a
+  JOIN mock_exams me ON me.id = a.mock_exam_id
+  WHERE a.id = mock_exam_answers.attempt_id
+    AND (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_student() IS NOT NULL AND me.student_id::text = edrion_current_student())
+      OR (edrion_current_independent_user() IS NOT NULL AND me.independent_user_id::text = edrion_current_independent_user())
+    )
+));
+
+ALTER TABLE question_exposure ENABLE ROW LEVEL SECURITY;
+ALTER TABLE question_exposure FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS question_exposure_student_private ON question_exposure;
+CREATE POLICY question_exposure_student_private ON question_exposure FOR ALL
+USING (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+  OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
+  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+)
+WITH CHECK (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+  OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
+  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+);
+
+-- Paper patterns + question_bank are shared curriculum assets (readable when GUCs unset or set).
+ALTER TABLE exam_paper_patterns ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS exam_paper_patterns_read ON exam_paper_patterns;
+CREATE POLICY exam_paper_patterns_read ON exam_paper_patterns FOR SELECT USING (true);
+
+ALTER TABLE question_bank ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS question_bank_read ON question_bank;
+CREATE POLICY question_bank_read ON question_bank FOR SELECT USING (true);
+DROP POLICY IF EXISTS question_bank_write ON question_bank;
+CREATE POLICY question_bank_write ON question_bank FOR INSERT WITH CHECK (true);
+CREATE POLICY question_bank_update ON question_bank FOR UPDATE USING (true);

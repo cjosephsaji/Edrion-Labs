@@ -1,178 +1,80 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import type { MockExamDto } from '@edrion/schemas';
-import {
-  useFinishMockExam,
-  useMockExam,
-  useRetakeWeakMockExam,
-  useSaveMockAnswer,
-  useStartMockExam,
-} from '@/lib/hooks';
+import { useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useExamGenerationStream, useMockExam, useStartExam } from '@/lib/hooks';
+import { Eyebrow, PageHeader } from '@/components/ui/primitives';
 import { PillButton } from '@/components/ui/pill-button';
-import { Card } from '@/components/ui/card';
-import { Eyebrow, PageHeader, StatSlot } from '@/components/ui/primitives';
-import { StreamingIndicator } from '@/components/learn/StreamingIndicator';
 
-export default function MockExamPage({ params }: { params: { id: string } }) {
+export default function MockExamStatusPage() {
+  const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { data, isLoading, refetch } = useMockExam(params.id);
-  const start = useStartMockExam();
-  const saveAnswer = useSaveMockAnswer();
-  const finish = useFinishMockExam();
-  const retakeWeak = useRetakeWeakMockExam();
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const exam = data as MockExamDto | undefined;
+  const { data: exam } = useMockExam(id, { pollWhileGenerating: true });
+  const stream = useExamGenerationStream(id);
+  const start = useStartExam();
 
   useEffect(() => {
-    const timer = setInterval(() => void refetch(), exam?.status === 'generating' ? 2000 : 60_000);
-    return () => clearInterval(timer);
-  }, [exam?.status, refetch]);
+    if (exam?.status === 'generating' && stream.status === 'idle') stream.start();
+  }, [exam?.status, stream]);
 
-  const handleStart = () => void start.mutateAsync(params.id).then(() => refetch());
+  useEffect(() => {
+    if (exam?.status === 'ready') {
+      // stay on page with Start CTA
+    }
+  }, [exam?.status]);
 
-  if (isLoading || !exam) {
-    return <div className="mx-auto max-w-2xl p-6 h-64 shimmer rounded-2xl" />;
-  }
-
-  if (exam.status === 'ready') {
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
-        <PageHeader
-          backHref="/lab"
-          eyebrow={<Eyebrow color="amber">MOCK EXAM</Eyebrow>}
-          title={exam.title}
-          subtitle={`${exam.questions?.length ?? 0} questions · ${exam.context.durationMin} minutes`}
-        />
-        <div className="mt-8 flex justify-center">
-          <PillButton onClick={handleStart} disabled={start.isPending}>
-            Start exam
-          </PillButton>
-        </div>
-      </div>
-    );
-  }
-
-  if (exam.status === 'generating' || exam.status === 'draft') {
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-6 pb-24">
-        <PageHeader eyebrow={<Eyebrow color="amber">MOCK EXAM</Eyebrow>} title="Building your exam" />
-        <div className="mt-6">
-          <StreamingIndicator label="PETROS IS WRITING YOUR QUESTIONS…" />
-        </div>
-      </div>
-    );
-  }
-
-  if (exam.status === 'completed' && exam.results) {
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
-        <PageHeader
-          backHref="/lab"
-          eyebrow={<Eyebrow color="amber">RESULTS</Eyebrow>}
-          title={exam.title}
-          subtitle="Counts only — no letter grade."
-        />
-        <StatSlot
-          className="mt-6"
-          label="Score"
-          value={`${exam.results.correct} / ${exam.results.total}`}
-          from="Questions answered correctly"
-        />
-        <p className="mt-4 text-sm text-st-muted">{exam.results.suggestion}</p>
-        <div className="mt-6 space-y-2">
-          {exam.results.byTopic.map((row) => (
-            <div key={row.topic} className="flex justify-between rounded-[15px] border border-st-bd1 bg-st-card px-4 py-3 text-sm">
-              <span className="text-st-ink">{row.topic}</span>
-              <span className="font-mono-ui text-st-muted">{row.correct}/{row.total}</span>
-            </div>
-          ))}
-        </div>
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <PillButton
-            variant="soft"
-            disabled={retakeWeak.isPending}
-            onClick={() =>
-              void retakeWeak.mutateAsync(params.id).then((next) => router.push(`/lab/mock-exams/${next.id}`))
-            }
-          >
-            Retake weak areas
-          </PillButton>
-          <PillButton onClick={() => router.push('/lab/mock-exams/new')}>
-            Build another mock
-          </PillButton>
-        </div>
-      </div>
-    );
-  }
-
-  const questions = exam.questions ?? [];
-  const q = questions[currentIdx];
-  if (!q) {
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-6">
-        <p className="text-st-muted">No questions available.</p>
-      </div>
-    );
-  }
-
-  const handleChoice = (choiceKey: string) => {
-    void saveAnswer.mutateAsync({
-      examId: params.id,
-      questionId: q.id,
-      body: { choiceKey },
-    });
-    if (currentIdx < questions.length - 1) setCurrentIdx((i) => i + 1);
-  };
-
-  const handleFinish = async () => {
-    await finish.mutateAsync(params.id);
-    void refetch();
+  const begin = async () => {
+    await start.mutateAsync(id);
+    router.push(`/lab/mock-exams/${id}/attempt`);
   };
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
-      <Eyebrow>
-        QUESTION {currentIdx + 1} OF {questions.length}
-      </Eyebrow>
-      <p className="mt-1 text-sm text-st-muted">{exam.title}</p>
+      <PageHeader
+        backHref="/lab/mock-exams"
+        backLabel="Mock exams"
+        eyebrow={<Eyebrow color="amber">GENERATING</Eyebrow>}
+        title={exam?.title ?? 'Mock exam'}
+        subtitle={
+          exam?.status === 'generating'
+            ? 'Petros is filling sections…'
+            : exam?.status === 'ready'
+              ? 'Ready when you are.'
+              : exam?.status ?? '…'
+        }
+      />
 
-      <Card className="mt-6" eyebrow={q.topic.toUpperCase()} noPadding>
-        <div className="p-5">
-          <p className="font-display text-lg text-st-ink">{q.prompt}</p>
-          {q.options && (
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {q.options.map((opt) => (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => handleChoice(opt.key)}
-                  className="rounded-xl border border-st-bd2 bg-st-card px-4 py-3 text-left text-sm transition hover:border-st-accent"
-                >
-                  <span className="font-mono-ui font-semibold text-st-accent">{opt.key}.</span> {opt.label}
-                </button>
-              ))}
-            </div>
-          )}
+      {exam?.status === 'generating' && (
+        <div className="mt-8 space-y-3">
+          <div className="h-2 overflow-hidden rounded-full bg-st-surface2">
+            <div className="h-full w-2/3 animate-st-shimmer rounded-full bg-st-accent/60" />
+          </div>
+          <ul className="space-y-1 font-mono text-xs text-st-muted">
+            {stream.events.slice(-8).map((ev, i) => (
+              <li key={i}>
+                {ev.type}
+                {ev.type === 'question' && ev.qtype ? ` · ${ev.qtype}` : ''}
+                {ev.type === 'section' && 'name' in ev ? ` · ${ev.name}` : ''}
+              </li>
+            ))}
+          </ul>
+          {stream.degraded && <p className="text-sm text-st-amber">{stream.degraded}</p>}
+          {stream.error && <p className="text-sm text-st-danger">{stream.error}</p>}
         </div>
-      </Card>
+      )}
 
-      <div className="mt-6 flex justify-between">
-        <PillButton
-          variant="ghost"
-          disabled={currentIdx === 0}
-          onClick={() => setCurrentIdx((i) => i - 1)}
-        >
-          Previous
+      {exam?.generationNotice && (
+        <p className="mt-4 text-sm text-st-amber">{exam.generationNotice}</p>
+      )}
+
+      {exam?.status === 'ready' && (
+        <PillButton className="mt-8" onClick={() => void begin()} disabled={start.isPending}>
+          Enter exam room
         </PillButton>
-        {currentIdx === questions.length - 1 ? (
-          <PillButton onClick={() => void handleFinish()} disabled={finish.isPending}>
-            Finish exam
-          </PillButton>
-        ) : (
-          <PillButton onClick={() => setCurrentIdx((i) => i + 1)}>Next</PillButton>
-        )}
-      </div>
+      )}
+
+      {exam?.status === 'failed' && (
+        <p className="mt-6 text-sm text-st-danger">Generation failed. Try another blueprint.</p>
+      )}
     </div>
   );
 }

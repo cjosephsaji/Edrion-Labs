@@ -131,12 +131,6 @@ export class LibraryController {
     return this.library.quiz(principal, id);
   }
 
-  @Post('library/items/:id/concept-map')
-  @RequireStudentPermissions('student.library.use')
-  conceptMap(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {
-    return this.library.conceptMap(principal, id);
-  }
-
   @Post('library/items/:id/glossary')
   @RequireStudentPermissions('student.library.use')
   glossary(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {

@@ -7,8 +7,10 @@ import { JobsService } from '../../common/queue/jobs.service';
 import { QueueWorkers } from '../../common/queue/queue.worker';
 import { JobTracker } from '../../common/queue/job-tracker.service';
 import { SupportAccessService } from '../support-access/support-access.service';
+import { VisualStudioRepository } from '../student/visual-studio/visual-studio.repository';
 
 const SWEEP_INTERVAL_MS = 60_000;
+const VISUAL_REVISION_PRUNE_INTERVAL_MS = 6 * 60 * 60 * 1000;
 const QUEUE = 'maintenance';
 
 /**
@@ -28,6 +30,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
     private readonly workers: QueueWorkers,
     private readonly tracker: JobTracker,
     private readonly support: SupportAccessService,
+    private readonly visualRepo: VisualStudioRepository,
   ) {}
 
   /** True when the maintenance sweeps run as queue jobs (vs. in-process timers). */
@@ -49,10 +52,16 @@ export class MaintenanceService implements OnApplicationBootstrap {
     this.workers.register('billing.dunning-overdue', () =>
       this.tracker.run('billing.dunning-overdue', QUEUE, () => this.flagOverdueInvoices()),
     );
+    this.workers.register('visual.revisions.prune', () =>
+      this.tracker.run('visual.revisions.prune', QUEUE, async () => ({
+        itemsProcessed: await this.visualRepo.pruneStaleRevisions(),
+      })),
+    );
 
     await this.jobs.schedule(QUEUE, 'support-session.expiry', SWEEP_INTERVAL_MS);
     await this.jobs.schedule(QUEUE, 'ai-run.expiry', SWEEP_INTERVAL_MS);
     await this.jobs.schedule(QUEUE, 'billing.dunning-overdue', SWEEP_INTERVAL_MS);
+    await this.jobs.schedule(QUEUE, 'visual.revisions.prune', VISUAL_REVISION_PRUNE_INTERVAL_MS);
     this.logger.info('maintenance.scheduled', { interval_ms: SWEEP_INTERVAL_MS });
   }
 

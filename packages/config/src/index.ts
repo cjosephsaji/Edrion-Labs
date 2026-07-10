@@ -151,6 +151,26 @@ export const apiEnvSchema = z.object({
   OPENAI_SMALL_MODEL: z.string().default('gpt-5-nano-2025-08-07'),
   /** Quality-critical generation: exam/document content, format capture, role drafting. */
   OPENAI_BIG_MODEL: z.string().default('gpt-5.4-mini'),
+  /** Embedding model for Visual Studio memory matching. */
+  OPENAI_EMBEDDING_MODEL: z.string().default('text-embedding-3-small'),
+  /** Daily AI-run ceiling per student/independent user across all visual scopes. */
+  AI_MAX_RUNS_PER_STUDENT_PER_DAY: z.coerce.number().int().positive().default(50),
+  /** Per-scope daily limits for student visual AI operations (JSON object). */
+  AI_STUDENT_SCOPE_LIMITS_JSON: z
+    .string()
+    .default(
+      JSON.stringify({
+        'visual.topicality': 40,
+        'visual.propose': 12,
+        'visual.generate': 8,
+        'visual.expand': 12,
+        'visual.alternative': 8,
+        'visual.memory_reference': 8,
+        'visual.memory_embedding': 12,
+        'visual.node_quiz': 20,
+      }),
+    )
+    .transform((s) => JSON.parse(s) as Record<string, number>),
 
   BILLING_PROVIDER_SECRET: z.string().optional(),
   BILLING_WEBHOOK_SIGNING_SECRET: z.string().optional(),

@@ -1,63 +1,71 @@
 'use client';
-import { useState } from 'react';
+
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import type { ConceptMapContent } from '@edrion/schemas';
-import { useLibraryArtifact, useLibraryTutor } from '@/lib/hooks';
-import { ConceptMapCanvas } from '@/components/lab/GraphCanvas';
+import { useLibraryArtifact, useVisualLegacyLookup } from '@/lib/hooks';
 import { PillButton } from '@/components/ui/pill-button';
+import { StudentClientError } from '@/lib/student-client';
 
-export default function ConceptMapPage({ params }: { params: { id: string } }) {
+export default function ConceptMapRedirectPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { data, isLoading } = useLibraryArtifact(params.id);
-  const itemId = data?.itemId ?? '';
-  const tutor = useLibraryTutor(itemId);
-  const [flagged, setFlagged] = useState<Set<string>>(new Set());
+  const legacy = useVisualLegacyLookup(params.id);
 
-  if (isLoading) return <div className="mx-auto max-w-2xl p-6 h-64 shimmer rounded-2xl" />;
+  const sourceId = data?.itemId ?? undefined;
+  const rebuildHref = sourceId ? `/lab/visual?source_id=${sourceId}` : '/lab/visual';
 
-  if (!data || data.kind !== 'concept_map') {
+  useEffect(() => {
+    if (legacy.data && 'canvas_id' in legacy.data) {
+      router.replace(`/lab/visual/${legacy.data.canvas_id}`);
+    }
+  }, [legacy.data, router]);
+
+  if (isLoading || legacy.isLoading) {
+    return <div className="mx-auto max-w-2xl p-6 h-64 shimmer rounded-2xl" />;
+  }
+
+  if (!data || (data.kind !== 'concept_map' && data.kind !== 'visual')) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-6">
-        <p className="text-st-muted">Concept map not found.</p>
-        <Link href="/library" className="mt-4 text-sm text-st-accent">← Library</Link>
+        <p className="text-st-muted">Map not found.</p>
+        <Link href="/library" className="mt-4 text-sm text-st-accent">
+          ← Library
+        </Link>
       </div>
     );
   }
 
-  const content = data.content as ConceptMapContent;
+  if (legacy.data && 'canvas_id' in legacy.data) {
+    return <div className="mx-auto max-w-2xl p-6 h-64 shimmer rounded-2xl" />;
+  }
 
-  const handleLearnThis = async (label: string) => {
-    if (!itemId) return;
-    const result = await tutor.mutateAsync({ focusConcept: label });
-    router.push(`/learn/session/${result.sessionId}`);
-  };
+  const rebuildRequired =
+    legacy.isError &&
+    legacy.error instanceof StudentClientError &&
+    legacy.error.code === 'VISUAL_LEGACY_REBUILD_REQUIRED';
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 animate-st-block-in pb-24">
-      <Link href={data.itemId ? `/library/${data.itemId}` : '/library'} className="text-sm text-st-accent">
+      <Link href={sourceId ? `/library/${sourceId}` : '/library'} className="text-sm text-st-accent">
         ← Source
       </Link>
-      <p className="mt-4 text-xs font-medium text-st-violet">✦ AI-generated concept map</p>
+      <p className="mt-4 text-xs font-medium text-st-violet">✦ Older map</p>
       <h1 className="font-display text-2xl font-semibold text-st-ink">{data.title}</h1>
       <p className="mt-1 text-xs text-st-muted">Made from: {data.fromLabel.replace(/^From:\s*/i, '')}</p>
 
-      <div className="mt-6">
-        <ConceptMapCanvas
-          content={content}
-          flaggedIds={flagged}
-          onFlagShaky={(nodeId) => setFlagged((prev) => new Set(prev).add(nodeId))}
-          onLearnThis={(label) => void handleLearnThis(label)}
-        />
-      </div>
-
-      {tutor.isPending && (
-        <p className="mt-4 text-sm text-st-muted">Starting a grounded session…</p>
-      )}
-      <div className="mt-6">
-        <PillButton variant="ghost" onClick={() => router.push(data.itemId ? `/library/${data.itemId}` : '/library')}>
-          Back to source
-        </PillButton>
+      <div className="mt-8 rounded-[15px] border border-st-bd1 bg-st-card p-6">
+        <p className="font-display text-lg font-semibold text-st-ink">
+          {rebuildRequired
+            ? 'This older map needs a fresh layout.'
+            : 'Opening your Thinking Canvas…'}
+        </p>
+        <p className="mt-2 text-sm text-st-muted">
+          Petros can rebuild this from your source with the new visual engine.
+        </p>
+        <div className="mt-6">
+          <PillButton onClick={() => router.push(rebuildHref)}>Rebuild as a Thinking Canvas</PillButton>
+        </div>
       </div>
     </div>
   );

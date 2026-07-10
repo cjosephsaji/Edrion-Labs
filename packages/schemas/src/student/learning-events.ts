@@ -105,6 +105,34 @@ export const learningEventPayloadSchemas = {
       }),
     ),
   }),
+  'exam.blueprint_created': basePayload.extend({
+    blueprintId: z.string().uuid(),
+    template: z.string(),
+    sourceKind: z.string(),
+  }),
+  'exam.attempt_started': basePayload.extend({
+    examId: z.string().uuid(),
+    attemptId: z.string().uuid(),
+  }),
+  'exam.attempt_submitted': basePayload.extend({
+    examId: z.string().uuid(),
+    attemptId: z.string().uuid(),
+  }),
+  'exam.graded': basePayload.extend({
+    examId: z.string().uuid(),
+    attemptId: z.string().uuid(),
+    awardedMarks: z.number(),
+    maxMarks: z.number(),
+  }),
+  'exam.retake_weak_started': basePayload.extend({
+    sourceExamId: z.string().uuid(),
+    newExamId: z.string().uuid(),
+    topics: z.array(z.string()),
+  }),
+  'exam.topics_pushed_to_revision': basePayload.extend({
+    attemptId: z.string().uuid(),
+    topicLabels: z.array(z.string()),
+  }),
   'debate.completed': basePayload.extend({
     debateId: z.string().uuid(),
     format: z.string(),
@@ -138,6 +166,70 @@ export const learningEventPayloadSchemas = {
   'achievement.unlocked': basePayload.extend({
     badgeKey: z.string(),
     tier: z.string(),
+  }),
+  'visual.topic_declined': basePayload.extend({
+    category: z.string(),
+  }),
+  'visual.canvas_created': basePayload.extend({
+    canvasId: z.string().uuid(),
+    origin: z.string(),
+    archetype: z.string(),
+    nodeCount: z.number().int(),
+    edgeCount: z.number().int(),
+  }),
+  'visual.archetype_changed': basePayload.extend({
+    canvasId: z.string().uuid(),
+    from: z.string(),
+    to: z.string(),
+  }),
+  'visual.node_marked_shaky': basePayload.extend({
+    canvasId: z.string().uuid(),
+    nodeId: z.string(),
+    topicId: z.string().uuid(),
+  }),
+  'visual.node_resolved': basePayload.extend({
+    canvasId: z.string().uuid(),
+    nodeId: z.string(),
+    topicId: z.string().uuid(),
+  }),
+  'visual.branch_expanded': basePayload.extend({
+    canvasId: z.string().uuid(),
+    anchorNodeId: z.string(),
+    addedNodeIds: z.array(z.string()),
+  }),
+  'visual.alternative_added': basePayload.extend({
+    canvasId: z.string().uuid(),
+    anchorNodeId: z.string(),
+    addedNodeIds: z.array(z.string()),
+  }),
+  'visual.node_quiz_completed': basePayload.extend({
+    canvasId: z.string().uuid(),
+    nodeId: z.string(),
+    results: z.array(
+      z.object({
+        questionId: z.string().uuid(),
+        correct: z.boolean(),
+      }),
+    ),
+  }),
+  'visual.memory_check_completed': basePayload.extend({
+    canvasId: z.string().uuid(),
+    topicId: z.string().uuid(),
+    matchedNodeIds: z.array(z.string()),
+    missingReferenceNodeIds: z.array(z.string()),
+    correctEdgeIds: z.array(z.string()),
+    wrongEdgeIds: z.array(z.string()),
+    matchingMode: z.enum(['embeddings', 'normalized_title_fallback']),
+  }),
+  'visual.revision_queued': basePayload.extend({
+    canvasId: z.string().uuid(),
+    topicId: z.string().uuid(),
+    nodeIds: z.array(z.string()),
+    reason: z.enum(['shaky', 'memory_missing']),
+  }),
+  'visual.canvas_deleted': basePayload.extend({
+    canvasId: z.string().uuid(),
+    origin: z.string(),
   }),
   'goal.weekly_met': basePayload.extend({
     weekStart: z.string(),

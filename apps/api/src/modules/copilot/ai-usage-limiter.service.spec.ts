@@ -72,4 +72,30 @@ describe('AiUsageLimiter', () => {
     const { limiter } = build({ redisEnabled: false });
     await expect(limiter.check('e1', {})).resolves.toBeUndefined();
   });
+
+  it('peekStudent returns scope states without incrementing', async () => {
+    const redis = {
+      enabled: true,
+      getInt: vi.fn().mockResolvedValue(2),
+    };
+    const limiter = new AiUsageLimiter(
+      {
+        ...ENV,
+        AI_MAX_RUNS_PER_STUDENT_PER_DAY: 50,
+        AI_STUDENT_SCOPE_LIMITS_JSON: { 'visual.propose': 12 },
+      } as never,
+      redis as never,
+      { effectivePolicy: vi.fn() } as never,
+    );
+    const scopes = await limiter.peekStudent({
+      kind: 'independent',
+      independentUserId: 'u1',
+      email: '',
+      fullName: '',
+      lastAuthAt: null,
+      permissions: [],
+    });
+    expect(scopes['visual.propose']?.used).toBe(2);
+    expect(redis.getInt).toHaveBeenCalled();
+  });
 });

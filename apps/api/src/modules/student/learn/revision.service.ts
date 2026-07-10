@@ -19,8 +19,11 @@ export class RevisionService {
     const now = Date.now();
     const queue = rows.map((r) => {
       const days = (now - r.state.lastEvidenceAt.getTime()) / (1000 * 60 * 60 * 24);
+      const manualReasons = r.state.manualReasons ?? [];
+      const manualDue =
+        r.state.manualDueAt != null && r.state.manualDueAt.getTime() <= now && manualReasons.length > 0;
       let freshness: 'fresh' | 'fading' | 'due' = 'fresh';
-      if (days > FRESHNESS_FADING_DAYS) freshness = 'due';
+      if (manualDue || days > FRESHNESS_FADING_DAYS) freshness = 'due';
       else if (days > FRESHNESS_FRESH_DAYS) freshness = 'fading';
       return {
         topicKey: r.topic.topicKey,
@@ -28,6 +31,8 @@ export class RevisionService {
         freshness,
         lastTouched: r.state.lastEvidenceAt.toISOString(),
         topicId: r.topic.id,
+        manualReasonCount: manualReasons.length,
+        manualReasonTitles: manualReasons.slice(0, 2).map((reason) => reason.title),
       };
     });
 

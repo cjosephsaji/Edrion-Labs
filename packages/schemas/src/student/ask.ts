@@ -1,11 +1,24 @@
 import { z } from 'zod';
 
-export const askContextSchema = z.object({
-  kind: z.enum(['session', 'concept', 'practice', 'homework', 'quick']),
-  id: z.string().uuid(),
-  blockId: z.string().uuid().optional(),
-  contextLabel: z.string(),
-});
+export const askContextSchema = z.discriminatedUnion('kind', [
+  z
+    .object({
+      kind: z.enum(['session', 'concept', 'practice', 'homework', 'quick']),
+      id: z.string().uuid(),
+      blockId: z.string().uuid().optional(),
+      contextLabel: z.string(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('visual_node'),
+      id: z.string().uuid(),
+      canvasId: z.string().uuid(),
+      nodeId: z.string().min(1).max(64),
+      contextLabel: z.string(),
+    })
+    .strict(),
+]);
 
 export const askInputSchema = z.object({
   context: askContextSchema,

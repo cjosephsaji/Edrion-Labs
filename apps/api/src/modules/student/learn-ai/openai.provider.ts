@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
 import { z, type ZodSchema } from 'zod';
@@ -35,6 +36,7 @@ export class OpenAiLearnProvider implements LearnAiProvider {
   private client: OpenAI | null = null;
   private readonly apiKey: string | undefined;
   private readonly models: Record<'nano' | 'small' | 'big', string>;
+  private readonly embeddingModel: string;
   private readonly configuredModels: { chat: string; small: string; big: string };
   private lastError: string | null = null;
   private readonly schemaCache = new Map<string, Record<string, unknown>>();
@@ -46,6 +48,7 @@ export class OpenAiLearnProvider implements LearnAiProvider {
       small: env.OPENAI_SMALL_MODEL,
       big: env.OPENAI_BIG_MODEL,
     };
+    this.embeddingModel = env.OPENAI_EMBEDDING_MODEL;
     this.configuredModels = {
       chat: env.OPENAI_MODEL,
       small: env.OPENAI_SMALL_MODEL,
@@ -144,9 +147,16 @@ export class OpenAiLearnProvider implements LearnAiProvider {
           }
 
           if (attempt === 1) {
-            this.logger.error(
-              `JSON validation failed after retry: purpose=${opts.purpose} schema=${opts.schemaName} model=${modelId} raw=${lastText.slice(0, 200)}`,
-            );
+            const outputHash = createHash('sha256').update(lastText).digest('hex').slice(0, 16);
+            if (opts.privacySensitive) {
+              this.logger.error(
+                `JSON validation failed after retry: purpose=${opts.purpose} schema=${opts.schemaName} model=${modelId} outputHash=${outputHash}`,
+              );
+            } else {
+              this.logger.error(
+                `JSON validation failed after retry: purpose=${opts.purpose} schema=${opts.schemaName} model=${modelId} raw=${lastText.slice(0, 200)}`,
+              );
+            }
           }
           throw err;
         }
@@ -249,6 +259,33 @@ export class OpenAiLearnProvider implements LearnAiProvider {
         usage: {
           inputTokens: completed?.usage?.input_tokens ?? 0,
           outputTokens: completed?.usage?.output_tokens ?? 0,
+          model: modelId,
+          durationMs: Date.now() - started,
+        },
+      };
+    } catch (err) {
+      this.recordError(modelId, err);
+      throw err;
+    }
+  }
+
+  async embedTexts(texts: string[]): Promise<import('./provider').LearnAiEmbeddingResult> {
+    const started = Date.now();
+    const modelId = this.embeddingModel;
+    try {
+      const response = await this.withRetry(
+        () =>
+          this.sdk().embeddings.create({
+            model: modelId,
+            input: texts,
+            encoding_format: 'float',
+          }),
+        modelId,
+      );
+      return {
+        vectors: response.data.map((row) => row.embedding),
+        usage: {
+          inputTokens: response.usage?.prompt_tokens ?? 0,
           model: modelId,
           durationMs: Date.now() - started,
         },

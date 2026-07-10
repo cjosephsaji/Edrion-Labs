@@ -289,7 +289,11 @@ export type {
   NewDocumentTemplate,
   DocumentRender,
   NewDocumentRender,
+  VisualCanvas,
+  NewVisualCanvas,
+  VisualCanvasRevision,
+  VisualManualReason,
 } from './schema/index';
-export { sql, eq, and, or, desc, asc, ilike, inArray, count, gte, lte, lt, gt, isNull, isNotNull } from 'drizzle-orm';
+export { sql, eq, and, or, desc, asc, ilike, inArray, notInArray, count, gte, lte, lt, gt, isNull, isNotNull } from 'drizzle-orm';
 export type { SQL } from 'drizzle-orm';
 export type { PgColumn, PgTable } from 'drizzle-orm/pg-core';

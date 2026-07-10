@@ -24,7 +24,15 @@
     "pdfjs-dist": "4.8.69",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-pdf": "^9.2.1"
+    "react-markdown": "^10.1.0",
+    "react-pdf": "^9.2.1",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
+    "zustand": "^5.0.14",
+    "@xyflow/react": "^12.11.2",
+    "elkjs": "^0.11.1",
+    "html-to-image": "^1.11.13",
+    "idb-keyval": "^6.3.0"
   },
   "devDependencies": {
     "@edrion/design-tokens": "workspace:*",

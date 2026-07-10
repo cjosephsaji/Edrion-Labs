@@ -202,12 +202,13 @@ export const knowledgeItemPageSchema = z.object({
 
 export const libraryGeneratedItemSchema = z.object({
   id: z.string().uuid(),
-  kind: z.union([knowledgeArtifactKindSchema, z.literal('deck')]),
+  kind: z.union([knowledgeArtifactKindSchema, z.literal('deck'), z.literal('visual_canvas')]),
   title: z.string(),
   fromLabel: z.string(),
   freshness: freshnessBucketSchema.optional(),
   meta: z.string().optional(),
   createdAt: z.string(),
+  updatedAt: z.string().optional(),
   itemId: z.string().uuid().nullable().optional(),
 });
 

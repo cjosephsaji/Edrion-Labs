@@ -8,14 +8,20 @@ export class StudentClientError extends Error {
     public readonly code: string,
     message: string,
     public readonly correlationId?: string,
+    public readonly meta?: Record<string, unknown>,
   ) {
     super(message);
     this.name = 'StudentClientError';
   }
 }
 
+export type SseEventFrame = {
+  id?: string;
+  data: unknown;
+};
+
 export type SseHandlers = {
-  onMessage?: (data: unknown) => void;
+  onMessage?: (frame: SseEventFrame) => void;
   onError?: (err: unknown) => void;
   onOpen?: () => void;
 };
@@ -69,6 +75,7 @@ export class StudentClient {
         err.code ?? 'ERROR',
         err.message ?? res.statusText,
         err.correlationId,
+        err.meta,
       );
     }
     return body as T;
@@ -155,8 +162,24 @@ export class StudentClient {
           body: method === 'POST' && init?.body !== undefined ? JSON.stringify(init.body) : undefined,
           signal: controller.signal,
         });
-        if (!res.ok || !res.body) {
-          handlers.onError?.(new Error(`SSE failed: ${res.status}`));
+        if (!res.ok) {
+          let message = `SSE failed: ${res.status}`;
+          try {
+            const text = await res.text();
+            const body = JSON.parse(text) as { message?: string; code?: string };
+            if (body.message) message = body.message;
+          } catch {
+            // keep default message
+          }
+          handlers.onError?.(
+            new StudentClientError(res.status, 'SSE_FAILED', message, undefined),
+          );
+          return;
+        }
+        if (!res.body) {
+          handlers.onError?.(
+            new StudentClientError(502, 'SSE_FAILED', 'SSE stream unavailable', undefined),
+          );
           return;
         }
         handlers.onOpen?.();
@@ -172,20 +195,40 @@ export class StudentClient {
           buffer = frames.pop() ?? '';
 
           for (const frame of frames) {
-            const line = frame
-              .split('\n')
-              .find((l) => l.startsWith('data: '));
-            if (!line) continue;
-            const payload = line.slice(6).trim();
+            if (!frame.trim()) continue;
+            const lines = frame.split('\n');
+            let eventId: string | undefined;
+            const dataLines: string[] = [];
+            for (const line of lines) {
+              if (line.startsWith('id:')) {
+                eventId = line.slice(3).trim();
+              } else if (line.startsWith('data:')) {
+                dataLines.push(line.slice(5).trimStart());
+              }
+            }
+            if (dataLines.length === 0) continue;
+            const payload = dataLines.join('\n').trim();
             if (payload === '[DONE]') {
-              handlers.onMessage?.('[DONE]');
+              handlers.onMessage?.({ id: eventId, data: '[DONE]' });
               close();
               return;
             }
             try {
-              handlers.onMessage?.(JSON.parse(payload));
+              const parsed = JSON.parse(payload) as Record<string, unknown>;
+              if (parsed.type === 'error') {
+                handlers.onError?.(
+                  new StudentClientError(
+                    502,
+                    String(parsed.code ?? 'SSE_ERROR'),
+                    String(parsed.message ?? 'Stream error'),
+                    undefined,
+                  ),
+                );
+                continue;
+              }
+              handlers.onMessage?.({ id: eventId, data: parsed });
             } catch {
-              handlers.onMessage?.(payload);
+              handlers.onMessage?.({ id: eventId, data: payload });
             }
           }
         }

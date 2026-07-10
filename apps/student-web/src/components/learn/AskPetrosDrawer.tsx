@@ -21,6 +21,11 @@ function canPin(context: AskInput['context']): boolean {
   return context.kind === 'session' || context.kind === 'concept' || context.kind === 'practice';
 }
 
+function drawerTitle(context: AskInput['context']): string {
+  if (context.kind === 'visual_node') return 'Ask about this idea';
+  return 'Ask Petros';
+}
+
 export function AskPetrosDrawer({
   open,
   onClose,
@@ -59,8 +64,9 @@ export function AskPetrosDrawer({
       const es = streamAsk(
         { context, question: trimmed, conversation: conversationRef.current },
         {
-          onMessage: (data) => {
-            if (data === '[DONE]') {
+          onMessage: (frame) => {
+            const data = frame.data;
+            if (typeof data === 'string' && data === '[DONE]') {
               setStreaming(false);
               setPartialAnswer('');
               setPendingQuestion(null);
@@ -120,6 +126,9 @@ export function AskPetrosDrawer({
 
   const handlePin = async (turnIndex: number, q: string, a: string) => {
     if (!pinEnabled || pinnedTurns.has(turnIndex) || pinAsk.isPending) return;
+    if (context.kind !== 'session' && context.kind !== 'concept' && context.kind !== 'practice') {
+      return;
+    }
     await pinAsk.mutateAsync({
       sessionId: context.id,
       blockAfterId: context.blockId,
@@ -158,7 +167,7 @@ export function AskPetrosDrawer({
           <div>
             <div className="flex items-center gap-1">
               <PetrosMark />
-              <Eyebrow color="amber">ASK PETROS</Eyebrow>
+              <Eyebrow color="amber">{drawerTitle(context).toUpperCase()}</Eyebrow>
             </div>
             <p className="text-sm font-semibold text-st-amberInk">Asking about: {context.contextLabel}</p>
           </div>

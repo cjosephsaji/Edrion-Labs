@@ -4,12 +4,8 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { FeatureControlsModule } from '../feature-controls/feature-controls.module';
 import { PortalModule } from '../portal/portal.module';
 import { StudentAuthController } from './auth/student-auth.controller';
-import { StudentAuthService } from './auth/student-auth.service';
-import { IndependentSignupService } from './auth/independent-signup.service';
-import { StudentAuthGuard } from './core/student-auth.guard';
-import { StudentSessionService } from './core/student-session.service';
+import { StudentAuthModule } from './auth/student-auth.module';
 import { StudentTenantInterceptor } from './core/student-tenant.interceptor';
-import { StudentPermissionsGuard } from './core/student-permissions.guard';
 import { StudentMeController } from './me/student-me.controller';
 import { StudentMeService } from './me/student-me.service';
 import { StudentHomeController } from './home/student-home.controller';
@@ -42,10 +38,7 @@ import { LibraryStreamController } from './library/library-stream.controller';
 import { LibraryRepository } from './library/library.repository';
 import { LibraryService } from './library/library.service';
 import { LibraryIngestWorker } from './library/library-ingest.worker';
-import { LabVisualController } from './lab-visual/lab-visual.controller';
-import { LabVisualService } from './lab-visual/lab-visual.service';
-import { LabMockController } from './lab-mock/lab-mock.controller';
-import { LabMockService } from './lab-mock/lab-mock.service';
+import { ExamEngineModule } from './exam-engine/exam-engine.module';
 import { LabDebateController } from './lab-debate/lab-debate.controller';
 import { LabDebateService } from './lab-debate/lab-debate.service';
 import { AchievementsProcessor } from './jobs/achievements.processor';
@@ -70,12 +63,13 @@ import { StudentHomeworkController } from './homework/homework.controller';
 import { StudentHomeworkService } from './homework/homework.service';
 import { HomeworkRepository } from './homework/homework.repository';
 import { HomeworkPolicyService } from './homework/homework-policy.service';
+import { VisualStudioModule } from './visual-studio/visual-studio.module';
 import { StudentSurfacesController } from './surfaces/student-surfaces.controller';
 import { StudentSurfacesReadService } from './surfaces/student-surfaces-read.service';
 import { SurfaceGateService } from './surfaces/surface-gate.service';
 
 @Module({
-  imports: [FeatureControlsModule, PortalModule, LearnAiModule, LearningEventsModule],
+  imports: [FeatureControlsModule, PortalModule, LearnAiModule, LearningEventsModule, VisualStudioModule, ExamEngineModule, StudentAuthModule],
   controllers: [
     StudentAuthController,
     StudentMeController,
@@ -91,8 +85,6 @@ import { SurfaceGateService } from './surfaces/surface-gate.service';
     HistoryController,
     LibraryController,
     LibraryStreamController,
-    LabVisualController,
-    LabMockController,
     LabDebateController,
     AchievementsController,
     StudentAnalyticsController,
@@ -106,11 +98,6 @@ import { SurfaceGateService } from './surfaces/surface-gate.service';
     StudentSurfacesController,
   ],
   providers: [
-    StudentSessionService,
-    StudentAuthService,
-    IndependentSignupService,
-    StudentAuthGuard,
-    StudentPermissionsGuard,
     StudentMeService,
     StudentHomeService,
     SurfacesService,
@@ -128,8 +115,6 @@ import { SurfaceGateService } from './surfaces/surface-gate.service';
     LibraryRepository,
     LibraryService,
     LibraryIngestWorker,
-    LabVisualService,
-    LabMockService,
     LabDebateService,
     AchievementsService,
     AchievementsProcessor,
@@ -148,6 +133,6 @@ import { SurfaceGateService } from './surfaces/surface-gate.service';
     StudentSurfacesReadService,
     { provide: APP_INTERCEPTOR, useClass: StudentTenantInterceptor },
   ],
-  exports: [StudentSessionService, StudentAuthGuard, StudentPermissionsGuard, LearningEventsModule],
+  exports: [StudentAuthModule, LearningEventsModule],
 })
 export class StudentModule {}

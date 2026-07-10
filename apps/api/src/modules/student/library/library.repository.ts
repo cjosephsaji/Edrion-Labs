@@ -67,6 +67,39 @@ export class LibraryRepository {
       .orderBy(desc(schema.flashcardDecks.createdAt));
   }
 
+  async listCanvases(principal: StudentPrincipal) {
+    return this.db
+      .select()
+      .from(schema.visualCanvases)
+      .where(
+        ownerWhere(principal, schema.visualCanvases.studentId, schema.visualCanvases.independentUserId),
+      )
+      .orderBy(desc(schema.visualCanvases.updatedAt));
+  }
+
+  async listCanvasesForItem(itemId: string) {
+    return this.db
+      .select()
+      .from(schema.visualCanvases)
+      .where(eq(schema.visualCanvases.sourceId, itemId))
+      .orderBy(desc(schema.visualCanvases.updatedAt));
+  }
+
+  async mappedLegacyArtifactIds(principal: StudentPrincipal) {
+    const rows = await this.db
+      .select({ legacyArtifactId: schema.visualCanvases.legacyArtifactId })
+      .from(schema.visualCanvases)
+      .where(
+        and(
+          ownerWhere(principal, schema.visualCanvases.studentId, schema.visualCanvases.independentUserId),
+          sql`${schema.visualCanvases.legacyArtifactId} IS NOT NULL`,
+        ),
+      );
+    return new Set(
+      rows.map((r) => r.legacyArtifactId).filter((id): id is string => id != null),
+    );
+  }
+
   async getItem(principal: StudentPrincipal, id: string) {
     const [row] = await this.db
       .select()
@@ -423,7 +456,7 @@ export class LibraryRepository {
 
   async search(principal: StudentPrincipal, q: string) {
     const pattern = `%${q}%`;
-    const [items, artifacts, decks, collections] = await Promise.all([
+    const [items, artifacts, decks, collections, canvases] = await Promise.all([
       this.db
         .select()
         .from(schema.knowledgeItems)
@@ -472,8 +505,21 @@ export class LibraryRepository {
           ),
         )
         .limit(30),
+      this.db
+        .select()
+        .from(schema.visualCanvases)
+        .where(
+          and(
+            ownerWhere(principal, schema.visualCanvases.studentId, schema.visualCanvases.independentUserId),
+            or(
+              ilike(schema.visualCanvases.title, pattern),
+              ilike(schema.visualCanvases.archetype, pattern),
+            ),
+          ),
+        )
+        .limit(30),
     ]);
-    return { items, artifacts, decks, collections };
+    return { items, artifacts, decks, collections, canvases };
   }
 
   async getStorageObjects(ids: string[] | null | undefined) {

@@ -72,3 +72,5 @@ export * from './institutional-bridge';
 export * from './student-knowledge';
 // Learn engine (Plan 02)
 export * from './learn';
+// Visual Studio (Thinking Canvas)
+export * from './visual-studio';

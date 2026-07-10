@@ -211,6 +211,102 @@ export const flashcardReviews = pgTable(
   }),
 );
 
+/** Curriculum paper-pattern presets (CBSE / KTU / chapter test). */
+export const examPaperPatterns = pgTable(
+  'exam_paper_patterns',
+  {
+    id: primaryId(),
+    key: text('key').notNull(),
+    name: text('name').notNull(),
+    board: text('board').notNull(),
+    levelLabel: text('level_label').notNull(),
+    durationMin: integer('duration_min').notNull(),
+    totalMarks: integer('total_marks').notNull(),
+    sections: jsonb('sections').$type<Record<string, unknown>[]>().notNull(),
+    description: text('description'),
+    ...timestamps,
+  },
+  (t) => ({
+    keyUq: uniqueIndex('exam_paper_patterns_key_uq').on(t.key),
+  }),
+);
+
+/** Editable blueprint persisted before generation; retakes reuse the same row. */
+export const examBlueprints = pgTable(
+  'exam_blueprints',
+  {
+    id: primaryId(),
+    institutionId: uuid('institution_id').references(() => institutions.id, { onDelete: 'cascade' }),
+    studentId: uuid('student_id').references(() => students.id, { onDelete: 'cascade' }),
+    independentUserId: uuid('independent_user_id').references(() => independentUsers.id, {
+      onDelete: 'cascade',
+    }),
+    paperPatternId: uuid('paper_pattern_id').references(() => examPaperPatterns.id, {
+      onDelete: 'set null',
+    }),
+    sourceKind: text('source_kind').notNull().default('studied'),
+    blueprint: jsonb('blueprint').$type<Record<string, unknown>>().notNull(),
+    version: integer('version').notNull().default(1),
+    ...timestamps,
+  },
+  (t) => ({
+    ownerIdx: index('exam_blueprints_owner_idx').on(t.studentId, t.createdAt),
+    indepIdx: index('exam_blueprints_indep_idx').on(t.independentUserId, t.createdAt),
+  }),
+);
+
+/** Shared validated question bank (concept_atoms-style cache). */
+export const questionBank = pgTable(
+  'question_bank',
+  {
+    id: primaryId(),
+    topicKey: text('topic_key').notNull(),
+    topicLabel: text('topic_label').notNull(),
+    qtype: text('qtype').notNull(),
+    difficulty: text('difficulty').notNull(),
+    curriculumKey: text('curriculum_key').notNull().default('general'),
+    promptHash: text('prompt_hash').notNull(),
+    promptVersion: text('prompt_version').notNull().default('exam-v1'),
+    payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
+    model: text('model'),
+    ...timestamps,
+  },
+  (t) => ({
+    bankUq: uniqueIndex('question_bank_lookup_uq').on(
+      t.topicKey,
+      t.qtype,
+      t.difficulty,
+      t.curriculumKey,
+      t.promptHash,
+      t.promptVersion,
+    ),
+    topicIdx: index('question_bank_topic_idx').on(t.topicKey, t.qtype, t.difficulty),
+  }),
+);
+
+/** Per-student exposure so banked questions are not repeated. */
+export const questionExposure = pgTable(
+  'question_exposure',
+  {
+    id: primaryId(),
+    studentId: uuid('student_id').references(() => students.id, { onDelete: 'cascade' }),
+    independentUserId: uuid('independent_user_id').references(() => independentUsers.id, {
+      onDelete: 'cascade',
+    }),
+    questionBankId: uuid('question_bank_id')
+      .notNull()
+      .references(() => questionBank.id, { onDelete: 'cascade' }),
+    exposedAt: timestamp('exposed_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    studentBankUq: uniqueIndex('question_exposure_student_bank_uq').on(t.studentId, t.questionBankId),
+    indepBankUq: uniqueIndex('question_exposure_indep_bank_uq').on(
+      t.independentUserId,
+      t.questionBankId,
+    ),
+  }),
+);
+
 export const mockExams = pgTable(
   'mock_exams',
   {
@@ -228,6 +324,10 @@ export const mockExams = pgTable(
       onDelete: 'set null',
     }),
     examGoalId: uuid('exam_goal_id'),
+    blueprintId: uuid('blueprint_id').references(() => examBlueprints.id, { onDelete: 'set null' }),
+    sourceKind: text('source_kind'),
+    generationNotice: text('generation_notice'),
+    gradingStatus: text('grading_status'),
     status: text('status').notNull().default('draft'),
     generatedAt: timestamp('generated_at', { withTimezone: true }),
     version: integer('version').notNull().default(1),
@@ -235,6 +335,7 @@ export const mockExams = pgTable(
   },
   (t) => ({
     ownerIdx: index('mock_exams_owner_idx').on(t.studentId, t.createdAt),
+    blueprintIdx: index('mock_exams_blueprint_idx').on(t.blueprintId),
   }),
 );
 
@@ -253,6 +354,12 @@ export const mockExamQuestions = pgTable(
     correctKey: text('correct_key'),
     markingNote: text('marking_note'),
     marks: integer('marks').notNull().default(1),
+    sectionId: text('section_id'),
+    difficulty: text('difficulty'),
+    payload: jsonb('payload').$type<Record<string, unknown> | null>(),
+    questionBankId: uuid('question_bank_id').references(() => questionBank.id, {
+      onDelete: 'set null',
+    }),
   },
   (t) => ({
     examSeqUq: uniqueIndex('mock_exam_questions_exam_seq_uq').on(t.mockExamId, t.sequence),
@@ -270,10 +377,14 @@ export const mockExamAttempts = pgTable(
     startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
     endsAt: timestamp('ends_at', { withTimezone: true }).notNull(),
     finishedAt: timestamp('finished_at', { withTimezone: true }),
+    pausedAt: timestamp('paused_at', { withTimezone: true }),
+    status: text('status').notNull().default('in_progress'),
+    serverClockSkewMs: integer('server_clock_skew_ms'),
     results: jsonb('results').$type<Record<string, unknown> | null>(),
   },
   (t) => ({
     examAttemptUq: uniqueIndex('mock_exam_attempts_exam_no_uq').on(t.mockExamId, t.attemptNo),
+    statusIdx: index('mock_exam_attempts_status_idx').on(t.status, t.endsAt),
   }),
 );
 
@@ -291,7 +402,9 @@ export const mockExamAnswers = pgTable(
     answerText: text('answer_text'),
     photoObjectId: uuid('photo_object_id').references(() => storageObjects.id, { onDelete: 'set null' }),
     flagged: boolean('flagged').notNull().default(false),
-    evaluation: jsonb('evaluation').$type<{ correct: boolean; note?: string } | null>(),
+    answerPayload: jsonb('answer_payload').$type<Record<string, unknown> | null>(),
+    clientUpdatedAt: timestamp('client_updated_at', { withTimezone: true }),
+    evaluation: jsonb('evaluation').$type<Record<string, unknown> | null>(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({

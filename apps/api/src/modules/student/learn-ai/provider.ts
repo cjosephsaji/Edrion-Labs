@@ -17,10 +17,27 @@ export type LearnAiPurpose =
   | 'evidence_tag'
   | 'library_gen'
   | 'visual'
+  | 'visual_propose'
+  | 'visual_generate'
+  | 'visual_expand'
+  | 'visual_alternative'
+  | 'visual_memory'
+  | 'visual_quiz'
   | 'mock_gen'
   | 'mock_eval'
   | 'debate'
   | 'ocr';
+
+export interface LearnAiEmbeddingUsage {
+  inputTokens: number;
+  model: string;
+  durationMs: number;
+}
+
+export interface LearnAiEmbeddingResult {
+  vectors: number[][];
+  usage: LearnAiEmbeddingUsage;
+}
 
 export interface LearnAiUsage {
   inputTokens: number;
@@ -42,6 +59,8 @@ export interface LearnAiCompleteOpts<T> {
   maxOutputTokens: number;
   reasoningEffort?: LearnAiReasoningEffort;
   verbosity?: LearnAiVerbosity;
+  /** When true, suppress raw model output in error logs (privacy-sensitive flows). */
+  privacySensitive?: boolean;
 }
 
 export interface LearnAiStreamOpts<T> extends LearnAiCompleteOpts<T> {
@@ -67,6 +86,7 @@ export interface LearnAiProvider {
   completeJson<T>(opts: LearnAiCompleteOpts<T>): Promise<{ result: T; usage: LearnAiUsage }>;
   streamJsonArray<T>(opts: LearnAiStreamOpts<T>): AsyncIterable<T>;
   streamText(opts: LearnAiStreamTextOpts): AsyncIterable<LearnAiTextStreamEvent>;
+  embedTexts(texts: string[]): Promise<LearnAiEmbeddingResult>;
 }
 
 export class AiUnavailableError extends Error {

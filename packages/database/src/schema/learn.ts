@@ -165,6 +165,20 @@ export const revisionStates = pgTable(
     freshness: text('freshness').notNull().default('fresh'),
     lastEvidenceAt: timestamp('last_evidence_at', { withTimezone: true }).notNull(),
     lastRefreshedAt: timestamp('last_refreshed_at', { withTimezone: true }),
+    manualDueAt: timestamp('manual_due_at', { withTimezone: true }),
+    manualReasons: jsonb('manual_reasons')
+      .$type<
+        Array<{
+          contextType: 'visual_canvas';
+          contextId: string;
+          nodeId: string;
+          title: string;
+          reason: 'shaky' | 'memory_missing';
+          queuedAt: string;
+        }>
+      >()
+      .notNull()
+      .default([]),
     computedAt: timestamp('computed_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({

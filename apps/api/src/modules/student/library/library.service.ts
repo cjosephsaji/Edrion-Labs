@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { z } from 'zod';
 import {
-  conceptMapContentSchema,
   createCollectionSchema,
   createFlashcardSchema,
   createKnowledgeItemSchema,
@@ -26,7 +25,9 @@ import {
   summaryContentSchema,
   summarySectionSchema,
   type CreateKnowledgeItemInput,
+  type VisualArchetype,
 } from '@edrion/schemas';
+import type { VisualCanvas } from '@edrion/database';
 import {
   FLASHCARD_AGAIN_DELAY_MINUTES,
   FRESHNESS_FRESH_DAYS,
@@ -48,6 +49,17 @@ const IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/hei
 
 type Emit = (event: Record<string, unknown>) => void;
 
+const VISUAL_ARCHETYPE_LABELS: Record<VisualArchetype, string> = {
+  mind_map: 'Mind map',
+  flowchart: 'Flowchart',
+  cycle: 'Cycle',
+  timeline: 'Timeline',
+  hierarchy: 'Hierarchy',
+  comparison: 'Comparison',
+};
+
+const LEGACY_VISUAL_KINDS = new Set(['concept_map', 'visual']);
+
 @Injectable()
 export class LibraryService {
   constructor(
@@ -64,6 +76,7 @@ export class LibraryService {
   async getOverview(principal: StudentPrincipal, q?: string) {
     if (q?.trim()) {
       const hits = await this.repo.search(principal, q.trim());
+      const mappedLegacyIds = await this.repo.mappedLegacyArtifactIds(principal);
       const deckIds = hits.decks.map((d) => d.id);
       const [dueMap, countMap, earliestMap] = await Promise.all([
         this.repo.dueCountsForDecks(deckIds),
@@ -78,6 +91,10 @@ export class LibraryService {
           count: await this.repo.countItemsInCollection(c.id),
         })),
       );
+      const visibleArtifacts = hits.artifacts.filter(
+        (a) => !this.shouldHideLegacyArtifact(a.kind, a.id, mappedLegacyIds),
+      );
+      const artifactFromLabels = new Map(hits.artifacts.map((a) => [a.id, a.fromLabel]));
       return {
         collections: collectionCounts,
         uploads: hits.items.map((i) => ({
@@ -93,38 +110,27 @@ export class LibraryService {
           createdAt: i.createdAt.toISOString(),
           updatedAt: i.updatedAt.toISOString(),
         })),
-        generated: [
-          ...hits.artifacts.map((a) => ({
-            id: a.id,
-            kind: a.kind as 'summary' | 'quiz' | 'topic_pack' | 'visual' | 'concept_map' | 'glossary',
-            title: a.title,
-            fromLabel: a.fromLabel,
-            freshness: this.artifactFreshness(a.createdAt, a.lastInteractedAt),
-            meta: a.kind,
-            createdAt: a.createdAt.toISOString(),
-            itemId: a.itemId,
-          })),
-          ...hits.decks.map((d) => ({
-            id: d.id,
-            kind: 'deck' as const,
-            title: d.title,
-            fromLabel: d.fromLabel,
-            freshness: this.deckFreshnessFromMaps(d.id, dueMap, earliestMap),
-            meta: `${countMap.get(d.id) ?? 0} cards`,
-            createdAt: d.createdAt.toISOString(),
-            itemId: d.itemId,
-          })),
-        ],
+        generated: this.mergeGenerated(
+          visibleArtifacts,
+          hits.decks,
+          hits.canvases,
+          { dueMap, countMap, earliestMap, artifactFromLabels },
+        ),
         recentAdded: hits.items.slice(0, 8).map((u) => ({ id: u.id, title: u.title, kind: u.kind })),
       };
     }
 
-    const [collections, uploads, artifacts, decks] = await Promise.all([
+    const [collections, uploads, artifacts, decks, canvases] = await Promise.all([
       this.repo.listCollections(principal),
       this.repo.listUploads(principal),
       this.repo.listArtifacts(principal),
       this.repo.listDecks(principal),
+      this.repo.listCanvases(principal),
     ]);
+
+    const mappedLegacyIds = new Set(
+      canvases.map((c) => c.legacyArtifactId).filter((id): id is string => id != null),
+    );
 
     const collectionCounts = await Promise.all(
       collections.map(async (c) => ({
@@ -142,28 +148,17 @@ export class LibraryService {
       this.repo.earliestDueForDecks(deckIds),
     ]);
 
-    const generated = [
-      ...artifacts.map((a) => ({
-        id: a.id,
-        kind: a.kind as 'summary' | 'quiz' | 'topic_pack' | 'visual' | 'concept_map' | 'glossary',
-        title: a.title,
-        fromLabel: a.fromLabel,
-        freshness: this.artifactFreshness(a.createdAt, a.lastInteractedAt),
-        meta: a.kind,
-        createdAt: a.createdAt.toISOString(),
-        itemId: a.itemId,
-      })),
-      ...decks.map((d) => ({
-        id: d.id,
-        kind: 'deck' as const,
-        title: d.title,
-        fromLabel: d.fromLabel,
-        freshness: this.deckFreshnessFromMaps(d.id, dueMap, earliestMap),
-        meta: `${countMap.get(d.id) ?? 0} cards`,
-        createdAt: d.createdAt.toISOString(),
-        itemId: d.itemId,
-      })),
-    ];
+    const visibleArtifacts = artifacts.filter(
+      (a) => !this.shouldHideLegacyArtifact(a.kind, a.id, mappedLegacyIds),
+    );
+    const artifactFromLabels = new Map(artifacts.map((a) => [a.id, a.fromLabel]));
+
+    const generated = this.mergeGenerated(visibleArtifacts, decks, canvases, {
+      dueMap,
+      countMap,
+      earliestMap,
+      artifactFromLabels,
+    });
 
     return {
       collections: collectionCounts,
@@ -194,10 +189,18 @@ export class LibraryService {
     const items = await this.repo.listItemsInCollection(principal, id);
     const derived = await Promise.all(
       items.map(async (item) => {
-        const [artifacts, decks] = await Promise.all([
+        const [artifacts, decks, canvases] = await Promise.all([
           this.repo.artifactsForItem(item.id),
           this.repo.decksForItem(item.id),
+          this.repo.listCanvasesForItem(item.id),
         ]);
+        const mappedLegacyIds = new Set(
+          canvases.map((c) => c.legacyArtifactId).filter((legacyId): legacyId is string => legacyId != null),
+        );
+        const artifactFromLabels = new Map(artifacts.map((a) => [a.id, a.fromLabel]));
+        const visibleArtifacts = artifacts.filter(
+          (a) => !this.shouldHideLegacyArtifact(a.kind, a.id, mappedLegacyIds),
+        );
         return {
           item: {
             id: item.id,
@@ -209,14 +212,20 @@ export class LibraryService {
             aiRead: item.aiRead,
             createdAt: item.createdAt.toISOString(),
           },
-          artifacts: artifacts.map((a) => ({
-            id: a.id,
-            kind: a.kind,
-            title: a.title,
-            fromLabel: a.fromLabel,
-            freshness: this.artifactFreshness(a.createdAt, a.lastInteractedAt),
-            createdAt: a.createdAt.toISOString(),
-          })),
+          artifacts: [
+            ...visibleArtifacts.map((a) => ({
+              id: a.id,
+              kind: a.kind,
+              title: a.title,
+              fromLabel: a.fromLabel,
+              freshness: this.artifactFreshness(a.createdAt, a.lastInteractedAt),
+              createdAt: a.createdAt.toISOString(),
+            })),
+            ...canvases.map((c) => ({
+              ...this.canvasToItemArtifact(c, item.title, artifactFromLabels),
+              freshness: this.artifactFreshness(c.createdAt, c.updatedAt),
+            })),
+          ],
           decks: decks.map((d) => ({
             id: d.id,
             title: d.title,
@@ -357,12 +366,20 @@ export class LibraryService {
 
   async getItem(principal: StudentPrincipal, id: string) {
     const item = await this.requireItem(principal, id);
-    const [artifacts, decks, pages, objects] = await Promise.all([
+    const [artifacts, decks, pages, objects, canvases] = await Promise.all([
       this.repo.artifactsForItem(item.id),
       this.repo.decksForItem(item.id),
       this.repo.listPages(item.id),
       this.repo.getStorageObjects(item.objectIds ?? []),
+      this.repo.listCanvasesForItem(item.id),
     ]);
+    const mappedLegacyIds = new Set(
+      canvases.map((c) => c.legacyArtifactId).filter((legacyId): legacyId is string => legacyId != null),
+    );
+    const artifactFromLabels = new Map(artifacts.map((a) => [a.id, a.fromLabel]));
+    const visibleArtifacts = artifacts.filter(
+      (a) => !this.shouldHideLegacyArtifact(a.kind, a.id, mappedLegacyIds),
+    );
     const objById = new Map(objects.map((o) => [o.id, o]));
     return {
       item: {
@@ -404,7 +421,7 @@ export class LibraryService {
             filename: o.filename ?? undefined,
           })),
       artifacts: [
-        ...artifacts.map((a) => ({
+        ...visibleArtifacts.map((a) => ({
           id: a.id,
           kind: a.kind,
           title: a.title,
@@ -418,6 +435,7 @@ export class LibraryService {
           fromLabel: d.fromLabel,
           createdAt: d.createdAt.toISOString(),
         })),
+        ...canvases.map((c) => this.canvasToItemArtifact(c, item.title, artifactFromLabels)),
       ],
     };
   }
@@ -496,22 +514,6 @@ export class LibraryService {
       fromLabel: `From: ${item.title}`,
     });
     await this.logArtifact(principal, item.id, artifact.id, 'quiz');
-    return artifact;
-  }
-
-  async conceptMap(principal: StudentPrincipal, itemId: string) {
-    const item = await this.requireReadyItem(principal, itemId);
-    const text = await this.extractedText(item);
-    const content = await this.generateConceptMap(principal, text, item.title);
-    const artifact = await this.repo.insertArtifact({
-      ...this.repo.owner(principal),
-      itemId: item.id,
-      kind: 'concept_map',
-      title: content.title,
-      content,
-      fromLabel: `From: ${item.title}`,
-    });
-    await this.logArtifact(principal, item.id, artifact.id, 'concept_map');
     return artifact;
   }
 
@@ -1180,28 +1182,6 @@ export class LibraryService {
     return result;
   }
 
-  private async generateConceptMap(principal: StudentPrincipal, text: string, sourceTitle: string) {
-    if (!this.ai.available) return this.stubConceptMap(sourceTitle);
-    await this.budgets.spend(principal, 'library_gen', 2000);
-    try {
-      const { result, usage } = await this.ai.completeJson({
-        purpose: 'library_gen',
-        tier: 'large',
-        system:
-          GROUNDING_SYSTEM +
-          ' Extract how ideas connect into a concept map. Layout web or flowchart. 8–20 nodes with sourceLocation like "p. 3".',
-        user: text.slice(0, 12_000),
-        schema: conceptMapContentSchema,
-        schemaName: 'concept_map',
-        maxOutputTokens: 4000,
-      });
-      await this.callLog.log(principal, 'library_gen', usage);
-      return result;
-    } catch {
-      return this.stubConceptMap(sourceTitle);
-    }
-  }
-
   private async generateGlossary(principal: StudentPrincipal, text: string, sourceTitle: string) {
     if (!this.ai.available) return this.stubGlossary(sourceTitle);
     await this.budgets.spend(principal, 'library_gen', 1500);
@@ -1224,53 +1204,6 @@ export class LibraryService {
     }
   }
 
-  private stubConceptMap(sourceTitle: string) {
-    return {
-      title: `Concept map — ${sourceTitle}`,
-      layout: 'web' as const,
-      nodes: [
-        {
-          id: '1',
-          label: sourceTitle,
-          miniDefinition: 'The central topic from your source.',
-          sourceLocation: 'p. 1',
-          x: 50,
-          y: 18,
-        },
-        {
-          id: '2',
-          label: 'Key idea A',
-          miniDefinition: 'A supporting concept linked to the topic.',
-          sourceLocation: 'p. 2',
-          x: 22,
-          y: 55,
-        },
-        {
-          id: '3',
-          label: 'Key idea B',
-          miniDefinition: 'Another connected idea from the source.',
-          sourceLocation: 'p. 3',
-          x: 78,
-          y: 55,
-        },
-        {
-          id: '4',
-          label: 'Application',
-          miniDefinition: 'How the ideas come together in practice.',
-          sourceLocation: 'p. 4',
-          x: 50,
-          y: 85,
-        },
-      ],
-      edges: [
-        { from: '1', to: '2', relation: 'depends_on' as const },
-        { from: '1', to: '3', relation: 'depends_on' as const },
-        { from: '2', to: '4', relation: 'step' as const },
-        { from: '3', to: '4', relation: 'step' as const },
-      ],
-    };
-  }
-
   private stubGlossary(sourceTitle: string) {
     return {
       title: `Glossary — ${sourceTitle}`,
@@ -1279,6 +1212,108 @@ export class LibraryService {
         { term: 'Key term', definition: 'An important defined term from the source.', sourceLocation: 'p. 2' },
       ],
     };
+  }
+
+  private shouldHideLegacyArtifact(kind: string, id: string, mappedLegacyIds: Set<string>) {
+    return LEGACY_VISUAL_KINDS.has(kind) && mappedLegacyIds.has(id);
+  }
+
+  private canvasArchetypeLabel(archetype: string) {
+    return VISUAL_ARCHETYPE_LABELS[archetype as VisualArchetype] ?? archetype.replace(/_/g, ' ');
+  }
+
+  private canvasFromLabel(
+    canvas: VisualCanvas,
+    sourceTitle?: string,
+    artifactFromLabels?: Map<string, string>,
+  ) {
+    if (canvas.legacyArtifactId && artifactFromLabels?.has(canvas.legacyArtifactId)) {
+      return artifactFromLabels.get(canvas.legacyArtifactId)!;
+    }
+    if (sourceTitle) return `From: ${sourceTitle}`;
+    return 'Thinking Canvas';
+  }
+
+  private canvasToItemArtifact(
+    canvas: VisualCanvas,
+    sourceTitle?: string,
+    artifactFromLabels?: Map<string, string>,
+  ) {
+    return {
+      id: canvas.id,
+      kind: 'visual_canvas' as const,
+      title: canvas.title,
+      fromLabel: this.canvasFromLabel(canvas, sourceTitle, artifactFromLabels),
+      createdAt: canvas.createdAt.toISOString(),
+    };
+  }
+
+  private canvasToGenerated(
+    canvas: VisualCanvas,
+    artifactFromLabels?: Map<string, string>,
+  ) {
+    const nodeCount = canvas.graph.nodes.length;
+    return {
+      id: canvas.id,
+      kind: 'visual_canvas' as const,
+      title: canvas.title,
+      fromLabel: this.canvasFromLabel(canvas, undefined, artifactFromLabels),
+      freshness: this.artifactFreshness(canvas.createdAt, canvas.updatedAt),
+      meta: `${this.canvasArchetypeLabel(canvas.archetype)} · ${nodeCount} idea${nodeCount === 1 ? '' : 's'}`,
+      createdAt: canvas.createdAt.toISOString(),
+      updatedAt: canvas.updatedAt.toISOString(),
+      itemId: canvas.sourceId,
+    };
+  }
+
+  private mergeGenerated(
+    artifacts: Array<{
+      id: string;
+      kind: string;
+      title: string;
+      fromLabel: string;
+      createdAt: Date;
+      lastInteractedAt: Date | null;
+      itemId: string | null;
+    }>,
+    decks: Array<{
+      id: string;
+      title: string;
+      fromLabel: string;
+      createdAt: Date;
+      itemId: string | null;
+    }>,
+    canvases: VisualCanvas[],
+    maps: {
+      dueMap: Map<string, number>;
+      countMap: Map<string, number>;
+      earliestMap: Map<string, Date>;
+      artifactFromLabels?: Map<string, string>;
+    },
+  ) {
+    return [
+      ...artifacts.map((a) => ({
+        id: a.id,
+        kind: a.kind,
+        title: a.title,
+        fromLabel: a.fromLabel,
+        freshness: this.artifactFreshness(a.createdAt, a.lastInteractedAt),
+        meta: a.kind,
+        createdAt: a.createdAt.toISOString(),
+        itemId: a.itemId,
+      })),
+      ...decks.map((d) => ({
+        id: d.id,
+        kind: 'deck' as const,
+        title: d.title,
+        fromLabel: d.fromLabel,
+        freshness: this.deckFreshnessFromMaps(d.id, maps.dueMap, maps.earliestMap),
+        meta: `${maps.countMap.get(d.id) ?? 0} cards`,
+        createdAt: d.createdAt.toISOString(),
+        itemId: d.itemId,
+      })),
+      ...canvases.map((c) => this.canvasToGenerated(c, maps.artifactFromLabels)),
+    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   private artifactFreshness(

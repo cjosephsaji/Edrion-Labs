@@ -120,6 +120,10 @@
     --st-selection: #CFE4D6;
     --st-success: #14614B;
     --st-sidebar: #F8F5EC;
+    --st-canvasGrid: #D8D2C2;
+    --st-canvasEdge: #7D897F;
+    --st-canvasAlternative: #5B4A78;
+    --st-canvasMissing: #3A5A78;
   }
 
   [data-student-theme='dim'] {
@@ -159,6 +163,10 @@
     --st-selection: #2E4A3C;
     --st-success: #48B78C;
     --st-sidebar: #2C271F;
+    --st-canvasGrid: #443D33;
+    --st-canvasEdge: #938C80;
+    --st-canvasAlternative: #B9A7D4;
+    --st-canvasMissing: #7CA6C8;
   }
 
   [data-student-theme='dark'] {
@@ -198,6 +206,10 @@
     --st-selection: #2F5443;
     --st-success: #5FCB9E;
     --st-sidebar: #251F18;
+    --st-canvasGrid: #332C22;
+    --st-canvasEdge: #8B8478;
+    --st-canvasAlternative: #C2ACE0;
+    --st-canvasMissing: #83B4D9;
   }
 
   @media (prefers-reduced-motion: reduce) {

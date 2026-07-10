@@ -35,7 +35,8 @@ export function useLearnSession(sessionId: string | undefined) {
     // still invalidated would refetch, re-trigger the page effect, and loop forever.
     let producedBlocks = false;
     const es = client.sse(`/learn/sessions/${sessionId}/stream`, {
-      onMessage: (data) => {
+      onMessage: (frame) => {
+        const data = frame.data;
         if (data === '[DONE]') {
           setStreaming(false);
           esRef.current?.close();

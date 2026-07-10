@@ -46,6 +46,8 @@ export interface ApiError {
   /** Field-level validation messages, keyed by dotted path. */
   details?: Record<string, string[]>;
   correlationId?: string;
+  /** Safe client-facing metadata (quota resets, retry tokens, etc.). */
+  meta?: Record<string, unknown>;
 }
 
 export interface SortSpec {

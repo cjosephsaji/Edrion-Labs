@@ -21,4 +21,8 @@ export class NullLearnAiProvider implements LearnAiProvider {
   async *streamText(_opts: LearnAiStreamTextOpts) {
     throw new AiUnavailableError();
   }
+
+  async embedTexts(): Promise<never> {
+    throw new AiUnavailableError();
+  }
 }

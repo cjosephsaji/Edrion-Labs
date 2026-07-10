@@ -1,13 +1,16 @@
 import type { ReflectionSummaryBlock } from '@edrion/schemas';
+import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
 import { BlockCard } from '../BlockCard';
 import { PillButton } from '@/components/ui/pill-button';
 
 export function WrapUp({
   content,
+  sessionId,
   onFinish,
 }: {
   content: ReflectionSummaryBlock;
+  sessionId?: string;
   onFinish?: () => void;
 }) {
   return (
@@ -28,11 +31,17 @@ export function WrapUp({
           </li>
         ))}
       </ul>
-      {onFinish && (
-        <div className="mt-6 flex justify-center">
-          <PillButton onClick={onFinish}>Finish session →</PillButton>
-        </div>
-      )}
+      <div className="mt-6 flex flex-col items-center gap-3">
+        {sessionId ? (
+          <Link
+            href={`/lab/visual?session_id=${sessionId}`}
+            className="text-sm font-semibold text-st-accent"
+          >
+            See this as a map →
+          </Link>
+        ) : null}
+        {onFinish && <PillButton onClick={onFinish}>Finish session →</PillButton>}
+      </div>
     </BlockCard>
   );
 }

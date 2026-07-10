@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Mono, Instrument_Sans, Source_Serif_4 } from 'next/font/google';
+import '@xyflow/react/dist/style.css';
 import './globals.css';
+import '@/components/visual-studio/thinking-canvas.css';
 import { Providers } from './providers';
 import { RegisterSW } from '@/components/register-sw';
 

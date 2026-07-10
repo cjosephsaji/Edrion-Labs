@@ -1,11 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  useLibraryConceptMap,
-  useLibraryGlossary,
-  useLibraryTutor,
-} from '@/lib/hooks';
+import { useLibraryGlossary, useLibraryTutor } from '@/lib/hooks';
 import { GenerationStream } from './GenerationStream';
 import { PillButton } from '@/components/ui/pill-button';
 import { useToast } from '@/components/ui/toast';
@@ -21,10 +17,9 @@ export function LibraryActionsRail({
   const router = useRouter();
   const { say } = useToast();
   const tutor = useLibraryTutor(itemId);
-  const conceptMap = useLibraryConceptMap(itemId);
   const glossary = useLibraryGlossary(itemId);
   const [streaming, setStreaming] = useState<GenerationKind | null>(null);
-  const busy = tutor.isPending || conceptMap.isPending || glossary.isPending;
+  const busy = tutor.isPending || glossary.isPending;
 
   const hint = ready ? undefined : 'Confirm OCR / wait until ready';
 
@@ -66,16 +61,9 @@ export function LibraryActionsRail({
           variant="ghost"
           disabled={!ready || busy}
           title={hint}
-          onClick={async () => {
-            try {
-              const r = await conceptMap.mutateAsync();
-              router.push(`/library/maps/${r.id}`);
-            } catch (e) {
-              say((e as Error).message ?? 'Concept map failed');
-            }
-          }}
+          onClick={() => router.push(`/lab/visual?source_id=${itemId}`)}
         >
-          Concept map
+          Visualize this
         </PillButton>
         <PillButton
           type="button"

@@ -13,6 +13,7 @@ export const STUDENT_NEVER_SHARED = [
   'Hint ladder detail',
   'Uploaded files before submission',
   'Library and lab activity',
+  'Visual canvases, node statuses, and memory-map checks',
 ] as const;
 
 export type HomeworkAiPolicy = 'off' | 'hints_only' | 'full';

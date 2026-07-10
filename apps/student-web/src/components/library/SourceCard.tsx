@@ -6,6 +6,7 @@ import { ingestStatusLine } from '@/lib/library-ingest';
 
 export function artifactHref(kind: string, id: string) {
   if (kind === 'deck') return `/library/decks/${id}`;
+  if (kind === 'visual_canvas') return `/lab/visual/${id}`;
   if (kind === 'concept_map') return `/library/maps/${id}`;
   if (kind === 'quiz') return `/library/quiz/${id}`;
   return `/library/artifacts/${id}`;

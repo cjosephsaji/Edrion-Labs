@@ -86,7 +86,13 @@ export function BlockRenderer({
         />
       );
     case 'reflection_summary':
-      return <WrapUp content={parseBlockContent('reflection_summary', block.content)} onFinish={onFinish} />;
+      return (
+        <WrapUp
+          content={parseBlockContent('reflection_summary', block.content)}
+          sessionId={sessionId}
+          onFinish={onFinish}
+        />
+      );
     case 'note_card':
       return (
         <>
