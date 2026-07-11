@@ -1,6 +1,6 @@
 import type { VisualArchetype } from '@edrion/schemas';
 
-export const VISUAL_PROMPT_VERSION = 'visual-v1';
+export const VISUAL_PROMPT_VERSION = 'visual-v2';
 
 export const VISUAL_PROPOSAL_SYSTEM = `You are Petros, the learning guide inside Edrion.
 Choose the single diagram archetype that best helps a student reason about the requested study material.
@@ -43,7 +43,7 @@ Hard limits and invariants:
 - title is concise. body is useful study content in markdown, at most 1500 characters. Formula body contains valid LaTeX using $...$ or $$...$$.
 - Edge types: leads_to, causes, requires, contrasts_with, example_of, part_of, alternative_to.
 - Edge direction is literal: source leads_to target; source causes target; source requires target; source example_of target; source part_of target. contrasts_with and alternative_to are symmetric.
-- Use edge labels only when the relation needs a short student-facing qualifier. Never label an edge with its type name.
+- Use edge labels only when the relation needs a short student-facing qualifier. Never label an edge with its type name. Prefer omitting label or using null; never emit an empty string.
 - layout_cache must be an empty object. Layout is not your job.
 - Do not include mastery, percentages, confidence, grades, difficulty scores, or claims about what the student knows.
 
@@ -73,6 +73,7 @@ export const ARCHETYPE_SYSTEM: Record<VisualArchetype, string> = {
 - The final core edge must visibly return to the root.`,
   timeline: `TIMELINE RULES:
 - leads_to edges form one chronological simple path from the root through every main event/stage.
+- Depth: root is 0; every main backbone event/stage is depth 1 (do not number steps 2,3,4 along the chain); attached context nodes are depth 2.
 - Use process_step for stages/events and concept/definition/example/formula for attached context.
 - causes may connect an earlier main node to a later main node, never backwards.
 - Do not create a cycle or alternative branch. Put dates/periods in titles or bodies when the material supplies them.`,
@@ -126,4 +127,5 @@ Return only the required structured JSON.
 - Wrong options are plausible misconceptions, never jokes or tricks.
 - feedback is a short explanation of the correct idea and must not mention a score.
 - Do not infer mastery, ability, confidence, or grade from this checkpoint.
-- When SOURCE EXCERPTS are present, every correct answer must be supported by them.`;
+- When SOURCE EXCERPTS are present, every correct answer must be supported by them.
+- Do not include question ids; the system assigns them.`;

@@ -42,16 +42,24 @@ export class ExamEngineProcessor implements OnModuleInit {
 
   async enqueueGenerate(data: ExamGenerateJobData): Promise<string | null> {
     const id = await this.jobs.enqueue('ai', EXAM_GENERATE_JOB, data as unknown as Record<string, unknown>);
+    // When queues are off, do NOT await generation here — that blocked POST /generate
+    // for the full AI run and left the UI stuck on "Starting…". The exam status page
+    // drives generation via SSE (`POST :id/generate/stream`) instead.
     if (!id) {
-      // Queues disabled — run inline so local/dev still works.
-      await this.onGenerate(data);
+      this.logger.log(`Queues off — generation deferred to SSE for exam ${data.examId}`);
     }
     return id;
   }
 
   async enqueueGrade(data: ExamGradeJobData): Promise<string | null> {
     const id = await this.jobs.enqueue('ai', EXAM_GRADE_SUBJECTIVE_JOB, data as unknown as Record<string, unknown>);
-    if (!id) await this.onGrade(data);
+    // Same as generate: avoid blocking the HTTP request when Redis is disabled.
+    // Subjective grading is observed via GET :id/grade/stream (polls until done).
+    if (!id) {
+      void this.onGrade(data).catch((e) =>
+        this.logger.error(`inline grade failed: ${e instanceof Error ? e.message : e}`),
+      );
+    }
     return id;
   }
 

@@ -2,7 +2,7 @@
 import {
   useExamPaper,
   useFinishExamAttempt,
-  useSaveExamAnswer,
+  useSaveExamAttemptAnswer,
   useStartExamAttempt,
 } from '@/lib/hooks';
 import { QuizAttemptView } from '@/components/institutional/quiz-attempt-view';
@@ -10,7 +10,7 @@ import { QuizAttemptView } from '@/components/institutional/quiz-attempt-view';
 export default function ExamAttemptPage({ params }: { params: { scheduleId: string } }) {
   const { data, isLoading, refetch } = useExamPaper(params.scheduleId);
   const start = useStartExamAttempt();
-  const saveAnswer = useSaveExamAnswer();
+  const saveAnswer = useSaveExamAttemptAnswer();
   const finish = useFinishExamAttempt();
 
   return (

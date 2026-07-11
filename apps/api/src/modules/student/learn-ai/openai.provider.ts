@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
-import { z, type ZodSchema } from 'zod';
+import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import type { ApiEnv } from '@edrion/config';
 import { API_ENV } from '../../../common/tokens';
@@ -84,10 +84,16 @@ export class OpenAiLearnProvider implements LearnAiProvider {
     return this.models[TIER_MODEL[tier]];
   }
 
-  private jsonSchemaFor(schemaName: string, zodSchema: ZodSchema): Record<string, unknown> {
+  private jsonSchemaFor(schemaName: string, zodSchema: z.ZodTypeAny): Record<string, unknown> {
     let cached = this.schemaCache.get(schemaName);
     if (!cached) {
-      const raw = zodToJsonSchema(zodSchema, { $refStrategy: 'root' }) as Record<string, unknown>;
+      // Prefer the pre-transform input shape so OpenAI structured output matches what we
+      // actually parse (e.g. empty edge labels), not the post-normalize storage shape.
+      let forJson: z.ZodTypeAny = zodSchema;
+      while (forJson instanceof z.ZodEffects) {
+        forJson = forJson._def.schema;
+      }
+      const raw = zodToJsonSchema(forJson, { $refStrategy: 'root' }) as Record<string, unknown>;
       const { $schema: _schema, ...rest } = raw;
       cached = rest;
       this.schemaCache.set(schemaName, cached);

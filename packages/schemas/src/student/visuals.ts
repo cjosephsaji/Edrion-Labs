@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { collectVisualGraphIssues } from './visual-graph-rules';
+import { collectVisualGraphIssues, computeExpectedDepths } from './visual-graph-rules';
 
 export {
   collectVisualGraphIssues,
@@ -229,7 +229,10 @@ function addStructuralGraphIssues(
 
 export const canvasGraphSchema = canvasGraphShape.superRefine(addStructuralGraphIssues);
 
-export const completeCanvasGraphSchema = canvasGraphShape.superRefine((graph, ctx) => {
+function addCompleteGraphIssues(
+  graph: z.infer<typeof canvasGraphShape>,
+  ctx: z.RefinementCtx,
+) {
   addStructuralGraphIssues(graph, ctx);
   if (graph.nodes.length < 2) {
     ctx.addIssue({
@@ -252,31 +255,85 @@ export const completeCanvasGraphSchema = canvasGraphShape.superRefine((graph, ct
       message: issue.message,
     });
   }
+}
+
+export const completeCanvasGraphSchema = canvasGraphShape.superRefine(addCompleteGraphIssues);
+
+/**
+ * The AI boundary only.
+ *
+ * This schema is fed to zodToJsonSchema for OpenAI structured outputs, which requires
+ * every property to be present — the model cannot omit an optional field, so it emits
+ * `label: ""` and the storage rule (`min(1)`) rejected the whole graph, failing every
+ * generation. Treat an empty/blank label as "no label" here and normalize it away, so
+ * nothing empty is ever stored and the storage schema stays strict.
+ */
+/** Accepts `label: ""` / null from structured output; storage schema stays strict. */
+export const aiVisualGraphEdgeSchema = visualGraphEdgeSchema.extend({
+  label: z.string().max(120).nullish(),
 });
 
-export const aiGeneratedGraphSchema = completeCanvasGraphSchema.superRefine((graph, ctx) => {
-  if (graph.nodes.length > AI_GRAPH_NODE_LIMIT) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['nodes'],
-      message: `AI output is limited to ${AI_GRAPH_NODE_LIMIT} nodes`,
-    });
-  }
-  if (graph.nodes.some((node) => node.origin !== 'ai')) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['nodes'],
-      message: 'Initial AI output must use origin=ai',
-    });
-  }
-  if (Object.keys(graph.layout_cache).length !== 0) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['layout_cache'],
-      message: 'AI must not produce layout coordinates',
-    });
-  }
+const aiCanvasGraphShape = canvasGraphShape.extend({
+  edges: z.array(aiVisualGraphEdgeSchema).max(600),
 });
+
+/**
+ * Depth is derived from graph structure, never authored. The model was numbering
+ * timeline steps 2,3,4... down the chain when the rule puts every backbone step at
+ * depth 1, which failed the whole generation. Recompute depth from the structure the
+ * model actually produced rather than trusting its arithmetic; the validator below
+ * still enforces the same rule, so nothing is loosened.
+ */
+function normalizeAiGraph(
+  graph: z.infer<typeof aiCanvasGraphShape>,
+): z.infer<typeof canvasGraphShape> {
+  // Drop the key entirely rather than carrying `label: undefined`, so the result is the
+  // canonical graph type and nothing empty is ever persisted.
+  const edges: z.infer<typeof visualGraphEdgeSchema>[] = graph.edges.map((edge) => {
+    const label = edge.label?.trim();
+    const base = { id: edge.id, source: edge.source, target: edge.target, type: edge.type };
+    return label ? { ...base, label } : base;
+  });
+
+  const nodes = graph.root_node_id
+    ? (() => {
+        const expected = computeExpectedDepths({ ...graph, edges }, graph.root_node_id);
+        return graph.nodes.map((node) => {
+          const depth = expected.get(node.id);
+          return depth === undefined || depth === node.depth ? node : { ...node, depth };
+        });
+      })()
+    : graph.nodes;
+
+  return { ...graph, nodes, edges };
+}
+
+export const aiGeneratedGraphSchema = aiCanvasGraphShape
+  .transform(normalizeAiGraph)
+  .superRefine((graph, ctx) => {
+    addCompleteGraphIssues(graph, ctx);
+    if (graph.nodes.length > AI_GRAPH_NODE_LIMIT) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['nodes'],
+        message: `AI output is limited to ${AI_GRAPH_NODE_LIMIT} nodes`,
+      });
+    }
+    if (graph.nodes.some((node) => node.origin !== 'ai')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['nodes'],
+        message: 'Initial AI output must use origin=ai',
+      });
+    }
+    if (Object.keys(graph.layout_cache).length !== 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['layout_cache'],
+        message: 'AI must not produce layout coordinates',
+      });
+    }
+  });
 
 export const visualGraphPatchSchema = z
   .object({

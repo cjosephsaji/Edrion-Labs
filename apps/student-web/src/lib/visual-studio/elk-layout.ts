@@ -1,5 +1,4 @@
-/// <reference lib="webworker" />
-import ELK from 'elkjs/lib/elk.bundled.js';
+import ELK from 'elkjs/lib/elk-api.js';
 import type {
   LayoutAlgorithm,
   LayoutEdgeInput,
@@ -9,7 +8,33 @@ import type {
   LayoutResponseMessage,
 } from './layout-types';
 
-const elk = new ELK();
+/**
+ * ELK's algorithm bundle must be spawned AS a worker, never imported INTO one.
+ *
+ * elk-worker.min.js branches on `typeof self !== 'undefined'`: in any worker context
+ * it exports nothing and assigns `self.onmessage = <its own dispatcher>`. Importing
+ * elkjs inside our own Web Worker therefore silently overwrote our message handler,
+ * so every layout request was swallowed by ELK's dispatcher and never answered in our
+ * format. Layout hung forever, layout_cache stayed empty, and the canvas fell back to
+ * a grid — which is what made this look like "ELK was never integrated".
+ *
+ * So ELK owns the worker: it runs the algorithm in elk-worker.min.js off the main
+ * thread, exactly as the plan requires. The archetype selection and the custom
+ * cycle/timeline/comparison math below are O(n) and run on the caller's thread.
+ */
+// Constructed lazily: ELK spawns its Worker in the constructor, and `Worker` does not
+// exist while Next renders this client component on the server.
+let elkInstance: InstanceType<typeof ELK> | null = null;
+
+function getElk(): InstanceType<typeof ELK> {
+  if (!elkInstance) {
+    elkInstance = new ELK({
+      workerFactory: () => new Worker(new URL('elkjs/lib/elk-worker.min.js', import.meta.url)),
+    });
+  }
+  return elkInstance;
+}
+
 const TRAVERSAL_TYPES = new Set(['leads_to', 'causes', 'alternative_to']);
 const TIMELINE_ATTACHMENT_TYPES = new Set(['example', 'definition', 'formula', 'note']);
 
@@ -23,10 +48,30 @@ function reversePartOfEdges(edges: LayoutEdgeInput[]): Array<{ id: string; sourc
     .map((edge) => ({ id: edge.id, source: edge.target, target: edge.source }));
 }
 
-function traversalEdges(edges: LayoutEdgeInput[]): Array<{ id: string; source: string; target: string }> {
-  return edges
-    .filter((edge) => TRAVERSAL_TYPES.has(edge.type))
-    .map((edge) => ({ id: edge.id, source: edge.source, target: edge.target }));
+/**
+ * Every edge, with part_of flipped so it points parent -> child.
+ *
+ * ELK only relates nodes it can see an edge between; anything else it treats as a
+ * disconnected component and packs into a grid. Feeding it a single edge type left
+ * nodes joined only by example_of/requires/contrasts_with orphaned, which is what
+ * turned the canvas into a card grid. Layout reads the whole graph; the archetype
+ * decides the algorithm and direction, not which relationships exist.
+ */
+function structuralEdges(edges: LayoutEdgeInput[]): Array<{ id: string; source: string; target: string }> {
+  const seen = new Set<string>();
+  const result: Array<{ id: string; source: string; target: string }> = [];
+
+  for (const edge of edges) {
+    const [source, target] =
+      edge.type === 'part_of' ? [edge.target, edge.source] : [edge.source, edge.target];
+    if (source === target) continue;
+    const key = `${source}->${target}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push({ id: edge.id, source, target });
+  }
+
+  return result;
 }
 
 async function runElk(
@@ -49,13 +94,22 @@ async function runElk(
     })),
   };
 
-  const layouted = await elk.layout(graph);
+  const layouted = await getElk().layout(graph);
   const positions: LayoutPositionMap = {};
   for (const child of layouted.children ?? []) {
     if (child.id && child.x != null && child.y != null) {
       positions[child.id] = { x: child.x, y: child.y };
     }
   }
+
+  // A layout that skipped nodes is a failed layout. Returning it anyway is how
+  // stacked/orphaned nodes reach the canvas and read as a deliberate arrangement.
+  if (Object.keys(positions).length !== nodes.length) {
+    throw new Error(
+      `Layout positioned ${Object.keys(positions).length} of ${nodes.length} nodes`,
+    );
+  }
+
   return positions;
 }
 
@@ -243,15 +297,19 @@ async function computeLayout(
 
   switch (archetype) {
     case 'mind_map': {
-      const positions = await runElk(nodes, reversePartOfEdges(edges), {
-        'elk.algorithm': 'org.eclipse.elk.radial',
+      // elk.radial requires a strict tree and silently stacks nodes on a single
+      // coordinate when the graph has cross-links (which real canvases always do).
+      // mrtree spreads the same graph as a tree without overlapping.
+      const positions = await runElk(nodes, structuralEdges(edges), {
+        'elk.algorithm': 'org.eclipse.elk.mrtree',
+        'elk.direction': 'RIGHT',
         'org.eclipse.elk.spacing.nodeNode': '56',
         'org.eclipse.elk.spacing.componentComponent': '44',
       });
-      return { positions, algorithm: 'elk_radial' };
+      return { positions, algorithm: 'elk_mrtree' };
     }
     case 'flowchart': {
-      const positions = await runElk(nodes, traversalEdges(edges), {
+      const positions = await runElk(nodes, structuralEdges(edges), {
         'elk.algorithm': 'org.eclipse.elk.layered',
         'elk.direction': 'DOWN',
         'elk.edgeRouting': 'ORTHOGONAL',
@@ -262,7 +320,7 @@ async function computeLayout(
       return { positions, algorithm: 'elk_layered' };
     }
     case 'hierarchy': {
-      const positions = await runElk(nodes, reversePartOfEdges(edges), {
+      const positions = await runElk(nodes, structuralEdges(edges), {
         'elk.algorithm': 'org.eclipse.elk.mrtree',
         'elk.direction': 'DOWN',
         'org.eclipse.elk.spacing.nodeNode': '48',
@@ -284,24 +342,18 @@ async function computeLayout(
   }
 }
 
-self.onmessage = (event: MessageEvent<LayoutRequestMessage>) => {
-  void (async () => {
-    try {
-      const result = await computeLayout(event.data);
-      const response: LayoutResponseMessage = {
-        requestId: event.data.requestId,
-        positions: result.positions,
-        algorithm: result.algorithm,
-      };
-      self.postMessage(response);
-    } catch (error) {
-      const response: LayoutResponseMessage = {
-        requestId: event.data.requestId,
-        error: error instanceof Error ? error.message : 'Layout failed',
-      };
-      self.postMessage(response);
-    }
-  })();
-};
-
-export {};
+export async function runLayout(message: LayoutRequestMessage): Promise<LayoutResponseMessage> {
+  try {
+    const result = await computeLayout(message);
+    return {
+      requestId: message.requestId,
+      positions: result.positions,
+      algorithm: result.algorithm,
+    };
+  } catch (error) {
+    return {
+      requestId: message.requestId,
+      error: error instanceof Error ? error.message : 'Layout failed',
+    };
+  }
+}

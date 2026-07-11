@@ -17,6 +17,7 @@ type CanvasSaveIndicatorProps = {
   lastSavedAt?: string | null;
   conflictResolved?: boolean;
   validationMessage?: string | null;
+  onRetry?: () => void;
 };
 
 export function CanvasSaveIndicator({
@@ -25,6 +26,7 @@ export function CanvasSaveIndicator({
   lastSavedAt = null,
   conflictResolved = false,
   validationMessage = null,
+  onRetry,
 }: CanvasSaveIndicatorProps) {
   const [, setTick] = useState(0);
 
@@ -56,6 +58,15 @@ export function CanvasSaveIndicator({
   return (
     <span className={`font-mono-ui text-xs font-medium ${tone}`} aria-live="polite">
       {label}
+      {status === 'error' && onRetry ? (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="ml-2 font-sans text-[11px] font-semibold text-st-accentDeep underline underline-offset-2 hover:text-st-accent"
+        >
+          Retry
+        </button>
+      ) : null}
       {validationMessage ? (
         <span className="mt-0.5 block font-sans text-[11px] font-normal">{validationMessage}</span>
       ) : null}

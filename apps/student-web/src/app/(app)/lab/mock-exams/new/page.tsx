@@ -61,33 +61,65 @@ export default function MockExamNewPage() {
   const [libraryIds, setLibraryIds] = useState<string[]>([]);
   const [patternId, setPatternId] = useState<string | null>(null);
   const [template, setTemplate] = useState<ExamTemplate>('chapter_test');
+  const [confirmError, setConfirmError] = useState<string | null>(null);
   const [blueprint, setBlueprint] = useState<ExamBlueprint | null>(null);
 
-  const topicWeights: ExamTopicWeight[] = useMemo(
-    () => (topics.length ? topics : ['General']).map((t) => ({ topicLabel: t, weight: 5 as const })),
-    [topics],
-  );
-
   const subjectLabel = subject.trim() || defaults?.subjectLabel || 'Practice';
+
+  const availableTopics = useMemo(() => {
+    if (defaults?.studiedTopics?.length) return defaults.studiedTopics.map((t) => t.label);
+    return defaults?.topics ?? [];
+  }, [defaults]);
 
   const toggleTopic = (t: string) => {
     setTopics((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
   };
 
+  /** Ensure we always have at least one topic before leaving the source step. */
+  const ensureTopics = (): string[] => {
+    if (topics.length) return topics;
+    if (availableTopics.length) {
+      const seeded = availableTopics.slice(0, 6);
+      setTopics(seeded);
+      return seeded;
+    }
+    return ['General'];
+  };
+
+  const canChooseTemplate =
+    sourceKind === 'library'
+      ? libraryIds.length > 0
+      : sourceKind === 'preset'
+        ? !!patternId
+        : topics.length > 0 || availableTopics.length > 0;
+
+  const goToTemplate = () => {
+    if (!canChooseTemplate) return;
+    ensureTopics();
+    setStep('template');
+  };
+
   const buildBlueprint = (tpl: ExamTemplate) => {
+    const resolvedTopics = ensureTopics();
+    const weights: ExamTopicWeight[] = resolvedTopics.map((t) => ({ topicLabel: t, weight: 5 as const }));
     const pattern = patterns.find((p) => p.id === patternId);
     let bp = defaultBlueprintForTemplate(tpl, {
       subjectLabel,
-      topicWeights,
+      topicWeights: weights,
       paperPatternId: patternId,
       sourceKind,
     });
-    if (tpl === 'board_pattern' && pattern) {
+    // Curriculum presets always carry their section/marks structure into the blueprint.
+    if (sourceKind === 'preset' && pattern) {
       bp = {
         ...bp,
         durationMin: pattern.durationMin,
         sections: pattern.sections as ExamBlueprint['sections'],
         paperPatternId: pattern.id,
+        title:
+          tpl === 'board_pattern' || tpl === 'custom'
+            ? `${pattern.name} — ${subjectLabel}`
+            : bp.title,
       };
     }
     if (sourceKind === 'library') bp = { ...bp, libraryItemIds: libraryIds };
@@ -111,9 +143,18 @@ export default function MockExamNewPage() {
 
   const confirm = async () => {
     if (!blueprint) return;
-    const saved = await createBp.mutateAsync(blueprint);
-    const exam = await generate.mutateAsync(saved.id);
-    router.push(`/lab/mock-exams/${exam.id}`);
+    setConfirmError(null);
+    try {
+      const saved = await createBp.mutateAsync(blueprint);
+      const exam = await generate.mutateAsync(saved.id);
+      router.push(`/lab/mock-exams/${exam.id}`);
+    } catch (e) {
+      const msg =
+        e && typeof e === 'object' && 'message' in e && typeof (e as { message: unknown }).message === 'string'
+          ? (e as { message: string }).message
+          : 'Could not start generation. Check the API is running and try again.';
+      setConfirmError(msg);
+    }
   };
 
   const updateSectionCount = (sectionId: string, questionCount: number) => {
@@ -213,13 +254,20 @@ export default function MockExamNewPage() {
                   </button>
                 ))}
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {(defaults?.topics ?? []).map((t) => (
+              <Eyebrow className="mt-6">TOPICS TO COVER</Eyebrow>
+              <p className="mt-2 text-xs text-st-muted">
+                Tap topics to include them. If you skip this, we&apos;ll use your recent study topics.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {availableTopics.map((t) => (
                   <PillChip key={t} variant={topics.includes(t) ? 'primary' : 'default'} onClick={() => toggleTopic(t)}>
                     {t}
                   </PillChip>
                 ))}
               </div>
+              {topics.length > 0 && (
+                <p className="mt-2 font-mono text-xs text-st-muted">{topics.length} selected</p>
+              )}
             </section>
           )}
 
@@ -272,17 +320,22 @@ export default function MockExamNewPage() {
             </section>
           )}
 
-          <PillButton
-            className="mt-8"
-            disabled={
-              (sourceKind !== 'library' && topics.length === 0) ||
-              (sourceKind === 'library' && libraryIds.length === 0) ||
-              (sourceKind === 'preset' && !patternId)
-            }
-            onClick={() => setStep('template')}
-          >
+          <PillButton className="mt-8" disabled={!canChooseTemplate} onClick={goToTemplate}>
             Choose template
           </PillButton>
+          {!canChooseTemplate && (
+            <p className="mt-2 text-sm text-st-muted">
+              {sourceKind === 'preset' && !patternId
+                ? 'Select a paper pattern above.'
+                : sourceKind === 'library' && libraryIds.length === 0
+                  ? 'Select at least one library item.'
+                  : sourceKind === 'manual' && topics.length === 0
+                    ? 'Add at least one topic.'
+                    : sourceKind === 'studied' && topics.length === 0
+                      ? 'Select at least one topic from your history.'
+                      : 'Complete the source step to continue.'}
+            </p>
+          )}
         </>
       )}
 
@@ -399,6 +452,7 @@ export default function MockExamNewPage() {
               Back
             </button>
           </div>
+          {confirmError && <p className="mt-3 text-sm text-st-danger">{confirmError}</p>}
         </section>
       )}
     </div>

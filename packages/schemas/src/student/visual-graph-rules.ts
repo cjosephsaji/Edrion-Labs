@@ -438,66 +438,45 @@ function validateGlobalRules(
   return { nodeById, nodeIndexById, rootId };
 }
 
-function validateDepths(
+/**
+ * The depth every node must have, derived purely from graph structure.
+ *
+ * Depth is not an authored property — validateDepths below computes exactly this and
+ * rejects any node that disagrees. Exposing it lets the AI boundary derive depth from
+ * the structure the model produced instead of asking the model to recompute a graph
+ * traversal in its head (which it reliably gets wrong, failing the whole generation).
+ *
+ * Nodes absent from the returned map have no structurally-implied depth, so whatever
+ * they carry is left alone.
+ */
+export function computeExpectedDepths(
   graph: GraphForValidation,
-  issues: VisualGraphIssue[],
-  nodeById: Map<string, GraphNode>,
-  nodeIndexById: Map<string, number>,
   rootId: string,
-): void {
-  if (graph.archetype === 'mind_map') {
-    const layoutDepths = computeLayoutDepths(rootId, graph, nodeById);
+): Map<string, number> {
+  const { nodeById } = buildNodeMaps(graph);
+  const expected = new Map<string, number>();
+
+  const adopt = (depths: Map<string, number>, clamp = false) => {
     for (const node of graph.nodes) {
-      const expected = layoutDepths.get(node.id);
-      if (expected === undefined) {
-        continue;
-      }
-      if (node.depth !== expected) {
-        pushIssue(
-          issues,
-          nodePath(nodeIndexById, node.id, 'depth'),
-          `Depth must match layout distance from root (${expected})`,
-        );
-      }
+      const value = depths.get(node.id);
+      if (value === undefined) continue;
+      expected.set(node.id, clamp ? Math.min(value, GRAPH_DEPTH_LIMIT) : value);
     }
-    return;
+  };
+
+  if (graph.archetype === 'mind_map') {
+    adopt(computeLayoutDepths(rootId, graph, nodeById));
+    return expected;
   }
 
   if (graph.archetype === 'hierarchy' || graph.archetype === 'comparison') {
-    const partOfDepths = computePartOfTreeDepths(rootId, graph);
-    for (const node of graph.nodes) {
-      const expected = partOfDepths.get(node.id);
-      if (expected === undefined) {
-        continue;
-      }
-      if (node.depth !== expected) {
-        pushIssue(
-          issues,
-          nodePath(nodeIndexById, node.id, 'depth'),
-          `Depth must match part_of distance from root (${expected})`,
-        );
-      }
-    }
-    return;
+    adopt(computePartOfTreeDepths(rootId, graph));
+    return expected;
   }
 
   if (graph.archetype === 'flowchart') {
-    const traversalDepths = computeTraversalDepths(rootId, graph);
-    for (const node of graph.nodes) {
-      const shortest = traversalDepths.get(node.id);
-      if (shortest === undefined) {
-        continue;
-      }
-      const expected = Math.min(shortest, GRAPH_DEPTH_LIMIT);
-      if (node.depth !== expected) {
-        pushIssue(
-          issues,
-          nodePath(nodeIndexById, node.id, 'depth'),
-          `Depth must match shortest traversal distance from root (${expected})`,
-        );
-      }
-    }
-    return;
+    adopt(computeTraversalDepths(rootId, graph), true);
+    return expected;
   }
 
   if (graph.archetype === 'cycle') {
@@ -509,23 +488,9 @@ function validateDepths(
       }
     }
     for (const node of graph.nodes) {
-      let expected: number;
-      if (node.id === rootId) {
-        expected = 0;
-      } else if (coreNodeIds.has(node.id)) {
-        expected = 1;
-      } else {
-        expected = 2;
-      }
-      if (node.depth !== expected) {
-        pushIssue(
-          issues,
-          nodePath(nodeIndexById, node.id, 'depth'),
-          `Depth must be ${expected} for this node in a cycle diagram`,
-        );
-      }
+      expected.set(node.id, node.id === rootId ? 0 : coreNodeIds.has(node.id) ? 1 : 2);
     }
-    return;
+    return expected;
   }
 
   if (graph.archetype === 'timeline') {
@@ -537,23 +502,58 @@ function validateDepths(
       }
     }
     for (const node of graph.nodes) {
-      let expected: number;
       if (node.id === rootId) {
-        expected = 0;
+        expected.set(node.id, 0);
       } else if (backboneIds.has(node.id) && !TIMELINE_ATTACHMENT_TYPES.has(node.type)) {
-        expected = 1;
+        expected.set(node.id, 1);
       } else if (TIMELINE_ATTACHMENT_TYPES.has(node.type) || backboneIds.has(node.id)) {
-        expected = 2;
+        expected.set(node.id, 2);
       } else {
-        expected = 1;
+        expected.set(node.id, 1);
       }
-      if (node.depth !== expected) {
-        pushIssue(
-          issues,
-          nodePath(nodeIndexById, node.id, 'depth'),
-          `Depth must be ${expected} for this node in a timeline`,
-        );
-      }
+    }
+    return expected;
+  }
+
+  return expected;
+}
+
+function depthMessage(archetype: GraphForValidation['archetype'], expected: number): string {
+  switch (archetype) {
+    case 'mind_map':
+      return `Depth must match layout distance from root (${expected})`;
+    case 'hierarchy':
+    case 'comparison':
+      return `Depth must match part_of distance from root (${expected})`;
+    case 'flowchart':
+      return `Depth must match shortest traversal distance from root (${expected})`;
+    case 'cycle':
+      return `Depth must be ${expected} for this node in a cycle diagram`;
+    case 'timeline':
+      return `Depth must be ${expected} for this node in a timeline`;
+    default:
+      return `Depth must be ${expected}`;
+  }
+}
+
+function validateDepths(
+  graph: GraphForValidation,
+  issues: VisualGraphIssue[],
+  _nodeById: Map<string, GraphNode>,
+  nodeIndexById: Map<string, number>,
+  rootId: string,
+): void {
+  const expectedByNode = computeExpectedDepths(graph, rootId);
+
+  for (const node of graph.nodes) {
+    const expected = expectedByNode.get(node.id);
+    if (expected === undefined) continue;
+    if (node.depth !== expected) {
+      pushIssue(
+        issues,
+        nodePath(nodeIndexById, node.id, 'depth'),
+        depthMessage(graph.archetype, expected),
+      );
     }
   }
 }

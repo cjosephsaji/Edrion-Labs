@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { Handle, Position } from '@xyflow/react';
 import type { VisualGraphNode } from '@edrion/schemas';
 import { useLongPress } from '@/lib/hooks/use-long-press';
 import { MarkdownMath } from '../MarkdownMath';
@@ -19,6 +20,9 @@ export type BaseVisualNodeProps = {
   onTap?: () => void;
   onLongPress?: () => void;
   onDoubleActivate?: () => void;
+  /** Edge attachment sides, derived from the active archetype's layout direction. */
+  targetPosition?: Position;
+  sourcePosition?: Position;
 };
 
 export type VisualNodeData = Omit<BaseVisualNodeProps, 'eyebrow'> & {
@@ -52,6 +56,8 @@ export function BaseVisualNode({
   onTap,
   onLongPress,
   onDoubleActivate,
+  targetPosition = Position.Top,
+  sourcePosition = Position.Bottom,
 }: BaseVisualNodeProps) {
   const status = statusLabel(node);
   const origin = originLabel(node);
@@ -77,6 +83,19 @@ export function BaseVisualNode({
       className={`thinking-node ${surfaceClass} ${selected ? 'thinking-node--selected' : ''} ${className}`}
       data-layout-transition
     >
+      <Handle
+        type="target"
+        position={targetPosition}
+        className="thinking-node__handle"
+        isConnectable={false}
+      />
+      <Handle
+        type="source"
+        position={sourcePosition}
+        className="thinking-node__handle"
+        isConnectable={false}
+      />
+
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">

@@ -9,6 +9,7 @@ import {
   canvasGraphSchema,
   collectVisualGraphIssues,
   completeCanvasGraphSchema,
+  type CanvasGraph,
   type VisualArchetype,
   type VisualApplyProposalInput,
   type VisualCanvasCreateInput,
@@ -110,6 +111,28 @@ function assertGraphBytes(graph: unknown): void {
 
   if (graphByteSize(graph) > CANVAS_GRAPH_MAX_BYTES) throw payloadTooLarge();
 
+}
+
+function sanitizeCanvasGraph(graph: CanvasGraph): CanvasGraph {
+  const nodeIds = new Set(graph.nodes.map((node) => node.id));
+  const layout_cache: CanvasGraph['layout_cache'] = {};
+  for (const [archetype, layout] of Object.entries(graph.layout_cache)) {
+    const positions: NonNullable<typeof layout>['positions'] = {};
+    for (const [nodeId, position] of Object.entries(layout?.positions ?? {})) {
+      if (nodeIds.has(nodeId)) positions[nodeId] = position;
+    }
+    if (Object.keys(positions).length > 0 || layout?.viewport) {
+      layout_cache[archetype as VisualArchetype] = { ...layout, positions };
+    }
+  }
+
+  let root_node_id = graph.root_node_id;
+  if (root_node_id !== null && !nodeIds.has(root_node_id)) {
+    const sorted = [...graph.nodes].sort((a, b) => a.depth - b.depth || a.id.localeCompare(b.id));
+    root_node_id = sorted[0]?.id ?? null;
+  }
+
+  return { ...graph, layout_cache, root_node_id };
 }
 
 
@@ -668,19 +691,17 @@ export class VisualStudioService {
 
     assertGraphBytes(input.graph);
 
-
+    const graph = sanitizeCanvasGraph(input.graph);
 
     const existing = await this.repo.getCanvas(principal, id);
 
     if (!existing) throw visualNotFound();
 
-
-
     const schemaRef =
 
       existing.origin === 'memory' ? canvasGraphSchema : completeCanvasGraphSchema;
 
-    const parsed = schemaRef.safeParse(input.graph);
+    const parsed = schemaRef.safeParse(graph);
 
     if (!parsed.success) {
 

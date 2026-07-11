@@ -29,6 +29,8 @@ export type ExamPrincipalRef =
 @Injectable()
 export class ExamGenerationService {
   private readonly logger = new Logger(ExamGenerationService.name);
+  /** Coalesce concurrent generateExam calls (worker + SSE) for the same exam. */
+  private readonly inflight = new Map<string, Promise<void>>();
 
   constructor(
     @Inject(DATABASE) private readonly db: Database,
@@ -67,6 +69,39 @@ export class ExamGenerationService {
     principalRef: ExamPrincipalRef,
     emit?: (ev: ExamGenerationSseEvent) => void,
   ): Promise<void> {
+    const existing = this.inflight.get(examId);
+    if (existing) {
+      await existing;
+      if (!emit) return;
+      const [exam] = await this.db
+        .select()
+        .from(schema.mockExams)
+        .where(eq(schema.mockExams.id, examId))
+        .limit(1);
+      if (exam?.status === 'ready') {
+        const qs = await this.db
+          .select()
+          .from(schema.mockExamQuestions)
+          .where(eq(schema.mockExamQuestions.mockExamId, examId));
+        emit({ type: 'saved', examId, questionCount: qs.length, status: 'ready' });
+      } else if (exam?.status === 'failed') {
+        emit({ type: 'error', message: exam.generationNotice ?? 'Generation failed' });
+      }
+      return;
+    }
+
+    const run = this.doGenerateExam(examId, principalRef, emit).finally(() => {
+      this.inflight.delete(examId);
+    });
+    this.inflight.set(examId, run);
+    await run;
+  }
+
+  private async doGenerateExam(
+    examId: string,
+    principalRef: ExamPrincipalRef,
+    emit?: (ev: ExamGenerationSseEvent) => void,
+  ): Promise<void> {
     const principal = this.toPrincipal(principalRef);
     const [exam] = await this.db
       .select()
@@ -74,6 +109,14 @@ export class ExamGenerationService {
       .where(eq(schema.mockExams.id, examId))
       .limit(1);
     if (!exam) return;
+    if (exam.status === 'ready') {
+      const qs = await this.db
+        .select()
+        .from(schema.mockExamQuestions)
+        .where(eq(schema.mockExamQuestions.mockExamId, examId));
+      emit?.({ type: 'saved', examId, questionCount: qs.length, status: 'ready' });
+      return;
+    }
 
     let blueprint: ExamBlueprint | null = null;
     if (exam.blueprintId) {

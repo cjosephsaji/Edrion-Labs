@@ -1,11 +1,7 @@
 import type { CanvasGraph } from '@edrion/schemas';
 import type { VisualNodeType } from '@edrion/schemas';
-import type {
-  LayoutAlgorithm,
-  LayoutRequestMessage,
-  LayoutResponseMessage,
-} from './layout-types';
-import { isLayoutErrorMessage } from './layout-types';
+import type { LayoutAlgorithm, LayoutRequestMessage, LayoutResponseMessage } from './layout-types';
+import { runLayout } from './elk-layout';
 
 export const NODE_DIMENSIONS: Record<VisualNodeType, { width: number; height: number }> = {
   concept: { width: 240, height: 120 },
@@ -17,16 +13,6 @@ export const NODE_DIMENSIONS: Record<VisualNodeType, { width: number; height: nu
   formula: { width: 260, height: 132 },
   note: { width: 220, height: 116 },
 };
-
-let worker: Worker | null = null;
-let latestRequestId = 0;
-
-function getWorker(): Worker {
-  if (!worker) {
-    worker = new Worker(new URL('./elk-layout.worker.ts', import.meta.url), { type: 'module' });
-  }
-  return worker;
-}
 
 export function requestGraphLayout(
   graph: CanvasGraph,
@@ -58,33 +44,9 @@ export function requestGraphLayout(
     rootNodeId: graph.root_node_id,
   };
 
-  latestRequestId = requestId;
-
-  return new Promise((resolve, reject) => {
-    const layoutWorker = getWorker();
-
-    const handleMessage = (event: MessageEvent<LayoutResponseMessage>) => {
-      if (event.data.requestId !== requestId) return;
-      if (event.data.requestId < latestRequestId) return;
-      layoutWorker.removeEventListener('message', handleMessage);
-      layoutWorker.removeEventListener('error', handleError);
-      if (isLayoutErrorMessage(event.data)) {
-        reject(new Error(event.data.error));
-        return;
-      }
-      resolve(event.data);
-    };
-
-    const handleError = (event: ErrorEvent) => {
-      layoutWorker.removeEventListener('message', handleMessage);
-      layoutWorker.removeEventListener('error', handleError);
-      reject(event.error ?? new Error(event.message));
-    };
-
-    layoutWorker.addEventListener('message', handleMessage);
-    layoutWorker.addEventListener('error', handleError);
-    layoutWorker.postMessage(message);
-  });
+  // ELK spawns and owns the Web Worker that runs the layout algorithm, so this stays
+  // off the main thread without us wrapping it in a second worker of our own.
+  return runLayout(message);
 }
 
 export function getCachedPositions(graph: CanvasGraph): Record<string, { x: number; y: number }> | null {

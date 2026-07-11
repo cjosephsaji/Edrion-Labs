@@ -19,6 +19,39 @@ export type CanvasCommand = {
   createdAt: number;
 };
 
+function pruneLayoutCache(graph: CanvasGraph, nodeIds: Set<string>): CanvasGraph['layout_cache'] {
+  const next: CanvasGraph['layout_cache'] = {};
+  for (const [archetype, layout] of Object.entries(graph.layout_cache)) {
+    const positions: NonNullable<typeof layout>['positions'] = {};
+    for (const [nodeId, position] of Object.entries(layout?.positions ?? {})) {
+      if (nodeIds.has(nodeId)) positions[nodeId] = position;
+    }
+    if (Object.keys(positions).length > 0 || layout?.viewport) {
+      next[archetype as VisualArchetype] = { ...layout, positions };
+    }
+  }
+  return next;
+}
+
+function reconcileRootNodeId(graph: CanvasGraph): string | null {
+  const nodeIds = new Set(graph.nodes.map((node) => node.id));
+  if (graph.root_node_id !== null && nodeIds.has(graph.root_node_id)) {
+    return graph.root_node_id;
+  }
+  if (graph.nodes.length === 0) return null;
+  const sorted = [...graph.nodes].sort((a, b) => a.depth - b.depth || a.id.localeCompare(b.id));
+  return sorted[0]?.id ?? null;
+}
+
+function finalizeGraph(graph: CanvasGraph): CanvasGraph {
+  const nodeIds = new Set(graph.nodes.map((node) => node.id));
+  return {
+    ...graph,
+    layout_cache: pruneLayoutCache(graph, nodeIds),
+    root_node_id: reconcileRootNodeId(graph),
+  };
+}
+
 export function applyMutations(graph: CanvasGraph, mutations: CanvasMutation[]): CanvasGraph {
   let next: CanvasGraph = { ...graph, nodes: [...graph.nodes], edges: [...graph.edges], layout_cache: { ...graph.layout_cache } };
 
@@ -75,7 +108,7 @@ export function applyMutations(graph: CanvasGraph, mutations: CanvasMutation[]):
     }
   }
 
-  return next;
+  return finalizeGraph(next);
 }
 
 export function runCommand(graph: CanvasGraph, command: CanvasCommand, direction: 'redo' | 'undo'): CanvasGraph {

@@ -25,6 +25,7 @@ type CanvasToolbarProps = {
   dirty?: boolean;
   lastSavedAt?: string | null;
   conflictResolved?: boolean;
+  onRetrySave?: () => void;
 };
 
 export function CanvasToolbar({
@@ -32,6 +33,7 @@ export function CanvasToolbar({
   dirty = false,
   lastSavedAt = null,
   conflictResolved = false,
+  onRetrySave,
 }: CanvasToolbarProps) {
   const graph = useVisualCanvasStore((state) => state.graph);
   const saveStatus = useVisualCanvasStore((state) => state.saveStatus);
@@ -65,6 +67,7 @@ export function CanvasToolbar({
           dirty={dirty}
           lastSavedAt={lastSavedAt}
           conflictResolved={conflictResolved}
+          onRetry={onRetrySave}
         />
         {children}
         <CanvasExportButton />

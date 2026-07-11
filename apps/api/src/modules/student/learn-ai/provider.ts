@@ -1,4 +1,4 @@
-import type { ZodSchema } from 'zod';
+import type { ZodType, ZodTypeDef } from 'zod';
 
 export type LearnAiTier = 'nano' | 'small' | 'large' | 'vision';
 
@@ -54,7 +54,11 @@ export interface LearnAiCompleteOpts<T> {
   images?: { objectId: string; base64: string; mimeType: string }[];
   /** PDF / other files as base64 input_file blocks (OpenAI Responses API). */
   files?: { filename: string; base64: string; mimeType?: string }[];
-  schema: ZodSchema<T>;
+  // ZodType<Output, Def, Input> with Input left open: ZodSchema<T> pins input === output,
+  // which rejects any schema that normalizes its input (e.g. the visual graph schema,
+  // which rewrites AI-emitted empty labels and depths) and silently infers T from the
+  // raw input shape instead of the parsed result.
+  schema: ZodType<T, ZodTypeDef, unknown>;
   schemaName: string;
   maxOutputTokens: number;
   reasoningEffort?: LearnAiReasoningEffort;

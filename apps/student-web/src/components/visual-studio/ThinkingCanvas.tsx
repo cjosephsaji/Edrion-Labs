@@ -4,13 +4,15 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Background,
   MiniMap,
+  Position,
   ReactFlow,
   useReactFlow,
   type Edge,
   type Node,
   type OnSelectionChangeParams,
 } from '@xyflow/react';
-import type { CanvasGraph, VisualNodeType } from '@edrion/schemas';
+import type { CanvasGraph, VisualArchetype, VisualNodeType } from '@edrion/schemas';
+import { CanvasErrorState } from './CanvasErrorState';
 import { useTheme } from '@/lib/theme';
 import { computeVisibility } from '@/lib/visual-studio/canvas-visibility';
 import {
@@ -44,6 +46,23 @@ const DEFAULT_NODE_SIZE = { width: 240, height: 120 } as const;
 
 function nodeSize(type: VisualNodeType) {
   return NODE_DIMENSIONS[type] ?? DEFAULT_NODE_SIZE;
+}
+
+/**
+ * Edges attach on the sides that match each archetype's layout axis, so an edge
+ * leaves a node on the side it actually travels toward.
+ */
+const HANDLE_SIDES: Record<VisualArchetype, { target: Position; source: Position }> = {
+  mind_map: { target: Position.Left, source: Position.Right },
+  flowchart: { target: Position.Top, source: Position.Bottom },
+  hierarchy: { target: Position.Top, source: Position.Bottom },
+  cycle: { target: Position.Left, source: Position.Right },
+  timeline: { target: Position.Left, source: Position.Right },
+  comparison: { target: Position.Left, source: Position.Right },
+};
+
+function handleSides(archetype: VisualArchetype) {
+  return HANDLE_SIDES[archetype] ?? HANDLE_SIDES.flowchart;
 }
 
 const nodeTypes = {
@@ -182,6 +201,8 @@ function ThinkingCanvasInner({
   const { reducedMotion } = useTheme();
   const [viewportZoom, setViewportZoom] = useState(1);
   const [isViewportMoving, setIsViewportMoving] = useState(false);
+  const [layoutError, setLayoutError] = useState<string | null>(null);
+  const sides = handleSides(graph.archetype);
   const layoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeLayoutRequest = useRef(layoutRequestId);
 
@@ -199,15 +220,9 @@ function ThinkingCanvasInner({
     [graph, memoryDiff],
   );
 
-  const positions = useMemo(() => {
-    const cached = getCachedPositions(graph);
-    if (cached) return cached;
-    const fallback: Record<string, { x: number; y: number }> = {};
-    graph.nodes.forEach((node, index) => {
-      fallback[node.id] = { x: (index % 4) * 280, y: Math.floor(index / 4) * 180 };
-    });
-    return fallback;
-  }, [graph]);
+  // No grid fallback: an un-laid-out graph is a failure, not a layout. Rendering
+  // nodes at made-up coordinates would silently pass a broken canvas off as a design.
+  const positions = useMemo(() => getCachedPositions(graph), [graph]);
 
   const toggleCollapse = useCallback(
     (nodeId: string) => {
@@ -243,16 +258,21 @@ function ThinkingCanvasInner({
       const requestId = state.layoutRequestId;
       void requestGraphLayout(currentGraph, visible, requestId)
         .then((response) => {
-          if (isLayoutErrorMessage(response)) return;
+          if (isLayoutErrorMessage(response)) {
+            setLayoutError(response.error);
+            return;
+          }
           if (response.requestId < store.getState().layoutRequestId) return;
           const nextCache = mergeLayoutCache(currentGraph, response.positions, response.algorithm);
+          setLayoutError(null);
           store.getState().setGraph({
             ...currentGraph,
             layout_cache: nextCache,
           });
         })
-        .catch(() => {
-          // Keep fallback positions when layout fails.
+        .catch((error: unknown) => {
+          console.error('[visual-studio] ELK layout failed', error);
+          setLayoutError(error instanceof Error ? error.message : 'Layout engine failed');
         });
     }, 80);
 
@@ -276,7 +296,7 @@ function ThinkingCanvasInner({
       .filter((node) => visibility.visibleNodeIds.has(node.id))
       .map((node) => {
         const size = nodeSize(node.type);
-        const pos = positions[node.id] ?? { x: 0, y: 0 };
+        const pos = positions?.[node.id] ?? { x: 0, y: 0 };
         const hiddenCount = visibility.hiddenCounts.get(node.id) ?? 0;
         const memoryRole = memoryPresentation?.nodeRoles.get(node.id);
         const connectionSummary = connectedLabelsByNode.get(node.id);
@@ -303,6 +323,8 @@ function ThinkingCanvasInner({
             stepNumber: stepNumbers.get(node.id),
             onToggleCollapse: hiddenCount > 0 || node.collapsed ? () => toggleCollapse(node.id) : undefined,
             showBody: showNodeBodies,
+            targetPosition: sides.target,
+            sourcePosition: sides.source,
             className: memoryNodeClassName(memoryRole),
             onTap: onNodeTap ? () => onNodeTap(node.id) : undefined,
             onLongPress: onNodeLongPress ? () => onNodeLongPress(node.id) : undefined,
@@ -314,7 +336,7 @@ function ThinkingCanvasInner({
       .concat(
         (memoryPresentation?.ghostNodes ?? []).map((ghost, index) => {
           const parentPos = ghost.suggestedParentStudentNodeId
-            ? positions[ghost.suggestedParentStudentNodeId]
+            ? positions?.[ghost.suggestedParentStudentNodeId]
             : undefined;
           const size = nodeSize(ghost.node.type);
           const pos = parentPos
@@ -337,6 +359,8 @@ function ThinkingCanvasInner({
               stepNumber: undefined,
               onToggleCollapse: undefined,
               showBody: true,
+              targetPosition: sides.target,
+              sourcePosition: sides.source,
               className: memoryNodeClassName('ghost'),
               onTap: undefined,
               onLongPress: undefined,
@@ -350,7 +374,7 @@ function ThinkingCanvasInner({
         ghostNodes
           .filter((node) => !graph.nodes.some((entry) => entry.id === node.id))
           .map((node, index) => {
-            const anchorPos = positions[ghostEdges[0]?.source ?? node.id] ?? { x: 0, y: 0 };
+            const anchorPos = positions?.[ghostEdges[0]?.source ?? node.id] ?? { x: 0, y: 0 };
             const size = nodeSize(node.type);
             return {
               id: `proposal-ghost-${node.id}`,
@@ -369,6 +393,8 @@ function ThinkingCanvasInner({
                 stepNumber: undefined,
                 onToggleCollapse: undefined,
                 showBody: true,
+                targetPosition: sides.target,
+                sourcePosition: sides.source,
                 className: 'opacity-60',
                 onTap: undefined,
                 onLongPress: undefined,
@@ -392,6 +418,7 @@ function ThinkingCanvasInner({
     reducedMotion,
     memoryPresentation,
     showNodeBodies,
+    sides,
     onNodeTap,
     onNodeLongPress,
     onNodeDoubleClick,
@@ -416,7 +443,9 @@ function ThinkingCanvasInner({
           data: {
             archetype: graph.archetype,
             edgeType: edge.type,
-            label: edge.label,
+            // edge.label is optional; fall back to the semantic type so an edge always
+            // says what the relationship is rather than rendering as a bare line.
+            label: edge.label ?? edge.type.replace(/_/g, ' '),
             dashed,
             showLabel: showEdgeLabels,
             stroke: memoryEdgeStroke(memoryRole),
@@ -436,7 +465,7 @@ function ThinkingCanvasInner({
           data: {
             archetype: graph.archetype,
             edgeType: edge.type,
-            label: edge.label,
+            label: edge.label ?? edge.type.replace(/_/g, ' '),
             dashed: true,
             showLabel: showEdgeLabels,
             stroke: undefined,
@@ -506,6 +535,32 @@ function ThinkingCanvasInner({
     },
     [flowNodes, onDeleteSelected, onEditSelected, onOpenActions, readOnly, selectedNodeId, store, toggleCollapse],
   );
+
+  const retryLayout = useCallback(() => {
+    setLayoutError(null);
+    store.getState().bumpLayoutRequest();
+  }, [store]);
+
+  if (layoutError) {
+    return (
+      <CanvasErrorState
+        title="Couldn't lay out this canvas"
+        message="The layout engine failed, so the canvas can't be drawn. Your ideas are safe — nothing was lost."
+        onRetry={retryLayout}
+      />
+    );
+  }
+
+  if (!positions && graph.nodes.length > 0) {
+    return (
+      <div
+        className="flex h-full w-full items-center justify-center text-sm text-st-muted"
+        role="status"
+      >
+        Arranging your ideas…
+      </div>
+    );
+  }
 
   return (
     <div

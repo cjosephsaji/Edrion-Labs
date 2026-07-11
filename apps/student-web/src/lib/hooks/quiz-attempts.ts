@@ -56,7 +56,7 @@ export function useStartExamAttempt() {
   });
 }
 
-export function useSaveExamAnswer() {
+export function useSaveExamAttemptAnswer() {
   const client = useStudentClient();
   return useMutation({
     mutationFn: ({

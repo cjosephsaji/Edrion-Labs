@@ -3,12 +3,12 @@ import { Inject, Injectable } from '@nestjs/common';
 import { z } from 'zod';
 import {
   aiGeneratedGraphSchema,
+  aiVisualGraphEdgeSchema,
   type CanvasGraph,
   type CompleteCanvasGraph,
   type VisualArchetype,
   type VisualGraphEdge,
   type VisualGraphNode,
-  visualGraphEdgeSchema,
   visualGraphNodeSchema,
   visualQuizQuestionPrivateSchema,
 } from '@edrion/schemas';
@@ -33,13 +33,18 @@ const aiPatchOutputSchema = z
   .object({
     summary: z.string().trim().min(1).max(240),
     nodes: z.array(visualGraphNodeSchema).min(2).max(10),
-    edges: z.array(visualGraphEdgeSchema).min(1).max(30),
+    // Same empty-label tolerance as full-graph generation (structured output emits "").
+    edges: z.array(aiVisualGraphEdgeSchema).min(1).max(30),
   })
   .strict();
 
+const aiQuizQuestionSchema = visualQuizQuestionPrivateSchema.omit({ id: true }).extend({
+  id: z.string().trim().min(1).max(80).optional(),
+});
+
 const aiQuizOutputSchema = z
   .object({
-    questions: z.array(visualQuizQuestionPrivateSchema).min(2).max(3),
+    questions: z.array(aiQuizQuestionSchema).min(2).max(3),
   })
   .strict();
 
@@ -321,10 +326,13 @@ export class VisualGenerationService {
     });
     await this.callLog.log(principal, 'visual_quiz', usage);
     void idempotencyKey;
-    return result.questions.map((q) => ({
-      ...q,
-      id: q.id || randomUUID(),
-    }));
+    return result.questions.map((q) => {
+      const parsed = visualQuizQuestionPrivateSchema.parse({
+        ...q,
+        id: randomUUID(),
+      });
+      return parsed;
+    });
   }
 
   buildPatchUserPrompt(
@@ -414,9 +422,15 @@ export class VisualGenerationService {
   }
 }
 
-function normalizeEdge(edge: VisualGraphEdge): VisualGraphEdge {
-  return {
-    ...edge,
-    label: edge.label?.trim() || undefined,
-  };
+function normalizeEdge(edge: {
+  id: string;
+  source: string;
+  target: string;
+  type: VisualGraphEdge['type'];
+  label?: string | null;
+}): VisualGraphEdge {
+  const label = edge.label?.trim();
+  return label
+    ? { id: edge.id, source: edge.source, target: edge.target, type: edge.type, label }
+    : { id: edge.id, source: edge.source, target: edge.target, type: edge.type };
 }

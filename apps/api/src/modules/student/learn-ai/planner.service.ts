@@ -83,7 +83,7 @@ export class PlannerService {
       });
       await this.callLog.log(principal, 'session_plan', usage);
       await this.atoms.put(topicId, 'session_plan', result, usage.model);
-      return sessionPlanSchema.parse({ kind, ...result });
+      return sessionPlanSchema.parse({ ...result, kind });
     } catch (err) {
       this.logger.error(`Session planner AI failed — using default plan: ${(err as Error).message}`);
       return kind === 'refresh10' ? REFRESH_PLAN : DEFAULT_PLAN;
@@ -121,11 +121,11 @@ export class PlannerService {
         reasoningEffort: 'low',
       });
       await this.callLog.log(principal, 'session_plan', usage);
-      return sessionPlanSchema.parse({ kind: 'standard', ...result });
+      return sessionPlanSchema.parse({ ...result, kind: 'standard' });
     } catch (err) {
       this.logger.error(`Grounded session planner AI failed — using default plan: ${(err as Error).message}`);
       return DEFAULT_PLAN;
     }
   }
 }
-
+

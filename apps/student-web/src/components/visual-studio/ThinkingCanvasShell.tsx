@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { ReactFlowProvider } from '@xyflow/react';
@@ -80,18 +80,40 @@ function ThinkingCanvasShellInner({
     initRef.current = true;
   }, [canvasId, graph, initFromServer, origin, serverVersion]);
 
+  // React Query returns a fresh mutation object every render. Depending on it here
+  // tore down and rebuilt the autosave mid-debounce, clearing its timers and silently
+  // dropping the pending write. The instance must outlive renders; the callbacks it
+  // closes over are read through a ref so they stay current without recreating it.
+  const autosaveCallbacksRef = useRef({
+    patch: patchCanvas.mutateAsync,
+    setSaveStatus,
+    setServerVersion,
+    setLastSavedAt,
+  });
+  autosaveCallbacksRef.current = {
+    patch: patchCanvas.mutateAsync,
+    setSaveStatus,
+    setServerVersion,
+    setLastSavedAt,
+  };
+
   useEffect(() => {
     autosaveRef.current = new CanvasAutosave({
-      patch: (payload) => patchCanvas.mutateAsync(payload),
-      onStatus: setSaveStatus,
+      patch: (payload) => autosaveCallbacksRef.current.patch(payload),
+      onStatus: (status) => autosaveCallbacksRef.current.setSaveStatus(status),
       onSaved: (version) => {
-        setServerVersion(version);
-        setLastSavedAt(new Date().toISOString());
+        autosaveCallbacksRef.current.setServerVersion(version);
+        autosaveCallbacksRef.current.setLastSavedAt(new Date().toISOString());
       },
       onConflict: () => setConflictResolved(true),
     });
     return () => autosaveRef.current?.dispose();
-  }, [canvasId, patchCanvas, setLastSavedAt, setSaveStatus, setServerVersion]);
+  }, [canvasId]);
+
+  // A failed flush keeps its pending payload, so retrying is just another flush.
+  const retrySave = useCallback(() => {
+    void autosaveRef.current?.flush();
+  }, []);
 
   useEffect(() => {
     const syncOnline = () => setIsOffline(!navigator.onLine);
@@ -216,7 +238,12 @@ function ThinkingCanvasShellInner({
               </button>
             </div>
           ) : null}
-          <CanvasToolbar dirty={dirty} lastSavedAt={lastSavedAt} conflictResolved={conflictResolved}>
+          <CanvasToolbar
+            dirty={dirty}
+            lastSavedAt={lastSavedAt}
+            conflictResolved={conflictResolved}
+            onRetrySave={retrySave}
+          >
             {isMemoryMode ? (
               <PillButton
                 onClick={() => void handleCheckMemory()}
