@@ -4,6 +4,7 @@ import { Check, Copy, Paperclip, Plus, Trash2 } from 'lucide-react';
 import { Badge, Button, Drawer, Input, Label, Select } from '@edrion/ui';
 import { PortalClientError } from '@/lib/portal-client';
 import { useCreateInfoRequest, useInfoRequests, useInfoFileUrl, type InfoFieldDef, type InfoFileRef } from '@/lib/admission-info';
+import { formatPersonName } from '@/lib/person-name';
 import type { AdmissionRow } from '@/lib/admissions-types';
 
 const FIELD_TYPES = [
@@ -75,7 +76,7 @@ export function AdmissionInfoDrawer({ application, open, onClose }: { applicatio
       open={open}
       onClose={onClose}
       title="Request more information"
-      description={application ? `${application.firstName} ${application.lastName} (${application.applicationNo})` : ''}
+      description={application ? `${formatPersonName(application)} (${application.applicationNo})` : ''}
       footer={
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>Close</Button>

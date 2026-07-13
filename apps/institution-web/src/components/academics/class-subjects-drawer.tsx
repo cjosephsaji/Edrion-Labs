@@ -4,7 +4,7 @@ import { Trash2 } from 'lucide-react';
 import { Button, Drawer, Select, Skeleton } from '@edrion/ui';
 import { usePermissions } from '@/lib/permissions';
 import { useClassSubjectMutations, useClassSubjects, useSubjectOptions } from '@/lib/academics';
-import { useTeachingStaffOptions } from '@/lib/people';
+import { useTeachingStaffOptions, teachingStaffSelectOptions } from '@/lib/people';
 import { PortalClientError } from '@/lib/portal-client';
 
 /**
@@ -35,7 +35,7 @@ export function ClassSubjectsDrawer({
 
   const assignedIds = new Set((assigned ?? []).map((a) => a.subjectId));
   const available = (subjects?.items ?? []).filter((s) => !assignedIds.has(s.id));
-  const teacherOptions = (teachers ?? []).map((t) => ({ value: t.id, label: `${t.firstName} ${t.lastName}` }));
+  const teacherOptions = teachingStaffSelectOptions(teachers);
 
   async function add() {
     if (!subjectId) return;

@@ -7,6 +7,7 @@ import {
   inArray,
   isNull,
   or,
+  personSqlName,
   schema,
   sql,
   type Database,
@@ -15,6 +16,7 @@ import {
   type SQL,
 } from '@edrion/database';
 import { DATABASE } from '../../common/tokens';
+import { studentSearchCondition } from './student-search';
 
 /** One matched row, pre-shaped for the global-search UI (href is added by the service). */
 export interface SearchHit {
@@ -25,8 +27,7 @@ export interface SearchHit {
 
 const s = schema;
 
-/** concat_ws collapses NULLs, so a missing last name never yields a trailing space. */
-const fullName = (first: PgColumn, last: PgColumn): SQL<string> =>
+const twoPartName = (first: PgColumn, last: PgColumn): SQL<string> =>
   sql<string>`concat_ws(' ', ${first}, ${last})`;
 
 /** First non-null of a set of columns — used to build a compact "sublabel" line. */
@@ -51,9 +52,9 @@ export class PortalSearchRepository {
       instCol: t.institutionId,
       campusCol: t.campusId,
       idCol: t.id,
-      label: fullName(t.firstName, t.lastName),
-      sublabel: firstOf(t.admissionNo, t.email, t.phone),
-      match: [t.firstName, t.lastName, t.admissionNo, t.email, t.phone],
+      label: personSqlName(t.firstName, t.middleName, t.lastName),
+      sublabel: firstOf(t.admissionNo, t.rollNo, t.email, t.phone),
+      searchCond: studentSearchCondition(t, term),
       order: t.lastName,
       institutionId,
       campusIds,
@@ -69,9 +70,9 @@ export class PortalSearchRepository {
       instCol: t.institutionId,
       campusCol: t.campusId,
       idCol: t.id,
-      label: fullName(t.firstName, t.lastName),
+      label: personSqlName(t.firstName, t.middleName, t.lastName),
       sublabel: firstOf(t.employeeNo, t.email, t.phone),
-      match: [t.firstName, t.lastName, t.employeeNo, t.email, t.phone],
+      match: [t.firstName, t.middleName, t.lastName, t.employeeNo, t.email, t.phone],
       order: t.lastName,
       institutionId,
       campusIds,
@@ -87,9 +88,9 @@ export class PortalSearchRepository {
       instCol: t.institutionId,
       campusCol: t.campusId,
       idCol: t.id,
-      label: fullName(t.firstName, t.lastName),
+      label: personSqlName(t.firstName, t.middleName, t.lastName),
       sublabel: firstOf(t.employeeNo, t.email, t.phone),
-      match: [t.firstName, t.lastName, t.employeeNo, t.email, t.phone],
+      match: [t.firstName, t.middleName, t.lastName, t.employeeNo, t.email, t.phone],
       order: t.lastName,
       institutionId,
       campusIds,
@@ -105,7 +106,7 @@ export class PortalSearchRepository {
       instCol: t.institutionId,
       campusCol: t.campusId,
       idCol: t.id,
-      label: fullName(t.firstName, t.lastName),
+      label: twoPartName(t.firstName, t.lastName),
       sublabel: firstOf(t.email, t.phone),
       match: [t.firstName, t.lastName, t.email, t.phone],
       order: t.lastName,
@@ -199,7 +200,8 @@ export class PortalSearchRepository {
     idCol: PgColumn;
     label: SQL<string>;
     sublabel: SQL<string | null> | null;
-    match: PgColumn[];
+    match?: PgColumn[];
+    searchCond?: SQL;
     order: PgColumn;
     institutionId: string;
     campusIds: string[] | null;
@@ -207,7 +209,8 @@ export class PortalSearchRepository {
     limit: number;
   }): Promise<SearchHit[]> {
     const like = `%${opts.term}%`;
-    const match = or(...opts.match.map((c) => ilike(c, like)));
+    const match =
+      opts.searchCond ?? or(...(opts.match ?? []).map((c) => ilike(c, like)));
     const where = and(
       eq(opts.instCol, opts.institutionId),
       this.campusNarrow(opts.campusCol, opts.campusIds),

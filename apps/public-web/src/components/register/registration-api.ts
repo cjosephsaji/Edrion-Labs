@@ -19,6 +19,13 @@ export class RegistrationApiError extends Error {
   }
 }
 
+/** Pull server-side resend cooldown from an OTP_COOLDOWN error, if present. */
+export function otpCooldownSeconds(error: unknown): number | null {
+  if (!(error instanceof RegistrationApiError) || error.code !== 'OTP_COOLDOWN') return null;
+  const retryAfter = error.details?.retryAfter;
+  return typeof retryAfter === 'number' && retryAfter > 0 ? Math.ceil(retryAfter) : null;
+}
+
 async function call<T>(path: string, init: RequestInit, token?: string): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set('content-type', 'application/json');

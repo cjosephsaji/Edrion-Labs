@@ -15,6 +15,7 @@ interface PersonBase {
 export interface StudentRow extends PersonBase {
   admissionNo: string;
   firstName: string;
+  middleName: string | null;
   lastName: string;
   gender: string | null;
   dateOfBirth: string | null;
@@ -33,6 +34,7 @@ export interface StudentRow extends PersonBase {
 export interface StaffRow extends PersonBase {
   employeeNo: string | null;
   firstName: string;
+  middleName: string | null;
   lastName: string;
   email: string | null;
   phone: string | null;
@@ -51,6 +53,7 @@ export interface StaffRow extends PersonBase {
 export interface TeachingStaffOption {
   id: string;
   firstName: string;
+  middleName: string | null;
   lastName: string;
   designation: string | null;
   departmentName: string | null;
@@ -133,6 +136,7 @@ export interface ClassRosterEntry {
   id: string;
   admissionNo: string;
   firstName: string;
+  middleName: string | null;
   lastName: string;
   rollNo: string | null;
   status: string;

@@ -8,14 +8,18 @@ import {
   Dialog,
   Input,
   Label,
+  Select,
   Skeleton,
 } from '@edrion/ui';
 import { Topbar } from '@/components/app-shell/topbar';
 import {
   useAcademicMutations,
   useAcademicYearOptions,
+  useClassOptions,
   useProgrammeStructure,
+  useSubjectOptions,
 } from '@/lib/academics';
+import { isEndAfterStart, maxStartDate, minEndDate } from '@/lib/date-range';
 import type {
   GradeLevelRow,
   ProgrammeStructureDepartment,
@@ -26,6 +30,9 @@ import { usePermissions } from '@/lib/permissions';
 import { useTerm } from '@/lib/term';
 
 const EASE = [0.4, 0, 0.2, 1] as const;
+
+/** Sentinel option in the class picker: reveal a name field and create a fresh class instead. */
+const NEW_SECTION = '__new__';
 
 const listStagger = {
   hidden: {},
@@ -120,8 +127,10 @@ export default function ProgrammeStructurePage() {
       <Topbar title={title} />
       <div className="page-enter flex flex-1 flex-col gap-4 p-5">
         <p className="text-sm text-text-secondary">
-          Build each {t('department').toLowerCase()} from the inside out — add {tp('gradeLevel').toLowerCase()},{' '}
-          then {tp('term').toLowerCase()}, then {tp('class').toLowerCase()}.
+          Build each {t('department').toLowerCase()} from the top down — add {tp('gradeLevel').toLowerCase()}, then{' '}
+          {tp('term').toLowerCase()}, then the {tp('subject').toLowerCase()} and {tp('class').toLowerCase()} that sit
+          inside each one. {tp('subject')} added here become the curriculum every intake of this{' '}
+          {t('gradeLevel').toLowerCase()} inherits.
         </p>
         {isLoading && <Skeleton className="h-64 w-full rounded-lg" />}
         <AnimatePresence mode="wait">
@@ -350,7 +359,7 @@ function LevelNode({
   const reduceMotion = useReducedMotion();
 
   async function saveTerm() {
-    if (!currentYear || !termName || !startDate || !endDate) return;
+    if (!currentYear || !termName || !startDate || !endDate || !isEndAfterStart(startDate, endDate)) return;
     await termMut.create.mutateAsync({
       academicYearId: currentYear.id,
       programmeLevelId: level.id,
@@ -446,18 +455,32 @@ function LevelNode({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Start</Label>
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              <Input
+                type="date"
+                value={startDate}
+                max={maxStartDate(endDate)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setStartDate(v);
+                  if (endDate && !isEndAfterStart(v, endDate)) setEndDate('');
+                }}
+              />
             </div>
             <div>
               <Label>End</Label>
-              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              <Input
+                type="date"
+                value={endDate}
+                min={minEndDate(startDate)}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
             </div>
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setAddTerm(false)}>
               Cancel
             </Button>
-            <Button onClick={saveTerm} loading={termMut.create.isPending} disabled={!termName || !startDate || !endDate}>
+            <Button onClick={saveTerm} loading={termMut.create.isPending} disabled={!termName || !isEndAfterStart(startDate, endDate)}>
               Save
             </Button>
           </div>
@@ -480,23 +503,85 @@ function TermNode({
 }) {
   const { t, tp } = useTerm();
   const [addSection, setAddSection] = useState(false);
+  const [addSubject, setAddSubject] = useState(false);
   const classMut = useAcademicMutations('classes');
+  const curriculumMut = useAcademicMutations('programme-subjects');
   const { data: years } = useAcademicYearOptions();
+  const { data: subjects } = useSubjectOptions();
+  const { data: classes } = useClassOptions();
   const currentYear = years?.items?.find((y) => y.isCurrent) ?? years?.items?.[0];
+  const [sectionChoice, setSectionChoice] = useState('');
   const [sectionName, setSectionName] = useState('');
+  const [subjectId, setSubjectId] = useState('');
   const reduceMotion = useReducedMotion();
 
-  async function saveSection() {
-    if (!currentYear || !sectionName.trim()) return;
-    await classMut.create.mutateAsync({
-      academicYearId: currentYear.id,
-      gradeLevelId: level.gradeLevelId,
-      programmeLevelId: level.id,
-      termId: term.id,
-      name: sectionName.trim(),
-    });
+  const isOrphan = term.id.startsWith('orphan-');
+  const placedIds = new Set(term.subjects.map((s) => s.subjectId));
+  const availableSubjects = (subjects?.items ?? []).filter((s) => !placedIds.has(s.id));
+
+  // Classes that could be moved into this semester — anything not already sitting in it.
+  const attachable = (classes?.items ?? []).filter((c) => c.termId !== term.id);
+  const sectionOptions = [
+    ...attachable.map((c) => ({
+      value: c.id,
+      label: c.termName ? `${c.name} (in ${c.termName})` : `${c.name} (unplaced)`,
+    })),
+    { value: NEW_SECTION, label: `＋ Create a new ${t('class').toLowerCase()}…` },
+  ];
+  const creatingSection = sectionChoice === NEW_SECTION;
+
+  function resetSection() {
+    setSectionChoice('');
     setSectionName('');
     setAddSection(false);
+  }
+
+  async function saveSection() {
+    if (!currentYear || !sectionChoice) return;
+
+    if (creatingSection) {
+      if (!sectionName.trim()) return;
+      await classMut.create.mutateAsync({
+        academicYearId: currentYear.id,
+        gradeLevelId: level.gradeLevelId,
+        programmeLevelId: level.id,
+        termId: term.id,
+        name: sectionName.trim(),
+      });
+    } else {
+      // Moving an existing class in: repoint its year too, since the API requires the class's
+      // grade level to match the programme level it is being attached to.
+      const existing = attachable.find((c) => c.id === sectionChoice);
+      if (!existing) return;
+      await classMut.update.mutateAsync({
+        id: existing.id,
+        body: {
+          programmeLevelId: level.id,
+          termId: term.id,
+          gradeLevelId: level.gradeLevelId,
+          version: existing.version,
+        },
+      });
+    }
+
+    resetSection();
+    onChanged();
+  }
+
+  async function saveSubject() {
+    if (!subjectId) return;
+    await curriculumMut.create.mutateAsync({
+      subjectId,
+      programmeLevelId: level.id,
+      semesterSequence: term.sequence,
+    });
+    setSubjectId('');
+    setAddSubject(false);
+    onChanged();
+  }
+
+  async function dropSubject(id: string, version: number) {
+    await curriculumMut.remove.mutateAsync({ id, version });
     onChanged();
   }
 
@@ -508,73 +593,206 @@ function TermNode({
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm font-medium">{term.name}</span>
         <motion.span
-          key={term.sections.length}
+          key={`${term.subjects.length}-${term.sections.length}`}
           initial={{ scale: 0.9, opacity: 0.6 }}
           animate={{ scale: 1, opacity: 1 }}
           className="text-xs text-text-muted"
         >
-          {term.sections.length} {tp('class').toLowerCase()}
+          {term.subjects.length} {tp('subject').toLowerCase()} · {term.sections.length}{' '}
+          {tp('class').toLowerCase()}
         </motion.span>
       </div>
-      <motion.ul className="mt-1 space-y-1 pl-2" variants={reduceMotion ? undefined : listStagger} initial="hidden" animate="visible">
-        <AnimatePresence mode="popLayout">
-          {term.sections.map((s) => (
-            <motion.li
-              key={s.id}
-              layout={!reduceMotion}
-              variants={reduceMotion ? undefined : listItem}
-              exit={reduceMotion ? undefined : listItem.exit}
-              className="text-xs text-text-secondary"
-            >
-              {s.name}
-              {s.section ? ` · ${s.section}` : ''}
-              {s.studentCount != null && (
-                <span className="text-text-muted"> · {s.studentCount} students</span>
+
+      {/* Curriculum — the subjects taught in this semester. Orphan (term-less) nodes can't hold
+          curriculum, because a curriculum slot is keyed on the semester's sequence number. */}
+      {!isOrphan && (
+        <div className="mt-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+            {tp('subject')}
+          </p>
+          <motion.ul className="mt-1 space-y-1 pl-2" variants={reduceMotion ? undefined : listStagger} initial="hidden" animate="visible">
+            <AnimatePresence mode="popLayout">
+              {term.subjects.length === 0 && (
+                <motion.li
+                  key="no-subjects"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-xs text-text-muted"
+                >
+                  No {tp('subject').toLowerCase()} yet.
+                </motion.li>
               )}
-            </motion.li>
-          ))}
-        </AnimatePresence>
-      </motion.ul>
-      {canManage && (
-        <AnimatePresence mode="wait" initial={false}>
-          {!addSection ? (
-            <motion.div
-              key="add-btn"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <Button size="sm" variant="ghost" className="mt-1 h-7 px-2 text-xs" onClick={() => setAddSection(true)}>
-                <Plus className="mr-1 h-3 w-3" /> Add {t('class').toLowerCase()}
-              </Button>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="add-form"
-              className="mt-2 flex gap-2 overflow-hidden"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2, ease: EASE }}
-            >
-              <Input
-                value={sectionName}
-                onChange={(e) => setSectionName(e.target.value)}
-                placeholder={`${t('class')} name`}
-                className="h-8 text-sm"
-                autoFocus
-              />
-              <Button size="sm" onClick={saveSection} loading={classMut.create.isPending} disabled={!sectionName.trim()}>
-                Add
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setAddSection(false)}>
-                Cancel
-              </Button>
-            </motion.div>
+              {term.subjects.map((s) => (
+                <motion.li
+                  key={s.id}
+                  layout={!reduceMotion}
+                  variants={reduceMotion ? undefined : listItem}
+                  exit={reduceMotion ? undefined : listItem.exit}
+                  className="group flex items-center gap-1.5 text-xs text-text-secondary"
+                >
+                  <span className="min-w-0 flex-1 truncate">
+                    {s.name}
+                    <span className="ml-1 font-mono text-text-muted">{s.code}</span>
+                    {s.credits != null && <span className="text-text-muted"> · {s.credits} cr</span>}
+                    {s.isElective && <span className="text-text-muted"> · elective</span>}
+                  </span>
+                  {canManage && (
+                    <motion.button
+                      type="button"
+                      aria-label={`Remove ${s.name}`}
+                      onClick={() => dropSubject(s.id, s.version)}
+                      whileTap={reduceMotion ? undefined : { scale: 0.92 }}
+                      className="rounded p-0.5 text-text-muted opacity-0 transition-opacity hover:text-danger focus:opacity-100 group-hover:opacity-100"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </motion.button>
+                  )}
+                </motion.li>
+              ))}
+            </AnimatePresence>
+          </motion.ul>
+          {canManage && (
+            <AnimatePresence mode="wait" initial={false}>
+              {!addSubject ? (
+                <motion.div key="add-subject-btn" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.15 }}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="mt-1 h-7 px-2 text-xs"
+                    onClick={() => setAddSubject(true)}
+                    disabled={availableSubjects.length === 0}
+                  >
+                    <Plus className="mr-1 h-3 w-3" />
+                    {availableSubjects.length === 0
+                      ? `All ${tp('subject').toLowerCase()} placed`
+                      : `Add ${t('subject').toLowerCase()}`}
+                  </Button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="add-subject-form"
+                  className="mt-2 flex gap-2 overflow-hidden"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2, ease: EASE }}
+                >
+                  <Select
+                    value={subjectId}
+                    onChange={(e) => setSubjectId(e.target.value)}
+                    placeholder={`Pick a ${t('subject').toLowerCase()}…`}
+                    options={availableSubjects.map((s) => ({ value: s.id, label: `${s.name} (${s.code})` }))}
+                    className="h-8 text-sm"
+                  />
+                  <Button size="sm" onClick={saveSubject} loading={curriculumMut.create.isPending} disabled={!subjectId}>
+                    Add
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setAddSubject(false)}>
+                    Cancel
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           )}
-        </AnimatePresence>
+        </div>
       )}
+
+      <div className="mt-2">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+          {tp('class')}
+        </p>
+        <motion.ul className="mt-1 space-y-1 pl-2" variants={reduceMotion ? undefined : listStagger} initial="hidden" animate="visible">
+          <AnimatePresence mode="popLayout">
+            {term.sections.length === 0 && (
+              <motion.li
+                key="no-sections"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-xs text-text-muted"
+              >
+                No {tp('class').toLowerCase()} yet.
+              </motion.li>
+            )}
+            {term.sections.map((s) => (
+              <motion.li
+                key={s.id}
+                layout={!reduceMotion}
+                variants={reduceMotion ? undefined : listItem}
+                exit={reduceMotion ? undefined : listItem.exit}
+                className="text-xs text-text-secondary"
+              >
+                {s.name}
+                {s.section ? ` · ${s.section}` : ''}
+                {s.studentCount != null && (
+                  <span className="text-text-muted"> · {s.studentCount} students</span>
+                )}
+                {s.subjectCount != null && (
+                  <span className="text-text-muted">
+                    {' '}
+                    · {s.subjectCount} {tp('subject').toLowerCase()}
+                  </span>
+                )}
+              </motion.li>
+            ))}
+          </AnimatePresence>
+        </motion.ul>
+        {canManage && (
+          <AnimatePresence mode="wait" initial={false}>
+            {!addSection ? (
+              <motion.div
+                key="add-btn"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <Button size="sm" variant="ghost" className="mt-1 h-7 px-2 text-xs" onClick={() => setAddSection(true)}>
+                  <Plus className="mr-1 h-3 w-3" /> Add {t('class').toLowerCase()}
+                </Button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="add-form"
+                className="mt-2 flex gap-2 overflow-hidden"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2, ease: EASE }}
+              >
+                <Select
+                  value={sectionChoice}
+                  onChange={(e) => setSectionChoice(e.target.value)}
+                  placeholder={`Pick a ${t('class').toLowerCase()}…`}
+                  options={sectionOptions}
+                  className="h-8 text-sm"
+                />
+                {creatingSection && (
+                  <Input
+                    value={sectionName}
+                    onChange={(e) => setSectionName(e.target.value)}
+                    placeholder={`${t('class')} name`}
+                    className="h-8 text-sm"
+                    autoFocus
+                  />
+                )}
+                <Button
+                  size="sm"
+                  onClick={saveSection}
+                  loading={classMut.create.isPending || classMut.update.isPending}
+                  disabled={!sectionChoice || (creatingSection && !sectionName.trim())}
+                >
+                  Add
+                </Button>
+                <Button size="sm" variant="ghost" onClick={resetSection}>
+                  Cancel
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
+      </div>
     </motion.div>
   );
 }

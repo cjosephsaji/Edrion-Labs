@@ -5,7 +5,7 @@ import { ResourceManager, type ResourcePermissions } from '@/components/academic
 import type { FieldDef } from '@/components/academics/resource-form';
 import { AttendanceRecordsPanel } from '@/components/attendance/attendance-records-panel';
 import { useClassOptions, useSubjectOptions } from '@/lib/academics';
-import { useTeachingStaffOptions } from '@/lib/people';
+import { useTeachingStaffOptions, teachingStaffSelectOptions } from '@/lib/people';
 import { useAttendanceList, useAttendanceMutations, type AttendanceSessionRow } from '@/lib/attendance';
 import { useAcademicContextFilters } from '@/lib/academic-context';
 import { useTerm } from '@/lib/term';
@@ -47,7 +47,7 @@ export default function AttendancePage() {
         label: 'Taken by',
         type: 'select',
         nullable: true,
-        options: (teachers ?? []).map((t) => ({ value: t.id, label: `${t.firstName} ${t.lastName}` })),
+        options: teachingStaffSelectOptions(teachers),
       },
       { name: 'notes', label: 'Notes', type: 'textarea', nullable: true, placeholder: 'Optional' },
     ],

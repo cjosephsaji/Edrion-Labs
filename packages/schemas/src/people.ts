@@ -15,6 +15,17 @@ import { lenientPhoneSchema, optionalE164PhoneSchema } from './geo/validators';
 // --- shared ------------------------------------------------------------------
 
 const personName = z.string().trim().min(1, 'Required').max(80);
+/** Optional middle name — omitted from display when blank. */
+const optionalMiddleName = z.string().trim().max(80).optional();
+
+/** Format first + optional middle + last for display labels. */
+export function formatPersonName(parts: {
+  firstName: string;
+  middleName?: string | null;
+  lastName: string;
+}): string {
+  return [parts.firstName, parts.middleName?.trim(), parts.lastName].filter((p) => p && p.length > 0).join(' ').trim();
+}
 const optionalUuid = z.string().uuid().nullish();
 /** A calendar date as YYYY-MM-DD (matches the Postgres `date` column). */
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD').nullish();
@@ -75,6 +86,7 @@ const withVersion = { version: versionSchema };
 export const createStudentSchema = z.object({
   admissionNo: z.string().trim().min(1, 'Required').max(40),
   firstName: personName,
+  middleName: optionalMiddleName,
   lastName: personName,
   gender: genderSchema.nullish(),
   dateOfBirth: isoDate,
@@ -92,6 +104,7 @@ export type CreateStudentInput = z.infer<typeof createStudentSchema>;
 export const updateStudentSchema = z.object({
   admissionNo: z.string().trim().min(1).max(40).optional(),
   firstName: personName.optional(),
+  middleName: optionalMiddleName.nullable(),
   lastName: personName.optional(),
   gender: genderSchema.nullish(),
   dateOfBirth: isoDate,
@@ -112,6 +125,7 @@ export type UpdateStudentInput = z.infer<typeof updateStudentSchema>;
 export const createStaffSchema = z.object({
   employeeNo: shortText(40),
   firstName: personName,
+  middleName: optionalMiddleName,
   lastName: personName,
   email,
   phone: phoneStrict,
@@ -131,6 +145,7 @@ export type CreateStaffInput = z.infer<typeof createStaffSchema>;
 export const updateStaffSchema = z.object({
   employeeNo: shortText(40),
   firstName: personName.optional(),
+  middleName: optionalMiddleName.nullable(),
   lastName: personName.optional(),
   email,
   phone,

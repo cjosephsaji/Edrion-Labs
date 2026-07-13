@@ -15,27 +15,53 @@
 
 export const REDACTED = '[REDACTED]';
 
-/** Object keys whose value is always a credential and must be masked wholesale. */
+/**
+ * Object keys whose value is always a credential and must be masked wholesale.
+ *
+ * These are matched against the key's WORD SEGMENTS, never as a raw substring. The alternation
+ * below contains some very short terms, and an unanchored substring test made them ravenous:
+ * `className` contains the letters of `ssn` (cla-SSN-ame), `businessName` contains them too, and
+ * `notPublished` contains `otp` (n-OTP-ublished). All three were being replaced with [REDACTED] —
+ * so an AI run that looked up a class was shown a redacted class name and had to guess.
+ *
+ * Anchoring costs no coverage: keys in this codebase are camelCase or snake_case, and both
+ * normalize cleanly (`apiKey`/`x-api-key` → `api_key`, `accessToken` → `access_token`). The
+ * trailing `s?` keeps plurals (`credentials`, `tokens`) covered.
+ */
 const SENSITIVE_KEY = new RegExp(
-  [
-    'pass(word|phrase)?',
+  `(?:^|_)(?:${[
+    'pass(?:word|phrase)?',
     'secret',
     'token',
-    'api[-_]?key',
-    'access[-_]?key',
-    'client[-_]?secret',
+    'api_?key',
+    'access_?key',
+    'client_?secret',
     'authorization',
     'cookie',
     'credential',
-    'private[-_]?key',
-    'session[-_]?(id|secret)',
+    'private_?key',
+    'session_?(?:id|secret)',
     'otp',
-    'mfa[-_]?code',
+    'mfa_?code',
     'cvv',
     'ssn',
-  ].join('|'),
+  ].join('|')})s?(?:_|$)`,
   'i',
 );
+
+/** `apiKey` → `api_key`, `x-api-key` → `x_api_key`, `APIKey` → `api_key`, `SSN` → `ssn`. */
+function normalizeKey(key: string): string {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2') // apiKey  → api_Key
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2') // APIKey  → API_Key
+    .replace(/[^a-zA-Z0-9]+/g, '_') // x-api-key → x_api_key
+    .toLowerCase();
+}
+
+/** True when a key names a credential — see SENSITIVE_KEY on why this is not a substring test. */
+export function isSensitiveKey(key: string): boolean {
+  return SENSITIVE_KEY.test(normalizeKey(key));
+}
 
 /** High-confidence secret shapes to scrub from inside free-text string values. */
 const VALUE_PATTERNS: RegExp[] = [
@@ -73,7 +99,7 @@ function redact(value: unknown, seen: WeakSet<object>): unknown {
 
   const out: Record<string, unknown> = {};
   for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
-    out[key] = SENSITIVE_KEY.test(key) ? REDACTED : redact(val, seen);
+    out[key] = isSensitiveKey(key) ? REDACTED : redact(val, seen);
   }
   return out;
 }

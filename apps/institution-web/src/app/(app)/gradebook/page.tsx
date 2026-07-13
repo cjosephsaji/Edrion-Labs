@@ -4,7 +4,7 @@ import { type Column } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
 import { useClassOptions, useSubjectOptions } from '@/lib/academics';
-import { useStudentOptions } from '@/lib/people';
+import { useStudentOptions, studentRowSelectOptions } from '@/lib/people';
 import { useExamOptions } from '@/lib/exams';
 import { useGradebookList, useGradebookMutations } from '@/lib/gradebook';
 import { useAcademicContextFilters } from '@/lib/academic-context';
@@ -33,7 +33,7 @@ export default function GradebookPage() {
         label: t('student'),
         type: 'select',
         required: true,
-        options: (students?.items ?? []).map((s) => ({ value: s.id, label: `${s.firstName} ${s.lastName} (${s.admissionNo})` })),
+        options: studentRowSelectOptions(students?.items),
       },
       {
         name: 'subjectId',

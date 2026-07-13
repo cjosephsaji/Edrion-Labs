@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { AlertTriangle, CheckCircle2, ChevronRight, Clock, Filter } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronRight, Clock } from 'lucide-react';
 import { Badge, DetailPanel, PermissionDenied, Skeleton, type DetailSection } from '@edrion/ui';
 import { Topbar } from '@/components/app-shell/topbar';
 import { usePermissions } from '@/lib/permissions';
@@ -62,7 +62,6 @@ export default function AttentionPage() {
             )}
           </div>
           <div className="flex items-center gap-1 rounded-full border border-border bg-surface-elevated p-1 shadow-xs">
-            <Filter className="ml-2 h-3.5 w-3.5 text-text-muted" />
             {(['all', 'high', 'medium', 'low'] as const).map((s) => (
               <button
                 key={s}
@@ -104,8 +103,8 @@ export default function AttentionPage() {
 function CategoryCard({ category, severityAllowed, onOpen }: { category: AttentionCategory; severityAllowed: (s: AttentionSeverity) => boolean; onOpen: (item: AttentionItem) => void }) {
   const items = category.items.filter((i) => severityAllowed(i.severity)).sort((a, b) => SEV_ORDER[a.severity] - SEV_ORDER[b.severity]);
   return (
-    <section className="flex min-h-[18rem] flex-col rounded-xl border border-border bg-surface-elevated shadow-sm transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md">
-      <header className="flex items-start justify-between gap-3 border-b border-border bg-surface p-4">
+    <section className="flex min-h-[18rem] flex-col overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-sm transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md">
+      <header className="flex items-start justify-between gap-3 rounded-t-xl border-b border-border bg-surface p-4">
         <div className="min-w-0">
           <h2 className="truncate font-semibold text-text-primary">{category.label}</h2>
           <p className="mt-0.5 text-xs text-text-muted">{category.description}</p>

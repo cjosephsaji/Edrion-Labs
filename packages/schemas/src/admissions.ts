@@ -13,6 +13,7 @@ import { lenientPhoneSchema } from './geo/validators';
 // --- shared ------------------------------------------------------------------
 
 const personName = z.string().trim().min(1, 'Required').max(80);
+const optionalMiddleName = z.string().trim().max(80).optional();
 const optionalUuid = z.string().uuid().nullish();
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD').nullish();
 const email = z.string().trim().toLowerCase().email().nullish();
@@ -76,6 +77,7 @@ const withVersion = { version: versionSchema };
 export const createAdmissionSchema = z.object({
   applicationNo: z.string().trim().min(1, 'Required').max(40),
   firstName: personName,
+  middleName: optionalMiddleName,
   lastName: personName,
   gender: admissionGenderSchema.nullish(),
   dateOfBirth: isoDate,
@@ -96,6 +98,7 @@ export type CreateAdmissionInput = z.infer<typeof createAdmissionSchema>;
 export const updateAdmissionSchema = z.object({
   applicationNo: z.string().trim().min(1).max(40).optional(),
   firstName: personName.optional(),
+  middleName: optionalMiddleName.nullable(),
   lastName: personName.optional(),
   gender: admissionGenderSchema.nullish(),
   dateOfBirth: isoDate,

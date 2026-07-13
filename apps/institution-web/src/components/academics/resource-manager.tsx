@@ -15,7 +15,7 @@ import { RecordDetailDialog } from '@/components/common/record-detail-dialog';
 import { usePermissions } from '@/lib/permissions';
 import { useScope } from '@/lib/scope';
 import { useAcademicList, useAcademicMutations, type ListParams } from '@/lib/academics';
-import { PortalClientError } from '@/lib/portal-client';
+import { formatPortalError } from '@/lib/portal-client';
 import { ResourceForm, type FieldDef } from './resource-form';
 
 /** A toolbar facet dropdown; the chosen value is sent to the API as an extra list query param. */
@@ -236,8 +236,7 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
   }
 
   function errorMessage(err: unknown): string {
-    if (err instanceof PortalClientError) return err.message;
-    return 'Something went wrong. Try again.';
+    return formatPortalError(err);
   }
 
   async function submitCreate(body: Record<string, unknown>) {

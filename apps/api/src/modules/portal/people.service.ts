@@ -18,6 +18,7 @@ import type {
   UpdateStaffInput,
   UpdateStudentInput,
 } from '@edrion/schemas';
+import { formatPersonName } from '@edrion/schemas';
 import { AUDIT_WRITER } from '../../common/tokens';
 import type { Page } from './academics.repository';
 import type { ListResult } from './academics.service';
@@ -63,6 +64,7 @@ export class PeopleService {
       campusId,
       admissionNo: input.admissionNo,
       firstName: input.firstName,
+      middleName: input.middleName?.trim() || null,
       lastName: input.lastName,
       gender: input.gender ?? null,
       dateOfBirth: input.dateOfBirth ?? null,
@@ -91,6 +93,7 @@ export class PeopleService {
     const updated = await this.repo.updateStudent(id, input.version, {
       admissionNo: input.admissionNo ?? existing!.admissionNo,
       firstName: input.firstName ?? existing!.firstName,
+      middleName: input.middleName === undefined ? existing!.middleName : input.middleName?.trim() || null,
       lastName: input.lastName ?? existing!.lastName,
       gender: input.gender === undefined ? existing!.gender : input.gender,
       dateOfBirth: input.dateOfBirth === undefined ? existing!.dateOfBirth : input.dateOfBirth,
@@ -154,7 +157,7 @@ export class PeopleService {
       }
       const invited = await this.users.invite(ctx, {
         email: input.email,
-        fullName: `${input.firstName} ${input.lastName}`.trim(),
+        fullName: formatPersonName(input),
         phone: input.phone ?? null,
         roleKeys: input.roleKeys ?? [],
         campusIds,
@@ -173,6 +176,7 @@ export class PeopleService {
       campusId,
       employeeNo: input.employeeNo ?? null,
       firstName: input.firstName,
+      middleName: input.middleName?.trim() || null,
       lastName: input.lastName,
       email: input.email ?? null,
       phone: input.phone ?? null,
@@ -197,6 +201,7 @@ export class PeopleService {
     const updated = await this.repo.updateStaff(id, input.version, {
       employeeNo: input.employeeNo === undefined ? existing!.employeeNo : input.employeeNo,
       firstName: input.firstName ?? existing!.firstName,
+      middleName: input.middleName === undefined ? existing!.middleName : input.middleName?.trim() || null,
       lastName: input.lastName ?? existing!.lastName,
       email: input.email === undefined ? existing!.email : input.email,
       phone: input.phone === undefined ? existing!.phone : input.phone,
@@ -419,8 +424,8 @@ export class PeopleService {
     return scope.mode === 'campus' ? scope.campusId : null;
   }
 
-  private fullName(p: { firstName: string; lastName: string }): string {
-    return `${p.firstName} ${p.lastName}`.trim();
+  private fullName(p: { firstName: string; middleName?: string | null; lastName: string }): string {
+    return formatPersonName(p);
   }
 
   private assertInScope<T>(campusId: string | null, row: T | undefined, filter: ScopeFilter): asserts row is T {

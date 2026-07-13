@@ -7,6 +7,7 @@ import { AdmissionWorkflowPanel } from '@/components/admissions/admission-workfl
 import { useAcademicYearOptions, useGradeLevelOptions } from '@/lib/academics';
 import { usePermissions } from '@/lib/permissions';
 import { useAdmissionsList, useAdmissionsMutations, type AdmissionRow } from '@/lib/admissions';
+import { formatPersonName } from '@/lib/person-name';
 import { useTerm } from '@/lib/term';
 
 const PERMISSIONS: ResourcePermissions = {
@@ -55,6 +56,7 @@ export default function AdmissionsPage() {
     () => [
       { name: 'applicationNo', label: 'Application no.', type: 'text', required: true, placeholder: 'e.g. APP-2026-001' },
       { name: 'firstName', label: 'First name', type: 'text', required: true },
+      { name: 'middleName', label: 'Middle name', type: 'text', nullable: true, placeholder: 'Optional' },
       { name: 'lastName', label: 'Last name', type: 'text', required: true },
       { name: 'status', label: 'Status', type: 'select', required: true, options: STATUS_OPTIONS },
       { name: 'gradeLevelId', label: `Applying for ${t('gradeLevel').toLowerCase()}`, type: 'select', nullable: true, options: gradeOptions },
@@ -86,7 +88,7 @@ export default function AdmissionsPage() {
   const columns = useMemo<Column<AdmissionRow>[]>(
     () => [
       { key: 'applicationNo', header: 'Application', sortable: true, render: (r) => <span className="font-mono text-text-secondary">{r.applicationNo}</span> },
-      { key: 'lastName', header: 'Applicant', sortable: true, render: (r) => <span className="font-medium">{r.firstName} {r.lastName}</span> },
+      { key: 'lastName', header: 'Applicant', sortable: true, render: (r) => <span className="font-medium">{formatPersonName(r)}</span> },
       { key: 'gradeLevelName', header: t('gradeLevel'), render: (r) => r.gradeLevelName ?? '—' },
       { key: 'academicYearName', header: t('academicYear'), render: (r) => r.academicYearName ?? '—' },
       { key: 'submittedVia', header: 'Source', render: (r) => <SubmittedViaBadge via={r.submittedVia} /> },
@@ -117,7 +119,7 @@ export default function AdmissionsPage() {
         {
           title: 'Applicant',
           fields: [
-            { label: 'Name', value: `${r.firstName} ${r.lastName}` },
+            { label: 'Name', value: formatPersonName(r) },
             { label: 'Application no.', value: r.applicationNo },
             { label: 'Status', value: <StatusBadge status={r.status} /> },
             { label: 'Source', value: <SubmittedViaBadge via={r.submittedVia} /> },
@@ -188,11 +190,12 @@ export default function AdmissionsPage() {
       permissions={PERMISSIONS}
       useList={useAdmissionsList}
       useMutations={useAdmissionsMutations}
-      rowLabel={(r) => `${r.firstName} ${r.lastName} (${r.applicationNo})`}
+      rowLabel={(r) => `${formatPersonName(r)} (${r.applicationNo})`}
       renderDetailExtra={canManage ? ({ row }) => <AdmissionWorkflowPanel application={row} /> : undefined}
       toFormValues={(r) => ({
         applicationNo: r.applicationNo,
         firstName: r.firstName,
+        middleName: r.middleName ?? '',
         lastName: r.lastName,
         status: r.status === 'enrolled' ? 'accepted' : r.status,
         gradeLevelId: r.gradeLevelId ?? '',

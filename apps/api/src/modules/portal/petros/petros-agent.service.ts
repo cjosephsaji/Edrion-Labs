@@ -5,19 +5,30 @@ import { evaluateGuardrail, redactSecrets, type AiPolicyInput } from '@edrion/co
 import type { PetrosBlock, PetrosStreamEvent } from '@edrion/schemas';
 import type { PetrosConversation, PetrosMessage, PetrosPendingTurn } from '@edrion/database';
 import { PetrosRepository } from './petros.repository';
-import { PetrosOpenAiService, extractUsage, type PetrosUsage } from './openai-client.service';
+import {
+  PetrosOpenAiService,
+  extractUsage,
+  type PetrosUsage,
+  type ReasoningEffort,
+} from './openai-client.service';
 import { PetrosToolRegistry } from './tools/registry';
 import { buildInstructions, PETROS_PROMPT_VERSION } from './petros-prompt';
 import { PortalCopilotRepository } from '../portal-copilot.repository';
 import { SettingsService } from '../settings.service';
 import { PetrosAttachmentService } from './petros-attachment.service';
 import { PetrosTopicalityService } from './petros-topicality.service';
+import { PetrosHistoryService } from './context/history';
+import { compactToolResult, estimateTokens } from './context/compact';
 import { resolveAiPolicy } from '@edrion/copilot';
 import type { PortalActionContext } from '../portal-action-context';
 
 const CONFIRMATION_TTL_MS = 15 * 60 * 1000;
 const MAX_LOOP_ITERATIONS = 8;
-const HISTORY_TURNS = 20;
+
+/** Turns whose answer is written prose (or which read a document) get more thinking. See `resolveEffort`. */
+const DRAFTING_INTENT =
+  /\b(draft|write|compose|rewrite|letter|circular|report|essay|plan|proposal|explain|summar(y|ise|ize)|analy(se|ze)|recommend)/i;
+const LONG_PROMPT_CHARS = 400;
 
 export type Emit = (event: PetrosStreamEvent) => void;
 
@@ -55,6 +66,14 @@ interface LoopState {
   blocks: PetrosBlock[];
   input: unknown[];
   usage: PetrosUsage;
+  /** How hard the model thinks on this turn. Persisted across a pause so a resumed draft stays a draft. */
+  effort: ReasoningEffort;
+  /**
+   * Read calls already answered on this turn, keyed by tool + arguments. A model that re-asks the
+   * same question gets a pointer back to its own earlier result instead of a second full payload —
+   * which would otherwise sit in `input` and be re-billed on every remaining iteration.
+   */
+  memo: Set<string>;
 }
 
 /**
@@ -75,6 +94,7 @@ export class PetrosAgentService {
     private readonly attachments: PetrosAttachmentService,
     private readonly topicality: PetrosTopicalityService,
     private readonly settings: SettingsService,
+    private readonly history: PetrosHistoryService,
   ) {}
 
   // ── Turn entrypoints ─────────────────────────────────────────────────────────
@@ -128,7 +148,9 @@ export class PetrosAgentService {
       }
     }
 
-    const input = await this.rebuildInput(conversation);
+    // The verbatim window starts at the summary watermark: everything older is already carried by
+    // `conversation.summary`, so it is never resent.
+    const { input, summary } = await this.history.buildInput(conversation);
     if (attachmentIds.length) {
       // Replace the plain last user message with a multimodal one carrying the file blocks.
       const { blocks } = await this.attachments.toInputBlocks(ctx, attachmentIds);
@@ -146,13 +168,25 @@ export class PetrosAgentService {
     emit({ type: 'message_start', messageId: message.id, conversationId: conversation.id });
 
     const state: LoopState = {
-      conversation,
+      conversation: { ...conversation, summary },
       message,
       blocks: [],
       input,
       usage: { inputTokens: 0, outputTokens: 0, cachedInputTokens: 0 },
+      effort: this.effortFor(userText, attachmentIds.length > 0),
+      memo: new Set(),
     };
     await this.runLoop(ctx, state, emit);
+  }
+
+  /**
+   * A lookup and a piece of drafting were paying the same reasoning bill. Reading an attachment or
+   * producing prose earns the extra thinking; "how many students are in Grade 5A" does not.
+   */
+  private effortFor(userText: string, hasAttachments: boolean): ReasoningEffort {
+    const heavy =
+      hasAttachments || userText.length > LONG_PROMPT_CHARS || DRAFTING_INTENT.test(userText);
+    return this.openai.resolveEffort(heavy ? 'heavy' : 'light');
   }
 
   /** Resume after the user answers an ask_user question. */
@@ -164,11 +198,7 @@ export class PetrosAgentService {
     state.blocks = state.blocks.map((b) =>
       b.type === 'question' ? { ...b, answeredOptionId: optionId } : b,
     );
-    state.input.push({
-      type: 'function_call_output',
-      call_id: pending.pendingCallId,
-      output: JSON.stringify({ answer: optionId }),
-    });
+    state.input.push(fnOutput(pending.pendingCallId, { answer: optionId }));
     await this.repo.resolvePendingTurn(pending.id);
     await this.runLoop(ctx, state, emit);
   }
@@ -244,11 +274,7 @@ export class PetrosAgentService {
       }
     }
 
-    state.input.push({
-      type: 'function_call_output',
-      call_id: pending.pendingCallId,
-      output: JSON.stringify(redactSecrets(output ?? {})),
-    });
+    state.input.push(fnOutput(pending.pendingCallId, redactSecrets(output ?? {})));
     await this.repo.resolvePendingTurn(pending.id);
     await this.runLoop(ctx, state, emit);
   }
@@ -271,11 +297,7 @@ export class PetrosAgentService {
     }
 
     const state = await this.restoreState(ctx, pending);
-    state.input.push({
-      type: 'function_call_output',
-      call_id: pending.pendingCallId,
-      output: JSON.stringify({ status: 'rejected_by_user' }),
-    });
+    state.input.push(fnOutput(pending.pendingCallId, { status: 'rejected_by_user' }));
     await this.repo.resolvePendingTurn(pending.id);
     await this.runLoop(ctx, state, emit);
   }
@@ -304,6 +326,10 @@ export class PetrosAgentService {
           instructions,
           input: state.input,
           tools: openaiTools,
+          effort: state.effort,
+          // Keyed on the conversation so every iteration of every turn in this thread lands on the
+          // same cache prefix. The input array only ever grows at the tail, which is precisely the
+          // shape prefix caching rewards.
           prompt_cache_key: state.conversation.id,
         })) as unknown as AsyncIterable<Record<string, unknown>>;
 
@@ -423,6 +449,21 @@ export class PetrosAgentService {
     }
 
     if (tool.capability === 'read' && guardrail.decision === AiGuardrailDecision.Allow) {
+      // Already answered this exact question on this turn. Re-running it would put a second copy of
+      // the payload into `input`, where every remaining iteration would pay for it again — so point
+      // the model back at its own result instead. Only ever fires on an exact argument match, which
+      // means the model is going round in circles.
+      const key = memoKey(tool.name, parsed.data as Record<string, unknown>);
+      if (state.memo.has(key)) {
+        state.input.push({
+          type: 'function_call_output',
+          call_id: callId,
+          output: `Already answered above — the earlier ${tool.name} call in this turn used identical arguments and its result has not changed. Use that result.`,
+        });
+        return false;
+      }
+      state.memo.add(key);
+
       emit({ type: 'tool_started', toolName: tool.name, humanStatus: tool.humanStatus });
       try {
         const result = await tool.execute(ctx, {
@@ -444,7 +485,11 @@ export class PetrosAgentService {
             emit({ type: 'artifact', artifactId: readArtifactId, kind: artifact.kind, title: artifact.title });
           }
         }
-        state.input.push(fnOutput(callId, redactSecrets(result ?? {})));
+        const out = fnOutput(callId, redactSecrets(result ?? {}));
+        // Tool results are the tail of the input array, so they are re-billed on every remaining
+        // iteration. This is the line to watch when a tool starts getting expensive.
+        this.logger.debug(`tool ${tool.name} → ~${estimateTokens(String(out.output))} tokens`);
+        state.input.push(out);
       } catch (e) {
         state.blocks.push({ type: 'tool_activity', toolName: tool.name, status: 'failed', summary: 'Lookup failed' });
         emit({ type: 'tool_finished', toolName: tool.name, ok: false });
@@ -536,25 +581,33 @@ export class PetrosAgentService {
       messageId: state.message.id,
       apiInput: redactSecrets(state.input) as unknown[],
       pendingCallId: callId,
-      payload,
+      // `effort` rides along so a resumed turn keeps the thinking budget the turn was started with:
+      // confirming a drafted circular must not finish it at lookup effort.
+      payload: { ...payload, effort: state.effort },
       expiresAt: new Date(Date.now() + CONFIRMATION_TTL_MS),
     });
   }
 
   private async finishMessage(state: LoopState, status: string, emit: Emit): Promise<void> {
+    const costMicroUsd = this.openai.costOf(state.usage, 'chat');
     await this.repo.updateMessage(state.message.id, {
       content: state.blocks as Record<string, unknown>[],
       status,
       inputTokens: state.usage.inputTokens,
       outputTokens: state.usage.outputTokens,
       cachedInputTokens: state.usage.cachedInputTokens,
+      costMicroUsd,
     });
     await this.repo.updateConversation(state.conversation.id, { lastMessageAt: new Date() });
+    const usage = { ...state.usage, costMicroUsd };
     if (status === 'complete') {
       const title = await this.maybeTitle(state.conversation);
-      emit({ type: 'message_complete', messageId: state.message.id, usage: state.usage, title });
+      emit({ type: 'message_complete', messageId: state.message.id, usage, title });
+      // Compact the history AFTER the user has their answer — the nano round-trip must never sit in
+      // front of the response.
+      await this.history.maybeSummarize(state.conversation);
     } else {
-      emit({ type: 'message_complete', messageId: state.message.id, usage: state.usage });
+      emit({ type: 'message_complete', messageId: state.message.id, usage });
     }
   }
 
@@ -589,6 +642,7 @@ export class PetrosAgentService {
     const messages = await this.repo.messagesForConversation(conversation.id);
     const message = messages.find((m) => m.id === pending.messageId);
     if (!message) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Paused message not found' });
+    const saved = (pending.payload as { effort?: ReasoningEffort } | null)?.effort;
     return {
       conversation,
       message,
@@ -599,6 +653,10 @@ export class PetrosAgentService {
         outputTokens: message.outputTokens ?? 0,
         cachedInputTokens: message.cachedInputTokens ?? 0,
       },
+      effort: saved ?? this.openai.resolveEffort('heavy'),
+      // The memo is a within-turn dedupe; a resumed turn starts a fresh one rather than trusting a
+      // result the user may have spent fifteen minutes deciding about.
+      memo: new Set(),
     };
   }
 
@@ -639,23 +697,20 @@ export class PetrosAgentService {
     });
   }
 
-  /** Rebuild the model input from persisted messages (last N turns; older prefix summarized). */
-  private async rebuildInput(conversation: PetrosConversation): Promise<unknown[]> {
-    const messages = await this.repo.messagesForConversation(conversation.id);
-    const recent = messages.slice(-HISTORY_TURNS);
-    const input: unknown[] = [];
-    for (const m of recent) {
-      const text = ((m.content ?? []) as { type: string; text?: string }[])
-        .filter((b) => b.type === 'text' && b.text)
-        .map((b) => b.text)
-        .join('\n');
-      if (!text) continue;
-      input.push({ role: m.role === 'user' ? 'user' : 'assistant', content: text });
-    }
-    return input;
-  }
 }
 
+/**
+ * A tool result as the model sees it. `compactToolResult` is what stands between the model and a
+ * raw `db.select()` row — see `context/compact.ts` for what it strips and why.
+ */
 function fnOutput(callId: string, output: unknown): Record<string, unknown> {
-  return { type: 'function_call_output', call_id: callId, output: JSON.stringify(output) };
+  return { type: 'function_call_output', call_id: callId, output: compactToolResult(output) };
+}
+
+/** Memo key for a read call. Key order must not matter, and the injected conversation id is constant. */
+function memoKey(toolName: string, args: Record<string, unknown>): string {
+  const entries = Object.entries(args)
+    .filter(([k]) => !k.startsWith('__'))
+    .sort(([a], [b]) => a.localeCompare(b));
+  return `${toolName}(${JSON.stringify(entries)})`;
 }

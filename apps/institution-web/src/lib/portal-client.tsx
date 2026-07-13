@@ -9,10 +9,24 @@ export class PortalClientError extends Error {
     public readonly code: string,
     message: string,
     public readonly correlationId?: string,
+    public readonly details?: Record<string, string[]>,
   ) {
     super(message);
     this.name = 'PortalClientError';
   }
+}
+
+/** Prefer field-level validation messages over the generic API envelope. */
+export function formatPortalError(err: unknown, fallback = 'Something went wrong. Try again.'): string {
+  if (err instanceof PortalClientError) {
+    if (err.details) {
+      const msgs = Object.values(err.details).flat().filter(Boolean);
+      if (msgs.length) return msgs.join(' ');
+    }
+    return err.message || fallback;
+  }
+  if (err instanceof Error && err.message) return err.message;
+  return fallback;
 }
 
 /** Serialise the active scope to the header the API parses (`institution` | `campus:<id>`). */
@@ -53,6 +67,7 @@ export class PortalClient {
         err.code ?? 'ERROR',
         err.message ?? res.statusText,
         err.correlationId,
+        err.details,
       );
     }
     return body as T;
@@ -104,7 +119,7 @@ export class PortalClient {
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
       const err = body as ApiError;
-      throw new PortalClientError(res.status, err.code ?? 'ERROR', err.message ?? res.statusText, err.correlationId);
+      throw new PortalClientError(res.status, err.code ?? 'ERROR', err.message ?? res.statusText, err.correlationId, err.details);
     }
     return body as T;
   }
@@ -131,7 +146,7 @@ export class PortalClient {
     });
     if (!res.ok || !res.body) {
       const err = (await res.json().catch(() => ({}))) as ApiError;
-      throw new PortalClientError(res.status, err.code ?? 'ERROR', err.message ?? res.statusText, err.correlationId);
+      throw new PortalClientError(res.status, err.code ?? 'ERROR', err.message ?? res.statusText, err.correlationId, err.details);
     }
     const reader = res.body.getReader();
     const decoder = new TextDecoder();

@@ -1,19 +1,27 @@
 'use client';
 import { useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Sparkles, Trash2 } from 'lucide-react';
 import { Button, Select, Skeleton } from '@edrion/ui';
 import { usePermissions } from '@/lib/permissions';
-import { useClassSubjectMutations, useClassSubjects, useSubjectOptions } from '@/lib/academics';
-import { useTeachingStaffOptions } from '@/lib/people';
+import {
+  useApplyCurriculum,
+  useClassCurriculum,
+  useClassSubjectMutations,
+  useClassSubjects,
+  useSubjectOptions,
+} from '@/lib/academics';
+import { useTeachingStaffOptions, teachingStaffSelectOptions } from '@/lib/people';
 import { PortalClientError } from '@/lib/portal-client';
 
-/** Inline class subjects editor — used inside the class edit drawer. */
+/** Inline class subjects editor — used inside the class edit drawer and detail popup. */
 export function ClassSubjectsPanel({ classId, className }: { classId: string; className: string }) {
   const { can } = usePermissions();
   const canManage = can('academics.manage');
   const { data: assigned, isLoading } = useClassSubjects(classId);
   const { data: subjects } = useSubjectOptions();
   const { data: teachers } = useTeachingStaffOptions();
+  const { data: curriculum } = useClassCurriculum(classId);
+  const applyCurriculum = useApplyCurriculum(classId);
   const { assign, remove } = useClassSubjectMutations(classId);
   const [subjectId, setSubjectId] = useState('');
   const [teacherId, setTeacherId] = useState('');
@@ -21,7 +29,17 @@ export function ClassSubjectsPanel({ classId, className }: { classId: string; cl
 
   const assignedIds = new Set((assigned ?? []).map((a) => a.subjectId));
   const available = (subjects?.items ?? []).filter((s) => !assignedIds.has(s.id));
-  const teacherOptions = (teachers ?? []).map((t) => ({ value: t.id, label: `${t.firstName} ${t.lastName}` }));
+  const teacherOptions = teachingStaffSelectOptions(teachers);
+  const missingFromCurriculum = (curriculum ?? []).filter((c) => !c.assigned);
+
+  async function applyAll() {
+    setError(null);
+    try {
+      await applyCurriculum.mutateAsync({});
+    } catch (err) {
+      setError(err instanceof PortalClientError ? err.message : 'Could not apply the curriculum.');
+    }
+  }
 
   async function add() {
     if (!subjectId) return;
@@ -60,6 +78,20 @@ export function ClassSubjectsPanel({ classId, className }: { classId: string; cl
       {error && (
         <div role="alert" className="rounded-md border border-danger/30 bg-danger/5 px-3 py-2 text-sm text-danger">
           {error}
+        </div>
+      )}
+
+      {canManage && missingFromCurriculum.length > 0 && (
+        <div className="flex items-center gap-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2.5">
+          <Sparkles className="h-4 w-4 shrink-0 text-primary" />
+          <p className="min-w-0 flex-1 text-xs text-text-secondary">
+            The curriculum for this semester lists{' '}
+            <span className="font-medium text-text-primary">{missingFromCurriculum.length}</span>{' '}
+            subject{missingFromCurriculum.length === 1 ? '' : 's'} this class isn’t teaching yet.
+          </p>
+          <Button size="sm" onClick={applyAll} loading={applyCurriculum.isPending}>
+            Add them
+          </Button>
         </div>
       )}
 

@@ -30,6 +30,8 @@ export const petrosConversations = pgTable(
     pinned: boolean('pinned').notNull().default(false),
     /** Rolling nano summary of older turns dropped from the model input window. */
     summary: text('summary'),
+    /** How many of this conversation's messages `summary` already covers (incremental watermark). */
+    summaryThrough: integer('summary_through').notNull().default(0),
     lastMessageAt: timestamp('last_message_at', { withTimezone: true }),
     version: integer('version').notNull().default(0),
     ...actorColumns,
@@ -70,6 +72,8 @@ export const petrosMessages = pgTable(
     inputTokens: integer('input_tokens'),
     outputTokens: integer('output_tokens'),
     cachedInputTokens: integer('cached_input_tokens'),
+    /** Estimated spend for this turn, in millionths of a USD (integer — no float drift). */
+    costMicroUsd: integer('cost_micro_usd').notNull().default(0),
     stopReason: text('stop_reason'),
     ...timestamps,
   },

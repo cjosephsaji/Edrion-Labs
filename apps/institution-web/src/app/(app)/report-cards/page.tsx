@@ -6,6 +6,7 @@ import type { FieldDef } from '@/components/academics/resource-form';
 import { ReportCardEntriesPanel } from '@/components/report-cards/report-card-entries-panel';
 import { useClassOptions } from '@/lib/academics';
 import { usePeopleList, type StudentRow } from '@/lib/people';
+import { formatPersonName } from '@/lib/person-name';
 import { usePermissions } from '@/lib/permissions';
 import {
   usePublishReportCard,
@@ -61,7 +62,7 @@ export default function ReportCardsPage() {
         nullable: true,
         options: (students?.items ?? []).map((s) => ({
           value: s.id,
-          label: `${s.firstName} ${s.lastName}`,
+          label: formatPersonName(s),
         })),
       },
       {

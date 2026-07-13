@@ -9,6 +9,7 @@ import { UserProfileDialog } from '@/components/people/user-profile-dialog';
 import { usePermissions } from '@/lib/permissions';
 import { useClassOptions, useGradeLevelOptions } from '@/lib/academics';
 import { usePeopleList, usePeopleMutations, type StudentRow } from '@/lib/people';
+import { formatPersonName } from '@/lib/person-name';
 import { useTerm } from '@/lib/term';
 
 const PERMISSIONS: ResourcePermissions = {
@@ -63,6 +64,7 @@ export default function StudentsPage() {
     () => [
       { name: 'admissionNo', label: 'Admission no.', type: 'text', required: true, placeholder: 'e.g. ADM-1024' },
       { name: 'firstName', label: 'First name', type: 'text', required: true },
+      { name: 'middleName', label: 'Middle name', type: 'text', nullable: true, placeholder: 'Optional' },
       { name: 'lastName', label: 'Last name', type: 'text', required: true },
       {
         name: 'status',
@@ -113,7 +115,7 @@ export default function StudentsPage() {
         key: 'lastName',
         header: 'Name',
         sortable: true,
-        render: (r) => <span className="font-medium">{r.firstName} {r.lastName}</span>,
+        render: (r) => <span className="font-medium">{formatPersonName(r)}</span>,
       },
       { key: 'gradeLevelName', header: 'Grade', render: (r) => r.gradeLevelName ?? '—' },
       { key: 'className', header: 'Class', render: (r) => <span className="text-text-muted">{r.className ?? '—'}</span> },
@@ -135,7 +137,7 @@ export default function StudentsPage() {
       permissions={PERMISSIONS}
       useList={usePeopleList}
       useMutations={usePeopleMutations}
-      rowLabel={(r) => `${r.firstName} ${r.lastName}`}
+      rowLabel={(r) => formatPersonName(r)}
       renderDetail={(ctx) => <UserProfileDialog kind="student" {...ctx} />}
       renderFormExtra={({ row }) => (
         <>
@@ -144,18 +146,19 @@ export default function StudentsPage() {
               <h3 className="mb-2 text-sm font-medium text-text-primary">Student portal</h3>
               <StudentPortalInviteDialog
                 studentId={row.id}
-                studentName={`${row.firstName} ${row.lastName}`}
+                studentName={formatPersonName(row)}
                 studentEmail={row.email}
                 guardians={[]}
               />
             </div>
           )}
-          <StudentGuardiansPanel studentId={row.id} studentName={`${row.firstName} ${row.lastName}`} />
+          <StudentGuardiansPanel studentId={row.id} studentName={formatPersonName(row)} />
         </>
       )}
       toFormValues={(r) => ({
         admissionNo: r.admissionNo,
         firstName: r.firstName,
+        middleName: r.middleName ?? '',
         lastName: r.lastName,
         status: r.status,
         gender: r.gender ?? '',

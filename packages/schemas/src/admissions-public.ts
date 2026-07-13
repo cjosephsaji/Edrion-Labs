@@ -33,6 +33,7 @@ const targetSection = z
 const studentSection = z
   .object({
     firstName: optionalText(120),
+    middleName: optionalText(80),
     lastName: optionalText(120),
     gender: optionalText(30),
     dateOfBirth: optionalText(20),

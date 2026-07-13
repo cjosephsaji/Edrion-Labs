@@ -26,6 +26,7 @@ import { InstitutionPermissionsGuard } from './portal-permissions.guard';
 import { CurrentInstitutionPrincipal, CurrentScope, RequireInstitutionPermissions } from './portal.decorators';
 import type { ListResult } from './academics.service';
 import type { PortalActionContext } from './portal-action-context';
+import { studentSearchCondition } from './student-search';
 
 // Picker/directory batch loads request pageSize=200 (students-basic / staff-basic), so this caps
 // higher than the shared 100 default. Kept local so other lists keep the normal ceiling.
@@ -53,15 +54,13 @@ export class DirectoryService {
       const inScope = or(isNull(t.campusId), inArray(t.campusId, f.campusIds));
       if (inScope) conds.push(inScope);
     }
-    if (q.search) {
-      const s = or(ilike(t.firstName, `%${q.search}%`), ilike(t.lastName, `%${q.search}%`), ilike(t.admissionNo, `%${q.search}%`));
-      if (s) conds.push(s);
-    }
+    if (q.search) conds.push(studentSearchCondition(t, q.search));
     const where = and(...conds);
     const items = await this.db
       .select({
         id: t.id,
         firstName: t.firstName,
+        middleName: t.middleName,
         lastName: t.lastName,
         admissionNo: t.admissionNo,
         rollNo: t.rollNo,
@@ -96,6 +95,7 @@ export class DirectoryService {
       .select({
         id: t.id,
         firstName: t.firstName,
+        middleName: t.middleName,
         lastName: t.lastName,
         employeeNo: t.employeeNo,
         designation: t.designation,

@@ -7,6 +7,7 @@ import { RoleMultiSelect } from '@/components/admin/role-multi-select';
 import { UserProfileDialog } from '@/components/people/user-profile-dialog';
 import { useDepartmentOptions } from '@/lib/academics';
 import { usePeopleList, usePeopleMutations, type StaffRow } from '@/lib/people';
+import { formatPersonName } from '@/lib/person-name';
 import { useRolesList } from '@/lib/roles';
 import type { RoleRow } from '@/lib/admin-types';
 import { useTerm } from '@/lib/term';
@@ -65,6 +66,7 @@ export default function StaffPage() {
   const fields = useMemo<FieldDef[]>(
     () => [
       { name: 'firstName', label: 'First name', type: 'text', required: true },
+      { name: 'middleName', label: 'Middle name', type: 'text', nullable: true, placeholder: 'Optional' },
       { name: 'lastName', label: 'Last name', type: 'text', required: true },
       { name: 'employeeNo', label: 'Employee no.', type: 'text', nullable: true, placeholder: 'e.g. EMP-512' },
       {
@@ -107,7 +109,7 @@ export default function StaffPage() {
 
   const columns = useMemo<Column<StaffRow>[]>(
     () => [
-      { key: 'lastName', header: 'Name', sortable: true, render: (r) => <span className="font-medium">{r.firstName} {r.lastName}</span> },
+      { key: 'lastName', header: 'Name', sortable: true, render: (r) => <span className="font-medium">{formatPersonName(r)}</span> },
       { key: 'employeeNo', header: 'Employee', render: (r) => <span className="font-mono text-text-secondary">{r.employeeNo ?? '—'}</span> },
       { key: 'departmentName', header: t('department'), render: (r) => <span className="text-text-muted">{r.departmentName ?? '—'}</span> },
       { key: 'designation', header: 'Designation', render: (r) => r.designation ?? '—' },
@@ -135,10 +137,11 @@ export default function StaffPage() {
       permissions={PERMISSIONS}
       useList={usePeopleList}
       useMutations={usePeopleMutations}
-      rowLabel={(r) => `${r.firstName} ${r.lastName}`}
+      rowLabel={(r) => formatPersonName(r)}
       renderDetail={(ctx) => <UserProfileDialog kind="staff" {...ctx} />}
       toFormValues={(r) => ({
         firstName: r.firstName,
+        middleName: r.middleName ?? '',
         lastName: r.lastName,
         employeeNo: r.employeeNo ?? '',
         departmentId: r.departmentId ?? '',

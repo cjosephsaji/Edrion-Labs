@@ -165,8 +165,8 @@ export const shadow = {
 /** Typography. */
 export const typography = {
   fontFamily: {
-    sans: 'var(--font-sans, "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif)',
-    mono: 'var(--font-mono, "JetBrains Mono", ui-monospace, SFMono-Regular, monospace)',
+    sans: 'var(--font-sans)',
+    mono: 'var(--font-mono)',
   },
   fontSize: {
     xs: ['12px', '16px'],

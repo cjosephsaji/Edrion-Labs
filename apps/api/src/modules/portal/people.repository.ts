@@ -29,6 +29,7 @@ import type {
 import type { PeopleListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
+import { studentSearchCondition } from './student-search';
 
 const parentName = sql<string>`concat_ws(' ', ${schema.parents.firstName}, ${schema.parents.lastName})`;
 
@@ -50,6 +51,7 @@ export interface ClassRosterRow {
   id: string;
   admissionNo: string;
   firstName: string;
+  middleName: string | null;
   lastName: string;
   rollNo: string | null;
   status: string;
@@ -137,14 +139,7 @@ export class PeopleRepository {
   async listStudents(institutionId: string, campusIds: CampusFilter, q: PeopleListQuery): Promise<Page<StudentRow>> {
     const t = schema.students;
     const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
-    if (q.search) {
-      const s = or(
-        ilike(t.firstName, `%${q.search}%`),
-        ilike(t.lastName, `%${q.search}%`),
-        ilike(t.admissionNo, `%${q.search}%`),
-      );
-      if (s) conds.push(s);
-    }
+    if (q.search) conds.push(studentSearchCondition(t, q.search));
     const where = and(...conds);
     const sortable: Record<string, PgColumn> = {
       admissionNo: t.admissionNo,
@@ -207,6 +202,7 @@ export class PeopleRepository {
     if (q.search) {
       const s = or(
         ilike(t.firstName, `%${q.search}%`),
+        ilike(t.middleName, `%${q.search}%`),
         ilike(t.lastName, `%${q.search}%`),
         ilike(t.email, `%${q.search}%`),
         ilike(t.employeeNo, `%${q.search}%`),

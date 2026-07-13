@@ -1,5 +1,6 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
+import { formatPersonName } from '@edrion/schemas';
 import { usePortalClient } from './portal-client';
 import { useScope } from './scope';
 import type { InstitutionScope } from './types';
@@ -13,6 +14,7 @@ import type { InstitutionScope } from './types';
 export interface StudentBasic {
   id: string;
   firstName: string;
+  middleName: string | null;
   lastName: string;
   admissionNo: string;
   rollNo: string | null;
@@ -25,6 +27,7 @@ export interface StudentBasic {
 export interface StaffBasic {
   id: string;
   firstName: string;
+  middleName: string | null;
   lastName: string;
   employeeNo: string | null;
   designation: string | null;
@@ -71,7 +74,16 @@ export function useStaffDirectory(enabled = true) {
 export function studentOptions(items: StudentBasic[] | undefined) {
   return (items ?? []).map((s) => ({
     value: s.id,
-    label: `${s.firstName} ${s.lastName}`,
-    keywords: [s.admissionNo, s.rollNo ?? ''].filter(Boolean),
+    label: formatPersonName(s),
+    keywords: [s.firstName, s.middleName ?? '', s.lastName, s.admissionNo, s.rollNo ?? '', s.email ?? '', s.phone ?? ''].filter(Boolean),
+  }));
+}
+
+/** Map staff to Combobox options. */
+export function staffOptions(items: StaffBasic[] | undefined) {
+  return (items ?? []).map((s) => ({
+    value: s.id,
+    label: formatPersonName(s),
+    keywords: [s.firstName, s.middleName ?? '', s.lastName, s.employeeNo ?? '', s.designation ?? '', s.email ?? '', s.phone ?? ''].filter(Boolean),
   }));
 }

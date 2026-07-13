@@ -27,6 +27,7 @@ export interface AdmissionRow {
   updatedAt: string;
   applicationNo: string;
   firstName: string;
+  middleName: string | null;
   lastName: string;
   gender: string | null;
   dateOfBirth: string | null;

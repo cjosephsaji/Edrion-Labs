@@ -11,6 +11,7 @@ import {
   or,
   schema,
   sql,
+  personSqlName,
   type Database,
   type PgColumn,
   type SQL,
@@ -28,7 +29,7 @@ import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
 import { programmeListFilterConds } from './programme-list-filters';
 
-const studentDisplayName = sql<string>`concat_ws(' ', ${schema.students.firstName}, ${schema.students.lastName})`;
+const studentDisplayName = personSqlName(schema.students.firstName, schema.students.middleName, schema.students.lastName);
 
 export interface FeeStructureRow extends FeeStructure {
   gradeLevelName: string | null;

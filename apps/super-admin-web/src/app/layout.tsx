@@ -8,11 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // Font stack is defined in design tokens (--font-sans) with system fallbacks, so no
-  // network font fetch is required to build or run.
   return (
     <html lang="en" suppressHydrationWarning className="h-full">
-      <body className="h-full">
+      <body className="h-full font-sans antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

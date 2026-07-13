@@ -5,6 +5,7 @@ import { usePermissions } from '@/lib/permissions';
 import { usePeopleList, type StudentRow } from '@/lib/people';
 import { useAttendanceMarkMutations, useAttendanceRecords, type AttendanceStatus } from '@/lib/attendance';
 import { PortalClientError } from '@/lib/portal-client';
+import { formatPersonName } from '@/lib/person-name';
 
 const STATUS_OPTIONS = [
   { value: 'present', label: 'Present' },
@@ -108,13 +109,13 @@ export function AttendanceRecordsPanel({
             <li key={s.id} className="flex items-center justify-between gap-3 px-3 py-2">
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-text-primary">
-                  {s.firstName} {s.lastName}
+                  {formatPersonName(s)}
                 </p>
                 <p className="truncate font-mono text-xs text-text-muted">{s.admissionNo}</p>
               </div>
               <div className="w-36 shrink-0">
                 <Select
-                  aria-label={`Status for ${s.firstName} ${s.lastName}`}
+                  aria-label={`Status for ${formatPersonName(s)}`}
                   value={marks[s.id] ?? 'present'}
                   onChange={(e) => {
                     setMarks((m) => ({ ...m, [s.id]: e.target.value as AttendanceStatus }));

@@ -10,6 +10,7 @@ import {
   or,
   schema,
   sql,
+  personSqlName,
   type Database,
   type PgColumn,
   type SQL,
@@ -24,8 +25,8 @@ import type { AttendanceListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
 
-const teacherDisplayName = sql<string>`concat_ws(' ', ${schema.staff.firstName}, ${schema.staff.lastName})`;
-const studentDisplayName = sql<string>`concat_ws(' ', ${schema.students.firstName}, ${schema.students.lastName})`;
+const teacherDisplayName = personSqlName(schema.staff.firstName, schema.staff.middleName, schema.staff.lastName);
+const studentDisplayName = personSqlName(schema.students.firstName, schema.students.middleName, schema.students.lastName);
 
 export interface AttendanceSessionRow extends AttendanceSession {
   className: string | null;

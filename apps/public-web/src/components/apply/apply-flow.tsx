@@ -62,6 +62,7 @@ const RELATIONSHIP_OPTIONS = [
 /** The plain-field steps. Institution pick, programme selects, review and verify are bespoke. */
 const STUDENT_FIELDS: FieldDef[] = [
   { key: 'firstName', label: 'First name', type: 'text', required: true, placeholder: 'Ava', half: true },
+  { key: 'middleName', label: 'Middle name', type: 'text', placeholder: 'Optional', half: true },
   { key: 'lastName', label: 'Last name', type: 'text', required: true, placeholder: 'Applicant', half: true },
   { key: 'gender', label: 'Gender', type: 'select', options: GENDER_OPTIONS, half: true },
   { key: 'dateOfBirth', label: 'Date of birth', type: 'date', half: true },
@@ -752,6 +753,12 @@ function ProgrammeStep({
       live = false;
     };
   }, [institutionId]);
+
+  // When there's only one campus, pre-select it — no need to ask the applicant.
+  useEffect(() => {
+    if (!opts || opts.campuses.length !== 1 || value.campusId) return;
+    onChange('campusId', opts.campuses[0]!.id);
+  }, [opts, value.campusId, onChange]);
 
   const labels = termsFor(opts?.institutionType, opts?.nomenclature);
 

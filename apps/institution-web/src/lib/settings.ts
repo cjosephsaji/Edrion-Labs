@@ -47,6 +47,13 @@ export function useInstitutionProfile() {
   });
 }
 
+/** ISO country from the institution profile (set during registration). Used as the phone-input default. */
+export function useInstitutionCountry(): string | undefined {
+  const { data } = useInstitutionProfile();
+  const code = data?.country?.trim().toUpperCase();
+  return code || undefined;
+}
+
 export function useSaveInstitutionProfile() {
   const client = usePortalClient();
   const { scope } = useScope();

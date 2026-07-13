@@ -41,10 +41,26 @@ function readStored(): InstitutionScope | null {
   return null;
 }
 
+/** Pick the initial scope once campuses and permissions are known. */
+function defaultScope(campuses: CampusOption[], canSelectEntireInstitution: boolean): InstitutionScope {
+  if (campuses.length === 1) {
+    return { mode: 'campus', campusId: campuses[0]!.id };
+  }
+  if (canSelectEntireInstitution) {
+    return { mode: 'institution' };
+  }
+  if (campuses[0]) {
+    return { mode: 'campus', campusId: campuses[0].id };
+  }
+  return { mode: 'institution' };
+}
+
 /**
  * Holds the global viewing scope (Entire Institution vs a specific campus) and persists it. The
  * scope narrows every dashboard, table, report and analytic. Confined users (e.g. Campus Admin)
- * cannot select "Entire Institution" and default to their first allowed campus.
+ * cannot select "Entire Institution" and default to their first allowed campus. When the
+ * institution has only one campus, that campus is selected by default (even for institution-wide
+ * users) because "Entire Institution" would be redundant.
  */
 export function ScopeProvider({ children }: { children: ReactNode }) {
   const { data: me } = usePortalMe();
@@ -58,18 +74,23 @@ export function ScopeProvider({ children }: { children: ReactNode }) {
     if (!me) return;
     const allowedIds = new Set(campuses.map((c) => c.id));
     const stored = readStored();
+    const singleCampus = campuses.length === 1;
 
     const isValid = (s: InstitutionScope | null): s is InstitutionScope =>
       !!s &&
-      ((s.mode === 'institution' && canSelectEntireInstitution) ||
+      ((s.mode === 'institution' && canSelectEntireInstitution && !singleCampus) ||
         (s.mode === 'campus' && allowedIds.has(s.campusId)));
 
     if (isValid(stored)) {
       setScopeState(stored);
-    } else if (canSelectEntireInstitution) {
-      setScopeState({ mode: 'institution' });
-    } else if (campuses[0]) {
-      setScopeState({ mode: 'campus', campusId: campuses[0].id });
+    } else {
+      const next = defaultScope(campuses, canSelectEntireInstitution);
+      setScopeState(next);
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me]);

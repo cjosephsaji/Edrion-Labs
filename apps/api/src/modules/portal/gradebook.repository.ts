@@ -11,6 +11,7 @@ import {
   or,
   schema,
   sql,
+  personSqlName,
   type Database,
   type PgColumn,
   type SQL,
@@ -20,7 +21,7 @@ import type { GradebookListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
 
-const studentDisplayName = sql<string>`concat_ws(' ', ${schema.students.firstName}, ${schema.students.lastName})`;
+const studentDisplayName = personSqlName(schema.students.firstName, schema.students.middleName, schema.students.lastName);
 
 export interface GradeEntryRow extends GradeEntry {
   studentName: string | null;

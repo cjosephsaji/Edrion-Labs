@@ -8,7 +8,7 @@ import { useAcademicList } from '@/lib/academics';
 import type { AcademicTermRow } from '@/lib/academics-types';
 import { useCoursesList, useCoursesMutations } from '@/lib/courses';
 import type { CourseRow } from '@/lib/courses-types';
-import { useTeachingStaffOptions } from '@/lib/people';
+import { useTeachingStaffOptions, teachingStaffSelectOptions } from '@/lib/people';
 import { useTerm } from '@/lib/term';
 
 const PERMISSIONS: ResourcePermissions = {
@@ -45,7 +45,7 @@ export default function CoursesPage() {
         label: 'Professor',
         type: 'select',
         nullable: true,
-        options: (professors ?? []).map((p) => ({ value: p.id, label: `${p.firstName} ${p.lastName}` })),
+        options: teachingStaffSelectOptions(professors),
       },
       { name: 'officeHours', label: 'Office hours', type: 'text', nullable: true },
       { name: 'attendanceRequiredPct', label: 'Attendance required %', type: 'number', required: true, min: 0, max: 100 },

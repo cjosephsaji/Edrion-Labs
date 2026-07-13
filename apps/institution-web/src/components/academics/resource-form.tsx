@@ -18,6 +18,8 @@ import {
   type SelectOption,
 } from '@edrion/ui';
 import { useFormat } from '@/lib/format';
+import { useInstitutionCountry } from '@/lib/settings';
+import { isEndAfterStart, maxStartDate, minEndDate } from '@/lib/date-range';
 
 /** A declarative form field. The `name` must match the API body key for the resource. */
 export type FieldDef =
@@ -129,7 +131,16 @@ export function ResourceForm({
   }, [open, initial]);
 
   function set(name: string, value: unknown) {
-    setValues((v) => ({ ...v, [name]: value }));
+    setValues((v) => {
+      const next = { ...v, [name]: value };
+      if (name === 'startDate' && typeof value === 'string' && value) {
+        const end = next.endDate;
+        if (typeof end === 'string' && end && !isEndAfterStart(value, end)) {
+          next.endDate = '';
+        }
+      }
+      return next;
+    });
   }
 
   function validate(): boolean {
@@ -139,6 +150,11 @@ export function ResourceForm({
         const v = values[f.name];
         if (v === '' || v === undefined || v === null) next[f.name] = `${f.label} is required`;
       }
+    }
+    const start = values.startDate;
+    const end = values.endDate;
+    if (typeof start === 'string' && typeof end === 'string' && start && end && !isEndAfterStart(start, end)) {
+      next.endDate = 'End date must be after the start date';
     }
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -206,6 +222,7 @@ function Field({
   onChange: (v: unknown) => void;
 }) {
   const fmt = useFormat();
+  const institutionCountry = useInstitutionCountry();
   if (field.type === 'checkbox') {
     return (
       <label className="flex cursor-pointer items-center gap-2.5">
@@ -270,7 +287,7 @@ function Field({
         <InternationalPhoneInput
           id={id}
           value={String(value ?? '')}
-          defaultCountry={countryValue || undefined}
+          defaultCountry={countryValue || institutionCountry}
           invalid={!!error}
           aria-describedby={errId}
           onChange={onChange}
@@ -326,7 +343,18 @@ function Field({
         <Input
           id={`f-${field.name}`}
           type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
-          min={field.type === 'number' ? field.min : undefined}
+          min={
+            field.type === 'number'
+              ? field.min
+              : field.type === 'date' && field.name === 'endDate'
+                ? minEndDate(String(values.startDate ?? ''))
+                : undefined
+          }
+          max={
+            field.type === 'date' && field.name === 'startDate'
+              ? maxStartDate(String(values.endDate ?? ''))
+              : undefined
+          }
           value={String(value ?? '')}
           onChange={(e) => onChange(e.target.value)}
           placeholder={'placeholder' in field ? field.placeholder : undefined}

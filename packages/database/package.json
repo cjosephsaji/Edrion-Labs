@@ -19,6 +19,7 @@
     "seed:proper-staff": "tsx src/seed-proper-staff.ts",
     "backfill:geo": "tsx src/backfill-geo.ts",
     "cleanup:logins": "tsx src/cleanup-logins.ts",
+    "clear:data": "tsx src/clear-users.ts",
     "studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",

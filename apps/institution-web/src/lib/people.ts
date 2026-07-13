@@ -14,7 +14,23 @@ import type {
   StudentRow,
   TeachingStaffOption,
 } from './people-types';
+import { formatPersonName, namedPersonLabel } from './person-name';
 import { scopeKey } from './admin';
+
+/** Combobox options for teaching staff pickers. */
+export function teachingStaffSelectOptions(teachers: TeachingStaffOption[] | undefined) {
+  return (teachers ?? []).map((t) => ({ value: t.id, label: formatPersonName(t) }));
+}
+
+/** Combobox options for student pickers (includes admission number). */
+export function studentRowSelectOptions(students: StudentRow[] | undefined) {
+  return (students ?? []).map((s) => ({ value: s.id, label: namedPersonLabel(s, s.admissionNo) }));
+}
+
+/** Combobox options for staff pickers. */
+export function staffRowSelectOptions(staff: StaffRow[] | undefined) {
+  return (staff ?? []).map((s) => ({ value: s.id, label: formatPersonName(s) }));
+}
 
 /** People resource path segment (matches the API routes under /portal/people/*). */
 export type PeopleResource = 'students' | 'staff' | 'parents';

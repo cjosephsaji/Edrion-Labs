@@ -19,6 +19,8 @@ function staticVars(): string {
     lines.push(`    --size-${kebab}: ${v};`);
   }
   for (const [k, v] of Object.entries(shadow)) lines.push(`    --shadow-${k}: ${v};`);
+  lines.push(`    --font-sans: 'Google Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`);
+  lines.push(`    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;`);
   lines.push(`    --ease-standard: ${motion.easing.standard};`);
   lines.push(`    --ease-emphasized: ${motion.easing.emphasized};`);
   lines.push(`    --ease-exit: ${motion.easing.exit};`);

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Button, Checkbox, Drawer, Label, Select } from '@edrion/ui';
 import { useDecideAdmission } from '@/lib/admissions';
 import { PortalClientError } from '@/lib/portal-client';
+import { formatPersonName } from '@/lib/person-name';
 import type { AdmissionDecision, AdmissionRow } from '@/lib/admissions-types';
 
 const DECISION_OPTIONS: { value: AdmissionDecision; label: string }[] = [
@@ -65,7 +66,7 @@ export function AdmissionDecisionDrawer({
       open={open}
       onClose={onClose}
       title="Record decision"
-      description={application ? `${application.firstName} ${application.lastName} (${application.applicationNo})` : ''}
+      description={application ? `${formatPersonName(application)} (${application.applicationNo})` : ''}
       footer={
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose} disabled={decide.isPending}>

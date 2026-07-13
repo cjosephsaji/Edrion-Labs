@@ -345,6 +345,7 @@ export class AdmissionsPublicService {
       campusId: target.campusId ?? null,
       applicationNo,
       firstName: sections.student.firstName,
+      middleName: sections.student.middleName?.trim() || null,
       lastName: sections.student.lastName,
       gender: sections.student.gender ?? null,
       dateOfBirth: sections.student.dateOfBirth ?? null,

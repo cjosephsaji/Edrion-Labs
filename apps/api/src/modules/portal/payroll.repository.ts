@@ -11,6 +11,7 @@ import {
   or,
   schema,
   sql,
+  personSqlName,
   type Database,
   type PgColumn,
   type SQL,
@@ -20,7 +21,7 @@ import type { PayrollRunsListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
 
-const employeeName = sql<string>`concat_ws(' ', ${schema.staff.firstName}, ${schema.staff.lastName})`;
+const employeeName = personSqlName(schema.staff.firstName, schema.staff.middleName, schema.staff.lastName);
 
 export interface PayrollRunRow extends PayrollRun {
   itemCount: number;

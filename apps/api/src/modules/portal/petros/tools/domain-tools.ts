@@ -39,7 +39,9 @@ export interface DomainToolDeps {
 const page = (extra: Record<string, unknown> = {}) =>
   ({ page: 1, pageSize: 10, sortDir: 'desc', ...extra }) as never;
 
-const searchParam = params({ query: { type: 'string', description: 'Search text' } });
+const searchParam = params({
+  query: { type: 'string', description: 'Name, roll number, admission number, email, or phone' },
+});
 const searchSchema = z.object({ query: z.string().trim().max(160).optional() });
 const q = (args: Record<string, unknown>) =>
   typeof args.query === 'string' && args.query.trim() ? args.query.trim() : undefined;
@@ -74,20 +76,48 @@ export function buildDomainTools(s: DomainToolDeps): PetrosTool[] {
     }),
     read({
       name: 'student_get_basic_profile',
-      description: 'Reduced student projection (name, class, contact) for restricted roles. Never academic/financial/medical data.',
+      description:
+        'Search students by name, roll number, admission number, email, or phone — or call with NO query to list and count the whole roll. Returns a reduced projection (name, admission number, roll number, class, contact) for restricted roles; never academic/financial/medical data. The "N total" header is the number of students matching the query.',
       inputSchema: searchSchema,
       parameters: searchParam,
       requiredPermissions: ['student_basic_profile.view'],
       humanStatus: 'Looking up student…',
       execute: async (ctx, args) => {
         const result = await s.people.listStudents(ctx, page({ search: q(args) }));
+        const items = result.items as unknown as Record<string, unknown>[];
+
+        // Resolve class names HERE. The students row only carries `classId`, and a model handed a
+        // bare uuid has no choice but to spend a whole extra round-trip on academics_get_structure
+        // just to turn it into a word — the single most expensive tool result in the catalogue.
+        // Only the classes these students are actually in are resolved, so this discloses nothing
+        // the caller could not already read off the student record.
+        const classIds = new Set(
+          items.map((r) => r.classId).filter((v): v is string => typeof v === 'string' && v.length > 0),
+        );
+        const classNames = new Map<string, string>();
+        if (classIds.size) {
+          const classes = await s.academics.listClasses(ctx, page({ pageSize: 100 }));
+          for (const c of classes.items as unknown as { id: string; name: string }[]) {
+            if (classIds.has(c.id)) classNames.set(c.id, c.name);
+          }
+        }
+
+        // The standard list envelope, like every other tool: the compactor renders it as
+        // "N total, showing M", which the prompt already teaches the model to read. The old shape
+        // (`{matched, students}`) was the odd one out, and the model did not reliably understand
+        // that `matched` was the count it had just been asked for.
         return {
-          matched: result.total,
-          students: (result.items as unknown as Record<string, unknown>[]).map((r) => ({
+          total: result.total,
+          items: items.map((r) => ({
             id: r.id,
-            fullName: r.fullName,
-            classId: r.classId,
-            guardianPhone: r.guardianPhone ?? null,
+            admissionNo: r.admissionNo,
+            rollNo: r.rollNo ?? null,
+            firstName: r.firstName,
+            lastName: r.lastName,
+            className: typeof r.classId === 'string' ? (classNames.get(r.classId) ?? null) : null,
+            phone: r.phone ?? null,
+            email: r.email ?? null,
+            status: r.status,
           })),
         };
       },

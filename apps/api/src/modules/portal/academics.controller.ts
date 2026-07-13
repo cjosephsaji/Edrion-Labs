@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } f
 import { ApiTags } from '@nestjs/swagger';
 import {
   academicsListQuerySchema,
+  applyCurriculumSchema,
   assignClassSubjectSchema,
   createAcademicYearSchema,
   createAcademicTermSchema,
@@ -9,17 +10,22 @@ import {
   createDepartmentSchema,
   createDepartmentGradeLevelSchema,
   createGradeLevelSchema,
+  createProgrammeSubjectSchema,
   createSubjectSchema,
+  rosterCandidateQuerySchema,
   updateAcademicYearSchema,
   updateAcademicTermSchema,
   updateClassSchema,
+  updateClassRosterSchema,
   updateDepartmentSchema,
   updateDepartmentGradeLevelSchema,
   updateGradeLevelSchema,
+  updateProgrammeSubjectSchema,
   programmeStructureQuerySchema,
   updateSubjectSchema,
   versionedDeleteSchema,
   type AcademicsListQuery,
+  type ApplyCurriculumInput,
   type AssignClassSubjectInput,
   type CreateAcademicYearInput,
   type CreateAcademicTermInput,
@@ -27,13 +33,17 @@ import {
   type CreateDepartmentInput,
   type CreateDepartmentGradeLevelInput,
   type CreateGradeLevelInput,
+  type CreateProgrammeSubjectInput,
   type CreateSubjectInput,
+  type RosterCandidateQuery,
   type UpdateAcademicYearInput,
   type UpdateAcademicTermInput,
   type UpdateClassInput,
+  type UpdateClassRosterInput,
   type UpdateDepartmentInput,
   type UpdateDepartmentGradeLevelInput,
   type UpdateGradeLevelInput,
+  type UpdateProgrammeSubjectInput,
   type ProgrammeStructureQuery,
   type UpdateSubjectInput,
   type VersionedDeleteInput,
@@ -375,6 +385,54 @@ export class AcademicsController {
     return this.service.deleteSubject(this.ctx(p, s, r), id, body.version);
   }
 
+  // === programme subjects (curriculum) =======================================
+
+  @Get('programme-subjects')
+  @RequireInstitutionPermissions('academics.view')
+  listProgrammeSubjects(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Query(zodBody(academicsListQuerySchema)) q: AcademicsListQuery,
+  ) {
+    return this.service.listProgrammeSubjects(this.ctx(p, s, r), q);
+  }
+
+  @Post('programme-subjects')
+  @RequireInstitutionPermissions('academics.manage')
+  createProgrammeSubject(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(createProgrammeSubjectSchema)) body: CreateProgrammeSubjectInput,
+  ) {
+    return this.service.createProgrammeSubject(this.ctx(p, s, r), body);
+  }
+
+  @Patch('programme-subjects/:id')
+  @RequireInstitutionPermissions('academics.manage')
+  updateProgrammeSubject(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(updateProgrammeSubjectSchema)) body: UpdateProgrammeSubjectInput,
+  ) {
+    return this.service.updateProgrammeSubject(this.ctx(p, s, r), id, body);
+  }
+
+  @Delete('programme-subjects/:id')
+  @RequireInstitutionPermissions('academics.manage')
+  deleteProgrammeSubject(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(versionedDeleteSchema)) body: VersionedDeleteInput,
+  ) {
+    return this.service.deleteProgrammeSubject(this.ctx(p, s, r), id, body.version);
+  }
+
   // === classes / sections ====================================================
 
   @Get('classes')
@@ -397,6 +455,30 @@ export class AcademicsController {
     @ReqContext() r: EdrionRequestContext,
   ) {
     return this.service.listClassRoster(this.ctx(p, s, r), id);
+  }
+
+  @Get('classes/:id/roster/candidates')
+  @RequireInstitutionPermissions('academics.manage')
+  listRosterCandidates(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Query(zodBody(rosterCandidateQuerySchema)) q: RosterCandidateQuery,
+  ) {
+    return this.service.listRosterCandidates(this.ctx(p, s, r), id, q);
+  }
+
+  @Patch('classes/:id/roster')
+  @RequireInstitutionPermissions('academics.manage')
+  updateClassRoster(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(updateClassRosterSchema)) body: UpdateClassRosterInput,
+  ) {
+    return this.service.updateClassRoster(this.ctx(p, s, r), id, body);
   }
 
   @Post('classes')
@@ -469,5 +551,28 @@ export class AcademicsController {
     @ReqContext() r: EdrionRequestContext,
   ) {
     return this.service.removeClassSubject(this.ctx(p, s, r), id, assignmentId);
+  }
+
+  @Get('classes/:id/curriculum')
+  @RequireInstitutionPermissions('academics.view')
+  listClassCurriculum(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+  ) {
+    return this.service.listClassCurriculum(this.ctx(p, s, r), id);
+  }
+
+  @Post('classes/:id/curriculum/apply')
+  @RequireInstitutionPermissions('academics.manage')
+  applyCurriculum(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(applyCurriculumSchema)) body: ApplyCurriculumInput,
+  ) {
+    return this.service.applyCurriculum(this.ctx(p, s, r), id, body);
   }
 }

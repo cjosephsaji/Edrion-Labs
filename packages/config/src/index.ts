@@ -153,6 +153,26 @@ export const apiEnvSchema = z.object({
   OPENAI_BIG_MODEL: z.string().default('gpt-5.4-mini'),
   /** Embedding model for Visual Studio memory matching. */
   OPENAI_EMBEDDING_MODEL: z.string().default('text-embedding-3-small'),
+
+  // ── Petros cost controls ────────────────────────────────────────────────────
+  /**
+   * How hard the chat model thinks. Reasoning tokens bill at the OUTPUT rate, so this is the main
+   * lever on the output side. `auto` (the default) picks per turn: `low` for lookups and chat,
+   * `medium` when the turn is drafting, reading an attachment, or producing a document. Pin it to a
+   * fixed level to override the heuristic.
+   */
+  PETROS_REASONING_EFFORT: z.enum(['auto', 'minimal', 'low', 'medium', 'high']).default('auto'),
+  /** Prose length. `low` keeps answers tight without making them less correct. */
+  PETROS_VERBOSITY: z.enum(['low', 'medium', 'high']).default('low'),
+  /** Budget for the ANSWER, per model call. Thinking room is reserved on top of this. */
+  PETROS_MAX_OUTPUT_TOKENS: z.coerce.number().int().positive().default(4000),
+  /**
+   * Rates for OUR cost telemetry — not what OpenAI bills. Keyed by model id or by family
+   * (`nano` / `mini` / `full`), USD per 1M tokens:
+   * `{"gpt-5.4-mini":{"input":0.25,"cachedInput":0.025,"output":2}}`. Defaults track the GPT-5
+   * family; update when the provider's price list moves.
+   */
+  OPENAI_PRICING_JSON: z.string().optional(),
   /** Daily AI-run ceiling per student/independent user across all visual scopes. */
   AI_MAX_RUNS_PER_STUDENT_PER_DAY: z.coerce.number().int().positive().default(50),
   /** Per-scope daily limits for student visual AI operations (JSON object). */

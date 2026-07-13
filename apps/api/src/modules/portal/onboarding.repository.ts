@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, count, eq, or, schema, sql, type Database } from '@edrion/database';
+import { count, eq, schema, sql, type Database } from '@edrion/database';
 import { InstitutionStatus, OnboardingStatus } from '@edrion/shared-types';
 import { DATABASE } from '../../common/tokens';
 
@@ -13,7 +13,6 @@ export interface OnboardingSignals {
   academicTerms: number;
   subjects: number;
   students: number;
-  teachers: number;
   staff: number;
 }
 
@@ -45,16 +44,15 @@ export class OnboardingRepository {
 
   /** One count per step — a step is complete once its count ≥ 1. */
   async signals(institutionId: string): Promise<OnboardingSignals> {
-    const [academicYears, departments, academicTerms, subjects, students, teachers, staff] = await Promise.all([
+    const [academicYears, departments, academicTerms, subjects, students, staff] = await Promise.all([
       this.scalar(this.db.select({ value: count() }).from(schema.academicYears).where(eq(schema.academicYears.institutionId, institutionId))),
       this.scalar(this.db.select({ value: count() }).from(schema.departments).where(eq(schema.departments.institutionId, institutionId))),
       this.scalar(this.db.select({ value: count() }).from(schema.academicTerms).where(eq(schema.academicTerms.institutionId, institutionId))),
       this.scalar(this.db.select({ value: count() }).from(schema.subjects).where(eq(schema.subjects.institutionId, institutionId))),
       this.scalar(this.db.select({ value: count() }).from(schema.students).where(eq(schema.students.institutionId, institutionId))),
-      this.scalar(this.countTeachingStaff(institutionId)),
       this.scalar(this.db.select({ value: count() }).from(schema.staff).where(eq(schema.staff.institutionId, institutionId))),
     ]);
-    return { academicYears, departments, academicTerms, subjects, students, teachers, staff };
+    return { academicYears, departments, academicTerms, subjects, students, staff };
   }
 
   /**
@@ -78,29 +76,6 @@ export class OnboardingRepository {
         activatedAt: schema.institutions.activatedAt,
       });
     return row ?? null;
-  }
-
-  private countTeachingStaff(institutionId: string) {
-    return this.db
-      .select({
-        value: sql<number>`count(distinct ${schema.staff.id})`,
-      })
-      .from(schema.staff)
-      .where(
-        and(
-          eq(schema.staff.institutionId, institutionId),
-          or(
-            sql`${schema.staff.id} in (select class_teacher_id from classes where institution_id = ${institutionId} and class_teacher_id is not null)`,
-            sql`${schema.staff.id} in (select teacher_id from class_subject_teachers where institution_id = ${institutionId} and teacher_id is not null)`,
-            sql`${schema.staff.institutionUserId} in (
-              select iur.institution_user_id from institution_user_roles iur
-              inner join institution_users iu on iu.id = iur.institution_user_id
-              where iu.institution_id = ${institutionId}
-              and iur.role_key in ('teacher', 'professor', 'assistant_professor')
-            )`,
-          ),
-        ),
-      );
   }
 
   private async scalar(query: PromiseLike<{ value: number | string }[]>): Promise<number> {

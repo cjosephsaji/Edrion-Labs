@@ -6,9 +6,19 @@ import type { Paged } from './academics-types';
 
 const INSTITUTION_SCOPE = { mode: 'institution' } as const;
 const SUMMARY_KEY = ['portal', 'onboarding'];
-const listKey = (endpoint: string) => ['portal', 'onboarding-list', endpoint];
+const listKey = (endpoint: string, params?: Record<string, string>) => [
+  'portal',
+  'onboarding-list',
+  endpoint,
+  params ?? {},
+];
 
-/** The onboarding wizard summary — the 6 data-driven steps + progress. Institution-scoped. */
+function listQuery(params?: Record<string, string>): string {
+  if (!params || Object.keys(params).length === 0) return '';
+  return `?${new URLSearchParams(params).toString()}`;
+}
+
+/** The onboarding wizard summary — step progress and go-live readiness. Institution-scoped. */
 export function useOnboarding() {
   const client = usePortalClient();
   return useQuery({
@@ -18,23 +28,23 @@ export function useOnboarding() {
 }
 
 /** Recent records already added for a step, so each section shows what exists. */
-export function useStepList<T = { id: string }>(endpoint: string) {
+export function useStepList<T = { id: string }>(endpoint: string, params?: Record<string, string>) {
   const client = usePortalClient();
   return useQuery({
-    queryKey: listKey(endpoint),
-    queryFn: () => client.get<Paged<T>>(`/portal/${endpoint}`, INSTITUTION_SCOPE),
+    queryKey: listKey(endpoint, params),
+    queryFn: () => client.get<Paged<T>>(`/portal/${endpoint}${listQuery(params)}`, INSTITUTION_SCOPE),
   });
 }
 
 /** Add a record to a step (posts to the module's own create endpoint), then refresh step + summary. */
-export function useStepCreate(endpoint: string) {
+export function useStepCreate(endpoint: string, listParams?: Record<string, string>) {
   const client = usePortalClient();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: Record<string, unknown>) => client.post(`/portal/${endpoint}`, INSTITUTION_SCOPE, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: SUMMARY_KEY });
-      qc.invalidateQueries({ queryKey: listKey(endpoint) });
+      qc.invalidateQueries({ queryKey: listKey(endpoint, listParams) });
     },
   });
 }

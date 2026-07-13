@@ -22,6 +22,8 @@ import {
   Input,
   InternationalPhoneInput,
   Label,
+  OtpInput,
+  OtpResendCooldown,
   Select,
   TimezoneSelect,
   cn,
@@ -39,6 +41,7 @@ import { InstitutionType } from '@edrion/shared-types';
 import {
   registrationApi,
   RegistrationApiError,
+  otpCooldownSeconds,
   type DraftView,
   type GeoGuess,
   type PublicPlan,
@@ -739,8 +742,16 @@ function EmailVerify({
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(0);
+  const verifyRef = useRef<() => Promise<void>>(async () => {});
   // The code box only applies to the address we actually sent to — editing the email hides it.
   const sent = sentEmail !== null && sentEmail === email;
+
+  // Changing the email invalidates any in-flight OTP session for a different address.
+  useEffect(() => {
+    setSentEmail(null);
+    setCode('');
+    setLocalError(null);
+  }, [email]);
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -761,6 +772,8 @@ function EmailVerify({
       setCode('');
       setResendIn(res.resendAvailableInSeconds);
     } catch (e) {
+      const cooldown = otpCooldownSeconds(e);
+      if (cooldown !== null) setResendIn(cooldown);
       setLocalError((e as RegistrationApiError).message);
     } finally {
       setBusy(false);
@@ -768,6 +781,7 @@ function EmailVerify({
   };
 
   const verify = async () => {
+    if (code.length !== 6 || busy) return;
     setLocalError(null);
     setBusy(true);
     try {
@@ -781,6 +795,16 @@ function EmailVerify({
     }
   };
 
+  verifyRef.current = verify;
+
+  const handleEmailChange = (value: string) => {
+    onEmailChange(value);
+  };
+
+  const canRequestCode = emailValid && !busy && resendIn <= 0;
+  const showOtpPanel = sent && !verified;
+  const message = error ?? localError;
+
   return (
     <div className="rounded-xl border border-border bg-background-secondary p-4">
       <Label htmlFor="email">
@@ -792,47 +816,72 @@ function EmailVerify({
           type="email"
           placeholder="principal@greenwood.edu"
           value={email}
-          onChange={(e) => onEmailChange(e.target.value)}
+          onChange={(e) => handleEmailChange(e.target.value)}
           className="sm:flex-1"
         />
         {verified ? (
           <span className="inline-flex h-input items-center gap-1.5 rounded-md bg-success-soft px-3 text-sm font-medium text-success">
             <CheckCircle2 className="h-4 w-4" /> Verified
           </span>
-        ) : (
-          <Button variant="secondary" onClick={request} loading={busy && !sent} disabled={!emailValid || busy || resendIn > 0}>
-            <Mail className="h-4 w-4" /> {sent ? (resendIn > 0 ? `Resend in ${resendIn}s` : 'Resend code') : 'Verify email'}
+        ) : !showOtpPanel ? (
+          <Button variant="secondary" onClick={request} loading={busy} disabled={!canRequestCode}>
+            <Mail className="h-4 w-4" /> Verify email
           </Button>
-        )}
+        ) : null}
       </div>
       {verified ? (
         <p className="mt-2 rounded-md border border-border bg-surface px-3 py-2 text-xs text-text-secondary">
           <span className="font-medium text-text-primary">Wrong email?</span> Edit the address above and we&apos;ll send a fresh verification code.
         </p>
-      ) : sent ? (
+      ) : showOtpPanel ? (
         <p className="mt-2 text-xs text-text-muted">
           <span className="font-medium text-primary">Wrong email?</span> Edit the address above before entering the code.
         </p>
       ) : null}
-      <FieldError>{error ?? localError}</FieldError>
 
-      {sent && !verified && (
-        <div className="page-enter mt-3 border-t border-border pt-3">
-          <p className="mb-2 flex items-center gap-1.5 text-sm text-text-secondary">
-            <ShieldCheck className="h-4 w-4 text-primary" /> We emailed a 6-digit code to <strong className="text-text-primary">{email}</strong>. It expires in 10 minutes.
+      {resendIn > 0 && !verified && (
+        <OtpResendCooldown secondsRemaining={resendIn} className="mt-3" />
+      )}
+
+      {message && !showOtpPanel && <FieldError prominent>{message}</FieldError>}
+
+      {showOtpPanel && (
+        <div className="page-enter mt-4 space-y-4 border-t border-border pt-4">
+          <p className="text-center text-sm text-text-secondary">
+            <ShieldCheck className="mb-1 inline h-4 w-4 text-primary" />{' '}
+            We emailed a 6-digit code to <strong className="text-text-primary">{email}</strong>. It expires in 10
+            minutes.
           </p>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Input
-              inputMode="numeric"
-              maxLength={6}
-              placeholder="123456"
+
+          <div className="flex flex-col items-center space-y-3">
+            <OtpInput
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-              className="font-mono tracking-[0.4em] sm:max-w-[180px]"
+              onChange={setCode}
+              onComplete={() => void verifyRef.current()}
+              disabled={busy}
+              error={Boolean(localError)}
+              autoFocus
+              className="justify-center"
             />
-            <Button onClick={verify} loading={busy} disabled={code.length !== 6 || busy}>
-              Verify
-            </Button>
+
+            {message && <FieldError prominent className="w-full max-w-md">{message}</FieldError>}
+
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Button onClick={verify} loading={busy} disabled={code.length !== 6 || busy}>
+                Verify code
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={request}
+                loading={busy}
+                disabled={!canRequestCode}
+                className="text-text-secondary"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                {resendIn > 0 ? `Resend in ${resendIn}s` : 'Resend code'}
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -1050,6 +1099,13 @@ function ResumePanel({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(0);
+  const verifyRef = useRef<() => Promise<void>>(async () => {});
+
+  useEffect(() => {
+    setSent(false);
+    setCode('');
+    setErr(null);
+  }, [email]);
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -1058,6 +1114,7 @@ function ResumePanel({
   }, [resendIn]);
 
   const emailValid = z.string().email().safeParse(email).success;
+  const canRequestCode = emailValid && !busy && resendIn <= 0;
 
   const request = async () => {
     setErr(null);
@@ -1068,6 +1125,8 @@ function ResumePanel({
       setCode('');
       setResendIn(res.resendAvailableInSeconds);
     } catch (e) {
+      const cooldown = otpCooldownSeconds(e);
+      if (cooldown !== null) setResendIn(cooldown);
       setErr((e as RegistrationApiError).message);
     } finally {
       setBusy(false);
@@ -1075,6 +1134,7 @@ function ResumePanel({
   };
 
   const verify = async () => {
+    if (code.length !== 6 || busy) return;
     setErr(null);
     setBusy(true);
     try {
@@ -1087,6 +1147,8 @@ function ResumePanel({
     }
   };
 
+  verifyRef.current = verify;
+
   return (
     <div className="rounded-xl border border-border bg-background-secondary p-4">
       <Label htmlFor="resume-email">Registration email</Label>
@@ -1096,40 +1158,60 @@ function ResumePanel({
           type="email"
           placeholder="principal@greenwood.edu"
           value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            setSent(false);
-          }}
+          onChange={(e) => setEmail(e.target.value)}
           className="sm:flex-1"
         />
-        <Button variant="secondary" onClick={request} loading={busy && !sent} disabled={!emailValid || busy || resendIn > 0}>
-          <Mail className="h-4 w-4" /> {sent ? (resendIn > 0 ? `Resend in ${resendIn}s` : 'Resend code') : 'Send code'}
-        </Button>
+        {!sent ? (
+          <Button variant="secondary" onClick={request} loading={busy} disabled={!canRequestCode}>
+            <Mail className="h-4 w-4" /> Send code
+          </Button>
+        ) : null}
       </div>
 
+      {resendIn > 0 && <OtpResendCooldown secondsRemaining={resendIn} className="mt-3" />}
+
+      {err && !sent && <FieldError prominent>{err}</FieldError>}
+
       {sent && (
-        <div className="page-enter mt-3 border-t border-border pt-3">
-          <p className="mb-2 flex items-center gap-1.5 text-sm text-text-secondary">
-            <ShieldCheck className="h-4 w-4 text-primary" /> If a registration exists for{' '}
+        <div className="page-enter mt-4 space-y-4 border-t border-border pt-4">
+          <p className="text-center text-sm text-text-secondary">
+            <ShieldCheck className="mb-1 inline h-4 w-4 text-primary" /> If a registration exists for{' '}
             <strong className="text-text-primary">{email}</strong>, we&apos;ve emailed it a 6-digit code.
           </p>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Input
-              inputMode="numeric"
-              maxLength={6}
-              placeholder="123456"
+
+          <div className="flex flex-col items-center space-y-3">
+            <OtpInput
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-              className="font-mono tracking-[0.4em] sm:max-w-[180px]"
+              onChange={setCode}
+              onComplete={() => void verifyRef.current()}
+              disabled={busy}
+              error={Boolean(err)}
+              autoFocus
+              className="justify-center"
             />
-            <Button onClick={verify} loading={busy} disabled={code.length !== 6 || busy}>
-              Continue <ArrowRight className="h-4 w-4" />
-            </Button>
+
+            {err && <FieldError prominent className="w-full max-w-md">{err}</FieldError>}
+
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Button onClick={verify} loading={busy} disabled={code.length !== 6 || busy}>
+                Continue <ArrowRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={request}
+                loading={busy}
+                disabled={!canRequestCode}
+                className="text-text-secondary"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                {resendIn > 0 ? `Resend in ${resendIn}s` : 'Resend code'}
+              </Button>
+            </div>
           </div>
         </div>
       )}
 
-      <FieldError>{err}</FieldError>
       <button className="mt-3 flex items-center gap-1 text-xs font-medium text-primary hover:underline" onClick={onBack}>
         <ArrowLeft className="h-3 w-3" /> Back to options
       </button>

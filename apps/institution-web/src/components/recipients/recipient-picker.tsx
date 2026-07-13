@@ -11,6 +11,7 @@ import {
   useRecipientGroupMutations,
   type Target,
 } from '@/lib/recipients';
+import { formatPersonName } from '@/lib/person-name';
 import { useTerm } from '@/lib/term';
 
 type TabKey =
@@ -40,7 +41,7 @@ const PREFIX: Record<string, string> = {
 };
 
 const key = (t: Target) => `${t.kind}:${t.refId ?? ''}`;
-const name = (p: { firstName: string; lastName: string }) => `${p.firstName} ${p.lastName}`;
+const name = (p: { firstName: string; middleName?: string | null; lastName: string }) => formatPersonName(p);
 
 /**
  * The recipient targeting control (admin-redesign Phase 3). Compose a target list from individuals,

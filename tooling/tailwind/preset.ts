@@ -41,8 +41,8 @@ const preset: Omit<Config, 'content'> = {
       colors: { ...colors, ...stColors },
       borderRadius,
       fontFamily: {
-        sans: typography.fontFamily.sans.split(',').map((s) => s.trim()),
-        mono: typography.fontFamily.mono.split(',').map((s) => s.trim()),
+        sans: ['var(--font-sans)'],
+        mono: ['var(--font-mono)'],
         display: ['Source Serif 4', 'Georgia', 'serif'],
         body: ['Instrument Sans', 'system-ui', 'sans-serif'],
         'mono-ui': ['IBM Plex Mono', 'ui-monospace', 'monospace'],
@@ -129,6 +129,15 @@ const preset: Omit<Config, 'content'> = {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.15' },
         },
+        'otp-digit-in': {
+          from: { opacity: '0', transform: 'scale(0.82) translateY(6px)' },
+          to: { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
+        'otp-shake': {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '20%, 60%': { transform: 'translateX(-5px)' },
+          '40%, 80%': { transform: 'translateX(5px)' },
+        },
       },
       animation: {
         'fade-in-up': 'fade-in-up 160ms var(--ease-standard)',
@@ -147,6 +156,8 @@ const preset: Omit<Config, 'content'> = {
         'st-dot-bounce': 'st-dot-bounce 1.2s ease-in-out infinite',
         'st-shimmer': 'st-shimmer 1.4s ease-in-out infinite',
         'st-blink': 'st-blink 1.1s ease-in-out infinite',
+        'otp-digit-in': 'otp-digit-in 280ms var(--ease-emphasized) both',
+        'otp-shake': 'otp-shake 420ms ease-in-out',
       },
     },
   },

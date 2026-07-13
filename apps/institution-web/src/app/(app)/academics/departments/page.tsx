@@ -5,17 +5,14 @@ import { ResourceManager } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
 import type { FilterDef } from '@/components/academics/resource-manager';
 import type { DepartmentRow } from '@/lib/academics';
-import { useTeachingStaffOptions } from '@/lib/people';
+import { useTeachingStaffOptions, teachingStaffSelectOptions } from '@/lib/people';
 import { useTerm } from '@/lib/term';
 
 export default function DepartmentsPage() {
   const { t, tp } = useTerm();
   const { data: teachers } = useTeachingStaffOptions();
 
-  const teacherOptions = (teachers ?? []).map((t) => ({
-    value: t.id,
-    label: `${t.firstName} ${t.lastName}`,
-  }));
+  const teacherOptions = teachingStaffSelectOptions(teachers);
 
   const filters = useMemo<FilterDef[]>(
     () => [
@@ -50,7 +47,7 @@ export default function DepartmentsPage() {
   const fields = useMemo<FieldDef[]>(
     () => [
       { name: 'name', label: 'Name', type: 'text', required: true, placeholder: 'e.g. Science' },
-      { name: 'code', label: 'Code', type: 'text', required: true, placeholder: 'e.g. SCI' },
+      { name: 'code', label: 'Code', type: 'text', placeholder: 'e.g. SCI' },
       {
         name: 'headUserId',
         label: `${t('department')} head`,

@@ -10,6 +10,7 @@ import {
 } from '@/lib/academics';
 import { useTerm } from '@/lib/term';
 import { PortalClientError } from '@/lib/portal-client';
+import { formatPersonName } from '@/lib/person-name';
 import type { AdmissionRow } from '@/lib/admissions-types';
 
 /**
@@ -93,7 +94,7 @@ export function AdmissionEnrolDrawer({
       open={open}
       onClose={onClose}
       title="Enrol applicant"
-      description={application ? `${application.firstName} ${application.lastName}` : ''}
+      description={application ? formatPersonName(application) : ''}
       footer={
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose} disabled={enrol.isPending}>

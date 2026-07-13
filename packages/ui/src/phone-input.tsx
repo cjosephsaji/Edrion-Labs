@@ -87,6 +87,13 @@ export function InternationalPhoneInput({
     setText(nationalFromE164(v, c));
   }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // When there is no number yet, follow the institution / form country once it loads.
+  useEffect(() => {
+    if (value) return;
+    const dc = defaultCountry?.trim().toUpperCase();
+    if (dc && getCountry(dc)) setCountry(dc);
+  }, [defaultCountry, value]);
+
   const emit = useCallback(
     (raw: string, c: string) => {
       const res = normalizePhone(raw, c);

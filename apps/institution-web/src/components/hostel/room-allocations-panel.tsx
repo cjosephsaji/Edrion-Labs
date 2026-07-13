@@ -4,6 +4,7 @@ import { LogOut, Trash2 } from 'lucide-react';
 import { Button, Input, Label, Select, Skeleton } from '@edrion/ui';
 import { usePermissions } from '@/lib/permissions';
 import { useStudentOptions } from '@/lib/people';
+import { namedPersonLabel } from '@/lib/person-name';
 import { useRoomAllocationMutations, useRoomAllocations } from '@/lib/hostel';
 import { PortalClientError } from '@/lib/portal-client';
 
@@ -105,7 +106,7 @@ export function RoomAllocationsPanel({
                 placeholder="Student…"
                 options={(students?.items ?? []).map((s) => ({
                   value: s.id,
-                  label: `${s.firstName} ${s.lastName} (${s.admissionNo})`,
+                  label: namedPersonLabel(s, s.admissionNo),
                 }))}
               />
             </div>

@@ -274,7 +274,7 @@ export class PetrosController {
     const tools = this.registry.availableFor(p.permissions, institution?.type ?? 'school');
     const names = new Set(tools.map((t) => t.name));
     const suggestions: string[] = [];
-    if (names.has('students_search')) suggestions.push('Look up a student');
+    if (names.has('student_get_basic_profile')) suggestions.push('Look up a student');
     if (names.has('attendance_list_sessions')) suggestions.push("Summarise this week's attendance");
     if (names.has('announcement_draft')) suggestions.push('Draft an announcement for parents');
     if (can(p.permissions, 'documents.generate')) suggestions.push('Prepare a letter on school letterhead');

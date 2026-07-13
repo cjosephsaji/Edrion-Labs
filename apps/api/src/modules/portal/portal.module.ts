@@ -141,6 +141,7 @@ import { FeatureControlsModule } from '../feature-controls/feature-controls.modu
 import { LearningEventsModule } from '../student/ledger/learning-events.module';
 import { PortalReportQueriesService } from './portal-report-queries.service';
 import { PetrosTopicalityService } from './petros/petros-topicality.service';
+import { PetrosHistoryService } from './petros/context/history';
 import { DocumentsGenController } from '../documents/documents-gen.controller';
 import { PortalHomeworkController } from './homework/portal-homework.controller';
 import { PortalHomeworkService } from './homework/portal-homework.service';
@@ -285,6 +286,7 @@ import { PortalCalendarEventsService } from './calendar-events/portal-calendar-e
     PetrosAttachmentService,
     PortalReportQueriesService,
     PetrosTopicalityService,
+    PetrosHistoryService,
     SettingsService,
     SettingsRepository,
     RolesService,

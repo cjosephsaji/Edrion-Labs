@@ -9,6 +9,7 @@ import {
   useReturnHomeworkSubmission,
 } from '@/lib/homework';
 import { PortalClientError } from '@/lib/portal-client';
+import { formatPersonName } from '@/lib/person-name';
 
 const ROSTER_PARAMS = { page: 1, pageSize: 200, sortDir: 'asc' as const, sortBy: 'lastName' };
 
@@ -136,7 +137,7 @@ export function HomeworkSubmissionsPanel({
                     }`}
                     onClick={() => sub && setSelectedId(sub.id)}
                   >
-                    <td className="px-3 py-2">{s.firstName} {s.lastName}</td>
+                    <td className="px-3 py-2">{formatPersonName(s)}</td>
                     <td className="px-3 py-2 capitalize">{sub?.status ?? '—'}</td>
                     <td className="px-3 py-2 tabular-nums">
                       {sub?.totalMarks != null ? sub.totalMarks : '—'}

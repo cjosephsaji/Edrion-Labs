@@ -91,7 +91,13 @@ export type PetrosStreamEvent =
   | {
       type: 'message_complete';
       messageId: string;
-      usage?: { inputTokens: number; outputTokens: number; cachedInputTokens: number };
+      usage?: {
+        inputTokens: number;
+        outputTokens: number;
+        cachedInputTokens: number;
+        /** Estimated spend for the turn, in millionths of a USD. Our telemetry, not the provider's bill. */
+        costMicroUsd?: number;
+      };
       title?: string | null;
     }
   | { type: 'error'; code: string; message: string };

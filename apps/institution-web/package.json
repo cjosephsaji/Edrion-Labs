@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@edrion/permissions": "workspace:*",
+    "@edrion/schemas": "workspace:*",
     "@edrion/shared-types": "workspace:*",
     "@edrion/ui": "workspace:*",
     "@hookform/resolvers": "^3.9.0",

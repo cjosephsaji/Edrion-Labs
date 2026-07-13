@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Button, Input, Label, Select, Skeleton } from '@edrion/ui';
 import { usePermissions } from '@/lib/permissions';
-import { useStaffOptions, useTeachingStaffOptions } from '@/lib/people';
+import { useStaffOptions, useTeachingStaffOptions, teachingStaffSelectOptions, staffRowSelectOptions } from '@/lib/people';
 import { usePayrollItemMutations, usePayrollItems } from '@/lib/payroll';
 import { PortalClientError } from '@/lib/portal-client';
 
@@ -56,8 +56,8 @@ export function PayrollItemsPanel({ runId, runName }: { runId: string; runName: 
 
   const employeeOptions =
     employeeType === 'teacher'
-      ? (teachers ?? []).map((t) => ({ value: t.id, label: `${t.firstName} ${t.lastName}` }))
-      : (staff?.items ?? []).map((s) => ({ value: s.id, label: `${s.firstName} ${s.lastName}` }));
+      ? teachingStaffSelectOptions(teachers)
+      : staffRowSelectOptions(staff?.items);
 
   return (
     <div className="flex flex-col gap-3">

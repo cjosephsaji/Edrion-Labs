@@ -47,6 +47,18 @@ export interface GradeLevelRow extends BaseRow {
   studentCount?: number;
 }
 
+/** Where a subject sits in the curriculum — "Applied Psychology · Year 1 · Semester 1". */
+export interface SubjectPlacement {
+  id: string;
+  programmeLevelId: string;
+  departmentId: string;
+  departmentName: string | null;
+  gradeLevelName: string | null;
+  semesterSequence: number;
+  credits: number | null;
+  isElective: boolean;
+}
+
 export interface SubjectRow extends BaseRow {
   name: string;
   code: string;
@@ -54,6 +66,42 @@ export interface SubjectRow extends BaseRow {
   departmentId: string | null;
   departmentName: string | null;
   classCount?: number;
+  placements?: SubjectPlacement[];
+}
+
+/** A curriculum row: this subject is taught in this semester of this programme year. */
+export interface ProgrammeSubjectRow extends BaseRow {
+  departmentId: string;
+  departmentName: string | null;
+  programmeLevelId: string;
+  gradeLevelName: string | null;
+  programmeSequence: number | null;
+  semesterSequence: number;
+  subjectId: string;
+  subjectName: string | null;
+  subjectCode: string | null;
+  subjectKind: 'core' | 'elective' | null;
+  credits: number | null;
+  isElective: boolean;
+  sequence: number;
+}
+
+/** A curriculum row resolved against a class, with whether the class already teaches it. */
+export interface ClassCurriculumRow extends ProgrammeSubjectRow {
+  assigned: boolean;
+}
+
+/** A student who could be added to a class. */
+export interface RosterCandidate {
+  id: string;
+  admissionNo: string;
+  firstName: string;
+  middleName: string | null;
+  lastName: string;
+  rollNo: string | null;
+  status: string;
+  currentClassId: string | null;
+  currentClassName: string | null;
 }
 
 export interface DepartmentGradeLevelRow extends BaseRow {
@@ -73,6 +121,18 @@ export interface ProgrammeStructureSection {
   termId: string | null;
   programmeLevelId: string | null;
   studentCount?: number;
+  subjectCount?: number;
+}
+
+export interface ProgrammeStructureSubject {
+  id: string;
+  subjectId: string;
+  name: string;
+  code: string;
+  kind: string;
+  credits: number | null;
+  isElective: boolean;
+  version: number;
 }
 
 export interface ProgrammeStructureTerm {
@@ -85,6 +145,7 @@ export interface ProgrammeStructureTerm {
   status: string;
   programmeLevelId: string | null;
   sections: ProgrammeStructureSection[];
+  subjects: ProgrammeStructureSubject[];
 }
 
 export interface ProgrammeStructureLevel {
@@ -115,11 +176,16 @@ export interface ClassRow extends BaseRow {
   gradeLevelName: string | null;
   programmeLevelId?: string | null;
   termId?: string | null;
+  termName?: string | null;
+  termSequence?: number | null;
+  departmentId?: string | null;
+  departmentName?: string | null;
   classTeacherId: string | null;
   classTeacherName: string | null;
   room: string | null;
   capacity: number | null;
   studentCount?: number;
+  subjectCount?: number;
 }
 
 export interface ClassSubjectRow {
@@ -145,5 +211,8 @@ export interface AcademicTermRow extends BaseRow {
   endDate: string;
   isCurrent: boolean;
   status: 'planning' | 'active' | 'archived';
+  departmentName?: string | null;
+  gradeLevelName?: string | null;
   classCount?: number;
+  subjectCount?: number;
 }

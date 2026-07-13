@@ -143,6 +143,58 @@ export const subjects = pgTable(
   }),
 );
 
+/**
+ * CURRICULUM: which subject is taught in which semester of which programme year — the reusable
+ * template ("BSc Applied Psychology, Year 1, Semester 1 teaches Discrete Mathematics").
+ *
+ * Deliberately keyed on `semesterSequence` (an abstract slot: 1, 2, …) rather than a concrete
+ * `academic_terms` row, because a term is dated and belongs to one intake, whereas a curriculum
+ * applies to every intake. A class resolves its subjects by matching its term's `sequence` against
+ * this table for the class's `programme_level_id`.
+ */
+export const programmeSubjects = pgTable(
+  'programme_subjects',
+  {
+    id: primaryId(),
+    institutionId: uuid('institution_id')
+      .notNull()
+      .references(() => institutions.id, { onDelete: 'cascade' }),
+    campusId: uuid('campus_id').references(() => campuses.id, { onDelete: 'cascade' }),
+    /** Denormalised from the programme level for cheap filtering; the service keeps it in sync. */
+    departmentId: uuid('department_id')
+      .notNull()
+      .references(() => departments.id, { onDelete: 'cascade' }),
+    /** Programme × year link — "Applied Psychology, Year 1". */
+    programmeLevelId: uuid('programme_level_id')
+      .notNull()
+      .references(() => departmentGradeLevels.id, { onDelete: 'cascade' }),
+    /** Which semester slot within that year (1 = first). Matches `academic_terms.sequence`. */
+    semesterSequence: integer('semester_sequence').notNull().default(1),
+    subjectId: uuid('subject_id')
+      .notNull()
+      .references(() => subjects.id, { onDelete: 'cascade' }),
+    credits: integer('credits'),
+    isElective: boolean('is_elective').notNull().default(false),
+    /** Display order within the semester. */
+    sequence: integer('sequence').notNull().default(0),
+    version: integer('version').notNull().default(0),
+    ...actorColumns,
+    ...timestamps,
+  },
+  (t) => ({
+    instIdx: index('programme_subjects_institution_idx').on(t.institutionId),
+    scopeIdx: index('programme_subjects_institution_campus_idx').on(t.institutionId, t.campusId),
+    levelIdx: index('programme_subjects_level_idx').on(t.programmeLevelId, t.semesterSequence),
+    subjectIdx: index('programme_subjects_subject_idx').on(t.subjectId),
+    deptIdx: index('programme_subjects_department_idx').on(t.departmentId),
+    uniq: uniqueIndex('programme_subjects_slot_uniq').on(
+      t.programmeLevelId,
+      t.semesterSequence,
+      t.subjectId,
+    ),
+  }),
+);
+
 /** A class / section (e.g. "Grade 1 – A") within a year + grade. Always campus-scoped. */
 export const classes = pgTable(
   'classes',
@@ -261,6 +313,8 @@ export type DepartmentGradeLevel = typeof departmentGradeLevels.$inferSelect;
 export type NewDepartmentGradeLevel = typeof departmentGradeLevels.$inferInsert;
 export type Subject = typeof subjects.$inferSelect;
 export type NewSubject = typeof subjects.$inferInsert;
+export type ProgrammeSubject = typeof programmeSubjects.$inferSelect;
+export type NewProgrammeSubject = typeof programmeSubjects.$inferInsert;
 export type Class = typeof classes.$inferSelect;
 export type NewClass = typeof classes.$inferInsert;
 export type ClassSubjectTeacher = typeof classSubjectTeachers.$inferSelect;

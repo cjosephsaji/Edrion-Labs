@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import {
   BarChart3,
-  GraduationCap,
   LifeBuoy,
   Lock,
   Mail,
@@ -16,6 +16,13 @@ export const metadata: Metadata = {
   description:
     'Apply to bring your school or college onto Edrion — the modern, secure platform for institution operations.',
 };
+
+const NAV = [
+  { href: '#benefits', label: 'Why Edrion' },
+  { href: '#faq', label: 'FAQ' },
+  { href: '/apply', label: 'Apply for admission' },
+  { href: '#support', label: 'Support' },
+];
 
 const BENEFITS = [
   { icon: Workflow, title: 'One platform, every department', body: 'Academics, admissions, fees, HR, library, transport and more — unified and audited.' },
@@ -34,37 +41,43 @@ const FAQS = [
 export default function RegisterPage() {
   return (
     <main className="h-full overflow-y-auto bg-background scrollbar-thin">
-      {/* Hero */}
       <header className="border-b border-border bg-background-secondary">
-        <div className="mx-auto max-w-6xl px-5 py-5">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-white">
-              <GraduationCap className="h-5 w-5" aria-hidden />
-            </span>
-            <span className="text-md font-semibold text-text-primary">Edrion</span>
-          </div>
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <Link href="/register" className="shrink-0">
+            <span className="text-2xl font-bold tracking-[0.02em] text-primary sm:text-[1.65rem]">Edrion</span>
+          </Link>
+          <nav className="flex flex-wrap items-center gap-x-5 gap-y-1" aria-label="Main">
+            {NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-sm font-medium text-text-secondary transition-colors hover:text-primary"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
         </div>
-        <div className="mx-auto max-w-6xl px-5 pb-12 pt-6 text-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-xs font-medium text-primary">
-            <Sparkles className="h-3.5 w-3.5" /> Now welcoming new institutions
+
+        <div className="mx-auto max-w-6xl px-5 pb-6 pt-2 text-center">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-0.5 text-xs font-medium text-primary">
+            <Sparkles className="h-3 w-3" /> Now welcoming new institutions
           </span>
-          <h1 className="mx-auto mt-4 max-w-2xl text-3xl font-bold tracking-tight text-text-primary sm:text-4xl">
+          <h1 className="mx-auto mt-2 max-w-2xl text-2xl font-bold tracking-tight text-text-primary sm:text-3xl">
             Bring your institution onto Edrion
           </h1>
-          <p className="mx-auto mt-3 max-w-xl text-md text-text-secondary">
-            Tell us about your school or college and verify your email. Our onboarding team reviews
-            every application personally — no account is created until you’re approved.
+          <p className="mx-auto mt-1.5 max-w-lg text-sm text-text-secondary">
+            Tell us about your school or college and verify your email. Our team reviews every
+            application — no account is created until you&apos;re approved.
           </p>
         </div>
       </header>
 
-      {/* Form */}
-      <section className="mx-auto w-full max-w-2xl px-5 py-12">
+      <section className="mx-auto w-full max-w-2xl px-5 py-8">
         <RegisterFlow />
       </section>
 
-      {/* Benefits */}
-      <section className="mx-auto max-w-5xl px-5 pb-12">
+      <section id="benefits" className="mx-auto max-w-5xl scroll-mt-16 px-5 pb-10">
         <div className="grid gap-4 sm:grid-cols-3">
           {BENEFITS.map((b) => (
             <div key={b.title} className="rounded-2xl border border-border bg-surface p-5">
@@ -88,11 +101,10 @@ export default function RegisterPage() {
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="border-t border-border bg-surface">
-        <div className="mx-auto max-w-3xl px-5 py-14">
-          <h2 className="text-center text-2xl font-bold text-text-primary">Frequently asked questions</h2>
-          <div className="mt-8 space-y-3">
+      <section id="faq" className="scroll-mt-16 border-t border-border bg-surface">
+        <div className="mx-auto max-w-3xl px-5 py-10">
+          <h2 className="text-center text-xl font-bold text-text-primary">Frequently asked questions</h2>
+          <div className="mt-6 space-y-3">
             {FAQS.map((f) => (
               <details key={f.q} className="group rounded-xl border border-border bg-surface-elevated p-4 [&_summary]:cursor-pointer">
                 <summary className="flex list-none items-center justify-between text-sm font-medium text-text-primary">
@@ -106,9 +118,8 @@ export default function RegisterPage() {
         </div>
       </section>
 
-      {/* Support + footer */}
-      <section className="border-t border-border bg-background-secondary">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 text-center sm:flex-row sm:text-left">
+      <section id="support" className="scroll-mt-16 border-t border-border bg-background-secondary">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-6 text-center sm:flex-row sm:text-left">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-soft text-primary">
               <LifeBuoy className="h-5 w-5" />
@@ -128,7 +139,7 @@ export default function RegisterPage() {
       </section>
 
       <footer className="border-t border-border">
-        <div className="mx-auto max-w-6xl px-5 py-6 text-center text-xs text-text-muted">
+        <div className="mx-auto max-w-6xl px-5 py-5 text-center text-xs text-text-muted">
           © {new Date().getFullYear()} Edrion. All rights reserved.
         </div>
       </footer>

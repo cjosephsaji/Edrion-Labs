@@ -3,6 +3,7 @@ export { Button, type ButtonProps } from './button';
 export { Card, CardHeader, CardTitle, CardDescription, CardContent, StatCard } from './card';
 export { Badge, StatusBadge, type BadgeTone, type BadgeProps } from './badge';
 export { Input, Label, FieldError } from './input';
+export { OtpInput, OtpResendCooldown, type OtpInputProps, type OtpResendCooldownProps } from './otp-input';
 export { Checkbox } from './checkbox';
 export { Skeleton, TableSkeleton } from './skeleton';
 export { EmptyState, ErrorState, PermissionDenied } from './states';

@@ -41,6 +41,7 @@ BEGIN
       ('department_grade_levels', 'institution_id'),
       ('academic_terms', 'institution_id'),
       ('subjects', 'institution_id'),
+      ('programme_subjects', 'institution_id'),
       ('classes', 'institution_id'),
       ('class_subject_teachers', 'institution_id'),
       -- Institution-portal people directory (Phase 4): tenant-isolated under the API guard.

@@ -14,7 +14,6 @@ const STEPS: { key: keyof OnboardingSignals; label: string; required: number }[]
   { key: 'academicTerms', label: 'Terms', required: 0 },
   { key: 'subjects', label: 'Subjects', required: 1 },
   { key: 'students', label: 'Students', required: 1 },
-  { key: 'teachers', label: 'Teachers', required: 1 },
   { key: 'staff', label: 'Staff', required: 1 },
 ];
 
@@ -43,7 +42,7 @@ export interface OnboardingSummary {
 
 /**
  * Institution onboarding wizard service. The whole journey is data-driven: each step (academic
- * years, departments, subjects, students, teachers, staff) completes the moment the admin adds a
+ * years, departments, subjects, students, staff) completes the moment the admin adds a
  * record — there is no manual checklist. Go-live is blocked until every step has data. Reads need
  * `institution_settings.view`; go-live needs the sensitive `institution_settings.manage`.
  */

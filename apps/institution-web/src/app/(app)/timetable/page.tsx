@@ -8,7 +8,7 @@ import {
   useClassOptions,
   useSubjectOptions,
 } from '@/lib/academics';
-import { useTeachingStaffOptions } from '@/lib/people';
+import { useTeachingStaffOptions, teachingStaffSelectOptions } from '@/lib/people';
 import { useProgrammeFacetFilters } from '@/lib/programme-facets';
 import { useAcademicContextFilters } from '@/lib/academic-context';
 import { useTerm } from '@/lib/term';
@@ -70,7 +70,7 @@ export default function TimetablePage() {
         label: t('teacher'),
         type: 'select',
         nullable: true,
-        options: (teachers ?? []).map((te) => ({ value: te.id, label: `${te.firstName} ${te.lastName}` })),
+        options: teachingStaffSelectOptions(teachers),
       },
       { name: 'dayOfWeek', label: 'Day', type: 'select', required: true, options: DAYS },
       { name: 'startTime', label: 'Start (HH:MM)', type: 'text', required: true, placeholder: 'e.g. 09:00' },

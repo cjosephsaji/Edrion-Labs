@@ -24,6 +24,7 @@ import { usePermissions } from '@/lib/permissions';
 import { useTerm } from '@/lib/term';
 import { useLogIncident, useStudentProfile } from '@/lib/student-profile';
 import { useParentProfile, useStaffProfile } from '@/lib/people';
+import { formatPersonName } from '@/lib/person-name';
 import type { ParentRow, StaffRow, StudentRow } from '@/lib/people-types';
 import type { UserRow } from '@/lib/admin-types';
 
@@ -86,7 +87,7 @@ export function UserProfileDialog(props: UserProfileDialogProps) {
   const title =
     props.kind === 'user'
       ? props.row.fullName
-      : `${props.row.firstName} ${props.row.lastName}`;
+      : formatPersonName(props.row);
 
   return (
     <Dialog open={open} onClose={onClose} title={title} className="max-w-3xl">
@@ -225,7 +226,7 @@ function StudentBody({ row, edit, canEdit }: { row: StudentRow; edit: () => void
   const [logging, setLogging] = useState(false);
   const canLog = can('student_conduct.manage');
 
-  const name = `${row.firstName} ${row.lastName}`;
+  const name = formatPersonName(row);
   const header = (
     <PersonHeader
       id={row.id}
@@ -491,7 +492,7 @@ function StaffBody({ row, edit, canEdit }: { row: StaffRow; edit: () => void; ca
   const header = (
     <PersonHeader
       id={row.id}
-      name={`${row.firstName} ${row.lastName}`}
+      name={formatPersonName(row)}
       sub={row.employeeNo ?? undefined}
       trailing={
         <>

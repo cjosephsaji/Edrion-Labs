@@ -15,6 +15,8 @@ import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common'
 
 const name = z.string().trim().min(1, 'Required').max(160);
 const code = z.string().trim().min(1, 'Required').max(32);
+/** Optional short code — the API derives one from the name when omitted. */
+const optionalCode = z.string().trim().max(32).optional();
 /** A calendar date as YYYY-MM-DD (matches the Postgres `date` column). */
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
 const optionalUuid = z.string().uuid().nullish();
@@ -34,6 +36,7 @@ export const ACADEMIC_RESOURCES = [
   'grade-levels',
   'department-grade-levels',
   'subjects',
+  'programme-subjects',
   'classes',
   'academic-terms',
 ] as const;
@@ -45,6 +48,10 @@ export const academicsListQuerySchema = paginationQuerySchema.merge(sortQuerySch
   departmentId: z.string().uuid().optional(),
   programmeLevelId: z.string().uuid().optional(),
   termId: z.string().uuid().optional(),
+  /** Curriculum slot (1 = first semester of the programme year). */
+  semesterSequence: z.coerce.number().int().min(1).max(20).optional(),
+  subjectId: z.string().uuid().optional(),
+  kind: subjectKindSchema.optional(),
 });
 export type AcademicsListQuery = z.infer<typeof academicsListQuerySchema>;
 
@@ -86,7 +93,7 @@ export type UpdateAcademicYearInput = z.infer<typeof updateAcademicYearSchema>;
 
 export const createDepartmentSchema = z.object({
   name,
-  code,
+  code: optionalCode,
   headUserId: optionalUuid,
   description: z.string().trim().max(500).nullish(),
 });
@@ -146,7 +153,7 @@ export type UpdateDepartmentGradeLevelInput = z.infer<typeof updateDepartmentGra
 
 export const createSubjectSchema = z.object({
   name,
-  code,
+  code: optionalCode,
   kind: subjectKindSchema.default('core'),
   departmentId: optionalUuid,
 });
@@ -160,6 +167,43 @@ export const updateSubjectSchema = z.object({
   ...withVersion,
 });
 export type UpdateSubjectInput = z.infer<typeof updateSubjectSchema>;
+
+// --- programme subjects (curriculum: subject × programme year × semester slot) ------------------
+
+/**
+ * A curriculum placement — "Discrete Mathematics is taught in semester 1 of Applied Psychology
+ * year 1". Either send `programmeLevelId`, or send `departmentId` + `gradeLevelId` and the API
+ * resolves the link for you.
+ */
+export const createProgrammeSubjectSchema = z
+  .object({
+    subjectId: z.string().uuid(),
+    programmeLevelId: optionalUuid,
+    departmentId: optionalUuid,
+    gradeLevelId: optionalUuid,
+    semesterSequence: z.coerce.number().int().min(1).max(20).default(1),
+    credits: z.coerce.number().int().min(0).max(100).nullish(),
+    isElective: z.boolean().default(false),
+    sequence: z.coerce.number().int().min(0).max(100).default(0),
+  })
+  .refine((v) => !!v.programmeLevelId || (!!v.departmentId && !!v.gradeLevelId), {
+    message: 'Select a programme and a year',
+    path: ['programmeLevelId'],
+  });
+export type CreateProgrammeSubjectInput = z.infer<typeof createProgrammeSubjectSchema>;
+
+export const updateProgrammeSubjectSchema = z.object({
+  subjectId: z.string().uuid().optional(),
+  programmeLevelId: optionalUuid,
+  departmentId: optionalUuid,
+  gradeLevelId: optionalUuid,
+  semesterSequence: z.coerce.number().int().min(1).max(20).optional(),
+  credits: z.coerce.number().int().min(0).max(100).nullish(),
+  isElective: z.boolean().optional(),
+  sequence: z.coerce.number().int().min(0).max(100).optional(),
+  ...withVersion,
+});
+export type UpdateProgrammeSubjectInput = z.infer<typeof updateProgrammeSubjectSchema>;
 
 // --- classes / sections ------------------------------------------------------
 
@@ -196,6 +240,37 @@ export const assignClassSubjectSchema = z.object({
   teacherId: optionalUuid,
 });
 export type AssignClassSubjectInput = z.infer<typeof assignClassSubjectSchema>;
+
+/**
+ * Seed a class's subjects from the curriculum defined for its programme year + semester slot.
+ * Existing assignments (and their teachers) are left alone; only missing subjects are added.
+ */
+export const applyCurriculumSchema = z.object({
+  /** Only add these curriculum rows; omit to add every missing subject in the slot. */
+  programmeSubjectIds: z.array(z.string().uuid()).max(200).optional(),
+});
+export type ApplyCurriculumInput = z.infer<typeof applyCurriculumSchema>;
+
+/** Bulk move students in/out of a class in one write. */
+export const updateClassRosterSchema = z
+  .object({
+    add: z.array(z.string().uuid()).max(500).default([]),
+    remove: z.array(z.string().uuid()).max(500).default([]),
+  })
+  .refine((v) => v.add.length > 0 || v.remove.length > 0, {
+    message: 'Select at least one student',
+    path: ['add'],
+  });
+export type UpdateClassRosterInput = z.infer<typeof updateClassRosterSchema>;
+
+/** Students eligible to join a class — unassigned, or sitting in a different class. */
+export const rosterCandidateQuerySchema = z.object({
+  search: z.string().trim().max(160).optional(),
+  /** false (default) = only students with no class; true = every active student. */
+  includeAssigned: z.coerce.boolean().default(false),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
+export type RosterCandidateQuery = z.infer<typeof rosterCandidateQuerySchema>;
 
 /** Delete (and other version-guarded mutations sent with just a version). */
 export const versionedDeleteSchema = z.object({ ...withVersion });

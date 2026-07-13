@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { REDACTED, redactSecrets } from './redact';
+import { isSensitiveKey, REDACTED, redactSecrets } from './redact';
 
 describe('redactSecrets — key-based masking', () => {
   it('masks values of credential-named keys at any depth', () => {
@@ -21,6 +21,60 @@ describe('redactSecrets — key-based masking', () => {
     const out = redactSecrets(input);
     expect(input.password).toBe('secret');
     expect(out.password).toBe(REDACTED);
+  });
+
+  // The alternation holds some very short terms. Matched as raw substrings they were ravenous:
+  // className contains "ssn" (cla-SSN-ame) and notPublished contains "otp" (n-OTP-ublished), so the
+  // AI was being handed [REDACTED] where a class name should have been, and had to guess.
+  it.each([
+    'className',
+    'classNames',
+    'businessName',
+    'notPublished',
+    'crossNumber',
+    'firstName',
+    'status',
+    'gradeLevelName',
+  ])('leaves the benign key %s alone', (key) => {
+    expect(isSensitiveKey(key)).toBe(false);
+    expect(redactSecrets({ [key]: 'Grade 9 – A' })[key]).toBe('Grade 9 – A');
+  });
+
+  // …and anchoring must not cost coverage. Every one of these is still a credential.
+  it.each([
+    'password',
+    'passwords',
+    'passwordHash',
+    'passphrase',
+    'user_password',
+    'secret',
+    'clientSecret',
+    'client_secret',
+    'token',
+    'tokens',
+    'accessToken',
+    'refresh_token',
+    'apiKey',
+    'api_key',
+    'x-api-key',
+    'APIKey',
+    'accessKey',
+    'privateKey',
+    'Authorization',
+    'cookie',
+    'credential',
+    'credentials',
+    'sessionId',
+    'session_secret',
+    'otp',
+    'otpCode',
+    'mfaCode',
+    'cvv',
+    'ssn',
+    'SSN',
+  ])('still masks the credential key %s', (key) => {
+    expect(isSensitiveKey(key)).toBe(true);
+    expect(redactSecrets({ [key]: 'live-value' })[key]).toBe(REDACTED);
   });
 });
 

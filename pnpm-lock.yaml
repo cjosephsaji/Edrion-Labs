@@ -168,6 +168,9 @@ importers:
       '@edrion/permissions':
         specifier: workspace:*
         version: link:../../packages/permissions
+      '@edrion/schemas':
+        specifier: workspace:*
+        version: link:../../packages/schemas
       '@edrion/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types

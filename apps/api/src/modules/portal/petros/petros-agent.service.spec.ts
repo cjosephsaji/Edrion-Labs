@@ -93,6 +93,8 @@ function makeHarness(tools: PetrosTool[], streams: Record<string, unknown>[][]) 
     modelFor: () => 'gpt-test',
     streamResponse: vi.fn().mockImplementation(async () => fakeStream(streams[streamIdx++] ?? textResponse('done'))),
     text: vi.fn().mockResolvedValue({ text: 'Test title', usage: { inputTokens: 1, outputTokens: 1, cachedInputTokens: 0 } }),
+    resolveEffort: vi.fn().mockImplementation((weight: string) => (weight === 'heavy' ? 'medium' : 'low')),
+    costOf: vi.fn().mockReturnValue(42),
   };
   const registry = {
     tools: new Map(tools.map((t) => [t.name, t])),
@@ -132,6 +134,21 @@ function makeHarness(tools: PetrosTool[], streams: Record<string, unknown>[][]) 
       nomenclatureOverrides: {},
     }),
   };
+  const history = {
+    buildInput: vi.fn().mockImplementation(async () => ({
+      input: messages
+        .map((m) => ({
+          role: m.role,
+          content: (m.content as { type: string; text?: string }[])
+            .filter((b) => b.type === 'text')
+            .map((b) => b.text)
+            .join('\n'),
+        }))
+        .filter((m) => m.content),
+      summary: null,
+    })),
+    maybeSummarize: vi.fn().mockResolvedValue(undefined),
+  };
   const service = new PetrosAgentService(
     repo as never,
     openai as never,
@@ -140,8 +157,9 @@ function makeHarness(tools: PetrosTool[], streams: Record<string, unknown>[][]) 
     attachments as never,
     topicality as never,
     settings as never,
+    history as never,
   );
-  return { service, repo, openai, runs, conversation, runRows, topicality };
+  return { service, repo, openai, runs, conversation, runRows, topicality, history };
 }
 
 const readTool: PetrosTool = {
@@ -261,5 +279,79 @@ describe('PetrosAgentService', () => {
     expect(mutationTool.execute).not.toHaveBeenCalled();
     expect(h.runs.insertRun).not.toHaveBeenCalled();
     expect(events.at(-1)?.type).toBe('message_complete');
+  });
+
+  // ── Cost controls ───────────────────────────────────────────────────────────
+
+  it('hands the model a compacted tool result, not a raw database row', async () => {
+    const fat = {
+      items: [
+        { id: 's1', firstName: 'Aarav', institutionId: 'inst-1', campusId: 'c-1', version: 0, email: null },
+        { id: 's2', firstName: 'Riya', institutionId: 'inst-1', campusId: 'c-1', version: 0, email: null },
+      ],
+      total: 143,
+    };
+    (readTool.execute as ReturnType<typeof vi.fn>).mockResolvedValueOnce(fat);
+    const h = makeHarness([readTool], [functionCallResponse('students_search', { query: 'a' }), textResponse('ok')]);
+    await h.service.startTurn(ctx(['ai.use', 'students.view']), h.conversation, 'find a', emit as never);
+
+    const input = h.openai.streamResponse.mock.calls[1]![0].input as { output?: string }[];
+    const result = input.find((i) => (i as { type?: string }).type === 'function_call_output') as { output: string };
+    expect(result.output).toContain('143 total, showing 2');
+    expect(result.output).toContain('Aarav');
+    expect(result.output).not.toContain('institutionId');
+    expect(result.output).not.toContain('version');
+    expect(result.output).not.toContain('email'); // null — dropped
+  });
+
+  it('answers a repeated identical read from the turn memo instead of paying for it twice', async () => {
+    const h = makeHarness(
+      [readTool],
+      [
+        functionCallResponse('students_search', { query: 'ria' }),
+        functionCallResponse('students_search', { query: 'ria' }),
+        textResponse('Found her.'),
+      ],
+    );
+    await h.service.startTurn(ctx(['ai.use', 'students.view']), h.conversation, 'find ria', emit as never);
+    expect(readTool.execute).toHaveBeenCalledTimes(1);
+
+    const input = h.openai.streamResponse.mock.calls[2]![0].input as { type?: string; output?: string }[];
+    const outputs = input.filter((i) => i.type === 'function_call_output');
+    expect(outputs).toHaveLength(2);
+    expect(outputs[1]!.output).toContain('Already answered above');
+  });
+
+  it('spends more thinking on drafting than on a lookup', async () => {
+    const lookup = makeHarness([readTool], [textResponse('42 students.')]);
+    await lookup.service.startTurn(ctx(['ai.use', 'students.view']), lookup.conversation, 'how many in 5A?', emit as never);
+    expect(lookup.openai.streamResponse.mock.calls[0]![0].effort).toBe('low');
+
+    const draft = makeHarness([readTool], [textResponse('Dear Principal…')]);
+    await draft.service.startTurn(ctx(['ai.use', 'students.view']), draft.conversation, 'draft my leave letter', emit as never);
+    expect(draft.openai.streamResponse.mock.calls[0]![0].effort).toBe('medium');
+  });
+
+  it('carries the turn\'s thinking budget across a pause, so a confirmed draft stays a draft', async () => {
+    const h = makeHarness(
+      [mutationTool],
+      [functionCallResponse('announcement_draft', { title: 'PTM' }), textResponse('Draft created.')],
+    );
+    const c = ctx(['ai.use', 'announcements.send']);
+    await h.service.startTurn(c, h.conversation, 'draft an announcement about the PTM', emit as never);
+    expect(h.openai.streamResponse.mock.calls[0]![0].effort).toBe('medium');
+
+    await h.service.confirmRun(c, h.runRows[0]!.id as string, emit as never);
+    expect(h.openai.streamResponse.mock.calls[1]![0].effort).toBe('medium');
+  });
+
+  it('records what the turn cost, and compacts the history once the answer is out', async () => {
+    const h = makeHarness([readTool], [textResponse('Hello!')]);
+    await h.service.startTurn(ctx(['ai.use', 'students.view']), h.conversation, 'hi', emit as never);
+    expect(h.repo.updateMessage).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ costMicroUsd: 42 }),
+    );
+    expect(h.history.maybeSummarize).toHaveBeenCalledWith(h.conversation);
   });
 });

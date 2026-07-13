@@ -11,6 +11,7 @@ import {
   or,
   schema,
   sql,
+  personSqlName,
   type Database,
   type SQL,
 } from '@edrion/database';
@@ -56,7 +57,7 @@ export class ConductService {
     const sortCol = q.sortBy === 'severity' ? t.severity : q.sortBy === 'status' ? t.status : q.sortBy === 'occurredOn' ? t.occurredOn : t.createdAt;
     const orderBy = q.sortDir === 'asc' ? asc(sortCol) : desc(sortCol);
     const rows = await this.db
-      .select({ inc: t, studentName: sql<string>`concat_ws(' ', ${schema.students.firstName}, ${schema.students.lastName})`, admissionNo: schema.students.admissionNo })
+      .select({ inc: t, studentName: personSqlName(schema.students.firstName, schema.students.middleName, schema.students.lastName), admissionNo: schema.students.admissionNo })
       .from(t)
       .leftJoin(schema.students, eq(schema.students.id, t.studentId))
       .where(where)

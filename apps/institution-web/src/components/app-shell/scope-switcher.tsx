@@ -30,8 +30,8 @@ export function ScopeSwitcher() {
     };
   }, []);
 
-  // Nothing to switch between — hide entirely (single-campus, confined user).
-  if (!canSelectEntireInstitution && campuses.length <= 1) return null;
+  // Nothing to switch between — hide when there's at most one campus.
+  if (campuses.length <= 1) return null;
 
   function choose(next: InstitutionScope) {
     setScope(next);

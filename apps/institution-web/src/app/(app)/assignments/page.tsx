@@ -7,7 +7,7 @@ import { AssignmentQuestionEditor } from '@/components/assignments/assignment-qu
 import { AssignmentSubmissionsPanel } from '@/components/assignments/assignment-submissions-panel';
 import { RecipientPicker } from '@/components/recipients/recipient-picker';
 import { useClassOptions, useSubjectOptions } from '@/lib/academics';
-import { useTeachingStaffOptions } from '@/lib/people';
+import { useTeachingStaffOptions, teachingStaffSelectOptions } from '@/lib/people';
 import { useAssignmentsList, useAssignmentsMutations } from '@/lib/assignments';
 import type { AssignmentRow } from '@/lib/assignments-types';
 import type { Target } from '@/lib/recipients';
@@ -59,7 +59,7 @@ export default function AssignmentsPage() {
         label: t('teacher'),
         type: 'select',
         nullable: true,
-        options: (teachers ?? []).map((t) => ({ value: t.id, label: `${t.firstName} ${t.lastName}` })),
+        options: teachingStaffSelectOptions(teachers),
       },
       { name: 'status', label: 'Status', type: 'select', required: true, options: STATUSES },
       {

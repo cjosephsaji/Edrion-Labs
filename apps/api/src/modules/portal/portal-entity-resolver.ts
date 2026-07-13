@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, inArray, schema, type Database } from '@edrion/database';
+import { formatPersonName } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 
 /**
@@ -81,6 +82,8 @@ function ageFrom(dob: string | null | undefined): number | null {
 }
 
 const fullName = (first: string, last: string) => `${first} ${last}`.trim();
+const personName = (first: string, middle: string | null | undefined, last: string) =>
+  formatPersonName({ firstName: first, middleName: middle, lastName: last });
 const uniq = (ids?: Iterable<string>): string[] => {
   if (!ids) return [];
   return [...new Set([...ids].filter((v): v is string => typeof v === 'string' && v.length > 0))];
@@ -128,6 +131,7 @@ export class PortalEntityResolver {
       .select({
         id: t.id,
         firstName: t.firstName,
+        middleName: t.middleName,
         lastName: t.lastName,
         admissionNo: t.admissionNo,
         classId: t.classId,
@@ -153,7 +157,7 @@ export class PortalEntityResolver {
         const campus = s.campusId ? campuses?.[s.campusId] : undefined;
         const ctx: StudentContext = {
           id: s.id,
-          label: fullName(s.firstName, s.lastName),
+          label: personName(s.firstName, s.middleName, s.lastName),
           sub: s.admissionNo,
           meta: { admissionNo: s.admissionNo, dateOfBirth: s.dateOfBirth },
           className: cls?.label ?? null,
@@ -209,6 +213,7 @@ export class PortalEntityResolver {
       .select({
         id: t.id,
         firstName: t.firstName,
+        middleName: t.middleName,
         lastName: t.lastName,
         admissionNo: t.admissionNo,
         classId: t.classId,
@@ -222,7 +227,7 @@ export class PortalEntityResolver {
     return byId(
       rows.map((r) => ({
         id: r.id,
-        label: fullName(r.firstName, r.lastName),
+        label: personName(r.firstName, r.middleName, r.lastName),
         sub: r.admissionNo,
         meta: {
           admissionNo: r.admissionNo,
@@ -243,6 +248,7 @@ export class PortalEntityResolver {
       .select({
         id: t.id,
         firstName: t.firstName,
+        middleName: t.middleName,
         lastName: t.lastName,
         employeeNo: t.employeeNo,
         designation: t.designation,
@@ -254,7 +260,7 @@ export class PortalEntityResolver {
     return byId(
       rows.map((r) => ({
         id: r.id,
-        label: fullName(r.firstName, r.lastName),
+        label: personName(r.firstName, r.middleName, r.lastName),
         sub: r.designation ?? r.employeeNo ?? null,
         meta: { employeeNo: r.employeeNo, designation: r.designation, departmentId: r.departmentId, campusId: r.campusId },
       })),

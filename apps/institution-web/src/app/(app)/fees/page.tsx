@@ -5,7 +5,7 @@ import { ResourceManager, type FilterDef, type ResourcePermissions } from '@/com
 import type { FieldDef } from '@/components/academics/resource-form';
 import { InvoicePaymentsPanel } from '@/components/fees/invoice-payments-panel';
 import { useAcademicYearOptions, useClassOptions, useGradeLevelOptions } from '@/lib/academics';
-import { useStudentOptions } from '@/lib/people';
+import { useStudentOptions, studentRowSelectOptions } from '@/lib/people';
 import { useFeesList, useFeesMutations, useFeeStructureOptions } from '@/lib/fees';
 import { useFormat } from '@/lib/format';
 import { useProgrammeFacetFilters } from '@/lib/programme-facets';
@@ -184,7 +184,7 @@ function InvoicesTab() {
         label: 'Student',
         type: 'select',
         required: true,
-        options: (students?.items ?? []).map((s) => ({ value: s.id, label: `${s.firstName} ${s.lastName} (${s.admissionNo})` })),
+        options: studentRowSelectOptions(students?.items),
       },
       {
         name: 'feeStructureId',

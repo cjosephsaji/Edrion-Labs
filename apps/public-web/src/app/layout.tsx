@@ -7,12 +7,9 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // Font stack is defined in design tokens (--font-sans) with system fallbacks, so no
-  // network font fetch is required to build or run. The public funnel uses raw fetch, so no
-  // query-client / api-client providers are needed here.
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>{children}</body>
+      <body className="font-sans antialiased">{children}</body>
     </html>
   );
 }

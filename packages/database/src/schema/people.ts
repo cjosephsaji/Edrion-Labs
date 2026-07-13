@@ -40,6 +40,7 @@ export const students = pgTable(
     /** Institution admission/enrolment number (unique within the institution). */
     admissionNo: text('admission_no').notNull(),
     firstName: text('first_name').notNull(),
+    middleName: text('middle_name'),
     lastName: text('last_name').notNull(),
     /** male | female | other (free-text; validated in zod). */
     gender: text('gender'),
@@ -79,6 +80,7 @@ export const staff = pgTable(
     campusId: uuid('campus_id').references(() => campuses.id, { onDelete: 'cascade' }),
     employeeNo: text('employee_no'),
     firstName: text('first_name').notNull(),
+    middleName: text('middle_name'),
     lastName: text('last_name').notNull(),
     email: text('email'),
     phone: text('phone'),

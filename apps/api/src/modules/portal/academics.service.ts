@@ -9,6 +9,7 @@ import { resolveScopeFilter, type InstitutionScope, type ScopeFilter } from '@ed
 import type { AuditWriter, AuditEventInput } from '@edrion/audit';
 import type {
   AcademicsListQuery,
+  ApplyCurriculumInput,
   AssignClassSubjectInput,
   CreateAcademicYearInput,
   CreateAcademicTermInput,
@@ -16,13 +17,17 @@ import type {
   CreateDepartmentInput,
   CreateDepartmentGradeLevelInput,
   CreateGradeLevelInput,
+  CreateProgrammeSubjectInput,
   CreateSubjectInput,
+  RosterCandidateQuery,
   UpdateAcademicYearInput,
   UpdateAcademicTermInput,
   UpdateClassInput,
+  UpdateClassRosterInput,
   UpdateDepartmentInput,
   UpdateDepartmentGradeLevelInput,
   UpdateGradeLevelInput,
+  UpdateProgrammeSubjectInput,
   UpdateSubjectInput,
 } from '@edrion/schemas';
 import { AUDIT_WRITER } from '../../common/tokens';
@@ -30,6 +35,21 @@ import { AcademicsRepository, type Page, type ProgrammeStructureDepartment } fro
 import { basePortalAudit, type PortalActionContext } from './portal-action-context';
 
 const MODULE = 'portal-academics';
+
+/** Derive a short code from a display name when the user leaves code blank. */
+function defaultResourceCode(name: string): string {
+  const trimmed = name.trim();
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  if (words.length > 1) {
+    const initials = words.map((w) => w[0]?.toUpperCase() ?? '').join('');
+    if (initials.length >= 2) return initials.slice(0, 32);
+  }
+  const slug = trimmed
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  return (slug || 'ITEM').slice(0, 32);
+}
 
 export interface ListResult<T> extends Page<T> {
   page: number;
@@ -208,7 +228,7 @@ export class AcademicsService {
       institutionId: ctx.principal.institutionId,
       campusId,
       name: input.name,
-      code: input.code,
+      code: input.code?.trim() || defaultResourceCode(input.name),
       headUserId: input.headUserId ?? null,
       description: input.description ?? null,
       createdBy: ctx.principal.institutionUserId,
@@ -411,7 +431,7 @@ export class AcademicsService {
       institutionId: ctx.principal.institutionId,
       campusId,
       name: input.name,
-      code: input.code,
+      code: input.code?.trim() || defaultResourceCode(input.name),
       kind: input.kind,
       departmentId: input.departmentId ?? null,
       createdBy: ctx.principal.institutionUserId,
@@ -446,6 +466,131 @@ export class AcademicsService {
     this.assertInScope(existing?.campusId ?? null, existing, f);
     const ok = await this.guardDelete(() => this.repo.deleteSubject(id, version));
     await this.write(ctx, 'subject.delete', 'subject', id, existing!.campusId, { previousState: { name: existing!.name } });
+    return ok;
+  }
+
+  // === programme subjects (curriculum) =======================================
+
+  async listProgrammeSubjects(ctx: PortalActionContext, q: AcademicsListQuery) {
+    const f = this.filter(ctx);
+    return this.paginate(
+      await this.repo.listProgrammeSubjects(ctx.principal.institutionId, f.campusIds, q),
+      q,
+    );
+  }
+
+  async createProgrammeSubject(ctx: PortalActionContext, input: CreateProgrammeSubjectInput) {
+    await this.assertRef(ctx, 'subjects', input.subjectId, 'subject');
+    const link = await this.resolveProgrammeLinkage(ctx, input);
+    if (!link.programmeLevelId || !link.departmentId) {
+      throw new BadRequestException({
+        code: 'INVALID_PROGRAMME_LEVEL',
+        message: 'Select a programme and a year.',
+      });
+    }
+
+    const clash = await this.repo.findProgrammeSubjectSlot(
+      link.programmeLevelId,
+      input.semesterSequence,
+      input.subjectId,
+    );
+    if (clash) {
+      throw new ConflictException({
+        code: 'DUPLICATE_CURRICULUM_ENTRY',
+        message: 'That subject is already in this semester of the programme year.',
+      });
+    }
+
+    const campusId = this.createCampusId(ctx.scope);
+    const row = await this.repo.insertProgrammeSubject({
+      institutionId: ctx.principal.institutionId,
+      campusId,
+      departmentId: link.departmentId,
+      programmeLevelId: link.programmeLevelId,
+      semesterSequence: input.semesterSequence,
+      subjectId: input.subjectId,
+      credits: input.credits ?? null,
+      isElective: input.isElective,
+      sequence: input.sequence,
+      createdBy: ctx.principal.institutionUserId,
+    });
+    await this.write(ctx, 'programme_subject.create', 'programme_subject', row.id, campusId, {
+      newState: {
+        subjectId: row.subjectId,
+        programmeLevelId: row.programmeLevelId,
+        semesterSequence: row.semesterSequence,
+      },
+    });
+    return row;
+  }
+
+  async updateProgrammeSubject(
+    ctx: PortalActionContext,
+    id: string,
+    input: UpdateProgrammeSubjectInput,
+  ) {
+    const f = this.filter(ctx);
+    const existing = await this.repo.findProgrammeSubject(id, ctx.principal.institutionId);
+    this.assertInScope(existing?.campusId ?? null, existing, f);
+    if (input.subjectId) await this.assertRef(ctx, 'subjects', input.subjectId, 'subject');
+
+    // Only re-resolve the programme link when the caller actually sent one; otherwise keep it.
+    const sendsLink = !!(input.programmeLevelId || input.departmentId || input.gradeLevelId);
+    const link = sendsLink
+      ? await this.resolveProgrammeLinkage(ctx, input)
+      : { programmeLevelId: existing!.programmeLevelId, departmentId: existing!.departmentId };
+
+    const programmeLevelId = link.programmeLevelId ?? existing!.programmeLevelId;
+    const departmentId = link.departmentId ?? existing!.departmentId;
+    const semesterSequence = input.semesterSequence ?? existing!.semesterSequence;
+    const subjectId = input.subjectId ?? existing!.subjectId;
+
+    const slotMoved =
+      programmeLevelId !== existing!.programmeLevelId ||
+      semesterSequence !== existing!.semesterSequence ||
+      subjectId !== existing!.subjectId;
+    if (slotMoved) {
+      const clash = await this.repo.findProgrammeSubjectSlot(programmeLevelId, semesterSequence, subjectId);
+      if (clash && clash.id !== id) {
+        throw new ConflictException({
+          code: 'DUPLICATE_CURRICULUM_ENTRY',
+          message: 'That subject is already in this semester of the programme year.',
+        });
+      }
+    }
+
+    const updated = await this.repo.updateProgrammeSubject(id, input.version, {
+      departmentId,
+      programmeLevelId,
+      semesterSequence,
+      subjectId,
+      credits: input.credits === undefined ? existing!.credits : input.credits,
+      isElective: input.isElective ?? existing!.isElective,
+      sequence: input.sequence ?? existing!.sequence,
+      updatedBy: ctx.principal.institutionUserId,
+    });
+    if (!updated) throw this.versionConflict();
+    await this.write(ctx, 'programme_subject.update', 'programme_subject', id, updated.campusId, {
+      previousState: {
+        semesterSequence: existing!.semesterSequence,
+        subjectId: existing!.subjectId,
+      },
+      newState: { semesterSequence: updated.semesterSequence, subjectId: updated.subjectId },
+    });
+    return updated;
+  }
+
+  async deleteProgrammeSubject(ctx: PortalActionContext, id: string, version: number) {
+    const f = this.filter(ctx);
+    const existing = await this.repo.findProgrammeSubject(id, ctx.principal.institutionId);
+    this.assertInScope(existing?.campusId ?? null, existing, f);
+    const ok = await this.guardDelete(() => this.repo.deleteProgrammeSubject(id, version));
+    await this.write(ctx, 'programme_subject.delete', 'programme_subject', id, existing!.campusId, {
+      previousState: {
+        subjectId: existing!.subjectId,
+        semesterSequence: existing!.semesterSequence,
+      },
+    });
     return ok;
   }
 
@@ -619,6 +764,96 @@ export class AcademicsService {
       previousState: { subjectId: link.subjectId },
     });
     return { deleted: ok };
+  }
+
+  /** The curriculum this class inherits from its programme year + semester, with an assigned flag. */
+  async listClassCurriculum(ctx: PortalActionContext, classId: string) {
+    const cls = await this.requireClassInScope(ctx, classId);
+    return this.repo.listClassCurriculum(cls);
+  }
+
+  /**
+   * Seed the class's subjects from its curriculum. Existing assignments keep their teacher — only
+   * missing subjects are added — so this is safe to press twice.
+   */
+  async applyCurriculum(ctx: PortalActionContext, classId: string, input: ApplyCurriculumInput) {
+    const cls = await this.requireClassInScope(ctx, classId);
+    if (!cls.programmeLevelId) {
+      throw new BadRequestException({
+        code: 'CLASS_NOT_PLACED',
+        message: 'Assign this class to a programme year before applying a curriculum.',
+      });
+    }
+
+    const curriculum = await this.repo.listClassCurriculum(cls);
+    const wanted = input.programmeSubjectIds?.length
+      ? curriculum.filter((c) => input.programmeSubjectIds!.includes(c.id))
+      : curriculum;
+    const missing = wanted.filter((c) => !c.assigned);
+
+    if (missing.length === 0) return { added: 0, subjects: [] as string[] };
+
+    const inserted = await this.repo.insertClassSubjects(
+      missing.map((c) => ({
+        institutionId: ctx.principal.institutionId,
+        classId,
+        subjectId: c.subjectId,
+        teacherId: null,
+        createdBy: ctx.principal.institutionUserId,
+      })),
+    );
+
+    await this.write(ctx, 'class_subject.apply_curriculum', 'class', classId, cls.campusId, {
+      newState: { added: inserted.length, subjectIds: missing.map((c) => c.subjectId) },
+    });
+    return { added: inserted.length, subjects: missing.map((c) => c.subjectId) };
+  }
+
+  // --- class roster ----------------------------------------------------------
+
+  async listRosterCandidates(ctx: PortalActionContext, classId: string, q: RosterCandidateQuery) {
+    await this.requireClassInScope(ctx, classId);
+    const f = this.filter(ctx);
+    return this.repo.listRosterCandidates(ctx.principal.institutionId, f.campusIds, classId, q);
+  }
+
+  /** Bulk add/remove students on a class in one write. */
+  async updateClassRoster(ctx: PortalActionContext, classId: string, input: UpdateClassRosterInput) {
+    const cls = await this.requireClassInScope(ctx, classId);
+
+    // Reject the whole batch if any id is foreign — a partial roster move is worse than none.
+    const ids = [...new Set([...input.add, ...input.remove])];
+    const found = await this.repo.countStudentsInInstitution(ctx.principal.institutionId, ids);
+    if (found !== ids.length) {
+      throw new BadRequestException({
+        code: 'INVALID_REFERENCE',
+        message: 'One or more students do not belong to this institution.',
+      });
+    }
+
+    if (cls.capacity != null && input.add.length > 0) {
+      const roster = await this.repo.listClassRoster(classId, ctx.principal.institutionId);
+      const staying = roster.filter((s) => !input.remove.includes(s.id)).length;
+      const joining = input.add.filter((id) => !roster.some((s) => s.id === id)).length;
+      if (staying + joining > cls.capacity) {
+        throw new BadRequestException({
+          code: 'CLASS_OVER_CAPACITY',
+          message: `This class holds ${cls.capacity}; that would make ${staying + joining}.`,
+        });
+      }
+    }
+
+    const result = await this.repo.updateClassRoster(
+      ctx.principal.institutionId,
+      classId,
+      input.add,
+      input.remove,
+      ctx.principal.institutionUserId,
+    );
+    await this.write(ctx, 'class.roster_update', 'class', classId, cls.campusId, {
+      newState: { added: result.added, removed: result.removed },
+    });
+    return result;
   }
 
   // === helpers ===============================================================

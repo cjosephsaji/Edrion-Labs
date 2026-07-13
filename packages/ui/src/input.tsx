@@ -30,10 +30,31 @@ export const Label = forwardRef<HTMLLabelElement, React.LabelHTMLAttributes<HTML
 );
 Label.displayName = 'Label';
 
-export function FieldError({ id, children }: { id?: string; children?: React.ReactNode }) {
+export function FieldError({
+  id,
+  children,
+  prominent,
+  className,
+}: {
+  id?: string;
+  children?: React.ReactNode;
+  /** High-visibility banner for critical feedback (e.g. OTP / API errors). */
+  prominent?: boolean;
+  className?: string;
+}) {
   if (!children) return null;
   return (
-    <p id={id} role="alert" className="mt-1 text-xs text-danger">
+    <p
+      id={id}
+      role="alert"
+      className={cn(
+        prominent
+          ? 'rounded-lg border border-danger/30 bg-danger-soft px-4 py-2.5 text-center text-sm font-semibold leading-snug text-danger'
+          : 'mt-1.5 text-sm font-medium text-danger',
+        prominent ? 'mt-3' : undefined,
+        className,
+      )}
+    >
       {children}
     </p>
   );

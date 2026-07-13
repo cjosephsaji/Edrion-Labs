@@ -14,6 +14,7 @@ import type {
   EnrolAdmissionInput,
   UpdateAdmissionInput,
 } from '@edrion/schemas';
+import { formatPersonName } from '@edrion/schemas';
 import { AUDIT_WRITER } from '../../common/tokens';
 import type { Page } from './academics.repository';
 import type { ListResult } from './academics.service';
@@ -64,6 +65,7 @@ export class AdmissionsService {
       campusId,
       applicationNo: input.applicationNo,
       firstName: input.firstName,
+      middleName: input.middleName?.trim() || null,
       lastName: input.lastName,
       gender: input.gender ?? null,
       dateOfBirth: input.dateOfBirth ?? null,
@@ -96,6 +98,7 @@ export class AdmissionsService {
     const updated = await this.repo.update(id, input.version, {
       applicationNo: input.applicationNo ?? existing!.applicationNo,
       firstName: input.firstName ?? existing!.firstName,
+      middleName: input.middleName === undefined ? existing!.middleName : input.middleName?.trim() || null,
       lastName: input.lastName ?? existing!.lastName,
       gender: input.gender === undefined ? existing!.gender : input.gender,
       dateOfBirth: input.dateOfBirth === undefined ? existing!.dateOfBirth : input.dateOfBirth,
@@ -227,6 +230,7 @@ export class AdmissionsService {
       campusId: app!.campusId,
       admissionNo,
       firstName: app!.firstName,
+      middleName: app!.middleName,
       lastName: app!.lastName,
       gender: app!.gender,
       dateOfBirth: app!.dateOfBirth,
@@ -263,8 +267,8 @@ export class AdmissionsService {
     return scope.mode === 'campus' ? scope.campusId : null;
   }
 
-  private fullName(p: { firstName: string; lastName: string }): string {
-    return `${p.firstName} ${p.lastName}`.trim();
+  private fullName(p: { firstName: string; middleName?: string | null; lastName: string }): string {
+    return formatPersonName(p);
   }
 
   private today(): string {

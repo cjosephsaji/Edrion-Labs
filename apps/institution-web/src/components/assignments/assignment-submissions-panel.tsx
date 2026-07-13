@@ -10,6 +10,7 @@ import {
   type SubmissionStatus,
 } from '@/lib/assignments';
 import { PortalClientError } from '@/lib/portal-client';
+import { formatPersonName } from '@/lib/person-name';
 
 const STATUS_OPTIONS = [
   { value: 'assigned', label: 'Assigned' },
@@ -134,13 +135,13 @@ export function AssignmentSubmissionsPanel({
               <li key={s.id} className="flex items-center justify-between gap-2 px-3 py-2">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-text-primary">
-                    {s.firstName} {s.lastName}
+                    {formatPersonName(s)}
                   </p>
                   <p className="truncate font-mono text-xs text-text-muted">{s.admissionNo}</p>
                 </div>
                 <div className="w-32 shrink-0">
                   <Select
-                    aria-label={`Status for ${s.firstName} ${s.lastName}`}
+                    aria-label={`Status for ${formatPersonName(s)}`}
                     value={m.status}
                     onChange={(e) => {
                       setMarks((prev) => ({ ...prev, [s.id]: { ...m, status: e.target.value as SubmissionStatus } }));
@@ -155,7 +156,7 @@ export function AssignmentSubmissionsPanel({
                     type="number"
                     min={0}
                     max={maxPoints}
-                    aria-label={`Points for ${s.firstName} ${s.lastName}`}
+                    aria-label={`Points for ${formatPersonName(s)}`}
                     placeholder="—"
                     value={m.points}
                     onChange={(e) => {

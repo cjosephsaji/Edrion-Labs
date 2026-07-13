@@ -74,6 +74,7 @@ export class AdmissionsRepository {
     if (q.search) {
       const s = or(
         ilike(t.firstName, `%${q.search}%`),
+        ilike(t.middleName, `%${q.search}%`),
         ilike(t.lastName, `%${q.search}%`),
         ilike(t.applicationNo, `%${q.search}%`),
       );

@@ -30,6 +30,7 @@ export const admissionApplications = pgTable(
     /** Application reference (unique within the institution). */
     applicationNo: text('application_no').notNull(),
     firstName: text('first_name').notNull(),
+    middleName: text('middle_name'),
     lastName: text('last_name').notNull(),
     /** male | female | other (free-text; validated in zod). */
     gender: text('gender'),
@@ -80,6 +81,7 @@ export interface AdmissionDraftPayload {
   target?: { campusId?: string; academicYearId?: string; gradeLevelId?: string; programme?: string };
   student?: {
     firstName?: string;
+    middleName?: string;
     lastName?: string;
     gender?: string;
     dateOfBirth?: string;
