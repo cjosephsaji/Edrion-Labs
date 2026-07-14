@@ -17,8 +17,8 @@ set -u
 set +B
 API="${API:-http://localhost:3001/v1}"
 AC="$API/portal/academics"
-OWNER='owner@greenwood.edu'
-TEACHER='teacher@greenwood.edu'   # academics.view only — must not be able to mutate
+OWNER="${OWNER:-owner@greenwood.edu}"
+TEACHER="${TEACHER:-teacher@greenwood.edu}"   # academics.view only — must not be able to mutate
 SCOPE='institution'
 RUN="curr-$(date +%s)"
 
