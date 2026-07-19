@@ -151,8 +151,13 @@ export class PeopleController {
     @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
     @CurrentScope() s: InstitutionScope,
     @ReqContext() r: EdrionRequestContext,
+    @Query() query: Record<string, string | undefined>,
   ) {
-    return this.service.listTeachingStaff(this.ctx(p, s, r));
+    const q = {
+      academicYearId: query.academicYearId,
+      termId: query.termId,
+    };
+    return this.service.listTeachingStaff(this.ctx(p, s, r), q);
   }
 
   @Get('staff/:id/profile')

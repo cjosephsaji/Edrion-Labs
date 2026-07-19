@@ -1,6 +1,8 @@
 'use client';
+import { useMemo } from 'react';
 import type { DetailField } from '@edrion/ui';
 import type { StudentContext } from '@/lib/types';
+import { useTerm } from '@/lib/term';
 import { EntityRef } from './entity-ref';
 
 /**
@@ -9,9 +11,10 @@ import { EntityRef } from './entity-ref';
  * section / campus / age. Falls back to a muted note when no student is linked.
  */
 export function StudentCardHeader({ student }: { student: StudentContext | null | undefined }) {
+  const { t } = useTerm();
   if (!student) return <p className="text-sm text-text-muted">No student linked to this record.</p>;
   const chips = [
-    student.className && `Class ${student.className}`,
+    student.className && `${t('class')} ${student.className}`,
     student.gradeName,
     student.section && `Sec ${student.section}`,
     student.campusName,
@@ -44,13 +47,16 @@ export function StudentCardHeader({ student }: { student: StudentContext | null 
 }
 
 /** Detail fields describing a student's context — reused inside a detail panel's "Student" section. */
-export function studentContextFields(student: StudentContext | null | undefined): DetailField[] {
+export function studentContextFields(
+  student: StudentContext | null | undefined,
+  labels: { class: string; gradeLevel: string; section: string },
+): DetailField[] {
   return [
     { label: 'Student', value: <EntityRef entity={student} /> },
     { label: 'Admission no.', value: student?.sub },
-    { label: 'Class', value: student?.className },
-    { label: 'Grade', value: student?.gradeName },
-    { label: 'Section', value: student?.section },
+    { label: labels.class, value: student?.className },
+    { label: labels.gradeLevel, value: student?.gradeName },
+    { label: labels.section, value: student?.section },
     { label: 'Campus', value: student?.campusName },
     { label: 'Age', value: student?.age != null ? String(student.age) : null },
     {
@@ -60,4 +66,16 @@ export function studentContextFields(student: StudentContext | null | undefined)
         : null,
     },
   ];
+}
+
+export function useStudentContextLabels() {
+  const { t } = useTerm();
+  return useMemo(
+    () => ({
+      class: t('class'),
+      gradeLevel: t('gradeLevel'),
+      section: t('section'),
+    }),
+    [t],
+  );
 }

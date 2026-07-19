@@ -141,7 +141,7 @@ export function AdmissionEnrolDrawer({
               <Select
                 id="enrol-year"
                 value={programmeLevelId}
-                placeholder={departmentId ? 'Select…' : `Choose ${t('department').toLowerCase()} first`}
+                placeholder={departmentId ? 'Select…' : `Choose ${t('department')} first`}
                 disabled={!departmentId}
                 options={(programmeLevels?.items ?? []).map((l) => ({
                   value: l.id,
@@ -155,7 +155,7 @@ export function AdmissionEnrolDrawer({
               <Select
                 id="enrol-term"
                 value={termId}
-                placeholder={programmeLevelId ? 'Optional' : `Choose ${t('gradeLevel').toLowerCase()} first`}
+                placeholder={programmeLevelId ? 'Optional' : `Choose ${t('gradeLevel')} first`}
                 disabled={!programmeLevelId}
                 options={(terms?.items ?? []).map((x) => ({ value: x.id, label: x.name }))}
                 onChange={(e) => setTermId(e.target.value)}

@@ -3,14 +3,10 @@ import { useMemo, useState } from 'react';
 import { type Column } from '@edrion/ui';
 import { ResourceManager, type FilterDef, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
-import { ExamSchedulesPanel } from '@/components/exams/exam-schedules-panel';
-import { RecipientPicker } from '@/components/recipients/recipient-picker';
 import { useAcademicYearOptions } from '@/lib/academics';
 import { useExamsList, useExamsMutations } from '@/lib/exams';
 import { useProgrammeFacetFilters } from '@/lib/programme-facets';
-import { useAcademicContextFilters } from '@/lib/academic-context';
 import { useTerm } from '@/lib/term';
-import type { Target } from '@/lib/recipients';
 import type { ExamRow } from '@/lib/exams-types';
 
 const PERMISSIONS: ResourcePermissions = {
@@ -42,49 +38,25 @@ const label = (opts: { value: string; label: string }[], v: string) => opts.find
 export default function ExamsPage() {
   const { t } = useTerm();
   const facets = useProgrammeFacetFilters();
-  const contextFilters = useAcademicContextFilters();
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const { data: years } = useAcademicYearOptions();
 
+  // Minimal fields kept for detail auto-panel; create/edit go to the builder page.
   const fields = useMemo<FieldDef[]>(
     () => [
-      { name: 'name', label: 'Name', type: 'text', required: true, placeholder: 'e.g. Term 1 Finals' },
-      { name: 'examType', label: 'Type', type: 'select', required: true, options: EXAM_TYPES },
-      { name: 'status', label: 'Status', type: 'select', required: true, options: STATUSES },
-      ...(facets.showFacets
-        ? [
-            {
-              name: 'termId',
-              label: t('term'),
-              type: 'select' as const,
-              nullable: true,
-              options: facets.termOptions,
-            },
-          ]
-        : [{ name: 'termLabel', label: t('term'), type: 'text' as const, nullable: true, placeholder: 'e.g. Term 1' }]),
+      { name: 'name', label: 'Name', type: 'text', required: true },
+      { name: 'examType', label: 'Type', type: 'combobox', required: true, options: EXAM_TYPES },
+      { name: 'status', label: 'Status', type: 'combobox', required: true, options: STATUSES },
       {
         name: 'academicYearId',
         label: t('academicYear'),
-        type: 'select',
+        type: 'combobox',
         nullable: true,
         options: (years?.items ?? []).map((y) => ({ value: y.id, label: y.name })),
       },
-      { name: 'startDate', label: 'Start date', type: 'date', nullable: true },
-      { name: 'endDate', label: 'End date', type: 'date', nullable: true },
-      { name: 'durationMin', label: 'Duration (minutes)', type: 'number', nullable: true, min: 1, placeholder: 'Optional timed attempt' },
-      {
-        name: 'audience',
-        label: 'Student audience',
-        type: 'custom',
-        render: (value, onChange) => (
-          <RecipientPicker value={(value as Target[]) ?? []} onChange={onChange} studentsOnly />
-        ),
-        help: 'Who can attempt this exam online. Leave empty to skip online attempts.',
-      },
-      { name: 'description', label: 'Description', type: 'textarea', nullable: true, placeholder: 'Optional' },
     ],
-    [years, facets.showFacets, facets.termOptions, t],
+    [years, t],
   );
 
   const columns = useMemo<Column<ExamRow>[]>(
@@ -142,26 +114,19 @@ export default function ExamsPage() {
       filters={toolbarFilters}
       filterValues={listFilterValues}
       onFilterChange={onListFilterChange}
-      extraFilters={contextFilters}
       defaultSortBy="startDate"
       defaultSortDir="desc"
       permissions={PERMISSIONS}
       useList={useExamsList}
       useMutations={useExamsMutations}
       rowLabel={(r) => r.name}
-      renderFormExtra={({ row }) => <ExamSchedulesPanel examId={row.id} examName={row.name} />}
+      createHref="/exams/new"
+      getEditHref={(r) => `/exams/${r.id}`}
       toFormValues={(r) => ({
         name: r.name,
         examType: r.examType,
         status: r.status,
-        termId: r.termId ?? '',
-        termLabel: r.termLabel ?? '',
         academicYearId: r.academicYearId ?? '',
-        startDate: r.startDate ?? '',
-        endDate: r.endDate ?? '',
-        durationMin: r.durationMin ?? '',
-        audience: r.audience ?? [],
-        description: r.description ?? '',
       })}
     />
   );

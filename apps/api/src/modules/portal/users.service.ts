@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { AuditWriter, AuditEventInput } from '@edrion/audit';
+import { can } from '@edrion/permissions';
 import {
   ALL_INSTITUTION_PERMISSION_KEYS,
   CAMPUS_ADMIN_ASSIGNABLE_ROLE_KEYS,
@@ -8,13 +9,18 @@ import {
 } from '@edrion/permissions/institution';
 import type {
   InvitePortalUserInput,
+  PortalUserStatusActionInput,
   PortalUsersListQuery,
   SetPortalUserAccessInput,
   UpdatePortalUserInput,
 } from '@edrion/schemas';
+import { computeEffectiveAccess } from '@edrion/schemas';
 import type { InstitutionUser } from '@edrion/database';
+import { resolveScopeFilter } from '@edrion/auth';
+import { AccountStatus } from '@edrion/shared-types';
 import { AUDIT_WRITER } from '../../common/tokens';
 import type { ListResult } from './academics.service';
+import { PeopleRepository } from './people.repository';
 import { UsersRepository } from './users.repository';
 import { RolesRepository } from './roles.repository';
 import { PortalInviteService } from './portal-invite.service';
@@ -24,6 +30,14 @@ import { basePortalAudit, type PortalActionContext } from './portal-action-conte
 const MODULE = 'portal-users';
 const VALID_GRANT_KEYS = new Set<string>(ALL_INSTITUTION_PERMISSION_KEYS);
 const DEFAULT_ROLE_KEYS = new Set(INSTITUTION_DEFAULT_ROLES.map((r) => r.key));
+const TEACH_PERMISSION = 'academics.teach';
+const MESSAGE_PERMISSION = 'messages.use';
+
+function sameStringSet(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const set = new Set(a);
+  return b.every((v) => set.has(v));
+}
 
 export interface UserView extends InstitutionUser {
   roleKeys: string[];
@@ -44,6 +58,7 @@ export interface UserView extends InstitutionUser {
 export class UsersService {
   constructor(
     private readonly repo: UsersRepository,
+    private readonly peopleRepo: PeopleRepository,
     private readonly roles: RolesRepository,
     private readonly invites: PortalInviteService,
     private readonly sessions: PortalSessionService,
@@ -56,14 +71,47 @@ export class UsersService {
     const permissionFilterIds = q.permission ? await this.repo.userIdsWithPermission(institutionId, q.permission) : null;
     const provisionedIds =
       q.provisionedFromStaff === true ? await this.repo.userIdsProvisionedFromStaff(institutionId) : null;
-    const page = await this.repo.list(institutionId, roleFilterIds, permissionFilterIds, provisionedIds, q);
+    const excludeProvisionedIds =
+      q.provisionedFromStaff === false ? await this.repo.userIdsProvisionedFromStaff(institutionId) : null;
+    const page = await this.repo.list(
+      institutionId,
+      roleFilterIds,
+      permissionFilterIds,
+      provisionedIds,
+      excludeProvisionedIds,
+      q,
+    );
     const ids = page.items.map((u) => u.id);
     const [roleMap, campusMap] = await Promise.all([this.repo.rolesForUsers(ids), this.repo.campusIdsForUsers(ids)]);
     const items = page.items.map((u) => this.toView(u, roleMap.get(u.id) ?? [], campusMap.get(u.id) ?? []));
     return { items, total: page.total, page: q.page, pageSize: q.pageSize, hasMore: q.page * q.pageSize < page.total };
   }
 
-  async invite(ctx: PortalActionContext, input: InvitePortalUserInput) {
+  async get(ctx: PortalActionContext, id: string): Promise<UserView> {
+    const user = await this.require(ctx, id);
+    const [roleKeys, campusIds] = await Promise.all([this.repo.getRoleKeys(id), this.repo.getCampusIds(id)]);
+    return this.toView(user, roleKeys, campusIds);
+  }
+
+  /** Portal users the caller can message — gated by messages.use, not users.view. */
+  async listMessagingColleagues(ctx: PortalActionContext) {
+    const institutionId = ctx.principal.institutionId;
+    const campusIds = resolveScopeFilter(ctx.principal, ctx.scope).campusIds;
+    const messageableIds = await this.repo.userIdsWithPermission(institutionId, MESSAGE_PERMISSION);
+    const items = await this.repo.listMessagingColleagues(
+      institutionId,
+      messageableIds,
+      campusIds,
+      ctx.principal.institutionUserId,
+    );
+    return { items, total: items.length };
+  }
+
+  async invite(
+    ctx: PortalActionContext,
+    input: InvitePortalUserInput,
+    opts?: { skipStaffDirectory?: boolean },
+  ) {
     const institutionId = ctx.principal.institutionId;
     const email = input.email.toLowerCase();
     if (await this.repo.findByEmail(institutionId, email)) {
@@ -71,6 +119,12 @@ export class UsersService {
     }
     const roleKeys = await this.validateRoleKeys(ctx, input.roleKeys);
     const campusIds = await this.validateCampusIds(institutionId, input.campusIds);
+    if (roleKeys.length === 0) {
+      throw new BadRequestException({
+        code: 'ROLE_REQUIRED',
+        message: 'Assign at least one role when inviting a portal user.',
+      });
+    }
 
     const user = await this.repo.insert({
       institutionId,
@@ -90,6 +144,10 @@ export class UsersService {
         directDenies: [],
         actorId: ctx.principal.institutionUserId,
       });
+    }
+
+    if (!opts?.skipStaffDirectory) {
+      await this.ensureStaffDirectoryRow(ctx, user, roleKeys, campusIds);
     }
 
     // Send the real invitation email (persists a portal_invitations row + a signed accept link).
@@ -129,15 +187,76 @@ export class UsersService {
     };
     if (input.status) {
       patch.status = input.status;
-      patch.disabledAt = input.status === 'disabled' ? new Date() : null;
+      if (input.status === AccountStatus.Disabled) {
+        patch.disabledAt = new Date();
+        patch.disabledReason = input.disabledReason ?? null;
+      } else {
+        patch.disabledAt = null;
+        patch.disabledReason = null;
+      }
     }
     const updated = await this.repo.update(id, input.version, patch);
     if (!updated) throw this.versionConflict();
+    const [roleKeys, campusIds] = await Promise.all([this.repo.getRoleKeys(id), this.repo.getCampusIds(id)]);
+    await this.ensureStaffDirectoryRow(ctx, updated, roleKeys, campusIds, updated.directGrants ?? []);
+    await this.syncStaffProfile(ctx, updated);
     await this.write(ctx, 'user.update', id, {
       previousState: { status: existing.status, fullName: existing.fullName },
-      newState: { status: updated.status, fullName: updated.fullName },
+      newState: {
+        status: updated.status,
+        fullName: updated.fullName,
+        ...(input.status === AccountStatus.Disabled ? { disabledReason: input.disabledReason } : {}),
+      },
     });
+    return this.toView(updated, roleKeys, campusIds);
+  }
+
+  /** Suspend (disable) a portal user. Reason is required and stored on the account. */
+  async suspend(ctx: PortalActionContext, id: string, input: PortalUserStatusActionInput) {
+    const existing = await this.require(ctx, id);
+    if (id === ctx.principal.institutionUserId) {
+      throw new ForbiddenException({ code: 'CANNOT_DISABLE_SELF', message: 'You cannot suspend your own account.' });
+    }
+    if (existing.status === AccountStatus.Disabled) {
+      throw new BadRequestException({ code: 'ALREADY_SUSPENDED', message: 'This user is already suspended.' });
+    }
+    await this.sessions.revokeAllForUser(id, 'user_suspended');
+    const updated = await this.repo.update(id, input.version, {
+      status: AccountStatus.Disabled,
+      disabledAt: new Date(),
+      disabledReason: input.reason,
+      sessionsRevokedAt: new Date(),
+      updatedBy: ctx.principal.institutionUserId,
+    });
+    if (!updated) throw this.versionConflict();
     const [roleKeys, campusIds] = await Promise.all([this.repo.getRoleKeys(id), this.repo.getCampusIds(id)]);
+    await this.write(ctx, 'user.suspend', id, {
+      reason: input.reason,
+      previousState: { status: existing.status },
+      newState: { status: updated.status, disabledReason: input.reason, sessionsRevoked: true },
+    });
+    return this.toView(updated, roleKeys, campusIds);
+  }
+
+  /** Unsuspend (re-enable) a previously suspended portal user. */
+  async unsuspend(ctx: PortalActionContext, id: string, input: PortalUserStatusActionInput) {
+    const existing = await this.require(ctx, id);
+    if (existing.status !== AccountStatus.Disabled && !existing.disabledAt) {
+      throw new BadRequestException({ code: 'NOT_SUSPENDED', message: 'This user is not suspended.' });
+    }
+    const updated = await this.repo.update(id, input.version, {
+      status: AccountStatus.Active,
+      disabledAt: null,
+      disabledReason: null,
+      updatedBy: ctx.principal.institutionUserId,
+    });
+    if (!updated) throw this.versionConflict();
+    const [roleKeys, campusIds] = await Promise.all([this.repo.getRoleKeys(id), this.repo.getCampusIds(id)]);
+    await this.write(ctx, 'user.unsuspend', id, {
+      reason: input.reason,
+      previousState: { status: existing.status, disabledReason: existing.disabledReason },
+      newState: { status: updated.status },
+    });
     return this.toView(updated, roleKeys, campusIds);
   }
 
@@ -150,17 +269,21 @@ export class UsersService {
         message: 'You cannot change your own roles or access. Ask another administrator.',
       });
     }
-    const roleKeys = await this.validateRoleKeys(ctx, input.roleKeys);
+    const roleKeys = await this.validateRoleKeys(ctx, input.roleKeys, id);
     const campusIds = await this.validateCampusIds(institutionId, input.campusIds);
-    const directGrants = this.validateOverrides(input.directGrants, 'directGrants');
-    const directDenies = this.validateOverrides(input.directDenies, 'directDenies');
-    // Direct permission overrides bypass roles entirely — only institution-wide principals may set
-    // them. A scope-confined Campus Admin assigns roles from the allowlist, never raw grants/denies.
-    if (!ctx.principal.isInstitutionWide && (directGrants.length > 0 || directDenies.length > 0)) {
-      throw new ForbiddenException({
-        code: 'OVERRIDES_NOT_PERMITTED',
-        message: 'You cannot set direct permission overrides. Assign roles instead.',
-      });
+    let directGrants = this.validateOverrides(input.directGrants, 'directGrants');
+    let directDenies = this.validateOverrides(input.directDenies, 'directDenies');
+    if (!this.canManageRoles(ctx)) {
+      const existingGrants = existing.directGrants ?? [];
+      const existingDenies = existing.directDenies ?? [];
+      if (!sameStringSet(directGrants, existingGrants) || !sameStringSet(directDenies, existingDenies)) {
+        throw new ForbiddenException({
+          code: 'OVERRIDES_NOT_PERMITTED',
+          message: 'You cannot set direct permission overrides. Assign roles instead.',
+        });
+      }
+      directGrants = existingGrants;
+      directDenies = existingDenies;
     }
 
     const updated = await this.repo.replaceAccess(id, input.version, {
@@ -171,6 +294,7 @@ export class UsersService {
       actorId: ctx.principal.institutionUserId,
     });
     if (!updated) throw this.versionConflict();
+    await this.ensureStaffDirectoryRow(ctx, updated, roleKeys, campusIds, directGrants);
     await this.write(ctx, 'user.access.set', id, {
       previousState: { roleKeys: await this.repo.getRoleKeys(id) },
       newState: {
@@ -178,7 +302,7 @@ export class UsersService {
         campusCount: campusIds.length,
         grants: directGrants.length,
         denies: directDenies.length,
-        ...(ctx.principal.isInstitutionWide ? {} : { assignedBy: 'campus_admin' }),
+        ...(this.canManageRoles(ctx) ? {} : { assignedBy: 'campus_admin' }),
       },
     });
     void existing;
@@ -256,13 +380,81 @@ export class UsersService {
 
   // === helpers ===============================================================
 
+  private async ensureStaffDirectoryRow(
+    ctx: PortalActionContext,
+    user: InstitutionUser,
+    roleKeys: string[],
+    campusIds: string[],
+    directGrants: string[] = [],
+  ): Promise<void> {
+    const custom = await this.roles.listCustom(ctx.principal.institutionId);
+    const roleDefs = [...INSTITUTION_DEFAULT_ROLES, ...custom.map((r) => ({ key: r.key, permissions: r.permissions }))];
+    const effective = computeEffectiveAccess({ roleKeys, directGrants }, roleDefs);
+    const needsDirectory =
+      effective.permissionKeys.includes(TEACH_PERMISSION) || effective.permissionKeys.includes(MESSAGE_PERMISSION);
+    if (!needsDirectory) return;
+    if (await this.repo.findStaffByInstitutionUserId(user.id, ctx.principal.institutionId)) return;
+
+    const { firstName, lastName } = this.splitFullName(user.fullName);
+    const campusId =
+      campusIds.length === 1 ? campusIds[0]! : ctx.scope.mode === 'campus' ? ctx.scope.campusId : null;
+
+    await this.peopleRepo.insertStaff({
+      institutionId: ctx.principal.institutionId,
+      campusId,
+      employeeNo: null,
+      firstName,
+      middleName: null,
+      lastName,
+      email: user.email,
+      phone: user.phone,
+      departmentId: null,
+      designation: null,
+      employmentType: 'full_time',
+      status: 'active',
+      joinDate: null,
+      institutionUserId: user.id,
+      createdBy: ctx.principal.institutionUserId,
+    });
+  }
+
+  private splitFullName(fullName: string): { firstName: string; lastName: string } {
+    const parts = fullName.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return { firstName: 'User', lastName: 'User' };
+    if (parts.length === 1) return { firstName: parts[0]!, lastName: parts[0]! };
+    return { firstName: parts[0]!, lastName: parts.slice(1).join(' ') };
+  }
+
+  /** Keep the linked staff directory row in sync when an account profile changes. */
+  private async syncStaffProfile(ctx: PortalActionContext, user: InstitutionUser): Promise<void> {
+    const staff = await this.repo.findStaffByInstitutionUserId(user.id, ctx.principal.institutionId);
+    if (!staff) return;
+    const { firstName, lastName } = this.splitFullName(user.fullName);
+    await this.peopleRepo.updateStaff(staff.id, staff.version, {
+      firstName,
+      lastName,
+      email: user.email,
+      phone: user.phone,
+      updatedBy: ctx.principal.institutionUserId,
+    });
+  }
+
   private async require(ctx: PortalActionContext, id: string): Promise<InstitutionUser> {
     const row = await this.repo.find(id, ctx.principal.institutionId);
     if (!row) throw new NotFoundException({ code: 'NOT_FOUND', message: 'User not found' });
     return row;
   }
 
-  private async validateRoleKeys(ctx: PortalActionContext, keys: string[]): Promise<string[]> {
+  /** Full role assignment + direct overrides — institution-wide principals or users.manage_roles. */
+  private canManageRoles(ctx: PortalActionContext): boolean {
+    return ctx.principal.isInstitutionWide || can(ctx.principal.permissions, 'users.manage_roles');
+  }
+
+  private async validateRoleKeys(
+    ctx: PortalActionContext,
+    keys: string[],
+    existingUserId?: string,
+  ): Promise<string[]> {
     const institutionId = ctx.principal.institutionId;
     const cleaned = [...new Set(keys.map((k) => k.trim()).filter(Boolean))];
     if (cleaned.length === 0) return [];
@@ -274,8 +466,16 @@ export class UsersService {
     }
     // Scope-confined principals (Campus Admins) may only assign the operational staff allowlist —
     // never finance/HR/admin/custom roles. Institution-wide principals (Owner/Admin) assign anything.
-    if (!ctx.principal.isInstitutionWide) {
-      const notAssignable = cleaned.filter((k) => !isCampusAdminAssignableRole(k));
+    // When editing an existing user, roles they already hold may be kept even if outside the allowlist.
+    if (!this.canManageRoles(ctx)) {
+      const existingRoleKeys = existingUserId
+        ? new Set(await this.repo.getRoleKeys(existingUserId))
+        : new Set<string>();
+      const notAssignable = cleaned.filter((k) => {
+        if (existingRoleKeys.has(k)) return false;
+        if (k === 'parent' && can(ctx.principal.permissions, 'parents.manage')) return false;
+        return !isCampusAdminAssignableRole(k);
+      });
       if (notAssignable.length > 0) {
         throw new ForbiddenException({
           code: 'ROLE_NOT_ASSIGNABLE',

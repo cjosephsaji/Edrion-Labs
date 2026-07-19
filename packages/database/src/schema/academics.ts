@@ -55,6 +55,14 @@ export const departments = pgTable(
     /** Optional department head — a teacher (People phase, teachers.ts is the FK target). */
     headUserId: uuid('head_user_id').references(() => staff.id, { onDelete: 'set null' }),
     description: text('description'),
+    /** annual | semester | trimester | quarter | modular | custom | term */
+    termSystem: text('term_system').notNull().default('term'),
+    /** Total programme length in months; null = open-ended (e.g. PhD). */
+    durationMonths: integer('duration_months'),
+    /** Derived from termSystem; free for custom. */
+    termsPerYear: integer('terms_per_year').notNull().default(3),
+    /** True once students are enrolled — blocks destructive regeneration. */
+    structureLocked: boolean('structure_locked').notNull().default(false),
     version: integer('version').notNull().default(0),
     ...actorColumns,
     ...timestamps,
@@ -119,7 +127,52 @@ export const departmentGradeLevels = pgTable(
   }),
 );
 
-/** A teachable subject (e.g. "Algebra"). `kind` = core | elective. */
+/** Undated term slot within a programme year — the reusable template ("Semester 3", "First Professional"). */
+export const programmeTermSlots = pgTable(
+  'programme_term_slots',
+  {
+    id: primaryId(),
+    institutionId: uuid('institution_id')
+      .notNull()
+      .references(() => institutions.id, { onDelete: 'cascade' }),
+    campusId: uuid('campus_id').references(() => campuses.id, { onDelete: 'cascade' }),
+    departmentId: uuid('department_id')
+      .notNull()
+      .references(() => departments.id, { onDelete: 'cascade' }),
+    programmeLevelId: uuid('programme_level_id')
+      .notNull()
+      .references(() => departmentGradeLevels.id, { onDelete: 'cascade' }),
+    /** Position within the programme year (1 = first). */
+    sequenceInYear: integer('sequence_in_year').notNull().default(1),
+    /** Position across the whole programme — stable handle for fees, exams, reports. */
+    absoluteSequence: integer('absolute_sequence').notNull().default(1),
+    name: text('name').notNull(),
+    /** term | semester | trimester | quarter | phase | module */
+    kind: text('kind').notNull().default('term'),
+    /** Nullable — null means an even split of the year. */
+    durationMonths: integer('duration_months'),
+    /** Internship / capstone — excluded from normal term maths. */
+    isTerminal: boolean('is_terminal').notNull().default(false),
+    version: integer('version').notNull().default(0),
+    ...actorColumns,
+    ...timestamps,
+  },
+  (t) => ({
+    instIdx: index('programme_term_slots_institution_idx').on(t.institutionId),
+    scopeIdx: index('programme_term_slots_institution_campus_idx').on(t.institutionId, t.campusId),
+    deptIdx: index('programme_term_slots_department_idx').on(t.departmentId),
+    levelSeqUniq: uniqueIndex('programme_term_slots_level_seq_uniq').on(
+      t.programmeLevelId,
+      t.sequenceInYear,
+    ),
+    deptAbsUniq: uniqueIndex('programme_term_slots_dept_abs_uniq').on(
+      t.departmentId,
+      t.absoluteSequence,
+    ),
+  }),
+);
+
+/** A teachable subject (e.g. "Algebra"). `kind` = core | elective | honor | minor. */
 export const subjects = pgTable(
   'subjects',
   {
@@ -130,8 +183,10 @@ export const subjects = pgTable(
     campusId: uuid('campus_id').references(() => campuses.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
     code: text('code').notNull(),
-    /** core | elective. */
+    /** core | elective | honor | minor. */
     kind: text('kind').notNull().default('core'),
+    /** When true, timetable slots for this subject auto-sync to the lab schedule. */
+    isLabSubject: boolean('is_lab_subject').notNull().default(false),
     departmentId: uuid('department_id').references(() => departments.id, { onDelete: 'set null' }),
     version: integer('version').notNull().default(0),
     ...actorColumns,
@@ -170,6 +225,8 @@ export const programmeSubjects = pgTable(
       .references(() => departmentGradeLevels.id, { onDelete: 'cascade' }),
     /** Which semester slot within that year (1 = first). Matches `academic_terms.sequence`. */
     semesterSequence: integer('semester_sequence').notNull().default(1),
+    /** FK to the undated slot row — source of truth once backfilled. */
+    slotId: uuid('slot_id').references(() => programmeTermSlots.id, { onDelete: 'set null' }),
     subjectId: uuid('subject_id')
       .notNull()
       .references(() => subjects.id, { onDelete: 'cascade' }),
@@ -185,6 +242,7 @@ export const programmeSubjects = pgTable(
     instIdx: index('programme_subjects_institution_idx').on(t.institutionId),
     scopeIdx: index('programme_subjects_institution_campus_idx').on(t.institutionId, t.campusId),
     levelIdx: index('programme_subjects_level_idx').on(t.programmeLevelId, t.semesterSequence),
+    slotIdx: index('programme_subjects_slot_idx').on(t.slotId),
     subjectIdx: index('programme_subjects_subject_idx').on(t.subjectId),
     deptIdx: index('programme_subjects_department_idx').on(t.departmentId),
     uniq: uniqueIndex('programme_subjects_slot_uniq').on(
@@ -286,11 +344,13 @@ export const academicTerms = pgTable(
     kind: text('kind').notNull().default('term'),
     /** Order within the academic year (1 = first). */
     sequence: integer('sequence').notNull().default(1),
+    /** FK to the undated slot this dated term is an instance of. */
+    slotId: uuid('slot_id').references(() => programmeTermSlots.id, { onDelete: 'set null' }),
     startDate: date('start_date').notNull(),
     endDate: date('end_date').notNull(),
     isCurrent: boolean('is_current').notNull().default(false),
     /** planning | active | archived. */
-    status: text('status').notNull().default('planning'),
+    status: text('status').notNull().default('active'),
     version: integer('version').notNull().default(0),
     ...actorColumns,
     ...timestamps,
@@ -300,6 +360,7 @@ export const academicTerms = pgTable(
     scopeIdx: index('academic_terms_institution_campus_idx').on(t.institutionId, t.campusId),
     yearIdx: index('academic_terms_year_idx').on(t.academicYearId),
     programmeLevelIdx: index('academic_terms_programme_level_idx').on(t.programmeLevelId),
+    slotIdx: index('academic_terms_slot_idx').on(t.slotId),
   }),
 );
 
@@ -311,6 +372,8 @@ export type GradeLevel = typeof gradeLevels.$inferSelect;
 export type NewGradeLevel = typeof gradeLevels.$inferInsert;
 export type DepartmentGradeLevel = typeof departmentGradeLevels.$inferSelect;
 export type NewDepartmentGradeLevel = typeof departmentGradeLevels.$inferInsert;
+export type ProgrammeTermSlot = typeof programmeTermSlots.$inferSelect;
+export type NewProgrammeTermSlot = typeof programmeTermSlots.$inferInsert;
 export type Subject = typeof subjects.$inferSelect;
 export type NewSubject = typeof subjects.$inferInsert;
 export type ProgrammeSubject = typeof programmeSubjects.$inferSelect;

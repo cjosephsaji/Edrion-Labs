@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label } from '@edrion/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Select } from '@edrion/ui';
 import {
   ApiClientError,
   useUpsertAiRule,
@@ -130,11 +130,7 @@ export function AiActionRules({ rules }: { rules: AiActionRuleDto[] }) {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label htmlFor="r-cap">Capability</Label>
-            <select id="r-cap" value={capability} onChange={(e) => setCapability(e.target.value)} className={fieldClass}>
-              {CAPABILITIES.map((c) => (
-                <option key={c.key} value={c.key}>{c.label}</option>
-              ))}
-            </select>
+            <Select id="r-cap" value={capability} onChange={(e) => setCapability(e.target.value)} className={fieldClass} options={CAPABILITIES.map((c) => ({ value: c.key, label: c.label }))} />
           </div>
           <div>
             <Label htmlFor="r-action">Action key (blank = all)</Label>
@@ -142,19 +138,11 @@ export function AiActionRules({ rules }: { rules: AiActionRuleDto[] }) {
           </div>
           <div>
             <Label htmlFor="r-effect">Effect</Label>
-            <select id="r-effect" value={effect} onChange={(e) => setEffect(e.target.value)} className={fieldClass}>
-              {EFFECTS.map((e) => (
-                <option key={e.key} value={e.key}>{e.label}</option>
-              ))}
-            </select>
+            <Select id="r-effect" value={effect} onChange={(e) => setEffect(e.target.value)} className={fieldClass} options={EFFECTS.map((e) => ({ value: e.key, label: e.label }))} />
           </div>
           <div>
             <Label htmlFor="r-risk">Risk (optional)</Label>
-            <select id="r-risk" value={riskLevel} onChange={(e) => setRiskLevel(e.target.value)} className={fieldClass}>
-              {RISKS.map((rk) => (
-                <option key={rk} value={rk}>{rk === '' ? 'unset' : rk}</option>
-              ))}
-            </select>
+            <Select id="r-risk" value={riskLevel} onChange={(e) => setRiskLevel(e.target.value)} className={fieldClass} options={RISKS.map((rk) => ({ value: rk, label: rk === '' ? 'unset' : rk }))} />
           </div>
           <div className="col-span-2">
             <Label htmlFor="r-desc">Description (optional)</Label>

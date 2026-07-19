@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+import { paginationQuerySchema, sortQuerySchema, versionSchema, academicScopeQuerySchema } from './common';
 
 /**
  * Institution-Portal ACADEMICS (Phase 2) request/response contracts. The same Zod schemas
@@ -25,9 +25,28 @@ export const ACADEMIC_YEAR_STATUSES = ['planning', 'active', 'archived'] as cons
 export const academicYearStatusSchema = z.enum(ACADEMIC_YEAR_STATUSES);
 export type AcademicYearStatus = (typeof ACADEMIC_YEAR_STATUSES)[number];
 
-export const SUBJECT_KINDS = ['core', 'elective'] as const;
+export const SUBJECT_KINDS = ['core', 'elective', 'honor', 'minor'] as const;
 export const subjectKindSchema = z.enum(SUBJECT_KINDS);
 export type SubjectKind = (typeof SUBJECT_KINDS)[number];
+
+export const SUBJECT_KIND_LABELS: Record<SubjectKind, string> = {
+  core: 'Core',
+  elective: 'Elective',
+  honor: 'Honor',
+  minor: 'Minor',
+};
+
+export const SUBJECT_KIND_OPTIONS = SUBJECT_KINDS.map((value) => ({
+  value,
+  label: SUBJECT_KIND_LABELS[value],
+}));
+
+export function subjectKindLabel(kind: SubjectKind | string | null | undefined): string {
+  if (kind && (SUBJECT_KINDS as readonly string[]).includes(kind)) {
+    return SUBJECT_KIND_LABELS[kind as SubjectKind];
+  }
+  return SUBJECT_KIND_LABELS.core;
+}
 
 /** Which academic resource a generic list/route targets. */
 export const ACADEMIC_RESOURCES = [
@@ -42,16 +61,38 @@ export const ACADEMIC_RESOURCES = [
 ] as const;
 export type AcademicResource = (typeof ACADEMIC_RESOURCES)[number];
 
+export const TERM_SYSTEMS = [
+  'annual',
+  'semester',
+  'trimester',
+  'quarter',
+  'modular',
+  'custom',
+  'term',
+] as const;
+export const termSystemSchema = z.enum(TERM_SYSTEMS);
+export type TermSystem = (typeof TERM_SYSTEMS)[number];
+
 /** Common list query for every academic directory: page + sort + free-text search. */
-export const academicsListQuerySchema = paginationQuerySchema.merge(sortQuerySchema).extend({
+export const academicsListQuerySchema = paginationQuerySchema
+  .merge(sortQuerySchema)
+  .merge(academicScopeQuerySchema)
+  .extend({
   search: z.string().trim().max(160).optional(),
+  status: academicYearStatusSchema.optional(),
+  isCurrent: z.enum(['true', 'false']).optional(),
   departmentId: z.string().uuid().optional(),
   programmeLevelId: z.string().uuid().optional(),
-  termId: z.string().uuid().optional(),
   /** Curriculum slot (1 = first semester of the programme year). */
   semesterSequence: z.coerce.number().int().min(1).max(20).optional(),
+  /**
+   * Year number (grade_levels.level), not a row id. Every department has its own "Year 2" row, but
+   * they all share this number — so it is the only way to say "year 2, whichever department".
+   */
+  gradeLevelNumber: z.coerce.number().int().min(0).max(20).optional(),
   subjectId: z.string().uuid().optional(),
   kind: subjectKindSchema.optional(),
+  hasHead: z.enum(['true', 'false']).optional(),
 });
 export type AcademicsListQuery = z.infer<typeof academicsListQuerySchema>;
 
@@ -96,6 +137,9 @@ export const createDepartmentSchema = z.object({
   code: optionalCode,
   headUserId: optionalUuid,
   description: z.string().trim().max(500).nullish(),
+  termSystem: termSystemSchema.optional(),
+  durationMonths: z.coerce.number().int().min(1).max(240).nullish(),
+  termsPerYear: z.coerce.number().int().min(0).max(12).optional(),
 });
 export type CreateDepartmentInput = z.infer<typeof createDepartmentSchema>;
 
@@ -104,6 +148,9 @@ export const updateDepartmentSchema = z.object({
   code: code.optional(),
   headUserId: optionalUuid,
   description: z.string().trim().max(500).nullish(),
+  termSystem: termSystemSchema.optional(),
+  durationMonths: z.coerce.number().int().min(1).max(240).nullish(),
+  termsPerYear: z.coerce.number().int().min(0).max(12).optional(),
   ...withVersion,
 });
 export type UpdateDepartmentInput = z.infer<typeof updateDepartmentSchema>;
@@ -155,6 +202,7 @@ export const createSubjectSchema = z.object({
   name,
   code: optionalCode,
   kind: subjectKindSchema.default('core'),
+  isLabSubject: z.boolean().default(false),
   departmentId: optionalUuid,
 });
 export type CreateSubjectInput = z.infer<typeof createSubjectSchema>;
@@ -163,6 +211,7 @@ export const updateSubjectSchema = z.object({
   name: name.optional(),
   code: code.optional(),
   kind: subjectKindSchema.optional(),
+  isLabSubject: z.boolean().optional(),
   departmentId: optionalUuid,
   ...withVersion,
 });
@@ -181,6 +230,7 @@ export const createProgrammeSubjectSchema = z
     programmeLevelId: optionalUuid,
     departmentId: optionalUuid,
     gradeLevelId: optionalUuid,
+    slotId: optionalUuid,
     semesterSequence: z.coerce.number().int().min(1).max(20).default(1),
     credits: z.coerce.number().int().min(0).max(100).nullish(),
     isElective: z.boolean().default(false),
@@ -264,12 +314,14 @@ export const updateClassRosterSchema = z
 export type UpdateClassRosterInput = z.infer<typeof updateClassRosterSchema>;
 
 /** Students eligible to join a class — unassigned, or sitting in a different class. */
-export const rosterCandidateQuerySchema = z.object({
-  search: z.string().trim().max(160).optional(),
-  /** false (default) = only students with no class; true = every active student. */
-  includeAssigned: z.coerce.boolean().default(false),
-  limit: z.coerce.number().int().min(1).max(200).default(50),
-});
+export const rosterCandidateQuerySchema = z
+  .object({
+    search: z.string().trim().max(160).optional(),
+    /** false (default) = only students with no class; true = every active student. */
+    includeAssigned: z.coerce.boolean().default(false),
+    limit: z.coerce.number().int().min(1).max(200).default(50),
+  })
+  .merge(academicScopeQuerySchema);
 export type RosterCandidateQuery = z.infer<typeof rosterCandidateQuerySchema>;
 
 /** Delete (and other version-guarded mutations sent with just a version). */
@@ -297,7 +349,7 @@ export const createAcademicTermSchema = z
     sequence: z.coerce.number().int().min(1).max(20).default(1),
     startDate: isoDate,
     endDate: isoDate,
-    status: academicTermStatusSchema.default('planning'),
+    status: academicTermStatusSchema.default('active'),
     isCurrent: z.boolean().default(false),
   })
   .refine((v) => v.endDate > v.startDate, {
@@ -331,3 +383,61 @@ export const programmeStructureQuerySchema = z.object({
   departmentId: z.string().uuid().optional(),
 });
 export type ProgrammeStructureQuery = z.infer<typeof programmeStructureQuerySchema>;
+
+// --- programme structure (template slots) ------------------------------------
+
+export const slotOverrideSchema = z.object({
+  levelSequence: z.coerce.number().int().min(1).max(30),
+  sequenceInYear: z.coerce.number().int().min(1).max(20),
+  name: z.string().trim().min(1).max(160).optional(),
+  durationMonths: z.coerce.number().int().min(1).max(120).nullish(),
+  isTerminal: z.boolean().optional(),
+  remove: z.boolean().optional(),
+});
+export type SlotOverrideInput = z.infer<typeof slotOverrideSchema>;
+
+export const previewStructureSchema = z.object({
+  termSystem: termSystemSchema,
+  durationMonths: z.coerce.number().int().min(1).max(240).nullish(),
+  termsPerYear: z.coerce.number().int().min(0).max(12).optional(),
+  gradeCount: z.coerce.number().int().min(1).max(20).optional(),
+  preset: z.string().trim().max(32).optional(),
+  overrides: z.array(slotOverrideSchema).max(200).optional(),
+});
+export type PreviewStructureInput = z.infer<typeof previewStructureSchema>;
+
+export const plannedLevelSchema = z.object({
+  sequence: z.coerce.number().int().min(1).max(30),
+  name,
+  durationMonths: z.coerce.number().int().min(1).max(120).nullish(),
+});
+export type PlannedLevelInput = z.infer<typeof plannedLevelSchema>;
+
+export const plannedSlotSchema = z.object({
+  levelSequence: z.coerce.number().int().min(1).max(30),
+  sequenceInYear: z.coerce.number().int().min(1).max(20),
+  absoluteSequence: z.coerce.number().int().min(1).max(200),
+  name,
+  kind: z.string().trim().min(1).max(32),
+  durationMonths: z.coerce.number().int().min(1).max(120).nullish(),
+  isTerminal: z.boolean().default(false),
+});
+export type PlannedSlotInput = z.infer<typeof plannedSlotSchema>;
+
+export const commitStructureSchema = z.object({
+  termSystem: termSystemSchema,
+  durationMonths: z.coerce.number().int().min(1).max(240).nullish(),
+  termsPerYear: z.coerce.number().int().min(0).max(12),
+  levels: z.array(plannedLevelSchema).max(30),
+  slots: z.array(plannedSlotSchema).max(200),
+});
+export type CommitStructureInput = z.infer<typeof commitStructureSchema>;
+
+export const patchStructureSchema = commitStructureSchema.partial().extend({ ...withVersion });
+export type PatchStructureInput = z.infer<typeof patchStructureSchema>;
+
+export const scheduleAcademicYearSchema = z.object({
+  /** When true, replace existing scheduled terms for this year that match a slot. */
+  replaceExisting: z.boolean().default(false),
+});
+export type ScheduleAcademicYearInput = z.infer<typeof scheduleAcademicYearSchema>;

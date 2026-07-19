@@ -49,6 +49,8 @@ BEGIN
       ('staff', 'institution_id'),
       ('parents', 'institution_id'),
       ('student_guardians', 'institution_id'),
+      ('student_enrollments', 'institution_id'),
+      ('staff_assignments', 'institution_id'),
       -- Institution-portal admissions/attendance/timetable (Phase 5): tenant-isolated.
       ('admission_applications', 'institution_id'),
       ('attendance_sessions', 'institution_id'),
@@ -148,6 +150,7 @@ BEGIN
       ('parent_messages', 'institution_id'),
       ('parent_emergency_broadcasts', 'institution_id'),
       ('calendar_events', 'institution_id'),
+      ('calendar_event_types', 'institution_id'),
       ('parent_consent_forms', 'institution_id'),
       ('parent_consent_responses', 'institution_id'),
       ('parent_ptm_events', 'institution_id'),
@@ -178,6 +181,7 @@ BEGIN
       ('class_stream_posts', 'institution_id'),
       ('class_materials', 'institution_id'),
       ('courses', 'institution_id'),
+      ('course_enrollments', 'institution_id'),
       ('report_cards', 'institution_id')
     ) AS t(tbl, col)
   LOOP
@@ -366,4 +370,5 @@ DROP POLICY IF EXISTS question_bank_read ON question_bank;
 CREATE POLICY question_bank_read ON question_bank FOR SELECT USING (true);
 DROP POLICY IF EXISTS question_bank_write ON question_bank;
 CREATE POLICY question_bank_write ON question_bank FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS question_bank_update ON question_bank;
 CREATE POLICY question_bank_update ON question_bank FOR UPDATE USING (true);

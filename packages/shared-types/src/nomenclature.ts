@@ -105,10 +105,17 @@ export const NOMENCLATURE_PRESETS: Record<InstitutionType, ResolvedNomenclature>
 export function resolveNomenclature(
   type: InstitutionType,
   overrides?: NomenclatureOverrides | null,
+  programme?: { termSystem?: string | null } | null,
 ): ResolvedNomenclature {
   const preset = NOMENCLATURE_PRESETS[type] ?? school;
   const resolved = { ...preset };
-  if (!overrides) return resolved;
+  if (!overrides) {
+    if (programme?.termSystem) {
+      const label = termLabelFromSystem(programme.termSystem, preset.term.singular);
+      resolved.term = { singular: label, plural: `${label}s` };
+    }
+    return resolved;
+  }
   for (const key of TERM_KEYS) {
     const o = overrides[key];
     if (!o) continue;
@@ -117,5 +124,28 @@ export function resolveNomenclature(
       plural: o.plural?.trim() || preset[key].plural,
     };
   }
+  if (programme?.termSystem) {
+    const label = termLabelFromSystem(programme.termSystem, resolved.term.singular);
+    resolved.term = { singular: label, plural: `${label}s` };
+  }
   return resolved;
+}
+
+function termLabelFromSystem(system: string, fallback: string): string {
+  switch (system) {
+    case 'semester':
+      return 'Semester';
+    case 'annual':
+      return 'Year';
+    case 'trimester':
+      return 'Trimester';
+    case 'quarter':
+      return 'Quarter';
+    case 'modular':
+      return 'Module';
+    case 'term':
+      return 'Term';
+    default:
+      return fallback;
+  }
 }

@@ -29,6 +29,8 @@ import type {
 import type { AssignmentsListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
+import { programmeListFilterConds } from './programme-list-filters';
+import { scopeConds } from './portal-scope';
 
 const teacherDisplayName = personSqlName(schema.staff.firstName, schema.staff.middleName, schema.staff.lastName);
 const studentDisplayName = personSqlName(schema.students.firstName, schema.students.middleName, schema.students.lastName);
@@ -63,12 +65,7 @@ export class AssignmentsRepository {
     institutionId: string,
     campusIds: CampusFilter,
   ): SQL[] {
-    const conds: SQL[] = [eq(instCol, institutionId)];
-    if (campusIds) {
-      const inScope = or(isNull(campusCol), inArray(campusCol, campusIds));
-      if (inScope) conds.push(inScope);
-    }
-    return conds;
+    return scopeConds(instCol, campusCol, institutionId, campusIds);
   }
 
   private order(col: PgColumn | undefined, dir: 'asc' | 'desc', fallback: PgColumn): SQL {
@@ -93,6 +90,14 @@ export class AssignmentsRepository {
     const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
     if (q.classId) conds.push(eq(t.classId, q.classId));
     if (q.status) conds.push(eq(t.status, q.status));
+    conds.push(
+      ...programmeListFilterConds(this.db, q, {
+        academicYearId: t.academicYearId,
+        termId: t.termId,
+        classId: t.classId,
+        termIdNullMeansWholeYear: true,
+      }),
+    );
     if (q.search) {
       const s = ilike(t.title, `%${q.search}%`);
       if (s) conds.push(s);
@@ -251,6 +256,106 @@ export class AssignmentsRepository {
     const t = schema.assignmentQuestions;
     const rows = await this.db.delete(t).where(and(eq(t.id, id), eq(t.version, version))).returning({ id: t.id });
     return rows.length > 0;
+  }
+
+  /** Atomic insert of assignment + optional questions. */
+  async insertFull(
+    assignmentValues: NewAssignment,
+    questions: Array<Omit<NewAssignmentQuestion, 'assignmentId'>>,
+  ): Promise<Assignment> {
+    return this.db.transaction(async (tx) => {
+      const [row] = await tx.insert(schema.assignments).values(assignmentValues).returning();
+      if (questions.length > 0) {
+        await tx.insert(schema.assignmentQuestions).values(
+          questions.map((q) => ({ ...q, assignmentId: row!.id })),
+        );
+      }
+      return row!;
+    });
+  }
+
+  /** Atomic reconcile of assignment + questions for the builder. */
+  async reconcileFull(args: {
+    assignmentId: string;
+    version: number;
+    patch: Partial<NewAssignment>;
+    questions: Array<{
+      id?: string;
+      version?: number;
+      sequence: number;
+      qtype: string;
+      prompt: string;
+      promptImageObjectId: string | null;
+      options: NewAssignmentQuestion['options'];
+      correctKey: string | null;
+      markingNote: string | null;
+      marks: number;
+      config: Record<string, unknown> | null;
+      actorId: string | null;
+    }>;
+  }): Promise<Assignment | undefined> {
+    return this.db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(schema.assignments)
+        .set({ ...args.patch, version: args.version + 1, updatedAt: new Date() })
+        .where(and(eq(schema.assignments.id, args.assignmentId), eq(schema.assignments.version, args.version)))
+        .returning();
+      if (!row) return undefined;
+
+      const existingQs = await tx
+        .select()
+        .from(schema.assignmentQuestions)
+        .where(eq(schema.assignmentQuestions.assignmentId, args.assignmentId));
+      const keepIds = new Set(args.questions.map((q) => q.id).filter(Boolean) as string[]);
+      for (const old of existingQs) {
+        if (!keepIds.has(old.id)) {
+          await tx.delete(schema.assignmentQuestions).where(eq(schema.assignmentQuestions.id, old.id));
+        }
+      }
+
+      for (const q of args.questions) {
+        if (q.id) {
+          const existing = existingQs.find((x) => x.id === q.id);
+          if (!existing) throw new Error('QUESTION_NOT_FOUND');
+          const ver = q.version ?? existing.version;
+          const [updated] = await tx
+            .update(schema.assignmentQuestions)
+            .set({
+              sequence: q.sequence,
+              qtype: q.qtype,
+              prompt: q.prompt,
+              promptImageObjectId: q.promptImageObjectId,
+              options: q.options,
+              correctKey: q.correctKey,
+              markingNote: q.markingNote,
+              marks: q.marks,
+              config: q.config,
+              updatedBy: q.actorId,
+              version: ver + 1,
+              updatedAt: new Date(),
+            })
+            .where(and(eq(schema.assignmentQuestions.id, q.id), eq(schema.assignmentQuestions.version, ver)))
+            .returning();
+          if (!updated) throw new Error('QUESTION_VERSION_CONFLICT');
+        } else {
+          await tx.insert(schema.assignmentQuestions).values({
+            assignmentId: args.assignmentId,
+            sequence: q.sequence,
+            qtype: q.qtype,
+            prompt: q.prompt,
+            promptImageObjectId: q.promptImageObjectId,
+            options: q.options,
+            correctKey: q.correctKey,
+            markingNote: q.markingNote,
+            marks: q.marks,
+            config: q.config,
+            createdBy: q.actorId,
+          });
+        }
+      }
+
+      return row;
+    });
   }
 
   // --- quiz attempts (grading) -----------------------------------------------

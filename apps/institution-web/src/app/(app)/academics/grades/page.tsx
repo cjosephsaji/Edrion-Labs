@@ -25,11 +25,11 @@ export default function GradeLevelsPage() {
     () => [
       {
         key: 'departmentId',
-        label: `All ${t('department').toLowerCase()}s`,
+        label: `All ${tp('department')}`,
         options: (data?.items ?? []).map((d) => ({ value: d.id, label: d.name })),
       },
     ],
-    [data, t],
+    [data, tp],
   );
 
   const columns: Column<GradeLevelRow>[] = useMemo(

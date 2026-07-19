@@ -14,12 +14,15 @@ import type {
   CreateAssignmentInput,
   GradeAnswerInput,
   GradeSubmissionsInput,
+  ReconcileAssignmentInput,
   UpdateAssignmentInput,
   UpdateAssignmentQuestionInput,
 } from '@edrion/schemas';
-import { AUDIT_WRITER } from '../../common/tokens';
+import { AUDIT_WRITER, DATABASE } from '../../common/tokens';
+import type { Database } from '@edrion/database';
 import type { Page } from './academics.repository';
 import type { ListResult } from './academics.service';
+import { resolveAcademicScope } from './academic-scope-stamp';
 import { AssignmentsRepository, type AssignmentRefTable } from './assignments.repository';
 import { basePortalAudit, type PortalActionContext } from './portal-action-context';
 import { PortalAudienceService } from './portal-audience.service';
@@ -37,6 +40,7 @@ export class AssignmentsService {
   constructor(
     private readonly repo: AssignmentsRepository,
     private readonly audience: PortalAudienceService,
+    @Inject(DATABASE) private readonly db: Database,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
   ) {}
 
@@ -47,17 +51,34 @@ export class AssignmentsService {
     return this.paginate(await this.repo.list(ctx.principal.institutionId, f.campusIds, q), q);
   }
 
+  /** Assignment + questions for the builder. */
+  async getFull(ctx: PortalActionContext, id: string) {
+    const assignment = await this.requireAssignmentInScope(ctx, id);
+    const questions = await this.repo.listQuestions(id);
+    return { ...assignment, questions };
+  }
+
   async create(ctx: PortalActionContext, input: CreateAssignmentInput) {
     await this.assertRef(ctx, 'classes', input.classId, 'class');
     await this.assertOptional(ctx, 'subjects', input.subjectId, 'subject');
     await this.assertOptional(ctx, 'staff', input.teacherId, 'teacher');
     const campusId = this.createCampusId(ctx.scope);
     const audience = input.audience?.length ? input.audience : [{ kind: 'class' as const, refId: input.classId }];
-    const row = await this.repo.insert({
+    const actorId = ctx.principal.institutionUserId;
+    const f = this.filter(ctx);
+    const scope = await resolveAcademicScope(this.db, {
+      institutionId: ctx.principal.institutionId,
+      campusIds: f.campusIds,
+      classId: input.classId,
+    });
+    const questions = input.questions ?? [];
+    const assignmentValues = {
       institutionId: ctx.principal.institutionId,
       campusId,
       title: input.title,
       classId: input.classId,
+      academicYearId: scope.academicYearId,
+      termId: scope.termId,
       subjectId: input.subjectId ?? null,
       teacherId: input.teacherId ?? null,
       instructions: input.instructions ?? null,
@@ -67,13 +88,90 @@ export class AssignmentsService {
       audience,
       durationMin: input.durationMin ?? null,
       deliveryMode: input.deliveryMode,
-      createdBy: ctx.principal.institutionUserId,
-    });
+      createdBy: actorId,
+    };
+    const row =
+      questions.length > 0
+        ? await this.repo.insertFull(
+            assignmentValues,
+            questions.map((q) => ({
+              sequence: q.sequence,
+              qtype: q.qtype,
+              prompt: q.prompt,
+              promptImageObjectId: q.promptImageObjectId ?? null,
+              options: q.options ?? null,
+              correctKey: q.correctKey ?? null,
+              markingNote: q.markingNote ?? null,
+              marks: q.marks,
+              config: (q.config as Record<string, unknown> | null | undefined) ?? null,
+              createdBy: actorId,
+            })),
+          )
+        : await this.repo.insert(assignmentValues);
     await this.audience.materializeAssignmentAssignees(ctx, row.id, audience);
     await this.write(ctx, 'assignment.create', 'assignment', row.id, campusId, {
-      newState: { title: row.title, classId: row.classId, status: row.status },
+      newState: { title: row.title, classId: row.classId, status: row.status, questionCount: questions.length },
     });
     return row;
+  }
+
+  async reconcile(ctx: PortalActionContext, id: string, input: ReconcileAssignmentInput) {
+    const f = this.filter(ctx);
+    const existing = await this.repo.find(id, ctx.principal.institutionId);
+    this.assertInScope(existing?.campusId ?? null, existing, f);
+    await this.assertOptional(ctx, 'classes', input.classId, 'class');
+    await this.assertOptional(ctx, 'subjects', input.subjectId, 'subject');
+    await this.assertOptional(ctx, 'staff', input.teacherId, 'teacher');
+    const actorId = ctx.principal.institutionUserId;
+    let updated;
+    try {
+      updated = await this.repo.reconcileFull({
+        assignmentId: id,
+        version: input.version,
+        patch: {
+          title: input.title ?? existing!.title,
+          classId: input.classId ?? existing!.classId,
+          subjectId: input.subjectId === undefined ? existing!.subjectId : input.subjectId,
+          teacherId: input.teacherId === undefined ? existing!.teacherId : input.teacherId,
+          instructions: input.instructions === undefined ? existing!.instructions : input.instructions,
+          dueDate: input.dueDate === undefined ? existing!.dueDate : input.dueDate,
+          maxPoints: input.maxPoints ?? existing!.maxPoints,
+          status: input.status ?? existing!.status,
+          audience: input.audience === undefined ? existing!.audience : input.audience,
+          durationMin: input.durationMin === undefined ? existing!.durationMin : input.durationMin,
+          deliveryMode: input.deliveryMode ?? existing!.deliveryMode,
+          updatedBy: actorId,
+        },
+        questions: (input.questions ?? []).map((q) => ({
+          id: q.id,
+          version: q.version,
+          sequence: q.sequence,
+          qtype: q.qtype,
+          prompt: q.prompt,
+          promptImageObjectId: q.promptImageObjectId ?? null,
+          options: q.options ?? null,
+          correctKey: q.correctKey ?? null,
+          markingNote: q.markingNote ?? null,
+          marks: q.marks,
+          config: (q.config as Record<string, unknown> | null | undefined) ?? null,
+          actorId,
+        })),
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('VERSION_CONFLICT') || msg.includes('NOT_FOUND')) {
+        throw this.versionConflict();
+      }
+      throw err;
+    }
+    if (!updated) throw this.versionConflict();
+    if (input.audience !== undefined) {
+      await this.audience.materializeAssignmentAssignees(ctx, id, input.audience);
+    }
+    await this.write(ctx, 'assignment.reconcile', 'assignment', id, updated.campusId, {
+      newState: { title: updated.title, status: updated.status, questionCount: input.questions?.length ?? 0 },
+    });
+    return updated;
   }
 
   async update(ctx: PortalActionContext, id: string, input: UpdateAssignmentInput) {
@@ -194,6 +292,7 @@ export class AssignmentsService {
       correctKey: input.correctKey ?? null,
       markingNote: input.markingNote ?? null,
       marks: input.marks,
+      config: (input.config as Record<string, unknown> | null | undefined) ?? null,
       createdBy: ctx.principal.institutionUserId,
     });
     await this.write(ctx, 'assignment.question.create', 'assignment_question', row.id, assignment.campusId, {
@@ -220,6 +319,10 @@ export class AssignmentsService {
       correctKey: input.correctKey === undefined ? existing.correctKey : input.correctKey,
       markingNote: input.markingNote === undefined ? existing.markingNote : input.markingNote,
       marks: input.marks ?? existing.marks,
+      config:
+        input.config === undefined
+          ? existing.config
+          : ((input.config as Record<string, unknown> | null | undefined) ?? null),
       updatedBy: ctx.principal.institutionUserId,
     });
     if (!updated) throw this.versionConflict();

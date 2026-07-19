@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+import { paginationQuerySchema, sortQuerySchema, versionSchema, academicScopeQuerySchema } from './common';
 
 /**
  * Institution-Portal ATTENDANCE (Phase 5) request/response contracts: registers (sessions) and the
@@ -18,7 +18,10 @@ const withVersion = { version: versionSchema };
 
 // --- sessions (registers) ----------------------------------------------------
 
-export const attendanceListQuerySchema = paginationQuerySchema.merge(sortQuerySchema).extend({
+export const attendanceListQuerySchema = paginationQuerySchema
+  .merge(sortQuerySchema)
+  .merge(academicScopeQuerySchema)
+  .extend({
   search: z.string().trim().max(160).optional(),
   classId: z.string().uuid().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -61,3 +64,24 @@ export const markAttendanceSchema = z.object({
   marks: z.array(attendanceMarkSchema).min(1, 'Mark at least one student').max(500),
 });
 export type MarkAttendanceInput = z.infer<typeof markAttendanceSchema>;
+
+// --- agenda / open -----------------------------------------------------------
+
+export const attendanceAgendaQuerySchema = z.object({
+  date: isoDate.optional(),
+  scope: z.enum(['mine', 'all']).optional(),
+  classId: z.string().uuid().optional(),
+});
+export type AttendanceAgendaQuery = z.infer<typeof attendanceAgendaQuerySchema>;
+
+export const openAttendanceSessionSchema = z
+  .object({
+    slotId: z.string().uuid().optional(),
+    classId: z.string().uuid().optional(),
+    date: isoDate,
+  })
+  .refine((v) => !!v.slotId || !!v.classId, {
+    message: 'Provide slotId or classId',
+    path: ['slotId'],
+  });
+export type OpenAttendanceSessionInput = z.infer<typeof openAttendanceSessionSchema>;

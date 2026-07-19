@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileText, Loader2, Plus, UploadCloud } from 'lucide-react';
-import { Badge, Button, Card, Drawer, Input, Label, PermissionDenied, Skeleton } from '@edrion/ui';
+import { Badge, Button, Card, Drawer, Input, Label, PermissionDenied, Skeleton, Select } from '@edrion/ui';
 import { Topbar } from '@/components/app-shell/topbar';
 import { usePermissions } from '@/lib/permissions';
 import { usePortalClient } from '@/lib/portal-client';
@@ -153,16 +153,12 @@ export default function DocumentTemplatesPage() {
             {error && <p className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">{error}</p>}
             <div>
               <Label>Document type</Label>
-              <select
+              <Select
                 value={editing.docType}
                 disabled={Boolean(editing.id)}
                 onChange={(e) => setEditing({ ...editing, docType: e.target.value })}
-                className="h-input w-full rounded-md border border-border bg-surface px-3 text-sm"
-              >
-                {DOC_TYPES.map((d) => (
-                  <option key={d} value={d}>{d.replace(/_/g, ' ')}</option>
-                ))}
-              </select>
+                options={DOC_TYPES.map((d) => ({ value: d, label: d.replace(/_/g, ' ') }))}
+              />
             </div>
             <div>
               <Label>Name</Label>

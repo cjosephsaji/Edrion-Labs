@@ -14,6 +14,7 @@ import { ReqContext, SkipRateLimit } from '../../common/decorators';
 import type { EdrionRequestContext } from '../../common/request-context';
 import { zodBody } from '../../common/zod-validation.pipe';
 import { API_ENV, AUDIT_WRITER, DATABASE } from '../../common/tokens';
+import { emailButton, emailLayout } from '../../common/email-templates';
 import { EmailService } from './email.service';
 import { AttachmentStorageService } from './attachment-storage.service';
 import { InstitutionAuthGuard } from './portal-auth.guard';
@@ -67,12 +68,23 @@ export class AdmissionInfoService {
 
     const link = `${this.env.REGISTRATION_WEB_URL}/apply/info/${row!.id}?token=${token}`;
     if (app.email) {
+      const text = `Hello,\n\nThe admissions team needs a little more information to continue reviewing application ${app.applicationNo}.\n\nPlease complete the secure form here:\n${link}\n\n${input.message ?? ''}\n\nThank you.`;
+      const html = emailLayout({
+        heading: 'Additional information needed',
+        preheader: `Application ${app.applicationNo}`,
+        footer:
+          "You're receiving this because you submitted an admission application through Edrion. If this wasn't you, you can safely ignore it.",
+        bodyHtml: `<p style="margin:0 0 16px;">The admissions team needs a little more information to continue reviewing application <strong>${app.applicationNo}</strong>.</p>
+          ${input.message ? `<p style="margin:0 0 16px;">${input.message}</p>` : ''}
+          <p style="margin:0 0 18px;">Please complete the secure form below to provide the requested details.</p>
+          ${emailButton(link, 'Complete the secure form')}`,
+      });
       await this.email
         .send({
           to: app.email,
           subject: `Additional information needed for your application ${app.applicationNo}`,
-          text: `Hello,\n\nThe admissions team needs a little more information to continue reviewing application ${app.applicationNo}.\n\nPlease complete the secure form here:\n${link}\n\n${input.message ?? ''}\n\nThank you.`,
-          html: `<p>Hello,</p><p>The admissions team needs a little more information to continue reviewing application <strong>${app.applicationNo}</strong>.</p>${input.message ? `<p>${input.message}</p>` : ''}<p><a href="${link}">Complete the secure form</a></p>`,
+          text,
+          html,
         })
         .catch(() => undefined);
     }

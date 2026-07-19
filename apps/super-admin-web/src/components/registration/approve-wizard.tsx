@@ -5,9 +5,11 @@ import { Button, Dialog, FieldError, Input, Label, Select, cn, countryName } fro
 import {
   ApiClientError,
   useApproveRegistration,
+  usePlans,
   type RegistrationApprovalResultDto,
   type RegistrationRequestDto,
 } from '@edrion/api-client';
+import { formatPlanName, planNameByKey } from '@/lib/registration-display';
 
 const STEP_TITLES = ['Review', 'Subscription', 'Campus', 'Administrator', 'Confirm'];
 
@@ -43,6 +45,8 @@ export function ApproveWizard({
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const mutation = useApproveRegistration(request.id);
+  const plans = usePlans({ pageSize: 100 });
+  const planNames = planNameByKey(plans.data?.items ?? []);
 
   const [supportTier, setSupportTier] = useState('standard');
   const [planKey] = useState(request.preferredPlanKey ?? '');
@@ -139,7 +143,11 @@ export function ApproveWizard({
               <div>
                 <Label>Selected plan</Label>
                 <div className="rounded-md border border-border bg-background-secondary px-3 py-2 text-sm text-text-primary">
-                  {planKey || <span className="text-text-muted">No plan chosen by the institution</span>}
+                  {planKey ? (
+                    formatPlanName(planKey, planNames)
+                  ) : (
+                    <span className="text-text-muted">No plan chosen by the institution</span>
+                  )}
                 </div>
                 <p className="mt-1 text-xs text-text-muted">
                   Chosen by the institution during registration. A trial subscription on this plan is opened on approval.

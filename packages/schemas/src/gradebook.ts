@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+import { paginationQuerySchema, sortQuerySchema, versionSchema, academicScopeQuerySchema } from './common';
 
 /**
  * Institution-Portal GRADEBOOK (Phase 6) request/response contracts: a flat list of marks. Tenancy
@@ -12,7 +12,10 @@ const marks = z.coerce.number().int().min(0).max(1000);
 
 const withVersion = { version: versionSchema };
 
-export const gradebookListQuerySchema = paginationQuerySchema.merge(sortQuerySchema).extend({
+export const gradebookListQuerySchema = paginationQuerySchema
+  .merge(sortQuerySchema)
+  .merge(academicScopeQuerySchema)
+  .extend({
   search: z.string().trim().max(160).optional(),
   studentId: z.string().uuid().optional(),
   subjectId: z.string().uuid().optional(),

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import type { VisualArchetype, VisualEdgeType, VisualGraphEdge } from '@edrion/schemas';
+import { Select } from '@edrion/ui';
 import { PillButton } from '@/components/ui/pill-button';
 import { ARCHETYPE_LABELS } from '@/lib/visual-studio/canvas-compatibility';
 
@@ -53,17 +54,12 @@ export function EdgeEditor({ archetype, sourceId, targetId, onSave, onClose, exi
 
         <label className="mt-4 block text-xs font-semibold uppercase tracking-[0.12em] text-st-faint">
           Connection type
-          <select
+          <Select
             value={type}
             onChange={(e) => setType(e.target.value as VisualEdgeType)}
-            className="mt-1 w-full rounded-xl border border-st-bd1 bg-st-card px-3 py-2 text-sm"
-          >
-            {allowed.map((entry) => (
-              <option key={entry} value={entry}>
-                {entry.replace(/_/g, ' ')}
-              </option>
-            ))}
-          </select>
+            className="mt-1 rounded-xl"
+            options={allowed.map((entry) => ({ value: entry, label: entry.replace(/_/g, ' ') }))}
+          />
         </label>
         {type === 'part_of' ? (
           <p className="mt-2 text-xs text-st-muted">The first idea is part of the second.</p>

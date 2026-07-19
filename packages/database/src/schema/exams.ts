@@ -120,6 +120,8 @@ export const examPaperQuestions = pgTable(
     correctKey: text('correct_key'),
     markingNote: text('marking_note'),
     marks: integer('marks').notNull().default(1),
+    /** Type-specific authoring config (matching pairs, code tests, file constraints, …). */
+    config: jsonb('config').$type<Record<string, unknown>>(),
     version: integer('version').notNull().default(0),
     ...actorColumns,
     ...timestamps,
@@ -188,6 +190,8 @@ export const examAnswers = pgTable(
     choiceKey: text('choice_key'),
     answerText: text('answer_text'),
     answerObjectId: uuid('answer_object_id').references(() => storageObjects.id, { onDelete: 'set null' }),
+    /** Structured answer payload (matching map, code source, multi-file ids, …). */
+    answerJson: jsonb('answer_json').$type<Record<string, unknown>>(),
     autoCorrect: boolean('auto_correct'),
     awardedMarks: integer('awarded_marks'),
     teacherMarks: integer('teacher_marks'),

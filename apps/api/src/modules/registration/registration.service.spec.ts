@@ -45,6 +45,7 @@ function makeService() {
   const emails = {
     sendOtp: vi.fn().mockResolvedValue({ messageId: 'm', transport: 'log' }),
     sendSubmitted: vi.fn().mockResolvedValue({ messageId: 'm', transport: 'log' }),
+    sendReviewStarted: vi.fn().mockResolvedValue({ messageId: 'm', transport: 'log' }),
     sendRejected: vi.fn().mockResolvedValue({ messageId: 'm', transport: 'log' }),
   };
   const audit = { logAudit: vi.fn().mockResolvedValue(undefined) };
@@ -130,6 +131,39 @@ describe('RegistrationService.submit', () => {
   });
 });
 
+describe('RegistrationService.startReview', () => {
+  it('moves to under_review, audits, and emails the applicant', async () => {
+    const h = makeService();
+    h.repo.findById.mockResolvedValue({
+      id: ID,
+      status: 'submitted',
+      version: 1,
+      contactEmail: EMAIL,
+      displayName: 'Greenwood High',
+      publicRef: 'EDR-REG-2026-000001',
+    });
+    h.repo.updateWithVersion.mockResolvedValue({
+      id: ID,
+      status: 'under_review',
+      version: 2,
+      contactEmail: EMAIL,
+      displayName: 'Greenwood High',
+      publicRef: 'EDR-REG-2026-000001',
+    });
+
+    await h.service.startReview(ID, { version: 1 }, adminCtx);
+
+    expect(h.emails.sendReviewStarted).toHaveBeenCalledWith(
+      EMAIL,
+      'Greenwood High',
+      'EDR-REG-2026-000001',
+    );
+    const actions = h.audit.logAudit.mock.calls.map((c) => c[0].action);
+    expect(actions).toContain('registration.start_review');
+    expect(actions).toContain('registration.email_sent');
+  });
+});
+
 describe('RegistrationService.reject', () => {
   it('records the decision, writes audit and emails the applicant', async () => {
     const h = makeService();
@@ -148,5 +182,13 @@ describe('RegistrationService.reject', () => {
     expect(h.emails.sendRejected).toHaveBeenCalledWith(EMAIL, 'Greenwood High', 'Outside service region');
     const actions = h.audit.logAudit.mock.calls.map((c) => c[0].action);
     expect(actions).toContain('registration.rejected');
+  });
+
+  it('blocks rejection before review has started', async () => {
+    const h = makeService();
+    h.repo.findById.mockResolvedValue({ id: ID, status: 'submitted', version: 1, contactEmail: EMAIL });
+    await expect(h.service.reject(ID, { version: 1, reason: 'Too early' }, adminCtx)).rejects.toMatchObject({
+      response: { code: 'INVALID_STATUS' },
+    });
   });
 });

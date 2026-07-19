@@ -36,7 +36,7 @@ export class ParentStaffService {
       .set({ status: input.decision, reviewedBy: ctx.principal.institutionUserId, reviewedAt: new Date(), reviewNote: input.reviewNote ?? null })
       .where(eq(schema.parentAbsenceNotes.id, noteId));
     // Acknowledging marks the covered absence "explained" (parent reads derive it from acknowledged notes).
-    await this.notify.emit(note.institutionId, [note.guardianUserId], { type: 'absence_note.reviewed', title: `Absence note ${input.decision}`, studentId: note.studentId, deepLink: `/child/${note.studentId}/attendance`, sourceEntity: `parent_absence_notes:${noteId}` });
+    await this.notify.emit(note.institutionId, [note.guardianUserId], { type: 'absence_note.reviewed', title: `Absence note ${input.decision}`, studentId: note.studentId, deepLink: `/family/child/${note.studentId}/attendance`, sourceEntity: `parent_absence_notes:${noteId}` });
     await this.write(ctx, 'parent_staff.absence_note.review', noteId, { newState: { decision: input.decision } });
     return { ok: true };
   }
@@ -48,7 +48,7 @@ export class ParentStaffService {
       .update(schema.pickupAuthorizations)
       .set({ status: 'active', verifiedBy: ctx.principal.institutionUserId, verifiedAt: new Date(), version: row.version + 1 })
       .where(eq(schema.pickupAuthorizations.id, pickupId));
-    await this.notify.emit(row.institutionId, [row.guardianUserId], { type: 'pickup.verified', title: `Pickup authorization verified: ${row.personName}`, studentId: row.studentId, deepLink: `/child/${row.studentId}/pickup`, sourceEntity: `pickup_authorizations:${pickupId}` });
+    await this.notify.emit(row.institutionId, [row.guardianUserId], { type: 'pickup.verified', title: `Pickup authorization verified: ${row.personName}`, studentId: row.studentId, deepLink: `/family/child/${row.studentId}/pickup`, sourceEntity: `pickup_authorizations:${pickupId}` });
     await this.write(ctx, 'parent_staff.pickup.verify', pickupId, { newState: { status: 'active' } });
     return { ok: true };
   }
@@ -62,7 +62,7 @@ export class ParentStaffService {
       // Approval records a gate exit event (drives the "ward exited campus" alert).
       await this.db.insert(schema.gateExitEvents).values({ institutionId: row.institutionId, campusId: row.campusId, studentId: row.studentId, type: 'early_leave', occurredAt: new Date(), recordedBy: ctx.principal.institutionUserId });
     }
-    await this.notify.emit(row.institutionId, [row.guardianUserId], { type: 'early_leave.decided', title: `Early-leave request ${status}`, studentId: row.studentId, deepLink: `/child/${row.studentId}/pickup`, sourceEntity: `early_leave_requests:${id}` });
+    await this.notify.emit(row.institutionId, [row.guardianUserId], { type: 'early_leave.decided', title: `Early-leave request ${status}`, studentId: row.studentId, deepLink: `/family/child/${row.studentId}/pickup`, sourceEntity: `early_leave_requests:${id}` });
     await this.write(ctx, 'parent_staff.early_leave.decide', id, { newState: { status } });
     return { ok: true, status };
   }
@@ -73,7 +73,7 @@ export class ParentStaffService {
       .values({ institutionId: ctx.principal.institutionId, studentId: input.studentId, title: input.title, description: input.description ?? null, severity: input.severity, location: input.location ?? null, actionTaken: input.actionTaken ?? null, occurredAt: new Date(), status: 'open' })
       .returning();
     // Immediate: medical incidents always notify guardians (M6 makes this all-channels, quiet-hours-exempt).
-    const n = await this.notify.emitToStudentGuardians(ctx.principal.institutionId, input.studentId, { type: 'medical_incident', title: `Health room: ${input.title}`, body: input.actionTaken ?? null, deepLink: `/child/${input.studentId}/health`, priority: 'immediate', sourceEntity: `medical_incidents:${row!.id}` });
+    const n = await this.notify.emitToStudentGuardians(ctx.principal.institutionId, input.studentId, { type: 'medical_incident', title: `Health room: ${input.title}`, body: input.actionTaken ?? null, deepLink: `/family/child/${input.studentId}/health`, priority: 'immediate', sourceEntity: `medical_incidents:${row!.id}` });
     await this.write(ctx, 'parent_staff.medical_incident.record', row!.id, { newState: { studentId: input.studentId, severity: input.severity, notified: n } });
     return { id: row!.id, notified: n };
   }
@@ -83,7 +83,7 @@ export class ParentStaffService {
     if (!thread) throw new NotFoundException({ code: 'THREAD_NOT_FOUND', message: 'Not found.' });
     const [msg] = await this.db.insert(schema.parentMessages).values({ institutionId: thread.institutionId, threadId, senderType: 'staff', senderId: ctx.principal.institutionUserId, body: input.body }).returning();
     await this.db.update(schema.parentMessageThreads).set({ status: input.closeThread ? 'closed' : 'answered', lastMessageAt: new Date() }).where(eq(schema.parentMessageThreads.id, threadId));
-    await this.notify.emit(thread.institutionId, [thread.openedByGuardianId], { type: 'message.reply', title: `Reply: ${thread.subject}`, studentId: thread.studentId, deepLink: `/inbox/messages/${threadId}`, sourceEntity: `parent_message_threads:${threadId}` });
+    await this.notify.emit(thread.institutionId, [thread.openedByGuardianId], { type: 'message.reply', title: `Reply: ${thread.subject}`, studentId: thread.studentId, deepLink: `/family/inbox`, sourceEntity: `parent_message_threads:${threadId}` });
     await this.write(ctx, 'parent_staff.message.reply', msg!.id, { newState: { threadId } });
     return msg;
   }
@@ -96,7 +96,7 @@ export class ParentStaffService {
       .values({ institutionId: req.institutionId, campusId: req.campusId, studentId: req.studentId, type: req.type === 'custom' ? 'other' : req.type, title: input.title, fileRef: input.fileRef, contentType: input.contentType, issuedAt: new Date(), published: true, issuedBy: ctx.principal.institutionUserId })
       .returning();
     await this.db.update(schema.documentRequests).set({ status: 'ready', fulfilledDocumentId: doc!.id, decidedBy: ctx.principal.institutionUserId, decidedAt: new Date() }).where(eq(schema.documentRequests.id, requestId));
-    await this.notify.emit(req.institutionId, [req.guardianUserId], { type: 'document.ready', title: `Document ready: ${input.title}`, studentId: req.studentId, deepLink: `/child/${req.studentId}/documents`, sourceEntity: `student_documents:${doc!.id}` });
+    await this.notify.emit(req.institutionId, [req.guardianUserId], { type: 'document.ready', title: `Document ready: ${input.title}`, studentId: req.studentId, deepLink: `/family/child/${req.studentId}/documents`, sourceEntity: `student_documents:${doc!.id}` });
     await this.write(ctx, 'parent_staff.document_request.fulfil', requestId, { newState: { documentId: doc!.id } });
     return { documentId: doc!.id };
   }
@@ -106,7 +106,7 @@ export class ParentStaffService {
       .insert(schema.studentRecognitions)
       .values({ institutionId: ctx.principal.institutionId, studentId: input.studentId, type: input.type, title: input.title, description: input.description ?? null, awardedAt: new Date(), awardedBy: ctx.principal.institutionUserId })
       .returning();
-    await this.notify.emitToStudentGuardians(ctx.principal.institutionId, input.studentId, { type: 'recognition', title: `🎉 ${input.title}`, deepLink: `/child/${input.studentId}/behavior`, priority: 'digest', sourceEntity: `student_recognitions:${row!.id}` });
+    await this.notify.emitToStudentGuardians(ctx.principal.institutionId, input.studentId, { type: 'recognition', title: `🎉 ${input.title}`, deepLink: `/family/child/${input.studentId}/behavior`, priority: 'digest', sourceEntity: `student_recognitions:${row!.id}` });
     await this.write(ctx, 'parent_staff.recognition.create', row!.id, { newState: { studentId: input.studentId, title: input.title } });
     return row;
   }

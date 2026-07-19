@@ -6,11 +6,8 @@ import {
   desc,
   eq,
   ilike,
-  inArray,
-  isNull,
   or,
   schema,
-  sql,
   personSqlName,
   type Database,
   type PgColumn,
@@ -21,6 +18,7 @@ import type { TimetableListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
 import { programmeListFilterConds } from './programme-list-filters';
+import { scopeConds } from './portal-scope';
 
 const teacherDisplayName = personSqlName(schema.staff.firstName, schema.staff.middleName, schema.staff.lastName);
 
@@ -43,20 +41,6 @@ export type TimetableRefTable = 'classes' | 'subjects' | 'staff' | 'academicYear
 export class TimetableRepository {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
 
-  private scopeConds(
-    instCol: PgColumn,
-    campusCol: PgColumn,
-    institutionId: string,
-    campusIds: CampusFilter,
-  ): SQL[] {
-    const conds: SQL[] = [eq(instCol, institutionId)];
-    if (campusIds) {
-      const inScope = or(isNull(campusCol), inArray(campusCol, campusIds));
-      if (inScope) conds.push(inScope);
-    }
-    return conds;
-  }
-
   private order(col: PgColumn | undefined, dir: 'asc' | 'desc', fallback: PgColumn): SQL {
     const c = col ?? fallback;
     return dir === 'asc' ? asc(c) : desc(c);
@@ -74,11 +58,12 @@ export class TimetableRepository {
 
   async list(institutionId: string, campusIds: CampusFilter, q: TimetableListQuery): Promise<Page<TimetableSlotRow>> {
     const t = schema.timetableSlots;
-    const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
+    const conds = scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
     if (q.classId) conds.push(eq(t.classId, q.classId));
     if (q.dayOfWeek) conds.push(eq(t.dayOfWeek, q.dayOfWeek));
     conds.push(
       ...programmeListFilterConds(this.db, q, {
+        academicYearId: t.academicYearId,
         termId: t.termId,
         classId: t.classId,
       }),

@@ -242,6 +242,10 @@ export const courseEnrollments = pgTable(
   'course_enrollments',
   {
     id: primaryId(),
+    institutionId: uuid('institution_id')
+      .notNull()
+      .references(() => institutions.id, { onDelete: 'cascade' }),
+    campusId: uuid('campus_id').references(() => campuses.id, { onDelete: 'cascade' }),
     courseId: uuid('course_id')
       .notNull()
       .references(() => courses.id, { onDelete: 'cascade' }),
@@ -250,6 +254,8 @@ export const courseEnrollments = pgTable(
       .references(() => students.id, { onDelete: 'cascade' }),
   },
   (t) => ({
+    instIdx: index('course_enrollments_institution_idx').on(t.institutionId),
+    scopeIdx: index('course_enrollments_institution_campus_idx').on(t.institutionId, t.campusId),
     uniq: uniqueIndex('course_enrollments_uq').on(t.courseId, t.studentId),
   }),
 );
@@ -270,33 +276,6 @@ export const courseSyllabusModules = pgTable(
   },
   (t) => ({
     uniq: uniqueIndex('course_syllabus_modules_uq').on(t.courseId, t.weekNo),
-  }),
-);
-
-/** Student-portal calendar events (Plan 03). Distinct from parent-portal calendar_events. */
-export const portalCalendarEvents = pgTable(
-  'portal_calendar_events',
-  {
-    id: primaryId(),
-    institutionId: uuid('institution_id')
-      .notNull()
-      .references(() => institutions.id, { onDelete: 'cascade' }),
-    campusId: uuid('campus_id').references(() => campuses.id, { onDelete: 'cascade' }),
-    kind: text('kind').notNull(),
-    title: text('title').notNull(),
-    detail: text('detail'),
-    startsOn: date('starts_on').notNull(),
-    endsOn: date('ends_on'),
-    timeLabel: text('time_label'),
-    audience: jsonb('audience').$type<Record<string, unknown>>().notNull().default({}),
-    sourceRef: jsonb('source_ref').$type<Record<string, unknown>>(),
-    status: text('status').notNull().default('published'),
-    version: integer('version').notNull().default(1),
-    ...actorColumns,
-    ...timestamps,
-  },
-  (t) => ({
-    instDateIdx: index('portal_calendar_events_inst_date_idx').on(t.institutionId, t.startsOn),
   }),
 );
 
@@ -398,6 +377,5 @@ export type HomeworkQuestion = typeof homeworkQuestions.$inferSelect;
 export type HomeworkSubmission = typeof homeworkSubmissions.$inferSelect;
 export type Course = typeof courses.$inferSelect;
 export type ReportCard = typeof reportCards.$inferSelect;
-export type PortalCalendarEvent = typeof portalCalendarEvents.$inferSelect;
 export type StudentPlannerItem = typeof studentPlannerItems.$inferSelect;
 export type StudentExamGoal = typeof studentExamGoals.$inferSelect;

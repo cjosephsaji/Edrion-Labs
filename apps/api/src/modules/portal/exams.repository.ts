@@ -19,6 +19,7 @@ import type { Exam, ExamSchedule, NewExam, NewExamSchedule, ExamPaperQuestion, N
 import type { ExamsListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
+import { scopeConds } from './portal-scope';
 import { programmeListFilterConds } from './programme-list-filters';
 
 export interface ExamRow extends Exam {
@@ -49,12 +50,7 @@ export class ExamsRepository {
     institutionId: string,
     campusIds: CampusFilter,
   ): SQL[] {
-    const conds: SQL[] = [eq(instCol, institutionId)];
-    if (campusIds) {
-      const inScope = or(isNull(campusCol), inArray(campusCol, campusIds));
-      if (inScope) conds.push(inScope);
-    }
-    return conds;
+    return scopeConds(instCol, campusCol, institutionId, campusIds);
   }
 
   private order(col: PgColumn | undefined, dir: 'asc' | 'desc', fallback: PgColumn): SQL {
@@ -79,9 +75,9 @@ export class ExamsRepository {
     const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
     if (q.status) conds.push(eq(t.status, q.status));
     if (q.examType) conds.push(eq(t.examType, q.examType));
-    if (q.academicYearId) conds.push(eq(t.academicYearId, q.academicYearId));
     conds.push(
       ...programmeListFilterConds(this.db, q, {
+        academicYearId: t.academicYearId,
         termId: t.termId,
       }),
     );
@@ -239,6 +235,196 @@ export class ExamsRepository {
     const t = schema.examPaperQuestions;
     const rows = await this.db.delete(t).where(and(eq(t.id, id), eq(t.version, version))).returning({ id: t.id });
     return rows.length > 0;
+  }
+
+  /**
+   * Atomic insert of exam + optional schedules + questions. Used by the single-page builder.
+   * Returns the exam row; schedules/questions are persisted in the same transaction.
+   */
+  async insertFull(
+    examValues: NewExam,
+    schedules: Array<{
+      schedule: Omit<NewExamSchedule, 'examId'>;
+      questions: Array<Omit<NewExamPaperQuestion, 'examScheduleId'>>;
+    }>,
+  ): Promise<Exam> {
+    return this.db.transaction(async (tx) => {
+      const [exam] = await tx.insert(schema.exams).values(examValues).returning();
+      for (const block of schedules) {
+        const [sched] = await tx
+          .insert(schema.examSchedules)
+          .values({ ...block.schedule, examId: exam!.id })
+          .returning();
+        if (block.questions.length > 0) {
+          await tx.insert(schema.examPaperQuestions).values(
+            block.questions.map((q) => ({ ...q, examScheduleId: sched!.id })),
+          );
+        }
+      }
+      return exam!;
+    });
+  }
+
+  /**
+   * Atomic reconcile: update exam fields, then create/update/delete schedules and questions
+   * to match the payload. Version-guards the exam; schedule/question versions are checked when provided.
+   */
+  async reconcileFull(args: {
+    examId: string;
+    examVersion: number;
+    examPatch: Partial<NewExam>;
+    schedules: Array<{
+      id?: string;
+      version?: number;
+      classId: string;
+      subjectId: string;
+      examDate: string | null;
+      startTime: string | null;
+      endTime: string | null;
+      maxMarks: number;
+      passMarks: number | null;
+      room: string | null;
+      /** When true, paper is visible on the student datesheet. */
+      published?: boolean;
+      actorId: string | null;
+      institutionId: string;
+      questions: Array<{
+        id?: string;
+        version?: number;
+        sequence: number;
+        qtype: string;
+        prompt: string;
+        promptImageObjectId: string | null;
+        options: NewExamPaperQuestion['options'];
+        correctKey: string | null;
+        markingNote: string | null;
+        marks: number;
+        config: Record<string, unknown> | null;
+        actorId: string | null;
+      }>;
+    }>;
+  }): Promise<Exam | undefined> {
+    return this.db.transaction(async (tx) => {
+      const [exam] = await tx
+        .update(schema.exams)
+        .set({ ...args.examPatch, version: args.examVersion + 1, updatedAt: new Date() })
+        .where(and(eq(schema.exams.id, args.examId), eq(schema.exams.version, args.examVersion)))
+        .returning();
+      if (!exam) return undefined;
+
+      const existingSchedules = await tx
+        .select()
+        .from(schema.examSchedules)
+        .where(eq(schema.examSchedules.examId, args.examId));
+      const keepScheduleIds = new Set(args.schedules.map((s) => s.id).filter(Boolean) as string[]);
+
+      for (const old of existingSchedules) {
+        if (!keepScheduleIds.has(old.id)) {
+          await tx.delete(schema.examSchedules).where(eq(schema.examSchedules.id, old.id));
+        }
+      }
+
+      for (const block of args.schedules) {
+        let scheduleId = block.id;
+        if (scheduleId) {
+          const existing = existingSchedules.find((s) => s.id === scheduleId);
+          if (!existing) throw new Error('SCHEDULE_NOT_FOUND');
+          const ver = block.version ?? existing.version;
+          const [updated] = await tx
+            .update(schema.examSchedules)
+            .set({
+              classId: block.classId,
+              subjectId: block.subjectId,
+              examDate: block.examDate,
+              startTime: block.startTime,
+              endTime: block.endTime,
+              maxMarks: block.maxMarks,
+              passMarks: block.passMarks,
+              room: block.room,
+              ...(block.published !== undefined ? { published: block.published } : {}),
+              updatedBy: block.actorId,
+              version: ver + 1,
+              updatedAt: new Date(),
+            })
+            .where(and(eq(schema.examSchedules.id, scheduleId), eq(schema.examSchedules.version, ver)))
+            .returning();
+          if (!updated) throw new Error('SCHEDULE_VERSION_CONFLICT');
+        } else {
+          const [created] = await tx
+            .insert(schema.examSchedules)
+            .values({
+              institutionId: block.institutionId,
+              examId: args.examId,
+              classId: block.classId,
+              subjectId: block.subjectId,
+              examDate: block.examDate,
+              startTime: block.startTime,
+              endTime: block.endTime,
+              maxMarks: block.maxMarks,
+              passMarks: block.passMarks,
+              room: block.room,
+              published: block.published ?? false,
+              createdBy: block.actorId,
+            })
+            .returning();
+          scheduleId = created!.id;
+        }
+
+        const existingQs = await tx
+          .select()
+          .from(schema.examPaperQuestions)
+          .where(eq(schema.examPaperQuestions.examScheduleId, scheduleId));
+        const keepQIds = new Set(block.questions.map((q) => q.id).filter(Boolean) as string[]);
+        for (const old of existingQs) {
+          if (!keepQIds.has(old.id)) {
+            await tx.delete(schema.examPaperQuestions).where(eq(schema.examPaperQuestions.id, old.id));
+          }
+        }
+
+        for (const q of block.questions) {
+          if (q.id) {
+            const existing = existingQs.find((x) => x.id === q.id);
+            if (!existing) throw new Error('QUESTION_NOT_FOUND');
+            const ver = q.version ?? existing.version;
+            const [updated] = await tx
+              .update(schema.examPaperQuestions)
+              .set({
+                sequence: q.sequence,
+                qtype: q.qtype,
+                prompt: q.prompt,
+                promptImageObjectId: q.promptImageObjectId,
+                options: q.options,
+                correctKey: q.correctKey,
+                markingNote: q.markingNote,
+                marks: q.marks,
+                config: q.config,
+                updatedBy: q.actorId,
+                version: ver + 1,
+                updatedAt: new Date(),
+              })
+              .where(and(eq(schema.examPaperQuestions.id, q.id), eq(schema.examPaperQuestions.version, ver)))
+              .returning();
+            if (!updated) throw new Error('QUESTION_VERSION_CONFLICT');
+          } else {
+            await tx.insert(schema.examPaperQuestions).values({
+              examScheduleId: scheduleId,
+              sequence: q.sequence,
+              qtype: q.qtype,
+              prompt: q.prompt,
+              promptImageObjectId: q.promptImageObjectId,
+              options: q.options,
+              correctKey: q.correctKey,
+              markingNote: q.markingNote,
+              marks: q.marks,
+              config: q.config,
+              createdBy: q.actorId,
+            });
+          }
+        }
+      }
+
+      return exam;
+    });
   }
 
   // --- attempts (grading) ----------------------------------------------------

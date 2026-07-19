@@ -2,6 +2,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, inArray, isNull, or, schema, sql, type Database, type PgColumn, type SQL } from '@edrion/database';
 import { DATABASE } from '../../common/tokens';
 import { PortalEntityResolver } from './portal-entity-resolver';
+import { UsersRepository } from './users.repository';
+
+const MESSAGE_PERMISSION = 'messages.use';
 
 /** One recipient target: a kind + an optional anchor/entity id (see schema/recipients.ts). */
 export interface Target {
@@ -15,9 +18,10 @@ export interface ResolvedRecipients {
   parentIds: string[];
   teacherIds: string[];
   staffIds: string[];
-  /** Total distinct people across the four kinds. */
+  userIds: string[];
+  /** Total distinct people across all kinds. */
   count: number;
-  byKind: { students: number; parents: number; teachers: number; staff: number };
+  byKind: { students: number; parents: number; teachers: number; staff: number; colleagues: number };
   /** A few readable names for the pre-send preview. */
   sample: string[];
   /** A short human description of the targets, e.g. "Grade 9 – A · Parents of Class 5 · +1 more". */
@@ -37,6 +41,7 @@ export class RecipientResolver {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     private readonly entities: PortalEntityResolver,
+    private readonly usersRepo: UsersRepository,
   ) {}
 
   async resolve(institutionId: string, campusIds: string[] | null, targets: Target[]): Promise<ResolvedRecipients> {
@@ -44,6 +49,7 @@ export class RecipientResolver {
     const parents = new Set<string>();
     const teachers = new Set<string>();
     const staff = new Set<string>();
+    const users = new Set<string>();
 
     // Expand any saved groups first (one level — a group never contains another group).
     const expanded = await this.expandGroups(institutionId, targets);
@@ -63,6 +69,7 @@ export class RecipientResolver {
     ids('parent').forEach((v) => parents.add(v));
     ids('teacher').forEach((v) => teachers.add(v));
     ids('staff').forEach((v) => staff.add(v));
+    ids('user').forEach((v) => users.add(v));
 
     // --- structural: students of a class/grade/department/campus ---
     if (ids('class').length) (await this.studentsBy('classId', ids('class'), institutionId, campusIds)).forEach((v) => students.add(v));
@@ -97,17 +104,19 @@ export class RecipientResolver {
     if (has('all') || has('all_teachers')) (await this.allPeople('staff', institutionId, campusIds, 'teacher')).forEach((v) => teachers.add(v));
     if (has('all') || has('all_staff')) (await this.allPeople('staff', institutionId, campusIds)).forEach((v) => staff.add(v));
     if (has('all') || has('all_parents')) (await this.allPeople('parents', institutionId, campusIds)).forEach((v) => parents.add(v));
+    if (has('all_colleagues')) (await this.allColleagues(institutionId, campusIds)).forEach((v) => users.add(v));
 
     // Validate the direct individual ids against scope/existence (structural/derived are already scoped).
-    const [vStudents, vParents, vTeachers, vStaff] = await Promise.all([
+    const [vStudents, vParents, vTeachers, vStaff, vUsers] = await Promise.all([
       this.validate('students', [...students], institutionId, campusIds),
       this.validate('parents', [...parents], institutionId, campusIds),
       this.validateStaff([...teachers], institutionId, campusIds, 'teacher'),
       this.validateStaff([...staff], institutionId, campusIds, 'staff'),
+      this.validateUsers([...users], institutionId, campusIds),
     ]);
 
-    const count = vStudents.length + vParents.length + vTeachers.length + vStaff.length;
-    const sample = await this.sampleNames(institutionId, vStudents, vParents, vTeachers, vStaff);
+    const count = vStudents.length + vParents.length + vTeachers.length + vStaff.length + vUsers.length;
+    const sample = await this.sampleNames(institutionId, vStudents, vParents, vTeachers, vStaff, vUsers);
     const summary = await this.summarize(institutionId, expanded);
 
     return {
@@ -115,8 +124,15 @@ export class RecipientResolver {
       parentIds: vParents,
       teacherIds: vTeachers,
       staffIds: vStaff,
+      userIds: vUsers,
       count,
-      byKind: { students: vStudents.length, parents: vParents.length, teachers: vTeachers.length, staff: vStaff.length },
+      byKind: {
+        students: vStudents.length,
+        parents: vParents.length,
+        teachers: vTeachers.length,
+        staff: vStaff.length,
+        colleagues: vUsers.length,
+      },
       sample,
       summary,
     };
@@ -254,6 +270,21 @@ export class RecipientResolver {
   }
 
   /** Keep only the ids that exist in this institution + campus scope. */
+  private async allColleagues(institutionId: string, campusIds: string[] | null): Promise<string[]> {
+    const messageableIds = await this.usersRepo.userIdsWithPermission(institutionId, MESSAGE_PERMISSION);
+    const rows = await this.usersRepo.listMessagingColleagues(institutionId, messageableIds, campusIds);
+    return rows.map((r) => r.id);
+  }
+
+  private async validateUsers(candidateIds: string[], institutionId: string, campusIds: string[] | null) {
+    if (candidateIds.length === 0) return [];
+    const messageableIds = await this.usersRepo.userIdsWithPermission(institutionId, MESSAGE_PERMISSION);
+    const allowed = new Set(messageableIds);
+    const filtered = candidateIds.filter((id) => allowed.has(id));
+    const rows = await this.usersRepo.listMessagingColleagues(institutionId, filtered, campusIds);
+    return rows.map((r) => r.id);
+  }
+
   private async validate(tableName: 'students' | 'parents', candidateIds: string[], institutionId: string, campusIds: string[] | null) {
     if (candidateIds.length === 0) return [];
     const t = schema[tableName];
@@ -279,15 +310,23 @@ export class RecipientResolver {
     return rows.map((r) => r.id);
   }
 
-  private async sampleNames(institutionId: string, students: string[], parents: string[], teachers: string[], staff: string[]): Promise<string[]> {
+  private async sampleNames(
+    institutionId: string,
+    students: string[],
+    parents: string[],
+    teachers: string[],
+    staff: string[],
+    users: string[],
+  ): Promise<string[]> {
     const refs = await this.entities.resolve(institutionId, {
       studentIds: students.slice(0, SAMPLE_SIZE),
       parentIds: parents.slice(0, SAMPLE_SIZE),
       teacherIds: teachers.slice(0, SAMPLE_SIZE),
       staffIds: staff.slice(0, SAMPLE_SIZE),
+      userIds: users.slice(0, SAMPLE_SIZE),
     });
     const names: string[] = [];
-    for (const bucket of [refs.student, refs.parent, refs.teacher, refs.staff]) {
+    for (const bucket of [refs.student, refs.parent, refs.teacher, refs.staff, refs.user]) {
       for (const d of Object.values(bucket ?? {})) {
         names.push(d.label);
         if (names.length >= SAMPLE_SIZE) return names;
@@ -319,6 +358,7 @@ export class RecipientResolver {
       parentIds: bucket((k) => k === 'parent'),
       teacherIds: bucket((k) => k === 'teacher'),
       staffIds: bucket((k) => k === 'staff'),
+      userIds: bucket((k) => k === 'user'),
       classIds: bucket((k) => k.includes('class')),
       gradeLevelIds: bucket((k) => k.includes('grade')),
       departmentIds: bucket((k) => k.includes('department')),
@@ -335,6 +375,7 @@ export class RecipientResolver {
       all_parents: 'All parents',
       all_teachers: 'All teachers',
       all_staff: 'All staff',
+      all_colleagues: 'All colleagues',
     };
     const broadcast = BROADCAST[t.kind];
     if (broadcast) return broadcast;
@@ -348,7 +389,9 @@ export class RecipientResolver {
             ? refs.teacher?.[t.refId]?.label
             : t.kind === 'staff'
               ? refs.staff?.[t.refId]?.label
-              : t.kind.includes('subject')
+              : t.kind === 'user'
+                ? refs.user?.[t.refId]?.label
+                : t.kind.includes('subject')
                 ? refs.subject?.[t.refId]?.label
                 : t.kind.includes('class')
                   ? refs.class?.[t.refId]?.label

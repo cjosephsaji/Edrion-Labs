@@ -86,6 +86,17 @@ export class StudentPortalStudentsController {
     return this.service.inviteStudent(this.ctx(p, s, r), id, body);
   }
 
+  @Post(':id/portal-password-reset')
+  @RequireInstitutionPermissions('student_portal.manage')
+  sendPasswordReset(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+  ) {
+    return this.service.sendPasswordReset(this.ctx(p, s, r), id);
+  }
+
   @Get(':id/learning-summary')
   @RequireInstitutionPermissions('students.view')
   getLearningSummary(@Param('id') id: string) {

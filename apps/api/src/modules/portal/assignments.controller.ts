@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { ApiTags } from '@nestjs/swagger';
 import {
@@ -8,6 +8,7 @@ import {
   createAssignmentSchema,
   gradeAnswerSchema,
   gradeSubmissionsSchema,
+  reconcileAssignmentSchema,
   updateAssignmentQuestionSchema,
   updateAssignmentSchema,
   versionedDeleteSchema,
@@ -17,6 +18,7 @@ import {
   type CreateAssignmentInput,
   type GradeAnswerInput,
   type GradeSubmissionsInput,
+  type ReconcileAssignmentInput,
   type UpdateAssignmentInput,
   type UpdateAssignmentQuestionInput,
   type VersionedDeleteInput,
@@ -80,6 +82,17 @@ export class AssignmentsController {
     return this.service.list(this.ctx(p, s, r), q);
   }
 
+  @Get(':id/full')
+  @RequireInstitutionPermissions('assignments.view')
+  getFull(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+  ) {
+    return this.service.getFull(this.ctx(p, s, r), id);
+  }
+
   @Post()
   @RequireInstitutionPermissions('assignments.manage')
   create(
@@ -89,6 +102,18 @@ export class AssignmentsController {
     @Body(zodBody(createAssignmentSchema)) body: CreateAssignmentInput,
   ) {
     return this.service.create(this.ctx(p, s, r), body);
+  }
+
+  @Put(':id/full')
+  @RequireInstitutionPermissions('assignments.manage')
+  reconcile(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(reconcileAssignmentSchema)) body: ReconcileAssignmentInput,
+  ) {
+    return this.service.reconcile(this.ctx(p, s, r), id, body);
   }
 
   @Patch(':id')

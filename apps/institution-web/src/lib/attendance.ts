@@ -4,6 +4,7 @@ import { usePortalClient } from './portal-client';
 import { useScope } from './scope';
 import type { InstitutionScope } from './types';
 import type { ListParams } from './academics';
+import { useAcademicScopedParams } from './academic-context';
 import type { AttendanceRecordRow, AttendanceStatus, Paged } from './attendance-types';
 
 function scopeKey(scope: InstitutionScope): string {
@@ -24,9 +25,11 @@ function queryString(p: ListParams): string {
 export function useAttendanceList<T>(resource: string, params: ListParams) {
   const client = usePortalClient();
   const { scope } = useScope();
+  const scoped = useAcademicScopedParams(params, params.academicScope ?? 'year');
+  const { academicScope: _as, ...listParams } = scoped;
   return useQuery({
-    queryKey: ['attendance', resource, scopeKey(scope), params],
-    queryFn: () => client.get<Paged<T>>(`/portal/${resource}?${queryString(params)}`, scope),
+    queryKey: ['attendance', resource, scopeKey(scope), listParams],
+    queryFn: () => client.get<Paged<T>>(`/portal/${resource}?${queryString(listParams)}`, scope),
     placeholderData: keepPreviousData,
   });
 }
@@ -95,4 +98,54 @@ export function useAttendanceMarkMutations(sessionId: string) {
   return { mark, remove };
 }
 
-export type { AttendanceRecordRow, AttendanceSessionRow, AttendanceStatus } from './attendance-types';
+export function useAttendanceAgenda(params: {
+  date?: string;
+  scope?: 'mine' | 'all';
+  classId?: string;
+}) {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  const sp = new URLSearchParams();
+  if (params.date) sp.set('date', params.date);
+  if (params.scope) sp.set('scope', params.scope);
+  if (params.classId) sp.set('classId', params.classId);
+  const qs = sp.toString();
+  return useQuery({
+    queryKey: ['attendance', 'agenda', scopeKey(scope), params],
+    queryFn: () =>
+      client.get<import('./attendance-types').AttendanceAgendaResponse>(
+        `/portal/attendance/agenda${qs ? `?${qs}` : ''}`,
+        scope,
+      ),
+    refetchInterval: 60_000,
+  });
+}
+
+export function useOpenAttendanceSession() {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: {
+      slotId?: string;
+      classId?: string;
+      date: string;
+    }) =>
+      client.post<import('./attendance-types').OpenAttendanceResult>(
+        '/portal/attendance/sessions/open',
+        scope,
+        body,
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['attendance'] });
+    },
+  });
+}
+
+export type {
+  AttendanceRecordRow,
+  AttendanceSessionRow,
+  AttendanceStatus,
+  AttendanceAgendaSlot,
+  AttendanceAgendaResponse,
+} from './attendance-types';

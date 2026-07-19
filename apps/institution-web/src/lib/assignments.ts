@@ -4,6 +4,7 @@ import { usePortalClient } from './portal-client';
 import { useScope } from './scope';
 import type { InstitutionScope } from './types';
 import type { ListParams } from './academics';
+import { useAcademicScopedParams } from './academic-context';
 import type { AssignmentSubmissionRow, Paged, SubmissionStatus } from './assignments-types';
 
 function scopeKey(scope: InstitutionScope): string {
@@ -24,9 +25,11 @@ function queryString(p: ListParams): string {
 export function useAssignmentsList<T>(resource: string, params: ListParams) {
   const client = usePortalClient();
   const { scope } = useScope();
+  const scoped = useAcademicScopedParams(params, params.academicScope ?? 'year');
+  const { academicScope: _as, ...listParams } = scoped;
   return useQuery({
-    queryKey: ['assignments', resource, scopeKey(scope), params],
-    queryFn: () => client.get<Paged<T>>(`/portal/${resource}?${queryString(params)}`, scope),
+    queryKey: ['assignments', resource, scopeKey(scope), listParams],
+    queryFn: () => client.get<Paged<T>>(`/portal/${resource}?${queryString(listParams)}`, scope),
     placeholderData: keepPreviousData,
   });
 }
@@ -99,13 +102,46 @@ export function useAssignmentGradeMutations(assignmentId: string) {
 
 // --- quiz questions ----------------------------------------------------------
 
-import type { QuestionDraft, QuestionRow } from './question-types';
+import type { QuestionConfig, QuestionDraft, QuestionRow } from './question-types';
 import type { Target } from './recipients';
+import type { AssignmentRow } from './assignments-types';
 
 export interface AssignmentAudiencePreview {
   count: number;
   sample: string[];
   studentCount: number;
+}
+
+export interface AssignmentFull extends AssignmentRow {
+  questions: Array<QuestionRow & { config?: QuestionConfig | null }>;
+}
+
+export function useAssignmentFull(assignmentId: string | null) {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  return useQuery({
+    queryKey: ['assignments', assignmentId, 'full', scopeKey(scope)],
+    queryFn: () => client.get<AssignmentFull>(`/portal/assignments/${assignmentId}/full`, scope),
+    enabled: !!assignmentId,
+  });
+}
+
+export function useAssignmentFullMutations() {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  const qc = useQueryClient();
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['assignments'] });
+
+  const create = useMutation({
+    mutationFn: (body: Record<string, unknown>) => client.post('/portal/assignments', scope, body),
+    onSuccess: invalidate,
+  });
+  const reconcile = useMutation({
+    mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) =>
+      client.put(`/portal/assignments/${id}/full`, scope, body),
+    onSuccess: invalidate,
+  });
+  return { create, reconcile };
 }
 
 export function useAssignmentQuestions(assignmentId: string | null) {

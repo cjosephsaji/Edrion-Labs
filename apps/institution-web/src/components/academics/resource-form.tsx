@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   AdministrativeDivisionSelect,
   Button,
@@ -20,6 +20,11 @@ import {
 import { useFormat } from '@/lib/format';
 import { useInstitutionCountry } from '@/lib/settings';
 import { isEndAfterStart, maxStartDate, minEndDate } from '@/lib/date-range';
+import {
+  effectivePortalLogin,
+  hasPortalLoginEmail,
+  portalLoginAfterEmailChange,
+} from '@/lib/portal-login-email';
 
 /** A declarative form field. The `name` must match the API body key for the resource. */
 export type FieldDef =
@@ -40,9 +45,50 @@ export type FieldDef =
   | { name: string; label: string; type: 'phone'; required?: boolean; nullable?: boolean; countryField?: string; help?: string }
   // Escape hatch: a fully custom control (e.g. the RecipientPicker). The page supplies `render`,
   // which receives the current value + an onChange; the raw value is sent to the API unchanged.
-  | { name: string; label: string; type: 'custom'; render: (value: unknown, onChange: (v: unknown) => void) => React.ReactNode; help?: string };
+  | {
+      name: string;
+      label: string;
+      type: 'custom';
+      render: (
+        value: unknown,
+        onChange: (v: unknown) => void,
+        ctx?: { values: Values; disabled: boolean },
+      ) => React.ReactNode;
+      help?: string;
+      /** Interactive only when `values[field]` equals `equals` (e.g. createLogin === true). */
+      enabledWhen?: { field: string; equals: unknown };
+      /** Required only when the same condition is met. */
+      requiredWhen?: { field: string; equals: unknown };
+    };
 
 type Values = Record<string, unknown>;
+
+function isFieldConditionMet(values: Values, condition?: { field: string; equals: unknown }): boolean {
+  if (!condition) return true;
+  return values[condition.field] === condition.equals;
+}
+
+/** Lets an embedded section (e.g. roles & access) contribute fields to the same Save action. */
+export type ResourceFormExtraApi = {
+  setSubmitPayload: (payload: Record<string, unknown>) => void;
+  /** Live form values — use for fields (e.g. email) that sit above an extra section. */
+  values: Values;
+};
+
+function formHasCreateLogin(fields: FieldDef[]): boolean {
+  return fields.some((f) => f.name === 'createLogin');
+}
+
+function applyPortalLoginEmailRules(fields: FieldDef[], values: Values): Values {
+  if (!formHasCreateLogin(fields)) return values;
+  const next = { ...values };
+  if (!hasPortalLoginEmail(next.email)) {
+    next.createLogin = false;
+    next.roleKeys = [];
+    if ('campusIds' in next) next.campusIds = [];
+  }
+  return next;
+}
 
 /**
  * Builds the API request body from the form values: numbers are coerced, cleared optional
@@ -92,13 +138,18 @@ function initialFor(fields: FieldDef[], initial: Values): Values {
     else if (f.type === 'money') v[f.name] = provided == null || provided === '' ? '' : String(Number(provided) / 100);
     else v[f.name] = provided ?? '';
   }
-  return v;
+  if (formHasCreateLogin(fields) && hasPortalLoginEmail(v.email)) {
+    v.createLogin = true;
+  }
+  return applyPortalLoginEmailRules(fields, v);
 }
 
 /** The shared create/edit drawer form, driven entirely by a field list. */
 export function ResourceForm({
   open,
   title,
+  description,
+  drawerClassName,
   fields,
   initial,
   submitting,
@@ -109,23 +160,31 @@ export function ResourceForm({
 }: {
   open: boolean;
   title: string;
+  description?: string;
+  drawerClassName?: string;
   fields: FieldDef[];
   initial: Values;
   submitting?: boolean;
   error?: string | null;
   onSubmit: (body: Values) => void;
   onClose: () => void;
-  /** Optional section below the standard fields (edit-only related data). */
-  extra?: React.ReactNode;
+  /** Optional section below the standard fields; may register extra submit payload. */
+  extra?: ReactNode | ((api: ResourceFormExtraApi) => ReactNode);
 }) {
   const [values, setValues] = useState<Values>(() => initialFor(fields, initial));
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [extraPayload, setExtraPayload] = useState<Values>({});
+  const extraApi = useMemo<ResourceFormExtraApi>(
+    () => ({ setSubmitPayload: setExtraPayload, values }),
+    [values],
+  );
 
   // Reset the form whenever it (re)opens or the edited row changes.
   useEffect(() => {
     if (open) {
       setValues(initialFor(fields, initial));
       setErrors({});
+      setExtraPayload({});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initial]);
@@ -133,6 +192,23 @@ export function ResourceForm({
   function set(name: string, value: unknown) {
     setValues((v) => {
       const next = { ...v, [name]: value };
+      if (name === 'email' && formHasCreateLogin(fields)) {
+        const hadEmail = hasPortalLoginEmail(v.email);
+        const hasEmail = hasPortalLoginEmail(value);
+        next.createLogin = portalLoginAfterEmailChange(hadEmail, hasEmail, v.createLogin === true);
+        if (!next.createLogin) {
+          next.roleKeys = [];
+          if ('campusIds' in next) next.campusIds = [];
+        }
+      }
+      if (name === 'createLogin') {
+        if (value === true && !hasPortalLoginEmail(next.email)) {
+          next.createLogin = false;
+        } else if (value === false) {
+          next.roleKeys = [];
+          if ('campusIds' in next) next.campusIds = [];
+        }
+      }
       if (name === 'startDate' && typeof value === 'string' && value) {
         const end = next.endDate;
         if (typeof end === 'string' && end && !isEndAfterStart(value, end)) {
@@ -144,17 +220,25 @@ export function ResourceForm({
   }
 
   function validate(): boolean {
+    const activeValues = applyPortalLoginEmailRules(fields, values);
     const next: Record<string, string> = {};
     for (const f of fields) {
       if ('required' in f && f.required) {
-        const v = values[f.name];
+        const v = activeValues[f.name];
         if (v === '' || v === undefined || v === null) next[f.name] = `${f.label} is required`;
       }
     }
-    const start = values.startDate;
-    const end = values.endDate;
+    const start = activeValues.startDate;
+    const end = activeValues.endDate;
     if (typeof start === 'string' && typeof end === 'string' && start && end && !isEndAfterStart(start, end)) {
       next.endDate = 'End date must be after the start date';
+    }
+    for (const f of fields) {
+      if (f.type !== 'custom') continue;
+      if (!isFieldConditionMet(activeValues, f.requiredWhen)) continue;
+      const v = activeValues[f.name];
+      const empty = Array.isArray(v) ? v.length === 0 : v === '' || v === undefined || v === null;
+      if (empty) next[f.name] = `${f.label} is required`;
     }
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -163,7 +247,8 @@ export function ResourceForm({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
-    onSubmit(buildBody(fields, values));
+    const synced = applyPortalLoginEmailRules(fields, values);
+    onSubmit({ ...buildBody(fields, synced), ...extraPayload });
   }
 
   return (
@@ -171,6 +256,8 @@ export function ResourceForm({
       open={open}
       onClose={onClose}
       title={title}
+      description={description}
+      className={drawerClassName}
       footer={
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose} disabled={submitting}>
@@ -200,7 +287,7 @@ export function ResourceForm({
         ))}
         {extra && (
           <div className="border-t border-border pt-4">
-            {extra}
+            {typeof extra === 'function' ? extra(extraApi) : extra}
           </div>
         )}
       </form>
@@ -223,28 +310,54 @@ function Field({
 }) {
   const fmt = useFormat();
   const institutionCountry = useInstitutionCountry();
-  if (field.type === 'checkbox') {
-    return (
-      <label className="flex cursor-pointer items-center gap-2.5">
-        <Checkbox checked={!!value} onChange={(e) => onChange(e.target.checked)} />
-        <span className="text-sm font-medium text-text-primary">{field.label}</span>
-      </label>
-    );
-  }
+  const id = `f-${field.name}`;
+  const errId = error ? `${id}-error` : undefined;
 
-  if (field.type === 'custom') {
+  if (field.type === 'checkbox') {
+    const portalLoginField = field.name === 'createLogin';
+    const hasEmail = hasPortalLoginEmail(values.email);
+    const portalLoginChecked = portalLoginField
+      ? effectivePortalLogin(values.email, value)
+      : !!value;
     return (
       <div>
-        <Label>{field.label}</Label>
-        <div className="mt-1">{field.render(value, onChange)}</div>
+        <label className="flex cursor-pointer items-center gap-2.5">
+          <Checkbox
+            checked={portalLoginChecked}
+            onChange={(e) => {
+              if (portalLoginField && !hasEmail) return;
+              onChange(e.target.checked);
+            }}
+          />
+          <span className="text-sm font-medium text-text-primary">{field.label}</span>
+        </label>
+        {portalLoginField && !hasEmail && (
+          <p className="mt-1 text-xs text-text-muted">Add an email address above to enable portal login.</p>
+        )}
         {field.help && <p className="mt-1 text-xs text-text-muted">{field.help}</p>}
       </div>
     );
   }
 
+  if (field.type === 'custom') {
+    const enabled = isFieldConditionMet(values, field.enabledWhen);
+    const required = isFieldConditionMet(values, field.requiredWhen);
+    return (
+      <div className={enabled ? undefined : 'opacity-50'}>
+        <Label>
+          {field.label}
+          {required ? <span className="text-danger"> *</span> : null}
+        </Label>
+        <div className={enabled ? 'mt-1' : 'pointer-events-none mt-1'}>
+          {field.render(value, onChange, { values, disabled: !enabled })}
+        </div>
+        {field.help && <p className="mt-1 text-xs text-text-muted">{field.help}</p>}
+        <FieldError id={errId}>{error}</FieldError>
+      </div>
+    );
+  }
+
   const requiredMark = 'required' in field && field.required ? <span className="text-danger"> *</span> : null;
-  const id = `f-${field.name}`;
-  const errId = error ? `${id}-error` : undefined;
   const countryValue =
     'countryField' in field && field.countryField ? String(values[field.countryField] ?? '') : '';
   const labelText =

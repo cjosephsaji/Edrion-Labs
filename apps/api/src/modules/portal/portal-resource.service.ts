@@ -71,6 +71,7 @@ export function resourceConfig(
       version: table.version,
       createdAt: table.createdAt,
       status: table.status,
+      kind: table.kind,
     },
     module: opts.module,
     entityType: opts.entityType,

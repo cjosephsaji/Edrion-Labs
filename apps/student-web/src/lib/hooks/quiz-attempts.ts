@@ -11,6 +11,7 @@ export type QuizPaperQuestion = {
   promptImageUrl: string | null;
   options?: Array<{ key: string; label: string; imageUrl: string | null }>;
   marks: number;
+  config?: Record<string, unknown> | null;
 };
 
 export type QuizPaperDto = {

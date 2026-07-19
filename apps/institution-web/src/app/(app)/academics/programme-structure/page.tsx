@@ -1,7 +1,6 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { ChevronDown, Plus, Trash2 } from 'lucide-react';
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
+import { ChevronDown, Pencil, Plus, Trash2 } from 'lucide-react';
 import {
   Button,
   ConfirmDialog,
@@ -11,6 +10,7 @@ import {
   Select,
   Skeleton,
 } from '@edrion/ui';
+import { subjectKindLabel } from '@edrion/schemas';
 import { Topbar } from '@/components/app-shell/topbar';
 import {
   useAcademicMutations,
@@ -19,72 +19,37 @@ import {
   useProgrammeStructure,
   useSubjectOptions,
 } from '@/lib/academics';
+import type { ClassRow, Paged } from '@/lib/academics-types';
 import { isEndAfterStart, maxStartDate, minEndDate } from '@/lib/date-range';
+import { formatPortalError, usePortalClient } from '@/lib/portal-client';
+import { useScope } from '@/lib/scope';
 import type {
   GradeLevelRow,
   ProgrammeStructureDepartment,
   ProgrammeStructureLevel,
+  ProgrammeStructureSection,
+  ProgrammeStructureSubject,
   ProgrammeStructureTerm,
 } from '@/lib/academics-types';
 import { usePermissions } from '@/lib/permissions';
 import { useTerm } from '@/lib/term';
 
-const EASE = [0.4, 0, 0.2, 1] as const;
-
 /** Sentinel option in the class picker: reveal a name field and create a fresh class instead. */
 const NEW_SECTION = '__new__';
 
-const listStagger = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.05, delayChildren: 0.03 } },
-};
-
-const listItem = {
-  hidden: { opacity: 0, y: 10, scale: 0.98 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.22, ease: EASE } },
-  exit: { opacity: 0, y: -6, scale: 0.98, transition: { duration: 0.16, ease: EASE } },
-};
-
 function TreePanel({ open, children }: { open: boolean; children: React.ReactNode }) {
-  const reduceMotion = useReducedMotion();
-  if (reduceMotion) return open ? <div>{children}</div> : null;
-
-  return (
-    <AnimatePresence initial={false}>
-      {open && (
-        <motion.div
-          key="panel"
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: 'auto', opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
-          transition={{ duration: 0.24, ease: EASE }}
-          className="overflow-hidden"
-        >
-          <motion.div
-            initial={{ y: -6 }}
-            animate={{ y: 0 }}
-            exit={{ y: -4 }}
-            transition={{ duration: 0.2, ease: EASE }}
-          >
-            {children}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
+  if (!open) return null;
+  return <div>{children}</div>;
 }
 
 function TreeChevron({ open, className }: { open: boolean; className?: string }) {
-  const reduceMotion = useReducedMotion();
   return (
-    <motion.span
-      className={`inline-flex shrink-0 text-text-muted ${className ?? ''}`}
-      animate={{ rotate: open ? 0 : -90 }}
-      transition={{ duration: reduceMotion ? 0 : 0.22, ease: EASE }}
+    <span
+      className={`inline-flex shrink-0 text-text-muted transition-transform duration-150 ${open ? '' : '-rotate-90'} ${className ?? ''}`}
       aria-hidden
     >
       <ChevronDown className="h-4 w-4" />
-    </motion.span>
+    </span>
   );
 }
 
@@ -99,18 +64,32 @@ function ExpandableHeader({
   children: React.ReactNode;
   className?: string;
 }) {
-  const reduceMotion = useReducedMotion();
   return (
-    <motion.button
-      type="button"
-      className={className}
-      onClick={onToggle}
-      aria-expanded={open}
-      whileTap={reduceMotion ? undefined : { scale: 0.995 }}
-      transition={{ duration: 0.1 }}
-    >
+    <button type="button" className={className} onClick={onToggle} aria-expanded={open}>
       {children}
-    </motion.button>
+    </button>
+  );
+}
+
+function CourseMeta({
+  code,
+  credits,
+  kind,
+}: {
+  code: string | null;
+  credits: number | null;
+  kind: string;
+}) {
+  const parts: string[] = [];
+  if (credits != null) parts.push(`${credits} credits`);
+  parts.push(kind);
+
+  return (
+    <p className="mt-0.5 text-xs text-text-muted">
+      {code && <span className="font-mono">{code}</span>}
+      {code && parts.length > 0 && <span> · </span>}
+      {parts.join(' · ')}
+    </p>
   );
 }
 
@@ -119,57 +98,29 @@ export default function ProgrammeStructurePage() {
   const { can } = usePermissions();
   const canManage = can('academics.manage');
   const { data, isLoading, refetch } = useProgrammeStructure();
-  const reduceMotion = useReducedMotion();
   const title = t('programmeStructure');
 
   return (
     <>
       <Topbar title={title} />
-      <div className="page-enter flex flex-1 flex-col gap-4 p-5">
-        <p className="text-sm text-text-secondary">
+      <div className="page-enter mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 p-5">
+        <p className="text-sm leading-relaxed text-text-secondary">
           Build each {t('department').toLowerCase()} from the top down — add {tp('gradeLevel').toLowerCase()}, then{' '}
           {tp('term').toLowerCase()}, then the {tp('subject').toLowerCase()} and {tp('class').toLowerCase()} that sit
           inside each one. {tp('subject')} added here become the curriculum every intake of this{' '}
           {t('gradeLevel').toLowerCase()} inherits.
         </p>
         {isLoading && <Skeleton className="h-64 w-full rounded-lg" />}
-        <AnimatePresence mode="wait">
-          {!isLoading && (data?.length ?? 0) === 0 && (
-            <motion.p
-              key="empty"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25, ease: EASE }}
-              className="rounded-lg border border-border bg-surface px-4 py-8 text-center text-sm text-text-muted"
-            >
-              No {tp('department').toLowerCase()} yet. Add programmes first, then return here to define their structure.
-            </motion.p>
-          )}
-        </AnimatePresence>
-        <LayoutGroup>
-          <motion.div
-            className="space-y-3"
-            initial={reduceMotion ? false : 'hidden'}
-            animate="visible"
-            variants={{
-              visible: { transition: { staggerChildren: reduceMotion ? 0 : 0.08 } },
-            }}
-          >
-            {(data ?? []).map((dept) => (
-              <motion.div
-                key={dept.id}
-                layout={!reduceMotion}
-                variants={{
-                  hidden: { opacity: 0, y: 16 },
-                  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: EASE } },
-                }}
-              >
-                <ProgrammeNode dept={dept} canManage={canManage} onChanged={() => refetch()} />
-              </motion.div>
-            ))}
-          </motion.div>
-        </LayoutGroup>
+        {!isLoading && (data?.length ?? 0) === 0 && (
+          <p className="rounded-lg border border-border bg-surface px-4 py-8 text-center text-sm text-text-muted">
+            No {tp('department').toLowerCase()} yet. Add programmes first, then return here to define their structure.
+          </p>
+        )}
+        <div className="space-y-4">
+          {(data ?? []).map((dept) => (
+            <ProgrammeNode key={dept.id} dept={dept} canManage={canManage} onChanged={() => refetch()} />
+          ))}
+        </div>
       </div>
     </>
   );
@@ -192,7 +143,6 @@ function ProgrammeNode({
   const [yearName, setYearName] = useState('');
   const [durationLabel, setDurationLabel] = useState('');
   const [removeLevel, setRemoveLevel] = useState<ProgrammeStructureLevel | null>(null);
-  const reduceMotion = useReducedMotion();
 
   async function saveYear() {
     if (!yearName.trim()) return;
@@ -222,73 +172,47 @@ function ProgrammeNode({
   }
 
   return (
-    <motion.div
-      layout={!reduceMotion}
-      className="rounded-xl border border-border bg-surface shadow-sm transition-shadow duration-200 hover:shadow-md"
-    >
+    <div className="rounded-xl border border-border bg-surface shadow-sm transition-shadow duration-150 hover:shadow-md">
       <ExpandableHeader
         open={open}
         onToggle={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-background-secondary/40"
+        className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-background-secondary/40"
       >
         <TreeChevron open={open} />
         <span className="font-semibold text-text-primary">{dept.name}</span>
-        <span className="text-xs text-text-muted">{dept.code}</span>
-        <motion.span
-          key={dept.levels.length}
-          initial={{ scale: 0.9, opacity: 0.6 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="ml-auto text-xs text-text-muted"
-        >
+        {dept.code && (
+          <span className="rounded bg-background-secondary px-1.5 py-0.5 text-xs text-text-muted">
+            {dept.code}
+          </span>
+        )}
+        <span className="ml-auto rounded-full bg-background-secondary px-2.5 py-0.5 text-xs text-text-muted tabular-nums">
           {dept.levels.length} {tp('gradeLevel').toLowerCase()}
-        </motion.span>
+        </span>
       </ExpandableHeader>
       <TreePanel open={open}>
-        <div className="border-t border-border px-4 py-3">
-          <AnimatePresence mode="popLayout">
-            {dept.levels.length === 0 && (
-              <motion.p
-                key="no-years"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="mb-3 text-sm text-text-muted"
-              >
-                No {tp('gradeLevel').toLowerCase()} yet.
-              </motion.p>
-            )}
-          </AnimatePresence>
-          <motion.ul
-            className="space-y-2"
-            variants={reduceMotion ? undefined : listStagger}
-            initial={reduceMotion ? false : 'hidden'}
-            animate="visible"
-          >
-            <AnimatePresence mode="popLayout">
-              {dept.levels.map((level) => (
-                <motion.li
-                  key={level.id}
-                  layout={!reduceMotion}
-                  variants={reduceMotion ? undefined : listItem}
-                  exit={reduceMotion ? undefined : listItem.exit}
-                >
-                  <LevelNode
-                    level={level}
-                    deptId={dept.id}
-                    canManage={canManage}
-                    onRemove={() => setRemoveLevel(level)}
-                    onChanged={onChanged}
-                  />
-                </motion.li>
-              ))}
-            </AnimatePresence>
-          </motion.ul>
+        <div className="border-t border-border px-5 py-4">
+          {dept.levels.length === 0 && (
+            <p className="mb-3 text-sm text-text-muted">No {tp('gradeLevel').toLowerCase()} yet.</p>
+          )}
+          <ul className="space-y-3">
+            {dept.levels.map((level) => (
+              <li key={level.id}>
+                <LevelNode
+                  level={level}
+                  deptId={dept.id}
+                  canManage={canManage}
+                  onRemove={() => setRemoveLevel(level)}
+                  onChanged={onChanged}
+                />
+              </li>
+            ))}
+          </ul>
           {canManage && (
-            <motion.div className="mt-3" layout={!reduceMotion}>
+            <div className="mt-4">
               <Button size="sm" variant="secondary" onClick={() => setAddYear(true)}>
                 <Plus className="mr-1 h-4 w-4" /> Add {t('gradeLevel').toLowerCase()}
               </Button>
-            </motion.div>
+            </div>
           )}
         </div>
       </TreePanel>
@@ -330,7 +254,7 @@ function ProgrammeNode({
         danger
         onConfirm={confirmRemoveLevel}
       />
-    </motion.div>
+    </div>
   );
 }
 
@@ -356,7 +280,6 @@ function LevelNode({
   const [termName, setTermName] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const reduceMotion = useReducedMotion();
 
   async function saveTerm() {
     if (!currentYear || !termName || !startDate || !endDate || !isEndAfterStart(startDate, endDate)) return;
@@ -386,63 +309,43 @@ function LevelNode({
   }, [level.durationLabel, level.gradeLevelName]);
 
   return (
-    <div className="rounded-lg border border-border/80 bg-background-secondary/40 transition-colors duration-150 hover:border-border">
-      <div className="flex items-center gap-2 px-3 py-2">
+    <div className="rounded-lg border border-border/80 bg-background-secondary/30 transition-colors duration-150 hover:border-border">
+      <div className="flex items-center gap-2 px-4 py-3">
         <ExpandableHeader
           open={open}
           onToggle={() => setOpen((v) => !v)}
-          className="flex flex-1 items-center gap-2 text-left"
+          className="flex flex-1 items-center gap-2.5 text-left"
         >
           <TreeChevron open={open} className="[&_svg]:h-3.5 [&_svg]:w-3.5" />
-          <span className="text-sm font-medium">{yearLabel}</span>
-          <motion.span
-            key={realTerms.length}
-            initial={{ scale: 0.9, opacity: 0.6 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="text-xs text-text-muted"
-          >
+          <span className="text-sm font-semibold text-text-primary">{yearLabel}</span>
+          <span className="rounded-full bg-surface px-2 py-0.5 text-xs text-text-muted">
             {realTerms.length} {tp('term').toLowerCase()}
-          </motion.span>
+          </span>
         </ExpandableHeader>
         {canManage && (
-          <motion.button
+          <button
             type="button"
             aria-label={`Remove ${t('gradeLevel').toLowerCase()}`}
             onClick={onRemove}
-            whileTap={reduceMotion ? undefined : { scale: 0.92 }}
             className="rounded p-1 text-text-muted transition-colors hover:bg-danger/10 hover:text-danger"
           >
             <Trash2 className="h-4 w-4" />
-          </motion.button>
+          </button>
         )}
       </div>
       <TreePanel open={open}>
-        <div className="border-t border-border/60 px-3 py-2 pl-8">
-          <motion.div
-            className="space-y-2"
-            variants={reduceMotion ? undefined : listStagger}
-            initial={reduceMotion ? false : 'hidden'}
-            animate="visible"
-          >
-            <AnimatePresence mode="popLayout">
-              {realTerms.map((term) => (
-                <motion.div
-                  key={term.id}
-                  layout={!reduceMotion}
-                  variants={reduceMotion ? undefined : listItem}
-                  exit={reduceMotion ? undefined : listItem.exit}
-                >
-                  <TermNode term={term} level={level} canManage={canManage} onChanged={onChanged} />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
+        <div className="space-y-3 border-t border-border/60 px-4 py-3 pl-10">
+          <div className="space-y-3">
+            {realTerms.map((term) => (
+              <TermNode key={term.id} term={term} level={level} canManage={canManage} onChanged={onChanged} />
+            ))}
+          </div>
           {canManage && (
-            <motion.div layout={!reduceMotion} className="mt-2">
+            <div className="pt-1">
               <Button size="sm" variant="secondary" onClick={() => setAddTerm(true)}>
                 <Plus className="mr-1 h-3.5 w-3.5" /> Add {t('term').toLowerCase()}
               </Button>
-            </motion.div>
+            </div>
           )}
         </div>
       </TreePanel>
@@ -502,18 +405,24 @@ function TermNode({
   onChanged: () => void;
 }) {
   const { t, tp } = useTerm();
+  const client = usePortalClient();
+  const { scope } = useScope();
   const [addSection, setAddSection] = useState(false);
   const [addSubject, setAddSubject] = useState(false);
+  const [sectionError, setSectionError] = useState<string | null>(null);
   const classMut = useAcademicMutations('classes');
   const curriculumMut = useAcademicMutations('programme-subjects');
+  const subjectMut = useAcademicMutations('subjects');
   const { data: years } = useAcademicYearOptions();
   const { data: subjects } = useSubjectOptions();
-  const { data: classes } = useClassOptions();
+  const { data: classes } = useClassOptions({ programmeLevelId: level.id });
   const currentYear = years?.items?.find((y) => y.isCurrent) ?? years?.items?.[0];
   const [sectionChoice, setSectionChoice] = useState('');
   const [sectionName, setSectionName] = useState('');
   const [subjectId, setSubjectId] = useState('');
-  const reduceMotion = useReducedMotion();
+  const [editingCourse, setEditingCourse] = useState<ProgrammeStructureSubject | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editCode, setEditCode] = useState('');
 
   const isOrphan = term.id.startsWith('orphan-');
   const placedIds = new Set(term.subjects.map((s) => s.subjectId));
@@ -573,7 +482,7 @@ function TermNode({
     await curriculumMut.create.mutateAsync({
       subjectId,
       programmeLevelId: level.id,
-      semesterSequence: term.sequence,
+      ...(term.slotId ? { slotId: term.slotId } : { semesterSequence: term.sequence }),
     });
     setSubjectId('');
     setAddSubject(false);
@@ -585,214 +494,289 @@ function TermNode({
     onChanged();
   }
 
+  async function resolveClassVersion(section: ProgrammeStructureSection): Promise<number | null> {
+    if (section.version != null) return section.version;
+    const cached = classes?.items?.find((c) => c.id === section.id)?.version;
+    if (cached != null) return cached;
+    const page = await client.get<Paged<ClassRow>>(
+      `/portal/academics/classes?programmeLevelId=${level.id}&page=1&pageSize=100&sortBy=name&sortDir=asc`,
+      scope,
+    );
+    return page.items.find((c) => c.id === section.id)?.version ?? null;
+  }
+
+  async function dropSection(section: ProgrammeStructureSection) {
+    setSectionError(null);
+    try {
+      const version = await resolveClassVersion(section);
+      if (version == null) {
+        setSectionError(`Could not update ${t('class').toLowerCase()}. Refresh and try again.`);
+        return;
+      }
+      await classMut.update.mutateAsync({
+        id: section.id,
+        body: { termId: null, version },
+      });
+      onChanged();
+    } catch (err) {
+      setSectionError(formatPortalError(err));
+    }
+  }
+
+  function openEditCourse(course: ProgrammeStructureSubject) {
+    setEditingCourse(course);
+    setEditName(course.name);
+    setEditCode(course.code ?? '');
+  }
+
+  async function saveEditCourse() {
+    if (!editingCourse || !editName.trim()) return;
+    const subjectVersion =
+      editingCourse.subjectVersion ??
+      subjects?.items?.find((s) => s.id === editingCourse.subjectId)?.version;
+    if (subjectVersion == null) return;
+    const code = editCode.trim();
+    await subjectMut.update.mutateAsync({
+      id: editingCourse.subjectId,
+      body: {
+        version: subjectVersion,
+        name: editName.trim(),
+        ...(code ? { code } : {}),
+      },
+    });
+    setEditingCourse(null);
+    onChanged();
+  }
+
   return (
-    <motion.div
-      layout={!reduceMotion}
-      className="rounded-md border border-border/50 bg-surface px-3 py-2 transition-colors duration-150 hover:border-border"
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium">{term.name}</span>
-        <motion.span
-          key={`${term.subjects.length}-${term.sections.length}`}
-          initial={{ scale: 0.9, opacity: 0.6 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="text-xs text-text-muted"
-        >
+    <div className="rounded-lg border border-border bg-surface shadow-xs transition-colors duration-150 hover:border-border-strong">
+      <div className="flex items-start justify-between gap-3 border-b border-border/60 px-4 py-3">
+        <span className="text-sm font-semibold text-text-primary">{term.name}</span>
+        <span className="shrink-0 rounded-full bg-background-secondary px-2.5 py-0.5 text-xs text-text-muted tabular-nums">
           {term.subjects.length} {tp('subject').toLowerCase()} · {term.sections.length}{' '}
           {tp('class').toLowerCase()}
-        </motion.span>
+        </span>
       </div>
 
-      {/* Curriculum — the subjects taught in this semester. Orphan (term-less) nodes can't hold
-          curriculum, because a curriculum slot is keyed on the semester's sequence number. */}
-      {!isOrphan && (
-        <div className="mt-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-            {tp('subject')}
-          </p>
-          <motion.ul className="mt-1 space-y-1 pl-2" variants={reduceMotion ? undefined : listStagger} initial="hidden" animate="visible">
-            <AnimatePresence mode="popLayout">
+      <div className="space-y-4 px-4 py-4">
+        {!isOrphan && (
+          <section>
+            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
+              {tp('subject')}
+            </h4>
+            <ul className="space-y-2">
               {term.subjects.length === 0 && (
-                <motion.li
-                  key="no-subjects"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="text-xs text-text-muted"
-                >
+                <li className="rounded-md border border-dashed border-border/60 bg-background-secondary/20 px-3 py-3 text-sm text-text-muted">
                   No {tp('subject').toLowerCase()} yet.
-                </motion.li>
+                </li>
               )}
               {term.subjects.map((s) => (
-                <motion.li
+                <li
                   key={s.id}
-                  layout={!reduceMotion}
-                  variants={reduceMotion ? undefined : listItem}
-                  exit={reduceMotion ? undefined : listItem.exit}
-                  className="group flex items-center gap-1.5 text-xs text-text-secondary"
+                  className="group flex items-start gap-3 rounded-md border border-border/50 bg-background-secondary/30 px-3 py-2.5"
                 >
-                  <span className="min-w-0 flex-1 truncate">
-                    {s.name}
-                    <span className="ml-1 font-mono text-text-muted">{s.code}</span>
-                    {s.credits != null && <span className="text-text-muted"> · {s.credits} cr</span>}
-                    {s.isElective && <span className="text-text-muted"> · elective</span>}
-                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-text-primary">{s.name}</p>
+                    <CourseMeta
+                      code={s.code}
+                      credits={s.credits}
+                      kind={subjectKindLabel(s.isElective ? 'elective' : s.kind)}
+                    />
+                  </div>
                   {canManage && (
-                    <motion.button
-                      type="button"
-                      aria-label={`Remove ${s.name}`}
-                      onClick={() => dropSubject(s.id, s.version)}
-                      whileTap={reduceMotion ? undefined : { scale: 0.92 }}
-                      className="rounded p-0.5 text-text-muted opacity-0 transition-opacity hover:text-danger focus:opacity-100 group-hover:opacity-100"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </motion.button>
+                    <div className="mt-0.5 flex shrink-0 gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+                      <button
+                        type="button"
+                        aria-label={`Edit ${s.name}`}
+                        onClick={() => openEditCourse(s)}
+                        className="rounded p-1 text-text-muted transition-colors hover:bg-background-secondary hover:text-text-primary"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Remove ${s.name}`}
+                        onClick={() => dropSubject(s.id, s.version)}
+                        className="rounded p-1 text-text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   )}
-                </motion.li>
+                </li>
               ))}
-            </AnimatePresence>
-          </motion.ul>
-          {canManage && (
-            <AnimatePresence mode="wait" initial={false}>
-              {!addSubject ? (
-                <motion.div key="add-subject-btn" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.15 }}>
+            </ul>
+            {canManage && (
+              <>
+                {!addSubject ? (
                   <Button
                     size="sm"
-                    variant="ghost"
-                    className="mt-1 h-7 px-2 text-xs"
+                    variant="secondary"
+                    className="mt-3"
                     onClick={() => setAddSubject(true)}
                     disabled={availableSubjects.length === 0}
                   >
-                    <Plus className="mr-1 h-3 w-3" />
+                    <Plus className="mr-1.5 h-3.5 w-3.5" />
                     {availableSubjects.length === 0
                       ? `All ${tp('subject').toLowerCase()} placed`
                       : `Add ${t('subject').toLowerCase()}`}
                   </Button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="add-subject-form"
-                  className="mt-2 flex gap-2 overflow-hidden"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2, ease: EASE }}
-                >
-                  <Select
-                    value={subjectId}
-                    onChange={(e) => setSubjectId(e.target.value)}
-                    placeholder={`Pick a ${t('subject').toLowerCase()}…`}
-                    options={availableSubjects.map((s) => ({ value: s.id, label: `${s.name} (${s.code})` }))}
-                    className="h-8 text-sm"
-                  />
-                  <Button size="sm" onClick={saveSubject} loading={curriculumMut.create.isPending} disabled={!subjectId}>
-                    Add
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setAddSubject(false)}>
-                    Cancel
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          )}
-        </div>
-      )}
+                ) : (
+                  <div className="mt-3 flex flex-wrap gap-2 rounded-md border border-border/60 bg-background-secondary/20 p-3">
+                    <Select
+                      value={subjectId}
+                      onChange={(e) => setSubjectId(e.target.value)}
+                      placeholder={`Pick a ${t('subject').toLowerCase()}…`}
+                      options={availableSubjects.map((s) => ({ value: s.id, label: `${s.name} (${s.code})` }))}
+                      className="h-9 min-w-[12rem] flex-1 text-sm"
+                    />
+                    <Button size="sm" onClick={saveSubject} loading={curriculumMut.create.isPending} disabled={!subjectId}>
+                      Add
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setAddSubject(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </section>
+        )}
 
-      <div className="mt-2">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-          {tp('class')}
-        </p>
-        <motion.ul className="mt-1 space-y-1 pl-2" variants={reduceMotion ? undefined : listStagger} initial="hidden" animate="visible">
-          <AnimatePresence mode="popLayout">
+        <section className={isOrphan ? undefined : 'border-t border-border/60 pt-4'}>
+          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
+            {tp('class')}
+          </h4>
+          {sectionError && (
+            <p className="mb-2 text-sm text-danger" role="alert">
+              {sectionError}
+            </p>
+          )}
+          <ul className="space-y-2">
             {term.sections.length === 0 && (
-              <motion.li
-                key="no-sections"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-xs text-text-muted"
-              >
+              <li className="rounded-md border border-dashed border-border/60 bg-background-secondary/20 px-3 py-3 text-sm text-text-muted">
                 No {tp('class').toLowerCase()} yet.
-              </motion.li>
+              </li>
             )}
             {term.sections.map((s) => (
-              <motion.li
+              <li
                 key={s.id}
-                layout={!reduceMotion}
-                variants={reduceMotion ? undefined : listItem}
-                exit={reduceMotion ? undefined : listItem.exit}
-                className="text-xs text-text-secondary"
+                className="group flex items-start gap-3 rounded-md border border-border/50 bg-background-secondary/30 px-3 py-2.5"
               >
-                {s.name}
-                {s.section ? ` · ${s.section}` : ''}
-                {s.studentCount != null && (
-                  <span className="text-text-muted"> · {s.studentCount} students</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-text-primary">{s.name}</p>
+                  {(s.section || s.studentCount != null || s.subjectCount != null) && (
+                    <p className="mt-0.5 text-xs text-text-muted">
+                      {[
+                        s.section,
+                        s.studentCount != null ? `${s.studentCount} students` : null,
+                        s.subjectCount != null
+                          ? `${s.subjectCount} ${tp('subject').toLowerCase()}`
+                          : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+                  )}
+                </div>
+                {canManage && (
+                  <button
+                    type="button"
+                    aria-label={`Remove ${s.name}`}
+                    onClick={() => dropSection(s)}
+                    className="mt-0.5 shrink-0 rounded p-1 text-text-muted opacity-0 transition-colors transition-opacity focus-within:opacity-100 group-hover:opacity-100 hover:bg-danger/10 hover:text-danger"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 )}
-                {s.subjectCount != null && (
-                  <span className="text-text-muted">
-                    {' '}
-                    · {s.subjectCount} {tp('subject').toLowerCase()}
-                  </span>
-                )}
-              </motion.li>
+              </li>
             ))}
-          </AnimatePresence>
-        </motion.ul>
-        {canManage && (
-          <AnimatePresence mode="wait" initial={false}>
-            {!addSection ? (
-              <motion.div
-                key="add-btn"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.15 }}
-              >
-                <Button size="sm" variant="ghost" className="mt-1 h-7 px-2 text-xs" onClick={() => setAddSection(true)}>
-                  <Plus className="mr-1 h-3 w-3" /> Add {t('class').toLowerCase()}
+          </ul>
+          {canManage && (
+            <>
+              {!addSection ? (
+                <Button size="sm" variant="secondary" className="mt-3" onClick={() => setAddSection(true)}>
+                  <Plus className="mr-1.5 h-3.5 w-3.5" /> Add {t('class').toLowerCase()}
                 </Button>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="add-form"
-                className="mt-2 flex gap-2 overflow-hidden"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2, ease: EASE }}
-              >
-                <Select
-                  value={sectionChoice}
-                  onChange={(e) => setSectionChoice(e.target.value)}
-                  placeholder={`Pick a ${t('class').toLowerCase()}…`}
-                  options={sectionOptions}
-                  className="h-8 text-sm"
-                />
-                {creatingSection && (
-                  <Input
-                    value={sectionName}
-                    onChange={(e) => setSectionName(e.target.value)}
-                    placeholder={`${t('class')} name`}
-                    className="h-8 text-sm"
-                    autoFocus
+              ) : (
+                <div className="mt-3 flex flex-wrap gap-2 rounded-md border border-border/60 bg-background-secondary/20 p-3">
+                  <Select
+                    value={sectionChoice}
+                    onChange={(e) => setSectionChoice(e.target.value)}
+                    placeholder={`Pick a ${t('class').toLowerCase()}…`}
+                    options={sectionOptions}
+                    className="h-9 min-w-[12rem] flex-1 text-sm"
                   />
-                )}
-                <Button
-                  size="sm"
-                  onClick={saveSection}
-                  loading={classMut.create.isPending || classMut.update.isPending}
-                  disabled={!sectionChoice || (creatingSection && !sectionName.trim())}
-                >
-                  Add
-                </Button>
-                <Button size="sm" variant="ghost" onClick={resetSection}>
-                  Cancel
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        )}
+                  {creatingSection && (
+                    <Input
+                      value={sectionName}
+                      onChange={(e) => setSectionName(e.target.value)}
+                      placeholder={`${t('class')} name`}
+                      className="h-9 min-w-[10rem] flex-1 text-sm"
+                      autoFocus
+                    />
+                  )}
+                  <Button
+                    size="sm"
+                    onClick={saveSection}
+                    loading={classMut.create.isPending || classMut.update.isPending}
+                    disabled={!sectionChoice || (creatingSection && !sectionName.trim())}
+                  >
+                    Add
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={resetSection}>
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </section>
       </div>
-    </motion.div>
+
+      <Dialog
+        open={!!editingCourse}
+        onClose={() => setEditingCourse(null)}
+        title={`Edit ${t('subject').toLowerCase()}`}
+      >
+        <div className="flex flex-col gap-4 p-5">
+          <p className="text-sm text-text-muted">
+            {term.name} · {level.gradeLevelName}
+          </p>
+          <div>
+            <Label>
+              Name <span className="text-danger">*</span>
+            </Label>
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              placeholder="Course name"
+              autoFocus
+            />
+          </div>
+          <div>
+            <Label>Code</Label>
+            <Input
+              value={editCode}
+              onChange={(e) => setEditCode(e.target.value)}
+              placeholder="e.g. CST401"
+              className="font-mono"
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setEditingCourse(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={saveEditCourse}
+              loading={subjectMut.update.isPending}
+              disabled={!editName.trim()}
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+    </div>
   );
 }

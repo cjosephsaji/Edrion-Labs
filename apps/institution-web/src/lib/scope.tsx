@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -65,6 +66,7 @@ function defaultScope(campuses: CampusOption[], canSelectEntireInstitution: bool
 export function ScopeProvider({ children }: { children: ReactNode }) {
   const { data: me } = usePortalMe();
   const [scope, setScopeState] = useState<InstitutionScope>({ mode: 'institution' });
+  const lastUserId = useRef<string | null>(null);
 
   const campuses = useMemo(() => me?.campuses ?? [], [me]);
   const canSelectEntireInstitution = me?.isInstitutionWide ?? false;
@@ -72,6 +74,16 @@ export function ScopeProvider({ children }: { children: ReactNode }) {
   // Hydrate from storage / fall back to a valid scope once `me` is known.
   useEffect(() => {
     if (!me) return;
+
+    if (lastUserId.current && lastUserId.current !== me.institutionUserId) {
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
+    }
+    lastUserId.current = me.institutionUserId;
+
     const allowedIds = new Set(campuses.map((c) => c.id));
     const stored = readStored();
     const singleCampus = campuses.length === 1;

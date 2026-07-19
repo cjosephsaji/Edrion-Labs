@@ -1,9 +1,17 @@
 'use client';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button, Drawer, Input, Label } from '@edrion/ui';
 import { RecipientPicker } from '@/components/recipients/recipient-picker';
 import { useConversationMutations } from '@/lib/conversations';
-import type { Target } from '@/lib/recipients';
+import { formatPortalError } from '@/lib/portal-client';
+import { useRecipientPreview, type Target } from '@/lib/recipients';
+
+const INDIVIDUAL_KINDS = new Set(['user', 'student', 'parent', 'teacher', 'staff']);
+
+function isLikelyDirectChat(targets: Target[], resolvedCount: number | undefined): boolean {
+  if (resolvedCount === 1) return true;
+  return targets.length === 1 && INDIVIDUAL_KINDS.has(targets[0]!.kind);
+}
 
 /**
  * Start a new conversation: choose participants via the recipient targeting model (an individual for
@@ -21,6 +29,11 @@ export function NewConversationDrawer({
 }) {
   const { create } = useConversationMutations();
   const [targets, setTargets] = useState<Target[]>([]);
+  const preview = useRecipientPreview(targets, targets.length > 0, true);
+  const isDirect = useMemo(
+    () => isLikelyDirectChat(targets, preview.data?.count),
+    [targets, preview.data?.count],
+  );
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -39,11 +52,15 @@ export function NewConversationDrawer({
     }
     setError(null);
     try {
-      const conv = await create.mutateAsync({ targets, title: title.trim() || null, body: body.trim() || null });
+      const conv = await create.mutateAsync({
+        targets,
+        title: isDirect ? null : (title.trim() || null),
+        body: body.trim() || null,
+      });
       reset();
       onCreated(conv.id);
-    } catch {
-      setError('Could not start the conversation. Try again.');
+    } catch (e) {
+      setError(formatPortalError(e, 'Could not start the conversation. Try again.'));
     }
   }
 
@@ -64,12 +81,14 @@ export function NewConversationDrawer({
         {error && <div role="alert" className="rounded-md border border-danger/30 bg-danger/5 px-3 py-2 text-sm text-danger">{error}</div>}
         <div>
           <Label>Participants</Label>
-          <div className="mt-1"><RecipientPicker value={targets} onChange={setTargets} /></div>
+          <div className="mt-1"><RecipientPicker value={targets} onChange={setTargets} messaging /></div>
         </div>
-        <div>
-          <Label htmlFor="conv-title">Group name (optional)</Label>
-          <Input id="conv-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Year 5 parents" />
-        </div>
+        {!isDirect && (
+          <div>
+            <Label htmlFor="conv-title">Group name (optional)</Label>
+            <Input id="conv-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Year 5 parents" />
+          </div>
+        )}
         <div>
           <Label htmlFor="conv-body">First message (optional)</Label>
           <textarea

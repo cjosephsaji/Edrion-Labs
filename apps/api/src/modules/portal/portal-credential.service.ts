@@ -1,5 +1,5 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { and, eq, gt, schema, type Database } from '@edrion/database';
+import { and, eq, gt, isNull, schema, type Database } from '@edrion/database';
 import {
   AccountStatus,
   ActorType,
@@ -7,14 +7,17 @@ import {
   RiskLevel,
 } from '@edrion/shared-types';
 import type {
+  PortalAcceptInviteInput,
   PortalActivateInput,
   PortalForgotPasswordInput,
   PortalResetPasswordInput,
 } from '@edrion/schemas';
+import type { PortalInviteTokenPayload } from '@edrion/auth';
 import type { AuditWriter } from '@edrion/audit';
 import type { ApiEnv } from '@edrion/config';
 import { API_ENV, AUDIT_WRITER, DATABASE } from '../../common/tokens';
 import type { EdrionRequestContext } from '../../common/request-context';
+import { JwtError, verifyHs256 } from '../../common/jwt';
 import { RegistrationEmailService } from '../registration/registration-email.service';
 import { hashPassword, hashToken, makeToken } from '../authentication/password.util';
 import { PortalAuthService } from './portal-auth.service';
@@ -106,6 +109,78 @@ export class PortalCredentialService {
     return { token };
   }
 
+  /** Validate an invite JWT and return display metadata for the accept form. */
+  async previewAcceptInvite(token: string): Promise<{ fullName: string; email: string; institutionName: string }> {
+    const { invitation, user } = await this.resolveInviteToken(token);
+    const institutionName = await this.institutionName(user.institutionId);
+    return {
+      fullName: user.fullName,
+      email: invitation.email,
+      institutionName: institutionName ?? 'Your institution',
+    };
+  }
+
+  /** Accept a portal invitation: set password, activate the user, stamp the invitation, auto-login. */
+  async acceptInvite(input: PortalAcceptInviteInput, req: EdrionRequestContext): Promise<{ token: string }> {
+    const { invitation, user } = await this.resolveInviteToken(input.token);
+    if (user.status === AccountStatus.Active) {
+      throw new BadRequestException({
+        code: 'ALREADY_ACTIVE',
+        message: 'This invitation has already been accepted. Sign in with your password.',
+      });
+    }
+    if (user.status !== AccountStatus.Invited) {
+      throw new BadRequestException({
+        code: 'INVALID_TOKEN',
+        message: 'This invitation link is invalid or has expired. Ask an administrator to resend it.',
+      });
+    }
+
+    const now = new Date();
+    await this.db
+      .update(schema.institutionUsers)
+      .set({
+        passwordHash: await hashPassword(input.password),
+        status: AccountStatus.Active,
+        activatedAt: now,
+        activationTokenHash: null,
+        activationTokenExpiresAt: null,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        lockedAt: null,
+        lastLoginAt: now,
+        lastAuthAt: now,
+      })
+      .where(eq(schema.institutionUsers.id, user.id));
+
+    await this.db
+      .update(schema.portalInvitations)
+      .set({ acceptedAt: now })
+      .where(eq(schema.portalInvitations.id, invitation.id));
+
+    const institutionName = await this.institutionName(user.institutionId);
+
+    await this.logAudit(user, req, 'user.invite.accepted', AuditResult.Success, RiskLevel.Low, {
+      entityType: 'institution_user',
+      entityId: user.id,
+      newState: { status: AccountStatus.Active, invitationId: invitation.id },
+    });
+
+    const { token } = await this.sessions.issue({
+      institutionId: user.institutionId,
+      institutionUserId: user.id,
+      aal: user.mfaEnrolled ? 'aal2' : 'aal1',
+      ip: req.ip,
+      userAgent: req.userAgent,
+    });
+
+    if (institutionName) {
+      await this.emails.sendWelcome(user.email, institutionName, this.env.PORTAL_WEB_URL);
+    }
+
+    return { token };
+  }
+
   /** Email a reset link if the address maps to an active user. Always resolves (no enumeration). */
   async forgotPassword(input: PortalForgotPasswordInput, req: EdrionRequestContext): Promise<void> {
     const user = await this.auth.loadActiveByEmail(input.email);
@@ -180,6 +255,60 @@ export class PortalCredentialService {
       .where(eq(schema.institutions.id, institutionId))
       .limit(1);
     return inst?.displayName ?? null;
+  }
+
+  private async resolveInviteToken(token: string) {
+    let payload: Record<string, unknown>;
+    try {
+      payload = verifyHs256(token, this.env.SESSION_COOKIE_SECRET);
+    } catch (err) {
+      const message =
+        err instanceof JwtError && err.message === 'Token expired'
+          ? 'This invitation link has expired. Ask an administrator to resend it.'
+          : 'This invitation link is invalid or has expired. Ask an administrator to resend it.';
+      throw new BadRequestException({ code: 'INVALID_TOKEN', message });
+    }
+
+    if (payload.purpose !== 'portal_invite' || typeof payload.inv !== 'string' || typeof payload.uid !== 'string') {
+      throw new BadRequestException({
+        code: 'INVALID_TOKEN',
+        message: 'This invitation link is invalid or has expired. Ask an administrator to resend it.',
+      });
+    }
+    const invitePayload = payload as unknown as PortalInviteTokenPayload;
+
+    const [invitation] = await this.db
+      .select()
+      .from(schema.portalInvitations)
+      .where(
+        and(
+          eq(schema.portalInvitations.id, invitePayload.inv),
+          eq(schema.portalInvitations.institutionUserId, invitePayload.uid),
+          isNull(schema.portalInvitations.acceptedAt),
+          gt(schema.portalInvitations.expiresAt, new Date()),
+        ),
+      )
+      .limit(1);
+    if (!invitation) {
+      throw new BadRequestException({
+        code: 'INVALID_TOKEN',
+        message: 'This invitation link is invalid or has expired. Ask an administrator to resend it.',
+      });
+    }
+
+    const [user] = await this.db
+      .select()
+      .from(schema.institutionUsers)
+      .where(eq(schema.institutionUsers.id, invitation.institutionUserId))
+      .limit(1);
+    if (!user || user.disabledAt) {
+      throw new BadRequestException({
+        code: 'INVALID_TOKEN',
+        message: 'This invitation link is invalid or has expired. Ask an administrator to resend it.',
+      });
+    }
+
+    return { invitation, user };
   }
 
   private async logAudit(

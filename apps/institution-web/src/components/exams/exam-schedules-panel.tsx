@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
-import { Button, Input, Label, Select, Skeleton } from '@edrion/ui';
+import { Button, Combobox, Input, Label, Skeleton } from '@edrion/ui';
 import { ExamQuestionEditor } from '@/components/exams/exam-question-editor';
 import { ExamAttemptsPanel } from '@/components/exams/exam-attempts-panel';
 import { usePermissions } from '@/lib/permissions';
@@ -81,20 +81,20 @@ export function ExamSchedulesPanel({ examId, examName }: { examId: string; examN
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label htmlFor="es-class">Class</Label>
-              <Select
+              <Combobox
                 id="es-class"
                 value={classId}
-                onChange={(e) => setClassId(e.target.value)}
+                onChange={setClassId}
                 placeholder="Class…"
                 options={(classes?.items ?? []).map((c) => ({ value: c.id, label: c.name }))}
               />
             </div>
             <div>
               <Label htmlFor="es-subject">Subject</Label>
-              <Select
+              <Combobox
                 id="es-subject"
                 value={subjectId}
-                onChange={(e) => setSubjectId(e.target.value)}
+                onChange={setSubjectId}
                 placeholder="Subject…"
                 options={(subjects?.items ?? []).map((s) => ({ value: s.id, label: s.name }))}
               />

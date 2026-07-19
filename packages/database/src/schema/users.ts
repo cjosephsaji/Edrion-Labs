@@ -78,6 +78,25 @@ export const institutionUserRoles = pgTable('institution_user_roles', {
   ...timestamps,
 });
 
+/**
+ * Per-user dashboard layout preferences. Purely a VIEW FILTER over the widgets the user is already
+ * entitled to by permission — the API re-intersects these ids with the user's entitled set on both
+ * read and write, so a stale pref can never resurrect a widget after a role is revoked, and a
+ * crafted write can never pin a widget the user was never allowed to see.
+ */
+export const institutionUserDashboardPrefs = pgTable('institution_user_dashboard_prefs', {
+  id: primaryId(),
+  institutionUserId: uuid('institution_user_id')
+    .notNull()
+    .unique()
+    .references(() => institutionUsers.id, { onDelete: 'cascade' }),
+  hiddenWidgets: jsonb('hidden_widgets').$type<string[]>().notNull().default([]),
+  pinnedWidgets: jsonb('pinned_widgets').$type<string[]>().notNull().default([]),
+  /** Last persona tab the user was on, or null for "All". */
+  activePersona: text('active_persona'),
+  ...timestamps,
+});
+
 /** Campus access grants — the mechanism that lets one user manage several campuses. */
 export const campusUserAccess = pgTable(
   'campus_user_access',

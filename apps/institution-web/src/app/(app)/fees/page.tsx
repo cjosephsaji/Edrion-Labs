@@ -9,7 +9,6 @@ import { useStudentOptions, studentRowSelectOptions } from '@/lib/people';
 import { useFeesList, useFeesMutations, useFeeStructureOptions } from '@/lib/fees';
 import { useFormat } from '@/lib/format';
 import { useProgrammeFacetFilters } from '@/lib/programme-facets';
-import { useAcademicContextFilters } from '@/lib/academic-context';
 import { useTerm } from '@/lib/term';
 import type { FeeInvoiceRow, FeeStructureRow } from '@/lib/fees-types';
 
@@ -50,9 +49,8 @@ const label = (opts: { value: string; label: string }[], v: string) => opts.find
 
 function StructuresTab() {
   const fmt = useFormat();
-  const { t } = useTerm();
+  const { t, tp } = useTerm();
   const facets = useProgrammeFacetFilters();
-  const contextFilters = useAcademicContextFilters();
   const [statusFilter, setStatusFilter] = useState('');
   const [feeTypeFilter, setFeeTypeFilter] = useState('');
   const { data: grades } = useGradeLevelOptions();
@@ -96,11 +94,32 @@ function StructuresTab() {
               nullable: true,
               options: facets.termOptions,
             },
+            // The college-wide alternative to the two id pickers above. Each department owns its own
+            // "Year 1" and "Semester 1" row, so picking one there charges one department; these two
+            // numbers are what those rows share, and so reach every department at once.
+            {
+              name: 'gradeLevelNumber',
+              label: `${t('gradeLevel')} number — all ${tp('department').toLowerCase()}`,
+              type: 'number' as const,
+              nullable: true,
+              min: 0,
+              placeholder: 'e.g. 1',
+              help: `Charge every ${tp('department').toLowerCase().replace(/s$/, '')}'s ${t('gradeLevel').toLowerCase()} of this number. Leave the ${t('gradeLevel').toLowerCase()} and ${t('term').toLowerCase()} pickers empty when using this.`,
+            },
+            {
+              name: 'termSequence',
+              label: `${t('term')} slot — all ${tp('department').toLowerCase()}`,
+              type: 'number' as const,
+              nullable: true,
+              min: 1,
+              placeholder: 'e.g. 1',
+              help: `Which ${t('term').toLowerCase()} within that ${t('gradeLevel').toLowerCase()} (1 = first). Counts within the ${t('gradeLevel').toLowerCase()}, so an 8-semester programme's ${t('term').toLowerCase()} 5 is ${t('gradeLevel').toLowerCase()} 3, slot 1.`,
+            },
           ]
         : []),
       { name: 'description', label: 'Description', type: 'textarea', nullable: true, placeholder: 'Optional' },
     ],
-    [grades, classes, years, facets.showFacets, facets.termOptions, t],
+    [grades, classes, years, facets.showFacets, facets.termOptions, t, tp],
   );
 
   const toolbarFilters = useMemo<FilterDef[]>(
@@ -133,9 +152,31 @@ function StructuresTab() {
       { key: 'feeType', header: 'Type', sortable: true, render: (r) => <span className="text-text-muted">{label(FEE_TYPES, r.feeType)}</span> },
       { key: 'amount', header: 'Amount', align: 'right', sortable: true, render: (r) => <span className="tabular-nums">{fmt.money(r.amount)}</span> },
       { key: 'frequency', header: 'Frequency', render: (r) => label(FREQUENCIES, r.frequency) },
+      {
+        key: 'appliesTo',
+        header: 'Applies to',
+        render: (r) => {
+          if (r.gradeLevelNumber == null && r.termSequence == null) {
+            const named = [r.gradeLevelName, r.className, r.termName].filter(Boolean).join(' · ');
+            return <span className="text-text-muted">{named || '—'}</span>;
+          }
+          const slot = [
+            r.gradeLevelNumber != null ? `${t('gradeLevel')} ${r.gradeLevelNumber}` : null,
+            r.termSequence != null ? `${t('term')} ${r.termSequence}` : null,
+          ]
+            .filter(Boolean)
+            .join(' · ');
+          return (
+            <span>
+              {slot}{' '}
+              <span className="text-text-muted">· all {tp('department').toLowerCase()}</span>
+            </span>
+          );
+        },
+      },
       { key: 'status', header: 'Status', sortable: true, render: (r) => label(STRUCTURE_STATUSES, r.status) },
     ],
-    [fmt],
+    [fmt, t, tp],
   );
 
   return (
@@ -148,7 +189,6 @@ function StructuresTab() {
       filters={toolbarFilters}
       filterValues={listFilterValues}
       onFilterChange={onListFilterChange}
-      extraFilters={contextFilters}
       defaultSortBy="name"
       permissions={PERMISSIONS}
       useList={useFeesList}
@@ -164,6 +204,8 @@ function StructuresTab() {
         classId: r.classId ?? '',
         academicYearId: r.academicYearId ?? '',
         termId: r.termId ?? '',
+        gradeLevelNumber: r.gradeLevelNumber ?? '',
+        termSequence: r.termSequence ?? '',
         description: r.description ?? '',
       })}
     />
@@ -172,7 +214,6 @@ function StructuresTab() {
 
 function InvoicesTab() {
   const fmt = useFormat();
-  const contextFilters = useAcademicContextFilters();
   const { data: students } = useStudentOptions();
   const { data: structures } = useFeeStructureOptions();
 
@@ -222,7 +263,6 @@ function InvoicesTab() {
       noun="invoice"
       columns={columns}
       fields={fields}
-      extraFilters={contextFilters}
       defaultSortBy="createdAt"
       defaultSortDir="desc"
       permissions={PERMISSIONS}

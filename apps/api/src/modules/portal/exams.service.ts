@@ -14,6 +14,7 @@ import type {
   ExamQuestionInput,
   ExamsListQuery,
   GradeAnswerInput,
+  ReconcileExamInput,
   UpdateExamInput,
   UpdateExamQuestionInput,
   UpdateExamScheduleInput,
@@ -48,11 +49,44 @@ export class ExamsService {
     return this.paginate(await this.repo.list(ctx.principal.institutionId, f.campusIds, q), q);
   }
 
+  /** Exam + schedules + questions for the builder. */
+  async getFull(ctx: PortalActionContext, id: string) {
+    const exam = await this.requireExamInScope(ctx, id);
+    const schedules = await this.repo.listSchedules(id);
+    const withQuestions = await Promise.all(
+      schedules.map(async (s) => ({
+        ...s,
+        questions: await this.repo.listQuestions(s.id),
+      })),
+    );
+    return { ...exam, schedules: withQuestions };
+  }
+
   async create(ctx: PortalActionContext, input: CreateExamInput) {
     await this.assertOptional(ctx, 'academicYears', input.academicYearId, 'academic year');
     await this.assertOptional(ctx, 'academicTerms', input.termId, 'term');
     const campusId = this.createCampusId(ctx.scope);
-    const row = await this.repo.insert({
+    const actorId = ctx.principal.institutionUserId;
+    const schedules = input.schedules ?? [];
+
+    for (const s of schedules) {
+      await this.assertRef(ctx, 'classes', s.classId, 'class');
+      await this.assertRef(ctx, 'subjects', s.subjectId, 'subject');
+    }
+    const keys = new Set<string>();
+    for (const s of schedules) {
+      const key = `${s.classId}:${s.subjectId}`;
+      if (keys.has(key)) {
+        throw new ConflictException({
+          code: 'SCHEDULE_EXISTS',
+          message: 'A paper already exists for this class and subject in this exam.',
+        });
+      }
+      keys.add(key);
+    }
+
+    const publishPapers = input.status === 'published';
+    const examValues = {
       institutionId: ctx.principal.institutionId,
       campusId,
       name: input.name,
@@ -66,15 +100,146 @@ export class ExamsService {
       description: input.description ?? null,
       audience: input.audience ?? [],
       durationMin: input.durationMin ?? null,
-      createdBy: ctx.principal.institutionUserId,
-    });
+      createdBy: actorId,
+    };
+
+    const row =
+      schedules.length > 0
+        ? await this.repo.insertFull(
+            examValues,
+            schedules.map((s) => ({
+              schedule: {
+                institutionId: ctx.principal.institutionId,
+                classId: s.classId,
+                subjectId: s.subjectId,
+                examDate: s.examDate ?? null,
+                startTime: s.startTime ?? null,
+                endTime: s.endTime ?? null,
+                maxMarks: s.maxMarks,
+                passMarks: s.passMarks ?? null,
+                room: s.room ?? null,
+                published: publishPapers,
+                createdBy: actorId,
+              },
+              questions: (s.questions ?? []).map((q) => ({
+                sequence: q.sequence,
+                qtype: q.qtype,
+                prompt: q.prompt,
+                promptImageObjectId: q.promptImageObjectId ?? null,
+                options: q.options ?? null,
+                correctKey: q.correctKey ?? null,
+                markingNote: q.markingNote ?? null,
+                marks: q.marks,
+                config: (q.config as Record<string, unknown> | null | undefined) ?? null,
+                createdBy: actorId,
+              })),
+            })),
+          )
+        : await this.repo.insert(examValues);
+
     if (input.audience?.length) {
       await this.audience.materializeExamAssignees(ctx, row.id, input.audience);
     }
     await this.write(ctx, 'exam.create', 'exam', row.id, campusId, {
-      newState: { name: row.name, examType: row.examType, status: row.status },
+      newState: {
+        name: row.name,
+        examType: row.examType,
+        status: row.status,
+        scheduleCount: schedules.length,
+      },
     });
     return row;
+  }
+
+  /** Atomic update of exam + schedules + questions from the builder. */
+  async reconcile(ctx: PortalActionContext, id: string, input: ReconcileExamInput) {
+    const f = this.filter(ctx);
+    const existing = await this.repo.find(id, ctx.principal.institutionId);
+    this.assertInScope(existing?.campusId ?? null, existing, f);
+    await this.assertOptional(ctx, 'academicYears', input.academicYearId, 'academic year');
+    await this.assertOptional(ctx, 'academicTerms', input.termId, 'term');
+
+    const keys = new Set<string>();
+    for (const s of input.schedules) {
+      await this.assertRef(ctx, 'classes', s.classId, 'class');
+      await this.assertRef(ctx, 'subjects', s.subjectId, 'subject');
+      const key = `${s.classId}:${s.subjectId}`;
+      if (keys.has(key)) {
+        throw new ConflictException({
+          code: 'SCHEDULE_EXISTS',
+          message: 'A paper already exists for this class and subject in this exam.',
+        });
+      }
+      keys.add(key);
+    }
+
+    const actorId = ctx.principal.institutionUserId;
+    const nextStatus = input.status ?? existing!.status;
+    const publishPapers = nextStatus === 'published';
+    let updated;
+    try {
+      updated = await this.repo.reconcileFull({
+        examId: id,
+        examVersion: input.version,
+        examPatch: {
+          name: input.name ?? existing!.name,
+          examType: input.examType ?? existing!.examType,
+          academicYearId: input.academicYearId === undefined ? existing!.academicYearId : input.academicYearId,
+          termId: input.termId === undefined ? existing!.termId : input.termId,
+          termLabel: input.termLabel === undefined ? existing!.termLabel : input.termLabel,
+          startDate: input.startDate === undefined ? existing!.startDate : input.startDate,
+          endDate: input.endDate === undefined ? existing!.endDate : input.endDate,
+          status: nextStatus,
+          description: input.description === undefined ? existing!.description : input.description,
+          audience: input.audience === undefined ? existing!.audience : input.audience,
+          durationMin: input.durationMin === undefined ? existing!.durationMin : input.durationMin,
+          updatedBy: actorId,
+        },
+        schedules: input.schedules.map((s) => ({
+          id: s.id,
+          version: s.version,
+          classId: s.classId,
+          subjectId: s.subjectId,
+          examDate: s.examDate ?? null,
+          startTime: s.startTime ?? null,
+          endTime: s.endTime ?? null,
+          maxMarks: s.maxMarks,
+          passMarks: s.passMarks ?? null,
+          room: s.room ?? null,
+          published: publishPapers ? true : undefined,
+          actorId,
+          institutionId: ctx.principal.institutionId,
+          questions: (s.questions ?? []).map((q) => ({
+            id: q.id,
+            version: undefined,
+            sequence: q.sequence,
+            qtype: q.qtype,
+            prompt: q.prompt,
+            promptImageObjectId: q.promptImageObjectId ?? null,
+            options: q.options ?? null,
+            correctKey: q.correctKey ?? null,
+            markingNote: q.markingNote ?? null,
+            marks: q.marks,
+            config: (q.config as Record<string, unknown> | null | undefined) ?? null,
+            actorId,
+          })),
+        })),
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('VERSION_CONFLICT') || msg.includes('NOT_FOUND')) {
+        throw this.versionConflict();
+      }
+      throw err;
+    }
+    if (!updated) throw this.versionConflict();
+    if (input.audience !== undefined) {
+      await this.audience.materializeExamAssignees(ctx, id, input.audience);
+    }
+    await this.write(ctx, 'exam.reconcile', 'exam', id, updated.campusId, {
+      newState: { name: updated.name, status: updated.status, scheduleCount: input.schedules.length },
+    });
+    return updated;
   }
 
   async update(ctx: PortalActionContext, id: string, input: UpdateExamInput) {
@@ -228,6 +393,7 @@ export class ExamsService {
       correctKey: input.correctKey ?? null,
       markingNote: input.markingNote ?? null,
       marks: input.marks,
+      config: (input.config as Record<string, unknown> | null | undefined) ?? null,
       createdBy: ctx.principal.institutionUserId,
     });
     await this.write(ctx, 'exam.question.create', 'exam_paper_question', row.id, exam.campusId, {
@@ -255,6 +421,10 @@ export class ExamsService {
       correctKey: input.correctKey === undefined ? existing.correctKey : input.correctKey,
       markingNote: input.markingNote === undefined ? existing.markingNote : input.markingNote,
       marks: input.marks ?? existing.marks,
+      config:
+        input.config === undefined
+          ? existing.config
+          : ((input.config as Record<string, unknown> | null | undefined) ?? null),
       updatedBy: ctx.principal.institutionUserId,
     });
     if (!updated) throw this.versionConflict();

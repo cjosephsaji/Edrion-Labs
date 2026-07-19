@@ -13,6 +13,7 @@ import {
   Skeleton,
   ErrorState,
   Label,
+  Select,
   cn,
 } from '@edrion/ui';
 import {
@@ -303,14 +304,12 @@ function CampusAccessCard({ user, onChange }: { user: InstitutionUserDetailDto; 
                       {c.name}
                     </label>
                     {on && (
-                      <select
+                      <Select
                         value={grants[c.id]}
                         onChange={(e) => setGrants((p) => ({ ...p, [c.id]: e.target.value }))}
-                        className="rounded-md border border-border bg-surface px-2 py-1 text-xs"
-                      >
-                        <option value="manage">manage</option>
-                        <option value="view">view</option>
-                      </select>
+                        className="text-xs"
+                        options={[{ value: 'manage', label: 'manage' }, { value: 'view', label: 'view' }]}
+                      />
                     )}
                   </div>
                 );
@@ -400,15 +399,8 @@ function OverridesCard({ user, onChange }: { user: InstitutionUserDetailDto; onC
         <div className="space-y-2 border-t border-border pt-3">
           <Label>Add override</Label>
           <div className="flex flex-wrap items-center gap-2">
-            <select value={key} onChange={(e) => setKey(e.target.value)} className="h-input flex-1 rounded-md border border-border bg-surface px-2 text-xs">
-              {ALL_INSTITUTION_PERMISSION_KEYS.map((k) => (
-                <option key={k} value={k}>{permLabel(k)}</option>
-              ))}
-            </select>
-            <select value={effect} onChange={(e) => setEffect(e.target.value as 'grant' | 'deny')} className="h-input rounded-md border border-border bg-surface px-2 text-xs">
-              <option value="grant">grant</option>
-              <option value="deny">deny</option>
-            </select>
+            <Select value={key} onChange={(e) => setKey(e.target.value)} className="h-input flex-1 text-xs" options={ALL_INSTITUTION_PERMISSION_KEYS.map((k) => ({ value: k, label: permLabel(k) }))} />
+            <Select value={effect} onChange={(e) => setEffect(e.target.value as 'grant' | 'deny')} className="h-input text-xs" options={[{ value: 'grant', label: 'grant' }, { value: 'deny', label: 'deny' }]} />
             <Button
               size="sm"
               onClick={() =>

@@ -6,6 +6,7 @@ export * from './users';
 export * from './portal-sessions';
 export * from './academics';
 export * from './people';
+export * from './enrollments';
 export * from './admissions';
 export * from './attendance';
 export * from './timetable';

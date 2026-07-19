@@ -41,10 +41,18 @@ export function StatCard({
   className?: string;
 }) {
   return (
-    <Card className={cn('group overflow-hidden p-4 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md', className)}>
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-xs font-semibold uppercase tracking-wide text-text-muted">{label}</div>
-        <span className="h-1.5 w-1.5 rounded-full bg-primary/30 transition-colors group-hover:bg-primary" aria-hidden />
+    <Card
+      className={cn(
+        'group relative min-w-[9.5rem] overflow-hidden p-4 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md',
+        className,
+      )}
+    >
+      <span
+        className="absolute right-4 top-4 h-1.5 w-1.5 rounded-full bg-primary/30 transition-colors group-hover:bg-primary"
+        aria-hidden
+      />
+      <div className="pr-4 text-xs font-semibold uppercase leading-snug tracking-wide text-balance text-text-muted hyphens-none">
+        {label}
       </div>
       <div className="mt-2 text-2xl font-semibold text-text-primary">{value}</div>
       {hint ? <div className="mt-1 text-xs text-text-muted">{hint}</div> : null}

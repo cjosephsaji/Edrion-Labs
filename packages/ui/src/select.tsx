@@ -1,6 +1,6 @@
 'use client';
-import { forwardRef } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { forwardRef, useCallback } from 'react';
+import { Combobox } from './combobox';
 import { cn } from './cn';
 
 export interface SelectOption {
@@ -8,37 +8,78 @@ export interface SelectOption {
   label: string;
 }
 
-export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange' | 'value'> {
   options: SelectOption[];
-  /** Shown as a disabled leading option when the value is empty (acts as a label). */
+  /** Shown when the value is empty and no matching option is selected. */
   placeholder?: string;
+  value?: string;
+  onChange?: React.ChangeEventHandler<HTMLSelectElement>;
+  searchPlaceholder?: string;
+  emptyText?: string;
 }
 
-/** Styled native <select> — accessible, zero-dependency, matches the Input chrome. */
-export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, options, placeholder, ...props }, ref) => (
-    <div className="relative">
-      <select
-        ref={ref}
-        className={cn(
-          'h-input w-full appearance-none rounded-md border border-border bg-surface px-3 pr-9 text-sm text-text-primary',
-          'transition-shadow duration-100 focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/40',
-          'disabled:cursor-not-allowed disabled:opacity-60',
-          className,
-        )}
-        {...props}
-      >
-        {placeholder !== undefined && (
-          <option value="">{placeholder}</option>
-        )}
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-    </div>
-  ),
+function syntheticChange(value: string, name?: string): React.ChangeEvent<HTMLSelectElement> {
+  const target = { value, name: name ?? '' } as HTMLSelectElement;
+  return { target, currentTarget: target } as React.ChangeEvent<HTMLSelectElement>;
+}
+
+/** Searchable select — wraps {@link Combobox} with a native-select-compatible API. */
+export const Select = forwardRef<HTMLButtonElement, SelectProps>(
+  (
+    {
+      className,
+      options,
+      placeholder,
+      value,
+      onChange,
+      disabled,
+      id,
+      name,
+      required,
+      searchPlaceholder,
+      emptyText,
+      'aria-label': ariaLabel,
+      'aria-describedby': ariaDescribedBy,
+    },
+    ref,
+  ) => {
+    const handleChange = useCallback(
+      (next: string) => {
+        onChange?.(syntheticChange(next, name));
+      },
+      [onChange, name],
+    );
+
+    return (
+      <>
+        {name ? (
+          <input
+            type="text"
+            name={name}
+            value={value ?? ''}
+            required={required}
+            tabIndex={-1}
+            aria-hidden
+            readOnly
+            className="pointer-events-none absolute h-0 w-0 opacity-0"
+          />
+        ) : null}
+        <Combobox
+          ref={ref}
+          id={id}
+          options={options}
+          value={value ?? ''}
+          onChange={handleChange}
+          placeholder={placeholder ?? 'Select…'}
+          searchPlaceholder={searchPlaceholder}
+          emptyText={emptyText}
+          disabled={disabled}
+          className={cn(className)}
+          aria-label={ariaLabel}
+          aria-describedby={ariaDescribedBy}
+        />
+      </>
+    );
+  },
 );
 Select.displayName = 'Select';

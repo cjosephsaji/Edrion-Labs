@@ -1,7 +1,9 @@
 'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { EffectiveSettings, EffectiveSettingsResponse, InstitutionProfile, NomenclatureOverrides, UpdateInstitutionProfileInput } from '@edrion/ui';
+import type { EffectiveSettings, EffectiveSettingsResponse, InstitutionProfile, NavigationLayout, NomenclatureOverrides, UpdateInstitutionProfileInput } from '@edrion/ui';
 import { makeCrudHooks } from './admin';
+import { usePortalMe } from './hooks';
+import { usePermissions } from './permissions';
 import { usePortalClient } from './portal-client';
 import { useScope } from './scope';
 import type { InstitutionScope } from './types';
@@ -19,10 +21,12 @@ function scopeKey(scope: InstitutionScope): string {
 export function useEffectiveSettings() {
   const client = usePortalClient();
   const { scope } = useScope();
+  const { can, ready } = usePermissions();
   return useQuery({
     queryKey: ['settings', 'effective', scopeKey(scope)],
     queryFn: () => client.get<EffectiveSettingsResponse>('/portal/settings/effective', scope),
     staleTime: 60_000,
+    enabled: ready && can('institution_settings.view'),
   });
 }
 
@@ -40,17 +44,24 @@ export function useSaveEffectiveSettings() {
 export function useInstitutionProfile() {
   const client = usePortalClient();
   const { scope } = useScope();
+  const { can, ready } = usePermissions();
   return useQuery({
     queryKey: ['settings', 'profile'],
     queryFn: () => client.get<InstitutionProfile>('/portal/settings/profile', scope),
     staleTime: 60_000,
+    enabled: ready && can('institution_settings.view'),
   });
 }
 
-/** ISO country from the institution profile (set during registration). Used as the phone-input default. */
+/**
+ * ISO country for phone-input defaults. Prefers the editable profile (if the user can load it),
+ * then falls back to `/portal/me` so onboarding and staff forms work before settings loads and
+ * for users without `institution_settings.view`.
+ */
 export function useInstitutionCountry(): string | undefined {
-  const { data } = useInstitutionProfile();
-  const code = data?.country?.trim().toUpperCase();
+  const { data: profile } = useInstitutionProfile();
+  const { data: me } = usePortalMe();
+  const code = (profile?.country ?? me?.institutionCountry)?.trim().toUpperCase();
   return code || undefined;
 }
 
@@ -76,6 +87,37 @@ export function useSaveNomenclatureOverrides() {
   return useMutation({
     mutationFn: (overrides: NomenclatureOverrides) =>
       client.post<EffectiveSettingsResponse>('/portal/settings/nomenclature', scope, { overrides }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['settings', 'effective'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['settings', 'effective'] });
+      // Nomenclature is embedded in /portal/me — refresh so labels update everywhere immediately.
+      qc.invalidateQueries({ queryKey: ['portal', 'me'] });
+    },
+  });
+}
+
+export function useSaveNavigationLayout() {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (layout: NavigationLayout) =>
+      client.post<EffectiveSettingsResponse>('/portal/settings/navigation', scope, { layout }),
+    onSuccess: async (data) => {
+      // Patch caches immediately, then await /portal/me refetch so the sidebar can't race
+      // a stale response without navigation.
+      qc.setQueryData(['settings', 'effective', scopeKey(scope)], data);
+      qc.setQueryData(['portal', 'me'], (old: unknown) => {
+        if (!old || typeof old !== 'object') return old;
+        return {
+          ...(old as Record<string, unknown>),
+          navigation: data.navigation,
+          nomenclature: data.nomenclature,
+        };
+      });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['settings', 'effective'] }),
+        qc.invalidateQueries({ queryKey: ['portal', 'me'] }),
+      ]);
+    },
   });
 }

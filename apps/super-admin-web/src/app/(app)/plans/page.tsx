@@ -11,6 +11,7 @@ import {
   EmptyState,
   ErrorState,
   Button,
+  Select,
 } from '@edrion/ui';
 import { usePlans, usePlansSummary } from '@edrion/api-client';
 import { PlanStatus } from '@edrion/shared-types';
@@ -86,26 +87,8 @@ export default function PlansPage() {
               className="h-input w-72 rounded-md border border-border bg-surface pl-8 pr-3 text-sm text-text-primary placeholder:text-text-muted focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
             />
           </div>
-          <select
-            value={status}
-            onChange={(e) => setParam({ status: e.target.value, page: 1 })}
-            className="h-input rounded-md border border-border bg-surface px-3 text-sm text-text-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-          >
-            {STATUS_FILTERS.map((s) => (
-              <option key={s} value={s}>
-                {s === '' ? 'All statuses' : s}
-              </option>
-            ))}
-          </select>
-          <select
-            value={audience}
-            onChange={(e) => setParam({ audience: e.target.value, page: 1 })}
-            className="h-input rounded-md border border-border bg-surface px-3 text-sm text-text-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-          >
-            <option value="">All audiences</option>
-            <option value="institution">Institution</option>
-            <option value="independent">Independent</option>
-          </select>
+          <Select value={status} onChange={(e) => setParam({ status: e.target.value, page: 1 })} className="h-input w-auto min-w-[10rem]" options={STATUS_FILTERS.map((s) => ({ value: s, label: s === '' ? 'All statuses' : s }))} />
+          <Select value={audience} onChange={(e) => setParam({ audience: e.target.value, page: 1 })} className="h-input w-auto min-w-[10rem]" options={[{ value: '', label: 'All audiences' }, { value: 'institution', label: 'Institution' }, { value: 'independent', label: 'Independent' }]} />
           {isFetching && <span className="text-xs text-text-muted">Updating…</span>}
         </div>
 

@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { and, eq, schema, type Database } from '@edrion/database';
 import { resolveScopeFilter } from '@edrion/auth';
 import type { TargetInput } from '@edrion/schemas';
@@ -47,15 +47,23 @@ export class PortalAudienceService {
     await this.db.insert(t).values(studentIds.map((studentId) => ({ assignmentId, studentId })));
   }
 
-  /** Upload a question/option image to storage_objects (institution staff scope). */
-  async uploadQuestionImage(
+  /** Upload a question/option/answer file to storage_objects (institution staff or student scope). */
+  async uploadQuestionFile(
     ctx: PortalActionContext,
     driver: { put: (scopeKey: string, buffer: Buffer) => Promise<string> },
     filename: string,
     mimeType: string,
     buffer: Buffer,
-    kind: 'exam_question' | 'assignment_question',
+    kind: 'exam_question' | 'assignment_question' | 'exam_answer_file' | 'code_submission',
+    opts?: { maxBytes?: number },
   ) {
+    const maxBytes = opts?.maxBytes ?? 25 * 1024 * 1024;
+    if (buffer.length > maxBytes) {
+      throw new BadRequestException({
+        code: 'FILE_TOO_LARGE',
+        message: `File exceeds the ${Math.round(maxBytes / (1024 * 1024))}MB limit.`,
+      });
+    }
     const scopeKey = `inst/${ctx.principal.institutionId}/staff/${ctx.principal.institutionUserId}`;
     const storageKey = await driver.put(scopeKey, buffer);
     const [row] = await this.db
@@ -74,6 +82,18 @@ export class PortalAudienceService {
       })
       .returning();
     return { objectId: row!.id };
+  }
+
+  /** @deprecated Prefer uploadQuestionFile — kept for call-site compatibility. */
+  uploadQuestionImage(
+    ctx: PortalActionContext,
+    driver: { put: (scopeKey: string, buffer: Buffer) => Promise<string> },
+    filename: string,
+    mimeType: string,
+    buffer: Buffer,
+    kind: 'exam_question' | 'assignment_question',
+  ) {
+    return this.uploadQuestionFile(ctx, driver, filename, mimeType, buffer, kind);
   }
 
   async isStudentTargetedForExam(studentId: string, examId: string, classId: string | null): Promise<boolean> {

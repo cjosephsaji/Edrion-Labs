@@ -1,0 +1,19 @@
+/* Guardian (parent) token surface for shared @edrion/ui components in the /family view. */
+:root {
+  --background: #f8f5ee;
+  --background-secondary: #f1ecdf;
+  --surface: #fffaf1;
+  --surface-elevated: #ffffff;
+  --primary: #1f604a;
+  --primary-hover: #164f3d;
+  --text-primary: #25241d;
+  --text-secondary: #686355;
+  --text-muted: #746d5d;
+  --border: #e2d9c8;
+  --border-strong: #cfc4af;
+  --danger: #b74833;
+  --ring: #1f604a;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --size-input: 2.75rem;
+}

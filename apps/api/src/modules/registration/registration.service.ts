@@ -363,6 +363,19 @@ export class RegistrationService {
       previousState: { status: request.status },
       newState: { status: updated.status },
     });
+
+    const recipient = updated.contactEmail ?? updated.verifiedEmail;
+    if (recipient) {
+      const sent = await this.emails.sendReviewStarted(
+        recipient,
+        updated.displayName ?? updated.legalName ?? 'your institution',
+        updated.publicRef ?? id,
+      );
+      await this.writeAudit(ctx, updated, 'registration.email_sent', {
+        newState: { template: 'registration_review_started', to: recipient, messageId: sent.messageId },
+      });
+    }
+
     return updated;
   }
 
@@ -413,7 +426,7 @@ export class RegistrationService {
     ctx: ActionContext,
   ): Promise<InstitutionRegistrationRequest> {
     const request = await this.requireRequest(id);
-    this.assertReviewable(request);
+    this.assertDecidable(request);
     const reviewerId = ctx.principalContext.principal.employeeId;
     const updated = await this.repo.updateWithVersion(id, input.version, {
       status: RegistrationStatus.Rejected,
@@ -491,6 +504,12 @@ export class RegistrationService {
       request.status !== RegistrationStatus.UnderReview
     ) {
       throw this.invalidStatus(request.status, 'review');
+    }
+  }
+
+  private assertDecidable(request: InstitutionRegistrationRequest): void {
+    if (request.status !== RegistrationStatus.UnderReview) {
+      throw this.invalidStatus(request.status, 'approve or reject');
     }
   }
 

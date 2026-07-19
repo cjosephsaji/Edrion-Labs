@@ -27,6 +27,8 @@ import type {
 import type { FeeInvoicesListQuery, FeeStructuresListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
+import { scopeConds } from './portal-scope';
+import { enrolledStudentsCond } from './academic-scope-filters';
 import { programmeListFilterConds } from './programme-list-filters';
 
 const studentDisplayName = personSqlName(schema.students.firstName, schema.students.middleName, schema.students.lastName);
@@ -70,12 +72,7 @@ export class FeesRepository {
     institutionId: string,
     campusIds: CampusFilter,
   ): SQL[] {
-    const conds: SQL[] = [eq(instCol, institutionId)];
-    if (campusIds) {
-      const inScope = or(isNull(campusCol), inArray(campusCol, campusIds));
-      if (inScope) conds.push(inScope);
-    }
-    return conds;
+    return scopeConds(instCol, campusCol, institutionId, campusIds);
   }
 
   private order(col: PgColumn | undefined, dir: 'asc' | 'desc', fallback: PgColumn): SQL {
@@ -108,9 +105,12 @@ export class FeesRepository {
     if (q.classId) conds.push(eq(t.classId, q.classId));
     conds.push(
       ...programmeListFilterConds(this.db, q, {
+        academicYearId: t.academicYearId,
         termId: t.termId,
         gradeLevelId: t.gradeLevelId,
         classId: t.classId,
+        gradeLevelNumber: t.gradeLevelNumber,
+        termSequence: t.termSequence,
       }),
     );
     if (q.search) {
@@ -195,6 +195,15 @@ export class FeesRepository {
     const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
     if (q.status) conds.push(eq(t.status, q.status));
     if (q.studentId) conds.push(eq(t.studentId, q.studentId));
+    conds.push(
+      ...programmeListFilterConds(this.db, q, {
+        academicYearId: t.academicYearId,
+        termId: t.termId,
+        termIdNullMeansWholeYear: true,
+      }),
+    );
+    const enrolled = enrolledStudentsCond(this.db, q, t.studentId);
+    if (enrolled) conds.push(enrolled);
     if (q.search) {
       const s = or(ilike(t.invoiceNo, `%${q.search}%`), ilike(studentDisplayName, `%${q.search}%`));
       if (s) conds.push(s);

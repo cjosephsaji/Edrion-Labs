@@ -14,6 +14,8 @@ export const TARGET_ENTITY_KINDS = [
   'parent',
   'teacher',
   'staff',
+  /** A portal login (institution_users row) — for staff-to-staff messaging. */
+  'user',
   'class',
   'grade',
   'department',
@@ -32,7 +34,15 @@ export const TARGET_ENTITY_KINDS = [
 ] as const;
 
 /** Broadcast kinds — no refId. */
-export const TARGET_BROADCAST_KINDS = ['all', 'all_students', 'all_parents', 'all_teachers', 'all_staff'] as const;
+export const TARGET_BROADCAST_KINDS = [
+  'all',
+  'all_students',
+  'all_parents',
+  'all_teachers',
+  'all_staff',
+  /** Every portal user who can use messaging in the current scope. */
+  'all_colleagues',
+] as const;
 
 export const TARGET_KINDS = [...TARGET_ENTITY_KINDS, ...TARGET_BROADCAST_KINDS] as const;
 export const targetKindSchema = z.enum(TARGET_KINDS);

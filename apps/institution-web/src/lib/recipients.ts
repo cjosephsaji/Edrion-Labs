@@ -23,8 +23,9 @@ export interface RecipientPreview {
   parentIds: string[];
   teacherIds: string[];
   staffIds: string[];
+  userIds?: string[];
   count: number;
-  byKind: { students: number; parents: number; teachers: number; staff: number };
+  byKind: { students: number; parents: number; teachers: number; staff: number; colleagues?: number };
   sample: string[];
   summary: string;
 }
@@ -35,6 +36,12 @@ export interface RecipientGroupRow {
   description: string | null;
   version: number;
   members: DescribedTarget[];
+}
+
+export interface MessagingColleague {
+  id: string;
+  fullName: string;
+  email: string;
 }
 
 interface Paged<T> {
@@ -54,12 +61,13 @@ function scopeKey(scope: InstitutionScope): string {
  * Modeled as a query (keyed on the targets) so it caches + refetches as the selection changes; the
  * endpoint is a POST but idempotent (reads only).
  */
-export function useRecipientPreview(targets: Target[], enabled = true) {
+export function useRecipientPreview(targets: Target[], enabled = true, messaging = false) {
   const client = usePortalClient();
   const { scope } = useScope();
+  const path = messaging ? '/portal/conversations/recipients/preview' : '/portal/recipients/preview';
   return useQuery({
-    queryKey: ['recipients', 'preview', scopeKey(scope), targets],
-    queryFn: () => client.post<RecipientPreview>('/portal/recipients/preview', scope, { targets }),
+    queryKey: ['recipients', 'preview', messaging ? 'messaging' : 'announcements', scopeKey(scope), targets],
+    queryFn: () => client.post<RecipientPreview>(path, scope, { targets }),
     enabled: enabled && targets.length > 0,
     placeholderData: keepPreviousData,
   });
@@ -96,4 +104,22 @@ export function useRecipientGroupMutations() {
     onSuccess: invalidate,
   });
   return { create, update, remove };
+}
+
+/** Portal users the caller can message (messages.use — no users.view required). */
+export function useMessagingColleagues(enabled = true) {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  return useQuery({
+    queryKey: ['recipients', 'messaging-colleagues', scopeKey(scope)],
+    queryFn: async () => {
+      const res = await client.get<{ items: MessagingColleague[]; total: number }>(
+        '/portal/users/messaging-colleagues',
+        scope,
+      );
+      return res.items ?? [];
+    },
+    enabled,
+    staleTime: 60_000,
+  });
 }

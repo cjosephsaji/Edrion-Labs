@@ -3,6 +3,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { usePortalClient } from './portal-client';
 import { useScope } from './scope';
 import type { ListParams } from './academics';
+import { useAcademicScopedParams, useAcademicContextKey } from './academic-context';
 import type {
   ClassRosterEntry,
   GuardianRow,
@@ -47,12 +48,21 @@ function queryString(p: ListParams): string {
 }
 
 /** A scope-aware, server-paginated list of one people resource. Refetches when scope changes. */
+const PEOPLE_ACADEMIC_SCOPE: Record<string, 'year+term' | 'year' | 'none'> = {
+  students: 'year',
+  staff: 'year',
+  parents: 'none',
+};
+
 export function usePeopleList<T>(resource: string, params: ListParams) {
   const client = usePortalClient();
   const { scope } = useScope();
+  const mode = params.academicScope ?? PEOPLE_ACADEMIC_SCOPE[resource] ?? 'year';
+  const scoped = useAcademicScopedParams(params, mode);
+  const { academicScope: _as, ...listParams } = scoped;
   return useQuery({
-    queryKey: ['people', resource, scopeKey(scope), params],
-    queryFn: () => client.get<Paged<T>>(`/portal/people/${resource}?${queryString(params)}`, scope),
+    queryKey: ['people', resource, scopeKey(scope), listParams],
+    queryFn: () => client.get<Paged<T>>(`/portal/people/${resource}?${queryString(listParams)}`, scope),
     placeholderData: keepPreviousData,
   });
 }
@@ -87,10 +97,23 @@ const OPTION_PARAMS: ListParams = { page: 1, pageSize: 100, sortDir: 'asc' };
 export function useTeachingStaffOptions() {
   const client = usePortalClient();
   const { scope } = useScope();
+  const academicKey = useAcademicContextKey();
+  const scoped = useAcademicScopedParams(
+    { page: 1, pageSize: 100, sortDir: 'asc' as const, filters: {} },
+    'year',
+  );
+  const filters = scoped.filters ?? {};
+  const qs = new URLSearchParams();
+  if (filters.academicYearId) qs.set('academicYearId', filters.academicYearId);
+  if (filters.termId) qs.set('termId', filters.termId);
+  const q = qs.toString();
   return useQuery({
-    queryKey: ['people', 'staff', 'teaching-options', scopeKey(scope)],
+    queryKey: ['people', 'staff', 'teaching-options', scopeKey(scope), academicKey],
     queryFn: async () => {
-      const res = await client.get<{ items: TeachingStaffOption[]; total: number }>('/portal/people/staff/teaching-options', scope);
+      const res = await client.get<{ items: TeachingStaffOption[]; total: number }>(
+        `/portal/people/staff/teaching-options${q ? `?${q}` : ''}`,
+        scope,
+      );
       return res.items ?? [];
     },
     staleTime: 60_000,

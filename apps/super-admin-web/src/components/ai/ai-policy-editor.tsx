@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label } from '@edrion/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Select } from '@edrion/ui';
 import { useUpsertAiPolicy, type AiPolicyDto } from '@edrion/api-client';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { errorMessage } from '@/lib/errors';
@@ -91,11 +91,7 @@ export function AiPolicyEditor({ policy }: { policy?: AiPolicyDto }) {
       <CardContent className="space-y-5">
         <div>
           <Label htmlFor="pe-mode">Operating mode</Label>
-          <select id="pe-mode" value={form.mode} onChange={(e) => setForm((f) => ({ ...f, mode: e.target.value }))} className={fieldClass + ' max-w-xs'}>
-            {MODES.map((m) => (
-              <option key={m.key} value={m.key}>{m.label}</option>
-            ))}
-          </select>
+          <Select id="pe-mode" value={form.mode} onChange={(e) => setForm((f) => ({ ...f, mode: e.target.value }))} className={fieldClass + ' max-w-xs'} options={MODES.map((m) => ({ value: m.key, label: m.label }))} />
           <p className="mt-1 text-xs text-text-muted">{MODES.find((m) => m.key === form.mode)?.hint}</p>
         </div>
 

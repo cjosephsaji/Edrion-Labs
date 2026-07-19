@@ -6,13 +6,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { and, eq, schema, type Database } from '@edrion/database';
-import { ActorType, AuditResult, FeatureScope, RiskLevel, STUDENT_SURFACES } from '@edrion/shared-types';
+import { AccountStatus, ActorType, AuditResult, FeatureScope, RiskLevel, STUDENT_SURFACES } from '@edrion/shared-types';
 import type { AuditWriter } from '@edrion/audit';
 import type { ApiEnv } from '@edrion/config';
 import { API_ENV, AUDIT_WRITER, DATABASE } from '../../common/tokens';
 import { FeatureControlsRepository } from '../feature-controls/feature-controls.repository';
 import { FeatureControlsService } from '../feature-controls/feature-controls.service';
 import { hashToken, makeToken } from '../authentication/password.util';
+import { emailButton, emailLayout } from '../../common/email-templates';
 import { EmailService } from './email.service';
 import { PortalInviteService } from './portal-invite.service';
 import type { PortalActionContext } from './portal-action-context';
@@ -20,6 +21,7 @@ import { basePortalAudit } from './portal-action-context';
 
 const MODULE = 'student-portal';
 const INVITE_TTL_SECONDS = 7 * 24 * 60 * 60;
+const RESET_TTL_SECONDS = 60 * 60;
 
 export interface StudentPortalInviteInput {
   targetEmail?: string;
@@ -131,27 +133,68 @@ export class StudentPortalInviteService {
       .set({ institutionUserId: user.id })
       .where(eq(schema.students.id, student.id));
 
+    // Persist invitation metadata without the institution-portal email (that uses PORTAL_WEB_URL :3002).
+    // Student activation always links to STUDENT_WEB_URL (:3005).
     const sent = await this.invites.invite({
       institutionId,
       institutionUserId: user.id,
       email: inviteEmail ?? accountEmail,
       fullName,
       invitedBy: ctx.principal.institutionUserId,
+      sendEmail: false,
     });
 
-    const activateUrl = `${this.env.STUDENT_WEB_URL}/activate?token=${encodeURIComponent(rawToken)}`;
+    const activateUrl = `${this.env.STUDENT_WEB_URL.replace(/\/$/, '')}/activate?token=${encodeURIComponent(rawToken)}`;
+    const institutionName = institution?.displayName ?? 'Your school';
+    const to = inviteEmail ?? accountEmail;
     if (guardianMediated) {
+      const text = [
+        `Hello,`,
+        '',
+        `${institutionName} has invited ${fullName} to the Edrion student portal.`,
+        `As their guardian, please set up their password using this link (valid 7 days):`,
+        activateUrl,
+        '',
+      ].join('\n');
+      const html = emailLayout({
+        heading: `Activate ${fullName}'s student portal`,
+        preheader: `Set up ${fullName}'s Edrion student account`,
+        footer:
+          "You're receiving this because your school invited your child to the Edrion student portal. If this wasn't expected, you can safely ignore it.",
+        bodyHtml: `<p style="margin:0 0 16px;"><strong>${institutionName}</strong> has invited <strong>${fullName}</strong> to the Edrion student portal.</p>
+          <p style="margin:0 0 18px;">As their guardian, please set up their password using the link below. It is valid for <strong>7 days</strong>.</p>
+          ${emailButton(activateUrl, 'Set up student account')}`,
+      });
       await this.emails.send({
-        to: inviteEmail!,
+        to,
         subject: `Activate ${fullName}'s student portal account`,
-        text: [
-          `Hello,`,
-          '',
-          `${institution?.displayName ?? 'Your school'} has invited ${fullName} to the Edrion student portal.`,
-          `As their guardian, please set up their password using this link (valid 7 days):`,
-          activateUrl,
-          '',
-        ].join('\n'),
+        text,
+        html,
+      });
+    } else {
+      const text = [
+        `Hi ${fullName},`,
+        '',
+        `${institutionName} has invited you to the Edrion student portal.`,
+        `Set up your password using this link (valid 7 days):`,
+        activateUrl,
+        '',
+        `If you weren't expecting this, you can ignore this email.`,
+      ].join('\n');
+      const html = emailLayout({
+        heading: `Activate your student portal`,
+        preheader: `Set up your Edrion student account for ${institutionName}`,
+        footer:
+          "You're receiving this because your school invited you to the Edrion student portal. If this wasn't expected, you can safely ignore it.",
+        bodyHtml: `<p style="margin:0 0 16px;">Hi ${fullName}, <strong>${institutionName}</strong> has invited you to the Edrion student portal.</p>
+          <p style="margin:0 0 18px;">Click below to set your password and activate your account. This link is valid for <strong>7 days</strong>.</p>
+          ${emailButton(activateUrl, 'Activate student account')}`,
+      });
+      await this.emails.send({
+        to,
+        subject: `You've been invited to ${institutionName} on Edrion`,
+        text,
+        html,
       });
     }
 
@@ -178,6 +221,102 @@ export class StudentPortalInviteService {
       invitationId: sent.invitation.id,
       guardianMediated,
     };
+  }
+
+  /**
+   * Admin-triggered password reset for a student who already has a linked portal account.
+   * Sends a student-web reset link (not institution-portal).
+   */
+  async sendPasswordReset(ctx: PortalActionContext, studentId: string) {
+    const institutionId = ctx.principal.institutionId;
+    const [student] = await this.db
+      .select()
+      .from(schema.students)
+      .where(and(eq(schema.students.id, studentId), eq(schema.students.institutionId, institutionId)))
+      .limit(1);
+    if (!student) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Student not found' });
+    if (!student.institutionUserId) {
+      throw new BadRequestException({
+        code: 'NOT_LINKED',
+        message: 'This student does not have a portal account yet. Send an invitation first.',
+      });
+    }
+
+    const [user] = await this.db
+      .select()
+      .from(schema.institutionUsers)
+      .where(
+        and(
+          eq(schema.institutionUsers.id, student.institutionUserId),
+          eq(schema.institutionUsers.institutionId, institutionId),
+        ),
+      )
+      .limit(1);
+    if (!user) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Linked portal account not found' });
+    }
+    if (user.status === AccountStatus.Disabled || user.disabledAt) {
+      throw new BadRequestException({
+        code: 'ACCOUNT_SUSPENDED',
+        message: 'This student account is suspended. Unsuspend it before sending a password reset.',
+      });
+    }
+    if (user.status !== AccountStatus.Active || !user.activatedAt) {
+      throw new BadRequestException({
+        code: 'NOT_ACTIVATED',
+        message: 'This student has not activated their account yet. Send (or resend) an invitation instead.',
+      });
+    }
+
+    const raw = makeToken();
+    const expiresAt = new Date(Date.now() + RESET_TTL_SECONDS * 1000);
+    await this.db
+      .update(schema.institutionUsers)
+      .set({
+        passwordResetTokenHash: hashToken(raw, this.pepper),
+        passwordResetExpiresAt: expiresAt,
+      })
+      .where(eq(schema.institutionUsers.id, user.id));
+
+    const resetUrl = `${this.env.STUDENT_WEB_URL.replace(/\/$/, '')}/reset/confirm?token=${encodeURIComponent(raw)}`;
+    const text = [
+      `Hi ${user.fullName},`,
+      '',
+      'Your school requested a password reset for your Edrion student account.',
+      `Reset your password (valid for 1 hour):`,
+      resetUrl,
+      '',
+      `If you didn't expect this, you can safely ignore this email.`,
+    ].join('\n');
+    const html = emailLayout({
+      heading: 'Reset your password',
+      preheader: 'Your school requested a password reset',
+      footer:
+        "You're receiving this because your school requested a password reset for your Edrion student account. If you didn't expect this, you can safely ignore it.",
+      bodyHtml: `<p style="margin:0 0 16px;">Hi ${user.fullName}, your school requested a password reset for your Edrion student account.</p>
+        <p style="margin:0 0 18px;">Click below to choose a new password. This link expires in <strong>1 hour</strong>.</p>
+        ${emailButton(resetUrl, 'Reset your password')}`,
+    });
+    await this.emails.send({
+      to: user.email,
+      subject: 'Reset your Edrion student password',
+      text,
+      html,
+    });
+
+    await this.audit.logAudit({
+      ...basePortalAudit(ctx),
+      actorType: ActorType.InstitutionUser,
+      action: 'student_portal.password_reset',
+      module: MODULE,
+      entityType: 'student',
+      entityId: student.id,
+      result: AuditResult.Success,
+      riskLevel: RiskLevel.Medium,
+      newState: { institutionUserId: user.id, email: user.email },
+    });
+
+    return { studentId: student.id, institutionUserId: user.id, email: user.email };
   }
 
   /** Institution-scoped student portal surface toggles (Plan 01). */

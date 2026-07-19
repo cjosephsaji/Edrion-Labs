@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Bell, BookOpen, Building2, GraduationCap, Save, School, ScrollText, ShieldCheck, SlidersHorizontal, UserCog } from 'lucide-react';
+import { ArrowRight, Bell, BookOpen, Building2, GraduationCap, LayoutList, Save, School, ScrollText, ShieldCheck, SlidersHorizontal, UserCog } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -33,6 +33,7 @@ import {
   type UpdateInstitutionProfileInput,
 } from '@edrion/ui';
 import { Topbar } from '@/components/app-shell/topbar';
+import { NavigationSection } from '@/components/settings/navigation-editor';
 import { usePermissions } from '@/lib/permissions';
 import {
   useEffectiveSettings,
@@ -42,11 +43,12 @@ import {
   useSaveNomenclatureOverrides,
 } from '@/lib/settings';
 
-type Section = 'profile' | 'preferences' | 'nomenclature' | 'administration';
+type Section = 'profile' | 'preferences' | 'navigation' | 'nomenclature' | 'administration';
 
 const SECTIONS: { key: Section; label: string; icon: typeof Building2 }[] = [
   { key: 'profile', label: 'Institution Profile', icon: Building2 },
   { key: 'preferences', label: 'Preferences', icon: SlidersHorizontal },
+  { key: 'navigation', label: 'Navigation', icon: LayoutList },
   { key: 'nomenclature', label: 'Nomenclature', icon: BookOpen },
   { key: 'administration', label: 'Administration', icon: ShieldCheck },
 ];
@@ -95,6 +97,7 @@ export default function SettingsPage() {
 
         {section === 'profile' && <ProfileSection canManage={canManage} />}
         {section === 'preferences' && <PreferencesSection canManage={canManage} />}
+        {section === 'navigation' && <NavigationSection canManage={canManage} />}
         {section === 'nomenclature' && <NomenclatureSection canManage={canManage} />}
         {section === 'administration' && <AdministrationSection />}
       </div>
@@ -564,13 +567,34 @@ function NomenclatureSection({ canManage }: { canManage: boolean }) {
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <CardHeader>
-          <CardTitle>Nomenclature</CardTitle>
-          <CardDescription>
-            Your institution type is <strong className="text-text-primary">{institutionType.replace('_', ' ')}</strong>.
-            Labels below default from that preset; override any row to customise what staff and families see.
-          </CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <div>
+            <CardTitle>Nomenclature</CardTitle>
+            <CardDescription>
+              Your institution type is <strong className="text-text-primary">{institutionType.replace('_', ' ')}</strong>.
+              Labels below default from that preset; override any row to customise what staff and families see.
+            </CardDescription>
+          </div>
+          {canManage && (
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <Button type="button" size="sm" variant="secondary" onClick={resetAll} disabled={!dirty}>
+                Reset all
+              </Button>
+              <Button type="button" size="sm" onClick={() => void onSave()} loading={save.isPending} disabled={!dirty}>
+                <Save className="h-4 w-4" />
+                Save
+              </Button>
+            </div>
+          )}
         </CardHeader>
+        {(error || (save.isSuccess && !dirty)) && (
+          <div className="border-t border-border px-5 py-2">
+            {error && <p className="text-sm text-danger">{error}</p>}
+            {save.isSuccess && !dirty && !error && (
+              <p className="text-sm text-success">Nomenclature saved — labels update across the portal.</p>
+            )}
+          </div>
+        )}
       </Card>
 
       {isLoading && <Skeleton className="h-40 w-full" />}
@@ -620,21 +644,6 @@ function NomenclatureSection({ canManage }: { canManage: boolean }) {
           </tbody>
         </table>
       </div>
-
-      {canManage && (
-        <div className="flex flex-wrap items-center gap-3">
-          <Button onClick={onSave} loading={save.isPending} disabled={!dirty}>
-            <Save className="mr-1.5 h-4 w-4" /> Save nomenclature
-          </Button>
-          <Button type="button" variant="secondary" onClick={resetAll} disabled={!dirty}>
-            Reset all to preset
-          </Button>
-          {save.isSuccess && !dirty && (
-            <span className="text-sm text-success">Nomenclature saved — labels update across the portal.</span>
-          )}
-          {error && <span className="text-sm text-danger">{error}</span>}
-        </div>
-      )}
     </div>
   );
 }
@@ -650,6 +659,7 @@ const ADMIN_LINKS: { label: string; href: string; permission: string; descriptio
   { label: 'Notifications', href: '/notifications', permission: 'announcements.view', description: 'Delivery of announcements and alerts.', icon: Bell },
   { label: 'Audit Logs', href: '/audit', permission: 'audit.view', description: 'Review every change made in the portal.', icon: ScrollText },
   { label: 'Student portal', href: '/settings/student-portal', permission: 'student_portal.manage', description: 'Invite students and control what they can see.', icon: GraduationCap },
+  { label: 'Calendar types', href: '/settings/calendar-types', permission: 'calendar_events.manage', description: 'Event type labels and colours for the institution calendar.', icon: LayoutList },
 ];
 
 function AdministrationSection() {

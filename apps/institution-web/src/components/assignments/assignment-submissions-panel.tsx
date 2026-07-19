@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Input, Select, Skeleton } from '@edrion/ui';
 import { usePermissions } from '@/lib/permissions';
 import { usePeopleList, type StudentRow } from '@/lib/people';
@@ -20,7 +20,13 @@ const STATUS_OPTIONS = [
   { value: 'missing', label: 'Missing' },
 ];
 
-const ROSTER_PARAMS = { page: 1, pageSize: 100, sortDir: 'asc' as const, sortBy: 'lastName' };
+const rosterParams = (classId: string) => ({
+  page: 1,
+  pageSize: 200,
+  sortDir: 'asc' as const,
+  sortBy: 'lastName',
+  filters: { classId },
+});
 
 interface Mark {
   status: SubmissionStatus;
@@ -44,16 +50,16 @@ export function AssignmentSubmissionsPanel({
   const { can } = usePermissions();
   const canManage = can('assignments.manage');
   const { data: submissions, isLoading: subsLoading } = useAssignmentSubmissions(assignmentId);
-  const { data: students, isLoading: studentsLoading } = usePeopleList<StudentRow>('students', ROSTER_PARAMS);
+  const { data: students, isLoading: studentsLoading } = usePeopleList<StudentRow>(
+    'students',
+    rosterParams(classId),
+  );
   const { grade } = useAssignmentGradeMutations(assignmentId);
   const [marks, setMarks] = useState<Record<string, Mark>>({});
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  const roster = useMemo(
-    () => (students?.items ?? []).filter((s) => s.classId === classId),
-    [students, classId],
-  );
+  const roster = students?.items ?? [];
 
   useEffect(() => {
     const byStudent = new Map((submissions ?? []).map((s) => [s.studentId, s]));

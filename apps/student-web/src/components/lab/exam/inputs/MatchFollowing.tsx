@@ -1,5 +1,6 @@
 'use client';
 import { MathText } from '@/components/learn/MathText';
+import { Select } from '@edrion/ui';
 import type { QuestionInputProps } from './types';
 
 type Entry = { key: string; label: string };
@@ -32,19 +33,14 @@ export function MatchFollowing({ question, value, onChange, disabled }: Question
               <MathText>{l.label}</MathText>
             </span>
           </div>
-          <select
+          <Select
             value={pairs[l.key] ?? ''}
             disabled={disabled}
             onChange={(e) => setPair(l.key, e.target.value)}
-            className="rounded-[10px] border border-st-bd2 bg-st-cardAlt px-3 py-2 text-sm text-st-ink outline-none focus:border-st-accent sm:w-56"
-          >
-            <option value="">Match…</option>
-            {right.map((r) => (
-              <option key={r.key} value={r.key}>
-                {r.key.toUpperCase()} — {r.label}
-              </option>
-            ))}
-          </select>
+            className="sm:w-56"
+            placeholder="Match…"
+            options={[{ value: '', label: 'Match…' }, ...right.map((r) => ({ value: r.key, label: `${r.key.toUpperCase()} — ${r.label}` }))]}
+          />
         </div>
       ))}
     </div>

@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Card, StatCard, TableSkeleton, EmptyState, ErrorState } from '@edrion/ui';
+import { Card, StatCard, TableSkeleton, EmptyState, ErrorState, Select } from '@edrion/ui';
 import { useCampuses, useInstitutions } from '@edrion/api-client';
 import { CampusBillingStatus } from '@edrion/shared-types';
 import { Topbar } from '@/components/app-shell/topbar';
@@ -80,30 +80,19 @@ export default function CampusesPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          <Select
             value={institutionId}
             onChange={(e) => setParam({ institutionId: e.target.value, page: 1 })}
-            className={selectClass}
-          >
-            <option value="">All institutions</option>
-            {(institutions.data?.items ?? []).map((i) => (
-              <option key={i.id} value={i.id}>{i.displayName}</option>
-            ))}
-          </select>
-          <select
+            className={`${selectClass} w-auto min-w-[12rem]`}
+            options={[{ value: '', label: 'All institutions' }, ...(institutions.data?.items ?? []).map((i) => ({ value: i.id, label: i.displayName }))]}
+          />
+          <Select
             value={billingStatus}
             onChange={(e) => setParam({ billingStatus: e.target.value, page: 1 })}
-            className={selectClass}
-          >
-            {BILLING_FILTERS.map((s) => (
-              <option key={s} value={s}>{s === '' ? 'All billing statuses' : s.replace(/_/g, ' ')}</option>
-            ))}
-          </select>
-          <select value={active} onChange={(e) => setParam({ active: e.target.value, page: 1 })} className={selectClass}>
-            {ACTIVE_FILTERS.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
-            ))}
-          </select>
+            className={`${selectClass} w-auto min-w-[10rem]`}
+            options={BILLING_FILTERS.map((s) => ({ value: s, label: s === '' ? 'All billing statuses' : s.replace(/_/g, ' ') }))}
+          />
+          <Select value={active} onChange={(e) => setParam({ active: e.target.value, page: 1 })} className={`${selectClass} w-auto min-w-[10rem]`} options={ACTIVE_FILTERS} />
           {isFetching && <span className="text-xs text-text-muted">Updating…</span>}
         </div>
 

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { ApiTags } from '@nestjs/swagger';
 import {
@@ -8,6 +8,7 @@ import {
   examQuestionSchema,
   examsListQuerySchema,
   gradeAnswerSchema,
+  reconcileExamSchema,
   updateExamQuestionSchema,
   updateExamSchema,
   updateExamScheduleSchema,
@@ -18,6 +19,7 @@ import {
   type ExamQuestionInput,
   type ExamsListQuery,
   type GradeAnswerInput,
+  type ReconcileExamInput,
   type UpdateExamInput,
   type UpdateExamQuestionInput,
   type UpdateExamScheduleInput,
@@ -82,6 +84,17 @@ export class ExamsController {
     return this.service.list(this.ctx(p, s, r), q);
   }
 
+  @Get(':id/full')
+  @RequireInstitutionPermissions('exams.view')
+  getFull(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+  ) {
+    return this.service.getFull(this.ctx(p, s, r), id);
+  }
+
   @Post()
   @RequireInstitutionPermissions('exams.manage')
   create(
@@ -91,6 +104,18 @@ export class ExamsController {
     @Body(zodBody(createExamSchema)) body: CreateExamInput,
   ) {
     return this.service.create(this.ctx(p, s, r), body);
+  }
+
+  @Put(':id/full')
+  @RequireInstitutionPermissions('exams.manage')
+  reconcile(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(reconcileExamSchema)) body: ReconcileExamInput,
+  ) {
+    return this.service.reconcile(this.ctx(p, s, r), id, body);
   }
 
   @Patch(':id')

@@ -236,6 +236,7 @@ export const INSTITUTION_PERMISSIONS: readonly PermissionDef[] = [
   def('report_cards.manage', 'Report cards', 'Create and edit report cards.'),
   def('report_cards.publish', 'Report cards', 'Publish report cards to students.', true),
   def('report_cards.view', 'Report cards', 'View report cards.'),
+  def('calendar_events.view', 'Calendar', 'View institution calendar events.'),
   def('calendar_events.manage', 'Calendar', 'Manage institution calendar events.'),
 ] as const;
 

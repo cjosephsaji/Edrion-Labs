@@ -1,8 +1,21 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, gte, lte, schema, sql, type Database } from '@edrion/database';
+import { and, eq, gte, inArray, lte, schema, sql, type Database, type PgColumn, type SQL } from '@edrion/database';
 import { resolveScopeFilter } from '@edrion/auth';
 import { DATABASE } from '../../common/tokens';
 import type { PortalActionContext } from './portal-action-context';
+
+/**
+ * campus_id ∈ ids, or always-false when the caller is confined to no campus at all. Null ids
+ * (institution-wide) means no narrowing, so the caller drops the clause entirely.
+ *
+ * Must NOT be written as `= any(${ids})` in a `sql` template: drizzle expands an interpolated JS
+ * array into one chunk per element rather than binding it as a single array parameter, so a
+ * single-campus scope binds a bare uuid to `any(...)` and Postgres fails with "malformed array
+ * literal".
+ */
+function campusNarrow(col: PgColumn, campusIds: string[]): SQL {
+  return campusIds.length === 0 ? sql`false` : (inArray(col, campusIds) as SQL);
+}
 
 export interface ReportPeriod {
   from?: Date;
@@ -30,7 +43,7 @@ export class PortalReportQueriesService {
       eq(r.institutionId, ctx.principal.institutionId),
       period.from ? gte(s.date, period.from.toISOString().slice(0, 10)) : undefined,
       period.to ? lte(s.date, period.to.toISOString().slice(0, 10)) : undefined,
-      campusIds ? sql`${s.campusId} = any(${campusIds})` : undefined,
+      campusIds ? campusNarrow(s.campusId, campusIds) : undefined,
     );
     const byStatus = await this.db
       .select({ status: r.status, count: sql<number>`count(*)` })
@@ -63,7 +76,7 @@ export class PortalReportQueriesService {
     const campusIds = this.campusIds(ctx);
     const invWhere = and(
       eq(inv.institutionId, ctx.principal.institutionId),
-      campusIds ? sql`${inv.campusId} = any(${campusIds})` : undefined,
+      campusIds ? campusNarrow(inv.campusId, campusIds) : undefined,
       period.from ? sql`${inv.issueDate} >= ${period.from.toISOString().slice(0, 10)}` : undefined,
       period.to ? sql`${inv.issueDate} <= ${period.to.toISOString().slice(0, 10)}` : undefined,
     );
@@ -122,7 +135,7 @@ export class PortalReportQueriesService {
         and(
           eq(g.institutionId, ctx.principal.institutionId),
           examId ? eq(g.examId, examId) : undefined,
-          campusIds ? sql`${g.campusId} = any(${campusIds})` : undefined,
+          campusIds ? campusNarrow(g.campusId, campusIds) : undefined,
         ),
       )
       .groupBy(bucket)

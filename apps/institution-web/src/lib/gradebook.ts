@@ -4,6 +4,7 @@ import { usePortalClient } from './portal-client';
 import { useScope } from './scope';
 import type { InstitutionScope } from './types';
 import type { ListParams } from './academics';
+import { useAcademicScopedParams } from './academic-context';
 import type { Paged } from './gradebook-types';
 
 function scopeKey(scope: InstitutionScope): string {
@@ -24,9 +25,11 @@ function queryString(p: ListParams): string {
 export function useGradebookList<T>(resource: string, params: ListParams) {
   const client = usePortalClient();
   const { scope } = useScope();
+  const scoped = useAcademicScopedParams(params, params.academicScope ?? 'year');
+  const { academicScope: _as, ...listParams } = scoped;
   return useQuery({
-    queryKey: ['gradebook', resource, scopeKey(scope), params],
-    queryFn: () => client.get<Paged<T>>(`/portal/${resource}?${queryString(params)}`, scope),
+    queryKey: ['gradebook', resource, scopeKey(scope), listParams],
+    queryFn: () => client.get<Paged<T>>(`/portal/${resource}?${queryString(listParams)}`, scope),
     placeholderData: keepPreviousData,
   });
 }

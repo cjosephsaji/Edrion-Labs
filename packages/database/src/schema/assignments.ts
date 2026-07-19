@@ -2,7 +2,7 @@ import { boolean, date, index, integer, jsonb, pgTable, text, timestamp, uniqueI
 import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { campuses } from './campuses';
-import { classes, subjects } from './academics';
+import { classes, subjects, academicYears, academicTerms } from './academics';
 import { students, staff } from './people';
 import { storageObjects } from './student';
 
@@ -30,6 +30,9 @@ export const assignments = pgTable(
     classId: uuid('class_id')
       .notNull()
       .references(() => classes.id, { onDelete: 'cascade' }),
+    /** Direct year/term stamp — a year-long class has term_id NULL, so Sem-2 work needs its own. */
+    academicYearId: uuid('academic_year_id').references(() => academicYears.id, { onDelete: 'set null' }),
+    termId: uuid('term_id').references(() => academicTerms.id, { onDelete: 'set null' }),
     subjectId: uuid('subject_id').references(() => subjects.id, { onDelete: 'set null' }),
     teacherId: uuid('teacher_id').references(() => staff.id, { onDelete: 'set null' }),
     instructions: text('instructions'),
@@ -57,6 +60,7 @@ export const assignments = pgTable(
     scopeIdx: index('assignments_institution_campus_idx').on(t.institutionId, t.campusId),
     classIdx: index('assignments_class_idx').on(t.classId),
     statusIdx: index('assignments_status_idx').on(t.status),
+    yearIdx: index('assignments_year_idx').on(t.academicYearId),
   }),
 );
 
@@ -112,6 +116,8 @@ export const assignmentQuestions = pgTable(
     correctKey: text('correct_key'),
     markingNote: text('marking_note'),
     marks: integer('marks').notNull().default(1),
+    /** Type-specific authoring config (matching pairs, code tests, file constraints, …). */
+    config: jsonb('config').$type<Record<string, unknown>>(),
     version: integer('version').notNull().default(0),
     ...actorColumns,
     ...timestamps,
@@ -180,6 +186,8 @@ export const assignmentAnswers = pgTable(
     choiceKey: text('choice_key'),
     answerText: text('answer_text'),
     answerObjectId: uuid('answer_object_id').references(() => storageObjects.id, { onDelete: 'set null' }),
+    /** Structured answer payload (matching map, code source, multi-file ids, …). */
+    answerJson: jsonb('answer_json').$type<Record<string, unknown>>(),
     autoCorrect: boolean('auto_correct'),
     awardedMarks: integer('awarded_marks'),
     teacherMarks: integer('teacher_marks'),

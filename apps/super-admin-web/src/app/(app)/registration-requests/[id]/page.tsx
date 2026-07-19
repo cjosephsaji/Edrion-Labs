@@ -34,6 +34,7 @@ import {
   useAddRegistrationNote,
   useAssignRegistrationReviewer,
   useEmployees,
+  usePlans,
   useRegistrationRequest,
   useStartRegistrationReview,
   type RegistrationRequestDto,
@@ -41,11 +42,13 @@ import {
 import { Topbar } from '@/components/app-shell/topbar';
 import { ApproveWizard } from '@/components/registration/approve-wizard';
 import { RejectDialog } from '@/components/registration/reject-dialog';
+import { formatContactMethod, formatPlanName, planNameByKey } from '@/lib/registration-display';
 
 export default function RegistrationRequestDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { data, isLoading, isError } = useRegistrationRequest(id);
+  const plans = usePlans({ pageSize: 100 });
   const employees = useEmployees({ pageSize: 100 });
   const startReview = useStartRegistrationReview(id);
   const addNote = useAddRegistrationNote(id);
@@ -61,6 +64,11 @@ export default function RegistrationRequestDetailPage() {
     for (const e of employees.data?.items ?? []) m.set(e.id, e.fullName);
     return (eid: string | null) => (eid ? m.get(eid) ?? 'Unknown reviewer' : '—');
   }, [employees.data]);
+
+  const planNames = useMemo(
+    () => planNameByKey(plans.data?.items ?? []),
+    [plans.data?.items],
+  );
 
   if (isLoading) {
     return (
@@ -86,6 +94,7 @@ export default function RegistrationRequestDetailPage() {
 
   const r = data.request;
   const reviewable = r.status === 'submitted' || r.status === 'under_review';
+  const decidable = r.status === 'under_review';
   const comms = data.auditEvents.filter((e) => e.action === 'registration.email_sent');
 
   const doStartReview = () => {
@@ -139,10 +148,12 @@ export default function RegistrationRequestDetailPage() {
               </Button>
             )}
             {reviewable && (
+              <Button size="sm" variant="secondary" onClick={() => setAssignOpen(true)}>
+                <UserPlus className="h-4 w-4" /> Assign
+              </Button>
+            )}
+            {decidable && (
               <>
-                <Button size="sm" variant="secondary" onClick={() => setAssignOpen(true)}>
-                  <UserPlus className="h-4 w-4" /> Assign
-                </Button>
                 <Button size="sm" variant="danger" onClick={() => setRejectOpen(true)}>
                   <XCircle className="h-4 w-4" /> Reject
                 </Button>
@@ -167,7 +178,7 @@ export default function RegistrationRequestDetailPage() {
 
         {r.status === 'submitted' && (
           <p className="rounded-md border border-info/30 bg-info-soft px-3 py-2 text-sm text-info">
-            This application is awaiting review. Start the review to take ownership before approving or rejecting.
+            This application is awaiting review. Start the review to take ownership before approving or rejecting — the applicant will be emailed once review begins.
           </p>
         )}
         {r.status === 'rejected' && r.rejectionReason && (
@@ -200,7 +211,7 @@ export default function RegistrationRequestDetailPage() {
               ['Job title', r.primaryContact?.jobTitle as string],
               ['Email', r.contactEmail],
               ['Phone', r.contactPhone],
-              ['Preferred method', r.primaryContact?.preferredContactMethod as string],
+              ['Preferred method', formatContactMethod(r.primaryContact?.preferredContactMethod)],
             ]} />
             <InfoCard icon={Building2} title="Campus information" rows={[
               ['Current campuses', r.campusesCount],
@@ -210,7 +221,7 @@ export default function RegistrationRequestDetailPage() {
               ['Expected staff', r.campusInfo?.expectedStaff as number],
             ]} />
             <InfoCard icon={ShieldCheck} title="Subscription preferences" rows={[
-              ['Preferred plan', r.preferredPlanKey],
+              ['Preferred plan', formatPlanName(r.preferredPlanKey, planNames)],
               ['Launch timeline', r.subscription?.launchTimeline as string],
               ['Current ERP', r.subscription?.currentErp as string],
               ['Heard about us', r.subscription?.hearAboutUs as string],

@@ -18,6 +18,7 @@ interface SanitizedQuestion {
   promptImageUrl: string | null;
   options: Array<{ key: string; label: string; imageUrl: string | null }> | undefined;
   marks: number;
+  config: Record<string, unknown> | null;
 }
 
 @Injectable()
@@ -110,6 +111,7 @@ export class StudentQuizAttemptService {
         choiceKey: body.choiceKey ?? null,
         answerText: body.answerText ?? null,
         answerObjectId: body.answerObjectId ?? null,
+        answerJson: (body.answerJson as Record<string, unknown> | null | undefined) ?? null,
       })
       .onConflictDoUpdate({
         target: [schema.examAnswers.attemptId, schema.examAnswers.questionId],
@@ -117,6 +119,7 @@ export class StudentQuizAttemptService {
           choiceKey: body.choiceKey ?? null,
           answerText: body.answerText ?? null,
           answerObjectId: body.answerObjectId ?? null,
+          answerJson: (body.answerJson as Record<string, unknown> | null | undefined) ?? null,
           updatedAt: new Date(),
         },
       });
@@ -215,6 +218,7 @@ export class StudentQuizAttemptService {
         choiceKey: body.choiceKey ?? null,
         answerText: body.answerText ?? null,
         answerObjectId: body.answerObjectId ?? null,
+        answerJson: (body.answerJson as Record<string, unknown> | null | undefined) ?? null,
       })
       .onConflictDoUpdate({
         target: [schema.assignmentAnswers.attemptId, schema.assignmentAnswers.questionId],
@@ -222,6 +226,7 @@ export class StudentQuizAttemptService {
           choiceKey: body.choiceKey ?? null,
           answerText: body.answerText ?? null,
           answerObjectId: body.answerObjectId ?? null,
+          answerJson: (body.answerJson as Record<string, unknown> | null | undefined) ?? null,
           updatedAt: new Date(),
         },
       });
@@ -256,6 +261,7 @@ export class StudentQuizAttemptService {
     promptImageObjectId: string | null;
     options: Array<{ key: string; label: string; imageObjectId?: string }> | null;
     marks: number;
+    config?: Record<string, unknown> | null;
   }): SanitizedQuestion {
     return {
       id: q.id,
@@ -269,6 +275,7 @@ export class StudentQuizAttemptService {
         imageUrl: o.imageObjectId ? `/v1/student/storage/${o.imageObjectId}` : null,
       })),
       marks: q.marks,
+      config: q.config ?? null,
     };
   }
 
@@ -389,6 +396,7 @@ export class StudentQuizAttemptService {
       correctKey: string | null;
       markingNote: string | null;
       marks: number;
+      config?: Record<string, unknown> | null;
     }>,
     answers: Array<{
       id: string;
@@ -396,6 +404,7 @@ export class StudentQuizAttemptService {
       choiceKey: string | null;
       answerText: string | null;
       answerObjectId: string | null;
+      answerJson?: Record<string, unknown> | null;
     }>,
   ) {
     const images = await this.loadAnswerImages(principal, answers);

@@ -30,8 +30,11 @@ import type {
   UpdateProgrammeSubjectInput,
   UpdateSubjectInput,
 } from '@edrion/schemas';
-import { AUDIT_WRITER } from '../../common/tokens';
+import { AUDIT_WRITER, DATABASE } from '../../common/tokens';
+import type { Database } from '@edrion/database';
 import { AcademicsRepository, type Page, type ProgrammeStructureDepartment } from './academics.repository';
+import { LabScheduleSyncService } from './lab-schedule-sync.service';
+import { insertStaffAssignment } from './academic-scope-stamp';
 import { basePortalAudit, type PortalActionContext } from './portal-action-context';
 
 const MODULE = 'portal-academics';
@@ -68,6 +71,8 @@ export interface ListResult<T> extends Page<T> {
 export class AcademicsService {
   constructor(
     private readonly repo: AcademicsRepository,
+    private readonly labScheduleSync: LabScheduleSyncService,
+    @Inject(DATABASE) private readonly db: Database,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
   ) {}
 
@@ -231,6 +236,9 @@ export class AcademicsService {
       code: input.code?.trim() || defaultResourceCode(input.name),
       headUserId: input.headUserId ?? null,
       description: input.description ?? null,
+      termSystem: input.termSystem ?? 'term',
+      durationMonths: input.durationMonths ?? null,
+      termsPerYear: input.termsPerYear ?? 3,
       createdBy: ctx.principal.institutionUserId,
     });
     await this.write(ctx, 'department.create', 'department', row.id, campusId, { newState: { name: row.name } });
@@ -433,6 +441,7 @@ export class AcademicsService {
       name: input.name,
       code: input.code?.trim() || defaultResourceCode(input.name),
       kind: input.kind,
+      isLabSubject: input.isLabSubject ?? false,
       departmentId: input.departmentId ?? null,
       createdBy: ctx.principal.institutionUserId,
     });
@@ -449,10 +458,18 @@ export class AcademicsService {
       name: input.name ?? existing!.name,
       code: input.code ?? existing!.code,
       kind: input.kind ?? existing!.kind,
+      isLabSubject: input.isLabSubject ?? existing!.isLabSubject,
       departmentId: input.departmentId === undefined ? existing!.departmentId : input.departmentId,
       updatedBy: ctx.principal.institutionUserId,
     });
     if (!updated) throw this.versionConflict();
+    if (input.isLabSubject !== undefined && input.isLabSubject !== existing!.isLabSubject) {
+      if (updated.isLabSubject) {
+        await this.labScheduleSync.syncAllForSubject(ctx, ctx.principal.institutionId, id);
+      } else {
+        await this.labScheduleSync.removeAllForSubject(id);
+      }
+    }
     await this.write(ctx, 'subject.update', 'subject', id, updated.campusId, {
       previousState: { name: existing!.name },
       newState: { name: updated.name },
@@ -481,8 +498,39 @@ export class AcademicsService {
 
   async createProgrammeSubject(ctx: PortalActionContext, input: CreateProgrammeSubjectInput) {
     await this.assertRef(ctx, 'subjects', input.subjectId, 'subject');
-    const link = await this.resolveProgrammeLinkage(ctx, input);
-    if (!link.programmeLevelId || !link.departmentId) {
+
+    let slotId = input.slotId ?? null;
+    let programmeLevelId: string | null = input.programmeLevelId ?? null;
+    let departmentId: string | null = input.departmentId ?? null;
+    let semesterSequence = input.semesterSequence;
+
+    if (slotId) {
+      const slot = await this.repo.findProgrammeTermSlot(slotId, ctx.principal.institutionId);
+      if (!slot) {
+        throw new BadRequestException({
+          code: 'INVALID_SLOT',
+          message: 'Selected term slot was not found.',
+        });
+      }
+      const pl = await this.requireProgrammeLevel(ctx, slot.programmeLevelId);
+      programmeLevelId = slot.programmeLevelId;
+      departmentId = pl.departmentId;
+      semesterSequence = slot.sequenceInYear;
+    } else {
+      const link = await this.resolveProgrammeLinkage(ctx, input);
+      programmeLevelId = link.programmeLevelId;
+      departmentId = link.departmentId;
+      if (!programmeLevelId || !departmentId) {
+        throw new BadRequestException({
+          code: 'INVALID_PROGRAMME_LEVEL',
+          message: 'Select a programme and a year.',
+        });
+      }
+      const slot = await this.repo.findProgrammeTermSlotBySequence(programmeLevelId, input.semesterSequence);
+      slotId = slot?.id ?? null;
+    }
+
+    if (!programmeLevelId || !departmentId) {
       throw new BadRequestException({
         code: 'INVALID_PROGRAMME_LEVEL',
         message: 'Select a programme and a year.',
@@ -490,8 +538,9 @@ export class AcademicsService {
     }
 
     const clash = await this.repo.findProgrammeSubjectSlot(
-      link.programmeLevelId,
-      input.semesterSequence,
+      ctx.principal.institutionId,
+      programmeLevelId,
+      semesterSequence,
       input.subjectId,
     );
     if (clash) {
@@ -501,13 +550,14 @@ export class AcademicsService {
       });
     }
 
-    const campusId = this.createCampusId(ctx.scope);
+    const campusId = null;
     const row = await this.repo.insertProgrammeSubject({
       institutionId: ctx.principal.institutionId,
       campusId,
-      departmentId: link.departmentId,
-      programmeLevelId: link.programmeLevelId,
-      semesterSequence: input.semesterSequence,
+      departmentId,
+      programmeLevelId,
+      semesterSequence,
+      slotId,
       subjectId: input.subjectId,
       credits: input.credits ?? null,
       isElective: input.isElective,
@@ -529,9 +579,10 @@ export class AcademicsService {
     id: string,
     input: UpdateProgrammeSubjectInput,
   ) {
-    const f = this.filter(ctx);
     const existing = await this.repo.findProgrammeSubject(id, ctx.principal.institutionId);
-    this.assertInScope(existing?.campusId ?? null, existing, f);
+    if (!existing) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Not found' });
+    }
     if (input.subjectId) await this.assertRef(ctx, 'subjects', input.subjectId, 'subject');
 
     // Only re-resolve the programme link when the caller actually sent one; otherwise keep it.
@@ -550,7 +601,12 @@ export class AcademicsService {
       semesterSequence !== existing!.semesterSequence ||
       subjectId !== existing!.subjectId;
     if (slotMoved) {
-      const clash = await this.repo.findProgrammeSubjectSlot(programmeLevelId, semesterSequence, subjectId);
+      const clash = await this.repo.findProgrammeSubjectSlot(
+        ctx.principal.institutionId,
+        programmeLevelId,
+        semesterSequence,
+        subjectId,
+      );
       if (clash && clash.id !== id) {
         throw new ConflictException({
           code: 'DUPLICATE_CURRICULUM_ENTRY',
@@ -581,9 +637,10 @@ export class AcademicsService {
   }
 
   async deleteProgrammeSubject(ctx: PortalActionContext, id: string, version: number) {
-    const f = this.filter(ctx);
     const existing = await this.repo.findProgrammeSubject(id, ctx.principal.institutionId);
-    this.assertInScope(existing?.campusId ?? null, existing, f);
+    if (!existing) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Not found' });
+    }
     const ok = await this.guardDelete(() => this.repo.deleteProgrammeSubject(id, version));
     await this.write(ctx, 'programme_subject.delete', 'programme_subject', id, existing!.campusId, {
       previousState: {
@@ -658,6 +715,9 @@ export class AcademicsService {
       capacity: input.capacity ?? null,
       createdBy: ctx.principal.institutionUserId,
     });
+    if (row.classTeacherId) {
+      await this.ensureStaffYearAssignment(ctx, row.classTeacherId, row.academicYearId, row.termId, row.campusId);
+    }
     await this.write(ctx, 'class.create', 'class', row.id, campusId, { newState: { name: row.name } });
     return row;
   }
@@ -707,6 +767,15 @@ export class AcademicsService {
       updatedBy: ctx.principal.institutionUserId,
     });
     if (!updated) throw this.versionConflict();
+    if (updated.classTeacherId && updated.classTeacherId !== existing!.classTeacherId) {
+      await this.ensureStaffYearAssignment(
+        ctx,
+        updated.classTeacherId,
+        updated.academicYearId,
+        updated.termId,
+        updated.campusId,
+      );
+    }
     await this.write(ctx, 'class.update', 'class', id, updated.campusId, {
       previousState: { name: existing!.name },
       newState: { name: updated.name },
@@ -737,6 +806,9 @@ export class AcademicsService {
     const existing = await this.repo.findClassSubject(classId, input.subjectId);
     if (existing) {
       const updated = await this.repo.updateClassSubjectTeacher(existing.id, input.teacherId ?? null);
+      if (input.teacherId) {
+        await this.ensureStaffYearAssignment(ctx, input.teacherId, cls.academicYearId, cls.termId, cls.campusId);
+      }
       await this.write(ctx, 'class_subject.update', 'class_subject', existing.id, cls.campusId, {
         newState: { subjectId: input.subjectId, teacherId: input.teacherId ?? null },
       });
@@ -749,6 +821,9 @@ export class AcademicsService {
       teacherId: input.teacherId ?? null,
       createdBy: ctx.principal.institutionUserId,
     });
+    if (input.teacherId) {
+      await this.ensureStaffYearAssignment(ctx, input.teacherId, cls.academicYearId, cls.termId, cls.campusId);
+    }
     await this.write(ctx, 'class_subject.assign', 'class_subject', row.id, cls.campusId, {
       newState: { subjectId: input.subjectId, teacherId: input.teacherId ?? null },
     });
@@ -860,6 +935,25 @@ export class AcademicsService {
 
   private filter(ctx: PortalActionContext): ScopeFilter {
     return resolveScopeFilter(ctx.principal, ctx.scope);
+  }
+
+  /** Upsert a staff_assignments row for the class's year/term (ON CONFLICT DO NOTHING). */
+  private async ensureStaffYearAssignment(
+    ctx: PortalActionContext,
+    staffId: string,
+    academicYearId: string,
+    termId: string | null,
+    campusId: string | null,
+  ): Promise<void> {
+    await insertStaffAssignment(this.db, {
+      institutionId: ctx.principal.institutionId,
+      campusId,
+      staffId,
+      academicYearId,
+      termId,
+      status: 'active',
+      createdBy: ctx.principal.institutionUserId,
+    });
   }
 
   /** New rows belong to the active campus, or are institution-owned when viewing the whole institution. */

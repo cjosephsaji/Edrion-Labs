@@ -4,6 +4,7 @@ import { usePortalClient } from './portal-client';
 import { useScope } from './scope';
 import type { InstitutionScope } from './types';
 import type { ListParams } from './academics';
+import { useAcademicScopedParams } from './academic-context';
 import type { Paged, ReportCardEntryRow, ReportCardRow } from './report-cards-types';
 
 function scopeKey(scope: InstitutionScope): string {
@@ -13,21 +14,25 @@ function scopeKey(scope: InstitutionScope): string {
 export function useReportCardsList(_resource: string, params: ListParams) {
   const client = usePortalClient();
   const { scope } = useScope();
+  const scoped = useAcademicScopedParams(params, params.academicScope ?? 'year');
+  const { academicScope: _as, ...listParams } = scoped;
   return useQuery({
-    queryKey: ['report-cards', scopeKey(scope), params],
+    queryKey: ['report-cards', scopeKey(scope), listParams],
     queryFn: async () => {
       const sp = new URLSearchParams();
-      if (params.filters?.status) sp.set('status', params.filters.status);
-      if (params.filters?.studentId) sp.set('studentId', params.filters.studentId);
+      if (listParams.filters?.status) sp.set('status', listParams.filters.status);
+      if (listParams.filters?.studentId) sp.set('studentId', listParams.filters.studentId);
+      if (listParams.filters?.academicYearId) sp.set('academicYearId', listParams.filters.academicYearId);
+      if (listParams.filters?.termId) sp.set('termId', listParams.filters.termId);
       const rows = await client.get<ReportCardRow[]>(`/portal/report-cards?${sp}`, scope);
       let items = [...rows];
-      if (params.search) {
-        const q = params.search.toLowerCase();
+      if (listParams.search) {
+        const q = listParams.search.toLowerCase();
         items = items.filter((r) => r.termLabel.toLowerCase().includes(q));
       }
       const total = items.length;
-      const start = (params.page - 1) * params.pageSize;
-      return { items: items.slice(start, start + params.pageSize), total } satisfies Paged<ReportCardRow>;
+      const start = (listParams.page - 1) * listParams.pageSize;
+      return { items: items.slice(start, start + listParams.pageSize), total } satisfies Paged<ReportCardRow>;
     },
     placeholderData: keepPreviousData,
   });

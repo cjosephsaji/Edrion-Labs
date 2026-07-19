@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+import { paginationQuerySchema, sortQuerySchema, versionSchema, academicScopeQuerySchema } from './common';
 
 /**
  * Institution-portal student conduct (behaviour incidents + complaints) request contracts. Reads need
@@ -9,7 +9,10 @@ export const STUDENT_INCIDENT_CATEGORIES = ['behavior', 'discipline', 'complaint
 export const STUDENT_INCIDENT_SEVERITIES = ['low', 'medium', 'high'] as const;
 export const STUDENT_INCIDENT_STATUSES = ['open', 'resolved', 'dismissed'] as const;
 
-export const conductListQuerySchema = paginationQuerySchema.merge(sortQuerySchema).extend({
+export const conductListQuerySchema = paginationQuerySchema
+  .merge(sortQuerySchema)
+  .merge(academicScopeQuerySchema)
+  .extend({
   search: z.string().trim().max(160).optional(),
   studentId: z.string().uuid().optional(),
   category: z.enum(STUDENT_INCIDENT_CATEGORIES).optional(),

@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label } from '@edrion/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Select } from '@edrion/ui';
 import {
   ApiClientError,
   useUpsertFeatureAssignment,
@@ -143,11 +143,7 @@ export function FeatureAssignments({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label htmlFor="a-scope">Scope</Label>
-            <select id="a-scope" value={scope} onChange={(e) => setScope(e.target.value)} className={fieldClass}>
-              {scopes.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+            <Select id="a-scope" value={scope} onChange={(e) => setScope(e.target.value)} className={fieldClass} options={scopes.map((s) => ({ value: s, label: s }))} />
           </div>
           <div>
             <Label htmlFor="a-scopeid">Scope ID / role key</Label>
@@ -155,17 +151,11 @@ export function FeatureAssignments({
           </div>
           <div>
             <Label htmlFor="a-value">Value</Label>
-            <select id="a-value" value={value ? 'on' : 'off'} onChange={(e) => setValue(e.target.value === 'on')} className={fieldClass}>
-              <option value="on">ON</option>
-              <option value="off">OFF</option>
-            </select>
+            <Select id="a-value" value={value ? 'on' : 'off'} onChange={(e) => setValue(e.target.value === 'on')} className={fieldClass} options={[{ value: 'on', label: 'ON' }, { value: 'off', label: 'OFF' }]} />
           </div>
           <div>
             <Label htmlFor="a-enabled">Enabled</Label>
-            <select id="a-enabled" value={enabled ? 'yes' : 'no'} onChange={(e) => setEnabled(e.target.value === 'yes')} className={fieldClass}>
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-            </select>
+            <Select id="a-enabled" value={enabled ? 'yes' : 'no'} onChange={(e) => setEnabled(e.target.value === 'yes')} className={fieldClass} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} />
           </div>
           <div>
             <Label htmlFor="a-activates">Activates at</Label>

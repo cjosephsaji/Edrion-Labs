@@ -10,8 +10,10 @@ import {
   type EffectiveSettings,
   type EffectiveSettingsResponse,
   type InstitutionProfile,
+  type NavigationLayout,
   type PortalSettingsListQuery,
   type PutEffectiveSettingsInput,
+  type PutNavigationLayoutInput,
   type PutNomenclatureOverridesInput,
   type SettingDef,
   type UpdateInstitutionProfileInput,
@@ -21,6 +23,7 @@ import { Currency, resolveNomenclature, type InstitutionType, type NomenclatureO
 import type { Institution, NewInstitution } from '@edrion/database';
 import { AUDIT_WRITER } from '../../common/tokens';
 import type { Page } from './academics.repository';
+import { clearInstitutionTimezoneCache } from './institution-clock';
 import type { ListResult } from './academics.service';
 import { SettingsRepository } from './settings.repository';
 import { basePortalAudit, type PortalActionContext } from './portal-action-context';
@@ -29,6 +32,8 @@ const MODULE = 'portal-settings';
 
 const NOMENCLATURE_CATEGORY = 'nomenclature';
 const NOMENCLATURE_KEY = 'overrides';
+const NAVIGATION_CATEGORY = 'navigation';
+const NAVIGATION_KEY = 'layout';
 
 /** The currencies the platform billing enum (`institutions.currency`) actually accepts. */
 const SUPPORTED_BILLING_CURRENCIES = new Set<string>(Object.values(Currency));
@@ -59,6 +64,11 @@ export class SettingsService {
    * beats the institution-owned value; in institution scope only institution-owned rows apply (a
    * single campus's override must not leak into the institution-wide view).
    */
+  /**
+   * Registry defaults overlaid with stored overrides. In campus scope the ACTIVE campus's override
+   * beats the institution-owned value; in institution scope only institution-owned rows apply (a
+   * single campus's override must not leak into the institution-wide view).
+   */
   async getEffective(ctx: PortalActionContext): Promise<EffectiveSettingsResponse> {
     const f = this.filter(ctx);
     const activeCampusId = ctx.scope.mode === 'campus' ? ctx.scope.campusId : null;
@@ -81,12 +91,30 @@ export class SettingsService {
       const override = stored.get(def.key);
       values[def.key] = override && override.value !== null ? this.parse(def, override.value) : def.default;
     }
-    const nomenclatureOverrides = this.parseNomenclatureOverrides(stored.get(NOMENCLATURE_KEY)?.value);
+    // Prefer category+key so navigation/nomenclature never collide with registry keys.
+    const nomenclatureInstitution = rows.find(
+      (r) => r.category === NOMENCLATURE_CATEGORY && r.key === NOMENCLATURE_KEY && r.campusId === null,
+    )?.value;
+    const nomenclatureCampus = activeCampusId
+      ? rows.find(
+          (r) =>
+            r.category === NOMENCLATURE_CATEGORY && r.key === NOMENCLATURE_KEY && r.campusId === activeCampusId,
+        )?.value
+      : undefined;
+    // Navigation is institution-wide chrome (sidebar). Only institution-owned rows apply.
+    const navigationInstitution = rows.find(
+      (r) => r.category === NAVIGATION_CATEGORY && r.key === NAVIGATION_KEY && r.campusId === null,
+    )?.value;
+    const nomenclatureOverrides = this.parseNomenclatureOverrides(
+      nomenclatureCampus ?? nomenclatureInstitution ?? stored.get(NOMENCLATURE_KEY)?.value,
+    );
+    const navigation = this.parseNavigationLayout(navigationInstitution);
     const institutionType = (inst?.type ?? 'school') as InstitutionType;
     return {
       values,
       nomenclature: resolveNomenclature(institutionType, nomenclatureOverrides),
       nomenclatureOverrides,
+      navigation,
     };
   }
 
@@ -112,6 +140,37 @@ export class SettingsService {
     );
     await this.write(ctx, 'setting.nomenclature_update', 'institution_setting', NOMENCLATURE_KEY, campusId, {
       newState: { keys: Object.keys(cleaned) },
+    });
+    return this.getEffective(ctx);
+  }
+
+  /** Persist sidebar navigation order and label overrides (always institution-owned). */
+  async putNavigationLayout(
+    ctx: PortalActionContext,
+    input: PutNavigationLayoutInput,
+  ): Promise<EffectiveSettingsResponse> {
+    // Sidebar reads /portal/me with institution scope — always store institution-owned.
+    const campusId = null;
+    const cleaned = this.cleanNavigationLayout(input.layout);
+    const value = Object.keys(cleaned).length > 0 ? JSON.stringify(cleaned) : null;
+    await this.repo.upsertValue(
+      ctx.principal.institutionId,
+      campusId,
+      NAVIGATION_CATEGORY,
+      NAVIGATION_KEY,
+      'Navigation layout',
+      'json',
+      value,
+      ctx.principal.institutionUserId,
+    );
+    // Drop any older campus-scoped copies so they can't shadow the institution row.
+    await this.repo.deleteCampusScoped(ctx.principal.institutionId, NAVIGATION_CATEGORY, NAVIGATION_KEY);
+    await this.write(ctx, 'setting.navigation_update', 'institution_setting', NAVIGATION_KEY, campusId, {
+      newState: {
+        groupOrder: cleaned.groupOrder?.length ?? 0,
+        groupLabels: Object.keys(cleaned.groupLabels ?? {}).length,
+        itemLabels: Object.keys(cleaned.itemLabels ?? {}).length,
+      },
     });
     return this.getEffective(ctx);
   }
@@ -180,6 +239,7 @@ export class SettingsService {
     // institution-owned settings the rest of the app resolves (finance.currency, localization.timezone).
     await this.mirrorSetting(ctx, 'currency', derivedCurrency);
     await this.mirrorSetting(ctx, 'timezone', input.timezone);
+    clearInstitutionTimezoneCache(ctx.principal.institutionId);
 
     await this.write(ctx, 'institution.profile_update', 'institution', updated.id, null, {
       previousState: { displayName: existing.displayName, country: existing.country, currency: existing.currency },
@@ -255,6 +315,54 @@ export class SettingsService {
     } catch {
       return {};
     }
+  }
+
+  private parseNavigationLayout(raw: string | null | undefined): NavigationLayout {
+    if (!raw) return {};
+    try {
+      const parsed = JSON.parse(raw) as NavigationLayout;
+      return parsed && typeof parsed === 'object' ? this.cleanNavigationLayout(parsed) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  private cleanNavigationLayout(layout: NavigationLayout): NavigationLayout {
+    const cleaned: NavigationLayout = {};
+    if (layout.groupOrder?.length) {
+      cleaned.groupOrder = layout.groupOrder.filter((id) => typeof id === 'string' && id.trim());
+    }
+    if (layout.itemOrder && typeof layout.itemOrder === 'object') {
+      const itemOrder: Record<string, string[]> = {};
+      for (const [groupId, ids] of Object.entries(layout.itemOrder)) {
+        if (!groupId.trim() || !Array.isArray(ids)) continue;
+        const next = ids.filter((id) => typeof id === 'string' && id.trim());
+        if (next.length) itemOrder[groupId] = next;
+      }
+      if (Object.keys(itemOrder).length) cleaned.itemOrder = itemOrder;
+    }
+    if (layout.groupLabels && typeof layout.groupLabels === 'object') {
+      const groupLabels: Record<string, string> = {};
+      for (const [id, label] of Object.entries(layout.groupLabels)) {
+        const trimmed = typeof label === 'string' ? label.trim() : '';
+        if (id.trim() && trimmed) groupLabels[id] = trimmed.slice(0, 80);
+      }
+      if (Object.keys(groupLabels).length) cleaned.groupLabels = groupLabels;
+    }
+    if (layout.itemLabels && typeof layout.itemLabels === 'object') {
+      const itemLabels: Record<string, string> = {};
+      for (const [id, label] of Object.entries(layout.itemLabels)) {
+        const trimmed = typeof label === 'string' ? label.trim() : '';
+        if (id.trim() && trimmed) itemLabels[id] = trimmed.slice(0, 80);
+      }
+      if (Object.keys(itemLabels).length) cleaned.itemLabels = itemLabels;
+    }
+    if (layout.hiddenItems?.length) {
+      cleaned.hiddenItems = [
+        ...new Set(layout.hiddenItems.filter((id) => typeof id === 'string' && id.trim())),
+      ];
+    }
+    return cleaned;
   }
 
   async create(ctx: PortalActionContext, input: CreatePortalSettingInput) {

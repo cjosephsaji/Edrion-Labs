@@ -11,7 +11,13 @@ import {
 import { PortalClientError } from '@/lib/portal-client';
 import { formatPersonName } from '@/lib/person-name';
 
-const ROSTER_PARAMS = { page: 1, pageSize: 200, sortDir: 'asc' as const, sortBy: 'lastName' };
+const rosterParams = (classId: string) => ({
+  page: 1,
+  pageSize: 200,
+  sortDir: 'asc' as const,
+  sortBy: 'lastName',
+  filters: { classId },
+});
 
 type QuestionGrade = { questionId: string; teacherMarks: string; teacherFeedback: string };
 
@@ -27,7 +33,10 @@ export function HomeworkSubmissionsPanel({
   const { can } = usePermissions();
   const canGrade = can('homework.grade');
   const { data: submissions, isLoading: subsLoading } = useHomeworkSubmissions(homeworkId);
-  const { data: students, isLoading: studentsLoading } = usePeopleList<StudentRow>('students', ROSTER_PARAMS);
+  const { data: students, isLoading: studentsLoading } = usePeopleList<StudentRow>(
+    'students',
+    rosterParams(classId),
+  );
   const returnSubmission = useReturnHomeworkSubmission(homeworkId);
   const [note, setNote] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -37,10 +46,7 @@ export function HomeworkSubmissionsPanel({
 
   const { data: detail, isLoading: detailLoading } = useHomeworkSubmissionDetail(homeworkId, selectedId);
 
-  const roster = useMemo(
-    () => (students?.items ?? []).filter((s) => s.classId === classId),
-    [students, classId],
-  );
+  const roster = students?.items ?? [];
 
   const byStudent = useMemo(
     () => new Map((submissions ?? []).map((s) => [s.studentId, s])),

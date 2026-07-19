@@ -5,11 +5,11 @@ import {
   count,
   desc,
   eq,
-  ilike,
   inArray,
   isNotNull,
   isNull,
   or,
+  personSqlName,
   schema,
   sql,
   type Database,
@@ -29,13 +29,18 @@ import type {
 import type { PeopleListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
+import { assignedStaffCond, enrolledStudentsCond, type AcademicScopeFilterQuery } from './academic-scope-filters';
+import { scopeConds } from './portal-scope';
 import { studentSearchCondition } from './student-search';
+import { personSearchCondition } from './person-search';
 
-const parentName = sql<string>`concat_ws(' ', ${schema.parents.firstName}, ${schema.parents.lastName})`;
+const parentName = personSqlName(schema.parents.firstName, schema.parents.middleName, schema.parents.lastName);
 
 export interface StudentRow extends Student {
   gradeLevelName: string | null;
   className: string | null;
+  /** Linked portal account status when institutionUserId is set. */
+  portalUserStatus: string | null;
 }
 export interface StaffRow extends Staff {
   departmentName: string | null;
@@ -93,12 +98,7 @@ export class PeopleRepository {
     institutionId: string,
     campusIds: CampusFilter,
   ): SQL[] {
-    const conds: SQL[] = [eq(instCol, institutionId)];
-    if (campusIds) {
-      const inScope = or(isNull(campusCol), inArray(campusCol, campusIds));
-      if (inScope) conds.push(inScope);
-    }
-    return conds;
+    return scopeConds(instCol, campusCol, institutionId, campusIds);
   }
 
   private order(col: PgColumn | undefined, dir: 'asc' | 'desc', fallback: PgColumn): SQL {
@@ -140,6 +140,12 @@ export class PeopleRepository {
     const t = schema.students;
     const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
     if (q.search) conds.push(studentSearchCondition(t, q.search));
+    if (q.status) conds.push(eq(t.status, q.status));
+    if (q.gradeLevelId) conds.push(eq(t.gradeLevelId, q.gradeLevelId));
+    if (q.classId) conds.push(eq(t.classId, q.classId));
+    if (q.gender) conds.push(eq(t.gender, q.gender));
+    const enrolled = enrolledStudentsCond(this.db, q, t.id);
+    if (enrolled) conds.push(enrolled);
     const where = and(...conds);
     const sortable: Record<string, PgColumn> = {
       admissionNo: t.admissionNo,
@@ -151,17 +157,28 @@ export class PeopleRepository {
     const { limit, offset } = this.pageBounds(q);
 
     const rows = await this.db
-      .select({ student: t, gradeLevelName: schema.gradeLevels.name, className: schema.classes.name })
+      .select({
+        student: t,
+        gradeLevelName: schema.gradeLevels.name,
+        className: schema.classes.name,
+        portalUserStatus: schema.institutionUsers.status,
+      })
       .from(t)
       .leftJoin(schema.gradeLevels, eq(schema.gradeLevels.id, t.gradeLevelId))
       .leftJoin(schema.classes, eq(schema.classes.id, t.classId))
+      .leftJoin(schema.institutionUsers, eq(schema.institutionUsers.id, t.institutionUserId))
       .where(where)
       .orderBy(this.order(q.sortBy ? sortable[q.sortBy] : undefined, q.sortDir, t.lastName))
       .limit(limit)
       .offset(offset);
     const [tot] = await this.db.select({ value: count() }).from(t).where(where);
     return {
-      items: rows.map((r) => ({ ...r.student, gradeLevelName: r.gradeLevelName, className: r.className })),
+      items: rows.map((r) => ({
+        ...r.student,
+        gradeLevelName: r.gradeLevelName,
+        className: r.className,
+        portalUserStatus: r.portalUserStatus ?? null,
+      })),
       total: Number(tot?.value ?? 0),
     };
   }
@@ -200,14 +217,13 @@ export class PeopleRepository {
     const t = schema.staff;
     const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
     if (q.search) {
-      const s = or(
-        ilike(t.firstName, `%${q.search}%`),
-        ilike(t.middleName, `%${q.search}%`),
-        ilike(t.lastName, `%${q.search}%`),
-        ilike(t.email, `%${q.search}%`),
-        ilike(t.employeeNo, `%${q.search}%`),
+      conds.push(
+        personSearchCondition(
+          { firstName: t.firstName, middleName: t.middleName, lastName: t.lastName },
+          q.search,
+          [t.email, t.employeeNo],
+        ),
       );
-      if (s) conds.push(s);
     }
     if (q.status) conds.push(eq(t.status, q.status));
     if (q.employmentType) conds.push(eq(t.employmentType, q.employmentType));
@@ -216,7 +232,7 @@ export class PeopleRepository {
       if (teachingUserIds && teachingUserIds.length === 0) return { items: [], total: 0 };
       if (teachingUserIds) conds.push(inArray(t.institutionUserId, teachingUserIds));
       else conds.push(isNotNull(t.institutionUserId));
-    } else if (q.teaching === 'false' && teachingUserIds) {
+    } else     if (q.teaching === 'false' && teachingUserIds) {
       if (teachingUserIds.length > 0) {
         conds.push(or(isNull(t.institutionUserId), sql`${t.institutionUserId} not in (${sql.join(teachingUserIds.map((id) => sql`${id}`), sql`, `)})`)!);
       }
@@ -224,6 +240,9 @@ export class PeopleRepository {
 
     const roleFilter = q.roleKey ? this.listStaffWithRoleFilter(t, q.roleKey) : null;
     if (roleFilter) conds.push(roleFilter.cond);
+
+    const assigned = assignedStaffCond(this.db, q, t.id);
+    if (assigned) conds.push(assigned);
 
     const where = and(...conds);
     const sortable: Record<string, PgColumn> = {
@@ -265,11 +284,18 @@ export class PeopleRepository {
   }
 
   /** Staff whose linked institution user holds academics.teach (teaching staff picker). */
-  async listTeachingStaff(institutionId: string, campusIds: CampusFilter, teachingUserIds: string[]): Promise<StaffRow[]> {
+  async listTeachingStaff(
+    institutionId: string,
+    campusIds: CampusFilter,
+    teachingUserIds: string[],
+    q: AcademicScopeFilterQuery = {},
+  ): Promise<StaffRow[]> {
     if (teachingUserIds.length === 0) return [];
     const t = schema.staff;
     const conds = [...this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds), eq(t.status, 'active')];
     conds.push(inArray(t.institutionUserId, teachingUserIds));
+    const assigned = assignedStaffCond(this.db, q, t.id);
+    if (assigned) conds.push(assigned);
     const rows = await this.db
       .select({ staff: t, departmentName: schema.departments.name })
       .from(t)
@@ -361,12 +387,30 @@ export class PeopleRepository {
     const t = schema.parents;
     const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
     if (q.search) {
-      const s = or(
-        ilike(t.firstName, `%${q.search}%`),
-        ilike(t.lastName, `%${q.search}%`),
-        ilike(t.email, `%${q.search}%`),
+      conds.push(
+        personSearchCondition({ firstName: t.firstName, middleName: t.middleName, lastName: t.lastName }, q.search, [t.email]),
       );
-      if (s) conds.push(s);
+    }
+    if (q.hasLogin === 'true') conds.push(isNotNull(t.institutionUserId));
+    else if (q.hasLogin === 'false') conds.push(isNull(t.institutionUserId));
+    if (q.hasChildren === 'true') {
+      conds.push(
+        inArray(
+          t.id,
+          this.db
+            .select({ id: schema.studentGuardians.parentId })
+            .from(schema.studentGuardians)
+            .where(eq(schema.studentGuardians.institutionId, institutionId)),
+        ),
+      );
+    } else if (q.hasChildren === 'false') {
+      conds.push(
+        sql`${t.id} not in (
+          select ${schema.studentGuardians.parentId}
+          from ${schema.studentGuardians}
+          where ${schema.studentGuardians.institutionId} = ${institutionId}
+        )`,
+      );
     }
     const where = and(...conds);
     const sortable: Record<string, PgColumn> = {

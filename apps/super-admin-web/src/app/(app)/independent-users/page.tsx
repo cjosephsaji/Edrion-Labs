@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search } from 'lucide-react';
-import { Card, StatusBadge, TableSkeleton, EmptyState, ErrorState, Button, countryName } from '@edrion/ui';
+import { Card, StatusBadge, TableSkeleton, EmptyState, ErrorState, Button, countryName, Select } from '@edrion/ui';
 import { useIndependentUsers, useIndependentUserStatusAction, type IndependentUserDto } from '@edrion/api-client';
 import { errorMessage } from '@/lib/errors';
 import { Topbar } from '@/components/app-shell/topbar';
@@ -61,18 +61,13 @@ export default function IndependentUsersPage() {
               aria-label="Search independent users"
             />
           </div>
-          <select
-            className={selectClass}
+          <Select
+            className={`${selectClass} w-auto min-w-[10rem]`}
             value={status}
             onChange={(e) => setParam({ status: e.target.value, page: 1 })}
             aria-label="Filter by status"
-          >
-            {STATUS_FILTERS.map((s) => (
-              <option key={s} value={s}>
-                {s === '' ? 'All statuses' : s}
-              </option>
-            ))}
-          </select>
+            options={STATUS_FILTERS.map((s) => ({ value: s, label: s === '' ? 'All statuses' : s }))}
+          />
         </div>
 
         {isLoading ? (

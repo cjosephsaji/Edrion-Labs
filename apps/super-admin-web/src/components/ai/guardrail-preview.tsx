@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Button, Label } from '@edrion/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Button, Label, Select } from '@edrion/ui';
 import { useEvaluateGuardrail } from '@edrion/api-client';
 import { CAPABILITIES, DECISION_META, GUARDRAIL_LAYER_LABEL } from './labels';
 
@@ -56,11 +56,7 @@ export function GuardrailPreview() {
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
           <div>
             <Label htmlFor="gp-cap">Capability</Label>
-            <select id="gp-cap" value={capability} onChange={(e) => setCapability(e.target.value)} className={fieldClass}>
-              {CAPABILITIES.map((c) => (
-                <option key={c.key} value={c.key}>{c.label}</option>
-              ))}
-            </select>
+            <Select id="gp-cap" value={capability} onChange={(e) => setCapability(e.target.value)} className={fieldClass} options={CAPABILITIES.map((c) => ({ value: c.key, label: c.label }))} />
           </div>
           <div>
             <Label htmlFor="gp-action">Action key</Label>

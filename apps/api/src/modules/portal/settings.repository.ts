@@ -7,6 +7,7 @@ import {
   eq,
   ilike,
   inArray,
+  isNotNull,
   isNull,
   or,
   schema,
@@ -169,5 +170,19 @@ export class SettingsRepository {
     } else {
       await this.insert({ institutionId, campusId, category, key, label, valueType, value, createdBy: userId });
     }
+  }
+
+  /** Remove campus-scoped copies of a setting so institution-owned is the only source. */
+  async deleteCampusScoped(
+    institutionId: string,
+    category: string,
+    key: string,
+  ): Promise<void> {
+    const t = schema.institutionSettings;
+    await this.db
+      .delete(t)
+      .where(
+        and(eq(t.institutionId, institutionId), eq(t.category, category), eq(t.key, key), isNotNull(t.campusId)),
+      );
   }
 }

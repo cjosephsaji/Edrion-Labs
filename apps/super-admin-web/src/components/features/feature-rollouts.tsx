@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Plus, Trash2, Power } from 'lucide-react';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label } from '@edrion/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Select } from '@edrion/ui';
 import {
   ApiClientError,
   useUpsertFeatureRollout,
@@ -185,18 +185,11 @@ export function FeatureRollouts({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label htmlFor="r-type">Type</Label>
-            <select id="r-type" value={type} onChange={(e) => setType(e.target.value)} className={fieldClass}>
-              {ROLLOUT_TYPES.map((t) => (
-                <option key={t} value={t}>{t.replace('_', ' ')}</option>
-              ))}
-            </select>
+            <Select id="r-type" value={type} onChange={(e) => setType(e.target.value)} className={fieldClass} options={ROLLOUT_TYPES.map((t) => ({ value: t, label: t.replace('_', ' ') }))} />
           </div>
           <div>
             <Label htmlFor="r-enabled">Enabled</Label>
-            <select id="r-enabled" value={enabled ? 'yes' : 'no'} onChange={(e) => setEnabled(e.target.value === 'yes')} className={fieldClass}>
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-            </select>
+            <Select id="r-enabled" value={enabled ? 'yes' : 'no'} onChange={(e) => setEnabled(e.target.value === 'yes')} className={fieldClass} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} />
           </div>
         </div>
         {type === 'percentage' && (

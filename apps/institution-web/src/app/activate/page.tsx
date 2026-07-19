@@ -1,9 +1,11 @@
 'use client';
 import { Suspense, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { GraduationCap } from 'lucide-react';
 import { Button, Input, Label } from '@edrion/ui';
 import { webEnv } from '@/lib/env';
+import { finalizePortalSignIn } from '@/lib/portal-session';
 
 /**
  * Account activation. The administrator arrives from the invitation email with a single-use token
@@ -12,6 +14,7 @@ import { webEnv } from '@/lib/env';
  */
 function ActivateForm() {
   const router = useRouter();
+  const qc = useQueryClient();
   const params = useSearchParams();
   const token = params.get('token') ?? '';
   const [password, setPassword] = useState('');
@@ -37,6 +40,7 @@ function ActivateForm() {
         setError(data?.message ?? 'Activation failed. The link may have expired.');
         return;
       }
+      finalizePortalSignIn(qc);
       router.replace('/dashboard');
     } catch {
       setError('Could not reach the server. Try again.');

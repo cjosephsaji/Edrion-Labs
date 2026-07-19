@@ -59,7 +59,7 @@ export default function AdmissionsPage() {
       { name: 'middleName', label: 'Middle name', type: 'text', nullable: true, placeholder: 'Optional' },
       { name: 'lastName', label: 'Last name', type: 'text', required: true },
       { name: 'status', label: 'Status', type: 'select', required: true, options: STATUS_OPTIONS },
-      { name: 'gradeLevelId', label: `Applying for ${t('gradeLevel').toLowerCase()}`, type: 'select', nullable: true, options: gradeOptions },
+      { name: 'gradeLevelId', label: `Applying for ${t('gradeLevel')}`, type: 'select', nullable: true, options: gradeOptions },
       { name: 'academicYearId', label: t('academicYear'), type: 'select', nullable: true, options: yearOptions },
       {
         name: 'gender',

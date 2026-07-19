@@ -197,12 +197,35 @@ export const putNomenclatureOverridesSchema = z.object({
 });
 export type PutNomenclatureOverridesInput = z.infer<typeof putNomenclatureOverridesSchema>;
 
+// =============================================================================
+// Navigation layout (sidebar order + labels)
+// =============================================================================
+
+/** Tenant overrides for sidebar group/item order and display names. */
+export const navigationLayoutSchema = z.object({
+  groupOrder: z.array(z.string().min(1).max(64)).max(50).optional(),
+  /** Map of groupId → ordered item ids within that group. */
+  itemOrder: z.record(z.string().min(1).max(64), z.array(z.string().min(1).max(64)).max(100)).optional(),
+  groupLabels: z.record(z.string().min(1).max(64), z.string().trim().min(1).max(80)).optional(),
+  itemLabels: z.record(z.string().min(1).max(64), z.string().trim().min(1).max(80)).optional(),
+  /** Nav item ids hidden from the sidebar for everyone at this institution. */
+  hiddenItems: z.array(z.string().min(1).max(64)).max(200).optional(),
+});
+export type NavigationLayout = z.infer<typeof navigationLayoutSchema>;
+
+export const putNavigationLayoutSchema = z.object({
+  layout: navigationLayoutSchema,
+});
+export type PutNavigationLayoutInput = z.infer<typeof putNavigationLayoutSchema>;
+
 /** Effective settings response includes resolved nomenclature alongside scalar registry values. */
 export interface EffectiveSettingsResponse {
   values: EffectiveSettings;
   nomenclature: import('@edrion/shared-types').ResolvedNomenclature;
   /** Stored tenant overrides (empty object when none). */
   nomenclatureOverrides: import('@edrion/shared-types').NomenclatureOverrides;
+  /** Stored sidebar layout overrides (empty object when none). */
+  navigation: NavigationLayout;
 }
 
 /** PUT body for the curated settings form — a partial map of known keys to values. */

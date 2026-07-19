@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq, gte, inArray, isNull, lte, lt, schema, type Database } from '@edrion/database';
+import { and, desc, eq, gte, inArray, isNull, lt, schema, type Database } from '@edrion/database';
 import type { AuditWriter, AuditEventInput } from '@edrion/audit';
 import type { CreateDocumentRequestInput, CreateProfileChangeRequestInput, ParentListQuery } from '@edrion/schemas';
 import { AUDIT_WRITER, DATABASE } from '../../common/tokens';
@@ -40,12 +40,15 @@ export class ParentInboxService {
   // ── Calendar ──────────────────────────────────────────────────────────────────
   async calendar(guardian: GuardianContext, month?: string) {
     const t = schema.calendarEvents;
-    const conds = [eq(t.institutionId, guardian.institutionId)];
+    const conds = [eq(t.institutionId, guardian.institutionId), eq(t.status, 'published')];
     if (month && /^\d{4}-\d{2}$/.test(month)) {
-      const start = new Date(`${month}-01T00:00:00Z`);
-      const end = new Date(start.getFullYear(), start.getMonth() + 1, 1);
+      const start = `${month}-01`;
+      const [y, m] = month.split('-').map(Number);
+      const nextMonth = m === 12 ? 1 : m! + 1;
+      const nextYear = m === 12 ? y! + 1 : y!;
+      const end = `${String(nextYear).padStart(4, '0')}-${String(nextMonth).padStart(2, '0')}-01`;
       conds.push(gte(t.startsOn, start));
-      conds.push(lte(t.startsOn, end));
+      conds.push(lt(t.startsOn, end));
     }
     const rows = await this.db.select().from(t).where(and(...conds)).orderBy(t.startsOn);
     return { items: rows };

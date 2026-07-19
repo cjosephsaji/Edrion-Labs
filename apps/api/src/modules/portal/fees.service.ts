@@ -16,9 +16,11 @@ import type {
   UpdateFeeInvoiceInput,
   UpdateFeeStructureInput,
 } from '@edrion/schemas';
-import { AUDIT_WRITER } from '../../common/tokens';
+import { AUDIT_WRITER, DATABASE } from '../../common/tokens';
+import type { Database } from '@edrion/database';
 import type { Page } from './academics.repository';
 import type { ListResult } from './academics.service';
+import { resolveAcademicScope } from './academic-scope-stamp';
 import { FeesRepository, type FeeRefTable } from './fees.repository';
 import { basePortalAudit, type PortalActionContext } from './portal-action-context';
 
@@ -37,6 +39,7 @@ const MODULE = 'portal-fees';
 export class FeesService {
   constructor(
     private readonly repo: FeesRepository,
+    @Inject(DATABASE) private readonly db: Database,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
   ) {}
 
@@ -62,6 +65,8 @@ export class FeesService {
       classId: input.classId ?? null,
       academicYearId: input.academicYearId ?? null,
       termId: input.termId ?? null,
+      gradeLevelNumber: input.gradeLevelNumber ?? null,
+      termSequence: input.termSequence ?? null,
       amount: input.amount,
       frequency: input.frequency,
       description: input.description ?? null,
@@ -89,6 +94,9 @@ export class FeesService {
       classId: input.classId === undefined ? existing!.classId : input.classId,
       academicYearId: input.academicYearId === undefined ? existing!.academicYearId : input.academicYearId,
       termId: input.termId === undefined ? existing!.termId : input.termId,
+      gradeLevelNumber:
+        input.gradeLevelNumber === undefined ? existing!.gradeLevelNumber : input.gradeLevelNumber,
+      termSequence: input.termSequence === undefined ? existing!.termSequence : input.termSequence,
       amount: input.amount ?? existing!.amount,
       frequency: input.frequency ?? existing!.frequency,
       description: input.description === undefined ? existing!.description : input.description,
@@ -132,12 +140,20 @@ export class FeesService {
       });
     }
     const campusId = this.createCampusId(ctx.scope);
+    const f = this.filter(ctx);
+    const scope = await resolveAcademicScope(this.db, {
+      institutionId: ctx.principal.institutionId,
+      campusIds: f.campusIds,
+      feeStructureId: input.feeStructureId,
+    });
     const row = await this.repo.insertInvoice({
       institutionId: ctx.principal.institutionId,
       campusId,
       invoiceNo,
       studentId: input.studentId,
       feeStructureId: input.feeStructureId ?? null,
+      academicYearId: scope.academicYearId,
+      termId: scope.termId,
       amount: input.amount,
       amountPaid: 0,
       status: input.status,

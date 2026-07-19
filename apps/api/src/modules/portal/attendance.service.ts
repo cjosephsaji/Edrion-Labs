@@ -8,15 +8,21 @@ import {
 import { resolveScopeFilter, type InstitutionScope, type ScopeFilter } from '@edrion/auth';
 import type { AuditWriter, AuditEventInput } from '@edrion/audit';
 import type {
+  AttendanceAgendaQuery,
   AttendanceListQuery,
   CreateAttendanceSessionInput,
   MarkAttendanceInput,
+  OpenAttendanceSessionInput,
   UpdateAttendanceSessionInput,
 } from '@edrion/schemas';
-import { AUDIT_WRITER } from '../../common/tokens';
+import { AUDIT_WRITER, DATABASE } from '../../common/tokens';
+import type { Database } from '@edrion/database';
 import type { Page } from './academics.repository';
 import type { ListResult } from './academics.service';
+import { resolveAcademicScope } from './academic-scope-stamp';
 import { AttendanceRepository, type AttendanceRefTable } from './attendance.repository';
+import { resolveCurrentStaffId } from './current-staff';
+import { institutionNow, slotTiming, getCachedInstitutionTimezone } from './institution-clock';
 import { basePortalAudit, type PortalActionContext } from './portal-action-context';
 
 const MODULE = 'portal-attendance';
@@ -31,6 +37,7 @@ const MODULE = 'portal-attendance';
 export class AttendanceService {
   constructor(
     private readonly repo: AttendanceRepository,
+    @Inject(DATABASE) private readonly db: Database,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
   ) {}
 
@@ -39,6 +46,161 @@ export class AttendanceService {
   async listSessions(ctx: PortalActionContext, q: AttendanceListQuery) {
     const f = this.filter(ctx);
     return this.paginate(await this.repo.listSessions(ctx.principal.institutionId, f.campusIds, q), q);
+  }
+
+  async agenda(ctx: PortalActionContext, q: AttendanceAgendaQuery) {
+    const timezone = await getCachedInstitutionTimezone(ctx.principal.institutionId, () =>
+      this.repo.getInstitutionTimezone(ctx.principal.institutionId),
+    );
+    const wall = institutionNow(timezone);
+    const date = q.date ?? wall.date;
+    // When browsing another date, recompute day-of-week from that date in the institution tz
+    // by anchoring noon UTC on that calendar date (avoids DST edge for weekday).
+    let dayOfWeek = wall.dayOfWeek;
+    let nowTime = wall.time;
+    if (q.date && q.date !== wall.date) {
+      const [y, m, d] = q.date.split('-').map(Number);
+      const anchor = new Date(Date.UTC(y!, m! - 1, d!, 12, 0, 0));
+      dayOfWeek = institutionNow(timezone, anchor).dayOfWeek;
+      nowTime = '23:59'; // historical dates: treat all slots as past for timing
+    }
+
+    const staffId = await resolveCurrentStaffId(this.db, ctx.principal);
+    let scope: 'mine' | 'all' = q.scope ?? (staffId ? 'mine' : 'all');
+    if (scope === 'mine' && !staffId) {
+      return {
+        date,
+        now: wall.time,
+        timezone,
+        dayOfWeek,
+        scope,
+        slots: [] as const,
+        reason: 'staff_not_linked' as const,
+      };
+    }
+
+    const f = this.filter(ctx);
+    const rows = await this.repo.listAgendaSlots({
+      institutionId: ctx.principal.institutionId,
+      campusIds: f.campusIds,
+      date,
+      dayOfWeek,
+      teacherId: scope === 'mine' ? staffId : undefined,
+      classId: q.classId,
+    });
+
+    const slots = rows.map((r) => {
+      const timing = slotTiming(nowTime, r.startTime, r.endTime);
+      let marking: 'unmarked' | 'partial' | 'complete' = 'unmarked';
+      if (r.sessionId) {
+        marking =
+          r.rosterSize > 0 && r.recordCount >= r.rosterSize
+            ? 'complete'
+            : r.recordCount > 0
+              ? 'partial'
+              : 'unmarked';
+      }
+      return {
+        slotId: r.slotId,
+        periodLabel: r.periodLabel,
+        startTime: r.startTime,
+        endTime: r.endTime,
+        classId: r.classId,
+        className: r.className,
+        subjectId: r.subjectId,
+        subjectName: r.subjectName,
+        teacherId: r.teacherId,
+        teacherName: r.teacherName,
+        room: r.room,
+        timing,
+        marking,
+        rosterSize: r.rosterSize,
+        session: r.sessionId
+          ? {
+              id: r.sessionId,
+              recordCount: r.recordCount,
+              presentCount: r.presentCount,
+              version: r.sessionVersion ?? 0,
+            }
+          : null,
+      };
+    });
+
+    return {
+      date,
+      now: wall.time,
+      timezone,
+      dayOfWeek,
+      scope,
+      slots,
+      reason: null as null,
+    };
+  }
+
+  async openSession(ctx: PortalActionContext, input: OpenAttendanceSessionInput) {
+    const institutionId = ctx.principal.institutionId;
+    let classId = input.classId;
+    let slotId: string | null = null;
+    let subjectId: string | null = null;
+    let periodLabel = 'full_day';
+    let campusId = this.createCampusId(ctx.scope);
+
+    if (input.slotId) {
+      const slot = await this.repo.findTimetableSlot(input.slotId, institutionId);
+      if (!slot) {
+        throw new BadRequestException({ code: 'INVALID_REFERENCE', message: 'Unknown timetable slot' });
+      }
+      classId = slot.classId;
+      slotId = slot.id;
+      subjectId = slot.subjectId;
+      periodLabel = slot.periodLabel?.trim() || slot.startTime || 'period';
+      if (slot.campusId) campusId = slot.campusId;
+    }
+
+    if (!classId) {
+      throw new BadRequestException({ code: 'INVALID_REFERENCE', message: 'classId is required' });
+    }
+    await this.assertRef(ctx, 'classes', classId, 'class');
+
+    // Find-or-create (idempotent — never 409 SESSION_EXISTS).
+    let session =
+      slotId != null
+        ? await this.repo.findSessionBySlotId(institutionId, classId, input.date, slotId)
+        : await this.repo.findSessionByKey(institutionId, classId, input.date, periodLabel);
+
+    if (!session) {
+      const f = this.filter(ctx);
+      const scope = await resolveAcademicScope(this.db, {
+        institutionId,
+        campusIds: f.campusIds,
+        classId,
+      });
+      const staffId = await resolveCurrentStaffId(this.db, ctx.principal);
+      session = await this.repo.insertSession({
+        institutionId,
+        campusId,
+        classId,
+        academicYearId: scope.academicYearId,
+        termId: scope.termId,
+        subjectId,
+        date: input.date,
+        period: periodLabel,
+        slotId,
+        takenById: staffId,
+        notes: null,
+        createdBy: ctx.principal.institutionUserId,
+      });
+      await this.write(ctx, 'attendance.session.open', 'attendance_session', session.id, campusId, {
+        newState: { classId, date: input.date, period: periodLabel, slotId },
+      });
+    }
+
+    const [roster, records] = await Promise.all([
+      this.repo.classRoster(classId, institutionId),
+      this.repo.listRecords(session.id),
+    ]);
+
+    return { session, roster, records };
   }
 
   async createSession(ctx: PortalActionContext, input: CreateAttendanceSessionInput) {
@@ -58,10 +220,18 @@ export class AttendanceService {
       });
     }
     const campusId = this.createCampusId(ctx.scope);
+    const f = this.filter(ctx);
+    const scope = await resolveAcademicScope(this.db, {
+      institutionId: ctx.principal.institutionId,
+      campusIds: f.campusIds,
+      classId: input.classId,
+    });
     const row = await this.repo.insertSession({
       institutionId: ctx.principal.institutionId,
       campusId,
       classId: input.classId,
+      academicYearId: scope.academicYearId,
+      termId: scope.termId,
       subjectId: input.subjectId ?? null,
       date: input.date,
       period: input.period,
@@ -117,26 +287,47 @@ export class AttendanceService {
     return this.repo.listRecords(sessionId);
   }
 
-  /** Bulk upsert the register. Each mark's student is pre-checked for a friendly 400. */
+  /** Bulk upsert the register — two queries (validate students + multi-row upsert). */
   async mark(ctx: PortalActionContext, sessionId: string, input: MarkAttendanceInput) {
     const session = await this.requireSessionInScope(ctx, sessionId);
-    const seen = new Set<string>();
-    for (const m of input.marks) {
-      if (!seen.has(m.studentId)) {
-        await this.assertRef(ctx, 'students', m.studentId, 'student');
-        seen.add(m.studentId);
+    const uniqueIds = [...new Set(input.marks.map((m) => m.studentId))];
+    const existing = await this.repo.existingStudentIds(uniqueIds, ctx.principal.institutionId);
+    const missing = uniqueIds.filter((id) => !existing.has(id));
+    if (missing.length > 0) {
+      throw new BadRequestException({
+        code: 'INVALID_REFERENCE',
+        message: `Unknown student${missing.length > 1 ? 's' : ''}`,
+      });
+    }
+
+    // Prefer students in the class when the session has a class.
+    const rosterIds = await this.repo.classRosterStudentIds(session.classId, ctx.principal.institutionId);
+    if (rosterIds.length > 0) {
+      const rosterSet = new Set(rosterIds);
+      const outside = uniqueIds.filter((id) => !rosterSet.has(id));
+      if (outside.length > 0) {
+        throw new BadRequestException({
+          code: 'INVALID_REFERENCE',
+          message: 'One or more students are not in this class',
+        });
       }
-      await this.repo.upsertRecord({
+    }
+
+    // Last-write-wins per studentId if duplicates appear in the payload.
+    const byStudent = new Map(input.marks.map((m) => [m.studentId, m]));
+    await this.repo.upsertRecords(
+      [...byStudent.values()].map((m) => ({
         institutionId: ctx.principal.institutionId,
         sessionId,
         studentId: m.studentId,
         status: m.status,
         remarks: m.remarks ?? null,
         createdBy: ctx.principal.institutionUserId,
-      });
-    }
+      })),
+    );
+
     await this.write(ctx, 'attendance.mark', 'attendance_session', sessionId, session.campusId, {
-      newState: { marks: input.marks.length },
+      newState: { marks: byStudent.size },
     });
     return this.repo.listRecords(sessionId);
   }

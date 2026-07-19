@@ -132,6 +132,7 @@ function makeHarness(tools: PetrosTool[], streams: Record<string, unknown>[][]) 
       values: {},
       nomenclature: NOMENCLATURE_PRESETS.school,
       nomenclatureOverrides: {},
+      navigation: {},
     }),
   };
   const history = {

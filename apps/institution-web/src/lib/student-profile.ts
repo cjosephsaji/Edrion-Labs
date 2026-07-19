@@ -34,14 +34,54 @@ export interface StudentProfile {
   attendance: { total: number; present: number; absent: number; late: number; ratePct: number | null } | null;
   fees: { invoices: number; billedMinor: number; paidMinor: number; outstandingMinor: number; overdue: number } | null;
   health: {
-    records: { id: string; recordType: string; title: string; status: string; followUpRequired: boolean; at: string }[];
+    records: {
+      id: string;
+      recordType: string;
+      title: string;
+      status: string;
+      followUpRequired: boolean;
+      followUpAt: string | null;
+      reason: string | null;
+      symptoms: string | null;
+      actionTaken: string | null;
+      treatment: string | null;
+      attendedBy: string | null;
+      details: string | null;
+      bloodGroup: string | null;
+      at: string;
+    }[];
+    incidents: {
+      id: string;
+      title: string;
+      severity: string;
+      status: string;
+      description: string | null;
+      actionTaken: string | null;
+      treatment: string | null;
+      attendedBy: string | null;
+      followUpRequired: boolean;
+      followUpAt: string | null;
+      occurredAt: string | null;
+    }[];
     incidentsOpen: number;
     incidentsTotal: number;
   } | null;
   conduct: {
     open: number;
     total: number;
-    recent: { id: string; category: string; title: string; severity: string; status: string; occurredOn: string | null; at: string }[];
+    recent: {
+      id: string;
+      category: string;
+      title: string;
+      severity: string;
+      status: string;
+      occurredOn: string | null;
+      description: string | null;
+      reporterName: string | null;
+      resolutionNote: string | null;
+      notifyGuardians: boolean;
+      at: string;
+    }[];
   } | null;
 }
 

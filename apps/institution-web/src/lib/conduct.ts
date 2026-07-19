@@ -4,6 +4,7 @@ import { usePortalClient } from './portal-client';
 import { useScope } from './scope';
 import { scopeKey } from './admin';
 import type { ListParams } from './academics';
+import { useAcademicScopedParams } from './academic-context';
 import type { Paged } from './academics-types';
 
 /** A student conduct incident (behaviour or complaint) from GET /portal/conduct. */
@@ -41,9 +42,11 @@ function queryString(p: ListParams & { studentId?: string }): string {
 export function useConductList<T = IncidentRow>(resource: string, params: ListParams) {
   const client = usePortalClient();
   const { scope } = useScope();
+  const scoped = useAcademicScopedParams(params, params.academicScope ?? 'year');
+  const { academicScope: _as, ...listParams } = scoped;
   return useQuery({
-    queryKey: ['conduct', resource, scopeKey(scope), params],
-    queryFn: () => client.get<Paged<T>>(`/portal/${resource}?${queryString(params)}`, scope),
+    queryKey: ['conduct', resource, scopeKey(scope), listParams],
+    queryFn: () => client.get<Paged<T>>(`/portal/${resource}?${queryString(listParams)}`, scope),
     placeholderData: keepPreviousData,
   });
 }

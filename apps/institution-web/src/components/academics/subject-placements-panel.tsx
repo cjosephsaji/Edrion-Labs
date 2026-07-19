@@ -3,18 +3,15 @@ import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Badge, Button, Input, Label, Select, Skeleton } from '@edrion/ui';
 import {
+  placementTermLabel,
   useAcademicMutations,
   useProgrammeLevelSelectOptions,
+  useProgrammeSlotSelectOptions,
   useSubjectPlacements,
 } from '@/lib/academics';
 import { usePermissions } from '@/lib/permissions';
 import { PortalClientError } from '@/lib/portal-client';
 import { useTerm } from '@/lib/term';
-
-const SEMESTER_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
-  value: String(i + 1),
-  label: String(i + 1),
-}));
 
 /**
  * Curriculum placements for one subject — where in the programme structure it is actually taught.
@@ -35,26 +32,29 @@ export function SubjectPlacementsPanel({
   const mut = useAcademicMutations('programme-subjects');
 
   const [programmeLevelId, setProgrammeLevelId] = useState('');
-  const [semesterSequence, setSemesterSequence] = useState('1');
+  const [slotId, setSlotId] = useState('');
   const [credits, setCredits] = useState('');
   const [isElective, setIsElective] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { options: slotOptions, hasStructure } = useProgrammeSlotSelectOptions(
+    programmeLevelId || undefined,
+  );
 
   const placements = data?.items ?? [];
 
   async function add() {
-    if (!programmeLevelId) return;
+    if (!programmeLevelId || !slotId) return;
     setError(null);
     try {
       await mut.create.mutateAsync({
         subjectId,
         programmeLevelId,
-        semesterSequence: Number(semesterSequence),
+        slotId,
         credits: credits === '' ? null : Number(credits),
         isElective,
       });
       setProgrammeLevelId('');
-      setSemesterSequence('1');
+      setSlotId('');
       setCredits('');
       setIsElective(false);
     } catch (err) {
@@ -89,8 +89,11 @@ export function SubjectPlacementsPanel({
         <div className="flex flex-col gap-2 rounded-md border border-border p-3">
           <Select
             value={programmeLevelId}
-            onChange={(e) => setProgrammeLevelId(e.target.value)}
-            placeholder={levelOptions.length ? `${t('department')} and ${t('gradeLevel').toLowerCase()}…` : 'No programme years defined yet'}
+            onChange={(e) => {
+              setProgrammeLevelId(e.target.value);
+              setSlotId('');
+            }}
+            placeholder={levelOptions.length ? `${t('department')} and ${t('gradeLevel')}…` : 'No programme years defined yet'}
             options={levelOptions}
             disabled={levelOptions.length === 0}
           />
@@ -98,9 +101,17 @@ export function SubjectPlacementsPanel({
             <div>
               <Label>{t('term')}</Label>
               <Select
-                value={semesterSequence}
-                onChange={(e) => setSemesterSequence(e.target.value)}
-                options={SEMESTER_OPTIONS}
+                value={slotId}
+                onChange={(e) => setSlotId(e.target.value)}
+                placeholder={
+                  !programmeLevelId
+                    ? `Pick a ${t('gradeLevel').toLowerCase()} first`
+                    : hasStructure
+                      ? `Pick a ${t('term').toLowerCase()}…`
+                      : 'No term slots yet'
+                }
+                options={slotOptions}
+                disabled={!programmeLevelId || !hasStructure}
               />
             </div>
             <div>
@@ -123,7 +134,7 @@ export function SubjectPlacementsPanel({
             />
             Elective in this {t('term').toLowerCase()}
           </label>
-          <Button onClick={add} loading={mut.create.isPending} disabled={!programmeLevelId}>
+          <Button onClick={add} loading={mut.create.isPending} disabled={!programmeLevelId || !slotId}>
             Add placement
           </Button>
         </div>
@@ -145,9 +156,7 @@ export function SubjectPlacementsPanel({
                   {[p.departmentName, p.gradeLevelName].filter(Boolean).join(' · ')}
                 </p>
                 <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-text-muted">
-                  <span>
-                    {t('term')} {p.semesterSequence}
-                  </span>
+                  <span>{placementTermLabel(p, t('term'))}</span>
                   {p.credits != null && <span>· {p.credits} credits</span>}
                   {p.isElective && <Badge tone="neutral">Elective</Badge>}
                 </p>

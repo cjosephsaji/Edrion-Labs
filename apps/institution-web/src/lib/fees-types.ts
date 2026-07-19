@@ -26,6 +26,13 @@ export interface FeeStructureRow {
   academicYearName: string | null;
   termId: string | null;
   termName: string | null;
+  /**
+   * College-wide placement by number instead of by row id — set when the charge applies to a slot in
+   * every department at once (each department has its own "Year 1"/"Semester 1" row, so an id would
+   * pin the charge to one of them). Mutually exclusive with gradeLevelId/termId.
+   */
+  gradeLevelNumber: number | null;
+  termSequence: number | null;
   amount: number;
   frequency: FeeFrequency;
   description: string | null;

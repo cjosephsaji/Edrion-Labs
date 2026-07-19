@@ -17,6 +17,7 @@ import {
   Label,
   FieldError,
   TimezoneSelect,
+  Select,
   subdivisionLabel,
 } from '@edrion/ui';
 import { createInstitutionSchema, type CreateInstitutionInput } from '@edrion/schemas';
@@ -80,16 +81,21 @@ export default function NewInstitutionPage() {
                 <Input {...register('displayName')} placeholder="Riverside Public School" />
               </Field>
               <Field label="Type" error={errors.type?.message}>
-                <select
-                  {...register('type')}
-                  className="h-input w-full rounded-md border border-border bg-surface px-3 text-sm capitalize text-text-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-                >
-                  {Object.values(InstitutionType).map((t) => (
-                    <option key={t} value={t}>
-                      {t.replace(/_/g, ' ')}
-                    </option>
-                  ))}
-                </select>
+                <Controller
+                  control={control}
+                  name="type"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      className="capitalize"
+                      options={Object.values(InstitutionType).map((t) => ({
+                        value: t,
+                        label: t.replace(/_/g, ' '),
+                      }))}
+                    />
+                  )}
+                />
               </Field>
               <Field label="Country" error={errors.country?.message}>
                 <Controller
@@ -134,16 +140,17 @@ export default function NewInstitutionPage() {
                 />
               </Field>
               <Field label="Currency" error={errors.currency?.message}>
-                <select
-                  {...register('currency')}
-                  className="h-input w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-                >
-                  {Object.values(Currency).map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+                <Controller
+                  control={control}
+                  name="currency"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      options={Object.values(Currency).map((c) => ({ value: c, label: c }))}
+                    />
+                  )}
+                />
               </Field>
             </CardContent>
           </Card>

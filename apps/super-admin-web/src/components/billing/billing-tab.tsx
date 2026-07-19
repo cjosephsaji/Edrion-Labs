@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, StatCard, StatusBadge, EmptyState } from '@edrion/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, StatCard, StatusBadge, EmptyState, Select } from '@edrion/ui';
 import {
   ApiClientError,
   useBillingSummary,
@@ -218,9 +218,7 @@ export function BillingTab({ institutionId }: { institutionId: string }) {
         )}
         {active?.kind === 'dunning' && (
           <Labelled label="Dunning state">
-            <select value={form.dunningState ?? 'reminder'} onChange={(e) => set('dunningState', e.target.value)} className={fieldClass}>
-              {['reminder', 'overdue', 'final_notice', 'written_off'].map((d) => <option key={d} value={d}>{d.replace(/_/g, ' ')}</option>)}
-            </select>
+            <Select value={form.dunningState ?? 'reminder'} onChange={(e) => set('dunningState', e.target.value)} className={fieldClass} options={['reminder', 'overdue', 'final_notice', 'written_off'].map((d) => ({ value: d, label: d.replace(/_/g, ' ') }))} />
           </Labelled>
         )}
         {active?.kind === 'issue-credit' && (

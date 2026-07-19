@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+import { paginationQuerySchema, sortQuerySchema, versionSchema, academicScopeQuerySchema } from './common';
 
 /**
  * Institution-Portal FEES (Phase 7) request/response contracts: fee structures (templates),
@@ -39,50 +39,91 @@ const withVersion = { version: versionSchema };
 
 // --- fee structures (templates) ----------------------------------------------
 
-export const feeStructuresListQuerySchema = paginationQuerySchema.merge(sortQuerySchema).extend({
+export const feeStructuresListQuerySchema = paginationQuerySchema
+  .merge(sortQuerySchema)
+  .merge(academicScopeQuerySchema)
+  .extend({
   search: z.string().trim().max(160).optional(),
   status: feeStructureStatusSchema.optional(),
   feeType: feeTypeSchema.optional(),
   departmentId: z.string().uuid().optional(),
   programmeLevelId: z.string().uuid().optional(),
-  termId: z.string().uuid().optional(),
   gradeLevelId: z.string().uuid().optional(),
   classId: z.string().uuid().optional(),
+  /** Year number and term slot — the department-agnostic facets. See `slot` fields below. */
+  gradeLevelNumber: z.coerce.number().int().min(0).max(20).optional(),
+  semesterSequence: z.coerce.number().int().min(1).max(20).optional(),
 });
 export type FeeStructuresListQuery = z.infer<typeof feeStructuresListQuerySchema>;
 
-export const createFeeStructureSchema = z.object({
-  name: z.string().trim().min(1, 'Required').max(120),
-  feeType: feeTypeSchema.default('tuition'),
-  gradeLevelId: optionalUuid,
-  classId: optionalUuid,
-  academicYearId: optionalUuid,
-  termId: optionalUuid,
-  amount: money.default(0),
-  frequency: feeFrequencySchema.default('one_time'),
-  description: shortText(500),
-  status: feeStructureStatusSchema.default('active'),
-});
+/**
+ * Placement by *number* rather than by row id, so one structure covers every department: a
+ * university's "Year 1" / "Semester 1" is a separate row per department, so `gradeLevelId` /
+ * `termId` would pin the charge to one of them. Null = not scoped that way.
+ */
+const slot = {
+  gradeLevelNumber: z.coerce.number().int().min(0).max(20).nullish(),
+  termSequence: z.coerce.number().int().min(1).max(20).nullish(),
+};
+
+/** A structure is placed by ids OR by numbers — mixing the two would double-scope the charge. */
+const notBothPlacements = (v: {
+  gradeLevelId?: string | null;
+  termId?: string | null;
+  gradeLevelNumber?: number | null;
+  termSequence?: number | null;
+}) =>
+  !(
+    (v.gradeLevelNumber != null || v.termSequence != null) &&
+    (v.gradeLevelId != null || v.termId != null)
+  );
+const bothPlacementsMessage = {
+  message:
+    'Use either a specific year/term or a college-wide year number and term slot — not both.',
+  path: ['gradeLevelNumber'] as (string | number)[],
+};
+
+export const createFeeStructureSchema = z
+  .object({
+    name: z.string().trim().min(1, 'Required').max(120),
+    feeType: feeTypeSchema.default('tuition'),
+    gradeLevelId: optionalUuid,
+    classId: optionalUuid,
+    academicYearId: optionalUuid,
+    termId: optionalUuid,
+    ...slot,
+    amount: money.default(0),
+    frequency: feeFrequencySchema.default('one_time'),
+    description: shortText(500),
+    status: feeStructureStatusSchema.default('active'),
+  })
+  .refine(notBothPlacements, bothPlacementsMessage);
 export type CreateFeeStructureInput = z.infer<typeof createFeeStructureSchema>;
 
-export const updateFeeStructureSchema = z.object({
-  name: z.string().trim().min(1).max(120).optional(),
-  feeType: feeTypeSchema.optional(),
-  gradeLevelId: optionalUuid,
-  classId: optionalUuid,
-  academicYearId: optionalUuid,
-  termId: optionalUuid,
-  amount: money.optional(),
-  frequency: feeFrequencySchema.optional(),
-  description: shortText(500),
-  status: feeStructureStatusSchema.optional(),
-  ...withVersion,
-});
+export const updateFeeStructureSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120).optional(),
+    feeType: feeTypeSchema.optional(),
+    gradeLevelId: optionalUuid,
+    classId: optionalUuid,
+    academicYearId: optionalUuid,
+    termId: optionalUuid,
+    ...slot,
+    amount: money.optional(),
+    frequency: feeFrequencySchema.optional(),
+    description: shortText(500),
+    status: feeStructureStatusSchema.optional(),
+    ...withVersion,
+  })
+  .refine(notBothPlacements, bothPlacementsMessage);
 export type UpdateFeeStructureInput = z.infer<typeof updateFeeStructureSchema>;
 
 // --- fee invoices (per student) ----------------------------------------------
 
-export const feeInvoicesListQuerySchema = paginationQuerySchema.merge(sortQuerySchema).extend({
+export const feeInvoicesListQuerySchema = paginationQuerySchema
+  .merge(sortQuerySchema)
+  .merge(academicScopeQuerySchema)
+  .extend({
   search: z.string().trim().max(160).optional(),
   status: feeInvoiceStatusSchema.optional(),
   studentId: z.string().uuid().optional(),

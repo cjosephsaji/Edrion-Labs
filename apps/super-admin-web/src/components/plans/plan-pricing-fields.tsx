@@ -1,5 +1,5 @@
 'use client';
-import { Label } from '@edrion/ui';
+import { Label, Select } from '@edrion/ui';
 import type { PlanVersionDto, PlanVersionPricingPayload } from '@edrion/api-client';
 
 const fieldClass =
@@ -129,19 +129,11 @@ export function PlanPricingFields({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label htmlFor="plan-currency">Currency</Label>
-          <select id="plan-currency" value={value.currency} onChange={(e) => set({ currency: e.target.value })} className={fieldClass}>
-            {CURRENCIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+          <Select id="plan-currency" value={value.currency} onChange={(e) => set({ currency: e.target.value })} className={fieldClass} options={CURRENCIES.map((c) => ({ value: c, label: c }))} />
         </div>
         <div>
           <Label htmlFor="plan-support">Support tier</Label>
-          <select id="plan-support" value={value.supportTier} onChange={(e) => set({ supportTier: e.target.value })} className={fieldClass}>
-            {SUPPORT_TIERS.map((t) => (
-              <option key={t} value={t} className="capitalize">{t}</option>
-            ))}
-          </select>
+          <Select id="plan-support" value={value.supportTier} onChange={(e) => set({ supportTier: e.target.value })} className={fieldClass} options={SUPPORT_TIERS.map((t) => ({ value: t, label: t }))} />
         </div>
         <div>
           <Label htmlFor="plan-monthly">Monthly price</Label>

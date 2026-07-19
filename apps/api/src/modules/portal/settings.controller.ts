@@ -4,6 +4,7 @@ import {
   createPortalSettingSchema,
   portalSettingsListQuerySchema,
   putEffectiveSettingsSchema,
+  putNavigationLayoutSchema,
   putNomenclatureOverridesSchema,
   updateInstitutionProfileSchema,
   updatePortalSettingSchema,
@@ -11,6 +12,7 @@ import {
   type CreatePortalSettingInput,
   type PortalSettingsListQuery,
   type PutEffectiveSettingsInput,
+  type PutNavigationLayoutInput,
   type PutNomenclatureOverridesInput,
   type UpdateInstitutionProfileInput,
   type UpdatePortalSettingInput,
@@ -107,6 +109,17 @@ export class SettingsController {
     @Body(zodBody(putNomenclatureOverridesSchema)) body: PutNomenclatureOverridesInput,
   ) {
     return this.service.putNomenclatureOverrides(this.ctx(p, s, r), body);
+  }
+
+  @Post('navigation')
+  @RequireInstitutionPermissions('institution_settings.manage')
+  saveNavigation(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(putNavigationLayoutSchema)) body: PutNavigationLayoutInput,
+  ) {
+    return this.service.putNavigationLayout(this.ctx(p, s, r), body);
   }
 
   @Post()

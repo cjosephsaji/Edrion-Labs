@@ -36,6 +36,13 @@ export const sortQuerySchema = z.object({
 });
 export type SortQuery = z.infer<typeof sortQuerySchema>;
 
+/** Optional academic year / term facets for portal list queries. Backend may ignore until wired. */
+export const academicScopeQuerySchema = z.object({
+  academicYearId: z.string().uuid().optional(),
+  termId: z.string().uuid().optional(),
+});
+export type AcademicScopeQuery = z.infer<typeof academicScopeQuerySchema>;
+
 /** A required, human-meaningful reason — used to gate sensitive/audited actions. */
 export const reasonSchema = z
   .string()

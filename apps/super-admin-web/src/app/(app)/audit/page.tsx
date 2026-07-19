@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { Download, Search } from 'lucide-react';
-import { Button, Card, StatusBadge, TableSkeleton, EmptyState, ErrorState } from '@edrion/ui';
+import { Button, Card, StatusBadge, TableSkeleton, EmptyState, ErrorState, Select } from '@edrion/ui';
 import { useAuditEvents, useAuditExport, useCurrentEmployee, type AuditFilter } from '@edrion/api-client';
 import { Topbar } from '@/components/app-shell/topbar';
 import { rowActivation } from '@/lib/use-focus-trap';
@@ -64,16 +64,8 @@ export default function AuditPage() {
             placeholder="Module"
             className={selectClass + ' w-36'}
           />
-          <select value={filter.riskLevel ?? ''} onChange={(e) => set('riskLevel', e.target.value)} className={selectClass}>
-            {RISK.map((r) => (
-              <option key={r} value={r}>{r === '' ? 'All risk' : r}</option>
-            ))}
-          </select>
-          <select value={filter.result ?? ''} onChange={(e) => set('result', e.target.value)} className={selectClass}>
-            {RESULT.map((r) => (
-              <option key={r} value={r}>{r === '' ? 'All results' : r}</option>
-            ))}
-          </select>
+          <Select value={filter.riskLevel ?? ''} onChange={(e) => set('riskLevel', e.target.value)} className={selectClass} options={RISK.map((r) => ({ value: r, label: r === '' ? 'All risk' : r }))} />
+          <Select value={filter.result ?? ''} onChange={(e) => set('result', e.target.value)} className={selectClass} options={RESULT.map((r) => ({ value: r, label: r === '' ? 'All results' : r }))} />
           <input
             type="date"
             value={filter.from?.slice(0, 10) ?? ''}

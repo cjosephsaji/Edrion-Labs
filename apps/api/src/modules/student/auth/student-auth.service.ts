@@ -21,6 +21,7 @@ import type { ApiEnv } from '@edrion/config';
 import { API_ENV, AUDIT_WRITER, DATABASE } from '../../../common/tokens';
 import type { EdrionRequestContext } from '../../../common/request-context';
 import { hashPassword, hashToken, makeToken, verifyPassword } from '../../authentication/password.util';
+import { emailButton, emailLayout } from '../../../common/email-templates';
 import { EmailService } from '../../portal/email.service';
 import type { VerifiedStudentSession } from '../core/student-session.service';
 import { StudentSessionService } from '../core/student-session.service';
@@ -504,10 +505,30 @@ export class StudentAuthService {
         .where(eq(schema.independentUsers.id, iu.id));
     }
     const resetUrl = `${this.env.STUDENT_WEB_URL}/reset/confirm?token=${encodeURIComponent(raw)}`;
+    const text = [
+      `Hi ${user.fullName},`,
+      '',
+      'We received a request to reset your Edrion student password.',
+      `Reset your password (valid for 1 hour):`,
+      resetUrl,
+      '',
+      `If you didn't request this, you can safely ignore this email.`,
+    ].join('\n');
+    const html = emailLayout({
+      heading: 'Reset your password',
+      preheader: 'Choose a new Edrion student password',
+      footer:
+        "You're receiving this because a password reset was requested for your Edrion student account. If you didn't request this, you can safely ignore it.",
+      bodyHtml: `<p style="margin:0 0 16px;">Hi ${user.fullName}, we received a request to reset the password on your Edrion student account.</p>
+        <p style="margin:0 0 18px;">Click below to choose a new password. This link expires in <strong>1 hour</strong>.</p>
+        ${emailButton(resetUrl, 'Reset your password')}
+        <p style="margin:18px 0 0;">If you didn't request this, you can safely ignore this email — your password won't change.</p>`,
+    });
     await this.emails.send({
       to: user.email,
       subject: 'Reset your Edrion student password',
-      text: [`Hi ${user.fullName},`, '', 'Reset your password (valid for 1 hour):', resetUrl, ''].join('\n'),
+      text,
+      html,
     });
     await this.audit.logAudit({
       ...this.actorFields(kind, user, req),

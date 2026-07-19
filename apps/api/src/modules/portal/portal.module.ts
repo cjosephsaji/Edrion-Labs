@@ -5,6 +5,7 @@ import { PortalController } from './portal.controller';
 import { PortalAuthService } from './portal-auth.service';
 import { PortalRepository } from './portal.repository';
 import { PortalDashboardService } from './portal-dashboard.service';
+import { DashboardPrefsService } from './dashboard/dashboard-prefs.service';
 import { PortalSearchService } from './portal-search.service';
 import { PortalSearchRepository } from './portal-search.repository';
 import { InstitutionAuthGuard } from './portal-auth.guard';
@@ -22,6 +23,8 @@ import { SupabaseVerifier } from '../authentication/supabase-verifier';
 import { AcademicsController } from './academics.controller';
 import { AcademicsService } from './academics.service';
 import { AcademicsRepository } from './academics.repository';
+import { ProgrammeStructureService } from './programme-structure.service';
+import { ProgrammeStructureRepository } from './programme-structure.repository';
 import { PeopleController } from './people.controller';
 import { PeopleService } from './people.service';
 import { PeopleRepository } from './people.repository';
@@ -34,6 +37,9 @@ import { AttendanceRepository } from './attendance.repository';
 import { TimetableController } from './timetable.controller';
 import { TimetableService } from './timetable.service';
 import { TimetableRepository } from './timetable.repository';
+import { LabScheduleSyncService } from './lab-schedule-sync.service';
+import { CalendarController } from './calendar.controller';
+import { CalendarService } from './calendar.service';
 import { ExamsController } from './exams.controller';
 import { ExamsService } from './exams.service';
 import { PortalAudienceService } from './portal-audience.service';
@@ -151,8 +157,8 @@ import { PortalCoursesController } from './courses/portal-courses.controller';
 import { PortalCoursesService } from './courses/portal-courses.service';
 import { PortalReportCardsController } from './report-cards/portal-report-cards.controller';
 import { PortalLearningSummaryService, PortalReportCardsService } from './report-cards/portal-report-cards.service';
-import { PortalCalendarEventsController } from './calendar-events/portal-calendar-events.controller';
-import { PortalCalendarEventsService } from './calendar-events/portal-calendar-events.service';
+import { CalendarEventsController } from './calendar-events/calendar-events.controller';
+import { CalendarEventsService } from './calendar-events/calendar-events.service';
 
 /**
  * Institution Portal module — the tenant-facing API. Separate from the platform control-plane
@@ -169,6 +175,7 @@ import { PortalCalendarEventsService } from './calendar-events/portal-calendar-e
     AdmissionsController,
     AttendanceController,
     TimetableController,
+    CalendarController,
     ExamsController,
     GradebookController,
     AssignmentsController,
@@ -215,7 +222,7 @@ import { PortalCalendarEventsService } from './calendar-events/portal-calendar-e
     PortalCourseContentController,
     PortalCoursesController,
     PortalReportCardsController,
-    PortalCalendarEventsController,
+    CalendarEventsController,
   ],
   providers: [
     PortalAuthService,
@@ -229,11 +236,14 @@ import { PortalCalendarEventsService } from './calendar-events/portal-calendar-e
     SupabaseVerifier,
     PortalRepository,
     PortalDashboardService,
+    DashboardPrefsService,
     PortalSearchService,
     PortalSearchRepository,
     { provide: APP_INTERCEPTOR, useClass: PortalTenantInterceptor },
     AcademicsService,
     AcademicsRepository,
+    ProgrammeStructureService,
+    ProgrammeStructureRepository,
     PeopleService,
     PeopleRepository,
     AdmissionsService,
@@ -242,6 +252,8 @@ import { PortalCalendarEventsService } from './calendar-events/portal-calendar-e
     AttendanceRepository,
     TimetableService,
     TimetableRepository,
+    LabScheduleSyncService,
+    CalendarService,
     ExamsService,
     ExamsRepository,
     GradebookService,
@@ -322,7 +334,7 @@ import { PortalCalendarEventsService } from './calendar-events/portal-calendar-e
     PortalCoursesService,
     PortalReportCardsService,
     PortalLearningSummaryService,
-    PortalCalendarEventsService,
+    CalendarEventsService,
   ],
   // InstitutionAuthGuard (+ its session/rate-limit deps) is reused by the Parent Portal module,
   // which layers GuardianScopeGuard on top. Export the guard's transitive deps so it resolves there.

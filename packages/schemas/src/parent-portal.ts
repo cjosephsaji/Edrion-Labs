@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { cursorQuerySchema, versionSchema } from './common';
 
 /**
- * PARENT-PORTAL (/v1/parent/*) request + response contracts, shared between the API and parent-web.
+ * PARENT-PORTAL (/v1/parent/*) request + response contracts, shared between the API and institution-web guardian UI.
  * Every list is cursor (keyset) paginated. Student ids are NEVER trusted from the client for scoping
  * — the GuardianScopeGuard validates each `:studentId` against the caller's active guardian links —
  * but they still appear here as path/body params so the DTOs are self-describing.

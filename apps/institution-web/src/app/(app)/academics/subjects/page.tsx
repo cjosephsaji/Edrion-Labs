@@ -1,10 +1,18 @@
 'use client';
 import { useMemo } from 'react';
 import { Badge, type Column, type DetailSection } from '@edrion/ui';
+import { SUBJECT_KIND_OPTIONS, subjectKindLabel, type SubjectKind } from '@edrion/schemas';
 import { ResourceManager, type FilterDef } from '@/components/academics/resource-manager';
+import { ProgrammeSlotFields } from '@/components/academics/programme-slot-fields';
 import { SubjectPlacementsPanel } from '@/components/academics/subject-placements-panel';
 import type { FieldDef } from '@/components/academics/resource-form';
-import { useDepartmentOptions, useProgrammeLevelSelectOptions, type SubjectRow } from '@/lib/academics';
+import {
+  placementTermLabel,
+  useAcademicMutations,
+  useDepartmentOptions,
+  useProgrammeLevelSelectOptions,
+  type SubjectRow,
+} from '@/lib/academics';
 import { useTerm } from '@/lib/term';
 
 const SEMESTER_FILTER_OPTIONS = Array.from({ length: 8 }, (_, i) => ({
@@ -12,34 +20,45 @@ const SEMESTER_FILTER_OPTIONS = Array.from({ length: 8 }, (_, i) => ({
   label: String(i + 1),
 }));
 
+function subjectKindBadgeTone(kind: SubjectKind): 'info' | 'neutral' | 'warning' | 'success' {
+  switch (kind) {
+    case 'elective':
+      return 'neutral';
+    case 'honor':
+      return 'warning';
+    case 'minor':
+      return 'success';
+    default:
+      return 'info';
+  }
+}
+
 export default function SubjectsPage() {
   const { t, tp } = useTerm();
   const { data } = useDepartmentOptions();
   const { options: levelOptions } = useProgrammeLevelSelectOptions();
+  const curriculumMut = useAcademicMutations('programme-subjects');
 
   const filters = useMemo<FilterDef[]>(
     () => [
       {
         key: 'kind',
         label: 'All types',
-        options: [
-          { value: 'core', label: 'Core' },
-          { value: 'elective', label: 'Elective' },
-        ],
+        options: SUBJECT_KIND_OPTIONS,
       },
       {
         key: 'departmentId',
-        label: `All ${t('department').toLowerCase()}s`,
+        label: `All ${tp('department')}`,
         options: (data?.items ?? []).map((d) => ({ value: d.id, label: d.name })),
       },
       {
         key: 'programmeLevelId',
-        label: `All ${t('gradeLevel').toLowerCase()}s`,
+        label: `All ${tp('gradeLevel')}`,
         options: levelOptions,
       },
       {
         key: 'semesterSequence',
-        label: `All ${tp('term').toLowerCase()}`,
+        label: `All ${tp('term')}`,
         options: SEMESTER_FILTER_OPTIONS.map((o) => ({
           value: o.value,
           label: `${t('term')} ${o.label}`,
@@ -57,7 +76,12 @@ export default function SubjectsPage() {
         key: 'kind',
         header: 'Type',
         sortable: true,
-        render: (r) => <Badge tone={r.kind === 'core' ? 'info' : 'neutral'}>{r.kind === 'core' ? 'Core' : 'Elective'}</Badge>,
+        render: (r) => (
+          <span className="flex flex-wrap items-center gap-1">
+            <Badge tone={subjectKindBadgeTone(r.kind)}>{subjectKindLabel(r.kind)}</Badge>
+            {r.isLabSubject && <Badge tone="info">Lab</Badge>}
+          </span>
+        ),
       },
       {
         key: 'placements',
@@ -72,8 +96,8 @@ export default function SubjectsPage() {
             <span className="flex flex-wrap items-center gap-1">
               {shown.map((p) => (
                 <Badge key={p.id} tone="neutral">
-                  {[p.departmentName, p.gradeLevelName].filter(Boolean).join(' · ')} · {t('term')}{' '}
-                  {p.semesterSequence}
+                  {[p.departmentName, p.gradeLevelName].filter(Boolean).join(' · ')} ·{' '}
+                  {placementTermLabel(p, t('term'))}
                 </Badge>
               ))}
               {placements.length > shown.length && (
@@ -83,7 +107,7 @@ export default function SubjectsPage() {
           );
         },
       },
-      { key: 'departmentName', header: `Owning ${t('department').toLowerCase()}`, render: (r) => <span className="text-text-muted">{r.departmentName ?? '—'}</span> },
+      { key: 'departmentName', header: `Owning ${t('department')}`, render: (r) => <span className="text-text-muted">{r.departmentName ?? '—'}</span> },
       { key: 'classCount', header: 'Classes', align: 'right', render: (r) => <span className="tabular-nums">{r.classCount ?? '—'}</span> },
     ],
     [t],
@@ -98,18 +122,21 @@ export default function SubjectsPage() {
         label: 'Type',
         type: 'select',
         required: true,
-        options: [
-          { value: 'core', label: 'Core' },
-          { value: 'elective', label: 'Elective' },
-        ],
+        options: SUBJECT_KIND_OPTIONS,
       },
       {
         name: 'departmentId',
-        label: `Owning ${t('department').toLowerCase()}`,
+        label: `Owning ${t('department')}`,
         type: 'select',
         nullable: true,
         options: (data?.items ?? []).map((d) => ({ value: d.id, label: d.name })),
-        help: `Who owns the subject. Save, then use “Taught in” below to place it in a ${t('gradeLevel').toLowerCase()} and ${t('term').toLowerCase()}.`,
+        help: `Who owns the subject. You can also place it in a programme year and ${t('term').toLowerCase()} below.`,
+      },
+      {
+        name: 'isLabSubject',
+        label: 'Lab subject',
+        type: 'checkbox',
+        help: 'When scheduled on the timetable, this subject is automatically added to the lab schedule.',
       },
     ],
     [data, t],
@@ -123,7 +150,8 @@ export default function SubjectsPage() {
           fields: [
             { label: 'Name', value: r.name },
             { label: 'Code', value: r.code },
-            { label: 'Type', value: r.kind === 'core' ? 'Core' : 'Elective' },
+            { label: 'Type', value: subjectKindLabel(r.kind) },
+            { label: 'Lab subject', value: r.isLabSubject ? 'Yes' : 'No' },
             { label: `Owning ${t('department').toLowerCase()}`, value: r.departmentName ?? '—' },
             { label: 'Classes teaching it', value: r.classCount ?? 0 },
           ],
@@ -141,14 +169,40 @@ export default function SubjectsPage() {
       fields={fields}
       filters={filters}
       detail={detail}
-      defaultSortBy="name"
+      renderCreateExtra={({ setSubmitPayload }) => (
+        <ProgrammeSlotFields setSubmitPayload={setSubmitPayload} />
+      )}
+      onSubmitCreate={async (body, { create }) => {
+        const {
+          placementProgrammeLevelId,
+          placementSlotId,
+          placementCredits,
+          placementIsElective,
+          ...subjectBody
+        } = body;
+        const subject = (await create.mutateAsync(subjectBody)) as { id: string };
+        if (
+          typeof placementProgrammeLevelId === 'string' &&
+          placementProgrammeLevelId &&
+          typeof placementSlotId === 'string' &&
+          placementSlotId
+        ) {
+          await curriculumMut.create.mutateAsync({
+            subjectId: subject.id,
+            programmeLevelId: placementProgrammeLevelId,
+            slotId: placementSlotId,
+            credits: typeof placementCredits === 'number' ? placementCredits : null,
+            isElective: placementIsElective === true,
+          });
+        }
+      }}
       renderFormExtra={({ row }) => (
         <SubjectPlacementsPanel subjectId={row.id} subjectName={row.name} />
       )}
       renderDetailExtra={({ row }) => (
         <SubjectPlacementsPanel subjectId={row.id} subjectName={row.name} />
       )}
-      toFormValues={(r) => ({ name: r.name, code: r.code, kind: r.kind, departmentId: r.departmentId ?? '' })}
+      toFormValues={(r) => ({ name: r.name, code: r.code, kind: r.kind, isLabSubject: r.isLabSubject, departmentId: r.departmentId ?? '' })}
     />
   );
 }

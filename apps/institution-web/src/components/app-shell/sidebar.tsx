@@ -2,12 +2,15 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, GraduationCap, LogOut, Rocket } from 'lucide-react';
 import { cn } from '@edrion/ui';
 import { usePortalMe } from '@/lib/hooks';
 import { usePermissions } from '@/lib/permissions';
 import { usePortalClient } from '@/lib/portal-client';
-import { NAV } from '@/lib/nav';
+import { clearPortalSession } from '@/lib/portal-session';
+import { isNavItemActive } from '@/lib/nav';
+import { resolveNav } from '@/lib/resolve-nav';
 import { useTerm } from '@/lib/term';
 
 const COLLAPSE_KEY = 'edrion.portal.sidebar.collapsed';
@@ -15,6 +18,7 @@ const COLLAPSE_KEY = 'edrion.portal.sidebar.collapsed';
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const qc = useQueryClient();
   const client = usePortalClient();
   const { data: me } = usePortalMe();
   const { can } = usePermissions();
@@ -22,12 +26,20 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [isNarrow, setIsNarrow] = useState(false);
 
+  const navGroups = resolveNav(me?.navigation, {
+    can,
+    institutionType: type,
+    term: t,
+    termPlural: tp,
+  });
+
   async function handleLogout() {
     try {
       await client.post('/portal/auth/logout', { mode: 'institution' }, {});
     } catch {
       // session already gone — proceed anyway
     }
+    clearPortalSession(qc);
     router.push('/login');
   }
 
@@ -107,25 +119,20 @@ export function Sidebar() {
             </ul>
           </div>
         )}
-        {NAV.map((group) => {
-          const items = group.items.filter(
-            (i) => can(i.permission) && (!i.institutionTypes || i.institutionTypes.includes(type)),
-          );
-          if (items.length === 0) return null;
-          return (
-            <div key={group.label} className="mb-3">
+        {navGroups.map((group) => (
+            <div key={group.id} className="mb-3">
               {!effectiveCollapsed && (
                 <div className="px-3 pb-1.5 pt-3 text-[11px] font-semibold uppercase tracking-wide text-sidebar-muted">
                   {group.label}
                 </div>
               )}
               <ul className="space-y-0.5">
-                {items.map((item) => {
-                  const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                {group.items.map((item) => {
+                  const active = isNavItemActive(pathname, item.href);
                   const Icon = item.icon;
-                  const label = item.termKey ? (item.termPlural ? tp(item.termKey) : t(item.termKey)) : item.label;
+                  const label = item.displayLabel;
                   return (
-                    <li key={item.href}>
+                    <li key={item.id}>
                       <Link
                         href={item.href}
                         title={effectiveCollapsed ? label : undefined}
@@ -146,8 +153,7 @@ export function Sidebar() {
                 })}
               </ul>
             </div>
-          );
-        })}
+          ))}
       </nav>
 
       {/* Profile + collapse */}

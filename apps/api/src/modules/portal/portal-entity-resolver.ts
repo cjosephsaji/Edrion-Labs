@@ -81,7 +81,6 @@ function ageFrom(dob: string | null | undefined): number | null {
   return age >= 0 && age < 150 ? age : null;
 }
 
-const fullName = (first: string, last: string) => `${first} ${last}`.trim();
 const personName = (first: string, middle: string | null | undefined, last: string) =>
   formatPersonName({ firstName: first, middleName: middle, lastName: last });
 const uniq = (ids?: Iterable<string>): string[] => {
@@ -182,6 +181,7 @@ export class PortalEntityResolver {
         relationship: g.relationship,
         isPrimary: g.isPrimary,
         firstName: p.firstName,
+        middleName: p.middleName,
         lastName: p.lastName,
         phone: p.phone,
         email: p.email,
@@ -195,7 +195,7 @@ export class PortalEntityResolver {
       // Prefer a primary guardian; otherwise keep the first seen.
       if (!cur || (r.isPrimary && !cur.isPrimary)) {
         out[r.studentId] = {
-          name: fullName(r.firstName, r.lastName),
+          name: personName(r.firstName, r.middleName, r.lastName),
           phone: r.phone,
           email: r.email,
           relationship: r.relationship,
@@ -271,13 +271,13 @@ export class PortalEntityResolver {
     if (ids.length === 0) return undefined;
     const t = schema.parents;
     const rows = await this.db
-      .select({ id: t.id, firstName: t.firstName, lastName: t.lastName, phone: t.phone, email: t.email })
+      .select({ id: t.id, firstName: t.firstName, middleName: t.middleName, lastName: t.lastName, phone: t.phone, email: t.email })
       .from(t)
       .where(and(eq(t.institutionId, institutionId), inArray(t.id, ids)));
     return byId(
       rows.map((r) => ({
         id: r.id,
-        label: fullName(r.firstName, r.lastName),
+        label: personName(r.firstName, r.middleName, r.lastName),
         sub: r.phone ?? r.email ?? null,
         meta: { phone: r.phone, email: r.email },
       })),

@@ -1,10 +1,11 @@
 'use client';
-import { Badge, StatusBadge, type Column } from '@edrion/ui';
+import { useMemo } from 'react';
+import { Badge, Button, StatusBadge, type Column } from '@edrion/ui';
 import { ResourceManager, type FilterDef } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
 import type { AcademicYearRow } from '@/lib/academics';
+import { useScheduleAcademicYear } from '@/lib/academics';
 import { useTerm } from '@/lib/term';
-import { useMemo } from 'react';
 
 const STATUS_OPTIONS = [
   { value: 'planning', label: 'Planning' },
@@ -52,6 +53,7 @@ const columns: Column<AcademicYearRow>[] = [
 
 export default function AcademicYearsPage() {
   const { t, tp } = useTerm();
+  const schedule = useScheduleAcademicYear();
 
   const filters = useMemo<FilterDef[]>(
     () => [
@@ -75,6 +77,16 @@ export default function AcademicYearsPage() {
       filters={filters}
       defaultSortBy="startDate"
       defaultSortDir="desc"
+      extraActions={(row) => (
+        <Button
+          size="sm"
+          variant="secondary"
+          loading={schedule.isPending}
+          onClick={() => schedule.mutate({ academicYearId: row.id })}
+        >
+          Schedule {tp('term').toLowerCase()}
+        </Button>
+      )}
       toFormValues={(r) => ({
         name: r.name,
         startDate: r.startDate,

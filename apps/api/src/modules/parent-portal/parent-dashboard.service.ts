@@ -194,28 +194,28 @@ export class ParentDashboardService {
         .select({ c: sql<number>`count(*)::int` })
         .from(schema.feeInvoices)
         .where(and(eq(schema.feeInvoices.studentId, studentId), eq(schema.feeInvoices.status, 'overdue')));
-      if ((row?.c ?? 0) > 0) items.push({ type: 'fee_overdue', title: 'Overdue fee', detail: `${row!.c} invoice(s) overdue`, deepLink: `/child/${studentId}/fees` });
+      if ((row?.c ?? 0) > 0) items.push({ type: 'fee_overdue', title: 'Overdue fee', detail: `${row!.c} invoice(s) overdue`, deepLink: `/family/fees` });
     }
     // Pending pickup authorization verification.
     const [pickup] = await this.db
       .select({ c: sql<number>`count(*)::int` })
       .from(schema.pickupAuthorizations)
       .where(and(eq(schema.pickupAuthorizations.studentId, studentId), eq(schema.pickupAuthorizations.status, 'pending_school_verification')));
-    if ((pickup?.c ?? 0) > 0) items.push({ type: 'pickup_pending', title: 'Pickup authorization pending', detail: 'Awaiting school verification', deepLink: `/child/${studentId}/pickup` });
+    if ((pickup?.c ?? 0) > 0) items.push({ type: 'pickup_pending', title: 'Pickup authorization pending', detail: 'Awaiting school verification', deepLink: `/family/child/${studentId}/pickup` });
 
     // Published behaviour incident awaiting acknowledgement.
     const [beh] = await this.db
       .select({ c: sql<number>`count(*)::int` })
       .from(schema.studentIncidents)
       .where(and(eq(schema.studentIncidents.studentId, studentId), eq(schema.studentIncidents.parentAckRequired, true), isNull(schema.studentIncidents.parentAcknowledgedAt)));
-    if ((beh?.c ?? 0) > 0) items.push({ type: 'behavior_ack', title: 'Behaviour note to acknowledge', detail: null, deepLink: `/child/${studentId}/behavior` });
+    if ((beh?.c ?? 0) > 0) items.push({ type: 'behavior_ack', title: 'Behaviour note to acknowledge', detail: null, deepLink: `/family/child/${studentId}/behavior` });
 
     // Document request ready.
     const [doc] = await this.db
       .select({ c: sql<number>`count(*)::int` })
       .from(schema.documentRequests)
       .where(and(eq(schema.documentRequests.studentId, studentId), eq(schema.documentRequests.status, 'ready')));
-    if ((doc?.c ?? 0) > 0) items.push({ type: 'document_ready', title: 'Document ready', detail: 'A requested document is ready', deepLink: `/child/${studentId}/documents` });
+    if ((doc?.c ?? 0) > 0) items.push({ type: 'document_ready', title: 'Document ready', detail: 'A requested document is ready', deepLink: `/family/child/${studentId}/documents` });
 
     // Unexplained absence in the last 7 days.
     const rec = schema.attendanceRecords;
@@ -232,7 +232,7 @@ export class ParentDashboardService {
         .from(schema.parentAbsenceNotes)
         .where(and(eq(schema.parentAbsenceNotes.studentId, studentId), eq(schema.parentAbsenceNotes.status, 'acknowledged')));
       const unexplained = absents.filter((a) => a.date && !notes.some((n) => n.from <= a.date! && n.to >= a.date!));
-      if (unexplained.length) items.push({ type: 'absence_unexplained', title: 'Unexplained absence', detail: `${unexplained.length} day(s)`, deepLink: `/child/${studentId}/attendance` });
+      if (unexplained.length) items.push({ type: 'absence_unexplained', title: 'Unexplained absence', detail: `${unexplained.length} day(s)`, deepLink: `/family/child/${studentId}/attendance` });
     }
     return items;
   }

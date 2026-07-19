@@ -2,11 +2,13 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuard
 import { ApiTags } from '@nestjs/swagger';
 import {
   invitePortalUserSchema,
+  portalUserStatusActionSchema,
   portalUsersListQuerySchema,
   setPortalUserAccessSchema,
   updatePortalUserSchema,
   versionedDeleteSchema,
   type InvitePortalUserInput,
+  type PortalUserStatusActionInput,
   type PortalUsersListQuery,
   type SetPortalUserAccessInput,
   type UpdatePortalUserInput,
@@ -65,6 +67,27 @@ export class UsersController {
     return this.service.invite(this.ctx(p, s, r), body);
   }
 
+  @Get('messaging-colleagues')
+  @RequireInstitutionPermissions('messages.use')
+  listMessagingColleagues(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+  ) {
+    return this.service.listMessagingColleagues(this.ctx(p, s, r));
+  }
+
+  @Get(':id')
+  @RequireInstitutionPermissions('users.view')
+  get(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+  ) {
+    return this.service.get(this.ctx(p, s, r), id);
+  }
+
   @Patch(':id')
   @RequireInstitutionPermissions('users.manage')
   update(
@@ -75,6 +98,32 @@ export class UsersController {
     @Body(zodBody(updatePortalUserSchema)) body: UpdatePortalUserInput,
   ) {
     return this.service.update(this.ctx(p, s, r), id, body);
+  }
+
+  /** Suspend (disable) a user. Requires a reason; revokes all live sessions. */
+  @Post(':id/suspend')
+  @RequireInstitutionPermissions('users.manage')
+  suspend(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(portalUserStatusActionSchema)) body: PortalUserStatusActionInput,
+  ) {
+    return this.service.suspend(this.ctx(p, s, r), id, body);
+  }
+
+  /** Unsuspend (re-enable) a previously suspended user. Requires a reason. */
+  @Post(':id/unsuspend')
+  @RequireInstitutionPermissions('users.manage')
+  unsuspend(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(portalUserStatusActionSchema)) body: PortalUserStatusActionInput,
+  ) {
+    return this.service.unsuspend(this.ctx(p, s, r), id, body);
   }
 
   @Put(':id/access')

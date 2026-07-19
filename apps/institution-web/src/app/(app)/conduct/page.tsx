@@ -1,6 +1,6 @@
 'use client';
 import { useMemo } from 'react';
-import { Badge, type BadgeTone, type Column } from '@edrion/ui';
+import { Badge, type BadgeTone, type Column, type DetailSection } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
 import { useConductList, useConductMutations, type IncidentRow } from '@/lib/conduct';
@@ -52,6 +52,25 @@ export default function ConductPage() {
     [],
   );
 
+  const detail = (r: IncidentRow): DetailSection[] => [
+    {
+      title: 'Incident',
+      fields: [
+        { label: 'Student', value: r.studentName ?? '—' },
+        { label: 'Admission no.', value: r.admissionNo ?? '—' },
+        { label: 'Title', value: r.title },
+        { label: 'Category', value: catLabel(r.category) },
+        { label: 'Severity', value: <Badge tone={SEV_TONE[r.severity] ?? 'neutral'}>{r.severity}</Badge> },
+        { label: 'Status', value: <Badge tone={STATUS_TONE[r.status] ?? 'neutral'}>{r.status}</Badge> },
+        { label: 'Date', value: r.occurredOn ?? '—' },
+        { label: 'Reported by', value: r.reporterName, full: true },
+        { label: 'Description', value: r.description, full: true },
+        { label: 'Resolution note', value: r.resolutionNote, full: true },
+        { label: 'Notify guardians', value: r.notifyGuardians ? 'Yes' : 'No' },
+      ],
+    },
+  ];
+
   const columns = useMemo<Column<IncidentRow>[]>(
     () => [
       {
@@ -86,6 +105,7 @@ export default function ConductPage() {
       useList={useConductList}
       useMutations={useConductMutations}
       rowLabel={(r) => r.title}
+      detail={detail}
       filters={[
         { key: 'category', label: 'All categories', options: CATEGORIES },
         { key: 'severity', label: 'All severities', options: SEVERITIES },

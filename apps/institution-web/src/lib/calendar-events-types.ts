@@ -1,15 +1,25 @@
 export interface CalendarEventRow {
   id: string;
   version: number;
-  kind: 'exam' | 'holiday' | 'event';
+  eventTypeId: string | null;
+  type: string;
   title: string;
-  detail: string | null;
+  description: string | null;
   startsOn: string;
   endsOn: string | null;
-  timeLabel: string | null;
-  audience: Record<string, unknown>;
+  startTime: string | null;
+  endTime: string | null;
   status: 'draft' | 'published';
   createdAt: string;
+}
+
+export interface CalendarEventTypeRow {
+  id: string;
+  key: string;
+  label: string;
+  color: string;
+  isSystem: boolean;
+  version: number;
 }
 
 export interface Paged<T> {

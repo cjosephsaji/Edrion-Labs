@@ -70,18 +70,25 @@ export class InstitutionAuthGuard implements CanActivate {
   private async resolvePrincipal(
     req: Request,
   ): Promise<{ principal: InstitutionPrincipal; authSessionId?: string }> {
-    // A live portal session cookie ALWAYS wins. The dev `x-institution-user-email` header is sent
-    // on every request in development (NEXT_PUBLIC_DEV_INSTITUTION_USER), so it must not override a
-    // user who has actually signed in — otherwise every login resolves to the dev default user.
+    // A valid portal session cookie wins. The dev `x-institution-user-email` header is sent on every
+    // request in development (NEXT_PUBLIC_DEV_INSTITUTION_USER), so it must not override a user who
+    // has actually signed in — otherwise every login resolves to the dev default user.
     const token = readCookie(req.headers.cookie, this.sessions.cookieName);
     if (token) {
-      const session = await this.sessions.verify(token);
-      const principal = await this.auth.resolveById(session.institutionUserId, session.lastAuthAt);
-      return { principal, authSessionId: session.id };
+      try {
+        const session = await this.sessions.verify(token);
+        const principal = await this.auth.resolveById(session.institutionUserId, session.lastAuthAt);
+        return { principal, authSessionId: session.id };
+      } catch (err) {
+        // Stale or revoked cookies are common in dev (secret rotation, DB reset, logout elsewhere).
+        // Fall back to the dev header instead of hard-failing every request until the browser drops
+        // the cookie. Production still requires a live session.
+        if (!this.env.PORTAL_AUTH_DEV_HEADER) throw err;
+      }
     }
 
-    // Dev escape hatch (only when enabled, and only when there is no session cookie): trust the
-    // explicit header identity. No server session → treated as always-recent (lastAuthAt = now).
+    // Dev escape hatch (only when enabled): trust the explicit header identity. No server session →
+    // treated as always-recent (lastAuthAt = now).
     if (this.env.PORTAL_AUTH_DEV_HEADER) {
       const email = req.header('x-institution-user-email');
       if (email) return { principal: await this.auth.resolveByEmail(email, new Date()) };

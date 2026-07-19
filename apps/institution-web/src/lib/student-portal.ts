@@ -43,12 +43,27 @@ export function useSetStudentPortalSurface() {
 export function useInviteStudentToPortal() {
   const client = usePortalClient();
   const { scope } = useScope();
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: { studentId: string; targetEmail?: string; guardianParentId?: string }) =>
       client.post<{ studentId: string; institutionUserId: string }>(
         `/portal/students/${input.studentId}/portal-invite`,
         scope,
         { targetEmail: input.targetEmail, guardianParentId: input.guardianParentId },
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['people'] }),
+  });
+}
+
+export function useSendStudentPortalPasswordReset() {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  return useMutation({
+    mutationFn: (studentId: string) =>
+      client.post<{ studentId: string; institutionUserId: string; email: string }>(
+        `/portal/students/${studentId}/portal-password-reset`,
+        scope,
+        {},
       ),
   });
 }

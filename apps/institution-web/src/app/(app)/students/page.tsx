@@ -39,12 +39,12 @@ export default function StudentsPage() {
       { key: 'status', label: 'All statuses', options: STATUS_OPTIONS },
       {
         key: 'gradeLevelId',
-        label: `All ${t('gradeLevel').toLowerCase()}s`,
+        label: `All ${tp('gradeLevel')}`,
         options: (grades?.items ?? []).map((g) => ({ value: g.id, label: g.name })),
       },
       {
         key: 'classId',
-        label: `All ${t('class').toLowerCase()}es`,
+        label: `All ${tp('class')}`,
         options: (classes?.items ?? []).map((c) => ({ value: c.id, label: c.name })),
       },
       {
@@ -57,7 +57,7 @@ export default function StudentsPage() {
         ],
       },
     ],
-    [grades, classes, t],
+    [grades, classes, tp],
   );
 
   const fields = useMemo<FieldDef[]>(
@@ -87,14 +87,14 @@ export default function StudentsPage() {
       { name: 'dateOfBirth', label: 'Date of birth', type: 'date', nullable: true },
       {
         name: 'gradeLevelId',
-        label: 'Grade',
+        label: t('gradeLevel'),
         type: 'select',
         nullable: true,
         options: (grades?.items ?? []).map((g) => ({ value: g.id, label: g.name })),
       },
       {
         name: 'classId',
-        label: 'Class',
+        label: t('class'),
         type: 'select',
         nullable: true,
         options: (classes?.items ?? []).map((c) => ({ value: c.id, label: c.name })),
@@ -105,7 +105,7 @@ export default function StudentsPage() {
       { name: 'phone', label: 'Phone', type: 'phone', nullable: true },
       { name: 'address', label: 'Address', type: 'textarea', nullable: true, placeholder: 'Optional' },
     ],
-    [grades, classes],
+    [grades, classes, t],
   );
 
   const columns = useMemo<Column<StudentRow>[]>(
@@ -117,12 +117,12 @@ export default function StudentsPage() {
         sortable: true,
         render: (r) => <span className="font-medium">{formatPersonName(r)}</span>,
       },
-      { key: 'gradeLevelName', header: 'Grade', render: (r) => r.gradeLevelName ?? '—' },
-      { key: 'className', header: 'Class', render: (r) => <span className="text-text-muted">{r.className ?? '—'}</span> },
+      { key: 'gradeLevelName', header: t('gradeLevel'), render: (r) => r.gradeLevelName ?? '—' },
+      { key: 'className', header: t('class'), render: (r) => <span className="text-text-muted">{r.className ?? '—'}</span> },
       { key: 'rollNo', header: 'Roll', render: (r) => <span className="tabular-nums">{r.rollNo ?? '—'}</span> },
       { key: 'status', header: 'Status', sortable: true, render: (r) => <StatusBadge status={r.status} /> },
     ],
-    [],
+    [t],
   );
 
   return (
@@ -149,6 +149,8 @@ export default function StudentsPage() {
                 studentName={formatPersonName(row)}
                 studentEmail={row.email}
                 guardians={[]}
+                institutionUserId={row.institutionUserId}
+                portalUserStatus={row.portalUserStatus}
               />
             </div>
           )}

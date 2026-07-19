@@ -49,6 +49,59 @@ export function useStepCreate(endpoint: string, listParams?: Record<string, stri
   });
 }
 
+/** Steps that need more than one API call, or a different list endpoint than the create path. */
+export function useOnboardingStepSubmit(stepKey: string, endpoint: string, listEndpoint = endpoint) {
+  const client = usePortalClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      body,
+      values,
+    }: {
+      body: Record<string, unknown>;
+      values: Record<string, unknown>;
+    }) => {
+      if (stepKey === 'programmeLevels') {
+        const departmentId = String(values.departmentId ?? '');
+        const name = String(values.name ?? '').trim();
+        const sequence = Number(values.sequence) || 1;
+        const grade = await client.post<{ id: string }>('/portal/academics/grade-levels', INSTITUTION_SCOPE, {
+          name,
+          level: sequence,
+          departmentId,
+        });
+        return client.post('/portal/academics/department-grade-levels', INSTITUTION_SCOPE, {
+          departmentId,
+          gradeLevelId: grade.id,
+          sequence,
+        });
+      }
+
+      if (stepKey === 'subjects') {
+        const subject = await client.post<{ id: string }>(`/portal/${endpoint}`, INSTITUTION_SCOPE, body);
+        const programmeLevelId = values.programmeLevelId;
+        if (programmeLevelId) {
+          await client.post('/portal/academics/programme-subjects', INSTITUTION_SCOPE, {
+            subjectId: subject.id,
+            programmeLevelId,
+            semesterSequence: Number(values.semesterSequence) || 1,
+          });
+        }
+        return subject;
+      }
+
+      return client.post(`/portal/${endpoint}`, INSTITUTION_SCOPE, body);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SUMMARY_KEY });
+      qc.invalidateQueries({ queryKey: listKey(listEndpoint) });
+      if (stepKey === 'subjects') {
+        qc.invalidateQueries({ queryKey: listKey('academics/programme-subjects') });
+      }
+    },
+  });
+}
+
 /** Take the institution live once every step has data. */
 export function useCompleteOnboarding() {
   const client = usePortalClient();

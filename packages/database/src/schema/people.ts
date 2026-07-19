@@ -104,6 +104,7 @@ export const staff = pgTable(
     instIdx: index('staff_institution_idx').on(t.institutionId),
     scopeIdx: index('staff_institution_campus_idx').on(t.institutionId, t.campusId),
     deptIdx: index('staff_department_idx').on(t.departmentId),
+    institutionUserIdx: index('staff_institution_user_idx').on(t.institutionUserId),
     employeeUniq: uniqueIndex('staff_employee_uniq').on(t.institutionId, t.employeeNo),
   }),
 );
@@ -118,6 +119,7 @@ export const parents = pgTable(
       .references(() => institutions.id, { onDelete: 'cascade' }),
     campusId: uuid('campus_id').references(() => campuses.id, { onDelete: 'cascade' }),
     firstName: text('first_name').notNull(),
+    middleName: text('middle_name'),
     lastName: text('last_name').notNull(),
     email: text('email'),
     phone: text('phone'),

@@ -46,7 +46,7 @@ export class ParentEmergencyService {
       type: 'emergency_broadcast',
       title: `🚨 ${input.title}`,
       body: input.body,
-      deepLink: '/inbox',
+      deepLink: '/family/inbox',
       priority: 'immediate',
       sourceEntity: `parent_emergency_broadcasts:${row!.id}`,
     });

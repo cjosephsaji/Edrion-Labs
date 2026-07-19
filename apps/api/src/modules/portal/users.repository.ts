@@ -8,6 +8,7 @@ import {
   ilike,
   inArray,
   isNotNull,
+  notInArray,
   or,
   schema,
   sql,
@@ -47,12 +48,13 @@ export class UsersRepository {
     roleKeyUserIds: string[] | null,
     permissionUserIds: string[] | null,
     provisionedUserIds: string[] | null,
+    excludeProvisionedUserIds: string[] | null,
     q: PortalUsersListQuery,
   ): Promise<Page<InstitutionUser>> {
     const t = schema.institutionUsers;
     const conds: SQL[] = [eq(t.institutionId, institutionId)];
     if (q.status) conds.push(eq(t.status, q.status));
-    if (q.mfa !== undefined) conds.push(eq(t.requireMfa, q.mfa));
+    if (q.mfaEnrolled !== undefined) conds.push(eq(t.mfaEnrolled, q.mfaEnrolled));
     if (roleKeyUserIds) {
       if (roleKeyUserIds.length === 0) return { items: [], total: 0 };
       conds.push(inArray(t.id, roleKeyUserIds));
@@ -64,6 +66,9 @@ export class UsersRepository {
     if (provisionedUserIds) {
       if (provisionedUserIds.length === 0) return { items: [], total: 0 };
       conds.push(inArray(t.id, provisionedUserIds));
+    }
+    if (excludeProvisionedUserIds && excludeProvisionedUserIds.length > 0) {
+      conds.push(notInArray(t.id, excludeProvisionedUserIds));
     }
     if (q.campusId) {
       const campusUsers = await this.db
@@ -225,6 +230,51 @@ export class UsersRepository {
       );
 
     return [...new Set([...roleRows.map((r) => r.id), ...grantRows.map((r) => r.id)])];
+  }
+
+  /**
+   * Active portal users who can receive direct messages, confined to campus scope. Users with no
+   * campus assignment are institution-wide and appear in every campus scope.
+   */
+  async listMessagingColleagues(
+    institutionId: string,
+    messageableUserIds: string[],
+    campusIds: string[] | null,
+    excludeUserId?: string,
+  ): Promise<Array<{ id: string; fullName: string; email: string }>> {
+    if (messageableUserIds.length === 0) return [];
+    const t = schema.institutionUsers;
+    let eligibleIds = messageableUserIds;
+
+    if (campusIds && campusIds.length > 0) {
+      const inCampus = await this.db
+        .select({ userId: schema.campusUserAccess.institutionUserId })
+        .from(schema.campusUserAccess)
+        .where(inArray(schema.campusUserAccess.campusId, campusIds));
+      const inCampusSet = new Set(inCampus.map((r) => r.userId));
+
+      const withCampus = await this.db
+        .selectDistinct({ userId: schema.campusUserAccess.institutionUserId })
+        .from(schema.campusUserAccess)
+        .where(inArray(schema.campusUserAccess.institutionUserId, messageableUserIds));
+      const restricted = new Set(withCampus.map((r) => r.userId));
+
+      eligibleIds = messageableUserIds.filter((id) => !restricted.has(id) || inCampusSet.has(id));
+      if (eligibleIds.length === 0) return [];
+    }
+
+    const conds: SQL[] = [
+      eq(t.institutionId, institutionId),
+      eq(t.status, 'active'),
+      inArray(t.id, eligibleIds),
+    ];
+    if (excludeUserId) conds.push(sql`${t.id} <> ${excludeUserId}`);
+
+    return this.db
+      .select({ id: t.id, fullName: t.fullName, email: t.email })
+      .from(t)
+      .where(and(...conds))
+      .orderBy(asc(t.fullName), asc(t.email));
   }
 
   /** Users linked from a staff directory row in this institution. */

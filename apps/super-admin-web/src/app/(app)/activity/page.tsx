@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { Activity } from 'lucide-react';
-import { Button, Card, CardContent, Skeleton, EmptyState, ErrorState } from '@edrion/ui';
+import { Button, Card, CardContent, Skeleton, EmptyState, ErrorState, Select } from '@edrion/ui';
 import { useActivityFeed, type ActivityFilter } from '@edrion/api-client';
 import { Topbar } from '@/components/app-shell/topbar';
 
@@ -33,17 +33,18 @@ export default function ActivityPage() {
             placeholder="Category"
             className={selectClass + ' w-44'}
           />
-          <select
+          <Select
             value={filter.riskLevel ?? ''}
             onChange={(e) => setFilter((f) => ({ ...f, riskLevel: e.target.value || undefined }))}
             className={selectClass}
-          >
-            <option value="">All risk</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="critical">Critical</option>
-          </select>
+            options={[
+              { value: '', label: 'All risk' },
+              { value: 'low', label: 'Low' },
+              { value: 'medium', label: 'Medium' },
+              { value: 'high', label: 'High' },
+              { value: 'critical', label: 'Critical' },
+            ]}
+          />
         </div>
 
         <Card>

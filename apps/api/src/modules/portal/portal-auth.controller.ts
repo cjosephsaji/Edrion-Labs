@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Inject,
   Post,
+  Query,
   Res,
   UnauthorizedException,
   UseGuards,
@@ -13,11 +14,15 @@ import {
 import type { Response } from 'express';
 import { ApiTags } from '@nestjs/swagger';
 import {
+  portalAcceptInvitePreviewQuerySchema,
+  portalAcceptInviteSchema,
   portalActivateSchema,
   portalForgotPasswordSchema,
   portalLoginSchema,
   portalReauthSchema,
   portalResetPasswordSchema,
+  type PortalAcceptInviteInput,
+  type PortalAcceptInvitePreviewQuery,
   type PortalActivateInput,
   type PortalForgotPasswordInput,
   type PortalLoginInput,
@@ -82,6 +87,27 @@ export class PortalAuthController {
     const { token } = await this.credentials.activate(body, req);
     res.cookie(this.sessions.cookieName, token, this.sessions.cookieOptions());
     return { activated: true };
+  }
+
+  /** Preview an invitation before the invitee sets a password (public — bearer token in query). */
+  @Get('accept-invite/preview')
+  async acceptInvitePreviewHandler(
+    @Query(zodBody(portalAcceptInvitePreviewQuerySchema)) query: PortalAcceptInvitePreviewQuery,
+  ) {
+    return this.credentials.previewAcceptInvite(query.token);
+  }
+
+  /** Accept a portal invitation: set password from the signed JWT, then auto-login. */
+  @Post('accept-invite')
+  @HttpCode(HttpStatus.OK)
+  async acceptInviteHandler(
+    @Body(zodBody(portalAcceptInviteSchema)) body: PortalAcceptInviteInput,
+    @ReqContext() req: EdrionRequestContext,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { token } = await this.credentials.acceptInvite(body, req);
+    res.cookie(this.sessions.cookieName, token, this.sessions.cookieOptions());
+    return { accepted: true };
   }
 
   /** Request a password-reset link. Always 200 (never reveals whether the email exists). */

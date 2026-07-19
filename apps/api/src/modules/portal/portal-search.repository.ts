@@ -16,6 +16,7 @@ import {
   type SQL,
 } from '@edrion/database';
 import { DATABASE } from '../../common/tokens';
+import { personSearchCondition } from './person-search';
 import { studentSearchCondition } from './student-search';
 
 /** One matched row, pre-shaped for the global-search UI (href is added by the service). */
@@ -26,9 +27,6 @@ export interface SearchHit {
 }
 
 const s = schema;
-
-const twoPartName = (first: PgColumn, last: PgColumn): SQL<string> =>
-  sql<string>`concat_ws(' ', ${first}, ${last})`;
 
 /** First non-null of a set of columns — used to build a compact "sublabel" line. */
 const firstOf = (...cols: PgColumn[]): SQL<string | null> => sql<string | null>`coalesce(${sql.join(cols, sql`, `)})`;
@@ -72,7 +70,11 @@ export class PortalSearchRepository {
       idCol: t.id,
       label: personSqlName(t.firstName, t.middleName, t.lastName),
       sublabel: firstOf(t.employeeNo, t.email, t.phone),
-      match: [t.firstName, t.middleName, t.lastName, t.employeeNo, t.email, t.phone],
+      searchCond: personSearchCondition(
+        { firstName: t.firstName, middleName: t.middleName, lastName: t.lastName },
+        term,
+        [t.employeeNo, t.email, t.phone],
+      ),
       order: t.lastName,
       institutionId,
       campusIds,
@@ -90,7 +92,11 @@ export class PortalSearchRepository {
       idCol: t.id,
       label: personSqlName(t.firstName, t.middleName, t.lastName),
       sublabel: firstOf(t.employeeNo, t.email, t.phone),
-      match: [t.firstName, t.middleName, t.lastName, t.employeeNo, t.email, t.phone],
+      searchCond: personSearchCondition(
+        { firstName: t.firstName, middleName: t.middleName, lastName: t.lastName },
+        term,
+        [t.employeeNo, t.email, t.phone],
+      ),
       order: t.lastName,
       institutionId,
       campusIds,
@@ -106,9 +112,13 @@ export class PortalSearchRepository {
       instCol: t.institutionId,
       campusCol: t.campusId,
       idCol: t.id,
-      label: twoPartName(t.firstName, t.lastName),
+      label: personSqlName(t.firstName, t.middleName, t.lastName),
       sublabel: firstOf(t.email, t.phone),
-      match: [t.firstName, t.lastName, t.email, t.phone],
+      searchCond: personSearchCondition(
+        { firstName: t.firstName, middleName: t.middleName, lastName: t.lastName },
+        term,
+        [t.email, t.phone],
+      ),
       order: t.lastName,
       institutionId,
       campusIds,

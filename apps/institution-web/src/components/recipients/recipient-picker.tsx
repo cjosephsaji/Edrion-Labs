@@ -5,10 +5,12 @@ import { Button } from '@edrion/ui';
 import { useStudentOptions, useParentOptions, useTeachingStaffOptions, useStaffOptions } from '@/lib/people';
 import { useClassOptions, useGradeLevelOptions, useDepartmentOptions, useSubjectOptions } from '@/lib/academics';
 import { useScope } from '@/lib/scope';
+import { usePortalMe } from '@/lib/hooks';
 import {
   useRecipientPreview,
   useRecipientGroups,
   useRecipientGroupMutations,
+  useMessagingColleagues,
   type Target,
 } from '@/lib/recipients';
 import { formatPersonName } from '@/lib/person-name';
@@ -16,6 +18,7 @@ import { useTerm } from '@/lib/term';
 
 type TabKey =
   | 'broadcast'
+  | 'colleagues'
   | 'students'
   | 'parents'
   | 'teachers'
@@ -53,10 +56,16 @@ export function RecipientPicker({
   value,
   onChange,
   studentsOnly = false,
+  messaging = false,
+  alreadyAddedKeys,
 }: {
   value: Target[];
   onChange: (targets: Target[]) => void;
   studentsOnly?: boolean;
+  /** When true, shows portal colleagues and uses the messaging recipient preview endpoint. */
+  messaging?: boolean;
+  /** Keys (`kind:refId`) for people already in the conversation — shown as disabled. */
+  alreadyAddedKeys?: Set<string>;
 }) {
   const { tp } = useTerm();
   const broadcastLabel: Record<string, string> = useMemo(
@@ -66,12 +75,14 @@ export function RecipientPicker({
       all_parents: 'All parents',
       all_teachers: `All ${tp('teacher').toLowerCase()}`,
       all_staff: `All ${tp('staff').toLowerCase()}`,
+      all_colleagues: 'All colleagues',
     }),
     [tp],
   );
   const tabs: { key: TabKey; label: string }[] = useMemo(
     () => {
       const all: { key: TabKey; label: string }[] = [
+        ...(messaging ? [{ key: 'colleagues' as const, label: 'Colleagues' }] : []),
         { key: 'broadcast', label: 'Broadcast' },
         { key: 'students', label: tp('student') },
         { key: 'parents', label: 'Parents' },
@@ -88,9 +99,9 @@ export function RecipientPicker({
       const keep = new Set<TabKey>(['broadcast', 'students', 'classes', 'grades', 'departments', 'campuses', 'groups']);
       return all.filter((t) => keep.has(t.key));
     },
-    [tp, studentsOnly],
+    [tp, studentsOnly, messaging],
   );
-  const [tab, setTab] = useState<TabKey>('broadcast');
+  const [tab, setTab] = useState<TabKey>(messaging ? 'colleagues' : 'broadcast');
   const [q, setQ] = useState('');
   const [groupName, setGroupName] = useState('');
   const [saving, setSaving] = useState(false);
@@ -104,22 +115,34 @@ export function RecipientPicker({
   const departments = useDepartmentOptions();
   const subjects = useSubjectOptions();
   const { campuses } = useScope();
+  const { data: me } = usePortalMe();
+  const colleagues = useMessagingColleagues(messaging);
+  const colleagueRows = useMemo(
+    () => (colleagues.data ?? []).filter((u) => u.id !== me?.institutionUserId),
+    [colleagues.data, me?.institutionUserId],
+  );
   const groups = useRecipientGroups();
   const groupMut = useRecipientGroupMutations();
 
-  const preview = useRecipientPreview(value);
+  const preview = useRecipientPreview(value, true, messaging);
 
   const broadcastEntries = useMemo(
-    () =>
-      studentsOnly
-        ? Object.entries(broadcastLabel).filter(([kind]) => kind === 'all_students')
-        : Object.entries(broadcastLabel),
-    [broadcastLabel, studentsOnly],
+    () => {
+      if (studentsOnly) return Object.entries(broadcastLabel).filter(([kind]) => kind === 'all_students');
+      if (messaging) {
+        return Object.entries(broadcastLabel).filter(([kind]) =>
+          kind === 'all_colleagues' || kind === 'all_students' || kind === 'all_parents' || kind === 'all_teachers' || kind === 'all_staff',
+        );
+      }
+      return Object.entries(broadcastLabel);
+    },
+    [broadcastLabel, studentsOnly, messaging],
   );
 
   const selected = useMemo(() => new Set(value.map(key)), [value]);
   const add = (t: Target) => {
-    if (selected.has(key(t))) return;
+    const k = key(t);
+    if (selected.has(k) || alreadyAddedKeys?.has(k)) return;
     onChange([...value, t]);
   };
   const remove = (t: Target) => onChange(value.filter((x) => key(x) !== key(t)));
@@ -131,6 +154,7 @@ export function RecipientPicker({
       parent: new Map((parents.data?.items ?? []).map((p) => [p.id, name(p)])),
       teacher: new Map((teachers.data ?? []).map((t) => [t.id, name(t)])),
       staff: new Map((staff.data?.items ?? []).map((s) => [s.id, name(s)])),
+      user: new Map(colleagueRows.map((u) => [u.id, u.fullName])),
       class: new Map((classes.data?.items ?? []).map((c) => [c.id, c.name])),
       grade: new Map((grades.data?.items ?? []).map((g) => [g.id, g.name])),
       department: new Map((departments.data?.items ?? []).map((d) => [d.id, d.name])),
@@ -139,7 +163,7 @@ export function RecipientPicker({
       group: new Map((groups.data?.items ?? []).map((g) => [g.id, g.name])),
     };
     return m;
-  }, [students.data, parents.data, teachers.data, staff.data, classes.data, grades.data, departments.data, subjects.data, campuses, groups.data]);
+  }, [students.data, parents.data, teachers.data, staff.data, colleagueRows, classes.data, grades.data, departments.data, subjects.data, campuses, groups.data]);
 
   const chipLabel = (target: Target): string => {
     const broadcast = broadcastLabel[target.kind];
@@ -154,7 +178,9 @@ export function RecipientPicker({
             ? 'subject'
             : target.kind === 'campus'
               ? 'campus'
-              : target.kind;
+              : target.kind === 'user'
+                ? 'user'
+                : target.kind;
     const resolved = target.refId ? labelMaps[anchor]?.get(target.refId) : undefined;
     const entityName = resolved ?? target.refId ?? target.kind;
     const prefix = PREFIX[target.kind];
@@ -239,82 +265,124 @@ export function RecipientPicker({
         {tab === 'broadcast' && (
           <div className="flex flex-col">
             {broadcastEntries.map(([kind, lbl]) => (
-              <Row key={kind} label={lbl} onAdd={() => add({ kind })} added={selected.has(key({ kind }))} />
+              <Row key={kind} label={lbl} onAdd={() => add({ kind })} added={selected.has(key({ kind }))} alreadyAdded={alreadyAddedKeys?.has(key({ kind }))} />
             ))}
           </div>
         )}
+        {tab === 'colleagues' && filtered(colleagueRows, (u) => u.fullName).map((u) => (
+          <Row key={u.id} label={u.fullName} sub={u.email} onAdd={() => add({ kind: 'user', refId: u.id })} added={selected.has(`user:${u.id}`)} alreadyAdded={alreadyAddedKeys?.has(`user:${u.id}`)} />
+        ))}
         {tab === 'students' && filtered(students.data?.items, name).map((s) => (
-          <Row key={s.id} label={name(s)} sub={s.admissionNo} onAdd={() => add({ kind: 'student', refId: s.id })} added={selected.has(`student:${s.id}`)} />
+          <Row key={s.id} label={name(s)} sub={s.admissionNo} onAdd={() => add({ kind: 'student', refId: s.id })} added={selected.has(`student:${s.id}`)} alreadyAdded={alreadyAddedKeys?.has(`student:${s.id}`)} />
         ))}
         {tab === 'parents' && filtered(parents.data?.items, name).map((p) => (
-          <Row key={p.id} label={name(p)} sub={p.phone ?? undefined} onAdd={() => add({ kind: 'parent', refId: p.id })} added={selected.has(`parent:${p.id}`)} />
+          <Row key={p.id} label={name(p)} sub={p.phone ?? undefined} onAdd={() => add({ kind: 'parent', refId: p.id })} added={selected.has(`parent:${p.id}`)} alreadyAdded={alreadyAddedKeys?.has(`parent:${p.id}`)} />
         ))}
         {tab === 'teachers' && filtered(teachers.data, name).map((t) => (
-          <Row key={t.id} label={name(t)} sub={t.designation ?? undefined} onAdd={() => add({ kind: 'teacher', refId: t.id })} added={selected.has(`teacher:${t.id}`)} />
+          <Row key={t.id} label={name(t)} sub={t.designation ?? undefined} onAdd={() => add({ kind: 'teacher', refId: t.id })} added={selected.has(`teacher:${t.id}`)} alreadyAdded={alreadyAddedKeys?.has(`teacher:${t.id}`)} />
         ))}
         {tab === 'staff' && filtered(staff.data?.items, name).map((s) => (
-          <Row key={s.id} label={name(s)} sub={s.designation ?? undefined} onAdd={() => add({ kind: 'staff', refId: s.id })} added={selected.has(`staff:${s.id}`)} />
+          <Row key={s.id} label={name(s)} sub={s.designation ?? undefined} onAdd={() => add({ kind: 'staff', refId: s.id })} added={selected.has(`staff:${s.id}`)} alreadyAdded={alreadyAddedKeys?.has(`staff:${s.id}`)} />
         ))}
-        {tab === 'classes' && filtered(classes.data?.items, (c) => c.name).map((c) => (
-          <DerivedRow
+        {tab === 'classes' && filtered(classes.data?.items, (c) => c.name).map((c) =>
+          studentsOnly ? (
+            <Row
+              key={c.id}
+              label={c.name}
+              onAdd={() => add({ kind: 'students_of_class', refId: c.id })}
+              added={selected.has(`students_of_class:${c.id}`)}
+              alreadyAdded={alreadyAddedKeys?.has(`students_of_class:${c.id}`)}
+            />
+          ) : (
+            <DerivedRow
+              key={c.id}
+              label={c.name}
+              actions={[
+                { label: tp('student'), target: { kind: 'students_of_class', refId: c.id } },
+                { label: 'Parents', target: { kind: 'parents_of_class', refId: c.id } },
+                { label: tp('teacher'), target: { kind: 'teachers_of_class', refId: c.id } },
+              ]}
+              selected={selected}
+              onAdd={add}
+            />
+          ),
+        )}
+        {tab === 'grades' && filtered(grades.data?.items, (g) => g.name).map((g) =>
+          studentsOnly ? (
+            <Row
+              key={g.id}
+              label={g.name}
+              onAdd={() => add({ kind: 'students_of_grade', refId: g.id })}
+              added={selected.has(`students_of_grade:${g.id}`)}
+              alreadyAdded={alreadyAddedKeys?.has(`students_of_grade:${g.id}`)}
+            />
+          ) : (
+            <DerivedRow
+              key={g.id}
+              label={g.name}
+              actions={[
+                { label: tp('student'), target: { kind: 'students_of_grade', refId: g.id } },
+                { label: 'Parents', target: { kind: 'parents_of_grade', refId: g.id } },
+                { label: tp('teacher'), target: { kind: 'teachers_of_grade', refId: g.id } },
+              ]}
+              selected={selected}
+              onAdd={add}
+            />
+          ),
+        )}
+        {tab === 'departments' && filtered(departments.data?.items, (d) => d.name).map((d) =>
+          studentsOnly ? (
+            <Row
+              key={d.id}
+              label={d.name}
+              onAdd={() => add({ kind: 'students_of_department', refId: d.id })}
+              added={selected.has(`students_of_department:${d.id}`)}
+              alreadyAdded={alreadyAddedKeys?.has(`students_of_department:${d.id}`)}
+            />
+          ) : (
+            <DerivedRow
+              key={d.id}
+              label={d.name}
+              actions={[
+                { label: tp('student'), target: { kind: 'students_of_department', refId: d.id } },
+                { label: tp('teacher'), target: { kind: 'teachers_of_department', refId: d.id } },
+              ]}
+              selected={selected}
+              onAdd={add}
+            />
+          ),
+        )}
+        {tab === 'subjects' && filtered(subjects.data?.items, (s) => s.name).map((s) =>
+          studentsOnly ? (
+            <Row
+              key={s.id}
+              label={s.name}
+              onAdd={() => add({ kind: 'students_of_subject', refId: s.id })}
+              added={selected.has(`students_of_subject:${s.id}`)}
+              alreadyAdded={alreadyAddedKeys?.has(`students_of_subject:${s.id}`)}
+            />
+          ) : (
+            <DerivedRow
+              key={s.id}
+              label={s.name}
+              actions={[{ label: tp('student'), target: { kind: 'students_of_subject', refId: s.id } }]}
+              selected={selected}
+              onAdd={add}
+            />
+          ),
+        )}
+        {tab === 'campuses' && campuses.filter((c) => !q || c.name.toLowerCase().includes(q.toLowerCase())).map((c) => (
+          <Row
             key={c.id}
             label={c.name}
-            actions={
-              studentsOnly
-                ? [{ label: tp('student'), target: { kind: 'students_of_class', refId: c.id } }]
-                : [
-                    { label: tp('student'), target: { kind: 'students_of_class', refId: c.id } },
-                    { label: 'Parents', target: { kind: 'parents_of_class', refId: c.id } },
-                    { label: tp('teacher'), target: { kind: 'teachers_of_class', refId: c.id } },
-                  ]
-            }
-            selected={selected}
-            onAdd={add}
+            sub={studentsOnly ? undefined : 'Everyone at campus'}
+            onAdd={() => add({ kind: 'campus', refId: c.id })}
+            added={selected.has(`campus:${c.id}`)}
+            alreadyAdded={alreadyAddedKeys?.has(`campus:${c.id}`)}
           />
-        ))}
-        {tab === 'grades' && filtered(grades.data?.items, (g) => g.name).map((g) => (
-          <DerivedRow
-            key={g.id}
-            label={g.name}
-            actions={
-              studentsOnly
-                ? [{ label: tp('student'), target: { kind: 'students_of_grade', refId: g.id } }]
-                : [
-                    { label: tp('student'), target: { kind: 'students_of_grade', refId: g.id } },
-                    { label: 'Parents', target: { kind: 'parents_of_grade', refId: g.id } },
-                    { label: tp('teacher'), target: { kind: 'teachers_of_grade', refId: g.id } },
-                  ]
-            }
-            selected={selected}
-            onAdd={add}
-          />
-        ))}
-        {tab === 'departments' && filtered(departments.data?.items, (d) => d.name).map((d) => (
-          <DerivedRow
-            key={d.id}
-            label={d.name}
-            actions={
-              studentsOnly
-                ? [{ label: tp('student'), target: { kind: 'students_of_department', refId: d.id } }]
-                : [
-                    { label: tp('student'), target: { kind: 'students_of_department', refId: d.id } },
-                    { label: tp('teacher'), target: { kind: 'teachers_of_department', refId: d.id } },
-                  ]
-            }
-            selected={selected}
-            onAdd={add}
-          />
-        ))}
-        {tab === 'subjects' && filtered(subjects.data?.items, (s) => s.name).map((s) => (
-          <DerivedRow key={s.id} label={s.name} actions={[
-            { label: tp('student'), target: { kind: 'students_of_subject', refId: s.id } },
-          ]} selected={selected} onAdd={add} />
-        ))}
-        {tab === 'campuses' && campuses.filter((c) => !q || c.name.toLowerCase().includes(q.toLowerCase())).map((c) => (
-          <Row key={c.id} label={c.name} sub="Everyone at campus" onAdd={() => add({ kind: 'campus', refId: c.id })} added={selected.has(`campus:${c.id}`)} />
         ))}
         {tab === 'groups' && filtered(groups.data?.items, (g) => g.name).map((g) => (
-          <Row key={g.id} label={g.name} sub={`${g.members.length} target(s)`} onAdd={() => add({ kind: 'group', refId: g.id })} added={selected.has(`group:${g.id}`)} />
+          <Row key={g.id} label={g.name} sub={`${g.members.length} target(s)`} onAdd={() => add({ kind: 'group', refId: g.id })} added={selected.has(`group:${g.id}`)} alreadyAdded={alreadyAddedKeys?.has(`group:${g.id}`)} />
         ))}
       </div>
 
@@ -340,19 +408,20 @@ export function RecipientPicker({
   );
 }
 
-function Row({ label, sub, onAdd, added }: { label: string; sub?: string; onAdd: () => void; added: boolean }) {
+function Row({ label, sub, onAdd, added, alreadyAdded }: { label: string; sub?: string; onAdd: () => void; added: boolean; alreadyAdded?: boolean }) {
+  const status = alreadyAdded ? 'Already added' : added ? 'Added' : 'Add';
   return (
     <button
       type="button"
       onClick={onAdd}
-      disabled={added}
+      disabled={added || alreadyAdded}
       className="flex w-full items-center justify-between border-b border-border px-3 py-2 text-left text-sm last:border-b-0 hover:bg-background-secondary disabled:opacity-50"
     >
       <span className="flex min-w-0 flex-col">
         <span className="truncate font-medium text-text-primary">{label}</span>
         {sub && <span className="truncate text-xs text-text-muted">{sub}</span>}
       </span>
-      <span className="text-xs text-text-muted">{added ? 'Added' : 'Add'}</span>
+      <span className={'shrink-0 text-xs text-text-muted'}>{status}</span>
     </button>
   );
 }

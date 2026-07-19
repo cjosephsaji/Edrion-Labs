@@ -1,47 +1,22 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AttemptAnswerUpdateInput } from '@edrion/schemas';
-import { Camera } from 'lucide-react';
-import { webEnv } from '@/lib/env';
 import type { QuizPaperDto, QuizPaperQuestion } from '@/lib/hooks/quiz-attempts';
 import { useUploadAnswerPhoto } from '@/lib/hooks/quiz-attempts';
 import { PillButton } from '@/components/ui/pill-button';
 import { Card } from '@/components/ui/card';
 import { Eyebrow, PageHeader, StatSlot } from '@/components/ui/primitives';
-
-type LocalAnswer = {
-  choiceKey?: string;
-  answerText?: string;
-  answerObjectId?: string;
-  photoName?: string;
-};
-
-function mediaUrl(path: string | null): string | null {
-  if (!path) return null;
-  if (path.startsWith('http')) return path;
-  const resolved = path.replace('/storage/', '/files/');
-  return `${webEnv.apiBaseUrl}${resolved}`;
-}
+import {
+  QuestionPlayer,
+  toAnswerPayload,
+  type LocalAnswer,
+} from '@/components/institutional/question-player';
 
 function formatCountdown(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000));
   const m = Math.floor(total / 60);
   const s = total % 60;
   return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-function isMcqType(qtype: string): boolean {
-  return qtype === 'mcq_single' || qtype === 'mcq_multi' || qtype === 'true_false';
-}
-
-function isTextType(qtype: string): boolean {
-  return (
-    qtype === 'short_answer' ||
-    qtype === 'long_answer' ||
-    qtype === 'fill_blank' ||
-    qtype === 'numeric' ||
-    qtype === 'matching'
-  );
 }
 
 function ExamTimer({ endsAt, onExpire }: { endsAt: string; onExpire: () => void }) {
@@ -71,127 +46,6 @@ function ExamTimer({ endsAt, onExpire }: { endsAt: string; onExpire: () => void 
     >
       {formatCountdown(remaining)}
     </span>
-  );
-}
-
-function QuestionBody({
-  q,
-  answer,
-  onMcqSelect,
-  onTextChange,
-  onPhotoUpload,
-  photoUploading,
-}: {
-  q: QuizPaperQuestion;
-  answer: LocalAnswer | undefined;
-  onMcqSelect: (choiceKey: string) => void;
-  onTextChange: (text: string) => void;
-  onPhotoUpload: (file: File) => void;
-  photoUploading: boolean;
-}) {
-  const promptImage = mediaUrl(q.promptImageUrl);
-  const selectedKeys = new Set((answer?.choiceKey ?? '').split(',').map((k) => k.trim()).filter(Boolean));
-
-  return (
-    <div className="p-5">
-      {promptImage && (
-        <img src={promptImage} alt="" className="mb-4 max-h-48 w-full rounded-xl object-contain" />
-      )}
-      <p className="font-display text-lg text-st-ink">{q.prompt}</p>
-
-      {isMcqType(q.qtype) && q.options && (
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">
-          {q.options.map((opt) => {
-            const selected = selectedKeys.has(opt.key);
-            return (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => onMcqSelect(opt.key)}
-                className={`rounded-xl border px-4 py-3 text-left text-sm transition ${
-                  selected
-                    ? 'border-st-accent bg-st-accentSoft text-st-accentDeep'
-                    : 'border-st-bd2 bg-st-card hover:border-st-accent'
-                }`}
-              >
-                <span className="font-mono-ui font-semibold text-st-accent">{opt.key}.</span> {opt.label}
-                {opt.imageUrl && mediaUrl(opt.imageUrl) && (
-                  <img
-                    src={mediaUrl(opt.imageUrl)!}
-                    alt=""
-                    className="mt-2 max-h-24 rounded-lg object-contain"
-                  />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {q.qtype === 'true_false' && !q.options && (
-        <div className="mt-4 flex gap-2">
-          {['true', 'false'].map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => onMcqSelect(key)}
-              className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold capitalize transition ${
-                answer?.choiceKey === key
-                  ? 'border-st-accent bg-st-accentSoft text-st-accentDeep'
-                  : 'border-st-bd2 bg-st-card hover:border-st-accent'
-              }`}
-            >
-              {key}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {isTextType(q.qtype) && (
-        <div className="mt-4 space-y-3">
-          {q.qtype === 'long_answer' ? (
-            <textarea
-              value={answer?.answerText ?? ''}
-              onChange={(e) => onTextChange(e.target.value)}
-              rows={5}
-              placeholder="Type your answer…"
-              className="w-full rounded-xl border border-st-bd2 bg-st-card px-4 py-3 text-sm text-st-ink outline-none focus:border-st-accent"
-            />
-          ) : (
-            <input
-              type={q.qtype === 'numeric' ? 'number' : 'text'}
-              value={answer?.answerText ?? ''}
-              onChange={(e) => onTextChange(e.target.value)}
-              placeholder="Type your answer…"
-              className="w-full rounded-xl border border-st-bd2 bg-st-card px-4 py-3 text-sm text-st-ink outline-none focus:border-st-accent"
-            />
-          )}
-
-          <div className="rounded-xl border border-dashed border-st-bd2 bg-st-surface2 p-4">
-            <p className="text-xs font-semibold text-st-faint">PHOTO ANSWER (OPTIONAL)</p>
-            <p className="mt-1 text-xs text-st-muted">Upload a photo of handwritten work.</p>
-            {answer?.answerObjectId ? (
-              <p className="mt-2 text-sm text-st-success">Photo attached{answer.photoName ? `: ${answer.photoName}` : ''}</p>
-            ) : null}
-            <label className="mt-3 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-st-accent hover:text-st-accentDeep">
-              <Camera size={16} aria-hidden />
-              {photoUploading ? 'Uploading…' : answer?.answerObjectId ? 'Replace photo' : 'Upload photo'}
-              <input
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                disabled={photoUploading}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) onPhotoUpload(file);
-                  e.target.value = '';
-                }}
-              />
-            </label>
-          </div>
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -290,6 +144,35 @@ export function QuizAttemptView({
     [answers, persist, updateLocal, uploadPhoto],
   );
 
+  const handleMatchingChange = useCallback(
+    (q: QuizPaperQuestion, matches: Record<string, string>) => {
+      const answerJson = { ...(answers[q.id]?.answerJson ?? {}), matches };
+      updateLocal(q.id, { answerJson, answerText: JSON.stringify(matches) });
+      const existing = textTimers.current[q.id];
+      if (existing) clearTimeout(existing);
+      textTimers.current[q.id] = setTimeout(() => {
+        void persist(q.id, {
+          answerText: JSON.stringify(matches),
+          answerJson,
+        });
+      }, 400);
+    },
+    [answers, persist, updateLocal],
+  );
+
+  const handleCodeChange = useCallback(
+    (q: QuizPaperQuestion, source: string, language: string) => {
+      const answerJson = { ...(answers[q.id]?.answerJson ?? {}), code: { language, source } };
+      updateLocal(q.id, { answerJson, answerText: source });
+      const existing = textTimers.current[q.id];
+      if (existing) clearTimeout(existing);
+      textTimers.current[q.id] = setTimeout(() => {
+        void persist(q.id, toAnswerPayload({ answerJson, answerText: source }));
+      }, 600);
+    },
+    [answers, persist, updateLocal],
+  );
+
   const handleExpire = useCallback(() => {
     if (!finishPending) void onFinish().then(() => onRefetch());
   }, [finishPending, onFinish, onRefetch]);
@@ -366,13 +249,20 @@ export function QuizAttemptView({
         right={<ExamTimer endsAt={paper.attempt.endsAt} onExpire={handleExpire} />}
       />
 
-      <Card className="mt-6" eyebrow={`${q.qtype.replace(/_/g, ' ').toUpperCase()} · ${q.marks} mark${q.marks === 1 ? '' : 's'}`} noPadding>
-        <QuestionBody
+      <Card
+        className="mt-6"
+        eyebrow={`${q.qtype.replace(/_/g, ' ').toUpperCase()} · ${q.marks} mark${q.marks === 1 ? '' : 's'}`}
+        noPadding
+      >
+        <QuestionPlayer
           q={q}
           answer={answers[q.id]}
           onMcqSelect={(key) => handleMcqSelect(q, key)}
           onTextChange={(text) => handleTextChange(q, text)}
           onPhotoUpload={(file) => void handlePhotoUpload(q, file)}
+          onMatchingChange={(matches) => handleMatchingChange(q, matches)}
+          onCodeChange={(source, language) => handleCodeChange(q, source, language)}
+          onFileUpload={(file) => void handlePhotoUpload(q, file)}
           photoUploading={uploadPhoto.isPending}
         />
       </Card>

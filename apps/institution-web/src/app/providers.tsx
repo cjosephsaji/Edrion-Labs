@@ -5,6 +5,7 @@ import { PortalClientProvider } from '@/lib/portal-client';
 import { ScopeProvider } from '@/lib/scope';
 import { AcademicContextProvider } from '@/lib/academic-context';
 import { webEnv } from '@/lib/env';
+import { ToastProvider } from '@edrion/ui';
 
 /**
  * Client providers: one TanStack Query client per app instance, the typed Portal API client,
@@ -28,7 +29,9 @@ export function Providers({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <PortalClientProvider baseUrl={webEnv.apiBaseUrl} devUserEmail={webEnv.devUserEmail}>
         <ScopeProvider>
-          <AcademicContextProvider>{children}</AcademicContextProvider>
+          <AcademicContextProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </AcademicContextProvider>
         </ScopeProvider>
       </PortalClientProvider>
     </QueryClientProvider>

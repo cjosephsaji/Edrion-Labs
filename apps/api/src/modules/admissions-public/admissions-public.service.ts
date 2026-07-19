@@ -27,6 +27,7 @@ import type {
 import { API_ENV, AUDIT_WRITER } from '../../common/tokens';
 import type { EdrionRequestContext } from '../../common/request-context';
 import { GeoLookupService } from '../../common/geo-lookup.service';
+import { emailCodeBlock, emailLayout, emailReferenceBlock } from '../../common/email-templates';
 import { OtpService, type OtpTarget } from '../registration/otp.service';
 import { EmailService } from '../portal/email.service';
 import { AttachmentStorageService } from '../portal/attachment-storage.service';
@@ -111,12 +112,22 @@ export class AdmissionsPublicService {
     // Info supplied → return the application to the review queue.
     await this.repo.setApplicationStatus(req.applicationId, 'under_review');
     if (req.contactEmail) {
+      const text =
+        'We have received the additional information for your admission application. The admissions team will continue reviewing it.';
+      const html = emailLayout({
+        heading: 'Information received',
+        preheader: 'Your admission application update',
+        footer:
+          "You're receiving this because you submitted an admission application through Edrion. If this wasn't you, you can safely ignore it.",
+        bodyHtml: `<p style="margin:0 0 16px;">Thank you — we've received the additional information for your admission application.</p>
+          <p style="margin:0;">The admissions team will continue reviewing your application and contact you with any further updates.</p>`,
+      });
       await this.emails
         .send({
           to: req.contactEmail,
           subject: 'Thank you — your information has been received',
-          text: 'We have received the additional information for your admission application. The admissions team will continue reviewing it.',
-          html: '<p>We have received the additional information for your admission application. The admissions team will continue reviewing it.</p>',
+          text,
+          html,
         })
         .catch(() => undefined);
     }
@@ -529,17 +540,30 @@ export class AdmissionsPublicService {
 
   private sendOtpEmail(to: string, code: string): Promise<unknown> {
     const text = `Your Edrion verification code is ${code}. It expires in 10 minutes. Do not share it with anyone.`;
-    const html = `<p>Use the code below to verify your email and continue your admission application. It expires in 10 minutes.</p>
-      <p style="font:700 30px/1 monospace;letter-spacing:8px;color:#14532D;">${code}</p>
-      <p>For your security, never share this code.</p>`;
+    const html = emailLayout({
+      heading: 'Verify your email',
+      preheader: 'Your Edrion verification code',
+      footer:
+        "You're receiving this because an admission application was started with this email at Edrion. If this wasn't you, you can safely ignore it.",
+      bodyHtml: `<p style="margin:0 0 18px;">Use the code below to verify your email and continue your admission application. It expires in <strong>10 minutes</strong>.</p>
+        ${emailCodeBlock(code)}
+        <p style="margin:0;">For your security, never share this code. Edrion staff will never ask you for it.</p>`,
+    });
     return this.emails.send({ to, subject: `Your Edrion verification code: ${code}`, text, html });
   }
 
   private sendSubmittedEmail(to: string, displayName: string, applicationNo: string): Promise<unknown> {
     const text = `Thank you — your application to ${displayName} has been received. Reference: ${applicationNo}. The admissions team will review it and contact you with the outcome.`;
-    const html = `<p>Thank you — your application to <strong>${displayName}</strong> has been received.</p>
-      <p>Your reference number: <strong>${applicationNo}</strong></p>
-      <p>The admissions team will review your application and contact you with the outcome.</p>`;
+    const html = emailLayout({
+      heading: 'Application received',
+      preheader: `Reference ${applicationNo}`,
+      footer:
+        "You're receiving this because an admission application was submitted with this email at Edrion. If this wasn't you, you can safely ignore it.",
+      bodyHtml: `<p style="margin:0 0 16px;">Thank you for applying to <strong>${displayName}</strong>. We've received your application.</p>
+        <p style="margin:0 0 8px;">Your reference number:</p>
+        ${emailReferenceBlock(applicationNo)}
+        <p style="margin:0;">The admissions team will review your application and contact you with the outcome. No action is needed from you right now.</p>`,
+    });
     return this.emails.send({
       to,
       subject: `We've received your application to ${displayName} (${applicationNo})`,

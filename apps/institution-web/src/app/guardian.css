@@ -1,0 +1,41 @@
+@import '../styles/guardian-tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+[data-guardian-theme] {
+  color-scheme: light;
+  background:
+    radial-gradient(circle at top left, rgb(222 238 228 / 0.7), transparent 28rem),
+    linear-gradient(180deg, #f8f5ee, #f1ecdf);
+  color: #25241d;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-guardian-theme] * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+[data-guardian-theme] .shimmer {
+  background: linear-gradient(90deg, #f1ecdf 25%, #e2d9c8 37%, #f1ecdf 63%);
+  background-size: 400% 100%;
+  animation: guardian-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes guardian-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
+[data-guardian-theme] button,
+[data-guardian-theme] a[role='button'] {
+  min-height: 44px;
+}

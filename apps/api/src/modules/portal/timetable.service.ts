@@ -16,6 +16,7 @@ import { AUDIT_WRITER } from '../../common/tokens';
 import type { Page } from './academics.repository';
 import type { ListResult } from './academics.service';
 import { TimetableRepository, type TimetableRefTable } from './timetable.repository';
+import { LabScheduleSyncService } from './lab-schedule-sync.service';
 import { basePortalAudit, type PortalActionContext } from './portal-action-context';
 
 const MODULE = 'portal-timetable';
@@ -29,6 +30,7 @@ const MODULE = 'portal-timetable';
 export class TimetableService {
   constructor(
     private readonly repo: TimetableRepository,
+    private readonly labScheduleSync: LabScheduleSyncService,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
   ) {}
 
@@ -55,12 +57,15 @@ export class TimetableService {
       dayOfWeek: input.dayOfWeek,
       startTime: input.startTime,
       endTime: input.endTime,
+      label: input.label ?? null,
+      kind: input.kind ?? 'teaching',
       room: input.room ?? null,
       createdBy: ctx.principal.institutionUserId,
     });
     await this.write(ctx, 'timetable.create', 'timetable_slot', row.id, campusId, {
       newState: { classId: row.classId, dayOfWeek: row.dayOfWeek, startTime: row.startTime },
     });
+    await this.labScheduleSync.syncForSlot(ctx, row);
     return row;
   }
 
@@ -82,6 +87,8 @@ export class TimetableService {
       dayOfWeek: input.dayOfWeek ?? existing!.dayOfWeek,
       startTime: input.startTime ?? existing!.startTime,
       endTime: input.endTime ?? existing!.endTime,
+      label: input.label === undefined ? existing!.label : input.label,
+      kind: input.kind ?? existing!.kind,
       room: input.room === undefined ? existing!.room : input.room,
       updatedBy: ctx.principal.institutionUserId,
     });
@@ -89,6 +96,7 @@ export class TimetableService {
     await this.write(ctx, 'timetable.update', 'timetable_slot', id, updated.campusId, {
       newState: { dayOfWeek: updated.dayOfWeek, startTime: updated.startTime },
     });
+    await this.labScheduleSync.syncForSlot(ctx, updated);
     return updated;
   }
 
@@ -98,6 +106,7 @@ export class TimetableService {
     this.assertInScope(existing?.campusId ?? null, existing, f);
     const ok = await this.repo.delete(id, version);
     if (!ok) throw this.versionConflict();
+    await this.labScheduleSync.removeForSlotId(id);
     await this.write(ctx, 'timetable.delete', 'timetable_slot', id, existing!.campusId, {
       previousState: { dayOfWeek: existing!.dayOfWeek, startTime: existing!.startTime },
     });

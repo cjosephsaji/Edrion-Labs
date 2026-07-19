@@ -1,16 +1,23 @@
 'use client';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Badge, StatusBadge, type Column } from '@edrion/ui';
 import { ResourceManager, type FilterDef, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
 import { RoleMultiSelect } from '@/components/admin/role-multi-select';
+import { PortalUserAccessPanel } from '@/components/admin/staff-portal-access-panel';
+import { StaffPortalLoginSetup } from '@/components/admin/staff-portal-login-setup';
 import { UserProfileDialog } from '@/components/people/user-profile-dialog';
 import { useDepartmentOptions } from '@/lib/academics';
 import { usePeopleList, usePeopleMutations, type StaffRow } from '@/lib/people';
+import { usePortalMe } from '@/lib/hooks';
 import { formatPersonName } from '@/lib/person-name';
+import { usePermissions } from '@/lib/permissions';
 import { useRolesList } from '@/lib/roles';
+import { useSetUserAccess } from '@/lib/users';
 import type { RoleRow } from '@/lib/admin-types';
 import { useTerm } from '@/lib/term';
+
+const ACCESS_KEYS = new Set(['roleKeys', 'campusIds', 'directGrants', 'directDenies', 'userVersion', 'createLogin']);
 
 const PERMISSIONS: ResourcePermissions = {
   view: 'staff.view',
@@ -33,6 +40,12 @@ const STATUS_OPTIONS = [
 
 export default function StaffPage() {
   const { t, tp } = useTerm();
+  const { data: me } = usePortalMe();
+  const { can } = usePermissions();
+  const canEditStaff = can('staff.manage');
+  const canViewUsers = can('users.view');
+  const canManageRoles = can('users.assign_scoped_roles') || can('users.manage_roles');
+  const setAccess = useSetUserAccess();
   const { data: departments } = useDepartmentOptions();
   const { data: roles } = useRolesList<RoleRow>('roles', { page: 1, pageSize: 100, sortDir: 'asc' });
 
@@ -47,12 +60,12 @@ export default function StaffPage() {
       { key: 'employmentType', label: 'All employment', options: EMPLOYMENT_OPTIONS },
       {
         key: 'departmentId',
-        label: `All ${t('department').toLowerCase()}s`,
+        label: `All ${tp('department')}`,
         options: (departments?.items ?? []).map((d) => ({ value: d.id, label: d.name })),
       },
       { key: 'roleKey', label: 'All roles', options: roleFilterOptions },
       {
-        key: 'isTeaching',
+        key: 'teaching',
         label: 'Teaching / non-teaching',
         options: [
           { value: 'true', label: 'Teaching' },
@@ -60,7 +73,7 @@ export default function StaffPage() {
         ],
       },
     ],
-    [departments, roleFilterOptions, t],
+    [departments, roleFilterOptions, tp],
   );
 
   const fields = useMemo<FieldDef[]>(
@@ -92,15 +105,20 @@ export default function StaffPage() {
         name: 'createLogin',
         label: 'Create portal login',
         type: 'checkbox',
-        help: 'Provision a user account with the email above (default on).',
+        help: 'Turned on automatically when you add an email; you can turn it off.',
       },
       {
         name: 'roleKeys',
         label: 'Portal roles',
         type: 'custom',
-        help: 'Roles assigned when a login is created.',
-        render: (value, onChange) => (
-          <RoleMultiSelect value={(value as string[]) ?? []} onChange={(keys) => onChange(keys)} />
+        requiredWhen: { field: 'createLogin', equals: true },
+        help: 'Required when creating a portal login.',
+        render: (value, onChange, ctx) => (
+          <RoleMultiSelect
+            value={(value as string[]) ?? []}
+            onChange={(keys) => onChange(keys)}
+            disabled={ctx?.disabled}
+          />
         ),
       },
     ],
@@ -124,6 +142,39 @@ export default function StaffPage() {
     [t],
   );
 
+  const onSubmitUpdate = useCallback(
+    async (row: StaffRow, body: Record<string, unknown>, { update }) => {
+      const profile: Record<string, unknown> = { version: row.version };
+      for (const [key, value] of Object.entries(body)) {
+        if (!ACCESS_KEYS.has(key)) profile[key] = value;
+      }
+
+      if (body.createLogin && !row.institutionUserId) {
+        profile.createLogin = true;
+        profile.roleKeys = body.roleKeys ?? [];
+      }
+
+      const updatedStaff = (await update.mutateAsync({ id: row.id, body: profile })) as StaffRow;
+      const institutionUserId = updatedStaff.institutionUserId ?? row.institutionUserId;
+      const justCreatedLogin = Boolean(body.createLogin && !row.institutionUserId);
+      const roleKeys = Array.isArray(body.roleKeys) ? (body.roleKeys as string[]) : [];
+
+      // Roles are assigned during invite when createLogin is used; otherwise sync access when roles were picked.
+      const editingSelf = Boolean(me?.institutionUserId && institutionUserId === me.institutionUserId);
+      if (canManageRoles && institutionUserId && !justCreatedLogin && !editingSelf && roleKeys.length > 0) {
+        await setAccess.mutateAsync({
+          id: institutionUserId,
+          roleKeys,
+          campusIds: (body.campusIds as string[]) ?? [],
+          directGrants: (body.directGrants as string[]) ?? [],
+          directDenies: (body.directDenies as string[]) ?? [],
+          version: body.userVersion as number | undefined,
+        });
+      }
+    },
+    [canManageRoles, me?.institutionUserId, setAccess],
+  );
+
   return (
     <ResourceManager<StaffRow>
       resource="staff"
@@ -139,6 +190,42 @@ export default function StaffPage() {
       useMutations={usePeopleMutations}
       rowLabel={(r) => formatPersonName(r)}
       renderDetail={(ctx) => <UserProfileDialog kind="staff" {...ctx} />}
+      editFormDescription="Scroll down for portal login and role access."
+      editDrawerClassName="max-w-2xl"
+      renderFormExtra={
+        canEditStaff
+          ? ({ row, setSubmitPayload, values }) => (
+              <div className="flex flex-col gap-4">
+                {row.institutionUserId ? (
+                  canViewUsers ? (
+                    <PortalUserAccessPanel
+                      institutionUserId={row.institutionUserId}
+                      canManage={canManageRoles}
+                      setSubmitPayload={setSubmitPayload}
+                    />
+                  ) : (
+                    <p className="text-sm text-text-muted">
+                      Portal access details require the <span className="font-medium">users.view</span> permission.
+                    </p>
+                  )
+                ) : canManageRoles ? (
+                  <StaffPortalLoginSetup
+                    email={
+                      typeof values.email === 'string' && values.email.trim()
+                        ? values.email
+                        : row.email
+                    }
+                    canManage={canManageRoles}
+                    setSubmitPayload={setSubmitPayload}
+                  />
+                ) : (
+                  <p className="text-sm text-text-muted">This staff member has no portal login.</p>
+                )}
+              </div>
+            )
+          : undefined
+      }
+      onSubmitUpdate={canEditStaff ? onSubmitUpdate : undefined}
       toFormValues={(r) => ({
         firstName: r.firstName,
         middleName: r.middleName ?? '',

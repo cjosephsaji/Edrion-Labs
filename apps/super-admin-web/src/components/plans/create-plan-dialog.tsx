@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { Button, Label } from '@edrion/ui';
+import { Button, Label, Select } from '@edrion/ui';
 import { ApiClientError, useCreatePlanDraft, type PlanDetailDto } from '@edrion/api-client';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import {
@@ -96,10 +96,7 @@ export function CreatePlanDialog({ onCreated }: { onCreated?: (plan: PlanDetailD
           </div>
           <div>
             <Label htmlFor="plan-audience">Audience</Label>
-            <select id="plan-audience" value={audience} onChange={(e) => setAudience(e.target.value)} className={fieldClass}>
-              <option value="institution">Institution</option>
-              <option value="independent">Independent</option>
-            </select>
+            <Select id="plan-audience" value={audience} onChange={(e) => setAudience(e.target.value)} className={fieldClass} options={[{ value: 'institution', label: 'Institution' }, { value: 'independent', label: 'Independent' }]} />
           </div>
           <div>
             <Label htmlFor="plan-desc">Description</Label>

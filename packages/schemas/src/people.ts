@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+import { paginationQuerySchema, sortQuerySchema, versionSchema, academicScopeQuerySchema } from './common';
 import { lenientPhoneSchema, optionalE164PhoneSchema } from './geo/validators';
 
 /**
@@ -16,7 +16,7 @@ import { lenientPhoneSchema, optionalE164PhoneSchema } from './geo/validators';
 
 const personName = z.string().trim().min(1, 'Required').max(80);
 /** Optional middle name — omitted from display when blank. */
-const optionalMiddleName = z.string().trim().max(80).optional();
+const optionalMiddleName = z.string().trim().max(80).nullish();
 
 /** Format first + optional middle + last for display labels. */
 export function formatPersonName(parts: {
@@ -41,6 +41,7 @@ const phone = lenientPhoneSchema;
 const phoneStrict = optionalE164PhoneSchema.nullable();
 const shortText = (max = 120) => z.string().trim().max(max).nullish();
 const roleKeys = z.array(z.string().trim().min(1).max(64)).max(40);
+const campusIds = z.array(z.string().uuid()).max(200);
 
 export const GENDERS = ['male', 'female', 'other'] as const;
 export const genderSchema = z.enum(GENDERS);
@@ -66,15 +67,26 @@ export type GuardianRelationship = (typeof GUARDIAN_RELATIONSHIPS)[number];
 export const PEOPLE_RESOURCES = ['students', 'staff', 'parents'] as const;
 export type PeopleResource = (typeof PEOPLE_RESOURCES)[number];
 
-/** Common list query for every people directory: page + sort + free-text search + staff filters. */
-export const peopleListQuerySchema = paginationQuerySchema.merge(sortQuerySchema).extend({
+/** Common list query for every people directory: page + sort + free-text search + facet filters. */
+export const peopleListQuerySchema = paginationQuerySchema
+  .merge(sortQuerySchema)
+  .merge(academicScopeQuerySchema)
+  .extend({
   search: z.string().trim().max(160).optional(),
-  status: staffStatusSchema.optional(),
+  /** Staff employment status, student enrolment status, etc. — validated per list endpoint. */
+  status: z.string().trim().max(32).optional(),
   employmentType: employmentTypeSchema.optional(),
   departmentId: z.string().uuid().optional(),
   roleKey: z.string().trim().max(64).optional(),
   /** When set, restrict staff to those with (true) or without (false) academics.teach. */
   teaching: z.enum(['true', 'false']).optional(),
+  /** Student list facets */
+  gradeLevelId: z.string().uuid().optional(),
+  classId: z.string().uuid().optional(),
+  gender: genderSchema.optional(),
+  /** Parent list facets */
+  hasChildren: z.enum(['true', 'false']).optional(),
+  hasLogin: z.enum(['true', 'false']).optional(),
 });
 export type PeopleListQuery = z.infer<typeof peopleListQuerySchema>;
 
@@ -136,50 +148,105 @@ export const createStaffSchema = z.object({
   joinDate: isoDate,
   institutionUserId: optionalUuid,
   /** When true and no institutionUserId, invite a portal login using email + roleKeys. */
-  createLogin: z.boolean().default(true),
+  createLogin: z.boolean().default(false),
   /** Roles to assign on invite or when linking an existing institution user. */
   roleKeys: roleKeys.default([]),
+  /** Campus access for the portal login (when createLogin is true). */
+  campusIds: campusIds.default([]),
+}).superRefine((data, ctx) => {
+  if (!data.createLogin) return;
+  if (!data.email) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Email is required to create a portal login.',
+      path: ['email'],
+    });
+  }
+  if (data.roleKeys.length === 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Select at least one portal role.',
+      path: ['roleKeys'],
+    });
+  }
 });
 export type CreateStaffInput = z.infer<typeof createStaffSchema>;
 
-export const updateStaffSchema = z.object({
-  employeeNo: shortText(40),
+export const updateStaffSchema = z
+  .object({
+    employeeNo: shortText(40),
+    firstName: personName.optional(),
+    middleName: optionalMiddleName.nullable(),
+    lastName: personName.optional(),
+    email,
+    phone,
+    departmentId: optionalUuid,
+    designation: shortText(80),
+    employmentType: employmentTypeSchema.optional(),
+    status: staffStatusSchema.optional(),
+    joinDate: isoDate,
+    institutionUserId: optionalUuid,
+    createLogin: z.boolean().optional(),
+    roleKeys: roleKeys.default([]).optional(),
+    campusIds: campusIds.default([]).optional(),
+    ...withVersion,
+  })
+  .superRefine((data, ctx) => {
+    if (!data.createLogin) return;
+    if (!data.email) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Email is required to create a portal login.',
+        path: ['email'],
+      });
+    }
+    if ((data.roleKeys ?? []).length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Select at least one portal role.',
+        path: ['roleKeys'],
+      });
+    }
+  });
+export type UpdateStaffInput = z.infer<typeof updateStaffSchema>;
+
+// --- parents / guardians -----------------------------------------------------
+
+export const createParentSchema = z
+  .object({
+    firstName: personName,
+    middleName: optionalMiddleName,
+    lastName: personName,
+    email,
+    phone: phoneStrict,
+    occupation: shortText(120),
+    address: shortText(300),
+    institutionUserId: optionalUuid,
+    /** When true, invite a portal login with the parent role using the email above. */
+    createLogin: z.boolean().default(false),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.createLogin) return;
+    if (!data.email) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Email is required to create a portal login.',
+        path: ['email'],
+      });
+    }
+  });
+export type CreateParentInput = z.infer<typeof createParentSchema>;
+
+export const updateParentSchema = z.object({
   firstName: personName.optional(),
   middleName: optionalMiddleName.nullable(),
   lastName: personName.optional(),
   email,
   phone,
-  departmentId: optionalUuid,
-  designation: shortText(80),
-  employmentType: employmentTypeSchema.optional(),
-  status: staffStatusSchema.optional(),
-  joinDate: isoDate,
-  institutionUserId: optionalUuid,
-  ...withVersion,
-});
-export type UpdateStaffInput = z.infer<typeof updateStaffSchema>;
-
-// --- parents / guardians -----------------------------------------------------
-
-export const createParentSchema = z.object({
-  firstName: personName,
-  lastName: personName,
-  email,
-  phone: phoneStrict,
   occupation: shortText(120),
   address: shortText(300),
   institutionUserId: optionalUuid,
-});
-export type CreateParentInput = z.infer<typeof createParentSchema>;
-
-export const updateParentSchema = z.object({
-  firstName: personName.optional(),
-  lastName: personName.optional(),
-  email,
-  phone,
-  occupation: shortText(120),
-  address: shortText(300),
-  institutionUserId: optionalUuid,
+  createLogin: z.boolean().optional(),
   ...withVersion,
 });
 export type UpdateParentInput = z.infer<typeof updateParentSchema>;

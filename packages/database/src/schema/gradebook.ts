@@ -2,7 +2,7 @@ import { boolean, index, integer, pgTable, text, uniqueIndex, uuid } from 'drizz
 import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { campuses } from './campuses';
-import { classes, subjects } from './academics';
+import { classes, subjects, academicYears, academicTerms } from './academics';
 import { students } from './people';
 import { exams } from './exams';
 
@@ -34,6 +34,9 @@ export const gradeEntries = pgTable(
     examId: uuid('exam_id').references(() => exams.id, { onDelete: 'set null' }),
     /** Optional class context. */
     classId: uuid('class_id').references(() => classes.id, { onDelete: 'set null' }),
+    /** Direct year stamp — exam_id and class_id are both nullable, so there is no other path. */
+    academicYearId: uuid('academic_year_id').references(() => academicYears.id, { onDelete: 'set null' }),
+    termId: uuid('term_id').references(() => academicTerms.id, { onDelete: 'set null' }),
     /** Label for the assessment, e.g. "Midterm" — used when not tied to an exam. */
     assessmentName: text('assessment_name').notNull(),
     marksObtained: integer('marks_obtained').notNull().default(0),
@@ -52,6 +55,7 @@ export const gradeEntries = pgTable(
     scopeIdx: index('grade_entries_institution_campus_idx').on(t.institutionId, t.campusId),
     studentIdx: index('grade_entries_student_idx').on(t.studentId),
     examIdx: index('grade_entries_exam_idx').on(t.examId),
+    yearIdx: index('grade_entries_year_idx').on(t.academicYearId),
     uniq: uniqueIndex('grade_entry_uniq').on(t.studentId, t.subjectId, t.examId),
   }),
 );

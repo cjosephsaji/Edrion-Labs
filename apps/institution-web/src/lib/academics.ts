@@ -3,6 +3,8 @@ import { useMemo } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePortalClient } from './portal-client';
 import { useScope } from './scope';
+import type { AcademicScopeMode } from './academic-context';
+import { useAcademicScopedParams, useAcademicContext } from './academic-context';
 import type { InstitutionScope } from './types';
 import type {
   AcademicYearRow,
@@ -16,8 +18,11 @@ import type {
   ProgrammeSubjectRow,
   Paged,
   RosterCandidate,
+  SubjectPlacement,
   SubjectRow,
 } from './academics-types';
+
+export type { AcademicScopeMode };
 
 /** Academic resource path segment (matches the API routes under /portal/academics/*). */
 export type Resource =
@@ -38,7 +43,27 @@ export interface ListParams {
   search?: string;
   /** Optional extra query facets (e.g. status, submittedVia). Empty values are dropped. */
   filters?: Record<string, string | undefined>;
+  enabled?: boolean;
+  /**
+   * Per-call-site academic scope override. Defaults to the resource policy map.
+   * Use `'none'` to opt out (greppable escape hatch).
+   */
+  academicScope?: AcademicScopeMode;
 }
+
+/** Default academic-year/term scoping per academics resource. */
+export const RESOURCE_ACADEMIC_SCOPE: Record<Resource, AcademicScopeMode> = {
+  'academic-years': 'none',
+  departments: 'none',
+  'grade-levels': 'none',
+  'department-grade-levels': 'none',
+  subjects: 'none',
+  'programme-subjects': 'none',
+  // Year only — terms are often programme-specific UUIDs, so shell termId would hide
+  // other programmes' sections. Page facets pass termId explicitly when the user picks one.
+  classes: 'year',
+  'academic-terms': 'year',
+};
 
 function scopeKey(scope: InstitutionScope): string {
   return scope.mode === 'campus' ? `campus:${scope.campusId}` : 'institution';
@@ -59,10 +84,14 @@ function queryString(p: ListParams): string {
 export function useAcademicList<T>(resource: Resource, params: ListParams) {
   const client = usePortalClient();
   const { scope } = useScope();
+  const mode = params.academicScope ?? RESOURCE_ACADEMIC_SCOPE[resource] ?? 'none';
+  const scoped = useAcademicScopedParams(params, mode);
+  const { enabled = true, academicScope: _as, ...listParams } = scoped;
   return useQuery({
-    queryKey: ['academics', resource, scopeKey(scope), params],
-    queryFn: () => client.get<Paged<T>>(`/portal/academics/${resource}?${queryString(params)}`, scope),
+    queryKey: ['academics', resource, scopeKey(scope), listParams],
+    queryFn: () => client.get<Paged<T>>(`/portal/academics/${resource}?${queryString(listParams)}`, scope),
     placeholderData: keepPreviousData,
+    enabled,
   });
 }
 
@@ -71,7 +100,23 @@ export function useAcademicMutations(resource: Resource) {
   const client = usePortalClient();
   const { scope } = useScope();
   const qc = useQueryClient();
-  const invalidate = () => qc.invalidateQueries({ queryKey: ['academics', resource] });
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['academics', resource] });
+    if (resource === 'programme-subjects') {
+      qc.invalidateQueries({ queryKey: ['academics', 'programme-structure-detail'] });
+      qc.invalidateQueries({ queryKey: ['academics', 'programme-structure'] });
+      // Subjects list embeds placements — keep "Taught in" in sync after curriculum changes.
+      qc.invalidateQueries({ queryKey: ['academics', 'subjects'] });
+    }
+    if (resource === 'subjects') {
+      qc.invalidateQueries({ queryKey: ['academics', 'programme-structure'] });
+      qc.invalidateQueries({ queryKey: ['academics', 'programme-structure-detail'] });
+    }
+    if (resource === 'classes') {
+      qc.invalidateQueries({ queryKey: ['academics', 'programme-structure'] });
+      qc.invalidateQueries({ queryKey: ['academics', 'programme-structure-detail'] });
+    }
+  };
 
   const create = useMutation({
     mutationFn: (body: Record<string, unknown>) =>
@@ -97,8 +142,15 @@ const OPTION_PARAMS: ListParams = { page: 1, pageSize: 100, sortDir: 'asc' };
 export function useDepartmentOptions() {
   return useAcademicList<DepartmentRow>('departments', { ...OPTION_PARAMS, sortBy: 'name' });
 }
-export function useAcademicYearOptions() {
-  return useAcademicList<AcademicYearRow>('academic-years', { ...OPTION_PARAMS, sortBy: 'startDate', sortDir: 'desc' });
+export function useAcademicYearOptions(enabled = true) {
+  return useAcademicList<AcademicYearRow>('academic-years', {
+    ...OPTION_PARAMS,
+    sortBy: 'startDate',
+    sortDir: 'desc',
+    enabled,
+    // Provider loads years before mounting context — must not read academic context.
+    academicScope: 'none',
+  });
 }
 export function useGradeLevelOptions() {
   return useAcademicList<GradeLevelRow>('grade-levels', { ...OPTION_PARAMS, sortBy: 'level' });
@@ -136,11 +188,54 @@ export function useProgrammeLevelSelectOptions(departmentId?: string) {
   return { options, isLoading, items: data?.items ?? [] };
 }
 
-export function useTermOptionsByProgrammeLevel(programmeLevelId?: string) {
+export function useProgrammeSlotSelectOptions(programmeLevelId?: string) {
+  const { items: levelItems, isLoading: levelsLoading } = useProgrammeLevelSelectOptions();
+  const departmentId = useMemo(
+    () => levelItems.find((l) => l.id === programmeLevelId)?.departmentId,
+    [levelItems, programmeLevelId],
+  );
+  const { data: structure, isLoading: structureLoading } = useProgrammeStructureDetail(departmentId);
+
+  const options = useMemo(() => {
+    if (!programmeLevelId || !structure) return [];
+    const level = structure.levels.find((l) => l.id === programmeLevelId);
+    return (level?.slots ?? []).map((s) => ({
+      value: s.id,
+      label: s.name,
+    }));
+  }, [structure, programmeLevelId]);
+
+  return {
+    options,
+    isLoading: levelsLoading || structureLoading,
+    hasStructure: options.length > 0,
+  };
+}
+
+/** Human label for a curriculum placement — prefers the programme slot name over a raw sequence. */
+export function placementTermLabel(
+  placement: Pick<SubjectPlacement, 'slotName' | 'semesterSequence'>,
+  termLabel: string,
+): string {
+  return placement.slotName ?? `${termLabel} ${placement.semesterSequence}`;
+}
+
+export function useTermOptionsByProgrammeLevel(
+  programmeLevelId?: string,
+  enabled = true,
+  /** Explicit year — required when called from AcademicContextProvider (must not read context). */
+  academicYearId?: string,
+) {
   return useAcademicList<import('./academics-types').AcademicTermRow>('academic-terms', {
     ...OPTION_PARAMS,
     sortBy: 'sequence',
-    filters: programmeLevelId ? { programmeLevelId } : undefined,
+    filters: {
+      ...(programmeLevelId ? { programmeLevelId } : {}),
+      ...(academicYearId ? { academicYearId } : {}),
+    },
+    // Caller passes year explicitly; never auto-merge context (provider would recurse/throw).
+    academicScope: 'none',
+    enabled,
   });
 }
 
@@ -150,7 +245,12 @@ export function useTermOptionsByProgrammeLevel(programmeLevelId?: string) {
  * Terms with no programme link are labelled as such rather than hidden — that's how you spot them.
  */
 export function useTermSelectOptions(programmeLevelId?: string) {
-  const { data, isLoading } = useTermOptionsByProgrammeLevel(programmeLevelId);
+  const { academicYearId } = useAcademicContext();
+  const { data, isLoading } = useTermOptionsByProgrammeLevel(
+    programmeLevelId,
+    true,
+    academicYearId || undefined,
+  );
   const options = useMemo(
     () =>
       (data?.items ?? []).map((t) => {
@@ -184,6 +284,162 @@ export function useProgrammeStructure(departmentId?: string) {
     queryKey: ['academics', 'programme-structure', scopeKey(scope), departmentId ?? 'all'],
     queryFn: () =>
       client.get<ProgrammeStructureDepartment[]>(`/portal/academics/programme-structure${qs}`, scope),
+  });
+}
+
+export interface ProgrammeStructureDetail {
+  department: {
+    id: string;
+    name: string;
+    code: string;
+    termSystem: string;
+    durationMonths: number | null;
+    termsPerYear: number;
+    structureLocked: boolean;
+    version: number;
+  };
+  levels: {
+    id: string;
+    sequence: number;
+    name: string;
+    gradeLevelId: string;
+    durationLabel: string | null;
+    version: number;
+    slots: {
+      id: string;
+      programmeLevelId: string;
+      levelSequence: number;
+      sequenceInYear: number;
+      absoluteSequence: number;
+      name: string;
+      kind: string;
+      durationMonths: number | null;
+      isTerminal: boolean;
+      subjectCount: number;
+      subjects: {
+        id: string;
+        subjectId: string;
+        subjectName: string | null;
+        subjectCode: string | null;
+        subjectKind: string | null;
+        credits: number | null;
+        isElective: boolean;
+        sequence: number;
+        version: number;
+      }[];
+      version: number;
+    }[];
+  }[];
+  totals: { levels: number; slots: number };
+}
+
+export function useProgrammeStructureDetail(departmentId?: string) {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  return useQuery({
+    queryKey: ['academics', 'programme-structure-detail', scopeKey(scope), departmentId],
+    queryFn: () =>
+      client.get<ProgrammeStructureDetail>(`/portal/academics/programmes/${departmentId}/structure`, scope),
+    enabled: !!departmentId,
+  });
+}
+
+export function usePreviewProgrammeStructure() {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  return useMutation({
+    mutationFn: ({
+      departmentId: _d,
+      ...body
+    }: {
+      departmentId?: string;
+      termSystem: string;
+      durationMonths?: number | null;
+      termsPerYear?: number;
+      gradeCount?: number;
+      preset?: string;
+      overrides?: unknown[];
+    }) =>
+      client.post<import('@edrion/shared-types').GeneratedStructure>(
+        `/portal/academics/programmes/${_d ?? 'preview'}/structure/preview`,
+        scope,
+        body,
+      ),
+  });
+}
+
+export function useCommitProgrammeStructure() {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      departmentId,
+      body,
+    }: {
+      departmentId: string;
+      body: Record<string, unknown>;
+    }) =>
+      client.post<ProgrammeStructureDetail>(
+        `/portal/academics/programmes/${departmentId}/structure`,
+        scope,
+        body,
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['academics'] });
+      qc.invalidateQueries({ queryKey: ['portal', 'onboarding'] });
+      qc.invalidateQueries({ queryKey: ['academics', 'programme-structures-created'] });
+    },
+  });
+}
+
+/** Programmes that already have a committed slot structure (onboarding + academics). */
+export function useCreatedProgrammeStructures() {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  const { data: depts } = useDepartmentOptions();
+  const deptIds = (depts?.items ?? []).map((d) => d.id).join(',');
+
+  return useQuery({
+    queryKey: ['academics', 'programme-structures-created', scopeKey(scope), deptIds],
+    queryFn: async () => {
+      const items = depts?.items ?? [];
+      if (items.length === 0) return [] as ProgrammeStructureDetail[];
+
+      const results = await Promise.all(
+        items.map(async (d) => {
+          const detail = await client.get<ProgrammeStructureDetail>(
+            `/portal/academics/programmes/${d.id}/structure`,
+            scope,
+          );
+          return detail.totals.slots > 0 ? detail : null;
+        }),
+      );
+      return results.filter((r): r is ProgrammeStructureDetail => r != null);
+    },
+    enabled: (depts?.items?.length ?? 0) > 0,
+  });
+}
+
+export function useScheduleAcademicYear() {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      academicYearId,
+      replaceExisting = false,
+    }: {
+      academicYearId: string;
+      replaceExisting?: boolean;
+    }) =>
+      client.post(`/portal/academics/academic-years/${academicYearId}/schedule`, scope, {
+        replaceExisting,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['academics', 'academic-terms'] });
+      qc.invalidateQueries({ queryKey: ['academics', 'academic-years'] });
+    },
   });
 }
 

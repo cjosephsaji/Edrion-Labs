@@ -22,6 +22,10 @@ import {
   updateGradeLevelSchema,
   updateProgrammeSubjectSchema,
   programmeStructureQuerySchema,
+  previewStructureSchema,
+  commitStructureSchema,
+  patchStructureSchema,
+  scheduleAcademicYearSchema,
   updateSubjectSchema,
   versionedDeleteSchema,
   type AcademicsListQuery,
@@ -45,6 +49,10 @@ import {
   type UpdateGradeLevelInput,
   type UpdateProgrammeSubjectInput,
   type ProgrammeStructureQuery,
+  type PreviewStructureInput,
+  type CommitStructureInput,
+  type PatchStructureInput,
+  type ScheduleAcademicYearInput,
   type UpdateSubjectInput,
   type VersionedDeleteInput,
 } from '@edrion/schemas';
@@ -61,6 +69,7 @@ import {
   RequireInstitutionPermissions,
 } from './portal.decorators';
 import { AcademicsService } from './academics.service';
+import { ProgrammeStructureService } from './programme-structure.service';
 import type { PortalActionContext } from './portal-action-context';
 
 /**
@@ -76,7 +85,10 @@ import type { PortalActionContext } from './portal-action-context';
 @SkipRateLimit()
 @UseGuards(InstitutionAuthGuard, InstitutionPermissionsGuard)
 export class AcademicsController {
-  constructor(private readonly service: AcademicsService) {}
+  constructor(
+    private readonly service: AcademicsService,
+    private readonly structureService: ProgrammeStructureService,
+  ) {}
 
   private ctx(
     principal: InstitutionPrincipal,
@@ -335,6 +347,65 @@ export class AcademicsController {
     @Query(zodBody(programmeStructureQuerySchema)) q: ProgrammeStructureQuery,
   ) {
     return this.service.getProgrammeStructure(this.ctx(p, s, r), q.departmentId);
+  }
+
+  @Post('programmes/:id/structure/preview')
+  @RequireInstitutionPermissions('academics.view')
+  previewProgrammeStructure(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(previewStructureSchema)) body: PreviewStructureInput,
+  ) {
+    return this.structureService.preview(this.ctx(p, s, r), body);
+  }
+
+  @Post('programmes/:id/structure')
+  @RequireInstitutionPermissions('academics.manage')
+  commitProgrammeStructure(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(commitStructureSchema)) body: CommitStructureInput,
+  ) {
+    return this.structureService.commit(this.ctx(p, s, r), id, body);
+  }
+
+  @Get('programmes/:id/structure')
+  @RequireInstitutionPermissions('academics.view')
+  getProgrammeStructureDetail(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+  ) {
+    return this.structureService.get(this.ctx(p, s, r), id);
+  }
+
+  @Patch('programmes/:id/structure')
+  @RequireInstitutionPermissions('academics.manage')
+  patchProgrammeStructure(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(patchStructureSchema)) body: PatchStructureInput,
+  ) {
+    return this.structureService.patch(this.ctx(p, s, r), id, body);
+  }
+
+  @Post('academic-years/:id/schedule')
+  @RequireInstitutionPermissions('academics.manage')
+  scheduleAcademicYear(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(scheduleAcademicYearSchema)) body: ScheduleAcademicYearInput,
+  ) {
+    return this.structureService.scheduleYear(this.ctx(p, s, r), id, body);
   }
 
   // === subjects ==============================================================

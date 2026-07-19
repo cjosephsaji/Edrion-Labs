@@ -15,7 +15,7 @@ const PROGRAMME_INSTITUTION_TYPES = new Set(['college', 'university', 'training_
  * that have programme-structure links. Returns empty filters for schools or when no links exist.
  */
 export function useProgrammeFacetFilters() {
-  const { tp, type } = useTerm();
+  const { tp, t, type } = useTerm();
   const { data: allLevels } = useProgrammeLevelOptions();
   const hasProgrammeLinks = (allLevels?.items?.length ?? 0) > 0;
   const showFacets = PROGRAMME_INSTITUTION_TYPES.has(type) && hasProgrammeLinks;
@@ -43,7 +43,7 @@ export function useProgrammeFacetFilters() {
     const deptOpts = (departments?.items ?? []).map((d) => ({ value: d.id, label: d.name }));
     const levelOpts = (programmeLevels?.items ?? []).map((l) => ({
       value: l.id,
-      label: l.gradeLevelName ?? l.durationLabel ?? 'Year',
+      label: l.gradeLevelName ?? l.durationLabel ?? t('gradeLevel'),
     }));
     const termOpts = (terms?.items ?? []).map((t) => ({ value: t.id, label: t.name }));
     return [
@@ -51,7 +51,7 @@ export function useProgrammeFacetFilters() {
       { key: 'programmeLevelId', label: `All ${tp('gradeLevel')}`, options: levelOpts },
       { key: 'termId', label: `All ${tp('term')}`, options: termOpts },
     ];
-  }, [showFacets, departments, programmeLevels, terms, tp]);
+  }, [showFacets, departments, programmeLevels, terms, tp, t]);
 
   const filterValues = useMemo(
     () => ({
@@ -79,10 +79,11 @@ export function useProgrammeFacetFilters() {
 
   const classFilters = useMemo(
     () => ({
+      ...(departmentId ? { departmentId } : {}),
       ...(programmeLevelId ? { programmeLevelId } : {}),
       ...(termId ? { termId } : {}),
     }),
-    [programmeLevelId, termId],
+    [departmentId, programmeLevelId, termId],
   );
 
   return {

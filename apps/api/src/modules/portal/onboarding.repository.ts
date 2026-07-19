@@ -10,7 +10,7 @@ import { DATABASE } from '../../common/tokens';
 export interface OnboardingSignals {
   academicYears: number;
   departments: number;
-  academicTerms: number;
+  programmeStructures: number;
   subjects: number;
   students: number;
   staff: number;
@@ -44,15 +44,20 @@ export class OnboardingRepository {
 
   /** One count per step — a step is complete once its count ≥ 1. */
   async signals(institutionId: string): Promise<OnboardingSignals> {
-    const [academicYears, departments, academicTerms, subjects, students, staff] = await Promise.all([
+    const [academicYears, departments, programmeStructures, subjects, students, staff] = await Promise.all([
       this.scalar(this.db.select({ value: count() }).from(schema.academicYears).where(eq(schema.academicYears.institutionId, institutionId))),
       this.scalar(this.db.select({ value: count() }).from(schema.departments).where(eq(schema.departments.institutionId, institutionId))),
-      this.scalar(this.db.select({ value: count() }).from(schema.academicTerms).where(eq(schema.academicTerms.institutionId, institutionId))),
+      this.scalar(
+        this.db
+          .select({ value: count(sql`DISTINCT ${schema.programmeTermSlots.departmentId}`) })
+          .from(schema.programmeTermSlots)
+          .where(eq(schema.programmeTermSlots.institutionId, institutionId)),
+      ),
       this.scalar(this.db.select({ value: count() }).from(schema.subjects).where(eq(schema.subjects.institutionId, institutionId))),
       this.scalar(this.db.select({ value: count() }).from(schema.students).where(eq(schema.students.institutionId, institutionId))),
       this.scalar(this.db.select({ value: count() }).from(schema.staff).where(eq(schema.staff.institutionId, institutionId))),
     ]);
-    return { academicYears, departments, academicTerms, subjects, students, staff };
+    return { academicYears, departments, programmeStructures, subjects, students, staff };
   }
 
   /**

@@ -66,11 +66,12 @@ export function InternationalPhoneInput({
     }
     const dc = defaultCountry?.trim().toUpperCase();
     return dc && getCountry(dc) ? dc : DEFAULT_COUNTRY;
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [defaultCountry, value]);
 
   const [country, setCountry] = useState(initialCountry);
   const [text, setText] = useState(() => (value ? nationalFromE164(value, initialCountry) : ''));
   const lastEmitted = useRef<string>(value ?? '');
+  const userPickedCountry = useRef(false);
 
   // Re-hydrate when the stored value changes externally (e.g. loading a record to edit).
   useEffect(() => {
@@ -79,6 +80,10 @@ export function InternationalPhoneInput({
     lastEmitted.current = v;
     if (!v) {
       setText('');
+      userPickedCountry.current = false;
+      const dc = defaultCountry?.trim().toUpperCase();
+      if (dc && getCountry(dc)) setCountry(dc);
+      else setCountry(initialCountry);
       return;
     }
     const res = normalizePhone(v);
@@ -89,10 +94,9 @@ export function InternationalPhoneInput({
 
   // When there is no number yet, follow the institution / form country once it loads.
   useEffect(() => {
-    if (value) return;
-    const dc = defaultCountry?.trim().toUpperCase();
-    if (dc && getCountry(dc)) setCountry(dc);
-  }, [defaultCountry, value]);
+    if (value || userPickedCountry.current) return;
+    setCountry(initialCountry);
+  }, [initialCountry, value]);
 
   const emit = useCallback(
     (raw: string, c: string) => {
@@ -121,6 +125,7 @@ export function InternationalPhoneInput({
   };
 
   const onPickCountry = (iso2: string) => {
+    userPickedCountry.current = true;
     setCountry(iso2);
     onCountryChange?.(iso2);
     setText((t) => formatAsYouType(t, iso2));

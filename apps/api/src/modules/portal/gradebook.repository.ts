@@ -20,6 +20,8 @@ import type { GradeEntry, NewGradeEntry } from '@edrion/database';
 import type { GradebookListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
+import { enrolledStudentsCond } from './academic-scope-filters';
+import { programmeListFilterConds } from './programme-list-filters';
 
 const studentDisplayName = personSqlName(schema.students.firstName, schema.students.middleName, schema.students.lastName);
 
@@ -101,6 +103,16 @@ export class GradebookRepository {
     if (q.subjectId) conds.push(eq(t.subjectId, q.subjectId));
     if (q.examId) conds.push(eq(t.examId, q.examId));
     if (q.classId) conds.push(eq(t.classId, q.classId));
+    conds.push(
+      ...programmeListFilterConds(this.db, q, {
+        academicYearId: t.academicYearId,
+        termId: t.termId,
+        classId: t.classId,
+        termIdNullMeansWholeYear: true,
+      }),
+    );
+    const enrolled = enrolledStudentsCond(this.db, q, t.studentId);
+    if (enrolled) conds.push(enrolled);
     if (q.search) {
       const s = ilike(t.assessmentName, `%${q.search}%`);
       if (s) conds.push(s);

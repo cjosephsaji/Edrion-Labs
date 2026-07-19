@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+import { paginationQuerySchema, sortQuerySchema, versionSchema, academicScopeQuerySchema } from './common';
 
 /**
  * Institution-Portal LIBRARY (Phase 8) request/response contracts: the book catalogue + the per-student
@@ -27,7 +27,10 @@ const withVersion = { version: versionSchema };
 
 // --- books (catalogue) -------------------------------------------------------
 
-export const libraryBooksListQuerySchema = paginationQuerySchema.merge(sortQuerySchema).extend({
+export const libraryBooksListQuerySchema = paginationQuerySchema
+  .merge(sortQuerySchema)
+  .merge(academicScopeQuerySchema)
+  .extend({
   search: z.string().trim().max(160).optional(),
   status: libraryBookStatusSchema.optional(),
 });

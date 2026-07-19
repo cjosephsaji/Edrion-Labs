@@ -4,7 +4,7 @@ import { StatusBadge, type Column, type DetailSection } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
 import { EntityRef } from '@/components/common/entity-ref';
-import { StudentCardHeader, studentContextFields } from '@/components/common/student-card';
+import { StudentCardHeader, studentContextFields, useStudentContextLabels } from '@/components/common/student-card';
 import { usePermissions } from '@/lib/permissions';
 import { useCounselingList, useCounselingMutations } from '@/lib/staff-modules';
 import { useStudentDirectory, studentOptions } from '@/lib/directory';
@@ -30,6 +30,7 @@ const STATUSES = [
 const label = (opts: { value: string; label: string }[], v: string) => opts.find((o) => o.value === v)?.label ?? v;
 
 export default function CounselingNotesPage() {
+  const studentLabels = useStudentContextLabels();
   const { can } = usePermissions();
   const { data: students } = useStudentDirectory(can('student_basic_profile.view'));
   const studentOpts = useMemo(() => studentOptions(students?.items), [students]);
@@ -66,7 +67,7 @@ export default function CounselingNotesPage() {
   );
 
   const detail = (r: CounselingRecordRow): DetailSection[] => [
-    { title: 'Student', fields: studentContextFields(r.student) },
+    { title: 'Student', fields: studentContextFields(r.student, studentLabels) },
     {
       title: 'Session',
       fields: [

@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { Skeleton } from '@edrion/ui';
 import { useRolesList } from '@/lib/roles';
 import type { RoleRow } from '@/lib/admin-types';
+import { RoleCheckboxList } from './role-checkbox-list';
 
 /** Shared multiselect for institution role keys (staff create, user invite). */
 export function RoleMultiSelect({
@@ -29,22 +30,11 @@ export function RoleMultiSelect({
   if (isLoading) return <Skeleton className="h-24 w-full rounded-md" />;
 
   return (
-    <ul className="divide-y divide-border rounded-md border border-border">
-      {roles.map((r) => (
-        <li key={r.key} className="flex items-start gap-2.5 px-3 py-2">
-          <input
-            type="checkbox"
-            checked={selected.has(r.key)}
-            onChange={() => toggle(r.key)}
-            disabled={disabled}
-            className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-ring disabled:opacity-50"
-          />
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-text-primary">{r.name}</p>
-            <p className="text-xs text-text-muted">{r.description ?? r.key}</p>
-          </div>
-        </li>
-      ))}
-    </ul>
+    <RoleCheckboxList
+      roles={roles}
+      selected={selected}
+      onToggle={toggle}
+      disabled={disabled}
+    />
   );
 }

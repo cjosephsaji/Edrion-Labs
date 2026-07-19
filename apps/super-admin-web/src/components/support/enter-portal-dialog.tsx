@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { LogIn } from 'lucide-react';
-import { Button, Label, cn } from '@edrion/ui';
+import { Button, Label, cn, Select } from '@edrion/ui';
 import { ACCESS_LEVELS } from '@edrion/schemas';
 import {
   ApiClientError,
@@ -117,33 +117,23 @@ export function EnterPortalDialog({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label htmlFor="access-level">Access level</Label>
-            <select
+            <Select
               id="access-level"
               value={accessLevel}
               onChange={(e) => setAccessLevel(e.target.value)}
               className={cn(fieldClass, 'capitalize')}
-            >
-              {ACCESS_LEVELS.map((lvl) => (
-                <option key={lvl} value={lvl} className="capitalize">
-                  {lvl.replace(/_/g, ' ')}
-                </option>
-              ))}
-            </select>
+              options={ACCESS_LEVELS.map((lvl) => ({ value: lvl, label: lvl.replace(/_/g, ' ') }))}
+            />
           </div>
           <div>
             <Label htmlFor="duration">Duration</Label>
-            <select
+            <Select
               id="duration"
-              value={durationMinutes}
+              value={String(durationMinutes)}
               onChange={(e) => setDurationMinutes(Number(e.target.value))}
               className={fieldClass}
-            >
-              {DURATIONS.map((d) => (
-                <option key={d.value} value={d.value}>
-                  {d.label}
-                </option>
-              ))}
-            </select>
+              options={DURATIONS.map((d) => ({ value: String(d.value), label: d.label }))}
+            />
           </div>
         </div>
 

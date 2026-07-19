@@ -36,6 +36,18 @@ export const feeStructures = pgTable(
     academicYearId: uuid('academic_year_id').references(() => academicYears.id, { onDelete: 'set null' }),
     /** Optional link to a structured academic term period (when frequency = term). */
     termId: uuid('term_id').references(() => academicTerms.id, { onDelete: 'set null' }),
+    /**
+     * Department-agnostic placement, for the college-wide charge: "Year 1, Semester 1 tuition —
+     * every programme". `grade_level_id` and `term_id` cannot express that, because a university's
+     * "Year 1" and "Semester 1" are a separate row per department, so pointing at one silently bills
+     * one department. These are the *numbers* those rows share (grade_levels.level and
+     * academic_terms.sequence), which is the only handle that crosses departments — the same reason
+     * programme_subjects keys on `semester_sequence` rather than a term row.
+     *
+     * NULL = not scoped that way. Set these OR the id columns, not both.
+     */
+    gradeLevelNumber: integer('grade_level_number'),
+    termSequence: integer('term_sequence'),
     /** Default amount in minor units. */
     amount: integer('amount').notNull().default(0),
     /** one_time | monthly | term | annual. */
@@ -69,6 +81,9 @@ export const feeInvoices = pgTable(
       .notNull()
       .references(() => students.id, { onDelete: 'cascade' }),
     feeStructureId: uuid('fee_structure_id').references(() => feeStructures.id, { onDelete: 'set null' }),
+    /** Direct year stamp — fee_structure_id is nullable (ad-hoc invoices). */
+    academicYearId: uuid('academic_year_id').references(() => academicYears.id, { onDelete: 'set null' }),
+    termId: uuid('term_id').references(() => academicTerms.id, { onDelete: 'set null' }),
     /**
      * Charge origin for the unified parent fees view (§4.3): tuition | fine | transport | hostel | other.
      * Lets library fines and transport/hostel charges surface alongside tuition without a structure.
@@ -92,6 +107,7 @@ export const feeInvoices = pgTable(
     scopeIdx: index('fee_invoices_institution_campus_idx').on(t.institutionId, t.campusId),
     studentIdx: index('fee_invoices_student_idx').on(t.studentId),
     statusIdx: index('fee_invoices_status_idx').on(t.status),
+    yearIdx: index('fee_invoices_year_idx').on(t.academicYearId),
     invoiceUniq: uniqueIndex('fee_invoice_no_uniq').on(t.institutionId, t.invoiceNo),
   }),
 );

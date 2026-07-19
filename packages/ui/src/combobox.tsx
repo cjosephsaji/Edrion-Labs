@@ -1,8 +1,10 @@
 'use client';
 import {
+  forwardRef,
   useCallback,
   useEffect,
   useId,
+  useImperativeHandle,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -63,23 +65,26 @@ function normalize(s: string): string {
  * body portal with fixed positioning so it is never clipped by `overflow-hidden`
  * drawers/dialogs or trapped behind overlays. Matches the Input/Select chrome.
  */
-export function Combobox({
-  options,
-  value,
-  onChange,
-  placeholder = 'Select…',
-  searchPlaceholder = 'Search…',
-  emptyText = 'No results found',
-  disabled,
-  readOnly,
-  invalid,
-  loading,
-  id,
-  name,
-  className,
-  renderValue,
-  ...aria
-}: ComboboxProps) {
+export const Combobox = forwardRef<HTMLButtonElement, ComboboxProps>(function Combobox(
+  {
+    options,
+    value,
+    onChange,
+    placeholder = 'Select…',
+    searchPlaceholder = 'Search…',
+    emptyText = 'No results found',
+    disabled,
+    readOnly,
+    invalid,
+    loading,
+    id,
+    name,
+    className,
+    renderValue,
+    ...aria
+  },
+  ref,
+) {
   const reactId = useId();
   const listboxId = `${reactId}-listbox`;
   const [open, setOpen] = useState(false);
@@ -89,6 +94,7 @@ export function Combobox({
   const [rect, setRect] = useState<{ top: number; left: number; width: number; flip: boolean } | null>(null);
 
   const triggerRef = useRef<HTMLButtonElement>(null);
+  useImperativeHandle(ref, () => triggerRef.current as HTMLButtonElement);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -120,7 +126,11 @@ export function Combobox({
   useLayoutEffect(() => {
     if (!open) return;
     reposition();
-    const onScroll = () => reposition();
+    const onScroll = (e: Event) => {
+      // Ignore scroll inside the dropdown list — only reposition when ancestors move.
+      if (popoverRef.current?.contains(e.target as Node)) return;
+      reposition();
+    };
     window.addEventListener('scroll', onScroll, true);
     window.addEventListener('resize', onScroll);
     return () => {
@@ -129,17 +139,21 @@ export function Combobox({
     };
   }, [open, reposition]);
 
-  // Reset highlight to the selected (or first) item whenever the list changes.
+  // Reset highlight whenever the filtered list changes.
   useEffect(() => {
     if (!open) return;
+    if (query) {
+      setActiveIndex(0);
+      return;
+    }
     const idx = filtered.findIndex((o) => o.value === value);
     setActiveIndex(idx >= 0 ? idx : 0);
-  }, [open, filtered, value]);
+  }, [open, filtered, value, query]);
 
   useEffect(() => {
     if (open) {
       // Focus the search box once the portal is mounted.
-      const t = setTimeout(() => inputRef.current?.focus(), 0);
+      const t = setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 0);
       return () => clearTimeout(t);
     }
     setQuery('');
@@ -158,21 +172,23 @@ export function Combobox({
     return () => document.removeEventListener('pointerdown', onDown, true);
   }, [open]);
 
-  // Keep the active option scrolled into view (also drives virtualization window).
+  // Keep the active option scrolled into view and sync virtualization scroll state.
   useEffect(() => {
+    if (!open) return;
     const list = listRef.current;
     if (!list) return;
     const top = activeIndex * ITEM_H;
     const bottom = top + ITEM_H;
     if (top < list.scrollTop) list.scrollTop = top;
     else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight;
+    setScrollTop(list.scrollTop);
   }, [activeIndex, open]);
 
   const choose = (opt: ComboboxOption | undefined) => {
     if (!opt) return;
     onChange(opt.value);
     setOpen(false);
-    triggerRef.current?.focus();
+    triggerRef.current?.focus({ preventScroll: true });
   };
 
   const onTriggerKeyDown = (e: React.KeyboardEvent) => {
@@ -202,7 +218,7 @@ export function Combobox({
     } else if (e.key === 'Escape') {
       e.preventDefault();
       setOpen(false);
-      triggerRef.current?.focus();
+      triggerRef.current?.focus({ preventScroll: true });
     }
   };
 
@@ -273,6 +289,7 @@ export function Combobox({
                 onChange={(e) => {
                   setQuery(e.target.value);
                   setScrollTop(0);
+                  setActiveIndex(0);
                   if (listRef.current) listRef.current.scrollTop = 0;
                 }}
                 onKeyDown={onListKeyDown}
@@ -328,4 +345,5 @@ export function Combobox({
         )}
     </>
   );
-}
+});
+Combobox.displayName = 'Combobox';

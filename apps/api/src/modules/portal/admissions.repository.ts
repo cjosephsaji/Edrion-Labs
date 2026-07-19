@@ -18,6 +18,7 @@ import type { AdmissionApplication, NewAdmissionApplication } from '@edrion/data
 import type { AdmissionsListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
+import { programmeListFilterConds } from './programme-list-filters';
 
 export interface AdmissionRow extends AdmissionApplication {
   gradeLevelName: string | null;
@@ -71,6 +72,7 @@ export class AdmissionsRepository {
     const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
     if (q.status) conds.push(eq(t.status, q.status));
     if (q.submittedVia) conds.push(eq(t.submittedVia, q.submittedVia));
+    if (q.academicYearId) conds.push(eq(t.academicYearId, q.academicYearId));
     if (q.search) {
       const s = or(
         ilike(t.firstName, `%${q.search}%`),

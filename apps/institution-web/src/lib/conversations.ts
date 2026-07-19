@@ -73,7 +73,8 @@ export function useConversations(filter: Filter, search: string) {
         scope,
       ),
     placeholderData: keepPreviousData,
-    refetchInterval: 15000,
+    staleTime: 0,
+    refetchInterval: 10_000,
   });
 }
 
@@ -94,7 +95,9 @@ export function useMessages(id: string | null) {
     queryKey: ['conversation', scopeKey(scope), id, 'messages'],
     queryFn: () => client.get<MessageDto[]>(`/portal/conversations/${id}/messages?pageSize=200`, scope),
     enabled: !!id,
-    refetchInterval: 10000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchInterval: id ? 3_000 : false,
   });
 }
 
@@ -104,9 +107,9 @@ export function useConversationMutations() {
   const qc = useQueryClient();
   const invalidateAll = () => qc.invalidateQueries({ queryKey: ['conversations'] });
   const invalidateOne = (id: string) => {
-    qc.invalidateQueries({ queryKey: ['conversation'] });
+    qc.invalidateQueries({ queryKey: ['conversation', scopeKey(scope), id] });
+    qc.invalidateQueries({ queryKey: ['conversation', scopeKey(scope), id, 'messages'] });
     qc.invalidateQueries({ queryKey: ['conversations'] });
-    void id;
   };
 
   const create = useMutation({

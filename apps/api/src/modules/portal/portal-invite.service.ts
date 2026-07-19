@@ -4,6 +4,7 @@ import type { PortalInviteTokenPayload } from '@edrion/auth';
 import type { ApiEnv } from '@edrion/config';
 import { API_ENV, DATABASE } from '../../common/tokens';
 import { signHs256 } from '../../common/jwt';
+import { emailButton, emailLayout } from '../../common/email-templates';
 import { EmailService } from './email.service';
 
 /** Invitations are valid for 7 days, then the user must be re-invited. */
@@ -36,6 +37,8 @@ export class PortalInviteService {
     email: string;
     fullName: string;
     invitedBy: string;
+    /** When false, only persists the invitation row (e.g. student portal sends its own email). Default true. */
+    sendEmail?: boolean;
   }): Promise<SentInvitation> {
     const institutionName = await this.institutionName(input.institutionId);
     const now = new Date();
@@ -53,6 +56,10 @@ export class PortalInviteService {
       .returning();
     if (!invitation) throw new Error('Failed to create invitation');
 
+    if (input.sendEmail === false) {
+      return { invitation, emailMessageId: 'skipped', emailTransport: 'log' };
+    }
+
     const payload: Omit<PortalInviteTokenPayload, 'iat' | 'exp'> = {
       inv: invitation.id,
       uid: input.institutionUserId,
@@ -61,18 +68,31 @@ export class PortalInviteService {
     const token = signHs256(payload, this.env.SESSION_COOKIE_SECRET, INVITE_TTL_SECONDS, now);
     const acceptUrl = `${this.env.PORTAL_WEB_URL}/accept-invite?token=${encodeURIComponent(token)}`;
 
+    const text = [
+      `Hi ${input.fullName},`,
+      '',
+      `${institutionName} has invited you to the Edrion institution portal.`,
+      `Accept your invitation (valid for 7 days):`,
+      acceptUrl,
+      '',
+      `If you weren't expecting this, you can ignore this email.`,
+    ].join('\n');
+    const html = emailLayout({
+      heading: `You've been invited to ${institutionName}`,
+      preheader: 'Accept your Edrion portal invitation',
+      footer:
+        "You're receiving this because you were invited to join an institution on Edrion. If you weren't expecting this, you can safely ignore it.",
+      bodyHtml: `<p style="margin:0 0 16px;">Hi ${input.fullName}, <strong>${institutionName}</strong> has invited you to join their workspace on Edrion.</p>
+        <p style="margin:0 0 18px;">Click below to accept your invitation and set up your account. This link is valid for <strong>7 days</strong>.</p>
+        ${emailButton(acceptUrl, 'Accept invitation')}
+        <p style="margin:18px 0 0;">If you weren't expecting this invitation, you can safely ignore this email.</p>`,
+    });
+
     const sent = await this.email.send({
       to: input.email,
       subject: `You've been invited to ${institutionName} on Edrion`,
-      text: [
-        `Hi ${input.fullName},`,
-        '',
-        `${institutionName} has invited you to the Edrion institution portal.`,
-        `Accept your invitation (valid for 7 days):`,
-        acceptUrl,
-        '',
-        `If you weren't expecting this, you can ignore this email.`,
-      ].join('\n'),
+      text,
+      html,
     });
 
     return { invitation, emailMessageId: sent.messageId, emailTransport: sent.transport };

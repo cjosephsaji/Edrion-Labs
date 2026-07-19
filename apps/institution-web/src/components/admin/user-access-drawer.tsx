@@ -1,11 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Button, Drawer, Skeleton } from '@edrion/ui';
+import { Button, Drawer, Skeleton, cn } from '@edrion/ui';
 import { useScope } from '@/lib/scope';
+import { usePortalMe } from '@/lib/hooks';
 import { useRolesList } from '@/lib/roles';
 import { useSetUserAccess } from '@/lib/users';
 import type { RoleRow, UserRow } from '@/lib/admin-types';
 import { PortalClientError } from '@/lib/portal-client';
+import { RoleCheckboxList } from './role-checkbox-list';
 
 /**
  * Assign a user's roles + campus access in one version-guarded save (requires users.manage_roles).
@@ -24,6 +26,9 @@ export function UserAccessDrawer({
   canManage: boolean;
 }) {
   const { campuses } = useScope();
+  const { data: me } = usePortalMe();
+  const isSelf = Boolean(me?.institutionUserId && user?.id === me.institutionUserId);
+  const canEditAccess = canManage && !isSelf;
   const { data: roleData, isLoading } = useRolesList<RoleRow>('roles', { page: 1, pageSize: 100, sortDir: 'asc' });
   const setAccess = useSetUserAccess();
   const [roleKeys, setRoleKeys] = useState<Set<string>>(new Set());
@@ -48,7 +53,7 @@ export function UserAccessDrawer({
   }
 
   async function save() {
-    if (!user || !canManage) return;
+    if (!user || !canEditAccess) return;
     setError(null);
     try {
       await setAccess.mutateAsync({
@@ -72,7 +77,7 @@ export function UserAccessDrawer({
       title="Roles & access"
       description={user ? user.fullName : undefined}
       footer={
-        canManage ? (
+        canEditAccess ? (
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={onClose} disabled={setAccess.isPending}>
               Cancel
@@ -91,28 +96,27 @@ export function UserAccessDrawer({
           </div>
         )}
 
+        {isSelf && (
+          <div
+            role="status"
+            className="rounded-md border border-border bg-background-secondary/60 px-3 py-2 text-sm text-text-muted"
+          >
+            You cannot change your own roles or access. Ask another administrator.
+          </div>
+        )}
+
+        <div className={cn('flex flex-col gap-4', isSelf && 'pointer-events-none opacity-50')}>
         <section>
           <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">Roles</h4>
           {isLoading ? (
             <Skeleton className="h-24 w-full rounded-md" />
           ) : (
-            <ul className="divide-y divide-border rounded-md border border-border">
-              {roles.map((r) => (
-                <li key={r.key} className="flex items-start gap-2.5 px-3 py-2">
-                  <input
-                    type="checkbox"
-                    checked={roleKeys.has(r.key)}
-                    onChange={() => toggle(roleKeys, r.key, setRoleKeys)}
-                    disabled={!canManage}
-                    className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-ring disabled:opacity-50"
-                  />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-text-primary">{r.name}</p>
-                    <p className="text-xs text-text-muted">{r.description ?? r.key}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <RoleCheckboxList
+              roles={roles}
+              selected={roleKeys}
+              onToggle={(key) => toggle(roleKeys, key, setRoleKeys)}
+              disabled={!canEditAccess}
+            />
           )}
         </section>
 
@@ -128,7 +132,7 @@ export function UserAccessDrawer({
                     type="checkbox"
                     checked={campusIds.has(c.id)}
                     onChange={() => toggle(campusIds, c.id, setCampusIds)}
-                    disabled={!canManage}
+                    disabled={!canEditAccess}
                     className="h-4 w-4 rounded border-border text-primary focus:ring-ring disabled:opacity-50"
                   />
                   <span className="text-sm text-text-primary">{c.name}</span>
@@ -140,6 +144,7 @@ export function UserAccessDrawer({
             Leave campuses empty for institution-wide roles (Owner / Admin reach every campus).
           </p>
         </section>
+        </div>
       </div>
     </Drawer>
   );

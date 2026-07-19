@@ -1,4 +1,4 @@
-import { boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, date, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { campuses } from './campuses';
@@ -166,7 +166,32 @@ export const parentEmergencyBroadcasts = pgTable(
   }),
 );
 
-/** A school calendar entry. Feeds the portal calendar + .ics export. Institution/campus scoped. */
+/** Institution-defined calendar event type (swatch key). */
+export const calendarEventTypes = pgTable(
+  'calendar_event_types',
+  {
+    id: primaryId(),
+    institutionId: uuid('institution_id')
+      .notNull()
+      .references(() => institutions.id, { onDelete: 'cascade' }),
+    key: text('key').notNull(),
+    label: text('label').notNull(),
+    /** Named swatch key (red|amber|green|…), not hex. */
+    color: text('color').notNull().default('green'),
+    icon: text('icon'),
+    isSystem: boolean('is_system').notNull().default(false),
+    sortOrder: integer('sort_order').notNull().default(0),
+    version: integer('version').notNull().default(0),
+    ...actorColumns,
+    ...timestamps,
+  },
+  (t) => ({
+    instIdx: index('calendar_event_types_institution_idx').on(t.institutionId),
+    uniq: uniqueIndex('calendar_event_types_institution_key_uniq').on(t.institutionId, t.key),
+  }),
+);
+
+/** A school calendar entry. Feeds the portal calendar + overlays. Institution/campus scoped. */
 export const calendarEvents = pgTable(
   'calendar_events',
   {
@@ -176,11 +201,19 @@ export const calendarEvents = pgTable(
       .references(() => institutions.id, { onDelete: 'cascade' }),
     campusId: uuid('campus_id').references(() => campuses.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
-    /** holiday | event | exam_period | activity | ptm | deadline. */
+    /** Legacy text type — kept through backfill; prefer eventTypeId. */
     type: text('type').notNull().default('event'),
-    startsOn: timestamp('starts_on', { withTimezone: true }).notNull(),
-    endsOn: timestamp('ends_on', { withTimezone: true }),
-    allDay: boolean('all_day').notNull().default(true),
+    eventTypeId: uuid('event_type_id').references(() => calendarEventTypes.id, {
+      onDelete: 'restrict',
+    }),
+    /** Local calendar date (not timestamptz). */
+    startsOn: date('starts_on').notNull(),
+    endsOn: date('ends_on'),
+    /** "HH:MM"; null = all-day. */
+    startTime: text('start_time'),
+    endTime: text('end_time'),
+    status: text('status').notNull().default('published'),
+    sourceRef: jsonb('source_ref').$type<Record<string, unknown>>(),
     audienceScope: text('audience_scope').notNull().default('institution'),
     audienceRefId: uuid('audience_ref_id'),
     description: text('description'),
@@ -191,6 +224,7 @@ export const calendarEvents = pgTable(
   (t) => ({
     instIdx: index('calendar_events_institution_idx').on(t.institutionId),
     rangeIdx: index('calendar_events_range_idx').on(t.institutionId, t.startsOn),
+    typeIdx: index('calendar_events_event_type_idx').on(t.institutionId, t.eventTypeId),
   }),
 );
 
@@ -204,5 +238,7 @@ export type ParentMessage = typeof parentMessages.$inferSelect;
 export type NewParentMessage = typeof parentMessages.$inferInsert;
 export type ParentEmergencyBroadcast = typeof parentEmergencyBroadcasts.$inferSelect;
 export type NewParentEmergencyBroadcast = typeof parentEmergencyBroadcasts.$inferInsert;
+export type CalendarEventType = typeof calendarEventTypes.$inferSelect;
+export type NewCalendarEventType = typeof calendarEventTypes.$inferInsert;
 export type CalendarEvent = typeof calendarEvents.$inferSelect;
 export type NewCalendarEvent = typeof calendarEvents.$inferInsert;

@@ -7,7 +7,6 @@ import { useClassOptions, useSubjectOptions } from '@/lib/academics';
 import { useStudentOptions, studentRowSelectOptions } from '@/lib/people';
 import { useExamOptions } from '@/lib/exams';
 import { useGradebookList, useGradebookMutations } from '@/lib/gradebook';
-import { useAcademicContextFilters } from '@/lib/academic-context';
 import { useTerm } from '@/lib/term';
 import type { GradeEntryRow } from '@/lib/gradebook-types';
 
@@ -20,7 +19,6 @@ const PERMISSIONS: ResourcePermissions = {
 
 export default function GradebookPage() {
   const { t } = useTerm();
-  const contextFilters = useAcademicContextFilters();
   const { data: students } = useStudentOptions();
   const { data: subjects } = useSubjectOptions();
   const { data: classes } = useClassOptions();
@@ -91,7 +89,6 @@ export default function GradebookPage() {
       noun={t('gradeLevel').toLowerCase()}
       columns={columns}
       fields={fields}
-      extraFilters={contextFilters}
       defaultSortBy="createdAt"
       defaultSortDir="desc"
       searchable

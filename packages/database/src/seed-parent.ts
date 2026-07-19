@@ -224,12 +224,12 @@ async function main() {
   await ensureRow(
     'calendarEvents',
     and(eq(s.calendarEvents.institutionId, inst.id), eq(s.calendarEvents.title, 'Founder’s Day (Holiday)')),
-    { institutionId: inst.id, campusId, title: 'Founder’s Day (Holiday)', type: 'holiday', startsOn: daysFromNow(20), allDay: true },
+    { institutionId: inst.id, campusId, title: 'Founder’s Day (Holiday)', type: 'holiday', startsOn: daysFromNow(20).toISOString().slice(0, 10), status: 'published' },
   );
   await ensureRow(
     'calendarEvents',
     and(eq(s.calendarEvents.institutionId, inst.id), eq(s.calendarEvents.title, 'Science Exhibition')),
-    { institutionId: inst.id, campusId, title: 'Science Exhibition', type: 'event', startsOn: daysFromNow(10), allDay: true },
+    { institutionId: inst.id, campusId, title: 'Science Exhibition', type: 'event', startsOn: daysFromNow(10).toISOString().slice(0, 10), status: 'published' },
   );
 
   // Recognitions for ward1 (celebrated).

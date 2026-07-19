@@ -66,6 +66,10 @@ export type {
   NewParent,
   StudentGuardian,
   NewStudentGuardian,
+  StudentEnrollment,
+  NewStudentEnrollment,
+  StaffAssignment,
+  NewStaffAssignment,
   AdmissionApplication,
   NewAdmissionApplication,
   AdmissionApplicationDraft,
@@ -84,6 +88,10 @@ export type {
   NewAttendanceRecord,
   TimetableSlot,
   NewTimetableSlot,
+  CalendarEvent,
+  NewCalendarEvent,
+  CalendarEventType,
+  NewCalendarEventType,
   Exam,
   NewExam,
   ExamSchedule,
@@ -298,5 +306,6 @@ export type {
 } from './schema/index';
 export { sql, eq, and, or, desc, asc, ilike, inArray, notInArray, count, gte, lte, lt, gt, isNull, isNotNull } from 'drizzle-orm';
 export { personSqlName } from './person-name';
+export { seedInstitutionScheduleDefaults } from './seed-institution-defaults';
 export type { SQL } from 'drizzle-orm';
 export type { PgColumn, PgTable } from 'drizzle-orm/pg-core';

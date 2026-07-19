@@ -1,7 +1,7 @@
 'use client';
 import { useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Card, TableSkeleton, ErrorState } from '@edrion/ui';
+import { Card, TableSkeleton, ErrorState, Select } from '@edrion/ui';
 import { useSupportSessions } from '@edrion/api-client';
 import { SupportAccessSessionStatus } from '@edrion/shared-types';
 import { Topbar } from '@/components/app-shell/topbar';
@@ -46,17 +46,12 @@ export default function AccessSessionsPage() {
         </p>
 
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          <Select
             value={status}
             onChange={(e) => setParam({ status: e.target.value })}
-            className="h-input rounded-md border border-border bg-surface px-3 text-sm text-text-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-          >
-            {STATUS_FILTERS.map((s) => (
-              <option key={s} value={s}>
-                {s === '' ? 'All statuses' : s.replace(/_/g, ' ')}
-              </option>
-            ))}
-          </select>
+            className="h-input w-auto min-w-[10rem]"
+            options={STATUS_FILTERS.map((s) => ({ value: s, label: s === '' ? 'All statuses' : s.replace(/_/g, ' ') }))}
+          />
           {isFetching && <span className="text-xs text-text-muted">Updating…</span>}
         </div>
 

@@ -200,18 +200,79 @@ export class StudentProfileService {
   private async health(instId: string, studentId: string) {
     const hr = schema.healthRecords;
     const records = await this.db
-      .select({ id: hr.id, recordType: hr.recordType, title: hr.title, status: hr.status, followUpRequired: hr.followUpRequired, createdAt: hr.createdAt })
+      .select({
+        id: hr.id,
+        recordType: hr.recordType,
+        title: hr.title,
+        status: hr.status,
+        followUpRequired: hr.followUpRequired,
+        followUpAt: hr.followUpAt,
+        reason: hr.reason,
+        symptoms: hr.symptoms,
+        actionTaken: hr.actionTaken,
+        treatment: hr.treatment,
+        attendedBy: hr.attendedBy,
+        details: hr.details,
+        bloodGroup: hr.bloodGroup,
+        createdAt: hr.createdAt,
+      })
       .from(hr)
       .where(and(eq(hr.institutionId, instId), eq(hr.studentId, studentId)))
       .orderBy(desc(hr.createdAt))
       .limit(RECENT);
     const mi = schema.medicalIncidents;
+    const incidents = await this.db
+      .select({
+        id: mi.id,
+        title: mi.title,
+        severity: mi.severity,
+        status: mi.status,
+        description: mi.description,
+        actionTaken: mi.actionTaken,
+        treatment: mi.treatment,
+        attendedBy: mi.attendedBy,
+        followUpRequired: mi.followUpRequired,
+        followUpAt: mi.followUpAt,
+        occurredAt: mi.occurredAt,
+      })
+      .from(mi)
+      .where(and(eq(mi.institutionId, instId), eq(mi.studentId, studentId)))
+      .orderBy(desc(mi.occurredAt))
+      .limit(RECENT);
     const [inc] = await this.db
       .select({ open: sql<number>`count(*) filter (where ${mi.status} = 'open')::int`, total: sql<number>`count(*)::int` })
       .from(mi)
       .where(and(eq(mi.institutionId, instId), eq(mi.studentId, studentId)));
     return {
-      records: records.map((r) => ({ id: r.id, recordType: r.recordType, title: r.title, status: r.status, followUpRequired: r.followUpRequired, at: r.createdAt })),
+      records: records.map((r) => ({
+        id: r.id,
+        recordType: r.recordType,
+        title: r.title,
+        status: r.status,
+        followUpRequired: r.followUpRequired,
+        followUpAt: r.followUpAt,
+        reason: r.reason,
+        symptoms: r.symptoms,
+        actionTaken: r.actionTaken,
+        treatment: r.treatment,
+        attendedBy: r.attendedBy,
+        details: r.details,
+        bloodGroup: r.bloodGroup,
+        at: r.createdAt,
+      })),
+      incidents: incidents.map((r) => ({
+        id: r.id,
+        title: r.title,
+        severity: r.severity,
+        status: r.status,
+        description: r.description,
+        actionTaken: r.actionTaken,
+        treatment: r.treatment,
+        attendedBy: r.attendedBy,
+        followUpRequired: r.followUpRequired,
+        followUpAt: r.followUpAt,
+        occurredAt: r.occurredAt?.toISOString() ?? null,
+      })),
       incidentsOpen: Number(inc?.open ?? 0),
       incidentsTotal: Number(inc?.total ?? 0),
     };
@@ -220,7 +281,19 @@ export class StudentProfileService {
   private async conduct(instId: string, studentId: string) {
     const t = schema.studentIncidents;
     const items = await this.db
-      .select({ id: t.id, category: t.category, title: t.title, severity: t.severity, status: t.status, occurredOn: t.occurredOn, createdAt: t.createdAt })
+      .select({
+        id: t.id,
+        category: t.category,
+        title: t.title,
+        severity: t.severity,
+        status: t.status,
+        occurredOn: t.occurredOn,
+        description: t.description,
+        reporterName: t.reporterName,
+        resolutionNote: t.resolutionNote,
+        notifyGuardians: t.notifyGuardians,
+        createdAt: t.createdAt,
+      })
       .from(t)
       .where(and(eq(t.institutionId, instId), eq(t.studentId, studentId)))
       .orderBy(desc(sql`coalesce(${t.occurredOn}, ${t.createdAt}::date)`))
@@ -232,7 +305,19 @@ export class StudentProfileService {
     return {
       open: Number(agg?.open ?? 0),
       total: Number(agg?.total ?? 0),
-      recent: items.map((r) => ({ id: r.id, category: r.category, title: r.title, severity: r.severity, status: r.status, occurredOn: r.occurredOn, at: r.createdAt })),
+      recent: items.map((r) => ({
+        id: r.id,
+        category: r.category,
+        title: r.title,
+        severity: r.severity,
+        status: r.status,
+        occurredOn: r.occurredOn,
+        description: r.description,
+        reporterName: r.reporterName,
+        resolutionNote: r.resolutionNote,
+        notifyGuardians: r.notifyGuardians,
+        at: r.createdAt,
+      })),
     };
   }
 }

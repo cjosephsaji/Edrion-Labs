@@ -29,6 +29,10 @@ export interface StudentRow extends PersonBase {
   address: string | null;
   status: 'enrolled' | 'inactive' | 'graduated' | 'transferred' | 'alumni';
   enrollmentDate: string | null;
+  /** Linked institution_users id when the student has a portal login. */
+  institutionUserId: string | null;
+  /** Portal account status when linked (`invited` | `active` | `disabled` | …). */
+  portalUserStatus: string | null;
 }
 
 export interface StaffRow extends PersonBase {
@@ -61,6 +65,7 @@ export interface TeachingStaffOption {
 
 export interface ParentRow extends PersonBase {
   firstName: string;
+  middleName: string | null;
   lastName: string;
   email: string | null;
   phone: string | null;
@@ -111,25 +116,36 @@ export interface StaffProfile {
 }
 
 export interface ParentProfile {
-  details: {
+  overview: {
     id: string;
     name: string;
     email: string | null;
     phone: string | null;
     occupation: string | null;
     address: string | null;
+    institutionUserId: string | null;
   };
-  children:
+  children: {
+    studentId: string;
+    name: string;
+    admissionNo: string;
+    className: string | null;
+    gradeLevelName: string | null;
+    relationship: string;
+    isPrimary: boolean;
+    status: string;
+  }[];
+  fees:
     | {
-        id: string;
+        studentId: string;
         name: string;
-        admissionNo: string;
-        className: string | null;
-        relationship: string;
-        isPrimary: boolean;
+        invoices: number;
+        billedMinor: number;
+        paidMinor: number;
+        outstandingMinor: number;
+        overdue: number;
       }[]
     | null;
-  fees: { invoices: number; outstandingMinor: number; overdue: number } | null;
 }
 
 export interface ClassRosterEntry {

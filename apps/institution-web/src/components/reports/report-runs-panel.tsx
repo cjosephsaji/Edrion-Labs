@@ -127,7 +127,7 @@ export function ReportRunsPanel({ reportId, reportName }: { reportId: string; re
                     { value: '', label: `All ${tp('gradeLevel')}` },
                     ...(programmeLevels?.items ?? []).map((l) => ({
                       value: l.id,
-                      label: l.gradeLevelName ?? l.durationLabel ?? 'Year',
+                      label: l.gradeLevelName ?? l.durationLabel ?? t('gradeLevel'),
                     })),
                   ]}
                 />

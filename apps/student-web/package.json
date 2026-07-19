@@ -14,10 +14,17 @@
     "clean": "rm -rf .next .turbo"
   },
   "dependencies": {
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/lang-python": "^6.2.1",
     "@edrion/schemas": "workspace:*",
     "@edrion/shared-types": "workspace:*",
     "@edrion/ui": "workspace:*",
     "@tanstack/react-query": "^5.59.0",
+    "@uiw/react-codemirror": "^4.25.11",
+    "@xyflow/react": "^12.11.2",
+    "elkjs": "^0.11.1",
+    "html-to-image": "^1.11.13",
+    "idb-keyval": "^6.3.0",
     "katex": "^0.16.47",
     "lucide-react": "^0.451.0",
     "next": "14.2.13",
@@ -28,11 +35,7 @@
     "react-pdf": "^9.2.1",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
-    "zustand": "^5.0.14",
-    "@xyflow/react": "^12.11.2",
-    "elkjs": "^0.11.1",
-    "html-to-image": "^1.11.13",
-    "idb-keyval": "^6.3.0"
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@edrion/design-tokens": "workspace:*",

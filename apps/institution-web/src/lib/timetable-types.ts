@@ -22,5 +22,7 @@ export interface TimetableSlotRow {
   dayOfWeek: number;
   startTime: string;
   endTime: string;
+  label?: string | null;
+  kind?: 'teaching' | 'break' | 'lunch';
   room: string | null;
 }

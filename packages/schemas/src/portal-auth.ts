@@ -27,6 +27,19 @@ export const portalActivateSchema = z.object({
 });
 export type PortalActivateInput = z.infer<typeof portalActivateSchema>;
 
+/** Preview an invitation accept link before the user sets a password. */
+export const portalAcceptInvitePreviewQuerySchema = z.object({
+  token: z.string().min(1),
+});
+export type PortalAcceptInvitePreviewQuery = z.infer<typeof portalAcceptInvitePreviewQuerySchema>;
+
+/** Accept a portal invitation: set the first password using the signed JWT from the email link. */
+export const portalAcceptInviteSchema = z.object({
+  token: z.string().min(1),
+  password: passwordSchema,
+});
+export type PortalAcceptInviteInput = z.infer<typeof portalAcceptInviteSchema>;
+
 /** Request a portal password-reset link. Always answered 200 (no account enumeration). */
 export const portalForgotPasswordSchema = z.object({ email: z.string().email() });
 export type PortalForgotPasswordInput = z.infer<typeof portalForgotPasswordSchema>;

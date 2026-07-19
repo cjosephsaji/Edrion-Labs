@@ -7,7 +7,9 @@ import {
   eq,
   ilike,
   inArray,
+  isNotNull,
   isNull,
+  notInArray,
   or,
   schema,
   sql,
@@ -38,10 +40,12 @@ import type {
 } from '@edrion/database';
 import type { AcademicsListQuery, RosterCandidateQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
+import { scopeConds, type CampusFilter } from './portal-scope';
+import { enrolledStudentsCond } from './academic-scope-filters';
+import { programmeListFilterConds } from './programme-list-filters';
 import { studentSearchCondition } from './student-search';
 
-/** A campus filter resolved from the request scope (null = every campus in the institution). */
-export type CampusFilter = string[] | null;
+export type { CampusFilter };
 
 /** Display name for a teacher FK (class teacher / department head / subject teacher). */
 const teacherDisplayName = personSqlName(schema.staff.firstName, schema.staff.middleName, schema.staff.lastName);
@@ -87,6 +91,8 @@ export interface SubjectPlacement {
   departmentName: string | null;
   gradeLevelName: string | null;
   semesterSequence: number;
+  slotId: string | null;
+  slotName: string | null;
   credits: number | null;
   isElective: boolean;
 }
@@ -102,6 +108,7 @@ export interface ProgrammeSubjectRow extends ProgrammeSubject {
   departmentName: string | null;
   gradeLevelName: string | null;
   programmeSequence: number | null;
+  slotName: string | null;
 }
 export interface ClassSubjectRow extends ClassSubjectTeacher {
   subjectName: string | null;
@@ -138,6 +145,7 @@ export interface ProgrammeStructureSection {
   programmeLevelId: string | null;
   studentCount: number;
   subjectCount: number;
+  version: number;
 }
 
 /** A curriculum entry hanging off a semester node in the programme tree. */
@@ -150,6 +158,7 @@ export interface ProgrammeStructureSubject {
   credits: number | null;
   isElective: boolean;
   version: number;
+  subjectVersion: number;
 }
 
 export interface ProgrammeStructureTerm {
@@ -161,6 +170,7 @@ export interface ProgrammeStructureTerm {
   endDate: string;
   status: string;
   programmeLevelId: string | null;
+  slotId: string | null;
   sections: ProgrammeStructureSection[];
   subjects: ProgrammeStructureSubject[];
 }
@@ -201,12 +211,7 @@ export class AcademicsRepository {
     institutionId: string,
     campusIds: CampusFilter,
   ): SQL[] {
-    const conds: SQL[] = [eq(instCol, institutionId)];
-    if (campusIds) {
-      const inScope = or(isNull(campusCol), inArray(campusCol, campusIds));
-      if (inScope) conds.push(inScope);
-    }
-    return conds;
+    return scopeConds(instCol, campusCol, institutionId, campusIds);
   }
 
   private order(col: PgColumn | undefined, dir: 'asc' | 'desc', fallback: PgColumn): SQL {
@@ -228,6 +233,9 @@ export class AcademicsRepository {
     const t = schema.academicYears;
     const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
     if (q.search) conds.push(ilike(t.name, `%${q.search}%`));
+    if (q.status) conds.push(eq(t.status, q.status));
+    if (q.isCurrent === 'true') conds.push(eq(t.isCurrent, true));
+    else if (q.isCurrent === 'false') conds.push(eq(t.isCurrent, false));
     const where = and(...conds);
     const sortable: Record<string, PgColumn> = { name: t.name, startDate: t.startDate, status: t.status, createdAt: t.createdAt };
     const { limit, offset } = this.pageBounds(q);
@@ -284,9 +292,52 @@ export class AcademicsRepository {
     if (q.search) conds.push(ilike(t.name, `%${q.search}%`));
     if (q.programmeLevelId) conds.push(eq(t.programmeLevelId, q.programmeLevelId));
     if (q.departmentId) conds.push(eq(t.departmentId, q.departmentId));
+    if (q.academicYearId) conds.push(eq(t.academicYearId, q.academicYearId));
+    // The slot number is what every department's "Semester N" has in common — filtering on it
+    // (with no departmentId) is how the cross-department "semester N everywhere" view is built.
+    if (q.semesterSequence) conds.push(eq(t.sequence, q.semesterSequence));
+    // `sequence` counts within a year, so the year has to be pinned by its *number* rather than by
+    // programme_level_id — a level id belongs to one department and would collapse the view to it.
+    // Kept as a subquery so `where` only touches `t` and the count query below stays valid.
+    if (q.gradeLevelNumber !== undefined) {
+      conds.push(
+        inArray(
+          t.gradeLevelId,
+          this.db
+            .select({ id: schema.gradeLevels.id })
+            .from(schema.gradeLevels)
+            .where(
+              and(
+                eq(schema.gradeLevels.institutionId, institutionId),
+                eq(schema.gradeLevels.level, q.gradeLevelNumber),
+              ),
+            ),
+        ),
+      );
+    }
+    if (q.status) conds.push(eq(t.status, q.status));
+    if (q.isCurrent === 'true') conds.push(eq(t.isCurrent, true));
+    else if (q.isCurrent === 'false') conds.push(eq(t.isCurrent, false));
     const where = and(...conds);
-    const sortable: Record<string, PgColumn> = { name: t.name, sequence: t.sequence, startDate: t.startDate, createdAt: t.createdAt };
+    const sortable: Record<string, PgColumn> = {
+      name: t.name,
+      sequence: t.sequence,
+      startDate: t.startDate,
+      createdAt: t.createdAt,
+      status: t.status,
+      departmentName: schema.departments.name,
+      gradeLevelNumber: schema.gradeLevels.level,
+    };
     const { limit, offset } = this.pageBounds(q);
+    const gradeLevelOrder = asc(sql`coalesce(${schema.gradeLevels.level}, 999)`);
+    const termOrder =
+      q.sortBy === 'gradeLevelNumber'
+        ? [this.order(sortable.gradeLevelNumber, q.sortDir, t.sequence), asc(t.sequence), asc(t.name)]
+        : q.sortBy === 'sequence'
+          ? [gradeLevelOrder, this.order(sortable.sequence, q.sortDir, t.sequence), asc(t.name)]
+          : q.sortBy && sortable[q.sortBy]
+            ? [this.order(sortable[q.sortBy], q.sortDir, t.sequence), gradeLevelOrder, asc(t.sequence), asc(t.name)]
+            : [gradeLevelOrder, asc(t.sequence), asc(t.name)];
 
     const rows = await this.db
       .select({
@@ -300,7 +351,7 @@ export class AcademicsRepository {
       .leftJoin(schema.departments, eq(schema.departments.id, t.departmentId))
       .leftJoin(schema.gradeLevels, eq(schema.gradeLevels.id, t.gradeLevelId))
       .where(where)
-      .orderBy(this.order(q.sortBy ? sortable[q.sortBy] : undefined, q.sortDir, t.sequence))
+      .orderBy(...termOrder)
       .limit(limit)
       .offset(offset);
     const [tot] = await this.db.select({ value: count() }).from(t).where(where);
@@ -323,12 +374,11 @@ export class AcademicsRepository {
   }
 
   /**
-   * How many curriculum subjects each term inherits. A term's subjects are the programme_subjects
-   * rows for its (programme_level_id, sequence) slot — the curriculum is a template, so the count
-   * is derived rather than stored.
+   * How many curriculum subjects each term inherits. Prefer the dated term's programme slot id;
+   * fall back to (programme level, within-year sequence) for legacy rows.
    */
   private async countTermCurriculum(
-    terms: { id: string; programmeLevelId: string | null; sequence: number }[],
+    terms: { id: string; programmeLevelId: string | null; sequence: number; slotId: string | null }[],
   ): Promise<Map<string, number>> {
     const map = new Map<string, number>();
     const placed = terms.filter((t) => t.programmeLevelId);
@@ -339,15 +389,27 @@ export class AcademicsRepository {
       .select({
         programmeLevelId: ps.programmeLevelId,
         semesterSequence: ps.semesterSequence,
+        slotId: ps.slotId,
         value: count(),
       })
       .from(ps)
       .where(inArray(ps.programmeLevelId, [...new Set(placed.map((t) => t.programmeLevelId!))]))
-      .groupBy(ps.programmeLevelId, ps.semesterSequence);
+      .groupBy(ps.programmeLevelId, ps.semesterSequence, ps.slotId);
 
-    const bySlot = new Map<string, number>();
-    for (const r of rows) bySlot.set(`${r.programmeLevelId}:${r.semesterSequence}`, Number(r.value ?? 0));
-    for (const t of placed) map.set(t.id, bySlot.get(`${t.programmeLevelId}:${t.sequence}`) ?? 0);
+    const bySlotId = new Map<string, number>();
+    const byLevelSeq = new Map<string, number>();
+    for (const r of rows) {
+      const n = Number(r.value ?? 0);
+      if (r.slotId) bySlotId.set(r.slotId, (bySlotId.get(r.slotId) ?? 0) + n);
+      byLevelSeq.set(`${r.programmeLevelId}:${r.semesterSequence}`, (byLevelSeq.get(`${r.programmeLevelId}:${r.semesterSequence}`) ?? 0) + n);
+    }
+    for (const t of placed) {
+      const count =
+        (t.slotId ? bySlotId.get(t.slotId) : undefined) ??
+        byLevelSeq.get(`${t.programmeLevelId}:${t.sequence}`) ??
+        0;
+      map.set(t.id, count);
+    }
     return map;
   }
 
@@ -391,6 +453,8 @@ export class AcademicsRepository {
       const s = or(ilike(t.name, `%${q.search}%`), ilike(t.code, `%${q.search}%`));
       if (s) conds.push(s);
     }
+    if (q.hasHead === 'true') conds.push(isNotNull(t.headUserId));
+    else if (q.hasHead === 'false') conds.push(isNull(t.headUserId));
     const where = and(...conds);
     const sortable: Record<string, PgColumn> = { name: t.name, code: t.code, createdAt: t.createdAt };
     const { limit, offset } = this.pageBounds(q);
@@ -451,6 +515,7 @@ export class AcademicsRepository {
     const t = schema.gradeLevels;
     const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
     if (q.search) conds.push(ilike(t.name, `%${q.search}%`));
+    if (q.departmentId) conds.push(eq(t.departmentId, q.departmentId));
     const where = and(...conds);
     const sortable: Record<string, PgColumn> = { name: t.name, level: t.level, createdAt: t.createdAt };
     const { limit, offset } = this.pageBounds(q);
@@ -670,6 +735,7 @@ export class AcademicsRepository {
         section: schema.classes.section,
         termId: schema.classes.termId,
         programmeLevelId: schema.classes.programmeLevelId,
+        version: schema.classes.version,
       })
       .from(schema.classes)
       .where(
@@ -699,10 +765,12 @@ export class AcademicsRepository {
         id: ps.id,
         programmeLevelId: ps.programmeLevelId,
         semesterSequence: ps.semesterSequence,
+        slotId: ps.slotId,
         subjectId: ps.subjectId,
         credits: ps.credits,
         isElective: ps.isElective,
         version: ps.version,
+        subjectVersion: schema.subjects.version,
         name: schema.subjects.name,
         code: schema.subjects.code,
         kind: schema.subjects.kind,
@@ -712,11 +780,10 @@ export class AcademicsRepository {
       .where(and(eq(ps.institutionId, institutionId), inArray(ps.programmeLevelId, levelIds)))
       .orderBy(asc(ps.sequence), asc(schema.subjects.name));
 
-    const subjectsBySlot = new Map<string, ProgrammeStructureSubject[]>();
+    const subjectsBySlotId = new Map<string, ProgrammeStructureSubject[]>();
+    const subjectsByLevelSeq = new Map<string, ProgrammeStructureSubject[]>();
     for (const r of curriculumRows) {
-      const key = `${r.programmeLevelId}:${r.semesterSequence}`;
-      const list = subjectsBySlot.get(key) ?? [];
-      list.push({
+      const subject: ProgrammeStructureSubject = {
         id: r.id,
         subjectId: r.subjectId,
         name: r.name,
@@ -725,8 +792,17 @@ export class AcademicsRepository {
         credits: r.credits,
         isElective: r.isElective,
         version: r.version,
-      });
-      subjectsBySlot.set(key, list);
+        subjectVersion: r.subjectVersion,
+      };
+      if (r.slotId) {
+        const list = subjectsBySlotId.get(r.slotId) ?? [];
+        list.push(subject);
+        subjectsBySlotId.set(r.slotId, list);
+      }
+      const levelKey = `${r.programmeLevelId}:${r.semesterSequence}`;
+      const levelList = subjectsByLevelSeq.get(levelKey) ?? [];
+      levelList.push(subject);
+      subjectsByLevelSeq.set(levelKey, levelList);
     }
 
     const sectionsByTerm = new Map<string, ProgrammeStructureSection[]>();
@@ -740,6 +816,7 @@ export class AcademicsRepository {
         programmeLevelId: s.programmeLevelId,
         studentCount: sectionStudentCounts.get(s.id) ?? 0,
         subjectCount: sectionSubjectCounts.get(s.id) ?? 0,
+        version: s.version,
       };
       if (s.termId) {
         const list = sectionsByTerm.get(s.termId) ?? [];
@@ -764,8 +841,12 @@ export class AcademicsRepository {
         endDate: term.endDate,
         status: term.status,
         programmeLevelId: term.programmeLevelId,
+        slotId: term.slotId,
         sections: sectionsByTerm.get(term.id) ?? [],
-        subjects: subjectsBySlot.get(`${term.programmeLevelId}:${term.sequence}`) ?? [],
+        subjects:
+          (term.slotId ? subjectsBySlotId.get(term.slotId) : undefined) ??
+          subjectsByLevelSeq.get(`${term.programmeLevelId}:${term.sequence}`) ??
+          [],
       };
       const list = termsByLevel.get(term.programmeLevelId) ?? [];
       list.push(node);
@@ -796,6 +877,7 @@ export class AcademicsRepository {
           endDate: '',
           status: 'planning',
           programmeLevelId: r.link.id,
+          slotId: null,
           sections: orphanSections,
           subjects: [],
         });
@@ -821,20 +903,61 @@ export class AcademicsRepository {
       const s = or(ilike(t.name, `%${q.search}%`), ilike(t.code, `%${q.search}%`));
       if (s) conds.push(s);
     }
-    if (q.kind) conds.push(eq(t.kind, q.kind));
+    if (q.kind === 'elective') {
+      conds.push(
+        or(
+          eq(t.kind, 'elective'),
+          inArray(
+            t.id,
+            this.db.select({ id: ps.subjectId }).from(ps).where(eq(ps.isElective, true)),
+          ),
+        )!,
+      );
+    } else if (q.kind === 'core') {
+      conds.push(eq(t.kind, 'core'));
+      conds.push(
+        notInArray(
+          t.id,
+          this.db.select({ id: ps.subjectId }).from(ps).where(eq(ps.isElective, true)),
+        ),
+      );
+    } else if (q.kind) {
+      conds.push(eq(t.kind, q.kind));
+    }
     if (q.departmentId) conds.push(eq(t.departmentId, q.departmentId));
 
-    // Year and semester are properties of the CURRICULUM, not of the subject itself, so these two
-    // facets narrow the catalogue to subjects that have a matching placement.
-    const slotConds: SQL[] = [];
-    if (q.programmeLevelId) slotConds.push(eq(ps.programmeLevelId, q.programmeLevelId));
-    if (q.semesterSequence) slotConds.push(eq(ps.semesterSequence, q.semesterSequence));
-
-    if (slotConds.length > 0) {
+    // Year and semester are properties of the CURRICULUM. The facet label is the absolute semester
+    // number ("Semester 7"), so match via programme_term_slots.absolute_sequence, not sequence_in_year.
+    if (q.programmeLevelId || q.semesterSequence) {
+      const placementConds: SQL[] = [];
+      if (q.programmeLevelId) placementConds.push(eq(ps.programmeLevelId, q.programmeLevelId));
+      if (q.semesterSequence) {
+        const pts = schema.programmeTermSlots;
+        placementConds.push(
+          inArray(
+            ps.id,
+            this.db
+              .select({ id: ps.id })
+              .from(ps)
+              .leftJoin(
+                pts,
+                or(
+                  eq(ps.slotId, pts.id),
+                  and(
+                    isNull(ps.slotId),
+                    eq(ps.programmeLevelId, pts.programmeLevelId),
+                    eq(ps.semesterSequence, pts.sequenceInYear),
+                  ),
+                ),
+              )
+              .where(eq(pts.absoluteSequence, q.semesterSequence)),
+          ),
+        );
+      }
       conds.push(
         inArray(
           t.id,
-          this.db.select({ id: ps.subjectId }).from(ps).where(and(...slotConds)),
+          this.db.select({ id: ps.subjectId }).from(ps).where(and(...placementConds)),
         ),
       );
     }
@@ -879,6 +1002,7 @@ export class AcademicsRepository {
     if (subjectIds.length === 0) return map;
 
     const ps = schema.programmeSubjects;
+    const pts = schema.programmeTermSlots;
     const rows = await this.db
       .select({
         id: ps.id,
@@ -886,6 +1010,8 @@ export class AcademicsRepository {
         programmeLevelId: ps.programmeLevelId,
         departmentId: ps.departmentId,
         semesterSequence: ps.semesterSequence,
+        slotId: ps.slotId,
+        slotName: pts.name,
         credits: ps.credits,
         isElective: ps.isElective,
         departmentName: schema.departments.name,
@@ -896,10 +1022,22 @@ export class AcademicsRepository {
       .leftJoin(schema.departments, eq(schema.departments.id, ps.departmentId))
       .leftJoin(schema.departmentGradeLevels, eq(schema.departmentGradeLevels.id, ps.programmeLevelId))
       .leftJoin(schema.gradeLevels, eq(schema.gradeLevels.id, schema.departmentGradeLevels.gradeLevelId))
+      .leftJoin(
+        pts,
+        or(
+          eq(ps.slotId, pts.id),
+          and(
+            isNull(ps.slotId),
+            eq(ps.programmeLevelId, pts.programmeLevelId),
+            eq(ps.semesterSequence, pts.sequenceInYear),
+          ),
+        ),
+      )
       .where(inArray(ps.subjectId, subjectIds))
       .orderBy(
         asc(schema.departments.name),
         asc(schema.departmentGradeLevels.sequence),
+        asc(pts.absoluteSequence),
         asc(ps.semesterSequence),
       );
 
@@ -912,6 +1050,8 @@ export class AcademicsRepository {
         departmentName: r.departmentName,
         gradeLevelName: r.gradeLevelName,
         semesterSequence: r.semesterSequence,
+        slotId: r.slotId,
+        slotName: r.slotName,
         credits: r.credits,
         isElective: r.isElective,
       });
@@ -948,6 +1088,7 @@ export class AcademicsRepository {
   /** The joins every curriculum read needs: subject + programme + year names. */
   private programmeSubjectSelect() {
     const ps = schema.programmeSubjects;
+    const pts = schema.programmeTermSlots;
     return {
       row: ps,
       subjectName: schema.subjects.name,
@@ -956,6 +1097,7 @@ export class AcademicsRepository {
       departmentName: schema.departments.name,
       gradeLevelName: schema.gradeLevels.name,
       programmeSequence: schema.departmentGradeLevels.sequence,
+      slotName: pts.name,
     };
   }
 
@@ -967,6 +1109,7 @@ export class AcademicsRepository {
     departmentName: string | null;
     gradeLevelName: string | null;
     programmeSequence: number | null;
+    slotName: string | null;
   }): ProgrammeSubjectRow {
     return {
       ...r.row,
@@ -976,6 +1119,7 @@ export class AcademicsRepository {
       departmentName: r.departmentName,
       gradeLevelName: r.gradeLevelName,
       programmeSequence: r.programmeSequence,
+      slotName: r.slotName,
     };
   }
 
@@ -985,10 +1129,35 @@ export class AcademicsRepository {
     q: AcademicsListQuery,
   ): Promise<Page<ProgrammeSubjectRow>> {
     const ps = schema.programmeSubjects;
-    const conds = this.scopeConds(ps.institutionId, ps.campusId, institutionId, campusIds);
-    if (q.departmentId) conds.push(eq(ps.departmentId, q.departmentId));
+    // Curriculum for a programme is institution-wide — campus scope would hide placements
+    // created under another campus while duplicate checks still see them.
+    const conds = q.departmentId
+      ? [eq(ps.institutionId, institutionId), eq(ps.departmentId, q.departmentId)]
+      : this.scopeConds(ps.institutionId, ps.campusId, institutionId, campusIds);
     if (q.programmeLevelId) conds.push(eq(ps.programmeLevelId, q.programmeLevelId));
-    if (q.semesterSequence) conds.push(eq(ps.semesterSequence, q.semesterSequence));
+    if (q.semesterSequence) {
+      const pts = schema.programmeTermSlots;
+      conds.push(
+        inArray(
+          ps.id,
+          this.db
+            .select({ id: ps.id })
+            .from(ps)
+            .leftJoin(
+              pts,
+              or(
+                eq(ps.slotId, pts.id),
+                and(
+                  isNull(ps.slotId),
+                  eq(ps.programmeLevelId, pts.programmeLevelId),
+                  eq(ps.semesterSequence, pts.sequenceInYear),
+                ),
+              ),
+            )
+            .where(eq(pts.absoluteSequence, q.semesterSequence)),
+        ),
+      );
+    }
     if (q.subjectId) conds.push(eq(ps.subjectId, q.subjectId));
     if (q.search) {
       const s = or(ilike(schema.subjects.name, `%${q.search}%`), ilike(schema.subjects.code, `%${q.search}%`));
@@ -1010,7 +1179,18 @@ export class AcademicsRepository {
       .leftJoin(schema.subjects, eq(schema.subjects.id, ps.subjectId))
       .leftJoin(schema.departments, eq(schema.departments.id, ps.departmentId))
       .leftJoin(schema.departmentGradeLevels, eq(schema.departmentGradeLevels.id, ps.programmeLevelId))
-      .leftJoin(schema.gradeLevels, eq(schema.gradeLevels.id, schema.departmentGradeLevels.gradeLevelId));
+      .leftJoin(schema.gradeLevels, eq(schema.gradeLevels.id, schema.departmentGradeLevels.gradeLevelId))
+      .leftJoin(
+        schema.programmeTermSlots,
+        or(
+          eq(ps.slotId, schema.programmeTermSlots.id),
+          and(
+            isNull(ps.slotId),
+            eq(ps.programmeLevelId, schema.programmeTermSlots.programmeLevelId),
+            eq(ps.semesterSequence, schema.programmeTermSlots.sequenceInYear),
+          ),
+        ),
+      );
 
     const rows = await base
       .where(where)
@@ -1042,6 +1222,7 @@ export class AcademicsRepository {
 
   /** The unique curriculum slot — used to turn a duplicate insert into a friendly 409. */
   async findProgrammeSubjectSlot(
+    institutionId: string,
     programmeLevelId: string,
     semesterSequence: number,
     subjectId: string,
@@ -1052,9 +1233,38 @@ export class AcademicsRepository {
       .from(ps)
       .where(
         and(
+          eq(ps.institutionId, institutionId),
           eq(ps.programmeLevelId, programmeLevelId),
           eq(ps.semesterSequence, semesterSequence),
           eq(ps.subjectId, subjectId),
+        ),
+      )
+      .limit(1);
+    return row;
+  }
+
+  async findProgrammeTermSlot(slotId: string, institutionId: string) {
+    const [row] = await this.db
+      .select()
+      .from(schema.programmeTermSlots)
+      .where(
+        and(
+          eq(schema.programmeTermSlots.id, slotId),
+          eq(schema.programmeTermSlots.institutionId, institutionId),
+        ),
+      )
+      .limit(1);
+    return row;
+  }
+
+  async findProgrammeTermSlotBySequence(programmeLevelId: string, sequenceInYear: number) {
+    const [row] = await this.db
+      .select()
+      .from(schema.programmeTermSlots)
+      .where(
+        and(
+          eq(schema.programmeTermSlots.programmeLevelId, programmeLevelId),
+          eq(schema.programmeTermSlots.sequenceInYear, sequenceInYear),
         ),
       )
       .limit(1);
@@ -1146,7 +1356,13 @@ export class AcademicsRepository {
     const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
     if (q.search) conds.push(ilike(t.name, `%${q.search}%`));
     if (q.programmeLevelId) conds.push(eq(t.programmeLevelId, q.programmeLevelId));
-    if (q.termId) conds.push(eq(t.termId, q.termId));
+    conds.push(
+      ...programmeListFilterConds(this.db, q, {
+        academicYearId: t.academicYearId,
+        termId: t.termId,
+        termIdNullMeansWholeYear: true,
+      }),
+    );
     if (q.departmentId) {
       conds.push(
         inArray(
@@ -1262,6 +1478,9 @@ export class AcademicsRepository {
     }
 
     if (q.search) conds.push(studentSearchCondition(t, q.search));
+
+    const enrolled = enrolledStudentsCond(this.db, q, t.id);
+    if (enrolled) conds.push(enrolled);
 
     const rows = await this.db
       .select({

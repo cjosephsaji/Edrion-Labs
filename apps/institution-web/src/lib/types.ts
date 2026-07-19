@@ -58,6 +58,14 @@ export interface PortalMeDto {
   institutionStatus: string;
   /** Onboarding lifecycle (`not_started` | `in_progress` | `awaiting_customer` | `completed`). */
   onboardingStatus: string;
+  /** Institution type preset (school, college, university, …). Drives nomenclature fallbacks. */
+  institutionType: import('@edrion/shared-types').InstitutionType;
+  /** ISO 3166-1 alpha-2 from the institution record (registration / profile). Phone-input default. */
+  institutionCountry: string;
+  /** Resolved UI labels for this institution (type preset + any overrides). */
+  nomenclature: import('@edrion/shared-types').ResolvedNomenclature;
+  /** Sidebar order + label overrides (empty object when unset). */
+  navigation?: import('@edrion/schemas').NavigationLayout;
   roleKeys: string[];
   /** Effective (evaluated) permission keys. Client gates UI on these; API re-checks. */
   permissions: string[];
@@ -66,46 +74,76 @@ export interface PortalMeDto {
   campuses: CampusOption[];
 }
 
-export type DashboardKind =
-  | 'institution'
-  | 'campus'
-  | 'teacher'
-  | 'parent'
-  | 'student'
-  | 'generic';
+/** Presentation grouping over roles. Mirrors PERSONA_ORDER in @edrion/permissions/institution. */
+export type PersonaKey =
+  | 'leadership'
+  | 'academics'
+  | 'teaching'
+  | 'finance'
+  | 'people'
+  | 'admissions'
+  | 'wellbeing'
+  | 'operations'
+  | 'library'
+  | 'it'
+  | 'general';
 
 export interface DashboardStat {
   key: string;
   label: string;
   value: number | string;
   hint?: string;
-  /** True when the underlying module isn't built yet — rendered muted/"coming soon". */
-  pending?: boolean;
   /** 'money' → value is integer MINOR units; formatted in the institution's currency by the web. */
   format?: 'money';
 }
 
-export interface DashboardActivity {
+/**
+ * A widget's payload, discriminated by `type`. The web renders by type, so a widget the API adds
+ * reusing an existing type needs no change here — and an unrecognised type is skipped, not thrown.
+ *
+ * `attention` carries no payload: that widget fetches /portal/attention itself via useAttention().
+ */
+export type WidgetData =
+  | { type: 'stats'; stats: DashboardStat[] }
+  | { type: 'list'; items: Array<{ id: string; title: string; subtitle?: string; badge?: string }> }
+  | { type: 'comparison'; rows: Array<{ id: string; name: string; value: number }> }
+  | { type: 'activity'; items: Array<{ id: string; title: string; description: string; at: string }> }
+  | { type: 'attention' };
+
+export interface DashboardWidget {
   id: string;
+  persona: PersonaKey;
   title: string;
-  description: string;
-  at: string;
+  description?: string;
+  size: 'sm' | 'md' | 'lg';
+  pinned: boolean;
+  data: WidgetData;
 }
 
-export interface CampusComparisonRow {
-  campusId: string;
-  name: string;
-  /** Seats/users currently provisioned on the campus (real). Richer academic metrics land later. */
-  users: number;
+export interface DashboardPersona {
+  key: PersonaKey;
+  label: string;
+  /** True when one of the user's roles maps to this persona. Ordering hint only. */
+  fromRole: boolean;
 }
 
-/** GET /v1/portal/dashboard — adaptive, scope-aware dashboard payload (single request). */
+/**
+ * GET /v1/portal/dashboard — the composed, scope-aware dashboard.
+ *
+ * Only widgets the caller's PERMISSIONS entitle them to are present; the queries behind the rest
+ * never ran. Personas group them; they do not gate them.
+ */
 export interface PortalDashboardDto {
-  kind: DashboardKind;
   scopeLabel: string;
-  stats: DashboardStat[];
-  pendingApprovals: number;
-  recentActivity: DashboardActivity[];
-  /** Institution-wide variant only: per-campus comparison. */
-  campusComparison?: CampusComparisonRow[];
+  personas: DashboardPersona[];
+  widgets: DashboardWidget[];
+  /** Widget ids this user hid, so the web can offer "unhide" without another request. */
+  hidden: string[];
+}
+
+/** GET/PUT /v1/portal/dashboard/prefs */
+export interface DashboardPrefs {
+  hidden: string[];
+  pinned: string[];
+  activePersona: PersonaKey | null;
 }

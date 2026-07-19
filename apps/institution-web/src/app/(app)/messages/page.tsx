@@ -65,6 +65,17 @@ export default function MessagesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId, messages.data?.length]);
 
+  // If the sidebar preview already shows a newer message, pull the thread immediately.
+  useEffect(() => {
+    if (!activeId) return;
+    const summary = conversations.data?.items.find((c) => c.id === activeId);
+    if (!summary?.lastMessageAt) return;
+    const latest = messages.data?.at(-1)?.createdAt;
+    if (!latest || new Date(summary.lastMessageAt).getTime() > new Date(latest).getTime()) {
+      void messages.refetch();
+    }
+  }, [activeId, conversations.data?.items, messages.data, messages.refetch]);
+
   useEffect(() => { setReplyTo(null); }, [activeId]);
 
   if (!can('messages.use')) {
@@ -424,8 +435,49 @@ function InfoPanel({ conv, onClose }: { conv: ConversationSummary; onClose: () =
   const mut = useConversationMutations();
   const [adding, setAdding] = useState(false);
   const [targets, setTargets] = useState<Target[]>([]);
+  const [width, setWidth] = useState(360);
+  const resizing = useRef(false);
+
+  const alreadyAddedKeys = useMemo(
+    () => new Set(conv.participants.map((p) => `${p.participantType}:${p.participantId}`)),
+    [conv.participants],
+  );
+
+  useEffect(() => {
+    function onMove(e: MouseEvent) {
+      if (!resizing.current) return;
+      const next = Math.min(640, Math.max(280, window.innerWidth - e.clientX));
+      setWidth(next);
+    }
+    function onUp() {
+      resizing.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  }, []);
+
+  function startResize(e: React.MouseEvent) {
+    e.preventDefault();
+    resizing.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }
+
   return (
-    <aside className="flex w-72 shrink-0 flex-col border-l border-border">
+    <aside className="relative flex shrink-0 flex-col border-l border-border" style={{ width }}>
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize details panel"
+        onMouseDown={startResize}
+        className="absolute inset-y-0 left-0 z-10 w-1.5 -translate-x-1/2 cursor-col-resize hover:bg-primary/20 active:bg-primary/30"
+      />
       <header className="flex items-center justify-between border-b border-border px-4 py-3">
         <span className="font-semibold text-text-primary">Details</span>
         <button onClick={onClose} aria-label="Close"><X className="h-4 w-4 text-text-muted" /></button>
@@ -450,7 +502,7 @@ function InfoPanel({ conv, onClose }: { conv: ConversationSummary; onClose: () =
             <Button size="sm" variant="secondary" onClick={() => setAdding(true)}><UserPlus className="h-4 w-4" />Add participants</Button>
           ) : (
             <div className="flex flex-col gap-2">
-              <RecipientPicker value={targets} onChange={setTargets} />
+              <RecipientPicker value={targets} onChange={setTargets} messaging alreadyAddedKeys={alreadyAddedKeys} />
               <div className="flex gap-2">
                 <Button size="sm" variant="secondary" onClick={() => { setAdding(false); setTargets([]); }}>Cancel</Button>
                 <Button size="sm" loading={mut.addParticipants.isPending} disabled={targets.length === 0} onClick={async () => { await mut.addParticipants.mutateAsync({ id: conv.id, targets }); setAdding(false); setTargets([]); }}>Add</Button>

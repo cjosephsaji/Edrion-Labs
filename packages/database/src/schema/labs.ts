@@ -1,7 +1,8 @@
-import { index, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { campuses } from './campuses';
+import { timetableSlots } from './timetable';
 
 /**
  * INSTITUTION-PORTAL labs module (Phase 13 — Lab Staff). Campus-scoped, version-guarded. A single
@@ -49,6 +50,8 @@ export const labSchedules = pgTable(
     durationMinutes: integer('duration_minutes'),
     /** scheduled | completed | cancelled. */
     status: text('status').notNull().default('scheduled'),
+    /** When set, this row was created from a recurring timetable slot. */
+    timetableSlotId: uuid('timetable_slot_id').references(() => timetableSlots.id, { onDelete: 'cascade' }),
     version: integer('version').notNull().default(0),
     ...actorColumns,
     ...timestamps,
@@ -57,6 +60,7 @@ export const labSchedules = pgTable(
     instIdx: index('lab_schedules_institution_idx').on(t.institutionId),
     scopeIdx: index('lab_schedules_institution_campus_idx').on(t.institutionId, t.campusId),
     statusIdx: index('lab_schedules_status_idx').on(t.status),
+    slotUniq: uniqueIndex('lab_schedules_timetable_slot_id_uniq').on(t.timetableSlotId),
   }),
 );
 

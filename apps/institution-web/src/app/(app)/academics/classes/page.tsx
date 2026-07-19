@@ -1,31 +1,40 @@
 'use client';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Badge, type Column, type DetailSection } from '@edrion/ui';
 import { ResourceManager } from '@/components/academics/resource-manager';
 import { ClassRosterPanel } from '@/components/academics/class-roster-panel';
 import { ClassSubjectsPanel } from '@/components/academics/class-subjects-panel';
 import type { FieldDef } from '@/components/academics/resource-form';
 import type { FilterDef } from '@/components/academics/resource-manager';
-import { useAcademicContextFilters } from '@/lib/academic-context';
 import {
   useAcademicYearOptions,
   useDepartmentOptions,
-  useGradeLevelOptions,
   useProgrammeLevelSelectOptions,
   useTermSelectOptions,
   type ClassRow,
 } from '@/lib/academics';
+import type { DepartmentGradeLevelRow } from '@/lib/academics-types';
 import { useTeachingStaffOptions, teachingStaffSelectOptions } from '@/lib/people';
+import { useAcademicContext } from '@/lib/academic-context';
 import { useTerm } from '@/lib/term';
+
+function withGradeLevelFromProgramme(
+  body: Record<string, unknown>,
+  levels: DepartmentGradeLevelRow[],
+): Record<string, unknown> {
+  const programmeLevelId = String(body.programmeLevelId ?? '');
+  const level = levels.find((l) => l.id === programmeLevelId);
+  if (!level) throw new Error('Pick a programme and year first.');
+  return { ...body, gradeLevelId: level.gradeLevelId };
+}
 
 export default function ClassesPage() {
   const { t, tp } = useTerm();
-  const contextFilters = useAcademicContextFilters();
+  const { academicYearId } = useAcademicContext();
   const { data: years } = useAcademicYearOptions();
-  const { data: grades } = useGradeLevelOptions();
   const { data: departments } = useDepartmentOptions();
   const { data: teachers } = useTeachingStaffOptions();
-  const { options: levelOptions } = useProgrammeLevelSelectOptions();
+  const { options: levelOptions, items: levelItems } = useProgrammeLevelSelectOptions();
   const { options: termOptions } = useTermSelectOptions();
 
   const teacherOptions = teachingStaffSelectOptions(teachers);
@@ -34,22 +43,22 @@ export default function ClassesPage() {
     () => [
       {
         key: 'departmentId',
-        label: `All ${t('department').toLowerCase()}s`,
+        label: `All ${tp('department')}`,
         options: (departments?.items ?? []).map((d) => ({ value: d.id, label: d.name })),
       },
       {
         key: 'programmeLevelId',
-        label: `All ${t('gradeLevel').toLowerCase()}s`,
+        label: `All ${tp('gradeLevel')}`,
         options: levelOptions,
       },
       {
         key: 'termId',
-        label: `All ${tp('term').toLowerCase()}`,
+        label: `All ${tp('term')}`,
         options: termOptions,
       },
       {
         key: 'academicYearId',
-        label: `All ${t('academicYear').toLowerCase()}s`,
+        label: `All ${tp('academicYear')}`,
         options: (years?.items ?? []).map((y) => ({ value: y.id, label: y.name })),
       },
     ],
@@ -63,7 +72,7 @@ export default function ClassesPage() {
         name: 'programmeLevelId',
         label: `${t('department')} and ${t('gradeLevel').toLowerCase()}`,
         type: 'select',
-        nullable: true,
+        required: true,
         options: levelOptions,
         help: `Which ${t('gradeLevel').toLowerCase()} of which ${t('department').toLowerCase()} this ${t('class').toLowerCase()} belongs to.`,
       },
@@ -71,16 +80,9 @@ export default function ClassesPage() {
         name: 'termId',
         label: t('term'),
         type: 'select',
-        nullable: true,
-        options: termOptions,
-        help: `The ${t('term').toLowerCase()} this ${t('class').toLowerCase()} is currently in. Its subjects come from the curriculum for that ${t('term').toLowerCase()}.`,
-      },
-      {
-        name: 'gradeLevelId',
-        label: t('gradeLevel'),
-        type: 'select',
         required: true,
-        options: (grades?.items ?? []).map((g) => ({ value: g.id, label: g.name })),
+        options: termOptions,
+        help: `The ${t('term').toLowerCase()} this ${t('class').toLowerCase()} is currently in. Its subjects come from the curriculum for that ${t('term').toLowerCase()}. Create terms first via Academics → Academic Years → Schedule ${tp('term').toLowerCase()}.`,
       },
       {
         name: 'academicYearId',
@@ -91,7 +93,7 @@ export default function ClassesPage() {
       },
       {
         name: 'classTeacherId',
-        label: `${t('class')} ${t('teacher').toLowerCase()}`,
+        label: `${t('class')} ${t('teacher')}`,
         type: 'select',
         nullable: true,
         options: teacherOptions,
@@ -100,7 +102,12 @@ export default function ClassesPage() {
       { name: 'room', label: 'Room', type: 'text', nullable: true, placeholder: 'Optional' },
       { name: 'capacity', label: 'Capacity', type: 'number', min: 0, nullable: true, placeholder: 'Optional' },
     ],
-    [years, grades, levelOptions, termOptions, teacherOptions, t],
+    [years, levelOptions, termOptions, teacherOptions, t],
+  );
+
+  const submitClass = useCallback(
+    (body: Record<string, unknown>) => withGradeLevelFromProgramme(body, levelItems),
+    [levelItems],
   );
 
   const columns = useMemo<Column<ClassRow>[]>(
@@ -124,7 +131,7 @@ export default function ClassesPage() {
           ),
       },
       { key: 'section', header: t('section'), render: (r) => r.section ?? '—' },
-      { key: 'classTeacherName', header: `${t('class')} ${t('teacher').toLowerCase()}`, render: (r) => <span className="text-text-muted">{r.classTeacherName ?? 'Unassigned'}</span> },
+      { key: 'classTeacherName', header: `${t('class')} ${t('teacher')}`, render: (r) => <span className="text-text-muted">{r.classTeacherName ?? 'Unassigned'}</span> },
       { key: 'subjectCount', header: tp('subject'), align: 'right', render: (r) => <span className="tabular-nums">{r.subjectCount ?? 0}</span> },
       {
         key: 'studentCount',
@@ -158,7 +165,7 @@ export default function ClassesPage() {
           fields: [
             { label: 'Name', value: r.name },
             { label: t('section'), value: r.section ?? '—' },
-            { label: `${t('class')} ${t('teacher').toLowerCase()}`, value: r.classTeacherName ?? 'Unassigned' },
+            { label: `${t('class')} ${t('teacher')}`, value: r.classTeacherName ?? 'Unassigned' },
             { label: 'Room', value: r.room ?? '—' },
             { label: 'Capacity', value: r.capacity ?? '—' },
           ],
@@ -175,7 +182,7 @@ export default function ClassesPage() {
       columns={columns}
       fields={fields}
       filters={filters}
-      extraFilters={contextFilters}
+      createInitialValues={academicYearId ? { academicYearId } : undefined}
       detail={detail}
       defaultSortBy="name"
       renderFormExtra={({ row }) => <ClassSubjectsPanel classId={row.id} className={row.name} />}
@@ -189,13 +196,18 @@ export default function ClassesPage() {
         name: r.name,
         programmeLevelId: r.programmeLevelId ?? '',
         termId: r.termId ?? '',
-        gradeLevelId: r.gradeLevelId,
         academicYearId: r.academicYearId,
         classTeacherId: r.classTeacherId ?? '',
         section: r.section ?? '',
         room: r.room ?? '',
         capacity: r.capacity ?? '',
       })}
+      onSubmitCreate={async (body, { create }) => {
+        await create.mutateAsync(submitClass(body));
+      }}
+      onSubmitUpdate={async (row, body, { update }) => {
+        await update.mutateAsync({ id: row.id, body: { ...submitClass(body), version: row.version } });
+      }}
     />
   );
 }

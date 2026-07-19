@@ -12,6 +12,7 @@ import { staff } from './people';
  *
  * day_of_week: 1 = Monday … 7 = Sunday (validated in zod). One slot per (class, day, start_time).
  * Times are stored as "HH:MM" 24-hour text.
+ * kind: teaching | break | lunch — attendance only surfaces teaching slots.
  */
 export const timetableSlots = pgTable(
   'timetable_slots',
@@ -37,6 +38,10 @@ export const timetableSlots = pgTable(
     /** "HH:MM" 24-hour. */
     startTime: text('start_time').notNull(),
     endTime: text('end_time').notNull(),
+    /** Optional period name, e.g. "Period 1". Attendance falls back to startTime when null. */
+    label: text('label'),
+    /** teaching | break | lunch */
+    kind: text('kind').notNull().default('teaching'),
     room: text('room'),
     version: integer('version').notNull().default(0),
     ...actorColumns,

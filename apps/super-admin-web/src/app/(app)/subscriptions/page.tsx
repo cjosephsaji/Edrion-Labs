@@ -11,6 +11,7 @@ import {
   EmptyState,
   ErrorState,
   Button,
+  Select,
 } from '@edrion/ui';
 import { useSubscriptions, useSubscriptionsSummary } from '@edrion/api-client';
 import { SubscriptionStatus, BillingCycle } from '@edrion/shared-types';
@@ -83,17 +84,8 @@ export default function SubscriptionsPage() {
               className="h-input w-72 rounded-md border border-border bg-surface pl-8 pr-3 text-sm text-text-primary placeholder:text-text-muted focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
             />
           </div>
-          <select value={status} onChange={(e) => setParam({ status: e.target.value, page: 1 })} className="h-input rounded-md border border-border bg-surface px-3 text-sm text-text-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30">
-            {STATUS_FILTERS.map((s) => (
-              <option key={s} value={s}>{s === '' ? 'All statuses' : s.replace(/_/g, ' ')}</option>
-            ))}
-          </select>
-          <select value={cycle} onChange={(e) => setParam({ billingCycle: e.target.value, page: 1 })} className="h-input rounded-md border border-border bg-surface px-3 text-sm text-text-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30">
-            <option value="">All cycles</option>
-            {Object.values(BillingCycle).map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+          <Select value={status} onChange={(e) => setParam({ status: e.target.value, page: 1 })} className="h-input w-auto min-w-[10rem]" options={STATUS_FILTERS.map((s) => ({ value: s, label: s === '' ? 'All statuses' : s.replace(/_/g, ' ') }))} />
+          <Select value={cycle} onChange={(e) => setParam({ billingCycle: e.target.value, page: 1 })} className="h-input w-auto min-w-[10rem]" options={[{ value: '', label: 'All cycles' }, ...Object.values(BillingCycle).map((c) => ({ value: c, label: c }))]} />
           {isFetching && <span className="text-xs text-text-muted">Updating…</span>}
         </div>
 

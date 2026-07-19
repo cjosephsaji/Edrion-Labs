@@ -2,9 +2,13 @@
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { GraduationCap } from 'lucide-react';
 import { Button, Input, Label } from '@edrion/ui';
 import { webEnv } from '@/lib/env';
+import { finalizePortalSignIn } from '@/lib/portal-session';
+import { isParentPortalUser } from '@/lib/parent-portal-user';
+import type { PortalMeDto } from '@/lib/types';
 
 /**
  * Institution-portal sign-in. The primary path is native email + password, posted to
@@ -17,6 +21,7 @@ type Mode = 'password' | 'dev' | 'token';
 
 export default function LoginPage() {
   const router = useRouter();
+  const qc = useQueryClient();
   const [mode, setMode] = useState<Mode>('password');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -46,8 +51,17 @@ export default function LoginPage() {
         setError(data?.message ?? 'Sign-in failed. Check your credentials and try again.');
         return;
       }
-      const next = new URLSearchParams(window.location.search).get('next') || '/dashboard';
-      router.replace(next);
+      finalizePortalSignIn(qc);
+      const meRes = await fetch(`${webEnv.apiBaseUrl}/v1/portal/me`, {
+        credentials: 'include',
+        cache: 'no-store',
+        headers: webEnv.devUserEmail ? { 'x-institution-user-email': webEnv.devUserEmail } : undefined,
+      });
+      const me = (await meRes.json().catch(() => null)) as PortalMeDto | null;
+      const requestedNext = new URLSearchParams(window.location.search).get('next');
+      const defaultHome =
+        me && isParentPortalUser(me.roleKeys, me.permissions) ? '/family' : '/dashboard';
+      router.replace(requestedNext || defaultHome);
     } catch {
       setError('Could not reach the server. Try again.');
     } finally {

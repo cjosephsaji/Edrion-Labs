@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+import { paginationQuerySchema, sortQuerySchema, versionSchema, academicScopeQuerySchema } from './common';
 import { createQuestionSchema, updateQuestionSchema } from './questions';
 import { previewRecipientsSchema, targetsSchema } from './recipients';
 
@@ -28,12 +28,22 @@ const withVersion = { version: versionSchema };
 
 // --- assignments -------------------------------------------------------------
 
-export const assignmentsListQuerySchema = paginationQuerySchema.merge(sortQuerySchema).extend({
+export const assignmentsListQuerySchema = paginationQuerySchema
+  .merge(sortQuerySchema)
+  .merge(academicScopeQuerySchema)
+  .extend({
   search: z.string().trim().max(160).optional(),
   classId: z.string().uuid().optional(),
   status: assignmentStatusSchema.optional(),
 });
 export type AssignmentsListQuery = z.infer<typeof assignmentsListQuerySchema>;
+
+/** Nested question on create/reconcile — optional client id for draft ↔ server mapping. */
+const nestedAssignmentQuestionSchema = createQuestionSchema.extend({
+  id: z.string().uuid().optional(),
+  clientKey: z.string().trim().max(64).optional(),
+  version: versionSchema.optional(),
+});
 
 export const createAssignmentSchema = z.object({
   title: z.string().trim().min(1, 'Required').max(160),
@@ -47,6 +57,8 @@ export const createAssignmentSchema = z.object({
   audience: targetsSchema.default([]),
   durationMin: z.coerce.number().int().min(1).max(480).nullish(),
   deliveryMode: deliveryModeSchema.default('file'),
+  /** Optional nested questions for atomic create (quiz delivery). */
+  questions: z.array(nestedAssignmentQuestionSchema).max(200).optional(),
 });
 export type CreateAssignmentInput = z.infer<typeof createAssignmentSchema>;
 
@@ -93,3 +105,21 @@ export type UpdateAssignmentQuestionInput = z.infer<typeof updateAssignmentQuest
 
 export const assignmentAudiencePreviewSchema = previewRecipientsSchema;
 export type AssignmentAudiencePreviewInput = z.infer<typeof assignmentAudiencePreviewSchema>;
+
+/** Atomic reconcile payload for the single-page builder (PUT /portal/assignments/:id/full). */
+export const reconcileAssignmentSchema = z.object({
+  version: versionSchema,
+  title: z.string().trim().min(1).max(160).optional(),
+  classId: z.string().uuid().optional(),
+  subjectId: optionalUuid,
+  teacherId: optionalUuid,
+  instructions: shortText(2000),
+  dueDate: isoDate,
+  maxPoints: z.coerce.number().int().min(1).max(1000).optional(),
+  status: assignmentStatusSchema.optional(),
+  audience: targetsSchema.optional(),
+  durationMin: z.coerce.number().int().min(1).max(480).nullish(),
+  deliveryMode: deliveryModeSchema.optional(),
+  questions: z.array(nestedAssignmentQuestionSchema).max(200).default([]),
+});
+export type ReconcileAssignmentInput = z.infer<typeof reconcileAssignmentSchema>;

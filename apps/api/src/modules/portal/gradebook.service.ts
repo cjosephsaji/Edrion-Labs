@@ -12,9 +12,11 @@ import type {
   GradebookListQuery,
   UpdateGradeEntryInput,
 } from '@edrion/schemas';
-import { AUDIT_WRITER } from '../../common/tokens';
+import { AUDIT_WRITER, DATABASE } from '../../common/tokens';
+import type { Database } from '@edrion/database';
 import type { Page } from './academics.repository';
 import type { ListResult } from './academics.service';
+import { resolveAcademicScope } from './academic-scope-stamp';
 import { GradebookRepository, type GradeRefTable } from './gradebook.repository';
 import { basePortalAudit, type PortalActionContext } from './portal-action-context';
 
@@ -30,6 +32,7 @@ const MODULE = 'portal-gradebook';
 export class GradebookService {
   constructor(
     private readonly repo: GradebookRepository,
+    @Inject(DATABASE) private readonly db: Database,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
   ) {}
 
@@ -54,6 +57,13 @@ export class GradebookService {
       }
     }
     const campusId = this.createCampusId(ctx.scope);
+    const f = this.filter(ctx);
+    const scope = await resolveAcademicScope(this.db, {
+      institutionId: ctx.principal.institutionId,
+      campusIds: f.campusIds,
+      classId: input.classId,
+      examId: input.examId,
+    });
     const row = await this.repo.insert({
       institutionId: ctx.principal.institutionId,
       campusId,
@@ -61,6 +71,8 @@ export class GradebookService {
       subjectId: input.subjectId,
       examId: input.examId ?? null,
       classId: input.classId ?? null,
+      academicYearId: scope.academicYearId,
+      termId: scope.termId,
       assessmentName: input.assessmentName,
       marksObtained: input.marksObtained,
       maxMarks: input.maxMarks,

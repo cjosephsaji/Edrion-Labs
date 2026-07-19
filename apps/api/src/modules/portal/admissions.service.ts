@@ -16,6 +16,7 @@ import type {
 } from '@edrion/schemas';
 import { formatPersonName } from '@edrion/schemas';
 import { AUDIT_WRITER } from '../../common/tokens';
+import { emailLayout } from '../../common/email-templates';
 import type { Page } from './academics.repository';
 import type { ListResult } from './academics.service';
 import { AdmissionsRepository, type AdmissionRefTable } from './admissions.repository';
@@ -173,12 +174,24 @@ export class AdmissionsService {
     // Email the applicant the outcome (enabled by default for every decision).
     if (input.notify && recipientEmail) {
       const label = DECISION_LABEL[input.decision] ?? input.decision;
+      const applicantName = this.fullName(updated);
+      const text = `Hello,\n\nThere is an update on admission application ${updated.applicationNo} for ${applicantName}: ${label}.${note ? `\n\n${note}` : ''}\n\nThank you.`;
+      const html = emailLayout({
+        heading: 'Admission update',
+        preheader: `${updated.applicationNo}: ${label}`,
+        footer:
+          "You're receiving this because you submitted an admission application through Edrion. If this wasn't you, you can safely ignore it.",
+        bodyHtml: `<p style="margin:0 0 16px;">There is an update on admission application <strong>${updated.applicationNo}</strong> for <strong>${applicantName}</strong>.</p>
+          <div style="margin:0 0 18px;background:#E7F0EA;border-radius:12px;padding:14px 18px;font:700 16px/1 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#14532D;">${label}</div>
+          ${note ? `<p style="margin:0 0 16px;">${note}</p>` : ''}
+          <p style="margin:0;">Thank you for your patience.</p>`,
+      });
       await this.email
         .send({
           to: recipientEmail,
           subject: `Admission update for ${updated.applicationNo}: ${label}`,
-          text: `Hello,\n\nThere is an update on admission application ${updated.applicationNo} for ${this.fullName(updated)}: ${label}.${note ? `\n\n${note}` : ''}\n\nThank you.`,
-          html: `<p>Hello,</p><p>There is an update on admission application <strong>${updated.applicationNo}</strong> for ${this.fullName(updated)}: <strong>${label}</strong>.</p>${note ? `<p>${note}</p>` : ''}`,
+          text,
+          html,
         })
         .catch(() => undefined);
     }

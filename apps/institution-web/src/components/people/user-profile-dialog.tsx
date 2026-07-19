@@ -1,7 +1,9 @@
 'use client';
 import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { BedDouble, HeartPulse, Home, Pencil, ShieldAlert, X } from 'lucide-react';
+import { BedDouble, ChevronDown, HeartPulse, Home, Pencil, ShieldAlert, X } from 'lucide-react';
+import { RoleBadges } from '@/components/admin/role-badges';
+import { SuspendUserPanel } from '@/components/admin/suspend-user-panel';
 import {
   Badge,
   Button,
@@ -34,7 +36,7 @@ const STATUS_TONE: Record<string, BadgeTone> = { open: 'warning', resolved: 'suc
 const USER_STATUS_TONE: Record<string, BadgeTone> = {
   active: 'success',
   invited: 'info',
-  disabled: 'neutral',
+  disabled: 'danger',
   locked: 'warning',
   pending_deletion: 'danger',
 };
@@ -215,6 +217,66 @@ function Panel({ title, icon, className, children }: { title: string; icon?: Rea
       </h4>
       {children}
     </div>
+  );
+}
+
+function ExpandableRecord({
+  id,
+  summary,
+  meta,
+  children,
+}: {
+  id: string;
+  summary: ReactNode;
+  meta?: ReactNode;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <li className="overflow-hidden rounded-md border border-border bg-background-secondary/30">
+      <button
+        type="button"
+        id={`record-${id}`}
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm transition-colors hover:bg-background-secondary/60"
+      >
+        <span className="min-w-0 flex-1">{summary}</span>
+        <span className="flex shrink-0 items-center gap-1.5">
+          {meta}
+          <ChevronDown className={cn('h-4 w-4 text-text-muted transition-transform', open && 'rotate-180')} aria-hidden />
+        </span>
+      </button>
+      {open && (
+        <div className="border-t border-border px-3 py-3 text-sm" role="region" aria-labelledby={`record-${id}`}>
+          {children}
+        </div>
+      )}
+    </li>
+  );
+}
+
+function DetailLine({ label, value }: { label: string; value: ReactNode }) {
+  if (value === null || value === undefined || value === '') return null;
+  return (
+    <div className="py-1">
+      <p className="text-xs text-text-muted">{label}</p>
+      <p className="mt-0.5 whitespace-pre-wrap text-text-primary">{value}</p>
+    </div>
+  );
+}
+
+function DetailBlock({ items }: { items: { label: string; value: ReactNode }[] }) {
+  const shown = items.filter((i) => i.value !== null && i.value !== undefined && i.value !== '');
+  if (shown.length === 0) {
+    return <p className="text-sm text-text-muted">No additional details recorded.</p>;
+  }
+  return (
+    <>
+      {shown.map((i) => (
+        <DetailLine key={i.label} label={i.label} value={i.value} />
+      ))}
+    </>
   );
 }
 
@@ -425,21 +487,73 @@ function StudentBody({ row, edit, canEdit }: { row: StudentRow; edit: () => void
         <div className="flex flex-col gap-4">
           {data.health && (
             <Panel title="Health" icon={<HeartPulse className="h-4 w-4" />}>
-              <p className="mb-2 text-sm text-text-secondary">
-                Incidents: <span className="font-medium text-text-primary">{data.health.incidentsOpen}</span> open / {data.health.incidentsTotal} total
+              <p className="mb-3 text-sm text-text-secondary">
+                Medical incidents: <span className="font-medium text-text-primary">{data.health.incidentsOpen}</span> open / {data.health.incidentsTotal} total
               </p>
-              {data.health.records.length === 0 ? (
-                <p className="text-sm text-text-muted">No health records.</p>
+              {data.health.records.length === 0 && data.health.incidents.length === 0 ? (
+                <p className="text-sm text-text-muted">No health records or medical incidents.</p>
               ) : (
-                <ul className="space-y-1 text-sm">
+                <ul className="space-y-2">
                   {data.health.records.map((r) => (
-                    <li key={r.id} className="flex items-center justify-between gap-3">
-                      <span className="text-text-primary">{r.title} <span className="text-text-muted">· {r.recordType}</span></span>
-                      <span className="flex items-center gap-1.5">
-                        {r.followUpRequired && <Badge tone="warning">Follow-up</Badge>}
-                        <span className="text-text-muted">{fmt.date(r.at)}</span>
-                      </span>
-                    </li>
+                    <ExpandableRecord
+                      key={r.id}
+                      id={r.id}
+                      summary={
+                        <>
+                          <span className="font-medium text-text-primary">{r.title}</span>
+                          <span className="text-text-muted"> · {r.recordType}</span>
+                        </>
+                      }
+                      meta={
+                        <>
+                          {r.followUpRequired && <Badge tone="warning">Follow-up</Badge>}
+                          <StatusBadge status={r.status} />
+                          <span className="text-text-muted">{fmt.date(r.at)}</span>
+                        </>
+                      }
+                    >
+                      <DetailBlock
+                        items={[
+                          { label: 'Reason', value: r.reason },
+                          { label: 'Symptoms', value: r.symptoms },
+                          { label: 'Action taken', value: r.actionTaken },
+                          { label: 'Treatment', value: r.treatment },
+                          { label: 'Attended by', value: r.attendedBy },
+                          { label: 'Blood group', value: r.bloodGroup },
+                          { label: 'Follow-up on', value: r.followUpAt ? fmt.date(r.followUpAt) : null },
+                          { label: 'Additional details', value: r.details },
+                        ]}
+                      />
+                    </ExpandableRecord>
+                  ))}
+                  {data.health.incidents.map((i) => (
+                    <ExpandableRecord
+                      key={i.id}
+                      id={i.id}
+                      summary={
+                        <>
+                          <span className="font-medium text-text-primary">{i.title}</span>
+                          <span className="text-text-muted"> · Medical incident</span>
+                        </>
+                      }
+                      meta={
+                        <>
+                          <Badge tone={SEV_TONE[i.severity] ?? 'neutral'}>{i.severity}</Badge>
+                          <StatusBadge status={i.status} />
+                          <span className="text-text-muted">{i.occurredAt ? fmt.date(i.occurredAt) : '—'}</span>
+                        </>
+                      }
+                    >
+                      <DetailBlock
+                        items={[
+                          { label: 'Description', value: i.description },
+                          { label: 'Action taken', value: i.actionTaken },
+                          { label: 'Treatment', value: i.treatment },
+                          { label: 'Attended by', value: i.attendedBy },
+                          { label: 'Follow-up on', value: i.followUpAt ? fmt.date(i.followUpAt) : null },
+                        ]}
+                      />
+                    </ExpandableRecord>
                   ))}
                 </ul>
               )}
@@ -450,19 +564,34 @@ function StudentBody({ row, edit, canEdit }: { row: StudentRow; edit: () => void
               {data.conduct.recent.length === 0 ? (
                 <p className="text-sm text-text-muted">No incidents or complaints on record.</p>
               ) : (
-                <ul className="divide-y divide-border">
+                <ul className="space-y-2">
                   {data.conduct.recent.map((c) => (
-                    <li key={c.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                      <span>
-                        <span className="font-medium text-text-primary">{c.title}</span>
-                        <span className="ml-1.5 text-text-muted">{catLabel(c.category)}</span>
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <Badge tone={SEV_TONE[c.severity] ?? 'neutral'}>{c.severity}</Badge>
-                        <Badge tone={STATUS_TONE[c.status] ?? 'neutral'}>{c.status}</Badge>
-                        <span className="text-text-muted">{c.occurredOn ? fmt.date(c.occurredOn) : fmt.date(c.at)}</span>
-                      </span>
-                    </li>
+                    <ExpandableRecord
+                      key={c.id}
+                      id={c.id}
+                      summary={
+                        <>
+                          <span className="font-medium text-text-primary">{c.title}</span>
+                          <span className="text-text-muted"> · {catLabel(c.category)}</span>
+                        </>
+                      }
+                      meta={
+                        <>
+                          <Badge tone={SEV_TONE[c.severity] ?? 'neutral'}>{c.severity}</Badge>
+                          <Badge tone={STATUS_TONE[c.status] ?? 'neutral'}>{c.status}</Badge>
+                          <span className="text-text-muted">{c.occurredOn ? fmt.date(c.occurredOn) : fmt.date(c.at)}</span>
+                        </>
+                      }
+                    >
+                      <DetailBlock
+                        items={[
+                          { label: 'Description', value: c.description },
+                          { label: 'Reported by', value: c.reporterName },
+                          { label: 'Resolution note', value: c.resolutionNote },
+                          { label: 'Guardians', value: c.notifyGuardians ? 'Flagged to notify guardians' : null },
+                        ]}
+                      />
+                    </ExpandableRecord>
                   ))}
                 </ul>
               )}
@@ -487,6 +616,8 @@ function StudentBody({ row, edit, canEdit }: { row: StudentRow; edit: () => void
 function StaffBody({ row, edit, canEdit }: { row: StaffRow; edit: () => void; canEdit: boolean }) {
   const fmt = useFormat();
   const { t } = useTerm();
+  const { can } = usePermissions();
+  const canManageRoles = can('users.assign_scoped_roles') || can('users.manage_roles');
   const { data, isLoading, isError } = useStaffProfile(row.id);
 
   const header = (
@@ -556,13 +687,7 @@ function StaffBody({ row, edit, canEdit }: { row: StaffRow; edit: () => void; ca
                 { label: 'Join date', value: data.overview.joinDate ? fmt.date(data.overview.joinDate) : null },
                 {
                   label: 'Roles',
-                  value: data.overview.roleKeys.length ? (
-                    <span className="flex flex-wrap gap-1">
-                      {data.overview.roleKeys.map((k) => (
-                        <Badge key={k} tone="neutral">{k}</Badge>
-                      ))}
-                    </span>
-                  ) : null,
+                  value: data.overview.roleKeys.length ? <RoleBadges roleKeys={data.overview.roleKeys} /> : null,
                   full: true,
                 },
               ]}
@@ -616,18 +741,34 @@ function StaffBody({ row, edit, canEdit }: { row: StaffRow; edit: () => void; ca
     },
     {
       key: 'account',
-      label: 'Account',
-      content: data.account ? (
-        <FieldGrid
-          fields={[
-            { label: 'Portal user', value: data.account.institutionUserId ? 'Linked' : 'No login' },
-            { label: 'Status', value: data.account.userStatus },
-            { label: 'MFA', value: data.account.mfaEnrolled ? 'Enrolled' : 'Not enrolled' },
-            { label: 'Last sign-in', value: data.account.lastLoginAt ? fmt.date(data.account.lastLoginAt) : 'Never' },
-          ]}
-        />
-      ) : (
-        <p className="py-6 text-center text-sm text-text-muted">Account details not visible for your role.</p>
+      label: 'Portal',
+      content: (
+        <div className="flex flex-col gap-4">
+          {data.overview.institutionUserId ? (
+            <FieldGrid
+              fields={[
+                { label: 'Portal login', value: 'Linked' },
+                {
+                  label: 'Roles',
+                  value: data.overview.roleKeys.length ? (
+                    <RoleBadges roleKeys={data.overview.roleKeys} />
+                  ) : (
+                    <span className="text-danger">No roles assigned</span>
+                  ),
+                  full: true,
+                },
+              ]}
+            />
+          ) : (
+            <p className="text-sm text-text-muted">No portal login for this staff member.</p>
+          )}
+          {canEdit && canManageRoles && (
+            <p className="text-sm text-text-secondary">
+              Open <button type="button" className="font-medium text-primary underline-offset-2 hover:underline" onClick={edit}>Edit</button>{' '}
+              and scroll to <span className="font-medium">Roles &amp; access</span> to manage portal roles.
+            </p>
+          )}
+        </div>
       ),
     },
   ];
@@ -644,7 +785,7 @@ function ParentBody({ row, edit, canEdit }: { row: ParentRow; edit: () => void; 
   const fmt = useFormat();
   const { data, isLoading, isError } = useParentProfile(row.id);
 
-  const header = <PersonHeader id={row.id} name={`${row.firstName} ${row.lastName}`} sub={row.occupation ?? 'Parent / guardian'} />;
+  const header = <PersonHeader id={row.id} name={formatPersonName(row)} sub={row.occupation ?? 'Parent / guardian'} />;
   const actions = <EditButton canEdit={canEdit} edit={edit} />;
 
   if (isLoading) {
@@ -655,6 +796,15 @@ function ParentBody({ row, edit, canEdit }: { row: ParentRow; edit: () => void; 
     );
   }
 
+  const feeSummary = data?.fees?.reduce(
+    (acc, f) => ({
+      invoices: acc.invoices + f.invoices,
+      outstandingMinor: acc.outstandingMinor + f.outstandingMinor,
+      overdue: acc.overdue + f.overdue,
+    }),
+    { invoices: 0, outstandingMinor: 0, overdue: 0 },
+  );
+
   const tabs: TabItem[] = [
     {
       key: 'details',
@@ -662,14 +812,14 @@ function ParentBody({ row, edit, canEdit }: { row: ParentRow; edit: () => void; 
       content: (
         <div className="flex flex-col gap-6">
           <Section title="Details">
-            <FieldGrid fields={[{ label: 'Occupation', value: data?.details.occupation ?? row.occupation }]} />
+            <FieldGrid fields={[{ label: 'Occupation', value: data?.overview?.occupation ?? row.occupation }]} />
           </Section>
           <Section title="Contact">
             <FieldGrid
               fields={[
-                { label: 'Email', value: data?.details.email ?? row.email },
-                { label: 'Phone', value: data?.details.phone ?? row.phone },
-                { label: 'Address', value: data?.details.address ?? row.address, full: true },
+                { label: 'Email', value: data?.overview?.email ?? row.email },
+                { label: 'Phone', value: data?.overview?.phone ?? row.phone },
+                { label: 'Address', value: data?.overview?.address ?? row.address, full: true },
               ]}
             />
           </Section>
@@ -685,7 +835,7 @@ function ParentBody({ row, edit, canEdit }: { row: ParentRow; edit: () => void; 
         ) : (
           <ul className="divide-y divide-border rounded-md border border-border">
             {data.children.map((c) => (
-              <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-sm">
+              <li key={c.studentId} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-sm">
                 <span>
                   <span className="font-medium text-text-primary">{c.name}</span>
                   <span className="text-text-muted"> · {c.relationship}</span>
@@ -707,12 +857,12 @@ function ParentBody({ row, edit, canEdit }: { row: ParentRow; edit: () => void; 
     {
       key: 'fees',
       label: 'Fees',
-      content: data?.fees ? (
+      content: feeSummary ? (
         <FieldGrid
           fields={[
-            { label: 'Invoices', value: data.fees.invoices },
-            { label: 'Outstanding', value: fmt.money(data.fees.outstandingMinor) },
-            { label: 'Overdue', value: data.fees.overdue },
+            { label: 'Invoices', value: feeSummary.invoices },
+            { label: 'Outstanding', value: fmt.money(feeSummary.outstandingMinor) },
+            { label: 'Overdue', value: feeSummary.overdue },
           ]}
         />
       ) : (
@@ -731,6 +881,9 @@ function ParentBody({ row, edit, canEdit }: { row: ParentRow; edit: () => void; 
 // ── Administrator / platform user ───────────────────────────────────────────────
 function UserBody({ row, edit, canEdit }: { row: UserRow; edit: () => void; canEdit: boolean }) {
   const fmt = useFormat();
+  const { can } = usePermissions();
+  const canManage = can('users.manage');
+  const statusLabel = row.status === 'disabled' ? 'suspended' : row.status;
   const header = (
     <PersonHeader
       id={row.id}
@@ -738,7 +891,7 @@ function UserBody({ row, edit, canEdit }: { row: UserRow; edit: () => void; canE
       sub={row.email}
       trailing={
         <>
-          <Badge tone={USER_STATUS_TONE[row.status] ?? 'neutral'}>{row.status}</Badge>
+          <Badge tone={USER_STATUS_TONE[row.status] ?? 'neutral'}>{statusLabel}</Badge>
           {row.provisionedFromStaffId && (
             <Link href={`/staff?q=${encodeURIComponent(row.provisionedFromStaffName ?? '')}`}>
               <Badge tone="info">From staff · {row.provisionedFromStaffName ?? 'View record'}</Badge>
@@ -757,7 +910,13 @@ function UserBody({ row, edit, canEdit }: { row: UserRow; edit: () => void; canE
               { label: 'Full name', value: row.fullName },
               { label: 'Email', value: row.email },
               { label: 'Phone', value: row.phone },
-              { label: 'Status', value: <Badge tone={USER_STATUS_TONE[row.status] ?? 'neutral'}>{row.status}</Badge> },
+              {
+                label: 'Status',
+                value: <Badge tone={USER_STATUS_TONE[row.status] ?? 'neutral'}>{statusLabel}</Badge>,
+              },
+              ...(row.status === 'disabled' && row.disabledReason
+                ? [{ label: 'Suspension reason', value: row.disabledReason, full: true as const }]
+                : []),
               { label: 'MFA', value: row.mfaEnrolled ? 'Enrolled' : 'Not enrolled' },
               { label: 'Last sign-in', value: row.lastLoginAt ? fmt.date(row.lastLoginAt) : 'Never' },
             ]}
@@ -768,19 +927,14 @@ function UserBody({ row, edit, canEdit }: { row: UserRow; edit: () => void; canE
             fields={[
               {
                 label: 'Roles',
-                value: row.roleKeys.length ? (
-                  <span className="flex flex-wrap gap-1">
-                    {row.roleKeys.map((k) => (
-                      <Badge key={k} tone="neutral">{k}</Badge>
-                    ))}
-                  </span>
-                ) : null,
+                value: row.roleKeys.length ? <RoleBadges roleKeys={row.roleKeys} /> : null,
                 full: true,
               },
               { label: 'Campuses', value: row.campusCount },
             ]}
           />
         </Section>
+        {canManage ? <SuspendUserPanel user={row} canManage /> : null}
       </div>
     </Shell>
   );

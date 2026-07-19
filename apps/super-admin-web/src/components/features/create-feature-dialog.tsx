@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { Button, Label } from '@edrion/ui';
+import { Button, Label, Select } from '@edrion/ui';
 import { ApiClientError, useCreateFeature, type FeatureDefinitionDto } from '@edrion/api-client';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 
@@ -107,13 +107,7 @@ export function CreateFeatureDialog({ onCreated }: { onCreated?: (f: FeatureDefi
           </div>
           <div>
             <Label htmlFor="f-stage">Release stage</Label>
-            <select id="f-stage" value={releaseStage} onChange={(e) => setReleaseStage(e.target.value)} className={fieldClass}>
-              <option value="internal">Internal</option>
-              <option value="alpha">Alpha</option>
-              <option value="beta">Beta</option>
-              <option value="ga">GA</option>
-              <option value="deprecated">Deprecated</option>
-            </select>
+            <Select id="f-stage" value={releaseStage} onChange={(e) => setReleaseStage(e.target.value)} className={fieldClass} options={[{ value: 'internal', label: 'Internal' }, { value: 'alpha', label: 'Alpha' }, { value: 'beta', label: 'Beta' }, { value: 'ga', label: 'GA' }, { value: 'deprecated', label: 'Deprecated' }]} />
           </div>
         </div>
         <label className="flex items-center gap-2 text-sm text-text-secondary">

@@ -4,6 +4,7 @@ import { Star, Trash2 } from 'lucide-react';
 import { Badge, Button, Combobox, Drawer, Select, Skeleton } from '@edrion/ui';
 import { usePermissions } from '@/lib/permissions';
 import { useGuardianMutations, useGuardians, useParentOptions } from '@/lib/people';
+import { formatPersonName } from '@/lib/person-name';
 import { PortalClientError } from '@/lib/portal-client';
 
 const RELATIONSHIPS = [
@@ -85,9 +86,9 @@ export function StudentGuardiansDrawer({
               aria-label="Parent"
               options={available.map((p) => ({
                 value: p.id,
-                label: `${p.firstName} ${p.lastName}`,
+                label: formatPersonName(p),
                 hint: p.phone ?? p.email ?? undefined,
-                keywords: [p.email, p.phone].filter((v): v is string => !!v),
+                keywords: [p.firstName, p.middleName ?? '', p.lastName, p.email, p.phone].filter((v): v is string => !!v),
               }))}
             />
             <div className="flex items-center gap-2">

@@ -47,7 +47,7 @@ export const apiEnvSchema = z.object({
   API_BASE_URL: z.string().url().default('http://localhost:3001'),
   API_CORS_ORIGINS: z
     .string()
-    .default('http://localhost:3000,http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:3005')
+    .default('http://localhost:3000,http://localhost:3002,http://localhost:3003,http://localhost:3005')
     .transform((s) => s.split(',').map((o) => o.trim())),
   SESSION_COOKIE_SECRET: z.string().min(16, 'SESSION_COOKIE_SECRET must be at least 16 chars'),
   /**

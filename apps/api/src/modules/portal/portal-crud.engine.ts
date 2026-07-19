@@ -52,6 +52,7 @@ export interface CrudColumns {
   version: PgColumn;
   createdAt: PgColumn;
   status?: PgColumn;
+  kind?: PgColumn;
 }
 
 export interface CrudConfig {
@@ -96,6 +97,7 @@ export interface CrudListQuery {
   sortDir: 'asc' | 'desc';
   search?: string;
   status?: string;
+  kind?: string;
 }
 
 /**
@@ -123,6 +125,7 @@ export class PortalCrudEngine {
       if (inScope) conds.push(inScope);
     }
     if (q.status && c.status) conds.push(eq(c.status, q.status));
+    if (q.kind && c.kind) conds.push(eq(c.kind, q.kind));
     if (q.search && cfg.search.length > 0) {
       const s = or(...cfg.search.map((col) => ilike(col, `%${q.search}%`)));
       if (s) conds.push(s);

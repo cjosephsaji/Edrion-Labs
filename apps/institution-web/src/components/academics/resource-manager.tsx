@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import {
   Button,
@@ -9,6 +9,7 @@ import {
   PermissionDenied,
   type Column,
   type DetailSection,
+  Select,
 } from '@edrion/ui';
 import { Topbar } from '@/components/app-shell/topbar';
 import { RecordDetailDialog } from '@/components/common/record-detail-dialog';
@@ -16,7 +17,7 @@ import { usePermissions } from '@/lib/permissions';
 import { useScope } from '@/lib/scope';
 import { useAcademicList, useAcademicMutations, type ListParams } from '@/lib/academics';
 import { formatPortalError } from '@/lib/portal-client';
-import { ResourceForm, type FieldDef } from './resource-form';
+import { ResourceForm, type FieldDef, type ResourceFormExtraApi } from './resource-form';
 
 /** A toolbar facet dropdown; the chosen value is sent to the API as an extra list query param. */
 export interface FilterDef {
@@ -72,6 +73,8 @@ export interface ResourceManagerProps<TRow extends { id: string; version: number
   fields: FieldDef[];
   /** Extra fields shown only in the create drawer (e.g. createLogin, roleKeys on staff). */
   createFields?: FieldDef[];
+  /** Initial form values when creating a row (merged into the create drawer). */
+  createInitialValues?: Record<string, unknown>;
   defaultSortBy?: string;
   defaultSortDir?: 'asc' | 'desc';
   searchable?: boolean;
@@ -117,12 +120,45 @@ export interface ResourceManagerProps<TRow extends { id: string; version: number
     edit: () => void;
     canEdit: boolean;
   }) => React.ReactNode;
+  /**
+   * When set, "New" navigates here instead of opening the create drawer (e.g. `/exams/new`).
+   */
+  createHref?: string;
+  /**
+   * When set, row Edit navigates here instead of opening the edit drawer.
+   */
+  getEditHref?: (row: TRow) => string;
   /** Optional block below the standard fields in the edit drawer (e.g. guardians, role permissions). */
-  renderFormExtra?: (ctx: { row: TRow; mode: 'edit' }) => React.ReactNode;
+  renderFormExtra?: (ctx: { row: TRow; mode: 'edit' } & ResourceFormExtraApi) => React.ReactNode;
+  /** Hint shown under the edit drawer title (e.g. scroll for portal access). */
+  editFormDescription?: string;
+  /** Wider drawer for forms with large embedded sections. */
+  editDrawerClassName?: string;
+  /** Optional block below the standard fields in the create drawer. */
+  renderCreateExtra?: (api: ResourceFormExtraApi) => React.ReactNode;
+  /**
+   * When set, replaces the default POST-on-save for creates. Use to chain extra writes (e.g.
+   * subject + curriculum placement) behind a single Save button.
+   */
+  onSubmitCreate?: (
+    body: Record<string, unknown>,
+    mutations: { create: MutationLike<Record<string, unknown>> },
+  ) => Promise<void>;
   /** Rich content below detail sections in the row-click popup. */
   renderDetailExtra?: (ctx: { row: TRow }) => React.ReactNode;
   /** Extra header actions in the row-click popup (publish, mark read, …). */
   detailActions?: (ctx: { row: TRow }) => React.ReactNode;
+  /**
+   * When set, replaces the default PATCH-on-save for edits. Use to chain extra writes (e.g. user
+   * profile + roles/access) behind a single Save button.
+   */
+  onSubmitUpdate?: (
+    row: TRow,
+    body: Record<string, unknown>,
+    mutations: { update: MutationLike<{ id: string; body: Record<string, unknown> }> },
+  ) => Promise<void>;
+  /** When false, create-login validation does not require roleKeys (e.g. parents use a fixed role). */
+  requireRoleKeysOnCreateLogin?: boolean;
   disableDetail?: boolean;
 }
 
@@ -176,6 +212,7 @@ const PAGE_SIZE = 20;
 export function ResourceManager<TRow extends { id: string; version: number }>(props: ResourceManagerProps<TRow>) {
   const { can } = usePermissions();
   const { activeLabel } = useScope();
+  const router = useRouter();
   const perms = props.permissions ?? ACADEMICS_PERMISSIONS;
   const useList = props.useList ?? (useAcademicList as unknown as ResourceListHook);
   const useMutations = props.useMutations ?? (useAcademicMutations as unknown as ResourceMutationsHook);
@@ -241,8 +278,31 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
 
   async function submitCreate(body: Record<string, unknown>) {
     setFormError(null);
+    if (body.createLogin === true) {
+      const email = typeof body.email === 'string' ? body.email.trim() : '';
+      const roles = Array.isArray(body.roleKeys) ? body.roleKeys : [];
+      if (!email) {
+        setFormError('Email is required to create a portal login.');
+        return;
+      }
+      if ((props.requireRoleKeysOnCreateLogin ?? true) && roles.length === 0) {
+        setFormError('Select at least one portal role.');
+        return;
+      }
+    }
+    if ('roleKeys' in body && !('createLogin' in body)) {
+      const roles = Array.isArray(body.roleKeys) ? body.roleKeys : [];
+      if (roles.length === 0) {
+        setFormError('Select at least one role.');
+        return;
+      }
+    }
     try {
-      await create.mutateAsync(body);
+      if (props.onSubmitCreate) {
+        await props.onSubmitCreate(body, { create });
+      } else {
+        await create.mutateAsync(body);
+      }
       setCreating(false);
     } catch (err) {
       setFormError(errorMessage(err));
@@ -253,7 +313,11 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
     if (!editing) return;
     setFormError(null);
     try {
-      await update.mutateAsync({ id: editing.id, body: { ...body, version: editing.version } });
+      if (props.onSubmitUpdate) {
+        await props.onSubmitUpdate(editing, body, { update });
+      } else {
+        await update.mutateAsync({ id: editing.id, body: { ...body, version: editing.version } });
+      }
       setEditing(null);
     } catch (err) {
       setFormError(errorMessage(err));
@@ -283,6 +347,10 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
             <Button
               size="sm"
               onClick={() => {
+                if (props.createHref) {
+                  router.push(props.createHref);
+                  return;
+                }
                 setFormError(null);
                 setCreating(true);
               }}
@@ -301,7 +369,7 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
               Viewing <span className="font-medium text-text-primary">{activeLabel}</span>
             </p>
             {props.filters?.map((f) => (
-              <select
+              <Select
                 key={f.key}
                 aria-label={f.label}
                 value={filterValues[f.key] ?? ''}
@@ -311,15 +379,9 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
                   else setInternalFilterValues((prev) => ({ ...prev, [f.key]: v }));
                   setPage(1);
                 }}
-                className="h-9 rounded-md border border-border bg-surface px-2.5 text-sm text-text-primary outline-none focus:border-border-strong"
-              >
-                <option value="">{f.label}</option>
-                {f.options.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+                className="h-9 w-auto min-w-[8rem]"
+                options={[{ value: '', label: f.label }, ...f.options]}
+              />
             ))}
           </div>
           {props.searchable !== false && (
@@ -331,7 +393,7 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
                   setSearch(e.target.value);
                   setPage(1);
                 }}
-                placeholder={`Search ${props.title.toLowerCase()}…`}
+                placeholder={`Search ${props.title}…`}
                 className="h-9 w-full rounded-md border border-border bg-surface pl-8 pr-3 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-border-strong"
               />
             </div>
@@ -371,7 +433,17 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
                   <div className="flex items-center justify-end gap-1">
                     {props.extraActions?.(row)}
                     {canUpdate && (
-                      <IconButton label="Edit" onClick={() => { setFormError(null); setEditing(row); }}>
+                      <IconButton
+                        label="Edit"
+                        onClick={() => {
+                          if (props.getEditHref) {
+                            router.push(props.getEditHref(row));
+                            return;
+                          }
+                          setFormError(null);
+                          setEditing(row);
+                        }}
+                      >
                         <Pencil className="h-4 w-4" />
                       </IconButton>
                     )}
@@ -392,24 +464,29 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
         open={creating}
         title={`New ${props.noun}`}
         fields={[...props.fields, ...(props.createFields ?? [])]}
-        initial={{ createLogin: true, roleKeys: [] }}
+        initial={{ ...(props.createInitialValues ?? {}), createLogin: false, roleKeys: [] }}
         submitting={create.isPending}
         error={formError}
         onSubmit={submitCreate}
         onClose={() => setCreating(false)}
+        extra={props.renderCreateExtra ? (api) => props.renderCreateExtra!(api) : undefined}
       />
 
       {/* Edit */}
       <ResourceForm
         open={!!editing}
         title={`Edit ${props.noun}`}
+        description={props.editFormDescription}
+        drawerClassName={props.editDrawerClassName}
         fields={props.fields}
         initial={editing ? props.toFormValues(editing) : {}}
         submitting={update.isPending}
         error={formError}
         onSubmit={submitUpdate}
         onClose={() => setEditing(null)}
-        extra={editing && props.renderFormExtra ? props.renderFormExtra({ row: editing, mode: 'edit' }) : undefined}
+        extra={editing && props.renderFormExtra
+          ? (api) => props.renderFormExtra!({ row: editing, mode: 'edit', ...api })
+          : undefined}
       />
 
       {/* Read-only detail (row click) — custom popup when provided, else the sliding panel. */}
@@ -423,6 +500,10 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
               if (!canUpdate || !viewing) return;
               const row = viewing;
               setViewing(null);
+              if (props.getEditHref) {
+                router.push(props.getEditHref(row));
+                return;
+              }
               setFormError(null);
               setEditing(row);
             },
@@ -449,6 +530,10 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
               ? () => {
                   const row = viewing;
                   setViewing(null);
+                  if (props.getEditHref) {
+                    router.push(props.getEditHref(row));
+                    return;
+                  }
                   setFormError(null);
                   setEditing(row);
                 }

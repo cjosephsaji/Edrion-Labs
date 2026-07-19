@@ -6,7 +6,6 @@ import {
   asc,
   count,
   eq,
-  ilike,
   inArray,
   isNull,
   or,
@@ -27,6 +26,7 @@ import { CurrentInstitutionPrincipal, CurrentScope, RequireInstitutionPermission
 import type { ListResult } from './academics.service';
 import type { PortalActionContext } from './portal-action-context';
 import { studentSearchCondition } from './student-search';
+import { personSearchCondition } from './person-search';
 
 // Picker/directory batch loads request pageSize=200 (students-basic / staff-basic), so this caps
 // higher than the shared 100 default. Kept local so other lists keep the normal ceiling.
@@ -87,8 +87,13 @@ export class DirectoryService {
       if (inScope) conds.push(inScope);
     }
     if (q.search) {
-      const s = or(ilike(t.firstName, `%${q.search}%`), ilike(t.lastName, `%${q.search}%`), ilike(t.employeeNo, `%${q.search}%`));
-      if (s) conds.push(s);
+      conds.push(
+        personSearchCondition(
+          { firstName: t.firstName, middleName: t.middleName, lastName: t.lastName },
+          q.search,
+          [t.employeeNo],
+        ),
+      );
     }
     const where = and(...conds);
     const items = await this.db

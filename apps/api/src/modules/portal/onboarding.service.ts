@@ -3,6 +3,7 @@ import { InstitutionStatus, OnboardingStatus } from '@edrion/shared-types';
 import type { AuditWriter, AuditEventInput } from '@edrion/audit';
 import { AUDIT_WRITER } from '../../common/tokens';
 import { OnboardingRepository, type OnboardingSignals } from './onboarding.repository';
+import { ProgrammeStructureService } from './programme-structure.service';
 import { basePortalAudit, type PortalActionContext } from './portal-action-context';
 
 const MODULE = 'portal-onboarding';
@@ -10,9 +11,8 @@ const MODULE = 'portal-onboarding';
 /** The onboarding journey, in order. Every step is completed by entering real data in the wizard. */
 const STEPS: { key: keyof OnboardingSignals; label: string; required: number }[] = [
   { key: 'academicYears', label: 'Academic Years', required: 1 },
-  { key: 'departments', label: 'Departments', required: 0 },
-  { key: 'academicTerms', label: 'Terms', required: 0 },
-  { key: 'subjects', label: 'Subjects', required: 1 },
+  { key: 'programmeStructures', label: 'Programmes', required: 1 },
+  { key: 'subjects', label: 'Curriculum', required: 1 },
   { key: 'students', label: 'Students', required: 1 },
   { key: 'staff', label: 'Staff', required: 1 },
 ];
@@ -50,6 +50,7 @@ export interface OnboardingSummary {
 export class OnboardingService {
   constructor(
     private readonly repo: OnboardingRepository,
+    private readonly programmeStructure: ProgrammeStructureService,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
   ) {}
 
@@ -82,6 +83,7 @@ export class OnboardingService {
     }
 
     const meta = await this.repo.goLive(ctx.principal.institutionId);
+    await this.programmeStructure.scheduleAllYears(ctx);
     await this.write(ctx, 'onboarding.completed', 'institution', ctx.principal.institutionId, {
       previousState: { status: summary.institution.status, onboardingStatus: summary.institution.onboardingStatus },
       newState: { status: meta?.status, onboardingStatus: meta?.onboardingStatus },

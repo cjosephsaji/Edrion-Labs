@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { VisualGraphNode, VisualNodeType } from '@edrion/schemas';
+import { Select } from '@edrion/ui';
 import { PillButton } from '@/components/ui/pill-button';
 import { X } from 'lucide-react';
 
@@ -78,17 +79,12 @@ export function EditNodeDialog({ node, onSave, onClose }: EditNodeDialogProps) {
 
         <label className="mt-3 block text-xs font-semibold uppercase tracking-[0.12em] text-st-faint">
           Type
-          <select
+          <Select
             value={type}
             onChange={(e) => setType(e.target.value as VisualNodeType)}
-            className="mt-1 w-full rounded-xl border border-st-bd1 bg-st-card px-3 py-2 text-sm text-st-ink"
-          >
-            {EDITABLE_TYPES.map((entry) => (
-              <option key={entry} value={entry}>
-                {entry.replace(/_/g, ' ')}
-              </option>
-            ))}
-          </select>
+            className="mt-1 rounded-xl"
+            options={EDITABLE_TYPES.map((entry) => ({ value: entry, label: entry.replace(/_/g, ' ') }))}
+          />
         </label>
 
         <div className="mt-5 flex gap-2">

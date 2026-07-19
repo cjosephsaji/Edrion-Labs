@@ -1,14 +1,17 @@
 import type { QuestionType } from '@edrion/schemas';
+import { AUTO_GRADABLE_TYPES } from '@edrion/schemas';
 
 export interface GradeableQuestion {
   qtype: string;
   correctKey: string | null;
   marks: number;
+  config?: Record<string, unknown> | null;
 }
 
 export interface GradeableAnswer {
   choiceKey: string | null;
   answerText: string | null;
+  answerJson?: Record<string, unknown> | null;
 }
 
 export interface ObjectiveGradeResult {
@@ -40,6 +43,36 @@ function numericMatch(given: string | null, expected: string | null, tolerance =
   return Math.abs(a - b) <= tolerance;
 }
 
+function matchingMapsEqual(
+  given: Record<string, string> | null | undefined,
+  expected: Record<string, string> | null | undefined,
+): boolean {
+  if (!given || !expected) return false;
+  const gKeys = Object.keys(given);
+  const eKeys = Object.keys(expected);
+  if (gKeys.length !== eKeys.length) return false;
+  for (const k of eKeys) {
+    if ((given[k] ?? '').trim() !== (expected[k] ?? '').trim()) return false;
+  }
+  return true;
+}
+
+function resolveMatchingAnswerKey(question: GradeableQuestion): Record<string, string> | null {
+  const cfg = question.config?.matching as { answerKey?: Record<string, string> } | undefined;
+  if (cfg?.answerKey && typeof cfg.answerKey === 'object') return cfg.answerKey;
+  if (question.correctKey) {
+    try {
+      const parsed = JSON.parse(question.correctKey) as unknown;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Record<string, string>;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  return null;
+}
+
 /** Deterministic auto-grader for objective question types. */
 export function gradeObjective(
   question: GradeableQuestion,
@@ -68,12 +101,32 @@ export function gradeObjective(
       return { autoCorrect: correct, awardedMarks: correct ? marks : 0, needsReview: false };
     }
     case 'numeric': {
-      const correct = numericMatch(answer.answerText, question.correctKey);
+      const tol =
+        typeof (question.config?.numeric as { tolerance?: number } | undefined)?.tolerance === 'number'
+          ? (question.config!.numeric as { tolerance: number }).tolerance
+          : 0.01;
+      const correct = numericMatch(answer.answerText, question.correctKey, tol);
+      return { autoCorrect: correct, awardedMarks: correct ? marks : 0, needsReview: false };
+    }
+    case 'matching': {
+      const expected = resolveMatchingAnswerKey(question);
+      const given =
+        (answer.answerJson?.matches as Record<string, string> | undefined) ??
+        (() => {
+          if (!answer.answerText) return null;
+          try {
+            return JSON.parse(answer.answerText) as Record<string, string>;
+          } catch {
+            return null;
+          }
+        })();
+      const correct = matchingMapsEqual(given, expected);
       return { autoCorrect: correct, awardedMarks: correct ? marks : 0, needsReview: false };
     }
     case 'short_answer':
     case 'long_answer':
-    case 'matching':
+    case 'file_upload':
+    case 'code':
     default:
       return { autoCorrect: false, awardedMarks: 0, needsReview: true };
   }
@@ -81,5 +134,5 @@ export function gradeObjective(
 
 /** Whether a question type can be auto-graded deterministically. */
 export function isAutoGradable(qtype: string): boolean {
-  return ['mcq_single', 'mcq_multi', 'true_false', 'numeric', 'fill_blank'].includes(qtype);
+  return AUTO_GRADABLE_TYPES.has(qtype);
 }

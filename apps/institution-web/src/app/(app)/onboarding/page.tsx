@@ -1,12 +1,13 @@
 'use client';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Check, ChevronRight, PartyPopper, Plus, Rocket } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ChevronRight, CircleAlert, Info, PartyPopper, Plus, Rocket } from 'lucide-react';
 import {
   Badge,
   Button,
   Card,
   CardContent,
+  Checkbox,
   ConfirmDialog,
   ErrorState,
   Input,
@@ -17,18 +18,27 @@ import {
   cn,
 } from '@edrion/ui';
 import type { TermKey } from '@edrion/shared-types';
+import { SUBJECT_KIND_OPTIONS } from '@edrion/schemas';
 import { Topbar } from '@/components/app-shell/topbar';
-import { useAcademicYearOptions } from '@/lib/academics';
+import { RoleMultiSelect } from '@/components/admin/role-multi-select';
+import { useAcademicYearOptions, useClassOptions, useDepartmentOptions, useGradeLevelOptions, useProgrammeLevelSelectOptions } from '@/lib/academics';
 import { isEndAfterStart, maxStartDate, minEndDate } from '@/lib/date-range';
 import { usePermissions } from '@/lib/permissions';
 import { useInstitutionCountry } from '@/lib/settings';
-import { useCompleteOnboarding, useOnboarding, useStepCreate, useStepList } from '@/lib/onboarding';
+import { ProgrammeBuilder } from '@/components/academics/programme-builder';
+import { CreatedProgrammesPanel } from '@/components/academics/created-programmes-panel';
+import { CurriculumGrid } from '@/components/academics/curriculum-grid';
+import { useCreatedProgrammeStructures } from '@/lib/academics';
+import { useCompleteOnboarding, useOnboarding, useOnboardingStepSubmit, useStepList } from '@/lib/onboarding';
 import type { OnboardingStep, OnboardingSummary } from '@/lib/onboarding-types';
-import { formatPortalError } from '@/lib/portal-client';
+import { formatPortalError, usePortalClient } from '@/lib/portal-client';
 import { formatPersonName } from '@/lib/person-name';
+import { useInstitutionProfile } from '@/lib/settings';
 import { useTerm } from '@/lib/term';
+import { useScope } from '@/lib/scope';
+import { effectivePortalLogin, hasPortalLoginEmail, portalLoginAfterEmailChange } from '@/lib/portal-login-email';
 
-type FieldType = 'text' | 'date' | 'email' | 'phone' | 'select';
+type FieldType = 'text' | 'date' | 'email' | 'phone' | 'select' | 'checkbox' | 'number' | 'textarea';
 interface FieldCfg {
   name: string;
   label: string;
@@ -36,6 +46,8 @@ interface FieldCfg {
   required?: boolean;
   placeholder?: string;
   options?: { value: string; label: string }[];
+  help?: string;
+  defaultValue?: string;
 }
 interface StepCfg {
   endpoint: string;
@@ -46,58 +58,170 @@ interface StepCfg {
   rowDetail?: (row: Record<string, unknown>) => string | null;
 }
 
+type FormValues = Record<string, string | boolean | string[]>;
+
+const ACADEMIC_YEAR_STATUS_OPTIONS = [
+  { value: 'planning', label: 'Planning' },
+  { value: 'active', label: 'Active' },
+  { value: 'archived', label: 'Archived' },
+];
+
+const TERM_KIND_OPTIONS = [
+  { value: 'term', label: 'Term' },
+  { value: 'semester', label: 'Semester' },
+  { value: 'trimester', label: 'Trimester' },
+  { value: 'quarter', label: 'Quarter' },
+];
+
+const SEMESTER_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
+  value: String(i + 1),
+  label: String(i + 1),
+}));
+
+const STUDENT_STATUS_OPTIONS = [
+  { value: 'enrolled', label: 'Enrolled' },
+  { value: 'inactive', label: 'Inactive' },
+  { value: 'graduated', label: 'Graduated' },
+  { value: 'transferred', label: 'Transferred' },
+  { value: 'alumni', label: 'Alumni' },
+];
+
+const GENDER_OPTIONS = [
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+  { value: 'other', label: 'Other' },
+];
+
+const STAFF_EMPLOYMENT_OPTIONS = [
+  { value: 'full_time', label: 'Full-time' },
+  { value: 'part_time', label: 'Part-time' },
+  { value: 'contract', label: 'Contract' },
+  { value: 'visiting', label: 'Visiting' },
+];
+
+const STAFF_STATUS_OPTIONS = [
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+  { value: 'on_leave', label: 'On leave' },
+];
+
 /** Per-step inline form config, keyed by the summary step key. */
 const STEP_CFG: Record<string, StepCfg> = {
   academicYears: {
     endpoint: 'academics/academic-years',
     itemLabel: 'academic year',
-    blurb: 'Add your first academic year — you can add more later from Academics.',
+    blurb: 'Add your first academic year — set its status and whether it is the current year.',
     fields: [
       { name: 'name', label: 'Name', type: 'text', required: true, placeholder: 'e.g. 2026–2027' },
       { name: 'startDate', label: 'Start date', type: 'date', required: true },
       { name: 'endDate', label: 'End date', type: 'date', required: true },
+      {
+        name: 'status',
+        label: 'Status',
+        type: 'select',
+        required: true,
+        options: ACADEMIC_YEAR_STATUS_OPTIONS,
+        defaultValue: 'planning',
+      },
+      {
+        name: 'isCurrent',
+        label: 'Mark as the current year',
+        type: 'checkbox',
+        help: 'Only one year can be current per scope.',
+      },
     ],
     rowLabel: (r) => String(r.name ?? ''),
     rowDetail: (r) => {
+      const parts: string[] = [];
       const start = r.startDate as string | undefined;
       const end = r.endDate as string | undefined;
-      return start && end ? `${start} → ${end}` : null;
+      if (start && end) parts.push(`${start} → ${end}`);
+      const status = r.status as string | undefined;
+      if (status) parts.push(status.charAt(0).toUpperCase() + status.slice(1));
+      if (r.isCurrent) parts.push('Current');
+      return parts.length ? parts.join(' · ') : null;
     },
   },
   departments: {
     endpoint: 'academics/departments',
     itemLabel: 'department',
-    blurb: 'Group subjects under departments. This step is optional.',
+    blurb: 'Add at least one department — programmes, subjects, and terms are organised under departments.',
     fields: [
       { name: 'name', label: 'Name', type: 'text', required: true, placeholder: 'e.g. Science' },
       { name: 'code', label: 'Code', type: 'text', placeholder: 'e.g. SCI (optional)' },
     ],
     rowLabel: (r) => `${r.name}${r.code ? ` (${r.code})` : ''}`,
   },
+  programmeLevels: {
+    endpoint: 'academics/department-grade-levels',
+    itemLabel: 'programme year',
+    blurb: 'Link a year level to a department so terms and subjects know which programme they belong to.',
+    fields: [
+      { name: 'departmentId', label: 'Department', type: 'select', required: true, options: [] },
+      { name: 'name', label: 'Year name', type: 'text', required: true, placeholder: 'e.g. Year 1' },
+      { name: 'sequence', label: 'Sequence', type: 'number', required: true, placeholder: '1', help: 'Position within the department (1 = first year).' },
+    ],
+    rowLabel: (r) => [r.departmentName, r.gradeLevelName].filter(Boolean).join(' · ') || String(r.name ?? ''),
+    rowDetail: (r) => (r.sequence != null ? `Seq. ${r.sequence}` : null),
+  },
   academicTerms: {
     endpoint: 'academics/academic-terms',
     itemLabel: 'term',
-    blurb: 'Add terms or semesters within an academic year. Optional for now.',
+    blurb: 'Add terms or semesters — pick the academic year, programme year, and sequence so they slot into the structure.',
     fields: [
+      { name: 'programmeLevelId', label: 'Programme', type: 'select', required: true, options: [] },
       { name: 'academicYearId', label: 'Academic year', type: 'select', required: true, options: [] },
       { name: 'name', label: 'Name', type: 'text', required: true, placeholder: 'e.g. Term 1' },
+      {
+        name: 'kind',
+        label: 'Kind',
+        type: 'select',
+        required: true,
+        options: TERM_KIND_OPTIONS,
+        defaultValue: 'semester',
+      },
+      { name: 'sequence', label: 'Sequence', type: 'number', required: true, placeholder: '1', help: 'Position within the programme year (1 = first).' },
       { name: 'startDate', label: 'Start date', type: 'date', required: true },
       { name: 'endDate', label: 'End date', type: 'date', required: true },
+      {
+        name: 'status',
+        label: 'Status',
+        type: 'select',
+        required: true,
+        options: ACADEMIC_YEAR_STATUS_OPTIONS,
+        defaultValue: 'active',
+      },
     ],
     rowLabel: (r) => String(r.name ?? ''),
     rowDetail: (r) => {
+      const parts: string[] = [];
+      const lineage = [r.departmentName, r.gradeLevelName].filter(Boolean).join(' · ');
+      if (lineage) parts.push(lineage);
+      if (r.academicYearName) parts.push(String(r.academicYearName));
       const start = r.startDate as string | undefined;
       const end = r.endDate as string | undefined;
-      return start && end ? `${start} → ${end}` : null;
+      if (start && end) parts.push(`${start} → ${end}`);
+      return parts.length ? parts.join(' · ') : null;
     },
   },
   subjects: {
     endpoint: 'academics/subjects',
     itemLabel: 'subject',
-    blurb: 'Add at least one subject your institution teaches.',
+    blurb: 'Add subjects and place them in a programme year and term so they appear in the curriculum.',
     fields: [
       { name: 'name', label: 'Name', type: 'text', required: true, placeholder: 'e.g. Mathematics' },
       { name: 'code', label: 'Code', type: 'text', placeholder: 'e.g. MATH (optional)' },
+      {
+        name: 'kind',
+        label: 'Type',
+        type: 'select',
+        required: true,
+        options: SUBJECT_KIND_OPTIONS,
+        defaultValue: 'core',
+      },
+      { name: 'departmentId', label: 'Owning department', type: 'select', required: false, options: [] },
+      { name: 'programmeLevelId', label: 'Taught in programme', type: 'select', required: true, options: [] },
+      { name: 'semesterSequence', label: 'Term sequence', type: 'select', required: true, options: SEMESTER_OPTIONS, defaultValue: '1' },
     ],
     rowLabel: (r) => `${r.name}${r.code ? ` (${r.code})` : ''}`,
   },
@@ -106,53 +230,194 @@ const STEP_CFG: Record<string, StepCfg> = {
     itemLabel: 'student',
     blurb: 'Add your first student to unlock the student directory.',
     fields: [
-      { name: 'admissionNo', label: 'Admission no.', type: 'text', required: true },
+      { name: 'admissionNo', label: 'Admission no.', type: 'text', required: true, placeholder: 'e.g. ADM-1024' },
       { name: 'firstName', label: 'First name', type: 'text', required: true },
       { name: 'middleName', label: 'Middle name', type: 'text', placeholder: 'Optional' },
       { name: 'lastName', label: 'Last name', type: 'text', required: true },
-      { name: 'email', label: 'Email', type: 'email' },
+      {
+        name: 'status',
+        label: 'Status',
+        type: 'select',
+        required: true,
+        options: STUDENT_STATUS_OPTIONS,
+        defaultValue: 'enrolled',
+      },
+      {
+        name: 'gender',
+        label: 'Gender',
+        type: 'select',
+        options: GENDER_OPTIONS,
+      },
+      { name: 'dateOfBirth', label: 'Date of birth', type: 'date' },
+      { name: 'gradeLevelId', label: 'Year', type: 'select', options: [] },
+      { name: 'classId', label: 'Class', type: 'select', options: [] },
+      { name: 'rollNo', label: 'Roll no.', type: 'text', placeholder: 'Optional' },
+      { name: 'enrollmentDate', label: 'Enrolment date', type: 'date' },
+      { name: 'email', label: 'Email', type: 'email', placeholder: 'Optional' },
       { name: 'phone', label: 'Phone', type: 'phone' },
+      { name: 'address', label: 'Address', type: 'textarea', placeholder: 'Optional' },
     ],
     rowLabel: (r) => formatPersonName({ firstName: String(r.firstName ?? ''), middleName: r.middleName as string | undefined, lastName: String(r.lastName ?? '') }),
   },
   staff: {
     endpoint: 'people/staff',
     itemLabel: 'staff member',
-    blurb: 'Add at least one staff member — teachers, administrators, and support staff all live here.',
+    blurb: 'Add staff and assign portal roles when they need a login.',
     fields: [
       { name: 'firstName', label: 'First name', type: 'text', required: true },
       { name: 'middleName', label: 'Middle name', type: 'text', placeholder: 'Optional' },
       { name: 'lastName', label: 'Last name', type: 'text', required: true },
+      { name: 'employeeNo', label: 'Employee no.', type: 'text', placeholder: 'e.g. EMP-512 (optional)' },
+      {
+        name: 'departmentId',
+        label: 'Department',
+        type: 'select',
+        help: 'Optional — assign HODs and teachers to a programme department.',
+      },
       { name: 'designation', label: 'Designation', type: 'text', placeholder: 'e.g. Teacher, Accountant (optional)' },
-      { name: 'email', label: 'Email', type: 'email' },
+      {
+        name: 'employmentType',
+        label: 'Employment',
+        type: 'select',
+        required: true,
+        options: STAFF_EMPLOYMENT_OPTIONS,
+        defaultValue: 'full_time',
+      },
+      {
+        name: 'status',
+        label: 'Status',
+        type: 'select',
+        required: true,
+        options: STAFF_STATUS_OPTIONS,
+        defaultValue: 'active',
+      },
+      { name: 'joinDate', label: 'Join date', type: 'date' },
+      { name: 'email', label: 'Email', type: 'email', placeholder: 'Optional' },
       { name: 'phone', label: 'Phone', type: 'phone' },
+      {
+        name: 'createLogin',
+        label: 'Create portal login',
+        type: 'checkbox',
+        help: 'Turned on automatically when you add an email; you can turn it off.',
+      },
     ],
     rowLabel: (r) => formatPersonName({ firstName: String(r.firstName ?? ''), middleName: r.middleName as string | undefined, lastName: String(r.lastName ?? '') }),
+    rowDetail: (r) => (r.departmentName ? String(r.departmentName) : null),
   },
 };
 
-function hasDraftInput(values: Record<string, string>): boolean {
-  return Object.values(values).some((v) => v.trim() !== '');
+function emptyValues(fields: FieldCfg[]): FormValues {
+  const v: FormValues = {};
+  for (const f of fields) {
+    if (f.type === 'checkbox') v[f.name] = false;
+    else if (f.type === 'select') v[f.name] = f.defaultValue ?? '';
+    else if (f.type === 'number') v[f.name] = f.defaultValue ?? '1';
+    else v[f.name] = '';
+  }
+  v.roleKeys = [];
+  v.campusIds = [];
+  return v;
+}
+
+function fieldString(values: FormValues, name: string): string {
+  const v = values[name];
+  return typeof v === 'string' ? v : '';
+}
+
+function fieldStringArray(values: FormValues, name: string): string[] {
+  const v = values[name];
+  return Array.isArray(v) ? v : [];
+}
+
+function hasDraftInput(values: FormValues, fields: FieldCfg[]): boolean {
+  if (fieldStringArray(values, 'roleKeys').length > 0) return true;
+  if (fieldStringArray(values, 'campusIds').length > 0) return true;
+  return fields.some((f) => {
+    const v = values[f.name];
+    if (f.type === 'checkbox') return v === true && f.name !== 'createLogin';
+    if (f.type === 'select' && f.defaultValue && v === f.defaultValue) return false;
+    if (typeof v === 'string') return v.trim() !== '';
+    return false;
+  });
+}
+
+function OnboardingNotice({
+  tone,
+  children,
+  className,
+  ...props
+}: {
+  tone: 'warning' | 'info' | 'danger';
+  children: React.ReactNode;
+  className?: string;
+} & React.ComponentPropsWithoutRef<'div'>) {
+  const Icon = tone === 'info' ? Info : CircleAlert;
+  return (
+    <div
+      {...props}
+      className={cn(
+        'flex gap-3 rounded-lg px-3.5 py-3',
+        tone === 'warning' && 'bg-warning-soft/70',
+        tone === 'info' && 'bg-info-soft/70',
+        tone === 'danger' && 'bg-danger-soft/70',
+        className,
+      )}
+    >
+      <Icon
+        className={cn(
+          'mt-0.5 h-4 w-4 shrink-0',
+          tone === 'warning' && 'text-warning',
+          tone === 'info' && 'text-info',
+          tone === 'danger' && 'text-danger',
+        )}
+        aria-hidden
+      />
+      <p className="text-sm leading-relaxed text-text-primary">{children}</p>
+    </div>
+  );
 }
 
 /** Step-specific defaults when posting to a module create endpoint. */
-function buildStepCreateBody(stepKey: string, fields: FieldCfg[], values: Record<string, string>): Record<string, unknown> {
+function buildStepCreateBody(stepKey: string, fields: FieldCfg[], values: FormValues): Record<string, unknown> {
   const body: Record<string, unknown> = {};
   for (const f of fields) {
-    const v = (values[f.name] ?? '').trim();
-    if (v) body[f.name] = v;
+    if (f.name === 'roleKeys' || f.name === 'campusIds') continue;
+    const v = values[f.name];
+    if (f.type === 'checkbox') {
+      body[f.name] = v === true;
+    } else if (f.type === 'number') {
+      const s = typeof v === 'string' ? v.trim() : '';
+      if (s) body[f.name] = Number(s);
+      else if (f.defaultValue) body[f.name] = Number(f.defaultValue);
+    } else if (f.type === 'select') {
+      const s = typeof v === 'string' ? v.trim() : '';
+      if (s || f.defaultValue) body[f.name] = s || f.defaultValue;
+    } else {
+      const s = typeof v === 'string' ? v.trim() : '';
+      if (s) body[f.name] = s;
+    }
   }
 
-  if (stepKey === 'staff') {
-    body.employmentType = 'full_time';
-    body.status = 'active';
-    body.createLogin = false;
-    if (body.email) {
-      body.createLogin = true;
-      body.roleKeys = [];
+  if (stepKey === 'programmeLevels') {
+    delete body.departmentId;
+    delete body.name;
+    delete body.sequence;
+  } else if (stepKey === 'subjects') {
+    delete body.programmeLevelId;
+    delete body.semesterSequence;
+  } else if (stepKey === 'staff') {
+    body.employmentType = body.employmentType ?? 'full_time';
+    body.status = body.status ?? 'active';
+    body.createLogin = effectivePortalLogin(body.email, values.createLogin);
+    body.roleKeys = Array.isArray(values.roleKeys) ? values.roleKeys : [];
+    body.campusIds = Array.isArray(values.campusIds) ? values.campusIds : [];
+    if (!body.createLogin) {
+      delete body.createLogin;
+      delete body.roleKeys;
+      delete body.campusIds;
     }
   } else if (stepKey === 'students') {
-    body.status = 'enrolled';
+    body.status = body.status ?? 'enrolled';
   }
 
   return body;
@@ -195,18 +460,16 @@ export default function OnboardingPage() {
 
 function stepTitle(step: OnboardingStep, tp: (key: TermKey) => string): string {
   switch (step.key) {
-    case 'departments':
-      return tp('department');
     case 'subjects':
-      return tp('subject');
+      return 'Curriculum';
     case 'students':
       return tp('student');
     case 'staff':
       return tp('staff');
     case 'academicYears':
       return tp('academicYear');
-    case 'academicTerms':
-      return tp('term');
+    case 'programmeStructures':
+      return tp('programmeStructure');
     default:
       return step.label;
   }
@@ -214,6 +477,8 @@ function stepTitle(step: OnboardingStep, tp: (key: TermKey) => string): string {
 
 function Wizard({ data, canManage }: { data: OnboardingSummary; canManage: boolean }) {
   const { tp } = useTerm();
+  // Warm the profile cache early so phone inputs on later steps get the right default country.
+  useInstitutionProfile();
   const complete = useCompleteOnboarding();
   const [stepIndex, setStepIndex] = useState(0);
   const [hasDraft, setHasDraft] = useState(false);
@@ -225,6 +490,7 @@ function Wizard({ data, canManage }: { data: OnboardingSummary; canManage: boole
   const steps = data.steps;
   const current = steps[stepIndex];
   const totalSteps = steps.length;
+  const isLastStep = stepIndex >= totalSteps - 1;
   const progress = Math.round(((stepIndex + 1) / totalSteps) * 100);
   const [stepError, setStepError] = useState<string | null>(null);
   const nextBlocked = !!(current && current.required > 0 && !current.done);
@@ -347,20 +613,38 @@ function Wizard({ data, canManage }: { data: OnboardingSummary; canManage: boole
           >
             <ArrowLeft className="h-4 w-4" /> Back
           </Button>
-          <div className="flex min-w-0 flex-1 flex-col items-end gap-1">
+          <div className="flex min-w-0 flex-1 flex-col items-stretch gap-2 sm:items-end">
             {stepError && (
-              <p role="alert" className="text-right text-xs text-danger">
+              <OnboardingNotice tone="warning" className="sm:max-w-sm" role="alert">
                 {stepError}
-              </p>
+              </OnboardingNotice>
             )}
-            <Button
-              size="sm"
-              onClick={() => goToStep(stepIndex + 1)}
-              disabled={stepIndex >= totalSteps - 1 || nextBlocked}
-              title={nextBlocked ? 'Add at least one record on this step to continue' : undefined}
-            >
-              Next <ArrowRight className="h-4 w-4" />
-            </Button>
+            {isLastStep ? (
+              <Button
+                size="sm"
+                onClick={() => complete.mutate()}
+                loading={complete.isPending}
+                disabled={!readyToLaunch || !canManage || nextBlocked}
+                title={
+                  nextBlocked
+                    ? 'Add at least one record on this step to continue'
+                    : !readyToLaunch
+                      ? 'Complete every required step before going live'
+                      : undefined
+                }
+              >
+                <Rocket className="h-4 w-4" /> Go live
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                onClick={() => goToStep(stepIndex + 1)}
+                disabled={nextBlocked}
+                title={nextBlocked ? 'Add at least one record on this step to continue' : undefined}
+              >
+                Next <ArrowRight className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
       </Card>
@@ -379,30 +663,22 @@ function Wizard({ data, canManage }: { data: OnboardingSummary; canManage: boole
         danger={false}
       />
 
-      <Card className="border-primary/30 bg-primary/5">
-        <CardContent className="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+      {!isLastStep && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="py-5">
             <p className="text-sm font-semibold text-text-primary">Ready to go live?</p>
-            <p className="text-sm text-text-secondary">
+            <p className="mt-1 text-sm text-text-secondary">
               {readyToLaunch
-                ? 'Every required step has data. Launch your institution to unlock the full portal.'
+                ? 'Every required step has data. Continue to the final step to launch your institution.'
                 : 'Add at least one record to every required step to go live.'}
             </p>
-          </div>
-          <Button
-            onClick={() => complete.mutate()}
-            loading={complete.isPending}
-            disabled={!readyToLaunch || !canManage}
-            className="shrink-0"
-          >
-            <Rocket className="mr-1.5 h-4 w-4" /> Go live
-          </Button>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
       {complete.isError && (
-        <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
+        <OnboardingNotice tone="danger" role="alert">
           {formatPortalError(complete.error, 'Could not go live. Try again.')}
-        </p>
+        </OnboardingNotice>
       )}
     </>
   );
@@ -419,38 +695,247 @@ function StepPanel({
   canManage: boolean;
   onDraftChange: (hasDraft: boolean) => void;
 }) {
-  const { t, tp } = useTerm();
-  const { data: years } = useAcademicYearOptions();
-  const cfg = STEP_CFG[step.key]!;
-  const fields = useMemo(() => {
-    if (step.key !== 'academicTerms') return cfg.fields;
-    return cfg.fields.map((f) =>
-      f.name === 'academicYearId'
-        ? {
-            ...f,
-            label: t('academicYear'),
-            options: (years?.items ?? []).map((y) => ({ value: y.id, label: y.name })),
-          }
-        : f.name === 'name'
-          ? { ...f, placeholder: `e.g. ${t('term')} 1` }
-          : f,
+  const client = usePortalClient();
+  const INSTITUTION_SCOPE = { mode: 'institution' } as const;
+
+  if (step.key === 'programmeStructures') {
+    return (
+      <ProgrammeStructuresStep
+        step={step}
+        index={index}
+        canManage={canManage}
+        createDepartment={(input) =>
+          client.post<{ id: string }>('/portal/academics/departments', INSTITUTION_SCOPE, input)
+        }
+      />
     );
-  }, [cfg.fields, step.key, t, years]);
-  const create = useStepCreate(cfg.endpoint);
+  }
+
+  if (step.key === 'subjects') {
+    return <CurriculumStep step={step} index={index} canManage={canManage} />;
+  }
+
+  return (
+    <DefaultStepPanel step={step} index={index} canManage={canManage} onDraftChange={onDraftChange} />
+  );
+}
+
+function ProgrammeStructuresStep({
+  step,
+  index,
+  canManage,
+  createDepartment,
+}: {
+  step: OnboardingStep;
+  index: number;
+  canManage: boolean;
+  createDepartment: (input: Record<string, unknown>) => Promise<{ id: string }>;
+}) {
+  const { tp } = useTerm();
+  const { refetch } = useOnboarding();
+  const { data: created, refetch: refetchCreated } = useCreatedProgrammeStructures();
+  const title = stepTitle(step, tp);
+
+  return (
+    <CardContent className="py-5">
+      <StepHeader step={step} index={index} title={title} blurb="Name each programme, pick how it is divided, preview the grid, then add it. Dates are scheduled later from Academics." />
+
+      {(created?.length ?? 0) > 0 && (
+        <div className="mb-5">
+          <CreatedProgrammesPanel items={created ?? []} />
+        </div>
+      )}
+
+      <ProgrammeBuilder
+        canManage={canManage}
+        createDepartment={createDepartment}
+        onCommitted={() => {
+          void refetch();
+          void refetchCreated();
+        }}
+      />
+    </CardContent>
+  );
+}
+
+function CurriculumStep({
+  step,
+  index,
+  canManage,
+}: {
+  step: OnboardingStep;
+  index: number;
+  canManage: boolean;
+}) {
+  const { tp } = useTerm();
+  const { refetch } = useOnboarding();
+  const title = stepTitle(step, tp);
+
+  return (
+    <CardContent className="py-5">
+      <StepHeader step={step} index={index} title={title} blurb="Pick a programme and place subjects into its term slots — no sequence numbers to type." />
+      <CurriculumGrid canManage={canManage} onChanged={() => refetch()} />
+    </CardContent>
+  );
+}
+
+function StepHeader({
+  step,
+  index,
+  title,
+  blurb,
+}: {
+  step: OnboardingStep;
+  index: number;
+  title: string;
+  blurb: string;
+}) {
+  return (
+    <div className="mb-4 flex items-start gap-3">
+      <span
+        className={
+          'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ' +
+          (step.done ? 'bg-success/15 text-success' : 'bg-background-secondary text-text-secondary')
+        }
+      >
+        {step.done ? <Check className="h-4 w-4" /> : index}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-base font-semibold text-text-primary">{title}</p>
+          {step.required === 0 ? (
+            <Badge tone="neutral">Optional</Badge>
+          ) : step.done ? (
+            <Badge tone="success">Complete</Badge>
+          ) : (
+            <Badge tone="warning">Required</Badge>
+          )}
+        </div>
+        <p className="mt-1 text-sm text-text-secondary">{blurb}</p>
+      </div>
+      {step.count > 0 && (
+        <Badge tone={step.done ? 'success' : 'neutral'}>{step.count} added</Badge>
+      )}
+    </div>
+  );
+}
+
+function DefaultStepPanel({
+  step,
+  index,
+  canManage,
+  onDraftChange,
+}: {
+  step: OnboardingStep;
+  index: number;
+  canManage: boolean;
+  onDraftChange: (hasDraft: boolean) => void;
+}) {
+  const { t, tp } = useTerm();
+  const { campuses } = useScope();
+  const { data: years } = useAcademicYearOptions();
+  const { data: departments } = useDepartmentOptions();
+  const { data: gradeLevels } = useGradeLevelOptions();
+  const { data: classes } = useClassOptions();
+  const { options: levelOptions } = useProgrammeLevelSelectOptions();
+  const cfg = STEP_CFG[step.key];
+  if (!cfg) return null;
+  const fields = useMemo(() => {
+    const deptOptions = (departments?.items ?? []).map((d) => ({ value: d.id, label: d.name }));
+    const yearOptions = (years?.items ?? []).map((y) => ({ value: y.id, label: y.name }));
+    const gradeOptions = (gradeLevels?.items ?? []).map((g) => ({ value: g.id, label: g.name }));
+    const classOptions = (classes?.items ?? []).map((c) => ({ value: c.id, label: c.name }));
+
+    return cfg.fields.map((f) => {
+      if (f.name === 'departmentId') {
+        return { ...f, label: t('department'), options: deptOptions };
+      }
+      if (f.name === 'gradeLevelId') {
+        return { ...f, label: t('gradeLevel'), options: gradeOptions };
+      }
+      if (f.name === 'classId') {
+        return { ...f, label: t('class'), options: classOptions };
+      }
+      if (f.name === 'programmeLevelId') {
+        return {
+          ...f,
+          label: `${t('department')} and ${t('gradeLevel').toLowerCase()}`,
+          options: levelOptions,
+          help:
+            levelOptions.length === 0
+              ? `Add a ${t('department').toLowerCase()} and programme year first.`
+              : f.help,
+        };
+      }
+      if (f.name === 'academicYearId') {
+        return { ...f, label: t('academicYear'), options: yearOptions };
+      }
+      if (f.name === 'semesterSequence') {
+        return { ...f, label: t('term'), options: SEMESTER_OPTIONS };
+      }
+      if (f.name === 'name' && step.key === 'academicTerms') {
+        return { ...f, placeholder: `e.g. ${t('term')} 1` };
+      }
+      if (f.name === 'name' && step.key === 'programmeLevels') {
+        return { ...f, label: `${t('gradeLevel')} name`, placeholder: `e.g. ${t('gradeLevel')} 1` };
+      }
+      return f;
+    });
+  }, [cfg.fields, departments, gradeLevels, classes, levelOptions, step.key, t, years]);
+  const create = useOnboardingStepSubmit(step.key, cfg.endpoint, cfg.endpoint);
   const list = useStepList<Record<string, unknown>>(cfg.endpoint);
   const institutionCountry = useInstitutionCountry();
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [values, setValues] = useState<FormValues>(() => emptyValues(fields));
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const draft = hasDraftInput(values);
+  const draft = hasDraftInput(values, fields);
+  const staffEmail = fieldString(values, 'email');
+  const createLogin =
+    step.key === 'staff'
+      ? effectivePortalLogin(staffEmail, values.createLogin)
+      : values.createLogin === true;
+  const selectedCampusIds = fieldStringArray(values, 'campusIds');
+  const singleCampus = campuses.length === 1 ? campuses[0]! : null;
 
   useEffect(() => {
     onDraftChange(draft);
   }, [draft, onDraftChange]);
 
-  const setField = (name: string, v: string) => {
+  useEffect(() => {
+    if (step.key !== 'staff' || !createLogin || !singleCampus) return;
+    setValues((s) => {
+      const current = fieldStringArray(s, 'campusIds');
+      if (current.length === 1 && current[0] === singleCampus.id) return s;
+      return { ...s, campusIds: [singleCampus.id] };
+    });
+  }, [step.key, createLogin, singleCampus]);
+
+  const setField = (name: string, v: string | boolean | string[]) => {
     setValues((s) => {
       const next = { ...s, [name]: v };
-      if (name === 'startDate' && next.endDate && !isEndAfterStart(v, next.endDate)) {
+      if (name === 'email' && step.key === 'staff') {
+        const hadEmail = hasPortalLoginEmail(s.email);
+        const hasEmail = hasPortalLoginEmail(v);
+        next.createLogin = portalLoginAfterEmailChange(hadEmail, hasEmail, s.createLogin === true);
+        if (!next.createLogin) {
+          next.roleKeys = [];
+          next.campusIds = [];
+        }
+      }
+      if (name === 'createLogin') {
+        if (v === true && !hasPortalLoginEmail(next.email)) {
+          next.createLogin = false;
+        } else if (v === false) {
+          next.roleKeys = [];
+          next.campusIds = [];
+        }
+      }
+      if (
+        typeof v === 'string' &&
+        name === 'startDate' &&
+        typeof next.endDate === 'string' &&
+        next.endDate &&
+        !isEndAfterStart(v, next.endDate)
+      ) {
         next.endDate = '';
       }
       return next;
@@ -462,14 +947,36 @@ function StepPanel({
     e.preventDefault();
     const nextErrors: Record<string, string> = {};
     for (const f of fields) {
-      if (f.required && !(values[f.name] ?? '').trim()) {
+      if (!f.required || f.type === 'checkbox') continue;
+      const v = values[f.name];
+      if (f.type === 'number') {
+        const n = typeof v === 'string' ? Number(v) : NaN;
+        if (!Number.isFinite(n) || n < 1) nextErrors[f.name] = `${f.label} is required`;
+        continue;
+      }
+      if (typeof v !== 'string' || !v.trim()) {
         nextErrors[f.name] = `${f.label} is required`;
       }
     }
-    const start = values.startDate ?? '';
-    const end = values.endDate ?? '';
+    const start = typeof values.startDate === 'string' ? values.startDate : '';
+    const end = typeof values.endDate === 'string' ? values.endDate : '';
     if (start && end && !isEndAfterStart(start, end)) {
       nextErrors.endDate = 'End date must be after the start date';
+    }
+    if (step.key === 'staff' && createLogin) {
+      const email = typeof values.email === 'string' ? values.email.trim() : '';
+      if (!email) nextErrors.email = 'Email is required to create a portal login';
+      const roles = Array.isArray(values.roleKeys) ? values.roleKeys : [];
+      if (roles.length === 0) nextErrors.roleKeys = 'Select at least one portal role';
+    }
+    if (step.key === 'programmeLevels' && (departments?.items ?? []).length === 0) {
+      nextErrors.departmentId = `Add a ${t('department').toLowerCase()} first`;
+    }
+    if (
+      (step.key === 'academicTerms' || step.key === 'subjects') &&
+      levelOptions.length === 0
+    ) {
+      nextErrors.programmeLevelId = `Add a programme year first`;
     }
     if (Object.keys(nextErrors).length) {
       setFieldErrors(nextErrors);
@@ -477,12 +984,15 @@ function StepPanel({
     }
 
     const body = buildStepCreateBody(step.key, fields, values);
-    create.mutate(body, {
-      onSuccess: () => {
-        setValues({});
-        setFieldErrors({});
+    create.mutate(
+      { body, values },
+      {
+        onSuccess: () => {
+          setValues(emptyValues(fields));
+          setFieldErrors({});
+        },
       },
-    });
+    );
   }
 
   const items = list.data?.items ?? [];
@@ -520,19 +1030,13 @@ function StepPanel({
       </div>
 
       {step.required > 0 && !step.done && (
-        <p
-          role="status"
-          className="mb-4 rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-text-secondary"
-        >
+        <OnboardingNotice tone="warning" className="mb-4" role="status">
           Add at least one {title.toLowerCase()} before you can continue to the next step.
-        </p>
+        </OnboardingNotice>
       )}
 
       {draft && (
-        <p
-          role="status"
-          className="mb-4 rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-text-secondary"
-        >
+        <OnboardingNotice tone="info" className="mb-4" role="status">
           {step.required > 0 && !step.done ? (
             <>
               You&apos;ve entered details but haven&apos;t added them yet. Click <strong>Add</strong> to save — this
@@ -544,20 +1048,71 @@ function StepPanel({
               Next to leave — you&apos;ll be asked to confirm.
             </>
           )}
-        </p>
+        </OnboardingNotice>
       )}
 
       <form onSubmit={onSubmit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {fields.map((f) => (
-          <div key={f.name} className={f.type === 'phone' ? 'sm:col-span-2' : undefined}>
+          <div
+            key={f.name}
+            className={
+              f.type === 'phone' ||
+              f.type === 'checkbox' ||
+              f.type === 'textarea' ||
+              f.name === 'programmeLevelId' ||
+              f.name === 'semesterSequence' ||
+              f.name === 'address'
+                ? 'sm:col-span-2'
+                : undefined
+            }
+          >
+            {f.type === 'checkbox' ? (
+              <div>
+                {f.name === 'createLogin' ? (
+                  <>
+                    <label className="flex cursor-pointer items-center gap-2.5">
+                      <Checkbox
+                        id={`${step.key}-${f.name}`}
+                        checked={createLogin}
+                        onChange={(e) => {
+                          if (!hasPortalLoginEmail(staffEmail)) return;
+                          setField('createLogin', e.target.checked);
+                        }}
+                      />
+                      <span className="text-sm font-medium text-text-primary">{f.label}</span>
+                    </label>
+                    {!hasPortalLoginEmail(staffEmail) && (
+                      <p className="mt-1 pl-[calc(18px+0.625rem)] text-xs text-text-muted">
+                        Add an email address above to enable portal login.
+                      </p>
+                    )}
+                    {f.help && <p className="mt-1 pl-[calc(18px+0.625rem)] text-xs text-text-muted">{f.help}</p>}
+                  </>
+                ) : (
+                  <>
+                    <label className="flex cursor-pointer items-center gap-2.5">
+                      <Checkbox
+                        id={`${step.key}-${f.name}`}
+                        checked={values[f.name] === true}
+                        disabled={!canManage}
+                        onChange={(e) => setField(f.name, e.target.checked)}
+                      />
+                      <span className="text-sm font-medium text-text-primary">{f.label}</span>
+                    </label>
+                    {f.help && <p className="mt-1 pl-[calc(18px+0.625rem)] text-xs text-text-muted">{f.help}</p>}
+                  </>
+                )}
+              </div>
+            ) : (
+              <>
             <Label htmlFor={`${step.key}-${f.name}`}>
-              {f.name === 'academicYearId' ? t('academicYear') : f.label}
+              {f.label}
               {f.required && <span className="text-danger"> *</span>}
             </Label>
             {f.type === 'phone' ? (
               <InternationalPhoneInput
                 id={`${step.key}-${f.name}`}
-                value={values[f.name] ?? ''}
+                value={fieldString(values, f.name)}
                 defaultCountry={institutionCountry}
                 onChange={(v) => setField(f.name, v)}
                 disabled={!canManage}
@@ -566,11 +1121,32 @@ function StepPanel({
               <Select
                 id={`${step.key}-${f.name}`}
                 required={f.required}
-                disabled={!canManage}
-                value={values[f.name] ?? ''}
-                placeholder="Select…"
+                disabled={!canManage || (f.options?.length === 0 && f.required)}
+                value={fieldString(values, f.name)}
+                placeholder={f.options?.length ? 'Select…' : 'Nothing to select yet'}
                 options={f.options ?? []}
                 onChange={(e) => setField(f.name, e.target.value)}
+              />
+            ) : f.type === 'number' ? (
+              <Input
+                id={`${step.key}-${f.name}`}
+                type="number"
+                min={1}
+                required={f.required}
+                disabled={!canManage}
+                placeholder={f.placeholder}
+                value={fieldString(values, f.name)}
+                onChange={(e) => setField(f.name, e.target.value)}
+              />
+            ) : f.type === 'textarea' ? (
+              <textarea
+                id={`${step.key}-${f.name}`}
+                rows={3}
+                disabled={!canManage}
+                placeholder={f.placeholder}
+                value={fieldString(values, f.name)}
+                onChange={(e) => setField(f.name, e.target.value)}
+                className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
               />
             ) : (
               <Input
@@ -579,31 +1155,94 @@ function StepPanel({
                 required={f.required}
                 disabled={!canManage}
                 placeholder={f.placeholder}
-                value={values[f.name] ?? ''}
-                min={f.type === 'date' && f.name === 'endDate' ? minEndDate(values.startDate ?? '') : undefined}
-                max={f.type === 'date' && f.name === 'startDate' ? maxStartDate(values.endDate ?? '') : undefined}
+                value={fieldString(values, f.name)}
+                min={f.type === 'date' && f.name === 'endDate' ? minEndDate(fieldString(values, 'startDate')) : undefined}
+                max={f.type === 'date' && f.name === 'startDate' ? maxStartDate(fieldString(values, 'endDate')) : undefined}
                 onChange={(e) => setField(f.name, e.target.value)}
               />
             )}
+            {f.help && <p className="mt-1 text-xs text-text-muted">{f.help}</p>}
             {fieldErrors[f.name] && (
               <p className="mt-1 text-xs text-danger">{fieldErrors[f.name]}</p>
             )}
+              </>
+            )}
           </div>
         ))}
+
+        {step.key === 'staff' && (
+          <div className="sm:col-span-2">
+            <Label>
+              Portal roles
+              {createLogin ? <span className="text-danger"> *</span> : null}
+            </Label>
+            <p className="mb-2 text-xs text-text-muted">
+              {createLogin
+                ? 'Roles assigned when the portal login is created.'
+                : 'Add an email address above to assign portal roles.'}
+            </p>
+            <RoleMultiSelect
+              value={fieldStringArray(values, 'roleKeys')}
+              onChange={(keys) => setField('roleKeys', keys)}
+              disabled={!canManage}
+            />
+            {fieldErrors.roleKeys && (
+              <p className="mt-1 text-xs text-danger">{fieldErrors.roleKeys}</p>
+            )}
+          </div>
+        )}
+
+        {step.key === 'staff' && campuses.length > 0 && (
+          <div className="mt-3 sm:col-span-2">
+            <Label>Campus access</Label>
+            <p className="mb-2 text-xs text-text-muted">
+              {!createLogin
+                ? 'Add an email address above to choose campus access.'
+                : singleCampus
+                  ? 'This institution has one campus — portal access is assigned there automatically.'
+                  : 'Choose which campuses this user can access. Leave empty for institution-wide roles.'}
+            </p>
+            <ul className="divide-y divide-border rounded-md border border-border">
+              {campuses.map((c) => (
+                <li key={c.id} className="flex items-center gap-2.5 px-3 py-2">
+                  <Checkbox
+                    id={`${step.key}-campus-${c.id}`}
+                    checked={selectedCampusIds.includes(c.id)}
+                    disabled={!canManage || !!singleCampus}
+                    onChange={() => {
+                      const next = new Set(selectedCampusIds);
+                      if (next.has(c.id)) next.delete(c.id);
+                      else next.add(c.id);
+                      setField('campusIds', [...next]);
+                    }}
+                  />
+                  <label
+                    htmlFor={`${step.key}-campus-${c.id}`}
+                    className={cn('text-sm text-text-primary', singleCampus ? 'cursor-default' : 'cursor-pointer')}
+                  >
+                    {c.name}
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="flex items-center gap-3 sm:col-span-2">
           <Button type="submit" size="sm" loading={create.isPending} disabled={!canManage}>
             <Plus className="mr-1 h-4 w-4" /> Add{' '}
             {step.key === 'departments'
               ? t('department').toLowerCase()
+              : step.key === 'programmeLevels'
+                ? t('gradeLevel').toLowerCase()
               : step.key === 'academicTerms'
                 ? t('term').toLowerCase()
                 : cfg.itemLabel}
           </Button>
           {create.isError && (
-            <span role="alert" className="text-sm text-danger">
+            <OnboardingNotice tone="danger" className="flex-1" role="alert">
               {formatPortalError(create.error, 'Could not add. Check the fields.')}
-            </span>
+            </OnboardingNotice>
           )}
         </div>
       </form>

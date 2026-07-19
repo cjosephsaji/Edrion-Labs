@@ -13,7 +13,7 @@ import {
   RegistrationStatus,
 } from '@edrion/shared-types';
 import type { ApproveRegistrationInput } from '@edrion/schemas';
-import { and, desc, eq, ilike, schema, type Database } from '@edrion/database';
+import { and, desc, eq, ilike, schema, seedInstitutionScheduleDefaults, type Database } from '@edrion/database';
 import type { InstitutionRegistrationRequest } from '@edrion/database';
 import type { AuditWriter, AuditEventInput } from '@edrion/audit';
 import type { ApiEnv } from '@edrion/config';
@@ -73,13 +73,10 @@ export class RegistrationApprovalService {
   ): Promise<ApprovalResult> {
     const request = await this.repo.findById(id);
     if (!request) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Registration not found' });
-    if (
-      request.status !== RegistrationStatus.Submitted &&
-      request.status !== RegistrationStatus.UnderReview
-    ) {
+    if (request.status !== RegistrationStatus.UnderReview) {
       throw new ConflictException({
         code: 'INVALID_STATUS',
-        message: `Cannot approve a request in status "${request.status}".`,
+        message: `Cannot approve a request in status "${request.status}". Start the review first.`,
       });
     }
     this.assertProvisionable(request);
@@ -155,6 +152,8 @@ export class RegistrationApprovalService {
           createdBy: employeeId,
         })
         .returning();
+
+      await seedInstitutionScheduleDefaults(tx, institution!.id);
 
       const [campus] = await tx
         .insert(schema.campuses)

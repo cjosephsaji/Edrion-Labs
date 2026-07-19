@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
-import { Card, StatCard, StatusBadge, TableSkeleton, EmptyState, ErrorState, Button } from '@edrion/ui';
+import { Card, StatCard, StatusBadge, TableSkeleton, EmptyState, ErrorState, Button, Select } from '@edrion/ui';
 import { useFeatures, useFeaturesSummary } from '@edrion/api-client';
 import { FeatureDefinitionStatus } from '@edrion/shared-types';
 import { Topbar } from '@/components/app-shell/topbar';
@@ -77,29 +77,25 @@ export default function FeaturesPage() {
               className="h-input w-72 rounded-md border border-border bg-surface pl-8 pr-3 text-sm text-text-primary placeholder:text-text-muted focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
             />
           </div>
-          <select
+          <Select
             value={status}
             onChange={(e) => setParam({ status: e.target.value, page: 1 })}
-            className="h-input rounded-md border border-border bg-surface px-3 text-sm text-text-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-          >
-            {STATUS_FILTERS.map((s) => (
-              <option key={s} value={s}>
-                {s === '' ? 'All statuses' : s}
-              </option>
-            ))}
-          </select>
-          <select
+            className="h-input w-auto min-w-[10rem]"
+            options={STATUS_FILTERS.map((s) => ({ value: s, label: s === '' ? 'All statuses' : s }))}
+          />
+          <Select
             value={releaseStage}
             onChange={(e) => setParam({ releaseStage: e.target.value, page: 1 })}
-            className="h-input rounded-md border border-border bg-surface px-3 text-sm text-text-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-          >
-            <option value="">All stages</option>
-            <option value="internal">Internal</option>
-            <option value="alpha">Alpha</option>
-            <option value="beta">Beta</option>
-            <option value="ga">GA</option>
-            <option value="deprecated">Deprecated</option>
-          </select>
+            className="h-input w-auto min-w-[10rem]"
+            options={[
+              { value: '', label: 'All stages' },
+              { value: 'internal', label: 'Internal' },
+              { value: 'alpha', label: 'Alpha' },
+              { value: 'beta', label: 'Beta' },
+              { value: 'ga', label: 'GA' },
+              { value: 'deprecated', label: 'Deprecated' },
+            ]}
+          />
           {isFetching && <span className="text-xs text-text-muted">Updating…</span>}
         </div>
 

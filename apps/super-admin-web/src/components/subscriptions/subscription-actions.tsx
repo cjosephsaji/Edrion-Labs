@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Button, Label } from '@edrion/ui';
+import { Button, Label, Select } from '@edrion/ui';
 import {
   ApiClientError,
   useSubscriptionAction,
@@ -206,11 +206,7 @@ export function SubscriptionActions({ sub, onChanged }: { sub: SubscriptionDetai
         )}
         {active === 'overage' && (
           <Field label="Overage policy">
-            <select value={form.overagePolicy ?? sub.overagePolicy} onChange={(e) => set('overagePolicy', e.target.value)} className={fieldClass}>
-              <option value="block">Block</option>
-              <option value="allow">Allow</option>
-              <option value="notify">Notify</option>
-            </select>
+            <Select value={form.overagePolicy ?? sub.overagePolicy} onChange={(e) => set('overagePolicy', e.target.value)} className={fieldClass} options={[{ value: 'block', label: 'Block' }, { value: 'allow', label: 'Allow' }, { value: 'notify', label: 'Notify' }]} />
           </Field>
         )}
         {active === 'grace' && (

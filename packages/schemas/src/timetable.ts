@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+import { paginationQuerySchema, sortQuerySchema, versionSchema, academicScopeQuerySchema } from './common';
 
 /**
  * Institution-Portal TIMETABLE (Phase 5) request/response contracts: recurring weekly slots.
@@ -9,6 +9,10 @@ import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common'
 const optionalUuid = z.string().uuid().nullish();
 /** "HH:MM" 24-hour. */
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use HH:MM (24-hour)');
+
+export const TIMETABLE_SLOT_KINDS = ['teaching', 'break', 'lunch'] as const;
+export const timetableSlotKindSchema = z.enum(TIMETABLE_SLOT_KINDS);
+export type TimetableSlotKind = (typeof TIMETABLE_SLOT_KINDS)[number];
 
 export const DAYS_OF_WEEK = [
   { value: 1, label: 'Monday' },
@@ -22,13 +26,15 @@ export const DAYS_OF_WEEK = [
 /** 1 = Monday … 7 = Sunday. */
 export const dayOfWeekSchema = z.coerce.number().int().min(1).max(7);
 
-export const timetableListQuerySchema = paginationQuerySchema.merge(sortQuerySchema).extend({
+export const timetableListQuerySchema = paginationQuerySchema
+  .merge(sortQuerySchema)
+  .merge(academicScopeQuerySchema)
+  .extend({
   search: z.string().trim().max(160).optional(),
   classId: z.string().uuid().optional(),
   dayOfWeek: dayOfWeekSchema.optional(),
   departmentId: z.string().uuid().optional(),
   programmeLevelId: z.string().uuid().optional(),
-  termId: z.string().uuid().optional(),
 });
 export type TimetableListQuery = z.infer<typeof timetableListQuerySchema>;
 
@@ -44,6 +50,8 @@ export const createTimetableSlotSchema = z
     dayOfWeek: dayOfWeekSchema,
     startTime: time,
     endTime: time,
+    label: z.string().trim().max(64).nullish(),
+    kind: timetableSlotKindSchema.default('teaching'),
     room: z.string().trim().max(64).nullish(),
   })
   .refine((v) => v.endTime > v.startTime, {
@@ -62,6 +70,8 @@ export const updateTimetableSlotSchema = z
     dayOfWeek: dayOfWeekSchema.optional(),
     startTime: time.optional(),
     endTime: time.optional(),
+    label: z.string().trim().max(64).nullish(),
+    kind: timetableSlotKindSchema.optional(),
     room: z.string().trim().max(64).nullish(),
     ...withVersion,
   })

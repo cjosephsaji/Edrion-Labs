@@ -1,14 +1,18 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import {
+  attendanceAgendaQuerySchema,
   attendanceListQuerySchema,
   createAttendanceSessionSchema,
   markAttendanceSchema,
+  openAttendanceSessionSchema,
   updateAttendanceSessionSchema,
   versionedDeleteSchema,
+  type AttendanceAgendaQuery,
   type AttendanceListQuery,
   type CreateAttendanceSessionInput,
   type MarkAttendanceInput,
+  type OpenAttendanceSessionInput,
   type UpdateAttendanceSessionInput,
   type VersionedDeleteInput,
 } from '@edrion/schemas';
@@ -46,6 +50,28 @@ export class AttendanceController {
     request: EdrionRequestContext,
   ): PortalActionContext {
     return { principal, scope, request };
+  }
+
+  @Get('agenda')
+  @RequireInstitutionPermissions('attendance.view')
+  agenda(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Query(zodBody(attendanceAgendaQuerySchema)) q: AttendanceAgendaQuery,
+  ) {
+    return this.service.agenda(this.ctx(p, s, r), q);
+  }
+
+  @Post('sessions/open')
+  @RequireInstitutionPermissions('attendance.manage')
+  openSession(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(openAttendanceSessionSchema)) body: OpenAttendanceSessionInput,
+  ) {
+    return this.service.openSession(this.ctx(p, s, r), body);
   }
 
   @Get('sessions')

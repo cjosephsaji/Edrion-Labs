@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { emailButton, emailLayout, escapeHtml } from '../../common/email-templates';
 import { EmailService } from '../portal/email.service';
 
 /** A rendered notification ready for a channel. */
@@ -80,18 +81,12 @@ export class WhatsAppChannel implements NotificationChannel {
 }
 
 function renderEmailHtml(p: ChannelPayload): string {
-  const btn = p.deepLink
-    ? `<p style="margin:24px 0"><a href="${p.deepLink}" style="background:#2563eb;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-family:sans-serif">Open in the app</a></p>`
-    : '';
-  return `<div style="max-width:560px;margin:0 auto;font-family:-apple-system,Segoe UI,sans-serif;color:#0f172a">
-  <h2 style="font-size:18px">${escapeHtml(p.title)}</h2>
-  <p style="font-size:15px;line-height:1.5;color:#334155">${escapeHtml(p.body ?? '')}</p>
-  ${btn}
-  <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0"/>
-  <p style="font-size:12px;color:#94a3b8">You’re receiving this because you’re a guardian on the Edrion Parent Portal. Manage notifications in Settings.</p>
-</div>`;
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+  const btn = p.deepLink ? emailButton(p.deepLink, 'Open in the app') : '';
+  return emailLayout({
+    heading: escapeHtml(p.title),
+    preheader: escapeHtml(p.body ?? p.title),
+    footer:
+      "You're receiving this because you're a guardian on the Edrion Parent Portal. Manage notifications in Settings.",
+    bodyHtml: `<p style="margin:0 0 18px;">${escapeHtml(p.body ?? '')}</p>${btn}`,
+  });
 }

@@ -15,6 +15,7 @@ import type { ApiEnv } from '@edrion/config';
 import { API_ENV, AUDIT_WRITER, DATABASE } from '../../../common/tokens';
 import type { EdrionRequestContext } from '../../../common/request-context';
 import { hashPassword } from '../../authentication/password.util';
+import { emailCodeBlock, emailLayout } from '../../../common/email-templates';
 import { EmailService } from '../../portal/email.service';
 
 const MODULE = 'student-auth';
@@ -114,12 +115,27 @@ export class IndependentSignupService {
       })
       .where(eq(schema.independentUsers.id, user.id));
 
+    const text = [
+      `Hi ${input.fullName},`,
+      '',
+      `Your verification code is ${code}.`,
+      'It expires in 10 minutes.',
+      '',
+    ].join('\n');
+    const html = emailLayout({
+      heading: 'Verify your email',
+      preheader: 'Your Edrion verification code',
+      footer:
+        "You're receiving this because a student account signup was started with this email at Edrion. If this wasn't you, you can safely ignore it.",
+      bodyHtml: `<p style="margin:0 0 18px;">Use the code below to verify your email and continue creating your Edrion student account. It expires in <strong>10 minutes</strong>.</p>
+        ${emailCodeBlock(code)}
+        <p style="margin:0;">For your security, never share this code. Edrion staff will never ask you for it.</p>`,
+    });
     await this.emails.send({
       to: email,
       subject: 'Your Edrion verification code',
-      text: [`Hi ${input.fullName},`, '', `Your verification code is ${code}.`, 'It expires in 10 minutes.', ''].join(
-        '\n',
-      ),
+      text,
+      html,
     });
 
     await this.audit.logAudit({

@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
-import { Card, StatCard, TableSkeleton, EmptyState, ErrorState } from '@edrion/ui';
+import { Card, StatCard, TableSkeleton, EmptyState, ErrorState, Select } from '@edrion/ui';
 import { useInstitutionUsers, useInstitutionUsersSummary } from '@edrion/api-client';
 import { INSTITUTION_DEFAULT_ROLES } from '@edrion/permissions/institution';
 import { AccountStatus } from '@edrion/shared-types';
@@ -99,27 +99,10 @@ export default function InstitutionUsersPage() {
               className="h-input w-64 rounded-md border border-border bg-surface pl-8 pr-3 text-sm text-text-primary placeholder:text-text-muted focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
             />
           </div>
-          <select value={status} onChange={(e) => setParam({ status: e.target.value, page: 1 })} className={selectClass}>
-            {STATUS_FILTERS.map((s) => (
-              <option key={s} value={s}>{s === '' ? 'All statuses' : s.replace(/_/g, ' ')}</option>
-            ))}
-          </select>
-          <select value={roleKey} onChange={(e) => setParam({ roleKey: e.target.value, page: 1 })} className={selectClass}>
-            <option value="">All roles</option>
-            {INSTITUTION_DEFAULT_ROLES.map((r) => (
-              <option key={r.key} value={r.key}>{r.name}</option>
-            ))}
-          </select>
-          <select value={security} onChange={(e) => setParam({ security: e.target.value, page: 1 })} className={selectClass}>
-            {SECURITY_FILTERS.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
-            ))}
-          </select>
-          <select value={lastActivity} onChange={(e) => setParam({ lastActivity: e.target.value, page: 1 })} className={selectClass}>
-            {ACTIVITY_FILTERS.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
-            ))}
-          </select>
+          <Select value={status} onChange={(e) => setParam({ status: e.target.value, page: 1 })} className={`${selectClass} w-auto min-w-[10rem]`} options={STATUS_FILTERS.map((s) => ({ value: s, label: s === '' ? 'All statuses' : s.replace(/_/g, ' ') }))} />
+          <Select value={roleKey} onChange={(e) => setParam({ roleKey: e.target.value, page: 1 })} className={`${selectClass} w-auto min-w-[10rem]`} options={[{ value: '', label: 'All roles' }, ...INSTITUTION_DEFAULT_ROLES.map((r) => ({ value: r.key, label: r.name }))]} />
+          <Select value={security} onChange={(e) => setParam({ security: e.target.value, page: 1 })} className={`${selectClass} w-auto min-w-[10rem]`} options={SECURITY_FILTERS} />
+          <Select value={lastActivity} onChange={(e) => setParam({ lastActivity: e.target.value, page: 1 })} className={`${selectClass} w-auto min-w-[10rem]`} options={ACTIVITY_FILTERS} />
           {isFetching && <span className="text-xs text-text-muted">Updating…</span>}
         </div>
 

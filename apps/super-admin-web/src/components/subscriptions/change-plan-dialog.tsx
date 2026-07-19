@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Repeat } from 'lucide-react';
-import { Button, Label } from '@edrion/ui';
+import { Button, Label, Select } from '@edrion/ui';
 import {
   ApiClientError,
   usePlan,
@@ -105,12 +105,7 @@ export function ChangePlanDialog({ sub, onChanged }: { sub: SubscriptionDetailDt
           <div className="space-y-3">
             <div>
               <Label htmlFor="cp-plan">Target plan</Label>
-              <select id="cp-plan" value={planId} onChange={(e) => setPlanId(e.target.value)} className={fieldClass}>
-                <option value="">Select a published plan…</option>
-                {plans.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name} ({p.key})</option>
-                ))}
-              </select>
+              <Select id="cp-plan" value={planId} onChange={(e) => setPlanId(e.target.value)} className={fieldClass} placeholder="Select a published plan…" options={[{ value: '', label: 'Select a published plan…' }, ...plans.map((p) => ({ value: p.id, label: `${p.name} (${p.key})` }))]} />
               {planId && !targetVersionId && !planDetail.isLoading && (
                 <p className="mt-1 text-xs text-warning">This plan has no published version.</p>
               )}
@@ -118,10 +113,7 @@ export function ChangePlanDialog({ sub, onChanged }: { sub: SubscriptionDetailDt
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="cp-cycle">Billing cycle</Label>
-                <select id="cp-cycle" value={cycle} onChange={(e) => setCycle(e.target.value)} className={fieldClass}>
-                  <option value="monthly">Monthly</option>
-                  <option value="annual">Annual</option>
-                </select>
+                <Select id="cp-cycle" value={cycle} onChange={(e) => setCycle(e.target.value)} className={fieldClass} options={[{ value: 'monthly', label: 'Monthly' }, { value: 'annual', label: 'Annual' }]} />
               </div>
               <div>
                 <Label htmlFor="cp-eff">Effective date</Label>

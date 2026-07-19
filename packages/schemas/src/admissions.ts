@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+import { paginationQuerySchema, sortQuerySchema, versionSchema, academicScopeQuerySchema } from './common';
 import { lenientPhoneSchema } from './geo/validators';
 
 /**
@@ -13,7 +13,7 @@ import { lenientPhoneSchema } from './geo/validators';
 // --- shared ------------------------------------------------------------------
 
 const personName = z.string().trim().min(1, 'Required').max(80);
-const optionalMiddleName = z.string().trim().max(80).optional();
+const optionalMiddleName = z.string().trim().max(80).nullish();
 const optionalUuid = z.string().uuid().nullish();
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD').nullish();
 const email = z.string().trim().toLowerCase().email().nullish();
@@ -63,7 +63,10 @@ export const admissionDecisionSchema = z.enum(ADMISSION_DECISIONS);
 export type AdmissionDecision = (typeof ADMISSION_DECISIONS)[number];
 
 /** Common list query for the admissions directory: page + sort + free-text search + facets. */
-export const admissionsListQuerySchema = paginationQuerySchema.merge(sortQuerySchema).extend({
+export const admissionsListQuerySchema = paginationQuerySchema
+  .merge(sortQuerySchema)
+  .merge(academicScopeQuerySchema)
+  .extend({
   search: z.string().trim().max(160).optional(),
   status: admissionStatusSchema.optional(),
   submittedVia: admissionSubmittedViaSchema.optional(),

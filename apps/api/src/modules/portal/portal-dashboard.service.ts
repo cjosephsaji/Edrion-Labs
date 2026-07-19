@@ -4,185 +4,144 @@ import {
   type InstitutionPrincipal,
   type InstitutionScope,
 } from '@edrion/auth';
-import { PortalRepository, type ModuleCounts } from './portal.repository';
+import { can } from '@edrion/permissions';
+import {
+  PERSONA_LABELS,
+  PERSONA_ORDER,
+  derivePersonas,
+  type PersonaKey,
+} from '@edrion/permissions/institution';
+import { PortalRepository } from './portal.repository';
+import { DashboardPrefsService } from './dashboard/dashboard-prefs.service';
+import { entitledWidgets, type WidgetData, type WidgetSize } from './dashboard/widget-registry';
 
-type DashboardKind = 'institution' | 'campus' | 'teacher' | 'parent' | 'student' | 'generic';
-
-interface DashboardStat {
-  key: string;
-  label: string;
-  value: number | string;
-  hint?: string;
-  pending?: boolean;
-  /** 'money' → value is integer MINOR units; the web formats it in the institution's currency. */
-  format?: 'money';
-}
-interface DashboardActivity {
+export interface DashboardWidgetDto {
   id: string;
+  persona: PersonaKey;
   title: string;
-  description: string;
-  at: string;
-}
-interface CampusComparisonRow {
-  campusId: string;
-  name: string;
-  users: number;
-}
-export interface PortalDashboardDto {
-  kind: DashboardKind;
-  scopeLabel: string;
-  stats: DashboardStat[];
-  pendingApprovals: number;
-  recentActivity: DashboardActivity[];
-  campusComparison?: CampusComparisonRow[];
+  description?: string;
+  size: WidgetSize;
+  pinned: boolean;
+  data: WidgetData;
 }
 
-/** A not-yet-built metric: rendered muted with a "coming soon" hint. Honest placeholder. */
-const pending = (key: string, label: string): DashboardStat => ({ key, label, value: 0, pending: true });
+export interface DashboardPersonaDto {
+  key: PersonaKey;
+  label: string;
+  /** True when one of the user's roles maps to this persona (vs. it only appearing because a
+   *  permission entitles them to a widget that lives under it). Drives tab ordering, nothing more. */
+  fromRole: boolean;
+}
+
+export interface PortalDashboardDto {
+  scopeLabel: string;
+  personas: DashboardPersonaDto[];
+  widgets: DashboardWidgetDto[];
+  hidden: string[];
+}
 
 /**
- * Builds the adaptive, scope-aware dashboard in a SINGLE request. The variant (kind) is derived
- * from the principal's roles; the scope (institution vs campus) narrows every query. Real metrics
- * (campuses, users, recent activity) come from live tables; modules not built yet are returned as
- * clearly-marked pending stats rather than fabricated numbers.
+ * Builds the dashboard by COMPOSING widgets, not by picking one of a few hardcoded variants.
+ *
+ * The old design chose a single "kind" from the user's first matching role, which meant a user with
+ * two roles lost one of them, and a user with a custom tenant role got nothing at all. Here, every
+ * widget the user's PERMISSIONS entitle them to is hydrated and returned; their roles only decide
+ * which persona heading each widget sits under and in what order the headings appear.
+ *
+ * The permission check happens before hydration, so an unentitled widget's query never runs and its
+ * data never enters the response. Personas and preferences are applied on top and can only ever
+ * narrow that set.
  */
 @Injectable()
 export class PortalDashboardService {
-  constructor(private readonly repo: PortalRepository) {}
+  constructor(
+    private readonly repo: PortalRepository,
+    private readonly prefs: DashboardPrefsService,
+  ) {}
 
   async build(principal: InstitutionPrincipal, scope: InstitutionScope): Promise<PortalDashboardDto> {
-    const kind = pickKind(principal.roleKeys);
     const filter = resolveScopeFilter(principal, scope);
+    const campusIds = filter.campusIds;
 
-    // Real module counts back the admin (institution/campus) dashboards; the per-user variants
-    // (teacher/parent/student) still show clearly-marked pending stats until their own joins land.
-    const wantsCounts = kind === 'institution' || kind === 'campus';
-    const [campuses, userCount, activity, counts] = await Promise.all([
-      this.repo.listCampuses(principal.institutionId, filter.campusIds),
-      this.repo.countUsers(principal.institutionId),
-      this.repo.recentActivity(principal.institutionId, filter.campusIds, 8),
-      wantsCounts
-        ? this.repo.moduleCounts(principal.institutionId, filter.campusIds)
-        : Promise.resolve(null),
+    // Teaching widgets key off the staff row behind the login. Resolve it once, up front, so the
+    // registry can drop teaching widgets for logins that have no staff record rather than
+    // hydrating them into confusing zeroes.
+    const staffId = await this.repo.staffIdForUser(principal.institutionId, principal.institutionUserId);
+
+    const [campuses, prefs] = await Promise.all([
+      this.repo.listCampuses(principal.institutionId, campusIds),
+      this.prefs.get(principal),
     ]);
 
-    const scopeLabel =
-      scope.mode === 'institution'
-        ? 'Entire Institution'
-        : campuses.find((c) => c.id === scope.campusId)?.name ?? 'Campus';
+    const entitled = entitledWidgets(principal, { scope, hasStaff: staffId !== null });
+    const hidden = new Set(prefs.hidden);
+    const pinned = new Set(prefs.pinned);
+    const visible = entitled.filter((w) => !hidden.has(w.id));
 
-    const recentActivity: DashboardActivity[] = activity.map((a) => ({
-      id: a.id,
-      title: humanizeAction(a.action),
-      description: `${a.module}${a.actorName ? ` · ${a.actorName}` : ''}`,
-      at: a.occurredAt.toISOString(),
-    }));
-
-    const stats = this.statsFor(kind, campuses.length, userCount, counts);
-
-    const dto: PortalDashboardDto = {
-      kind,
-      scopeLabel,
-      stats,
-      pendingApprovals: 0,
-      recentActivity,
+    const ctx = {
+      principal,
+      scope,
+      campusIds,
+      staffId,
+      repo: this.repo,
+      // Widgets that render several independently-sensitive figures gate each one with this, so a
+      // widget reached via ANY-of `requires` still can't show a figure the caller isn't cleared for.
+      can: (key: string) => can(principal.permissions, key),
     };
+    const all = await Promise.all(
+      visible.map(async (w) => ({
+        id: w.id,
+        persona: w.persona,
+        title: w.title,
+        description: w.description,
+        size: w.size,
+        pinned: pinned.has(w.id),
+        data: await w.hydrate(ctx),
+      })),
+    );
 
-    if (kind === 'institution' && scope.mode === 'institution') {
-      dto.campusComparison = campuses.map((c) => ({
-        campusId: c.id,
-        name: c.name,
-        users: c.currentUserCount,
-      }));
-    }
-    return dto;
+    // A stats widget whose every figure was gated away has nothing to say — drop it rather than
+    // render an empty card.
+    const hydrated = all.filter((w) => !(w.data.type === 'stats' && w.data.stats.length === 0));
+
+    // Pinned first, then by persona order, then by the widget's own priority.
+    const personaRank = new Map(PERSONA_ORDER.map((p, i) => [p, i]));
+    const priority = new Map(entitled.map((w) => [w.id, w.priority]));
+    hydrated.sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      const pa = personaRank.get(a.persona) ?? 99;
+      const pb = personaRank.get(b.persona) ?? 99;
+      if (pa !== pb) return pa - pb;
+      return (priority.get(a.id) ?? 0) - (priority.get(b.id) ?? 0);
+    });
+
+    return {
+      scopeLabel:
+        scope.mode === 'institution'
+          ? 'Entire Institution'
+          : campuses.find((c) => c.id === scope.campusId)?.name ?? 'Campus',
+      // Derived from what actually rendered, not merely what was entitled — a widget dropped for
+      // having nothing to show must not leave an empty persona tab behind.
+      personas: this.personasFor(principal, hydrated.map((w) => w.persona)),
+      widgets: hydrated,
+      // Returned so the web can offer "unhide" without a second round trip. Already filtered to
+      // ids the user is entitled to by DashboardPrefsService.get().
+      hidden: prefs.hidden,
+    };
   }
 
-  private statsFor(
-    kind: DashboardKind,
-    campusCount: number,
-    userCount: number,
-    counts: ModuleCounts | null,
-  ): DashboardStat[] {
-    const real = {
-      campuses: { key: 'campuses', label: 'Campuses', value: campusCount },
-      users: { key: 'users', label: 'Portal users', value: userCount },
-    } satisfies Record<string, DashboardStat>;
-
-    // Real, scope-aware module metrics (institution/campus dashboards). `feesCollected` is in MINOR
-    // units; the web formats it in the institution's currency (format: 'money').
-    const c = counts ?? { students: 0, staff: 0, attendanceToday: 0, feesCollected: 0, openAdmissions: 0, payrollDue: 0 };
-    const m = {
-      students: { key: 'students', label: 'Total students', value: c.students },
-      staff: { key: 'staff', label: 'Total staff', value: c.staff },
-      attendance: { key: 'attendance', label: 'Present today', value: c.attendanceToday },
-      fees: { key: 'fees', label: 'Fees collected', value: c.feesCollected, format: 'money' as const },
-      admissions: { key: 'admissions', label: 'Open admissions', value: c.openAdmissions },
-      payroll: { key: 'payroll', label: 'Payroll runs due', value: c.payrollDue },
-    } satisfies Record<string, DashboardStat>;
-
-    switch (kind) {
-      case 'institution':
-        return [
-          real.campuses,
-          m.students,
-          m.staff,
-          real.users,
-          m.attendance,
-          m.fees,
-          m.admissions,
-          m.payroll,
-        ];
-      case 'campus':
-        return [
-          { ...m.students, label: 'Campus students' },
-          { ...m.staff, label: 'Campus staff' },
-          real.users,
-          m.attendance,
-          m.fees,
-          m.admissions,
-        ];
-      case 'teacher':
-        return [
-          pending('classes', 'Assigned classes'),
-          pending('today', 'Classes today'),
-          pending('attendance', 'Attendance to mark'),
-          pending('grading', 'Assignments to grade'),
-        ];
-      case 'parent':
-        return [
-          pending('children', 'Children'),
-          pending('attendance', 'Attendance this week'),
-          pending('fees', 'Fees due'),
-          pending('announcements', 'New announcements'),
-        ];
-      case 'student':
-        return [
-          pending('classes', 'Classes'),
-          pending('assignments', 'Assignments due'),
-          pending('exams', 'Upcoming exams'),
-          pending('grade', 'Average grade'),
-        ];
-      default:
-        return [real.campuses, real.users];
-    }
+  /**
+   * Personas to render as tabs: those the user's roles imply, plus any persona that actually has an
+   * entitled widget in it. A persona with no entitled widget is dropped, so an admin who lacks
+   * `fees.view` never sees an empty Finance tab.
+   */
+  private personasFor(principal: InstitutionPrincipal, present: PersonaKey[]): DashboardPersonaDto[] {
+    const fromRole = new Set(derivePersonas(principal.roleKeys));
+    const withWidgets = new Set(present);
+    return PERSONA_ORDER.filter((p) => withWidgets.has(p)).map((key) => ({
+      key,
+      label: PERSONA_LABELS[key],
+      fromRole: fromRole.has(key),
+    }));
   }
-}
-
-/** Pick the dashboard variant from the user's roles (first match wins). */
-function pickKind(roleKeys: string[]): DashboardKind {
-  if (roleKeys.includes('institution_owner') || roleKeys.includes('institution_admin')) {
-    return 'institution';
-  }
-  if (roleKeys.includes('campus_admin') || roleKeys.includes('principal')) return 'campus';
-  if (roleKeys.includes('teacher')) return 'teacher';
-  if (roleKeys.includes('parent')) return 'parent';
-  if (roleKeys.includes('student')) return 'student';
-  return 'generic';
-}
-
-function humanizeAction(action: string): string {
-  return action
-    .replace(/[._]/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
 }

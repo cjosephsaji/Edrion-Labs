@@ -46,6 +46,8 @@ export interface UserRow {
   directGrants: string[];
   directDenies: string[];
   lastLoginAt: string | null;
+  disabledAt?: string | null;
+  disabledReason?: string | null;
   version: number;
   createdAt: string;
   updatedAt: string;

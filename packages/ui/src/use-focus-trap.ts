@@ -19,6 +19,8 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
   onClose: () => void,
 ): RefObject<T> {
   const ref = useRef<T>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!open) return;
@@ -28,12 +30,12 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
     // Move focus into the modal on open.
     const focusables = () => Array.from(container?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []);
     const first = focusables()[0];
-    (first ?? container)?.focus();
+    (first ?? container)?.focus({ preventScroll: true });
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== 'Tab') return;
@@ -47,10 +49,10 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
       const active = document.activeElement;
       if (e.shiftKey && (active === firstEl || active === container)) {
         e.preventDefault();
-        lastEl.focus();
+        lastEl.focus({ preventScroll: true });
       } else if (!e.shiftKey && active === lastEl) {
         e.preventDefault();
-        firstEl.focus();
+        firstEl.focus({ preventScroll: true });
       }
     };
 
@@ -58,9 +60,13 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
     return () => {
       document.removeEventListener('keydown', onKey, true);
       // Restore focus to the trigger when the modal closes.
-      if (previouslyFocused && typeof previouslyFocused.focus === 'function') previouslyFocused.focus();
+      if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
+        previouslyFocused.focus({ preventScroll: true });
+      }
     };
-  }, [open, onClose]);
+    // Intentionally only `open` — re-running when `onClose` identity changes would
+    // reset focus to the first field on every parent re-render (e.g. typing in a form).
+  }, [open]);
 
   return ref;
 }

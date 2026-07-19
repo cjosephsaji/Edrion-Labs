@@ -24,6 +24,7 @@ dotenv.config({ path: join(__dirname, '../../..', '.env') });
 import { and, asc, eq, isNull } from 'drizzle-orm';
 import { createDatabase } from './client';
 import * as s from './schema/index';
+import { seedInstitutionScheduleDefaults } from './seed-institution-defaults';
 
 /** Dev-only bcrypt hash of "password" (cost 10). Never prod. */
 const DEV_PASSWORD_HASH = '$2a$10$ByZT0oBbpXQboXG7ZlkzbOWfBfx9uAwu6Zf0HAt/G3yIcji9Rh.WG';
@@ -167,6 +168,7 @@ async function main() {
     s.examSchedules, s.exams,
     s.timetableSlots,
     s.attendanceRecords, s.attendanceSessions,
+    s.calendarEvents, s.calendarEventTypes,
     s.admissionApplications,
     s.studentGuardians,
     s.parents, s.students, s.staff,
@@ -185,6 +187,9 @@ async function main() {
     await db.delete(table as any).where(eq((table as any).institutionId, instId));
   }
   console.log('  ✓ Cleared.');
+
+  await seedInstitutionScheduleDefaults(db, instId);
+  console.log('✓ Calendar types');
 
   // ══════════════════════════════════════════════════════════════════════════
   // SECTION 1: ACADEMIC STRUCTURE
@@ -799,6 +804,57 @@ async function main() {
     { institutionId: instId, assignmentId: asgn3!.id, studentId: s10Id!, status: 'graded', submittedDate: dateStr(daysAgo(2)), pointsAwarded: 38, feedback: 'Excellent structure and arguments. A few grammar slips.' },
   ]);
   console.log('  ✓ Assignments: 4, Submissions: 9');
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // SECTION 11b: CALENDAR EVENTS
+  // ══════════════════════════════════════════════════════════════════════════
+  console.log('\n→ Seeding calendar events…');
+  const eventTypes = await db
+    .select()
+    .from(s.calendarEventTypes)
+    .where(eq(s.calendarEventTypes.institutionId, instId));
+  const typeByKey = Object.fromEntries(eventTypes.map((t) => [t.key, t.id]));
+  await db.insert(s.calendarEvents).values([
+    {
+      institutionId: instId,
+      campusId,
+      eventTypeId: typeByKey.holiday ?? null,
+      type: 'holiday',
+      title: 'Independence Day',
+      description: 'School closed — national holiday.',
+      startsOn: '2026-08-15',
+      endsOn: '2026-08-15',
+      status: 'published',
+      audienceScope: 'institution',
+    },
+    {
+      institutionId: instId,
+      campusId,
+      eventTypeId: typeByKey.ptm ?? null,
+      type: 'ptm',
+      title: 'Parent–Teacher Meeting',
+      description: 'Classes 9–10, Main Hall.',
+      startsOn: dateStr(daysFromNow(10)),
+      endsOn: dateStr(daysFromNow(10)),
+      startTime: '09:00',
+      endTime: '13:00',
+      status: 'published',
+      audienceScope: 'institution',
+    },
+    {
+      institutionId: instId,
+      campusId,
+      eventTypeId: typeByKey.exam_period ?? null,
+      type: 'exam_period',
+      title: 'Mid-term exams',
+      description: 'Written exams for secondary.',
+      startsOn: dateStr(daysFromNow(20)),
+      endsOn: dateStr(daysFromNow(24)),
+      status: 'published',
+      audienceScope: 'institution',
+    },
+  ]);
+  console.log('  ✓ Calendar events: 3');
 
   // ══════════════════════════════════════════════════════════════════════════
   // SECTION 12: FEES

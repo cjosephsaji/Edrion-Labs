@@ -4,6 +4,7 @@ import { usePortalClient } from './portal-client';
 import { useScope } from './scope';
 import type { InstitutionScope } from './types';
 import type { ListParams } from './academics';
+import { useAcademicScopedParams } from './academic-context';
 import type { ExamRow, ExamScheduleRow, Paged } from './exams-types';
 
 function scopeKey(scope: InstitutionScope): string {
@@ -25,9 +26,11 @@ function queryString(p: ListParams): string {
 export function useExamsList<T>(resource: string, params: ListParams) {
   const client = usePortalClient();
   const { scope } = useScope();
+  const scoped = useAcademicScopedParams(params, params.academicScope ?? 'year');
+  const { academicScope: _as, ...listParams } = scoped;
   return useQuery({
-    queryKey: ['exams', resource, scopeKey(scope), params],
-    queryFn: () => client.get<Paged<T>>(`/portal/${resource}?${queryString(params)}`, scope),
+    queryKey: ['exams', resource, scopeKey(scope), listParams],
+    queryFn: () => client.get<Paged<T>>(`/portal/${resource}?${queryString(listParams)}`, scope),
     placeholderData: keepPreviousData,
   });
 }
@@ -98,13 +101,53 @@ export function useExamScheduleMutations(examId: string) {
 
 // --- paper questions ---------------------------------------------------------
 
-import type { QuestionDraft, QuestionRow } from './question-types';
+import type { QuestionConfig, QuestionDraft, QuestionRow } from './question-types';
 import type { Target } from './recipients';
 
 export interface ExamAudiencePreview {
   count: number;
   sample: string[];
   studentCount: number;
+}
+
+export interface ExamFullQuestion extends QuestionRow {
+  config?: QuestionConfig | null;
+}
+
+export interface ExamFullSchedule extends ExamScheduleRow {
+  questions: ExamFullQuestion[];
+}
+
+export interface ExamFull extends ExamRow {
+  schedules: ExamFullSchedule[];
+}
+
+export function useExamFull(examId: string | null) {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  return useQuery({
+    queryKey: ['exams', examId, 'full', scopeKey(scope)],
+    queryFn: () => client.get<ExamFull>(`/portal/exams/${examId}/full`, scope),
+    enabled: !!examId,
+  });
+}
+
+export function useExamFullMutations() {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  const qc = useQueryClient();
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['exams'] });
+
+  const create = useMutation({
+    mutationFn: (body: Record<string, unknown>) => client.post('/portal/exams', scope, body),
+    onSuccess: invalidate,
+  });
+  const reconcile = useMutation({
+    mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) =>
+      client.put(`/portal/exams/${id}/full`, scope, body),
+    onSuccess: invalidate,
+  });
+  return { create, reconcile };
 }
 
 export function useExamQuestions(examId: string | null, scheduleId: string | null) {

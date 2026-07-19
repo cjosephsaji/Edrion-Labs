@@ -1,4 +1,8 @@
+import type { SubjectKind } from '@edrion/schemas';
+
 /** Client-side mirrors of the portal Academics DTOs (Phase 2). The API is authoritative. */
+
+export type { SubjectKind };
 
 export interface Paged<T> {
   items: T[];
@@ -55,6 +59,8 @@ export interface SubjectPlacement {
   departmentName: string | null;
   gradeLevelName: string | null;
   semesterSequence: number;
+  slotId: string | null;
+  slotName: string | null;
   credits: number | null;
   isElective: boolean;
 }
@@ -62,7 +68,8 @@ export interface SubjectPlacement {
 export interface SubjectRow extends BaseRow {
   name: string;
   code: string;
-  kind: 'core' | 'elective';
+  kind: SubjectKind;
+  isLabSubject: boolean;
   departmentId: string | null;
   departmentName: string | null;
   classCount?: number;
@@ -77,10 +84,12 @@ export interface ProgrammeSubjectRow extends BaseRow {
   gradeLevelName: string | null;
   programmeSequence: number | null;
   semesterSequence: number;
+  slotId: string | null;
+  slotName: string | null;
   subjectId: string;
   subjectName: string | null;
   subjectCode: string | null;
-  subjectKind: 'core' | 'elective' | null;
+  subjectKind: SubjectKind | null;
   credits: number | null;
   isElective: boolean;
   sequence: number;
@@ -122,6 +131,7 @@ export interface ProgrammeStructureSection {
   programmeLevelId: string | null;
   studentCount?: number;
   subjectCount?: number;
+  version?: number;
 }
 
 export interface ProgrammeStructureSubject {
@@ -133,6 +143,7 @@ export interface ProgrammeStructureSubject {
   credits: number | null;
   isElective: boolean;
   version: number;
+  subjectVersion: number;
 }
 
 export interface ProgrammeStructureTerm {
@@ -144,6 +155,7 @@ export interface ProgrammeStructureTerm {
   endDate: string;
   status: string;
   programmeLevelId: string | null;
+  slotId: string | null;
   sections: ProgrammeStructureSection[];
   subjects: ProgrammeStructureSubject[];
 }

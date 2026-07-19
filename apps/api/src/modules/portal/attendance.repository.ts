@@ -5,8 +5,8 @@ import {
   count,
   desc,
   eq,
+  ilike,
   inArray,
-  isNull,
   or,
   schema,
   sql,
@@ -24,6 +24,8 @@ import type {
 import type { AttendanceListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
+import { programmeListFilterConds } from './programme-list-filters';
+import { scopeConds } from './portal-scope';
 
 const teacherDisplayName = personSqlName(schema.staff.firstName, schema.staff.middleName, schema.staff.lastName);
 const studentDisplayName = personSqlName(schema.students.firstName, schema.students.middleName, schema.students.lastName);
@@ -58,12 +60,7 @@ export class AttendanceRepository {
     institutionId: string,
     campusIds: CampusFilter,
   ): SQL[] {
-    const conds: SQL[] = [eq(instCol, institutionId)];
-    if (campusIds) {
-      const inScope = or(isNull(campusCol), inArray(campusCol, campusIds));
-      if (inScope) conds.push(inScope);
-    }
-    return conds;
+    return scopeConds(instCol, campusCol, institutionId, campusIds);
   }
 
   private order(col: PgColumn | undefined, dir: 'asc' | 'desc', fallback: PgColumn): SQL {
@@ -88,6 +85,18 @@ export class AttendanceRepository {
     const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
     if (q.classId) conds.push(eq(t.classId, q.classId));
     if (q.date) conds.push(eq(t.date, q.date));
+    if (q.search) {
+      const s = `%${q.search}%`;
+      conds.push(or(ilike(t.period, s), ilike(t.notes, s))!);
+    }
+    conds.push(
+      ...programmeListFilterConds(this.db, q, {
+        academicYearId: t.academicYearId,
+        termId: t.termId,
+        classId: t.classId,
+        termIdNullMeansWholeYear: true,
+      }),
+    );
     const where = and(...conds);
     const sortable: Record<string, PgColumn> = { date: t.date, period: t.period, createdAt: t.createdAt };
     const limit = q.pageSize;
@@ -211,5 +220,217 @@ export class AttendanceRepository {
     const t = schema.attendanceRecords;
     const rows = await this.db.delete(t).where(eq(t.id, id)).returning({ id: t.id });
     return rows.length > 0;
+  }
+
+  /** Which of these student ids exist in the institution? */
+  async existingStudentIds(ids: string[], institutionId: string): Promise<Set<string>> {
+    if (ids.length === 0) return new Set();
+    const t = schema.students;
+    const rows = await this.db
+      .select({ id: t.id })
+      .from(t)
+      .where(and(eq(t.institutionId, institutionId), inArray(t.id, ids)));
+    return new Set(rows.map((r) => r.id));
+  }
+
+  /** Student ids enrolled in a class (for register roster). */
+  async classRosterStudentIds(classId: string, institutionId: string): Promise<string[]> {
+    const t = schema.students;
+    const rows = await this.db
+      .select({ id: t.id })
+      .from(t)
+      .where(and(eq(t.institutionId, institutionId), eq(t.classId, classId)));
+    return rows.map((r) => r.id);
+  }
+
+  async classRoster(
+    classId: string,
+    institutionId: string,
+  ): Promise<Array<{ id: string; studentName: string | null; admissionNo: string | null }>> {
+    const t = schema.students;
+    const rows = await this.db
+      .select({
+        id: t.id,
+        studentName: studentDisplayName,
+        admissionNo: t.admissionNo,
+      })
+      .from(t)
+      .where(and(eq(t.institutionId, institutionId), eq(t.classId, classId)))
+      .orderBy(asc(studentDisplayName));
+    return rows;
+  }
+
+  /** Bulk upsert marks in one statement. */
+  async upsertRecords(rows: NewAttendanceRecord[]): Promise<void> {
+    if (rows.length === 0) return;
+    const t = schema.attendanceRecords;
+    await this.db
+      .insert(t)
+      .values(rows)
+      .onConflictDoUpdate({
+        target: [t.sessionId, t.studentId],
+        set: {
+          status: sql`excluded.status`,
+          remarks: sql`excluded.remarks`,
+          version: sql`${t.version} + 1`,
+          updatedBy: sql`excluded.created_by`,
+          updatedAt: new Date(),
+        },
+      });
+  }
+
+  async findSessionBySlotId(
+    institutionId: string,
+    classId: string,
+    date: string,
+    slotId: string,
+  ): Promise<AttendanceSession | undefined> {
+    const t = schema.attendanceSessions;
+    const [row] = await this.db
+      .select()
+      .from(t)
+      .where(
+        and(
+          eq(t.institutionId, institutionId),
+          eq(t.classId, classId),
+          eq(t.date, date),
+          eq(t.slotId, slotId),
+        ),
+      )
+      .limit(1);
+    return row;
+  }
+
+  async findTimetableSlot(
+    slotId: string,
+    institutionId: string,
+  ): Promise<
+    | (typeof schema.timetableSlots.$inferSelect & {
+        periodLabel: string;
+      })
+    | undefined
+  > {
+    const t = schema.timetableSlots;
+    const [row] = await this.db
+      .select({
+        slot: t,
+        periodLabel: sql<string>`coalesce(${t.label}, ${t.startTime})`,
+      })
+      .from(t)
+      .where(and(eq(t.id, slotId), eq(t.institutionId, institutionId)))
+      .limit(1);
+    if (!row) return undefined;
+    return {
+      ...row.slot,
+      periodLabel: row.periodLabel,
+    };
+  }
+
+  async getInstitutionTimezone(institutionId: string): Promise<string> {
+    const t = schema.institutions;
+    const [row] = await this.db
+      .select({ timezone: t.timezone })
+      .from(t)
+      .where(eq(t.id, institutionId))
+      .limit(1);
+    return row?.timezone ?? 'UTC';
+  }
+
+  /**
+   * Timetable teaching slots for a weekday, left-joined to attendance sessions for the given date.
+   */
+  async listAgendaSlots(args: {
+    institutionId: string;
+    campusIds: CampusFilter;
+    date: string;
+    dayOfWeek: number;
+    teacherId?: string | null;
+    classId?: string;
+  }): Promise<
+    Array<{
+      slotId: string;
+      periodLabel: string;
+      startTime: string;
+      endTime: string;
+      classId: string;
+      className: string | null;
+      subjectId: string | null;
+      subjectName: string | null;
+      teacherId: string | null;
+      teacherName: string | null;
+      room: string | null;
+      sessionId: string | null;
+      sessionVersion: number | null;
+      recordCount: number;
+      presentCount: number;
+      rosterSize: number;
+    }>
+  > {
+    const t = schema.timetableSlots;
+    const sess = schema.attendanceSessions;
+
+    const conds = this.scopeConds(t.institutionId, t.campusId, args.institutionId, args.campusIds);
+    conds.push(eq(t.dayOfWeek, args.dayOfWeek));
+    conds.push(eq(t.kind, 'teaching'));
+    if (args.teacherId) conds.push(eq(t.teacherId, args.teacherId));
+    if (args.classId) conds.push(eq(t.classId, args.classId));
+
+    const recCount = sql<number>`coalesce((select count(*) from ${schema.attendanceRecords} ar where ar.session_id = ${sess.id}), 0)`;
+    const presentCount = sql<number>`coalesce((select count(*) from ${schema.attendanceRecords} ar where ar.session_id = ${sess.id} and ar.status = 'present'), 0)`;
+    const rosterSize = sql<number>`(select count(*) from ${schema.students} st where st.class_id = ${t.classId} and st.institution_id = ${t.institutionId})`;
+
+    const rows = await this.db
+      .select({
+        slotId: t.id,
+        periodLabel: sql<string>`coalesce(${t.label}, ${t.startTime})`,
+        startTime: t.startTime,
+        endTime: t.endTime,
+        classId: t.classId,
+        className: schema.classes.name,
+        subjectId: t.subjectId,
+        subjectName: schema.subjects.name,
+        teacherId: t.teacherId,
+        teacherName: teacherDisplayName,
+        room: t.room,
+        sessionId: sess.id,
+        sessionVersion: sess.version,
+        recordCount: recCount,
+        presentCount,
+        rosterSize,
+      })
+      .from(t)
+      .leftJoin(schema.classes, eq(schema.classes.id, t.classId))
+      .leftJoin(schema.subjects, eq(schema.subjects.id, t.subjectId))
+      .leftJoin(schema.staff, eq(schema.staff.id, t.teacherId))
+      .leftJoin(
+        sess,
+        and(
+          eq(sess.classId, t.classId),
+          eq(sess.date, args.date),
+          eq(sess.institutionId, args.institutionId),
+          eq(sess.slotId, t.id),
+        ),
+      )
+      .where(and(...conds))
+      .orderBy(asc(t.startTime));
+
+    return rows.map((r) => ({
+      slotId: r.slotId,
+      periodLabel: r.periodLabel,
+      startTime: r.startTime,
+      endTime: r.endTime,
+      classId: r.classId,
+      className: r.className,
+      subjectId: r.subjectId,
+      subjectName: r.subjectName,
+      teacherId: r.teacherId,
+      teacherName: r.teacherName,
+      room: r.room,
+      sessionId: r.sessionId,
+      sessionVersion: r.sessionVersion,
+      recordCount: Number(r.recordCount ?? 0),
+      presentCount: Number(r.presentCount ?? 0),
+      rosterSize: Number(r.rosterSize ?? 0),
+    }));
   }
 }

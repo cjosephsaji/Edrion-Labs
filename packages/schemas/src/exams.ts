@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { paginationQuerySchema, sortQuerySchema, versionSchema } from './common';
+import { paginationQuerySchema, sortQuerySchema, versionSchema, academicScopeQuerySchema } from './common';
 import { createQuestionSchema, updateQuestionSchema } from './questions';
 import { previewRecipientsSchema, targetsSchema } from './recipients';
 
@@ -27,47 +27,17 @@ const withVersion = { version: versionSchema };
 
 // --- exams -------------------------------------------------------------------
 
-export const examsListQuerySchema = paginationQuerySchema.merge(sortQuerySchema).extend({
+export const examsListQuerySchema = paginationQuerySchema
+  .merge(sortQuerySchema)
+  .merge(academicScopeQuerySchema)
+  .extend({
   search: z.string().trim().max(160).optional(),
   status: examStatusSchema.optional(),
   examType: examTypeSchema.optional(),
   departmentId: z.string().uuid().optional(),
   programmeLevelId: z.string().uuid().optional(),
-  termId: z.string().uuid().optional(),
-  academicYearId: z.string().uuid().optional(),
 });
 export type ExamsListQuery = z.infer<typeof examsListQuerySchema>;
-
-export const createExamSchema = z.object({
-  name: z.string().trim().min(1, 'Required').max(120),
-  examType: examTypeSchema.default('term'),
-  academicYearId: optionalUuid,
-  termId: optionalUuid,
-  termLabel: shortText(60),
-  startDate: isoDate,
-  endDate: isoDate,
-  status: examStatusSchema.default('draft'),
-  description: shortText(500),
-  audience: targetsSchema.default([]),
-  durationMin: z.coerce.number().int().min(1).max(480).nullish(),
-});
-export type CreateExamInput = z.infer<typeof createExamSchema>;
-
-export const updateExamSchema = z.object({
-  name: z.string().trim().min(1).max(120).optional(),
-  examType: examTypeSchema.optional(),
-  academicYearId: optionalUuid,
-  termId: optionalUuid,
-  termLabel: shortText(60),
-  startDate: isoDate,
-  endDate: isoDate,
-  status: examStatusSchema.optional(),
-  description: shortText(500),
-  audience: targetsSchema.optional(),
-  durationMin: z.coerce.number().int().min(1).max(480).nullish(),
-  ...withVersion,
-});
-export type UpdateExamInput = z.infer<typeof updateExamSchema>;
 
 // --- exam schedules (papers within an exam) ----------------------------------
 
@@ -106,6 +76,66 @@ export const updateExamScheduleSchema = z
   });
 export type UpdateExamScheduleInput = z.infer<typeof updateExamScheduleSchema>;
 
+/** Nested question on create/reconcile — optional client id for draft ↔ server mapping. */
+const nestedQuestionSchema = createQuestionSchema.extend({
+  id: z.string().uuid().optional(),
+  clientKey: z.string().trim().max(64).optional(),
+});
+
+/** Schedule fields without refine (Zod refine returns ZodEffects which can't .extend). */
+const nestedScheduleFields = z.object({
+  id: z.string().uuid().optional(),
+  clientKey: z.string().trim().max(64).optional(),
+  version: versionSchema.optional(),
+  classId: z.string().uuid(),
+  subjectId: z.string().uuid(),
+  examDate: isoDate,
+  startTime: time.nullish(),
+  endTime: time.nullish(),
+  maxMarks: z.coerce.number().int().min(1).max(1000).default(100),
+  passMarks: z.coerce.number().int().min(0).max(1000).nullish(),
+  room: shortText(64),
+  questions: z.array(nestedQuestionSchema).max(200).default([]),
+});
+
+const nestedScheduleSchema = nestedScheduleFields.refine(
+  (v) => !v.startTime || !v.endTime || v.endTime > v.startTime,
+  { message: 'End time must be after the start time', path: ['endTime'] },
+);
+
+export const createExamSchema = z.object({
+  name: z.string().trim().min(1, 'Required').max(120),
+  examType: examTypeSchema.default('term'),
+  academicYearId: optionalUuid,
+  termId: optionalUuid,
+  termLabel: shortText(60),
+  startDate: isoDate,
+  endDate: isoDate,
+  status: examStatusSchema.default('draft'),
+  description: shortText(500),
+  audience: targetsSchema.default([]),
+  durationMin: z.coerce.number().int().min(1).max(480).nullish(),
+  /** Optional nested papers+questions for atomic create from the builder. */
+  schedules: z.array(nestedScheduleSchema).max(50).optional(),
+});
+export type CreateExamInput = z.infer<typeof createExamSchema>;
+
+export const updateExamSchema = z.object({
+  name: z.string().trim().min(1).max(120).optional(),
+  examType: examTypeSchema.optional(),
+  academicYearId: optionalUuid,
+  termId: optionalUuid,
+  termLabel: shortText(60),
+  startDate: isoDate,
+  endDate: isoDate,
+  status: examStatusSchema.optional(),
+  description: shortText(500),
+  audience: targetsSchema.optional(),
+  durationMin: z.coerce.number().int().min(1).max(480).nullish(),
+  ...withVersion,
+});
+export type UpdateExamInput = z.infer<typeof updateExamSchema>;
+
 // --- exam paper questions ----------------------------------------------------
 
 export const examQuestionSchema = createQuestionSchema;
@@ -115,3 +145,21 @@ export type UpdateExamQuestionInput = z.infer<typeof updateExamQuestionSchema>;
 
 export const examAudiencePreviewSchema = previewRecipientsSchema;
 export type ExamAudiencePreviewInput = z.infer<typeof examAudiencePreviewSchema>;
+
+/** Atomic reconcile payload for the single-page builder (PUT /portal/exams/:id/full). */
+export const reconcileExamSchema = z.object({
+  version: versionSchema,
+  name: z.string().trim().min(1).max(120).optional(),
+  examType: examTypeSchema.optional(),
+  academicYearId: optionalUuid,
+  termId: optionalUuid,
+  termLabel: shortText(60),
+  startDate: isoDate,
+  endDate: isoDate,
+  status: examStatusSchema.optional(),
+  description: shortText(500),
+  audience: targetsSchema.optional(),
+  durationMin: z.coerce.number().int().min(1).max(480).nullish(),
+  schedules: z.array(nestedScheduleSchema).max(50),
+});
+export type ReconcileExamInput = z.infer<typeof reconcileExamSchema>;

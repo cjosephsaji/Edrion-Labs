@@ -223,9 +223,10 @@ export class ParentDigestService implements OnModuleInit {
 
   private async upcoming(institutionId: string, guardianUserId: string) {
     const now = new Date();
-    const in7 = new Date(Date.now() + 7 * DAY);
+    const from = now.toISOString().slice(0, 10);
+    const in7 = new Date(Date.now() + 7 * DAY).toISOString().slice(0, 10);
     const [cal, ptm, consents, responded] = await Promise.all([
-      this.scalar(this.db.select({ c: count() }).from(schema.calendarEvents).where(and(eq(schema.calendarEvents.institutionId, institutionId), gte(schema.calendarEvents.startsOn, now), lte(schema.calendarEvents.startsOn, in7)))),
+      this.scalar(this.db.select({ c: count() }).from(schema.calendarEvents).where(and(eq(schema.calendarEvents.institutionId, institutionId), gte(schema.calendarEvents.startsOn, from), lte(schema.calendarEvents.startsOn, in7)))),
       this.scalar(this.db.select({ c: count() }).from(schema.parentPtmEvents).where(and(eq(schema.parentPtmEvents.institutionId, institutionId), eq(schema.parentPtmEvents.status, 'published')))),
       this.scalar(this.db.select({ c: count() }).from(schema.parentConsentForms).where(and(eq(schema.parentConsentForms.institutionId, institutionId), eq(schema.parentConsentForms.status, 'published')))),
       this.scalar(this.db.select({ c: count() }).from(schema.parentConsentResponses).where(and(eq(schema.parentConsentResponses.guardianUserId, guardianUserId), sql`${schema.parentConsentResponses.supersededAt} is null`))),

@@ -1,48 +1,20 @@
 import { Injectable } from '@nestjs/common';
+import {
+  emailButton,
+  emailCodeBlock,
+  emailLayout,
+  emailReferenceBlock,
+} from '../../common/email-templates';
 import { EmailService, type SentEmail } from '../portal/email.service';
 
 /**
  * Branded transactional emails for the registration funnel. Templates are plain functions that
  * return `{subject,text,html}` and dispatch through the shared {@link EmailService} seam (real SMTP
- * when configured, structured-log transport otherwise). The visual language mirrors the public
- * registration page: warm ivory canvas, dark-green brand, generous spacing, rounded card.
+ * when configured, structured-log transport otherwise).
  */
 
-const BRAND = {
-  ivory: '#FBF7EF',
-  card: '#FFFFFF',
-  green: '#14532D',
-  greenSoft: '#E7F0EA',
-  ink: '#1C2B24',
-  muted: '#5B6B62',
-  border: '#E4DCCB',
-};
-
-function layout(opts: { heading: string; bodyHtml: string; preheader?: string }): string {
-  return `<!doctype html><html><body style="margin:0;padding:0;background:${BRAND.ivory};">
-  ${opts.preheader ? `<span style="display:none;opacity:0;color:${BRAND.ivory};">${opts.preheader}</span>` : ''}
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND.ivory};padding:32px 0;">
-    <tr><td align="center">
-      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="width:560px;max-width:92%;">
-        <tr><td style="padding:0 8px 20px;">
-          <span style="font:700 20px/1.2 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:${BRAND.green};letter-spacing:-.2px;">Edrion</span>
-        </td></tr>
-        <tr><td style="background:${BRAND.card};border:1px solid ${BRAND.border};border-radius:16px;padding:32px;">
-          <h1 style="margin:0 0 16px;font:700 22px/1.3 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:${BRAND.ink};">${opts.heading}</h1>
-          <div style="font:400 15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:${BRAND.muted};">${opts.bodyHtml}</div>
-        </td></tr>
-        <tr><td style="padding:20px 8px;font:400 12px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:${BRAND.muted};">
-          You're receiving this because an institution registration was started with this email at Edrion.
-          If this wasn't you, you can safely ignore it.
-        </td></tr>
-      </table>
-    </td></tr>
-  </table></body></html>`;
-}
-
-function button(href: string, label: string): string {
-  return `<a href="${href}" style="display:inline-block;background:${BRAND.green};color:#fff;text-decoration:none;font:600 14px/1 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;padding:13px 22px;border-radius:10px;">${label}</a>`;
-}
+const REGISTRATION_FOOTER =
+  "You're receiving this because an institution registration was started with this email at Edrion. If this wasn't you, you can safely ignore it.";
 
 @Injectable()
 export class RegistrationEmailService {
@@ -50,26 +22,40 @@ export class RegistrationEmailService {
 
   sendOtp(to: string, code: string): Promise<SentEmail> {
     const text = `Your Edrion verification code is ${code}. It expires in 10 minutes. Do not share it with anyone.`;
-    const html = layout({
+    const html = emailLayout({
       heading: 'Verify your email',
       preheader: 'Your Edrion verification code',
+      footer: REGISTRATION_FOOTER,
       bodyHtml: `<p style="margin:0 0 18px;">Use the code below to verify your email and continue your institution registration. It expires in <strong>10 minutes</strong>.</p>
-        <div style="margin:8px 0 18px;text-align:center;background:${BRAND.greenSoft};border-radius:12px;padding:18px;">
-          <span style="font:700 34px/1 -apple-system,SFMono-Regular,Menlo,monospace;letter-spacing:10px;color:${BRAND.green};">${code}</span>
-        </div>
+        ${emailCodeBlock(code)}
         <p style="margin:0;">For your security, never share this code. Edrion staff will never ask you for it.</p>`,
     });
     return this.email.send({ to, subject: `Your Edrion verification code: ${code}`, text, html });
   }
 
+  sendReviewStarted(to: string, displayName: string, publicRef: string): Promise<SentEmail> {
+    const text = `Our onboarding team has started reviewing your Edrion application for ${displayName}. Reference: ${publicRef}. We'll email you once the review is complete — no action is needed from you right now.`;
+    const html = emailLayout({
+      heading: 'Your application is under review',
+      preheader: `Reference ${publicRef}`,
+      footer: REGISTRATION_FOOTER,
+      bodyHtml: `<p style="margin:0 0 16px;">Our onboarding team has started reviewing the registration for <strong>${displayName}</strong>.</p>
+        <p style="margin:0 0 8px;">Your reference number:</p>
+        ${emailReferenceBlock(publicRef)}
+        <p style="margin:0;">We'll email you once the review is complete. No action is needed from you right now.</p>`,
+    });
+    return this.email.send({ to, subject: `Your Edrion application is under review (${publicRef})`, text, html });
+  }
+
   sendSubmitted(to: string, displayName: string, publicRef: string): Promise<SentEmail> {
     const text = `Thank you — your registration for ${displayName} has been received. Reference: ${publicRef}. Our onboarding team will review it and email you with the outcome.`;
-    const html = layout({
+    const html = emailLayout({
       heading: 'Application received',
       preheader: `Reference ${publicRef}`,
+      footer: REGISTRATION_FOOTER,
       bodyHtml: `<p style="margin:0 0 16px;">Thank you for your interest in Edrion. We've received the registration for <strong>${displayName}</strong>.</p>
         <p style="margin:0 0 8px;">Your reference number:</p>
-        <div style="margin:0 0 18px;background:${BRAND.greenSoft};border-radius:12px;padding:14px 18px;font:700 18px/1 -apple-system,SFMono-Regular,Menlo,monospace;color:${BRAND.green};">${publicRef}</div>
+        ${emailReferenceBlock(publicRef)}
         <p style="margin:0;">Our onboarding team will review your request and email you once the review is complete. No action is needed from you right now.</p>`,
     });
     return this.email.send({ to, subject: `We've received your Edrion application (${publicRef})`, text, html });
@@ -77,9 +63,10 @@ export class RegistrationEmailService {
 
   sendApproved(to: string, displayName: string): Promise<SentEmail> {
     const text = `Great news — the registration for ${displayName} has been approved. Your administrator will receive a separate invitation email to set up access and begin onboarding.`;
-    const html = layout({
+    const html = emailLayout({
       heading: 'Your application is approved 🎉',
       preheader: `${displayName} is approved`,
+      footer: REGISTRATION_FOOTER,
       bodyHtml: `<p style="margin:0 0 16px;">Welcome to Edrion! The registration for <strong>${displayName}</strong> has been approved and your workspace is being prepared.</p>
         <p style="margin:0 0 16px;">Your nominated administrator will receive a separate invitation email with steps to activate their account and start onboarding your institution.</p>
         <p style="margin:0;">We're delighted to have you on board.</p>`,
@@ -89,12 +76,13 @@ export class RegistrationEmailService {
 
   sendRejected(to: string, displayName: string, reason: string): Promise<SentEmail> {
     const text = `Thank you for your interest in Edrion. After review, we're unable to approve the registration for ${displayName} at this time. Reason: ${reason}. You're welcome to reply to this email if you'd like to discuss further.`;
-    const html = layout({
+    const html = emailLayout({
       heading: 'Update on your application',
       preheader: `Decision on ${displayName}`,
+      footer: REGISTRATION_FOOTER,
       bodyHtml: `<p style="margin:0 0 16px;">Thank you for your interest in Edrion and for taking the time to apply for <strong>${displayName}</strong>.</p>
         <p style="margin:0 0 8px;">After careful review, we're unable to approve this registration at this time.</p>
-        <div style="margin:0 0 18px;background:${BRAND.greenSoft};border-radius:12px;padding:14px 18px;color:${BRAND.ink};">${reason}</div>
+        <div style="margin:0 0 18px;background:#E7F0EA;border-radius:12px;padding:14px 18px;color:#1C2B24;">${reason}</div>
         <p style="margin:0;">If you believe this was in error or your circumstances change, simply reply to this email — we're happy to help.</p>`,
     });
     return this.email.send({ to, subject: `Update on your Edrion application for ${displayName}`, text, html });
@@ -113,13 +101,14 @@ export class RegistrationEmailService {
     const text = `Hi ${fullName}, you've been set up as the administrator for ${displayName} on Edrion. ${credLine}`;
     const credHtml = temporaryPassword
       ? `<p style="margin:0 0 8px;">Your temporary password:</p>
-         <div style="margin:0 0 18px;background:${BRAND.greenSoft};border-radius:12px;padding:14px 18px;font:700 16px/1 -apple-system,SFMono-Regular,Menlo,monospace;color:${BRAND.green};">${temporaryPassword}</div>
+         ${emailCodeBlock(temporaryPassword, 'md')}
          <p style="margin:0 0 18px;">You'll be asked to change it the first time you sign in.</p>
-         ${button(loginUrl, 'Sign in to Edrion')}`
-      : `<p style="margin:0 0 18px;">Click below to activate your account and set your password.</p>${button(loginUrl, 'Activate your account')}`;
-    const html = layout({
+         ${emailButton(loginUrl, 'Sign in to Edrion')}`
+      : `<p style="margin:0 0 18px;">Click below to activate your account and set your password.</p>${emailButton(loginUrl, 'Activate your account')}`;
+    const html = emailLayout({
       heading: `You're the administrator for ${displayName}`,
       preheader: 'Set up your Edrion administrator account',
+      footer: REGISTRATION_FOOTER,
       bodyHtml: `<p style="margin:0 0 16px;">Hi ${fullName}, you've been set up as the primary administrator for <strong>${displayName}</strong> on Edrion.</p>${credHtml}`,
     });
     return this.email.send({ to, subject: `Activate your Edrion administrator account`, text, html });
@@ -127,12 +116,13 @@ export class RegistrationEmailService {
 
   sendPasswordReset(to: string, fullName: string, resetUrl: string): Promise<SentEmail> {
     const text = `Hi ${fullName}, we received a request to reset your Edrion password. Use this link to choose a new one (it expires in 1 hour): ${resetUrl}. If you didn't request this, you can safely ignore this email.`;
-    const html = layout({
+    const html = emailLayout({
       heading: 'Reset your password',
       preheader: 'Choose a new Edrion password',
+      footer: REGISTRATION_FOOTER,
       bodyHtml: `<p style="margin:0 0 16px;">Hi ${fullName}, we received a request to reset the password on your Edrion account.</p>
         <p style="margin:0 0 18px;">Click below to choose a new password. This link expires in <strong>1 hour</strong>.</p>
-        ${button(resetUrl, 'Reset your password')}
+        ${emailButton(resetUrl, 'Reset your password')}
         <p style="margin:18px 0 0;">If you didn't request this, you can safely ignore this email — your password won't change.</p>`,
     });
     return this.email.send({ to, subject: 'Reset your Edrion password', text, html });
@@ -140,11 +130,12 @@ export class RegistrationEmailService {
 
   sendWelcome(to: string, displayName: string, loginUrl: string): Promise<SentEmail> {
     const text = `Welcome to Edrion! ${displayName} is now in onboarding. Sign in any time at ${loginUrl} to track your onboarding checklist.`;
-    const html = layout({
+    const html = emailLayout({
       heading: 'Welcome to Edrion',
       preheader: `${displayName} onboarding has started`,
+      footer: REGISTRATION_FOOTER,
       bodyHtml: `<p style="margin:0 0 16px;">We're thrilled to welcome <strong>${displayName}</strong> to Edrion. Your onboarding has begun and a checklist is waiting in your workspace.</p>
-        <p style="margin:0 0 18px;">Sign in any time to track progress through configuration, training and go-live.</p>${button(loginUrl, 'Open your workspace')}`,
+        <p style="margin:0 0 18px;">Sign in any time to track progress through configuration, training and go-live.</p>${emailButton(loginUrl, 'Open your workspace')}`,
     });
     return this.email.send({ to, subject: `Welcome to Edrion, ${displayName}`, text, html });
   }

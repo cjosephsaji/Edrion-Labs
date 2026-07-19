@@ -1,9 +1,11 @@
 import { date, index, integer, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { campuses } from './campuses';
-import { classes, subjects } from './academics';
+import { classes, subjects, academicYears, academicTerms } from './academics';
 import { students, staff } from './people';
+import { timetableSlots } from './timetable';
 
 /**
  * INSTITUTION-PORTAL attendance (Phase 5). A two-level model:
@@ -26,11 +28,16 @@ export const attendanceSessions = pgTable(
     classId: uuid('class_id')
       .notNull()
       .references(() => classes.id, { onDelete: 'cascade' }),
+    /** Direct year/term stamp — date→term is ambiguous across overlapping department terms. */
+    academicYearId: uuid('academic_year_id').references(() => academicYears.id, { onDelete: 'set null' }),
+    termId: uuid('term_id').references(() => academicTerms.id, { onDelete: 'set null' }),
     /** Optional subject — null = homeroom / whole-day register. */
     subjectId: uuid('subject_id').references(() => subjects.id, { onDelete: 'set null' }),
     date: date('date').notNull(),
     /** Period label, e.g. "1" or "full_day". Part of the per-day uniqueness key. */
     period: text('period').notNull().default('full_day'),
+    /** Timetable slot this register was opened from (timetable-driven path). */
+    slotId: uuid('slot_id').references(() => timetableSlots.id, { onDelete: 'set null' }),
     /** Who took the register — a teacher. */
     takenById: uuid('taken_by_id').references(() => staff.id, { onDelete: 'set null' }),
     notes: text('notes'),
@@ -43,7 +50,12 @@ export const attendanceSessions = pgTable(
     scopeIdx: index('attendance_sessions_institution_campus_idx').on(t.institutionId, t.campusId),
     classIdx: index('attendance_sessions_class_idx').on(t.classId),
     dateIdx: index('attendance_sessions_date_idx').on(t.date),
+    yearIdx: index('attendance_sessions_year_idx').on(t.academicYearId),
+    slotIdx: index('attendance_sessions_slot_idx').on(t.slotId),
     uniq: uniqueIndex('attendance_session_uniq').on(t.classId, t.date, t.period),
+    slotIdUniq: uniqueIndex('attendance_session_slot_id_uniq')
+      .on(t.classId, t.date, t.slotId)
+      .where(sql`${t.slotId} is not null`),
   }),
 );
 

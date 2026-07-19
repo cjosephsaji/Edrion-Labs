@@ -4,6 +4,7 @@ import { usePortalClient } from './portal-client';
 import { useScope } from './scope';
 import type { InstitutionScope } from './types';
 import type { ListParams } from './academics';
+import { useAcademicScopedParams } from './academic-context';
 import type { CourseRow, Paged, SyllabusModuleRow } from './courses-types';
 
 function scopeKey(scope: InstitutionScope): string {
@@ -17,15 +18,18 @@ function queryString(p: ListParams): string {
   sp.set('sortDir', p.sortDir);
   if (p.sortBy) sp.set('sortBy', p.sortBy);
   if (p.search) sp.set('search', p.search);
+  if (p.filters) for (const [k, v] of Object.entries(p.filters)) if (v) sp.set(k, v);
   return sp.toString();
 }
 
 export function useCoursesList<T = CourseRow>(resource: string, params: ListParams) {
   const client = usePortalClient();
   const { scope } = useScope();
+  const scoped = useAcademicScopedParams(params, params.academicScope ?? 'year');
+  const { academicScope: _as, ...listParams } = scoped;
   return useQuery({
-    queryKey: ['courses', resource, scopeKey(scope), params],
-    queryFn: () => client.get<Paged<T>>(`/portal/${resource}?${queryString(params)}`, scope),
+    queryKey: ['courses', resource, scopeKey(scope), listParams],
+    queryFn: () => client.get<Paged<T>>(`/portal/${resource}?${queryString(listParams)}`, scope),
     placeholderData: keepPreviousData,
   });
 }
