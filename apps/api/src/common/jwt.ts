@@ -22,7 +22,8 @@ function b64urlJson(value: unknown): string {
   return Buffer.from(JSON.stringify(value), 'utf8').toString(ENC);
 }
 
-function sign(signingInput: string, secret: string): string {
+/** Shared HMAC-SHA256 primitive for compact, URL-safe server signatures. */
+export function hmacSha256Base64Url(signingInput: string, secret: string): string {
   return createHmac('sha256', secret).update(signingInput).digest(ENC);
 }
 
@@ -44,7 +45,7 @@ export function signHs256(
   const header = b64urlJson({ alg: 'HS256', typ: 'JWT' });
   const body = b64urlJson({ ...payload, iat, exp: iat + expiresInSeconds });
   const signingInput = `${header}.${body}`;
-  return `${signingInput}.${sign(signingInput, secret)}`;
+  return `${signingInput}.${hmacSha256Base64Url(signingInput, secret)}`;
 }
 
 /**
@@ -65,7 +66,7 @@ export function verifyHs256(token: string, secret: string, now: Date = new Date(
   }
   if (header.alg !== 'HS256') throw new JwtError('Unsupported algorithm');
 
-  const expected = sign(`${headerB64}.${bodyB64}`, secret);
+  const expected = hmacSha256Base64Url(`${headerB64}.${bodyB64}`, secret);
   const a = Buffer.from(sigB64);
   const b = Buffer.from(expected);
   if (a.length !== b.length || !timingSafeEqual(a, b)) throw new JwtError('Bad signature');

@@ -3,9 +3,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FlaskConical, Home, Library, MoreHorizontal, Sparkles } from 'lucide-react';
 import { PetrosMark } from '@/components/ui/primitives';
+import { usePortalConfig } from '@/lib/portal-config';
+import { configNav } from '@/lib/nav';
 
 const tabs = [
-  { href: '/home', label: 'Home', icon: Home, match: (p: string) => p === '/home' || p === '/' },
+  { href: '/home', label: 'Today', icon: Home, match: (p: string) => p === '/home' || p === '/' },
   { href: '/learn', label: 'Learn', icon: Sparkles, match: (p: string) => p.startsWith('/learn'), sparkle: true },
   { href: '/library', label: 'Library', icon: Library, match: (p: string) => p.startsWith('/library') },
   { href: '/lab', label: 'Lab', icon: FlaskConical, match: (p: string) => p.startsWith('/lab') },
@@ -22,11 +24,19 @@ const tabs = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { config } = usePortalConfig();
+  const dynamic = configNav(config?.modules ?? []).slice(0, 3).map((item) => ({
+    href: item.href, label: item.label, icon: item.icon,
+    match: (p: string) => p === item.href || p.startsWith(`${item.href}/`),
+  }));
+  const visibleTabs = config
+    ? [tabs[0]!, ...dynamic, tabs[4]!]
+    : [tabs[0]!, tabs[4]!];
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-st-bd1 bg-st-sidebar/95 backdrop-blur min-[921px]:hidden">
       <div className="mx-auto grid max-w-lg grid-cols-5 px-1">
-        {tabs.map((t) => {
+        {visibleTabs.map((t) => {
           const active = t.match(pathname);
           return (
             <Link
@@ -38,7 +48,7 @@ export function BottomNav() {
             >
               <span className={`relative rounded-full p-1.5 ${active ? 'bg-st-accentDeep/[0.07]' : ''}`}>
                 <t.icon size={20} strokeWidth={active ? 2.2 : 1.8} />
-                {'sparkle' in t && t.sparkle && active && (
+                {Boolean((t as { sparkle?: boolean }).sparkle) && active && (
                   <span className="absolute -right-0.5 -top-0.5">
                     <PetrosMark className="text-[8px]" />
                   </span>

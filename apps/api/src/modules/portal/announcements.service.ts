@@ -16,6 +16,7 @@ import type { ListResult } from './academics.service';
 import { AnnouncementsRepository } from './announcements.repository';
 import { RecipientResolver } from './recipient-resolver.service';
 import { basePortalAudit, type PortalActionContext } from './portal-action-context';
+import { TodayNotifyService } from '../student/today/today-notify.service';
 
 const BROADCAST_LABEL: Record<string, string> = {
   all: 'Everyone',
@@ -40,6 +41,7 @@ export class AnnouncementsService {
     private readonly repo: AnnouncementsRepository,
     private readonly recipients: RecipientResolver,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
+    private readonly todayNotify: TodayNotifyService,
   ) {}
 
   async list(ctx: PortalActionContext, q: AnnouncementsListQuery) {
@@ -160,6 +162,7 @@ export class AnnouncementsService {
     const targets = (await this.repo.getTargetsFor(ctx.principal.institutionId, [id])).get(id) ?? [];
     let recipientCount: number | null = null;
     let targetSummary: string | null = null;
+    let resolvedStudents:string[]=[];
     if (targets.length > 0) {
       const resolved = await this.recipients.resolve(
         ctx.principal.institutionId,
@@ -168,8 +171,10 @@ export class AnnouncementsService {
       );
       recipientCount = resolved.count;
       targetSummary = resolved.summary;
+      resolvedStudents=resolved.studentIds;
     } else {
       targetSummary = BROADCAST_LABEL[audience] ?? 'Everyone';
+      if(audience==='students'||audience==='all'){const resolved=await this.recipients.resolve(ctx.principal.institutionId,f.campusIds,[{kind:'all_students'}]);resolvedStudents=resolved.studentIds;recipientCount=resolved.count;}
     }
 
     const notification = await this.repo.insertNotification({
@@ -188,6 +193,7 @@ export class AnnouncementsService {
     await this.write(ctx, ANNOUNCEMENTS_MODULE, 'announcement.publish', 'announcement', id, updated.campusId, {
       newState: { status: updated.status, notificationId: notification.id, audience, recipientCount },
     });
+    if(resolvedStudents.length)await this.todayNotify.fanoutInstitutionStudents(ctx.principal.institutionId,resolvedStudents,{eventKey:`announcement:${updated.id}:published`,type:'announcement',sourceModule:'announcements',title:updated.title,body:updated.body??'',deepLink:`/announcements/${updated.id}`}).catch(()=>undefined);
     return { announcement: updated, notification };
   }
 

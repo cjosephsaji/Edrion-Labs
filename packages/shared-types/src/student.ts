@@ -4,6 +4,7 @@ export type StudentSurfaceKey =
   | 'transport'
   | 'hostel'
   | 'documents'
+  | 'requests'
   | 'content'
   | 'exams';
 
@@ -38,6 +39,12 @@ export const STUDENT_SURFACES: readonly StudentSurfaceDef[] = [
     permissionKey: 'student.surface.documents.view',
     featureFlagKey: 'student.surface.documents',
     label: 'Documents',
+  },
+  {
+    key: 'requests',
+    permissionKey: 'student.surface.requests.view',
+    featureFlagKey: 'student.surface.requests',
+    label: 'My Requests',
   },
   {
     key: 'content',

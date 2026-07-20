@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useStudentMe } from '@/lib/hooks';
 import { AppShell } from '@/components/app-shell/app-shell';
 import { StudentClientError } from '@/lib/student-client';
+import { PortalConfigProvider } from '@/lib/portal-config';
 
 export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -39,5 +40,5 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
 
   if (!me) return null;
 
-  return <AppShell>{children}</AppShell>;
+  return <PortalConfigProvider><AppShell>{children}</AppShell></PortalConfigProvider>;
 }

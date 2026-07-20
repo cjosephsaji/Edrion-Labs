@@ -9,6 +9,7 @@ export interface DefaultTemplateSeed {
   html: string;
   css: string;
   headerConfig: Record<string, unknown>;
+  fieldsSchema?: Record<string, unknown>;
   appliesToTypes: string[];
 }
 
@@ -32,6 +33,38 @@ const questionList = `
 </ol>`;
 
 export const PLATFORM_DEFAULT_TEMPLATES: DefaultTemplateSeed[] = [
+  {
+    docType: 'fee_receipt',
+    name: 'Fee receipt',
+    html: `<div class="receipt"><h2>FEE RECEIPT</h2><p class="number">{{receipt.number}}</p><table><tr><th>Invoice</th><th>Amount</th></tr>{{#each receipt.lines}}<tr><td>{{this.invoiceNo}}</td><td>{{this.amountMinor}}</td></tr>{{/each}}</table><p><b>Amount received:</b> {{receipt.amount_minor}}</p><p><b>Method:</b> {{receipt.method}}</p><p class="note">This computer-generated receipt is the permanent payment record.</p></div>`,
+    css: `.receipt h2 { text-align:center; } .number { text-align:center; font-size:16pt; font-weight:bold; } .receipt table { width:100%; border-collapse:collapse; } .receipt th,.receipt td { border:1px solid #ddd; padding:8px; } .receipt .note { margin-top:32px; color:#555; font-size:9pt; }`,
+    headerConfig: { logoPosition: 'center', showInstitutionName: true },
+    appliesToTypes: [],
+  },
+  {
+    docType:'fee_statement',name:'Fee statement',
+    html:`<div class="statement"><h2>FEE STATEMENT</h2><p><b>{{student.name}}</b></p><table><tr><th>Invoice</th><th>Billed</th><th>Paid</th><th>Balance</th><th>Status</th></tr>{{#each invoices}}<tr><td>{{this.number}}</td><td>{{this.amount_minor}}</td><td>{{this.paid_minor}}</td><td>{{this.balance_minor}}</td><td>{{this.status}}</td></tr>{{/each}}</table><p class="closing"><b>Closing balance:</b> {{closing_balance_minor}}</p></div>`,
+    css:`.statement h2{text-align:center}.statement table{width:100%;border-collapse:collapse}.statement th,.statement td{border:1px solid #ddd;padding:7px;text-align:right}.statement th:first-child,.statement td:first-child{text-align:left}.closing{margin-top:20px;text-align:right}`,
+    headerConfig:{logoPosition:'center',showInstitutionName:true},appliesToTypes:[],
+  },
+  {
+    docType: 'bonafide',
+    name: 'Bonafide certificate',
+    html: `<div class="cert"><h2>BONAFIDE CERTIFICATE</h2><p>This is to certify that <b>{{student.full_name}}</b>, admission number <b>{{student.admission_no}}</b>, is a bona fide learner of this institution.</p><p>This certificate is issued for {{purpose_label}}{{#if purpose_text}} — {{purpose_text}}{{/if}}.</p><div class="verify"><img src="{{{issue.verify_qr_data_url}}}" alt="Verification QR"><div>Verification code: {{issue.verify_code}}<br><span>{{issue.verify_url}}</span></div></div><div class="sign"><div>{{issue.role_label}}</div></div></div>`,
+    css: `.cert { margin-top: 30px; line-height: 1.7; } .cert h2 { text-align: center; } .verify { margin-top: 32px; display: flex; align-items: center; gap: 12px; font-family: monospace; font-size: 9pt; } .verify img { width: 84px; height: 84px; } .sign { margin-top: 60px; text-align: right; }`,
+    fieldsSchema: { student: ['full_name', 'admission_no'], purpose_label: 'string', purpose_text: 'string', issue: ['verify_code', 'verify_url', 'verify_qr_data_url', 'role_label'] },
+    headerConfig: { logoPosition: 'center', showInstitutionName: true },
+    appliesToTypes: [],
+  },
+  {
+    docType: 'transcript',
+    name: 'Academic transcript',
+    html: `<div class="transcript"><h2>ACADEMIC TRANSCRIPT</h2><p><b>{{student.full_name}}</b> · {{student.admission_no}}</p><div>{{academic.summary}}</div><div class="verify"><img src="{{{issue.verify_qr_data_url}}}" alt="Verification QR"><div>Verification code: {{issue.verify_code}}<br><span>{{issue.verify_url}}</span></div></div><div class="sign"><div>{{issue.role_label}}</div></div></div>`,
+    css: `.transcript { margin-top: 24px; line-height: 1.6; } .transcript h2 { text-align: center; } .verify { margin-top: 32px; display: flex; align-items: center; gap: 12px; font-family: monospace; font-size: 9pt; } .verify img { width: 84px; height: 84px; } .sign { margin-top: 60px; text-align: right; }`,
+    fieldsSchema: { student: ['full_name', 'admission_no'], academic: ['summary'], issue: ['verify_code', 'verify_url', 'verify_qr_data_url', 'role_label'] },
+    headerConfig: { logoPosition: 'center', showInstitutionName: true },
+    appliesToTypes: ['college', 'university', 'training_center'],
+  },
   {
     docType: 'exam_paper',
     name: 'Standard exam paper',

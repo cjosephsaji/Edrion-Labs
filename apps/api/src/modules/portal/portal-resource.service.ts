@@ -60,6 +60,8 @@ export function resourceConfig(
     /** Bespoke enrichment run after refs (see CrudConfig.enrich). */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     enrich?: (rows: any[], ctx: PortalActionContext) => Promise<any[]>;
+    /** Institution-wide resources have no campus column or active-scope narrowing. */
+    scope?: 'campus' | 'institution';
   },
 ): CrudConfig {
   return {
@@ -73,6 +75,7 @@ export function resourceConfig(
       status: table.status,
       kind: table.kind,
     },
+    scope: opts.scope,
     module: opts.module,
     entityType: opts.entityType,
     actionPrefix: opts.actionPrefix,

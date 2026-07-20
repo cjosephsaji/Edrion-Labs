@@ -596,6 +596,34 @@
       "when": 1786300000000,
       "tag": "0084_lab_subject_timetable_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 85,
+      "version": "7",
+      "when": 1786400000000,
+      "tag": "0085_request_engine",
+      "breakpoints": true
+    },
+    {
+      "idx": 86,
+      "version": "7",
+      "when": 1786500000000,
+      "tag": "0086_module_visibility",
+      "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "7",
+      "when": 1786600000000,
+      "tag": "0087_fees_engine",
+      "breakpoints": true
+    },
+    {
+      "idx": 88,
+      "version": "7",
+      "when": 1786700000000,
+      "tag": "0088_today_feed",
+      "breakpoints": true
     }
   ]
 }

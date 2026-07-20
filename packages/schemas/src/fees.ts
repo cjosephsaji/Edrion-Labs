@@ -23,7 +23,7 @@ export const FEE_FREQUENCIES = ['one_time', 'monthly', 'term', 'annual'] as cons
 export const feeFrequencySchema = z.enum(FEE_FREQUENCIES);
 export type FeeFrequency = (typeof FEE_FREQUENCIES)[number];
 
-export const FEE_STRUCTURE_STATUSES = ['active', 'inactive'] as const;
+export const FEE_STRUCTURE_STATUSES = ['draft', 'active', 'archived'] as const;
 export const feeStructureStatusSchema = z.enum(FEE_STRUCTURE_STATUSES);
 export type FeeStructureStatus = (typeof FEE_STRUCTURE_STATUSES)[number];
 
@@ -95,7 +95,7 @@ export const createFeeStructureSchema = z
     amount: money.default(0),
     frequency: feeFrequencySchema.default('one_time'),
     description: shortText(500),
-    status: feeStructureStatusSchema.default('active'),
+    status: feeStructureStatusSchema.default('draft'),
   })
   .refine(notBothPlacements, bothPlacementsMessage);
 export type CreateFeeStructureInput = z.infer<typeof createFeeStructureSchema>;

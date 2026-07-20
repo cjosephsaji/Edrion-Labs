@@ -1,17 +1,19 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { and, eq, schema, type Database } from '@edrion/database';
+import { and, desc, eq, schema, type Database } from '@edrion/database';
 import { AccountStatus, ActorType, AuditResult, FeatureScope, RiskLevel, STUDENT_SURFACES } from '@edrion/shared-types';
 import type { AuditWriter } from '@edrion/audit';
 import type { ApiEnv } from '@edrion/config';
 import { API_ENV, AUDIT_WRITER, DATABASE } from '../../common/tokens';
 import { FeatureControlsRepository } from '../feature-controls/feature-controls.repository';
 import { FeatureControlsService } from '../feature-controls/feature-controls.service';
+import { STUDENT_MODULE_CATALOG } from '@edrion/feature-flags';
 import { hashToken, makeToken } from '../authentication/password.util';
 import { emailButton, emailLayout } from '../../common/email-templates';
 import { EmailService } from './email.service';
@@ -350,6 +352,37 @@ export class StudentPortalInviteService {
       .limit(1);
     if (!definition) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Feature definition not found' });
+    }
+
+    if (value && featureFlagKey.startsWith('student.surface.')) {
+      const [sub] = await this.db
+        .select({ planId: schema.planVersions.planId })
+        .from(schema.subscriptions)
+        .innerJoin(schema.planVersions, eq(schema.subscriptions.planVersionId, schema.planVersions.id))
+        .where(eq(schema.subscriptions.institutionId, institutionId))
+        .orderBy(desc(schema.subscriptions.updatedAt))
+        .limit(1);
+      const planResolution = await this.features.resolveByKey(featureFlagKey, { planId: sub?.planId });
+      if (planResolution.layer === 'assignment' && planResolution.scope === 'plan' && !planResolution.value) {
+        throw new ForbiddenException({
+          code: 'PLAN_LOCKED',
+          message: 'An Edrion super administrator must enable this surface.',
+        });
+      }
+      const key = featureFlagKey.slice('student.surface.'.length);
+      const module = STUDENT_MODULE_CATALOG.find((item) => item.key === key);
+      if (module?.requiresInstitutionModule) {
+        const dependency = await this.features.resolveByKey(
+          `institution.module.${module.requiresInstitutionModule}`,
+          { institutionId, planId: sub?.planId },
+        );
+        if (!dependency.value) {
+          throw new ForbiddenException({
+            code: 'MODULE_DEPENDENCY_DISABLED',
+            message: 'The backing institution module is disabled.',
+          });
+        }
+      }
     }
 
     const existing = await this.featureRepo.findAssignment(

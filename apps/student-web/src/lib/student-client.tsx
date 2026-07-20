@@ -70,6 +70,9 @@ export class StudentClient {
     }
     if (!res.ok) {
       const err = body as ApiError;
+      if (err.code === 'MODULE_DISABLED' && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('edrion:module-disabled', { detail: err }));
+      }
       throw new StudentClientError(
         res.status,
         err.code ?? 'ERROR',
@@ -83,6 +86,18 @@ export class StudentClient {
 
   get<T>(path: string): Promise<T> {
     return this.request<T>(path, { method: 'GET' });
+  }
+
+  async getWithEtag<T>(path: string, etag?: string): Promise<{ data?: T; etag?: string; notModified: boolean }> {
+    const headers = this.headers(etag ? { 'if-none-match': etag } : undefined);
+    const res = await fetch(`${this.baseUrl}/v1/student${path}`, { method: 'GET', credentials: 'include', headers });
+    if (res.status === 304) return { etag: etag ?? undefined, notModified: true };
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = body as ApiError;
+      throw new StudentClientError(res.status, err.code ?? 'ERROR', err.message ?? res.statusText, err.correlationId, err.meta);
+    }
+    return { data: body as T, etag: res.headers.get('etag') ?? undefined, notModified: false };
   }
 
   post<T>(path: string, body?: unknown): Promise<T> {
@@ -126,6 +141,11 @@ export class StudentClient {
 
   fileUrl(id: string): string {
     return `${this.baseUrl}/v1/student/files/${id}`;
+  }
+
+  /** Absolute URL for an authenticated student API resource (downloads / inline previews). */
+  resourceUrl(path: string): string {
+    return `${this.baseUrl}/v1/student${path.startsWith('/') ? path : `/${path}`}`;
   }
 
   /** Fetch file bytes with auth headers (pdf.js must not fetch cross-origin itself). */

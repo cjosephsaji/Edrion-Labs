@@ -27,6 +27,8 @@ export const SETTING_CATEGORIES = [
   'localization',
   'notifications',
   'security',
+  'student_portal',
+  'terminology',
 ] as const;
 export const settingCategorySchema = z.enum(SETTING_CATEGORIES);
 export type SettingCategory = (typeof SETTING_CATEGORIES)[number];
@@ -104,6 +106,7 @@ export const SETTINGS_CATEGORY_META: { key: string; label: string; description?:
   { key: 'attendance', label: 'Attendance', description: 'Attendance thresholds and lateness rules.' },
   { key: 'notifications', label: 'Notifications', description: 'How announcements and alerts are delivered.' },
   { key: 'communication', label: 'Communication', description: 'Parent and staff messaging.' },
+  { key: 'student_portal', label: 'Student Portal', description: 'Student-facing privacy and workflow preferences.' },
   { key: 'security', label: 'Security & Access', description: 'Sessions, passwords, MFA and lockout.' },
   { key: 'privacy', label: 'Data & Privacy', description: 'Retention of archived records.' },
 ];
@@ -138,6 +141,8 @@ export const SETTINGS_REGISTRY: SettingDef[] = [
   { category: 'notifications', key: 'smsNotifications', label: 'SMS notifications', type: 'boolean', default: false, applies: 'Whether announcements/notifications send by SMS.' },
   // Communication
   { category: 'communication', key: 'allowParentMessaging', label: 'Allow parent messaging', type: 'boolean', default: true, applies: 'Whether parents can be messaged / message staff.' },
+  // Student Portal
+  { category: 'student_portal', key: 'show_staff_names_to_students', label: 'Show staff names on requests', type: 'boolean', default: false, applies: 'Whether request history shows staff names instead of role labels.' },
   // Security & Access
   { category: 'security', key: 'sessionTimeoutMinutes', label: 'Session timeout (minutes)', type: 'number', default: 60, applies: 'Idle session expiry for portal logins.' },
   { category: 'security', key: 'passwordMinLength', label: 'Minimum password length', type: 'number', default: 8, applies: 'Password policy on activation and reset.' },

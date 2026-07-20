@@ -48,7 +48,8 @@ const REF_BUCKET: Record<RefType, keyof ResolveRequest> = {
 export interface CrudColumns {
   id: PgColumn;
   institutionId: PgColumn;
-  campusId: PgColumn;
+  /** Absent for institution-wide resources that deliberately have no campus scope. */
+  campusId?: PgColumn;
   version: PgColumn;
   createdAt: PgColumn;
   status?: PgColumn;
@@ -60,6 +61,8 @@ export interface CrudConfig {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   table: any;
   columns: CrudColumns;
+  /** Defaults to campus-aware; institution-only resources never receive a campus stamp/filter. */
+  scope?: 'campus' | 'institution';
   /** Audit module, e.g. 'portal-health'. */
   module: string;
   /** Audit entity type, e.g. 'health_record'. */
@@ -120,7 +123,7 @@ export class PortalCrudEngine {
     const f = this.filter(ctx);
     const c = cfg.columns;
     const conds: SQL[] = [eq(c.institutionId, ctx.principal.institutionId)];
-    if (f.campusIds) {
+    if (cfg.scope !== 'institution' && c.campusId && f.campusIds) {
       const inScope = or(isNull(c.campusId), inArray(c.campusId, f.campusIds));
       if (inScope) conds.push(inScope);
     }
@@ -157,13 +160,13 @@ export class PortalCrudEngine {
   }
 
   async create<TRow>(cfg: CrudConfig, ctx: PortalActionContext, values: Record<string, unknown>): Promise<TRow> {
-    const campusId = ctx.scope.mode === 'campus' ? ctx.scope.campusId : null;
+    const campusId = cfg.scope === 'institution' ? undefined : ctx.scope.mode === 'campus' ? ctx.scope.campusId : null;
     const [row] = await this.db
       .insert(cfg.table)
       .values({
         ...this.clean(values),
         institutionId: ctx.principal.institutionId,
-        campusId,
+        ...(cfg.columns.campusId ? { campusId } : {}),
         createdBy: ctx.principal.institutionUserId,
       })
       .returning();

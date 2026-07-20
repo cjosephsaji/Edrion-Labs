@@ -1,15 +1,38 @@
 'use client';
+import Link from 'next/link';
 import type { DocumentSurfaceItemDto } from '@edrion/schemas';
-import { useDocumentsSurface } from '@/lib/hooks';
+import { useDocumentsSurface, useStudentMe } from '@/lib/hooks';
+import { useStudentVault } from '@/lib/requests';
+import { useStudentClient } from '@/lib/student-client';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Eyebrow, PageHeader } from '@/components/ui/primitives';
 
 export default function DocumentsPage() {
   const { data, isLoading } = useDocumentsSurface();
+  const { data: me } = useStudentMe();
+  const requestsEnabled = Boolean(me?.surfaces.requests);
+  const vault = useStudentVault(requestsEnabled);
+  const client = useStudentClient();
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
       <PageHeader eyebrow={<Eyebrow>SCHOOL</Eyebrow>} title="Documents" />
+      {requestsEnabled && <div className="mt-5 flex gap-2">
+          <Link href="/requests?new=document_request" className="rounded-full bg-st-accent px-4 py-2 text-sm font-semibold text-white">Request a document</Link>
+          <Link href="/requests" className="rounded-full border border-st-bd2 bg-st-card px-4 py-2 text-sm font-semibold text-st-ink">Requests</Link>
+        </div>}
+
+      {(vault.data?.items ?? []).length > 0 && (
+        <section className="mt-7">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-st-faint">Your vault</p>
+          <div className="space-y-2">{vault.data!.items.map((doc) => (
+            <a key={doc.id} href={client.resourceUrl(`/requests/documents/${doc.id}/file`)} target="_blank" className="flex items-center justify-between rounded-[15px] border border-st-bd1 bg-st-card px-4 py-3.5">
+              <div><p className="font-semibold text-st-ink">{doc.title}</p><p className="text-xs text-st-faint">Issued {new Date(doc.issuedAt).toLocaleDateString()}</p></div>
+              {doc.revokedAt ? <span className="rounded-full bg-st-page px-2 py-1 text-xs text-st-muted">Revoked</span> : <span className="text-sm font-semibold text-st-accentDeep">Open</span>}
+            </a>
+          ))}</div>
+        </section>
+      )}
 
       {isLoading ? (
         <div className="mt-8 h-32 shimmer rounded-[15px]" />

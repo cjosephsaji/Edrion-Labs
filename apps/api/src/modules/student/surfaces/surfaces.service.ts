@@ -12,6 +12,7 @@ const FLAG_DEFAULTS: Record<string, boolean> = {
   'student.surface.transport': false,
   'student.surface.hostel': false,
   'student.surface.documents': false,
+  'student.surface.requests': false,
   'student.surface.content': false,
   'student.surface.exams': false,
 };

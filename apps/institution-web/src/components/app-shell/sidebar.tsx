@@ -12,6 +12,7 @@ import { clearPortalSession } from '@/lib/portal-session';
 import { isNavItemActive } from '@/lib/nav';
 import { resolveNav } from '@/lib/resolve-nav';
 import { useTerm } from '@/lib/term';
+import { usePortalRequests } from '@/lib/requests';
 
 const COLLAPSE_KEY = 'edrion.portal.sidebar.collapsed';
 
@@ -23,6 +24,7 @@ export function Sidebar() {
   const { data: me } = usePortalMe();
   const { can } = usePermissions();
   const { t, tp, type } = useTerm();
+  const approvals = usePortalRequests({}, can('requests.review'));
   const [collapsed, setCollapsed] = useState(false);
   const [isNarrow, setIsNarrow] = useState(false);
 
@@ -138,7 +140,7 @@ export function Sidebar() {
                         title={effectiveCollapsed ? label : undefined}
                         aria-current={active ? 'page' : undefined}
                         className={cn(
-                          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-[background-color,color,box-shadow,transform] duration-100',
+                          'relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-[background-color,color,box-shadow,transform] duration-100',
                           active
                             ? 'bg-sidebar-active text-sidebar shadow-sm'
                             : 'text-sidebar-text hover:bg-white/[0.08] hover:text-white',
@@ -147,6 +149,11 @@ export function Sidebar() {
                       >
                         <Icon className="h-[18px] w-[18px] shrink-0" />
                         {!effectiveCollapsed && <span className="truncate">{label}</span>}
+                        {item.id === 'approvals' && (approvals.data?.items.length ?? 0) > 0 && (
+                          <span className={cn('ml-auto rounded-full bg-danger px-2 py-0.5 text-[10px] font-bold text-white', effectiveCollapsed && 'absolute right-1 top-1 h-2 w-2 p-0 text-transparent')}>
+                            {approvals.data!.items.length}
+                          </span>
+                        )}
                       </Link>
                     </li>
                   );

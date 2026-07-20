@@ -28,4 +28,8 @@ export class MockPaymentProvider implements PaymentProvider {
     const b = Buffer.from(signature);
     return a.length === b.length && timingSafeEqual(a, b);
   }
+
+  verifyClientConfirmation(args: { providerRef: string; paymentId: string; signature: string }): boolean {
+    return this.verifyWebhook(`${args.providerRef}|${args.paymentId}`, args.signature);
+  }
 }

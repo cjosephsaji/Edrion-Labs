@@ -24,6 +24,10 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO edrion_app;
 
 -- Append-only tables: revoke mutation, keep insert + read.
 REVOKE UPDATE, DELETE, TRUNCATE ON audit_events FROM edrion_app;
+REVOKE UPDATE, DELETE, TRUNCATE ON fee_invoice_items, fee_gateway_events FROM edrion_app;
+REVOKE DELETE, TRUNCATE ON fee_receipts, fee_structure_versions, fee_receipt_sequences, fee_waivers, institution_fee_config, fee_payments FROM edrion_app;
+REVOKE UPDATE ON fee_receipts FROM edrion_app;
+GRANT UPDATE (status, cancelled_reason, pdf_storage_ref, vault_document_id, refund_status, refund_amount_minor, refund_reason, refund_proposed_by, refund_second_approved_by, version) ON fee_receipts TO edrion_app;
 REVOKE UPDATE, DELETE, TRUNCATE ON security_events FROM edrion_app;
 REVOKE UPDATE, DELETE, TRUNCATE ON activity_events FROM edrion_app;
 -- Webhook deliveries: each attempt is an immutable record (insert/select only).
@@ -36,6 +40,8 @@ REVOKE UPDATE, DELETE, TRUNCATE ON learning_events FROM edrion_app;
 REVOKE UPDATE, DELETE, TRUNCATE ON learn_ai_calls FROM edrion_app;
 REVOKE UPDATE, DELETE, TRUNCATE ON flashcard_reviews FROM edrion_app;
 REVOKE UPDATE, DELETE, TRUNCATE ON achievement_awards FROM edrion_app;
+REVOKE UPDATE, DELETE, TRUNCATE ON student_request_events FROM edrion_app;
+REVOKE UPDATE, DELETE, TRUNCATE ON feed_events FROM edrion_app;
 
 -- Belt-and-braces: a trigger that hard-blocks UPDATE/DELETE regardless of role.
 CREATE OR REPLACE FUNCTION edrion_block_mutation() RETURNS trigger AS $$
@@ -49,7 +55,8 @@ DECLARE t text;
 BEGIN
   FOREACH t IN ARRAY ARRAY['audit_events', 'security_events', 'activity_events', 'webhook_deliveries',
                            'parent_emergency_broadcasts', 'gate_exit_events', 'parent_digest_deliveries',
-                           'learning_events', 'learn_ai_calls', 'flashcard_reviews', 'achievement_awards'] LOOP
+                           'learning_events', 'learn_ai_calls', 'flashcard_reviews', 'achievement_awards',
+                           'student_request_events', 'feed_events'] LOOP
     EXECUTE format('DROP TRIGGER IF EXISTS %I_append_only ON %I', t, t);
     EXECUTE format(
       'CREATE TRIGGER %I_append_only BEFORE UPDATE OR DELETE ON %I

@@ -35,6 +35,7 @@ import { ParentPortalModule } from './modules/parent-portal/parent-portal.module
 import { StudentModule } from './modules/student/student.module';
 import { RegistrationModule } from './modules/registration/registration.module';
 import { AdmissionsPublicModule } from './modules/admissions-public/admissions-public.module';
+import { RequestEngineModule } from './modules/requests/request-engine.module';
 
 /**
  * Root module. Global guards run in order: AuthGuard (authenticate + attach principal) →
@@ -73,6 +74,7 @@ import { AdmissionsPublicModule } from './modules/admissions-public/admissions-p
     StudentModule,
     RegistrationModule,
     AdmissionsPublicModule,
+    RequestEngineModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },

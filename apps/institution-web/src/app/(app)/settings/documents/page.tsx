@@ -16,11 +16,13 @@ interface TemplateRow {
   html: string;
   css: string;
   headerConfig: Record<string, unknown>;
+  fieldsSchema: Record<string, unknown>;
   isDefault: boolean;
+  requiresSignOff: boolean;
   version: number;
 }
 
-const DOC_TYPES = ['exam_paper', 'assignment', 'circular', 'certificate', 'letter', 'report'];
+const DOC_TYPES = ['exam_paper', 'assignment', 'circular', 'certificate', 'letter', 'report', 'bonafide', 'transcript'];
 
 /**
  * Settings → Documents: institution document templates (Handlebars-in-DB) over the platform
@@ -51,6 +53,8 @@ export default function DocumentTemplatesPage() {
           html: t.html,
           css: t.css,
           headerConfig: t.headerConfig ?? {},
+          fieldsSchema: t.fieldsSchema ?? {},
+          requiresSignOff: t.requiresSignOff ?? false,
           version: t.version,
         });
       }
@@ -60,6 +64,8 @@ export default function DocumentTemplatesPage() {
         html: t.html,
         css: t.css ?? '',
         headerConfig: t.headerConfig ?? {},
+        fieldsSchema: t.fieldsSchema ?? {},
+        requiresSignOff: t.requiresSignOff ?? false,
       });
     },
     onSuccess: () => {
@@ -133,7 +139,7 @@ export default function DocumentTemplatesPage() {
                         setEditing(
                           t.institutionId
                             ? { ...t }
-                            : { docType: t.docType, name: `${t.name} (custom)`, html: t.html, css: t.css, headerConfig: t.headerConfig },
+                            : { docType: t.docType, name: `${t.name} (custom)`, html: t.html, css: t.css, headerConfig: t.headerConfig, fieldsSchema: t.fieldsSchema, requiresSignOff: t.requiresSignOff },
                         )
                       }
                     >
@@ -164,6 +170,10 @@ export default function DocumentTemplatesPage() {
               <Label>Name</Label>
               <Input value={editing.name ?? ''} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
             </div>
+            <label className="flex items-start gap-3 rounded-lg border border-border p-3">
+              <input type="checkbox" className="mt-1" checked={editing.requiresSignOff ?? false} onChange={(e) => setEditing({ ...editing, requiresSignOff: e.target.checked })} />
+              <span><span className="block text-sm font-medium text-text-primary">Require human sign-off</span><span className="block text-xs text-text-muted">Generated documents wait in the Issuance desk until a staff member signs and delivers them.</span></span>
+            </label>
             <div>
               <Label className="flex items-center gap-2">
                 Format capture

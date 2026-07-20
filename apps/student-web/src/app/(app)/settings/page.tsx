@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePersona } from '@/lib/persona';
 import { usePreferences, useStudentMe } from '@/lib/hooks';
 import { useTheme, type StudentThemeName } from '@/lib/theme';
@@ -21,6 +21,7 @@ type SectionId =
   | 'account';
 
 const themeOrder: StudentThemeName[] = ['standard', 'dim', 'dark'];
+type TodayPreferences={version:number;homeStatChips:string[];moduleNotifications:Record<string,boolean>};
 
 function ThemeCard({
   name,
@@ -78,6 +79,11 @@ export default function SettingsPage() {
   const client = useStudentClient();
   const [section, setSection] = useState<SectionId>('appearance');
   const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [todayPrefs,setTodayPrefs]=useState<TodayPreferences>();
+
+  useEffect(()=>{if(section!=='notifications'||todayPrefs)return;void client.get<TodayPreferences>('/me/today-preferences').then(setTodayPrefs).catch(()=>undefined);},[client,section,todayPrefs]);
+
+  async function updateToday(patch:{home_stat_chips?:string[];module_notifications?:Record<string,boolean>}){if(!todayPrefs)return;try{const row=await client.patch<TodayPreferences>('/me/today-preferences',{version:todayPrefs.version,...patch});setTodayPrefs(row);say('Today preferences saved.');}catch{say("Couldn't save Today preferences.");}}
 
   const sections: { id: SectionId; label: string; show?: boolean }[] = [
     { id: 'appearance', label: t('settings.sections.appearance') },
@@ -267,6 +273,9 @@ export default function SettingsPage() {
               checked={prefs.notifAnnouncements}
               onChange={(v) => update.mutate({ notifAnnouncements: v })}
             />
+            {todayPrefs&&<Card><p className="font-medium text-st-ink">Today screen</p><p className="mt-1 text-xs text-st-muted">Choose up to three quick stats and which updates may send a push. Updates still remain in Today when push is off.</p><div className="mt-4"><p className="text-xs font-semibold text-st-muted">QUICK STATS</p><div className="mt-2 flex flex-wrap gap-2">{[
+              ['attendance_pct','Attendance'],['gpa_term','Published average'],['streak','Streak'],['review_due_count','Review due'],['fees_balance','Fee balance'],['mock_percentile','Mock percentile'],
+            ].map(([value,label])=>{const selected=todayPrefs.homeStatChips.includes(value!);return <button key={value} type="button" onClick={()=>{const next=selected?todayPrefs.homeStatChips.filter(key=>key!==value):[...todayPrefs.homeStatChips,value!].slice(-3);void updateToday({home_stat_chips:next});}} className={`rounded-full px-3 py-1.5 text-xs font-medium ${selected?'bg-st-accent text-white':'bg-st-surface2 text-st-muted'}`}>{label}</button>;})}</div></div><div className="mt-5 space-y-2">{[['announcements','Announcements'],['results','Results'],['fees','Fees'],['requests','Requests'],['clubs','Clubs']].map(([module,label])=><ToggleRow key={module} label={label!} checked={todayPrefs.moduleNotifications[module!]!==false} onChange={(checked)=>void updateToday({module_notifications:{...todayPrefs.moduleNotifications,[module!]:checked}})}/>)}</div></Card>}
             <p className="text-xs text-st-muted">{t('settings.notifications.footer')}</p>
           </div>
         )}

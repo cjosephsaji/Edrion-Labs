@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useClassAbout, useClassMaterials, useClassStream } from '@/lib/hooks';
+import { useClassAbout, useClassMaterials, useClassStream, useStudentMe } from '@/lib/hooks';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -8,6 +8,7 @@ export default function ClassDetailPage({ params }: { params: { id: string } }) 
   const { data: about, isLoading: aboutLoading } = useClassAbout(params.id);
   const { data: stream, isLoading: streamLoading } = useClassStream(params.id);
   const { data: materials, isLoading: materialsLoading } = useClassMaterials(params.id);
+  const { data: me } = useStudentMe();
 
   const loading = aboutLoading || streamLoading || materialsLoading;
 
@@ -33,9 +34,10 @@ export default function ClassDetailPage({ params }: { params: { id: string } }) 
         <p className="text-xs text-st-faint">Teacher</p>
         <p className="font-semibold text-st-ink">{info?.teacherName ?? '—'}</p>
         {info?.attendance && (
-          <p className="mt-3 text-sm text-st-muted">
-            Attendance: {info.attendance.present}/{info.attendance.total}
-          </p>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-st-muted">
+            <p>Attendance: {info.attendance.present}/{info.attendance.total}</p>
+            {me?.surfaces.requests && <Link href="/requests?new=leave_request" className="font-semibold text-st-accentDeep">Apply for leave</Link>}
+          </div>
         )}
         {info?.timetableLines && info.timetableLines.length > 0 && (
           <ul className="mt-4 space-y-1 text-sm text-st-muted">

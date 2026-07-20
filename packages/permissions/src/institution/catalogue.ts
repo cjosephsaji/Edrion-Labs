@@ -140,6 +140,12 @@ export const INSTITUTION_PERMISSIONS: readonly PermissionDef[] = [
   // Document generation (formatted institution documents — distinct from Documents & Policies)
   def('documents.generate', 'Documents', 'Generate formatted documents from templates.'),
   def('documents.templates.manage', 'Documents', 'Edit templates, branding, paper formats.', true),
+  def('documents.issue', 'Documents', 'Review, sign, deliver, and revoke issued documents.', true),
+
+  // Student Request Engine.
+  def('requests.review', 'Approvals', 'Review and decide student requests.'),
+  def('requests.reassign', 'Approvals', 'Reassign student requests to another role or user.', true),
+  def('faculty_advisor', 'Approvals', 'Receive student requests routed to a faculty advisor.'),
 
   // Official circulars
   def('circulars.issue', 'Communication', 'Issue official circulars under letterhead.', true),

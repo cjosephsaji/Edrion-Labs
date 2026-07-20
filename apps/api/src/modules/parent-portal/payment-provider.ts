@@ -18,6 +18,10 @@ export interface CreatedIntent {
 export interface PaymentProvider {
   readonly key: string;
   createIntent(args: CreateIntentArgs): Promise<CreatedIntent>;
+  /** Browser-safe checkout configuration. Secrets are never returned. */
+  clientConfig?(): { keyId: string };
   /** Verify a webhook's raw body against its signature header. */
   verifyWebhook(rawBody: string, signature: string): boolean;
+  /** Verify the provider's browser-return signature without trusting client status text. */
+  verifyClientConfirmation?(args: { providerRef: string; paymentId: string; signature: string }): boolean;
 }

@@ -20,7 +20,6 @@ import { ParentSafetyService } from './parent-safety.service';
 import { ParentLogisticsService } from './parent-logistics.service';
 import { ParentCommService } from './parent-comm.service';
 import { ParentInboxService } from './parent-inbox.service';
-import { MockPaymentProvider } from './mock-payment.provider';
 
 /**
  * Parent Portal module. Reuses the institution-portal auth stack (InstitutionAuthGuard + session /
@@ -50,7 +49,6 @@ import { MockPaymentProvider } from './mock-payment.provider';
     ParentLogisticsService,
     ParentCommService,
     ParentInboxService,
-    MockPaymentProvider,
   ],
 })
 export class ParentPortalModule {}

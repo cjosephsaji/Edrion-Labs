@@ -1,21 +1,20 @@
 import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
-  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { and, desc, eq, inArray, schema, type Database } from '@edrion/database';
 import type { AuditWriter, AuditEventInput } from '@edrion/audit';
-import { ActorType } from '@edrion/shared-types';
 import type { CreatePaymentIntentInput, PaymentWebhookInput } from '@edrion/schemas';
 import { AUDIT_WRITER, DATABASE } from '../../common/tokens';
 import { assertWard } from './guardian-scope.guard';
 import type { GuardianContext } from './guardian-context';
 import type { PortalActionContext } from '../portal/portal-action-context';
 import { basePortalAudit } from '../portal/portal-action-context';
-import { MockPaymentProvider } from './mock-payment.provider';
+import { PaymentProviderRegistry } from './payment-provider.registry';
+import { FeeLedgerService } from '../portal/fee-ledger.service';
 
 const MODULE = 'parent-fees';
 
@@ -29,7 +28,8 @@ export class ParentFeesService {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
-    private readonly mock: MockPaymentProvider,
+    private readonly providers: PaymentProviderRegistry,
+    private readonly ledger: FeeLedgerService,
   ) {}
 
   /** Ward ids the caller may see fees for (excludes wards with fees hidden). */
@@ -142,7 +142,8 @@ export class ParentFeesService {
     }
 
     const id = randomUUID();
-    const created = await this.mock.createIntent({ intentId: id, amountMinor: amount, currency: 'INR', invoiceNo: invoice.invoiceNo });
+    const provider = this.providers.configured();
+    const created = await provider.createIntent({ intentId: id, amountMinor: amount, currency: 'INR', invoiceNo: invoice.invoiceNo });
     const [row] = await this.db
       .insert(schema.parentPaymentIntents)
       .values({
@@ -151,14 +152,14 @@ export class ParentFeesService {
         feeInvoiceId: invoice.id,
         guardianUserId: guardian.guardianUserId,
         amount,
-        provider: 'mock',
+        provider: provider.key,
         providerRef: created.providerRef,
         status: created.status,
         idempotencyKey: idempotencyKey ?? null,
       })
       .returning();
     await this.writeAudit(ctx, 'parent.payment_intent.create', row!.id, { newState: { amount, invoiceNo: invoice.invoiceNo, providerRef: created.providerRef } });
-    return { intentId: row!.id, providerRef: created.providerRef, amountMinor: amount, status: created.status, provider: 'mock' };
+    return { intentId: row!.id, providerRef: created.providerRef, amountMinor: amount, status: created.status, provider: provider.key };
   }
 
   /**
@@ -166,82 +167,30 @@ export class ParentFeesService {
    * replay, inserts a fee_payments row and re-derives the invoice balance/status. UNAUTHENTICATED
    * route — the signature is the only trust anchor.
    */
-  async settleWebhook(rawBody: string, signature: string, payload: PaymentWebhookInput) {
-    if (!this.mock.verifyWebhook(rawBody, signature)) {
-      throw new ForbiddenException({ code: 'BAD_SIGNATURE', message: 'Webhook signature verification failed.' });
-    }
-    const [intent] = await this.db
-      .select()
-      .from(schema.parentPaymentIntents)
-      .where(eq(schema.parentPaymentIntents.providerRef, payload.providerRef))
-      .limit(1);
-    if (!intent) throw new NotFoundException({ code: 'INTENT_NOT_FOUND', message: 'No matching intent.' });
-
-    // Idempotent replay: already settled → ack without a second payment.
-    if (intent.status === 'succeeded') return { ok: true, alreadySettled: true, paymentId: intent.settledPaymentId };
-    if (payload.status !== 'succeeded') {
-      await this.db.update(schema.parentPaymentIntents).set({ status: payload.status }).where(eq(schema.parentPaymentIntents.id, intent.id));
-      return { ok: true, settled: false, status: payload.status };
-    }
-
-    const [invoice] = await this.db.select().from(schema.feeInvoices).where(eq(schema.feeInvoices.id, intent.feeInvoiceId)).limit(1);
-    if (!invoice) throw new NotFoundException({ code: 'INVOICE_NOT_FOUND', message: 'Invoice gone.' });
-
-    const paymentId = randomUUID();
-    const newPaid = invoice.amountPaid + intent.amount;
-    const status = newPaid >= invoice.amount ? 'paid' : 'partial';
-    await this.db.insert(schema.feePayments).values({
-      id: paymentId,
-      institutionId: invoice.institutionId,
-      invoiceId: invoice.id,
-      amount: intent.amount,
-      method: 'online',
-      reference: payload.providerRef,
-      paidDate: new Date().toISOString().slice(0, 10),
+  async settleWebhook(rawBody: string, signature: string, payload: PaymentWebhookInput, providerEventId?: string) {
+    return this.ledger.settleProviderEvent({
+      provider: payload.provider,
+      providerEventId: providerEventId ?? `${payload.provider}:${payload.event}:${payload.providerRef}`,
+      eventType: payload.event,
+      providerRef: payload.providerRef,
+      amountMinor: payload.amount,
+      status: payload.status,
+      payload,
+      rawBody,
+      signature,
     });
-    await this.db.update(schema.feeInvoices).set({ amountPaid: newPaid, status }).where(eq(schema.feeInvoices.id, invoice.id));
-    await this.db
-      .update(schema.parentPaymentIntents)
-      .set({ status: 'succeeded', settledPaymentId: paymentId, settledAt: new Date() })
-      .where(eq(schema.parentPaymentIntents.id, intent.id));
-
-    await this.audit.logAudit({
-      actorType: ActorType.InstitutionUser,
-      actorId: intent.guardianUserId,
-      institutionId: invoice.institutionId,
-      action: 'parent.payment.settle',
-      module: MODULE,
-      entityType: 'fee_payment',
-      entityId: paymentId,
-      newState: { amount: intent.amount, invoiceNo: invoice.invoiceNo, providerRef: payload.providerRef },
-    } as AuditEventInput);
-    return { ok: true, settled: true, paymentId, invoiceStatus: status };
   }
 
   async receipts(guardian: GuardianContext, studentId?: string) {
     const ids = this.feeVisibleWards(guardian, studentId);
     if (!ids.length) return { receipts: [] };
-    const invoiceRows = await this.db
-      .select({ id: schema.feeInvoices.id, invoiceNo: schema.feeInvoices.invoiceNo, studentId: schema.feeInvoices.studentId })
-      .from(schema.feeInvoices)
-      .where(inArray(schema.feeInvoices.studentId, ids));
-    if (!invoiceRows.length) return { receipts: [] };
-    const invoiceIds = invoiceRows.map((r) => r.id);
-    const byId = new Map(invoiceRows.map((r) => [r.id, r]));
-    const payments = await this.db
-      .select()
-      .from(schema.feePayments)
-      .where(inArray(schema.feePayments.invoiceId, invoiceIds))
-      .orderBy(desc(schema.feePayments.paidDate));
+    const receipts = await this.db.select().from(schema.feeReceipts)
+      .where(inArray(schema.feeReceipts.studentId, ids)).orderBy(desc(schema.feeReceipts.issuedAt));
     return {
-      receipts: payments.map((p) => ({
-        id: p.id,
-        invoiceNo: byId.get(p.invoiceId)?.invoiceNo ?? null,
-        studentId: byId.get(p.invoiceId)?.studentId ?? null,
-        amountMinor: p.amount,
-        method: p.method,
-        reference: p.reference,
-        paidDate: p.paidDate,
+      receipts: receipts.map((receipt) => ({
+        id: receipt.id, receiptNo: receipt.receiptNo, studentId: receipt.studentId,
+        amountMinor: receipt.amountMinor, method: receipt.method, issuedAt: receipt.issuedAt,
+        status: receipt.status, cancelledReason: receipt.cancelledReason, pdfStorageRef: receipt.pdfStorageRef,
       })),
     };
   }

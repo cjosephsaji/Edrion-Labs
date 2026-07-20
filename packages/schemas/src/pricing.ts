@@ -54,6 +54,20 @@ function dayDiff(from: string, to: string): number {
   return Math.max(1, Math.round(ms / 86_400_000));
 }
 
+/** Pure day-based proration reused by student fee demand generation. Floors to a minor unit. */
+export function prorateMinorByDays(
+  amountMinor: number,
+  serviceStart: string,
+  serviceEnd: string,
+  joinedAt: string,
+): { amountMinor: number; factor: number; totalDays: number; billableDays: number } {
+  const totalDays = dayDiff(serviceStart, serviceEnd);
+  const effectiveStart = Date.parse(joinedAt) > Date.parse(serviceStart) ? joinedAt : serviceStart;
+  const billableDays = Date.parse(effectiveStart) >= Date.parse(serviceEnd) ? 0 : dayDiff(effectiveStart, serviceEnd);
+  const factor = clampFactor(billableDays / totalDays);
+  return { amountMinor: Math.floor(amountMinor * factor), factor, totalDays, billableDays };
+}
+
 /**
  * Compute the charge for adding one campus.
  *

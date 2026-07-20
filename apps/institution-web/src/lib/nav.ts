@@ -47,6 +47,7 @@ import {
   UserCog,
   Wallet,
   Wrench,
+  Inbox,
   type LucideIcon,
 } from 'lucide-react';
 import type { InstitutionType } from '@edrion/shared-types';
@@ -87,6 +88,13 @@ export const NAV: NavGroup[] = [
       { id: 'dashboard', label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'portal.dashboard.view' },
       { id: 'attention', label: 'Attention Centre', href: '/attention', icon: Gauge, permission: 'portal.dashboard.view' },
       { id: 'petros', label: 'Petros', href: '/petros', icon: Sparkles, permission: 'ai.use' },
+    ],
+  },
+  {
+    id: 'workflow',
+    label: 'Workflow',
+    items: [
+      { id: 'approvals', label: 'Approvals', href: '/approvals', icon: Inbox, permission: 'requests.review' },
     ],
   },
   {

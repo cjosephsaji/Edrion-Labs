@@ -194,6 +194,11 @@ export const apiEnvSchema = z.object({
 
   BILLING_PROVIDER_SECRET: z.string().optional(),
   BILLING_WEBHOOK_SIGNING_SECRET: z.string().optional(),
+  /** Student-fee gateway. Mock is allowed only outside production. */
+  FEES_PAYMENT_PROVIDER: z.enum(['mock', 'razorpay']).default('mock'),
+  RAZORPAY_KEY_ID: z.string().optional(),
+  RAZORPAY_KEY_SECRET: z.string().optional(),
+  RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
 
   // ── Message attachments (real upload; local-disk store, swap for object store later) ───────
   /** Directory uploaded message attachments are written to (resolved from the API process cwd). */

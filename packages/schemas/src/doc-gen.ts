@@ -3,7 +3,16 @@ import { paginationQuerySchema, versionSchema } from './common';
 
 /** Document generation (Petros Phase 4) contracts. */
 
-export const DOC_TYPES = ['exam_paper', 'assignment', 'circular', 'certificate', 'letter', 'report'] as const;
+export const DOC_TYPES = [
+  'exam_paper',
+  'assignment',
+  'circular',
+  'certificate',
+  'letter',
+  'report',
+  'bonafide',
+  'transcript',
+] as const;
 export type DocType = (typeof DOC_TYPES)[number];
 export const docTypeSchema = z.enum(DOC_TYPES);
 
@@ -36,6 +45,7 @@ export const createDocumentTemplateSchema = z.object({
   fieldsSchema: z.record(z.string(), z.unknown()).default({}),
   headerConfig: headerConfigSchema,
   isDefault: z.boolean().default(false),
+  requiresSignOff: z.boolean().default(false),
 });
 export type CreateDocumentTemplateInput = z.infer<typeof createDocumentTemplateSchema>;
 

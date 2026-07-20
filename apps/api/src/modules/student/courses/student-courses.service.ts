@@ -84,7 +84,7 @@ export class StudentCoursesService {
     const [att] = await this.db
       .select({
         present: sql<number>`count(*) filter (where ${schema.attendanceRecords.status} = 'present')`,
-        total: sql<number>`count(*)`,
+        total: sql<number>`count(*) filter (where ${schema.attendanceRecords.status} <> 'excused')`,
       })
       .from(schema.attendanceRecords)
       .where(eq(schema.attendanceRecords.studentId, principal.studentId));

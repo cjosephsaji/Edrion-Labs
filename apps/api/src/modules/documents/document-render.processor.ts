@@ -4,6 +4,7 @@ import { eq, schema, type Database } from '@edrion/database';
 import type { HeaderConfig } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import { QueueWorkers } from '../../common/queue/queue.worker';
+import { JobsService } from '../../common/queue/jobs.service';
 import { AttachmentStorageService } from '../portal/attachment-storage.service';
 import { DocumentsGenService, RENDER_JOB } from './documents-gen.service';
 import { buildDocumentHtml, renderPdf } from './document-renderer';
@@ -23,6 +24,7 @@ export class DocumentRenderProcessor implements OnModuleInit {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     private readonly workers: QueueWorkers,
+    private readonly jobs: JobsService,
     private readonly storage: AttachmentStorageService,
     private readonly svc: DocumentsGenService,
   ) {}
@@ -37,7 +39,10 @@ export class DocumentRenderProcessor implements OnModuleInit {
       .from(schema.documentRenders)
       .where(eq(schema.documentRenders.id, renderId))
       .limit(1);
-    if (!render || render.status === 'done') return { ok: true };
+    // A worker can win the race against the transaction that creates the render.
+    // Throw so the existing BullMQ retry policy handles it instead of losing the job.
+    if (!render) throw new Error(`Document render ${renderId} is not committed yet`);
+    if (render.status === 'done') return { ok: true };
 
     await this.db
       .update(schema.documentRenders)
@@ -100,6 +105,22 @@ export class DocumentRenderProcessor implements OnModuleInit {
         .update(schema.documentRenders)
         .set({ status: 'done', storagePath, artifactId, updatedAt: new Date() })
         .where(eq(schema.documentRenders.id, renderId));
+      if (render.runId && typeof render.payload?.request_id === 'string') {
+        await this.jobs.enqueue(
+          'notifications',
+          'requests.document_render_completed',
+          { institutionId: render.institutionId, renderId },
+          { jobId: `request-render-complete-${renderId}` },
+        );
+      }
+      if (typeof render.payload?.fee_receipt_id === 'string' || typeof render.payload?.fee_statement_student_id === 'string') {
+        await this.jobs.enqueue(
+          'notifications',
+          'fees.receipt_render_completed',
+          { institutionId: render.institutionId, renderId },
+          { jobId: `fee-receipt-render-complete-${renderId}` },
+        );
+      }
       return { ok: true };
     } catch (e) {
       const message = e instanceof Error ? e.message : 'render failed';

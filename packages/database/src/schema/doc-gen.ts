@@ -29,6 +29,8 @@ export const documentTemplates = pgTable(
     /** Institution types the (platform-default) template applies to. Empty = all. */
     appliesToTypes: jsonb('applies_to_types').$type<string[]>().default([]),
     isDefault: boolean('is_default').notNull().default(false),
+    /** Human review is required before a completed render may be delivered to a student. */
+    requiresSignOff: boolean('requires_sign_off').notNull().default(false),
     version: integer('version').notNull().default(0),
     ...actorColumns,
     ...timestamps,

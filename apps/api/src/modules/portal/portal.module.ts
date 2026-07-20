@@ -51,8 +51,16 @@ import { AssignmentsController } from './assignments.controller';
 import { AssignmentsService } from './assignments.service';
 import { AssignmentsRepository } from './assignments.repository';
 import { FeesController } from './fees.controller';
+import { FeesEngineController } from './fees-engine.controller';
 import { FeesService } from './fees.service';
+import { FeeLedgerService } from './fee-ledger.service';
+import { FeeJobsService } from './fee-jobs.service';
 import { FeesRepository } from './fees.repository';
+import { FeesInternalController } from '../fees-internal.controller';
+import { IdempotencyService } from '../../common/idempotency.service';
+import { MockPaymentProvider } from '../parent-portal/mock-payment.provider';
+import { RazorpayPaymentProvider } from '../parent-portal/razorpay-payment.provider';
+import { PaymentProviderRegistry } from '../parent-portal/payment-provider.registry';
 import { ExpensesController } from './expenses.controller';
 import { ExpensesService } from './expenses.service';
 import { PayrollController } from './payroll.controller';
@@ -134,6 +142,8 @@ import { StudentProfileController } from './student-profile.controller';
 import { StudentProfileService } from './student-profile.service';
 import { StudentPortalController, StudentPortalStudentsController } from './student-portal.controller';
 import { StudentPortalInviteService } from './student-portal.service';
+import { StudentPortalConfigController } from './student-portal-config.controller';
+import { StudentPortalConfigService } from './student-portal-config.service';
 import { AdmissionInfoController, AdmissionInfoService } from './admission-info.controller';
 import { PetrosController } from './petros/petros.controller';
 import { PetrosConversationsService } from './petros/petros-conversations.service';
@@ -145,6 +155,7 @@ import { PetrosAttachmentService } from './petros/petros-attachment.service';
 import { DocumentsGenModule } from '../documents/documents-gen.module';
 import { FeatureControlsModule } from '../feature-controls/feature-controls.module';
 import { LearningEventsModule } from '../student/ledger/learning-events.module';
+import { TodayNotificationModule } from '../today-notification.module';
 import { PortalReportQueriesService } from './portal-report-queries.service';
 import { PetrosTopicalityService } from './petros/petros-topicality.service';
 import { PetrosHistoryService } from './petros/context/history';
@@ -166,7 +177,7 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
  * controller level (the global platform AuthGuard is skipped via @Public on the controller).
  */
 @Module({
-  imports: [DocumentsGenModule, FeatureControlsModule, LearningEventsModule],
+  imports: [DocumentsGenModule, FeatureControlsModule, LearningEventsModule, TodayNotificationModule],
   controllers: [
     PortalController,
     PortalAuthController,
@@ -180,6 +191,8 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
     GradebookController,
     AssignmentsController,
     FeesController,
+    FeesEngineController,
+    FeesInternalController,
     ExpensesController,
     PayrollController,
     LibraryController,
@@ -217,6 +230,7 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
     StudentProfileController,
     StudentPortalController,
     StudentPortalStudentsController,
+    StudentPortalConfigController,
     AdmissionInfoController,
     PortalHomeworkController,
     PortalCourseContentController,
@@ -261,6 +275,12 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
     AssignmentsService,
     AssignmentsRepository,
     FeesService,
+    FeeLedgerService,
+    FeeJobsService,
+    IdempotencyService,
+    MockPaymentProvider,
+    RazorpayPaymentProvider,
+    PaymentProviderRegistry,
     ExpensesService,
     FeesRepository,
     PayrollService,
@@ -328,6 +348,9 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
     ConductService,
     StudentProfileService,
     StudentPortalInviteService,
+    StudentPortalConfigService,
+    FeeLedgerService,
+    PaymentProviderRegistry,
     AdmissionInfoService,
     PortalHomeworkService,
     PortalCourseContentService,
@@ -338,6 +361,18 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
   ],
   // InstitutionAuthGuard (+ its session/rate-limit deps) is reused by the Parent Portal module,
   // which layers GuardianScopeGuard on top. Export the guard's transitive deps so it resolves there.
-  exports: [PortalAuthService, InstitutionAuthGuard, InstitutionPermissionsGuard, PortalSessionService, InstitutionRateLimiter, EmailService],
+  exports: [
+    PortalAuthService,
+    InstitutionAuthGuard,
+    InstitutionPermissionsGuard,
+    PortalSessionService,
+    InstitutionRateLimiter,
+    EmailService,
+    PortalCrudEngine,
+    PortalEntityResolver,
+    AttendanceService,
+    AttachmentStorageService,
+    StudentPortalConfigService,
+  ],
 })
 export class PortalModule {}

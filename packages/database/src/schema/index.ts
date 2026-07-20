@@ -64,6 +64,9 @@ export * from './petros';
 // Document generation engine (templates + renders)
 export * from './doc-gen';
 
+// Student Request Engine
+export * from './requests';
+
 // Student portal (Plan 01)
 export * from './student';
 
@@ -75,3 +78,4 @@ export * from './student-knowledge';
 export * from './learn';
 // Visual Studio (Thinking Canvas)
 export * from './visual-studio';
+export * from './today';

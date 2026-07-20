@@ -124,6 +124,7 @@ export class StudentStorageService {
       'class_material',
       'report_card_pdf',
       'content_page_attachment',
+      'request_attachment',
       'debate_exhibit',
       'avatar',
     ];

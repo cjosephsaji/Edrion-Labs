@@ -1,88 +1,52 @@
 'use client';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState, type MouseEvent, type TouchEvent } from 'react';
 import Link from 'next/link';
-import type { HomeTileDto } from '@edrion/schemas';
-import { useStudentMe, useHome } from '@/lib/hooks';
-import { useT } from '@/i18n/use-t';
-import { Card } from '@/components/ui/card';
+import { get, set } from 'idb-keyval';
+import { useStudentClient } from '@/lib/student-client';
+import { useStudentMe } from '@/lib/hooks';
 import { Eyebrow, PageTitle } from '@/components/ui/primitives';
+import { useToast } from '@/components/ui/toast';
 
-function formatEyebrowDate(): string {
-  return new Intl.DateTimeFormat('en-GB', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  })
-    .format(new Date())
-    .toUpperCase();
-}
+type Action={label:string;deep_link:string};
+type Obligation={id:string;origin:'institution'|'self';kind:string;title:string;subtitle?:string;due_at:string;all_day:boolean;status:string;action:Action;progress?:{current:number;total:number};version?:number};
+type Hero={type:string;title:string;body:string;deep_link?:string;actions?:Action[]};
+type Chip={key:string;label:string;value:string|number;deep_link:string;tone:string};
+type Today={generated_at:string;timezone:string;ribbon:Obligation[];hero:Hero;due:Obligation[];chips:Chip[];nudge:{title:string;body:string;action:Action}|null;partial:boolean;missing_modules:string[]};
+type Event={id:string;title:string;body:string;deepLink:string;occurredAt:string;type:string};
+type Feed={items:Event[];nextCursor:string|null};
 
-export default function HomePage() {
-  const router = useRouter();
-  const { data: me } = useStudentMe();
-  const { data: home, isLoading } = useHome();
-  const { t } = useT();
+const relative=(iso:string)=>{const hours=Math.round((Date.parse(iso)-Date.now())/3_600_000);if(Math.abs(hours)<48)return hours<=0?'due now':hours===1?'in 1h':`in ${hours}h`;return new Intl.DateTimeFormat(undefined,{weekday:'short',hour:'numeric',minute:'2-digit'}).format(new Date(iso));};
+const greeting=()=>{const h=new Date().getHours();return h<12?'Good morning':h<18?'Good afternoon':'Good evening';};
 
-  useEffect(() => {
-    if (me?.kind === 'independent') {
-      router.replace('/learn');
-    }
-  }, [me?.kind, router]);
-
-  if (me?.kind === 'independent') {
-    return (
-      <div className="grid min-h-[40vh] place-items-center">
-        <div className="h-10 w-48 shimmer rounded-xl" />
-      </div>
-    );
-  }
-
-  const firstName = me?.fullName.split(' ')[0] ?? 'there';
-
-  return (
-    <div className="mx-auto max-w-[1130px] px-5 py-8 pb-24 animate-st-block-in md:px-10 md:py-[34px]">
-      <Eyebrow>{formatEyebrowDate()}</Eyebrow>
-      <PageTitle className="mt-2">{t('home.greeting', { name: firstName })}</PageTitle>
-      <p className="mt-2 max-w-lg text-sm text-st-muted">
-        {t('home.subline')}{' '}
-        <strong className="font-semibold text-st-ink">{t('home.learnEmphasis')}</strong>.
-      </p>
-
-      {isLoading ? (
-        <div className="mt-8 grid gap-3 sm:grid-cols-3">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="h-28 shimmer rounded-[15px]" />
-          ))}
-        </div>
-      ) : (
-        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {(home?.tiles ?? []).map((tile: HomeTileDto) => (
-            <Link key={tile.key} href={tile.route}>
-              <Card className="h-full transition hover:border-st-accent/40 hover:shadow-md" noPadding>
-                <div className="p-5">
-                  <Eyebrow>{tile.eyebrow}</Eyebrow>
-                  <p className="mt-1 font-display text-lg font-semibold text-st-ink">{tile.title}</p>
-                  {tile.meta && <p className="mt-1 text-xs text-st-muted">{tile.meta}</p>}
-                </div>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
-
-      <Link href="/learn" className="mt-6 block">
-        <div className="rounded-[18px] border border-st-accentBd bg-gradient-to-br from-st-accentSoft to-st-card p-6 transition hover:border-st-accent">
-          <Eyebrow color="accent">{t('home.learnBannerEyebrow')}</Eyebrow>
-          <p className="mt-2 font-display text-xl font-semibold text-st-ink">
-            {home?.learnBanner?.title ?? t('home.learnBannerTitle')}
-          </p>
-          {home?.learnBanner?.subtitle && (
-            <p className="mt-1 text-sm text-st-muted">{home.learnBanner.subtitle}</p>
-          )}
-          <p className="mt-3 text-sm font-semibold text-st-accent">{t('home.learnBannerCta')}</p>
-        </div>
-      </Link>
-    </div>
-  );
+export default function HomePage(){
+  const client=useStudentClient();const{say}=useToast();const{data:me}=useStudentMe();const owner=me?`${me.kind}:${me.id}`:'unknown';const key=`today:${owner}`;
+  const[today,setToday]=useState<Today>();const[feed,setFeed]=useState<Feed>();const[etag,setEtag]=useState<string>();const[loading,setLoading]=useState(true);const[refreshing,setRefreshing]=useState(false);const[offline,setOffline]=useState(false);const[error,setError]=useState('');const[cacheAt,setCacheAt]=useState(0);const[allDue,setAllDue]=useState(false);const[loadingMore,setLoadingMore]=useState(false);const[lastSeen]=useState(()=>typeof window==='undefined'?0:Number(localStorage.getItem('today:last-seen')??0));const pullStart=useRef(0);
+  async function refresh(){setRefreshing(true);try{const result=await client.getWithEtag<Today>('/today',etag);let next=today;if(result.data){next=result.data;setToday(result.data);setEtag(result.etag);}const nextFeed=await client.get<Feed>('/feed');setFeed(nextFeed);const at=Date.now();setCacheAt(at);setOffline(false);if(next)await set(key,{today:next,feed:nextFeed,etag:result.etag??etag,at});}catch{setOffline(true);if(!today)setError("Couldn't load your day.");}finally{setLoading(false);setRefreshing(false);}}
+  const startPull=(event:TouchEvent<HTMLDivElement>)=>{if(window.scrollY===0)pullStart.current=event.touches[0]?.clientY??0;};
+  const endPull=(event:TouchEvent<HTMLDivElement>)=>{const end=event.changedTouches[0]?.clientY??0;if(pullStart.current>0&&end-pullStart.current>=70&&!refreshing)void refresh();pullStart.current=0;};
+  async function complete(item:Obligation){if(item.origin!=='self'||item.kind!=='custom'||item.version===undefined)return;setToday(current=>current?{...current,due:current.due.map(row=>row.id===item.id?{...row,status:'done'}:row)}:current);const mutation={id:item.id.slice('self:uo:'.length),version:item.version};if(offline){localStorage.setItem('today:obligation-outbox',JSON.stringify(mutation));return;}try{await client.patch(`/me/obligations/${mutation.id}`,{version:mutation.version,status:'done'});setTimeout(()=>void refresh(),800);}catch{void refresh();}}
+  async function dismissRibbon(item:Obligation){setToday(current=>current?{...current,ribbon:current.ribbon.filter(row=>row.id!==item.id)}:current);try{const prefs=await client.get<{version:number;ribbonDismissedIds:string[]}>('/me/today-preferences');await client.patch('/me/today-preferences',{version:prefs.version,ribbon_dismissed_ids:[...new Set([...prefs.ribbonDismissedIds,item.id])]});}catch{void refresh();}}
+  async function more(){if(!feed?.nextCursor||offline||loadingMore)return;setLoadingMore(true);try{const page=await client.get<Feed>(`/feed?cursor=${encodeURIComponent(feed.nextCursor)}`);setFeed(current=>current?{items:[...current.items,...page.items],nextCursor:page.nextCursor}:page);}finally{setLoadingMore(false);}}
+  useEffect(()=>{let active=true;void get<{today:Today;feed:Feed;etag?:string;at:number}>(key).then((cached)=>{if(!active||!cached)return;setToday(cached.today);setFeed(cached.feed);setEtag(cached.etag);setCacheAt(cached.at);setLoading(false);}).finally(()=>{if(active)void refresh();});return()=>{active=false;};},[key]);
+  useEffect(()=>{const replay=()=>{const raw=localStorage.getItem('today:obligation-outbox');if(!raw)return;const mutation=JSON.parse(raw) as{id:string;version:number};void client.patch(`/me/obligations/${mutation.id}`,{version:mutation.version,status:'done'}).then(()=>{localStorage.removeItem('today:obligation-outbox');return refresh();}).catch(()=>void refresh());};window.addEventListener('online',replay);if(navigator.onLine)replay();return()=>window.removeEventListener('online',replay);},[client]);
+  useEffect(()=>{const onScroll=()=>{if(window.innerHeight+window.scrollY>=document.body.offsetHeight-500)void more();};window.addEventListener('scroll',onScroll,{passive:true});return()=>window.removeEventListener('scroll',onScroll);},[feed?.nextCursor,offline,loadingMore]);
+  useEffect(()=>{if(feed?.items.length)localStorage.setItem('today:last-seen',String(Date.now()));},[feed?.items.length]);
+  const guardOffline=(event:MouseEvent<HTMLAnchorElement>)=>{if(!offline)return;event.preventDefault();say("You're offline. This will be available when you're back online.");};
+  const firstName=me?.fullName.split(' ')[0]??'there';const stale=cacheAt>0&&Date.now()-cacheAt>10*60_000;const visibleDue=today?.due.slice(0,5);
+  const grouped=useMemo(()=>visibleDue??[],[visibleDue]);
+  const dueGroups=useMemo(()=>{const groups=new Map<string,Obligation[]>();const start=new Date();start.setHours(0,0,0,0);for(const item of today?.due.slice(0,30)??[]){const due=new Date(item.due_at);due.setHours(0,0,0,0);const days=Math.round((due.getTime()-start.getTime())/86_400_000);const label=days<=0?'Today':days===1?'Tomorrow':days<=7?'This week':'Later';groups.set(label,[...(groups.get(label)??[]),item]);}return [...groups.entries()];},[today?.due]);
+  if(loading&&!today)return <div className="mx-auto max-w-[1130px] space-y-4 px-5 py-8 md:px-10"><div className="h-7 w-56 shimmer rounded-lg"/><div className="h-40 shimmer rounded-[18px]"/><div className="flex gap-3 overflow-hidden">{[1,2,3,4,5].map(i=><div key={i} className="h-36 w-56 shrink-0 shimmer rounded-[15px]"/>)}</div><div className="grid grid-cols-3 gap-3">{[1,2,3].map(i=><div key={i} className="h-20 shimmer rounded-[15px]"/>)}</div></div>;
+  if(error&&!today)return <div className="grid min-h-[60vh] place-items-center px-5 text-center"><div><PageTitle>Couldn’t load your day.</PageTitle><button onClick={()=>void refresh()} className="mt-4 rounded-xl bg-st-ink px-5 py-2.5 font-semibold text-white">Retry</button><p className="mt-3 font-mono-ui text-[10px] text-st-faint">ref {crypto.randomUUID().slice(0,6)}</p></div></div>;
+  return <div onTouchStart={startPull} onTouchEnd={endPull} className="mx-auto max-w-[1130px] px-5 py-8 pb-24 animate-st-block-in md:px-10 md:py-[34px]">
+    <div className="flex items-start justify-between gap-4"><div><Eyebrow>{new Intl.DateTimeFormat(undefined,{weekday:'long',day:'numeric',month:'long'}).format(new Date()).toUpperCase()}</Eyebrow><PageTitle className="mt-2">{greeting()}, {firstName}</PageTitle></div><Link href="/settings" onClick={guardOffline} className="grid h-10 w-10 place-items-center rounded-full bg-st-accentDeep font-semibold text-white">{me?.initial??'E'}</Link></div>
+    {(offline||stale)&&<button onClick={()=>void refresh()} className="mt-4 rounded-full bg-st-soft px-3 py-1 text-xs text-st-muted">{offline?'Offline · showing last update':`Updated ${Math.max(1,Math.round((Date.now()-cacheAt)/60_000))}m ago`} · Refresh</button>}
+    {today?.partial&&<p className="mt-3 text-xs text-st-faint">A few modules are taking longer. The rest of your day is up to date.</p>}
+    {today?.ribbon.length?<div className="mt-5 space-y-1.5">{today.ribbon.map(item=><div key={item.id} className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-950"><Link href={item.action.deep_link} onClick={guardOffline} className="min-w-0 flex-1 truncate">{item.title} · {relative(item.due_at)}</Link><button type="button" aria-label={`Dismiss ${item.title}`} onClick={()=>void dismissRibbon(item)} className="grid h-7 w-7 shrink-0 place-items-center rounded-full hover:bg-amber-100">×</button></div>)}</div>:null}
+    {today?.hero&&<section className={`mt-6 rounded-[20px] border p-6 ${today.hero.type==='exam_day'?'border-emerald-800 bg-emerald-950 text-white':'border-st-bd1 bg-st-card text-st-ink'}`}><Eyebrow color={today.hero.type==='exam_day'?'accent':undefined}>{today.hero.type.replaceAll('_',' ')}</Eyebrow><h2 className="mt-2 font-display text-2xl font-semibold">{today.hero.title}</h2><p className={`mt-2 text-sm ${today.hero.type==='exam_day'?'text-emerald-100':'text-st-muted'}`}>{today.hero.body}</p><div className="mt-5 flex gap-2">{today.hero.deep_link&&<Link href={today.hero.deep_link} onClick={guardOffline} className="rounded-xl bg-st-accentDeep px-4 py-2.5 text-sm font-semibold text-white">Open</Link>}{today.hero.actions?.map(a=><Link key={a.deep_link} href={a.deep_link} onClick={guardOffline} className="rounded-xl border border-st-bd2 bg-st-card px-4 py-2.5 text-sm font-semibold text-st-ink">{a.label}</Link>)}</div></section>}
+    {today?.nudge&&<Link href={today.nudge.action.deep_link} onClick={guardOffline} className="mt-5 block rounded-[16px] border border-emerald-200 bg-emerald-50 p-4"><Eyebrow color="accent">PETROS</Eyebrow><p className="mt-1 font-semibold text-emerald-950">{today.nudge.title}</p><p className="mt-1 text-sm text-emerald-800">{today.nudge.body}</p><p className="mt-2 text-sm font-semibold text-emerald-900">{today.nudge.action.label} →</p></Link>}
+    {today?.due.length?<section className="mt-7"><div className="flex items-center justify-between"><h2 className="font-display text-xl font-semibold text-st-ink">Due</h2>{today.due.length>5&&<button onClick={()=>setAllDue(true)} className="text-sm font-semibold text-st-accentDeep">All due ({today.due.length})</button>}</div><div className="mt-3 flex snap-x gap-3 overflow-x-auto pb-2">{grouped.map(item=><article key={item.id} className={`w-[245px] shrink-0 snap-start rounded-[16px] border border-st-bd1 bg-st-card p-4 ${item.status==='done'?'opacity-60':''}`}><div className="flex justify-between gap-2"><Eyebrow>{item.kind.replaceAll('_',' ')}</Eyebrow>{item.origin==='self'&&item.kind==='custom'&&<button aria-label="Mark done" onClick={()=>void complete(item)} className="grid h-6 w-6 place-items-center rounded-full border border-st-bd2 text-xs">{item.status==='done'?'✓':''}</button>}</div><p className={`mt-2 line-clamp-2 font-semibold text-st-ink ${item.status==='done'?'line-through':''}`}>{item.title}</p>{item.subtitle&&<p className="mt-1 truncate text-xs text-st-muted">{item.subtitle}</p>}<p className="mt-3 text-xs font-medium text-amber-700">{relative(item.due_at)}</p><Link href={item.action.deep_link} onClick={guardOffline} className="mt-3 inline-block rounded-lg bg-st-soft px-3 py-2 text-xs font-semibold text-st-ink">{item.action.label}</Link></article>)}{today.due.length>5&&<button type="button" onClick={()=>setAllDue(true)} className="w-[180px] shrink-0 snap-start rounded-[16px] border border-dashed border-st-bd2 bg-st-soft p-4 text-left text-sm font-semibold text-st-accentDeep">All due ({today.due.length}) →</button>}</div></section>:null}
+    {today?.chips.length?<section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">{today.chips.map(chip=><Link key={chip.key} href={chip.deep_link} onClick={guardOffline} className="rounded-[15px] border border-st-bd1 bg-st-card p-4"><p className="text-xs text-st-muted">{chip.label}</p><p className="mt-1 font-display text-xl font-semibold text-st-ink">{chip.value}</p></Link>)}</section>:null}
+    <section className="mt-8"><div className="flex items-center justify-between"><h2 className="font-display text-xl font-semibold text-st-ink">Updates</h2><button disabled={refreshing} onClick={()=>void refresh()} className="text-xs font-semibold text-st-accentDeep disabled:opacity-50">{refreshing?'Refreshing…':'Refresh'}</button></div>{feed?.items.length?<div className="mt-3 space-y-2">{feed.items.map(event=><Link key={event.id} href={event.deepLink} onClick={guardOffline} className={`block rounded-[15px] border border-st-bd1 bg-st-card p-4 ${Date.parse(event.occurredAt)>lastSeen?'border-l-2 border-l-st-accent':''}`}><div className="flex justify-between gap-3"><p className="font-semibold text-st-ink">{event.title}</p><span className="shrink-0 text-xs text-st-faint">{new Intl.RelativeTimeFormat(undefined,{numeric:'auto'}).format(-Math.max(0,Math.round((Date.now()-Date.parse(event.occurredAt))/3_600_000)),'hour')}</span></div><p className="mt-1 text-sm text-st-muted">{event.body}</p></Link>)}{feed.nextCursor&&<button disabled={offline||loadingMore} onClick={()=>void more()} className="w-full rounded-xl border border-st-bd1 py-2.5 text-sm font-semibold text-st-ink disabled:opacity-50">{loadingMore?'Loading…':'Load older updates'}</button>}</div>:<p className="mt-3 rounded-[15px] border border-st-bd1 bg-st-card p-5 text-sm text-st-muted">You’re caught up. New updates will appear here.</p>}</section>
+    {allDue&&<div className="fixed inset-0 z-[70] bg-st-page"><div className="mx-auto flex h-full max-w-[760px] flex-col px-5 pb-8 pt-5"><div className="flex items-center justify-between border-b border-st-bd1 pb-4"><div><Eyebrow>UP TO 30 ITEMS</Eyebrow><h2 className="mt-1 font-display text-2xl font-semibold text-st-ink">All due</h2></div><button type="button" onClick={()=>setAllDue(false)} className="grid h-10 w-10 place-items-center rounded-full border border-st-bd1 bg-st-card text-xl" aria-label="Close all due">×</button></div><div className="flex-1 space-y-7 overflow-y-auto py-5">{dueGroups.map(([label,items])=><section key={label}><h3 className="text-sm font-semibold text-st-muted">{label}</h3><div className="mt-2 space-y-2">{items.map(item=><article key={item.id} className="rounded-[15px] border border-st-bd1 bg-st-card p-4"><div className="flex items-start justify-between gap-3"><div><Eyebrow>{item.kind.replaceAll('_',' ')}</Eyebrow><p className="mt-1 font-semibold text-st-ink">{item.title}</p>{item.subtitle&&<p className="mt-1 text-sm text-st-muted">{item.subtitle}</p>}<p className="mt-2 text-xs font-medium text-amber-700">{relative(item.due_at)}</p></div>{item.origin==='self'&&item.kind==='custom'&&<button aria-label="Mark done" onClick={()=>void complete(item)} className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-st-bd2 text-xs">{item.status==='done'?'✓':''}</button>}</div><Link href={item.action.deep_link} onClick={guardOffline} className="mt-3 inline-block rounded-lg bg-st-soft px-3 py-2 text-xs font-semibold text-st-ink">{item.action.label}</Link></article>)}</div></section>)}</div></div></div>}
+  </div>;
 }

@@ -3,6 +3,7 @@ import { currencyEnum, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { feeInvoices } from './fees';
 import { institutionUsers } from './users';
+import { studentRequests } from './requests';
 
 /**
  * PARENT-PORTAL online payment intents. A guardian creates an intent against a fee invoice; the
@@ -21,8 +22,11 @@ export const parentPaymentIntents = pgTable(
       .notNull()
       .references(() => feeInvoices.id, { onDelete: 'cascade' }),
     guardianUserId: uuid('guardian_user_id')
-      .notNull()
       .references(() => institutionUsers.id, { onDelete: 'cascade' }),
+    ownerKind: text('owner_kind').notNull().default('guardian'),
+    studentUserId: uuid('student_user_id').references(() => institutionUsers.id, { onDelete: 'cascade' }),
+    invoiceIds: uuid('invoice_ids').array(),
+    disputeRequestId: uuid('dispute_request_id').references(() => studentRequests.id, { onDelete: 'set null' }),
     /** Amount to charge, minor units. */
     amount: integer('amount').notNull(),
     currency: currencyEnum('currency').notNull().default('INR'),

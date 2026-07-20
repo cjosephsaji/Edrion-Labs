@@ -85,6 +85,7 @@ export class DocumentsGenService implements OnModuleInit {
         fieldsSchema: input.fieldsSchema,
         headerConfig: input.headerConfig as Record<string, unknown>,
         isDefault: input.isDefault,
+        requiresSignOff: input.requiresSignOff,
         createdBy: ctx.principal.institutionUserId,
       })
       .returning();

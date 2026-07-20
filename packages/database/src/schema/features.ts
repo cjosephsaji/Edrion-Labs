@@ -102,9 +102,18 @@ export const featureRollouts = pgTable(
   }),
 );
 
+/** Read-only analytics/reference mirror of the deployment-controlled student-module catalogue. */
+export const studentModules = pgTable('student_modules', {
+  key: text('key').primaryKey(),
+  category: text('category').notNull(),
+  minTier: text('min_tier').notNull(),
+  seededAt: timestamp('seeded_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type FeatureDefinition = typeof featureDefinitions.$inferSelect;
 export type NewFeatureDefinition = typeof featureDefinitions.$inferInsert;
 export type FeatureAssignment = typeof featureAssignments.$inferSelect;
 export type NewFeatureAssignment = typeof featureAssignments.$inferInsert;
 export type FeatureRollout = typeof featureRollouts.$inferSelect;
 export type NewFeatureRollout = typeof featureRollouts.$inferInsert;
+export type StudentModule = typeof studentModules.$inferSelect;

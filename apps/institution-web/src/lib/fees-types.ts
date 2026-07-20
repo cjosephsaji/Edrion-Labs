@@ -5,7 +5,7 @@ export type { Paged };
 
 export type FeeType = 'tuition' | 'admission' | 'transport' | 'hostel' | 'exam' | 'library' | 'misc';
 export type FeeFrequency = 'one_time' | 'monthly' | 'term' | 'annual';
-export type FeeStructureStatus = 'active' | 'inactive';
+export type FeeStructureStatus = 'draft' | 'active' | 'archived';
 export type FeeInvoiceStatus = 'pending' | 'partial' | 'paid' | 'overdue' | 'cancelled';
 export type FeePaymentMethod = 'cash' | 'card' | 'bank_transfer' | 'cheque' | 'online' | 'other';
 
@@ -37,6 +37,8 @@ export interface FeeStructureRow {
   frequency: FeeFrequency;
   description: string | null;
   status: FeeStructureStatus;
+  currentVersion: number;
+  category: string | null;
 }
 
 export interface FeeInvoiceRow {

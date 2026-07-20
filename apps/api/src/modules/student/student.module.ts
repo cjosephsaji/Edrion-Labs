@@ -67,9 +67,15 @@ import { VisualStudioModule } from './visual-studio/visual-studio.module';
 import { StudentSurfacesController } from './surfaces/student-surfaces.controller';
 import { StudentSurfacesReadService } from './surfaces/student-surfaces-read.service';
 import { SurfaceGateService } from './surfaces/surface-gate.service';
+import { StudentPortalRuntimeConfigController } from './surfaces/student-portal-config.controller';
+import { StudentFeesController } from './fees/student-fees.controller';
+import { TodayController } from './today/today.controller';
+import { TodayService } from './today/today.service';
+import { TodayJobsService } from './today/today-jobs.service';
+import { TodayNotificationModule } from '../today-notification.module';
 
 @Module({
-  imports: [FeatureControlsModule, PortalModule, LearnAiModule, LearningEventsModule, VisualStudioModule, ExamEngineModule, StudentAuthModule],
+  imports: [FeatureControlsModule, PortalModule, LearnAiModule, LearningEventsModule, VisualStudioModule, ExamEngineModule, StudentAuthModule, TodayNotificationModule],
   controllers: [
     StudentAuthController,
     StudentMeController,
@@ -96,6 +102,9 @@ import { SurfaceGateService } from './surfaces/surface-gate.service';
     StudentReportCardsController,
     StudentHomeworkController,
     StudentSurfacesController,
+    StudentPortalRuntimeConfigController,
+    StudentFeesController,
+    TodayController,
   ],
   providers: [
     StudentMeService,
@@ -131,8 +140,15 @@ import { SurfaceGateService } from './surfaces/surface-gate.service';
     HomeworkPolicyService,
     SurfaceGateService,
     StudentSurfacesReadService,
+    TodayService,
+    TodayJobsService,
     { provide: APP_INTERCEPTOR, useClass: StudentTenantInterceptor },
   ],
-  exports: [StudentAuthModule, LearningEventsModule],
+  exports: [
+    StudentAuthModule,
+    LearningEventsModule,
+    StudentStorageService,
+    SurfaceGateService,
+  ],
 })
 export class StudentModule {}

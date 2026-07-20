@@ -17,6 +17,7 @@ import type { EdrionRequestContext } from '../../../common/request-context';
 import { hashPassword } from '../../authentication/password.util';
 import { emailCodeBlock, emailLayout } from '../../../common/email-templates';
 import { EmailService } from '../../portal/email.service';
+import { StudentPortalConfigService } from '../../portal/student-portal-config.service';
 
 const MODULE = 'student-auth';
 const OTP_TTL_SECONDS = 600;
@@ -36,6 +37,7 @@ export class IndependentSignupService {
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
     @Inject(API_ENV) private readonly env: ApiEnv,
     private readonly emails: EmailService,
+    private readonly portalConfig: StudentPortalConfigService,
   ) {}
 
   private get pepper(): string {
@@ -74,6 +76,7 @@ export class IndependentSignupService {
         .returning();
       if (!created) throw new Error('Failed to create independent user');
       user = created;
+      await this.portalConfig.seedIndependent(created.id);
     } else {
       await this.db
         .update(schema.independentUsers)

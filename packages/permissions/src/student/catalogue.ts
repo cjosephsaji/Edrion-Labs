@@ -32,6 +32,7 @@ export const STUDENT_PERMISSIONS: readonly PermissionDef[] = [
   def('student.surface.transport.view', 'Surfaces', 'View transport info.'),
   def('student.surface.hostel.view', 'Surfaces', 'View hostel info.'),
   def('student.surface.documents.view', 'Surfaces', 'View institution documents.'),
+  def('student.surface.requests.view', 'Surfaces', 'Create and track institution requests.'),
   def('student.surface.content.view', 'Surfaces', 'View custom content pages.'),
   def('student.settings.manage', 'Account', 'Manage preferences and settings.'),
   def('student.data.export', 'Account', 'Export personal data.', true),

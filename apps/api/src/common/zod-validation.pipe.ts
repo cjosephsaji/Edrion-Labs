@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, type PipeTransform } from '@nestjs/common';
-import type { ZodSchema } from 'zod';
+import type { ZodType, ZodTypeDef } from 'zod';
 
 /**
  * Validates a payload against a Zod schema (the same schema the frontend form uses). On
@@ -7,7 +7,7 @@ import type { ZodSchema } from 'zod';
  */
 @Injectable()
 export class ZodValidationPipe<T> implements PipeTransform<unknown, T> {
-  constructor(private readonly schema: ZodSchema<T>) {}
+  constructor(private readonly schema: ZodType<T, ZodTypeDef, unknown>) {}
 
   transform(value: unknown): T {
     const result = this.schema.safeParse(value);
@@ -24,6 +24,6 @@ export class ZodValidationPipe<T> implements PipeTransform<unknown, T> {
 }
 
 /** Factory so a schema can be used inline: `@Body(zodBody(createInstitutionSchema))`. */
-export function zodBody<T>(schema: ZodSchema<T>): ZodValidationPipe<T> {
+export function zodBody<T>(schema: ZodType<T, ZodTypeDef, unknown>): ZodValidationPipe<T> {
   return new ZodValidationPipe(schema);
 }

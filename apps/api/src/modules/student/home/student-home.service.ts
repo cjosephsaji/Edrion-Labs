@@ -193,7 +193,7 @@ export class StudentHomeService {
     return row?.count ?? 0;
   }
 
-  async todaySchedule(principal: StudentPrincipal) {
+  async todaySchedule(principal: StudentPrincipal, date = new Date()) {
     if (principal.kind !== 'institutional') return [];
     const [student] = await this.db
       .select({ classId: schema.students.classId })
@@ -202,7 +202,7 @@ export class StudentHomeService {
       .limit(1);
     if (!student?.classId) return [];
 
-    const dayOfWeek = jsDayToTimetableDay(new Date());
+    const dayOfWeek = jsDayToTimetableDay(date);
     const teacherName = sql<string>`concat_ws(' ', ${schema.staff.firstName}, ${schema.staff.lastName})`;
     const rows = await this.db
       .select({
@@ -224,6 +224,8 @@ export class StudentHomeService {
       .orderBy(asc(schema.timetableSlots.startTime));
 
     return rows.map((r) => ({
+      startTime: r.startTime,
+      endTime: r.endTime,
       time: `${r.startTime}–${r.endTime}`,
       title: [r.subjectName, r.teacherName].filter(Boolean).join(' · ') || 'Class',
       room: r.room ?? undefined,

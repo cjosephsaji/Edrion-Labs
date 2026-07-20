@@ -9,9 +9,11 @@ import {
   institutionalNav,
   youNav,
   type NavItem,
+  configNav,
 } from '@/lib/nav';
 import { useT } from '@/i18n/use-t';
 import { PetrosMark } from '@/components/ui/primitives';
+import { usePortalConfig } from '@/lib/portal-config';
 
 export function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   const active = pathname === item.href || (item.href !== '/home' && pathname.startsWith(item.href));
@@ -44,9 +46,11 @@ export function SideNav() {
   const { t } = useT();
   const router = useRouter();
   const client = useStudentClient();
+  const { config, stale, offline, refresh } = usePortalConfig();
 
-  const instItems = me?.kind === 'institutional' ? institutionalNav(terms) : [];
-  const surfaceItems = me?.kind === 'institutional' ? filterSurfaceNav(me.surfaces) : [];
+  const resolvedItems = config ? configNav(config.modules) : [];
+  const instItems = config ? resolvedItems : (me?.kind === 'institutional' ? institutionalNav(terms) : coreNav);
+  const surfaceItems = config ? [] : (me?.kind === 'institutional' ? filterSurfaceNav(me.surfaces) : []);
 
   async function logout() {
     try {
@@ -79,10 +83,13 @@ export function SideNav() {
 
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2.5 pb-2.5">
         <div className="space-y-0.5">
-          {coreNav.map((item) => (
+          {[{ href: '/home', label: 'Today', icon: coreNav[0]!.icon }].map((item) => (
             <NavLink key={item.href} item={item} pathname={pathname} />
           ))}
         </div>
+
+        {(stale || offline) && <button type="button" onClick={() => void refresh()} className="mx-3 mt-2 rounded-lg bg-amber-50 px-2 py-1.5 text-left text-[10px] text-amber-800">Offline · showing saved navigation · Retry</button>}
+        {!config && <button type="button" onClick={() => void refresh()} className="mx-3 mt-2 rounded-lg border border-st-bd1 px-2 py-1.5 text-left text-[10px] text-st-muted">Portal modules unavailable · Retry</button>}
 
         {instItems.length > 0 && (
           <div className="mt-1">
@@ -91,7 +98,7 @@ export function SideNav() {
             </p>
             <div className="space-y-0.5">
               {[...instItems, ...surfaceItems].map((item) => (
-                <NavLink key={item.href} item={item} pathname={pathname} />
+                <NavLink key={item.key ?? item.href} item={item} pathname={pathname} />
               ))}
             </div>
           </div>

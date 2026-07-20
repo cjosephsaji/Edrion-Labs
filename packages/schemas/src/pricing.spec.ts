@@ -3,9 +3,21 @@ import { Currency } from '@edrion/shared-types';
 import {
   calculateCampusCharge,
   calculatePlanChangeProration,
+  prorateMinorByDays,
   type CampusPricingContext,
   type PlanChangeProrationContext,
 } from './pricing';
+
+describe('prorateMinorByDays', () => {
+  it('floors tuition proration and exposes its basis', () => {
+    expect(prorateMinorByDays(10_000, '2026-01-01', '2026-01-11', '2026-01-06')).toEqual({
+      amountMinor: 5_000,
+      factor: 0.5,
+      totalDays: 10,
+      billableDays: 5,
+    });
+  });
+});
 
 const baseCtx: CampusPricingContext = {
   baseCampusAllowance: 2,

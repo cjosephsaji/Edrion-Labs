@@ -6,12 +6,14 @@ import { DATABASE, LEARNING_EVENTS_WRITER } from '../../../common/tokens';
 
 import type { LearningEventsWriter } from '../../student/ledger/learning-events.writer';
 import type { PortalActionContext } from '../portal-action-context';
+import { TodayNotifyService } from '../../student/today/today-notify.service';
 
 @Injectable()
 export class PortalReportCardsService {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     @Inject(LEARNING_EVENTS_WRITER) private readonly ledger: LearningEventsWriter,
+    private readonly todayNotify: TodayNotifyService,
   ) {}
 
   list(ctx: PortalActionContext, q: ReportCardsListQuery) {
@@ -91,6 +93,8 @@ export class PortalReportCardsService {
   }
 
   async publish(ctx: PortalActionContext, id: string) {
+    const [card] = await this.db.select().from(schema.reportCards).where(eq(schema.reportCards.id, id)).limit(1);
+    if (!card) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Report card not found' });
     const entries = await this.db.select().from(schema.reportCardEntries).where(eq(schema.reportCardEntries.reportCardId, id));
     if (!entries.length) throw new ConflictException({ code: 'NO_ENTRIES', message: 'Structured report cards need at least one entry' });
     let gpa: string | null = null;
@@ -118,6 +122,22 @@ export class PortalReportCardsService {
       actorKind: 'staff',
       actorId: ctx.principal.institutionUserId,
     });
+    const [student] = await this.db.select({
+      institutionUserId: schema.students.institutionUserId,
+      email: schema.institutionUsers.email,
+      fullName: schema.institutionUsers.fullName,
+    }).from(schema.students).leftJoin(schema.institutionUsers, eq(schema.institutionUsers.id, schema.students.institutionUserId))
+      .where(eq(schema.students.id, card.studentId)).limit(1);
+    if (student?.institutionUserId) {
+      await this.todayNotify.dispatch({
+        kind: 'institutional', institutionId: card.institutionId, campusId: card.campusId,
+        institutionUserId: student.institutionUserId, studentId: card.studentId,
+        email: student.email ?? '', fullName: student.fullName ?? '', lastAuthAt: null, permissions: [],
+      }, {
+        eventKey: `report-card:${card.id}:published`, type: 'marks_released', sourceModule: 'results',
+        title: 'Results released', body: `${card.termLabel} results are ready to view.`, deepLink: '/report-cards',
+      }).catch(() => undefined);
+    }
     return { published: true };
   }
 

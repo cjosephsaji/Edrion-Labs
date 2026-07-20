@@ -94,6 +94,12 @@ BEGIN
       ('portal_ai_confirmations', 'institution_id'),
       -- Institution-portal administration (Phase 11): settings tree + custom roles, tenant-isolated.
       ('institution_settings', 'institution_id'),
+      ('fee_structure_versions', 'institution_id'),
+      ('fee_invoice_items', 'institution_id'),
+      ('fee_receipts', 'institution_id'),
+      ('fee_receipt_sequences', 'institution_id'),
+      ('fee_waivers', 'institution_id'),
+      ('institution_fee_config', 'institution_id'),
       ('institution_roles', 'institution_id'),
       -- Institution-portal real auth (Phase 12): server sessions + invitations, tenant-isolated.
       ('portal_sessions', 'institution_id'),
@@ -176,6 +182,11 @@ BEGIN
       -- Student portal (Plan 01): tenant-isolated institutional tables.
       ('storage_objects', 'institution_id'),
       ('student_content_pages', 'institution_id'),
+      -- Student Request Engine: operational request/event/config/vault records.
+      ('student_requests', 'institution_id'),
+      ('student_request_events', 'institution_id'),
+      ('institution_request_type_config', 'institution_id'),
+      ('student_document_vault', 'institution_id'),
       -- Student portal (Plan 03): institutional bridge tables.
       ('homework', 'institution_id'),
       ('class_stream_posts', 'institution_id'),
@@ -372,3 +383,27 @@ DROP POLICY IF EXISTS question_bank_write ON question_bank;
 CREATE POLICY question_bank_write ON question_bank FOR INSERT WITH CHECK (true);
 DROP POLICY IF EXISTS question_bank_update ON question_bank;
 CREATE POLICY question_bank_update ON question_bank FOR UPDATE USING (true);
+
+-- Today Feed: every personal table is dual-owner. institution_id is context only.
+DO $$
+DECLARE tbl text;
+BEGIN
+  FOREACH tbl IN ARRAY ARRAY['user_obligations','feed_events','today_preferences'] LOOP
+    EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
+    EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', tbl);
+    EXECUTE format('DROP POLICY IF EXISTS %I_owner_private ON %I', tbl, tbl);
+    EXECUTE format(
+      'CREATE POLICY %I_owner_private ON %I FOR ALL USING (
+        (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+        OR (edrion_current_student() IS NOT NULL AND student_id::text=edrion_current_student()
+            AND (institution_id IS NULL OR edrion_current_institution() IS NULL OR institution_id::text=edrion_current_institution()))
+        OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text=edrion_current_independent_user())
+      ) WITH CHECK (
+        (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+        OR (edrion_current_student() IS NOT NULL AND student_id::text=edrion_current_student()
+            AND (institution_id IS NULL OR edrion_current_institution() IS NULL OR institution_id::text=edrion_current_institution()))
+        OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text=edrion_current_independent_user())
+      )', tbl, tbl
+    );
+  END LOOP;
+END $$;

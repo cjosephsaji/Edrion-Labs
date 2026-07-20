@@ -17,7 +17,7 @@ import type {
   UpdateFeeStructureInput,
 } from '@edrion/schemas';
 import { AUDIT_WRITER, DATABASE } from '../../common/tokens';
-import type { Database } from '@edrion/database';
+import { schema, type Database } from '@edrion/database';
 import type { Page } from './academics.repository';
 import type { ListResult } from './academics.service';
 import { resolveAcademicScope } from './academic-scope-stamp';
@@ -71,6 +71,15 @@ export class FeesService {
       frequency: input.frequency,
       description: input.description ?? null,
       status: input.status,
+      createdBy: ctx.principal.institutionUserId,
+    });
+    await this.db.insert(schema.feeStructureVersions).values({
+      institutionId: ctx.principal.institutionId,
+      structureId: row.id,
+      versionNo: 1,
+      lineItems: [{ key:'legacy', label:input.name, amount_minor:input.amount, tax_pct:0, category:['tuition','exam','transport','hostel'].includes(input.feeType)?input.feeType:'other' }],
+      installmentSchedule: [{ seq:1, label:'Full payment', due_date:new Date().toISOString().slice(0,10), pct_bps:10_000 }],
+      lateFeePolicy: null,
       createdBy: ctx.principal.institutionUserId,
     });
     await this.write(ctx, 'fee.structure.create', 'fee_structure', row.id, campusId, {

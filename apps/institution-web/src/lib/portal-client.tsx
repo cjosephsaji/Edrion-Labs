@@ -176,6 +176,19 @@ export class PortalClient {
   fileUrl(path: string): string {
     return `${this.baseUrl}/v1${path}`;
   }
+
+  /** Fetch an authenticated binary resource while preserving the active campus scope header. */
+  async fetchFile(path: string, scope: InstitutionScope): Promise<Blob> {
+    const headers = new Headers();
+    headers.set('x-institution-scope', scopeHeader(scope));
+    if (this.devUserEmail) headers.set('x-institution-user-email', this.devUserEmail);
+    const response = await fetch(`${this.baseUrl}/v1${path}`, {
+      credentials: 'include',
+      headers,
+    });
+    if (!response.ok) throw new PortalClientError(response.status, 'FILE_FETCH_FAILED', response.statusText);
+    return response.blob();
+  }
 }
 
 const PortalClientContext = createContext<PortalClient | null>(null);
