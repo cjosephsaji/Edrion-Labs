@@ -4,6 +4,7 @@ import { StatusBadge, type Column } from '@edrion/ui';
 import { ResourceManager, type FilterDef, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
 import { StudentGuardiansPanel } from '@/components/people/student-guardians-panel';
+import { StudentLearnPanel } from '@/components/students/student-learn-panel';
 import { StudentPortalInviteDialog } from '@/components/students/student-portal-invite-dialog';
 import { UserProfileDialog } from '@/components/people/user-profile-dialog';
 import { usePermissions } from '@/lib/permissions';
@@ -155,6 +156,9 @@ export default function StudentsPage() {
             </div>
           )}
           <StudentGuardiansPanel studentId={row.id} studentName={formatPersonName(row)} />
+          <div className="mt-6">
+            <StudentLearnPanel studentId={row.id} />
+          </div>
         </>
       )}
       toFormValues={(r) => ({

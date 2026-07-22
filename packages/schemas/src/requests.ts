@@ -56,6 +56,8 @@ export const requestApproveSchema = requestVersionSchema.extend({
 });
 export const requestRejectSchema = requestVersionSchema.extend({
   note: z.string().trim().min(10, 'Use at least 10 characters').max(4000),
+  /** When true, surfaces the linked request invoice to the Fees desk for refund review. */
+  refund_flagged: z.boolean().optional(),
 });
 export const requestInfoSchema = requestVersionSchema.extend({
   question: z.string().trim().min(1).max(4000),

@@ -68,6 +68,7 @@ describe('VisualStudioService', () => {
       {} as never,
       {} as never,
       { enabled: true, enqueue: vi.fn() } as never,
+      {} as never,
       { log: vi.fn() } as never,
     );
   });

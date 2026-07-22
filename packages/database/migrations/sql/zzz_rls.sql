@@ -186,7 +186,11 @@ BEGIN
       ('student_requests', 'institution_id'),
       ('student_request_events', 'institution_id'),
       ('institution_request_type_config', 'institution_id'),
-      ('student_document_vault', 'institution_id'),
+      -- Document issuance catalog/batches (tenant-scoped).
+      ('document_catalog', 'institution_id'),
+      ('document_batches', 'institution_id'),
+      ('report_card_remarks', 'institution_id'),
+      ('mark_release_batches', 'institution_id'),
       -- Student portal (Plan 03): institutional bridge tables.
       ('homework', 'institution_id'),
       ('class_stream_posts', 'institution_id'),
@@ -262,11 +266,21 @@ WITH CHECK (EXISTS (
 ALTER TABLE exam_blueprints ENABLE ROW LEVEL SECURITY;
 ALTER TABLE exam_blueprints FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS exam_blueprints_student_private ON exam_blueprints;
+-- Owner rows + published institution blueprints readable by students of that institution.
 CREATE POLICY exam_blueprints_student_private ON exam_blueprints FOR ALL
 USING (
   (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
   OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
   OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+  OR (
+    edrion_current_student() IS NOT NULL
+    AND institution_id IS NOT NULL
+    AND student_id IS NULL
+    AND independent_user_id IS NULL
+    AND is_published = true
+    AND archived_at IS NULL
+    AND (edrion_current_institution() IS NULL OR institution_id::text = edrion_current_institution())
+  )
 )
 WITH CHECK (
   (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
@@ -378,11 +392,24 @@ CREATE POLICY exam_paper_patterns_read ON exam_paper_patterns FOR SELECT USING (
 
 ALTER TABLE question_bank ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS question_bank_read ON question_bank;
-CREATE POLICY question_bank_read ON question_bank FOR SELECT USING (true);
+-- Global (institution_id NULL) + own-institution rows; pending items still readable for review UIs.
+CREATE POLICY question_bank_read ON question_bank FOR SELECT USING (
+  institution_id IS NULL
+  OR edrion_current_institution() IS NULL
+  OR institution_id::text = edrion_current_institution()
+);
 DROP POLICY IF EXISTS question_bank_write ON question_bank;
-CREATE POLICY question_bank_write ON question_bank FOR INSERT WITH CHECK (true);
+CREATE POLICY question_bank_write ON question_bank FOR INSERT WITH CHECK (
+  institution_id IS NULL
+  OR edrion_current_institution() IS NULL
+  OR institution_id::text = edrion_current_institution()
+);
 DROP POLICY IF EXISTS question_bank_update ON question_bank;
-CREATE POLICY question_bank_update ON question_bank FOR UPDATE USING (true);
+CREATE POLICY question_bank_update ON question_bank FOR UPDATE USING (
+  institution_id IS NULL
+  OR edrion_current_institution() IS NULL
+  OR institution_id::text = edrion_current_institution()
+);
 
 -- Today Feed: every personal table is dual-owner. institution_id is context only.
 DO $$
@@ -407,3 +434,101 @@ BEGIN
     );
   END LOOP;
 END $$;
+
+-- Dual-owner document vault (evolved student_document_vault).
+ALTER TABLE student_document_vault ENABLE ROW LEVEL SECURITY;
+ALTER TABLE student_document_vault FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS student_document_vault_owner_split ON student_document_vault;
+CREATE POLICY student_document_vault_owner_split ON student_document_vault FOR ALL USING (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL AND edrion_current_institution() IS NULL)
+  OR (
+    institution_id IS NOT NULL AND student_id IS NOT NULL AND independent_user_id IS NULL
+    AND (edrion_current_institution() IS NULL OR institution_id::text = edrion_current_institution())
+    AND (edrion_current_student() IS NULL OR student_id::text = edrion_current_student())
+  )
+  OR (
+    independent_user_id IS NOT NULL AND institution_id IS NULL AND student_id IS NULL
+    AND (edrion_current_independent_user() IS NULL OR independent_user_id::text = edrion_current_independent_user())
+  )
+) WITH CHECK (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL AND edrion_current_institution() IS NULL)
+  OR (
+    institution_id IS NOT NULL AND student_id IS NOT NULL AND independent_user_id IS NULL
+    AND (edrion_current_institution() IS NULL OR institution_id::text = edrion_current_institution())
+  )
+  OR (
+    independent_user_id IS NOT NULL AND institution_id IS NULL AND student_id IS NULL
+    AND (edrion_current_independent_user() IS NULL OR independent_user_id::text = edrion_current_independent_user())
+  )
+);
+
+-- Edrion Learn orchestrator: owner-scoped tables.
+DO $$
+DECLARE tbl text;
+BEGIN
+  FOREACH tbl IN ARRAY ARRAY['learner_mastery', 'learner_model_events'] LOOP
+    EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
+    EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', tbl);
+    EXECUTE format('DROP POLICY IF EXISTS %I_owner_private ON %I', tbl, tbl);
+    EXECUTE format(
+      'CREATE POLICY %I_owner_private ON %I FOR ALL USING (
+        (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+        OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student()
+            AND (institution_id IS NULL OR edrion_current_institution() IS NULL OR institution_id::text = edrion_current_institution()))
+        OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      ) WITH CHECK (
+        (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+        OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student()
+            AND (institution_id IS NULL OR edrion_current_institution() IS NULL OR institution_id::text = edrion_current_institution()))
+        OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      )', tbl, tbl
+    );
+  END LOOP;
+END $$;
+
+ALTER TABLE learn_topic_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE learn_topic_profiles FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS learn_topic_profiles_owner_private ON learn_topic_profiles;
+CREATE POLICY learn_topic_profiles_owner_private ON learn_topic_profiles FOR ALL
+USING (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+  OR (
+    edrion_current_institution() IS NOT NULL
+    AND institution_id::text = edrion_current_institution()
+    AND independent_user_id IS NULL
+  )
+)
+WITH CHECK (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+  OR (
+    edrion_current_institution() IS NOT NULL
+    AND institution_id::text = edrion_current_institution()
+    AND independent_user_id IS NULL
+  )
+);
+
+-- learn_session_events: scoped via parent learn_sessions owner.
+ALTER TABLE learn_session_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE learn_session_events FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS learn_session_events_owner_private ON learn_session_events;
+CREATE POLICY learn_session_events_owner_private ON learn_session_events FOR ALL
+USING (EXISTS (
+  SELECT 1 FROM learn_sessions ls
+  WHERE ls.id = learn_session_events.session_id
+    AND (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_student() IS NOT NULL AND ls.student_id::text = edrion_current_student())
+      OR (edrion_current_independent_user() IS NOT NULL AND ls.independent_user_id::text = edrion_current_independent_user())
+    )
+))
+WITH CHECK (EXISTS (
+  SELECT 1 FROM learn_sessions ls
+  WHERE ls.id = learn_session_events.session_id
+    AND (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_student() IS NOT NULL AND ls.student_id::text = edrion_current_student())
+      OR (edrion_current_independent_user() IS NOT NULL AND ls.independent_user_id::text = edrion_current_independent_user())
+    )
+));

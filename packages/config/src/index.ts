@@ -51,6 +51,13 @@ export const apiEnvSchema = z.object({
     .transform((s) => s.split(',').map((o) => o.trim())),
   SESSION_COOKIE_SECRET: z.string().min(16, 'SESSION_COOKIE_SECRET must be at least 16 chars'),
   /**
+   * Dedicated HMAC secret for document verification short codes.
+   * Must NOT reuse SESSION_COOKIE_SECRET. Falls back only in non-production for local bootstrap.
+   */
+  DOCUMENT_VERIFY_SECRET: z.string().min(16).optional(),
+  /** Public origin for QR verify URLs (e.g. https://verify.edrion.com). */
+  DOCUMENT_VERIFY_ORIGIN: z.string().url().default('http://localhost:3003/documents/verify'),
+  /**
    * Master switch for the sensitive-action recent-auth gate. When false (default) no route ever
    * returns RECENT_AUTH_REQUIRED — sensitive actions are allowed as long as the session is valid.
    * Flip on to re-enable step-up re-authentication using RECENT_AUTH_WINDOW_SECONDS.

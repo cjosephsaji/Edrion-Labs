@@ -160,6 +160,8 @@ import { PortalReportQueriesService } from './portal-report-queries.service';
 import { PetrosTopicalityService } from './petros/petros-topicality.service';
 import { PetrosHistoryService } from './petros/context/history';
 import { DocumentsGenController } from '../documents/documents-gen.controller';
+import { DocumentBatchController } from '../documents/document-batch.controller';
+import { ReportCardIssuanceController } from '../documents/report-card-issuance.controller';
 import { PortalHomeworkController } from './homework/portal-homework.controller';
 import { PortalHomeworkService } from './homework/portal-homework.service';
 import { PortalCourseContentController } from './course-content/portal-course-content.controller';
@@ -168,6 +170,13 @@ import { PortalCoursesController } from './courses/portal-courses.controller';
 import { PortalCoursesService } from './courses/portal-courses.service';
 import { PortalReportCardsController } from './report-cards/portal-report-cards.controller';
 import { PortalLearningSummaryService, PortalReportCardsService } from './report-cards/portal-report-cards.service';
+import { PortalLearnPolicyController } from './learn-policy/portal-learn-policy.controller';
+import { PortalLearnPolicyService } from './learn-policy/portal-learn-policy.service';
+import { PortalLearnVisibilityService } from './learn-policy/portal-learn-visibility.service';
+import { PortalMockExamsController } from './mock-exams/portal-mock-exams.controller';
+import { PortalMockBlueprintsService } from './mock-exams/portal-mock-blueprints.service';
+import { PortalMockBanksService } from './mock-exams/portal-mock-banks.service';
+import { QuestionBankService } from '../student/exam-engine/question-bank.service';
 import { CalendarEventsController } from './calendar-events/calendar-events.controller';
 import { CalendarEventsService } from './calendar-events/calendar-events.service';
 
@@ -206,6 +215,8 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
     PortalCopilotController,
     PetrosController,
     DocumentsGenController,
+    DocumentBatchController,
+    ReportCardIssuanceController,
     SettingsController,
     RolesController,
     UsersController,
@@ -236,6 +247,8 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
     PortalCourseContentController,
     PortalCoursesController,
     PortalReportCardsController,
+    PortalLearnPolicyController,
+    PortalMockExamsController,
     CalendarEventsController,
   ],
   providers: [
@@ -357,6 +370,11 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
     PortalCoursesService,
     PortalReportCardsService,
     PortalLearningSummaryService,
+    PortalLearnPolicyService,
+    PortalLearnVisibilityService,
+    PortalMockBlueprintsService,
+    PortalMockBanksService,
+    QuestionBankService,
     CalendarEventsService,
   ],
   // InstitutionAuthGuard (+ its session/rate-limit deps) is reused by the Parent Portal module,

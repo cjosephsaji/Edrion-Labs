@@ -49,6 +49,11 @@ export interface RequestTypeConfig<TPayload extends Record<string, unknown> = Re
   requiresPayment: boolean;
   /** Required when requiresPayment is true; used to create the request-linked fee demand. */
   feeLine?: { label: string; amountMinor: number; category: 'tuition'|'exam'|'lab'|'transport'|'hostel'|'other' };
+  /**
+   * When set, the API resolves fee/template/routing/eligibility from a DB adapter
+   * (e.g. document_catalog) instead of static package config.
+   */
+  dynamicPolicy?: 'document_catalog';
   producesDocument: boolean;
   bulkApprovable: boolean;
   approvalSideEffectKey?: string;

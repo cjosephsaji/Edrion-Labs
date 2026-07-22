@@ -27,6 +27,7 @@ import type { InstitutionPrincipal, ScopeFilter } from '@edrion/auth';
 import { resolveScopeFilter } from '@edrion/auth';
 import { ActorType } from '@edrion/shared-types';
 import type {
+  DocumentRequestPayload,
   LeaveRequestPayload,
   PortalRequestsListQuery,
   RequestApproveInput,
@@ -52,6 +53,7 @@ import { RequestRegistryService, type ResolvedRequestType } from './request-regi
 import { RequestNotifyService } from './request-notify.service';
 import { addWorkingDays, codeSuffix, dateDiffDays, decodeCursor, encodeCursor } from './request-utils';
 import { RequestDocumentService } from './request-document.service';
+import { DocumentRequestPolicyService } from './document-request-policy.service';
 import { assertRequestTransition, canStudentCancel } from './request-state';
 
 type RequestRow = typeof schema.studentRequests.$inferSelect;
@@ -81,11 +83,12 @@ export class RequestEngineService {
     private readonly notifications: RequestNotifyService,
     private readonly attendance: AttendanceService,
     private readonly documents: RequestDocumentService,
+    private readonly documentPolicy: DocumentRequestPolicyService,
   ) {}
 
   async submit(ctx: StudentRequestContext, input: SubmitStudentRequestInput) {
     const { principal } = ctx;
-    const resolved = await this.registry.requireEnabled(principal.institutionId, input.type);
+    let resolved = await this.registry.requireEnabled(principal.institutionId, input.type);
     const parsed = resolved.config.payloadSchema.safeParse(input.payload);
     if (!parsed.success) {
       throw new BadRequestException({
@@ -99,7 +102,16 @@ export class RequestEngineService {
       payload = await this.prepareLeave(principal, payload as LeaveRequestPayload);
     }
     if (input.type === 'document_request') {
-      await this.documents.assertRequestableTemplate(principal.institutionId, String(payload.doc_type));
+      const docPayload = parsed.data as DocumentRequestPayload;
+      resolved = await this.documentPolicy.applyToResolved(
+        principal.institutionId,
+        docPayload,
+        resolved,
+      );
+      if (!docPayload.subtypeKey) {
+        payload = { ...payload, subtypeKey: docPayload.doc_type };
+      }
+      await this.documents.assertRequestableTemplate(principal.institutionId, docPayload.doc_type);
     }
 
     const attachments = await this.normalizeAttachments(principal, input.attachments);
@@ -470,7 +482,7 @@ export class RequestEngineService {
       decisionNote: input.note,
       resolvedAt: new Date(),
     }, ctx.principal);
-    await this.appendEvents(updated, [...events, { type: 'rejected', note: input.note }], this.staffActor(ctx.principal));
+    await this.appendEvents(updated, [...events, { type: 'rejected', note: input.note, data: { refund_flagged: input.refund_flagged ?? false } }], this.staffActor(ctx.principal));
     const seq = await this.lastSeq(updated.id);
     await this.writePortalAudit(ctx, updated, 'student_request.reject', row.status, 'rejected', input.note);
     await this.notifications.dispatch({ institutionId: row.institutionId, requestId: row.id, eventSeq: seq });
@@ -1147,7 +1159,46 @@ export class RequestEngineService {
           gte(schema.studentDocumentVault.issuedAt, new Date(Date.UTC(new Date().getUTCFullYear(), 0, 1))),
         ),
       );
-    return { student, priorDocuments: prior, feeDues: null };
+    const feeDues = await this.feeDuesSnapshot(row.institutionId, row.studentId);
+    return { student, priorDocuments: prior, feeDues };
+  }
+
+  private async feeDuesSnapshot(institutionId: string, studentId: string) {
+    try {
+      const [config] = await this.db
+        .select({ duesBlock: schema.institutionFeeConfig.duesBlock })
+        .from(schema.institutionFeeConfig)
+        .where(eq(schema.institutionFeeConfig.institutionId, institutionId))
+        .limit(1);
+      const [balance] = await this.db
+        .select({
+          overdueMinor: sql<number>`coalesce(sum(greatest(0, ${schema.feeInvoices.amount} - ${schema.feeInvoices.amountPaid})) filter (where ${schema.feeInvoices.dueDate} < current_date and ${schema.feeInvoices.status} in ('pending','partial','overdue')), 0)::int`,
+        })
+        .from(schema.feeInvoices)
+        .where(
+          and(
+            eq(schema.feeInvoices.institutionId, institutionId),
+            eq(schema.feeInvoices.studentId, studentId),
+            sql`${schema.feeInvoices.status} <> 'cancelled'`,
+          ),
+        );
+      const overdueMinor = Number(balance?.overdueMinor ?? 0);
+      const raw = (config?.duesBlock ?? {}) as Record<string, unknown>;
+      const triggered =
+        raw.threshold_mode === 'amount_gte'
+          ? overdueMinor >= Number(raw.threshold_minor ?? 0)
+          : overdueMinor > 0;
+      return {
+        overdueMinor,
+        consequences: {
+          hallTicket: triggered && raw.hall_ticket === true,
+          result: triggered && raw.result === true,
+          tc: triggered && raw.tc === true,
+        },
+      };
+    } catch {
+      return null;
+    }
   }
 
   private async writeStudentAudit(

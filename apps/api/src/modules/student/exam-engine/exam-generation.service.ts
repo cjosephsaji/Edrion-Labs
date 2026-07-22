@@ -3,8 +3,11 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, schema, type Database } from '@edrion/database';
 import {
   examBlueprintSchema,
+  examBlueprintTotalMarks,
+  examBlueprintTotalQuestions,
   examGenerationBatchOutputSchema,
   labExamQuestionSchema,
+  MOCK_GENERATION_SHORTFALL_THRESHOLD,
   type ExamBlueprint,
   type ExamGenerationSseEvent,
   type ExamQuestion,
@@ -118,8 +121,14 @@ export class ExamGenerationService {
       return;
     }
 
+    // Player/scorer must use immutable snapshot — never live blueprint after create.
     let blueprint: ExamBlueprint | null = null;
-    if (exam.blueprintId) {
+    const snap = exam.blueprintSnapshot
+      ? examBlueprintSchema.safeParse(exam.blueprintSnapshot)
+      : null;
+    if (snap?.success) {
+      blueprint = snap.data;
+    } else if (exam.blueprintId) {
       const [bpRow] = await this.db
         .select()
         .from(schema.examBlueprints)
@@ -136,18 +145,21 @@ export class ExamGenerationService {
       return;
     }
 
-    const targetCount = blueprint.sections.reduce((s, sec) => s + sec.questionCount, 0);
+    const targetCount = examBlueprintTotalQuestions(blueprint);
     emit?.({
       type: 'start',
       examId,
       sectionCount: blueprint.sections.length,
       targetQuestionCount: targetCount,
     });
+    emit?.({ type: 'stage', stage: 'Selecting questions…' } as ExamGenerationSseEvent);
 
     const groundingText = await this.loadGrounding(blueprint);
-    const accepted: ExamQuestion[] = [];
+    type AcceptedRec = { question: ExamQuestion; source: 'bank' | 'ai'; bankId: string | null };
+    const accepted: AcceptedRec[] = [];
     const bankIdsUsed: string[] = [];
     let sequence = 0;
+    const institutionId = principal.kind === 'institutional' ? principal.institutionId : null;
 
     for (let si = 0; si < blueprint.sections.length; si++) {
       const section = blueprint.sections[si]!;
@@ -175,8 +187,9 @@ export class ExamGenerationService {
         };
         const validated = labExamQuestionSchema.safeParse(q);
         if (!validated.success) continue;
-        if (this.bank.filterDuplicates([validated.data], accepted).length === 0) continue;
-        accepted.push(validated.data);
+        if (this.bank.filterDuplicates([validated.data], accepted.map((a) => a.question)).length === 0)
+          continue;
+        accepted.push({ question: validated.data, source: 'bank', bankId: d.bankId });
         bankIdsUsed.push(d.bankId);
         sequence += 1;
         emit?.({
@@ -189,11 +202,15 @@ export class ExamGenerationService {
       }
 
       const remaining = section.questionCount - drawn.length;
-      // Generate per type in small batches
       for (const qtype of section.questionTypes) {
-        const stillNeed = section.questionCount - accepted.filter((q) => q.blueprintSectionId === section.id).length;
+        const stillNeed =
+          section.questionCount -
+          accepted.filter((a) => a.question.blueprintSectionId === section.id).length;
         if (stillNeed <= 0) break;
-        const batchSize = Math.min(stillNeed, Math.ceil(remaining / section.questionTypes.length) || 1);
+        const batchSize = Math.min(
+          stillNeed,
+          Math.ceil(remaining / section.questionTypes.length) || 1,
+        );
         const batch = await this.generateBatch(principal, {
           subjectLabel: blueprint.subjectLabel,
           section,
@@ -203,10 +220,25 @@ export class ExamGenerationService {
           topics: blueprint.topicWeights.map((t) => t.topicLabel),
           groundingText,
         });
-        const unique = this.bank.filterDuplicates(batch, accepted);
+        const unique = this.bank.filterDuplicates(
+          batch,
+          accepted.map((a) => a.question),
+        );
         for (const q of unique) {
-          if (accepted.filter((a) => a.blueprintSectionId === section.id).length >= section.questionCount) break;
-          accepted.push(q);
+          if (
+            accepted.filter((a) => a.question.blueprintSectionId === section.id).length >=
+            section.questionCount
+          )
+            break;
+          // Pending bank insert — selectable only after teacher approval; usable in this mock.
+          const bankId = await this.bank.put(q, {
+            curriculumKey: blueprint.paperPatternId ? 'preset' : 'general',
+            institutionId,
+            source: 'ai',
+            reviewStatus: 'pending',
+          });
+          accepted.push({ question: q, source: 'ai', bankId });
+          if (bankId) bankIdsUsed.push(bankId);
           sequence += 1;
           emit?.({
             type: 'question',
@@ -215,17 +247,41 @@ export class ExamGenerationService {
             promptPreview: q.prompt.slice(0, 200),
             qtype: q.type,
           });
-          const bankId = await this.bank.put(q, {
-            curriculumKey: blueprint.paperPatternId ? 'preset' : 'general',
-          });
-          if (bankId) bankIdsUsed.push(bankId);
         }
       }
     }
 
+    emit?.({ type: 'stage', stage: 'Checking answers…' } as ExamGenerationSseEvent);
+
+    const fillRatio = targetCount === 0 ? 0 : accepted.length / targetCount;
+    if (accepted.length === 0 || fillRatio < MOCK_GENERATION_SHORTFALL_THRESHOLD) {
+      const reason =
+        'Not enough material in this source for this pattern — pick a smaller pattern or broader scope.';
+      await this.db
+        .update(schema.mockExams)
+        .set({
+          status: 'generation_failed',
+          generationNotice: reason,
+          generationMeta: {
+            requestedCount: targetCount,
+            acceptedCount: accepted.length,
+            fillRatio,
+            shortfall: true,
+            failureReason: reason,
+          },
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.mockExams.id, examId));
+      emit?.({ type: 'error', message: reason, code: 'GENERATION_FAILED' });
+      return;
+    }
+
+    let workingBlueprint = blueprint;
     let notice: string | null = null;
     if (accepted.length < targetCount) {
-      notice = `Generated ${accepted.length} of ${targetCount} questions — some items could not be validated.`;
+      // Shrink section counts proportionally; recompute totals on snapshot.
+      workingBlueprint = this.shrinkBlueprint(blueprint, accepted.map((a) => a.question));
+      notice = `Built with ${accepted.length} of ${targetCount} questions — your source didn't cover more`;
       emit?.({
         type: 'degraded',
         message: notice,
@@ -234,71 +290,78 @@ export class ExamGenerationService {
       });
     }
 
-    if (!accepted.length) {
-      // Last-resort stubs so the exam is never empty/broken
-      for (const section of blueprint.sections) {
-        for (let i = 0; i < Math.min(section.questionCount, 3); i++) {
-          const topic = blueprint.topicWeights[i % blueprint.topicWeights.length]!.topicLabel;
-          accepted.push(
-            labExamQuestionSchema.parse({
-              id: randomUUID(),
-              type: 'mcq_single',
-              topicLabel: topic,
-              difficulty: blueprint.difficultyCurve,
-              marks: section.marksPerQuestion,
-              blueprintSectionId: section.id,
-              explanation: 'Review this topic in your notes.',
-              schemaVersion: 1,
-              prompt: `Practice question ${i + 1} on ${topic}`,
-              options: [
-                { key: 'a', label: 'Option A' },
-                { key: 'b', label: 'Option B' },
-                { key: 'c', label: 'Option C' },
-                { key: 'd', label: 'Option D' },
-              ],
-              correctKey: 'a',
-            }),
-          );
-        }
-      }
-      notice = (notice ? notice + ' ' : '') + 'Fell back to placeholder questions.';
-    }
-
     await this.db.delete(schema.mockExamQuestions).where(eq(schema.mockExamQuestions.mockExamId, examId));
     await this.db.insert(schema.mockExamQuestions).values(
-      accepted.map((q, i) => ({
-        mockExamId: examId,
-        sequence: i + 1,
-        topic: q.topicLabel,
-        qtype: q.type,
-        prompt: q.prompt,
-        options:
-          'options' in q && Array.isArray(q.options)
-            ? q.options.map((o) => ({ key: o.key, label: o.label }))
-            : null,
-        correctKey: 'correctKey' in q ? (q.correctKey as string) : null,
-        markingNote: q.explanation,
-        marks: q.marks,
-        sectionId: q.blueprintSectionId,
-        difficulty: q.difficulty,
-        payload: q as unknown as Record<string, unknown>,
-        questionBankId: null,
-      })),
+      accepted.map((rec, i) => {
+        const q = rec.question;
+        return {
+          mockExamId: examId,
+          sequence: i + 1,
+          topic: q.topicLabel,
+          qtype: q.type,
+          prompt: q.prompt,
+          options:
+            'options' in q && Array.isArray(q.options)
+              ? q.options.map((o) => ({ key: o.key, label: o.label }))
+              : null,
+          correctKey: 'correctKey' in q ? (q.correctKey as string) : null,
+          markingNote: q.explanation,
+          marks: q.marks,
+          sectionId: q.blueprintSectionId,
+          difficulty: q.difficulty,
+          payload: q as unknown as Record<string, unknown>,
+          questionBankId: rec.bankId,
+          source: rec.source,
+          snapshotHash: this.bank.promptHash(q.prompt),
+        };
+      }),
     );
 
-    await this.bank.recordExposure(principal, [...new Set(bankIdsUsed)]);
+    await this.bank.recordExposure(principal, [...new Set(bankIdsUsed.filter(Boolean))]);
+
+    const snapshot = {
+      ...workingBlueprint,
+      resolvedTotalMarks: examBlueprintTotalMarks(workingBlueprint),
+      resolvedTotalQuestions: examBlueprintTotalQuestions(workingBlueprint),
+      snapshotAt: new Date().toISOString(),
+    };
 
     await this.db
       .update(schema.mockExams)
       .set({
-        status: 'ready',
+        status: exam.scheduledFor ? 'scheduled' : 'ready',
         generatedAt: new Date(),
         generationNotice: notice,
+        blueprintSnapshot: snapshot as unknown as Record<string, unknown>,
+        generationMeta: {
+          requestedCount: targetCount,
+          acceptedCount: accepted.length,
+          bankCount: accepted.filter((a) => a.source === 'bank').length,
+          aiCount: accepted.filter((a) => a.source === 'ai').length,
+          fillRatio,
+          shortfall: accepted.length < targetCount,
+        },
         updatedAt: new Date(),
       })
       .where(eq(schema.mockExams.id, examId));
 
+    emit?.({ type: 'stage', stage: 'Ready' } as ExamGenerationSseEvent);
     emit?.({ type: 'saved', examId, questionCount: accepted.length, status: 'ready' });
+  }
+
+  /** Deterministically shrink section questionCounts to match accepted distribution. */
+  private shrinkBlueprint(bp: ExamBlueprint, accepted: ExamQuestion[]): ExamBlueprint {
+    const counts = new Map<string, number>();
+    for (const q of accepted) {
+      counts.set(q.blueprintSectionId, (counts.get(q.blueprintSectionId) ?? 0) + 1);
+    }
+    const sections = bp.sections
+      .map((s) => ({
+        ...s,
+        questionCount: Math.max(0, counts.get(s.id) ?? 0),
+      }))
+      .filter((s) => s.questionCount > 0);
+    return examBlueprintSchema.parse({ ...bp, sections });
   }
 
   private async generateBatch(
@@ -411,7 +474,12 @@ export class ExamGenerationService {
   private async fail(examId: string, message: string) {
     await this.db
       .update(schema.mockExams)
-      .set({ status: 'failed', generationNotice: message, updatedAt: new Date() })
+      .set({
+        status: 'generation_failed',
+        generationNotice: message,
+        generationMeta: { failureReason: message, acceptedCount: 0, requestedCount: 0 },
+        updatedAt: new Date(),
+      })
       .where(eq(schema.mockExams.id, examId));
   }
 }

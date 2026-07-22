@@ -202,6 +202,30 @@ export function useSaveExamAnswer() {
   });
 }
 
+export function useWizardBlueprints() {
+  const client = useStudentClient();
+  return useQuery({
+    queryKey: [...MOCK_ROOT, 'wizard-blueprints'],
+    queryFn: () =>
+      client.get<{
+        personal: ExamBlueprintDto[];
+        institution: ExamBlueprintDto[];
+        quickMock: ExamBlueprint;
+      }>('/lab/mock-exams/wizard/blueprints'),
+  });
+}
+
+export function useCreateMockFromWizard() {
+  const client = useStudentClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: unknown) => client.post<MockExamDto>('/lab/mock-exams/wizard', body),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: listKey() });
+    },
+  });
+}
+
 export function usePauseExam() {
   const client = useStudentClient();
   const qc = useQueryClient();

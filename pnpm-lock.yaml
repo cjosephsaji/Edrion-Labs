@@ -723,6 +723,28 @@ importers:
         specifier: ^2.1.1
         version: 2.1.9(@types/node@20.19.43)
 
+  packages/learn-evals:
+    dependencies:
+      '@edrion/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+    devDependencies:
+      '@edrion/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
+      '@edrion/vitest-config':
+        specifier: workspace:*
+        version: link:../../tooling/vitest
+      tsx:
+        specifier: ^4.19.1
+        version: 4.22.4
+      typescript:
+        specifier: ^5.6.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.1
+        version: 2.1.9(@types/node@20.19.43)
+
   packages/observability:
     devDependencies:
       '@edrion/eslint-config':

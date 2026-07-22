@@ -176,37 +176,68 @@ export const institutionRequestTypeConfig = pgTable(
   }),
 );
 
-/** Issued institutional documents. Visibility before sign-off is enforced by the request service. */
+/**
+ * Dual-owner issued-document vault (evolved in place — not vault_documents).
+ * Institutional: institution_id + student_id. Independent: independent_user_id only.
+ * Abandoned send-backs keep an audit tombstone (abandoned_at) and are hidden from projections.
+ */
 export const studentDocumentVault = pgTable(
   'student_document_vault',
   {
     id: primaryId(),
-    institutionId: uuid('institution_id')
-      .notNull()
-      .references(() => institutions.id, { onDelete: 'cascade' }),
-    studentId: uuid('student_id')
-      .notNull()
-      .references(() => students.id, { onDelete: 'cascade' }),
+    institutionId: uuid('institution_id').references(() => institutions.id, { onDelete: 'cascade' }),
+    studentId: uuid('student_id').references(() => students.id, { onDelete: 'cascade' }),
+    independentUserId: uuid('independent_user_id'),
     requestId: uuid('request_id').references(() => studentRequests.id, { onDelete: 'set null' }),
-    documentRenderId: uuid('document_render_id')
-      .notNull()
-      .references(() => documentRenders.id, { onDelete: 'restrict' }),
+    documentRenderId: uuid('document_render_id').references(() => documentRenders.id, {
+      onDelete: 'restrict',
+    }),
+    storageKey: text('storage_key'),
     title: text('title').notNull(),
     docType: text('doc_type').notNull(),
+    family: text('family'),
+    source: text('source').notNull().default('request'),
+    templateId: uuid('template_id'),
+    templateFingerprint: text('template_fingerprint'),
+    batchId: uuid('batch_id'),
+    batchItemId: uuid('batch_item_id'),
+    academicYear: text('academic_year'),
     verifyCode: text('verify_code').notNull(),
-    issuedBy: uuid('issued_by')
-      .references(() => institutionUsers.id, { onDelete: 'restrict' }),
+    verifyCodeVersion: integer('verify_code_version').notNull().default(0),
+    issuedBy: uuid('issued_by').references(() => institutionUsers.id, { onDelete: 'restrict' }),
     issuedAt: timestamp('issued_at', { withTimezone: true }).notNull().defaultNow(),
+    deliveredAt: timestamp('delivered_at', { withTimezone: true }),
+    deliveryMode: text('delivery_mode'),
+    pickupReadyAt: timestamp('pickup_ready_at', { withTimezone: true }),
+    pickupNote: text('pickup_note'),
+    collectedAt: timestamp('collected_at', { withTimezone: true }),
+    collectedBy: uuid('collected_by'),
+    supersededBy: uuid('superseded_by'),
+    supersedes: uuid('supersedes'),
+    reissueReason: text('reissue_reason'),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
     revokedReason: text('revoked_reason'),
+    abandonedAt: timestamp('abandoned_at', { withTimezone: true }),
+    version: integer('version').notNull().default(0),
+    ...timestamps,
   },
   (t) => ({
     verifyCodeCheck: check(
       'student_document_vault_verify_code_check',
       sql`char_length(${t.verifyCode}) = 12`,
     ),
+    ownerCk: check(
+      'student_document_vault_owner_ck',
+      sql`(
+        (${t.institutionId} IS NOT NULL AND ${t.studentId} IS NOT NULL AND ${t.independentUserId} IS NULL)
+        OR (${t.institutionId} IS NULL AND ${t.studentId} IS NULL AND ${t.independentUserId} IS NOT NULL)
+      )`,
+    ),
+    sourceCk: check(
+      'student_document_vault_source_ck',
+      sql`${t.source} IN ('request','batch','manual_upload','system')`,
+    ),
     verifyCodeUniq: uniqueIndex('student_document_vault_verify_code_uniq').on(t.verifyCode),
-    renderUniq: uniqueIndex('student_document_vault_render_uniq').on(t.documentRenderId),
     studentIdx: index('student_document_vault_student_idx').on(t.institutionId, t.studentId),
     requestIdx: index('student_document_vault_request_idx').on(t.requestId),
   }),

@@ -1,17 +1,12 @@
 'use client';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   useFinishExam,
   useMockExam,
-  usePauseExam,
   useSaveExamAnswer,
   useStartExam,
 } from '@/lib/hooks';
-import { examTemplateAllowsPause } from '@edrion/schemas';
-import { ExamTimer } from '@/components/lab/exam/ExamTimer';
-import { QuestionPalette, type PaletteItem } from '@/components/lab/exam/QuestionPalette';
-import { QuestionInput } from '@/components/lab/exam/inputs/QuestionInput';
 import { useExamAttemptStore } from '@/components/lab/exam/useExamAttemptStore';
 import { OfflineAnswerQueue } from '@/components/lab/exam/OfflineAnswerQueue';
 import {
@@ -20,7 +15,8 @@ import {
   normalizeQuestionType,
   type LocalAnswer,
 } from '@/components/lab/exam/answer-model';
-import { MathText } from '@/components/learn/MathText';
+import { MockExamPlayer } from '@/components/mock-exams/players/MockExamPlayer';
+import type { ExamSkin } from '@edrion/schemas';
 
 const AUTOSAVE_MS = 600;
 
@@ -31,8 +27,6 @@ export default function ExamAttemptPage() {
   const start = useStartExam();
   const save = useSaveExamAnswer();
   const finish = useFinishExam();
-  const pauseMut = usePauseExam();
-  const [warning, setWarning] = useState<string | null>(null);
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const questions = exam?.questions ?? [];
@@ -47,7 +41,10 @@ export default function ExamAttemptPage() {
 
   useEffect(() => {
     if (!exam) return;
-    if (!exam.attempt && exam.status === 'ready') {
+    if (
+      !exam.attempt &&
+      (exam.status === 'ready' || exam.status === 'scheduled' || exam.status === 'in_progress')
+    ) {
       void start.mutateAsync(id).then(() => refetch());
     }
   }, [exam, id, start, refetch]);
@@ -64,7 +61,19 @@ export default function ExamAttemptPage() {
     return () => window.removeEventListener('online', onOnline);
   }, []);
 
-  const current = questions[store.state.currentIndex];
+  useEffect(() => {
+    if (!(exam as { strictMode?: boolean } | undefined)?.strictMode) return;
+    const onVis = () => {
+      if (document.visibilityState !== 'hidden') return;
+      void fetch(`/api/proxy/lab/mock-exams/${id}/attempt/tab-switch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientEventId: `${Date.now()}-${Math.random()}` }),
+      }).catch(() => undefined);
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [exam, id]);
 
   const scheduleSave = useCallback(
     (questionId: string, answer: LocalAnswer, flagged: boolean) => {
@@ -85,7 +94,8 @@ export default function ExamAttemptPage() {
     [id, save, questions],
   );
 
-  const onAnswer = (patch: Partial<LocalAnswer>) => {
+  const onAnswerPatch = (patch: Partial<LocalAnswer>) => {
+    const current = questions[store.state.currentIndex];
     if (!current) return;
     store.setAnswer(current.id, patch);
     const next = { ...store.state.answers[current.id], ...patch };
@@ -93,6 +103,7 @@ export default function ExamAttemptPage() {
   };
 
   const onToggleFlag = () => {
+    const current = questions[store.state.currentIndex];
     if (!current) return;
     const nextFlag = !store.state.flags[current.id];
     store.setFlag(current.id, nextFlag);
@@ -100,27 +111,25 @@ export default function ExamAttemptPage() {
   };
 
   const submit = async () => {
+    const unanswered = questions.filter(
+      (q) => !isAnswered(normalizeQuestionType(String(q.qtype)), store.state.answers[q.id]),
+    ).length;
+    const marked = Object.values(store.state.flags).filter(Boolean).length;
+    if (!window.confirm(`${unanswered} unanswered · ${marked} marked — submit?`)) return;
     await finish.mutateAsync(id);
     router.push(`/lab/mock-exams/${id}/results`);
   };
 
-  const canPause = useMemo(() => {
-    const t = exam?.blueprint?.template ?? 'chapter_test';
-    return examTemplateAllowsPause(t);
-  }, [exam?.blueprint?.template]);
+  const declaredSkin = useMemo((): ExamSkin | string | null => {
+    if (!exam) return null;
+    if (exam.skin) return exam.skin;
+    const snap = exam.blueprintSnapshot as { skin?: string } | undefined;
+    if (snap?.skin) return snap.skin;
+    if (exam.blueprint?.skin) return exam.blueprint.skin;
+    return 'standard';
+  }, [exam]);
 
-  const durationMs = (exam?.context?.durationMin ?? 60) * 60_000;
-
-  const paletteItems: PaletteItem[] = questions.map((q, index) => ({
-    index,
-    sequence: q.sequence,
-    sectionName: q.sectionId,
-    answered: isAnswered(normalizeQuestionType(String(q.qtype)), store.state.answers[q.id]),
-    flagged: !!store.state.flags[q.id],
-  }));
-  const answeredCount = paletteItems.filter((p) => p.answered).length;
-
-  if (!exam || !current) {
+  if (!exam || !questions.length || !queueRef.current) {
     return (
       <div className="flex min-h-screen items-center justify-center font-mono text-sm text-st-muted">
         Loading exam room…
@@ -129,97 +138,20 @@ export default function ExamAttemptPage() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-st-bg text-st-ink">
-      <header className="flex items-center justify-between gap-3 border-b border-st-bd2 px-4 py-3">
-        <div className="min-w-0">
-          <p className="truncate font-medium">{exam.title}</p>
-          <p className="font-mono text-xs text-st-muted">
-            Q{store.state.currentIndex + 1}/{questions.length}
-            {current.sectionId ? ` · ${current.sectionId}` : ''}
-          </p>
-        </div>
-        {exam.attempt?.endsAt && (
-          <ExamTimer
-            endsAt={exam.attempt.endsAt}
-            durationMs={durationMs}
-            onWarning={(kind) =>
-              setWarning(kind === 'half' ? 'Halfway through time.' : 'Five minutes left.')
-            }
-            onExpire={() => void submit()}
-          />
-        )}
-        <div className="flex shrink-0 gap-2">
-          {canPause && (
-            <button
-              type="button"
-              className="rounded-full border border-st-bd2 px-3 py-1 text-xs"
-              onClick={() => void pauseMut.mutateAsync(id).then(() => router.push('/lab/mock-exams'))}
-            >
-              Pause
-            </button>
-          )}
-          <button
-            type="button"
-            className="rounded-full bg-st-accent px-3 py-1 text-xs font-semibold text-white"
-            onClick={() => void submit()}
-          >
-            Submit
-          </button>
-        </div>
-      </header>
-
-      {warning && (
-        <div className="animate-st-fade-up bg-st-amberSoft px-4 py-2 text-center text-sm text-st-amber">
-          {warning}
-        </div>
-      )}
-
-      <div className="flex min-h-0 flex-1">
-        <QuestionPalette
-          items={paletteItems}
-          currentIndex={store.state.currentIndex}
-          answeredCount={answeredCount}
-          onSelect={store.goTo}
-          onFinish={() => void submit()}
-        />
-
-        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6">
-          <p className="font-mono text-xs text-st-muted">
-            {current.topic} · {current.marks} mark{current.marks === 1 ? '' : 's'}
-          </p>
-          <div className="mt-3 text-lg leading-relaxed">
-            <MathText>{current.prompt}</MathText>
-          </div>
-          <div className="mt-6">
-            <QuestionInput
-              question={current}
-              value={store.state.answers[current.id] ?? {}}
-              onChange={onAnswer}
-            />
-          </div>
-          <div className="mt-8 flex items-center justify-between gap-3 pb-24">
-            <button
-              type="button"
-              className="rounded-full border border-st-bd2 px-4 py-2 text-sm"
-              disabled={store.state.currentIndex === 0}
-              onClick={store.prev}
-            >
-              Previous
-            </button>
-            <button type="button" className="text-sm text-st-muted" onClick={onToggleFlag}>
-              {store.state.flags[current.id] ? 'Unflag' : 'Flag'}
-            </button>
-            <button
-              type="button"
-              className="rounded-full border border-st-bd2 px-4 py-2 text-sm"
-              disabled={store.state.currentIndex >= questions.length - 1}
-              onClick={store.next}
-            >
-              Next
-            </button>
-          </div>
-        </main>
-      </div>
-    </div>
+    <MockExamPlayer
+      examId={id}
+      exam={exam}
+      declaredSkin={declaredSkin}
+      store={store}
+      queue={queueRef.current}
+      onAnswerPatch={onAnswerPatch}
+      onToggleFlag={onToggleFlag}
+      onSubmit={() => void submit()}
+      onLeave={() => router.push('/lab/mock-exams')}
+      onExpire={() =>
+        void finish.mutateAsync(id).then(() => router.push(`/lab/mock-exams/${id}/results`))
+      }
+      scheduleSave={scheduleSave}
+    />
   );
 }

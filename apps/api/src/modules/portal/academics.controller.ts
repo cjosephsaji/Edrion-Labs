@@ -352,7 +352,7 @@ export class AcademicsController {
   @Post('programmes/:id/structure/preview')
   @RequireInstitutionPermissions('academics.view')
   previewProgrammeStructure(
-    @Param('id') id: string,
+    @Param('id') _id: string,
     @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
     @CurrentScope() s: InstitutionScope,
     @ReqContext() r: EdrionRequestContext,

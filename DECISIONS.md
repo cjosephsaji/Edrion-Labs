@@ -1,3 +1,31 @@
+# Mock Exams decisions
+
+- Migration number is `0100_mock_exam_extensions.sql` because `0098`/`0099` are Documents / mark_release_batches.
+- No `exam_profiles` table yet (Tier 3): use validated nullable `exam_profile_key` text on `exam_blueprints`, not an FK. Wire FK when Tier 3 lands.
+- Past-mistakes is a read projection over `mock_exam_answers.evaluation` + immutable question/attempt snapshots (+ compatible `learn_attempts`/`evidence_tags`). No mutable notebook / shadow mistakes table in v1.
+- Origin is derived from dual-owner columns; no redundant `origin` column.
+- Timer never pauses (including Quick). Answer grace is `ends_at+120s`. Generation shortfall ready only at ≥60%; no placeholders. Subjective self-grade is authoritative; AI is post-self comparator only.
+- Voluntary mock `individual_scores_visible` is hard-coded false.
+
+## D-T2-017 — NTA skin (AMENDED)
+
+**Status: AMENDED — NTA skin deferred pending approved reference assets.**
+
+- D6 ships the default digital-exam skin (standard) in place of a bespoke `nta` layout.
+- The `nta` skin value remains **RESERVED** in the blueprint `skin` enum (`standard|nta|paper`). No schema/CHECK change.
+- At render time a skin-resolver maps `nta → standard`. Selecting `nta` never fails; the player shows a calm, dismissible one-line note: “NTA-exact interface coming soon — practicing in standard mode.”
+- **Reversal trigger:** approved NTA reference screenshots + hex checked into `apps/student-web/src/components/mock-exams/nta-reference/`, at which point the frozen-NTA D6 work resumes and the pixel-regression gate is added.
+- **Tier 3 Entrance Prep** must NOT assume a live `nta`-skinned component exists yet. It consumes the paper pattern/blueprint SHAPE (D2) and the standard player, and inherits the NTA skin later when built.
+
+# Documents / Issuance / Report Cards decisions
+
+- `verify_show_full_name`: default-off institution setting (`category=documents`, `key=verify_show_full_name`). Verification returns initials unless explicitly enabled; changing it is audited and permissioned. (PLAN-DOCUMENTS §2.3)
+- Send-back uses transactional `abandoned_at` tombstone on `student_document_vault` (not hard delete). Student projection hides abandoned rows and emits no notification; request returns to `in_review`. (PLAN-DOCUMENTS §2.4)
+- Evolve existing `student_document_vault` / `document_templates` / `document_renders`; do not create `vault_documents` or a second request type. Migration number is `0098` because `0097` is already used by student tutor policy.
+- Preserve draft+invoice fee-linked request flow; SLA starts on payment confirmation.
+- Report cards bind released marks via `mark_release_batches.entry_ids` ∩ `grade_entries.published=true` only.
+- One shared pure `computeTermAggregate` for all GPA/standing; no second GPA implementation.
+
 # Request Engine decisions
 
 - Request submissions use the existing central `idempotency_keys` service with scope `student_request_submit`; `student_requests` deliberately has no local idempotency column.

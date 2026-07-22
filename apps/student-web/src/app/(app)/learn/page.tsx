@@ -81,6 +81,14 @@ function WeeklyGoalRing({ done, target }: { done: number; target: number }) {
   );
 }
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 80);
+}
+
 export default function LearnPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -168,9 +176,11 @@ export default function LearnPage() {
       if (forced === 'practice') {
         setRoutingStatus('Starting practice session…');
         const session = await createSession.mutateAsync({
-          topicTitle: topicGuess ?? trimmed,
-          source: 'refresh',
-          kind: 'refresh10',
+          entryPoint: 'goal',
+          topicKey: slugify(topicGuess ?? trimmed),
+          goal: 'revision',
+          timeBudgetMinutes: 10,
+          idempotencyKey: crypto.randomUUID(),
         });
         router.push(`/learn/session/${session.id}`);
         return;
@@ -184,16 +194,19 @@ export default function LearnPage() {
           if (!firstItem) return;
           setRoutingStatus('Starting your first session…');
           const session = await createSession.mutateAsync({
-            topicTitle: firstItem.title,
-            source: 'intent',
+            entryPoint: 'learning_path',
             pathItemId: firstItem.id,
+            goal: 'acquisition',
+            idempotencyKey: crypto.randomUUID(),
           });
           router.push(`/learn/session/${session.id}`);
         } else {
           setRoutingStatus('Starting your session…');
           const session = await createSession.mutateAsync({
-            topicTitle: topicGuess ?? trimmed,
-            source: 'intent',
+            entryPoint: 'goal',
+            topicKey: slugify(topicGuess ?? trimmed),
+            goal: 'acquisition',
+            idempotencyKey: crypto.randomUUID(),
           });
           router.push(`/learn/session/${session.id}`);
         }
@@ -212,16 +225,19 @@ export default function LearnPage() {
             if (!firstItem) return;
             setRoutingStatus('Starting your first session…');
             const session = await createSession.mutateAsync({
-              topicTitle: firstItem.title,
-              source: 'intent',
+              entryPoint: 'learning_path',
               pathItemId: firstItem.id,
+              goal: 'acquisition',
+              idempotencyKey: crypto.randomUUID(),
             });
             router.push(`/learn/session/${session.id}`);
           } else {
             setRoutingStatus('Starting your session…');
             const session = await createSession.mutateAsync({
-              topicTitle: routed.topicGuess ?? trimmed,
-              source: 'intent',
+              entryPoint: 'goal',
+              topicKey: slugify(routed.topicGuess ?? trimmed),
+              goal: 'acquisition',
+              idempotencyKey: crypto.randomUUID(),
             });
             router.push(`/learn/session/${session.id}`);
           }
@@ -236,9 +252,11 @@ export default function LearnPage() {
         case 'practice': {
           setRoutingStatus('Starting practice session…');
           const session = await createSession.mutateAsync({
-            topicTitle: routed.topicGuess ?? trimmed,
-            source: 'refresh',
-            kind: 'refresh10',
+            entryPoint: 'goal',
+            topicKey: slugify(routed.topicGuess ?? trimmed),
+            goal: 'revision',
+            timeBudgetMinutes: 10,
+            idempotencyKey: crypto.randomUUID(),
           });
           router.push(`/learn/session/${session.id}`);
           break;

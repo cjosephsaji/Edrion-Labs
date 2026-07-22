@@ -50,13 +50,17 @@ export class DocumentRenderProcessor implements OnModuleInit {
       .where(eq(schema.documentRenders.id, renderId));
 
     try {
+      if (!render.institutionId) {
+        throw new Error('Document render requires institution scope');
+      }
+      const institutionId = render.institutionId;
       const [institution] = await this.db
         .select({ name: schema.institutions.displayName, type: schema.institutions.type, logoUrl: schema.institutions.logoUrl })
         .from(schema.institutions)
-        .where(eq(schema.institutions.id, render.institutionId))
+        .where(eq(schema.institutions.id, institutionId))
         .limit(1);
       const template = await this.svc.resolveTemplate(
-        render.institutionId,
+        institutionId,
         institution?.type ?? 'school',
         render.docType,
         render.templateId ?? undefined,
@@ -80,7 +84,7 @@ export class DocumentRenderProcessor implements OnModuleInit {
         title: render.title,
       });
       const pdf = await renderPdf(html);
-      const storagePath = await this.storage.save(render.institutionId, pdf);
+      const storagePath = await this.storage.save(institutionId, pdf);
 
       let artifactId: string | null = null;
       if (render.conversationId) {
@@ -88,7 +92,7 @@ export class DocumentRenderProcessor implements OnModuleInit {
           .insert(schema.petrosArtifacts)
           .values({
             conversationId: render.conversationId,
-            institutionId: render.institutionId,
+            institutionId,
             kind: 'document_pdf',
             title: render.title,
             docType: render.docType,
@@ -109,15 +113,23 @@ export class DocumentRenderProcessor implements OnModuleInit {
         await this.jobs.enqueue(
           'notifications',
           'requests.document_render_completed',
-          { institutionId: render.institutionId, renderId },
+          { institutionId, renderId },
           { jobId: `request-render-complete-${renderId}` },
+        );
+      }
+      if (render.batchItemId || render.purpose === 'batch' || render.purpose === 'reissue') {
+        await this.jobs.enqueue(
+          'notifications',
+          'documents.batch_render_completed',
+          { institutionId, renderId },
+          { jobId: `batch-render-complete-${renderId}` },
         );
       }
       if (typeof render.payload?.fee_receipt_id === 'string' || typeof render.payload?.fee_statement_student_id === 'string') {
         await this.jobs.enqueue(
           'notifications',
           'fees.receipt_render_completed',
-          { institutionId: render.institutionId, renderId },
+          { institutionId, renderId },
           { jobId: `fee-receipt-render-complete-${renderId}` },
         );
       }

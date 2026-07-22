@@ -18,7 +18,6 @@ import type { AdmissionApplication, NewAdmissionApplication } from '@edrion/data
 import type { AdmissionsListQuery } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 import type { CampusFilter, Page } from './academics.repository';
-import { programmeListFilterConds } from './programme-list-filters';
 
 export interface AdmissionRow extends AdmissionApplication {
   gradeLevelName: string | null;

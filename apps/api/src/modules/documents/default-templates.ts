@@ -11,6 +11,7 @@ export interface DefaultTemplateSeed {
   headerConfig: Record<string, unknown>;
   fieldsSchema?: Record<string, unknown>;
   appliesToTypes: string[];
+  platformTemplateKey?: string;
 }
 
 const examMeta = `
@@ -112,5 +113,40 @@ export const PLATFORM_DEFAULT_TEMPLATES: DefaultTemplateSeed[] = [
     css: `.chart { margin-top: 20px; text-align: center; }`,
     headerConfig: { logoPosition: 'left', showDate: true },
     appliesToTypes: [],
+  },
+  {
+    docType: 'report_card',
+    name: 'CBSE report card',
+    platformTemplateKey: 'report_card.cbse',
+    html: `<div class="rc"><h2>REPORT CARD</h2><p><b>{{student.name}}</b> · {{student.regNo}} · {{term.label}}</p><table class="marks"><tr><th>Subject</th><th>Marks</th><th>Grade</th></tr>{{#each subjects}}<tr><td>{{this.name}}</td><td>{{this.marks}}</td><td>{{this.grade}}</td></tr>{{/each}}</table>{{#if aggregate.gpa}}<p class="gpa">GPA: {{aggregate.gpa}}</p>{{/if}}{{#if remarks}}<p class="remarks"><b>Remarks:</b> {{remarks}}</p>{{/if}}</div>`,
+    css: `.rc h2{text-align:center}.marks{width:100%;border-collapse:collapse;margin-top:16px}.marks th,.marks td{border:1px solid #ccc;padding:6px}.gpa{text-align:right;font-weight:bold;margin-top:12px}.remarks{margin-top:20px}`,
+    headerConfig: {
+      logoPosition: 'center',
+      showInstitutionName: true,
+      reportOptions: { showClassAverage: true, showRank: false, attendanceBlock: true, remarksSource: 'class_teacher' },
+      signatureSlots: [
+        { slotKey: 'class_teacher', label: 'Class teacher', mode: 'sign_step', signRole: 'class_teacher', order: 0 },
+        { slotKey: 'principal', label: 'Principal', mode: 'sign_step', signRole: 'principal', order: 1 },
+      ],
+    },
+    appliesToTypes: ['school'],
+  },
+  {
+    docType: 'report_card',
+    name: 'State simple report card',
+    platformTemplateKey: 'report_card.state_simple',
+    html: `<div class="rc simple"><h2>PROGRESS REPORT</h2><p>{{student.name}} · Class {{student.className}}</p><table>{{#each subjects}}<tr><td>{{this.name}}</td><td>{{this.marks}}/{{this.max}}</td></tr>{{/each}}</table></div>`,
+    css: `.rc.simple table{width:100%;margin-top:12px;border-collapse:collapse}.rc.simple td{border-bottom:1px solid #ddd;padding:6px}`,
+    headerConfig: { logoPosition: 'left', reportOptions: { showRank: false, attendanceBlock: true } },
+    appliesToTypes: ['school'],
+  },
+  {
+    docType: 'report_card',
+    name: 'US transcript-style report',
+    platformTemplateKey: 'report_card.us_transcript',
+    html: `<div class="us"><h2>REPORT OF PROGRESS</h2><p>{{student.name}} · ID {{student.regNo}}</p><table><tr><th>Course</th><th>Credits</th><th>Grade</th></tr>{{#each subjects}}<tr><td>{{this.name}}</td><td>{{this.credits}}</td><td>{{this.grade}}</td></tr>{{/each}}</table><p><b>Term GPA:</b> {{aggregate.gpa}}</p></div>`,
+    css: `.us table{width:100%;border-collapse:collapse}.us th,.us td{border:1px solid #999;padding:6px}`,
+    headerConfig: { logoPosition: 'center', reportOptions: { showClassAverage: false, showRank: true } },
+    appliesToTypes: ['college', 'university'],
   },
 ];

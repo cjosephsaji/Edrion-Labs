@@ -13,7 +13,7 @@ import { LearnAiCallLogger } from '../learn-ai/learn-ai-call.logger';
 import { ASK_FULL_SYSTEM_PROMPT, ASK_HINTS_ONLY_SYSTEM_PROMPT } from '../learn-ai/prompts/ask.prompt';
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import type { StudentPrincipal } from '../student.types';
-import { SessionsService } from './sessions.service';
+import { LearnArtifactService } from '../edrion-learn/learn-artifact.service';
 import { VisualGroundingService } from '../visual-studio/visual-grounding.service';
 
 const askOutputSchema = z.object({
@@ -30,7 +30,7 @@ export class AskService {
     private readonly budgets: BudgetsService,
     private readonly callLog: LearnAiCallLogger,
     @Inject(LEARNING_EVENTS_WRITER)     private readonly ledger: LearningEventsWriter,
-    private readonly sessions: SessionsService,
+    private readonly artifacts: LearnArtifactService,
     private readonly visualGrounding: VisualGroundingService,
   ) {}
 
@@ -171,7 +171,7 @@ export class AskService {
   }
 
   async pin(principal: StudentPrincipal, input: PinAskInput) {
-    await this.sessions.pinNote(
+    await this.artifacts.pinNote(
       principal,
       input.sessionId,
       input.question,

@@ -24,6 +24,8 @@ export const INSTITUTION_PERMISSIONS: readonly PermissionDef[] = [
   def('academics.view', 'Academics', 'View academic structure (years, departments, grades, classes, subjects).'),
   def('academics.manage', 'Academics', 'Create and edit academic structure.', true),
   def('academics.teach', 'Academics', 'Eligible to be assigned as class/subject teacher or department head.'),
+  def('lab.blueprints.publish', 'Lab', 'Publish institution mock-exam blueprints for students.'),
+  def('lab.banks.manage', 'Lab', 'Manage institution question banks and review queue.'),
 
   // Campuses
   def('campuses.view', 'Campuses', 'View campuses in the institution.'),

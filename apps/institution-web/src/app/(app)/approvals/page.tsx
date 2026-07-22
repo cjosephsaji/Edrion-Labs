@@ -25,7 +25,7 @@ type Composer = 'reject' | 'request-info' | 'note' | 'reassign' | null;
 export default function ApprovalsPage() {
   const { can } = usePermissions();
   const search = useSearchParams();
-  const [tab, setTab] = useState<'inbox' | 'issuance'>('inbox');
+  const [tab, setTab] = useState<'inbox' | 'issuance' | 'batches'>('inbox');
 
   if (!can('requests.review')) {
     return <><Topbar title="Approvals" /><div className="p-6"><PermissionDenied description="You don’t have permission to review requests." /></div></>;
@@ -38,8 +38,11 @@ export default function ApprovalsPage() {
         <div className="mb-4 flex items-center gap-2">
           <Tab active={tab === 'inbox'} onClick={() => setTab('inbox')}>Inbox</Tab>
           {can('documents.issue') && <Tab active={tab === 'issuance'} onClick={() => setTab('issuance')}>Issuance</Tab>}
+          {can('documents.issue') && <Tab active={tab === 'batches'} onClick={() => setTab('batches')}>Batches</Tab>}
         </div>
-        {tab === 'inbox' ? <InboxView initialRequestId={search.get('request')} /> : <IssuanceView />}
+        {tab === 'inbox' ? <InboxView initialRequestId={search.get('request')} /> : null}
+        {tab === 'issuance' ? <IssuanceView /> : null}
+        {tab === 'batches' ? <BatchesView /> : null}
       </div>
     </>
   );
@@ -230,7 +233,7 @@ function IssuanceView() {
   }, [client, scope, selected]);
   return <div className="grid min-h-[600px] overflow-hidden rounded-2xl border border-border bg-surface-elevated lg:grid-cols-[360px_1fr]">
     <section className="overflow-y-auto border-r border-border"><header className="border-b border-border p-4"><h1 className="font-semibold">Issuance desk</h1><p className="text-xs text-text-muted">Generated documents awaiting sign-off</p></header>{data.isLoading && <Skeleton className="m-4 h-28" />}{items.length === 0 && !data.isLoading && <p className="p-6 text-center text-sm text-text-muted">No documents awaiting sign-off.</p>}{items.map((item) => <button key={item.vault?.id ?? item.render?.id ?? item.request.id} onClick={() => { setSelected(item); setNote(''); }} className={`w-full border-b border-border p-4 text-left hover:bg-primary-soft ${item.render?.status === 'failed' ? 'border-l-4 border-l-danger' : ''}`}><p className="font-semibold">{item.studentName}</p><p className="text-sm text-primary">{item.vault?.title ?? item.request.summary}</p><p className="mt-1 font-mono text-xs text-text-muted">{item.request.humanCode}</p>{item.render?.status === 'failed' && <Badge tone="danger" className="mt-2">Generation failed</Badge>}</button>)}<header className="border-y border-border bg-background-secondary p-4"><h2 className="text-sm font-semibold">Issued documents</h2><p className="text-xs text-text-muted">Delivered and revoked records</p></header>{issued.length === 0 && !data.isLoading && <p className="p-6 text-center text-sm text-text-muted">No issued documents yet.</p>}{issued.map((item) => <button key={item.vault!.id} onClick={() => { setSelected(item); setNote(''); }} className="w-full border-b border-border p-4 text-left hover:bg-primary-soft"><div className="flex items-start justify-between gap-2"><p className="font-semibold">{item.studentName}</p>{item.vault?.revokedAt && <Badge tone="neutral">Revoked</Badge>}</div><p className="text-sm text-primary">{item.vault?.title}</p><p className="mt-1 font-mono text-xs text-text-muted">{item.request.humanCode}</p></button>)}</section>
-    {selected ? <section className="flex min-w-0 flex-col">{selected.render?.status === 'failed' ? <div className="m-5 rounded-xl border border-danger/30 bg-danger-soft p-5"><h2 className="font-semibold text-danger">Generation failed</h2><p className="mt-2 text-sm text-text-secondary">{selected.render.errorDetail ?? 'The document could not be generated.'}</p><Button className="mt-4" loading={retry.isPending} onClick={() => selected.render && retry.mutate(selected.render.id)}>Retry</Button><a href="/settings/documents" className="ml-3 text-sm font-semibold text-primary underline">Edit template</a></div> : selected.vault ? <><div className="flex-1 p-5">{previewUrl ? <iframe title={selected.vault.title} src={previewUrl} className="h-[520px] w-full rounded-xl border border-border" /> : <Skeleton className="h-[520px] w-full" />}</div><div className="border-t border-border p-4">{selected.request.status === 'fulfilled' ? <>{selected.vault.revokedAt ? <p className="rounded-lg bg-background-secondary p-3 text-sm text-text-secondary">This document is revoked.</p> : <><textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Reason for revocation" className="mb-3 w-full rounded-lg border border-border bg-surface p-3 text-sm" /><Button variant="outline" disabled={note.trim().length < 3} loading={action.isPending} onClick={() => action.mutate({ vaultId: selected.vault!.id, action: 'revoke', body: { reason: note } }, { onSuccess: () => setSelected(null) })}>Revoke document</Button></>}</> : <><textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Required only when sending back" className="mb-3 w-full rounded-lg border border-border bg-surface p-3 text-sm" /><div className="flex gap-2"><Button loading={action.isPending} onClick={() => action.mutate({ vaultId: selected.vault!.id, action: 'deliver' })}><FileCheck2 className="h-4 w-4" />Sign & deliver</Button><Button variant="outline" disabled={!note.trim()} onClick={() => action.mutate({ vaultId: selected.vault!.id, action: 'send-back', body: { note } })}>Send back</Button></div></>}</div></> : <div className="grid flex-1 place-items-center text-sm text-text-muted">Document generation in progress.</div>}</section> : <div className="grid place-items-center text-sm text-text-muted">Select a document to inspect</div>}
+    {selected ? <section className="flex min-w-0 flex-col">{selected.render?.status === 'failed' ? <div className="m-5 rounded-xl border border-danger/30 bg-danger-soft p-5"><h2 className="font-semibold text-danger">Generation failed</h2><p className="mt-2 text-sm text-text-secondary">{selected.render.errorDetail ?? 'The document could not be generated.'}</p><Button className="mt-4" loading={retry.isPending} onClick={() => selected.render && retry.mutate(selected.render.id)}>Retry</Button><a href="/settings/documents" className="ml-3 text-sm font-semibold text-primary underline">Edit template</a></div> : selected.vault ? <><div className="flex-1 p-5">{previewUrl ? <iframe title={selected.vault.title} src={previewUrl} className="h-[520px] w-full rounded-xl border border-border" /> : <Skeleton className="h-[520px] w-full" />}</div><div className="border-t border-border p-4">{selected.request.status === 'fulfilled' ? <>{selected.vault.revokedAt ? <p className="rounded-lg bg-background-secondary p-3 text-sm text-text-secondary">This document is revoked.</p> : <><textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Reason for revocation" className="mb-3 w-full rounded-lg border border-border bg-surface p-3 text-sm" /><Button variant="outline" disabled={note.trim().length < 3} loading={action.isPending} onClick={() => action.mutate({ vaultId: selected.vault!.id, action: 'revoke', body: { reason: note } }, { onSuccess: () => setSelected(null) })}>Revoke document</Button></>}</> : <><textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Required only when sending back (≥10 chars)" className="mb-3 w-full rounded-lg border border-border bg-surface p-3 text-sm" /><div className="flex gap-2"><Button loading={action.isPending} onClick={() => action.mutate({ vaultId: selected.vault!.id, action: 'deliver' })}><FileCheck2 className="h-4 w-4" />Sign & deliver</Button><Button variant="outline" disabled={note.trim().length < 10} onClick={() => action.mutate({ vaultId: selected.vault!.id, action: 'send-back', body: { note } })}>Send back</Button></div></>}</div></> : <div className="grid flex-1 place-items-center text-sm text-text-muted">Document generation in progress.</div>}</section> : <div className="grid place-items-center text-sm text-text-muted">Select a document to inspect</div>}
   </div>;
 }
 
@@ -240,3 +243,99 @@ function pretty(value: string) { return value.replace(/_/g, ' ').replace(/^./, (
 function renderValue(value: unknown) { return Array.isArray(value) ? `${value.length} item(s)` : value && typeof value === 'object' ? JSON.stringify(value) : String(value ?? '—'); }
 function age(value: string) { const days = Math.floor((Date.now() - new Date(value).getTime()) / 86_400_000); return days < 1 ? 'Today' : `${days}d`; }
 function studentName(context: Record<string, unknown>) { const student = context.student as { name?: string } | undefined; return student?.name ?? 'Student'; }
+
+function BatchesView() {
+  const client = usePortalClient();
+  const { scope } = useScope();
+  const [kind, setKind] = useState<'hall_ticket' | 'id_card' | 'manual_upload'>('hall_ticket');
+  const [batch, setBatch] = useState<{ id: string; status: string; version: number; counts?: { total: number; failed: number; delivered: number } } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function createBatch() {
+    setBusy(true);
+    setError(null);
+    try {
+      const created = await client.post<{ id: string; status: string; version: number; counts: { total: number; failed: number; delivered: number } }>(
+        '/portal/document-batches',
+        scope,
+        { kind, scope: {} },
+      );
+      setBatch(created);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to create batch');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function preview() {
+    if (!batch) return;
+    setBusy(true);
+    try {
+      await client.post(`/portal/document-batches/${batch.id}/preview`, scope, { version: batch.version });
+      const fresh = await client.get<typeof batch>(`/portal/document-batches/${batch.id}`, scope);
+      setBatch(fresh);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Preview failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function generate() {
+    if (!batch) return;
+    setBusy(true);
+    try {
+      const updated = await client.post<typeof batch>(`/portal/document-batches/${batch.id}/generate`, scope, {
+        version: batch.version,
+        acknowledgePreview: true,
+      });
+      setBatch(updated);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Generate failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="rounded-2xl border border-border bg-surface-elevated p-5">
+      <h1 className="font-semibold">Document batches</h1>
+      <p className="mt-1 text-sm text-text-muted">Hall tickets, ID cards, and manual uploads fan out through the shared render queue.</p>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <select
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+          value={kind}
+          onChange={(e) => setKind(e.target.value as typeof kind)}
+        >
+          <option value="hall_ticket">Hall tickets</option>
+          <option value="id_card">ID cards</option>
+          <option value="manual_upload">Manual upload</option>
+        </select>
+        <Button loading={busy} onClick={() => void createBatch()}>New draft batch</Button>
+        {batch && (
+          <>
+            <Button variant="outline" loading={busy} onClick={() => void preview()}>Preview 3 samples</Button>
+            <Button loading={busy} onClick={() => void generate()}>Generate</Button>
+          </>
+        )}
+      </div>
+      {error && <p role="alert" className="mt-3 text-sm text-danger">{error}</p>}
+      {batch && (
+        <div className="mt-4 rounded-xl border border-border bg-surface p-4 text-sm">
+          <p><span className="text-text-muted">Batch</span> <span className="font-mono">{batch.id}</span></p>
+          <p className="mt-1">Status: <Badge tone="primary">{batch.status}</Badge></p>
+          {batch.counts && (
+            <p className="mt-1 text-text-secondary">
+              {batch.counts.total} total · {batch.counts.delivered} delivered · {batch.counts.failed} failed
+            </p>
+          )}
+          <p className="mt-3 text-xs text-text-muted">
+            Revoked PDF watermark applies to future downloads only — already-saved copies cannot be recalled.
+          </p>
+        </div>
+      )}
+    </section>
+  );
+}

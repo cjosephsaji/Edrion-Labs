@@ -50,6 +50,8 @@ export type {
   NewGradeLevel,
   DepartmentGradeLevel,
   NewDepartmentGradeLevel,
+  ProgrammeTermSlot,
+  NewProgrammeTermSlot,
   Subject,
   NewSubject,
   ProgrammeSubject,

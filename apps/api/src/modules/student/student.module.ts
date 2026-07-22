@@ -16,9 +16,8 @@ import { StudentStorageController } from './storage/student-storage.controller';
 import { StudentStorageService } from './storage/student-storage.service';
 import { LearningEventsModule } from './ledger/learning-events.module';
 import { LearnAiModule } from './learn-ai/learn-ai.module';
+import { EdrionLearnModule } from './edrion-learn/edrion-learn.module';
 import { LearnRepository } from './learn/learn.repository';
-import { SessionsController } from './learn/sessions.controller';
-import { SessionsService } from './learn/sessions.service';
 import { AskController } from './learn/ask.controller';
 import { AskService } from './learn/ask.service';
 import { QuickController } from './learn/quick.controller';
@@ -75,13 +74,12 @@ import { TodayJobsService } from './today/today-jobs.service';
 import { TodayNotificationModule } from '../today-notification.module';
 
 @Module({
-  imports: [FeatureControlsModule, PortalModule, LearnAiModule, LearningEventsModule, VisualStudioModule, ExamEngineModule, StudentAuthModule, TodayNotificationModule],
+  imports: [FeatureControlsModule, PortalModule, LearnAiModule, LearningEventsModule, VisualStudioModule, ExamEngineModule, StudentAuthModule, TodayNotificationModule, EdrionLearnModule],
   controllers: [
     StudentAuthController,
     StudentMeController,
     StudentHomeController,
     StudentStorageController,
-    SessionsController,
     AskController,
     QuickController,
     PathController,
@@ -113,7 +111,6 @@ import { TodayNotificationModule } from '../today-notification.module';
     FeesSummaryService,
     StudentStorageService,
     LearnRepository,
-    SessionsService,
     AskService,
     QuickService,
     PathService,

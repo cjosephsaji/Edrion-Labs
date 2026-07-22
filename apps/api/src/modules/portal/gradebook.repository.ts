@@ -10,7 +10,6 @@ import {
   isNull,
   or,
   schema,
-  sql,
   personSqlName,
   type Database,
   type PgColumn,

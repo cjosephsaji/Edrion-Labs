@@ -624,6 +624,48 @@
       "when": 1786700000000,
       "tag": "0088_today_feed",
       "breakpoints": true
+    },
+    {
+      "idx": 89,
+      "version": "7",
+      "when": 1786800000000,
+      "tag": "0096_edrion_learn_orchestrator",
+      "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "7",
+      "when": 1786900000000,
+      "tag": "0097_student_tutor_policy_domain",
+      "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1787000000000,
+      "tag": "0098_documents_issuance",
+      "breakpoints": true
+    },
+    {
+      "idx": 92,
+      "version": "7",
+      "when": 1787100000000,
+      "tag": "0099_mark_release_batches",
+      "breakpoints": true
+    },
+    {
+      "idx": 93,
+      "version": "7",
+      "when": 1787200000000,
+      "tag": "0100_mock_exam_extensions",
+      "breakpoints": true
+    },
+    {
+      "idx": 94,
+      "version": "7",
+      "when": 1787300000000,
+      "tag": "0101_mock_system_paper_pack",
+      "breakpoints": true
     }
   ]
 }

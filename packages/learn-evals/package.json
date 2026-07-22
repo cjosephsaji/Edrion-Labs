@@ -1,0 +1,23 @@
+{
+  "name": "@edrion/learn-evals",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "learn-evals": "./src/cli.ts"
+  },
+  "scripts": {
+    "run": "tsx src/cli.ts run",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@edrion/schemas": "workspace:*"
+  },
+  "devDependencies": {
+    "@edrion/tsconfig": "workspace:*",
+    "@edrion/vitest-config": "workspace:*",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.1"
+  }
+}

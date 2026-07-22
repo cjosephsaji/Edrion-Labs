@@ -66,6 +66,7 @@ export class StudentReportCardsService {
       publishedAt: card.publishedAt?.toISOString() ?? null,
       pdfObjectId: card.pdfObjectId,
       entries: entries.map((e) => ({
+        id: e.id,
         subjectLabel: e.subjectLabel,
         component: e.component,
         marks: e.marks,

@@ -68,9 +68,12 @@ export class PortalCoursesService extends PortalResourceService {
       .orderBy(schema.courseSyllabusModules.weekNo);
   }
 
-  async enroll(_ctx: PortalActionContext, courseId: string, studentIds: string[]) {
+  async enroll(ctx: PortalActionContext, courseId: string, studentIds: string[]) {
     for (const studentId of studentIds) {
-      await this.db.insert(schema.courseEnrollments).values({ courseId, studentId }).onConflictDoNothing();
+      await this.db
+        .insert(schema.courseEnrollments)
+        .values({ institutionId: ctx.principal.institutionId, courseId, studentId })
+        .onConflictDoNothing();
     }
     return { enrolled: studentIds.length };
   }

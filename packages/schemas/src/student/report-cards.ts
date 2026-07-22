@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const reportCardEntrySchema = z.object({
+  id: z.string().uuid().optional(),
   subjectLabel: z.string(),
   component: z.string().nullable(),
   marks: z.number().int(),

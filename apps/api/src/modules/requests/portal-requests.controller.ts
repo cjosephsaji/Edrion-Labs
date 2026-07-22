@@ -3,6 +3,9 @@ import { ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import type { InstitutionPrincipal, InstitutionScope } from '@edrion/auth';
 import {
+  issuancePickupSchema,
+  issuanceReissueSchema,
+  issuanceRegisterQuerySchema,
   issuanceSendBackSchema,
   portalRequestsListQuerySchema,
   requestApproveSchema,
@@ -14,6 +17,7 @@ import {
   requestVersionSchema,
   vaultRevokeSchema,
   type IssuanceSendBackInput,
+  type IssuanceRegisterQuery,
   type PortalRequestsListQuery,
   type RequestApproveInput,
   type RequestBulkApproveInput,
@@ -64,8 +68,9 @@ export class PortalRequestsController {
     @CurrentInstitutionPrincipal() principal: InstitutionPrincipal,
     @CurrentScope() scope: InstitutionScope,
     @ReqContext() request: EdrionRequestContext,
+    @Query(zodBody(issuanceRegisterQuerySchema)) query: IssuanceRegisterQuery,
   ) {
-    return this.documents.listIssuance(this.ctx(principal, scope, request));
+    return this.documents.listIssuance(this.ctx(principal, scope, request), query);
   }
 
   @Post('issuance/:vaultId/deliver')
@@ -75,8 +80,32 @@ export class PortalRequestsController {
     @CurrentScope() scope: InstitutionScope,
     @ReqContext() request: EdrionRequestContext,
     @Param('vaultId') vaultId: string,
+    @Body(zodBody(issuancePickupSchema)) body: { pickupNote?: string },
   ) {
-    return this.documents.signAndDeliver(this.ctx(principal, scope, request), vaultId);
+    return this.documents.signAndDeliver(this.ctx(principal, scope, request), vaultId, body.pickupNote);
+  }
+
+  @Post('issuance/:vaultId/collect')
+  @RequireInstitutionPermissions('documents.issue')
+  collect(
+    @CurrentInstitutionPrincipal() principal: InstitutionPrincipal,
+    @CurrentScope() scope: InstitutionScope,
+    @ReqContext() request: EdrionRequestContext,
+    @Param('vaultId') vaultId: string,
+  ) {
+    return this.documents.markCollected(this.ctx(principal, scope, request), vaultId);
+  }
+
+  @Post('issuance/:vaultId/reissue')
+  @RequireInstitutionPermissions('documents.issue')
+  reissue(
+    @CurrentInstitutionPrincipal() principal: InstitutionPrincipal,
+    @CurrentScope() scope: InstitutionScope,
+    @ReqContext() request: EdrionRequestContext,
+    @Param('vaultId') vaultId: string,
+    @Body(zodBody(issuanceReissueSchema)) body: { reason: string },
+  ) {
+    return this.documents.reissueVault(this.ctx(principal, scope, request), vaultId, body.reason);
   }
 
   @Post('issuance/render/:renderId/retry')
@@ -130,6 +159,10 @@ export class PortalRequestsController {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Document not found.' });
     }
     response.setHeader('Content-Type', 'application/pdf');
+    if (row?.vault?.revokedAt) {
+      response.setHeader('X-Document-Revoked', 'true');
+      response.setHeader('Content-Disposition', `inline; filename="REVOKED-${safePortalFilename(row.vault.title)}.pdf"`);
+    }
     this.documents.stream(storagePath).pipe(response);
   }
 
@@ -269,4 +302,8 @@ export class PortalRequestsController {
   ) {
     return this.engine.addNote(this.ctx(principal, scope, request), id, body);
   }
+}
+
+function safePortalFilename(value: string): string {
+  return value.replace(/[^a-z0-9._-]+/gi, '-').replace(/^-+|-+$/g, '') || 'document';
 }

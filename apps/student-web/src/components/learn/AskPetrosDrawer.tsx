@@ -7,6 +7,7 @@ import { useAskStreamClient, usePinAsk } from '@/lib/hooks/useAsk';
 import { PillButton } from '@/components/ui/pill-button';
 import { Eyebrow, PetrosMark } from '@/components/ui/primitives';
 import type { SseConnection } from '@/lib/student-client';
+import { LearnHandoffCard, shouldShowLearnHandoff } from '@/components/edrion-learn/LearnHandoffCard';
 
 type AskPetrosDrawerProps = {
   open: boolean;
@@ -186,6 +187,12 @@ export function AskPetrosDrawer({
                 {turn.q}
               </p>
               <p className="rounded-xl bg-st-surface2 px-3 py-2 text-sm text-st-muted">{turn.a}</p>
+              {shouldShowLearnHandoff(turn.a, i) && (
+                <LearnHandoffCard
+                  topicKey={`chat:${context.contextLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}`}
+                  topicLabel={context.contextLabel}
+                />
+              )}
               {renderPinAction(i, turn.q, turn.a)}
             </div>
           ))}

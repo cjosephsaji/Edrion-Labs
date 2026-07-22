@@ -6,6 +6,7 @@ import { PortalModule } from '../portal/portal.module';
 import { StudentModule } from '../student/student.module';
 import { TodayNotificationModule } from '../today-notification.module';
 import { DocumentVerificationController } from './document-verification.controller';
+import { DocumentRequestPolicyService } from './document-request-policy.service';
 import { PortalRequestsController } from './portal-requests.controller';
 import { RequestConfigController } from './request-config.controller';
 import { RequestConfigService } from './request-config.service';
@@ -30,6 +31,7 @@ import { StudentRequestsController } from './student-requests.controller';
     RequestRegistryService,
     RequestNotifyService,
     RequestDocumentService,
+    DocumentRequestPolicyService,
     RequestEngineService,
     RequestJobsService,
     RequestConfigService,

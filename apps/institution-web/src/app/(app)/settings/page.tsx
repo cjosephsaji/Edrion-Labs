@@ -659,6 +659,7 @@ const ADMIN_LINKS: { label: string; href: string; permission: string; descriptio
   { label: 'Notifications', href: '/notifications', permission: 'announcements.view', description: 'Delivery of announcements and alerts.', icon: Bell },
   { label: 'Audit Logs', href: '/audit', permission: 'audit.view', description: 'Review every change made in the portal.', icon: ScrollText },
   { label: 'Student portal', href: '/settings/student-portal', permission: 'student_portal.manage', description: 'Invite students and control what they can see.', icon: GraduationCap },
+  { label: 'Edrion Learn policy', href: '/settings/learn-policy', permission: 'ai.configure', description: 'Tutoring bounds, directness, and session visibility.', icon: BookOpen },
   { label: 'Calendar types', href: '/settings/calendar-types', permission: 'calendar_events.manage', description: 'Event type labels and colours for the institution calendar.', icon: LayoutList },
 ];
 

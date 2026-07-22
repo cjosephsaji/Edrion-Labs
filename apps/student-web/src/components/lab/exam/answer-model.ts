@@ -13,6 +13,9 @@ export type LocalAnswer = {
   workingText?: string | null;
   pairs?: Record<string, string> | null;
   subAnswers?: Array<{ subQuestionId: string; payload: Record<string, unknown> }> | null;
+  answerMode?: 'type' | 'photo' | 'on_paper' | null;
+  photoRefs?: string[] | null;
+  photoObjectId?: string | null;
 };
 
 const LEGACY_TYPE_MAP: Record<string, ExamQuestionType> = {
@@ -29,6 +32,8 @@ export function normalizeQuestionType(qtype: string): ExamQuestionType {
 /** True when the student has committed any content for this question. */
 export function isAnswered(type: ExamQuestionType, a: LocalAnswer | undefined): boolean {
   if (!a) return false;
+  if (a.answerMode === 'on_paper') return true;
+  if (a.answerMode === 'photo' && ((a.photoRefs?.length ?? 0) > 0 || !!a.photoObjectId)) return true;
   switch (type) {
     case 'mcq_single':
     case 'assertion_reason':
@@ -86,6 +91,9 @@ export function buildAnswerBody(
       body.subAnswers = a.subAnswers ?? null;
       break;
   }
+  if (a.answerMode) body.answerMode = a.answerMode;
+  if (a.photoRefs?.length) body.photoRefs = a.photoRefs;
+  if (a.photoObjectId) body.photoObjectId = a.photoObjectId;
   return body;
 }
 
@@ -106,5 +114,8 @@ export function hydrateLocalAnswer(row: {
     pairs: (p.pairs as Record<string, string>) ?? null,
     subAnswers:
       (p.subAnswers as Array<{ subQuestionId: string; payload: Record<string, unknown> }>) ?? null,
+    answerMode: (p.answerMode as LocalAnswer['answerMode']) ?? null,
+    photoRefs: (p.photoRefs as string[]) ?? null,
+    photoObjectId: (p.photoObjectId as string) ?? null,
   };
 }

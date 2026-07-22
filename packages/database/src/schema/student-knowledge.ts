@@ -247,11 +247,19 @@ export const examBlueprints = pgTable(
     sourceKind: text('source_kind').notNull().default('studied'),
     blueprint: jsonb('blueprint').$type<Record<string, unknown>>().notNull(),
     version: integer('version').notNull().default(1),
+    skin: text('skin').notNull().default('standard'),
+    gradingStyle: text('grading_style').notNull().default('auto'),
+    /** Tier 3 Entrance Prep hook — validated slug; FK deferred until exam_profiles exists. */
+    examProfileKey: text('exam_profile_key'),
+    isPublished: boolean('is_published').notNull().default(false),
+    archivedAt: timestamp('archived_at', { withTimezone: true }),
     ...timestamps,
   },
   (t) => ({
     ownerIdx: index('exam_blueprints_owner_idx').on(t.studentId, t.createdAt),
     indepIdx: index('exam_blueprints_indep_idx').on(t.independentUserId, t.createdAt),
+    institutionPubIdx: index('exam_blueprints_institution_pub_idx').on(t.institutionId, t.isPublished),
+    profileKeyIdx: index('exam_blueprints_profile_key_idx').on(t.examProfileKey),
   }),
 );
 
@@ -260,15 +268,27 @@ export const questionBank = pgTable(
   'question_bank',
   {
     id: primaryId(),
+    institutionId: uuid('institution_id').references(() => institutions.id, { onDelete: 'cascade' }),
+    subjectId: uuid('subject_id'),
     topicKey: text('topic_key').notNull(),
     topicLabel: text('topic_label').notNull(),
     qtype: text('qtype').notNull(),
     difficulty: text('difficulty').notNull(),
+    difficultyDeclared: text('difficulty_declared'),
     curriculumKey: text('curriculum_key').notNull().default('general'),
     promptHash: text('prompt_hash').notNull(),
     promptVersion: text('prompt_version').notNull().default('exam-v1'),
     payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
     model: text('model'),
+    source: text('source').notNull().default('system'),
+    reviewStatus: text('review_status').notNull().default('approved'),
+    topicTags: text('topic_tags').array().notNull().default([]),
+    duplicateOfId: uuid('duplicate_of_id'),
+    reviewNote: text('review_note'),
+    createdByStaffId: uuid('created_by_staff_id'),
+    reviewedByStaffId: uuid('reviewed_by_staff_id'),
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    bankVersion: integer('bank_version').notNull().default(1),
     ...timestamps,
   },
   (t) => ({
@@ -281,6 +301,13 @@ export const questionBank = pgTable(
       t.promptVersion,
     ),
     topicIdx: index('question_bank_topic_idx').on(t.topicKey, t.qtype, t.difficulty),
+    institutionReviewIdx: index('question_bank_institution_review_idx').on(
+      t.institutionId,
+      t.reviewStatus,
+      t.qtype,
+      t.difficulty,
+    ),
+    subjectIdx: index('question_bank_subject_idx').on(t.subjectId, t.reviewStatus),
   }),
 );
 
@@ -331,11 +358,21 @@ export const mockExams = pgTable(
     status: text('status').notNull().default('draft'),
     generatedAt: timestamp('generated_at', { withTimezone: true }),
     version: integer('version').notNull().default(1),
+    scope: jsonb('scope').$type<Record<string, unknown> | null>(),
+    difficulty: text('difficulty'),
+    scheduledFor: timestamp('scheduled_for', { withTimezone: true }),
+    strictMode: boolean('strict_mode').notNull().default(false),
+    blueprintSnapshot: jsonb('blueprint_snapshot').$type<Record<string, unknown> | null>(),
+    blueprintVersion: integer('blueprint_version'),
+    generationMeta: jsonb('generation_meta').$type<Record<string, unknown> | null>(),
+    obligationId: uuid('obligation_id'),
     ...timestamps,
   },
   (t) => ({
     ownerIdx: index('mock_exams_owner_idx').on(t.studentId, t.createdAt),
     blueprintIdx: index('mock_exams_blueprint_idx').on(t.blueprintId),
+    scheduledIdx: index('mock_exams_scheduled_idx').on(t.scheduledFor),
+    statusIdx: index('mock_exams_status_idx').on(t.status, t.createdAt),
   }),
 );
 
@@ -360,9 +397,13 @@ export const mockExamQuestions = pgTable(
     questionBankId: uuid('question_bank_id').references(() => questionBank.id, {
       onDelete: 'set null',
     }),
+    source: text('source'),
+    validatorMeta: jsonb('validator_meta').$type<Record<string, unknown> | null>(),
+    snapshotHash: text('snapshot_hash'),
   },
   (t) => ({
     examSeqUq: uniqueIndex('mock_exam_questions_exam_seq_uq').on(t.mockExamId, t.sequence),
+    bankIdx: index('mock_exam_questions_bank_idx').on(t.questionBankId),
   }),
 );
 
@@ -378,9 +419,15 @@ export const mockExamAttempts = pgTable(
     endsAt: timestamp('ends_at', { withTimezone: true }).notNull(),
     finishedAt: timestamp('finished_at', { withTimezone: true }),
     pausedAt: timestamp('paused_at', { withTimezone: true }),
+    submittedAt: timestamp('submitted_at', { withTimezone: true }),
     status: text('status').notNull().default('in_progress'),
     serverClockSkewMs: integer('server_clock_skew_ms'),
     results: jsonb('results').$type<Record<string, unknown> | null>(),
+    tabSwitches: integer('tab_switches').notNull().default(0),
+    strictModeSnapshot: boolean('strict_mode_snapshot'),
+    currentSectionId: text('current_section_id'),
+    sectionDeadlines: jsonb('section_deadlines').$type<Record<string, string> | null>(),
+    scoringVersion: text('scoring_version'),
   },
   (t) => ({
     examAttemptUq: uniqueIndex('mock_exam_attempts_exam_no_uq').on(t.mockExamId, t.attemptNo),
@@ -405,6 +452,12 @@ export const mockExamAnswers = pgTable(
     answerPayload: jsonb('answer_payload').$type<Record<string, unknown> | null>(),
     clientUpdatedAt: timestamp('client_updated_at', { withTimezone: true }),
     evaluation: jsonb('evaluation').$type<Record<string, unknown> | null>(),
+    state: text('state').notNull().default('unseen'),
+    timeSpentMs: integer('time_spent_ms').notNull().default(0),
+    answerMode: text('answer_mode'),
+    photoRefs: jsonb('photo_refs').$type<string[] | null>(),
+    answerSchemaVersion: integer('answer_schema_version').notNull().default(1),
+    evaluationSchemaVersion: integer('evaluation_schema_version'),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({

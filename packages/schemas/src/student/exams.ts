@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const institutionalExamSchema = z.object({
+  examScheduleId: z.string().uuid(),
   examName: z.string(),
   subject: z.string().nullable(),
   date: z.string(),

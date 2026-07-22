@@ -58,7 +58,7 @@ export function useHome() {
   });
 }
 
-export * from './hooks/useLearnSession';
+export * from './hooks/useEdrionLearnSession';
 export * from './hooks/useIntent';
 export * from './hooks/usePath';
 export * from './hooks/useQuick';

@@ -1,18 +1,25 @@
 import {
+  ConflictException,
   ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { and, desc, eq, schema, type Database } from '@edrion/database';
+import { and, desc, eq, inArray, isNull, or, schema, type Database } from '@edrion/database';
+import { z } from 'zod';
 import {
   createExamBlueprintInputSchema,
   createMockExamSchema,
+  createMockFromWizardSchema,
   defaultBlueprintForTemplate,
+  deriveBlueprintOrigin,
   examBlueprintSchema,
-  examTemplateAllowsPause,
+  examBlueprintTotalMarks,
+  examBlueprintTotalQuestions,
+  examBlueprintSectionSchema,
   generateExamInputSchema,
   checkExamTopicInputSchema,
+  MOCK_ANSWER_GRACE_MS,
   pushRevisionTopicsInputSchema,
   saveExamAnswerSchema,
   updateExamBlueprintInputSchema,
@@ -146,13 +153,19 @@ export class ExamEngineService {
   async createBlueprint(principal: StudentPrincipal, body: unknown) {
     const parsed = createExamBlueprintInputSchema.parse(body);
     const owner = ownerColumns(principal);
+    const skin = parsed.skin ?? parsed.blueprint.skin ?? 'standard';
+    const gradingStyle = parsed.gradingStyle ?? parsed.blueprint.gradingStyle ?? 'auto';
     const [row] = await this.db
       .insert(schema.examBlueprints)
       .values({
         ...owner,
         sourceKind: parsed.blueprint.sourceKind,
         paperPatternId: parsed.blueprint.paperPatternId ?? null,
-        blueprint: parsed.blueprint as unknown as Record<string, unknown>,
+        blueprint: { ...parsed.blueprint, skin, gradingStyle } as unknown as Record<string, unknown>,
+        skin,
+        gradingStyle,
+        examProfileKey: parsed.examProfileKey ?? parsed.blueprint.examProfileKey ?? null,
+        isPublished: false,
       })
       .returning();
     await this.ledger.log({
@@ -178,18 +191,99 @@ export class ExamEngineService {
     if (row.version !== parsed.version) {
       throw new ForbiddenException({ code: 'VERSION_CONFLICT', message: 'Blueprint was updated elsewhere.' });
     }
+    const skin = parsed.skin ?? parsed.blueprint.skin ?? row.skin;
+    const gradingStyle = parsed.gradingStyle ?? parsed.blueprint.gradingStyle ?? row.gradingStyle;
     const [updated] = await this.db
       .update(schema.examBlueprints)
       .set({
-        blueprint: parsed.blueprint as unknown as Record<string, unknown>,
+        blueprint: { ...parsed.blueprint, skin, gradingStyle } as unknown as Record<string, unknown>,
         sourceKind: parsed.blueprint.sourceKind,
         paperPatternId: parsed.blueprint.paperPatternId ?? null,
+        skin,
+        gradingStyle,
+        examProfileKey:
+          parsed.examProfileKey !== undefined
+            ? parsed.examProfileKey
+            : (parsed.blueprint.examProfileKey ?? row.examProfileKey),
         version: row.version + 1,
         updatedAt: new Date(),
       })
       .where(eq(schema.examBlueprints.id, id))
       .returning();
     return this.blueprintDto(updated!);
+  }
+
+  /** List blueprints for wizard: personal + published institution + patterns separately via listPatterns. */
+  async listWizardBlueprints(principal: StudentPrincipal) {
+    const personal = await this.db
+      .select()
+      .from(schema.examBlueprints)
+      .where(
+        and(
+          ownerWhere(principal, schema.examBlueprints.studentId, schema.examBlueprints.independentUserId),
+          isNull(schema.examBlueprints.archivedAt),
+        ),
+      )
+      .orderBy(desc(schema.examBlueprints.updatedAt))
+      .limit(40);
+
+    let institution: (typeof schema.examBlueprints.$inferSelect)[] = [];
+    if (principal.kind === 'institutional') {
+      institution = await this.db
+        .select()
+        .from(schema.examBlueprints)
+        .where(
+          and(
+            eq(schema.examBlueprints.institutionId, principal.institutionId),
+            isNull(schema.examBlueprints.studentId),
+            isNull(schema.examBlueprints.independentUserId),
+            eq(schema.examBlueprints.isPublished, true),
+            isNull(schema.examBlueprints.archivedAt),
+          ),
+        )
+        .orderBy(desc(schema.examBlueprints.updatedAt))
+        .limit(40);
+    }
+
+    return {
+      personal: personal.map((b) => this.blueprintDto(b)),
+      institution: institution.map((b) => this.blueprintDto(b)),
+      quickMock: defaultBlueprintForTemplate('quick_check', {
+        subjectLabel: 'Quick mock',
+        topicWeights: [{ topicLabel: 'General', weight: 5 }],
+        sourceKind: 'studied',
+      }),
+    };
+  }
+
+  async duplicateFromPattern(principal: StudentPrincipal, patternKey: string) {
+    const [pattern] = await this.db
+      .select()
+      .from(schema.examPaperPatterns)
+      .where(eq(schema.examPaperPatterns.key, patternKey))
+      .limit(1);
+    if (!pattern) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Pattern not found' });
+    const sections = z.array(examBlueprintSectionSchema).parse(pattern.sections);
+    const skin =
+      pattern.board === 'NTA' ? 'nta' : pattern.key.startsWith('cbse') || pattern.key.includes('university') || pattern.key.startsWith('ap')
+        ? 'paper'
+        : 'standard';
+    const gradingStyle =
+      skin === 'paper' ? 'ai_assisted' : ('auto' as const);
+    const blueprint = examBlueprintSchema.parse({
+      template: 'board_pattern',
+      title: pattern.name,
+      subjectLabel: pattern.name,
+      durationMin: pattern.durationMin,
+      difficultyCurve: 'exam_level',
+      sections,
+      topicWeights: [{ topicLabel: pattern.name, weight: 5 }],
+      paperPatternId: pattern.id,
+      sourceKind: 'preset',
+      skin,
+      gradingStyle,
+    });
+    return this.createBlueprint(principal, { blueprint, skin, gradingStyle });
   }
 
   async checkTopic(principal: StudentPrincipal, body: unknown) {
@@ -199,9 +293,17 @@ export class ExamEngineService {
 
   async generate(principal: StudentPrincipal, body: unknown) {
     const { blueprintId } = generateExamInputSchema.parse(body);
-    const bp = await this.requireBlueprint(principal, blueprintId);
+    const bp = await this.requireBlueprintReadable(principal, blueprintId);
     const blueprint = examBlueprintSchema.parse(bp.blueprint);
     const owner = ownerColumns(principal);
+    const snapshot = {
+      ...blueprint,
+      skin: (bp.skin as ExamBlueprint['skin']) ?? blueprint.skin ?? 'standard',
+      gradingStyle: (bp.gradingStyle as ExamBlueprint['gradingStyle']) ?? blueprint.gradingStyle ?? 'auto',
+      resolvedTotalMarks: examBlueprintTotalMarks(blueprint),
+      resolvedTotalQuestions: examBlueprintTotalQuestions(blueprint),
+      snapshotAt: new Date().toISOString(),
+    };
     const [exam] = await this.db
       .insert(schema.mockExams)
       .values({
@@ -220,6 +322,86 @@ export class ExamEngineService {
         blueprintId,
         sourceKind: blueprint.sourceKind,
         status: 'generating',
+        blueprintSnapshot: snapshot as unknown as Record<string, unknown>,
+        blueprintVersion: bp.version,
+        strictMode: false,
+      })
+      .returning();
+
+    await this.processor.enqueueGenerate({
+      examId: exam!.id,
+      principalRef: this.principalRef(principal),
+    });
+    return this.get(principal, exam!.id);
+  }
+
+  /** Wizard create — persists full snapshot before queue (Part B §4). */
+  async createFromWizard(principal: StudentPrincipal, body: unknown) {
+    const parsed = createMockFromWizardSchema.parse(body);
+    const owner = ownerColumns(principal);
+
+    let bpRow: typeof schema.examBlueprints.$inferSelect | null = null;
+    let blueprint: ExamBlueprint;
+    if (parsed.quickMock) {
+      const topics =
+        parsed.scope.kind === 'topics'
+          ? parsed.scope.topicLabels
+          : ['General'];
+      blueprint = defaultBlueprintForTemplate('quick_check', {
+        subjectLabel: topics[0] ?? 'Quick mock',
+        topicWeights: topics.map((t) => ({ topicLabel: t, weight: 5 as const })),
+        sourceKind: 'studied',
+      });
+    } else if (parsed.blueprintId) {
+      bpRow = await this.requireBlueprintReadable(principal, parsed.blueprintId);
+      blueprint = examBlueprintSchema.parse(bpRow.blueprint);
+    } else if (parsed.paperPatternKey) {
+      const dup = await this.duplicateFromPattern(principal, parsed.paperPatternKey);
+      bpRow = await this.requireBlueprint(principal, dup.id);
+      blueprint = examBlueprintSchema.parse(bpRow.blueprint);
+    } else {
+      throw new ForbiddenException({ code: 'BLUEPRINT_REQUIRED', message: 'Select a blueprint or Quick mock.' });
+    }
+
+    const topicLabels =
+      parsed.scope.kind === 'topics'
+        ? parsed.scope.topicLabels
+        : blueprint.topicWeights.map((t) => t.topicLabel);
+
+    const snapshot = {
+      ...blueprint,
+      skin: (bpRow?.skin as ExamBlueprint['skin']) ?? blueprint.skin ?? 'standard',
+      gradingStyle:
+        (bpRow?.gradingStyle as ExamBlueprint['gradingStyle']) ?? blueprint.gradingStyle ?? 'auto',
+      resolvedTotalMarks: examBlueprintTotalMarks(blueprint),
+      resolvedTotalQuestions: examBlueprintTotalQuestions(blueprint),
+      snapshotAt: new Date().toISOString(),
+    };
+
+    const [exam] = await this.db
+      .insert(schema.mockExams)
+      .values({
+        ...owner,
+        title: parsed.title ?? blueprint.title,
+        subjectLabel: blueprint.subjectLabel,
+        topics: topicLabels,
+        context: {
+          level: 'current',
+          board: blueprint.paperPatternId ? 'preset' : 'general',
+          mix: blueprint.template,
+          difficulty: parsed.difficulty,
+          durationMin: blueprint.durationMin,
+          hintsOff: true,
+        },
+        blueprintId: bpRow?.id ?? null,
+        sourceKind: blueprint.sourceKind,
+        status: 'generating',
+        scope: parsed.scope as unknown as Record<string, unknown>,
+        difficulty: parsed.difficulty,
+        scheduledFor: parsed.scheduledFor ? new Date(parsed.scheduledFor) : null,
+        strictMode: parsed.strictMode,
+        blueprintSnapshot: snapshot as unknown as Record<string, unknown>,
+        blueprintVersion: bpRow?.version ?? 1,
       })
       .returning();
 
@@ -289,6 +471,7 @@ export class ExamEngineService {
     }
 
     let blueprint: ExamBlueprint | undefined;
+    let skinFromBp: string | undefined;
     if (exam.blueprintId) {
       const [bp] = await this.db
         .select()
@@ -298,8 +481,18 @@ export class ExamEngineService {
       if (bp) {
         const p = examBlueprintSchema.safeParse(bp.blueprint);
         if (p.success) blueprint = p.data;
+        skinFromBp = bp.skin ?? (p.success ? p.data.skin : undefined);
       }
     }
+
+    const snapParsed = exam.blueprintSnapshot
+      ? examBlueprintSchema.safeParse(exam.blueprintSnapshot)
+      : null;
+    const skin =
+      (snapParsed?.success ? snapParsed.data.skin : undefined) ??
+      skinFromBp ??
+      blueprint?.skin ??
+      'standard';
 
     return {
       id: exam.id,
@@ -310,6 +503,10 @@ export class ExamEngineService {
       status: exam.status as MockExamDto['status'],
       blueprintId: exam.blueprintId,
       blueprint,
+      blueprintSnapshot: snapParsed?.success ? snapParsed.data : undefined,
+      blueprintVersion: exam.blueprintVersion ?? undefined,
+      skin: skin as MockExamDto['skin'],
+      strictMode: exam.strictMode,
       sourceKind: (exam.sourceKind as MockExamDto['sourceKind']) ?? undefined,
       generationNotice: exam.generationNotice,
       gradingStatus: (exam.gradingStatus as MockExamDto['gradingStatus']) ?? undefined,
@@ -352,7 +549,7 @@ export class ExamEngineService {
 
   async start(principal: StudentPrincipal, id: string) {
     const exam = await this.requireExam(principal, id);
-    if (exam.status !== 'ready' && exam.status !== 'in_progress') {
+    if (!['ready', 'scheduled', 'in_progress'].includes(exam.status)) {
       throw new ForbiddenException({ code: 'NOT_READY', message: 'Exam is not ready to start.' });
     }
     const existing = await this.db
@@ -366,9 +563,15 @@ export class ExamEngineService {
       )
       .limit(1);
     if (existing[0]) {
-      return { attemptId: existing[0].id, endsAt: existing[0].endsAt.toISOString() };
+      return {
+        attemptId: existing[0].id,
+        endsAt: existing[0].endsAt.toISOString(),
+        sectionDeadlines: existing[0].sectionDeadlines,
+        currentSectionId: existing[0].currentSectionId,
+      };
     }
-    // Resume paused
+
+    // One-time recovery for legacy paused rows — resume without extending beyond original endsAt wall clock.
     const paused = await this.db
       .select()
       .from(schema.mockExamAttempts)
@@ -377,21 +580,47 @@ export class ExamEngineService {
       )
       .limit(1);
     if (paused[0]) {
-      const remaining = Math.max(0, paused[0].endsAt.getTime() - (paused[0].pausedAt?.getTime() ?? Date.now()));
-      const endsAt = new Date(Date.now() + remaining);
       await this.db
         .update(schema.mockExamAttempts)
-        .set({ status: 'in_progress', pausedAt: null, endsAt, startedAt: new Date() })
+        .set({ status: 'in_progress', pausedAt: null })
         .where(eq(schema.mockExamAttempts.id, paused[0].id));
       await this.db
         .update(schema.mockExams)
         .set({ status: 'in_progress', updatedAt: new Date() })
         .where(eq(schema.mockExams.id, exam.id));
-      return { attemptId: paused[0].id, endsAt: endsAt.toISOString() };
+      return {
+        attemptId: paused[0].id,
+        endsAt: paused[0].endsAt.toISOString(),
+        sectionDeadlines: paused[0].sectionDeadlines,
+        currentSectionId: paused[0].currentSectionId,
+      };
     }
 
-    const ctx = exam.context as { durationMin: number };
-    const endsAt = new Date(Date.now() + ctx.durationMin * 60_000);
+    const snap = exam.blueprintSnapshot
+      ? examBlueprintSchema.safeParse(exam.blueprintSnapshot)
+      : null;
+    const durationMin =
+      snap?.success
+        ? snap.data.durationMin
+        : (exam.context as { durationMin: number }).durationMin;
+    const startedAt = new Date();
+    const endsAt = new Date(startedAt.getTime() + durationMin * 60_000);
+
+    let sectionDeadlines: Record<string, string> | null = null;
+    let currentSectionId: string | null = null;
+    if (snap?.success) {
+      const secs = snap.data.sections;
+      if (secs.every((s) => s.sectionTimeSec != null)) {
+        sectionDeadlines = {};
+        let cursor = startedAt.getTime();
+        for (const s of secs) {
+          cursor += (s.sectionTimeSec ?? 0) * 1000;
+          sectionDeadlines[s.id] = new Date(cursor).toISOString();
+        }
+        currentSectionId = secs[0]?.id ?? null;
+      }
+    }
+
     const maxNo = await this.db
       .select({ attemptNo: schema.mockExamAttempts.attemptNo })
       .from(schema.mockExamAttempts)
@@ -401,7 +630,17 @@ export class ExamEngineService {
     const attemptNo = (maxNo[0]?.attemptNo ?? 0) + 1;
     const [attempt] = await this.db
       .insert(schema.mockExamAttempts)
-      .values({ mockExamId: exam.id, attemptNo, endsAt, status: 'in_progress' })
+      .values({
+        mockExamId: exam.id,
+        attemptNo,
+        startedAt,
+        endsAt,
+        status: 'in_progress',
+        strictModeSnapshot: exam.strictMode,
+        sectionDeadlines,
+        currentSectionId,
+        tabSwitches: 0,
+      })
       .returning();
     await this.db
       .update(schema.mockExams)
@@ -412,24 +651,28 @@ export class ExamEngineService {
       payload: { examId: exam.id, attemptId: attempt!.id },
       principal,
     });
-    return { attemptId: attempt!.id, endsAt: endsAt.toISOString() };
+    return {
+      attemptId: attempt!.id,
+      endsAt: endsAt.toISOString(),
+      sectionDeadlines,
+      currentSectionId,
+    };
   }
 
-  async pause(principal: StudentPrincipal, id: string) {
+  /** Pause removed from new flows — timer never pauses (PLAN §2.2). */
+  async pause(_principal: StudentPrincipal, _id: string) {
+    throw new ForbiddenException({
+      code: 'PAUSE_DISABLED',
+      message: 'The timer never pauses. Leave and resume later — the clock keeps running.',
+    });
+  }
+
+  async recordTabSwitch(principal: StudentPrincipal, id: string, body: unknown) {
+    const clientEventId =
+      typeof body === 'object' && body && 'clientEventId' in body
+        ? String((body as { clientEventId: string }).clientEventId)
+        : null;
     const exam = await this.requireExam(principal, id);
-    let template = 'chapter_test';
-    if (exam.blueprintId) {
-      const [bp] = await this.db
-        .select()
-        .from(schema.examBlueprints)
-        .where(eq(schema.examBlueprints.id, exam.blueprintId))
-        .limit(1);
-      const parsed = examBlueprintSchema.safeParse(bp?.blueprint);
-      if (parsed.success) template = parsed.data.template;
-    }
-    if (!examTemplateAllowsPause(template as never)) {
-      throw new ForbiddenException({ code: 'PAUSE_DENIED', message: 'Pause is only allowed for Quick check.' });
-    }
     const [attempt] = await this.db
       .select()
       .from(schema.mockExamAttempts)
@@ -438,11 +681,23 @@ export class ExamEngineService {
       )
       .limit(1);
     if (!attempt) throw new ForbiddenException({ code: 'NO_ACTIVE_ATTEMPT', message: 'No active attempt.' });
+    if (!attempt.strictModeSnapshot) return { ok: true, tabSwitches: attempt.tabSwitches };
+    // Dedup via results meta bag when clientEventId present
+    const meta = (attempt.results as { _tabEvents?: string[] } | null) ?? {};
+    const seen = new Set(meta._tabEvents ?? []);
+    if (clientEventId && seen.has(clientEventId)) {
+      return { ok: true, tabSwitches: attempt.tabSwitches };
+    }
+    if (clientEventId) seen.add(clientEventId);
+    const next = attempt.tabSwitches + 1;
     await this.db
       .update(schema.mockExamAttempts)
-      .set({ status: 'paused', pausedAt: new Date() })
+      .set({
+        tabSwitches: next,
+        results: { ...(attempt.results as object), _tabEvents: [...seen].slice(-50) },
+      })
       .where(eq(schema.mockExamAttempts.id, attempt.id));
-    return this.get(principal, id);
+    return { ok: true, tabSwitches: next };
   }
 
   async saveAnswer(principal: StudentPrincipal, examId: string, questionId: string, body: unknown) {
@@ -456,9 +711,27 @@ export class ExamEngineService {
       )
       .limit(1);
     if (!attempt) throw new ForbiddenException({ code: 'NO_ACTIVE_ATTEMPT', message: 'No active attempt.' });
-    const grace = new Date(attempt.endsAt.getTime() + 30_000);
+    const grace = new Date(attempt.endsAt.getTime() + MOCK_ANSWER_GRACE_MS);
     if (new Date() > grace) {
-      throw new ForbiddenException({ code: 'TIME_EXPIRED', message: 'Time is up for this attempt.' });
+      throw new ConflictException({ code: 'EXAM_OVER', message: 'Exam time including grace has ended.' });
+    }
+
+    // Reject writes to expired sections
+    if (attempt.sectionDeadlines && attempt.currentSectionId) {
+      const [q] = await this.db
+        .select()
+        .from(schema.mockExamQuestions)
+        .where(eq(schema.mockExamQuestions.id, questionId))
+        .limit(1);
+      if (q?.sectionId) {
+        const deadline = (attempt.sectionDeadlines as Record<string, string>)[q.sectionId];
+        if (deadline && new Date() > new Date(deadline)) {
+          throw new ForbiddenException({
+            code: 'SECTION_LOCKED',
+            message: 'Section time is over — you cannot change answers in this section.',
+          });
+        }
+      }
     }
 
     const clientUpdatedAt = new Date(parsed.clientUpdatedAt);
@@ -477,6 +750,13 @@ export class ExamEngineService {
     }
 
     const answerPayload = { ...parsed } as Record<string, unknown>;
+    const state =
+      parsed.state ??
+      (parsed.flagged
+        ? existing?.choiceKey || existing?.answerText
+          ? 'marked_answered'
+          : 'marked'
+        : 'answered');
     await this.db
       .insert(schema.mockExamAnswers)
       .values({
@@ -487,6 +767,11 @@ export class ExamEngineService {
         flagged: parsed.flagged ?? false,
         answerPayload,
         clientUpdatedAt,
+        state,
+        timeSpentMs: parsed.timeSpentMs ?? 0,
+        answerMode: parsed.answerMode ?? 'type',
+        photoRefs: parsed.photoRefs ?? null,
+        photoObjectId: parsed.photoObjectId ?? null,
       })
       .onConflictDoUpdate({
         target: [schema.mockExamAnswers.attemptId, schema.mockExamAnswers.questionId],
@@ -496,6 +781,11 @@ export class ExamEngineService {
           flagged: parsed.flagged ?? false,
           answerPayload,
           clientUpdatedAt,
+          state,
+          timeSpentMs: parsed.timeSpentMs ?? existing?.timeSpentMs ?? 0,
+          answerMode: parsed.answerMode ?? existing?.answerMode ?? 'type',
+          photoRefs: parsed.photoRefs ?? existing?.photoRefs ?? null,
+          photoObjectId: parsed.photoObjectId ?? existing?.photoObjectId ?? null,
           updatedAt: new Date(),
         },
       });
@@ -524,37 +814,110 @@ export class ExamEngineService {
     );
 
     if (!needsSubjective) {
+      await this.db
+        .update(schema.mockExamAttempts)
+        .set({
+          status: 'submitted',
+          submittedAt: new Date(),
+          finishedAt: new Date(),
+        })
+        .where(eq(schema.mockExamAttempts.id, attempt.id));
       await this.grading.gradeSubjective(exam.id, attempt.id, this.principalRef(principal));
       return this.get(principal, id, { includeKeys: true });
     }
 
+    // Subjective: objective scored; student must self-grade before AI comparator.
     await this.db
       .update(schema.mockExamAttempts)
       .set({
-        status: 'grading',
+        status: 'awaiting_self_grade',
+        submittedAt: new Date(),
         finishedAt: new Date(),
         results: {
           awardedMarks,
           maxMarks,
+          objectiveAwarded: awardedMarks,
+          objectiveMax: maxMarks,
+          awaitingSelfGradeCount: evaluations.filter((e) => !e.objective).length,
           bySection: [],
           byTopic: [],
           patterns: [],
           evaluations,
-          suggestion: 'Grading your written answers…',
+          suggestion: 'Grade your written answers — your grade counts.',
         },
       })
       .where(eq(schema.mockExamAttempts.id, attempt.id));
     await this.db
       .update(schema.mockExams)
-      .set({ gradingStatus: 'grading', status: 'completed', updatedAt: new Date() })
+      .set({
+        gradingStatus: 'awaiting_self_grade',
+        status: 'awaiting_self_grade',
+        updatedAt: new Date(),
+      })
       .where(eq(schema.mockExams.id, exam.id));
 
-    await this.processor.enqueueGrade({
-      examId: exam.id,
-      attemptId: attempt.id,
-      principalRef: this.principalRef(principal),
-    });
     return this.get(principal, id, { includeKeys: true });
+  }
+
+  /** Owner-only past-mistakes projection (no shadow table). */
+  async listPastMistakes(principal: StudentPrincipal, windowDays: number) {
+    const since =
+      windowDays === 0 ? null : new Date(Date.now() - windowDays * 24 * 3600_000);
+    const exams = await this.db
+      .select({ id: schema.mockExams.id })
+      .from(schema.mockExams)
+      .where(ownerWhere(principal, schema.mockExams.studentId, schema.mockExams.independentUserId));
+    const examIds = exams.map((e) => e.id);
+    if (!examIds.length) return { items: [], count: 0 };
+
+    const attempts = await this.db
+      .select()
+      .from(schema.mockExamAttempts)
+      .where(inArray(schema.mockExamAttempts.mockExamId, examIds))
+      .orderBy(desc(schema.mockExamAttempts.finishedAt))
+      .limit(80);
+
+    const ownedAttempts = attempts.filter(
+      (a) =>
+        ['scored', 'graded', 'completed', 'awaiting_self_grade'].includes(a.status) &&
+        (!since || (a.finishedAt && a.finishedAt >= since)),
+    );
+    const items: Array<Record<string, unknown>> = [];
+    for (const att of ownedAttempts.slice(0, 40)) {
+      const answers = await this.db
+        .select()
+        .from(schema.mockExamAnswers)
+        .where(eq(schema.mockExamAnswers.attemptId, att.id));
+      for (const a of answers) {
+        const ev = a.evaluation as {
+          verdict?: string;
+          awardedMarks?: number;
+          maxMarks?: number;
+          final_source?: string;
+        } | null;
+        if (!ev || (ev.verdict !== 'missed' && ev.verdict !== 'slipped')) continue;
+        const [q] = await this.db
+          .select()
+          .from(schema.mockExamQuestions)
+          .where(eq(schema.mockExamQuestions.id, a.questionId))
+          .limit(1);
+        if (!q) continue;
+        items.push({
+          id: `${att.id}:${a.questionId}`,
+          mockExamId: att.mockExamId,
+          attemptId: att.id,
+          questionId: a.questionId,
+          topicLabel: q.topic,
+          qtype: q.qtype,
+          prompt: q.prompt,
+          verdict: ev.verdict,
+          awardedMarks: ev.awardedMarks ?? 0,
+          maxMarks: ev.maxMarks ?? q.marks,
+          answeredAt: a.updatedAt?.toISOString?.() ?? att.finishedAt?.toISOString(),
+        });
+      }
+    }
+    return { items, count: items.length };
   }
 
   async retakeWeak(principal: StudentPrincipal, id: string) {
@@ -681,6 +1044,16 @@ export class ExamEngineService {
       id: row.id,
       blueprint: examBlueprintSchema.parse(row.blueprint),
       version: row.version,
+      skin: row.skin,
+      gradingStyle: row.gradingStyle,
+      examProfileKey: row.examProfileKey,
+      isPublished: row.isPublished,
+      archivedAt: row.archivedAt?.toISOString() ?? null,
+      origin: deriveBlueprintOrigin({
+        institutionId: row.institutionId,
+        studentId: row.studentId,
+        independentUserId: row.independentUserId,
+      }),
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };
@@ -714,5 +1087,29 @@ export class ExamEngineService {
       .limit(1);
     if (!row) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Blueprint not found' });
     return row;
+  }
+
+  /** Own blueprints or published institution blueprints. */
+  private async requireBlueprintReadable(principal: StudentPrincipal, id: string) {
+    try {
+      return await this.requireBlueprint(principal, id);
+    } catch {
+      if (principal.kind !== 'institutional') throw new NotFoundException({ code: 'NOT_FOUND', message: 'Blueprint not found' });
+      const [row] = await this.db
+        .select()
+        .from(schema.examBlueprints)
+        .where(
+          and(
+            eq(schema.examBlueprints.id, id),
+            eq(schema.examBlueprints.institutionId, principal.institutionId),
+            isNull(schema.examBlueprints.studentId),
+            eq(schema.examBlueprints.isPublished, true),
+            isNull(schema.examBlueprints.archivedAt),
+          ),
+        )
+        .limit(1);
+      if (!row) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Blueprint not found' });
+      return row;
+    }
   }
 }

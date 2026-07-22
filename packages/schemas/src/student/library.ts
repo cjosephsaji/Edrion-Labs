@@ -136,6 +136,7 @@ export const glossaryContentSchema = z.object({
 
 export const libraryTutorInputSchema = z.object({
   focusConcept: z.string().min(1).max(200).optional(),
+  timeBudgetMinutes: z.number().int().min(10).max(25).optional(),
 });
 
 export const quizAttemptSchema = z.object({

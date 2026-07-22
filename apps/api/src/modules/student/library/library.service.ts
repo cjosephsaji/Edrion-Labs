@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {
   createCollectionSchema,
@@ -39,6 +40,7 @@ import { EvaluatorService } from '../learn-ai/evaluator.service';
 import { LearnAiCallLogger } from '../learn-ai/learn-ai-call.logger';
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import { LearnRepository } from '../learn/learn.repository';
+import { PedagogyOrchestratorService } from '../edrion-learn/pedagogy-orchestrator.service';
 import { StudentStorageService } from '../storage/student-storage.service';
 import type { StudentPrincipal } from '../student.types';
 import { LibraryRepository } from './library.repository';
@@ -65,6 +67,7 @@ export class LibraryService {
   constructor(
     private readonly repo: LibraryRepository,
     private readonly learn: LearnRepository,
+    private readonly orchestrator: PedagogyOrchestratorService,
     private readonly storage: StudentStorageService,
     @Inject(LEARN_AI_PROVIDER) private readonly ai: LearnAiProvider,
     private readonly budgets: BudgetsService,
@@ -702,32 +705,24 @@ export class LibraryService {
   async tutor(principal: StudentPrincipal, itemId: string, body?: unknown) {
     const focus = libraryTutorInputSchema.parse(body ?? {});
     const item = await this.requireReadyItem(principal, itemId);
-    const topic = await this.learn.upsertTopicByKey(
-      `doc:${item.id.slice(0, 8)}`,
-      item.title,
-      'Library',
-      principal.kind === 'institutional' ? 'institution' : 'independent',
-      principal.kind === 'institutional' ? principal.institutionId : null,
-    );
-    if (!topic) throw new Error('Failed to resolve topic');
-    const session = await this.learn.createSession({
-      institutionId: principal.kind === 'institutional' ? principal.institutionId : null,
-      studentId: principal.kind === 'institutional' ? principal.studentId : null,
-      independentUserId: principal.kind === 'independent' ? principal.independentUserId : null,
-      topicId: topic.id,
-      groundingKnowledgeItemId: item.id,
-      status: 'active',
-      spine: [],
-      sessionPlan: {
-        source: 'tutor_grounded',
+    const timeBudget = focus.timeBudgetMinutes ?? 15;
+    const { session } = await this.orchestrator.createSession(principal, {
+      entryPoint: 'library_document',
+      topicKey: `material:${item.id}`,
+      knowledgeItemId: item.id,
+      goal: 'acquisition',
+      timeBudgetMinutes: timeBudget,
+      idempotencyKey: randomUUID(),
+    });
+    await this.ledger.log({
+      eventType: 'session.started',
+      payload: {
+        sessionId: session.id,
+        topicKey: session.topicKey,
+        source: 'library_document',
         knowledgeItemId: item.id,
         focusConcept: focus.focusConcept,
       },
-    });
-    if (!session) throw new Error('Failed to create session');
-    await this.ledger.log({
-      eventType: 'session.started',
-      payload: { sessionId: session.id, topicKey: topic.topicKey, source: 'tutor_grounded' },
       principal,
     });
     return { sessionId: session.id };

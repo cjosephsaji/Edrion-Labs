@@ -10,12 +10,12 @@ export default function PathPage() {
   const { data: path, isLoading } = usePath();
   const createSession = useCreateSession();
 
-  const startItem = async (itemId: string, title: string, topicKey: string) => {
+  const startItem = async (itemId: string) => {
     const session = await createSession.mutateAsync({
+      entryPoint: 'learning_path',
       pathItemId: itemId,
-      topicTitle: title,
-      topicKey,
-      source: 'path',
+      goal: 'acquisition',
+      idempotencyKey: crypto.randomUUID(),
     });
     window.location.href = `/learn/session/${session.id}`;
   };
@@ -106,7 +106,7 @@ export default function PathPage() {
                 {item.status === 'current' && (
                   <PillButton
                     className="mt-3"
-                    onClick={() => void startItem(item.id, item.title, item.topicKey)}
+                    onClick={() => void startItem(item.id)}
                     disabled={createSession.isPending}
                   >
                     Start

@@ -26,7 +26,12 @@ export type LearnAiPurpose =
   | 'mock_gen'
   | 'mock_eval'
   | 'debate'
-  | 'ocr';
+  | 'ocr'
+  | 'learn_plan'
+  | 'learn_render'
+  | 'learn_grade'
+  | 'learn_profile'
+  | 'learn_judge';
 
 export interface LearnAiEmbeddingUsage {
   inputTokens: number;

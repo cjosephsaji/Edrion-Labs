@@ -171,17 +171,62 @@ export class ExamSubjectiveGradingService {
           distractorRationale: obj.distractorRationale,
           objective: true,
         });
+        if (ans) {
+          await this.db
+            .update(schema.mockExamAnswers)
+            .set({
+              evaluation: {
+                awardedMarks: obj.awardedMarks,
+                maxMarks: obj.maxMarks,
+                verdict: obj.verdict,
+                note: obj.note,
+                distractorRationale: obj.distractorRationale,
+                objective: true,
+                final_source: 'objective',
+              },
+            })
+            .where(eq(schema.mockExamAnswers.id, ans.id));
+        }
         continue;
       }
 
-      const ev = await this.gradeOneSubjective(principal, q, qRow, payload);
-      evaluations.push(ev);
-      if (ans) {
-        await this.db
-          .update(schema.mockExamAnswers)
-          .set({ evaluation: ev as unknown as Record<string, unknown> })
-          .where(eq(schema.mockExamAnswers.id, ans.id));
-      }
+      // Subjective: do not AI-grade here — self-grade is authoritative (recordSelfGrade).
+      evaluations.push({
+        questionId: qRow.id,
+        sequence: qRow.sequence,
+        awardedMarks: 0,
+        maxMarks: q.marks,
+        verdict: 'missed',
+        note: 'Awaiting your self-grade.',
+        objective: false,
+      });
+    }
+
+    const subjectiveLeft = evaluations.filter((e) => !e.objective).length;
+    if (subjectiveLeft > 0) {
+      const awardedMarks = evaluations.filter((e) => e.objective).reduce((s, e) => s + e.awardedMarks, 0);
+      const maxMarks = evaluations.reduce((s, e) => s + e.maxMarks, 0);
+      await this.db
+        .update(schema.mockExamAttempts)
+        .set({
+          status: 'awaiting_self_grade',
+          results: {
+            awardedMarks,
+            maxMarks,
+            awaitingSelfGradeCount: subjectiveLeft,
+            evaluations,
+            bySection: [],
+            byTopic: [],
+            patterns: [],
+            suggestion: 'Grade your written answers — your grade counts.',
+          },
+        })
+        .where(eq(schema.mockExamAttempts.id, attemptId));
+      await this.db
+        .update(schema.mockExams)
+        .set({ status: 'awaiting_self_grade', gradingStatus: 'awaiting_self_grade', updatedAt: new Date() })
+        .where(eq(schema.mockExams.id, examId));
+      return;
     }
 
     const patterns = await this.buildPatterns(principal, questions, evaluations);
@@ -228,11 +273,17 @@ export class ExamSubjectiveGradingService {
 
     await this.db
       .update(schema.mockExamAttempts)
-      .set({ status: 'graded', results: results as unknown as Record<string, unknown>, finishedAt: new Date() })
+      .set({
+        status: 'scored',
+        scoringVersion: 'mock-scorer-v1',
+        results: results as unknown as Record<string, unknown>,
+        finishedAt: new Date(),
+        submittedAt: new Date(),
+      })
       .where(eq(schema.mockExamAttempts.id, attemptId));
     await this.db
       .update(schema.mockExams)
-      .set({ status: 'completed', gradingStatus: 'graded', updatedAt: new Date() })
+      .set({ status: 'scored', gradingStatus: 'graded', updatedAt: new Date() })
       .where(eq(schema.mockExams.id, examId));
 
     await this.ledger.log({
@@ -240,7 +291,6 @@ export class ExamSubjectiveGradingService {
       payload: { examId, attemptId, awardedMarks, maxMarks },
       principal,
     });
-    // Alias for History / achievements until consumers migrate
     await this.ledger.log({
       eventType: 'mock.completed',
       payload: {
@@ -255,6 +305,215 @@ export class ExamSubjectiveGradingService {
       },
       principal,
     });
+  }
+
+  /**
+   * Self-grade is authoritative. AI runs only after self and is stored as comparator.
+   * Header copy: "AI-graded — review the rubric. Your grade counts."
+   */
+  async recordSelfGrade(
+    principal: StudentPrincipal,
+    examId: string,
+    questionId: string,
+    body: unknown,
+  ) {
+    const { mockSelfGradeInputSchema } = await import('@edrion/schemas');
+    const parsed = mockSelfGradeInputSchema.parse(body);
+    const [exam] = await this.db
+      .select()
+      .from(schema.mockExams)
+      .where(eq(schema.mockExams.id, examId))
+      .limit(1);
+    if (!exam) throw new Error('Exam not found');
+    const [attempt] = await this.db
+      .select()
+      .from(schema.mockExamAttempts)
+      .where(eq(schema.mockExamAttempts.mockExamId, examId))
+      .orderBy(schema.mockExamAttempts.attemptNo)
+      .limit(1);
+    if (!attempt) throw new Error('Attempt not found');
+
+    const [qRow] = await this.db
+      .select()
+      .from(schema.mockExamQuestions)
+      .where(eq(schema.mockExamQuestions.id, questionId))
+      .limit(1);
+    if (!qRow) throw new Error('Question not found');
+    const q = this.parseQuestion(qRow);
+    const [ans] = await this.db
+      .select()
+      .from(schema.mockExamAnswers)
+      .where(
+        and(
+          eq(schema.mockExamAnswers.attemptId, attempt.id),
+          eq(schema.mockExamAnswers.questionId, questionId),
+        ),
+      )
+      .limit(1);
+
+    const selfAwarded = parsed.criteria.reduce((s, c) => s + c.marksAwarded, 0);
+    const maxMarks = q.marks;
+    const awarded = Math.min(maxMarks, Math.max(0, selfAwarded));
+    const onPaper = ans?.answerMode === 'on_paper';
+
+    let ai: Record<string, unknown> | undefined;
+    if (!onPaper && this.ai.available) {
+      ai = await this.runAiComparatorEnsemble(principal, q, ans);
+    } else if (onPaper) {
+      ai = { confidence: 'n_a', awardedMarks: 0, criteria: [], note: 'On paper — no AI grade.' };
+    }
+
+    const evaluation = {
+      awardedMarks: awarded,
+      maxMarks,
+      verdict: deriveVerdictFromMarks(awarded, maxMarks),
+      objective: false,
+      self: parsed,
+      ai,
+      final_source: 'self' as const,
+      note: 'AI-graded — review the rubric. Your grade counts.',
+    };
+
+    if (ans) {
+      await this.db
+        .update(schema.mockExamAnswers)
+        .set({ evaluation: evaluation as unknown as Record<string, unknown> })
+        .where(eq(schema.mockExamAnswers.id, ans.id));
+    }
+
+    await this.recomputeResultsAfterSelfGrade(examId, attempt.id, principal);
+    return { ok: true, evaluation };
+  }
+
+  private async runAiComparatorEnsemble(
+    principal: StudentPrincipal,
+    q: ExamQuestion,
+    ans: typeof schema.mockExamAnswers.$inferSelect | undefined,
+  ): Promise<Record<string, unknown>> {
+    const text = ans?.answerText ?? '';
+    const samples: number[] = [];
+    const criteriaSamples: Array<Array<{ criterionId: string; marksAwarded: number }>> = [];
+    for (let i = 0; i < 3; i++) {
+      try {
+        await this.budgets.spend(principal, 'mock_eval', 400);
+        const { result, usage } = await this.ai.completeJson({
+          purpose: 'mock_eval',
+          tier: 'small',
+          system: SUBJECTIVE_GRADE_SYSTEM,
+          user: `Prompt: ${q.prompt}\nStudent answer:\n${text.slice(0, 6000)}`,
+          schema: examSubjectiveGradeOutputSchema,
+          schemaName: 'exam_subjective_grade',
+          maxOutputTokens: 1200,
+        });
+        await this.callLog.log(principal, 'mock_eval', usage);
+        samples.push(result.awardedMarks);
+        criteriaSamples.push(
+          result.criteria.map((c) => ({
+            criterionId: c.criterionId,
+            marksAwarded: c.marksAwarded,
+          })),
+        );
+      } catch {
+        break;
+      }
+    }
+    const unanimous =
+      samples.length === 3 && samples.every((s) => s === samples[0]) &&
+      criteriaSamples.every((c) =>
+        c.every((crit, idx) => crit.marksAwarded === criteriaSamples[0]![idx]?.marksAwarded),
+      );
+    const confidence =
+      ans?.answerMode === 'photo' ? 'low' : samples.length < 2 ? 'low' : unanimous ? 'high' : 'medium';
+    const awardedMarks =
+      samples.length > 0
+        ? Math.round(samples.reduce((a, b) => a + b, 0) / samples.length)
+        : 0;
+    return {
+      awardedMarks,
+      confidence,
+      samples: samples.length,
+      criteria: criteriaSamples[0] ?? [],
+      note: 'Comparator only — student self-grade is final.',
+    };
+  }
+
+  private async recomputeResultsAfterSelfGrade(
+    examId: string,
+    attemptId: string,
+    principal: StudentPrincipal,
+  ) {
+    const answers = await this.db
+      .select()
+      .from(schema.mockExamAnswers)
+      .where(eq(schema.mockExamAnswers.attemptId, attemptId));
+    const questions = await this.db
+      .select()
+      .from(schema.mockExamQuestions)
+      .where(eq(schema.mockExamQuestions.mockExamId, examId));
+
+    let awaiting = 0;
+    let awardedMarks = 0;
+    let maxMarks = 0;
+    for (const q of questions) {
+      maxMarks += q.marks;
+      const a = answers.find((x) => x.questionId === q.id);
+      const ev = a?.evaluation as { awardedMarks?: number; objective?: boolean; final_source?: string } | null;
+      if (!ev) {
+        const parsed = this.parseQuestion(q);
+        if (!isExamObjectiveType(parsed.type)) awaiting += 1;
+        continue;
+      }
+      awardedMarks += ev.awardedMarks ?? 0;
+      if (ev.objective === false && ev.final_source !== 'self') awaiting += 1;
+      if (ev.objective === false && !ev.final_source) awaiting += 1;
+    }
+
+    // Count subjective without self
+    awaiting = 0;
+    for (const q of questions) {
+      const parsed = this.parseQuestion(q);
+      if (isExamObjectiveType(parsed.type)) continue;
+      const a = answers.find((x) => x.questionId === q.id);
+      const ev = a?.evaluation as { final_source?: string } | null;
+      if (ev?.final_source !== 'self') awaiting += 1;
+    }
+
+    const status = awaiting === 0 ? 'scored' : 'awaiting_self_grade';
+    const prev = (await this.db
+      .select({ results: schema.mockExamAttempts.results })
+      .from(schema.mockExamAttempts)
+      .where(eq(schema.mockExamAttempts.id, attemptId))
+      .limit(1))[0]?.results as Record<string, unknown> | null;
+
+    await this.db
+      .update(schema.mockExamAttempts)
+      .set({
+        status,
+        results: {
+          ...(prev ?? {}),
+          awardedMarks,
+          maxMarks,
+          awaitingSelfGradeCount: awaiting,
+          scoringVersion: 'mock-scorer-v1',
+        },
+      })
+      .where(eq(schema.mockExamAttempts.id, attemptId));
+    await this.db
+      .update(schema.mockExams)
+      .set({
+        status,
+        gradingStatus: awaiting === 0 ? 'graded' : 'awaiting_self_grade',
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.mockExams.id, examId));
+
+    if (awaiting === 0) {
+      await this.ledger.log({
+        eventType: 'exam.graded',
+        payload: { examId, attemptId, awardedMarks, maxMarks },
+        principal,
+      });
+    }
   }
 
   async pruneExpiredAttempts(): Promise<{ itemsProcessed: number }> {

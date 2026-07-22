@@ -1,16 +1,17 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { FRESHNESS_FADING_DAYS, FRESHNESS_FRESH_DAYS } from '@edrion/shared-types';
 import { LEARNING_EVENTS_WRITER } from '../../../common/tokens';
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import type { StudentPrincipal } from '../student.types';
+import { PedagogyOrchestratorService } from '../edrion-learn/pedagogy-orchestrator.service';
 import { LearnRepository } from './learn.repository';
-import { SessionsService } from './sessions.service';
 
 @Injectable()
 export class RevisionService {
   constructor(
     private readonly repo: LearnRepository,
-    private readonly sessions: SessionsService,
+    private readonly orchestrator: PedagogyOrchestratorService,
     @Inject(LEARNING_EVENTS_WRITER) private readonly ledger: LearningEventsWriter,
   ) {}
 
@@ -49,20 +50,21 @@ export class RevisionService {
     const topic = await this.repo.getTopic(topicId);
     if (!topic) throw new NotFoundException('Topic not found');
 
-    const session = await this.sessions.create(principal, {
+    const { session } = await this.orchestrator.createSession(principal, {
+      entryPoint: 'review_queue',
       topicKey: topic.topicKey,
-      topicTitle: topic.title,
-      source: 'refresh',
+      goal: 'revision',
+      timeBudgetMinutes: 20,
+      idempotencyKey: randomUUID(),
     });
 
     await this.ledger.log({
       principal,
-      eventType: 'revision.completed',
+      eventType: 'revision.started',
       topicKey: topic.topicKey,
-      payload: { topicKey: topic.topicKey, mode: 'refresh10' },
+      payload: { topicKey: topic.topicKey, sessionId: session.id },
     });
 
-    await this.repo.upsertRevisionFresh(principal, topicId);
     return session;
   }
 }

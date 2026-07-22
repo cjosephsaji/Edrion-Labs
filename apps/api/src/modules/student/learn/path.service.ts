@@ -6,7 +6,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { z } from 'zod';
-import type { CreatePathInput, LearningPathDto, PatchPathInput } from '@edrion/schemas';
+import {
+  toSelfDeclaredGoalV1,
+  type CreatePathInput,
+  type LearningPathDto,
+  type PatchPathInput,
+} from '@edrion/schemas';
 import { LEARN_AI_PROVIDER, LEARNING_EVENTS_WRITER } from '../../../common/tokens';
 import type { LearnAiProvider } from '../learn-ai/provider';
 import { BudgetsService } from '../learn-ai/budgets.service';
@@ -102,7 +107,11 @@ export class PathService {
       subjectLabel: plan.subjectLabel,
       source: 'ai_goal',
       metaLine: plan.metaLine ?? null,
-      goal: input,
+      goal: toSelfDeclaredGoalV1({
+        statement: input.goalStatement,
+        constraints: input.constraints ? [input.constraints] : [],
+        weeklyMinutes: input.weeklyMinutes,
+      }),
       status: 'active',
     });
 

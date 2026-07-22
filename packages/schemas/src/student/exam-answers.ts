@@ -97,5 +97,13 @@ export const saveExamAnswerSchema = z.object({
   subAnswers: z.array(caseBasedSubAnswerSchema).nullish(),
   flagged: z.boolean().optional(),
   clientUpdatedAt: z.string().min(1),
+  /** Legacy mock-exam photo attachment. */
+  photoObjectId: z.string().uuid().nullish(),
+  state: z.enum(['unseen', 'seen', 'answered', 'marked', 'marked_answered']).optional(),
+  timeSpentMs: z.number().int().nonnegative().optional(),
+  answerMode: z.enum(['type', 'photo', 'on_paper']).nullish(),
+  photoRefs: z.array(z.string().uuid()).max(8).optional(),
+  answerVersion: z.number().int().nonnegative().optional(),
+  idempotencyKey: z.string().min(8).max(128).optional(),
 });
 export type SaveExamAnswerInput = z.infer<typeof saveExamAnswerSchema>;

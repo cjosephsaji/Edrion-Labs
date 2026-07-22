@@ -7,6 +7,8 @@ import { PillButton } from '@/components/ui/pill-button';
 import { useToast } from '@/components/ui/toast';
 import type { GenerationKind } from '@/lib/hooks/library';
 
+const BUDGET_OPTIONS = [10, 15, 25] as const;
+
 export function LibraryActionsRail({
   itemId,
   ready,
@@ -19,9 +21,20 @@ export function LibraryActionsRail({
   const tutor = useLibraryTutor(itemId);
   const glossary = useLibraryGlossary(itemId);
   const [streaming, setStreaming] = useState<GenerationKind | null>(null);
+  const [budgetOpen, setBudgetOpen] = useState(false);
   const busy = tutor.isPending || glossary.isPending;
 
   const hint = ready ? undefined : 'Confirm OCR / wait until ready';
+
+  async function startTeach(minutes: number) {
+    setBudgetOpen(false);
+    try {
+      const r = await tutor.mutateAsync({ timeBudgetMinutes: minutes });
+      router.push(`/learn/session/${r.sessionId}`);
+    } catch (e) {
+      say((e as Error).message ?? 'Could not start lesson');
+    }
+  }
 
   return (
     <div className="space-y-3">
@@ -33,16 +46,9 @@ export function LibraryActionsRail({
           type="button"
           disabled={!ready || busy}
           title={hint}
-          onClick={async () => {
-            try {
-              const r = await tutor.mutateAsync({});
-              router.push(`/learn/session/${r.sessionId}`);
-            } catch (e) {
-              say((e as Error).message ?? 'Could not start tutoring');
-            }
-          }}
+          onClick={() => setBudgetOpen(true)}
         >
-          Tutor me
+          Teach me this
         </PillButton>
         {(['summarize', 'flashcards', 'quiz'] as GenerationKind[]).map((kind) => (
           <PillButton
@@ -82,6 +88,23 @@ export function LibraryActionsRail({
           Glossary
         </PillButton>
       </div>
+      {budgetOpen && (
+        <div className="rounded-[15px] border border-st-bd2 bg-st-card p-4">
+          <p className="text-sm font-medium text-st-ink">How long do you have?</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {BUDGET_OPTIONS.map((m) => (
+              <button
+                key={m}
+                type="button"
+                className="rounded-full border border-st-bd2 px-4 py-2 text-sm hover:border-[#1f604a]"
+                onClick={() => void startTeach(m)}
+              >
+                {m} min
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {!ready && (
         <p className="text-xs text-st-muted">
           Actions unlock when this source is ready.

@@ -23,6 +23,7 @@ export class StudentExamsService {
 
     const rows = await this.db
       .select({
+        examScheduleId: schema.examSchedules.id,
         examName: schema.exams.name,
         subject: schema.subjects.name,
         date: schema.examSchedules.examDate,
@@ -48,6 +49,7 @@ export class StudentExamsService {
         const examDate = new Date(r.date!);
         const daysUntil = Math.max(0, Math.ceil((examDate.getTime() - today.getTime()) / 86400000));
         return {
+          examScheduleId: r.examScheduleId,
           examName: r.examName,
           subject: r.subject,
           date: r.date,
