@@ -326,6 +326,7 @@ export type GenerationFrame =
   | { type: 'section'; section: unknown; index: number }
   | { type: 'card'; card: unknown; index: number }
   | { type: 'item'; item: unknown; index: number }
+  | { type: 'draft'; jobId: string; kind: string; proposals: unknown[]; title?: string; fromLabel?: string }
   | { type: 'saved'; artifactId?: string; deckId?: string; kind: string }
   | { type: 'error'; code: string; message: string };
 
@@ -333,8 +334,9 @@ export function useGenerationStream(itemId: string, kind: GenerationKind) {
   const client = useStudentClient();
   const qc = useQueryClient();
   const [frames, setFrames] = useState<GenerationFrame[]>([]);
-  const [status, setStatus] = useState<'idle' | 'streaming' | 'saved' | 'error'>('idle');
-  const [saved, setSaved] = useState<{ artifactId?: string; deckId?: string } | null>(null);
+  const [status, setStatus] = useState<'idle' | 'streaming' | 'draft' | 'saved' | 'error'>('idle');
+  const [saved, setSaved] = useState<{ artifactId?: string; deckId?: string; noteId?: string } | null>(null);
+  const [draft, setDraft] = useState<{ jobId: string; proposals: unknown[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const connRef = useRef<{ close: () => void } | null>(null);
 
@@ -347,6 +349,7 @@ export function useGenerationStream(itemId: string, kind: GenerationKind) {
     stop();
     setFrames([]);
     setSaved(null);
+    setDraft(null);
     setError(null);
     setStatus('streaming');
     const path = `/library/items/${itemId}/${kind}/stream`;
@@ -358,6 +361,10 @@ export function useGenerationStream(itemId: string, kind: GenerationKind) {
           if (data === '[DONE]') return;
           const gen = data as GenerationFrame;
           setFrames((prev) => [...prev, gen]);
+          if (gen.type === 'draft') {
+            setDraft({ jobId: gen.jobId, proposals: gen.proposals });
+            setStatus('draft');
+          }
           if (gen.type === 'saved') {
             setSaved({ artifactId: gen.artifactId, deckId: gen.deckId });
             setStatus('saved');
@@ -380,7 +387,20 @@ export function useGenerationStream(itemId: string, kind: GenerationKind) {
 
   useEffect(() => () => stop(), [stop]);
 
-  return { frames, status, saved, error, start, stop };
+  return { frames, status, saved, draft, error, start, stop };
+}
+
+export function useSaveGenerationDraft() {
+  const client = useStudentClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { jobId: string; kept: unknown[]; deck_id?: string }) =>
+      client.post<{ saved: number; deckId?: string; artifactId?: string; noteId?: string }>(
+        `/library/generation/${body.jobId}/save`,
+        { kept: body.kept, deck_id: body.deck_id },
+      ),
+    onSuccess: () => invalidateLibrary(qc),
+  });
 }
 
 export function useLibrarySummarize(itemId: string) {

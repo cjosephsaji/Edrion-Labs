@@ -34,9 +34,13 @@ import { AdmissionsRepository } from './admissions.repository';
 import { AttendanceController } from './attendance.controller';
 import { AttendanceService } from './attendance.service';
 import { AttendanceRepository } from './attendance.repository';
+import { AttendancePolicyController } from './attendance-policy.controller';
+import { AttendancePolicyService } from './attendance-policy.service';
 import { TimetableController } from './timetable.controller';
 import { TimetableService } from './timetable.service';
 import { TimetableRepository } from './timetable.repository';
+import { TimetableExceptionsService } from './timetable-exceptions.service';
+import { TimetableFanoutProcessor } from './timetable-fanout.processor';
 import { LabScheduleSyncService } from './lab-schedule-sync.service';
 import { CalendarController } from './calendar.controller';
 import { CalendarService } from './calendar.service';
@@ -45,6 +49,16 @@ import { ExamsService } from './exams.service';
 import { PortalAudienceService } from './portal-audience.service';
 import { ExamsRepository } from './exams.repository';
 import { GradebookController } from './gradebook.controller';
+import { MarkReleaseController } from './mark-release.controller';
+import { MarkReleaseService } from './mark-release.service';
+import { ResultsJobsService } from './results-jobs.service';
+import { ResultsRecomputeService } from './results-recompute.service';
+import { ResultsSettingsController } from './results-settings.controller';
+import { ResultsSettingsService } from './results-settings.service';
+import { GradingPortalController } from './grading-portal.controller';
+import { GradingSchemesService } from './grading-schemes.service';
+import { SubjectWeightMapsService } from './subject-weight-maps.service';
+import { TermRecomputeService } from './term-recompute.service';
 import { GradebookService } from './gradebook.service';
 import { GradebookRepository } from './gradebook.repository';
 import { AssignmentsController } from './assignments.controller';
@@ -185,10 +199,14 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
     PeopleController,
     AdmissionsController,
     AttendanceController,
+    AttendancePolicyController,
     TimetableController,
     CalendarController,
     ExamsController,
     GradebookController,
+    MarkReleaseController,
+    ResultsSettingsController,
+    GradingPortalController,
     AssignmentsController,
     FeesController,
     FeesEngineController,
@@ -263,14 +281,24 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
     AdmissionsService,
     AdmissionsRepository,
     AttendanceService,
+    AttendancePolicyService,
     AttendanceRepository,
     TimetableService,
     TimetableRepository,
+    TimetableExceptionsService,
+    TimetableFanoutProcessor,
     LabScheduleSyncService,
     CalendarService,
     ExamsService,
     ExamsRepository,
     GradebookService,
+    MarkReleaseService,
+    ResultsRecomputeService,
+    ResultsJobsService,
+    ResultsSettingsService,
+    GradingSchemesService,
+    SubjectWeightMapsService,
+    TermRecomputeService,
     GradebookRepository,
     AssignmentsService,
     AssignmentsRepository,
@@ -371,8 +399,11 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
     PortalCrudEngine,
     PortalEntityResolver,
     AttendanceService,
+    AttendancePolicyService,
     AttachmentStorageService,
     StudentPortalConfigService,
+    FeeLedgerService,
+    ResultsSettingsService,
   ],
 })
 export class PortalModule {}

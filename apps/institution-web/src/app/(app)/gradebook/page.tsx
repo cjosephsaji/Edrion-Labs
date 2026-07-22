@@ -3,6 +3,8 @@ import { useMemo } from 'react';
 import { type Column } from '@edrion/ui';
 import { ResourceManager, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
+import { GradebookReleasePanel } from '@/components/gradebook/release-panel';
+import { WeightMapEditor } from '@/components/gradebook/weight-map-editor';
 import { useClassOptions, useSubjectOptions } from '@/lib/academics';
 import { useStudentOptions, studentRowSelectOptions } from '@/lib/people';
 import { useExamOptions } from '@/lib/exams';
@@ -83,7 +85,10 @@ export default function GradebookPage() {
   );
 
   return (
-    <ResourceManager<GradeEntryRow>
+    <>
+      <GradebookReleasePanel />
+      <WeightMapEditor />
+      <ResourceManager<GradeEntryRow>
       resource="gradebook"
       title="Gradebook"
       noun={t('gradeLevel').toLowerCase()}
@@ -108,5 +113,6 @@ export default function GradebookPage() {
         remarks: r.remarks ?? '',
       })}
     />
+    </>
   );
 }

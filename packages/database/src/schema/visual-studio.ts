@@ -35,6 +35,7 @@ export const visualCanvases = pgTable(
     archetype: text('archetype').notNull(),
     graph: jsonb('graph').$type<CanvasGraph>().notNull(),
     schemaVersion: integer('schema_version').notNull().default(1),
+    status: text('status').notNull().default('ready'),
     origin: text('origin').notNull(),
     sourceId: uuid('source_id').references(() => knowledgeItems.id, {
       onDelete: 'set null',
@@ -45,9 +46,12 @@ export const visualCanvases = pgTable(
     sourceSessionId: uuid('source_session_id').references(() => learnSessions.id, {
       onDelete: 'set null',
     }),
+    sourceMeta: jsonb('source_meta').$type<Record<string, unknown> | null>(),
     legacyArtifactId: uuid('legacy_artifact_id').references(() => knowledgeArtifacts.id, {
       onDelete: 'set null',
     }),
+    nodeCount: integer('node_count').notNull().default(0),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
     version: integer('version').notNull().default(1),
     ...timestamps,
   },
@@ -65,10 +69,25 @@ export const visualCanvases = pgTable(
     ),
     originCk: check(
       'visual_canvases_origin_ck',
-      sql`${t.origin} IN ('prompt','library_source','learn_topic','learn_session','memory','legacy')`,
+      sql`${t.origin} IN ('prompt','library_source','learn_topic','learn_session','memory','legacy','debate_clash')`,
     ),
+    statusCk: check(
+      'visual_canvases_status_ck',
+      sql`${t.status} IN ('generating','ready','failed')`,
+    ),
+    nodeCountCk: check('visual_canvases_node_count_ck', sql`${t.nodeCount} >= 0`),
     studentUpdatedIdx: index('visual_canvases_student_updated_idx').on(t.studentId, t.updatedAt),
     indepUpdatedIdx: index('visual_canvases_indep_updated_idx').on(t.independentUserId, t.updatedAt),
+    studentActiveUpdatedIdx: index('visual_canvases_student_active_updated_idx')
+      .on(t.studentId, t.updatedAt)
+      .where(sql`${t.deletedAt} IS NULL`),
+    indepActiveUpdatedIdx: index('visual_canvases_indep_active_updated_idx')
+      .on(t.independentUserId, t.updatedAt)
+      .where(sql`${t.deletedAt} IS NULL`),
+    schemaVersionIdx: index('visual_canvases_schema_version_idx')
+      .on(t.schemaVersion)
+      .where(sql`${t.schemaVersion} < 1`),
+    statusIdx: index('visual_canvases_status_idx').on(t.status),
     sourceIdx: index('visual_canvases_source_idx').on(t.sourceId),
     topicIdx: index('visual_canvases_topic_idx').on(t.topicId),
     legacyUq: uniqueIndex('visual_canvases_legacy_artifact_uq').on(t.legacyArtifactId),
@@ -99,6 +118,10 @@ export const visualCanvasRevisions = pgTable(
     canvasCreatedIdx: index('visual_canvas_revisions_canvas_created_idx').on(
       t.canvasId,
       t.createdAt,
+    ),
+    canvasRevisionDescIdx: index('visual_canvas_revisions_canvas_revision_desc_idx').on(
+      t.canvasId,
+      t.revisionNumber,
     ),
   }),
 );

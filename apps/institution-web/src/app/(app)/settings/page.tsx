@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Bell, BookOpen, Building2, GraduationCap, LayoutList, Save, School, ScrollText, ShieldCheck, SlidersHorizontal, UserCog } from 'lucide-react';
+import { ArrowRight, Bell, BookOpen, Building2, ClipboardCheck, GraduationCap, LayoutList, Save, School, ScrollText, ShieldCheck, SlidersHorizontal, UserCog } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -660,6 +660,9 @@ const ADMIN_LINKS: { label: string; href: string; permission: string; descriptio
   { label: 'Audit Logs', href: '/audit', permission: 'audit.view', description: 'Review every change made in the portal.', icon: ScrollText },
   { label: 'Student portal', href: '/settings/student-portal', permission: 'student_portal.manage', description: 'Invite students and control what they can see.', icon: GraduationCap },
   { label: 'Calendar types', href: '/settings/calendar-types', permission: 'calendar_events.manage', description: 'Event type labels and colours for the institution calendar.', icon: LayoutList },
+  { label: 'Attendance policy', href: '/settings/attendance-policy', permission: 'institution_settings.view', description: 'Thresholds, counting rules, and parent visibility for attendance.', icon: ClipboardCheck },
+  { label: 'Results', href: '/settings/results', permission: 'institution_settings.view', description: 'Release policy, class averages, and revaluation knobs.', icon: ClipboardCheck },
+  { label: 'Grading schemes', href: '/settings/grading-schemes', permission: 'academics.view', description: 'Grade bands, GPA formulas, and term recompute requests.', icon: GraduationCap },
 ];
 
 function AdministrationSection() {

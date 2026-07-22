@@ -318,7 +318,7 @@ export interface ConversationPrompt {
 export interface ParentDashboardResponse {
   studentId: string;
   needsAttention: Array<{ type: string; title: string; detail: string | null; deepLink: string | null }>;
-  attendance: { last30Pct: number | null; lastFive: Array<{ date: string; status: string }> };
+  attendance: { last30Pct: number | null; lastFive: Array<{ date: string; status: string }> } | null;
   timetableToday: Array<{ subject: string; startTime: string | null; endTime: string | null; room: string | null }>;
   timetableTomorrow: Array<{ subject: string; startTime: string | null; endTime: string | null; room: string | null }>;
   assignmentsDue: Array<{ id: string; title: string; dueDate: string | null; subject: string | null }>;

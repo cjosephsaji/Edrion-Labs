@@ -3,12 +3,16 @@ import { and, count, eq, inArray, isNull, isNotNull, schema, type Database } fro
 import type { ParentChildSummary, ParentMeResponse } from '@edrion/schemas';
 import { resolveNomenclature, type InstitutionType } from '@edrion/shared-types';
 import { DATABASE } from '../../common/tokens';
+import { AttendancePolicyService } from '../portal/attendance-policy.service';
 import type { GuardianContext } from './guardian-context';
 
 /** Builds `GET /v1/parent/me`: the guardian, their wards, preferences and unread badge counts. */
 @Injectable()
 export class ParentMeService {
-  constructor(@Inject(DATABASE) private readonly db: Database) {}
+  constructor(
+    @Inject(DATABASE) private readonly db: Database,
+    private readonly attendancePolicy: AttendancePolicyService,
+  ) {}
 
   async getMe(guardian: GuardianContext): Promise<ParentMeResponse> {
     const [guardianRow, institutionRow, children, preferences, unread] = await Promise.all([
@@ -94,10 +98,12 @@ export class ParentMeService {
     const classNameById = new Map(classRows.map((c) => [c.id, c.name]));
     const boarderSet = new Set(boarders.map((b) => b.studentId));
     const transportSet = new Set(transported.map((t) => t.studentId));
+    const policy = await this.attendancePolicy.resolvePolicyValues(guardian.institutionId, null);
 
     return studentRows.map((s): ParentChildSummary => {
       const scope = guardian.students.find((x) => x.studentId === s.id);
       const hiddenSections = scope ? Object.keys(scope.hidden).filter((k) => scope.hidden[k]) : [];
+      if (policy.parentVisibility === 'off') hiddenSections.push('attendance');
       return {
         studentId: s.id,
         firstName: s.firstName,

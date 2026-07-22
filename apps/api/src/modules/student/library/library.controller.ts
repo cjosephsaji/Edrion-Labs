@@ -244,4 +244,20 @@ export class LibraryController {
   ) {
     return this.library.quizAttempt(principal, id, body);
   }
+
+  @Get('library/items/:id/classify')
+  @RequireStudentPermissions('student.library.use')
+  classify(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {
+    return this.library.classifyItem(principal, id);
+  }
+
+  @Post('library/items/:id/classify/accept')
+  @RequireStudentPermissions('student.library.use')
+  acceptClassify(
+    @CurrentStudent() principal: StudentPrincipal,
+    @Param('id') id: string,
+    @Body() body: unknown,
+  ) {
+    return this.library.acceptClassification(principal, id, body as { subject_ref?: Record<string, unknown> });
+  }
 }

@@ -9,9 +9,11 @@ export * from './people';
 export * from './enrollments';
 export * from './admissions';
 export * from './attendance';
+export * from './attendance-policy';
 export * from './timetable';
 export * from './exams';
 export * from './gradebook';
+export * from './grading';
 export * from './assignments';
 export * from './fees';
 export * from './expenses';
@@ -74,6 +76,7 @@ export * from './student';
 export * from './institutional-bridge';
 // Student Library / Lab / Achievements (Plan 04)
 export * from './student-knowledge';
+export * from './library-review';
 // Learn engine (Plan 02)
 export * from './learn';
 // Visual Studio (Thinking Canvas)

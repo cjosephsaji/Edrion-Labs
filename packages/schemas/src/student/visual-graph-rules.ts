@@ -27,6 +27,7 @@ export const ALL_VISUAL_EDGE_TYPES = [
   'example_of',
   'part_of',
   'alternative_to',
+  'clash',
 ] as const;
 
 export type VisualEdgeType = (typeof ALL_VISUAL_EDGE_TYPES)[number];
@@ -39,7 +40,7 @@ export const ANNOTATION_EDGE_TYPES = [
   'contrasts_with',
 ] as const;
 export const CORE_CYCLE_EDGE_TYPES = ['leads_to', 'causes'] as const;
-export const SYMMETRIC_EDGE_TYPES = ['contrasts_with', 'alternative_to'] as const;
+export const SYMMETRIC_EDGE_TYPES = ['contrasts_with', 'alternative_to', 'clash'] as const;
 
 export const VISUAL_NODE_TYPES_BY_ARCHETYPE: Record<VisualArchetype, readonly VisualNodeType[]> = {
   mind_map: ALL_VISUAL_NODE_TYPES,
@@ -56,7 +57,7 @@ export const VISUAL_EDGE_TYPES_BY_ARCHETYPE: Record<VisualArchetype, readonly Vi
   cycle: ['leads_to', 'causes', 'requires', 'example_of'],
   timeline: ['leads_to', 'causes', 'requires', 'example_of'],
   hierarchy: ['part_of', 'example_of', 'requires'],
-  comparison: ['part_of', 'contrasts_with', 'example_of', 'requires'],
+  comparison: ['part_of', 'contrasts_with', 'example_of', 'requires', 'clash'],
 };
 
 export const GRAPH_DEPTH_LIMIT = 6;
@@ -69,6 +70,11 @@ export interface VisualGraphIssue {
 export interface GraphForValidation {
   archetype: VisualArchetype;
   root_node_id: string | null;
+  groups?: Array<{
+    id: string;
+    label: string;
+    color_token?: string | null;
+  }>;
   nodes: Array<{
     id: string;
     type: string;
@@ -78,6 +84,10 @@ export interface GraphForValidation {
     collapsed: boolean;
     status: string;
     origin: string;
+    group_id?: string | null;
+    event_date?: string | null;
+    color_token?: string | null;
+    pinned?: { x: number; y: number } | null;
   }>;
   edges: Array<{
     id: string;
@@ -977,7 +987,118 @@ function validateHierarchy(
   }
 }
 
-function validateComparison(
+function validateNonComparisonGroups(
+  graph: GraphForValidation,
+  issues: VisualGraphIssue[],
+): void {
+  if (graph.archetype === 'comparison') {
+    return;
+  }
+  if ((graph.groups ?? []).length > 0) {
+    pushIssue(issues, ['groups'], 'Only comparison graphs may define groups in v1');
+  }
+}
+
+function groupIdForNode(
+  nodeId: string,
+  nodeById: Map<string, GraphNode>,
+): string | null {
+  const node = nodeById.get(nodeId);
+  if (!node) {
+    return null;
+  }
+  if (node.group_id != null) {
+    return node.group_id;
+  }
+  return null;
+}
+
+function validateClashEdges(
+  graph: GraphForValidation,
+  issues: VisualGraphIssue[],
+  nodeById: Map<string, GraphNode>,
+): void {
+  for (const [index, edge] of graph.edges.entries()) {
+    if (edge.type !== 'clash') {
+      continue;
+    }
+    if (graph.archetype !== 'comparison') {
+      pushIssue(issues, edgePath(index, 'type'), 'clash edges are only allowed for comparison');
+      continue;
+    }
+    const sourceGroup = groupIdForNode(edge.source, nodeById);
+    const targetGroup = groupIdForNode(edge.target, nodeById);
+    if (sourceGroup === null || targetGroup === null) {
+      pushIssue(
+        issues,
+        edgePath(index),
+        'clash edges must connect grouped argument nodes',
+      );
+      continue;
+    }
+    if (sourceGroup === targetGroup) {
+      pushIssue(
+        issues,
+        edgePath(index),
+        'clash edges must connect nodes in different groups',
+      );
+    }
+  }
+}
+
+function validateComparisonWithGroups(
+  graph: GraphForValidation,
+  issues: VisualGraphIssue[],
+  nodeById: Map<string, GraphNode>,
+  nodeIndexById: Map<string, number>,
+): void {
+  const groups = graph.groups ?? [];
+  if (groups.length < 2 || groups.length > 3) {
+    pushIssue(issues, ['groups'], 'Comparison needs exactly 2 or 3 groups');
+    return;
+  }
+
+  const comparableTypes = new Set(['concept', 'definition', 'example', 'formula', 'note', 'question']);
+  for (const group of groups) {
+    const members = graph.nodes.filter((node) => node.group_id === group.id && comparableTypes.has(node.type));
+    if (members.length === 0) {
+      pushIssue(
+        issues,
+        ['groups'],
+        `Comparison group "${group.id}" needs at least one comparable node`,
+      );
+    }
+  }
+
+  const sharedAttributes = graph.nodes.filter(
+    (node) => node.group_id == null && node.type === 'concept',
+  );
+  for (const node of sharedAttributes) {
+    const connectedGroups = new Set<string>();
+    for (const edge of graph.edges) {
+      if (edge.type !== 'contrasts_with') {
+        continue;
+      }
+      const otherId = edge.source === node.id ? edge.target : edge.target === node.id ? edge.source : null;
+      if (!otherId) {
+        continue;
+      }
+      const groupId = groupIdForNode(otherId, nodeById);
+      if (groupId) {
+        connectedGroups.add(groupId);
+      }
+    }
+    if (connectedGroups.size > 0 && connectedGroups.size < 2) {
+      pushIssue(
+        issues,
+        nodePath(nodeIndexById, node.id),
+        'Shared attribute nodes must contrast nodes in at least two groups',
+      );
+    }
+  }
+}
+
+function validateComparisonLegacy(
   graph: GraphForValidation,
   issues: VisualGraphIssue[],
   nodeIndexById: Map<string, number>,
@@ -1068,6 +1189,20 @@ function validateComparison(
   }
 }
 
+function validateComparison(
+  graph: GraphForValidation,
+  issues: VisualGraphIssue[],
+  nodeById: Map<string, GraphNode>,
+  nodeIndexById: Map<string, number>,
+  rootId: string,
+): void {
+  if ((graph.groups ?? []).length > 0) {
+    validateComparisonWithGroups(graph, issues, nodeById, nodeIndexById);
+    return;
+  }
+  validateComparisonLegacy(graph, issues, nodeIndexById, rootId);
+}
+
 function validateArchetypeStructure(
   graph: GraphForValidation,
   issues: VisualGraphIssue[],
@@ -1075,6 +1210,9 @@ function validateArchetypeStructure(
   nodeIndexById: Map<string, number>,
   rootId: string,
 ): void {
+  validateNonComparisonGroups(graph, issues);
+  validateClashEdges(graph, issues, nodeById);
+
   switch (graph.archetype) {
     case 'mind_map':
       validateMindMap(graph, issues, nodeById, nodeIndexById, rootId);
@@ -1092,7 +1230,7 @@ function validateArchetypeStructure(
       validateHierarchy(graph, issues, nodeIndexById, rootId);
       break;
     case 'comparison':
-      validateComparison(graph, issues, nodeIndexById, rootId);
+      validateComparison(graph, issues, nodeById, nodeIndexById, rootId);
       break;
     default:
       pushIssue(issues, ['archetype'], `Unknown archetype: ${graph.archetype as string}`);

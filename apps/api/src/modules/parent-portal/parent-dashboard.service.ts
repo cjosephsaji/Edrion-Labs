@@ -2,6 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { and, desc, eq, gte, isNotNull, isNull, schema, sql, type Database } from '@edrion/database';
 import type { ParentDashboardResponse } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
+import { AttendancePolicyService } from '../portal/attendance-policy.service';
+import { ParentNotifyService } from './parent-notify.service';
 import { assertWard } from './guardian-scope.guard';
 import type { GuardianContext, GuardianStudentScope } from './guardian-context';
 
@@ -11,7 +13,11 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 /** Builds the single aggregated `GET /v1/parent/dashboard?studentId=` payload for one ward. */
 @Injectable()
 export class ParentDashboardService {
-  constructor(@Inject(DATABASE) private readonly db: Database) {}
+  constructor(
+    @Inject(DATABASE) private readonly db: Database,
+    private readonly policy: AttendancePolicyService,
+    private readonly notify: ParentNotifyService,
+  ) {}
 
   async dashboard(guardian: GuardianContext, studentId: string): Promise<ParentDashboardResponse> {
     const scope = assertWard(guardian, studentId);
@@ -28,7 +34,7 @@ export class ParentDashboardService {
 
     const [attendance, assignmentsDue, upcomingExams, fees, recognitions, notices, ptm, library, transport, needsAttention] =
       await Promise.all([
-        this.attendance(studentId),
+        this.attendance(guardian, studentId),
         this.assignmentsDue(studentId, todayStr, in7),
         this.upcomingExams(classId, todayStr),
         this.outstandingFees(scope, studentId),
@@ -37,7 +43,7 @@ export class ParentDashboardService {
         this.activePtm(guardian.institutionId),
         this.libraryDue(studentId, todayStr),
         this.transport(studentId),
-        this.needsAttention(scope, studentId),
+        this.needsAttention(guardian, scope, studentId),
       ]);
 
     const timetable = await this.timetable(classId, today);
@@ -61,7 +67,9 @@ export class ParentDashboardService {
     };
   }
 
-  private async attendance(studentId: string): Promise<ParentDashboardResponse['attendance']> {
+  private async attendance(guardian: GuardianContext, studentId: string): Promise<ParentDashboardResponse['attendance']> {
+    const policy = await this.policy.resolvePolicyValues(guardian.institutionId, null);
+    if (policy.parentVisibility === 'off') return null;
     const rec = schema.attendanceRecords;
     const ses = schema.attendanceSessions;
     const since = iso(new Date(Date.now() - 30 * DAY));
@@ -183,6 +191,7 @@ export class ParentDashboardService {
   }
 
   private async needsAttention(
+    guardian: GuardianContext,
     scope: GuardianStudentScope,
     studentId: string,
   ): Promise<ParentDashboardResponse['needsAttention']> {
@@ -217,22 +226,51 @@ export class ParentDashboardService {
       .where(and(eq(schema.documentRequests.studentId, studentId), eq(schema.documentRequests.status, 'ready')));
     if ((doc?.c ?? 0) > 0) items.push({ type: 'document_ready', title: 'Document ready', detail: 'A requested document is ready', deepLink: `/family/child/${studentId}/documents` });
 
-    // Unexplained absence in the last 7 days.
-    const rec = schema.attendanceRecords;
-    const ses = schema.attendanceSessions;
-    const since = iso(new Date(Date.now() - 7 * DAY));
-    const absents = await this.db
-      .select({ date: ses.date })
-      .from(rec)
-      .innerJoin(ses, eq(ses.id, rec.sessionId))
-      .where(and(eq(rec.studentId, studentId), eq(rec.status, 'absent'), gte(ses.date, since)));
-    if (absents.length) {
-      const notes = await this.db
-        .select({ from: schema.parentAbsenceNotes.dateFrom, to: schema.parentAbsenceNotes.dateTo })
-        .from(schema.parentAbsenceNotes)
-        .where(and(eq(schema.parentAbsenceNotes.studentId, studentId), eq(schema.parentAbsenceNotes.status, 'acknowledged')));
-      const unexplained = absents.filter((a) => a.date && !notes.some((n) => n.from <= a.date! && n.to >= a.date!));
-      if (unexplained.length) items.push({ type: 'absence_unexplained', title: 'Unexplained absence', detail: `${unexplained.length} day(s)`, deepLink: `/family/child/${studentId}/attendance` });
+    // Unexplained absence in the last 7 days (when attendance is visible to parents).
+    if (!scope.hidden.attendance) {
+      const policy = await this.policy.resolvePolicyValues(guardian.institutionId, scope.campusId);
+      if (policy.parentVisibility !== 'off') {
+        const rec = schema.attendanceRecords;
+        const ses = schema.attendanceSessions;
+        const since = iso(new Date(Date.now() - 7 * DAY));
+        const absents = await this.db
+          .select({ date: ses.date })
+          .from(rec)
+          .innerJoin(ses, eq(ses.id, rec.sessionId))
+          .where(and(eq(rec.studentId, studentId), eq(rec.status, 'absent'), gte(ses.date, since)));
+        if (absents.length) {
+          const notes = await this.db
+            .select({ from: schema.parentAbsenceNotes.dateFrom, to: schema.parentAbsenceNotes.dateTo })
+            .from(schema.parentAbsenceNotes)
+            .where(and(eq(schema.parentAbsenceNotes.studentId, studentId), eq(schema.parentAbsenceNotes.status, 'acknowledged')));
+          const unexplained = absents.filter((a) => a.date && !notes.some((n) => n.from <= a.date! && n.to >= a.date!));
+          if (unexplained.length) {
+            items.push({ type: 'absence_unexplained', title: 'Unexplained absence', detail: `${unexplained.length} day(s)`, deepLink: `/family/child/${studentId}/attendance` });
+            const today = iso(new Date());
+            const sourceEntity = `absence_alert:${studentId}:${today}`;
+            const [sent] = await this.db
+              .select({ id: schema.parentNotifications.id })
+              .from(schema.parentNotifications)
+              .where(
+                and(
+                  eq(schema.parentNotifications.institutionId, guardian.institutionId),
+                  eq(schema.parentNotifications.studentId, studentId),
+                  eq(schema.parentNotifications.sourceEntity, sourceEntity),
+                ),
+              )
+              .limit(1);
+            if (!sent) {
+              await this.notify.emitToStudentGuardians(guardian.institutionId, studentId, {
+                type: 'absence_unexplained',
+                title: 'Unexplained absence',
+                body: `${unexplained.length} day(s) need an absence note.`,
+                deepLink: `/family/child/${studentId}/attendance`,
+                sourceEntity,
+              });
+            }
+          }
+        }
+      }
     }
     return items;
   }

@@ -47,16 +47,18 @@ export default function HomePage() {
       )}
 
       {d && (
-        <div className="grid grid-cols-2 gap-3">
-          <Link href={`/family/child/${child.studentId}/attendance`}>
-            <Card className="min-h-[116px]">
-              <span className="mb-3 grid h-9 w-9 place-items-center rounded-full bg-brand/10 text-brand">
-                <ShieldCheck size={18} />
-              </span>
-              <p className="text-xs text-muted">Attendance (30d)</p>
-              <p className="text-2xl font-bold">{d.attendance.last30Pct ?? '—'}%</p>
-            </Card>
-          </Link>
+        <div className={`grid gap-3 ${!child.hiddenSections?.includes('attendance') && d.attendance ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          {!child.hiddenSections?.includes('attendance') && d.attendance ? (
+            <Link href={`/family/child/${child.studentId}/attendance`}>
+              <Card className="min-h-[116px]">
+                <span className="mb-3 grid h-9 w-9 place-items-center rounded-full bg-brand/10 text-brand">
+                  <ShieldCheck size={18} />
+                </span>
+                <p className="text-xs text-muted">Attendance (30d)</p>
+                <p className="text-2xl font-bold">{d.attendance.last30Pct ?? '—'}%</p>
+              </Card>
+            </Link>
+          ) : null}
           <Link href="/family/fees">
             <Card className="min-h-[116px]">
               <span className="mb-3 grid h-9 w-9 place-items-center rounded-full bg-brand/10 text-brand">

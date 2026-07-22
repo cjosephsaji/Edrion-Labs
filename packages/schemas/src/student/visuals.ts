@@ -1,3 +1,4 @@
+import { SUBJECT_ACCENT_TOKENS } from '@edrion/design-tokens';
 import { z } from 'zod';
 import { collectVisualGraphIssues, computeExpectedDepths } from './visual-graph-rules';
 
@@ -12,18 +13,55 @@ export {
 
 export const GRAPH_SCHEMA_VERSION = 1 as const;
 export const AI_GRAPH_NODE_LIMIT = 60;
+export const AI_GRAPH_EDGE_LIMIT = 120;
+export const AI_GROUP_LIMIT = 6;
 export const AI_GRAPH_DEPTH_LIMIT = 6;
 export const CANVAS_NODE_LIMIT = 200;
+export const CANVAS_EDGE_LIMIT = 600;
 export const CANVAS_GRAPH_MAX_BYTES = 400_000;
+export const GENERATED_NODE_TITLE_MAX_WORDS = 8;
+export const GENERATED_NODE_TITLE_MAX_CHARS = 60;
+export const GENERATED_EDGE_LABEL_MAX_WORDS = 4;
+export const GENERATED_GROUP_LABEL_MAX_WORDS = 6;
 
-export const visualArchetypeSchema = z.enum([
+export const VISUAL_ARCHETYPES = [
   'mind_map',
   'flowchart',
   'cycle',
   'timeline',
   'hierarchy',
   'comparison',
-]);
+] as const;
+
+export const VISUAL_ORIGINS = [
+  'prompt',
+  'library_source',
+  'learn_topic',
+  'learn_session',
+  'memory',
+  'legacy',
+  'debate_clash',
+] as const;
+
+export const VISUAL_CANVAS_STATUSES = ['generating', 'ready', 'failed'] as const;
+
+export const VISUAL_REVISION_REASONS = [
+  'created',
+  'generation',
+  'edit',
+  'ai_extend',
+  'migration',
+  'spawn',
+  'clash_build',
+  'autosave',
+  'ai_patch',
+  'restore',
+] as const;
+
+export const visualArchetypeSchema = z.enum(VISUAL_ARCHETYPES);
+export const visualOriginSchema = z.enum(VISUAL_ORIGINS);
+export const visualCanvasStatusSchema = z.enum(VISUAL_CANVAS_STATUSES);
+export const visualRevisionReasonSchema = z.enum(VISUAL_REVISION_REASONS);
 
 export const visualNodeTypeSchema = z.enum([
   'concept',
@@ -52,6 +90,7 @@ export const visualEdgeTypeSchema = z.enum([
   'example_of',
   'part_of',
   'alternative_to',
+  'clash',
 ]);
 
 export const graphLocalIdSchema = z
@@ -59,6 +98,28 @@ export const graphLocalIdSchema = z
   .min(1)
   .max(64)
   .regex(/^[A-Za-z0-9_-]+$/, 'Use letters, digits, underscore, or hyphen');
+
+export const subjectAccentTokenSchema = z.enum(SUBJECT_ACCENT_TOKENS);
+
+export const visualPinSchema = z
+  .object({
+    x: z.number().finite(),
+    y: z.number().finite(),
+  })
+  .strict();
+
+export const eventDateSchema = z.union([
+  z.string().datetime({ offset: true }),
+  z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+]);
+
+export const visualGroupSchema = z
+  .object({
+    id: graphLocalIdSchema,
+    label: z.string().trim().min(1).max(80),
+    color_token: subjectAccentTokenSchema.nullable().optional(),
+  })
+  .strict();
 
 export const libraryPageSourceRefSchema = z
   .object({
@@ -103,6 +164,10 @@ export const visualGraphNodeSchema = z
     status: visualNodeStatusSchema,
     origin: visualNodeOriginSchema,
     source_ref: visualSourceRefSchema.optional(),
+    group_id: graphLocalIdSchema.nullable().optional(),
+    event_date: eventDateSchema.nullable().optional(),
+    color_token: subjectAccentTokenSchema.nullable().optional(),
+    pinned: visualPinSchema.nullable().optional(),
   })
   .strict();
 
@@ -153,17 +218,51 @@ const canvasGraphShape = z
     archetype: visualArchetypeSchema,
     root_node_id: graphLocalIdSchema.nullable(),
     nodes: z.array(visualGraphNodeSchema).max(CANVAS_NODE_LIMIT),
-    edges: z.array(visualGraphEdgeSchema).max(600),
+    edges: z.array(visualGraphEdgeSchema).max(CANVAS_EDGE_LIMIT),
+    groups: z.array(visualGroupSchema).max(AI_GROUP_LIMIT).default([]),
     layout_cache: z
       .record(visualArchetypeSchema, visualLayoutSnapshotSchema)
       .default({}),
   })
   .strict();
 
+function countWords(value: string): number {
+  return value.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function addGroupStructuralIssues(
+  graph: z.infer<typeof canvasGraphShape>,
+  ctx: z.RefinementCtx,
+) {
+  const groups = graph.groups ?? [];
+  const groupIds = new Set<string>();
+  for (const [index, group] of groups.entries()) {
+    if (groupIds.has(group.id)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['groups', index, 'id'],
+        message: `Duplicate group id: ${group.id}`,
+      });
+    }
+    groupIds.add(group.id);
+  }
+
+  for (const [index, node] of graph.nodes.entries()) {
+    if (node.group_id != null && !groupIds.has(node.group_id)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['nodes', index, 'group_id'],
+        message: `Unknown group id: ${node.group_id}`,
+      });
+    }
+  }
+}
+
 function addStructuralGraphIssues(
   graph: z.infer<typeof canvasGraphShape>,
   ctx: z.RefinementCtx,
 ) {
+  addGroupStructuralIssues(graph, ctx);
   const nodeIds = new Set<string>();
   for (const [index, node] of graph.nodes.entries()) {
     if (nodeIds.has(node.id)) {
@@ -227,7 +326,42 @@ function addStructuralGraphIssues(
   }
 }
 
-export const canvasGraphSchema = canvasGraphShape.superRefine(addStructuralGraphIssues);
+export const canvasGraphSchema = canvasGraphShape.superRefine((graph, ctx) => {
+  addStructuralGraphIssues(graph, ctx);
+  assertSerializedCanvasGraphByteCap(graph, ctx);
+});
+
+export function assertSerializedCanvasGraphByteCap(
+  graph: z.infer<typeof canvasGraphShape>,
+  ctx?: z.RefinementCtx,
+): void {
+  const bytes = new TextEncoder().encode(JSON.stringify(graph)).length;
+  if (bytes > CANVAS_GRAPH_MAX_BYTES) {
+    const issue = {
+      code: z.ZodIssueCode.custom,
+      path: [],
+      message: `Serialized graph exceeds ${CANVAS_GRAPH_MAX_BYTES} bytes`,
+    };
+    if (ctx) {
+      ctx.addIssue(issue);
+      return;
+    }
+    throw new Error(issue.message);
+  }
+}
+
+export function stripGenerationGraphPayload<T extends z.infer<typeof canvasGraphShape>>(
+  graph: T,
+): T {
+  return {
+    ...graph,
+    layout_cache: {},
+    nodes: graph.nodes.map((node) => {
+      const { pinned: _pinned, ...rest } = node;
+      return rest;
+    }),
+  };
+}
 
 function addCompleteGraphIssues(
   graph: z.infer<typeof canvasGraphShape>,
@@ -274,7 +408,7 @@ export const aiVisualGraphEdgeSchema = visualGraphEdgeSchema.extend({
 });
 
 const aiCanvasGraphShape = canvasGraphShape.extend({
-  edges: z.array(aiVisualGraphEdgeSchema).max(600),
+  edges: z.array(aiVisualGraphEdgeSchema).max(AI_GRAPH_EDGE_LIMIT),
 });
 
 /**
@@ -305,13 +439,91 @@ function normalizeAiGraph(
       })()
     : graph.nodes;
 
-  return { ...graph, nodes, edges };
+  return stripGenerationGraphPayload({ ...graph, nodes, edges });
+}
+
+function addGeneratedGraphIssues(
+  graph: z.infer<typeof canvasGraphShape>,
+  ctx: z.RefinementCtx,
+) {
+  if (graph.edges.length > AI_GRAPH_EDGE_LIMIT) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['edges'],
+      message: `Generated output is limited to ${AI_GRAPH_EDGE_LIMIT} edges`,
+    });
+  }
+  if ((graph.groups ?? []).length > AI_GROUP_LIMIT) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['groups'],
+      message: `Generated output is limited to ${AI_GROUP_LIMIT} groups`,
+    });
+  }
+  for (const [index, node] of graph.nodes.entries()) {
+    if (countWords(node.title) > GENERATED_NODE_TITLE_MAX_WORDS) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['nodes', index, 'title'],
+        message: `Generated node titles are limited to ${GENERATED_NODE_TITLE_MAX_WORDS} words`,
+      });
+    }
+    if (node.title.length > GENERATED_NODE_TITLE_MAX_CHARS) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['nodes', index, 'title'],
+        message: `Generated node titles are limited to ${GENERATED_NODE_TITLE_MAX_CHARS} characters`,
+      });
+    }
+    if (node.pinned != null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['nodes', index, 'pinned'],
+        message: 'Generated output must not include pinned coordinates',
+      });
+    }
+  }
+  for (const [index, edge] of graph.edges.entries()) {
+    if (edge.label && countWords(edge.label) > GENERATED_EDGE_LABEL_MAX_WORDS) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['edges', index, 'label'],
+        message: `Generated edge labels are limited to ${GENERATED_EDGE_LABEL_MAX_WORDS} words`,
+      });
+    }
+  }
+  for (const [index, group] of (graph.groups ?? []).entries()) {
+    if (countWords(group.label) > GENERATED_GROUP_LABEL_MAX_WORDS) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['groups', index, 'label'],
+        message: `Generated group labels are limited to ${GENERATED_GROUP_LABEL_MAX_WORDS} words`,
+      });
+    }
+  }
 }
 
 export const aiGeneratedGraphSchema = aiCanvasGraphShape
+  .superRefine((graph, ctx) => {
+    if (Object.keys(graph.layout_cache).length !== 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['layout_cache'],
+        message: 'AI must not produce layout coordinates',
+      });
+    }
+    if (graph.nodes.some((node) => node.pinned != null)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['nodes'],
+        message: 'AI must not produce pinned coordinates',
+      });
+    }
+  })
   .transform(normalizeAiGraph)
   .superRefine((graph, ctx) => {
     addCompleteGraphIssues(graph, ctx);
+    addGeneratedGraphIssues(graph, ctx);
     if (graph.nodes.length > AI_GRAPH_NODE_LIMIT) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -324,13 +536,6 @@ export const aiGeneratedGraphSchema = aiCanvasGraphShape
         code: z.ZodIssueCode.custom,
         path: ['nodes'],
         message: 'Initial AI output must use origin=ai',
-      });
-    }
-    if (Object.keys(graph.layout_cache).length !== 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['layout_cache'],
-        message: 'AI must not produce layout coordinates',
       });
     }
   });
@@ -535,6 +740,11 @@ export const visualSseEventSchema = z.discriminatedUnion('type', [
 ]);
 
 export type VisualArchetype = z.infer<typeof visualArchetypeSchema>;
+export type VisualOrigin = z.infer<typeof visualOriginSchema>;
+export type VisualCanvasStatus = z.infer<typeof visualCanvasStatusSchema>;
+export type VisualRevisionReason = z.infer<typeof visualRevisionReasonSchema>;
+export type SubjectAccentToken = z.infer<typeof subjectAccentTokenSchema>;
+export type VisualGroup = z.infer<typeof visualGroupSchema>;
 export type VisualGraphNode = z.infer<typeof visualGraphNodeSchema>;
 export type VisualGraphEdge = z.infer<typeof visualGraphEdgeSchema>;
 export type CanvasGraph = z.infer<typeof canvasGraphSchema>;
@@ -707,6 +917,18 @@ export const visualCanvasDeleteHeadersSchema = z
   })
   .strict();
 
+export const debateRoundSourceMetaSchema = z
+  .object({
+    kind: z.literal('debate_round'),
+    round_id: z.string().uuid(),
+    transcript_ref: z.string().trim().min(1).max(500).optional(),
+  })
+  .strict();
+
+export const visualCanvasSourceMetaSchema = z.discriminatedUnion('kind', [
+  debateRoundSourceMetaSchema,
+]);
+
 export const visualCanvasDtoSchema = z
   .object({
     id: z.string().uuid(),
@@ -714,10 +936,12 @@ export const visualCanvasDtoSchema = z
     archetype: visualArchetypeSchema,
     graph: canvasGraphSchema,
     schema_version: z.number().int(),
-    origin: z.enum(['prompt', 'library_source', 'learn_topic', 'learn_session', 'memory', 'legacy']),
+    origin: visualOriginSchema,
+    status: visualCanvasStatusSchema,
     source_id: z.string().uuid().nullable(),
     topic_id: z.string().uuid().nullable(),
     source_session_id: z.string().uuid().nullable(),
+    source_meta: visualCanvasSourceMetaSchema.nullable(),
     version: z.number().int().positive(),
     created_at: z.string().datetime(),
     updated_at: z.string().datetime(),
@@ -746,7 +970,84 @@ export const visualCanvasListResponseSchema = z
 export const visualCanvasPatchResponseSchema = z
   .object({
     canvas: visualCanvasDtoSchema,
-    conflict_resolved: z.enum(['last_write_wins']).nullable(),
+  })
+  .strict();
+
+export const canvasGenerateSourceSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('prompt'), prompt: z.string().trim().min(3).max(2000) }).strict(),
+  z
+    .object({
+      kind: z.literal('library'),
+      item_id: z.string().uuid(),
+      page_from: z.number().int().min(1).optional(),
+      page_to: z.number().int().min(1).optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('learn_topic'),
+      topic_id: z.string().uuid(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('learn_session'),
+      session_id: z.string().uuid(),
+      block_id: z.string().uuid().optional(),
+    })
+    .strict(),
+]);
+
+export const canvasGenerateBodySchema = z
+  .object({
+    archetype: visualArchetypeSchema,
+    source: canvasGenerateSourceSchema,
+    title: z.string().trim().min(1).max(200).optional(),
+  })
+  .strict();
+
+export const canvasGenerateAcceptedSchema = z
+  .object({
+    canvas_id: z.string().uuid(),
+    job_id: z.string(),
+    status: z.literal('generating'),
+  })
+  .strict();
+
+export const canvasExtendBodySchema = z
+  .object({
+    base_revision: z.number().int().min(1),
+    node_id: graphLocalIdSchema,
+    prompt: z.string().trim().min(1).max(500),
+    client_request_id: z.string().uuid(),
+  })
+  .strict();
+
+export const canvasRevisionBodySchema = visualCanvasPatchInputSchema.omit({ client_mutation_id: true }).extend({
+  client_mutation_id: z.string().uuid().optional(),
+});
+
+export const canvasDeleteBodySchema = z
+  .object({
+    version: z.number().int().min(1),
+  })
+  .strict();
+
+export const labHomeCardSchema = z
+  .object({
+    key: z.enum(['mock_exams', 'mind_maps', 'debate', 'entrance_prep']),
+    label: z.string(),
+    href: z.string(),
+    status: z.enum(['ready', 'coming_soon', 'resume']),
+    resume_canvas_id: z.string().uuid().optional(),
+    resume_title: z.string().optional(),
+  })
+  .strict();
+
+export const labHomeResponseSchema = z
+  .object({
+    cards: z.array(labHomeCardSchema),
+    canvas_enabled: z.boolean(),
   })
   .strict();
 
@@ -760,7 +1061,7 @@ export const visualRevisionSummarySchema = z
   .object({
     id: z.string().uuid(),
     revision_number: z.number().int().positive(),
-    reason: z.enum(['created', 'autosave', 'ai_patch', 'restore', 'migration']),
+    reason: visualRevisionReasonSchema,
     created_at: z.string().datetime(),
     title: z.string(),
     archetype: visualArchetypeSchema,
@@ -877,6 +1178,9 @@ export type VisualQuotaResponse = z.infer<typeof visualQuotaResponseSchema>;
 export type VisualCanvasCreateInput = z.infer<typeof visualCanvasCreateInputSchema>;
 export type VisualCanvasPatchInput = z.infer<typeof visualCanvasPatchInputSchema>;
 export type VisualCanvasPatchResponse = z.infer<typeof visualCanvasPatchResponseSchema>;
+export type CanvasGenerateBody = z.infer<typeof canvasGenerateBodySchema>;
+export type CanvasGenerateAccepted = z.infer<typeof canvasGenerateAcceptedSchema>;
+export type LabHomeResponse = z.infer<typeof labHomeResponseSchema>;
 export type VisualCanvasListResponse = z.infer<typeof visualCanvasListResponseSchema>;
 export type VisualRevisionListResponse = z.infer<typeof visualRevisionListResponseSchema>;
 export type VisualRevisionQueueInput = z.infer<typeof visualRevisionQueueInputSchema>;

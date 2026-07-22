@@ -20,6 +20,8 @@ export * from './exam-grading';
 export * from './exam-sse';
 export * from './debate';
 export * from './visuals';
+export * from './visual-parity';
+export * from './canvas-migrations';
 export * from './visual-legacy';
 export * from './achievements';
 export * from './blocks';

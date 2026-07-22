@@ -40,3 +40,115 @@
 - Review count and the synthetic review obligation share one `flashcards.next_due_at` query and the migration adds its index.
 - Today notification fan-out, quiet-hour holding, and coalescing register job types on the existing queues/workers and use the existing push channel. No parallel notification stack is introduced.
 - Where the repository has no writer (notably clubs) or no independent plan-engine block table, Today does not invent one; those states remain unavailable until their source feature exists.
+
+# Tier 2 pending decisions — 2026-07-21
+
+These records are scaffolds only. None is approved until the founder replaces the pending status.
+
+## D-T2-001 — Deployed CanvasGraph vocabulary wins
+
+- Recommendation: Keep `graph_schema_version`, the deployed node/edge field names, and underscore archetypes; add the planned optional v1 group/pin/date/color fields and reserved `clash` only through Graph A1 after the documented parity mismatch is ruled on.
+- Status: PENDING FOUNDER SIGN-OFF
+- Reversal trigger:
+
+## D-T2-002 — Graph origin mapping
+
+- Recommendation: Map Lab to `prompt`/`learn_topic`, Library to `library_source`, and Edrion Learn to `learn_session`; retain `memory`/`legacy` and add only `debate_clash`.
+- Status: PENDING FOUNDER SIGN-OFF
+- Reversal trigger:
+
+## D-T2-003 — Graph layout and revision policy
+
+- Recommendation: Use one Node-safe layout package, 409 optimistic conflicts, append committed states, a 200 ordinary-revision cap that preserves anchors, and soft deletion.
+- Status: PENDING FOUNDER SIGN-OFF
+- Reversal trigger:
+
+## D-T2-004 — Edrion Learn product split and clean rebuild
+
+- Recommendation: Petros answers and Edrion Learn teaches; follow the exact delete, retain, and split-boundary lists in the Learn plan.
+- Status: PENDING FOUNDER SIGN-OFF
+- Reversal trigger:
+
+## D-T2-005 — Repository owner convention overrides hyperspec `owner_kind`
+
+- Recommendation: Use the deployed institution/student/independent owner columns for new Learn profiles/mastery, vault/renders, and blueprints/banks.
+- Status: PENDING FOUNDER SIGN-OFF
+- Reversal trigger:
+
+## D-T2-006 — `student_tutor` as a policy domain
+
+- Recommendation: Extend the existing policy resolver/table with typed domain configuration and a permissive global default; do not create a second policy engine.
+- Status: PENDING FOUNDER SIGN-OFF
+- Reversal trigger:
+
+## D-T2-007 — Edrion Learn launch constraints
+
+- Recommendation: Ship independent-first with no P1 push notifications, no mastery decay, deterministic chat-to-teaching handoff, a configurable 14-move/15-minute default, and the full 180-session release gate.
+- Status: PENDING FOUNDER SIGN-OFF
+- Reversal trigger:
+
+## D-T2-008 — Self-declared goal location
+
+- Recommendation: Version the existing `learning_paths.goal` object and make it drive the independent Today plan; do not create a goals table.
+- Status: PENDING FOUNDER SIGN-OFF
+- Reversal trigger:
+
+## D-T2-009 — One document vault and renderer
+
+- Recommendation: Evolve `student_document_vault` and route every PDF through `document_renders`; preview renders never file a vault document.
+- Status: PENDING FOUNDER SIGN-OFF
+- Reversal trigger:
+
+## D-T2-010 — Document verification and privacy
+
+- Recommendation: Use a dedicated signer/secret, initials by default with an audited full-name setting, constant-shape 404 responses, and future-download-only revocation watermarking.
+- Status: PENDING FOUNDER SIGN-OFF
+- Reversal trigger:
+
+## D-T2-011 — One document request/catalog and deployed fee flow
+
+- Recommendation: Keep one `document_request` with a dynamic catalog adapter; paid requests remain draft until confirmation, and rejection flags Fees work instead of auto-refunding.
+- Status: PENDING FOUNDER SIGN-OFF
+- Reversal trigger:
+
+## D-T2-012 — Report review and correction
+
+- Recommendation: Review per section with per-card flags, invalidate signatures only for regenerated cards, and keep the reissue reason internal.
+- Status: PENDING FOUNDER SIGN-OFF
+- Reversal trigger:
+
+## D-T2-013 — Released-results snapshot
+
+- Recommendation: Bind report cards to `mark_release_batches` plus published entry IDs and use the extracted shared term aggregate as the only GPA implementation.
+- Status: PENDING FOUNDER SIGN-OFF
+- Reversal trigger:
+
+## D-T2-014 — Mock blueprint snapshot and bank approval
+
+- Recommendation: Reuse the existing blueprint version, snapshot it immutably on each mock, and keep new AI/import bank items pending until explicit approval.
+- Status: PENDING FOUNDER SIGN-OFF
+- Reversal trigger:
+
+## D-T2-015 — Mock generation and player contract
+
+- Recommendation: Permit no placeholders, allow an honest shrink only at or above the 60% validated threshold, never pause the timer, and use a 120-second answer grace period.
+- Status: PENDING FOUNDER SIGN-OFF
+- Reversal trigger:
+
+## D-T2-016 — Subjective score authority
+
+- Recommendation: Make the learner's self-grade final; reveal AI only as a comparator, and run no AI pass for on-paper answers.
+- Status: PENDING FOUNDER SIGN-OFF
+- Reversal trigger:
+
+## D-T2-017 — Frozen NTA skin and mock privacy
+
+- Recommendation: Treat checked-in pixel references and exact controls as a Tier 3 contract; keep voluntary individual scores unavailable to staff and psychometrics informational from n=30.
+- Status: PENDING FOUNDER SIGN-OFF
+- Reversal trigger:
+
+## D-T2-018 — Past-mistakes projection
+
+- Recommendation: Derive past mistakes from mock-answer evaluations plus compatible learning evidence unless a separate mutable notebook is explicitly approved.
+- Status: PENDING FOUNDER SIGN-OFF
+- Reversal trigger:

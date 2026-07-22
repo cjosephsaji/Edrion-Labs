@@ -16,10 +16,10 @@ export type AutosavePayload = {
 };
 
 export type AutosaveCallbacks = {
-  patch: (payload: VisualCanvasPatchInput) => Promise<{ conflict_resolved: 'last_write_wins' | null }>;
+  patch: (payload: VisualCanvasPatchInput) => Promise<unknown>;
   onStatus?: (status: CanvasSaveStatus) => void;
   onSaved?: (version: number) => void;
-  onConflict?: () => void;
+  onConflict?: (latestRevision: number, latestGraph: VisualCanvasPatchInput['graph']) => void;
 };
 
 export class CanvasAutosave {
@@ -77,11 +77,19 @@ export class CanvasAutosave {
       await clearQueuedSave(this.pending.canvasId);
       this.callbacks.onSaved?.(this.pending.baseVersion + 1);
       this.callbacks.onStatus?.('saved');
-      if (result.conflict_resolved === 'last_write_wins') this.callbacks.onConflict?.();
       this.resetTimers();
       this.pending = null;
       this.firstEditAt = null;
-    } catch {
+    } catch (err) {
+      const body =
+        err && typeof err === 'object' && 'response' in err
+          ? ((err as { response?: { data?: { code?: string; latest_revision?: number; latest_graph?: VisualCanvasPatchInput['graph'] } } }).response?.data ?? null)
+          : null;
+      if (body?.code === 'REV_CONFLICT' && body.latest_revision && body.latest_graph) {
+        this.callbacks.onStatus?.('conflict');
+        this.callbacks.onConflict?.(body.latest_revision, body.latest_graph);
+        return;
+      }
       this.callbacks.onStatus?.('error');
     }
   }

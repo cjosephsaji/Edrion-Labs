@@ -286,7 +286,19 @@ export class EvaluatorService {
     }>,
   ): Promise<{
     results: Array<{ index: number; verdict: 'solid' | 'slipped' | 'missed'; note: string; sourcePage?: number }>;
-    patterns: string[];
+    patterns: {
+      per_question: Array<{
+        question_id: string;
+        topic: string;
+        type: string;
+        correct: boolean;
+        chosen: string | null;
+        time_ms: number;
+      }>;
+      per_topic: Record<string, { asked: number; correct: number }>;
+      difficulty: number;
+      source_knowledge_item_id: string | null;
+    };
   }> {
     const results: Array<{
       index: number;
@@ -358,12 +370,29 @@ export class EvaluatorService {
       }
     }
 
-    const patterns: string[] = [];
-    const missed = results.filter((r) => r.verdict === 'missed').length;
-    const slipped = results.filter((r) => r.verdict === 'slipped').length;
-    if (missed >= 2) patterns.push('A few questions need another look at the source pages.');
-    if (slipped >= 2) patterns.push('Several answers were close — tighten the wording against the source.');
-    if (missed === 0 && slipped === 0) patterns.push('You stayed close to the source throughout.');
+    const patterns = {
+      per_question: items.map((item, index) => {
+        const verdict = results[index]?.verdict ?? 'missed';
+        return {
+          question_id: String(index),
+          topic: 'general',
+          type: item.qtype,
+          correct: verdict === 'solid',
+          chosen: item.choiceKey ?? item.answerText ?? null,
+          time_ms: 0,
+        };
+      }),
+      per_topic: items.reduce<Record<string, { asked: number; correct: number }>>((acc, _item, index) => {
+        const topic = 'general';
+        const bucket = acc[topic] ?? { asked: 0, correct: 0 };
+        bucket.asked += 1;
+        if (results[index]?.verdict === 'solid') bucket.correct += 1;
+        acc[topic] = bucket;
+        return acc;
+      }, {}),
+      difficulty: 2,
+      source_knowledge_item_id: null as string | null,
+    };
     return { results, patterns };
   }
 }

@@ -188,6 +188,8 @@ export const subjects = pgTable(
     /** When true, timetable slots for this subject auto-sync to the lab schedule. */
     isLabSubject: boolean('is_lab_subject').notNull().default(false),
     departmentId: uuid('department_id').references(() => departments.id, { onDelete: 'set null' }),
+    /** Weekly period quota for builder conflict warnings. */
+    weeklyPeriods: integer('weekly_periods'),
     version: integer('version').notNull().default(0),
     ...actorColumns,
     ...timestamps,
@@ -351,6 +353,9 @@ export const academicTerms = pgTable(
     isCurrent: boolean('is_current').notNull().default(false),
     /** planning | active | archived. */
     status: text('status').notNull().default('active'),
+    /** Frozen on first mark release of the term; see grading_schemes. */
+    gradingSchemeId: uuid('grading_scheme_id'),
+    gradingSchemeVersion: integer('grading_scheme_version'),
     version: integer('version').notNull().default(0),
     ...actorColumns,
     ...timestamps,

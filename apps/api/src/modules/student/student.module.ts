@@ -38,6 +38,20 @@ import { LibraryStreamController } from './library/library-stream.controller';
 import { LibraryRepository } from './library/library.repository';
 import { LibraryService } from './library/library.service';
 import { LibraryIngestWorker } from './library/library-ingest.worker';
+import { FsrsBackfillProcessor } from './library/fsrs-backfill.processor';
+import { LibraryReviewController } from './library/library-review.controller';
+import { LibraryReviewService } from './library/library-review.service';
+import { StreakService } from './library/streak.service';
+import { ExamBoostResolver } from './library/exam-boost.resolver';
+import { ExamBoostService } from './library/exam-boost.service';
+import { LibraryReminderProcessor } from './library/library-reminder.processor';
+import { StreakFinalizeProcessor } from './library/streak-finalize.processor';
+import { LibraryNotesController } from './library/notes.controller';
+import { LibraryAskController } from './library/ask.controller';
+import { KnowledgeIndexProcessor } from './library/knowledge-index.processor';
+import { GenerationCurationService } from './library/generation-curation.service';
+import { SubjectFilingService } from './library/subject-filing.service';
+import { GenerationController } from './library/generation.controller';
 import { ExamEngineModule } from './exam-engine/exam-engine.module';
 import { LabDebateController } from './lab-debate/lab-debate.controller';
 import { LabDebateService } from './lab-debate/lab-debate.service';
@@ -64,6 +78,7 @@ import { StudentHomeworkService } from './homework/homework.service';
 import { HomeworkRepository } from './homework/homework.repository';
 import { HomeworkPolicyService } from './homework/homework-policy.service';
 import { VisualStudioModule } from './visual-studio/visual-studio.module';
+import { LabHomeModule } from './lab-home/lab-home.module';
 import { StudentSurfacesController } from './surfaces/student-surfaces.controller';
 import { StudentSurfacesReadService } from './surfaces/student-surfaces-read.service';
 import { SurfaceGateService } from './surfaces/surface-gate.service';
@@ -73,9 +88,19 @@ import { TodayController } from './today/today.controller';
 import { TodayService } from './today/today.service';
 import { TodayJobsService } from './today/today-jobs.service';
 import { TodayNotificationModule } from '../today-notification.module';
+import { StudentTimetableController } from './timetable/student-timetable.controller';
+import { TimetableResolverService } from './timetable/timetable-resolver.service';
+import { IcsService } from './timetable/ics.service';
+import { IcsController } from './timetable/ics.controller';
+import { StudentAttendanceController } from './attendance/student-attendance.controller';
+import { StudentAttendanceService } from './attendance/student-attendance.service';
+import { AttendanceRollupService } from './attendance/attendance-rollup.service';
+import { AttendanceJobsService } from './attendance/attendance-jobs.service';
+import { StudentResultsController } from './results/student-results.controller';
+import { StudentResultsService } from './results/student-results.service';
 
 @Module({
-  imports: [FeatureControlsModule, PortalModule, LearnAiModule, LearningEventsModule, VisualStudioModule, ExamEngineModule, StudentAuthModule, TodayNotificationModule],
+  imports: [FeatureControlsModule, PortalModule, LearnAiModule, LearningEventsModule, VisualStudioModule, LabHomeModule, ExamEngineModule, StudentAuthModule, TodayNotificationModule],
   controllers: [
     StudentAuthController,
     StudentMeController,
@@ -91,6 +116,10 @@ import { TodayNotificationModule } from '../today-notification.module';
     HistoryController,
     LibraryController,
     LibraryStreamController,
+    LibraryReviewController,
+    LibraryNotesController,
+    LibraryAskController,
+    GenerationController,
     LabDebateController,
     AchievementsController,
     StudentAnalyticsController,
@@ -105,6 +134,10 @@ import { TodayNotificationModule } from '../today-notification.module';
     StudentPortalRuntimeConfigController,
     StudentFeesController,
     TodayController,
+    StudentTimetableController,
+    IcsController,
+    StudentAttendanceController,
+    StudentResultsController,
   ],
   providers: [
     StudentMeService,
@@ -124,6 +157,16 @@ import { TodayNotificationModule } from '../today-notification.module';
     LibraryRepository,
     LibraryService,
     LibraryIngestWorker,
+    FsrsBackfillProcessor,
+    LibraryReviewService,
+    StreakService,
+    ExamBoostResolver,
+    ExamBoostService,
+    LibraryReminderProcessor,
+    StreakFinalizeProcessor,
+    KnowledgeIndexProcessor,
+    GenerationCurationService,
+    SubjectFilingService,
     LabDebateService,
     AchievementsService,
     AchievementsProcessor,
@@ -142,6 +185,12 @@ import { TodayNotificationModule } from '../today-notification.module';
     StudentSurfacesReadService,
     TodayService,
     TodayJobsService,
+    TimetableResolverService,
+    IcsService,
+    StudentAttendanceService,
+    AttendanceRollupService,
+    AttendanceJobsService,
+    StudentResultsService,
     { provide: APP_INTERCEPTOR, useClass: StudentTenantInterceptor },
   ],
   exports: [
@@ -149,6 +198,9 @@ import { TodayNotificationModule } from '../today-notification.module';
     LearningEventsModule,
     StudentStorageService,
     SurfaceGateService,
+    TimetableResolverService,
+    AttendanceRollupService,
+    AttendanceJobsService,
   ],
 })
 export class StudentModule {}

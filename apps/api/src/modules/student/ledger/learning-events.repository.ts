@@ -9,4 +9,11 @@ export class LearningEventsRepository {
   async insert(row: typeof schema.learningEvents.$inferInsert): Promise<void> {
     await this.db.insert(schema.learningEvents).values(row);
   }
+
+  async insertInTransaction(
+    tx: Database,
+    row: typeof schema.learningEvents.$inferInsert,
+  ): Promise<void> {
+    await tx.insert(schema.learningEvents).values(row);
+  }
 }

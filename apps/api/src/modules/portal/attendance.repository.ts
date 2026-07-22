@@ -203,6 +203,7 @@ export class AttendanceRepository {
         set: {
           status: values.status,
           remarks: values.remarks ?? null,
+          provenance: values.provenance ?? null,
           version: sql`${t.version} + 1`,
           updatedBy: values.createdBy ?? null,
           updatedAt: new Date(),
@@ -272,6 +273,7 @@ export class AttendanceRepository {
         set: {
           status: sql`excluded.status`,
           remarks: sql`excluded.remarks`,
+          provenance: sql`coalesce(excluded.provenance, ${t.provenance})`,
           version: sql`${t.version} + 1`,
           updatedBy: sql`excluded.created_by`,
           updatedAt: new Date(),

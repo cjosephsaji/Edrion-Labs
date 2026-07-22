@@ -39,7 +39,7 @@ export interface RequestTypeConfig<TPayload extends Record<string, unknown> = Re
   label: string;
   humanCodePrefix: string;
   category: string;
-  entrySurface?: 'documents';
+  entrySurface?: 'documents' | 'attendance' | 'results';
   /** Schema inputs may omit fields that are filled by Zod defaults; its parsed output is TPayload. */
   payloadSchema: z.ZodType<TPayload, z.ZodTypeDef, unknown>;
   payloadSchemaVersion: number;
@@ -52,6 +52,7 @@ export interface RequestTypeConfig<TPayload extends Record<string, unknown> = Re
   producesDocument: boolean;
   bulkApprovable: boolean;
   approvalSideEffectKey?: string;
+  approveFormSchema?: z.ZodType;
   notifications: Partial<Record<RequestEventType, { title: string; body: string }>>;
   summaryLine(payload: TPayload): string;
 }

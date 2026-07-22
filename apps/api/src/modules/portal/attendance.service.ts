@@ -24,6 +24,12 @@ import { AttendanceRepository, type AttendanceRefTable } from './attendance.repo
 import { resolveCurrentStaffId } from './current-staff';
 import { institutionNow, slotTiming, getCachedInstitutionTimezone } from './institution-clock';
 import { basePortalAudit, type PortalActionContext } from './portal-action-context';
+import { JobsService } from '../../common/queue/jobs.service';
+import {
+  ATTENDANCE_RECOMPUTE_JOB,
+  type AttendanceRecomputeJobData,
+} from '../student/attendance/attendance.constants';
+import { and, eq, schema } from '@edrion/database';
 
 const MODULE = 'portal-attendance';
 
@@ -39,6 +45,7 @@ export class AttendanceService {
     private readonly repo: AttendanceRepository,
     @Inject(DATABASE) private readonly db: Database,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
+    private readonly jobs: JobsService,
   ) {}
 
   // === sessions ==============================================================
@@ -329,7 +336,62 @@ export class AttendanceService {
     await this.write(ctx, 'attendance.mark', 'attendance_session', sessionId, session.campusId, {
       newState: { marks: byStudent.size },
     });
+    await this.afterMarksWritten(ctx.principal.institutionId, sessionId, [...byStudent.keys()]);
     return this.repo.listRecords(sessionId);
+  }
+
+  /** System/request-engine write path with provenance — bypasses portal scope but stays institution-scoped. */
+  async markSystem(
+    institutionId: string,
+    sessionId: string,
+    mark: {
+      studentId: string;
+      status: string;
+      remarks?: string | null;
+      provenance?: {
+        kind: 'leave_approval' | 'od_approval' | 'correction_approval';
+        request_id: string;
+      } | null;
+    },
+  ) {
+    const session = await this.repo.findSession(sessionId, institutionId);
+    if (!session) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Attendance session not found' });
+    await this.repo.upsertRecords([
+      {
+        institutionId,
+        sessionId,
+        studentId: mark.studentId,
+        status: mark.status,
+        remarks: mark.remarks ?? null,
+        provenance: mark.provenance ?? null,
+        createdBy: null,
+      },
+    ]);
+    await this.afterMarksWritten(institutionId, sessionId, [mark.studentId]);
+    return this.repo.listRecords(sessionId);
+  }
+
+  private async afterMarksWritten(institutionId: string, sessionId: string, studentIds: string[]) {
+    const [session] = await this.db
+      .select()
+      .from(schema.attendanceSessions)
+      .where(eq(schema.attendanceSessions.id, sessionId))
+      .limit(1);
+    if (!session?.termId) return;
+    for (const studentId of studentIds) {
+      for (const subjectId of [session.subjectId, null] as Array<string | null>) {
+        const data: AttendanceRecomputeJobData = {
+          institutionId,
+          studentId,
+          subjectId,
+          termId: session.termId,
+        };
+        await this.jobs.enqueue('notifications', ATTENDANCE_RECOMPUTE_JOB, data as unknown as Record<string, unknown>, {
+          jobId: `attendance:${studentId}:${subjectId ?? 'overall'}:${session.termId}`,
+          delay: 30_000,
+        });
+      }
+    }
   }
 
   async removeRecord(ctx: PortalActionContext, sessionId: string, recordId: string) {

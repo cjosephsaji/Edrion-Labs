@@ -6,6 +6,8 @@ import { LEARNING_EVENTS_WRITER } from '../../../common/tokens';
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import {
   CANVAS_GRAPH_MAX_BYTES,
+  CURRENT_CANVAS_GRAPH_VERSION,
+  MIGRATED_FORMAT_LABEL,
   canvasGraphSchema,
   collectVisualGraphIssues,
   completeCanvasGraphSchema,
@@ -20,12 +22,14 @@ import {
   type VisualMemoryCheckInput,
   type VisualProposalInput,
   type VisualQuizSubmitInput,
-  type VisualRevisionQueueInput,
+  type CanvasGenerateBody,
+  type CanvasGenerateAccepted,
 } from '@edrion/schemas';
 
 import type { VisualCanvas } from '@edrion/database';
 
 import { JobsService } from '../../../common/queue/jobs.service';
+import { IdempotencyService } from '../../../common/idempotency.service';
 
 import { AiUsageLimiter } from '../../copilot/ai-usage-limiter.service';
 
@@ -50,6 +54,7 @@ import {
 } from './visual.errors';
 
 import { VisualStudioRepository } from './visual-studio.repository';
+import { VisualRevisionService } from './visual-revision.service';
 
 import { VisualTopicalityService } from './visual-topicality.service';
 
@@ -207,6 +212,8 @@ export class VisualStudioService {
 
     private readonly repo: VisualStudioRepository,
 
+    private readonly revisions: VisualRevisionService,
+
     private readonly limiter: AiUsageLimiter,
 
     private readonly topicality: VisualTopicalityService,
@@ -218,6 +225,8 @@ export class VisualStudioService {
     private readonly events: VisualJobEventStore,
 
     private readonly jobs: JobsService,
+
+    private readonly idempotency: IdempotencyService,
 
     private readonly processor: VisualStudioProcessor,
 
@@ -401,6 +410,68 @@ export class VisualStudioService {
     );
   }
 
+  async generateCanvas(
+    principal: StudentPrincipal,
+    input: CanvasGenerateBody,
+    idempotencyKey?: string,
+  ): Promise<CanvasGenerateAccepted> {
+    const scope = `canvas.generate:${principal.kind === 'institutional' ? principal.studentId : principal.independentUserId}`;
+    const { result } = await this.idempotency.run(idempotencyKey, scope, async () => {
+      const clientRequestId = randomUUID();
+      const proposalInput = this.mapCanvasSourceToProposal(input, clientRequestId);
+      const proposal = await this.propose(principal, proposalInput);
+      const accepted = await this.generate(principal, {
+        proposal_id: proposal.proposal_id,
+        archetype_override: input.archetype,
+        client_request_id: clientRequestId,
+      });
+      return {
+        canvas_id: accepted.canvas_id ?? randomUUID(),
+        job_id: accepted.job_id,
+        status: 'generating' as const,
+      };
+    });
+    return result;
+  }
+
+  private mapCanvasSourceToProposal(
+    input: CanvasGenerateBody,
+    clientRequestId: string,
+  ): VisualProposalInput {
+    switch (input.source.kind) {
+      case 'prompt':
+        return {
+          mode: 'prompt',
+          prompt: input.source.prompt,
+          preferred_archetype: input.archetype,
+          client_request_id: clientRequestId,
+        };
+      case 'library':
+        return {
+          mode: 'source',
+          source_id: input.source.item_id,
+          preferred_archetype: input.archetype,
+          client_request_id: clientRequestId,
+        };
+      case 'learn_topic':
+        return {
+          mode: 'topic',
+          topic_id: input.source.topic_id,
+          preferred_archetype: input.archetype,
+          client_request_id: clientRequestId,
+        };
+      case 'learn_session':
+        return {
+          mode: 'session',
+          session_id: input.source.session_id,
+          preferred_archetype: input.archetype,
+          client_request_id: clientRequestId,
+        };
+      default:
+        return input.source satisfies never;
+    }
+  }
+
 
 
   async streamJobEvents(
@@ -577,42 +648,19 @@ export class VisualStudioService {
 
 
 
-    const owner = this.repo.owner(principal);
-
-    const row = {
-
+    const { canvas: created } = await this.revisions.commitInitial(principal, {
       id: input.id,
-
-      ...owner,
-
       title: sanitizeVisualText(input.title),
-
       archetype: input.archetype,
-
       graph: parsed.data,
-
-      schemaVersion: parsed.data.graph_schema_version,
-
-      origin: 'memory' as const,
-
+      origin: 'memory',
       topicId: input.topic_id,
-
       sourceId: null,
-
       sourceSessionId: null,
-
-      legacyArtifactId: null,
-
-      version: 1,
-
-    };
-
-
-
-    const created = await this.repo.createMemoryCanvas(principal, row);
+      reason: 'created',
+    });
 
     return formatCanvasDto(created);
-
   }
 
 
@@ -719,37 +767,23 @@ export class VisualStudioService {
 
 
 
-    const result = await this.repo.patchCanvas(principal, id, {
-
+    const result = await this.revisions.commit(principal, {
+      canvasId: id,
+      baseRevision: input.base_version,
       title: sanitizeVisualText(input.title),
-
       archetype: input.archetype,
-
       graph: parsed.data,
-
-      baseVersion: input.base_version,
-
+      reason: 'autosave',
     });
 
-    if (!result) throw visualNotFound();
-
-
-
-    return {
-
-      canvas: formatCanvasDto(result.canvas),
-
-      conflict_resolved: result.conflictResolved,
-
-    };
-
+    return { canvas: formatCanvasDto(result.canvas) };
   }
 
 
 
   async deleteCanvas(principal: StudentPrincipal, id: string, version: number) {
 
-    const deleted = await this.repo.deleteCanvas(principal, id, version);
+    const deleted = await this.revisions.softDelete(principal, id, version);
 
     if (!deleted) throw visualNotFound();
 
@@ -768,19 +802,14 @@ export class VisualStudioService {
     return {
 
       items: items.map((r) => ({
-
         id: r.id,
-
         revision_number: r.revisionNumber,
-
         reason: r.reason,
-
         created_at: r.createdAt.toISOString(),
-
         title: r.title,
-
         archetype: r.archetype,
-
+        updated_format:
+          r.schemaVersion < CURRENT_CANVAS_GRAPH_VERSION ? MIGRATED_FORMAT_LABEL : null,
       })),
 
     };
@@ -813,16 +842,11 @@ export class VisualStudioService {
 
 
 
-    const result = await this.repo.restoreRevision(
-
+    const result = await this.revisions.restoreRevision(
       principal,
-
       canvasId,
-
       revisionId,
-
       input.base_version,
-
     );
 
     if (!result) throw visualNotFound();
@@ -1242,17 +1266,14 @@ export class VisualStudioService {
       }
     }
 
-    const result = await this.repo.patchCanvas(
-      principal,
+    const result = await this.revisions.commit(principal, {
       canvasId,
-      {
-        title: canvas.title,
-        archetype: canvas.archetype,
-        graph: parsed.data,
-        baseVersion: input.base_version,
-      },
-      'ai_patch',
-    );
+      baseRevision: input.base_version,
+      title: canvas.title,
+      archetype: canvas.archetype,
+      graph: parsed.data,
+      reason: 'ai_patch',
+    });
     if (!result) throw visualNotFound();
 
     await this.events.deletePatchProposal(input.proposal_id);

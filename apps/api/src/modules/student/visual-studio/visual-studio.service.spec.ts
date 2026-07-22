@@ -29,9 +29,15 @@ function emptyGraph() {
 describe('VisualStudioService', () => {
   let repo: VisualStudioRepository;
   let limiter: { peekStudent: ReturnType<typeof vi.fn> };
+  let revisions: { commit: ReturnType<typeof vi.fn>; commitInitial: ReturnType<typeof vi.fn>; softDelete: ReturnType<typeof vi.fn> };
   let service: VisualStudioService;
 
   beforeEach(() => {
+    revisions = {
+      commit: vi.fn(),
+      commitInitial: vi.fn(),
+      softDelete: vi.fn(),
+    };
     repo = {
       owner: vi.fn().mockReturnValue({
         institutionId: null,
@@ -42,7 +48,6 @@ describe('VisualStudioService', () => {
       createMemoryCanvas: vi.fn(),
       getCanvas: vi.fn(),
       listCanvases: vi.fn(),
-      patchCanvas: vi.fn(),
       listMemoryTopics: vi.fn(),
       getRevisionState: vi.fn(),
       updateManualReasons: vi.fn(),
@@ -62,12 +67,15 @@ describe('VisualStudioService', () => {
     };
     service = new VisualStudioService(
       repo,
+      revisions as never,
       limiter as never,
       {} as never,
       {} as never,
       {} as never,
       {} as never,
       { enabled: true, enqueue: vi.fn() } as never,
+      { run: vi.fn() } as never,
+      {} as never,
       { log: vi.fn() } as never,
     );
   });
@@ -131,7 +139,7 @@ describe('VisualStudioService', () => {
     });
   });
 
-  it('patchCanvas returns last_write_wins conflict flag from repository', async () => {
+  it('patchCanvas propagates REV_CONFLICT from revision gateway', async () => {
     const graph = emptyGraph();
     vi.mocked(repo.getCanvas).mockResolvedValue({
       id: 'canvas-1',
@@ -148,40 +156,32 @@ describe('VisualStudioService', () => {
       sourceSessionId: null,
       legacyArtifactId: null,
       version: 2,
+      status: 'ready',
+      nodeCount: 0,
+      deletedAt: null,
+      sourceMeta: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    vi.mocked(repo.patchCanvas).mockResolvedValue({
-      conflictResolved: 'last_write_wins',
-      canvas: {
-        id: 'canvas-1',
-        institutionId: null,
-        studentId: null,
-        independentUserId: principal.independentUserId,
+    vi.mocked(revisions.commit).mockRejectedValue(
+      new HttpException(
+        { code: 'REV_CONFLICT', latest_revision: 2, latest_graph: graph },
+        409,
+      ),
+    );
+
+    await expect(
+      service.patchCanvas(principal, 'canvas-1', {
+        base_version: 1,
         title: 'Draft',
         archetype: 'mind_map',
         graph,
-        schemaVersion: 1,
-        origin: 'memory',
-        sourceId: null,
-        topicId: 'topic-1',
-        sourceSessionId: null,
-        legacyArtifactId: null,
-        version: 3,
-        createdAt: new Date('2026-01-01T00:00:00.000Z'),
-        updatedAt: new Date('2026-01-02T00:00:00.000Z'),
-      },
+        client_mutation_id: '00000000-0000-4000-8000-000000000040',
+      }),
+    ).rejects.toSatisfy((err: unknown) => {
+      expect(err).toBeInstanceOf(HttpException);
+      expect((err as HttpException).getResponse()).toMatchObject({ code: 'REV_CONFLICT' });
+      return true;
     });
-
-    const result = await service.patchCanvas(principal, 'canvas-1', {
-      base_version: 1,
-      title: 'Draft',
-      archetype: 'mind_map',
-      graph,
-      client_mutation_id: '00000000-0000-4000-8000-000000000040',
-    });
-
-    expect(result.conflict_resolved).toBe('last_write_wins');
-    expect(result.canvas.version).toBe(3);
   });
 });

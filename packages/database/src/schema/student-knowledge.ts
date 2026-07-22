@@ -5,17 +5,33 @@ import {
   jsonb,
   numeric,
   pgTable,
+  real,
   text,
   timestamp,
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { students } from './people';
 import { independentUsers } from './users';
 import { storageObjects } from './student';
 import { learnSessions } from './learn';
+
+export type LibraryQuizPatterns = {
+  per_question: Array<{
+    question_id: string;
+    topic: string;
+    type: string;
+    correct: boolean;
+    chosen: string | null;
+    time_ms: number;
+  }>;
+  per_topic: Record<string, { asked: number; correct: number }>;
+  difficulty: number;
+  source_knowledge_item_id: string | null;
+};
 
 export const knowledgeCollections = pgTable(
   'knowledge_collections',
@@ -64,6 +80,9 @@ export const knowledgeItems = pgTable(
     ingestHeartbeatAt: timestamp('ingest_heartbeat_at', { withTimezone: true }),
     ingestAttempts: integer('ingest_attempts').notNull().default(0),
     ingestErrorDetail: text('ingest_error_detail'),
+    indexReady: boolean('index_ready').notNull().default(false),
+    embeddingModel: text('embedding_model'),
+    embeddingDimension: integer('embedding_dimension'),
     version: integer('version').notNull().default(1),
     ...timestamps,
   },
@@ -138,6 +157,13 @@ export const flashcardDecks = pgTable(
     topicId: uuid('topic_id'),
     title: text('title').notNull(),
     fromLabel: text('from_label').notNull(),
+    archivedAt: timestamp('archived_at', { withTimezone: true }),
+    subjectRef: jsonb('subject_ref').$type<{
+      kind: 'erp_subject' | 'commitment' | 'self';
+      id?: string;
+      label?: string;
+    } | null>(),
+    examBoostOptOut: boolean('exam_boost_opt_out').notNull().default(false),
     version: integer('version').notNull().default(1),
     ...timestamps,
   },
@@ -162,9 +188,26 @@ export const flashcards = pgTable(
     reps: integer('reps').notNull().default(0),
     lapses: integer('lapses').notNull().default(0),
     sourcePage: integer('source_page'),
+    /** new | learning | review | relearning */
+    srsState: text('srs_state'),
+    stability: real('stability'),
+    difficulty: real('difficulty'),
+    fsrsDueAt: timestamp('fsrs_due_at', { withTimezone: true }),
+    lastReviewAt: timestamp('last_review_at', { withTimezone: true }),
+    /** sm2 until backfill completes; fsrs after */
+    scheduler: text('scheduler').notNull().default('sm2'),
+    suspendedAt: timestamp('suspended_at', { withTimezone: true }),
+    fsrsParamsVersion: integer('fsrs_params_version').notNull().default(1),
+    sourceRef: jsonb('source_ref').$type<{ knowledge_item_id: string; page: number } | null>(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
     deckSeqUq: uniqueIndex('flashcards_deck_seq_uq').on(t.deckId, t.sequence),
+    fsrsDueIdx: index('flashcards_fsrs_due_at_idx').on(t.fsrsDueAt),
+    duePredicateIdx: index('flashcards_due_predicate_idx')
+      .on(t.fsrsDueAt)
+      .where(sql`${t.suspendedAt} is null`),
   }),
 );
 
@@ -182,7 +225,12 @@ export const libraryQuizAttempts = pgTable(
     }),
     answers: jsonb('answers').$type<Record<string, unknown>[]>().notNull().default([]),
     results: jsonb('results').$type<Record<string, unknown>[]>().notNull().default([]),
-    patterns: jsonb('patterns').$type<string[]>().notNull().default([]),
+    patterns: jsonb('patterns').$type<LibraryQuizPatterns>().notNull().default({
+      per_question: [],
+      per_topic: {},
+      difficulty: 1,
+      source_knowledge_item_id: null,
+    }),
     finishedAt: timestamp('finished_at', { withTimezone: true }).notNull().defaultNow(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -205,9 +253,23 @@ export const flashcardReviews = pgTable(
     }),
     result: text('result').notNull(),
     reviewedAt: timestamp('reviewed_at', { withTimezone: true }).notNull().defaultNow(),
+    grade: text('grade'),
+    stateBefore: text('state_before'),
+    stateAfter: text('state_after'),
+    dueBefore: timestamp('due_before', { withTimezone: true }),
+    dueAfter: timestamp('due_after', { withTimezone: true }),
+    elapsedMs: integer('elapsed_ms'),
+    sessionId: uuid('session_id'),
+    clientReviewId: uuid('client_review_id'),
   },
   (t) => ({
     cardIdx: index('flashcard_reviews_card_idx').on(t.cardId, t.reviewedAt),
+    studentClientIdem: uniqueIndex('flashcard_reviews_student_client_uq')
+      .on(t.studentId, t.clientReviewId)
+      .where(sql`${t.studentId} is not null and ${t.clientReviewId} is not null`),
+    indepClientIdem: uniqueIndex('flashcard_reviews_indep_client_uq')
+      .on(t.independentUserId, t.clientReviewId)
+      .where(sql`${t.independentUserId} is not null and ${t.clientReviewId} is not null`),
   }),
 );
 

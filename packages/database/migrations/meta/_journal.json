@@ -624,6 +624,62 @@
       "when": 1786700000000,
       "tag": "0088_today_feed",
       "breakpoints": true
+    },
+    {
+      "idx": 89,
+      "version": "7",
+      "when": 1786800000000,
+      "tag": "0089_timetable_exceptions",
+      "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "7",
+      "when": 1786900000000,
+      "tag": "0090_attendance_forecaster",
+      "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1787000000000,
+      "tag": "0091_attendance_day_view",
+      "breakpoints": true
+    },
+    {
+      "idx": 92,
+      "version": "7",
+      "when": 1787100000000,
+      "tag": "0092_marks_results",
+      "breakpoints": true
+    },
+    {
+      "idx": 93,
+      "version": "7",
+      "when": 1787200000000,
+      "tag": "0093_term_recompute_feed",
+      "breakpoints": true
+    },
+    {
+      "idx": 94,
+      "version": "7",
+      "when": 1787300000000,
+      "tag": "0094_library_fsrs",
+      "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "7",
+      "when": 1787400000000,
+      "tag": "0095_graph_pipeline",
+      "breakpoints": true
+    },
+    {
+      "idx": 96,
+      "version": "7",
+      "when": 1787500000000,
+      "tag": "0096_lab_canvas_flags",
+      "breakpoints": true
     }
   ]
 }

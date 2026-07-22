@@ -29,6 +29,7 @@ describe('VisualStudioProcessor', () => {
   let events: VisualJobEventStore;
   let generation: VisualGenerationService;
   let repo: VisualStudioRepository;
+  let revisions: { commitInitial: ReturnType<typeof vi.fn> };
   let limiter: { acquireStudentCall: ReturnType<typeof vi.fn> };
     let grounding: { forNode: ReturnType<typeof vi.fn> };
     let ledger: { log: ReturnType<typeof vi.fn> };
@@ -77,14 +78,17 @@ describe('VisualStudioProcessor', () => {
       }),
       chunkEdges: vi.fn((edges: unknown[]) => [edges]),
     } as unknown as VisualGenerationService;
-    repo = {
-      createGeneratedCanvas: vi.fn().mockResolvedValue({
-        id: '00000000-0000-4000-8000-000000000030',
-        version: 1,
-        archetype: 'mind_map',
-        origin: 'prompt',
+    repo = {} as unknown as VisualStudioRepository;
+    revisions = {
+      commitInitial: vi.fn().mockResolvedValue({
+        canvas: {
+          id: '00000000-0000-4000-8000-000000000030',
+          version: 1,
+          archetype: 'mind_map',
+          origin: 'prompt',
+        },
       }),
-    } as unknown as VisualStudioRepository;
+    };
     limiter = { acquireStudentCall: vi.fn().mockResolvedValue({ enforced: true }) };
     grounding = { forNode: vi.fn() };
     ledger = { log: vi.fn().mockResolvedValue(undefined) };
@@ -96,6 +100,7 @@ describe('VisualStudioProcessor', () => {
       {} as never,
       grounding as never,
       repo,
+      revisions as never,
       limiter as never,
       ledger as never,
     );
@@ -131,7 +136,7 @@ describe('VisualStudioProcessor', () => {
       'job-1:graph',
     );
     expect(generation.generateGraph).toHaveBeenCalled();
-    expect(repo.createGeneratedCanvas).toHaveBeenCalled();
+    expect(revisions.commitInitial).toHaveBeenCalled();
     expect(events.appendEvent).toHaveBeenCalledWith(
       'job-1',
       expect.objectContaining({ type: 'graph_ready' }),

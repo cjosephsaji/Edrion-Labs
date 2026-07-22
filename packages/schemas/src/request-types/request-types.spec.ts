@@ -27,7 +27,10 @@ describe('request type schemas', () => {
       'document_request',
       'fee_waiver',
       'payment_dispute',
-    ]);
+    'od_request',
+    'attendance_correction',
+    'revaluation',
+  ]);
     expect(REQUEST_TYPE_REGISTRY.leave_request!.approvalSideEffectKey).toBe('leave_attendance');
     expect(REQUEST_TYPE_REGISTRY.document_request!.producesDocument).toBe(true);
   });

@@ -42,6 +42,8 @@ import { LearnRepository } from '../learn/learn.repository';
 import { StudentStorageService } from '../storage/student-storage.service';
 import type { StudentPrincipal } from '../student.types';
 import { LibraryRepository } from './library.repository';
+import { GenerationCurationService } from './generation-curation.service';
+import { SubjectFilingService } from './subject-filing.service';
 
 const PDF_MIMES = new Set(['application/pdf']);
 const DOC_MIMES = new Set(['application/vnd.openxmlformats-officedocument.wordprocessingml.document']);
@@ -71,9 +73,12 @@ export class LibraryService {
     private readonly callLog: LearnAiCallLogger,
     private readonly evaluator: EvaluatorService,
     @Inject(LEARNING_EVENTS_WRITER) private readonly ledger: LearningEventsWriter,
+    private readonly curation: GenerationCurationService,
+    private readonly filing: SubjectFilingService,
   ) {}
 
   async getOverview(principal: StudentPrincipal, q?: string) {
+    await this.filing.seedDecksIfNeeded(principal);
     if (q?.trim()) {
       const hits = await this.repo.search(principal, q.trim());
       const mappedLegacyIds = await this.repo.mappedLegacyArtifactIds(principal);
@@ -564,16 +569,8 @@ export class LibraryService {
     }
 
     const content = { title: item.title, sections };
-    const artifact = await this.repo.insertArtifact({
-      ...this.repo.owner(principal),
-      itemId: item.id,
-      kind: 'summary',
-      title: content.title,
-      content,
-      fromLabel,
-    });
-    await this.logArtifact(principal, item.id, artifact.id, 'summary');
-    emit({ type: 'saved', artifactId: artifact.id, kind: 'summary' });
+    const job = await this.curation.createDraft(principal, item.id, 'summary', sections, { fromLabel });
+    emit({ type: 'draft', jobId: job.id, kind: 'summary', proposals: sections, title: content.title, fromLabel });
   }
 
   async streamFlashcards(principal: StudentPrincipal, itemId: string, emit: Emit) {
@@ -612,28 +609,8 @@ export class LibraryService {
       }
     }
 
-    const row = await this.repo.insertDeck({
-      ...this.repo.owner(principal),
-      itemId: item.id,
-      title: `Flashcards — ${item.title}`,
-      fromLabel,
-    });
-    await this.repo.insertCards(
-      cards.map((c, i) => ({
-        deckId: row.id,
-        sequence: i + 1,
-        prompt: c.prompt,
-        answer: c.answer,
-        sourcePage: c.sourcePage ?? null,
-        nextDueAt: new Date(),
-        intervalDays: '0',
-        ease: '2.50',
-        reps: 0,
-        lapses: 0,
-      })),
-    );
-    await this.logArtifact(principal, item.id, row.id, 'deck');
-    emit({ type: 'saved', deckId: row.id, kind: 'flashcards' });
+    const job = await this.curation.createDraft(principal, item.id, 'flashcards', cards, { fromLabel });
+    emit({ type: 'draft', jobId: job.id, kind: 'flashcards', proposals: cards, title: `Flashcards — ${item.title}`, fromLabel });
   }
 
   async streamQuiz(principal: StudentPrincipal, itemId: string, emit: Emit) {
@@ -671,16 +648,8 @@ export class LibraryService {
       }
     }
 
-    const artifact = await this.repo.insertArtifact({
-      ...this.repo.owner(principal),
-      itemId: item.id,
-      kind: 'quiz',
-      title: `Quiz — ${item.title}`,
-      content: { items },
-      fromLabel,
-    });
-    await this.logArtifact(principal, item.id, artifact.id, 'quiz');
-    emit({ type: 'saved', artifactId: artifact.id, kind: 'quiz' });
+    const job = await this.curation.createDraft(principal, item.id, 'quiz', items, { fromLabel });
+    emit({ type: 'draft', jobId: job.id, kind: 'quiz', proposals: items, title: `Quiz — ${item.title}`, fromLabel });
   }
 
   async getArtifact(principal: StudentPrincipal, artifactId: string) {
@@ -1344,9 +1313,26 @@ export class LibraryService {
     if (due > 0) return 'due';
     const cards = await this.repo.listCards(deckId);
     if (!cards.length) return 'fresh';
-    const oldest = cards.reduce((min, c) => (c.nextDueAt < min ? c.nextDueAt : min), cards[0]!.nextDueAt);
+    const oldest = cards.reduce(
+      (min, c) => ((c.fsrsDueAt ?? c.nextDueAt) < min ? (c.fsrsDueAt ?? c.nextDueAt) : min),
+      cards[0]!.fsrsDueAt ?? cards[0]!.nextDueAt,
+    );
     const days = (Date.now() - oldest.getTime()) / 86_400_000;
     return days > FRESHNESS_FRESH_DAYS ? 'fading' : 'fresh';
+  }
+
+  async classifyItem(principal: StudentPrincipal, itemId: string) {
+    await this.requireItem(principal, itemId);
+    return this.filing.classifyItem(principal, itemId);
+  }
+
+  async acceptClassification(
+    principal: StudentPrincipal,
+    itemId: string,
+    body: { subject_ref?: Record<string, unknown> },
+  ) {
+    await this.requireItem(principal, itemId);
+    return this.filing.acceptClassification(principal, itemId, body.subject_ref as never);
   }
 }
 

@@ -53,6 +53,9 @@ export const requestReplySchema = requestVersionSchema.extend({
 });
 export const requestApproveSchema = requestVersionSchema.extend({
   note: z.string().trim().max(4000).optional(),
+  accepted_session_ids: z.array(z.string().uuid()).optional(),
+  new_score: z.number().int().min(0).optional(),
+  form: z.record(z.unknown()).optional(),
 });
 export const requestRejectSchema = requestVersionSchema.extend({
   note: z.string().trim().min(10, 'Use at least 10 characters').max(4000),

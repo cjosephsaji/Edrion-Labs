@@ -1,3 +1,8 @@
+/**
+ * One-time legacy knowledge-artifact importer (pre–Visual Studio rows).
+ * Distinct from the forward `canvas-migrations` runner, which upgrades stored
+ * CanvasGraph JSON across schema versions after Visual Studio is live.
+ */
 import { randomUUID } from 'node:crypto';
 import { and, eq, inArray, notInArray, sql } from 'drizzle-orm';
 import {

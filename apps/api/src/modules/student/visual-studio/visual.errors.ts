@@ -1,4 +1,5 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { ConflictException, HttpException, HttpStatus } from '@nestjs/common';
+import type { CanvasGraph } from '@edrion/schemas';
 
 export function visualNotFound(): HttpException {
   return new HttpException(
@@ -110,6 +111,15 @@ export function visualGenerationFailed(): HttpException {
     },
     HttpStatus.BAD_GATEWAY,
   );
+}
+
+export function revConflict(latestRevision: number, latestGraph: CanvasGraph): ConflictException {
+  return new ConflictException({
+    code: 'REV_CONFLICT',
+    message: 'Someone else saved this canvas first.',
+    latest_revision: latestRevision,
+    latest_graph: latestGraph,
+  });
 }
 
 export function payloadTooLarge(): HttpException {

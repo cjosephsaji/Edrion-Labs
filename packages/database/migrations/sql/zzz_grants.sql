@@ -39,9 +39,17 @@ REVOKE UPDATE, DELETE, TRUNCATE ON parent_digest_deliveries FROM edrion_app;
 REVOKE UPDATE, DELETE, TRUNCATE ON learning_events FROM edrion_app;
 REVOKE UPDATE, DELETE, TRUNCATE ON learn_ai_calls FROM edrion_app;
 REVOKE UPDATE, DELETE, TRUNCATE ON flashcard_reviews FROM edrion_app;
+REVOKE UPDATE, DELETE, TRUNCATE ON streak_events FROM edrion_app;
 REVOKE UPDATE, DELETE, TRUNCATE ON achievement_awards FROM edrion_app;
 REVOKE UPDATE, DELETE, TRUNCATE ON student_request_events FROM edrion_app;
+REVOKE UPDATE, DELETE, TRUNCATE ON grading_scheme_versions, mark_revisions FROM edrion_app;
 REVOKE UPDATE, DELETE, TRUNCATE ON feed_events FROM edrion_app;
+-- Timetable exceptions: append-only except revocation fields (enforced in 0089 migration + trigger).
+REVOKE DELETE ON period_exceptions FROM edrion_app;
+REVOKE UPDATE ON period_exceptions FROM edrion_app;
+GRANT UPDATE (revoked_at, revoked_by, revoked_reason, recurring_until, version, updated_at)
+  ON period_exceptions TO edrion_app;
+GRANT SELECT, INSERT, UPDATE ON attendance_policies, attendance_rollups, request_marks_pending TO edrion_app;
 
 -- Belt-and-braces: a trigger that hard-blocks UPDATE/DELETE regardless of role.
 CREATE OR REPLACE FUNCTION edrion_block_mutation() RETURNS trigger AS $$
@@ -55,8 +63,8 @@ DECLARE t text;
 BEGIN
   FOREACH t IN ARRAY ARRAY['audit_events', 'security_events', 'activity_events', 'webhook_deliveries',
                            'parent_emergency_broadcasts', 'gate_exit_events', 'parent_digest_deliveries',
-                           'learning_events', 'learn_ai_calls', 'flashcard_reviews', 'achievement_awards',
-                           'student_request_events', 'feed_events'] LOOP
+                           'learning_events', 'learn_ai_calls', 'flashcard_reviews', 'streak_events', 'achievement_awards',
+                           'student_request_events', 'grading_scheme_versions', 'mark_revisions', 'feed_events'] LOOP
     EXECUTE format('DROP TRIGGER IF EXISTS %I_append_only ON %I', t, t);
     EXECUTE format(
       'CREATE TRIGGER %I_append_only BEFORE UPDATE OR DELETE ON %I

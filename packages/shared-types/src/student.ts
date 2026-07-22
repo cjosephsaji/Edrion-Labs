@@ -6,7 +6,9 @@ export type StudentSurfaceKey =
   | 'documents'
   | 'requests'
   | 'content'
-  | 'exams';
+  | 'exams'
+  | 'attendance'
+  | 'results';
 
 export interface StudentSurfaceDef {
   key: StudentSurfaceKey;
@@ -57,6 +59,18 @@ export const STUDENT_SURFACES: readonly StudentSurfaceDef[] = [
     permissionKey: 'student.exams.view',
     featureFlagKey: 'student.surface.exams',
     label: 'Exams',
+  },
+  {
+    key: 'attendance',
+    permissionKey: 'student.attendance.view',
+    featureFlagKey: 'student.surface.attendance',
+    label: 'Attendance',
+  },
+  {
+    key: 'results',
+    permissionKey: 'student.surface.results.view',
+    featureFlagKey: 'student.surface.results',
+    label: 'Results',
   },
 ] as const;
 

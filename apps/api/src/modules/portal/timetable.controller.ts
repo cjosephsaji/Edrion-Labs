@@ -1,11 +1,17 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import {
+  createPeriodExceptionSchema,
   createTimetableSlotSchema,
+  portalTimetableDayQuerySchema,
+  revokePeriodExceptionSchema,
   timetableListQuerySchema,
   updateTimetableSlotSchema,
   versionedDeleteSchema,
+  type CreatePeriodExceptionInput,
   type CreateTimetableSlotInput,
+  type PortalTimetableDayQuery,
+  type RevokePeriodExceptionInput,
   type TimetableListQuery,
   type UpdateTimetableSlotInput,
   type VersionedDeleteInput,
@@ -23,11 +29,11 @@ import {
   RequireInstitutionPermissions,
 } from './portal.decorators';
 import { TimetableService } from './timetable.service';
+import { TimetableExceptionsService } from './timetable-exceptions.service';
 import type { PortalActionContext } from './portal-action-context';
 
 /**
- * Institution-portal Timetable API (Phase 5) — recurring weekly slots. Same boundary as the rest of
- * the portal. Reads need timetable.view; mutations need timetable.manage.
+ * Institution-portal Timetable API — recurring weekly slots + live exceptions.
  */
 @ApiTags('portal-timetable')
 @Controller('portal/timetable')
@@ -35,7 +41,10 @@ import type { PortalActionContext } from './portal-action-context';
 @SkipRateLimit()
 @UseGuards(InstitutionAuthGuard, InstitutionPermissionsGuard)
 export class TimetableController {
-  constructor(private readonly service: TimetableService) {}
+  constructor(
+    private readonly service: TimetableService,
+    private readonly exceptions: TimetableExceptionsService,
+  ) {}
 
   private ctx(
     principal: InstitutionPrincipal,
@@ -89,5 +98,40 @@ export class TimetableController {
     @Body(zodBody(versionedDeleteSchema)) body: VersionedDeleteInput,
   ) {
     return this.service.delete(this.ctx(p, s, r), id, body.version);
+  }
+
+  @Get('day')
+  @RequireInstitutionPermissions('timetable.view')
+  day(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Query(zodBody(portalTimetableDayQuerySchema)) q: PortalTimetableDayQuery,
+  ) {
+    return this.exceptions.dayView(this.ctx(p, s, r), q);
+  }
+
+  @Post('exceptions')
+  @RequireInstitutionPermissions('timetable.exception.manage_all', 'timetable.exception.manage_own')
+  createException(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Headers('idempotency-key') idempotencyKey: string | undefined,
+    @Body(zodBody(createPeriodExceptionSchema)) body: CreatePeriodExceptionInput,
+  ) {
+    return this.exceptions.create(this.ctx(p, s, r), body, idempotencyKey);
+  }
+
+  @Post('exceptions/:id/revoke')
+  @RequireInstitutionPermissions('timetable.exception.manage_all', 'timetable.exception.manage_own')
+  revokeException(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(revokePeriodExceptionSchema)) body: RevokePeriodExceptionInput,
+  ) {
+    return this.exceptions.revoke(this.ctx(p, s, r), id, body);
   }
 }

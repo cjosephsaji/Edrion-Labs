@@ -10,13 +10,16 @@ import {
   sql,
   type SQL,
 } from 'drizzle-orm';
-import type { CanvasGraph, CompleteCanvasGraph } from '@edrion/schemas';
-import { schema, type Database, type VisualManualReason } from '@edrion/database';
+import {
+  CURRENT_CANVAS_GRAPH_VERSION,
+  migrateCanvasGraphToCurrent,
+  type CanvasGraph,
+} from '@edrion/schemas';
+import { schema, type Database, type VisualCanvas, type VisualManualReason } from '@edrion/database';
 import { DATABASE } from '../../../common/tokens';
 import { ownerColumns, ownerWhere } from '../core/owner-scope';
 import type { StudentPrincipal } from '../student.types';
-
-const MAX_REVISIONS = 20;
+import { MAX_CANVAS_REVISIONS } from './visual-studio.constants';
 
 export interface ListCanvasesQuery {
   limit: number;
@@ -32,6 +35,7 @@ export interface PatchCanvasInput {
   baseVersion: number;
 }
 
+/** Read-only persistence for visual canvases. All graph mutations go through VisualRevisionService. */
 @Injectable()
 export class VisualStudioRepository {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
@@ -40,13 +44,41 @@ export class VisualStudioRepository {
     return ownerColumns(principal);
   }
 
+  private presentCanvasGraph(graph: unknown): CanvasGraph {
+    return migrateCanvasGraphToCurrent(graph).graph;
+  }
+
+  private presentCanvas(row: VisualCanvas): VisualCanvas {
+    return {
+      ...row,
+      graph: this.presentCanvasGraph(row.graph),
+    };
+  }
+
+  private presentRevision<T extends { graph: unknown }>(row: T): T & { graph: CanvasGraph } {
+    return {
+      ...row,
+      graph: this.presentCanvasGraph(row.graph),
+    };
+  }
+
+  private notDeletedCondition(): SQL {
+    return isNull(schema.visualCanvases.deletedAt);
+  }
+
   async getCanvas(principal: StudentPrincipal, id: string) {
+    const row = await this.getCanvasRow(principal, id);
+    return row ? this.presentCanvas(row) : null;
+  }
+
+  private async getCanvasRow(principal: StudentPrincipal, id: string) {
     const [row] = await this.db
       .select()
       .from(schema.visualCanvases)
       .where(
         and(
           eq(schema.visualCanvases.id, id),
+          this.notDeletedCondition(),
           ownerWhere(
             principal,
             schema.visualCanvases.studentId,
@@ -65,6 +97,7 @@ export class VisualStudioRepository {
       .where(
         and(
           eq(schema.visualCanvases.legacyArtifactId, artifactId),
+          this.notDeletedCondition(),
           ownerWhere(
             principal,
             schema.visualCanvases.studentId,
@@ -73,11 +106,12 @@ export class VisualStudioRepository {
         ),
       )
       .limit(1);
-    return row ?? null;
+    return row ? this.presentCanvas(row) : null;
   }
 
   async listCanvases(principal: StudentPrincipal, query: ListCanvasesQuery) {
     const conditions: SQL[] = [
+      this.notDeletedCondition(),
       ownerWhere(
         principal,
         schema.visualCanvases.studentId,
@@ -102,111 +136,16 @@ export class VisualStudioRepository {
       .limit(query.limit + 1);
 
     const hasMore = rows.length > query.limit;
-    const items = hasMore ? rows.slice(0, query.limit) : rows;
+    const items = (hasMore ? rows.slice(0, query.limit) : rows).map((row) =>
+      this.presentCanvas(row),
+    );
     const nextCursor =
       hasMore && items.length ? items[items.length - 1]!.updatedAt.toISOString() : null;
     return { items, nextCursor };
   }
 
-  async createMemoryCanvas(
-    principal: StudentPrincipal,
-    row: typeof schema.visualCanvases.$inferInsert,
-  ) {
-    const existing = await this.getCanvas(principal, row.id!);
-    if (existing) return existing;
-
-    return this.db.transaction(async (tx) => {
-      const [created] = await tx.insert(schema.visualCanvases).values(row).returning();
-      await tx.insert(schema.visualCanvasRevisions).values({
-        canvasId: created!.id,
-        revisionNumber: 1,
-        graph: created!.graph,
-        schemaVersion: created!.schemaVersion,
-        title: created!.title,
-        archetype: created!.archetype,
-        reason: 'created',
-      });
-      return created!;
-    });
-  }
-
-  async patchCanvas(
-    principal: StudentPrincipal,
-    id: string,
-    input: PatchCanvasInput,
-    reason: 'autosave' | 'restore' | 'ai_patch' = 'autosave',
-  ) {
-    return this.db.transaction(async (tx) => {
-      const [current] = await tx
-        .select()
-        .from(schema.visualCanvases)
-        .where(
-          and(
-            eq(schema.visualCanvases.id, id),
-            ownerWhere(
-              principal,
-              schema.visualCanvases.studentId,
-              schema.visualCanvases.independentUserId,
-            ),
-          ),
-        )
-        .for('update')
-        .limit(1);
-
-      if (!current) return null;
-
-      const conflictResolved =
-        input.baseVersion !== current.version ? ('last_write_wins' as const) : null;
-      const nextRevisionNumber = current.version + 1;
-
-      await tx.insert(schema.visualCanvasRevisions).values({
-        canvasId: current.id,
-        revisionNumber: nextRevisionNumber,
-        graph: current.graph,
-        schemaVersion: current.schemaVersion,
-        title: current.title,
-        archetype: current.archetype,
-        reason,
-      });
-
-      await this.pruneRevisions(tx, current.id);
-
-      const [updated] = await tx
-        .update(schema.visualCanvases)
-        .set({
-          title: input.title,
-          archetype: input.archetype,
-          graph: input.graph,
-          version: nextRevisionNumber,
-          updatedAt: new Date(),
-        })
-        .where(eq(schema.visualCanvases.id, id))
-        .returning();
-
-      return { canvas: updated!, conflictResolved };
-    });
-  }
-
-  async deleteCanvas(principal: StudentPrincipal, id: string, expectedVersion: number) {
-    const result = await this.db
-      .delete(schema.visualCanvases)
-      .where(
-        and(
-          eq(schema.visualCanvases.id, id),
-          eq(schema.visualCanvases.version, expectedVersion),
-          ownerWhere(
-            principal,
-            schema.visualCanvases.studentId,
-            schema.visualCanvases.independentUserId,
-          ),
-        ),
-      )
-      .returning({ id: schema.visualCanvases.id });
-    return result.length > 0;
-  }
-
   async listRevisions(principal: StudentPrincipal, canvasId: string, limit: number) {
-    const canvas = await this.getCanvas(principal, canvasId);
+    const canvas = await this.getCanvasRow(principal, canvasId);
     if (!canvas) return null;
 
     const items = await this.db
@@ -217,6 +156,7 @@ export class VisualStudioRepository {
         createdAt: schema.visualCanvasRevisions.createdAt,
         title: schema.visualCanvasRevisions.title,
         archetype: schema.visualCanvasRevisions.archetype,
+        schemaVersion: schema.visualCanvasRevisions.schemaVersion,
       })
       .from(schema.visualCanvasRevisions)
       .where(eq(schema.visualCanvasRevisions.canvasId, canvasId))
@@ -227,7 +167,7 @@ export class VisualStudioRepository {
   }
 
   async getRevision(principal: StudentPrincipal, canvasId: string, revisionId: string) {
-    const canvas = await this.getCanvas(principal, canvasId);
+    const canvas = await this.getCanvasRow(principal, canvasId);
     if (!canvas) return null;
 
     const [row] = await this.db
@@ -240,29 +180,7 @@ export class VisualStudioRepository {
         ),
       )
       .limit(1);
-    return row ?? null;
-  }
-
-  async restoreRevision(
-    principal: StudentPrincipal,
-    canvasId: string,
-    revisionId: string,
-    baseVersion: number,
-  ) {
-    const revision = await this.getRevision(principal, canvasId, revisionId);
-    if (!revision) return null;
-
-    return this.patchCanvas(
-      principal,
-      canvasId,
-      {
-        title: revision.title,
-        archetype: revision.archetype,
-        graph: revision.graph,
-        baseVersion,
-      },
-      'restore',
-    );
+    return row ? this.presentRevision(row) : null;
   }
 
   async listMemoryTopics(principal: StudentPrincipal) {
@@ -458,71 +376,24 @@ export class VisualStudioRepository {
     return row ?? null;
   }
 
-  async createGeneratedCanvas(
-    principal: StudentPrincipal,
-    row: {
-      id: string;
-      title: string;
-      archetype: string;
-      graph: CompleteCanvasGraph;
-      origin: 'prompt' | 'library_source' | 'learn_topic' | 'learn_session';
-      sourceId: string | null;
-      topicId: string | null;
-      sourceSessionId: string | null;
-    },
-  ) {
-    const owner = this.owner(principal);
-    return this.db.transaction(async (tx) => {
-      const [created] = await tx
-        .insert(schema.visualCanvases)
-        .values({
-          id: row.id,
-          ...owner,
-          title: row.title,
-          archetype: row.archetype,
-          graph: row.graph as CanvasGraph,
-          schemaVersion: row.graph.graph_schema_version,
-          origin: row.origin,
-          sourceId: row.sourceId,
-          topicId: row.topicId,
-          sourceSessionId: row.sourceSessionId,
-          legacyArtifactId: null,
-          version: 1,
-        })
-        .returning();
-      await tx.insert(schema.visualCanvasRevisions).values({
-        canvasId: created!.id,
-        revisionNumber: 1,
-        graph: row.graph as CanvasGraph,
-        schemaVersion: row.graph.graph_schema_version,
-        title: row.title,
-        archetype: row.archetype,
-        reason: 'created',
-      });
-      return created!;
-    });
+  async claimCanvasesForSchemaMigration(cursor: string | null, batchSize: number): Promise<string[]> {
+    const result = await this.db.execute<{ id: string }>(sql`
+      SELECT id
+      FROM visual_canvases
+      WHERE deleted_at IS NULL
+        AND schema_version < ${CURRENT_CANVAS_GRAPH_VERSION}
+        AND (${cursor ?? null}::uuid IS NULL OR id > ${cursor ?? null}::uuid)
+      ORDER BY id
+      LIMIT ${batchSize}
+      FOR UPDATE SKIP LOCKED
+    `);
+    const rows: { id: string }[] = Array.isArray(result)
+      ? result
+      : ((result as { rows?: { id: string }[] }).rows ?? []);
+    return rows.map((row) => row.id);
   }
 
-  private async pruneRevisions(tx: Database, canvasId: string) {
-    const stale = await tx
-      .select({ id: schema.visualCanvasRevisions.id })
-      .from(schema.visualCanvasRevisions)
-      .where(eq(schema.visualCanvasRevisions.canvasId, canvasId))
-      .orderBy(desc(schema.visualCanvasRevisions.revisionNumber))
-      .offset(MAX_REVISIONS);
-
-    if (!stale.length) return;
-    await tx
-      .delete(schema.visualCanvasRevisions)
-      .where(
-        inArray(
-          schema.visualCanvasRevisions.id,
-          stale.map((r) => r.id),
-        ),
-      );
-  }
-
-  /** Maintenance sweep: keep newest 20 revisions per canvas and remove orphaned rows. */
+  /** Maintenance sweep: keep newest revisions per canvas and remove orphaned rows. */
   async pruneStaleRevisions(): Promise<number> {
     const overflow = await this.db.execute<{ id: string }>(sql`
       SELECT id
@@ -534,7 +405,7 @@ export class VisualStudioRepository {
                ) AS rn
         FROM visual_canvas_revisions
       ) ranked
-      WHERE rn > ${MAX_REVISIONS}
+      WHERE rn > ${MAX_CANVAS_REVISIONS}
     `);
     const overflowRows: { id: string }[] = Array.isArray(overflow)
       ? overflow

@@ -27,7 +27,9 @@ import type { InstitutionPrincipal, ScopeFilter } from '@edrion/auth';
 import { resolveScopeFilter } from '@edrion/auth';
 import { ActorType } from '@edrion/shared-types';
 import type {
+  AttendanceCorrectionPayload,
   LeaveRequestPayload,
+  OdRequestPayload,
   PortalRequestsListQuery,
   RequestApproveInput,
   RequestAttachmentInput,
@@ -45,7 +47,14 @@ import { AUDIT_WRITER, DATABASE } from '../../common/tokens';
 import type { EdrionRequestContext } from '../../common/request-context';
 import type { PortalActionContext } from '../portal/portal-action-context';
 import { basePortalAudit } from '../portal/portal-action-context';
+import { AttendancePolicyService } from '../portal/attendance-policy.service';
 import { AttendanceService } from '../portal/attendance.service';
+import { FeeLedgerService } from '../portal/fee-ledger.service';
+import { ResultsSettingsService } from '../portal/results-settings.service';
+import { institutionNow } from '../portal/institution-clock';
+import { ATTENDANCE_RECOMPUTE_JOB } from '../student/attendance/attendance.constants';
+import { RESULTS_RECOMPUTE_TERM_JOB } from '../portal/results.constants';
+import { JobsService } from '../../common/queue/jobs.service';
 import { StudentStorageService } from '../student/storage/student-storage.service';
 import type { InstitutionalStudentPrincipal } from '../student/student.types';
 import { RequestRegistryService, type ResolvedRequestType } from './request-registry.service';
@@ -53,6 +62,7 @@ import { RequestNotifyService } from './request-notify.service';
 import { addWorkingDays, codeSuffix, dateDiffDays, decodeCursor, encodeCursor } from './request-utils';
 import { RequestDocumentService } from './request-document.service';
 import { assertRequestTransition, canStudentCancel } from './request-state';
+import { revaluationApproveFormSchema } from '@edrion/schemas';
 
 type RequestRow = typeof schema.studentRequests.$inferSelect;
 type EventActor = {
@@ -81,6 +91,10 @@ export class RequestEngineService {
     private readonly notifications: RequestNotifyService,
     private readonly attendance: AttendanceService,
     private readonly documents: RequestDocumentService,
+    private readonly policy: AttendancePolicyService,
+    private readonly jobs: JobsService,
+    private readonly feeLedger: FeeLedgerService,
+    private readonly resultsSettings: ResultsSettingsService,
   ) {}
 
   async submit(ctx: StudentRequestContext, input: SubmitStudentRequestInput) {
@@ -97,6 +111,12 @@ export class RequestEngineService {
     let payload = parsed.data as Record<string, unknown>;
     if (input.type === 'leave_request') {
       payload = await this.prepareLeave(principal, payload as LeaveRequestPayload);
+    }
+    if (input.type === 'od_request') {
+      payload = await this.prepareOd(principal, payload as OdRequestPayload);
+    }
+    if (input.type === 'attendance_correction') {
+      await this.validateCorrection(principal, payload as AttendanceCorrectionPayload);
     }
     if (input.type === 'document_request') {
       await this.documents.assertRequestableTemplate(principal.institutionId, String(payload.doc_type));
@@ -473,6 +493,7 @@ export class RequestEngineService {
     await this.appendEvents(updated, [...events, { type: 'rejected', note: input.note }], this.staffActor(ctx.principal));
     const seq = await this.lastSeq(updated.id);
     await this.writePortalAudit(ctx, updated, 'student_request.reject', row.status, 'rejected', input.note);
+    await this.maybeRefundRevaluationFee(ctx, row);
     await this.notifications.dispatch({ institutionId: row.institutionId, requestId: row.id, eventSeq: seq });
     return this.toViewResolved(updated);
   }
@@ -484,26 +505,27 @@ export class RequestEngineService {
     const { events, assignedUserId } = await this.decisionPrelude(row, ctx.principal);
 
     if (resolved.config.approvalSideEffectKey === 'leave_attendance') {
-      const approved = await this.updateDecisionVersioned(row, input.version, {
-        status: 'approved',
-        assignedUserId,
-        decisionNote: input.note ?? null,
-      }, ctx.principal);
-      await this.appendEvents(
-        approved,
-        [...events, { type: 'approved', note: input.note }],
-        this.staffActor(ctx.principal),
+      return this.approveWithSideEffect(ctx, row, input, events, assignedUserId, () =>
+        this.applyLeaveAttendance(ctx, row),
       );
-      await this.writePortalAudit(ctx, approved, 'student_request.approve', row.status, 'approved', input.note);
-      await this.applyLeaveAttendance(ctx, approved);
-      const updated = await this.updateVersioned(approved, approved.version, {
-        status: 'fulfilled',
-        resolvedAt: new Date(),
-      });
-      const seq = await this.appendEvent(updated, 'fulfilled', this.staffActor(ctx.principal));
-      await this.writePortalAudit(ctx, updated, 'student_request.fulfil', 'approved', 'fulfilled');
-      await this.notifications.dispatch({ institutionId: row.institutionId, requestId: row.id, eventSeq: seq });
-      return this.toViewResolved(updated);
+    }
+
+    if (resolved.config.approvalSideEffectKey === 'od_attendance') {
+      return this.approveWithSideEffect(ctx, row, input, events, assignedUserId, () =>
+        this.applyOdAttendance(ctx, row),
+      );
+    }
+
+    if (resolved.config.approvalSideEffectKey === 'attendance_correction') {
+      return this.approveWithSideEffect(ctx, row, input, events, assignedUserId, () =>
+        this.applyAttendanceCorrection(ctx, row, input),
+      );
+    }
+
+    if (resolved.config.approvalSideEffectKey === 'revaluation') {
+      return this.approveWithSideEffect(ctx, row, input, events, assignedUserId, () =>
+        this.applyRevaluation(ctx, row, input),
+      );
     }
 
     if(resolved.config.approvalSideEffectKey==='fee_waiver'){
@@ -758,6 +780,7 @@ export class RequestEngineService {
         message: `You already have a leave request covering ${String(existing.start_date)}–${String(existing.end_date)} (${overlap[0].humanCode}).`,
       });
     }
+    await this.assertNoCrossTypeOverlap(principal, payload.start_date, payload.end_date, 'leave_request');
     const [student] = await this.db
       .select({ classId: schema.students.classId })
       .from(schema.students)
@@ -828,11 +851,361 @@ export class RequestEngineService {
     return rows;
   }
 
-  private async applyLeaveAttendance(ctx: PortalActionContext, row: RequestRow): Promise<void> {
+  private async approveWithSideEffect(
+    ctx: PortalActionContext,
+    row: RequestRow,
+    input: RequestApproveInput,
+    events: Array<{ type: string; note?: string }>,
+    assignedUserId: string | null,
+    sideEffect: () => Promise<Record<string, unknown> | void>,
+  ) {
+    let fulfillmentData: Record<string, unknown> | undefined;
+    try {
+      fulfillmentData = (await sideEffect()) ?? undefined;
+    } catch (error) {
+      throw error;
+    }
+    const approved = await this.updateDecisionVersioned(row, input.version, {
+      status: 'approved',
+      assignedUserId,
+      decisionNote: input.note ?? null,
+    }, ctx.principal);
+    await this.appendEvents(
+      approved,
+      [...events, { type: 'approved', note: input.note }],
+      this.staffActor(ctx.principal),
+    );
+    await this.writePortalAudit(ctx, approved, 'student_request.approve', row.status, 'approved', input.note);
+    const updated = await this.updateVersioned(approved, approved.version, {
+      status: 'fulfilled',
+      resolvedAt: new Date(),
+    });
+    const seq = await this.appendEvent(
+      updated,
+      'fulfilled',
+      this.staffActor(ctx.principal),
+      input.note ?? null,
+      fulfillmentData,
+    );
+    await this.writePortalAudit(ctx, updated, 'student_request.fulfil', 'approved', 'fulfilled');
+    await this.notifications.dispatch({ institutionId: row.institutionId, requestId: row.id, eventSeq: seq });
+    return this.toViewResolved(updated);
+  }
+
+  private async applyLeaveAttendance(_ctx: PortalActionContext, row: RequestRow): Promise<void> {
     const payload = row.payload as unknown as LeaveRequestPayload;
+    const policy = await this.policy.resolvePolicyValues(row.institutionId, row.campusId);
+    const mark = policy.leaveMark;
+    const [institution] = await this.db
+      .select({ timezone: schema.institutions.timezone })
+      .from(schema.institutions)
+      .where(eq(schema.institutions.id, row.institutionId))
+      .limit(1);
+    const today = institutionNow(institution?.timezone ?? 'UTC').date;
     for (const session of payload.notify_sessions ?? []) {
-      await this.attendance.mark(ctx, session.session_id, {
-        marks: [{ studentId: row.studentId, status: 'excused', remarks: `Leave ${row.humanCode}` }],
+      const isFuture = session.date > today;
+      const provenance = { kind: 'leave_approval' as const, request_id: row.id };
+      if (isFuture) {
+        const [student] = await this.db
+          .select({ classId: schema.students.classId })
+          .from(schema.students)
+          .where(eq(schema.students.id, row.studentId))
+          .limit(1);
+        if (!student?.classId) continue;
+        await this.db
+          .insert(schema.requestMarksPending)
+          .values({
+            institutionId: row.institutionId,
+            requestId: row.id,
+            studentId: row.studentId,
+            classId: student.classId,
+            subjectId: session.subject_id,
+            occurrenceDate: session.date,
+            slotId: null,
+            targetMark: mark,
+          })
+          .onConflictDoNothing();
+        continue;
+      }
+      await this.attendance.markSystem(row.institutionId, session.session_id, {
+        studentId: row.studentId,
+        status: mark,
+        remarks: `Leave ${row.humanCode}`,
+        provenance,
+      });
+    }
+    await this.enqueueRecompute(row);
+  }
+
+  private async applyOdAttendance(_ctx: PortalActionContext, row: RequestRow): Promise<void> {
+    const payload = row.payload as unknown as OdRequestPayload;
+    const [institution] = await this.db
+      .select({ timezone: schema.institutions.timezone })
+      .from(schema.institutions)
+      .where(eq(schema.institutions.id, row.institutionId))
+      .limit(1);
+    const today = institutionNow(institution?.timezone ?? 'UTC').date;
+    const [student] = await this.db
+      .select({ classId: schema.students.classId })
+      .from(schema.students)
+      .where(eq(schema.students.id, row.studentId))
+      .limit(1);
+    if (!student?.classId) return;
+    for (const occurrence of payload.sessions_snapshot ?? []) {
+      const provenance = { kind: 'od_approval' as const, request_id: row.id };
+      if (occurrence.date > today) {
+        await this.db
+          .insert(schema.requestMarksPending)
+          .values({
+            institutionId: row.institutionId,
+            requestId: row.id,
+            studentId: row.studentId,
+            classId: student.classId,
+            subjectId: occurrence.subject_id,
+            occurrenceDate: occurrence.date,
+            slotId: occurrence.slot_id,
+            targetMark: 'od',
+          })
+          .onConflictDoNothing();
+        continue;
+      }
+      const [session] = await this.db
+        .select()
+        .from(schema.attendanceSessions)
+        .where(
+          and(
+            eq(schema.attendanceSessions.institutionId, row.institutionId),
+            eq(schema.attendanceSessions.classId, student.classId),
+            eq(schema.attendanceSessions.date, occurrence.date),
+            occurrence.slot_id
+              ? eq(schema.attendanceSessions.slotId, occurrence.slot_id)
+              : isNull(schema.attendanceSessions.slotId),
+          ),
+        )
+        .limit(1);
+      if (!session) continue;
+      await this.attendance.markSystem(row.institutionId, session.id, {
+        studentId: row.studentId,
+        status: 'od',
+        remarks: `OD ${row.humanCode}`,
+        provenance,
+      });
+    }
+    await this.enqueueRecompute(row);
+  }
+
+  private async applyAttendanceCorrection(
+    _ctx: PortalActionContext,
+    row: RequestRow,
+    input: RequestApproveInput,
+  ): Promise<Record<string, unknown>> {
+    const payload = row.payload as unknown as AttendanceCorrectionPayload;
+    const toggled = new Set(input.accepted_session_ids ?? payload.record_refs.map((ref) => ref.session_id));
+    const flipped: string[] = [];
+    const kept: string[] = [];
+    for (const ref of payload.record_refs) {
+      if (!toggled.has(ref.session_id)) {
+        kept.push(ref.session_id);
+        continue;
+      }
+      await this.attendance.markSystem(row.institutionId, ref.session_id, {
+        studentId: row.studentId,
+        status: 'present',
+        remarks: input.note ?? `Correction ${row.humanCode}`,
+        provenance: { kind: 'correction_approval', request_id: row.id },
+      });
+      flipped.push(ref.session_id);
+    }
+    await this.enqueueRecompute(row);
+    return { flipped, kept };
+  }
+
+  private async maybeRefundRevaluationFee(ctx: PortalActionContext, row: RequestRow) {
+    if (row.type !== 'revaluation' || !row.paymentRequestId) return;
+    const settings = await this.resultsSettings.get(ctx);
+    if (!settings.revaluationRefundOnReject) return;
+    const [invoice] = await this.db
+      .select()
+      .from(schema.feeInvoices)
+      .where(
+        and(
+          eq(schema.feeInvoices.id, row.paymentRequestId),
+          eq(schema.feeInvoices.institutionId, row.institutionId),
+          eq(schema.feeInvoices.studentId, row.studentId),
+        ),
+      )
+      .limit(1);
+    if (!invoice || invoice.amountPaid <= 0) return;
+    const [payment] = await this.db
+      .select()
+      .from(schema.feePayments)
+      .where(and(eq(schema.feePayments.invoiceId, invoice.id), sql`${schema.feePayments.amount} > 0`))
+      .orderBy(desc(schema.feePayments.paidDate))
+      .limit(1);
+    if (!payment?.receiptId) return;
+    await this.feeLedger.refundReceipt(
+      ctx,
+      payment.receiptId,
+      invoice.amountPaid,
+      `Revaluation ${row.humanCode} rejected`,
+      `revaluation-reject:${row.id}`,
+    );
+  }
+
+  private async applyRevaluation(
+    ctx: PortalActionContext,
+    row: RequestRow,
+    input: RequestApproveInput,
+  ): Promise<Record<string, unknown>> {
+    const form = revaluationApproveFormSchema.parse({
+      new_score: input.new_score,
+      note: input.note,
+      ...(input.form ?? {}),
+    });
+    const payload = row.payload as { grade_entry_id: string };
+    const [entry] = await this.db
+      .select()
+      .from(schema.gradeEntries)
+      .where(
+        and(
+          eq(schema.gradeEntries.id, payload.grade_entry_id),
+          eq(schema.gradeEntries.institutionId, row.institutionId),
+          eq(schema.gradeEntries.studentId, row.studentId),
+        ),
+      )
+      .limit(1);
+    if (!entry) {
+      throw new NotFoundException({ code: 'GRADE_ENTRY_NOT_FOUND', message: 'Grade entry not found.' });
+    }
+    if (!Number.isInteger(form.new_score)) {
+      throw new BadRequestException({ code: 'INVALID_SCORE', message: 'Score must be a whole number.' });
+    }
+    if (form.new_score < 0 || form.new_score > entry.maxMarks) {
+      throw new BadRequestException({
+        code: 'SCORE_OUT_OF_RANGE',
+        message: `Score must be between 0 and ${entry.maxMarks}.`,
+      });
+    }
+
+    const revisionId = await this.db.transaction(async (tx) => {
+      const [revision] = await tx
+        .insert(schema.markRevisions)
+        .values({
+          institutionId: row.institutionId,
+          studentId: row.studentId,
+          gradeEntryId: entry.id,
+          oldScore: entry.marksObtained,
+          newScore: form.new_score,
+          reasonKind: 'revaluation',
+          note: form.note,
+          requestId: row.id,
+          revisedBy: ctx.principal.institutionUserId,
+        })
+        .returning({ id: schema.markRevisions.id });
+      await tx
+        .update(schema.gradeEntries)
+        .set({ marksObtained: form.new_score, updatedAt: new Date(), updatedBy: ctx.principal.institutionUserId })
+        .where(eq(schema.gradeEntries.id, entry.id));
+      return revision!.id;
+    });
+
+    if (entry.termId) {
+      await this.jobs.enqueue(
+        'reports',
+        RESULTS_RECOMPUTE_TERM_JOB,
+        {
+          institutionId: row.institutionId,
+          studentId: row.studentId,
+          termId: entry.termId,
+          revisionId,
+        },
+        { jobId: `results:${row.studentId}:${entry.termId}` },
+      );
+    }
+
+    return { grade_entry_id: entry.id, old_score: entry.marksObtained, new_score: form.new_score };
+  }
+
+  private async enqueueRecompute(row: RequestRow) {
+    await this.jobs.enqueue(
+      'notifications',
+      ATTENDANCE_RECOMPUTE_JOB,
+      { institutionId: row.institutionId, studentId: row.studentId, subjectId: null, rebuild: false },
+      { jobId: `attendance:${row.studentId}:overall:recompute`, delay: 30_000 },
+    );
+  }
+
+  private async prepareOd(principal: InstitutionalStudentPrincipal, payload: OdRequestPayload) {
+    await this.assertNoCrossTypeOverlap(principal, payload.start_date, payload.end_date, 'od_request');
+    return { ...payload, sessions_snapshot: payload.sessions_snapshot ?? [] };
+  }
+
+  private async validateCorrection(
+    principal: InstitutionalStudentPrincipal,
+    payload: AttendanceCorrectionPayload,
+  ) {
+    for (const ref of payload.record_refs) {
+      const [record] = await this.db
+        .select({ status: schema.attendanceRecords.status })
+        .from(schema.attendanceRecords)
+        .where(
+          and(
+            eq(schema.attendanceRecords.sessionId, ref.session_id),
+            eq(schema.attendanceRecords.studentId, principal.studentId),
+          ),
+        )
+        .limit(1);
+      if (!record || !['absent', 'late'].includes(record.status)) {
+        throw new BadRequestException({ code: 'CORRECTION_INELIGIBLE', message: 'Only marked absences can be disputed.' });
+      }
+    }
+    const sessionIds = payload.record_refs.map((ref) => ref.session_id);
+    const open = await this.db
+      .select({ humanCode: schema.studentRequests.humanCode, payload: schema.studentRequests.payload })
+      .from(schema.studentRequests)
+      .where(
+        and(
+          eq(schema.studentRequests.institutionId, principal.institutionId),
+          eq(schema.studentRequests.studentId, principal.studentId),
+          eq(schema.studentRequests.type, 'attendance_correction'),
+          inArray(schema.studentRequests.status, PENDING_STATUSES),
+        ),
+      );
+    for (const row of open) {
+      const refs = (row.payload as AttendanceCorrectionPayload).record_refs ?? [];
+      const overlap = refs.some((ref) => sessionIds.includes(ref.session_id));
+      if (overlap) {
+        throw new ConflictException({
+          code: 'CORRECTION_ALREADY_OPEN',
+          message: `You already have an open correction (${row.humanCode}) for one of these sessions.`,
+        });
+      }
+    }
+  }
+
+  private async assertNoCrossTypeOverlap(
+    principal: InstitutionalStudentPrincipal,
+    start: string,
+    end: string,
+    type: string,
+  ) {
+    const overlap = await this.db
+      .select({ humanCode: schema.studentRequests.humanCode, type: schema.studentRequests.type })
+      .from(schema.studentRequests)
+      .where(
+        and(
+          eq(schema.studentRequests.institutionId, principal.institutionId),
+          eq(schema.studentRequests.studentId, principal.studentId),
+          inArray(schema.studentRequests.status, PENDING_STATUSES),
+          sql`(${schema.studentRequests.payload}->>'start_date') <= ${end}`,
+          sql`(${schema.studentRequests.payload}->>'end_date') >= ${start}`,
+        ),
+      )
+      .limit(1);
+    if (overlap[0] && overlap[0].type !== type) {
+      throw new ConflictException({
+        code: 'ATTENDANCE_OVERLAP',
+        message: `You already have ${overlap[0].humanCode} covering ${start}–${end}.`,
       });
     }
   }
@@ -1134,6 +1507,74 @@ export class RequestEngineService {
           subjectName: item.subjectName,
           percentage: Number(item.total) > 0 ? Math.round((Number(item.attended) / Number(item.total)) * 100) : null,
         })),
+      };
+    }
+    if (row.type === 'od_request') {
+      const payload = row.payload as unknown as OdRequestPayload;
+      const sessions = payload.sessions_snapshot ?? [];
+      const subjectIds = [...new Set(sessions.map((session) => session.subject_id).filter((id): id is string => Boolean(id)))];
+      const attendance = subjectIds.length
+        ? await this.db
+            .select({
+              subjectId: schema.attendanceSessions.subjectId,
+              subjectName: schema.subjects.name,
+              total: sql<number>`count(${schema.attendanceRecords.id}) filter (where ${schema.attendanceRecords.status} <> 'excused')`,
+              attended: sql<number>`count(${schema.attendanceRecords.id}) filter (where ${schema.attendanceRecords.status} in ('present', 'late'))`,
+            })
+            .from(schema.attendanceRecords)
+            .innerJoin(schema.attendanceSessions, eq(schema.attendanceSessions.id, schema.attendanceRecords.sessionId))
+            .leftJoin(schema.subjects, eq(schema.subjects.id, schema.attendanceSessions.subjectId))
+            .where(and(eq(schema.attendanceRecords.studentId, row.studentId), inArray(schema.attendanceSessions.subjectId, subjectIds)))
+            .groupBy(schema.attendanceSessions.subjectId, schema.subjects.name)
+        : [];
+      return {
+        student,
+        sessions,
+        sessionCount: sessions.length,
+        attendance: attendance.map((item) => ({
+          subjectId: item.subjectId,
+          subjectName: item.subjectName,
+          percentage: Number(item.total) > 0 ? Math.round((Number(item.attended) / Number(item.total)) * 100) : null,
+        })),
+        eventName: payload.event_name,
+        organizer: payload.organizer,
+        reason: payload.reason,
+      };
+    }
+    if (row.type === 'attendance_correction') {
+      const payload = row.payload as unknown as AttendanceCorrectionPayload;
+      const sessionIds = payload.record_refs.map((ref) => ref.session_id);
+      const records = sessionIds.length
+        ? await this.db
+            .select({
+              sessionId: schema.attendanceSessions.id,
+              date: schema.attendanceSessions.date,
+              period: schema.attendanceSessions.period,
+              subjectName: schema.subjects.name,
+              status: schema.attendanceRecords.status,
+            })
+            .from(schema.attendanceSessions)
+            .leftJoin(schema.subjects, eq(schema.subjects.id, schema.attendanceSessions.subjectId))
+            .leftJoin(
+              schema.attendanceRecords,
+              and(
+                eq(schema.attendanceRecords.sessionId, schema.attendanceSessions.id),
+                eq(schema.attendanceRecords.studentId, row.studentId),
+              ),
+            )
+            .where(inArray(schema.attendanceSessions.id, sessionIds))
+        : [];
+      return {
+        student,
+        sessions: records.map((record) => ({
+          session_id: record.sessionId,
+          date: record.date,
+          period: record.period,
+          subject_name: record.subjectName,
+          current_status: record.status,
+        })),
+        sessionCount: records.length,
+        claim: payload.claim,
       };
     }
     const payload = row.payload as Record<string, unknown>;

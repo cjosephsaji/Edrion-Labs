@@ -34,7 +34,23 @@ export default function LibraryPage() {
         eyebrow={<Eyebrow>LIBRARY</Eyebrow>}
         title="Your knowledge space"
         subtitle={leadLine(me?.persona)}
-        right={<UploadFlow />}
+        right={
+          <div className="flex items-center gap-2">
+            <a
+              href="/library/notes"
+              className="rounded-full border border-st-bd2 px-4 py-2 text-sm font-medium"
+            >
+              Notes
+            </a>
+            <a
+              href="/library/review"
+              className="rounded-full bg-st-ink px-4 py-2 text-sm font-medium text-white"
+            >
+              Review
+            </a>
+            <UploadFlow />
+          </div>
+        }
       />
 
       <SearchBar value={q} onChange={setQ} />

@@ -55,11 +55,24 @@ BEGIN
       ('admission_applications', 'institution_id'),
       ('attendance_sessions', 'institution_id'),
       ('attendance_records', 'institution_id'),
+      ('attendance_policies', 'institution_id'),
+      ('attendance_rollups', 'institution_id'),
+      ('request_marks_pending', 'institution_id'),
       ('timetable_slots', 'institution_id'),
+      ('period_exceptions', 'institution_id'),
+      ('ics_tokens', 'institution_id'),
       -- Institution-portal exams/gradebook/assignments (Phase 6): tenant-isolated.
       ('exams', 'institution_id'),
       ('exam_schedules', 'institution_id'),
       ('grade_entries', 'institution_id'),
+      ('grading_schemes', 'institution_id'),
+      ('grading_scheme_versions', 'institution_id'),
+      ('subject_weight_maps', 'institution_id'),
+      ('mark_release_batches', 'institution_id'),
+      ('student_term_results', 'institution_id'),
+      ('student_cgpa_snapshots', 'institution_id'),
+      ('mark_revisions', 'institution_id'),
+      ('term_recompute_requests', 'institution_id'),
       ('assignments', 'institution_id'),
       ('assignment_submissions', 'institution_id'),
       -- Institution-portal fees/payroll (Phase 7): tenant-isolated under the API guard.
@@ -193,7 +206,16 @@ BEGIN
       ('class_materials', 'institution_id'),
       ('courses', 'institution_id'),
       ('course_enrollments', 'institution_id'),
-      ('report_cards', 'institution_id')
+      ('report_cards', 'institution_id'),
+      -- Library review / workspace (Phase 1): nullable institution_id context tag.
+      ('review_sessions', 'institution_id'),
+      ('user_streaks', 'institution_id'),
+      ('streak_events', 'institution_id'),
+      ('knowledge_chunks', 'institution_id'),
+      ('knowledge_item_chats', 'institution_id'),
+      ('generation_jobs', 'institution_id'),
+      ('library_notes', 'institution_id'),
+      ('user_review_prefs', 'institution_id')
     ) AS t(tbl, col)
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', spec.tbl);
@@ -388,7 +410,9 @@ CREATE POLICY question_bank_update ON question_bank FOR UPDATE USING (true);
 DO $$
 DECLARE tbl text;
 BEGIN
-  FOREACH tbl IN ARRAY ARRAY['user_obligations','feed_events','today_preferences'] LOOP
+  FOREACH tbl IN ARRAY ARRAY['user_obligations','feed_events','today_preferences',
+    'review_sessions','user_streaks','streak_events','knowledge_chunks','knowledge_item_chats',
+    'generation_jobs','library_notes','user_review_prefs'] LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
     EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', tbl);
     EXECUTE format('DROP POLICY IF EXISTS %I_owner_private ON %I', tbl, tbl);

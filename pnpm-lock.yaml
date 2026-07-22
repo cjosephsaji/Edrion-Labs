@@ -602,6 +602,28 @@ importers:
         specifier: ^2.1.1
         version: 2.1.9(@types/node@20.19.43)
 
+  packages/canvas-layout:
+    dependencies:
+      '@edrion/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      elkjs:
+        specifier: ^0.9.3
+        version: 0.9.3
+    devDependencies:
+      '@edrion/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@edrion/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
+      typescript:
+        specifier: ^5.6.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@20.19.43)
+
   packages/config:
     dependencies:
       zod:
@@ -764,6 +786,9 @@ importers:
 
   packages/schemas:
     dependencies:
+      '@edrion/design-tokens':
+        specifier: workspace:*
+        version: link:../design-tokens
       '@edrion/permissions':
         specifier: workspace:*
         version: link:../permissions
@@ -779,6 +804,9 @@ importers:
       libphonenumber-js:
         specifier: ^1.13.7
         version: 1.13.7
+      ts-fsrs:
+        specifier: ^4.7.1
+        version: 4.7.1
       world-countries:
         specifier: ^5.1.0
         version: 5.1.0
@@ -2932,6 +2960,9 @@ packages:
   elkjs@0.11.1:
     resolution: {integrity: sha512-zxxR9k+rx5ktMwT/FwyLdPCrq7xN6e4VGGHH8hA01vVYKjTFik7nHOxBnAYtrgYUB1RpAiLvA1/U2YraWxyKKg==}
 
+  elkjs@0.9.3:
+    resolution: {integrity: sha512-f/ZeWvW/BCXbhGEf1Ujp29EASo/lk1FDnETgNKwJrsVvGZhUWCZyg3xLJjAsxfOmt8KjswHmI5EwCQcPMpOYhQ==}
+
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
 
@@ -4455,6 +4486,10 @@ packages:
     engines: {node: '>=18.12'}
     peerDependencies:
       typescript: '>=4.8.4'
+
+  ts-fsrs@4.7.1:
+    resolution: {integrity: sha512-uYqKbSCNWLRPT0PfqFFy2rn0YuYz2fKmtgpgHOBd5/DP14oj6diG7P271AwJ8iGrKnmIspzXCF+nTKxict+Lcg==}
+    engines: {node: '>=18.0.0'}
 
   ts-interface-checker@0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
@@ -6356,6 +6391,8 @@ snapshots:
   electron-to-chromium@1.5.378: {}
 
   elkjs@0.11.1: {}
+
+  elkjs@0.9.3: {}
 
   emoji-regex@8.0.0: {}
 
@@ -8341,6 +8378,8 @@ snapshots:
   ts-api-utils@2.5.0(typescript@5.9.3):
     dependencies:
       typescript: 5.9.3
+
+  ts-fsrs@4.7.1: {}
 
   ts-interface-checker@0.1.13: {}
 

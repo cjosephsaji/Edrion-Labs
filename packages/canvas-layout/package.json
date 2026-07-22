@@ -1,0 +1,27 @@
+{
+  "name": "@edrion/canvas-layout",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "@edrion/schemas": "workspace:*",
+    "elkjs": "^0.9.3"
+  },
+  "devDependencies": {
+    "@edrion/eslint-config": "workspace:*",
+    "@edrion/tsconfig": "workspace:*",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.8"
+  }
+}

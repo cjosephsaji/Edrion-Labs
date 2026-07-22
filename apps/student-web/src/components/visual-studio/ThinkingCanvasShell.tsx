@@ -18,7 +18,7 @@ import { ThinkingCanvas } from './ThinkingCanvas';
 import { CanvasToolbar } from './CanvasToolbar';
 import { CanvasMobileToolbar } from './CanvasMobileToolbar';
 import { CanvasInspector } from './CanvasInspector';
-import { CanvasSaveIndicator } from './CanvasSaveIndicator';
+import { CanvasConflictSheet } from './CanvasConflictSheet';
 import { MemoryDiffOverlay } from './MemoryDiffOverlay';
 import { NodeActionSheet } from './NodeActionSheet';
 import { NodeQuizDialog } from './NodeQuizDialog';
@@ -52,7 +52,10 @@ function ThinkingCanvasShellInner({
   const checkMemory = useVisualCheckMemory();
   const [checkJobId, setCheckJobId] = useState<string | null>(null);
   const [checkError, setCheckError] = useState<string | null>(null);
-  const [conflictResolved, setConflictResolved] = useState(false);
+  const [conflict, setConflict] = useState<{
+    revision: number;
+    graph: CanvasGraph;
+  } | null>(null);
   const [offlineBannerDismissed, setOfflineBannerDismissed] = useState(false);
   const [isOffline, setIsOffline] = useState(
     typeof navigator !== 'undefined' ? !navigator.onLine : false,
@@ -105,7 +108,7 @@ function ThinkingCanvasShellInner({
         autosaveCallbacksRef.current.setServerVersion(version);
         autosaveCallbacksRef.current.setLastSavedAt(new Date().toISOString());
       },
-      onConflict: () => setConflictResolved(true),
+      onConflict: (revision, latestGraph) => setConflict({ revision, graph: latestGraph }),
     });
     return () => autosaveRef.current?.dispose();
   }, [canvasId]);
@@ -202,7 +205,7 @@ function ThinkingCanvasShellInner({
             status={saveStatus}
             dirty={dirty}
             lastSavedAt={lastSavedAt}
-            conflictResolved={conflictResolved}
+            conflictResolved={conflict !== null}
           />
         </header>
 
@@ -241,7 +244,7 @@ function ThinkingCanvasShellInner({
           <CanvasToolbar
             dirty={dirty}
             lastSavedAt={lastSavedAt}
-            conflictResolved={conflictResolved}
+            conflictResolved={conflict !== null}
             onRetrySave={retrySave}
           >
             {isMemoryMode ? (
@@ -419,6 +422,18 @@ function ThinkingCanvasShellInner({
             {checkError}
           </p>
         ) : null}
+
+        <CanvasConflictSheet
+          open={conflict !== null}
+          latestRevision={conflict?.revision ?? 0}
+          latestGraph={conflict?.graph ?? graph}
+          onRefresh={(revision, latestGraph) => {
+            initFromServer(canvasId, latestGraph, revision, origin === 'memory' ? 'memory' : 'edit');
+            setServerVersion(revision);
+            setConflict(null);
+          }}
+          onDismiss={() => setConflict(null)}
+        />
       </div>
     </ReactFlowProvider>
   );

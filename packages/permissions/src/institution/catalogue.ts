@@ -60,6 +60,9 @@ export const INSTITUTION_PERMISSIONS: readonly PermissionDef[] = [
   // Timetable
   def('timetable.view', 'Timetable', 'View timetables.'),
   def('timetable.manage', 'Timetable', 'Create and edit timetables.'),
+  def('timetable.builder.edit', 'Timetable', 'Edit timetable slots in the builder.'),
+  def('timetable.exception.manage_all', 'Timetable', 'Publish and revoke timetable exceptions for any class.'),
+  def('timetable.exception.manage_own', 'Timetable', 'Publish and revoke exceptions for own periods.'),
 
   // Exams
   def('exams.view', 'Exams', 'View exams and schedules.'),
@@ -68,6 +71,8 @@ export const INSTITUTION_PERMISSIONS: readonly PermissionDef[] = [
   // Gradebook
   def('gradebook.view', 'Gradebook', 'View grades.'),
   def('gradebook.manage', 'Gradebook', 'Enter and edit grades.', true),
+  def('gradebook.approve_release', 'Gradebook', 'Approve mark releases (HOD gate).', true),
+  def('results.recompute_approval', 'Gradebook', 'Approve recomputation of stamped term results.', true),
 
   // Assignments
   def('assignments.view', 'Assignments', 'View assignments.'),

@@ -6,13 +6,16 @@ import type {
   MemoryGraphDiff,
   VisualGraphEdge,
   VisualGraphNode,
+  VisualRevisionReason,
 } from '@edrion/schemas';
 import { LEARN_AI_PROVIDER } from '../../../common/tokens';
+import type { Database } from '@edrion/database';
 import { AiUsageLimiter } from '../../copilot/ai-usage-limiter.service';
 import type { LearnAiProvider } from '../learn-ai/provider';
 import { LearnAiCallLogger } from '../learn-ai/learn-ai-call.logger';
 import type { StudentPrincipal } from '../student.types';
 import { memoryEmbedText, normalizeMemoryText } from './visual-memory-text';
+import { LearningEventsWriter } from '../ledger/learning-events.writer';
 import {
   cosineSimilarity,
   hungarianMaximize,
@@ -40,7 +43,58 @@ export class VisualMemoryDiffService {
     @Inject(LEARN_AI_PROVIDER) private readonly ai: LearnAiProvider,
     private readonly callLog: LearnAiCallLogger,
     private readonly limiter: AiUsageLimiter,
+    private readonly ledger: LearningEventsWriter,
   ) {}
+
+  /**
+   * Emit learning_events for memory canvases after a committed revision.
+   * Study-mode reads never call this path.
+   */
+  async observeCommittedGraph(input: {
+    principal: StudentPrincipal;
+    canvasId: string;
+    topicId: string | null;
+    previousGraph: CanvasGraph;
+    committedGraph: CanvasGraph;
+    reason: VisualRevisionReason;
+    tx: Database;
+  }): Promise<void> {
+    if (!input.topicId) return;
+    if (input.reason === 'migration' || input.reason === 'restore') return;
+
+    const prevShaky = new Set(
+      input.previousGraph.nodes.filter((n) => n.status === 'shaky').map((n) => n.id),
+    );
+    const nextShaky = input.committedGraph.nodes.filter((n) => n.status === 'shaky');
+    const resolved = input.committedGraph.nodes.filter(
+      (n) => n.status === 'resolved' && prevShaky.has(n.id),
+    );
+
+    for (const node of nextShaky) {
+      if (prevShaky.has(node.id)) continue;
+      await this.ledger.logStrictInTransaction(input.tx, {
+        principal: input.principal,
+        eventType: 'visual.node_marked_shaky',
+        payload: {
+          canvasId: input.canvasId,
+          nodeId: node.id,
+          topicId: input.topicId,
+        },
+      });
+    }
+
+    for (const node of resolved) {
+      await this.ledger.logStrictInTransaction(input.tx, {
+        principal: input.principal,
+        eventType: 'visual.node_resolved',
+        payload: {
+          canvasId: input.canvasId,
+          nodeId: node.id,
+          topicId: input.topicId,
+        },
+      });
+    }
+  }
 
   async computeDiff(input: MemoryDiffInput): Promise<MemoryGraphDiff> {
     const { studentGraph, referenceGraph } = input;

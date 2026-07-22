@@ -10,7 +10,7 @@ const optionalUuid = z.string().uuid().nullish();
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
 const shortText = (max = 120) => z.string().trim().max(max).nullish();
 
-export const ATTENDANCE_STATUSES = ['present', 'absent', 'late', 'excused', 'left_early'] as const;
+export const ATTENDANCE_STATUSES = ['present', 'absent', 'late', 'excused', 'left_early', 'od'] as const;
 export const attendanceStatusSchema = z.enum(ATTENDANCE_STATUSES);
 export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
 

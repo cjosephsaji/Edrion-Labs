@@ -30,6 +30,7 @@ import { VisualReferenceCacheService } from './visual-reference-cache.service';
 import { VisualJobEventStore, type StoredVisualProposal } from './visual-job-event-store';
 
 import { VisualStudioRepository } from './visual-studio.repository';
+import { VisualRevisionService } from './visual-revision.service';
 
 import { visualProposalExpired, visualQueueUnavailable } from './visual.errors';
 
@@ -199,6 +200,8 @@ export class VisualStudioProcessor implements OnModuleInit {
 
     private readonly repo: VisualStudioRepository,
 
+    private readonly revisions: VisualRevisionService,
+
     private readonly limiter: AiUsageLimiter,
 
     @Inject(LEARNING_EVENTS_WRITER) private readonly ledger: LearningEventsWriter,
@@ -347,50 +350,17 @@ export class VisualStudioProcessor implements OnModuleInit {
 
       const canvasId = randomUUID();
 
-      const created = await this.repo.createGeneratedCanvas(principal, {
-
+      const created = await this.revisions.commitInitial(principal, {
         id: canvasId,
-
         title: proposal.title,
-
         archetype: request.archetype,
-
         graph,
-
         origin: proposal.origin,
-
         sourceId: proposal.source_id ?? null,
-
         topicId: proposal.topic_id ?? null,
-
         sourceSessionId: proposal.session_id ?? null,
-
-      });
-
-
-
-      await this.ledger.log({
-
-        principal,
-
-        eventType: 'visual.canvas_created',
-
-        payload: {
-
-          canvasId: created.id,
-
-          origin: created.origin,
-
-          archetype: created.archetype,
-
-          nodeCount: graph.nodes.length,
-
-          edgeCount: graph.edges.length,
-
-        },
-
-        topicKey: undefined,
-
+        reason: 'generation',
+        status: 'ready',
       });
 
 
@@ -399,11 +369,11 @@ export class VisualStudioProcessor implements OnModuleInit {
 
         type: 'graph_ready',
 
-        canvas_id: created.id,
+        canvas_id: created.canvas.id,
 
         graph,
 
-        version: created.version,
+        version: created.canvas.version,
 
       });
 

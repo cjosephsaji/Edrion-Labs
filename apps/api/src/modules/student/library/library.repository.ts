@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, count, desc, eq, ilike, inArray, lte, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import { schema, type Database } from '@edrion/database';
 import { DATABASE } from '../../../common/tokens';
 import type { StudentPrincipal } from '../student.types';
@@ -345,6 +345,14 @@ export class LibraryRepository {
     return this.db.insert(schema.flashcards).values(rows).returning();
   }
 
+  async maxCardSequence(deckId: string) {
+    const [row] = await this.db
+      .select({ max: sql<number>`coalesce(max(${schema.flashcards.sequence}), 0)::int` })
+      .from(schema.flashcards)
+      .where(eq(schema.flashcards.deckId, deckId));
+    return Number(row?.max ?? 0);
+  }
+
   async getCard(deckId: string, cardId: string) {
     const [row] = await this.db
       .select()
@@ -388,7 +396,13 @@ export class LibraryRepository {
     const [row] = await this.db
       .select({ n: count() })
       .from(schema.flashcards)
-      .where(and(eq(schema.flashcards.deckId, deckId), lte(schema.flashcards.nextDueAt, now)));
+      .where(
+        and(
+          eq(schema.flashcards.deckId, deckId),
+          lte(schema.flashcards.fsrsDueAt, now),
+          isNull(schema.flashcards.suspendedAt),
+        ),
+      );
     return Number(row?.n ?? 0);
   }
 
@@ -399,7 +413,7 @@ export class LibraryRepository {
     const rows = await this.db
       .select({ deckId: schema.flashcards.deckId, n: count() })
       .from(schema.flashcards)
-      .where(and(inArray(schema.flashcards.deckId, deckIds), lte(schema.flashcards.nextDueAt, now)))
+      .where(and(inArray(schema.flashcards.deckId, deckIds), lte(schema.flashcards.fsrsDueAt, now), isNull(schema.flashcards.suspendedAt)))
       .groupBy(schema.flashcards.deckId);
     for (const id of deckIds) map.set(id, 0);
     for (const row of rows) map.set(row.deckId, Number(row.n));
@@ -425,7 +439,7 @@ export class LibraryRepository {
     const rows = await this.db
       .select({
         deckId: schema.flashcards.deckId,
-        earliest: sql<Date>`min(${schema.flashcards.nextDueAt})`,
+        earliest: sql<Date>`min(${schema.flashcards.fsrsDueAt})`,
       })
       .from(schema.flashcards)
       .where(inArray(schema.flashcards.deckId, deckIds))

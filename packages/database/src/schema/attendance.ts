@@ -1,4 +1,4 @@
-import { date, index, integer, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { check, date, index, integer, jsonb, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
@@ -73,8 +73,12 @@ export const attendanceRecords = pgTable(
     studentId: uuid('student_id')
       .notNull()
       .references(() => students.id, { onDelete: 'cascade' }),
-    /** present | absent | late | excused | left_early. */
+    /** present | absent | late | excused | left_early | od. */
     status: text('status').notNull().default('present'),
+    provenance: jsonb('provenance').$type<{
+      kind: 'leave_approval' | 'od_approval' | 'correction_approval';
+      request_id: string;
+    } | null>(),
     remarks: text('remarks'),
     version: integer('version').notNull().default(0),
     ...actorColumns,
@@ -85,6 +89,10 @@ export const attendanceRecords = pgTable(
     sessionIdx: index('attendance_records_session_idx').on(t.sessionId),
     studentIdx: index('attendance_records_student_idx').on(t.studentId),
     uniq: uniqueIndex('attendance_record_uniq').on(t.sessionId, t.studentId),
+    statusCheck: check(
+      'attendance_records_status_check',
+      sql`${t.status} IN ('present', 'absent', 'late', 'excused', 'left_early', 'od')`,
+    ),
   }),
 );
 

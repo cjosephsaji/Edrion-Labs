@@ -24,7 +24,7 @@ export type NavItem = {
 };
 
 const MODULE_ROUTES: Record<string, string> = {
-  timetable:'/calendar', attendance:'/analytics', results:'/report-cards', registration:'/courses', exam_prep:'/lab/mock-exams', fees:'/fees', documents:'/documents', transport:'/transport', hostel:'/hostel', campus_library:'/library', health:'/home', id_card:'/settings', diary:'/homework', clubs:'/calendar', events:'/calendar', placements:'/progress', grievance:'/requests', announcements:'/home', learn:'/learn', library:'/library', lab:'/lab', planner:'/calendar', progress:'/progress',
+  timetable:'/timetable', attendance:'/attendance', results:'/results', registration:'/courses', exam_prep:'/lab/mock-exams', fees:'/fees', documents:'/documents', transport:'/transport', hostel:'/hostel', campus_library:'/library', health:'/home', id_card:'/settings', diary:'/homework', clubs:'/calendar', events:'/calendar', placements:'/progress', grievance:'/requests', announcements:'/home', learn:'/learn', library:'/library', lab:'/lab', planner:'/calendar', progress:'/progress',
 };
 
 export function configNav(modules: Array<{ key: string; label: string }>): NavItem[] {
