@@ -1,6 +1,7 @@
 import './parent-portal.types';
 import { Module } from '@nestjs/common';
 import { PortalModule } from '../portal/portal.module';
+import { FeatureControlsModule } from '../feature-controls/feature-controls.module';
 import { GuardianScopeGuard } from './guardian-scope.guard';
 import { ParentController } from './parent.controller';
 import { ParentWebhookController } from './parent-webhook.controller';
@@ -27,7 +28,7 @@ import { ParentInboxService } from './parent-inbox.service';
  * parent-facing services on top. Routes live under /v1/parent/*.
  */
 @Module({
-  imports: [PortalModule],
+  imports: [PortalModule, FeatureControlsModule],
   controllers: [ParentController, ParentWebhookController, ParentStaffController],
   providers: [
     GuardianScopeGuard,

@@ -77,7 +77,7 @@ Additional NTA call: freeze exact button labels/order, palette colors/states, ca
 
 **Files**
 
-- Add `packages/database/migrations/0098_mock_exam_extensions.sql`; modify `packages/database/src/schema/student-knowledge.ts`, schema exports, journal/grants/RLS.
+- Add `packages/database/migrations/0099_mock_exam_extensions.sql`; modify `packages/database/src/schema/student-knowledge.ts`, schema exports, journal/grants/RLS.
 - Extend `packages/schemas/src/student/exam-blueprint.ts`, `exam-questions.ts`, `mock-exams.ts`, `exam-grading.ts`; add focused `mock/` schemas for snapshots, player state, results, psychometrics, imports.
 - Commit `docs/mock-blueprint-audit.md` or an equivalent “REUSE/ADD” section in the implementation PR record.
 

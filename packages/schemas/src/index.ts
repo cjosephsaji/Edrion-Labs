@@ -80,3 +80,6 @@ export * from './calendar-events';
 export * from './portal-calendar-events';
 export * from './portal-learning-summary';
 export * from './library-fsrs';
+export * from './documents';
+export * from './security/step-up-actions';
+export * from './federation';

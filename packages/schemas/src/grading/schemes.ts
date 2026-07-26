@@ -61,5 +61,8 @@ export const SCHEME_PRESETS: Record<string, Omit<SchemeSnapshot, 'kind'> & { nam
 
 export function presetSnapshot(kind: SchemeSnapshot['kind']): SchemeSnapshot {
   const preset = SCHEME_PRESETS[kind];
+  if (!preset) {
+    throw new Error(`Unknown grading scheme preset: ${kind}`);
+  }
   return { kind: preset.kind, bands: preset.bands, gpa_formula: preset.gpa_formula };
 }

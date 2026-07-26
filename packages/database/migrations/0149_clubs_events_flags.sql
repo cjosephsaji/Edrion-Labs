@@ -1,0 +1,1 @@
+-- Tier 3 reserved migration 0149_clubs_events_flags (schema landed in adjacent migrations).

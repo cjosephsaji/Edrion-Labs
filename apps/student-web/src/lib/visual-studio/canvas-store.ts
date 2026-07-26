@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { CanvasGraph, MemoryGraphDiff, VisualGraphPatch } from '@edrion/schemas';
 import type { CanvasCommand } from './canvas-commands';
 
-export type CanvasSaveStatus = 'saved' | 'saving' | 'offline' | 'error';
+export type CanvasSaveStatus = 'saved' | 'saving' | 'offline' | 'error' | 'conflict';
 
 export type VisualCanvasStoreState = {
   canvasId: string;
@@ -55,6 +55,7 @@ const initialState: VisualCanvasStoreState = {
     root_node_id: null,
     nodes: [],
     edges: [],
+    groups: [],
     layout_cache: {},
   },
   serverVersion: 1,

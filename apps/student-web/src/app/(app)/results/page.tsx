@@ -1,13 +1,16 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import useSWR from 'swr';
 import { Eyebrow, PageHeader } from '@/components/ui/primitives';
 import { fetchTermResults, isResultsStale, schemeSnapshotFromPayload, type TermSubject } from '@/lib/results';
 import { WhatIfDrawer } from '@/components/institutional/results/what-if-drawer';
 
 export default function ResultsPage() {
-  const { data, error, isLoading, mutate } = useSWR('student-results-term', () => fetchTermResults());
+  const { data, isError, isLoading, refetch } = useQuery({
+    queryKey: ['student-results-term'],
+    queryFn: () => fetchTermResults(),
+  });
   const [expanded, setExpanded] = useState<string | null>(null);
   const [whatIfSubject, setWhatIfSubject] = useState<TermSubject | null>(null);
 
@@ -16,10 +19,10 @@ export default function ResultsPage() {
     [data],
   );
 
-  if (error) {
+  if (isError) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-6">
-        <button type="button" onClick={() => mutate()} className="rounded-[12px] border border-st-bd1 bg-st-card p-4 text-sm">
+        <button type="button" onClick={() => void refetch()} className="rounded-[12px] border border-st-bd1 bg-st-card p-4 text-sm">
           Couldn&apos;t load results. Tap to retry.
         </button>
       </div>
@@ -47,7 +50,7 @@ export default function ResultsPage() {
 
       {stale ? (
         <p className="rounded-full bg-st-amberSoft px-3 py-1.5 text-xs text-st-amberInk">
-          Last updated {new Date(data.computed_at).toLocaleString()}
+          Last updated {data.computed_at ? new Date(data.computed_at).toLocaleString() : 'recently'}
         </p>
       ) : null}
 

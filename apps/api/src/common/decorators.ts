@@ -14,6 +14,9 @@ export const RateLimit = (max: number, windowSeconds?: number) =>
 /** Exempt a handler from rate limiting (health checks, internal probes). */
 export const SkipRateLimit = () => SetMetadata(SKIP_RATE_LIMIT_KEY, true);
 
+/** Skip platform AuthGuard (portal routes use InstitutionAuthGuard). */
+export { Public } from './guards/auth.guard';
+
 /** Require ALL listed permission keys for the handler. Enforced by PermissionsGuard. */
 export const RequirePermissions = (...keys: string[]) => SetMetadata(PERMISSIONS_KEY, keys);
 

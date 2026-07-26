@@ -29,6 +29,7 @@ import {
   PillChip,
   ProgressSegments,
 } from '@/components/ui/primitives';
+import { OrchestratorLearnEntry } from '@/components/edrion-learn/OrchestratorLearnEntry';
 
 function formatGreetingEyebrow(me: ReturnType<typeof usePersona>['me']): string {
   const day = new Intl.DateTimeFormat('en-GB', { weekday: 'long' }).format(new Date()).toUpperCase();
@@ -320,6 +321,11 @@ export default function LearnPage() {
       </div>
 
       <div className="mt-8 md:mt-[34px]">
+        {isIndie ? (
+          <div className="mb-6">
+            <OrchestratorLearnEntry />
+          </div>
+        ) : null}
         <h2 className="font-display text-[25px] font-semibold text-st-ink">What are we doing today?</h2>
         <div className="relative mt-3.5 max-w-[730px]">
           <input

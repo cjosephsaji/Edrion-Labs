@@ -57,6 +57,10 @@ async function clearUsers() {
     console.log('→ Clearing auth sessions…');
     await tx.execute(sql`DELETE FROM auth_sessions`);
 
+    console.log('→ Clearing orphaned super-admin operational data…');
+    await tx.execute(sql`DELETE FROM support_cases`);
+    await tx.execute(sql`DELETE FROM feature_assignments WHERE scope = 'institution'`);
+
     console.log('→ Truncating append-only log tables…');
     await tx.execute(
       sql.raw(`TRUNCATE TABLE ${APPEND_ONLY_TABLES.join(', ')} RESTART IDENTITY CASCADE`),

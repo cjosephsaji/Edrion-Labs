@@ -15,12 +15,15 @@ import { RequestJobsService } from './request-jobs.service';
 import { RequestNotifyService } from './request-notify.service';
 import { RequestRegistryService } from './request-registry.service';
 import { StudentRequestsController } from './student-requests.controller';
+import { PortalSensitiveReportsController } from './portal-sensitive-reports.controller';
+import { SensitiveReportService } from './sensitive-report.service';
 
 @Module({
   imports: [PortalModule, StudentModule, DocumentsGenModule, TodayNotificationModule],
   controllers: [
     StudentRequestsController,
     PortalRequestsController,
+    PortalSensitiveReportsController,
     RequestConfigController,
     DocumentVerificationController,
   ],
@@ -33,6 +36,7 @@ import { StudentRequestsController } from './student-requests.controller';
     RequestEngineService,
     RequestJobsService,
     RequestConfigService,
+    SensitiveReportService,
   ],
 })
 export class RequestEngineModule {}

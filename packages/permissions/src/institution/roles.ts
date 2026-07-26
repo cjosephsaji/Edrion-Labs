@@ -100,6 +100,8 @@ export const INSTITUTION_DEFAULT_ROLES: readonly RoleDef[] = [
       'reports.view',
       'users.view',
       'documents.view',
+      'parent_comm.ptm.manage',
+      'parent_comm.notices.manage',
       'billing.view',
       'ai.use',
       'audit.view',

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { MessageCircle, Pause } from 'lucide-react';
 import { useLearnSession, usePath } from '@/lib/hooks';
 import { nextBlockRoute, isReadThroughBlock } from '@/lib/learn-navigation';
@@ -11,11 +11,21 @@ import { StreamingIndicator } from '@/components/learn/StreamingIndicator';
 import { AskPetrosDrawer } from '@/components/learn/AskPetrosDrawer';
 import { CompletionOverlay } from '@/components/learn/CompletionOverlay';
 import { Eyebrow, PetrosMark } from '@/components/ui/primitives';
+import { OrchestratorSessionDocument } from '@/components/edrion-learn/OrchestratorSessionDocument';
 
 export default function SessionPage({ params }: { params: { id: string } }) {
+  const searchParams = useSearchParams();
+  const orchestrator = searchParams.get('orchestrator') === '1';
+  if (orchestrator) {
+    return <OrchestratorSessionDocument sessionId={params.id} />;
+  }
+  return <LegacyLearnSession sessionId={params.id} />;
+}
+
+function LegacyLearnSession({ sessionId }: { sessionId: string }) {
   const router = useRouter();
   const { data: session, isLoading, streaming, startStream, pause, finish, continueBlock, answer, hint, invalidate } =
-    useLearnSession(params.id);
+    useLearnSession(sessionId);
   const { data: path } = usePath();
   const [askOpen, setAskOpen] = useState(false);
   const [prefill, setPrefill] = useState<string | undefined>();
@@ -70,10 +80,10 @@ export default function SessionPage({ params }: { params: { id: string } }) {
     if (!session || !currentBlock) return;
     if (isReadThroughBlock(currentBlock.blockType)) {
       const { session: updated } = await continueBlock.mutateAsync(currentBlock.id);
-      router.push(nextBlockRoute(params.id, updated));
+      router.push(nextBlockRoute(sessionId, updated));
       return;
     }
-    router.push(nextBlockRoute(params.id, session));
+    router.push(nextBlockRoute(sessionId, session));
   };
 
   const fetchHint = async (blockId: string, rung: 2 | 3) => {
@@ -139,7 +149,7 @@ export default function SessionPage({ params }: { params: { id: string } }) {
             <div className="animate-st-block-in">
               {isConcept && (
                 <Link
-                  href={`/learn/session/${params.id}/concept/${currentBlock.id}`}
+                  href={`/learn/session/${sessionId}/concept/${currentBlock.id}`}
                   className="mb-3 inline-block text-sm font-semibold text-st-accent"
                 >
                   Open concept view →
@@ -147,7 +157,7 @@ export default function SessionPage({ params }: { params: { id: string } }) {
               )}
               {isPractice && (
                 <Link
-                  href={`/learn/session/${params.id}/practice/${currentBlock.id}`}
+                  href={`/learn/session/${sessionId}/practice/${currentBlock.id}`}
                   className="mb-3 inline-block text-sm font-semibold text-st-accent"
                 >
                   Open practice →
@@ -156,7 +166,7 @@ export default function SessionPage({ params }: { params: { id: string } }) {
               <BlockRenderer
                 block={currentBlock}
                 readOnly={session.readOnly}
-                sessionId={params.id}
+                sessionId={sessionId}
                 onAsk={(q) => {
                   setPrefill(q);
                   setAskOpen(true);
@@ -192,7 +202,7 @@ export default function SessionPage({ params }: { params: { id: string } }) {
         onPinned={invalidate}
         context={{
           kind: 'session',
-          id: params.id,
+          id: sessionId,
           blockId: currentBlock?.id,
           contextLabel: session.topicTitle,
         }}

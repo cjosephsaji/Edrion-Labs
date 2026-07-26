@@ -17,6 +17,8 @@ import type {
  * the emergency kill switch short-circuits, and every outcome carries the deciding rule + reason.
  */
 
+export type AiPolicyDomain = 'copilot' | 'student_tutor';
+
 /** A governance policy attached at a scope (global/plan/institution/campus/user/role). */
 export interface AiPolicyInput {
   scope: FeatureScope;
@@ -26,6 +28,10 @@ export interface AiPolicyInput {
   enabled: boolean;
   /** Operating mode for this scope. */
   mode: AiMode;
+  /** Which resolver consumes this row. Defaults to copilot. */
+  policyDomain?: AiPolicyDomain;
+  /** Domain-specific config (e.g. LearnPolicyV1 for student_tutor). */
+  domainConfig?: Record<string, unknown>;
   /** Per-capability enable map. A capability absent from the map defaults to enabled. */
   capabilities?: Partial<Record<AiCapability, boolean>>;
   /** Hard ceiling on financial impact (minor units). Over this → BLOCKED. `null`/undefined = no cap. */

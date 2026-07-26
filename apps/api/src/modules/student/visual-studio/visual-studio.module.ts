@@ -46,6 +46,7 @@ import { StudentAuthModule } from '../auth/student-auth.module';
     VisualStudioRepository,
     VisualRevisionService,
     VisualSchemaMigrationService,
+    CanvasGraphService,
   ],
 })
 export class VisualStudioModule {}

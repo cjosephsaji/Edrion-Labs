@@ -8,6 +8,7 @@ dotenv.config({ path: join(__dirname, '../../..', '.env') });
 import { eq, sql } from 'drizzle-orm';
 import { PERMISSIONS, DEFAULT_ROLES, WILDCARD_PERMISSION, ALL_PERMISSION_KEYS } from '@edrion/permissions';
 import { createDatabase, closeDatabase } from './client';
+import { ensureStudentPortalFeatureDefinitions } from './seed-student-portal-features';
 import * as s from './schema/index';
 
 /**
@@ -370,6 +371,8 @@ async function seed() {
       });
     }
   }
+
+  await ensureStudentPortalFeatureDefinitions(db);
 
   await db.insert(s.independentUsers).values([
     { email: 'lea@example.com', fullName: 'Lea Park', country: 'US', signupSource: 'web', status: 'active' },

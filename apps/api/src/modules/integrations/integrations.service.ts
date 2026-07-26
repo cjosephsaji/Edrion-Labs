@@ -1,4 +1,4 @@
-import { createHmac, randomBytes } from 'node:crypto';
+import { createHmac, randomBytes, randomUUID } from 'node:crypto';
 import {
   ConflictException,
   Inject,
@@ -80,6 +80,12 @@ export class IntegrationsService implements OnApplicationBootstrap {
     return { endpoint: this.toDto(endpoint), deliveries: deliveries.map((d) => this.deliveryDto(d)) };
   }
 
+  async listDeliveries(id: string, limit = 50) {
+    await this.requireEndpoint(id);
+    const deliveries = await this.repo.recentDeliveries(id, limit);
+    return { items: deliveries.map((d) => this.deliveryDto(d)) };
+  }
+
   // --- mutations -------------------------------------------------------------
 
   async create(input: CreateEndpointInput, ctx: ActionContext) {
@@ -126,7 +132,11 @@ export class IntegrationsService implements OnApplicationBootstrap {
     const updated = await this.repo.updateWithVersion(
       id,
       input.version,
-      { secret: this.newSecret() },
+      {
+        previousSecret: before.secret,
+        previousSecretExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        secret: this.newSecret(),
+      },
       ctx.principalContext.principal.employeeId,
     );
     if (!updated) throw this.versionConflict();
@@ -180,7 +190,22 @@ export class IntegrationsService implements OnApplicationBootstrap {
     if (!endpoint) return null;
 
     const body = JSON.stringify({ event: eventType, sentAt: new Date().toISOString(), data: payload });
+    const eventId = randomUUID();
+    const occurredAt = new Date().toISOString();
+    const envelope = {
+      id: eventId,
+      type: eventType,
+      version: '2',
+      institution_id: endpoint.institutionId,
+      occurred_at: occurredAt,
+      data: payload,
+    };
+    const envelopeBody = JSON.stringify(envelope);
+    const timestamp = Math.floor(Date.now() / 1000);
     const signature = createHmac('sha256', endpoint.secret).update(body).digest('hex');
+    const v1sig = createHmac('sha256', endpoint.secret)
+      .update(`${timestamp}.${envelopeBody}`)
+      .digest('hex');
 
     let status: DeliveryStatus = DeliveryStatus.Delivered;
     let responseStatus: number | null = null;
@@ -195,9 +220,10 @@ export class IntegrationsService implements OnApplicationBootstrap {
           'content-type': 'application/json',
           'x-edrion-event': eventType,
           'x-edrion-signature': `sha256=${signature}`,
+          'Edrion-Signature': `t=${timestamp},v1=${v1sig}`,
           'x-edrion-delivery-attempt': String(attempt),
         },
-        body,
+        body: envelopeBody,
         signal: controller.signal,
       });
       responseStatus = res.status;
@@ -215,11 +241,14 @@ export class IntegrationsService implements OnApplicationBootstrap {
     const delivery = await this.repo.insertDelivery({
       endpointId,
       eventType,
-      payload,
+      payload: envelope as unknown as Record<string, unknown>,
       status,
       attempts: attempt,
       responseStatus,
       lastError,
+      eventId,
+      eventVersion: '2',
+      envelope: envelope as unknown as Record<string, unknown>,
     });
     this.logger.info('webhook.delivered', { endpointId, status, responseStatus });
     return delivery;

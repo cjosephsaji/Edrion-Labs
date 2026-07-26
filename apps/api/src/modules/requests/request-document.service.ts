@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   and,
@@ -17,6 +18,7 @@ import type { DocumentRequestPayload, VaultRevokeInput } from '@edrion/schemas';
 import QRCode from 'qrcode';
 import { API_ENV, AUDIT_WRITER, DATABASE } from '../../common/tokens';
 import { hmacSha256Base64Url } from '../../common/jwt';
+import { mintDocumentVerifyCode } from '../../common/crypto/document-verify-signer';
 import { JobsService } from '../../common/queue/jobs.service';
 import { AttachmentStorageService } from '../portal/attachment-storage.service';
 import type { PortalActionContext } from '../portal/portal-action-context';
@@ -170,6 +172,57 @@ export class RequestDocumentService {
     return render;
   }
 
+  /** Documents-backed student ID card render after `id_card_reissue` approval. */
+  async enqueueIdCardReissue(ctx: PortalActionContext, request: RequestRow) {
+    const template = await this.assertRequestableTemplate(request.institutionId, 'id_card');
+    const [student] = await this.db
+      .select({
+        fullName: sql<string>`concat_ws(' ', ${schema.students.firstName}, ${schema.students.middleName}, ${schema.students.lastName})`,
+        admissionNo: schema.students.admissionNo,
+        className: schema.classes.name,
+      })
+      .from(schema.students)
+      .leftJoin(schema.classes, eq(schema.classes.id, schema.students.classId))
+      .where(eq(schema.students.id, request.studentId))
+      .limit(1);
+    const verifyCode = this.codeFor(request.id);
+    const verifyUrl = `https://verify.edrion.com/${verifyCode}`;
+    const verifyQrDataUrl = await QRCode.toDataURL(verifyUrl, {
+      errorCorrectionLevel: 'M',
+      margin: 1,
+      width: 180,
+    });
+    const render = await this.documents.createRender(
+      ctx,
+      {
+        templateId: template.id,
+        docType: 'id_card',
+        title: `ID card · ${request.humanCode}`,
+        payload: {
+          student: {
+            full_name: student?.fullName ?? 'Student',
+            admission_no: student?.admissionNo ?? '',
+            class_name: student?.className ?? '',
+          },
+          issue: {
+            verify_code: verifyCode,
+            verify_url: verifyUrl,
+            verify_qr_data_url: verifyQrDataUrl,
+            role_label: 'Registrar',
+          },
+          request_id: request.id,
+          reissue_reason: (request.payload as { reason?: string }).reason ?? 'reissue',
+        },
+      },
+      request.id,
+    );
+    if (!this.documents.queueEnabled) {
+      await this.processor.process(render.id);
+      await this.completeRender(render.id);
+    }
+    return render;
+  }
+
   async completeRender(renderId: string): Promise<{ completed: boolean; requestId?: string }> {
     const [render] = await this.db
       .select()
@@ -204,16 +257,22 @@ export class RequestDocumentService {
       .limit(1);
     let vault = existingVault;
     if (!vault) {
+      const vaultId = randomUUID();
+      const { code: verifyCode } = mintDocumentVerifyCode(
+        vaultId,
+        this.env.SESSION_COOKIE_SECRET,
+      );
       const [created] = await this.db
         .insert(schema.studentDocumentVault)
         .values({
+          id: vaultId,
           institutionId: request.institutionId,
           studentId: request.studentId,
           requestId: request.id,
           documentRenderId: render.id,
           title: render.title,
           docType: render.docType,
-          verifyCode: this.codeFor(request.id),
+          verifyCode,
           issuedBy: render.requestedBy,
         })
         .onConflictDoNothing({ target: schema.studentDocumentVault.documentRenderId })

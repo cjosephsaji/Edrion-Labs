@@ -66,7 +66,7 @@ export class CanvasAutosave {
 
     this.callbacks.onStatus?.('saving');
     try {
-      const result = await this.callbacks.patch({
+      await this.callbacks.patch({
         base_version: this.pending.baseVersion,
         title: this.pending.title,
         archetype: this.pending.archetype,

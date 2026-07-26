@@ -27,11 +27,23 @@ describe('request type schemas', () => {
       'document_request',
       'fee_waiver',
       'payment_dispute',
-    'od_request',
-    'attendance_correction',
-    'revaluation',
-  ]);
+      'od_request',
+      'attendance_correction',
+      'revaluation',
+      'hostel_outpass',
+      'campus_library_renewal',
+      'transport_change',
+      'transport_renewal',
+      'id_card_reissue',
+      'club_join',
+      'grievance',
+      'helpdesk_ticket',
+      'sensitive_report',
+      'health_profile_update',
+      'loan_renewal',
+    ]);
     expect(REQUEST_TYPE_REGISTRY.leave_request!.approvalSideEffectKey).toBe('leave_attendance');
     expect(REQUEST_TYPE_REGISTRY.document_request!.producesDocument).toBe(true);
+    expect(REQUEST_TYPE_REGISTRY.sensitive_report!.key).toBe('sensitive_report');
   });
 });

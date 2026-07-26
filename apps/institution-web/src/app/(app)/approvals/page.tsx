@@ -71,8 +71,36 @@ function Tab({ active, onClick, children }: { active: boolean; onClick: () => vo
   return <button type="button" onClick={onClick} className={`rounded-full px-4 py-2 text-sm font-semibold ${active ? 'bg-primary text-primary-foreground' : 'bg-surface-elevated text-text-secondary hover:bg-primary-soft'}`}>{children}</button>;
 }
 
-function InboxView({ initialRequestId }: { initialRequestId: string | null }) {
-  const [filters, setFilters] = useState({ status: '', type: '', sla: false, mine: false });
+export function RequestsInboxView({
+  lockType,
+  heading = 'Requests inbox',
+  initialRequestId,
+}: {
+  lockType?: string;
+  heading?: string;
+  initialRequestId: string | null;
+}) {
+  return <InboxView initialRequestId={initialRequestId} lockType={lockType} heading={heading} />;
+}
+
+function InboxView({
+  initialRequestId,
+  lockType,
+  heading = 'Requests inbox',
+}: {
+  initialRequestId: string | null;
+  lockType?: string;
+  heading?: string;
+}) {
+  const search = useSearchParams();
+  const urlType = lockType ?? search.get('type') ?? '';
+  const [filters, setFilters] = useState({ status: '', type: urlType, sla: false, mine: false });
+
+  useEffect(() => {
+    const nextType = lockType ?? search.get('type') ?? '';
+    setFilters((f) => (f.type === nextType ? f : { ...f, type: nextType }));
+  }, [lockType, search]);
+
   const list = usePortalRequests(filters);
   const [selectedId, setSelectedId] = useState<string | null>(initialRequestId);
   const items = list.data?.items ?? [];
@@ -99,14 +127,18 @@ function InboxView({ initialRequestId }: { initialRequestId: string | null }) {
     <div className="grid min-h-0 flex-1 overflow-hidden rounded-2xl border border-border bg-surface-elevated shadow-sm lg:grid-cols-[380px_minmax(0,1fr)]">
       <section className="flex min-h-[520px] flex-col border-b border-border lg:border-b-0 lg:border-r">
         <header className="space-y-3 border-b border-border bg-surface p-4">
-          <div className="flex items-center justify-between"><h1 className="font-semibold text-text-primary">Requests inbox</h1><Badge tone="primary">{items.length} pending</Badge></div>
+          <div className="flex items-center justify-between"><h1 className="font-semibold text-text-primary">{heading}</h1><Badge tone="primary">{items.length} pending</Badge></div>
           <div className="grid grid-cols-2 gap-2">
             <select aria-label="Status" value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))} className="h-9 rounded-lg border border-border bg-surface-elevated px-2 text-sm">
               <option value="">Pending</option><option value="submitted">Submitted</option><option value="in_review">In review</option><option value="needs_info">Needs info</option>
             </select>
+            {!lockType ? (
             <select aria-label="Type" value={filters.type} onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value }))} className="h-9 rounded-lg border border-border bg-surface-elevated px-2 text-sm">
-              <option value="">All types</option><option value="leave_request">Leave request</option><option value="od_request">On-duty request</option><option value="attendance_correction">Attendance correction</option><option value="document_request">Document request</option>
+              <option value="">All types</option><option value="leave_request">Leave request</option><option value="od_request">On-duty request</option><option value="attendance_correction">Attendance correction</option><option value="document_request">Document request</option><option value="grievance">Formal grievance</option>
             </select>
+            ) : (
+              <p className="flex h-9 items-center rounded-lg border border-border bg-background-secondary px-2 text-xs text-text-secondary">Type: formal grievance</p>
+            )}
           </div>
           <div className="flex gap-4 text-xs text-text-secondary">
             <label className="flex items-center gap-2"><input type="checkbox" checked={filters.sla} onChange={(e) => setFilters((f) => ({ ...f, sla: e.target.checked }))} /> SLA breached</label>

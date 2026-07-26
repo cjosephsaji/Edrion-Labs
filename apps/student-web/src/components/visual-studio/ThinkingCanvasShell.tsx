@@ -16,6 +16,7 @@ import { useCanvasNodeActions } from '@/lib/visual-studio/use-canvas-node-action
 import { VisualCanvasStoreProvider, useVisualCanvasStore } from '@/lib/visual-studio/use-canvas-store';
 import { ThinkingCanvas } from './ThinkingCanvas';
 import { CanvasToolbar } from './CanvasToolbar';
+import { CanvasSaveIndicator } from './CanvasSaveIndicator';
 import { CanvasMobileToolbar } from './CanvasMobileToolbar';
 import { CanvasInspector } from './CanvasInspector';
 import { CanvasConflictSheet } from './CanvasConflictSheet';
@@ -36,7 +37,14 @@ type ThinkingCanvasShellProps = {
   title: string;
   graph: CanvasGraph;
   serverVersion: number;
-  origin: 'prompt' | 'library_source' | 'learn_topic' | 'learn_session' | 'memory' | 'legacy';
+  origin:
+    | 'prompt'
+    | 'library_source'
+    | 'learn_topic'
+    | 'learn_session'
+    | 'memory'
+    | 'legacy'
+    | 'debate_clash';
 };
 
 function ThinkingCanvasShellInner({

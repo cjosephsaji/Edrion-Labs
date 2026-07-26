@@ -28,6 +28,8 @@ export const STUDENT_PERMISSIONS: readonly PermissionDef[] = [
   def('student.courses.view', 'Institution', 'View courses.'),
   def('student.report_cards.view', 'Institution', 'View report cards.'),
   def('student.exams.view', 'Institution', 'View institution exams.'),
+  def('student.attendance.view', 'Institution', 'View attendance summary and subject breakdown.'),
+  def('student.surface.results.view', 'Surfaces', 'View released marks and term results.'),
   def('student.surface.fees.view', 'Surfaces', 'View fees summary.'),
   def('student.surface.transport.view', 'Surfaces', 'View transport info.'),
   def('student.surface.hostel.view', 'Surfaces', 'View hostel info.'),

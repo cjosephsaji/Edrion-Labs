@@ -9,6 +9,7 @@ import { CurrentStudent, RequireStudentPermissions } from '../core/student.decor
 import type { StudentPrincipal } from '../student.types';
 import { ExamEngineService } from './exam-engine.service';
 import { ExamGenerationService } from './exam-generation.service';
+import { PastMistakesProjectionService } from './past-mistakes-projection.service';
 import type { ExamGenerationSseEvent, ExamGradingSseEvent } from '@edrion/schemas';
 
 @ApiTags('student-lab-mock')
@@ -21,7 +22,13 @@ export class ExamEngineController {
   constructor(
     private readonly exams: ExamEngineService,
     private readonly generation: ExamGenerationService,
+    private readonly pastMistakes: PastMistakesProjectionService,
   ) {}
+
+  @Get('past-mistakes')
+  pastMistakes(@CurrentStudent() principal: StudentPrincipal) {
+    return this.pastMistakes.listForPrincipal(principal);
+  }
 
   @Get()
   list(@CurrentStudent() principal: StudentPrincipal) {

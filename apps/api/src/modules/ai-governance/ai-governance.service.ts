@@ -374,6 +374,8 @@ function toPolicyInput(p: AiPolicy): AiPolicyInput {
     secondApproverCapabilities: (p.secondApproverCapabilities ??
       []) as AiPolicyInput['secondApproverCapabilities'],
     killSwitch: p.killSwitch,
+    policyDomain: (p.policyDomain ?? 'copilot') as AiPolicyInput['policyDomain'],
+    domainConfig: (p.domainConfig ?? {}) as Record<string, unknown>,
     setByName: p.setByName,
     setAt: p.updatedAt,
   };

@@ -152,7 +152,7 @@ export class PortalAuthLoginService {
         await this.auth.registerFailedLogin(user.id, user.failedLoginAttempts);
         throw invalid;
       }
-      return { user, aal: user.mfaEnrolled ? 'aal2' : 'aal1' };
+      return { user, aal: 'aal1' };
     }
 
     // Dev login: email-only, behind an explicit flag, so login can be exercised without Supabase.

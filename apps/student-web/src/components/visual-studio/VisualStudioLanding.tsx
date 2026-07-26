@@ -153,6 +153,7 @@ export function VisualStudioLanding() {
           root_node_id: null,
           nodes: [],
           edges: [],
+          groups: [],
           layout_cache: {},
         },
         client_mutation_id: crypto.randomUUID(),

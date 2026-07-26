@@ -19,8 +19,6 @@ import {
 } from '@/lib/hooks';
 import { PillButton } from '@/components/ui/pill-button';
 import { Eyebrow, PageHeader, PillChip } from '@/components/ui/primitives';
-import Link from 'next/link';
-
 const TEMPLATES: { id: ExamTemplate; label: string; blurb: string }[] = [
   { id: 'quick_check', label: 'Quick check', blurb: '~10 min · objective' },
   { id: 'chapter_test', label: 'Chapter test', blurb: '~30 min · mixed' },

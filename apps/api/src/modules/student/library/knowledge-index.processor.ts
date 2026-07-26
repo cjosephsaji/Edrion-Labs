@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { eq, schema, type Database } from '@edrion/database';
-import { DATABASE } from '../../../common/tokens';
+import { DATABASE, LEARN_AI_PROVIDER } from '../../../common/tokens';
 import { JobsService } from '../../../common/queue/jobs.service';
 import { QueueWorkers } from '../../../common/queue/queue.worker';
 import { JobTracker } from '../../../common/queue/job-tracker.service';
@@ -20,7 +20,7 @@ export class KnowledgeIndexProcessor implements OnModuleInit {
     private readonly jobs: JobsService,
     private readonly workers: QueueWorkers,
     private readonly tracker: JobTracker,
-    private readonly ai: LearnAiProvider,
+    @Inject(LEARN_AI_PROVIDER) private readonly ai: LearnAiProvider,
   ) {}
 
   onModuleInit() {

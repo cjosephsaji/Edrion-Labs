@@ -96,7 +96,7 @@ export class PortalCredentialService {
     const { token } = await this.sessions.issue({
       institutionId: user.institutionId,
       institutionUserId: user.id,
-      aal: user.mfaEnrolled ? 'aal2' : 'aal1',
+      aal: 'aal1',
       ip: req.ip,
       userAgent: req.userAgent,
     });
@@ -169,7 +169,7 @@ export class PortalCredentialService {
     const { token } = await this.sessions.issue({
       institutionId: user.institutionId,
       institutionUserId: user.id,
-      aal: user.mfaEnrolled ? 'aal2' : 'aal1',
+      aal: 'aal1',
       ip: req.ip,
       userAgent: req.userAgent,
     });

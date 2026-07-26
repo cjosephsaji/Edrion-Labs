@@ -30,11 +30,12 @@ export function resolveAiPolicy(
   policies: AiPolicyInput[],
   context: AiResolutionContext,
 ): EffectiveAiPolicy {
+  const copilotPolicies = policies.filter((p) => (p.policyDomain ?? 'copilot') === 'copilot');
   const now = toDate(context.now) ?? new Date();
   void now; // policies have no schedule window today; kept for symmetry with feature-flags
 
   // Ordered most → least specific so the first matching layer wins each field.
-  const layered = SPECIFICITY_ORDER.map((scope) => bestPolicyForScope(scope, policies, context)).filter(
+  const layered = SPECIFICITY_ORDER.map((scope) => bestPolicyForScope(scope, copilotPolicies, context)).filter(
     (p): p is AiPolicyInput => !!p,
   );
 

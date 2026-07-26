@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
+import { Injectable } from '@nestjs/common';
 import { debateClashFixture, type CanvasGraph, type VisualArchetype } from '@edrion/schemas';
+import { buildClashMapGraph } from '../debate/debate-clash-map.builder';
 import type { StudentPrincipal } from '../student.types';
 import { VisualGenerationService } from './visual-generation.service';
 import { repairGeneratedGraph } from './visual-graph-repair';
@@ -22,10 +24,37 @@ export class CanvasGraphService {
     private readonly revisions: VisualRevisionService,
   ) {}
 
-  /** Debate clash builder — contract fixture only; no routable round table yet. */
-  buildClashMap(_roundId: string): CanvasGraph {
-    void _roundId;
-    throw new CanvasGraphNotImplementedError('Debate clash map generation is not implemented yet.');
+  /** Debate clash builder — CanvasGraph v1 comparison contract (≤40 nodes). */
+  buildClashMap(input: {
+    owner: unknown;
+    debateRoundId: string;
+    transcriptRef?: string;
+    nodeBudget?: number;
+    motionTitle?: string;
+    clashes?: Parameters<typeof buildClashMapGraph>[0]['clashes'];
+  }): CanvasGraph {
+    void input.owner;
+    void input.transcriptRef;
+    const budget = input.nodeBudget ?? 40;
+    const graph = buildClashMapGraph({
+      debateRoundId: input.debateRoundId,
+      motionTitle: input.motionTitle ?? 'Debate round',
+      clashes: input.clashes ?? [
+        {
+          id: 'default',
+          title: 'Core clash',
+          summary: 'Default clash placeholder.',
+          winner: 'tied',
+          weight: 1,
+          propArgumentRefs: ['T0-A1'],
+          oppArgumentRefs: ['T1-A1'],
+        },
+      ],
+    });
+    if (graph.nodes.length > budget) {
+      return { ...graph, nodes: graph.nodes.slice(0, budget) };
+    }
+    return graph;
   }
 
   /** Validates the frozen Debate clash fixture against the canonical graph contract. */

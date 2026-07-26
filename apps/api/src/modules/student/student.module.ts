@@ -53,8 +53,12 @@ import { GenerationCurationService } from './library/generation-curation.service
 import { SubjectFilingService } from './library/subject-filing.service';
 import { GenerationController } from './library/generation.controller';
 import { ExamEngineModule } from './exam-engine/exam-engine.module';
+import { EdrionLearnModule } from './edrion-learn/edrion-learn.module';
 import { LabDebateController } from './lab-debate/lab-debate.controller';
 import { LabDebateService } from './lab-debate/lab-debate.service';
+import { DebateModule } from './debate/debate.module';
+import { CampusMirrorsModule } from './campus-mirrors/campus-mirrors.module';
+import { ExamPrepModule } from './exam-prep/exam-prep.module';
 import { AchievementsProcessor } from './jobs/achievements.processor';
 import { AchievementsController } from './achievements/achievements.controller';
 import { AchievementsService } from './achievements/achievements.service';
@@ -100,7 +104,7 @@ import { StudentResultsController } from './results/student-results.controller';
 import { StudentResultsService } from './results/student-results.service';
 
 @Module({
-  imports: [FeatureControlsModule, PortalModule, LearnAiModule, LearningEventsModule, VisualStudioModule, LabHomeModule, ExamEngineModule, StudentAuthModule, TodayNotificationModule],
+  imports: [FeatureControlsModule, PortalModule, LearnAiModule, LearningEventsModule, VisualStudioModule, LabHomeModule, ExamEngineModule, EdrionLearnModule, StudentAuthModule, TodayNotificationModule, DebateModule, CampusMirrorsModule, ExamPrepModule],
   controllers: [
     StudentAuthController,
     StudentMeController,

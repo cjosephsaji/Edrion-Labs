@@ -9,6 +9,7 @@ import {
   useDashboardPrefs,
   usePortalDashboard,
   usePortalMe,
+  usePrincipalMetrics,
   useSaveDashboardPrefs,
 } from '@/lib/hooks';
 import { usePermissions } from '@/lib/permissions';
@@ -19,6 +20,7 @@ export default function DashboardPage() {
   const { data: me } = usePortalMe();
   const { can } = usePermissions();
   const { data, isLoading, isError, refetch } = usePortalDashboard();
+  const metrics = usePrincipalMetrics();
 
   // A freshly approved institution lands here; steer its admins into the setup wizard until
   // they go live. Only admins (who can actually complete onboarding) are redirected — other
@@ -63,13 +65,19 @@ export default function DashboardPage() {
             }
           />
         )}
-        {data && <DashboardBody data={data} />}
+        {data && <DashboardBody data={data} metrics={metrics.data?.items} />}
       </div>
     </>
   );
 }
 
-function DashboardBody({ data }: { data: PortalDashboardDto }) {
+function DashboardBody({
+  data,
+  metrics,
+}: {
+  data: PortalDashboardDto;
+  metrics?: Array<{ key: string; value: Record<string, unknown> }>;
+}) {
   const { data: prefs } = useDashboardPrefs();
   const save = useSaveDashboardPrefs();
   const [editing, setEditing] = useState(false);
@@ -129,6 +137,17 @@ function DashboardBody({ data }: { data: PortalDashboardDto }) {
           {editing ? 'Done' : 'Customise'}
         </button>
       </div>
+
+      {metrics && metrics.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-3">
+          {metrics.map((m) => (
+            <div key={m.key} className="rounded-xl border border-border bg-surface/85 px-4 py-3 text-sm">
+              <p className="font-mono text-[10px] uppercase tracking-wide text-text-muted">{m.key}</p>
+              <p className="mt-1 font-medium text-text-primary">{JSON.stringify(m.value)}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {editing && current.hidden.length > 0 && <HiddenTray ids={current.hidden} data={data} onUnhide={unhide} />}
 

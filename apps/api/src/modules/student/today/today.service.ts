@@ -18,6 +18,7 @@ import type { StudentPrincipal } from '../student.types';
 import { StudentHomeService } from '../home/student-home.service';
 import { TimetableResolverService } from '../timetable/timetable-resolver.service';
 import { StreakService } from '../library/streak.service';
+import { LearnGoalObligationService } from '../edrion-learn/learn-goal-obligation.service';
 
 type Provider = { key: string; sourceModule: string; load: () => Promise<Obligation[]> };
 
@@ -30,6 +31,7 @@ export class TodayService {
     private readonly home: StudentHomeService,
     private readonly timetable: TimetableResolverService,
     private readonly libraryStreaks: StreakService,
+    private readonly learnGoals: LearnGoalObligationService,
   ) {}
 
   async getToday(principal: StudentPrincipal) {
@@ -44,6 +46,7 @@ export class TodayService {
     ]);
     const providers: Provider[] = [
       { key: 'self', sourceModule: 'learn', load: () => this.selfObligations(principal) },
+      { key: 'learn-goal', sourceModule: 'learn', load: () => this.learnGoals.loadStudyBlocks(principal) },
       { key: 'assignments', sourceModule: 'learn', load: () => principal.kind === 'institutional' ? this.assignmentObligations(principal, config.terminology.homework_word ?? 'Work') : Promise.resolve([]) },
       { key: 'fees', sourceModule: 'fees', load: () => principal.kind === 'institutional' ? this.feeObligations(principal, config.terminology.fee_word ?? 'Fees') : Promise.resolve([]) },
       { key: 'exams', sourceModule: 'results', load: () => principal.kind === 'institutional' ? this.examObligations(principal, config.terminology.exam_word ?? 'Exam') : Promise.resolve([]) },

@@ -33,6 +33,7 @@ import { MaintenanceModule } from './modules/maintenance/maintenance.module';
 import { PortalModule } from './modules/portal/portal.module';
 import { ParentPortalModule } from './modules/parent-portal/parent-portal.module';
 import { StudentModule } from './modules/student/student.module';
+import { StudentAuthModule } from './modules/student/auth/student-auth.module';
 import { RegistrationModule } from './modules/registration/registration.module';
 import { AdmissionsPublicModule } from './modules/admissions-public/admissions-public.module';
 import { RequestEngineModule } from './modules/requests/request-engine.module';
@@ -69,6 +70,7 @@ import { RequestEngineModule } from './modules/requests/request-engine.module';
     ObservabilityModule,
     IntegrationsModule,
     MaintenanceModule,
+    StudentAuthModule,
     PortalModule,
     ParentPortalModule,
     StudentModule,

@@ -8,6 +8,7 @@ import { ExamSubjectiveGradingService } from './exam-subjective-grading.service'
 import { ExamEngineProcessor } from './exam-engine.processor';
 import { QuestionBankService } from './question-bank.service';
 import { ExamTopicalityService } from './exam-topicality.service';
+import { PastMistakesProjectionService } from './past-mistakes-projection.service';
 import { StudentAuthModule } from '../auth/student-auth.module';
 
 @Module({
@@ -20,7 +21,8 @@ import { StudentAuthModule } from '../auth/student-auth.module';
     ExamEngineProcessor,
     QuestionBankService,
     ExamTopicalityService,
+    PastMistakesProjectionService,
   ],
-  exports: [ExamEngineService],
+  exports: [ExamEngineService, PastMistakesProjectionService],
 })
 export class ExamEngineModule {}

@@ -25,6 +25,7 @@ import { InstitutionAuthGuard } from './portal-auth.guard';
 import { InstitutionPermissionsGuard } from './portal-permissions.guard';
 import { CurrentInstitutionPrincipal, CurrentScope, RequireInstitutionPermissions } from './portal.decorators';
 import { SecurityService } from './security.service';
+import { IdentityTokenService } from '../student/campus-mirrors/identity-token.service';
 import type { CrudListQuery } from './portal-crud.engine';
 import type { PortalActionContext } from './portal-action-context';
 
@@ -39,7 +40,10 @@ import type { PortalActionContext } from './portal-action-context';
 @SkipRateLimit()
 @UseGuards(InstitutionAuthGuard, InstitutionPermissionsGuard)
 export class SecurityController {
-  constructor(private readonly svc: SecurityService) {}
+  constructor(
+    private readonly svc: SecurityService,
+    private readonly identity: IdentityTokenService,
+  ) {}
 
   private ctx(p: InstitutionPrincipal, s: InstitutionScope, r: EdrionRequestContext): PortalActionContext {
     return { principal: p, scope: s, request: r };
@@ -231,5 +235,21 @@ export class SecurityController {
     @Body(zodBody(versionedDeleteSchema)) body: VersionedDeleteInput,
   ) {
     return this.svc.remove('access-logs', this.ctx(p, s, r), id, body.version);
+  }
+
+  @Post('identity/verify')
+  @RequireInstitutionPermissions('campus_access_logs.view')
+  verifyIdentity(
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @Body()
+    body: { token: string; nonce: string; deviceId?: string; contextKind: string },
+  ) {
+    return this.identity.verifyScan({
+      institutionId: p.institutionId,
+      token: body.token,
+      nonce: body.nonce,
+      deviceId: body.deviceId,
+      contextKind: body.contextKind,
+    });
   }
 }

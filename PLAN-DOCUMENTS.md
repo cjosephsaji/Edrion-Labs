@@ -77,7 +77,7 @@ Report Cards §6:
 
 **Files**
 
-- Add `packages/database/migrations/0097_documents_issuance.sql`; modify `packages/database/src/schema/doc-gen.ts`, `requests.ts`, schema index, journal/grants/RLS.
+- Add `packages/database/migrations/0098_documents_issuance.sql`; modify `packages/database/src/schema/doc-gen.ts`, `requests.ts`, schema index, journal/grants/RLS.
 - Add shared schemas in `packages/schemas/src/documents/{catalog,templates,merge-data,batches,vault,verify,report-cards}.ts` and exports/specs.
 
 **Template/render extensions**

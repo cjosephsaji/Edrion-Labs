@@ -95,6 +95,7 @@ export const NAV: NavGroup[] = [
     label: 'Workflow',
     items: [
       { id: 'approvals', label: 'Approvals', href: '/approvals', icon: Inbox, permission: 'requests.review' },
+      { id: 'grievances', label: 'Grievances', href: '/workflow/grievances', icon: TriangleAlert, permission: 'requests.review' },
     ],
   },
   {
@@ -126,6 +127,13 @@ export const NAV: NavGroup[] = [
       { id: 'conduct', label: 'Student Conduct', href: '/conduct', icon: ShieldAlert, permission: 'student_conduct.view' },
       { id: 'staff', label: 'Staff', href: '/staff', icon: Users, permission: 'staff.view', termKey: 'staff', termPlural: true },
       { id: 'parents', label: 'Parents', href: '/parents', icon: Users, permission: 'parents.view' },
+    ],
+  },
+  {
+    id: 'careers',
+    label: 'Careers',
+    items: [
+      { id: 'placement-cell', label: 'Placement cell', href: '/careers/placements', icon: FolderKanban, permission: 'students.view' },
     ],
   },
   {
@@ -172,6 +180,7 @@ export const NAV: NavGroup[] = [
       { id: 'announcements', label: 'Announcements', href: '/announcements', icon: Megaphone, permission: 'announcements.view' },
       { id: 'notifications', label: 'Notifications', href: '/notifications', icon: Bell, permission: 'announcements.view' },
       { id: 'messages', label: 'Messages', href: '/messages', icon: MessageSquare, permission: 'messages.use' },
+      { id: 'parent-comm-ptm', label: 'PTM scheduling', href: '/parent-comm/ptm', icon: Users, permission: 'parent_comm.ptm.manage' },
     ],
   },
   {
@@ -192,6 +201,7 @@ export const NAV: NavGroup[] = [
       { id: 'labs', label: 'Labs', href: '/labs', icon: FlaskConical, permission: 'labs.view' },
       { id: 'labs-schedule', label: 'Lab Schedule', href: '/labs/schedule', icon: CalendarClock, permission: 'labs.view_schedule' },
       { id: 'labs-incidents', label: 'Lab Incidents', href: '/labs/incidents', icon: TriangleAlert, permission: 'labs.view' },
+      { id: 'labs-debate-calibration', label: 'Debate calibration', href: '/labs/debate-calibration', icon: Sparkles, permission: 'audit.view' },
       { id: 'front-desk', label: 'Front Desk', href: '/front-desk', icon: ConciergeBell, permission: 'visitors.view' },
       { id: 'front-desk-appointments', label: 'Appointments', href: '/front-desk/appointments', icon: CalendarCheck, permission: 'appointments.manage' },
       { id: 'facilities', label: 'Facilities', href: '/facilities', icon: Wrench, permission: 'facilities.view' },
@@ -203,6 +213,7 @@ export const NAV: NavGroup[] = [
       { id: 'security-incidents', label: 'Security Incidents', href: '/security/incidents', icon: ShieldAlert, permission: 'security_incidents.manage' },
       { id: 'security-alerts', label: 'Emergency Alerts', href: '/security/alerts', icon: Siren, permission: 'emergency_alerts.view' },
       { id: 'security-access-logs', label: 'Access Logs', href: '/security/access-logs', icon: DoorOpen, permission: 'campus_access_logs.view' },
+      { id: 'security-sensitive', label: 'Sensitive Reports', href: '/security/sensitive-reports', icon: ShieldAlert, permission: 'requests.review' },
     ],
   },
   {
@@ -211,6 +222,7 @@ export const NAV: NavGroup[] = [
     items: [
       { id: 'it-devices', label: 'Devices', href: '/it', icon: Laptop, permission: 'devices.manage' },
       { id: 'it-access-requests', label: 'Access Requests', href: '/it/access-requests', icon: KeyRound, permission: 'access_requests.manage' },
+      { id: 'it-webhooks', label: 'Webhooks', href: '/it/webhooks', icon: Gauge, permission: 'integrations.view' },
     ],
   },
   {
@@ -227,6 +239,7 @@ export const NAV: NavGroup[] = [
       { id: 'users', label: 'User Management', href: '/users', icon: UserCog, permission: 'users.view' },
       { id: 'roles', label: 'Roles & Permissions', href: '/roles', icon: ShieldCheck, permission: 'roles.view' },
       { id: 'settings', label: 'Settings', href: '/settings', icon: Settings, permission: 'institution_settings.view' },
+      { id: 'settings-federation', label: 'SSO & roster', href: '/settings/federation', icon: KeyRound, permission: 'institution_settings.manage' },
       { id: 'billing', label: 'Billing', href: '/billing', icon: CreditCard, permission: 'billing.view' },
       { id: 'audit', label: 'Audit Logs', href: '/audit', icon: ShieldCheck, permission: 'audit.view' },
     ],

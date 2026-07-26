@@ -40,6 +40,7 @@ export interface InitialCanvasCommitInput {
   topicId: string | null;
   sourceSessionId: string | null;
   sourceMeta?: Record<string, unknown> | null;
+  debateId?: string | null;
   reason: 'created' | 'generation';
   status?: 'ready' | 'generating' | 'failed';
 }
@@ -176,6 +177,7 @@ export class VisualRevisionService {
           topicId: input.topicId,
           sourceSessionId: input.sourceSessionId,
           sourceMeta: input.sourceMeta ?? null,
+          debateId: input.debateId ?? null,
           legacyArtifactId: null,
           version: 1,
           nodeCount: graph.nodes.length,

@@ -21,6 +21,25 @@ const ctx: AiResolutionContext = {
   employeeRoleKeys: ['finance_admin'],
 };
 
+describe('resolveAiPolicy — domain isolation', () => {
+  it('ignores student_tutor rows when resolving copilot mode', () => {
+    const r = resolveAiPolicy(
+      [
+        policy({ scope: FeatureScope.Global, scopeId: null, mode: AiMode.Disabled }),
+        {
+          scope: FeatureScope.Global,
+          scopeId: null,
+          enabled: true,
+          mode: AiMode.Full,
+          policyDomain: 'student_tutor',
+        },
+      ],
+      {},
+    );
+    expect(r.mode).toBe(AiMode.Disabled);
+  });
+});
+
 describe('resolveAiPolicy — defaults', () => {
   it('defaults to disabled with no caps when nothing is set', () => {
     const r = resolveAiPolicy([], {});

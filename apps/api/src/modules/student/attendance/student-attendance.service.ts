@@ -73,12 +73,19 @@ export class StudentAttendanceService {
       )
       .orderBy(desc(schema.studentRequests.submittedAt))
       .limit(5);
-    const dayView = await this.features.resolveByKey('attendance.day_view', {
-      institutionId: principal.institutionId,
-      campusId: principal.campusId ?? undefined,
-      institutionUserId: principal.institutionUserId,
-    });
-    const dayStrip = dayView.value ? await this.dayStrip(principal, term.id) : null;
+    let dayView = false;
+    try {
+      dayView = (
+        await this.features.resolveByKey('attendance.day_view', {
+          institutionId: principal.institutionId,
+          campusId: principal.campusId ?? undefined,
+          institutionUserId: principal.institutionUserId,
+        })
+      ).value;
+    } catch (err) {
+      if (!(err instanceof NotFoundException)) throw err;
+    }
+    const dayStrip = dayView ? await this.dayStrip(principal, term.id) : null;
     return {
       termId: term.id,
       policy,
@@ -86,7 +93,7 @@ export class StudentAttendanceService {
       subjects,
       pendingRequests,
       updatedAt: overall?.rollup.updatedAt?.toISOString() ?? subjects[0]?.updatedAt ?? null,
-      features: { dayView: dayView.value },
+      features: { dayView },
       dayStrip,
     };
   }
@@ -308,7 +315,7 @@ export class StudentAttendanceService {
           ? and(eq(schema.academicTerms.id, termId), eq(schema.academicTerms.institutionId, institutionId))
           : eq(schema.academicTerms.institutionId, institutionId),
       )
-      .orderBy(desc(schema.academicTerms.startDate))
+      .orderBy(desc(schema.academicTerms.isCurrent), desc(schema.academicTerms.startDate))
       .limit(1);
     if (!term) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Term not found.' });
     return term;

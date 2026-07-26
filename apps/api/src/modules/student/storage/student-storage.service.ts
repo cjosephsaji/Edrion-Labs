@@ -13,7 +13,14 @@ import { API_ENV, DATABASE } from '../../../common/tokens';
 import type { StudentPrincipal } from '../student.types';
 import { LocalDiskDriver } from './drivers/local-disk.driver';
 
-const IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']);
+const AUDIO_MIMES = new Set([
+  'audio/webm',
+  'audio/webm;codecs=opus',
+  'audio/mp4',
+  'audio/mp4;codecs=mp4a.40.2',
+  'audio/ogg',
+  'audio/mpeg',
+]);
 const DOC_MIMES = new Set([
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -126,6 +133,7 @@ export class StudentStorageService {
       'content_page_attachment',
       'request_attachment',
       'debate_exhibit',
+      'debate_turn_chunk',
       'avatar',
     ];
     if (!allowed.includes(kind)) {
@@ -135,6 +143,12 @@ export class StudentStorageService {
     if (IMAGE_MIMES.has(mimeType)) {
       if (size > this.env.STUDENT_UPLOAD_MAX_BYTES_IMAGE) {
         throw new PayloadTooLargeException({ code: 'FILE_TOO_LARGE', message: 'Image exceeds size limit.' });
+      }
+      return;
+    }
+    if (AUDIO_MIMES.has(mimeType) || mimeType.startsWith('audio/')) {
+      if (size > this.env.STUDENT_UPLOAD_MAX_BYTES_DOC) {
+        throw new PayloadTooLargeException({ code: 'FILE_TOO_LARGE', message: 'Audio exceeds size limit.' });
       }
       return;
     }

@@ -35,7 +35,11 @@ export class PortalAuthService {
   }
 
   /** Cookie path: resolve by id; recent-auth is driven by the SESSION's lastAuthAt, not the user. */
-  async resolveById(institutionUserId: string, lastAuthAt: Date | null): Promise<InstitutionPrincipal> {
+  async resolveById(
+    institutionUserId: string,
+    lastAuthAt: Date | null,
+    sessionAal?: import('@edrion/auth').Aal,
+  ): Promise<InstitutionPrincipal> {
     const [user] = await this.db
       .select()
       .from(schema.institutionUsers)
@@ -44,7 +48,7 @@ export class PortalAuthService {
     if (!user || user.status === 'disabled' || user.disabledAt) {
       throw new UnauthorizedException({ code: 'UNAUTHENTICATED', message: 'Unknown or disabled user' });
     }
-    return this.build(user, lastAuthAt);
+    return this.build(user, lastAuthAt, sessionAal);
   }
 
   // --- Login resolution + account lockout (Phase 12) --------------------------
@@ -112,6 +116,7 @@ export class PortalAuthService {
   private async build(
     user: typeof schema.institutionUsers.$inferSelect,
     lastAuthAt: Date | null,
+    sessionAal?: import('@edrion/auth').Aal,
   ): Promise<InstitutionPrincipal> {
     const [roleRows, accessRows, customRoleRows] = await Promise.all([
       this.db
@@ -168,6 +173,7 @@ export class PortalAuthService {
       isInstitutionWide,
       mfaEnrolled: user.mfaEnrolled,
       lastAuthAt,
+      sessionAal,
       // institutionName isn't on the principal type; resolved separately where needed.
     } satisfies InstitutionPrincipal;
   }

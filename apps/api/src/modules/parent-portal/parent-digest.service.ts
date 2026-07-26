@@ -5,6 +5,7 @@ import { and, count, eq, gte, inArray, isNotNull, lte, schema, sql, type Databas
 import { DATABASE } from '../../common/tokens';
 import { JobsService } from '../../common/queue/jobs.service';
 import { QueueWorkers } from '../../common/queue/queue.worker';
+import { FeatureControlsService } from '../feature-controls/feature-controls.service';
 import { EmailChannel } from './notification-channels';
 
 const DIGEST_TICK_JOB = 'parent.digest.tick';
@@ -27,6 +28,7 @@ export interface DigestChildSection {
   feesDueMinor: number;
   libraryOverdue: number;
   documentsPublished: number;
+  prepSummary: string | null;
   prompt: string | null;
 }
 
@@ -53,6 +55,7 @@ export class ParentDigestService implements OnModuleInit {
     private readonly jobs: JobsService,
     private readonly workers: QueueWorkers,
     private readonly email: EmailChannel,
+    private readonly features: FeatureControlsService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -182,7 +185,7 @@ export class ParentDigestService implements OnModuleInit {
     const ackNotes = await this.db.select({ from: schema.parentAbsenceNotes.dateFrom, to: schema.parentAbsenceNotes.dateTo }).from(schema.parentAbsenceNotes).where(and(eq(schema.parentAbsenceNotes.studentId, studentId), eq(schema.parentAbsenceNotes.status, 'acknowledged')));
     const unexplained = attRows.filter((r) => r.status === 'absent' && r.date && !ackNotes.some((n) => n.from <= r.date! && n.to >= r.date!)).length;
 
-    const [assignUpcoming, assignMissed, newResults, recognitions, healthVisits, behavior, fees, libraryOverdue, docs] = await Promise.all([
+    const [assignUpcoming, assignMissed, newResults, recognitions, healthVisits, behavior, fees, libraryOverdue, docs, prepBlocks] = await Promise.all([
       this.scalar(this.db.select({ c: count() }).from(schema.assignmentSubmissions).where(and(eq(schema.assignmentSubmissions.studentId, studentId), eq(schema.assignmentSubmissions.status, 'assigned')))),
       this.db.select({ due: schema.assignments.dueDate }).from(schema.assignmentSubmissions).innerJoin(schema.assignments, eq(schema.assignments.id, schema.assignmentSubmissions.assignmentId)).where(and(eq(schema.assignmentSubmissions.studentId, studentId), eq(schema.assignmentSubmissions.status, 'assigned'))),
       this.scalar(this.db.select({ c: count() }).from(schema.gradeEntries).where(and(eq(schema.gradeEntries.studentId, studentId), eq(schema.gradeEntries.published, true), gte(schema.gradeEntries.updatedAt, window.start)))),
@@ -192,6 +195,18 @@ export class ParentDigestService implements OnModuleInit {
       this.db.select({ amount: schema.feeInvoices.amount, paid: schema.feeInvoices.amountPaid, status: schema.feeInvoices.status }).from(schema.feeInvoices).where(eq(schema.feeInvoices.studentId, studentId)),
       this.scalar(this.db.select({ c: count() }).from(schema.libraryLoans).where(and(eq(schema.libraryLoans.studentId, studentId), eq(schema.libraryLoans.status, 'issued'), lte(schema.libraryLoans.dueDate, new Date().toISOString().slice(0, 10))))),
       this.scalar(this.db.select({ c: count() }).from(schema.studentDocuments).where(and(eq(schema.studentDocuments.studentId, studentId), eq(schema.studentDocuments.published, true), gte(schema.studentDocuments.issuedAt, window.start)))),
+      this.scalar(
+        this.db
+          .select({ c: count() })
+          .from(schema.prepPlanBlocks)
+          .innerJoin(schema.prepPlans, eq(schema.prepPlans.id, schema.prepPlanBlocks.planId))
+          .where(
+            and(
+              eq(schema.prepPlans.studentId, studentId),
+              sql`(${schema.prepPlanBlocks.payload}->>'completedAt') is null`,
+            ),
+          ),
+      ),
     ]);
 
     const today = new Date().toISOString().slice(0, 10);
@@ -199,6 +214,20 @@ export class ParentDigestService implements OnModuleInit {
     const feesDue = fees.filter((f) => f.status !== 'paid' && f.status !== 'cancelled').reduce((s, f) => s + Math.max(0, f.amount - f.paid), 0);
     const name = student?.firstName ?? 'your child';
     const recTitles = recognitions.map((r) => r.title);
+    const [studentRow] = await this.db
+      .select({ institutionId: schema.students.institutionId })
+      .from(schema.students)
+      .where(eq(schema.students.id, studentId))
+      .limit(1);
+    let prepSummary: string | null = null;
+    if (studentRow?.institutionId) {
+      const prepFlag = await this.features.resolveByKey('prep.parent_digest', {
+        institutionId: studentRow.institutionId,
+      });
+      if (prepFlag.value && prepBlocks > 0) {
+        prepSummary = `${prepBlocks} open prep plan block(s) this week`;
+      }
+    }
     const prompt = recTitles[0]
       ? `Celebrate ${name}’s ${recTitles[0]}! 🎉`
       : missed > 0
@@ -217,6 +246,7 @@ export class ParentDigestService implements OnModuleInit {
       feesDueMinor: feesDue,
       libraryOverdue,
       documentsPublished: docs,
+      prepSummary,
       prompt,
     };
   }
@@ -256,6 +286,7 @@ export class ParentDigestService implements OnModuleInit {
       if (c.feesDueMinor) lines.push(`  · Fees due: ₹${(c.feesDueMinor / 100).toFixed(2)}`);
       if (c.libraryOverdue) lines.push(`  · ${c.libraryOverdue} library book(s) overdue`);
       if (c.documentsPublished) lines.push(`  · ${c.documentsPublished} new document(s)`);
+      if (c.prepSummary) lines.push(`  · ${c.prepSummary}`);
       if (c.prompt) lines.push(`  💬 ${c.prompt}`);
       lines.push('');
     }

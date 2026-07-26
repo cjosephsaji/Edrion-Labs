@@ -1,5 +1,5 @@
 import './portal.types';
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { PortalController } from './portal.controller';
 import { PortalAuthService } from './portal-auth.service';
@@ -20,6 +20,17 @@ import { RegistrationEmailService } from '../registration/registration-email.ser
 import { InstitutionRateLimiter } from './portal-rate-limit';
 import { PortalTenantInterceptor } from './portal-tenant.interceptor';
 import { SupabaseVerifier } from '../authentication/supabase-verifier';
+import { MfaController } from '../authentication/mfa.controller';
+import { MfaService } from '../authentication/mfa.service';
+import { PortalDebateCalibrationController } from './portal-debate-calibration.controller';
+import { PortalIntegrationsController } from './portal-integrations.controller';
+import { PortalPlacementsController } from './portal-placements.controller';
+import { PortalPtmController } from './portal-ptm.controller';
+import { PortalPlacementsService } from './portal-placements.service';
+import { PortalPtmService } from './portal-ptm.service';
+import { IntegrationsModule } from '../integrations/integrations.module';
+import { FederationModule } from '../federation/federation.module';
+import { CampusMirrorsModule } from '../student/campus-mirrors/campus-mirrors.module';
 import { AcademicsController } from './academics.controller';
 import { AcademicsService } from './academics.service';
 import { AcademicsRepository } from './academics.repository';
@@ -174,6 +185,7 @@ import { PortalReportQueriesService } from './portal-report-queries.service';
 import { PetrosTopicalityService } from './petros/petros-topicality.service';
 import { PetrosHistoryService } from './petros/context/history';
 import { DocumentsGenController } from '../documents/documents-gen.controller';
+import { DocumentsIssuanceController } from '../documents/documents-issuance.controller';
 import { PortalHomeworkController } from './homework/portal-homework.controller';
 import { PortalHomeworkService } from './homework/portal-homework.service';
 import { PortalCourseContentController } from './course-content/portal-course-content.controller';
@@ -191,7 +203,7 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
  * controller level (the global platform AuthGuard is skipped via @Public on the controller).
  */
 @Module({
-  imports: [DocumentsGenModule, FeatureControlsModule, LearningEventsModule, TodayNotificationModule],
+  imports: [DocumentsGenModule, FeatureControlsModule, LearningEventsModule, TodayNotificationModule, IntegrationsModule, CampusMirrorsModule, forwardRef(() => FederationModule)],
   controllers: [
     PortalController,
     PortalAuthController,
@@ -224,6 +236,7 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
     PortalCopilotController,
     PetrosController,
     DocumentsGenController,
+    DocumentsIssuanceController,
     SettingsController,
     RolesController,
     UsersController,
@@ -255,11 +268,17 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
     PortalCoursesController,
     PortalReportCardsController,
     CalendarEventsController,
+    MfaController,
+    PortalDebateCalibrationController,
+    PortalIntegrationsController,
+    PortalPlacementsController,
+    PortalPtmController,
   ],
   providers: [
     PortalAuthService,
     PortalSessionService,
     PortalAuthLoginService,
+    MfaService,
     PortalCredentialService,
     PortalInviteService,
     EmailService,
@@ -268,6 +287,8 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
     SupabaseVerifier,
     PortalRepository,
     PortalDashboardService,
+    PortalPlacementsService,
+    PortalPtmService,
     DashboardPrefsService,
     PortalSearchService,
     PortalSearchRepository,
@@ -403,6 +424,7 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
     AttachmentStorageService,
     StudentPortalConfigService,
     FeeLedgerService,
+    PaymentProviderRegistry,
     ResultsSettingsService,
   ],
 })

@@ -1,0 +1,1 @@
+-- Tier 3 reserved migration 0178_compliance_posture (schema landed in adjacent migrations).

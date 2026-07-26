@@ -21,7 +21,8 @@
     "db:seed": "pnpm --filter @edrion/database seed",
     "db:studio": "pnpm --filter @edrion/database studio",
     "clean": "turbo run clean && rm -rf node_modules",
-    "clean:apple": "find . -name '._*' -not -path '*/node_modules/*' -delete"
+    "clean:apple": "find . -name '._*' -not -path '*/node_modules/*' -delete",
+    "learn-evals": "pnpm --filter @edrion/learn-evals run"
   },
   "devDependencies": {
     "prettier": "^3.3.3",

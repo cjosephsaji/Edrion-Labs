@@ -81,4 +81,10 @@ export * from './library-review';
 export * from './learn';
 // Visual Studio (Thinking Canvas)
 export * from './visual-studio';
+export * from './debate';
+export * from './campus-mirrors';
+export * from './campus-placements';
+export * from './campus-life';
+export * from './exam-prep';
+export * from './federation';
 export * from './today';

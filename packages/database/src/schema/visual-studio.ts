@@ -50,6 +50,7 @@ export const visualCanvases = pgTable(
     legacyArtifactId: uuid('legacy_artifact_id').references(() => knowledgeArtifacts.id, {
       onDelete: 'set null',
     }),
+    debateId: uuid('debate_id'),
     nodeCount: integer('node_count').notNull().default(0),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     version: integer('version').notNull().default(1),
@@ -90,6 +91,7 @@ export const visualCanvases = pgTable(
     statusIdx: index('visual_canvases_status_idx').on(t.status),
     sourceIdx: index('visual_canvases_source_idx').on(t.sourceId),
     topicIdx: index('visual_canvases_topic_idx').on(t.topicId),
+    debateIdx: index('visual_canvases_debate_id_idx').on(t.debateId),
     legacyUq: uniqueIndex('visual_canvases_legacy_artifact_uq').on(t.legacyArtifactId),
   }),
 );

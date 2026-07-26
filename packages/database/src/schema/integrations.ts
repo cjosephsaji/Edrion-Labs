@@ -16,6 +16,8 @@ export const webhookEndpoints = pgTable(
     url: text('url').notNull(),
     /** HMAC-SHA256 signing secret. Redacted in API responses. */
     secret: text('secret').notNull(),
+    previousSecret: text('previous_secret'),
+    previousSecretExpiresAt: timestamp('previous_secret_expires_at', { withTimezone: true }),
     description: text('description'),
     /** Subscribed event types (WebhookEventType values). */
     events: text('events').array().notNull().default([]),
@@ -43,11 +45,16 @@ export const webhookDeliveries = pgTable(
       .references(() => webhookEndpoints.id, { onDelete: 'cascade' }),
     eventType: text('event_type').notNull(),
     payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
+    eventId: uuid('event_id'),
+    eventVersion: text('event_version'),
+    envelope: jsonb('envelope').$type<Record<string, unknown> | null>(),
     status: deliveryStatusEnum('status').notNull().default('pending'),
     /** Attempt number (1-based) within the delivering job. */
     attempts: integer('attempts').notNull().default(1),
     responseStatus: integer('response_status'),
     lastError: text('last_error'),
+    nextRetryAt: timestamp('next_retry_at', { withTimezone: true }),
+    deadLetteredAt: timestamp('dead_lettered_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({

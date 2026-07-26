@@ -40,9 +40,7 @@ export const studentRequests = pgTable(
     campusId: uuid('campus_id')
       .notNull()
       .references(() => campuses.id, { onDelete: 'restrict' }),
-    studentId: uuid('student_id')
-      .notNull()
-      .references(() => students.id, { onDelete: 'cascade' }),
+    studentId: uuid('student_id').references(() => students.id, { onDelete: 'cascade' }),
     type: text('type').notNull(),
     payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
     payloadSchemaVersion: integer('payload_schema_version').notNull(),

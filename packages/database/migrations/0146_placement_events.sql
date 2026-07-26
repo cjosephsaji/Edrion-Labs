@@ -1,0 +1,1 @@
+-- Tier 3 reserved migration 0146_placement_events (schema landed in adjacent migrations).

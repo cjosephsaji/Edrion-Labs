@@ -6,6 +6,6 @@ import { AiGovernanceRepository } from './ai-governance.repository';
 @Module({
   controllers: [AiGovernanceController],
   providers: [AiGovernanceService, AiGovernanceRepository],
-  exports: [AiGovernanceService],
+  exports: [AiGovernanceService, AiGovernanceRepository],
 })
 export class AiGovernanceModule {}

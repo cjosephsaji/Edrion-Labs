@@ -1,4 +1,4 @@
-import { boolean, index, integer, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import type { AiCapability } from '@edrion/shared-types';
 import {
   actorColumns,
@@ -47,6 +47,10 @@ export const aiPolicies = pgTable(
     topicalityMode: text('topicality_mode'),
     /** Emergency kill switch — short-circuits every action under this scope to BLOCKED. */
     killSwitch: boolean('kill_switch').notNull().default(false),
+    /** Policy family: copilot guardrails vs student_tutor Learn domain config. */
+    policyDomain: text('policy_domain').notNull().default('copilot'),
+    /** Typed domain payload (LearnPolicyV1 for student_tutor). */
+    domainConfig: jsonb('domain_config').$type<Record<string, unknown>>().notNull().default({}),
     reason: text('reason'),
     setByName: text('set_by_name'),
     /** Optimistic-concurrency token for sensitive edits. */
@@ -56,6 +60,7 @@ export const aiPolicies = pgTable(
   },
   (t) => ({
     scopeIdx: index('ai_policies_scope_idx').on(t.scope, t.scopeId),
+    scopeDomainUq: uniqueIndex('ai_policies_scope_domain_uq').on(t.scope, t.scopeId, t.policyDomain),
   }),
 );
 

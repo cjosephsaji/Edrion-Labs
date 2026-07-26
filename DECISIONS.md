@@ -152,3 +152,19 @@ These records are scaffolds only. None is approved until the founder replaces th
 - Recommendation: Derive past mistakes from mock-answer evaluations plus compatible learning evidence unless a separate mutable notebook is explicitly approved.
 - Status: PENDING FOUNDER SIGN-OFF
 - Reversal trigger:
+
+# Tier 3 decisions — 2026-07-25
+
+## D-T3-005 — Entrance Prep Content Lead
+
+- **Decision:** Founder assigns Content Lead to **Edrion Labs product (interim)** until a dedicated hire; SAT corpus ownership, licensing memo, and provenance sign-off remain with that role.
+- **Status:** ACCEPTED (interim assignment recorded for Tier 3 execution)
+- **Blocks:** `prep.profile.sat_digital` → `active` in production until CR-1 corpus gate passes; `content_ready` allowed in staging/dev.
+
+## D-T3-002 — Debate canvas binding
+
+- **Decision:** `visual_canvases.debate_id` nullable FK (implemented `0110`).
+
+## D-T3-003 — Debate STT
+
+- **Decision:** Deepgram batch behind `SttProvider`; mock fallback without API key.

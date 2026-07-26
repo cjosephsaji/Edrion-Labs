@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: join(__dirname, '../../..', '.env') });
 
-import { and, asc, eq, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import { createDatabase } from './client';
 import * as s from './schema/index';
 import { seedInstitutionScheduleDefaults } from './seed-institution-defaults';
@@ -103,6 +103,34 @@ async function main() {
 
   const instId = institution.id;
 
+  const [planVersion] = await db
+    .select({ id: s.planVersions.id })
+    .from(s.planVersions)
+    .innerJoin(s.plans, eq(s.plans.id, s.planVersions.planId))
+    .where(eq(s.plans.key, 'institution_standard'))
+    .limit(1);
+  if (planVersion) {
+    const [existingSub] = await db
+      .select({ id: s.subscriptions.id })
+      .from(s.subscriptions)
+      .where(eq(s.subscriptions.institutionId, instId))
+      .limit(1);
+    if (!existingSub) {
+      await db.insert(s.subscriptions).values({
+        institutionId: instId,
+        planVersionId: planVersion.id,
+        status: 'active',
+        billingCycle: 'monthly',
+        currency: institution.currency ?? 'INR',
+        periodStart: now,
+        periodEnd: daysFromNow(30),
+      });
+      console.log('✓ Linked active subscription (institution_standard)');
+    }
+  } else {
+    console.log('  ⚠ No institution_standard plan — run pnpm db:seed once for platform plan catalogue.');
+  }
+
   // ── 2. Find or create campus ─────────────────────────────────────────────
   let [campus] = await db
     .select()
@@ -147,9 +175,24 @@ async function main() {
 
   // ── 3. CLEAR all institution-scoped data (dependency order — children first) ─
   console.log('\n→ Clearing all existing data for this institution…');
+  await db.execute(sql`
+    DELETE FROM placement_applications
+    WHERE drive_id IN (
+      SELECT pd.id FROM placement_drives pd
+      INNER JOIN placement_seasons ps ON ps.id = pd.season_id
+      WHERE ps.institution_id = ${instId}
+    )
+  `);
+  await db.execute(sql`
+    DELETE FROM placement_drives
+    WHERE season_id IN (SELECT id FROM placement_seasons WHERE institution_id = ${instId})
+  `);
   const tables = [
     // leaf / child tables first
     s.webhookEndpoints, s.institutionSettings, s.institutionRoles,
+    s.parentPtmBookings, s.parentPtmSlots, s.parentPtmEvents,
+    s.placementCompanies, s.placementSeasons,
+    s.studentRequestEvents, s.studentRequests,
     s.campusAccessLogs, s.emergencyAlerts, s.securityIncidents, s.gatePasses,
     s.accessRequests, s.devices,
     s.medicationLogs, s.medicalIncidents, s.healthRecords,
@@ -176,7 +219,7 @@ async function main() {
     s.institutionUsers,
     // academic structure
     s.classSubjectTeachers, s.classes,
-    s.subjects, s.gradeLevels, s.departments, s.academicYears, s.academicTerms,
+    s.subjects, s.gradeLevels, s.departments, s.academicTerms, s.academicYears,
     // campus operations
     s.facilityAssets, s.maintenanceTasks, s.workOrders, s.facilities,
     s.visitors, s.appointments,
@@ -609,7 +652,8 @@ async function main() {
     await db
       .update(s.students)
       .set({ institutionUserId: studentPortal.id })
-      .where(and(eq(s.students.id, arjunId), isNull(s.students.institutionUserId)));
+      .where(eq(s.students.id, arjunId));
+    console.log('  ✓ Student portal: student@uis.edu.in → UIS-2025-001 (password: password)');
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -665,6 +709,24 @@ async function main() {
   // SECTION 9: ATTENDANCE
   // ══════════════════════════════════════════════════════════════════════════
   console.log('\n→ Seeding attendance…');
+  await db
+    .insert(s.attendancePolicies)
+    .values({
+      institutionId: instId,
+      campusId: null,
+      thresholdPct: '75',
+      safeMarginPct: '5',
+      parentVisibility: 'on',
+    })
+    .onConflictDoNothing();
+
+  const [currentTerm] = await db
+    .select({ id: s.academicTerms.id })
+    .from(s.academicTerms)
+    .where(and(eq(s.academicTerms.institutionId, instId), eq(s.academicTerms.isCurrent, true)))
+    .orderBy(desc(s.academicTerms.startDate))
+    .limit(1);
+
   const attDates = [dateStr(daysAgo(5)), dateStr(daysAgo(4)), dateStr(daysAgo(3)), dateStr(daysAgo(2)), dateStr(daysAgo(1)), today];
   const sessionInserts = [];
   for (const d of attDates) {
@@ -692,6 +754,23 @@ async function main() {
     );
   }
   console.log(`  ✓ Attendance sessions: ${sessionRows.length}, records seeded`);
+
+  if (currentTerm?.id) {
+    const termId = currentTerm.id;
+    const rollupBase = {
+      institutionId: instId,
+      termId,
+      forecast: { branch: 'can_miss' as const, n: 1 },
+      zone: 'safe' as const,
+    };
+    await db.insert(s.attendanceRollups).values([
+      { ...rollupBase, studentId: s1Id!, subjectId: null, attended: 5, conducted: 6, remaining: 0, pct: '83.33' },
+      { ...rollupBase, studentId: s1Id!, subjectId: subByCode['MATH101']!, attended: 5, conducted: 6, remaining: 0, pct: '83.33' },
+      { ...rollupBase, studentId: s1Id!, subjectId: subByCode['ENG101']!, attended: 6, conducted: 6, remaining: 0, pct: '100' },
+      { ...rollupBase, studentId: s1Id!, subjectId: subByCode['PHY301']!, attended: 4, conducted: 6, remaining: 0, pct: '66.67', zone: 'warning' },
+    ]).onConflictDoNothing();
+    console.log('  ✓ Attendance rollups for demo student (Arjun)');
+  }
 
   // ══════════════════════════════════════════════════════════════════════════
   // SECTION 10: EXAMS & GRADEBOOK
@@ -1292,12 +1371,146 @@ async function main() {
     { institutionId: instId, url: 'https://api.uis.edu.in/webhooks/tally', secret: 'whsec_tally_secret_key_789012', description: 'Tally ERP integration for school fee sync', events: ['fees.manage'], active: true }
   ]);
 
+  console.log('\n→ Seeding placements, PTM, and grievances…');
+  const [placementSeason] = await db
+    .insert(s.placementSeasons)
+    .values({
+      institutionId: instId,
+      campusId,
+      name: 'Placement 2025–26',
+      status: 'open',
+      opensAt: daysAgo(7),
+      closesAt: daysFromNow(90),
+    })
+    .returning();
+  const companyRows = await db
+    .insert(s.placementCompanies)
+    .values([
+      { institutionId: instId, name: 'TCS Digital', sector: 'IT Services' },
+      { institutionId: instId, name: 'Infosys', sector: 'IT Services' },
+      { institutionId: instId, name: 'Wipro', sector: 'IT Services' },
+    ])
+    .returning();
+  const tcsCo = companyRows[0]!;
+  const [placementDrive] = await db
+    .insert(s.placementDrives)
+    .values({
+      seasonId: placementSeason!.id,
+      companyId: tcsCo.id,
+      title: 'Campus hiring — Software Engineer',
+      packageBand: '6–8 LPA',
+      status: 'open',
+    })
+    .returning();
+  const [infosysDrive] = await db
+    .insert(s.placementDrives)
+    .values({
+      seasonId: placementSeason!.id,
+      companyId: companyRows[1]!.id,
+      title: 'Systems Engineer trainee',
+      packageBand: '5–6 LPA',
+      status: 'scheduled',
+    })
+    .returning();
+  if (placementDrive && s16Id && s17Id) {
+    await db.insert(s.placementApplications).values([
+      {
+        driveId: placementDrive.id,
+        studentId: s17Id,
+        status: 'submitted',
+        submittedAt: daysAgo(2),
+      },
+      {
+        driveId: placementDrive.id,
+        studentId: s16Id,
+        status: 'shortlisted',
+        submittedAt: daysAgo(5),
+      },
+      {
+        driveId: infosysDrive!.id,
+        studentId: s17Id,
+        status: 'shortlisted',
+        submittedAt: daysAgo(8),
+      },
+    ]);
+  }
+
+  const [ptmEvent] = await db
+    .insert(s.parentPtmEvents)
+    .values({
+      institutionId: instId,
+      campusId,
+      title: 'Term 2 Parent-Teacher Meeting',
+      description: 'Book a 15-minute slot with your child’s class teacher.',
+      startsOn: dateStr(daysFromNow(10)),
+      endsOn: dateStr(daysFromNow(10)),
+      slotLengthMinutes: 15,
+      status: 'published',
+    })
+    .returning();
+  const ptmTeacherId = teacherByNo['T-001'];
+  if (ptmEvent && ptmTeacherId) {
+    const slotStart = daysFromNow(10);
+    slotStart.setHours(14, 0, 0, 0);
+    await db.insert(s.parentPtmSlots).values([
+      {
+        institutionId: instId,
+        eventId: ptmEvent.id,
+        teacherId: ptmTeacherId,
+        startsAt: slotStart,
+        endsAt: new Date(slotStart.getTime() + 15 * 60_000),
+        capacity: 1,
+      },
+      {
+        institutionId: instId,
+        eventId: ptmEvent.id,
+        teacherId: ptmTeacherId,
+        startsAt: new Date(slotStart.getTime() + 20 * 60_000),
+        endsAt: new Date(slotStart.getTime() + 35 * 60_000),
+        capacity: 1,
+      },
+    ]);
+  }
+
+  await db.insert(s.studentRequests).values({
+    institutionId: instId,
+    campusId,
+    studentId: s2Id!,
+    type: 'grievance',
+    payload: {
+      category: 'facilities',
+      subject: 'Canteen hygiene concern',
+      description:
+        'Students reported improper food storage in the secondary canteen. Requesting a health inspection and written corrective action before the next term.',
+      desired_outcome: 'Inspection report shared with student council',
+    },
+    payloadSchemaVersion: 1,
+    status: 'submitted',
+    humanCode: 'GR-K7M2',
+    assignedRole: 'grievance_officer',
+    submittedAt: daysAgo(3),
+    slaDueAt: daysFromNow(7),
+  });
+  console.log('  ✓ Placements: season, 3 companies, 2 drives, 3 applications');
+  console.log('  ✓ PTM: published event + teacher slots');
+  console.log('  ✓ Grievances: 1 sample request (GR-K7M2)');
+
   console.log('  ✓ Lab assets: 9, Schedules: 4, Incidents: 1');
   console.log('  ✓ Facilities: 8, Work Orders: 4, Maintenance Tasks: 4, Facility Assets: 5');
   console.log('  ✓ Visitors: 3, Appointments: 3');
   console.log('  ✓ Security incidents: 3, Emergency alerts: 2, Gate passes: 2, Access logs: 3');
   console.log('  ✓ Devices: 10, Access requests: 4');
   console.log('  ✓ Settings: 13, Custom Roles: 3, Webhook Endpoints: 2');
+
+  await db.insert(s.activityEvents).values({
+    category: 'institutions',
+    actorName: 'Platform Owner',
+    summary: 'United Indian School demo dataset seeded',
+    institutionId: instId,
+    entityType: 'institution',
+    entityId: instId,
+  });
+  console.log('  ✓ Platform activity event recorded for super-admin feed');
 
   // ══════════════════════════════════════════════════════════════════════════
   // DONE

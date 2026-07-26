@@ -77,7 +77,11 @@ export class InstitutionAuthGuard implements CanActivate {
     if (token) {
       try {
         const session = await this.sessions.verify(token);
-        const principal = await this.auth.resolveById(session.institutionUserId, session.lastAuthAt);
+        const principal = await this.auth.resolveById(
+          session.institutionUserId,
+          session.lastAuthAt,
+          session.aal as import('@edrion/auth').Aal,
+        );
         return { principal, authSessionId: session.id };
       } catch (err) {
         // Stale or revoked cookies are common in dev (secret rotation, DB reset, logout elsewhere).

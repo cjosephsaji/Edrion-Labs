@@ -61,6 +61,7 @@ import { RequestRegistryService, type ResolvedRequestType } from './request-regi
 import { RequestNotifyService } from './request-notify.service';
 import { addWorkingDays, codeSuffix, dateDiffDays, decodeCursor, encodeCursor } from './request-utils';
 import { RequestDocumentService } from './request-document.service';
+import { SensitiveReportService } from './sensitive-report.service';
 import { assertRequestTransition, canStudentCancel } from './request-state';
 import { revaluationApproveFormSchema } from '@edrion/schemas';
 
@@ -95,6 +96,7 @@ export class RequestEngineService {
     private readonly jobs: JobsService,
     private readonly feeLedger: FeeLedgerService,
     private readonly resultsSettings: ResultsSettingsService,
+    private readonly sensitiveReports: SensitiveReportService,
   ) {}
 
   async submit(ctx: StudentRequestContext, input: SubmitStudentRequestInput) {
@@ -133,7 +135,7 @@ export class RequestEngineService {
     const values = {
       institutionId: principal.institutionId,
       campusId,
-      studentId: principal.studentId,
+      studentId: input.type === 'sensitive_report' ? null : principal.studentId,
       type: input.type,
       payload,
       payloadSchemaVersion: resolved.config.payloadSchemaVersion,
@@ -160,6 +162,9 @@ export class RequestEngineService {
     if (!row) {
       throw new ConflictException({ code: 'CODE_COLLISION', message: 'Could not allocate a request code. Try again.' });
     }
+    if (input.type === 'sensitive_report') {
+      await this.sensitiveReports.sealAfterSubmit(row.id, principal);
+    }
     await this.writeStudentAudit(ctx, row, 'student_request.submit', null, row.status);
     if(!resolved.config.requiresPayment)await this.notifications.dispatch({ institutionId: row.institutionId, requestId: row.id, eventSeq: 2 });
     const expectation = await this.fulfilmentExpectation(row.institutionId, row.type, resolved.slaDays);
@@ -169,7 +174,22 @@ export class RequestEngineService {
   async listStudent(principal: InstitutionalStudentPrincipal, query: StudentRequestsListQuery) {
     const t = schema.studentRequests;
     const cursor = decodeCursor(query.cursor);
-    const conds = [eq(t.institutionId, principal.institutionId), eq(t.studentId, principal.studentId)];
+    const owned = await this.db
+      .select({ requestId: schema.studentSensitiveReportOwnership.requestId })
+      .from(schema.studentSensitiveReportOwnership)
+      .where(
+        and(
+          eq(schema.studentSensitiveReportOwnership.institutionId, principal.institutionId),
+          eq(schema.studentSensitiveReportOwnership.studentId, principal.studentId),
+        ),
+      );
+    const ownedIds = owned.map((o) => o.requestId);
+    const conds = [
+      eq(t.institutionId, principal.institutionId),
+      ownedIds.length
+        ? or(eq(t.studentId, principal.studentId), inArray(t.id, ownedIds))!
+        : eq(t.studentId, principal.studentId),
+    ];
     if (query.type) conds.push(eq(t.type, query.type));
     if (query.status) conds.push(eq(t.status, query.status));
     if (cursor) {
@@ -525,6 +545,42 @@ export class RequestEngineService {
     if (resolved.config.approvalSideEffectKey === 'revaluation') {
       return this.approveWithSideEffect(ctx, row, input, events, assignedUserId, () =>
         this.applyRevaluation(ctx, row, input),
+      );
+    }
+
+    if (resolved.config.approvalSideEffectKey === 'hostel_outpass_gate_pass') {
+      return this.approveWithSideEffect(ctx, row, input, events, assignedUserId, () =>
+        this.applyHostelOutpass(ctx, row),
+      );
+    }
+
+    if (resolved.config.approvalSideEffectKey === 'campus_library_renewal') {
+      return this.approveWithSideEffect(ctx, row, input, events, assignedUserId, () =>
+        this.applyLibraryRenewal(ctx, row),
+      );
+    }
+
+    if (resolved.config.approvalSideEffectKey === 'transport_renewal') {
+      return this.approveWithSideEffect(ctx, row, input, events, assignedUserId, () =>
+        this.applyTransportRenewal(ctx, row),
+      );
+    }
+
+    if (resolved.config.approvalSideEffectKey === 'id_card_reissue') {
+      return this.approveWithSideEffect(ctx, row, input, events, assignedUserId, () =>
+        this.applyIdCardReissue(ctx, row),
+      );
+    }
+
+    if (resolved.config.approvalSideEffectKey === 'club_join') {
+      return this.approveWithSideEffect(ctx, row, input, events, assignedUserId, () =>
+        this.applyClubJoin(ctx, row),
+      );
+    }
+
+    if (resolved.config.approvalSideEffectKey === 'health_profile_update') {
+      return this.approveWithSideEffect(ctx, row, input, events, assignedUserId, () =>
+        this.applyHealthProfileUpdate(ctx, row),
       );
     }
 
@@ -889,6 +945,14 @@ export class RequestEngineService {
     );
     await this.writePortalAudit(ctx, updated, 'student_request.fulfil', 'approved', 'fulfilled');
     await this.notifications.dispatch({ institutionId: row.institutionId, requestId: row.id, eventSeq: seq });
+    const resolved = await this.registry.resolve(row.institutionId, row.type);
+    if (resolved.config.producesDocument) {
+      if (row.type === 'id_card_reissue') {
+        await this.documents.enqueueIdCardReissue(ctx, updated);
+      } else {
+        await this.documents.enqueue(ctx, updated);
+      }
+    }
     return this.toViewResolved(updated);
   }
 
@@ -1126,6 +1190,147 @@ export class RequestEngineService {
     return { grade_entry_id: entry.id, old_score: entry.marksObtained, new_score: form.new_score };
   }
 
+  private async applyHostelOutpass(ctx: PortalActionContext, row: RequestRow): Promise<void> {
+    const payload = row.payload as {
+      leave_at: string;
+      expected_return_at: string;
+      destination: string;
+      reason: string;
+    };
+    const [student] = await this.db
+      .select({ fullName: schema.students.fullName })
+      .from(schema.students)
+      .where(eq(schema.students.id, row.studentId))
+      .limit(1);
+    await this.db.insert(schema.gatePasses).values({
+      institutionId: row.institutionId,
+      campusId: ctx.principal.campusId,
+      holderName: student?.fullName ?? 'Student',
+      kind: 'student',
+      reason: `${payload.reason}: ${payload.destination}`,
+      issuedAt: new Date(payload.leave_at),
+      expiresAt: new Date(payload.expected_return_at),
+      expectedReturnAt: new Date(payload.expected_return_at),
+      status: 'active',
+      requestId: row.id,
+      holderStudentId: row.studentId,
+      direction: 'outgoing',
+    });
+  }
+
+  private async applyLibraryRenewal(_ctx: PortalActionContext, row: RequestRow): Promise<void> {
+    const payload = row.payload as { loan_id: string; renewal_days: number };
+    const [loan] = await this.db
+      .select()
+      .from(schema.libraryLoans)
+      .where(
+        and(
+          eq(schema.libraryLoans.id, payload.loan_id),
+          eq(schema.libraryLoans.studentId, row.studentId),
+          eq(schema.libraryLoans.status, 'issued'),
+        ),
+      )
+      .limit(1);
+    if (!loan?.dueDate) return;
+    const base = new Date(`${loan.dueDate}T00:00:00.000Z`);
+    base.setUTCDate(base.getUTCDate() + (payload.renewal_days ?? 7));
+    const next = base.toISOString().slice(0, 10);
+    await this.db
+      .update(schema.libraryLoans)
+      .set({ dueDate: next, updatedAt: new Date(), notes: `Renewed via ${row.humanCode}` })
+      .where(eq(schema.libraryLoans.id, loan.id));
+  }
+
+  private async applyTransportRenewal(_ctx: PortalActionContext, row: RequestRow): Promise<void> {
+    const payload = row.payload as { assignment_id: string; term_months: number };
+    const [assignment] = await this.db
+      .select()
+      .from(schema.transportAssignments)
+      .where(
+        and(
+          eq(schema.transportAssignments.id, payload.assignment_id),
+          eq(schema.transportAssignments.studentId, row.studentId),
+          eq(schema.transportAssignments.status, 'active'),
+        ),
+      )
+      .limit(1);
+    if (!assignment) return;
+    const renewedUntil = new Date();
+    renewedUntil.setUTCMonth(renewedUntil.getUTCMonth() + (payload.term_months ?? 12));
+    await this.db
+      .update(schema.transportAssignments)
+      .set({
+        notes: `Renewed via ${row.humanCode} until ${renewedUntil.toISOString().slice(0, 10)}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.transportAssignments.id, assignment.id));
+  }
+
+  private async applyIdCardReissue(ctx: PortalActionContext, row: RequestRow): Promise<void> {
+    await this.db
+      .update(schema.studentIdCards)
+      .set({ status: 'revoked', revokedAt: new Date(), updatedAt: new Date() })
+      .where(
+        and(
+          eq(schema.studentIdCards.studentId, row.studentId),
+          eq(schema.studentIdCards.status, 'active'),
+        ),
+      );
+    await this.db.insert(schema.studentIdCards).values({
+      institutionId: row.institutionId,
+      campusId: ctx.principal.campusId,
+      studentId: row.studentId,
+      status: 'pending_issue',
+      tokenVersion: 1,
+    });
+  }
+
+  private async applyClubJoin(_ctx: PortalActionContext, row: RequestRow): Promise<void> {
+    const payload = row.payload as { club_id: string };
+    await this.db
+      .insert(schema.clubMemberships)
+      .values({ clubId: payload.club_id, studentId: row.studentId!, status: 'active', joinedAt: new Date() })
+      .onConflictDoUpdate({
+        target: [schema.clubMemberships.clubId, schema.clubMemberships.studentId],
+        set: { status: 'active', joinedAt: new Date() },
+      });
+  }
+
+  private async applyHealthProfileUpdate(_ctx: PortalActionContext, row: RequestRow): Promise<void> {
+    const payload = row.payload as {
+      blood_group?: string;
+      allergies?: string;
+      conditions?: string;
+      emergency_contact?: string;
+    };
+    const allergies = payload.allergies
+      ? payload.allergies.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
+    const chronic = payload.conditions
+      ? payload.conditions.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
+    const [last] = await this.db
+      .select({ revision: schema.parentHealthProfiles.revision })
+      .from(schema.parentHealthProfiles)
+      .where(eq(schema.parentHealthProfiles.studentId, row.studentId!))
+      .orderBy(desc(schema.parentHealthProfiles.revision))
+      .limit(1);
+    await this.db.insert(schema.parentHealthProfiles).values({
+      institutionId: row.institutionId,
+      campusId: row.campusId,
+      studentId: row.studentId!,
+      bloodGroup: payload.blood_group ?? null,
+      allergies,
+      chronicConditions: chronic,
+      emergencyContacts: payload.emergency_contact
+        ? [{ name: 'Emergency', relationship: 'contact', phone: payload.emergency_contact }]
+        : [],
+      revision: (last?.revision ?? 0) + 1,
+      lastVerifiedBy: null,
+      lastVerifiedAt: new Date(),
+    });
+  }
+
   private async enqueueRecompute(row: RequestRow) {
     await this.jobs.enqueue(
       'notifications',
@@ -1323,14 +1528,22 @@ export class RequestEngineService {
       .select()
       .from(schema.studentRequests)
       .where(
-        and(
-          eq(schema.studentRequests.id, id),
-          eq(schema.studentRequests.institutionId, principal.institutionId),
-          eq(schema.studentRequests.studentId, principal.studentId),
-        ),
+        and(eq(schema.studentRequests.id, id), eq(schema.studentRequests.institutionId, principal.institutionId)),
       )
       .limit(1);
     if (!row) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Request not found.' });
+    if (row.studentId === principal.studentId) return row;
+    const [owned] = await this.db
+      .select()
+      .from(schema.studentSensitiveReportOwnership)
+      .where(
+        and(
+          eq(schema.studentSensitiveReportOwnership.requestId, id),
+          eq(schema.studentSensitiveReportOwnership.studentId, principal.studentId),
+        ),
+      )
+      .limit(1);
+    if (!owned) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Request not found.' });
     return row;
   }
 

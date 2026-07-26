@@ -220,6 +220,8 @@ export class ExamEngineService {
         blueprintId,
         sourceKind: blueprint.sourceKind,
         status: 'generating',
+        blueprintSnapshot: blueprint,
+        blueprintVersion: bp.version,
       })
       .returning();
 

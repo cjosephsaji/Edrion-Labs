@@ -1,4 +1,5 @@
 import type { EvaluatedPermissions } from '@edrion/permissions';
+import type { Aal } from './claims';
 
 /**
  * The authenticated INSTITUTION-PORTAL user for a request. Built by the API's portal-auth layer
@@ -27,6 +28,8 @@ export interface InstitutionPrincipal {
   isInstitutionWide: boolean;
   mfaEnrolled: boolean;
   lastAuthAt: Date | null;
+  /** AAL from the active portal session token — used for step-up; never infer from mfaEnrolled alone. */
+  sessionAal?: Aal;
 }
 
 /** The active viewing scope for a request — driven by the global scope switcher in the UI. */

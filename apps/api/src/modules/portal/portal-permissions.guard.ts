@@ -9,7 +9,8 @@ import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import { canAll } from '@edrion/permissions';
 import { isInstitutionSensitive } from '@edrion/permissions/institution';
-import { isRecentAuth } from '@edrion/auth';
+import { isMfaSatisfied, isRecentAuth } from '@edrion/auth';
+import { institutionPermissionRequiresMfaStepUp } from '@edrion/schemas';
 import type { ApiEnv } from '@edrion/config';
 import { API_ENV } from '../../common/tokens';
 import { PORTAL_PERMISSIONS_KEY } from './portal.decorators';
@@ -53,6 +54,18 @@ export class InstitutionPermissionsGuard implements CanActivate {
       throw new ForbiddenException({
         code: 'RECENT_AUTH_REQUIRED',
         message: 'This action requires recent authentication. Please re-authenticate.',
+      });
+    }
+
+    const needsMfaStepUp =
+      ic.principal.mfaEnrolled && required.some((k) => institutionPermissionRequiresMfaStepUp(k));
+    if (
+      needsMfaStepUp &&
+      !isMfaSatisfied({ aal: ic.principal.sessionAal ?? 'aal1' }, ic.principal.mfaEnrolled)
+    ) {
+      throw new ForbiddenException({
+        code: 'STEP_UP_REQUIRED',
+        message: 'This action requires multi-factor authentication. Complete MFA and try again.',
       });
     }
     return true;

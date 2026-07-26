@@ -2,6 +2,7 @@ import { index, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-c
 import { actorColumns, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { campuses } from './campuses';
+import { students } from './people';
 
 /**
  * INSTITUTION-PORTAL security module (Phase 13 — Security Staff). Campus-scoped, version-guarded.
@@ -24,6 +25,13 @@ export const gatePasses = pgTable(
     expiresAt: timestamp('expires_at', { withTimezone: true }),
     /** active | used | expired | revoked. */
     status: text('status').notNull().default('active'),
+    holderStudentId: uuid('holder_student_id').references(() => students.id, { onDelete: 'set null' }),
+    requestId: uuid('request_id'),
+    expectedReturnAt: timestamp('expected_return_at', { withTimezone: true }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    revokedBy: uuid('revoked_by'),
+    revokeReason: text('revoke_reason'),
+    direction: text('direction').default('outgoing'),
     version: integer('version').notNull().default(0),
     ...actorColumns,
     ...timestamps,

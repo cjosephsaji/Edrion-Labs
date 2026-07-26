@@ -1,0 +1,13 @@
+{
+  "suite": "core",
+  "sessions": 24,
+  "uniqueMoves": [
+    "direct_explanation",
+    "retrieval_check"
+  ],
+  "constraintCompliance": 1,
+  "pedagogicalFitMean": 4.5,
+  "correctnessMean": 4.4,
+  "passed": true,
+  "failures": []
+}

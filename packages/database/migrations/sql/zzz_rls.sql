@@ -21,6 +21,15 @@ CREATE OR REPLACE FUNCTION edrion_current_institution() RETURNS text AS $$
   SELECT NULLIF(current_setting('app.institution_id', true), '');
 $$ LANGUAGE sql STABLE;
 
+-- Student / independent learner scope (required by learn + visual RLS in Drizzle migrations).
+CREATE OR REPLACE FUNCTION edrion_current_student() RETURNS text AS $$
+  SELECT NULLIF(current_setting('app.student_id', true), '');
+$$ LANGUAGE sql STABLE;
+
+CREATE OR REPLACE FUNCTION edrion_current_independent_user() RETURNS text AS $$
+  SELECT NULLIF(current_setting('app.independent_user_id', true), '');
+$$ LANGUAGE sql STABLE;
+
 -- institutions: keyed by id. Others: keyed by institution_id.
 DO $$
 DECLARE
@@ -200,6 +209,16 @@ BEGIN
       ('student_request_events', 'institution_id'),
       ('institution_request_type_config', 'institution_id'),
       ('student_document_vault', 'institution_id'),
+      ('sensitive_report_audit_log', 'institution_id'),
+      ('sensitive_report_unseal_approvals', 'institution_id'),
+      ('student_sensitive_report_ownership', 'institution_id'),
+      ('principal_metric_rollups', 'institution_id'),
+      ('institution_identity_providers', 'institution_id'),
+      ('roster_sync_jobs', 'institution_id'),
+      ('library_fine_invoice_links', 'institution_id'),
+      ('clubs', 'institution_id'),
+      ('campus_events', 'institution_id'),
+      ('placement_seasons', 'institution_id'),
       -- Student portal (Plan 03): institutional bridge tables.
       ('homework', 'institution_id'),
       ('class_stream_posts', 'institution_id'),
@@ -231,14 +250,6 @@ END
 $$;
 
 -- Visual Studio: strict student-private policies (not institution-wide).
-CREATE OR REPLACE FUNCTION edrion_current_student() RETURNS text AS $$
-  SELECT NULLIF(current_setting('app.student_id', true), '');
-$$ LANGUAGE sql STABLE;
-
-CREATE OR REPLACE FUNCTION edrion_current_independent_user() RETURNS text AS $$
-  SELECT NULLIF(current_setting('app.independent_user_id', true), '');
-$$ LANGUAGE sql STABLE;
-
 ALTER TABLE visual_canvases ENABLE ROW LEVEL SECURITY;
 ALTER TABLE visual_canvases FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS visual_canvases_student_private ON visual_canvases;
@@ -431,3 +442,181 @@ BEGIN
     );
   END LOOP;
 END $$;
+
+-- Edrion Learn orchestrator (0097): student-private learner state.
+ALTER TABLE learn_topic_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE learn_topic_profiles FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS learn_topic_profiles_owner_private ON learn_topic_profiles;
+CREATE POLICY learn_topic_profiles_owner_private ON learn_topic_profiles FOR ALL
+USING (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+  OR (
+    edrion_current_institution() IS NOT NULL
+    AND institution_id IS NOT NULL
+    AND institution_id::text = edrion_current_institution()
+    AND independent_user_id IS NULL
+  )
+)
+WITH CHECK (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+  OR (
+    edrion_current_institution() IS NOT NULL
+    AND institution_id IS NOT NULL
+    AND institution_id::text = edrion_current_institution()
+    AND independent_user_id IS NULL
+  )
+);
+
+DO $$
+DECLARE tbl text;
+BEGIN
+  FOREACH tbl IN ARRAY ARRAY['learner_mastery', 'learner_model_events'] LOOP
+    EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
+    EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', tbl);
+    EXECUTE format('DROP POLICY IF EXISTS %I_owner_private ON %I', tbl, tbl);
+    EXECUTE format(
+      'CREATE POLICY %I_owner_private ON %I FOR ALL USING (
+        (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+        OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
+        OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      ) WITH CHECK (
+        (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+        OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
+        OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      )', tbl, tbl
+    );
+  END LOOP;
+END $$;
+
+ALTER TABLE learn_session_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE learn_session_events FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS learn_session_events_owner_private ON learn_session_events;
+CREATE POLICY learn_session_events_owner_private ON learn_session_events FOR ALL
+USING (EXISTS (
+  SELECT 1 FROM learn_sessions ls WHERE ls.id = learn_session_events.session_id
+    AND (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_student() IS NOT NULL AND ls.student_id::text = edrion_current_student())
+      OR (edrion_current_independent_user() IS NOT NULL AND ls.independent_user_id::text = edrion_current_independent_user())
+    )
+))
+WITH CHECK (EXISTS (
+  SELECT 1 FROM learn_sessions ls WHERE ls.id = learn_session_events.session_id
+    AND (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_student() IS NOT NULL AND ls.student_id::text = edrion_current_student())
+      OR (edrion_current_independent_user() IS NOT NULL AND ls.independent_user_id::text = edrion_current_independent_user())
+    )
+));
+
+-- Debate P1 (0110): owner-scoped rounds and artefacts.
+ALTER TABLE debates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE debates FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS debates_owner_private ON debates;
+CREATE POLICY debates_owner_private ON debates FOR ALL
+USING (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+  OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
+  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+)
+WITH CHECK (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+  OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
+  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+);
+
+DO $$
+DECLARE tbl text;
+BEGIN
+  FOREACH tbl IN ARRAY ARRAY[
+    'debate_participants', 'debate_turns', 'debate_consents', 'debate_transcripts',
+    'debate_adjudication_runs', 'debate_speech_analyses', 'debate_clashes', 'debate_verdicts',
+    'debate_speaker_scores', 'debate_feedback_reports', 'debate_ai_opponent_scripts'
+  ] LOOP
+    EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
+    EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', tbl);
+    EXECUTE format('DROP POLICY IF EXISTS %I_via_debate ON %I', tbl, tbl);
+    EXECUTE format(
+      'CREATE POLICY %I_via_debate ON %I FOR ALL USING (
+        EXISTS (
+          SELECT 1 FROM debates d WHERE d.id = %I.debate_id
+            AND (
+              (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+              OR (edrion_current_student() IS NOT NULL AND d.student_id::text = edrion_current_student())
+              OR (edrion_current_independent_user() IS NOT NULL AND d.independent_user_id::text = edrion_current_independent_user())
+            )
+        )
+      ) WITH CHECK (
+        EXISTS (
+          SELECT 1 FROM debates d WHERE d.id = %I.debate_id
+            AND (
+              (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+              OR (edrion_current_student() IS NOT NULL AND d.student_id::text = edrion_current_student())
+              OR (edrion_current_independent_user() IS NOT NULL AND d.independent_user_id::text = edrion_current_independent_user())
+            )
+        )
+      )', tbl, tbl, tbl, tbl
+    );
+  END LOOP;
+END $$;
+
+ALTER TABLE debate_prep_notes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE debate_prep_notes FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS debate_prep_notes_owner_private ON debate_prep_notes;
+CREATE POLICY debate_prep_notes_owner_private ON debate_prep_notes FOR ALL
+USING (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+  OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
+  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+)
+WITH CHECK (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+  OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
+  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+);
+
+ALTER TABLE debate_skill_snapshots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE debate_skill_snapshots FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS debate_skill_snapshots_owner_private ON debate_skill_snapshots;
+CREATE POLICY debate_skill_snapshots_owner_private ON debate_skill_snapshots FOR ALL
+USING (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+  OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
+  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+)
+WITH CHECK (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+  OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
+  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+);
+
+ALTER TABLE debate_adjudication_calls ENABLE ROW LEVEL SECURITY;
+ALTER TABLE debate_adjudication_calls FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS debate_adjudication_calls_via_run ON debate_adjudication_calls;
+CREATE POLICY debate_adjudication_calls_via_run ON debate_adjudication_calls FOR ALL
+USING (
+  EXISTS (
+    SELECT 1 FROM debate_adjudication_runs r
+    JOIN debates d ON d.id = r.debate_id
+    WHERE r.id = debate_adjudication_calls.run_id
+      AND (
+        (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+        OR (edrion_current_student() IS NOT NULL AND d.student_id::text = edrion_current_student())
+        OR (edrion_current_independent_user() IS NOT NULL AND d.independent_user_id::text = edrion_current_independent_user())
+      )
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM debate_adjudication_runs r
+    JOIN debates d ON d.id = r.debate_id
+    WHERE r.id = debate_adjudication_calls.run_id
+      AND (
+        (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+        OR (edrion_current_student() IS NOT NULL AND d.student_id::text = edrion_current_student())
+        OR (edrion_current_independent_user() IS NOT NULL AND d.independent_user_id::text = edrion_current_independent_user())
+      )
+  )
+);

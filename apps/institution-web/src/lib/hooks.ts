@@ -46,6 +46,20 @@ export function useDashboardPrefs() {
   });
 }
 
+/** Principal metric rollups for dashboard widgets. */
+export function usePrincipalMetrics(asOf?: string) {
+  const client = usePortalClient();
+  const q = asOf ? `?as_of=${encodeURIComponent(asOf)}` : '';
+  return useQuery({
+    queryKey: ['portal', 'principal-metrics', asOf ?? 'today'],
+    queryFn: () =>
+      client.get<{ asOf: string; items: Array<{ key: string; value: Record<string, unknown> }> }>(
+        `/portal/principal-metrics${q}`,
+        INSTITUTION_SCOPE,
+      ),
+  });
+}
+
 /**
  * Save pin/hide. Optimistic, with rollback — the API rejects any widget the user isn't entitled to
  * (WIDGET_NOT_ENTITLED), so a rejected write must restore the previous layout rather than leave the

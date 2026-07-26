@@ -8,7 +8,7 @@ import {
   schema,
   type Database,
 } from '@edrion/database';
-import { computeStanding, presetSnapshot, SCHEME_PRESETS, type SchemeSnapshot } from '@edrion/schemas';
+import { computeStanding, computeTermAggregate, presetSnapshot, SCHEME_PRESETS, type SchemeSnapshot } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 
 @Injectable()
@@ -78,20 +78,26 @@ export class ResultsRecomputeService {
       );
 
     const subjectsPayload: Array<Record<string, unknown>> = [];
-    let creditsEarned = 0;
-    let creditsTotal = 0;
-    let gpaNumerator = 0;
-    let gpaDenominator = 0;
-    let isComplete = true;
-    let termPctSum = 0;
-    let termPctCount = 0;
+    const aggregateInputs: Array<{
+      weighted_pct: number;
+      grade_points: number | null;
+      is_pass: boolean;
+      credits: number | null;
+      open_weight_pct: number;
+    }> = [];
 
     for (const row of classSubjects) {
       const map =
         weightMaps.find((m) => m.subjectId === row.subjectId && m.classId === enrollment.classId) ??
         weightMaps.find((m) => m.subjectId === row.subjectId && m.classId === null);
       if (!map) {
-        isComplete = false;
+        aggregateInputs.push({
+          weighted_pct: 0,
+          grade_points: null,
+          is_pass: false,
+          credits: null,
+          open_weight_pct: 100,
+        });
         continue;
       }
 
@@ -129,7 +135,17 @@ export class ResultsRecomputeService {
         subjectEntries,
       );
 
-      if (standing.open_weight_pct > 0) isComplete = false;
+      if (standing.open_weight_pct > 0) {
+        /* rolled into aggregate */
+      }
+
+      aggregateInputs.push({
+        weighted_pct: standing.weighted_pct,
+        grade_points: standing.grade_points,
+        is_pass: standing.is_pass ?? false,
+        credits,
+        open_weight_pct: standing.open_weight_pct,
+      });
 
       const components = (map.components as Array<{ key: string; label: string; weight_pct: number }>).map(
         (component) => {
@@ -158,25 +174,12 @@ export class ResultsRecomputeService {
         grade_points: standing.grade_points,
         class_avg_pct: null,
       });
-
-      termPctSum += standing.weighted_pct;
-      termPctCount += 1;
-
-      if (scheme.gpa_formula === 'credit_weighted' && credits !== null && standing.grade_points !== null) {
-        creditsTotal += credits;
-        if (standing.is_pass) creditsEarned += credits;
-        gpaNumerator += standing.grade_points * credits;
-        gpaDenominator += credits;
-      }
     }
 
-    const termPct = termPctCount > 0 ? Math.round((termPctSum / termPctCount) * 100) / 100 : 0;
-    const termGpa =
-      scheme.gpa_formula === 'credit_weighted' && gpaDenominator > 0
-        ? Math.round((gpaNumerator / gpaDenominator) * 100) / 100
-        : scheme.gpa_formula === 'simple_average' && termPctCount > 0
-          ? termPct
-          : null;
+    const { termPct, termGpa, creditsEarned, creditsTotal, isComplete } = computeTermAggregate(
+      scheme,
+      aggregateInputs,
+    );
 
     const payload = {
       institutionId,

@@ -96,11 +96,11 @@ export default function DebateSetupPage() {
       </section>
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-        <PillButton className="flex-1" onClick={() => void handleStart('solo')} disabled={create.isPending}>
-          Debate Petros
+        <PillButton className="flex-1" onClick={() => router.push('/lab/debate/new')}>
+          Practice vs AI (full round)
         </PillButton>
-        <PillButton variant="soft" className="flex-1" onClick={() => void handleStart('friend')} disabled={create.isPending}>
-          Invite a friend
+        <PillButton variant="soft" className="flex-1" onClick={() => void handleStart('solo')} disabled={create.isPending}>
+          Debate Petros (legacy)
         </PillButton>
       </div>
     </div>

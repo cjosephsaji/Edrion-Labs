@@ -122,7 +122,7 @@ Graph Pipeline must be merged, including `PLAN-GRAPH-JSON-CONTRACT.md`, before E
 
 **Files**
 
-- Add `packages/database/migrations/0096_edrion_learn_orchestrator.sql`; modify `packages/database/src/schema/learn.ts`, migration journal/grants/RLS.
+- Add `packages/database/migrations/0097_edrion_learn_orchestrator.sql`; modify `packages/database/src/schema/learn.ts`, migration journal/grants/RLS.
 - Add schemas under `packages/schemas/src/student/edrion-learn/`: `goal.ts`, `profile.ts`, `policy.ts`, `plan.ts`, `blocks.ts`, `state.ts`, `mastery.ts`, `api.ts`, `events.ts`; replace old exports from `student/session.ts` and `blocks.ts` once consumers migrate.
 
 **Existing-table extensions**
