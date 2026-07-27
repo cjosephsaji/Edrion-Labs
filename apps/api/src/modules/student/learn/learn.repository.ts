@@ -160,9 +160,21 @@ export class LearnRepository {
     return updated;
   }
 
+  /**
+   * Atomically allocate the next block sequence for a session.
+   * Single UPDATE: the row lock on `learn_sessions` serialises concurrent allocators, so this
+   * is never a read-then-increment race. `greatest(...)` re-seeds the counter from the existing
+   * blocks for legacy sessions written before `last_block_seq` was maintained.
+   */
   async nextBlockSequence(sessionId: string): Promise<number> {
-    const rows = await this.listBlocks(sessionId);
-    return rows.length ? Math.max(...rows.map((b) => b.sequence)) + 1 : 1;
+    const [row] = await this.db
+      .update(schema.learnSessions)
+      .set({
+        lastBlockSeq: sql`greatest(${schema.learnSessions.lastBlockSeq}, coalesce((select max(b.sequence) from learn_session_blocks b where b.session_id = ${sessionId}), 0)) + 1`,
+      })
+      .where(eq(schema.learnSessions.id, sessionId))
+      .returning({ seq: schema.learnSessions.lastBlockSeq });
+    return Number(row?.seq ?? 1);
   }
 
   async insertAttempt(row: typeof schema.learnAttempts.$inferInsert) {

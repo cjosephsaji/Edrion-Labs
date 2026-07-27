@@ -28,8 +28,6 @@ import { RevisionController } from './learn/revision.controller';
 import { RevisionService } from './learn/revision.service';
 import { StreaksController } from './learn/streaks.controller';
 import { StreaksService } from './learn/streaks.service';
-import { NotesController } from './learn/notes.controller';
-import { NotesService } from './learn/notes.service';
 import { HistoryController } from './learn/history.controller';
 import { HistoryService } from './learn/history.service';
 import { LibraryController } from './library/library.controller';
@@ -85,7 +83,6 @@ import { TodayNotificationModule } from '../today-notification.module';
     PathController,
     RevisionController,
     StreaksController,
-    NotesController,
     HistoryController,
     LibraryController,
     LibraryStreamController,
@@ -116,7 +113,6 @@ import { TodayNotificationModule } from '../today-notification.module';
     PathService,
     RevisionService,
     StreaksService,
-    NotesService,
     HistoryService,
     LibraryRepository,
     LibraryService,

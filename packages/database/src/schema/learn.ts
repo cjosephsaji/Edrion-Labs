@@ -18,8 +18,13 @@ import { institutions } from './institutions';
 import { students } from './people';
 import { independentUsers } from './users';
 
+/** Exactly one owner. The repo-wide Learn tenancy form (see migration 0103). */
 const ownerXor = (studentId: unknown, independentUserId: unknown) =>
   sql`num_nonnulls(${studentId}, ${independentUserId}) = 1`;
+
+/** At most one owner — for ledgers whose owner FKs are ON DELETE SET NULL. */
+const ownerAtMostOne = (studentId: unknown, independentUserId: unknown) =>
+  sql`num_nonnulls(${studentId}, ${independentUserId}) <= 1`;
 
 export const learnTopics = pgTable(
   'learn_topics',
@@ -60,21 +65,27 @@ export const conceptAtoms = pgTable(
   }),
 );
 
-export const learningPaths = pgTable('learning_paths', {
-  id: primaryId(),
-  institutionId: uuid('institution_id').references(() => institutions.id),
-  studentId: uuid('student_id').references(() => students.id),
-  independentUserId: uuid('independent_user_id').references(() => independentUsers.id),
-  title: text('title').notNull(),
-  subjectLabel: text('subject_label').notNull(),
-  source: text('source').notNull(),
-  metaLine: text('meta_line'),
-  goal: jsonb('goal').$type<Record<string, unknown>>(),
-  status: text('status').notNull().default('active'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-  version: integer('version').notNull().default(1),
-});
+export const learningPaths = pgTable(
+  'learning_paths',
+  {
+    id: primaryId(),
+    institutionId: uuid('institution_id').references(() => institutions.id),
+    studentId: uuid('student_id').references(() => students.id),
+    independentUserId: uuid('independent_user_id').references(() => independentUsers.id),
+    title: text('title').notNull(),
+    subjectLabel: text('subject_label').notNull(),
+    source: text('source').notNull(),
+    metaLine: text('meta_line'),
+    goal: jsonb('goal').$type<Record<string, unknown>>(),
+    status: text('status').notNull().default('active'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    version: integer('version').notNull().default(1),
+  },
+  (t) => ({
+    ownerXor: check('learning_paths_owner_ck', ownerXor(t.studentId, t.independentUserId)),
+  }),
+);
 
 export const learningPathItems = pgTable(
   'learning_path_items',
@@ -120,6 +131,7 @@ export const learnTopicProfiles = pgTable(
     ...timestamps,
   },
   (t) => ({
+    ownerXor: check('learn_topic_profiles_owner_ck', ownerXor(t.institutionId, t.independentUserId)),
     institutionTopicIdUq: uniqueIndex('learn_topic_profiles_institution_topic_id_uq')
       .on(t.institutionId, t.learnTopicId)
       .where(sql`${t.institutionId} IS NOT NULL AND ${t.learnTopicId} IS NOT NULL`),
@@ -157,8 +169,10 @@ export const learnSessions = pgTable(
     state: jsonb('state').$type<Record<string, unknown>>().notNull().default({}),
     sessionContext: jsonb('session_context').$type<Record<string, unknown>>().notNull().default({}),
     policySnapshot: jsonb('policy_snapshot').$type<Record<string, unknown>>().notNull().default({}),
-    spine: jsonb('spine').$type<unknown[]>().notNull(),
-    sessionPlan: jsonb('session_plan').$type<Record<string, unknown>>().notNull(),
+    // Plan-02 leftovers, nullable since 0103: the orchestrator has no spine/plan
+    // and must not write stubs. The legacy student/learn/ surface still fills them.
+    spine: jsonb('spine').$type<unknown[]>(),
+    sessionPlan: jsonb('session_plan').$type<Record<string, unknown>>(),
     timeBudgetMinutes: integer('time_budget_minutes'),
     elapsedMinutes: integer('elapsed_minutes').notNull().default(0),
     checkpointsTotal: integer('checkpoints_total').notNull().default(0),
@@ -178,6 +192,7 @@ export const learnSessions = pgTable(
     version: integer('version').notNull().default(1),
   },
   (t) => ({
+    ownerXor: check('learn_sessions_owner_ck', ownerXor(t.studentId, t.independentUserId)),
     studentIdx: index('learn_sessions_student_idx').on(t.studentId, t.startedAt),
     indepIdx: index('learn_sessions_indep_idx').on(t.independentUserId, t.startedAt),
     studentActiveOrchestratorUq: uniqueIndex('learn_sessions_student_active_orchestrator_uq')
@@ -202,7 +217,8 @@ export const learnSessionBlocks = pgTable(
       .references(() => learnSessions.id, { onDelete: 'cascade' }),
     sequence: integer('sequence').notNull(),
     blockType: text('block_type').notNull(),
-    spineStep: text('spine_step').notNull(),
+    // Plan-02 leftover, nullable since 0103 (see learn_sessions.spine).
+    spineStep: text('spine_step'),
     content: jsonb('content').$type<Record<string, unknown>>().notNull(),
     state: jsonb('state').$type<Record<string, unknown>>().notNull().default({}),
     moveType: text('move_type'),
@@ -240,6 +256,7 @@ export const learnAttempts = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
+    ownerXor: check('learn_attempts_owner_ck', ownerXor(t.studentId, t.independentUserId)),
     sessionBlockQuestionUq: uniqueIndex('learn_attempts_session_block_question_uq')
       .on(t.sessionId, t.blockId, t.questionId)
       .where(
@@ -260,7 +277,8 @@ export const learnerMastery = pgTable(
     atomId: uuid('atom_id')
       .notNull()
       .references(() => conceptAtoms.id, { onDelete: 'cascade' }),
-    rating: integer('rating').notNull().default(800),
+    // Hyperspec §6: display mastery m = (rating - 800) / 800, so 1200 reads 0.5.
+    rating: integer('rating').notNull().default(1200),
     attempts: integer('attempts').notNull().default(0),
     correctWeight: numeric('correct_weight').notNull().default('0'),
     lastAttemptAt: timestamp('last_attempt_at', { withTimezone: true }),
@@ -325,18 +343,24 @@ export const learnSessionEvents = pgTable(
   }),
 );
 
-export const quickAnswers = pgTable('quick_answers', {
-  id: primaryId(),
-  institutionId: uuid('institution_id').references(() => institutions.id),
-  studentId: uuid('student_id').references(() => students.id),
-  independentUserId: uuid('independent_user_id').references(() => independentUsers.id),
-  question: text('question').notNull(),
-  answerShort: text('answer_short').notNull(),
-  answerDetail: text('answer_detail').notNull(),
-  visual: jsonb('visual').$type<Record<string, unknown>>(),
-  onLearningList: integer('on_learning_list').notNull().default(0),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
+export const quickAnswers = pgTable(
+  'quick_answers',
+  {
+    id: primaryId(),
+    institutionId: uuid('institution_id').references(() => institutions.id),
+    studentId: uuid('student_id').references(() => students.id),
+    independentUserId: uuid('independent_user_id').references(() => independentUsers.id),
+    question: text('question').notNull(),
+    answerShort: text('answer_short').notNull(),
+    answerDetail: text('answer_detail').notNull(),
+    visual: jsonb('visual').$type<Record<string, unknown>>(),
+    onLearningList: integer('on_learning_list').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    ownerXor: check('quick_answers_owner_ck', ownerXor(t.studentId, t.independentUserId)),
+  }),
+);
 
 export const revisionStates = pgTable(
   'revision_states',
@@ -367,6 +391,7 @@ export const revisionStates = pgTable(
     computedAt: timestamp('computed_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
+    ownerXor: check('revision_states_owner_ck', ownerXor(t.studentId, t.independentUserId)),
     studentTopicUq: uniqueIndex('revision_states_student_topic_uq').on(t.studentId, t.topicId),
     indepTopicUq: uniqueIndex('revision_states_indep_topic_uq').on(t.independentUserId, t.topicId),
   }),
@@ -387,33 +412,42 @@ export const evidenceTags = pgTable(
     computedAt: timestamp('computed_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
+    ownerXor: check('evidence_tags_owner_ck', ownerXor(t.studentId, t.independentUserId)),
     studentTagUq: uniqueIndex('evidence_tags_student_tag_uq').on(t.studentId, t.tagKey),
     indepTagUq: uniqueIndex('evidence_tags_indep_tag_uq').on(t.independentUserId, t.tagKey),
   }),
 );
 
-export const learnAiCalls = pgTable('learn_ai_calls', {
-  id: primaryId(),
-  occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull().defaultNow(),
-  studentId: uuid('student_id'),
-  independentUserId: uuid('independent_user_id'),
-  sessionId: uuid('session_id').references(() => learnSessions.id, { onDelete: 'set null' }),
-  blockId: uuid('block_id').references(() => learnSessionBlocks.id, { onDelete: 'set null' }),
-  blockSeq: integer('block_seq'),
-  purpose: text('purpose').notNull(),
-  model: text('model').notNull(),
-  promptVersion: text('prompt_version'),
-  inputTokens: integer('input_tokens').notNull().default(0),
-  outputTokens: integer('output_tokens').notNull().default(0),
-  cached: integer('cached').notNull().default(0),
-  durationMs: integer('duration_ms'),
-  firstTokenMs: integer('first_token_ms'),
-  retry: boolean('retry').notNull().default(false),
-  speculative: boolean('speculative').notNull().default(false),
-  degraded: boolean('degraded').notNull().default(false),
-  outcome: text('outcome'),
-  error: text('error'),
-});
+export const learnAiCalls = pgTable(
+  'learn_ai_calls',
+  {
+    id: primaryId(),
+    occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull().defaultNow(),
+    studentId: uuid('student_id'),
+    independentUserId: uuid('independent_user_id'),
+    sessionId: uuid('session_id').references(() => learnSessions.id, { onDelete: 'set null' }),
+    blockId: uuid('block_id').references(() => learnSessionBlocks.id, { onDelete: 'set null' }),
+    blockSeq: integer('block_seq'),
+    purpose: text('purpose').notNull(),
+    model: text('model').notNull(),
+    promptVersion: text('prompt_version'),
+    inputTokens: integer('input_tokens').notNull().default(0),
+    outputTokens: integer('output_tokens').notNull().default(0),
+    cached: integer('cached').notNull().default(0),
+    durationMs: integer('duration_ms'),
+    firstTokenMs: integer('first_token_ms'),
+    retry: boolean('retry').notNull().default(false),
+    speculative: boolean('speculative').notNull().default(false),
+    degraded: boolean('degraded').notNull().default(false),
+    outcome: text('outcome'),
+    error: text('error'),
+  },
+  (t) => ({
+    // Append-only cost ledger: the owner FKs are ON DELETE SET NULL, so an
+    // ownerless row is legitimate. Only "both owners set" is forbidden.
+    ownerXor: check('learn_ai_calls_owner_ck', ownerAtMostOne(t.studentId, t.independentUserId)),
+  }),
+);
 
 export type LearnTopic = typeof learnTopics.$inferSelect;
 export type ConceptAtom = typeof conceptAtoms.$inferSelect;

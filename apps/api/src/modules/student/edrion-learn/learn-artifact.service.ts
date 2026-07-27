@@ -25,7 +25,6 @@ export class LearnArtifactService {
       sessionId,
       sequence: seq,
       blockType: 'note_card',
-      spineStep: 'understand',
       content: { question, answer },
       interactionState: blockAfterId ? { afterBlockId: blockAfterId } : {},
     });

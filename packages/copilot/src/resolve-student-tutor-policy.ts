@@ -1,5 +1,5 @@
 import { AiMode, FeatureScope } from '@edrion/shared-types';
-import { resolveAiPolicy } from './resolve-policy';
+import { resolveAiPolicy, scopeMatchesContext } from './resolve-policy';
 import type { AiPolicyInput, AiResolutionContext } from './types';
 
 export type StudentTutorCurriculumBounds = 'open' | 'institution_curriculum' | 'assigned_material_only';
@@ -85,8 +85,11 @@ export function resolveStudentTutorPolicy(
     FeatureScope.Global,
   ]
     .map((scope) =>
+      // Same scope guard the base engine applies in `bestPolicyForScope`. Without it an
+      // `institution`/`campus`/`user`-scoped row belonging to a *different* tenant would be
+      // picked up here and leak its `domainConfig` into this context's resolution.
       tutorRows
-        .filter((p) => p.scope === scope && p.enabled)
+        .filter((p) => p.scope === scope && p.enabled && scopeMatchesContext(scope, p.scopeId ?? null, context))
         .sort((a, b) => (b.setAt ? new Date(b.setAt).getTime() : 0) - (a.setAt ? new Date(a.setAt).getTime() : 0))[0],
     )
     .filter((p): p is StudentTutorPolicyInput => !!p);

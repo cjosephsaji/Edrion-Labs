@@ -93,7 +93,8 @@ function bestPolicyForScope(
   return [...candidates].sort((x, y) => setAtMs(y) - setAtMs(x))[0];
 }
 
-function scopeMatchesContext(
+/** Exported so domain wrappers apply the identical scope guard rather than re-deriving one. */
+export function scopeMatchesContext(
   scope: FeatureScope,
   scopeId: string | null,
   ctx: AiResolutionContext,

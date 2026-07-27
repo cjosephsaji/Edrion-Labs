@@ -1,4 +1,4 @@
-﻿import { ConflictException, ForbiddenException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';import {
+﻿import { ConflictException, ForbiddenException, HttpException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';import {
   answerBlockInputSchema,
   askSessionInputSchema,
   blockV1Schema,
@@ -35,6 +35,7 @@ import { SessionCompletionService } from './session-completion.service';
 import { ArtifactCommitService } from './artifact-commit.service';
 @Injectable()
 export class PedagogyOrchestratorService {
+  private readonly logger = new Logger(PedagogyOrchestratorService.name);
   constructor(
     private readonly repo: EdrionLearnRepository,
     private readonly policy: StudentTutorPolicyService,
@@ -50,7 +51,15 @@ export class PedagogyOrchestratorService {
     private readonly completion: SessionCompletionService,
     private readonly artifacts: ArtifactCommitService,
   ) {}
+  private orchestratorDisabled() {
+    return new ForbiddenException({
+      code: 'LEARN_ORCHESTRATOR_DISABLED',
+      message: 'Edrion Learn is unavailable right now. Try a quick Petros answer instead.',
+    });
+  }
   async assertOrchestratorEnabled(principal: StudentPrincipal) {
+    // Hard gate: this must fail CLOSED. A flag-resolution failure is not a grant.
+    let enabled: boolean;
     try {
       const resolution = await this.features.resolveByKey(
         'learn.orchestrator',
@@ -62,15 +71,15 @@ export class PedagogyOrchestratorService {
             }
           : { independentUserId: principal.independentUserId },
       );
-      if (!resolution.value) {
-        throw new ForbiddenException({
-          code: 'LEARN_ORCHESTRATOR_DISABLED',
-          message: 'Edrion Learn is unavailable right now. Try a quick Petros answer instead.',
-        });
-      }
+      enabled = Boolean(resolution.value);
     } catch (e) {
       if (e instanceof ForbiddenException) throw e;
+      this.logger.error(
+        `learn.orchestrator flag resolution failed; denying access: ${e instanceof Error ? e.message : String(e)}`,
+      );
+      throw this.orchestratorDisabled();
     }
+    if (!enabled) throw this.orchestratorDisabled();
   }
   async createSession(
     principal: StudentPrincipal,
@@ -154,8 +163,8 @@ export class PedagogyOrchestratorService {
       state: {},
       sessionContext,
       policySnapshot,
-      spine: [],
-      sessionPlan: { orchestrator: true, goal },
+      // `spine` / `session_plan` are Plan-02 fixed-sequence concepts the orchestrator
+      // does not model. Left NULL rather than stubbed (migration 0103 makes them nullable).
       timeBudgetMinutes: timeBudget,
       evidence: [],
     });
@@ -187,6 +196,7 @@ export class PedagogyOrchestratorService {
     lastSeq: number,
     emit: (event: Record<string, unknown>) => void,
   ) {
+    await this.assertOrchestratorEnabled(principal);
     const session = await this.repo.getSession(principal, sessionId);
     if (!session) throw new NotFoundException();
     const events = await this.repo.listSessionEventsSince(sessionId, lastSeq);
@@ -258,7 +268,6 @@ export class PedagogyOrchestratorService {
       sessionId,
       sequence: seq,
       blockType: this.planner.blockTypeForMove(plan.move),
-      spineStep: 'understand',
       content: {},
       moveType: plan.move,
       streamSeq,

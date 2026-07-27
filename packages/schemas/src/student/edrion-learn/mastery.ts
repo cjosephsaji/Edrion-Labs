@@ -10,7 +10,13 @@ export const MASTERY_DIFFICULTY_RATINGS = {
 
 export const MASTERY_RATING_MIN = 400;
 export const MASTERY_RATING_MAX = 2400;
-export const MASTERY_RATING_DEFAULT = 800;
+/**
+ * Hyperspec §6: the display transform is m = clamp((r - 800) / 800, 0, 1), so a
+ * new learner must start at 1200 to read 0.5 mastery (and to expect p ≈ 0.36 on
+ * a first medium-difficulty attempt). Mirrors learner_mastery.rating's DB
+ * default — see migration 0103_learn_tenancy_reconcile.
+ */
+export const MASTERY_RATING_DEFAULT = 1200;
 export const MASTERY_K_HIGH = 32;
 export const MASTERY_K_LOW = 16;
 export const MASTERY_K_ATTEMPT_THRESHOLD = 10;
