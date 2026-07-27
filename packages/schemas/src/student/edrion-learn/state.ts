@@ -49,6 +49,23 @@ export const sessionStateV1Schema = z.object({
   mastery_snapshot: z.record(z.number().min(0).max(1)).default({}),
   pending_free_question: z.string().max(500).nullable().optional(),
   free_questions_used: z.number().int().nonnegative().default(0),
+  /**
+   * Wall-clock accounting (§5). `paused_ms_total` is the sum of every COMPLETED
+   * pause interval; the currently-open interval (if any) is derived from
+   * `learn_sessions.paused_at`. Together with `started_at` this makes
+   * `elapsed_minutes` computable on every request without a new column.
+   */
+  paused_ms_total: z.number().int().nonnegative().default(0),
+  /** `elapsed >= budget - 3min`: the planner should steer toward closing. */
+  wrap_up: z.boolean().default(false),
+  /** "+5 minutes" is allowed EXACTLY ONCE per session (§5). */
+  budget_extended: z.boolean().default(false),
+  /** The fatigue break card (§3) is emitted at most once per session. */
+  fatigue_notice_sent: z.boolean().default(false),
+  /** The budget/wrap-up notice is emitted at most once per session. */
+  budget_notice_sent: z.boolean().default(false),
+  /** Rolling window of the last 3 GRADED answers — the fatigue rule's input. */
+  recent_graded: z.array(z.enum(['correct', 'wrong'])).max(3).default([]),
 });
 
 export type SessionStateV1 = z.infer<typeof sessionStateV1Schema>;
@@ -94,6 +111,36 @@ export const orchestratorStatusSchema = z.enum([
 ]);
 
 export type OrchestratorStatus = z.infer<typeof orchestratorStatusSchema>;
+
+/** Terminal state: nothing may leave it. */
+export const ORCHESTRATOR_TERMINAL_STATUSES = ['closed'] as const;
+
+/**
+ * Hyperspec §5, binding:
+ *   created → active ⇄ awaiting_response → active → closing → closed
+ *   active|awaiting_response → paused → active
+ *   any non-terminal → closed   (student_exit / policy_kill / abandoned)
+ *   paused --24h--> closed(abandoned)
+ *
+ * NOTE: `learn_sessions.orchestrator_status` is still a free `text` column with
+ * no DB CHECK. Until that migration lands this table plus `orchestratorStatusSchema`
+ * are the ONLY enforcement of the closed set.
+ */
+export const ORCHESTRATOR_TRANSITIONS: Record<OrchestratorStatus, readonly OrchestratorStatus[]> = {
+  created: ['active', 'closed'],
+  active: ['awaiting_response', 'paused', 'closing', 'closed'],
+  awaiting_response: ['active', 'paused', 'closing', 'closed'],
+  paused: ['active', 'closed'],
+  closing: ['closed'],
+  closed: [],
+};
+
+export function isValidOrchestratorTransition(
+  from: OrchestratorStatus,
+  to: OrchestratorStatus,
+): boolean {
+  return (ORCHESTRATOR_TRANSITIONS[from] ?? []).includes(to);
+}
 
 export const endReasonSchema = z.enum([
   'goal_met',

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { blockV1Schema } from './blocks';
+import { endReasonSchema, orchestratorStatusSchema } from './state';
 
 export const sessionEventTypeSchema = z.enum([
   'session_created',
@@ -10,11 +11,27 @@ export const sessionEventTypeSchema = z.enum([
   'block_interaction',
   'answer_recorded',
   'policy_notice',
+  'system_notice_emitted',
+  'budget_extended',
   'session_closed',
   'error',
 ]);
 
 export type SessionEventType = z.infer<typeof sessionEventTypeSchema>;
+
+/**
+ * Payload of the audit event written for EVERY state-machine transition (§5).
+ * Written in the same transaction as the `orchestrator_status` UPDATE.
+ */
+export const sessionStatusChangedPayloadSchema = z.object({
+  from: orchestratorStatusSchema.nullable(),
+  to: orchestratorStatusSchema,
+  reason: z.string().max(80),
+  end_reason: endReasonSchema.optional(),
+  elapsed_minutes: z.number().int().nonnegative().optional(),
+});
+
+export type SessionStatusChangedPayload = z.infer<typeof sessionStatusChangedPayloadSchema>;
 
 export const learnSessionEventSchema = z.object({
   id: z.string().uuid(),

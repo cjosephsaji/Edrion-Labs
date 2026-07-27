@@ -6,22 +6,28 @@
   createLearnSessionInputSchema,
   endSessionInputSchema,
   interactBlockInputSchema,
+  isValidOrchestratorTransition,
   learnPolicyV1Schema,
   sessionContextV1Schema,
   sessionStateV1Schema,
+  sessionStatusChangedPayloadSchema,
   type BlockV1,
+  type EndReason,
   type LearnSessionV1Dto,
+  type OrchestratorStatus,
+  type PlanV1,
   type SessionGoal,
+  type SessionStateV1,
 } from '@edrion/schemas';
 import type { StudentPrincipal } from '../student.types';
 import { FeatureControlsService } from '../../feature-controls/feature-controls.service';
 import {
-  LEARN_DAILY_SESSION_CAP,
-  LEARN_DEFAULT_SESSION_MINUTES,
-  LEARN_MAX_FREE_QUESTIONS,
-  LEARN_MOVE_CAP,
+  LEARN_PAUSED_ABANDON_HOURS,
+  LEARN_TIME_EXTENSION_MINUTES,
+  LEARN_TIME_WRAP_MINUTES_BEFORE_END,
 } from './constants';
 import { EdrionLearnRepository } from './edrion-learn.repository';
+import { LearnConfigService, type LearnConfigContext } from './learn-config.service';
 import { StudentTutorPolicyService } from './student-tutor-policy.service';
 import { TopicProfileService } from './profile.service';
 import { MovePlannerService } from './move-planner.service';
@@ -33,6 +39,13 @@ import { InstitutionalContextService } from './institutional-context.service';
 import { GradingService } from './grading.service';
 import { SessionCompletionService } from './session-completion.service';
 import { ArtifactCommitService } from './artifact-commit.service';
+
+/**
+ * Hyperspec §3 fatigue rule threshold. Not one of the 9 tenant-tunable knobs, so
+ * it stays a local constant rather than a `LearnConfigService` entry.
+ */
+const LEARN_FATIGUE_MIN_ELAPSED_MINUTES = 15;
+
 @Injectable()
 export class PedagogyOrchestratorService {
   private readonly logger = new Logger(PedagogyOrchestratorService.name);
@@ -50,7 +63,135 @@ export class PedagogyOrchestratorService {
     private readonly grading: GradingService,
     private readonly completion: SessionCompletionService,
     private readonly artifacts: ArtifactCommitService,
+    private readonly config: LearnConfigService,
   ) {}
+
+  private configCtx(principal: StudentPrincipal): LearnConfigContext {
+    return principal.kind === 'institutional'
+      ? {
+          institutionId: principal.institutionId,
+          campusId: principal.campusId ?? undefined,
+          institutionUserId: principal.institutionUserId,
+        }
+      : { independentUserId: principal.independentUserId };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Wall-clock accounting (§5)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Real elapsed minutes = (now − started_at) − every paused interval.
+   *
+   * A paused session must not burn the student's budget, so both the CLOSED
+   * pause intervals (`state.paused_ms_total`, accumulated on resume) and the
+   * currently OPEN one (`learn_sessions.paused_at`) are subtracted. This is the
+   * single source of truth for the fatigue rule, the wrap-up flag, the forced
+   * close at budget and the planner digest — all of which read
+   * `state.elapsed_minutes`.
+   */
+  private computeElapsedMinutes(
+    session: { startedAt: Date; pausedAt: Date | null },
+    state: SessionStateV1,
+    now: Date = new Date(),
+  ): number {
+    const openPauseMs = session.pausedAt
+      ? Math.max(0, now.getTime() - session.pausedAt.getTime())
+      : 0;
+    const grossMs = now.getTime() - session.startedAt.getTime();
+    const netMs = grossMs - (state.paused_ms_total ?? 0) - openPauseMs;
+    return Math.max(0, Math.floor(netMs / 60_000));
+  }
+
+  /**
+   * Recompute elapsed and mirror it onto the row so `elapsed_minutes` (DTO,
+   * reports) and `state.elapsed_minutes` (planner digest) never diverge.
+   * Mutates `state` in place and returns the value.
+   */
+  private async syncElapsed(
+    session: { id: string; startedAt: Date; pausedAt: Date | null },
+    state: SessionStateV1,
+  ): Promise<number> {
+    const elapsed = this.computeElapsedMinutes(session, state);
+    if (state.elapsed_minutes !== elapsed) {
+      state.elapsed_minutes = elapsed;
+      await this.repo.updateSession(session.id, { state, elapsedMinutes: elapsed });
+    }
+    return elapsed;
+  }
+
+  // ---------------------------------------------------------------------------
+  // State machine (§5)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * The ONLY writer of `orchestrator_status`. Rejects illegal edges in the
+   * application layer (the column is still free `text` with no DB CHECK), and
+   * writes exactly one audit event in the same transaction as the UPDATE.
+   * Returns false when a concurrent request already moved the session — the
+   * caller no-ops rather than writing a second event.
+   */
+  private async transition(
+    sessionId: string,
+    from: OrchestratorStatus,
+    to: OrchestratorStatus,
+    reason: string,
+    opts?: {
+      patch?: Parameters<EdrionLearnRepository['updateSession']>[1];
+      endReason?: EndReason;
+      elapsedMinutes?: number;
+    },
+  ): Promise<boolean> {
+    if (from === to) return true;
+    if (!isValidOrchestratorTransition(from, to)) {
+      throw new ConflictException({
+        code: 'ILLEGAL_SESSION_TRANSITION',
+        message: `Cannot move a lesson from ${from} to ${to}.`,
+      });
+    }
+    const result = await this.repo.transitionSessionStatus({
+      sessionId,
+      from: [from],
+      to,
+      eventType: to === 'closed' ? 'session_closed' : 'status_changed',
+      payload: sessionStatusChangedPayloadSchema.parse({
+        from,
+        to,
+        reason,
+        end_reason: opts?.endReason,
+        elapsed_minutes: opts?.elapsedMinutes,
+      }),
+      patch: opts?.patch,
+    });
+    if (!result) {
+      this.logger.debug(`transition ${from}→${to} lost the race for session ${sessionId}`);
+      return false;
+    }
+    return true;
+  }
+
+  private status(session: { orchestratorStatus: string | null }): OrchestratorStatus {
+    // Legacy fixed-sequence rows carry a NULL orchestrator_status; treat them as
+    // `active` so the machine has a defined starting edge.
+    return (session.orchestratorStatus ?? 'active') as OrchestratorStatus;
+  }
+
+  /**
+   * §5: `paused --24h--> closed(abandoned)`. Evaluated lazily on every read of a
+   * paused session (no sweep job), which is enough because a paused session is
+   * only reachable through its owner's requests or a new-session attempt.
+   * Returns true when the session was closed.
+   */
+  private async autoCloseIfAbandoned(
+    principal: StudentPrincipal,
+    session: Awaited<ReturnType<EdrionLearnRepository['getSession']>>,
+  ): Promise<boolean> {
+    if (!session || this.status(session) !== 'paused' || !session.pausedAt) return false;
+    const pausedForHours = (Date.now() - session.pausedAt.getTime()) / 3_600_000;
+    if (pausedForHours < LEARN_PAUSED_ABANDON_HOURS) return false;
+    await this.closeSession(principal, session.id, 'abandoned');
+    return true;
+  }
   private orchestratorDisabled() {
     return new ForbiddenException({
       code: 'LEARN_ORCHESTRATOR_DISABLED',
@@ -87,14 +228,20 @@ export class PedagogyOrchestratorService {
   ): Promise<{ session: LearnSessionV1Dto; streamUrl: string }> {
     await this.assertOrchestratorEnabled(principal);
     const input = createLearnSessionInputSchema.parse(raw);
+    const cfg = await this.config.getAll(this.configCtx(principal));
     const daily = await this.repo.countSessionsToday(principal);
-    if (daily >= LEARN_DAILY_SESSION_CAP) {
+    if (daily >= cfg.daily_session_cap_per_user) {
       throw new HttpException(
         { code: 'DAILY_SESSION_CAP', message: "You've had a full day of lessons — come back tomorrow." },
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
-    const active = await this.repo.findActiveOrchestratorSession(principal);
+    let active = await this.repo.findActiveOrchestratorSession(principal);
+    // A session paused for 24h is abandoned, not active — reclaim it here so the
+    // student is never permanently locked out by a session they walked away from.
+    if (active && (await this.autoCloseIfAbandoned(principal, active))) {
+      active = await this.repo.findActiveOrchestratorSession(principal);
+    }
     if (active) {
       throw new ConflictException({
         code: 'SESSION_ACTIVE',
@@ -127,7 +274,7 @@ export class PedagogyOrchestratorService {
       title: topic.title,
     });
     const timeBudget =
-      institutionalCtx.timeBudgetMinutes ?? input.timeBudgetMinutes ?? LEARN_DEFAULT_SESSION_MINUTES;
+      institutionalCtx.timeBudgetMinutes ?? input.timeBudgetMinutes ?? cfg.default_session_minutes;
     const goal: SessionGoal = institutionalCtx.goal ?? input.goal ?? 'acquisition';
     const emotionalContext = institutionalCtx.emotionalContext ?? input.emotionalContext ?? 'neutral';
     const owner =
@@ -176,7 +323,9 @@ export class PedagogyOrchestratorService {
       timeBudgetMinutes: timeBudget,
     });
     state.mastery_snapshot = await this.mastery.snapshot(principal, profile.prerequisites.map((p) => p.atom_id).filter(Boolean) as string[]);
-    await this.repo.updateSession(session.id, { state, orchestratorStatus: 'active' });
+    // §5: the session stays `created` until the FIRST RENDER START. Flipping to
+    // `active` here would make `created` unobservable.
+    await this.repo.updateSession(session.id, { state });
     // Sequence is allocated atomically from learn_sessions.last_event_seq so the
     // committed event and the column can never diverge.
     await this.repo.appendSessionEvent(session.id, 'session_created', { entry_point: resolvedEntryPoint });
@@ -188,6 +337,7 @@ export class PedagogyOrchestratorService {
   async getSession(principal: StudentPrincipal, sessionId: string): Promise<LearnSessionV1Dto> {
     const session = await this.repo.getSession(principal, sessionId);
     if (!session) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Session not found.' });
+    await this.autoCloseIfAbandoned(principal, session);
     return this.toDto(principal, sessionId);
   }
   async stream(
@@ -199,17 +349,25 @@ export class PedagogyOrchestratorService {
     await this.assertOrchestratorEnabled(principal);
     const session = await this.repo.getSession(principal, sessionId);
     if (!session) throw new NotFoundException();
+    const abandoned = await this.autoCloseIfAbandoned(principal, session);
     const events = await this.repo.listSessionEventsSince(sessionId, lastSeq);
     for (const ev of events) {
       emit({ type: 'replay', seq: ev.seq, eventType: ev.eventType, payload: ev.payload });
     }
-    if (session.orchestratorStatus === 'closed' || session.orchestratorStatus === 'paused') return;
-    if (session.orchestratorStatus === 'awaiting_response') return;
+    const status = this.status(session);
+    if (abandoned || status === 'closed' || status === 'paused') return;
+    if (status === 'awaiting_response') return;
+    if (status === 'closing') {
+      // A `closing` session crashed mid-pair. Resume it rather than stranding it:
+      // the closing pair is the only work legal in this state.
+      await this.runClosingSequence(principal, sessionId, 'goal_met', emit);
+      return;
+    }
     const blocks = await this.repo.listBlocks(sessionId);
     const last = blocks[blocks.length - 1];
     const lastMove = (last?.moveType ?? 'direct_explanation') as import('@edrion/schemas').MoveType;
     const shouldPlan =
-      session.orchestratorStatus === 'active' &&
+      (status === 'active' || status === 'created') &&
       (!blocks.length || (last?.renderStatus === 'complete' && !this.planner.requiresResponse(lastMove)));
     if (shouldPlan) {
       await this.planAndRenderNextBlock(principal, sessionId, emit);
@@ -221,13 +379,59 @@ export class PedagogyOrchestratorService {
     emit?: (event: Record<string, unknown>) => void,
   ) {
     const session = await this.repo.getSession(principal, sessionId);
-    if (!session || session.orchestratorStatus === 'closed') return;
+    if (!session) return;
+    const status = this.status(session);
+    // `closing` runs the forced pair through runClosingSequence and nothing else
+    // (§5: no planner calls in `closing` except the pair). `paused` burns no budget.
+    if (status === 'closed' || status === 'closing' || status === 'paused') return;
+    if (await this.autoCloseIfAbandoned(principal, session)) return;
     const policySnapshot = await this.policy.resolve(principal);
     if (policySnapshot.effective_mode === 'disabled') {
       await this.closeSession(principal, sessionId, 'policy_kill');
       return;
     }
+    const cfg = await this.config.getAll(this.configCtx(principal));
     const state = sessionStateV1Schema.parse(session.state ?? {});
+    const elapsed = await this.syncElapsed(session, state);
+    const budget = state.time_budget_minutes;
+
+    // §5 budget rules. Both branches are live now that elapsed actually advances.
+    if (elapsed >= budget) {
+      await this.runClosingSequence(principal, sessionId, 'time_budget', emit);
+      return;
+    }
+    if (elapsed >= budget - LEARN_TIME_WRAP_MINUTES_BEFORE_END) {
+      if (!state.wrap_up) {
+        state.wrap_up = true;
+        await this.repo.updateSession(sessionId, { state });
+      }
+      // The "+5 minutes" offer — the only thing that makes `notice_action`
+      // reachable — is shown once, when the wrap-up window opens.
+      if (!state.budget_notice_sent && !state.budget_extended) {
+        await this.emitSystemNotice(
+          principal,
+          sessionId,
+          {
+            kind: 'budget',
+            body_md: `You're close to the end of your ${budget}-minute lesson. Want a little longer?`,
+            actions: [
+              { key: 'extend_time', label: '+5 minutes' },
+              { key: 'wrap_up', label: 'Wrap up' },
+            ],
+          },
+          emit,
+        );
+        state.budget_notice_sent = true;
+        await this.repo.updateSession(sessionId, { state });
+        return;
+      }
+    }
+
+    // §5: `created → active` on FIRST RENDER START.
+    if (status === 'created') {
+      if (!(await this.transition(sessionId, 'created', 'active', 'first_render_start'))) return;
+    }
+
     const topic = await this.repo.getTopic(session.topicId);
     if (!topic) return;
     const { profile } = await this.profiles.resolve(principal, {
@@ -251,15 +455,43 @@ export class PedagogyOrchestratorService {
         profile,
         policy: policySnapshot,
         topicTitle: topic.title,
-        hardRules: [],
+        config: cfg,
+        hardRules: state.wrap_up
+          ? ['Time is almost up — steer toward closing and keep this short.']
+          : [],
         preferRetrieval: Boolean(preferRetrieval),
       },
       { sessionId },
     );
-    if (plan.session_should_end || this.planner.shouldForceClose(state)) {
-      await this.closeSession(principal, sessionId, state.moves.length >= LEARN_MOVE_CAP ? 'move_cap' : 'goal_met');
+    if (plan.session_should_end || state.moves.length >= cfg.move_cap) {
+      await this.runClosingSequence(
+        principal,
+        sessionId,
+        state.moves.length >= cfg.move_cap ? 'move_cap' : 'goal_met',
+        emit,
+      );
       return;
     }
+    await this.renderPlannedBlock(principal, sessionId, state, plan, topic.title, emit);
+  }
+
+  /**
+   * Renders one planned block and advances the state machine for it.
+   * Extracted from `planAndRenderNextBlock` so the forced closing pair can reuse
+   * the exact same render path without going near the planner.
+   */
+  private async renderPlannedBlock(
+    principal: StudentPrincipal,
+    sessionId: string,
+    state: SessionStateV1,
+    plan: PlanV1,
+    topicTitle: string,
+    emit?: (event: Record<string, unknown>) => void,
+    opts?: { closing?: boolean },
+  ) {
+    const session = await this.repo.getSession(principal, sessionId);
+    if (!session) return;
+    const topic = { title: topicTitle };
     // One atomic allocation serves both the block sequence and the stream sequence:
     // both are unique-per-session and a shared counter keeps them collision-free.
     const seq = await this.repo.nextBlockSequence(sessionId);
@@ -325,13 +557,26 @@ export class PedagogyOrchestratorService {
       block_id: blockRow.id,
       stream_seq: streamSeq,
     });
-    await this.repo.updateSession(sessionId, {
+    const patch = {
       state,
       planMoveCount: (session.planMoveCount ?? 0) + 1,
-      orchestratorStatus: awaiting ? 'awaiting_response' : 'active',
       checkpointsDone: state.checkpoints.done,
       checkpointsTotal: state.checkpoints.total,
-    });
+    };
+    // In `closing` the pair renders without leaving the state — the only exit is
+    // `closed`, written by closeSession once the pair is done.
+    if (awaiting && !opts?.closing && this.status(session) === 'active') {
+      const moved = await this.transition(
+        sessionId,
+        'active',
+        'awaiting_response',
+        `block_requires_response:${plan.move}`,
+        { patch },
+      );
+      if (!moved) await this.repo.updateSession(sessionId, patch);
+    } else {
+      await this.repo.updateSession(sessionId, patch);
+    }
     emit?.({
       type: 'block',
       seq: streamSeq,
@@ -346,6 +591,153 @@ export class PedagogyOrchestratorService {
       },
     });
   }
+
+  /**
+   * §5 `closing`: the forced closing pair (synthesis + artifact_commit) renders
+   * IN the `closing` state and no planner call happens there — `closingPlan` is
+   * deterministic, not an LLM call. Previously this state was declared but never
+   * assigned and the pair never rendered at all: the session jumped straight to
+   * `closed`.
+   */
+  private async runClosingSequence(
+    principal: StudentPrincipal,
+    sessionId: string,
+    endReason: EndReason,
+    emit?: (event: Record<string, unknown>) => void,
+  ) {
+    const session = await this.repo.getSession(principal, sessionId);
+    if (!session) return;
+    const from = this.status(session);
+    if (from === 'closed') return;
+    if (from !== 'closing') {
+      // Record the intended end reason on the row as we enter `closing`, so a
+      // crash mid-pair resumes and closes with the SAME reason rather than a
+      // guessed one.
+      const moved = await this.transition(sessionId, from, 'closing', `forced_close:${endReason}`, {
+        endReason,
+        patch: { endReason },
+      });
+      if (!moved) return;
+    }
+    const topic = await this.repo.getTopic(session.topicId);
+    const topicTitle = topic?.title ?? 'this lesson';
+    const state = sessionStateV1Schema.parse(session.state ?? {});
+    // Two iterations at most: closingPlan yields artifact_commit then synthesis.
+    for (let i = 0; i < 2; i += 1) {
+      const hasSynthesis = state.moves.some((m) => m.move_type === 'synthesis');
+      const hasArtifact = state.moves.some((m) => m.move_type === 'artifact_commit');
+      if (hasSynthesis && hasArtifact) break;
+      const plan = this.planner.closingPlan(state);
+      await this.renderPlannedBlock(principal, sessionId, state, plan, topicTitle, emit, {
+        closing: true,
+      });
+    }
+    await this.closeSession(principal, sessionId, endReason);
+  }
+
+  /**
+   * Emits a service-authored `system_notice` block (§3/§4.1). It is persisted as
+   * a real block row so it survives reconnect, and it reaches the SSE consumer
+   * through BOTH paths a normal block uses: the live `emit` callback when the
+   * stream is open, and the `block_stream_end` audit event that
+   * `GET /sessions/:id/stream?last_seq=` replays when it is not.
+   *
+   * It deliberately does NOT push to `state.moves` and does NOT bump
+   * `plan_move_count` or the checkpoints — §3: a notice never counts toward the
+   * move cap or checkpoints.
+   */
+  private async emitSystemNotice(
+    principal: StudentPrincipal,
+    sessionId: string,
+    notice: {
+      kind: 'break' | 'budget' | 'degraded' | 'policy';
+      body_md: string;
+      actions: { key: string; label: string }[];
+    },
+    emit?: (event: Record<string, unknown>) => void,
+  ) {
+    const block = blockV1Schema.parse({ block_type: 'system_notice', ...notice });
+    const seq = await this.repo.nextBlockSequence(sessionId);
+    const blockRow = await this.repo.insertBlock({
+      sessionId,
+      sequence: seq,
+      blockType: 'system_notice',
+      content: block,
+      moveType: 'system_notice',
+      streamSeq: seq,
+      reasoning: null,
+      renderStatus: 'complete',
+      completedAt: new Date(),
+    });
+    await this.repo.appendSessionEvent(sessionId, 'system_notice_emitted', {
+      block_id: blockRow.id,
+      stream_seq: seq,
+      kind: notice.kind,
+    });
+    await this.repo.appendSessionEvent(sessionId, 'block_stream_end', {
+      block_id: blockRow.id,
+      stream_seq: seq,
+    });
+    // A notice always waits for the student: it carries actions and nothing else
+    // may render until one is chosen.
+    const session = await this.repo.getSession(principal, sessionId);
+    const from = session ? this.status(session) : 'active';
+    if (from === 'active' || from === 'created') {
+      if (from === 'created') {
+        await this.transition(sessionId, 'created', 'active', 'first_render_start');
+      }
+      await this.transition(sessionId, 'active', 'awaiting_response', `system_notice:${notice.kind}`);
+    }
+    emit?.({
+      type: 'block',
+      seq,
+      block: {
+        id: blockRow.id,
+        streamSeq: seq,
+        moveType: 'system_notice',
+        block,
+        reasoning: null,
+        degraded: false,
+        renderStatus: 'complete',
+      },
+    });
+    return blockRow;
+  }
+
+  /**
+   * §3 fatigue rule: last 3 GRADED answers wrong AND elapsed ≥ 15 min → exactly
+   * one break card. `recent_graded` is the rolling window; `fatigue_notice_sent`
+   * is the once-per-session latch.
+   */
+  private async maybeEmitFatigueNotice(
+    principal: StudentPrincipal,
+    sessionId: string,
+    state: SessionStateV1,
+    emit?: (event: Record<string, unknown>) => void,
+  ): Promise<boolean> {
+    if (state.fatigue_notice_sent) return false;
+    if (state.elapsed_minutes < LEARN_FATIGUE_MIN_ELAPSED_MINUTES) return false;
+    if (state.recent_graded.length < 3) return false;
+    if (!state.recent_graded.every((r) => r === 'wrong')) return false;
+    state.fatigue_notice_sent = true;
+    await this.repo.updateSession(sessionId, { state });
+    await this.emitSystemNotice(
+      principal,
+      sessionId,
+      {
+        kind: 'break',
+        body_md:
+          "That last stretch was rough — that's normal, and a short break usually helps more than pushing through.",
+        actions: [
+          { key: 'pause', label: 'Take a break' },
+          { key: 'keep_going', label: 'Keep going' },
+        ],
+      },
+      emit,
+    );
+    return true;
+  }
+
   async answerBlock(principal: StudentPrincipal, sessionId: string, blockId: string, raw: unknown) {
     const input = answerBlockInputSchema.parse(raw);
     const session = await this.repo.getSession(principal, sessionId);
@@ -398,12 +790,30 @@ export class PedagogyOrchestratorService {
         },
       };
     }
+    // §3 fatigue window: only GRADED answers (`correct === null` means we could
+    // not auto-check it, so it carries no signal) enter the rolling last-3.
+    if (!result.duplicate && correct !== null) {
+      const outcome: 'correct' | 'wrong' = correct ? 'correct' : 'wrong';
+      state.recent_graded = [...state.recent_graded, outcome].slice(-3);
+    }
+    await this.syncElapsed(session, state);
     await this.repo.updateBlock(blockId, {
       interactionState: { ...((block.interactionState as object) ?? {}), answered: input.questionId, evaluation },
     });
-    await this.repo.updateSession(sessionId, { state, orchestratorStatus: 'active' });
+    const from = this.status(session);
+    if (from === 'awaiting_response') {
+      const moved = await this.transition(sessionId, from, 'active', 'answer_recorded', {
+        patch: { state },
+      });
+      if (!moved) await this.repo.updateSession(sessionId, { state });
+    } else {
+      await this.repo.updateSession(sessionId, { state });
+    }
     if (!result.duplicate) {
-      await this.planAndRenderNextBlock(principal, sessionId);
+      const fatigued = await this.maybeEmitFatigueNotice(principal, sessionId, state);
+      if (!fatigued) {
+        await this.planAndRenderNextBlock(principal, sessionId);
+      }
     }
     return {
       evaluation,
@@ -449,17 +859,54 @@ export class PedagogyOrchestratorService {
           last.outcome.skipped = true;
         }
         break;
-      case 'notice_action':
-        if (input.data?.key === 'extend_time') {
-          state.time_budget_minutes += 5;
+      case 'notice_action': {
+        const key = String(input.data?.key ?? '');
+        interaction.noticeAction = key;
+        if (key === 'extend_time') {
+          // §5: "+5 minutes" extends the budget EXACTLY ONCE per session.
+          if (state.budget_extended) {
+            throw new ConflictException({
+              code: 'BUDGET_ALREADY_EXTENDED',
+              message: "You've already added extra time to this lesson.",
+            });
+          }
+          state.time_budget_minutes = Math.min(
+            120,
+            state.time_budget_minutes + LEARN_TIME_EXTENSION_MINUTES,
+          );
+          state.budget_extended = true;
+          state.wrap_up = false;
+          await this.repo.appendSessionEvent(sessionId, 'budget_extended', {
+            added_minutes: LEARN_TIME_EXTENSION_MINUTES,
+            time_budget_minutes: state.time_budget_minutes,
+          });
         }
+        if (key === 'wrap_up') state.wrap_up = true;
         break;
+      }
       default:
         break;
     }
     await this.repo.updateBlock(blockId, { interactionState: interaction });
-    await this.repo.updateSession(sessionId, { state, orchestratorStatus: 'active' });
-    const doneActions = new Set(['probe_escape', 'synthesis_submit', 'synthesis_skip']);
+    const interactFrom = this.status(session);
+    if (interactFrom === 'awaiting_response') {
+      const moved = await this.transition(sessionId, interactFrom, 'active', `interact:${input.action}`, {
+        patch: { state },
+      });
+      if (!moved) await this.repo.updateSession(sessionId, { state });
+    } else {
+      await this.repo.updateSession(sessionId, { state });
+    }
+    // "Take a break" on the fatigue card is a real pause, not a continuation.
+    if (input.action === 'notice_action' && interaction.noticeAction === 'pause') {
+      return { session: await this.pause(principal, sessionId) };
+    }
+    const doneActions = new Set([
+      'probe_escape',
+      'synthesis_submit',
+      'synthesis_skip',
+      'notice_action',
+    ]);
     if (doneActions.has(input.action) || (input.action === 'reveal_step' && content.block_type === 'worked_example')) {
       const revealed = (interaction.revealedSteps as number[]) ?? [];
       const allRevealed = content.block_type === 'worked_example' && revealed.length >= content.steps.length;
@@ -473,8 +920,9 @@ export class PedagogyOrchestratorService {
     const input = askSessionInputSchema.parse(raw);
     const session = await this.repo.getSession(principal, sessionId);
     if (!session) throw new NotFoundException();
+    const cfg = await this.config.getAll(this.configCtx(principal));
     const state = sessionStateV1Schema.parse(session.state ?? {});
-    if (state.free_questions_used >= LEARN_MAX_FREE_QUESTIONS) {
+    if (state.free_questions_used >= cfg.max_free_questions_per_session) {
       throw new ConflictException({
         code: 'FREE_QUESTION_CAP',
         message: "Let's finish this lesson — then ask me anything in chat.",
@@ -512,18 +960,59 @@ export class PedagogyOrchestratorService {
       const last = state.moves[state.moves.length - 1]!;
       last.outcome.skipped = false;
     }
-    await this.repo.updateSession(sessionId, { state, orchestratorStatus: 'active' });
+    const from = this.status(session);
+    if (from === 'awaiting_response') {
+      const moved = await this.transition(sessionId, from, 'active', 'artifacts_committed', {
+        patch: { state },
+      });
+      if (!moved) await this.repo.updateSession(sessionId, { state });
+    } else {
+      await this.repo.updateSession(sessionId, { state });
+    }
     await this.planAndRenderNextBlock(principal, sessionId);
     return { deckId: result.deckId, cardCount: result.cardCount, session: await this.toDto(principal, sessionId) };
   }
   async pause(principal: StudentPrincipal, sessionId: string) {
-    await this.repo.updateSession(sessionId, { orchestratorStatus: 'paused', pausedAt: new Date() });
+    const session = await this.repo.getSession(principal, sessionId);
+    if (!session) throw new NotFoundException();
+    const from = this.status(session);
+    if (from === 'paused') return this.getSession(principal, sessionId);
+    const state = sessionStateV1Schema.parse(session.state ?? {});
+    const elapsed = await this.syncElapsed(session, state);
+    // `paused_at` opens the pause interval; every minute between now and resume
+    // is subtracted from elapsed, so a paused session burns no budget.
+    await this.transition(sessionId, from, 'paused', 'student_pause', {
+      patch: { pausedAt: new Date() },
+      elapsedMinutes: elapsed,
+    });
     return this.getSession(principal, sessionId);
   }
   async resume(principal: StudentPrincipal, sessionId: string) {
-    await this.repo.updateSession(sessionId, { orchestratorStatus: 'active', pausedAt: null });
-    const session = await this.getSession(principal, sessionId);
-    if (session.orchestratorStatus === 'active' && !session.blocks.some((b) => b.renderStatus === 'streaming')) {
+    const session = await this.repo.getSession(principal, sessionId);
+    if (!session) throw new NotFoundException();
+    if (await this.autoCloseIfAbandoned(principal, session)) {
+      return this.getSession(principal, sessionId);
+    }
+    const from = this.status(session);
+    if (from === 'paused') {
+      const state = sessionStateV1Schema.parse(session.state ?? {});
+      // Close the open pause interval into the running total BEFORE clearing
+      // `paused_at` — otherwise the paused minutes silently rejoin the budget.
+      if (session.pausedAt) {
+        state.paused_ms_total =
+          (state.paused_ms_total ?? 0) + Math.max(0, Date.now() - session.pausedAt.getTime());
+      }
+      state.elapsed_minutes = this.computeElapsedMinutes(
+        { startedAt: session.startedAt, pausedAt: null },
+        state,
+      );
+      await this.transition(sessionId, 'paused', 'active', 'student_resume', {
+        patch: { pausedAt: null, state, elapsedMinutes: state.elapsed_minutes },
+        elapsedMinutes: state.elapsed_minutes,
+      });
+    }
+    const dto = await this.getSession(principal, sessionId);
+    if (dto.orchestratorStatus === 'active' && !dto.blocks.some((b) => b.renderStatus === 'streaming')) {
       await this.planAndRenderNextBlock(principal, sessionId);
     }
     return this.getSession(principal, sessionId);
@@ -533,21 +1022,45 @@ export class PedagogyOrchestratorService {
     await this.closeSession(principal, sessionId, 'student_exit');
     return this.getSession(principal, sessionId);
   }
-  private async closeSession(
-    principal: StudentPrincipal,
-    sessionId: string,
-    endReason: 'goal_met' | 'time_budget' | 'move_cap' | 'student_exit' | 'policy_kill',
-  ) {
+  /**
+   * `any non-terminal → closed` (§5). Every end reason in `endReasonSchema` is
+   * reachable: `time_budget` from the budget rule, `abandoned` from the 24h
+   * paused sweep, `move_cap`/`goal_met` from the closing sequence,
+   * `student_exit` from `POST /end`, `policy_kill` from a mid-session policy
+   * revocation.
+   */
+  private async closeSession(principal: StudentPrincipal, sessionId: string, endReason: EndReason) {
     const session = await this.repo.getSession(principal, sessionId);
-    if (!session || session.orchestratorStatus === 'closed') return;
+    if (!session) return;
+    const from = this.status(session);
+    if (from === 'closed') return;
     const state = sessionStateV1Schema.parse(session.state ?? {});
-    await this.repo.updateSession(sessionId, {
-      orchestratorStatus: 'closed',
-      status: 'completed',
+    // An abandoned session stopped accruing time at `paused_at`, which
+    // computeElapsedMinutes already excludes.
+    const elapsed = this.computeElapsedMinutes(session, state);
+    state.elapsed_minutes = elapsed;
+    const now = new Date();
+    const moved = await this.transition(sessionId, from, 'closed', `close:${endReason}`, {
       endReason,
-      endedAt: new Date(),
-      completedAt: new Date(),
+      elapsedMinutes: elapsed,
+      patch: {
+        status: 'completed',
+        endReason,
+        endedAt: now,
+        completedAt: now,
+        elapsedMinutes: elapsed,
+        state,
+        summary: {
+          end_reason: endReason,
+          elapsed_minutes: elapsed,
+          time_budget_minutes: state.time_budget_minutes,
+          budget_extended: state.budget_extended,
+          moves: state.moves.length,
+          checkpoints: state.checkpoints,
+        },
+      },
     });
+    if (!moved) return;
     await this.completion.finalize(principal, sessionId, endReason, state);
   }
   /**

@@ -449,6 +449,61 @@ export const learnAiCalls = pgTable(
   }),
 );
 
+/**
+ * Typed key/value store for the `learn.*` config namespace (hyperspec 3 §2).
+ * Resolution order is global -> institution -> independent_user, most specific
+ * wins. Plan and campus layers are deliberately not modelled; see migration
+ * 0104 for why. An empty table is valid and means "use the code defaults".
+ */
+export const learnConfig = pgTable(
+  'learn_config',
+  {
+    id: primaryId(),
+    key: text('key').notNull(),
+    scope: text('scope').$type<'global' | 'institution' | 'independent_user'>().notNull().default('global'),
+    institutionId: uuid('institution_id').references(() => institutions.id, { onDelete: 'cascade' }),
+    independentUserId: uuid('independent_user_id').references(() => independentUsers.id, {
+      onDelete: 'cascade',
+    }),
+    valueType: text('value_type').$type<'number' | 'string' | 'boolean'>().notNull(),
+    value: text('value').notNull(),
+    description: text('description'),
+    version: integer('version').notNull().default(1),
+    ...timestamps,
+  },
+  (t) => ({
+    keyCk: check('learn_config_key_ck', sql`${t.key} ~ '^learn\\.[a-z0-9_]+$'`),
+    scopeCk: check('learn_config_scope_ck', sql`${t.scope} IN ('global', 'institution', 'independent_user')`),
+    valueTypeCk: check(
+      'learn_config_value_type_ck',
+      sql`${t.valueType} IN ('number', 'string', 'boolean')`,
+    ),
+    // Phase C tenancy form, made scope-conditional: a global row is ownerless
+    // by definition, so the discriminator and the owner columns must agree.
+    ownerCk: check(
+      'learn_config_owner_ck',
+      sql`(${t.scope} = 'global' AND num_nonnulls(${t.institutionId}, ${t.independentUserId}) = 0)
+    OR (${t.scope} = 'institution' AND ${t.institutionId} IS NOT NULL AND ${t.independentUserId} IS NULL)
+    OR (${t.scope} = 'independent_user' AND ${t.independentUserId} IS NOT NULL AND ${t.institutionId} IS NULL)`,
+    ),
+    globalKeyUq: uniqueIndex('learn_config_global_key_uq')
+      .on(t.key)
+      .where(sql`${t.scope} = 'global'`),
+    institutionKeyUq: uniqueIndex('learn_config_institution_key_uq')
+      .on(t.institutionId, t.key)
+      .where(sql`${t.scope} = 'institution'`),
+    independentKeyUq: uniqueIndex('learn_config_independent_key_uq')
+      .on(t.independentUserId, t.key)
+      .where(sql`${t.scope} = 'independent_user'`),
+    institutionIdx: index('learn_config_institution_idx')
+      .on(t.institutionId)
+      .where(sql`${t.institutionId} IS NOT NULL`),
+    independentUserIdx: index('learn_config_independent_user_idx')
+      .on(t.independentUserId)
+      .where(sql`${t.independentUserId} IS NOT NULL`),
+  }),
+);
+
 export type LearnTopic = typeof learnTopics.$inferSelect;
 export type ConceptAtom = typeof conceptAtoms.$inferSelect;
 export type LearnTopicProfile = typeof learnTopicProfiles.$inferSelect;
@@ -464,3 +519,4 @@ export type QuickAnswer = typeof quickAnswers.$inferSelect;
 export type RevisionState = typeof revisionStates.$inferSelect;
 export type EvidenceTag = typeof evidenceTags.$inferSelect;
 export type LearnAiCall = typeof learnAiCalls.$inferSelect;
+export type LearnConfigRow = typeof learnConfig.$inferSelect;

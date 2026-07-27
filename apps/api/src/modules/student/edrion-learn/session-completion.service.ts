@@ -22,6 +22,8 @@ export class SessionCompletionService {
     if (!session) return;
 
     const checkpointsMet = state.checkpoints.done >= 1;
+    // `abandoned` (24h paused) and `policy_kill` never count as completion —
+    // the student did not finish and nothing should be marked done on their path.
     const countsAsComplete =
       checkpointsMet &&
       ['goal_met', 'time_budget', 'student_exit', 'move_cap'].includes(endReason);
@@ -46,6 +48,10 @@ export class SessionCompletionService {
         endReason,
         checkpointsDone: state.checkpoints.done,
         moveCount: state.moves.length,
+        elapsedMinutes: state.elapsed_minutes,
+        timeBudgetMinutes: state.time_budget_minutes,
+        budgetExtended: state.budget_extended,
+        completed: countsAsComplete,
       },
     });
   }

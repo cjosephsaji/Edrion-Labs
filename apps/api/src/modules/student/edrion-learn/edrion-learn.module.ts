@@ -8,6 +8,7 @@ import { EdrionLearnController } from './edrion-learn.controller';
 import { EdrionLearnRepository } from './edrion-learn.repository';
 import { PedagogyOrchestratorService } from './pedagogy-orchestrator.service';
 import { StudentTutorPolicyService } from './student-tutor-policy.service';
+import { LearnConfigService } from './learn-config.service';
 import { TopicProfileService } from './profile.service';
 import { MasteryService } from './mastery.service';
 import { EvidenceService } from './evidence.service';
@@ -28,6 +29,7 @@ import { StudentAuthModule } from '../auth/student-auth.module';
     EdrionLearnRepository,
     LibraryRepository,
     StudentTutorPolicyService,
+    LearnConfigService,
     TopicProfileService,
     MasteryService,
     EvidenceService,
@@ -41,7 +43,7 @@ import { StudentAuthModule } from '../auth/student-auth.module';
     ArtifactCommitService,
     PedagogyOrchestratorService,
   ],
-  exports: [PedagogyOrchestratorService, StudentTutorPolicyService, EdrionLearnRepository, LearnArtifactService],
+  exports: [PedagogyOrchestratorService, StudentTutorPolicyService, LearnConfigService, EdrionLearnRepository, LearnArtifactService],
 })
 export class EdrionLearnModule {}
-
+

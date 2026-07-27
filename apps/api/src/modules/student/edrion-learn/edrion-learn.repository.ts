@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { and, desc, eq, gte, inArray, isNull, sql, type SQL } from 'drizzle-orm';
 import { schema, type Database } from '@edrion/database';
 import { DATABASE } from '../../../common/tokens';
+import type { OrchestratorStatus } from '@edrion/schemas';
 import type { StudentPrincipal } from '../student.types';
 import { ORCHESTRATOR_ACTIVE_STATUSES } from './constants';
 
@@ -127,12 +128,13 @@ export class EdrionLearnRepository {
     sessionId: string,
     patch: Partial<typeof schema.learnSessions.$inferInsert>,
     expectedVersion?: number,
+    tx: Database = this.db,
   ) {
     const conditions = [eq(schema.learnSessions.id, sessionId)];
     if (expectedVersion != null) {
       conditions.push(eq(schema.learnSessions.version, expectedVersion));
     }
-    const [updated] = await this.db
+    const [updated] = await tx
       .update(schema.learnSessions)
       .set({ ...patch, orchestratorUpdatedAt: new Date(), version: sql`${schema.learnSessions.version} + 1` })
       .where(and(...conditions))
@@ -191,8 +193,8 @@ export class EdrionLearnRepository {
    * Atomically allocate the next session event sequence.
    * Single statement: the returned value is the committed `last_event_seq`.
    */
-  async nextEventSeq(sessionId: string) {
-    const [row] = await this.db
+  async nextEventSeq(sessionId: string, tx: Database = this.db) {
+    const [row] = await tx
       .update(schema.learnSessions)
       .set({ lastEventSeq: sql`${schema.learnSessions.lastEventSeq} + 1` })
       .where(eq(schema.learnSessions.id, sessionId))
@@ -200,13 +202,62 @@ export class EdrionLearnRepository {
     return Number(row?.seq ?? 1);
   }
 
-  async appendSessionEvent(sessionId: string, eventType: string, payload: Record<string, unknown>) {
-    const seq = await this.nextEventSeq(sessionId);
-    const [row] = await this.db
+  async appendSessionEvent(
+    sessionId: string,
+    eventType: string,
+    payload: Record<string, unknown>,
+    tx: Database = this.db,
+  ) {
+    const seq = await this.nextEventSeq(sessionId, tx);
+    const [row] = await tx
       .insert(schema.learnSessionEvents)
       .values({ sessionId, seq, eventType, payload })
       .returning();
     return row!;
+  }
+
+  /**
+   * Hyperspec §5: a state-machine transition and its audit event are ONE unit of
+   * work. The status UPDATE is guarded on the expected `from` set so a concurrent
+   * request can never double-transition (and never writes a second audit event) —
+   * a lost race returns `null` and the caller no-ops.
+   *
+   * The event seq is allocated inside the same transaction via
+   * `appendSessionEvent`, which owns its own atomic `UPDATE … RETURNING`.
+   */
+  async transitionSessionStatus(input: {
+    sessionId: string;
+    from: readonly OrchestratorStatus[];
+    to: OrchestratorStatus;
+    eventType: string;
+    payload: Record<string, unknown>;
+    patch?: Partial<typeof schema.learnSessions.$inferInsert>;
+  }) {
+    return this.runInTransaction(async (tx) => {
+      const [updated] = await tx
+        .update(schema.learnSessions)
+        .set({
+          ...(input.patch ?? {}),
+          orchestratorStatus: input.to,
+          orchestratorUpdatedAt: new Date(),
+          version: sql`${schema.learnSessions.version} + 1`,
+        })
+        .where(
+          and(
+            eq(schema.learnSessions.id, input.sessionId),
+            inArray(schema.learnSessions.orchestratorStatus, [...input.from]),
+          ),
+        )
+        .returning();
+      if (!updated) return null;
+      const event = await this.appendSessionEvent(
+        input.sessionId,
+        input.eventType,
+        input.payload,
+        tx,
+      );
+      return { session: updated, event };
+    });
   }
 
   async listSessionEventsSince(sessionId: string, afterSeq: number) {
