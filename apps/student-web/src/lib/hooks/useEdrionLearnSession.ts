@@ -2,17 +2,53 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CreateLearnSessionInput, LearnSessionV1Dto, SessionBlockV1Dto } from '@edrion/schemas';
-import { useStudentClient, type SseConnection } from '../student-client';
+import { useStudentClient, StudentSseError, type SseConnection, type SseErrorSource } from '../student-client';
 
 const sessionKey = (id: string) => ['student', 'edrion-learn', 'session', id] as const;
+
+const isDev = process.env.NODE_ENV !== 'production';
+
+/**
+ * Hyperspec 2 §1 — the calm card shown when the stream never starts. Reserved for
+ * connectivity failures only; every other failure surfaces the server's own message.
+ */
+const STREAM_START_FAILED_COPY = "Couldn't start your lesson — check your connection";
+
+export type LearnStreamError = {
+  /** Which of the distinct failure modes this is (see `SseErrorSource`). */
+  source: SseErrorSource | 'unknown';
+  /** Backend error code where one exists, e.g. `PLANNER_TIMEOUT`. */
+  code: string;
+  /** What the student reads. */
+  message: string;
+  status?: number;
+};
+
+function toStreamError(err: unknown): LearnStreamError {
+  if (err instanceof StudentSseError) {
+    // Connectivity: the stream never started, or the socket dropped. Hyperspec copy.
+    if (err.source === 'network') {
+      return { source: 'network', code: err.code, message: STREAM_START_FAILED_COPY, status: err.status };
+    }
+    // Server-supplied failures (non-2xx body, in-stream error frame): show the real message.
+    return { source: err.source, code: err.code, message: err.message, status: err.status };
+  }
+  return {
+    source: 'unknown',
+    code: 'UNKNOWN',
+    message: err instanceof Error && err.message ? err.message : STREAM_START_FAILED_COPY,
+  };
+}
 
 export function useEdrionLearnSession(sessionId: string | undefined) {
   const client = useStudentClient();
   const qc = useQueryClient();
   const [streaming, setStreaming] = useState(false);
-  const [streamError, setStreamError] = useState<string | null>(null);
+  const [streamError, setStreamError] = useState<LearnStreamError | null>(null);
   const connRef = useRef<SseConnection | null>(null);
   const pendingContinue = useRef(false);
+  const restartTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startStreamRef = useRef<() => void>(() => {});
 
   const query = useQuery({
     queryKey: sessionKey(sessionId ?? ''),
@@ -67,54 +103,95 @@ export function useEdrionLearnSession(sessionId: string | undefined) {
     [qc, sessionId],
   );
 
+  /** Tear the current connection down and cancel any queued restart. */
+  const stopStream = useCallback(() => {
+    if (restartTimer.current) {
+      clearTimeout(restartTimer.current);
+      restartTimer.current = null;
+    }
+    pendingContinue.current = false;
+    connRef.current?.close();
+    connRef.current = null;
+    setStreaming(false);
+  }, []);
+
+  /** Single-flighted restart: at most one pending timer, and only when nothing is open. */
+  const scheduleRestart = useCallback(() => {
+    if (restartTimer.current || connRef.current) return;
+    restartTimer.current = setTimeout(() => {
+      restartTimer.current = null;
+      startStreamRef.current();
+    }, 100);
+  }, []);
+
   const startStream = useCallback(() => {
     if (!sessionId) return;
+    // Single-flight: a StrictMode double-mount (or a racing continue) must not open a
+    // second server-side handler. `client.sse` returns synchronously, so this is safe.
+    if (connRef.current) return;
+    if (restartTimer.current) {
+      clearTimeout(restartTimer.current);
+      restartTimer.current = null;
+    }
     setStreaming(true);
     setStreamError(null);
-    connRef.current?.close();
     const conn = client.sse(`/learn/sessions/${sessionId}/stream`, {
       onMessage: (frame) => {
         const data = frame.data;
         if (data === '[DONE]') {
+          // The transport closes itself on [DONE]; drop our handle so a restart can open.
+          connRef.current = null;
           setStreaming(false);
           if (pendingContinue.current) {
             pendingContinue.current = false;
-            setTimeout(() => startStream(), 100);
+            scheduleRestart();
           }
           return;
         }
         try {
           const event = (typeof data === 'string' ? JSON.parse(data) : data) as {
             type?: string;
-            message?: string;
             block?: Parameters<typeof applyBlock>[0]['block'];
           };
-          if (event.type === 'error') {
-            setStreamError(event.message ?? 'Stream failed');
-            setStreaming(false);
-            return;
-          }
+          // NOTE: `type === 'error'` never arrives here — StudentClient intercepts error
+          // frames and routes them to `onError` below.
           if (event.type === 'block' && event.block) applyBlock(event);
-        } catch {
-          /* ignore */
+        } catch (err) {
+          if (isDev) console.error('[edrion-learn] unparseable stream frame', { sessionId, data, err });
         }
       },
-      onError: () => {
-        setStreamError("Couldn't start your lesson — check your connection");
+      onError: (err) => {
+        if (isDev) console.error('[edrion-learn] stream error', { sessionId, err });
+        connRef.current = null;
+        pendingContinue.current = false;
+        setStreamError(toStreamError(err));
         setStreaming(false);
       },
     });
     connRef.current = conn;
-  }, [applyBlock, client, sessionId]);
+  }, [applyBlock, client, scheduleRestart, sessionId]);
 
-  const continueStream = useCallback(() => {
-    pendingContinue.current = true;
-    connRef.current?.close();
-    setStreaming(false);
+  startStreamRef.current = startStream;
+
+  /** Explicit user-driven retry — force a teardown first so the guard can't block it. */
+  const restartStream = useCallback(() => {
+    stopStream();
     startStream();
-  }, [startStream]);
+  }, [startStream, stopStream]);
 
-  useEffect(() => () => connRef.current?.close(), []);
+  /**
+   * Called after an answer/interact/ask/commit. If a connection is still open we let its
+   * own `[DONE]` handler do the restart — opening one here too would double-connect.
+   */
+  const continueStream = useCallback(() => {
+    if (connRef.current) {
+      pendingContinue.current = true;
+      return;
+    }
+    scheduleRestart();
+  }, [scheduleRestart]);
+
+  useEffect(() => stopStream, [stopStream]);
 
   const answer = useMutation({
     mutationFn: (input: { blockId: string; questionId: string; response: unknown }) =>
@@ -185,11 +262,19 @@ export function useEdrionLearnSession(sessionId: string | undefined) {
     onSuccess: (data) => qc.setQueryData(sessionKey(sessionId!), data),
   });
 
+  useEffect(() => {
+    if (isDev && query.error) {
+      console.error('[edrion-learn] session fetch failed', { sessionId, error: query.error });
+    }
+  }, [query.error, sessionId]);
+
   return {
     ...query,
     streaming,
     streamError,
     startStream,
+    stopStream,
+    restartStream,
     continueStream,
     answer,
     interact,

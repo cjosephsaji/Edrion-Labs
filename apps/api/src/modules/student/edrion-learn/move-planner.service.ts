@@ -90,20 +90,29 @@ export class MovePlannerService {
         schemaName: 'PlanV1',
         maxOutputTokens: 400,
       });
-      await this.callLog.log(principal, 'learn_plan', usage, {
+      await this.logSafe(principal, 'learn_plan', usage, {
         sessionId: opts?.sessionId,
         promptVersion: PROMPT_VERSION,
       });
       const move = this.enforceHardRules(result.move, ctx);
       return planV1Schema.parse({ ...result, move });
     } catch {
-      await this.callLog.log(
+      await this.logSafe(
         principal,
         'learn_plan',
         { inputTokens: 0, outputTokens: 0, model: 'fallback', durationMs: Date.now() - started },
         { sessionId: opts?.sessionId, error: 'plan_failed', degraded: true },
       );
       return deterministic;
+    }
+  }
+
+  /** Telemetry must never escape the handler it is reporting from. */
+  private async logSafe(...args: Parameters<LearnAiCallLogger['log']>): Promise<void> {
+    try {
+      await this.callLog.log(...args);
+    } catch {
+      /* non-fatal */
     }
   }
 

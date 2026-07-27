@@ -55,20 +55,29 @@ export class GradingService {
         schemaName: 'LearnGrade',
         maxOutputTokens: 120,
       });
-      await this.callLog.log(principal, 'learn_grade', usage, {
+      await this.logSafe(principal, 'learn_grade', usage, {
         sessionId: opts.sessionId,
         blockId: opts.blockId,
         promptVersion: PROMPT_VERSION,
       });
       return result;
     } catch {
-      await this.callLog.log(
+      await this.logSafe(
         principal,
         'learn_grade',
         { inputTokens: 0, outputTokens: 0, model: 'fallback', durationMs: Date.now() - started },
         { sessionId: opts.sessionId, blockId: opts.blockId, error: 'grade_failed' },
       );
       return { correct: null, feedback: "Recorded — couldn't auto-check this one." };
+    }
+  }
+
+  /** Telemetry must never escape the handler it is reporting from. */
+  private async logSafe(...args: Parameters<LearnAiCallLogger['log']>): Promise<void> {
+    try {
+      await this.callLog.log(...args);
+    } catch {
+      /* non-fatal */
     }
   }
 }

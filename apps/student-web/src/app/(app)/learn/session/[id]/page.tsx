@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEdrionLearnSession } from '@/lib/hooks/useEdrionLearnSession';
+import { StudentClientError } from '@/lib/student-client';
 import { EdrionLearnBlockCard } from '@/components/edrion-learn/EdrionLearnBlockCard';
 import { SessionProgressBar } from '@/components/edrion-learn/SessionProgressBar';
 import { ArtifactRail } from '@/components/edrion-learn/ArtifactRail';
@@ -32,14 +33,45 @@ function PolicyNotice({ policy }: { policy: LearnPolicyV1 }) {
   );
 }
 
+/** Full-screen calm card — Hyperspec 2 §1. `message` is passed through verbatim. */
+function SessionErrorCard({
+  message,
+  code,
+  onRetry,
+}: {
+  message: string;
+  code?: string;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="mx-auto max-w-[640px] px-4 py-16 text-center">
+      <p className="text-sm text-st-muted">{message}</p>
+      {code && <p className="mt-1 font-mono-ui text-[10.5px] uppercase text-st-faint">{code}</p>}
+      <div className="mt-4 flex justify-center gap-3">
+        <button type="button" onClick={onRetry} className="rounded-full bg-[#1f604a] px-4 py-2 text-sm text-white">
+          Retry
+        </button>
+        <Link href="/learn" className="rounded-full border border-st-bd2 px-4 py-2 text-sm">
+          Back
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function EdrionLearnSessionPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const {
     data: session,
     isLoading,
+    isError,
+    error,
+    refetch,
     streaming,
     streamError,
     startStream,
+    stopStream,
+    restartStream,
     answer,
     interact,
     ask,
@@ -53,10 +85,12 @@ export default function EdrionLearnSessionPage({ params }: { params: { id: strin
   const atBottomRef = useRef(true);
 
   useEffect(() => {
-    if (session && session.orchestratorStatus !== 'closed' && !session.readOnly) {
-      startStream();
-    }
-  }, [session?.id, session?.orchestratorStatus, startStream]);
+    if (!session || session.orchestratorStatus === 'closed' || session.readOnly) return;
+    startStream();
+    // StrictMode double-mounts this effect; without teardown the second run would leave
+    // the first server-side stream handler running.
+    return stopStream;
+  }, [session?.id, session?.orchestratorStatus, session?.readOnly, startStream, stopStream]);
 
   useEffect(() => {
     if (atBottomRef.current && mainRef.current) {
@@ -65,6 +99,21 @@ export default function EdrionLearnSessionPage({ params }: { params: { id: strin
       setShowNewPill(true);
     }
   }, [session?.blocks.length, streaming]);
+
+  // Failure mode 5: the session GET itself failed. Never fall through to the skeleton.
+  if (isError && !session) {
+    return (
+      <SessionErrorCard
+        message={
+          error instanceof StudentClientError && error.message
+            ? error.message
+            : "We couldn't load this lesson right now."
+        }
+        code={error instanceof StudentClientError ? error.code : undefined}
+        onRetry={() => void refetch()}
+      />
+    );
+  }
 
   if (isLoading || !session) {
     return (
@@ -76,17 +125,12 @@ export default function EdrionLearnSessionPage({ params }: { params: { id: strin
 
   if (streamError && !session.blocks.length) {
     return (
-      <div className="mx-auto max-w-[640px] px-4 py-16 text-center">
-        <p className="text-sm text-st-muted">{streamError}</p>
-        <div className="mt-4 flex justify-center gap-3">
-          <button type="button" onClick={() => startStream()} className="rounded-full bg-[#1f604a] px-4 py-2 text-sm text-white">
-            Retry
-          </button>
-          <Link href="/learn" className="rounded-full border border-st-bd2 px-4 py-2 text-sm">
-            Back
-          </Link>
-        </div>
-      </div>
+      <SessionErrorCard
+        message={streamError.message}
+        // Connectivity gets the plain hyperspec card; server-side failures also show their code.
+        code={streamError.source === 'network' ? undefined : streamError.code}
+        onRetry={restartStream}
+      />
     );
   }
 
@@ -134,6 +178,23 @@ export default function EdrionLearnSessionPage({ params }: { params: { id: strin
               }}
             />
           ))}
+          {streamError && (
+            <div className="rounded-[15px] border border-st-amberBd bg-st-amberSoft px-4 py-3 text-left">
+              <p className="text-sm text-st-amberInk">{streamError.message}</p>
+              {streamError.source !== 'network' && (
+                <p className="mt-1 font-mono-ui text-[10.5px] uppercase text-st-amberInk/70">
+                  {streamError.code}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={restartStream}
+                className="mt-2 rounded-full border border-st-amberBd px-3 py-1 text-xs font-medium text-st-amberInk"
+              >
+                Retry
+              </button>
+            </div>
+          )}
           {streaming && (
             <div className="h-24 animate-pulse rounded-[15px] bg-st-surface2 motion-reduce:animate-none" />
           )}

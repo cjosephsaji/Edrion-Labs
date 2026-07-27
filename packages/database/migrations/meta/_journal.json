@@ -666,6 +666,13 @@
       "when": 1787300000000,
       "tag": "0101_mock_system_paper_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "7",
+      "when": 1787400000000,
+      "tag": "0102_learn_session_repair",
+      "breakpoints": true
     }
   ]
 }

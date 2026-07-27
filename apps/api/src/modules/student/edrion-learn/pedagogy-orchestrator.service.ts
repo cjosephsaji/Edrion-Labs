@@ -9,6 +9,7 @@
   learnPolicyV1Schema,
   sessionContextV1Schema,
   sessionStateV1Schema,
+  type BlockV1,
   type LearnSessionV1Dto,
   type SessionGoal,
 } from '@edrion/schemas';
@@ -80,7 +81,7 @@ export class PedagogyOrchestratorService {
     const daily = await this.repo.countSessionsToday(principal);
     if (daily >= LEARN_DAILY_SESSION_CAP) {
       throw new HttpException(
-        { code: 'DAILY_SESSION_CAP', message: "You've had a full day of lessons â€” come back tomorrow." },
+        { code: 'DAILY_SESSION_CAP', message: "You've had a full day of lessons — come back tomorrow." },
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
@@ -167,7 +168,9 @@ export class PedagogyOrchestratorService {
     });
     state.mastery_snapshot = await this.mastery.snapshot(principal, profile.prerequisites.map((p) => p.atom_id).filter(Boolean) as string[]);
     await this.repo.updateSession(session.id, { state, orchestratorStatus: 'active' });
-    await this.repo.appendSessionEvent(session.id, 1, 'session_created', { entry_point: resolvedEntryPoint });
+    // Sequence is allocated atomically from learn_sessions.last_event_seq so the
+    // committed event and the column can never diverge.
+    await this.repo.appendSessionEvent(session.id, 'session_created', { entry_point: resolvedEntryPoint });
     return {
       session: await this.toDto(principal, session.id),
       streamUrl: `/student/learn/sessions/${session.id}/stream`,
@@ -247,8 +250,10 @@ export class PedagogyOrchestratorService {
       await this.closeSession(principal, sessionId, state.moves.length >= LEARN_MOVE_CAP ? 'move_cap' : 'goal_met');
       return;
     }
+    // One atomic allocation serves both the block sequence and the stream sequence:
+    // both are unique-per-session and a shared counter keeps them collision-free.
     const seq = await this.repo.nextBlockSequence(sessionId);
-    const streamSeq = await this.repo.nextStreamSeq(sessionId);
+    const streamSeq = seq;
     const blockRow = await this.repo.insertBlock({
       sessionId,
       sequence: seq,
@@ -269,11 +274,15 @@ export class PedagogyOrchestratorService {
       topicTitle: topic.title,
     });
     if (plan.move === 'visual_spawn') {
-      const graphResult = await this.canvas.generateForSession(principal, {
-        sessionId,
-        blockId: blockRow.id,
-        topicTitle: topic.title,
-      });
+      // Hyperspec §3.5: a pipeline hard-fail degrades to a direct explanation,
+      // it never breaks the session.
+      const graphResult = await this.canvas
+        .generateForSession(principal, {
+          sessionId,
+          blockId: blockRow.id,
+          topicTitle: topic.title,
+        })
+        .catch(() => null);
       if (graphResult) {
         block = blockV1Schema.parse({
           block_type: 'canvas_embed',
@@ -303,8 +312,7 @@ export class PedagogyOrchestratorService {
       state.checkpoints.done = Math.min(state.checkpoints.done + 1, state.checkpoints.total);
     }
     const awaiting = this.planner.requiresResponse(plan.move);
-    const eventSeq = Number(session.lastEventSeq ?? 0) + 1;
-    await this.repo.appendSessionEvent(sessionId, eventSeq, 'block_stream_end', {
+    await this.repo.appendSessionEvent(sessionId, 'block_stream_end', {
       block_id: blockRow.id,
       stream_seq: streamSeq,
     });
@@ -312,7 +320,6 @@ export class PedagogyOrchestratorService {
       state,
       planMoveCount: (session.planMoveCount ?? 0) + 1,
       orchestratorStatus: awaiting ? 'awaiting_response' : 'active',
-      lastEventSeq: eventSeq,
       checkpointsDone: state.checkpoints.done,
       checkpointsTotal: state.checkpoints.total,
     });
@@ -323,7 +330,7 @@ export class PedagogyOrchestratorService {
         id: blockRow.id,
         streamSeq,
         moveType: plan.move,
-        block,
+        block: this.redactServerOnly(block),
         reasoning: plan.reasoning,
         degraded,
         renderStatus: 'complete',
@@ -461,7 +468,7 @@ export class PedagogyOrchestratorService {
     if (state.free_questions_used >= LEARN_MAX_FREE_QUESTIONS) {
       throw new ConflictException({
         code: 'FREE_QUESTION_CAP',
-        message: "Let's finish this lesson â€” then ask me anything in chat.",
+        message: "Let's finish this lesson — then ask me anything in chat.",
       });
     }
     state.pending_free_question = input.text;
@@ -534,6 +541,17 @@ export class PedagogyOrchestratorService {
     });
     await this.completion.finalize(principal, sessionId, endReason, state);
   }
+  /**
+   * Hyperspec §4.1: `correct_option_id` is server-only. Strip it at the DTO/emit
+   * boundary; the persisted block keeps it so grading still works server-side.
+   */
+  private redactServerOnly(block: BlockV1): BlockV1 {
+    if (block.block_type !== 'question_set') return block;
+    return {
+      ...block,
+      questions: block.questions.map(({ correct_option_id: _omit, ...q }) => q),
+    };
+  }
   private async toDto(principal: StudentPrincipal, sessionId: string): Promise<LearnSessionV1Dto> {
     const session = await this.repo.getSession(principal, sessionId);
     if (!session) throw new NotFoundException();
@@ -558,22 +576,31 @@ export class PedagogyOrchestratorService {
       checkpointsDone: session.checkpointsDone ?? 0,
       planMoveCount: session.planMoveCount ?? 0,
       endReason: session.endReason as LearnSessionV1Dto['endReason'],
-      blocks: blocks.map((b) => ({
-        id: b.id,
-        sessionId,
-        sequence: b.sequence,
-        streamSeq: b.streamSeq,
-        moveType: b.moveType,
-        block: blockV1Schema.parse(b.content),
-        blockSchemaVersion: 1,
-        reasoning: b.reasoning,
-        degraded: b.degraded ?? false,
-        interactionState: (b.interactionState as Record<string, unknown>) ?? {},
-        renderStatus: b.renderStatus,
-        version: 1,
-        createdAt: b.createdAt.toISOString(),
-        updatedAt: b.updatedAt.toISOString(),
-      })),
+      blocks: blocks.flatMap((b) => {
+        // A block is inserted with `content: {}` at renderStatus 'streaming' and filled
+        // in later, so an in-flight or abandoned row is never parseable. Skip it instead
+        // of failing the whole session read.
+        const parsed = blockV1Schema.safeParse(b.content);
+        if (!parsed.success) return [];
+        return [
+          {
+            id: b.id,
+            sessionId,
+            sequence: b.sequence,
+            streamSeq: b.streamSeq,
+            moveType: b.moveType,
+            block: this.redactServerOnly(parsed.data),
+            blockSchemaVersion: 1,
+            reasoning: b.reasoning,
+            degraded: b.degraded ?? false,
+            interactionState: (b.interactionState as Record<string, unknown>) ?? {},
+            renderStatus: b.renderStatus,
+            version: 1,
+            createdAt: b.createdAt.toISOString(),
+            updatedAt: b.updatedAt.toISOString(),
+          },
+        ];
+      }),
       pathItemId: session.pathItemId,
       groundingKnowledgeItemId: session.groundingKnowledgeItemId,
       evidence: session.evidence ?? [],

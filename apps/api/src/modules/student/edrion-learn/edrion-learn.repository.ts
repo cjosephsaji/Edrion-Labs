@@ -174,23 +174,34 @@ export class EdrionLearnRepository {
     return updated ?? null;
   }
 
+  /**
+   * Atomically allocate the next block sequence for a session.
+   * Single statement: never read-then-increment.
+   */
   async nextBlockSequence(sessionId: string) {
-    const rows = await this.listBlocks(sessionId);
-    return rows.length ? Math.max(...rows.map((b) => b.sequence)) + 1 : 1;
+    const [row] = await this.db
+      .update(schema.learnSessions)
+      .set({ lastBlockSeq: sql`${schema.learnSessions.lastBlockSeq} + 1` })
+      .where(eq(schema.learnSessions.id, sessionId))
+      .returning({ seq: schema.learnSessions.lastBlockSeq });
+    return Number(row?.seq ?? 1);
   }
 
-  async nextStreamSeq(sessionId: string) {
-    const rows = await this.listBlocks(sessionId);
-    const seqs = rows.map((b) => b.streamSeq).filter((s): s is number => s != null);
-    return seqs.length ? Math.max(...seqs) + 1 : 1;
+  /**
+   * Atomically allocate the next session event sequence.
+   * Single statement: the returned value is the committed `last_event_seq`.
+   */
+  async nextEventSeq(sessionId: string) {
+    const [row] = await this.db
+      .update(schema.learnSessions)
+      .set({ lastEventSeq: sql`${schema.learnSessions.lastEventSeq} + 1` })
+      .where(eq(schema.learnSessions.id, sessionId))
+      .returning({ seq: schema.learnSessions.lastEventSeq });
+    return Number(row?.seq ?? 1);
   }
 
-  async appendSessionEvent(
-    sessionId: string,
-    seq: number,
-    eventType: string,
-    payload: Record<string, unknown>,
-  ) {
+  async appendSessionEvent(sessionId: string, eventType: string, payload: Record<string, unknown>) {
+    const seq = await this.nextEventSeq(sessionId);
     const [row] = await this.db
       .insert(schema.learnSessionEvents)
       .values({ sessionId, seq, eventType, payload })
@@ -240,7 +251,47 @@ export class EdrionLearnRepository {
   }
 
   async insertTopicProfile(row: typeof schema.learnTopicProfiles.$inferInsert) {
-    const [created] = await this.db.insert(schema.learnTopicProfiles).values(row).returning();
+    // Uniqueness is enforced by PARTIAL unique indexes, so the arbiter must repeat
+    // the index predicate via `targetWhere` (a bare column list raises 42P10).
+    const conflict =
+      row.institutionId != null
+        ? {
+            target: [schema.learnTopicProfiles.institutionId, schema.learnTopicProfiles.topicKey],
+            targetWhere: sql`${schema.learnTopicProfiles.institutionId} IS NOT NULL`,
+          }
+        : row.independentUserId != null
+          ? {
+              target: [
+                schema.learnTopicProfiles.independentUserId,
+                schema.learnTopicProfiles.topicKey,
+              ],
+              targetWhere: sql`${schema.learnTopicProfiles.independentUserId} IS NOT NULL`,
+            }
+          : null;
+
+    if (!conflict) {
+      const [inserted] = await this.db.insert(schema.learnTopicProfiles).values(row).returning();
+      return inserted!;
+    }
+
+    const [created] = await this.db
+      .insert(schema.learnTopicProfiles)
+      .values(row)
+      .onConflictDoUpdate({
+        ...conflict,
+        set: {
+          learnTopicId: row.learnTopicId ?? null,
+          title: row.title,
+          profile: row.profile,
+          source: row.source,
+          model: row.model ?? null,
+          promptVersion: row.promptVersion ?? null,
+          expiresAt: row.expiresAt ?? null,
+          updatedAt: new Date(),
+          version: sql`${schema.learnTopicProfiles.version} + 1`,
+        },
+      })
+      .returning();
     return created!;
   }
 

@@ -16,7 +16,7 @@ import {
 import { useAskQuick } from '@/lib/hooks/useQuick';
 import { usePersona } from '@/lib/persona';
 import { intentPreviewLabel, isAmbiguousIntent } from '@/lib/intent-preview';
-import { useStudentClient } from '@/lib/student-client';
+import { StudentClientError, useStudentClient } from '@/lib/student-client';
 import type { IntentResponseDto } from '@edrion/schemas';
 import { FreshnessChip } from '@/components/learn/FreshnessChip';
 import { Card } from '@/components/ui/card';
@@ -81,6 +81,16 @@ function WeeklyGoalRing({ done, target }: { done: number; target: number }) {
   );
 }
 
+const isDev = process.env.NODE_ENV !== 'production';
+
+/** The path was created but came back with no items — there is nothing to open. */
+class EmptyPathError extends Error {
+  constructor() {
+    super("Petros couldn't build a path for that yet — try describing it a bit differently.");
+    this.name = 'EmptyPathError';
+  }
+}
+
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -98,6 +108,7 @@ export default function LearnPage() {
   const [disambiguationText, setDisambiguationText] = useState<string | null>(null);
   const [forcedMode, setForcedMode] = useState<'quick_question' | 'learn_topic' | 'practice' | null>(null);
   const [routingStatus, setRoutingStatus] = useState<string | null>(null);
+  const [routingError, setRoutingError] = useState<string | null>(null);
   const { data: streaks } = useStreaks();
   const { data: path } = usePath();
   const { data: revision } = useRevisionQueue();
@@ -165,6 +176,7 @@ export default function LearnPage() {
 
       setForcedMode(null);
       setRoutingStatus(null);
+      setRoutingError(null);
 
       if (forced === 'quick_question') {
         setRoutingStatus('Getting your answer…');
@@ -191,7 +203,7 @@ export default function LearnPage() {
           setRoutingStatus('Building your path…');
           const pathResult = await createPath.mutateAsync({ goalStatement: trimmed });
           const firstItem = pathResult.items[0];
-          if (!firstItem) return;
+          if (!firstItem) throw new EmptyPathError();
           setRoutingStatus('Starting your first session…');
           const session = await createSession.mutateAsync({
             entryPoint: 'learning_path',
@@ -277,6 +289,31 @@ export default function LearnPage() {
     [askQuick, createPath, createSession, intent, me?.kind, resumeTile?.route, router],
   );
 
+  /**
+   * Every entry into `routeIntent` goes through here: on any failure the status line is
+   * cleared (it used to sit on "Building your path…" forever) and a real message is shown.
+   */
+  const safeRouteIntent = useCallback(
+    async (
+      text: string,
+      forced?: 'quick_question' | 'learn_topic' | 'practice',
+      topicGuess?: string,
+    ) => {
+      try {
+        await routeIntent(text, forced, topicGuess);
+      } catch (err) {
+        if (isDev) console.error('[learn] intent routing failed', { text, forced, error: err });
+        setRoutingStatus(null);
+        setRoutingError(
+          err instanceof EmptyPathError || err instanceof StudentClientError
+            ? err.message
+            : "We couldn't start that just now — please try again.",
+        );
+      }
+    },
+    [routeIntent],
+  );
+
   const handleSubmit = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed) return;
@@ -288,7 +325,7 @@ export default function LearnPage() {
       return;
     }
 
-    await routeIntent(trimmed, forcedMode ?? undefined);
+    await safeRouteIntent(trimmed, forcedMode ?? undefined);
   };
 
   const isRouting =
@@ -368,6 +405,19 @@ export default function LearnPage() {
           <p className="mt-2 text-sm text-st-muted">{routingStatus}</p>
         )}
 
+        {routingError && (
+          <div className="mt-2 max-w-[730px] animate-st-fade-up rounded-lg border border-st-amberBd bg-st-amberSoft px-3 py-2">
+            <p className="text-sm text-st-amberInk">{routingError}</p>
+            <button
+              type="button"
+              onClick={() => void safeRouteIntent(intentText, forcedMode ?? undefined)}
+              className="mt-1.5 text-xs font-semibold text-st-amberInk underline"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
         {previewLabel && !disambiguationText && !forcedMode && (
           <div className="mt-2 inline-flex animate-st-fade-up items-center gap-1.5 rounded-lg border border-st-amberBd bg-st-amberSoft px-2.5 py-1.5 text-xs font-medium text-st-amberInk">
             <PetrosMark />
@@ -383,11 +433,11 @@ export default function LearnPage() {
             <div className="mt-3 flex flex-wrap gap-2">
               <PillChip
                 variant="primary"
-                onClick={() => void routeIntent(disambiguationText, 'quick_question')}
+                onClick={() => void safeRouteIntent(disambiguationText, 'quick_question')}
               >
                 Quick answer
               </PillChip>
-              <PillChip onClick={() => void routeIntent(disambiguationText, 'learn_topic')}>
+              <PillChip onClick={() => void safeRouteIntent(disambiguationText, 'learn_topic')}>
                 Learn it properly
               </PillChip>
             </div>

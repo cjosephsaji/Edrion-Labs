@@ -51,7 +51,7 @@ export class BlockRendererService {
         maxOutputTokens: 1600,
       });
 
-      await this.callLog.log(principal, 'learn_render', usage, {
+      await this.logSafe(principal, 'learn_render', usage, {
         sessionId: opts.sessionId,
         blockId: opts.blockId,
         blockSeq: opts.blockSeq,
@@ -61,7 +61,7 @@ export class BlockRendererService {
       return { block: result, degraded: false };
     } catch {
       const usage = { inputTokens: 0, outputTokens: 0, model: 'fallback', durationMs: Date.now() - started };
-      await this.callLog.log(principal, 'learn_render', usage, {
+      await this.logSafe(principal, 'learn_render', usage, {
         sessionId: opts.sessionId,
         blockId: opts.blockId,
         blockSeq: opts.blockSeq,
@@ -70,6 +70,15 @@ export class BlockRendererService {
         degraded: true,
       });
       return { block: this.fallbackBlock(opts.plan, opts.topicTitle), degraded: true };
+    }
+  }
+
+  /** Telemetry must never escape the handler it is reporting from. */
+  private async logSafe(...args: Parameters<LearnAiCallLogger['log']>): Promise<void> {
+    try {
+      await this.callLog.log(...args);
+    } catch {
+      /* non-fatal */
     }
   }
 

@@ -31,6 +31,29 @@ export type SseConnection = {
 };
 
 /**
+ * Where an SSE failure originated. Consumers route on this so the four distinct
+ * failure modes below never collapse into one message:
+ * - `response` — the stream request returned a non-2xx; `code`/`message` come from the server body.
+ * - `no_body`  — 2xx with no readable body (proxy/runtime truncation).
+ * - `frame`    — an in-stream `{type:'error'}` data frame; `code`/`message` are the backend's.
+ * - `network`  — TCP/DNS failure, or a CORS rejection (the browser reports both identically).
+ */
+export type SseErrorSource = 'response' | 'no_body' | 'frame' | 'network';
+
+export class StudentSseError extends StudentClientError {
+  constructor(
+    status: number,
+    code: string,
+    message: string,
+    public readonly source: SseErrorSource,
+    public override readonly cause?: unknown,
+  ) {
+    super(status, code, message);
+    this.name = 'StudentSseError';
+  }
+}
+
+/**
  * Typed fetch wrapper for the Student Portal API (`/v1/student/*`). Sends credentials
  * (HTTP-only cookie); in dev it also forwards the impersonation header.
  */
@@ -184,21 +207,21 @@ export class StudentClient {
         });
         if (!res.ok) {
           let message = `SSE failed: ${res.status}`;
+          let code = 'SSE_FAILED';
           try {
             const text = await res.text();
             const body = JSON.parse(text) as { message?: string; code?: string };
             if (body.message) message = body.message;
+            if (body.code) code = body.code;
           } catch {
             // keep default message
           }
-          handlers.onError?.(
-            new StudentClientError(res.status, 'SSE_FAILED', message, undefined),
-          );
+          handlers.onError?.(new StudentSseError(res.status, code, message, 'response'));
           return;
         }
         if (!res.body) {
           handlers.onError?.(
-            new StudentClientError(502, 'SSE_FAILED', 'SSE stream unavailable', undefined),
+            new StudentSseError(502, 'SSE_NO_BODY', 'SSE stream unavailable', 'no_body'),
           );
           return;
         }
@@ -237,11 +260,11 @@ export class StudentClient {
               const parsed = JSON.parse(payload) as Record<string, unknown>;
               if (parsed.type === 'error') {
                 handlers.onError?.(
-                  new StudentClientError(
+                  new StudentSseError(
                     502,
                     String(parsed.code ?? 'SSE_ERROR'),
                     String(parsed.message ?? 'Stream error'),
-                    undefined,
+                    'frame',
                   ),
                 );
                 continue;
@@ -254,7 +277,17 @@ export class StudentClient {
         }
       } catch (err) {
         if (!closed && (err as Error).name !== 'AbortError') {
-          handlers.onError?.(err);
+          // A CORS rejection is indistinguishable from a TCP/DNS failure in the browser —
+          // both land here as an opaque TypeError, so both route as `network`.
+          handlers.onError?.(
+            new StudentSseError(
+              0,
+              'SSE_NETWORK',
+              (err as Error)?.message || 'Network request failed',
+              'network',
+              err,
+            ),
+          );
         }
       }
     })();

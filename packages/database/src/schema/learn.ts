@@ -167,6 +167,7 @@ export const learnSessions = pgTable(
     endReason: text('end_reason'),
     activeKey: text('active_key'),
     lastEventSeq: bigint('last_event_seq', { mode: 'number' }).notNull().default(0),
+    lastBlockSeq: bigint('last_block_seq', { mode: 'number' }).notNull().default(0),
     summary: jsonb('summary').$type<Record<string, unknown>>(),
     startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
     pausedAt: timestamp('paused_at', { withTimezone: true }),

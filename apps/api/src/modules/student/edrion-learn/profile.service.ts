@@ -68,10 +68,18 @@ export class TopicProfileService {
         schemaName: 'TopicProfileV1',
         maxOutputTokens: 600,
       });
-      await this.callLog.log(principal, 'learn_profile', usage, { promptVersion: PROMPT_VERSION });
+      await this.logSafe(principal, 'learn_profile', usage, { promptVersion: PROMPT_VERSION });
       return result;
     } catch {
       return DEFAULT_TOPIC_PROFILE_V1;
+    }
+  }
+  /** Telemetry must never escape the handler it is reporting from. */
+  private async logSafe(...args: Parameters<LearnAiCallLogger['log']>): Promise<void> {
+    try {
+      await this.callLog.log(...args);
+    } catch {
+      /* non-fatal */
     }
   }
   buildExpiryDate(): Date {
