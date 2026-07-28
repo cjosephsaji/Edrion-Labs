@@ -7,6 +7,6 @@ export {
   type BlockTypeV1 as BlockType,
   type BlockV1,
   type SessionBlockV1Dto as SessionBlockDto,
-} from './edrion-learn/blocks';
+} from './learn/blocks';
 
-export { moveTypeSchema, planV1Schema, type MoveType, type PlanV1 } from './edrion-learn/plan';
+export { moveTypeSchema, planV1Schema, type MoveType, type PlanV1 } from './learn/plan';

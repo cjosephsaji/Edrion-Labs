@@ -168,10 +168,6 @@ export const learnSessions = pgTable(
     state: jsonb('state').$type<Record<string, unknown>>().notNull().default({}),
     sessionContext: jsonb('session_context').$type<Record<string, unknown>>().notNull().default({}),
     policySnapshot: jsonb('policy_snapshot').$type<Record<string, unknown>>().notNull().default({}),
-    // Plan-02 leftovers, nullable since 0103: the orchestrator has no spine/plan
-    // and must not write stubs. The legacy student/learn/ surface still fills them.
-    spine: jsonb('spine').$type<unknown[]>(),
-    sessionPlan: jsonb('session_plan').$type<Record<string, unknown>>(),
     timeBudgetMinutes: integer('time_budget_minutes'),
     elapsedMinutes: integer('elapsed_minutes').notNull().default(0),
     checkpointsTotal: integer('checkpoints_total').notNull().default(0),
@@ -216,8 +212,6 @@ export const learnSessionBlocks = pgTable(
       .references(() => learnSessions.id, { onDelete: 'cascade' }),
     sequence: integer('sequence').notNull(),
     blockType: text('block_type').notNull(),
-    // Plan-02 leftover, nullable since 0103 (see learn_sessions.spine).
-    spineStep: text('spine_step'),
     content: jsonb('content').$type<Record<string, unknown>>().notNull(),
     state: jsonb('state').$type<Record<string, unknown>>().notNull().default({}),
     moveType: text('move_type'),

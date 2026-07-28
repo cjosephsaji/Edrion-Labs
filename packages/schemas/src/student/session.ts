@@ -14,7 +14,7 @@ export {
   type CreateLearnSessionInput as CreateSessionInput,
   type LearnSessionV1Dto as LearnSessionDto,
   type BlockAnswerResult,
-} from './edrion-learn/api';
+} from './learn/api';
 
 export {
   sessionStateV1Schema,
@@ -29,4 +29,4 @@ export {
   type EntryPoint,
   type OrchestratorStatus,
   type EndReason,
-} from './edrion-learn/state';
+} from './learn/state';

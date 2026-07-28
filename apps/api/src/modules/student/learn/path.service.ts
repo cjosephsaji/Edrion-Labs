@@ -20,8 +20,8 @@ import { PATH_SYSTEM_PROMPT } from '../learn-ai/prompts/path.prompt';
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import type { InstitutionalStudentPrincipal, StudentPrincipal } from '../student.types';
 import { LearnRepository } from './learn.repository';
-import { LearnProfileJobsService } from '../edrion-learn/learn-profile.jobs';
-import { topicKeyForLearnTopic } from '../edrion-learn/topic-keys';
+import { LearnProfileJobsService } from './engine/learn-profile.jobs';
+import { topicKeyForLearnTopic } from './engine/topic-keys';
 import { FeatureControlsService } from '../../feature-controls/feature-controls.service';
 
 const pathPlanSchema = z.object({
@@ -132,7 +132,7 @@ export class PathService {
         sequence: seq++,
         whyHere: item.whyHere ?? null,
         optionalBranch: item.optionalBranch ? 1 : 0,
-        status: seq === 2 ? 'current' : 'upcoming',
+        status: seq === 1 ? 'current' : 'upcoming',
       });
       // PM-003: pre-warm topic profiles on learning-path creation.
       void this.profileJobs.enqueueProfileTopic({

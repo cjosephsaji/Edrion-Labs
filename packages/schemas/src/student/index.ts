@@ -24,7 +24,7 @@ export * from './visuals';
 export * from './visual-legacy';
 export * from './achievements';
 export * from './svg-spec';
-export * from './edrion-learn';
+export * from './learn';
 export type { CheckpointBlock, PracticeItemBlock } from './legacy-teaching';
 export * from './blocks';
 export * from './session';

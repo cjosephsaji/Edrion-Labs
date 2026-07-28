@@ -670,43 +670,15 @@
     {
       "idx": 95,
       "version": "7",
-      "when": 1787400000000,
-      "tag": "0102_learn_session_repair",
+      "when": 1788000000000,
+      "tag": "0108_learn_teardown",
       "breakpoints": true
     },
     {
       "idx": 96,
       "version": "7",
-      "when": 1787500000000,
-      "tag": "0103_learn_tenancy_reconcile",
-      "breakpoints": true
-    },
-    {
-      "idx": 97,
-      "version": "7",
-      "when": 1787600000000,
-      "tag": "0104_learn_config",
-      "breakpoints": true
-    },
-    {
-      "idx": 98,
-      "version": "7",
-      "when": 1787700000000,
-      "tag": "0105_learn_status_check_and_config_rls",
-      "breakpoints": true
-    },
-    {
-      "idx": 99,
-      "version": "7",
-      "when": 1787800000000,
-      "tag": "0106_learn_profiler_learner_model",
-      "breakpoints": true
-    },
-    {
-      "idx": 100,
-      "version": "7",
-      "when": 1787900000000,
-      "tag": "0107_learn_student_tutor_capabilities",
+      "when": 1788100000000,
+      "tag": "0109_learn_engine",
       "breakpoints": true
     }
   ]

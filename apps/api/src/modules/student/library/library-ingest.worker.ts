@@ -17,8 +17,8 @@ import { LearnAiCallLogger } from '../learn-ai/learn-ai-call.logger';
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import { StudentStorageService } from '../storage/student-storage.service';
 import type { StudentPrincipal } from '../student.types';
-import { LearnProfileJobsService } from '../edrion-learn/learn-profile.jobs';
-import { topicKeyForMaterial } from '../edrion-learn/topic-keys';
+import { LearnProfileJobsService } from '../learn/engine/learn-profile.jobs';
+import { topicKeyForMaterial } from '../learn/engine/topic-keys';
 
 const execAsync = promisify(exec);
 

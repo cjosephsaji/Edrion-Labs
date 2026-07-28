@@ -4,7 +4,7 @@ import { FRESHNESS_FADING_DAYS, FRESHNESS_FRESH_DAYS } from '@edrion/shared-type
 import { LEARNING_EVENTS_WRITER } from '../../../common/tokens';
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import type { StudentPrincipal } from '../student.types';
-import { PedagogyOrchestratorService } from '../edrion-learn/pedagogy-orchestrator.service';
+import { PedagogyOrchestratorService } from './engine/pedagogy-orchestrator.service';
 import { LearnRepository } from './learn.repository';
 
 @Injectable()

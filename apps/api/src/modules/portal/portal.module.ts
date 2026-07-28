@@ -170,9 +170,6 @@ import { PortalCoursesController } from './courses/portal-courses.controller';
 import { PortalCoursesService } from './courses/portal-courses.service';
 import { PortalReportCardsController } from './report-cards/portal-report-cards.controller';
 import { PortalLearningSummaryService, PortalReportCardsService } from './report-cards/portal-report-cards.service';
-import { PortalLearnPolicyController } from './learn-policy/portal-learn-policy.controller';
-import { PortalLearnPolicyService } from './learn-policy/portal-learn-policy.service';
-import { PortalLearnVisibilityService } from './learn-policy/portal-learn-visibility.service';
 import { PortalMockExamsController } from './mock-exams/portal-mock-exams.controller';
 import { PortalMockBlueprintsService } from './mock-exams/portal-mock-blueprints.service';
 import { PortalMockBanksService } from './mock-exams/portal-mock-banks.service';
@@ -247,7 +244,6 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
     PortalCourseContentController,
     PortalCoursesController,
     PortalReportCardsController,
-    PortalLearnPolicyController,
     PortalMockExamsController,
     CalendarEventsController,
   ],
@@ -370,8 +366,6 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
     PortalCoursesService,
     PortalReportCardsService,
     PortalLearningSummaryService,
-    PortalLearnPolicyService,
-    PortalLearnVisibilityService,
     PortalMockBlueprintsService,
     PortalMockBanksService,
     QuestionBankService,

@@ -42,7 +42,7 @@ import { EvaluatorService } from '../learn-ai/evaluator.service';
 import { LearnAiCallLogger } from '../learn-ai/learn-ai-call.logger';
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import { LearnRepository } from '../learn/learn.repository';
-import { PedagogyOrchestratorService } from '../edrion-learn/pedagogy-orchestrator.service';
+import { PedagogyOrchestratorService } from '../learn/engine/pedagogy-orchestrator.service';
 import { StudentStorageService } from '../storage/student-storage.service';
 import type { StudentPrincipal } from '../student.types';
 import { LibraryRepository } from './library.repository';

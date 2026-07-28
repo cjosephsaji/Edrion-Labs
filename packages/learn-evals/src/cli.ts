@@ -14,6 +14,7 @@ import { P2_ENTRY_FIXTURES } from './fixtures/p2-entry-points';
 const args = process.argv.slice(2);
 const cmd = args[0] === 'run' ? 'run' : args[0] ?? 'run';
 const suite = argValue('--suite') ?? 'core';
+const provider = argValue('--provider') ?? 'live';
 const baselineArg = argValue('--baseline');
 const seed = Number(argValue('--seed') ?? process.env.LEARN_EVAL_SEED ?? 42);
 
@@ -51,6 +52,10 @@ async function main() {
   if (!cfg.evalSecret) {
     console.error('LEARN_EVAL_SECRET is required to seed frozen topic profiles.');
     process.exit(1);
+  }
+  if (provider === 'stub') {
+    process.env.LEARN_EVAL_STUB_PLANNER = '1';
+    console.log('learn-evals: --provider stub (deterministic planner, no LLM calls)');
   }
 
   const runId = `learn-eval-${suite}-${seed}-${Date.now()}`;

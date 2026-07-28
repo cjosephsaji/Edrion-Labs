@@ -3,7 +3,7 @@ import {
   answerDirectnessSchema,
   curriculumBoundsSchema,
   sessionVisibilitySchema,
-} from './student/edrion-learn/policy';
+} from './student/learn/policy';
 import { reasonSchema, versionSchema } from './common';
 
 export const portalLearnPolicyDtoSchema = z.object({

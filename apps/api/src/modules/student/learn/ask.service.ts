@@ -13,7 +13,7 @@ import { LearnAiCallLogger } from '../learn-ai/learn-ai-call.logger';
 import { ASK_FULL_SYSTEM_PROMPT, ASK_HINTS_ONLY_SYSTEM_PROMPT } from '../learn-ai/prompts/ask.prompt';
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import type { StudentPrincipal } from '../student.types';
-import { LearnArtifactService } from '../edrion-learn/learn-artifact.service';
+import { LearnArtifactService } from './engine/learn-artifact.service';
 import { VisualGroundingService } from '../visual-studio/visual-grounding.service';
 
 const askOutputSchema = z.object({
