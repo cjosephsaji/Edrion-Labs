@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ArgumentsHost } from '@nestjs/common';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, ConflictException } from '@nestjs/common';
 import { AllExceptionsFilter } from './all-exceptions.filter';
 
 const noopLogger = {
@@ -33,6 +33,21 @@ describe('AllExceptionsFilter', () => {
     const { status, body } = run(new ForbiddenException({ code: 'FORBIDDEN', message: 'nope' }));
     expect(status).toHaveBeenCalledWith(403);
     expect(body).toMatchObject({ statusCode: 403, code: 'FORBIDDEN', message: 'nope', correlationId: 'corr-1' });
+  });
+
+  it('passes through activeSessionId on conflict responses', () => {
+    const { status, body } = run(
+      new ConflictException({
+        code: 'SESSION_ACTIVE',
+        message: 'You already have a lesson in progress.',
+        activeSessionId: 'c796132a-5457-46b4-a867-b0cfa731d56e',
+      }),
+    );
+    expect(status).toHaveBeenCalledWith(409);
+    expect(body).toMatchObject({
+      code: 'SESSION_ACTIVE',
+      activeSessionId: 'c796132a-5457-46b4-a867-b0cfa731d56e',
+    });
   });
 
   it('maps an express payload-too-large error to 413 PAYLOAD_TOO_LARGE', () => {

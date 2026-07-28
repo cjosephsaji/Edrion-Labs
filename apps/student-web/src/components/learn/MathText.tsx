@@ -2,6 +2,7 @@
 import { useEffect, useRef } from 'react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import { MarkdownMath } from '@/components/visual-studio/MarkdownMath';
 
 type MathTextProps = {
   children: string;
@@ -101,12 +102,15 @@ export function MathText({ children, display = false, className = '' }: MathText
     }
 
     if (!hasInlineMath(children)) {
-      el.textContent = children;
       return;
     }
 
     renderMixedInline(children, el);
   }, [children, display]);
+
+  if (!display && !hasInlineMath(children)) {
+    return <MarkdownMath className={`prose prose-sm max-w-none text-inherit ${className}`}>{children}</MarkdownMath>;
+  }
 
   return <span ref={ref} className={className} />;
 }

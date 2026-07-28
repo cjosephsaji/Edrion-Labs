@@ -89,19 +89,43 @@ export class MovePlannerService {
    * declared fallback. This is THE enforcement point: the prompt is advisory.
    */
   enforcePlan(plan: PlanV1, ctx: PlanContext): PlannedMove {
-    const entry = moveEntry(plan.move);
-    // §3.5 lets the planner justify a visual_spawn on a non-visual topic; the
-    // justification is the reasoning string it already has to produce.
-    const justified = plan.move === 'visual_spawn' && plan.reasoning.trim().length >= 20;
+    let working = planV1Schema.parse(plan);
+    if (ctx.state.pending_free_question) {
+      working = { ...working, checkpoint_advance: false };
+    }
+    const last = ctx.state.moves[ctx.state.moves.length - 1];
+    if (
+      !ctx.state.pending_free_question &&
+      last?.move_type === 'direct_explanation' &&
+      working.move === 'direct_explanation'
+    ) {
+      const candidates: MoveType[] = ['retrieval_check', 'worked_example', 'visual_spawn', 'socratic_probe'];
+      for (const move of candidates) {
+        const decision = evaluateMove(moveEntry(move), this.evalContext(ctx));
+        if (decision.legal) {
+          working = planV1Schema.parse({
+            v: 1,
+            move,
+            params: clampParams(move, this.defaultParamsFor(move, ctx)),
+            reasoning: `Building on the explanation with a ${move.replace(/_/g, ' ')}.`,
+            checkpoint_advance: move === 'retrieval_check' || moveEntry(move).counts_toward_checkpoints,
+            session_should_end: false,
+          });
+          break;
+        }
+      }
+    }
+    const entry = moveEntry(working.move);
+    const justified = working.move === 'visual_spawn' && working.reasoning.trim().length >= 20;
     const decision = evaluateMove(entry, this.evalContext(ctx, justified));
 
     if (decision.legal) {
       const applied = planV1Schema.parse({
-        ...plan,
-        params: clampParams(plan.move, plan.params ?? {}),
-        checkpoint_advance: plan.checkpoint_advance && entry.counts_toward_checkpoints,
+        ...working,
+        params: clampParams(working.move, working.params ?? {}),
+        checkpoint_advance: working.checkpoint_advance && entry.counts_toward_checkpoints,
       });
-      return { plan: applied, enforcement: { rewritten: false, applied: plan.move } };
+      return { plan: applied, enforcement: { rewritten: false, applied: working.move } };
     }
 
     const target = moveEntry(decision.rewrite_to);
@@ -178,7 +202,7 @@ export class MovePlannerService {
   async planMove(
     principal: StudentPrincipal,
     ctx: PlanContext,
-    opts?: { sessionId?: string },
+    opts?: { sessionId?: string; speculative?: boolean },
   ): Promise<PlanV1> {
     return (await this.planNextMove(principal, ctx, opts)).plan;
   }
@@ -193,7 +217,7 @@ export class MovePlannerService {
   async planNextMove(
     principal: StudentPrincipal,
     ctx: PlanContext,
-    opts?: { sessionId?: string },
+    opts?: { sessionId?: string; speculative?: boolean },
   ): Promise<PlannedMove> {
     if (this.shouldForceClose(ctx.state, ctx.config)) {
       const plan = this.closingPlan(ctx.state);
@@ -246,12 +270,10 @@ export class MovePlannerService {
       await this.callLog.log(principal, 'learn_plan', usage, {
         sessionId: opts?.sessionId,
         promptVersion: PROMPT_VERSION,
-        // The single call log (§4.5) records the rewrite so violations are observable.
-        ...(enforced.enforcement.rewritten
-          ? {
-              outcome: `constraint_rewrite:${enforced.enforcement.code}:${enforced.enforcement.requested}->${enforced.enforcement.applied}`,
-            }
-          : {}),
+        speculative: opts?.speculative ?? false,
+        outcome: enforced.enforcement.rewritten
+          ? `constraint_rewrite:${enforced.enforcement.code}:${enforced.enforcement.requested}->${enforced.enforcement.applied}`
+          : 'ok',
       });
       this.applyPlanToState(ctx.state, enforced.plan);
       return enforced;
@@ -260,7 +282,13 @@ export class MovePlannerService {
         principal,
         'learn_plan',
         { inputTokens: 0, outputTokens: 0, model: 'fallback', durationMs: Date.now() - started },
-        { sessionId: opts?.sessionId, error: 'plan_failed', degraded: true },
+        {
+          sessionId: opts?.sessionId,
+          error: 'plan_failed',
+          degraded: true,
+          speculative: opts?.speculative ?? false,
+          outcome: 'degraded',
+        },
       );
       this.applyPlanToState(ctx.state, deterministic.plan);
       return deterministic;
@@ -280,7 +308,7 @@ export class MovePlannerService {
     const plan = planV1Schema.parse({
       v: 1,
       move: 'direct_explanation',
-      params: { depth: 'base', anchor },
+      params: { depth: 'base', anchor, remediation: true },
       reasoning: `Both prerequisite checks missed, so we're rebuilding "${anchor}" before moving on.`.slice(
         0,
         400,

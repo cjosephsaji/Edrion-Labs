@@ -84,6 +84,8 @@ export const sessionContextV1Schema = z.object({
   source_exam_schedule_id: z.string().uuid().optional(),
   days_until_exam: z.number().int().nonnegative().optional(),
   subject_label: z.string().max(200).optional(),
+  /** Denormalized title for ad-hoc sessions with null topic_id (DEC-14). */
+  topic_title: z.string().max(200).optional(),
 });
 
 export type SessionContextV1 = z.infer<typeof sessionContextV1Schema>;

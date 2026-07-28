@@ -1,107 +1,115 @@
 #!/usr/bin/env tsx
-import { writeFileSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
-import { TOPIC_FIXTURES, PERSONAS } from './fixtures/topics';
-import { PERSONA_POLICIES } from './personas';
+import { resolve } from 'node:path';
+import {
+  assertTopicCoverage,
+  PERSONAS,
+  TOPIC_FIXTURES,
+  type EvalPersona,
+} from './fixtures/topics';
+import { runEvalSession, type EvalClientConfig } from './runner/session-driver';
+import { judgeTranscript } from './rubrics/judge';
+import { buildReport, scoreSession, writeReport } from './report';
 import { P2_ENTRY_FIXTURES } from './fixtures/p2-entry-points';
 
 const args = process.argv.slice(2);
-const suite = args.includes('--suite') ? args[args.indexOf('--suite') + 1] : 'core';
-const baseline = args.includes('--baseline') ? args[args.indexOf('--baseline') + 1] : null;
-const apiBase = process.env.LEARN_EVAL_API_BASE ?? 'http://localhost:3001/v1/student';
+const cmd = args[0] === 'run' ? 'run' : args[0] ?? 'run';
+const suite = argValue('--suite') ?? 'core';
+const baselineArg = argValue('--baseline');
+const seed = Number(argValue('--seed') ?? process.env.LEARN_EVAL_SEED ?? 42);
 
-const topics = suite === 'full' ? TOPIC_FIXTURES : TOPIC_FIXTURES;
-const sessionCount = topics.length * PERSONAS.length;
-
-interface EvalSessionResult {
-  topic: string;
-  persona: string;
-  sessionId?: string;
-  error?: string;
-  moveCount: number;
-  constraintViolations: number;
+function argValue(flag: string): string | undefined {
+  const i = args.indexOf(flag);
+  return i >= 0 ? args[i + 1] : undefined;
 }
 
-async function runSession(topic: string, persona: string): Promise<EvalSessionResult> {
-  const policy = PERSONA_POLICIES[persona as keyof typeof PERSONA_POLICIES];
-  const result: EvalSessionResult = { topic, persona, moveCount: 0, constraintViolations: 0 };
+assertTopicCoverage();
 
-  if (!process.env.LEARN_EVAL_AUTH_TOKEN) {
-    result.error = 'LEARN_EVAL_AUTH_TOKEN not set — structural dry run only';
-    return result;
-  }
-
-  try {
-    const createRes = await fetch(`${apiBase}/learn/sessions`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        cookie: process.env.LEARN_EVAL_AUTH_TOKEN,
-      },
-      body: JSON.stringify({
-        entryPoint: 'goal',
-        topicKey: topic,
-        goal: policy.goal,
-        timeBudgetMinutes: policy.timeBudgetMinutes,
-        idempotencyKey: crypto.randomUUID(),
-      }),
-    });
-    if (!createRes.ok) {
-      result.error = `create failed: ${createRes.status}`;
-      return result;
-    }
-    const { session } = (await createRes.json()) as { session: { id: string; planMoveCount: number } };
-    result.sessionId = session.id;
-    result.moveCount = session.planMoveCount ?? 0;
-  } catch (e) {
-    result.error = e instanceof Error ? e.message : 'unknown';
-  }
-  return result;
+const canonical = TOPIC_FIXTURES.filter((t) => t.canonical);
+const topics = suite === 'full' ? TOPIC_FIXTURES : canonical;
+if (suite !== 'core' && suite !== 'full') {
+  console.error(`Unknown suite "${suite}" — use core|full`);
+  process.exit(2);
 }
 
 async function main() {
-  const results: EvalSessionResult[] = [];
-  for (const t of topics) {
-    for (const p of PERSONAS) {
-      results.push(await runSession(t.key, p));
+  if (cmd !== 'run') {
+    console.error('Usage: learn-evals run [--suite core|full] [--baseline <path-or-run_id>] [--seed N]');
+    process.exit(2);
+  }
+
+  const cfg: EvalClientConfig = {
+    apiBase: process.env.LEARN_EVAL_API_BASE ?? 'http://localhost:3001/v1/student',
+    authCookie: process.env.LEARN_EVAL_AUTH_TOKEN ?? '',
+    evalSecret: process.env.LEARN_EVAL_SECRET ?? '',
+    studentEmail: process.env.LEARN_EVAL_STUDENT_EMAIL,
+  };
+
+  if (!cfg.authCookie && !cfg.studentEmail) {
+    console.error('LEARN_EVAL_AUTH_TOKEN or LEARN_EVAL_STUDENT_EMAIL is required to drive the live orchestrator.');
+    process.exit(1);
+  }
+  if (!cfg.evalSecret) {
+    console.error('LEARN_EVAL_SECRET is required to seed frozen topic profiles.');
+    process.exit(1);
+  }
+
+  const runId = `learn-eval-${suite}-${seed}-${Date.now()}`;
+  console.log(
+    `learn-evals: suite=${suite} topics=${topics.length} personas=${PERSONAS.length} sessions=${topics.length * PERSONAS.length} seed=${seed}`,
+  );
+
+  const scores = [];
+  for (const topic of topics) {
+    for (const persona of PERSONAS as readonly EvalPersona[]) {
+      process.stdout.write(`  → ${topic.key} × ${persona} … `);
+      const transcript = await runEvalSession({ cfg, topic, persona, runSeed: seed });
+      if (transcript.error) {
+        console.log(`ERR ${transcript.error}`);
+        // Still judge failure loudly for content dims — judge unavailable path is separate.
+        try {
+          const judge = await judgeTranscript(transcript, {});
+          scores.push(scoreSession(transcript, judge));
+        } catch (e) {
+          console.error(`\n${e instanceof Error ? e.message : e}`);
+          process.exit(1);
+        }
+        continue;
+      }
+      try {
+        const judge = await judgeTranscript(transcript, {});
+        scores.push(scoreSession(transcript, judge));
+        console.log(`ok moves=${transcript.moves.length}`);
+      } catch (e) {
+        console.error(`\n${e instanceof Error ? e.message : e}`);
+        process.exit(1);
+      }
     }
   }
 
-  const failures = results.filter((r) => r.error);
-  const report = {
-    run_id: `learn-eval-${Date.now()}`,
-    suite,
-    sessions: sessionCount,
-    p2_fixtures: P2_ENTRY_FIXTURES.length,
-    seed: 42,
-    api_base: apiBase,
-    results,
-    dimensions: {
-      move_diversity: { mean: 0.72, pass: failures.length === 0 },
-      constraint_compliance: { value: 1, pass: true },
-      pedagogical_fit: { mean: 4.1, pass: true },
-      content_correctness: { mean: 4.3, pass: true },
-      artifact_quality: { mean: 4.0, pass: true },
-      latency_robustness: { p95_first_token_ms: 2100, degraded_rate: 0.01, discard_rate: 0.12, pass: true },
-    },
-    baseline_delta: baseline ? { note: `Compared against ${baseline}` } : null,
-    gate: failures.length === 0 ? 'pass' : 'fail',
-    note: failures.length
-      ? `${failures.length} sessions failed — set LEARN_EVAL_AUTH_TOKEN for live orchestrator runs`
-      : 'All sessions completed',
-  };
+  const baselinePath = baselineArg
+    ? baselineArg.endsWith('.json')
+      ? resolve(baselineArg)
+      : resolve(process.cwd(), 'eval-runs', `${baselineArg}.json`)
+    : null;
 
-  const outDir = join(process.cwd(), 'eval-runs');
-  mkdirSync(outDir, { recursive: true });
-  const outPath = join(outDir, `${report.run_id}.json`);
-  writeFileSync(outPath, JSON.stringify(report, null, 2));
-  const mdPath = join(outDir, `${report.run_id}.md`);
-  writeFileSync(
-    mdPath,
-    `# Learn eval ${report.run_id}\n\nSuite: ${suite}\nSessions: ${sessionCount}\nGate: ${report.gate}\n\n${report.note}\n`,
-  );
-  console.log(`learn-evals: wrote ${outPath} (${sessionCount} sessions, gate=${report.gate})`);
+  const report = buildReport({
+    runId,
+    suite,
+    seed,
+    scores,
+    baselinePath,
+  });
+  (report as { p2_fixtures?: number }).p2_fixtures = P2_ENTRY_FIXTURES.length;
+
+  const outDir = resolve(process.cwd(), 'eval-runs');
+  const { json, md } = writeReport(report, outDir);
+  console.log(`learn-evals: wrote ${json}`);
+  console.log(`learn-evals: wrote ${md}`);
+  console.log(`learn-evals: gate=${report.gate} failures=${report.failures.join(',') || 'none'}`);
   if (report.gate === 'fail') process.exit(1);
 }
 
-void main();
+void main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

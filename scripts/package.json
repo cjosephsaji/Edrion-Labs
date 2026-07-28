@@ -1,0 +1,18 @@
+{
+  "name": "@edrion/dev-scripts",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@edrion/database": "workspace:*",
+    "@edrion/feature-flags": "workspace:*",
+    "@edrion/permissions": "workspace:*",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.36.4",
+    "postgres": "^3.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.5",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
+  }
+}

@@ -49,7 +49,8 @@ export function resolveAiPolicy(
   const topicalityMode = firstDefined(layered, (p) => p.topicalityMode);
 
   // Capabilities: apply least → most specific so the most specific override stands.
-  const capabilities: Partial<Record<AiCapability, boolean>> = {};
+  // Values may be boolean (admin) or string enums (student_tutor DEC-16).
+  const capabilities: Partial<Record<AiCapability, boolean | string>> = {};
   for (const p of [...layered].reverse()) {
     if (p.capabilities) Object.assign(capabilities, p.capabilities);
   }

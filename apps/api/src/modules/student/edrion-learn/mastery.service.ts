@@ -10,6 +10,7 @@ import {
   ratingToDisplayMastery,
   type AttemptEvaluation,
 } from '@edrion/schemas';
+import type { Database } from '@edrion/database';
 import type { StudentPrincipal } from '../student.types';
 import { EdrionLearnRepository } from './edrion-learn.repository';
 
@@ -32,6 +33,7 @@ export class MasteryService {
     difficulty: 'easy' | 'medium' | 'hard',
     evaluation: AttemptEvaluation,
     hintsUsed: number,
+    tx?: Database,
   ): Promise<{ ratingBefore: number; ratingAfter: number; k: number; expectedP: number } | null> {
     if (evaluation.correct == null) return null;
 
@@ -52,12 +54,17 @@ export class MasteryService {
     const correctWeight =
       Number(existing?.correctWeight ?? 0) + (evaluation.correct ? (hintsUsed > 0 ? 0.5 : 1) : 0);
 
-    await this.repo.upsertMastery(principal, atomId, {
-      rating: ratingAfter,
-      attempts: attempts + 1,
-      correctWeight,
-      lastAttemptAt: new Date(),
-    });
+    await this.repo.upsertMastery(
+      principal,
+      atomId,
+      {
+        rating: ratingAfter,
+        attempts: attempts + 1,
+        correctWeight,
+        lastAttemptAt: new Date(),
+      },
+      tx,
+    );
 
     return { ratingBefore, ratingAfter, k, expectedP };
   }

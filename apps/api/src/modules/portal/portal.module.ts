@@ -391,6 +391,8 @@ import { CalendarEventsService } from './calendar-events/calendar-events.service
     AttendanceService,
     AttachmentStorageService,
     StudentPortalConfigService,
+    FeeLedgerService,
+    PaymentProviderRegistry,
   ],
 })
 export class PortalModule {}

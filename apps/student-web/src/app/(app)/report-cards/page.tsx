@@ -54,7 +54,7 @@ export default function ReportCardsPage() {
                       href={`/learn/session/start?entryPoint=bad_result&reportCardEntryId=${entry.id}`}
                     >
                       <PillButton variant="soft" className="text-xs whitespace-nowrap">
-                        Practice this topic
+                        Fix with Petros
                       </PillButton>
                     </Link>
                   )}

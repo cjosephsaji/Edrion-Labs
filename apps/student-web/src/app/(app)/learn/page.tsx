@@ -17,6 +17,7 @@ import { useAskQuick } from '@/lib/hooks/useQuick';
 import { usePersona } from '@/lib/persona';
 import { intentPreviewLabel, isAmbiguousIntent } from '@/lib/intent-preview';
 import { StudentClientError, useStudentClient } from '@/lib/student-client';
+import { redirectIfSessionActive } from '@/lib/learn/session-active';
 import type { IntentResponseDto } from '@edrion/schemas';
 import { FreshnessChip } from '@/components/learn/FreshnessChip';
 import { Card } from '@/components/ui/card';
@@ -304,6 +305,7 @@ export default function LearnPage() {
       } catch (err) {
         if (isDev) console.error('[learn] intent routing failed', { text, forced, error: err });
         setRoutingStatus(null);
+        if (redirectIfSessionActive(err, router, resumeTile?.route)) return;
         setRoutingError(
           err instanceof EmptyPathError || err instanceof StudentClientError
             ? err.message
@@ -311,7 +313,7 @@ export default function LearnPage() {
         );
       }
     },
-    [routeIntent],
+    [routeIntent, resumeTile?.route, router],
   );
 
   const handleSubmit = async (text: string) => {
@@ -322,6 +324,7 @@ export default function LearnPage() {
     if (isAmbiguousIntent(trimmed)) {
       setDisambiguationText(trimmed);
       setPreviewLabel(null);
+      setRoutingError(null);
       return;
     }
 

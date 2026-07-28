@@ -1,19 +1,18 @@
 import { z } from 'zod';
 import {
   examBlueprintSchema,
-  examGradingStyleSchema,
   examSkinSchema,
 } from '../exam-blueprint';
 import { examQuestionTypeSchema } from '../exam-questions';
 
 /** Immutable blueprint captured on mock create — player/scorer read this only. */
-export const mockBlueprintSnapshotSchema = examBlueprintSchema.extend({
-  skin: examSkinSchema,
-  gradingStyle: examGradingStyleSchema,
-  resolvedTotalMarks: z.number().int().nonnegative(),
-  resolvedTotalQuestions: z.number().int().nonnegative(),
-  snapshotAt: z.string().datetime({ offset: true }).or(z.string().datetime()).optional(),
-});
+export const mockBlueprintSnapshotSchema = examBlueprintSchema.and(
+  z.object({
+    resolvedTotalMarks: z.number().int().nonnegative(),
+    resolvedTotalQuestions: z.number().int().nonnegative(),
+    snapshotAt: z.string().datetime({ offset: true }).or(z.string().datetime()).optional(),
+  }),
+);
 export type MockBlueprintSnapshot = z.infer<typeof mockBlueprintSnapshotSchema>;
 
 export const mockScopeSchema = z.discriminatedUnion('kind', [

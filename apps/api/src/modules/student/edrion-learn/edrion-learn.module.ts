@@ -21,6 +21,10 @@ import { GradingService } from './grading.service';
 import { SessionCompletionService } from './session-completion.service';
 import { ArtifactCommitService } from './artifact-commit.service';
 import { StudentAuthModule } from '../auth/student-auth.module';
+import { LearnProfileJobsService } from './learn-profile.jobs';
+import { MasterySeedService } from './mastery-seed.service';
+import { TopicResolutionService } from './topic-resolution.service';
+import { LearnerModelService } from './learner-model.service';
 
 @Module({
   imports: [FeatureControlsModule, LearnAiModule, VisualStudioModule, LearningEventsModule, StudentAuthModule],
@@ -32,18 +36,30 @@ import { StudentAuthModule } from '../auth/student-auth.module';
     LearnConfigService,
     TopicProfileService,
     MasteryService,
+    MasterySeedService,
     EvidenceService,
     MovePlannerService,
     BlockRendererService,
     CanvasGraphService,
     InstitutionalContextService,
+    TopicResolutionService,
+    LearnerModelService,
     LearnArtifactService,
     GradingService,
     SessionCompletionService,
     ArtifactCommitService,
+    LearnProfileJobsService,
     PedagogyOrchestratorService,
   ],
-  exports: [PedagogyOrchestratorService, StudentTutorPolicyService, LearnConfigService, EdrionLearnRepository, LearnArtifactService],
+  exports: [
+    PedagogyOrchestratorService,
+    StudentTutorPolicyService,
+    LearnConfigService,
+    EdrionLearnRepository,
+    LearnArtifactService,
+    LearnProfileJobsService,
+    TopicProfileService,
+    MasterySeedService,
+  ],
 })
 export class EdrionLearnModule {}
-

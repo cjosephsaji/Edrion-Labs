@@ -20,6 +20,9 @@ import { PATH_SYSTEM_PROMPT } from '../learn-ai/prompts/path.prompt';
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import type { InstitutionalStudentPrincipal, StudentPrincipal } from '../student.types';
 import { LearnRepository } from './learn.repository';
+import { LearnProfileJobsService } from '../edrion-learn/learn-profile.jobs';
+import { topicKeyForLearnTopic } from '../edrion-learn/topic-keys';
+import { FeatureControlsService } from '../../feature-controls/feature-controls.service';
 
 const pathPlanSchema = z.object({
   title: z.string(),
@@ -52,6 +55,8 @@ export class PathService {
     private readonly budgets: BudgetsService,
     private readonly callLog: LearnAiCallLogger,
     @Inject(LEARNING_EVENTS_WRITER) private readonly ledger: LearningEventsWriter,
+    private readonly profileJobs: LearnProfileJobsService,
+    private readonly features: FeatureControlsService,
   ) {}
 
   async get(principal: StudentPrincipal): Promise<LearningPathDto | null> {
@@ -128,6 +133,14 @@ export class PathService {
         whyHere: item.whyHere ?? null,
         optionalBranch: item.optionalBranch ? 1 : 0,
         status: seq === 2 ? 'current' : 'upcoming',
+      });
+      // PM-003: pre-warm topic profiles on learning-path creation.
+      void this.profileJobs.enqueueProfileTopic({
+        principal,
+        learnTopicId: topic.id,
+        topicKey: topicKeyForLearnTopic(topic.id),
+        title: topic.title,
+        syllabusContext: plan.subjectLabel,
       });
     }
 
@@ -244,6 +257,20 @@ export class PathService {
     const rows = await this.repo.listPathItems(path.id);
     const revision = await this.repo.listRevisionStates(principal);
     const freshnessByTopic = new Map(revision.map((r) => [r.topic.id, r.state.freshness]));
+    let orchestratorEnabled = true;
+    try {
+      const flagQuery =
+        principal.kind === 'institutional'
+          ? {
+              institutionId: principal.institutionId,
+              campusId: principal.campusId ?? undefined,
+              institutionUserId: principal.institutionUserId,
+            }
+          : { independentUserId: principal.independentUserId };
+      orchestratorEnabled = (await this.features.resolveByKey('learn.orchestrator', flagQuery)).value;
+    } catch {
+      orchestratorEnabled = false;
+    }
 
     return {
       id: path.id,
@@ -253,6 +280,7 @@ export class PathService {
       source: path.source as 'institution' | 'ai_goal',
       pathEditable: principal.kind === 'independent',
       status: path.status as 'active' | 'archived',
+      orchestratorEnabled,
       items: rows
         .filter((r) => r.item.status !== 'removed')
         .map((r) => ({

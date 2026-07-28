@@ -154,9 +154,8 @@ export const learnSessions = pgTable(
     institutionId: uuid('institution_id').references(() => institutions.id),
     studentId: uuid('student_id').references(() => students.id),
     independentUserId: uuid('independent_user_id').references(() => independentUsers.id),
-    topicId: uuid('topic_id')
-      .notNull()
-      .references(() => learnTopics.id),
+    // Nullable since 0106 (DEC-14): ad-hoc free/material sessions carry no learn_topics row.
+    topicId: uuid('topic_id').references(() => learnTopics.id),
     topicProfileId: uuid('topic_profile_id').references(() => learnTopicProfiles.id, {
       onDelete: 'set null',
     }),
@@ -321,6 +320,33 @@ export const learnerModelEvents = pgTable(
       .where(sql`${t.studentId} IS NOT NULL`),
     independentIdempotencyUq: uniqueIndex('learner_model_events_independent_idempotency_uq')
       .on(t.independentUserId, t.idempotencyKey)
+      .where(sql`${t.independentUserId} IS NOT NULL`),
+  }),
+);
+
+/** Durable learner-model inputs beyond per-atom Elo (Phase E / hyperspec §3.1 observe). */
+export const learnerModelState = pgTable(
+  'learner_model_state',
+  {
+    id: primaryId(),
+    institutionId: uuid('institution_id').references(() => institutions.id, { onDelete: 'cascade' }),
+    studentId: uuid('student_id').references(() => students.id, { onDelete: 'cascade' }),
+    independentUserId: uuid('independent_user_id').references(() => independentUsers.id, {
+      onDelete: 'cascade',
+    }),
+    pacePreference: text('pace_preference'),
+    moveOutcomeStats: jsonb('move_outcome_stats').$type<Record<string, unknown>>().notNull().default({}),
+    shortDwellStreak: integer('short_dwell_streak').notNull().default(0),
+    version: integer('version').notNull().default(1),
+    ...timestamps,
+  },
+  (t) => ({
+    ownerXor: check('learner_model_state_owner_ck', ownerXor(t.studentId, t.independentUserId)),
+    studentUq: uniqueIndex('learner_model_state_student_uq')
+      .on(t.studentId)
+      .where(sql`${t.studentId} IS NOT NULL`),
+    independentUq: uniqueIndex('learner_model_state_independent_uq')
+      .on(t.independentUserId)
       .where(sql`${t.independentUserId} IS NOT NULL`),
   }),
 );
@@ -514,6 +540,7 @@ export type LearnSessionBlock = typeof learnSessionBlocks.$inferSelect;
 export type LearnAttempt = typeof learnAttempts.$inferSelect;
 export type LearnerMastery = typeof learnerMastery.$inferSelect;
 export type LearnerModelEvent = typeof learnerModelEvents.$inferSelect;
+export type LearnerModelState = typeof learnerModelState.$inferSelect;
 export type LearnSessionEvent = typeof learnSessionEvents.$inferSelect;
 export type QuickAnswer = typeof quickAnswers.$inferSelect;
 export type RevisionState = typeof revisionStates.$inferSelect;

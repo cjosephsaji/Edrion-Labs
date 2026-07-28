@@ -96,12 +96,15 @@ export class StudentClient {
       if (err.code === 'MODULE_DISABLED' && typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('edrion:module-disabled', { detail: err }));
       }
+      const extra = err as ApiError & { activeSessionId?: string };
+      const meta: Record<string, unknown> = { ...(extra.meta ?? {}) };
+      if (extra.activeSessionId) meta.activeSessionId = extra.activeSessionId;
       throw new StudentClientError(
         res.status,
         err.code ?? 'ERROR',
         err.message ?? res.statusText,
         err.correlationId,
-        err.meta,
+        Object.keys(meta).length ? meta : undefined,
       );
     }
     return body as T;

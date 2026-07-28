@@ -1,36 +1,44 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { createStore, get, set } from 'idb-keyval';
 import type { CreateLearnSessionInput, LearnSessionV1Dto, SessionBlockV1Dto } from '@edrion/schemas';
 import { useStudentClient, StudentSseError, type SseConnection, type SseErrorSource } from '../student-client';
 
 const sessionKey = (id: string) => ['student', 'edrion-learn', 'session', id] as const;
-
 const isDev = process.env.NODE_ENV !== 'production';
-
-/**
- * Hyperspec 2 §1 — the calm card shown when the stream never starts. Reserved for
- * connectivity failures only; every other failure surfaces the server's own message.
- */
 const STREAM_START_FAILED_COPY = "Couldn't start your lesson — check your connection";
+const ANSWER_RETRY_MS = 30_000;
+const learnOfflineStore = createStore('edrion-learn-offline', 'sessions');
+
+async function cacheSessionOffline(session: LearnSessionV1Dto) {
+  try {
+    await set(`session:${session.id}`, session, learnOfflineStore);
+  } catch {
+    /* private mode / quota — reading still works online */
+  }
+}
+
+async function readSessionOffline(id: string): Promise<LearnSessionV1Dto | undefined> {
+  try {
+    return await get<LearnSessionV1Dto>(`session:${id}`, learnOfflineStore);
+  } catch {
+    return undefined;
+  }
+}
 
 export type LearnStreamError = {
-  /** Which of the distinct failure modes this is (see `SseErrorSource`). */
   source: SseErrorSource | 'unknown';
-  /** Backend error code where one exists, e.g. `PLANNER_TIMEOUT`. */
   code: string;
-  /** What the student reads. */
   message: string;
   status?: number;
 };
 
 function toStreamError(err: unknown): LearnStreamError {
   if (err instanceof StudentSseError) {
-    // Connectivity: the stream never started, or the socket dropped. Hyperspec copy.
     if (err.source === 'network') {
       return { source: 'network', code: err.code, message: STREAM_START_FAILED_COPY, status: err.status };
     }
-    // Server-supplied failures (non-2xx body, in-stream error frame): show the real message.
     return { source: err.source, code: err.code, message: err.message, status: err.status };
   }
   return {
@@ -40,19 +48,54 @@ function toStreamError(err: unknown): LearnStreamError {
   };
 }
 
+function stableIdempotencyKey(map: Map<string, string>, key: string): string {
+  let existing = map.get(key);
+  if (!existing) {
+    existing = crypto.randomUUID();
+    map.set(key, existing);
+  }
+  return existing;
+}
+
 export function useEdrionLearnSession(sessionId: string | undefined) {
   const client = useStudentClient();
   const qc = useQueryClient();
   const [streaming, setStreaming] = useState(false);
   const [streamError, setStreamError] = useState<LearnStreamError | null>(null);
+  const [offline, setOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+  const [streamingText, setStreamingText] = useState<{ blockId: string; text: string } | null>(null);
+  const [streamingMoveType, setStreamingMoveType] = useState<string | null>(null);
   const connRef = useRef<SseConnection | null>(null);
   const pendingContinue = useRef(false);
   const restartTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startStreamRef = useRef<() => void>(() => {});
+  const lastSeqRef = useRef(0);
+  const idempotencyKeys = useRef(new Map<string, string>());
+
+  useEffect(() => {
+    const on = () => setOffline(false);
+    const off = () => setOffline(true);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => {
+      window.removeEventListener('online', on);
+      window.removeEventListener('offline', off);
+    };
+  }, []);
 
   const query = useQuery({
     queryKey: sessionKey(sessionId ?? ''),
-    queryFn: () => client.get<LearnSessionV1Dto>(`/learn/sessions/${sessionId}`),
+    queryFn: async () => {
+      try {
+        const fresh = await client.get<LearnSessionV1Dto>(`/learn/sessions/${sessionId}`);
+        await cacheSessionOffline(fresh);
+        return fresh;
+      } catch (err) {
+        const cached = sessionId ? await readSessionOffline(sessionId) : undefined;
+        if (cached) return cached;
+        throw err;
+      }
+    },
     enabled: !!sessionId,
     refetchInterval: (q) => {
       const s = q.state.data;
@@ -61,6 +104,16 @@ export function useEdrionLearnSession(sessionId: string | undefined) {
       return false;
     },
   });
+
+  useEffect(() => {
+    if (query.data) void cacheSessionOffline(query.data);
+  }, [query.data]);
+
+  useEffect(() => {
+    const blocks = query.data?.blocks ?? [];
+    const maxSeq = blocks.reduce((m, b) => Math.max(m, b.streamSeq ?? b.sequence ?? 0), 0);
+    if (maxSeq > lastSeqRef.current) lastSeqRef.current = maxSeq;
+  }, [query.data?.blocks]);
 
   const applyBlock = useCallback(
     (event: {
@@ -72,9 +125,15 @@ export function useEdrionLearnSession(sessionId: string | undefined) {
         reasoning?: string | null;
         degraded?: boolean;
         renderStatus?: string;
+        interactionState?: Record<string, unknown>;
       };
     }) => {
       if (!sessionId || !event.block) return;
+      if (event.block.streamSeq && event.block.streamSeq > lastSeqRef.current) {
+        lastSeqRef.current = event.block.streamSeq;
+      }
+      setStreamingText(null);
+      setStreamingMoveType(null);
       qc.setQueryData<LearnSessionV1Dto>(sessionKey(sessionId), (prev) => {
         if (!prev) return prev;
         const blocks = [...prev.blocks];
@@ -88,22 +147,31 @@ export function useEdrionLearnSession(sessionId: string | undefined) {
           blockSchemaVersion: 1,
           reasoning: event.block!.reasoning,
           degraded: event.block!.degraded ?? false,
-          interactionState: {},
+          // F4: preserve interactionState from the SSE payload (never hardcode {}).
+          interactionState: event.block!.interactionState ?? {},
           renderStatus: event.block!.renderStatus,
           version: 1,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
         const idx = blocks.findIndex((b) => b.id === mapped.id);
-        if (idx >= 0) blocks[idx] = mapped;
-        else blocks.push(mapped);
-        return { ...prev, blocks, orchestratorStatus: prev.orchestratorStatus };
+        if (idx >= 0) {
+          // Merge: keep prior interactionState if the event omitted it.
+          const prior = blocks[idx]!;
+          blocks[idx] = {
+            ...mapped,
+            interactionState:
+              Object.keys(mapped.interactionState).length > 0
+                ? mapped.interactionState
+                : prior.interactionState,
+          };
+        } else blocks.push(mapped);
+        return { ...prev, blocks };
       });
     },
     [qc, sessionId],
   );
 
-  /** Tear the current connection down and cancel any queued restart. */
   const stopStream = useCallback(() => {
     if (restartTimer.current) {
       clearTimeout(restartTimer.current);
@@ -115,7 +183,6 @@ export function useEdrionLearnSession(sessionId: string | undefined) {
     setStreaming(false);
   }, []);
 
-  /** Single-flighted restart: at most one pending timer, and only when nothing is open. */
   const scheduleRestart = useCallback(() => {
     if (restartTimer.current || connRef.current) return;
     restartTimer.current = setTimeout(() => {
@@ -126,8 +193,6 @@ export function useEdrionLearnSession(sessionId: string | undefined) {
 
   const startStream = useCallback(() => {
     if (!sessionId) return;
-    // Single-flight: a StrictMode double-mount (or a racing continue) must not open a
-    // second server-side handler. `client.sse` returns synchronously, so this is safe.
     if (connRef.current) return;
     if (restartTimer.current) {
       clearTimeout(restartTimer.current);
@@ -135,13 +200,16 @@ export function useEdrionLearnSession(sessionId: string | undefined) {
     }
     setStreaming(true);
     setStreamError(null);
-    const conn = client.sse(`/learn/sessions/${sessionId}/stream`, {
+    // F5: send last_seq so the server can replay without gaps/duplicates.
+    const qs = lastSeqRef.current > 0 ? `?lastSeq=${lastSeqRef.current}` : '';
+    const conn = client.sse(`/learn/sessions/${sessionId}/stream${qs}`, {
       onMessage: (frame) => {
         const data = frame.data;
         if (data === '[DONE]') {
-          // The transport closes itself on [DONE]; drop our handle so a restart can open.
           connRef.current = null;
           setStreaming(false);
+          setStreamingText(null);
+      setStreamingMoveType(null);
           if (pendingContinue.current) {
             pendingContinue.current = false;
             scheduleRestart();
@@ -152,9 +220,31 @@ export function useEdrionLearnSession(sessionId: string | undefined) {
           const event = (typeof data === 'string' ? JSON.parse(data) : data) as {
             type?: string;
             block?: Parameters<typeof applyBlock>[0]['block'];
+            blockId?: string;
+            text?: string;
+            seq?: number;
+            moveType?: string;
+            eventType?: string;
+            payload?: { block_id?: string; stream_seq?: number };
           };
-          // NOTE: `type === 'error'` never arrives here — StudentClient intercepts error
-          // frames and routes them to `onError` below.
+          if (event.type === 'heartbeat') return;
+          if (event.type === 'block_delta' && event.blockId && typeof event.text === 'string') {
+            setStreamingText({ blockId: event.blockId, text: event.text });
+            return;
+          }
+          if (event.type === 'block_start' && typeof event.seq === 'number') {
+            if (event.seq > lastSeqRef.current) lastSeqRef.current = event.seq;
+            if (event.moveType) setStreamingMoveType(event.moveType);
+            return;
+          }
+          if (event.type === 'replay') {
+            // Reconstruct from replay payloads when they carry block content; otherwise
+            // the accompanying block re-emit (F5 server fix) fills the gap.
+            if (typeof event.seq === 'number' && event.seq > lastSeqRef.current) {
+              lastSeqRef.current = event.seq;
+            }
+            return;
+          }
           if (event.type === 'block' && event.block) applyBlock(event);
         } catch (err) {
           if (isDev) console.error('[edrion-learn] unparseable stream frame', { sessionId, data, err });
@@ -166,6 +256,10 @@ export function useEdrionLearnSession(sessionId: string | undefined) {
         pendingContinue.current = false;
         setStreamError(toStreamError(err));
         setStreaming(false);
+        // Auto-resume with last_seq when connectivity returns.
+        if (err instanceof StudentSseError && err.source === 'network') {
+          scheduleRestart();
+        }
       },
     });
     connRef.current = conn;
@@ -173,16 +267,11 @@ export function useEdrionLearnSession(sessionId: string | undefined) {
 
   startStreamRef.current = startStream;
 
-  /** Explicit user-driven retry — force a teardown first so the guard can't block it. */
   const restartStream = useCallback(() => {
     stopStream();
     startStream();
   }, [startStream, stopStream]);
 
-  /**
-   * Called after an answer/interact/ask/commit. If a connection is still open we let its
-   * own `[DONE]` handler do the restart — opening one here too would double-connect.
-   */
   const continueStream = useCallback(() => {
     if (connRef.current) {
       pendingContinue.current = true;
@@ -193,16 +282,34 @@ export function useEdrionLearnSession(sessionId: string | undefined) {
 
   useEffect(() => stopStream, [stopStream]);
 
+  useEffect(() => {
+    if (!offline && streamError?.source === 'network') {
+      restartStream();
+    }
+  }, [offline, restartStream, streamError?.source]);
+
   const answer = useMutation({
-    mutationFn: (input: { blockId: string; questionId: string; response: unknown }) =>
-      client.post<{ session: LearnSessionV1Dto; evaluation: { correct?: boolean | null; feedback?: string } }>(
-        `/learn/sessions/${sessionId}/blocks/${input.blockId}/answer`,
-        {
+    mutationFn: async (input: { blockId: string; questionId: string; response: unknown; hintsUsed?: number }) => {
+      const key = stableIdempotencyKey(idempotencyKeys.current, `${input.blockId}:${input.questionId}`);
+      const post = () =>
+        client.post<{
+          session: LearnSessionV1Dto;
+          evaluation: { correct?: boolean | null; feedback?: string };
+          duplicate?: boolean;
+        }>(`/learn/sessions/${sessionId}/blocks/${input.blockId}/answer`, {
           questionId: input.questionId,
           response: input.response,
-          idempotencyKey: crypto.randomUUID(),
-        },
-      ),
+          hintsUsed: input.hintsUsed ?? 0,
+          idempotencyKey: key,
+        });
+      // G6: 30s idempotent answer retry on transient failure.
+      try {
+        return await post();
+      } catch (err) {
+        await new Promise((r) => setTimeout(r, ANSWER_RETRY_MS));
+        return post();
+      }
+    },
     onSuccess: (res) => {
       qc.setQueryData(sessionKey(sessionId!), res.session);
       continueStream();
@@ -210,16 +317,25 @@ export function useEdrionLearnSession(sessionId: string | undefined) {
   });
 
   const interact = useMutation({
-    mutationFn: (input: { blockId: string; action: string; data?: Record<string, unknown>; version: number }) =>
-      client.post<{ session: LearnSessionV1Dto }>(`/learn/sessions/${sessionId}/blocks/${input.blockId}/interact`, {
-        action: input.action,
-        data: input.data,
-        expectedInteractionVersion: input.version,
-        idempotencyKey: crypto.randomUUID(),
-      }),
-    onSuccess: (res) => {
+    mutationFn: (input: { blockId: string; action: string; data?: Record<string, unknown>; version: number }) => {
+      const key = stableIdempotencyKey(
+        idempotencyKeys.current,
+        `interact:${input.blockId}:${input.action}:${input.version}`,
+      );
+      return client.post<{ session: LearnSessionV1Dto }>(
+        `/learn/sessions/${sessionId}/blocks/${input.blockId}/interact`,
+        {
+          action: input.action,
+          data: input.data,
+          expectedInteractionVersion: input.version,
+          idempotencyKey: key,
+        },
+      );
+    },
+    onSuccess: (res, variables) => {
       qc.setQueryData(sessionKey(sessionId!), res.session);
-      continueStream();
+      const nonAdvancing = variables.action === 'expand_deeper' || variables.action === 'dwell';
+      if (!nonAdvancing) continueStream();
     },
   });
 
@@ -237,11 +353,14 @@ export function useEdrionLearnSession(sessionId: string | undefined) {
 
   const commitArtifacts = useMutation({
     mutationFn: (cardSelections: string[]) =>
-      client.post<{ session: LearnSessionV1Dto; deckId: string }>(`/learn/sessions/${sessionId}/commit-artifacts`, {
-        cardSelections,
-        includeCanvas: false,
-        idempotencyKey: crypto.randomUUID(),
-      }),
+      client.post<{ session: LearnSessionV1Dto; deckId: string }>(
+        `/learn/sessions/${sessionId}/commit-artifacts`,
+        {
+          cardSelections,
+          includeCanvas: false,
+          idempotencyKey: crypto.randomUUID(),
+        },
+      ),
     onSuccess: (res) => {
       qc.setQueryData(sessionKey(sessionId!), res.session);
       continueStream();
@@ -254,7 +373,7 @@ export function useEdrionLearnSession(sessionId: string | undefined) {
   });
 
   const end = useMutation({
-    mutationFn: (saveToLibrary = false) =>
+    mutationFn: (saveToLibrary: boolean) =>
       client.post<LearnSessionV1Dto>(`/learn/sessions/${sessionId}/end`, {
         saveToLibrary,
         idempotencyKey: crypto.randomUUID(),
@@ -262,16 +381,13 @@ export function useEdrionLearnSession(sessionId: string | undefined) {
     onSuccess: (data) => qc.setQueryData(sessionKey(sessionId!), data),
   });
 
-  useEffect(() => {
-    if (isDev && query.error) {
-      console.error('[edrion-learn] session fetch failed', { sessionId, error: query.error });
-    }
-  }, [query.error, sessionId]);
-
   return {
     ...query,
     streaming,
+    streamingText,
+    streamingMoveType,
     streamError,
+    offline,
     startStream,
     stopStream,
     restartStream,
@@ -295,4 +411,5 @@ export function useCreateEdrionLearnSession() {
   });
 }
 
+/** Alias used by Learn home / path entry points. */
 export const useCreateSession = useCreateEdrionLearnSession;

@@ -22,6 +22,7 @@ export function LibraryActionsRail({
   const glossary = useLibraryGlossary(itemId);
   const [streaming, setStreaming] = useState<GenerationKind | null>(null);
   const [budgetOpen, setBudgetOpen] = useState(false);
+  const [selectedBudget, setSelectedBudget] = useState<(typeof BUDGET_OPTIONS)[number]>(15);
   const busy = tutor.isPending || glossary.isPending;
 
   const hint = ready ? undefined : 'Confirm OCR / wait until ready';
@@ -96,13 +97,22 @@ export function LibraryActionsRail({
               <button
                 key={m}
                 type="button"
-                className="rounded-full border border-st-bd2 px-4 py-2 text-sm hover:border-[#1f604a]"
-                onClick={() => void startTeach(m)}
+                className={`rounded-full border px-4 py-2 text-sm ${
+                  selectedBudget === m ? 'border-[#1f604a] bg-[#1f604a]/10' : 'border-st-bd2 hover:border-[#1f604a]'
+                }`}
+                onClick={() => setSelectedBudget(m)}
               >
                 {m} min
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            className="mt-3 rounded-full bg-[#1f604a] px-4 py-2 text-sm text-white"
+            onClick={() => void startTeach(selectedBudget)}
+          >
+            Start {selectedBudget}-min lesson
+          </button>
         </div>
       )}
       {!ready && (

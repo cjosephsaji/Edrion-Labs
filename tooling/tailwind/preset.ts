@@ -1,5 +1,6 @@
 import type { Config } from 'tailwindcss';
 import animate from 'tailwindcss-animate';
+import tailwindTypography from '@tailwindcss/typography';
 import { lightTheme, radius, sizing, typography } from '@edrion/design-tokens';
 
 /** Map a token key to its CSS variable so utilities resolve to live theme values. */
@@ -161,7 +162,7 @@ const preset: Omit<Config, 'content'> = {
       },
     },
   },
-  plugins: [animate],
+  plugins: [animate, tailwindTypography],
 };
 
 void sizing; // referenced via CSS vars; kept for token completeness

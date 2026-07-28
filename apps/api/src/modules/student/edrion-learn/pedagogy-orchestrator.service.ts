@@ -1,4 +1,5 @@
-﻿import { ConflictException, ForbiddenException, HttpException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';import {
+﻿import { ConflictException, ForbiddenException, HttpException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
   answerBlockInputSchema,
   askSessionInputSchema,
   blockV1Schema,
@@ -39,6 +40,8 @@ import { InstitutionalContextService } from './institutional-context.service';
 import { GradingService } from './grading.service';
 import { SessionCompletionService } from './session-completion.service';
 import { ArtifactCommitService } from './artifact-commit.service';
+import { TopicResolutionService } from './topic-resolution.service';
+import { LearnerModelService } from './learner-model.service';
 
 /**
  * Hyperspec §3 fatigue rule threshold. Not one of the 9 tenant-tunable knobs, so
@@ -64,7 +67,17 @@ export class PedagogyOrchestratorService {
     private readonly completion: SessionCompletionService,
     private readonly artifacts: ArtifactCommitService,
     private readonly config: LearnConfigService,
+    private readonly topics: TopicResolutionService,
+    private readonly learnerModel: LearnerModelService,
   ) {}
+
+  private readonly speculativePlans = new Map<
+    string,
+    { plan: PlanV1; basedOnMoveCount: number; generatedAt: number }
+  >();
+
+  /** One plan+render at a time per session — concurrent SSE reconnects must not double-plan. */
+  private readonly planRenderInFlight = new Map<string, Promise<void>>();
 
   private configCtx(principal: StudentPrincipal): LearnConfigContext {
     return principal.kind === 'institutional'
@@ -74,6 +87,33 @@ export class PedagogyOrchestratorService {
           institutionUserId: principal.institutionUserId,
         }
       : { independentUserId: principal.independentUserId };
+  }
+
+  /** Title/key for a session that may have a null topic_id (DEC-14 ad-hoc). */
+  private async sessionTopicMeta(session: {
+    topicId: string | null;
+    state: unknown;
+    sessionContext: unknown;
+  }): Promise<{ learnTopicId: string | null; topicKey: string; title: string; subjectLabel: string }> {
+    const state = sessionStateV1Schema.safeParse(session.state ?? {});
+    const ctx = sessionContextV1Schema.safeParse(session.sessionContext ?? {});
+    if (session.topicId) {
+      const topic = await this.repo.getTopic(session.topicId);
+      if (topic) {
+        return {
+          learnTopicId: topic.id,
+          topicKey: topic.topicKey,
+          title: topic.title,
+          subjectLabel: topic.subjectLabel,
+        };
+      }
+    }
+    return {
+      learnTopicId: null,
+      topicKey: state.success ? state.data.topic_key : 'free:unknown',
+      title: ctx.success && ctx.data.topic_title ? ctx.data.topic_title : 'Untitled lesson',
+      subjectLabel: ctx.success && ctx.data.subject_label ? ctx.data.subject_label : 'General',
+    };
   }
 
   // ---------------------------------------------------------------------------
@@ -257,21 +297,22 @@ export class PedagogyOrchestratorService {
       });
     }
     const institutionalCtx = await this.institutional.resolve(principal, input);
-    const topicKey = institutionalCtx.topicKey ?? input.topicKey ?? `session:${input.idempotencyKey.slice(0, 8)}`;
-    const topicTitle = institutionalCtx.topicTitle ?? topicKey;
-    const subjectLabel = institutionalCtx.subjectLabel ?? 'General';
-    const curriculumKey = principal.kind === 'institutional' ? 'institution' : 'generic';
-    const topic = await this.repo.upsertTopic(
-      topicKey,
-      topicTitle,
-      subjectLabel,
-      curriculumKey,
-      principal.kind === 'institutional' ? principal.institutionId : null,
-    );
+    // DEC-14: resolve canonical topic keys; ad-hoc topics keep learn_topic_id null.
+    const resolved = await this.topics.resolve(principal, {
+      ...input,
+      topicKey: institutionalCtx.topicKey ?? input.topicKey,
+    });
+    const topicKey = resolved.topicKey;
+    const topicTitle = institutionalCtx.topicTitle ?? resolved.title;
+    const subjectLabel = institutionalCtx.subjectLabel ?? resolved.subjectLabel;
+    const learnTopicId = resolved.learnTopicId;
     const { profile, profileId } = await this.profiles.resolve(principal, {
-      learnTopicId: topic.id,
+      learnTopicId,
       topicKey,
-      title: topic.title,
+      title: topicTitle,
+      syllabusContext: resolved.syllabusContext,
+      materialOutline: resolved.materialOutline,
+      materialFirstChunk: resolved.materialFirstChunk,
     });
     const timeBudget =
       institutionalCtx.timeBudgetMinutes ?? input.timeBudgetMinutes ?? cfg.default_session_minutes;
@@ -287,19 +328,20 @@ export class PedagogyOrchestratorService {
       emotional_context: emotionalContext,
       policy_snapshot: policySnapshot,
       grounding_knowledge_item_id: input.knowledgeItemId,
+      subject_label: subjectLabel,
+      topic_title: topicTitle,
       ...institutionalCtx.sessionContextExtras,
+      ...resolved.sessionContextExtras,
     });
     const entryRef =
       institutionalCtx.entryRef ??
-      (input.pathItemId
-        ? { learning_path_item_id: input.pathItemId }
-        : input.knowledgeItemId
-          ? { knowledge_item_id: input.knowledgeItemId }
-          : {});
-    const resolvedEntryPoint = institutionalCtx.entryPoint ?? input.entryPoint;
+      resolved.entryRef ??
+      (input.knowledgeItemId ? { material_id: input.knowledgeItemId } : {});
+    const resolvedEntryPoint =
+      institutionalCtx.entryPoint ?? resolved.entryPoint ?? input.entryPoint;
     const session = await this.repo.createSession({
       ...owner,
-      topicId: topic.id,
+      topicId: learnTopicId,
       topicProfileId: profileId,
       pathItemId: input.pathItemId ?? null,
       groundingKnowledgeItemId: input.knowledgeItemId ?? null,
@@ -354,16 +396,34 @@ export class PedagogyOrchestratorService {
     for (const ev of events) {
       emit({ type: 'replay', seq: ev.seq, eventType: ev.eventType, payload: ev.payload });
     }
+    // F5: also re-emit persisted blocks so a reconnect recovers content, not just events.
+    const blocks = await this.repo.listBlocks(sessionId);
+    for (const b of blocks) {
+      if ((b.streamSeq ?? 0) <= lastSeq) continue;
+      const parsed = blockV1Schema.safeParse(b.content);
+      if (!parsed.success) continue;
+      emit({
+        type: 'block',
+        seq: b.streamSeq ?? b.sequence,
+        block: {
+          id: b.id,
+          streamSeq: b.streamSeq,
+          moveType: b.moveType,
+          block: this.redactServerOnly(parsed.data),
+          reasoning: b.reasoning,
+          degraded: b.degraded ?? false,
+          renderStatus: b.renderStatus,
+          interactionState: (b.interactionState as Record<string, unknown>) ?? {},
+        },
+      });
+    }
     const status = this.status(session);
     if (abandoned || status === 'closed' || status === 'paused') return;
     if (status === 'awaiting_response') return;
     if (status === 'closing') {
-      // A `closing` session crashed mid-pair. Resume it rather than stranding it:
-      // the closing pair is the only work legal in this state.
       await this.runClosingSequence(principal, sessionId, 'goal_met', emit);
       return;
     }
-    const blocks = await this.repo.listBlocks(sessionId);
     const last = blocks[blocks.length - 1];
     const lastMove = (last?.moveType ?? 'direct_explanation') as import('@edrion/schemas').MoveType;
     const shouldPlan =
@@ -373,11 +433,33 @@ export class PedagogyOrchestratorService {
       await this.planAndRenderNextBlock(principal, sessionId, emit);
     }
   }
+
   async planAndRenderNextBlock(
     principal: StudentPrincipal,
     sessionId: string,
     emit?: (event: Record<string, unknown>) => void,
-  ) {
+  ): Promise<void> {
+    const existing = this.planRenderInFlight.get(sessionId);
+    if (existing) {
+      await existing;
+      return;
+    }
+    const work = this.executePlanAndRenderNextBlock(principal, sessionId, emit);
+    this.planRenderInFlight.set(sessionId, work);
+    try {
+      await work;
+    } finally {
+      if (this.planRenderInFlight.get(sessionId) === work) {
+        this.planRenderInFlight.delete(sessionId);
+      }
+    }
+  }
+
+  private async executePlanAndRenderNextBlock(
+    principal: StudentPrincipal,
+    sessionId: string,
+    emit?: (event: Record<string, unknown>) => void,
+  ): Promise<void> {
     const session = await this.repo.getSession(principal, sessionId);
     if (!session) return;
     const status = this.status(session);
@@ -432,37 +514,47 @@ export class PedagogyOrchestratorService {
       if (!(await this.transition(sessionId, 'created', 'active', 'first_render_start'))) return;
     }
 
-    const topic = await this.repo.getTopic(session.topicId);
-    if (!topic) return;
+    const topicMeta = await this.sessionTopicMeta(session);
     const { profile } = await this.profiles.resolve(principal, {
-      learnTopicId: topic.id,
-      topicKey: topic.topicKey,
-      title: topic.title,
+      learnTopicId: topicMeta.learnTopicId,
+      topicKey: topicMeta.topicKey,
+      title: topicMeta.title,
     });
     const sessionCtx = sessionContextV1Schema.safeParse(session.sessionContext ?? {});
     const preferRetrieval =
       (sessionCtx.success && sessionCtx.data.active_assignment_overlap) ||
       policySnapshot.answer_directness === 'never_direct_on_assignment' ||
       policySnapshot.answer_directness === 'guided';
-    if (state.pending_free_question) {
-      state.pending_free_question = null;
-      await this.repo.updateSession(sessionId, { state });
+    const hadFreeQuestion = Boolean(state.pending_free_question);
+    const planCtx = {
+      state,
+      profile,
+      policy: policySnapshot,
+      topicTitle: topicMeta.title,
+      config: cfg,
+      hardRules: state.wrap_up
+        ? ['Time is almost up — steer toward closing and keep this short.']
+        : [],
+      preferRetrieval: Boolean(preferRetrieval),
+    };
+    // F3: consume speculative N+1 when still valid for this move count; else re-plan.
+    const speculative = this.speculativePlans.get(sessionId);
+    this.speculativePlans.delete(sessionId);
+    const speculativeFresh =
+      speculative &&
+      speculative.basedOnMoveCount === state.moves.length &&
+      Date.now() - speculative.generatedAt < 90_000;
+    let plan: PlanV1;
+    if (speculativeFresh && speculative) {
+      const planned = this.planner.enforcePlan(speculative.plan, planCtx);
+      plan = planned.plan;
+      this.planner.applyPlanToState(state, plan);
+    } else {
+      plan = (await this.planner.planNextMove(principal, planCtx, { sessionId })).plan;
     }
-    const plan = await this.planner.planMove(
-      principal,
-      {
-        state,
-        profile,
-        policy: policySnapshot,
-        topicTitle: topic.title,
-        config: cfg,
-        hardRules: state.wrap_up
-          ? ['Time is almost up — steer toward closing and keep this short.']
-          : [],
-        preferRetrieval: Boolean(preferRetrieval),
-      },
-      { sessionId },
-    );
+    if (hadFreeQuestion) {
+      state.pending_free_question = null;
+    }
     if (plan.session_should_end || state.moves.length >= cfg.move_cap) {
       await this.runClosingSequence(
         principal,
@@ -472,7 +564,7 @@ export class PedagogyOrchestratorService {
       );
       return;
     }
-    await this.renderPlannedBlock(principal, sessionId, state, plan, topic.title, emit);
+    await this.renderPlannedBlock(principal, sessionId, state, plan, topicMeta.title, emit);
   }
 
   /**
@@ -491,6 +583,18 @@ export class PedagogyOrchestratorService {
   ) {
     const session = await this.repo.getSession(principal, sessionId);
     if (!session) return;
+    const freshState = sessionStateV1Schema.parse(session.state ?? {});
+    const expectedMoveCount = state.moves.length;
+    if (freshState.moves.length !== expectedMoveCount) {
+      this.logger.debug(
+        `skip render for ${sessionId}: move digest advanced (${expectedMoveCount}→${freshState.moves.length})`,
+      );
+      return;
+    }
+    state = freshState;
+    const sessionVersion = session.version;
+    const priorBlocks = await this.repo.listBlocks(sessionId);
+    const recentBlocks = this.recentBlockDigestsForRender(priorBlocks);
     const topic = { title: topicTitle };
     // One atomic allocation serves both the block sequence and the stream sequence:
     // both are unique-per-session and a shared counter keeps them collision-free.
@@ -507,21 +611,58 @@ export class PedagogyOrchestratorService {
       renderStatus: 'streaming',
     });
     emit?.({ type: 'block_start', seq: streamSeq, blockId: blockRow.id, moveType: plan.move });
-    let { block, degraded } = await this.renderer.render(principal, {
-      sessionId,
-      blockId: blockRow.id,
-      blockSeq: seq,
-      plan,
-      topicTitle: topic.title,
-    });
+    // F3: when speculative_planning is on, fire plan for N+1 as soon as render starts.
+    const cfg = await this.config.getAll(this.configCtx(principal));
+    if (cfg.speculative_planning && !opts?.closing) {
+      void this.prefetchSpeculativePlan(principal, sessionId, state.moves.length + 1).catch(() => undefined);
+    }
+    const heartbeat = setInterval(() => {
+      emit?.({ type: 'heartbeat', ts: Date.now() });
+    }, 8_000);
+    let block: BlockV1;
+    let degraded: boolean;
+    try {
+      const rendered = await this.renderer.render(principal, {
+        sessionId,
+        blockId: blockRow.id,
+        blockSeq: seq,
+        plan,
+        topicTitle: topic.title,
+        learnTopicId: session.topicId,
+        recentBlocks,
+        onProgress: (p) => {
+          emit?.({
+            type: 'block_delta',
+            blockId: blockRow.id,
+            seq: streamSeq,
+            text: p.text,
+            firstTokenMs: p.firstTokenMs,
+          });
+        },
+      });
+      block = rendered.block;
+      degraded = rendered.degraded;
+    } finally {
+      clearInterval(heartbeat);
+    }
+    if (
+      plan.move === 'direct_explanation' &&
+      plan.params?.remediation === true &&
+      block.block_type === 'explanation'
+    ) {
+      const lead = "Let's shore this up first — it'll make the rest click.";
+      block = {
+        ...block,
+        body_md: block.body_md.startsWith(lead) ? block.body_md : `${lead}\n\n${block.body_md}`,
+      };
+    }
     if (plan.move === 'visual_spawn') {
-      // Hyperspec §3.5: a pipeline hard-fail degrades to a direct explanation,
-      // it never breaks the session.
       const graphResult = await this.canvas
         .generateForSession(principal, {
           sessionId,
           blockId: blockRow.id,
           topicTitle: topic.title,
+          topicId: session.topicId,
         })
         .catch(() => null);
       if (graphResult) {
@@ -532,7 +673,7 @@ export class PedagogyOrchestratorService {
           caption: topic.title,
         });
         await this.repo.updateBlock(blockRow.id, {
-          interactionState: { graph: graphResult.graph },
+          interactionState: { canvasId: graphResult.canvasId },
         });
       } else {
         block = blockV1Schema.parse({
@@ -563,8 +704,6 @@ export class PedagogyOrchestratorService {
       checkpointsDone: state.checkpoints.done,
       checkpointsTotal: state.checkpoints.total,
     };
-    // In `closing` the pair renders without leaving the state — the only exit is
-    // `closed`, written by closeSession once the pair is done.
     if (awaiting && !opts?.closing && this.status(session) === 'active') {
       const moved = await this.transition(
         sessionId,
@@ -573,9 +712,19 @@ export class PedagogyOrchestratorService {
         `block_requires_response:${plan.move}`,
         { patch },
       );
-      if (!moved) await this.repo.updateSession(sessionId, patch);
+      if (!moved) {
+        const updated = await this.repo.updateSession(sessionId, patch, sessionVersion);
+        if (!updated) {
+          this.logger.warn(`state version conflict after render for session ${sessionId}`);
+          return;
+        }
+      }
     } else {
-      await this.repo.updateSession(sessionId, patch);
+      const updated = await this.repo.updateSession(sessionId, patch, sessionVersion);
+      if (!updated) {
+        this.logger.warn(`state version conflict after render for session ${sessionId}`);
+        return;
+      }
     }
     emit?.({
       type: 'block',
@@ -588,8 +737,68 @@ export class PedagogyOrchestratorService {
         reasoning: plan.reasoning,
         degraded,
         renderStatus: 'complete',
+        interactionState:
+          plan.move === 'visual_spawn' && 'canvas_id' in block
+            ? { canvasId: (block as { canvas_id?: string }).canvas_id }
+            : {},
       },
     });
+  }
+
+  private recentBlockDigestsForRender(
+    blocks: Awaited<ReturnType<EdrionLearnRepository['listBlocks']>>,
+  ): { move: string | null; title?: string; body_excerpt?: string }[] {
+    return blocks
+      .filter((b) => b.renderStatus === 'complete')
+      .slice(-3)
+      .map((b) => {
+        const content = b.content as Record<string, unknown>;
+        const body =
+          typeof content.body_md === 'string'
+            ? content.body_md
+            : typeof content.problem_md === 'string'
+              ? content.problem_md
+              : '';
+        return {
+          move: b.moveType,
+          title: typeof content.title === 'string' ? content.title : undefined,
+          body_excerpt: body.slice(0, 200) || undefined,
+        };
+      });
+  }
+
+  /** Speculative N+1 plan (F3). Discarded if move count changes before use. */
+  private async prefetchSpeculativePlan(
+    principal: StudentPrincipal,
+    sessionId: string,
+    basedOnMoveCount: number,
+  ): Promise<void> {
+    const session = await this.repo.getSession(principal, sessionId);
+    if (!session) return;
+    const state = sessionStateV1Schema.parse(session.state ?? {});
+    if (state.moves.length !== basedOnMoveCount - 1) return;
+    const topicMeta = await this.sessionTopicMeta(session);
+    const { profile } = await this.profiles.resolve(principal, {
+      learnTopicId: topicMeta.learnTopicId,
+      topicKey: topicMeta.topicKey,
+      title: topicMeta.title,
+    });
+    const policy = learnPolicyV1Schema.parse(session.policySnapshot ?? {});
+    const cfg = await this.config.getAll(this.configCtx(principal));
+    const plan = await this.planner.planMove(
+      principal,
+      {
+        state,
+        profile,
+        policy,
+        topicTitle: topicMeta.title,
+        config: cfg,
+        hardRules: [],
+        preferRetrieval: false,
+      },
+      { sessionId, speculative: true },
+    );
+    this.speculativePlans.set(sessionId, { plan, basedOnMoveCount, generatedAt: Date.now() });
   }
 
   /**
@@ -619,8 +828,8 @@ export class PedagogyOrchestratorService {
       });
       if (!moved) return;
     }
-    const topic = await this.repo.getTopic(session.topicId);
-    const topicTitle = topic?.title ?? 'this lesson';
+    const topicMeta = await this.sessionTopicMeta(session);
+    const topicTitle = topicMeta.title;
     const state = sessionStateV1Schema.parse(session.state ?? {});
     // Two iterations at most: closingPlan yields artifact_commit then synthesis.
     for (let i = 0; i < 2; i += 1) {
@@ -750,6 +959,28 @@ export class PedagogyOrchestratorService {
     }
     const question = content.questions.find((q) => q.id === input.questionId);
     if (!question) throw new NotFoundException({ code: 'QUESTION_NOT_FOUND', message: 'Question not found.' });
+
+    // F8 / DM-096 / AC8: duplicate returns the STORED evaluation — never re-grades.
+    const existing = await this.repo.findAttemptByQuestion(sessionId, blockId, input.questionId);
+    if (existing) {
+      return {
+        evaluation: existing.evaluation as { correct?: boolean | null; feedback?: string },
+        session: await this.toDto(principal, sessionId),
+        duplicate: true as const,
+      };
+    }
+
+    // Invalidate speculative N+1 — answering may change the legal plan.
+    this.speculativePlans.delete(sessionId);
+
+    // E10: never write mastery against invented atom ids (FK would 23503).
+    const atomIdRaw = question.atom_id ?? null;
+    const validAtoms =
+      session.topicId && atomIdRaw
+        ? await this.repo.filterValidAtomIds(session.topicId, [atomIdRaw])
+        : new Set<string>();
+    const atomId = atomIdRaw && validAtoms.has(atomIdRaw) ? atomIdRaw : null;
+
     let correct: boolean | null = null;
     let feedback = question.why_md ?? '';
     if (question.type === 'mcq_single' && question.correct_option_id) {
@@ -766,17 +997,32 @@ export class PedagogyOrchestratorService {
       correct = graded.correct;
       feedback = graded.feedback;
     }
-    const evaluation = { correct, score: correct === true ? 1 : correct === false ? 0 : null, feedback };
+    const evaluation = {
+      correct,
+      score: correct === true ? 1 : correct === false ? 0 : null,
+      feedback:
+        correct === false && question.type === 'mcq_single' && question.correct_option_id
+          ? question.why_md ?? feedback
+          : feedback ||
+            (atomId
+              ? ''
+              : correct === null
+                ? "Recorded — couldn't auto-check this one."
+                : 'Recorded — concept link unavailable.'),
+      ...(correct === false && question.type === 'mcq_single' && question.correct_option_id
+        ? { correctOptionId: question.correct_option_id }
+        : {}),
+    };
     const result = await this.evidence.recordAnswer(principal, {
       sessionId,
       blockId,
       questionId: input.questionId,
-      atomId: question.atom_id,
+      atomId,
       difficulty: question.difficulty,
       kind: content.purpose === 'prereq' ? 'learn_prereq' : 'learn_retrieval',
       input: { question_id: input.questionId, response: input.response },
       evaluation,
-      hintsUsed: 0,
+      hintsUsed: input.hintsUsed ?? 0,
       idempotencyKey: input.idempotencyKey,
     });
     const state = sessionStateV1Schema.parse(session.state ?? {});
@@ -797,8 +1043,18 @@ export class PedagogyOrchestratorService {
       state.recent_graded = [...state.recent_graded, outcome].slice(-3);
     }
     await this.syncElapsed(session, state);
+    const priorInteraction = (block.interactionState as Record<string, unknown>) ?? {};
+    const answeredMap = {
+      ...((priorInteraction.answeredMap as Record<string, unknown>) ?? {}),
+      [input.questionId]: evaluation,
+    };
     await this.repo.updateBlock(blockId, {
-      interactionState: { ...((block.interactionState as object) ?? {}), answered: input.questionId, evaluation },
+      interactionState: {
+        ...priorInteraction,
+        answered: input.questionId,
+        evaluation,
+        answeredMap,
+      },
     });
     const from = this.status(session);
     if (from === 'awaiting_response') {
@@ -836,7 +1092,13 @@ export class PedagogyOrchestratorService {
         const revealed = new Set((interaction.revealedSteps as number[]) ?? []);
         revealed.add(step);
         interaction.revealedSteps = [...revealed];
-        if (input.data?.prediction) interaction[`prediction_${step}`] = input.data.prediction;
+        if (input.data?.prediction) {
+          interaction[`prediction_${step}`] = input.data.prediction;
+          if (state.moves.length) {
+            const last = state.moves[state.moves.length - 1]!;
+            last.outcome = { ...last.outcome, prediction_text: String(input.data.prediction) };
+          }
+        }
         break;
       }
       case 'probe_answer':
@@ -849,9 +1111,20 @@ export class PedagogyOrchestratorService {
           last.outcome.probe_escaped = true;
         }
         break;
-      case 'synthesis_submit':
-        interaction.synthesisText = input.data?.text;
+      case 'synthesis_submit': {
+        const text = String(input.data?.text ?? '');
+        interaction.synthesisText = text;
+        if (content.block_type === 'synthesis') {
+          const graded = await this.grading.gradeSynthesis(principal, {
+            sessionId,
+            blockId,
+            promptMd: content.prompt_md,
+            text,
+          });
+          interaction.synthesisTightened = graded.tightened;
+        }
         break;
+      }
       case 'synthesis_skip':
         interaction.synthesisSkipped = true;
         if (state.moves.length) {
@@ -884,6 +1157,33 @@ export class PedagogyOrchestratorService {
         if (key === 'wrap_up') state.wrap_up = true;
         break;
       }
+      case 'expand_deeper': {
+        interaction.expandedDeeper = true;
+        if (state.moves.length) {
+          const last = state.moves[state.moves.length - 1]!;
+          last.outcome.expanded_deeper = true;
+        }
+        await this.learnerModel.recordExpandedDeeper(principal, block.moveType ?? 'direct_explanation');
+        break;
+      }
+      case 'dwell': {
+        const dwellMs = Number(input.data?.ms ?? 0);
+        if (Number.isFinite(dwellMs) && dwellMs > 0) {
+          interaction.lastDwellMs = dwellMs;
+          await this.learnerModel.recordDwell(principal, dwellMs);
+        }
+        break;
+      }
+      case 'acknowledge':
+        interaction.acknowledged = true;
+        break;
+      case 'skip_step':
+        interaction.skipped = true;
+        if (state.moves.length) {
+          const last = state.moves[state.moves.length - 1]!;
+          last.outcome = { ...last.outcome, skipped: true };
+        }
+        break;
       default:
         break;
     }
@@ -903,9 +1203,12 @@ export class PedagogyOrchestratorService {
     }
     const doneActions = new Set([
       'probe_escape',
+      'probe_answer',
       'synthesis_submit',
       'synthesis_skip',
       'notice_action',
+      'acknowledge',
+      'skip_step',
     ]);
     if (doneActions.has(input.action) || (input.action === 'reveal_step' && content.block_type === 'worked_example')) {
       const revealed = (interaction.revealedSteps as number[]) ?? [];
@@ -950,8 +1253,8 @@ export class PedagogyOrchestratorService {
     if (content.block_type !== 'artifact_commit') throw new ConflictException();
     const selected = content.cards.filter((c) => input.cardSelections.includes(c.source_block_id) || input.cardSelections.length === 0);
     const cards = selected.length ? selected : content.cards;
-    const topic = await this.repo.getTopic(session.topicId);
-    const result = await this.artifacts.commitCards(principal, sessionId, cards, topic?.title ?? 'Lesson cards');
+    const topicMeta = await this.sessionTopicMeta(session);
+    const result = await this.artifacts.commitCards(principal, sessionId, cards, topicMeta.title);
     await this.repo.updateBlock(commitBlock.id, {
       interactionState: { committed: true, deckId: result.deckId, cardCount: result.cardCount },
     });
@@ -1077,15 +1380,15 @@ export class PedagogyOrchestratorService {
   private async toDto(principal: StudentPrincipal, sessionId: string): Promise<LearnSessionV1Dto> {
     const session = await this.repo.getSession(principal, sessionId);
     if (!session) throw new NotFoundException();
-    const topic = await this.repo.getTopic(session.topicId);
+    const topicMeta = await this.sessionTopicMeta(session);
     const blocks = await this.repo.listBlocks(sessionId);
     const policySnapshot = learnPolicyV1Schema.parse(session.policySnapshot ?? {});
     return {
       id: session.id,
       topicId: session.topicId,
-      topicKey: topic?.topicKey ?? '',
-      topicTitle: topic?.title ?? '',
-      subjectLabel: topic?.subjectLabel ?? 'General',
+      topicKey: topicMeta.topicKey,
+      topicTitle: topicMeta.title,
+      subjectLabel: topicMeta.subjectLabel,
       entryPoint: session.entryPoint as LearnSessionV1Dto['entryPoint'],
       orchestratorStatus: session.orchestratorStatus as LearnSessionV1Dto['orchestratorStatus'],
       status: (session.status as LearnSessionV1Dto['status']) ?? 'active',
@@ -1126,6 +1429,7 @@ export class PedagogyOrchestratorService {
       pathItemId: session.pathItemId,
       groundingKnowledgeItemId: session.groundingKnowledgeItemId,
       evidence: session.evidence ?? [],
+      summary: (session.summary as Record<string, unknown> | null) ?? null,
       startedAt: session.startedAt.toISOString(),
       pausedAt: session.pausedAt?.toISOString() ?? null,
       endedAt: session.endedAt?.toISOString() ?? null,

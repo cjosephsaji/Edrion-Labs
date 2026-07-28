@@ -30,6 +30,6 @@ import { StudentAuthModule } from '../auth/student-auth.module';
     VisualTopicalityService,
     StudentRateLimitGuard,
   ],
-  exports: [VisualGroundingService, VisualStudioRepository],
+  exports: [VisualGroundingService, VisualStudioRepository, VisualGenerationService],
 })
 export class VisualStudioModule {}

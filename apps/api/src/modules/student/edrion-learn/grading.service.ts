@@ -11,6 +11,11 @@ const gradeResultSchema = z.object({
   feedback: z.string().max(500),
 });
 
+const synthesisGradeSchema = z.object({
+  tightened: z.string().max(400),
+  note: z.string().max(300).optional(),
+});
+
 @Injectable()
 export class GradingService {
   constructor(
@@ -72,4 +77,44 @@ export class GradingService {
     }
   }
 
+  async gradeSynthesis(
+    principal: StudentPrincipal,
+    opts: { sessionId: string; blockId: string; promptMd: string; text: string },
+  ): Promise<{ tightened: string; note?: string }> {
+    const student = opts.text.trim().slice(0, 280);
+    if (!student) {
+      return { tightened: opts.text, note: 'Empty synthesis.' };
+    }
+    if (!this.ai.available) {
+      return { tightened: student };
+    }
+    const started = Date.now();
+    try {
+      const { result, usage } = await this.ai.completeJson({
+        purpose: 'learn_grade',
+        tier: 'small',
+        system:
+          'Tighten a student synthesis in one or two sentences. Output JSON {tightened, note?}. Keep their meaning; improve clarity.',
+        user: JSON.stringify({ prompt: opts.promptMd, student_synthesis: student }),
+        schema: synthesisGradeSchema,
+        schemaName: 'LearnSynthesisGrade',
+        maxOutputTokens: 180,
+      });
+      await this.callLog.log(principal, 'learn_grade', usage, {
+        sessionId: opts.sessionId,
+        blockId: opts.blockId,
+        promptVersion: PROMPT_VERSION,
+        outcome: 'synthesis',
+      });
+      return result;
+    } catch {
+      await this.callLog.log(
+        principal,
+        'learn_grade',
+        { inputTokens: 0, outputTokens: 0, model: 'fallback', durationMs: Date.now() - started },
+        { sessionId: opts.sessionId, blockId: opts.blockId, error: 'synthesis_grade_failed' },
+      );
+      return { tightened: student };
+    }
+  }
 }

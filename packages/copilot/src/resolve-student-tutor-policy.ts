@@ -1,4 +1,4 @@
-import { AiMode, FeatureScope } from '@edrion/shared-types';
+import { AiCapability, AiMode, FeatureScope } from '@edrion/shared-types';
 import { resolveAiPolicy, scopeMatchesContext } from './resolve-policy';
 import type { AiPolicyInput, AiResolutionContext } from './types';
 
@@ -8,6 +8,10 @@ export type StudentTutorSessionVisibility = 'none' | 'aggregate' | 'transcript';
 
 export interface StudentTutorPolicyInput extends AiPolicyInput {
   policyDomain?: 'copilot' | 'student_tutor';
+  /**
+   * @deprecated DEC-16 — read from `capabilities` (AiCapability grammar). Kept as a
+   * fallback for rows not yet migrated by 0107.
+   */
   domainConfig?: Record<string, unknown>;
 }
 
@@ -35,10 +39,7 @@ const DIRECTNESS = new Set<StudentTutorAnswerDirectness>([
 ]);
 const VISIBILITY = new Set<StudentTutorSessionVisibility>(['none', 'aggregate', 'transcript']);
 
-function pickDomainConfig(
-  layered: StudentTutorPolicyInput[],
-  key: string,
-): unknown {
+function pickDomainConfig(layered: StudentTutorPolicyInput[], key: string): unknown {
   for (const row of layered) {
     const v = row.domainConfig?.[key];
     if (v != null) return v;
@@ -66,7 +67,7 @@ function asVisibility(v: unknown): StudentTutorSessionVisibility {
 
 /**
  * Resolve Edrion Learn student_tutor policy from ai_policies rows.
- * Reuses base scope precedence and OR kill-switch semantics.
+ * Reuses base scope precedence, capability merge, and OR kill-switch semantics (DEC-16).
  */
 export function resolveStudentTutorPolicy(
   policies: StudentTutorPolicyInput[],
@@ -85,18 +86,22 @@ export function resolveStudentTutorPolicy(
     FeatureScope.Global,
   ]
     .map((scope) =>
-      // Same scope guard the base engine applies in `bestPolicyForScope`. Without it an
-      // `institution`/`campus`/`user`-scoped row belonging to a *different* tenant would be
-      // picked up here and leak its `domainConfig` into this context's resolution.
       tutorRows
         .filter((p) => p.scope === scope && p.enabled && scopeMatchesContext(scope, p.scopeId ?? null, context))
         .sort((a, b) => (b.setAt ? new Date(b.setAt).getTime() : 0) - (a.setAt ? new Date(a.setAt).getTime() : 0))[0],
     )
     .filter((p): p is StudentTutorPolicyInput => !!p);
 
-  const curriculum_bounds = asBounds(pickDomainConfig(layered, 'curriculum_bounds'));
-  const answer_directness = asDirectness(pickDomainConfig(layered, 'answer_directness'));
-  const session_visibility = asVisibility(pickDomainConfig(layered, 'session_visibility'));
+  // DEC-16: primary source is the engine's capabilities map; domain_config is legacy fallback.
+  const curriculum_bounds = asBounds(
+    base.capabilities[AiCapability.CurriculumBounds] ?? pickDomainConfig(layered, 'curriculum_bounds'),
+  );
+  const answer_directness = asDirectness(
+    base.capabilities[AiCapability.AnswerDirectness] ?? pickDomainConfig(layered, 'answer_directness'),
+  );
+  const session_visibility = asVisibility(
+    base.capabilities[AiCapability.SessionVisibility] ?? pickDomainConfig(layered, 'session_visibility'),
+  );
 
   const disabled = base.killSwitch || base.mode === AiMode.Disabled;
 

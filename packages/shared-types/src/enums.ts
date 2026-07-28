@@ -215,8 +215,18 @@ export const AiCapability = {
   InstitutionAccess: 'institution_access',
   Feature: 'feature',
   Communications: 'communications',
+  /**
+   * Student-tutor (Edrion Learn) capability keys — same capabilities map grammar as
+   * admin Copilot. Values are enum strings (not booleans) in `ai_policies.capabilities`.
+   */
+  CurriculumBounds: 'curriculum_bounds',
+  AnswerDirectness: 'answer_directness',
+  SessionVisibility: 'session_visibility',
 } as const;
 export type AiCapability = (typeof AiCapability)[keyof typeof AiCapability];
+
+/** Capability values may be boolean (admin Copilot) or enum strings (student_tutor). */
+export type AiCapabilityValue = boolean | string;
 
 /**
  * Guardrail outcome for a proposed AI action. Never a bare boolean — the evaluator returns the

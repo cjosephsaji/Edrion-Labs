@@ -62,7 +62,8 @@ export type CreateLearnSessionInput = z.infer<typeof createLearnSessionInputSche
 
 export const learnSessionV1Schema = z.object({
   id: z.string().uuid(),
-  topicId: z.string().uuid(),
+  /** Null for ad-hoc free/material sessions (DEC-14 / AC3). */
+  topicId: z.string().uuid().nullable(),
   topicKey: z.string(),
   topicTitle: z.string(),
   subjectLabel: z.string(),
@@ -85,6 +86,8 @@ export const learnSessionV1Schema = z.object({
   pathItemId: z.string().uuid().nullable().optional(),
   groundingKnowledgeItemId: z.string().uuid().nullable().optional(),
   evidence: z.array(z.string()).optional(),
+  /** Written at close; shown on the completion card (AC-8). */
+  summary: z.record(z.unknown()).nullable().optional(),
   startedAt: z.string().datetime(),
   pausedAt: z.string().datetime().nullable().optional(),
   endedAt: z.string().datetime().nullable().optional(),
@@ -107,6 +110,8 @@ export const activeSessionConflictSchema = z.object({
 export const answerBlockInputSchema = z.object({
   questionId: z.string().min(1).max(40),
   response: z.unknown(),
+  /** Real hint count for half-weight K on hinted success (hyperspec §6). */
+  hintsUsed: z.number().int().nonnegative().max(20).default(0),
   idempotencyKey: z.string().uuid(),
   expectedInteractionVersion: z.number().int().nonnegative().optional(),
 });
@@ -142,6 +147,8 @@ export const blockAnswerResultSchema = z.object({
   evaluation: z.object({
     correct: z.boolean().nullable().optional(),
     feedback: z.string().optional(),
+    /** Present only after a wrong MCQ — never on the streamed block payload. */
+    correctOptionId: z.string().optional(),
   }),
   session: learnSessionV1Schema,
 });

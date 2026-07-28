@@ -36,6 +36,7 @@ export class StudentTutorPolicyService {
       enabled: r.enabled,
       mode: r.mode as AiMode,
       killSwitch: r.killSwitch,
+      capabilities: (r.capabilities ?? {}) as StudentTutorPolicyInput['capabilities'],
       domainConfig: r.domainConfig ?? {},
       policyDomain: 'student_tutor',
       setAt: r.updatedAt,

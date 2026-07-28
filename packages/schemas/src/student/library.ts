@@ -191,6 +191,18 @@ export const deckFromSessionSchema = z.object({
   sessionId: z.string().uuid(),
 });
 
+export const learnBlockNoteSchema = z.object({
+  sessionId: z.string().uuid(),
+  title: z.string().min(1).max(200),
+  bodyMd: z.string().min(1).max(8000),
+});
+
+export const learnBlockFlashcardSchema = z.object({
+  sessionId: z.string().uuid(),
+  prompt: z.string().min(1).max(2000),
+  answer: z.string().min(1).max(4000),
+});
+
 export const knowledgeItemPageSchema = z.object({
   pageIndex: z.number().int().nonnegative(),
   objectId: z.string().uuid(),

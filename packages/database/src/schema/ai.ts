@@ -29,8 +29,9 @@ export const aiPolicies = pgTable(
     enabled: boolean('enabled').notNull().default(true),
     /** Operating mode: disabled | read_only | draft_only | full. */
     mode: aiModeEnum('mode').notNull().default('disabled'),
-    /** Per-capability enable map. A capability absent from the map defaults to enabled. */
-    capabilities: jsonb('capabilities').$type<Partial<Record<AiCapability, boolean>>>().default({}),
+    /** Per-capability enable map. A capability absent from the map defaults to enabled.
+     *  Student-tutor keys store enum strings in the same jsonb (DEC-16). */
+    capabilities: jsonb('capabilities').$type<Partial<Record<AiCapability, boolean | string>>>().default({}),
     /** Hard ceiling on financial impact (minor units). Over this → BLOCKED. Null = no cap. */
     maxFinancialImpactMinor: integer('max_financial_impact_minor'),
     /** Hard ceiling on affected users. Over this → BLOCKED. Null = no cap. */

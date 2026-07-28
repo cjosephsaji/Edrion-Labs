@@ -694,6 +694,20 @@
       "when": 1787700000000,
       "tag": "0105_learn_status_check_and_config_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "7",
+      "when": 1787800000000,
+      "tag": "0106_learn_profiler_learner_model",
+      "breakpoints": true
+    },
+    {
+      "idx": 100,
+      "version": "7",
+      "when": 1787900000000,
+      "tag": "0107_learn_student_tutor_capabilities",
+      "breakpoints": true
     }
   ]
 }

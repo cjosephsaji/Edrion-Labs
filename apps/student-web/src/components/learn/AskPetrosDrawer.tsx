@@ -191,6 +191,7 @@ export function AskPetrosDrawer({
                 <LearnHandoffCard
                   topicKey={`chat:${context.contextLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}`}
                   topicLabel={context.contextLabel}
+                  studentMessage={turn.q}
                 />
               )}
               {renderPinAction(i, turn.q, turn.a)}

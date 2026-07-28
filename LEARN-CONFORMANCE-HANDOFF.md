@@ -1,8 +1,8 @@
 # PETROS LEARN — CONFORMANCE PROGRAM HANDOFF (Phases E–H)
 
-**Status:** Phases A–D complete and committed. Phases E, F, G, H remain.
+**Status:** Phases A–H complete (H3 live run pending env/migration — see §10).
 **Audience:** the agent/developer continuing this work (Cursor).
-**Written:** 2026-07-27. Branch `feat/settings-currency-audit`. Last commit `81f23db`.
+**Written:** 2026-07-27. Branch `feat/settings-currency-audit`. Phases E–H largely uncommitted as of this update.
 
 Read this file end to end before touching anything. Section 6 onward is the actual work.
 
@@ -89,8 +89,8 @@ resolutions are in §4 below — **they are settled, implement them, do not reli
 | 0104 | 97 | `learn_config` | `learn_config` table + seeded global defaults |
 | 0105 | 98 | `learn_status_check_and_config_rls` | `orchestrator_status` CHECK; `learn_config` RLS |
 
-> **NEXT MIGRATION NUMBER IS `0106`, JOURNAL IDX `99`.** The journal currently has 99 entries ending
-> at idx 98. Use `when` values continuing the sequence (0105 used `1787700000000`).
+> **NEXT MIGRATION NUMBER IS `0108`, JOURNAL IDX `101`.** Phase H used `0107` / idx `100`
+> (`learn_student_tutor_capabilities`). Phase E used `0106` / idx `99`.
 > **`packages/database/migrations/superseded/0082_timetable_period_backfill.sql`** was moved out of
 > the migrations directory — it is dead, not drift (see §5). Do not restore or apply it.
 
@@ -164,17 +164,17 @@ persisted but never emitted.
 | DEC-3 | `source` domain: **keep** `'generated'` (not the spec's `'llm'`). | DONE (no-op) |
 | DEC-4 | `learner_mastery`: **keep surrogate PK**. A composite PK needs NOT NULL columns; the dual-owner pair is nullable, so the spec's composite `(user_id, atom_id)` is not expressible under DEC-1. Fix upserts with `targetWhere` instead. | DONE (C) |
 | DEC-5 | `rating` default **1200** (was 800). | DONE (C) |
-| DEC-6 | Canvas: **route visual_spawn through Chat 9's pipeline into `visual_canvases`** per spec. Learn must own no canvas storage. | **PENDING — Phase F** |
+| DEC-6 | Canvas: **route visual_spawn through Chat 9's pipeline into `visual_canvases`** per spec. Learn must own no canvas storage. | DONE (F) |
 | DEC-7 | `learn_attempts` block link: **reuse the existing `block_id`**, do not add `session_block_id`. | DONE (no-op) |
-| DEC-8 | `learn_sessions.evidence`: **write evidence-event ids**, not raw card markdown. | **PENDING — Phase E** |
-| DEC-9 | `learning_events` routing: **keep `LearningEventsWriter`** (not the visual-memory-diff service); amend spec. But **fix** the transactionality and unconditionality defects. | **PENDING — Phase E** |
+| DEC-8 | `learn_sessions.evidence`: **write evidence-event ids**, not raw card markdown. | DONE (E) |
+| DEC-9 | `learning_events` routing: **keep `LearningEventsWriter`** (not the visual-memory-diff service); amend spec. But **fix** the transactionality and unconditionality defects. | DONE (E) |
 | DEC-10 | Retire **only** `learn/notes`. `learn/history` is LIVE. | DONE (C) |
 | DEC-11 | spine/session_plan/spine_step → **nullable**, not dropped. | DONE (C) |
 | DEC-12 | `learn.orchestrator` stays a **hard gate**; amend spec's "rollback lever" language. Fix fail-open. | DONE (C) |
-| DEC-13 | `render_model_tier` → **`mid`** per spec. Config default already says `mid`. | **PENDING — Phase F** (renderer still hardcodes `small`) |
-| DEC-14 | Topic keys: **adopt the spec's forms**, allow genuinely ad-hoc profiles with a null FK. Stop unconditionally upserting a `learn_topics` row for every session. | **PENDING — Phase E** |
+| DEC-13 | `render_model_tier` → **`mid`** per spec. Config default already says `mid`. | DONE (F) |
+| DEC-14 | Topic keys: **adopt the spec's forms**, allow genuinely ad-hoc profiles with a null FK. Stop unconditionally upserting a `learn_topics` row for every session. | DONE (E) |
 | DEC-15 | `0082` → moved to `migrations/superseded/`. Dead, not drift. | DONE |
-| DEC-16 | Student-tutor scope: **migrate to the `AiCapability` grammar** (from `domain_config jsonb`). | **PENDING — Phase H** |
+| DEC-16 | Student-tutor scope: **migrate to the `AiCapability` grammar** (from `domain_config jsonb`). | DONE (H) |
 
 ---
 
@@ -374,6 +374,10 @@ callers**. Validate every `atom_id` the LLM emits against real atoms, and never 
 
 ## 8. PHASE F — Plan/render correctness and pipelining
 
+**Status: DONE (uncommitted).** Speculative consume + call-log flags, streamed mid-tier render,
+interactionState/reconnect/heartbeat, answer idempotency, DEC-6 canvas into `visual_canvases`.
+No migration in F. See original checklist below for provenance.
+
 **Goal:** make the two-call loop actually produce dynamic teaching. Matrix rows: `MV-087`, `MV-088`,
 `DM-096`, `UI-095/104/109/177-180/185/193`.
 
@@ -451,6 +455,13 @@ pipeline hard-fail must still yield a `degraded` explanation and continue the se
 ---
 
 ## 9. PHASE G — Session UI conformance
+
+**Status: DONE (uncommitted).** Segmented progress, one-at-a-time questions + amber wrong +
+correctOptionId reveal, synthesis/worked-example/artifact/system_notice, overflow → Chat 8
+note/flashcard APIs, Why this? popover, exit sheet + summary completion, composer queue / ↓ New /
+IndexedDB offline cache / 30s answer retry, policy footer, entry points (Start lesson gated on
+`learn.orchestrator`, library budget default 15, handoff setback on student message, Fix with Petros,
+goal revision doors, Learn push explicitly blocked in `TodayNotifyService`).
 
 **Goal:** hyperspec 2 §1–§8 tap by tap. This is the **largest gap area — 197 matrix rows, 71 absent,
 25 contradicted.** Matrix rows: `UI-*`.
@@ -530,6 +541,30 @@ the block is `degraded`, the copy is "I improvised this one."
 ---
 
 ## 10. PHASE H — Policy scope and eval harness
+
+**Status: H1 + H2 DONE (uncommitted). H3 live orchestrator run blocked on operator steps below.**
+
+### H1 — DONE (DEC-16)
+- Added `AiCapability.CurriculumBounds|AnswerDirectness|SessionVisibility`.
+- Capabilities map widened to `boolean | string`; `resolveStudentTutorPolicy` reads from
+  `resolveAiPolicy().capabilities` with `domain_config` as legacy fallback.
+- Migration **`0107_learn_student_tutor_capabilities`** (journal idx **100**) copies domain_config →
+  capabilities and extends the PG `ai_capability` enum. **Not applied** (write-only).
+
+### H2 — DONE
+- Rebuilt `packages/learn-evals`: 30 topics with frozen profiles + coverage assert; 6 seeded personas;
+  session driver against real API; structural + LLM judge rubrics; JSON/MD report with worst-5;
+  `--suite core` (24) vs `full` (180); judge outage fails loud.
+- `POST /student/learn/eval/seed-profile` (gated by `LEARN_EVAL_SECRET`) seeds human_override profiles.
+- CI: `.github/workflows/learn-evals.yml` with path filter. **Confirm GitHub Actions is the intended
+  CI host** — this was created from scratch (no prior `.github/`).
+
+### H3 — NOT YET RUN LIVE
+Blocked until: (1) apply migration 0107, (2) restart API with new code + `LEARN_EVAL_SECRET`,
+(3) set `LEARN_EVAL_AUTH_TOKEN` or `LEARN_EVAL_STUDENT_EMAIL`, (4) `pnpm learn-evals:core`.
+Fixture coverage check already passes (30 topics). Expect threshold failures on first honest run.
+
+### Original checklist (archive)
 
 ### H1 — Student-tutor scope (DEC-16)
 
@@ -644,10 +679,10 @@ Three times the original phase plan was wrong and was corrected:
 
 ```bash
 cd c:/Users/karol/Edrion-Labs
-git log --oneline -5          # expect 81f23db at HEAD
-npx tsc --noEmit -p apps/api/tsconfig.json 2>&1 | grep -c "error TS"   # expect exactly 12
+# Apply 0107 when ready (agent must not), restart API, then:
+pnpm learn-evals:core
 ```
-Then read, in order: this file → `LEARN-CONFORMANCE-MATRIX.md` (§Decisions + your phase's rows) →
-the relevant hyperspec section. Start with **Phase E**, §7 above.
+Next migration: **0108** / idx **101**.
 
-**Next migration number: `0106`, journal idx `99`.**
+Eval env: `LEARN_EVAL_SECRET`, `LEARN_EVAL_AUTH_TOKEN` or `LEARN_EVAL_STUDENT_EMAIL`,
+`LEARN_EVAL_JUDGE_API_KEY` (or `OPENAI_API_KEY`). See `.env.example`.

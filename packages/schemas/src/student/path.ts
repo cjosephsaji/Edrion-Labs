@@ -21,6 +21,8 @@ export const learningPathSchema = z.object({
   source: z.enum(['institution', 'ai_goal']),
   pathEditable: z.boolean(),
   status: z.enum(['active', 'archived']),
+  /** G8: Start lesson is gated on learn.orchestrator. */
+  orchestratorEnabled: z.boolean().optional(),
   items: z.array(pathItemSchema),
 });
 

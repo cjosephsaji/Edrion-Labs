@@ -11,6 +11,8 @@ import {
   createFlashcardSchema,
   createKnowledgeItemSchema,
   deckFromSessionSchema,
+  learnBlockFlashcardSchema,
+  learnBlockNoteSchema,
   deckGenerationSchema,
   flashcardReviewSchema,
   glossaryContentSchema,
@@ -790,6 +792,53 @@ export class LibraryService {
         lapses: 0,
       })),
     );
+    return { deckId: row.id };
+  }
+
+  /** G3 overflow: Save to notes — Chat 8 artifact, Learn owns no note storage. */
+  async noteFromLearnBlock(principal: StudentPrincipal, body: unknown) {
+    const parsed = learnBlockNoteSchema.parse(body);
+    const session = await this.learn.getSession(principal, parsed.sessionId);
+    if (!session) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Session not found' });
+    const artifact = await this.repo.insertArtifact({
+      ...this.repo.owner(principal),
+      sourceSessionId: parsed.sessionId,
+      kind: 'summary',
+      title: parsed.title.slice(0, 120),
+      content: {
+        title: parsed.title,
+        sections: [{ heading: 'From lesson', body: parsed.bodyMd }],
+      },
+      fromLabel: 'From Edrion Learn',
+    });
+    return { artifactId: artifact.id };
+  }
+
+  /** G3 overflow: Make flashcard from this — Chat 8 deck, Learn owns no card storage. */
+  async flashcardFromLearnBlock(principal: StudentPrincipal, body: unknown) {
+    const parsed = learnBlockFlashcardSchema.parse(body);
+    const session = await this.learn.getSession(principal, parsed.sessionId);
+    if (!session) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Session not found' });
+    const row = await this.repo.insertDeck({
+      ...this.repo.owner(principal),
+      sourceSessionId: parsed.sessionId,
+      title: parsed.prompt.slice(0, 80),
+      fromLabel: 'From Edrion Learn',
+    });
+    await this.repo.insertCards([
+      {
+        deckId: row.id,
+        sequence: 1,
+        prompt: parsed.prompt,
+        answer: parsed.answer,
+        sourcePage: null,
+        nextDueAt: new Date(),
+        intervalDays: '0',
+        ease: '2.50',
+        reps: 0,
+        lapses: 0,
+      },
+    ]);
     return { deckId: row.id };
   }
 

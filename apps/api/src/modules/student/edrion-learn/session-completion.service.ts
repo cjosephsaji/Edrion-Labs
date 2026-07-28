@@ -4,12 +4,14 @@ import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import type { StudentPrincipal } from '../student.types';
 import type { EndReason, SessionStateV1 } from '@edrion/schemas';
 import { EdrionLearnRepository } from './edrion-learn.repository';
+import { LearnerModelService } from './learner-model.service';
 
 @Injectable()
 export class SessionCompletionService {
   constructor(
     private readonly repo: EdrionLearnRepository,
     @Inject(LEARNING_EVENTS_WRITER) private readonly ledger: LearningEventsWriter,
+    private readonly learnerModel: LearnerModelService,
   ) {}
 
   async finalize(
@@ -22,8 +24,6 @@ export class SessionCompletionService {
     if (!session) return;
 
     const checkpointsMet = state.checkpoints.done >= 1;
-    // `abandoned` (24h paused) and `policy_kill` never count as completion —
-    // the student did not finish and nothing should be marked done on their path.
     const countsAsComplete =
       checkpointsMet &&
       ['goal_met', 'time_budget', 'student_exit', 'move_cap'].includes(endReason);
@@ -37,6 +37,11 @@ export class SessionCompletionService {
 
     if (session.topicId && countsAsComplete && session.entryPoint === 'review_queue') {
       await this.repo.upsertRevisionFresh(principal, session.topicId);
+    }
+
+    // E5: roll ephemeral move outcomes into durable per-move-type stats.
+    if (endReason !== 'abandoned') {
+      await this.learnerModel.rollupSessionMoves(principal, state);
     }
 
     await this.ledger.log({

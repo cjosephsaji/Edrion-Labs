@@ -48,9 +48,10 @@ const learnQuestionSchema = z.object({
   prompt_md: z.string().max(2000),
   options: z.array(learnQuestionOptionSchema).min(2).max(5).optional(),
   correct_option_id: z.string().optional(),
-  atom_id: z.string().uuid(),
+  atom_id: z.string().uuid().nullable().optional(),
   difficulty: z.enum(['easy', 'medium', 'hard']),
   why_md: z.string().max(1000).optional(),
+  hints: z.array(z.string().max(400)).min(1).max(3).optional(),
 });
 
 export const questionSetBlockSchema = blockEnvelopeSchema.extend({

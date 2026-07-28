@@ -17,6 +17,8 @@ import { LearnAiCallLogger } from '../learn-ai/learn-ai-call.logger';
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import { StudentStorageService } from '../storage/student-storage.service';
 import type { StudentPrincipal } from '../student.types';
+import { LearnProfileJobsService } from '../edrion-learn/learn-profile.jobs';
+import { topicKeyForMaterial } from '../edrion-learn/topic-keys';
 
 const execAsync = promisify(exec);
 
@@ -115,6 +117,7 @@ export class LibraryIngestWorker implements OnModuleInit, OnModuleDestroy {
     private readonly budgets: BudgetsService,
     private readonly callLog: LearnAiCallLogger,
     @Inject(LEARNING_EVENTS_WRITER) private readonly ledger: LearningEventsWriter,
+    private readonly profileJobs: LearnProfileJobsService,
   ) {}
 
   onModuleInit() {
@@ -480,6 +483,24 @@ export class LibraryIngestWorker implements OnModuleInit, OnModuleDestroy {
         },
         principal,
       });
+
+      // PM-004: pre-warm profile on Library-document indexing completion.
+      if (status === 'ready') {
+        const firstPages = await db
+          .select({ text: schema.knowledgeItemPages.text })
+          .from(schema.knowledgeItemPages)
+          .where(eq(schema.knowledgeItemPages.itemId, itemId))
+          .orderBy(schema.knowledgeItemPages.pageIndex)
+          .limit(2);
+        void this.profileJobs.enqueueProfileTopic({
+          principal,
+          learnTopicId: null,
+          topicKey: topicKeyForMaterial(itemId),
+          title: item.title || 'Library document',
+          materialOutline: firstPages.map((p) => (p.text ?? '').slice(0, 200)).join('\n').slice(0, 1500) || null,
+          materialFirstChunk: firstPages[0]?.text?.slice(0, 2000) ?? null,
+        });
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not read this document.';
       const detail = err instanceof Error ? `${currentStage}: ${err.message}` : `${currentStage}: ${message}`;

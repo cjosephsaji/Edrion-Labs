@@ -20,6 +20,23 @@ export const MASTERY_RATING_DEFAULT = 1200;
 export const MASTERY_K_HIGH = 32;
 export const MASTERY_K_LOW = 16;
 export const MASTERY_K_ATTEMPT_THRESHOLD = 10;
+/** Hyperspec §1.4 rung 1b: evaluation.score ≥ threshold ⇒ treat as correct. */
+export const MASTERY_SCORE_CORRECT_THRESHOLD = 0.7;
+
+export const pacePreferenceSchema = z.enum(['slow', 'normal', 'fast']);
+export type PacePreference = z.infer<typeof pacePreferenceSchema>;
+
+export const moveOutcomeBucketSchema = z.object({
+  correct: z.number().int().nonnegative().default(0),
+  wrong: z.number().int().nonnegative().default(0),
+  null_count: z.number().int().nonnegative().default(0),
+  escaped: z.number().int().nonnegative().default(0),
+  expanded_deeper: z.number().int().nonnegative().default(0),
+  skipped: z.number().int().nonnegative().default(0),
+  count: z.number().int().nonnegative().default(0),
+});
+
+export type MoveOutcomeBucket = z.infer<typeof moveOutcomeBucketSchema>;
 
 export const learnerMasterySchema = z.object({
   id: z.string().uuid(),

@@ -54,7 +54,8 @@ export class EdrionLearnRepository {
     return created!;
   }
 
-  async getTopic(topicId: string) {
+  async getTopic(topicId: string | null | undefined) {
+    if (!topicId) return null;
     return this.db
       .select()
       .from(schema.learnTopics)
@@ -76,6 +77,31 @@ export class EdrionLearnRepository {
       .update(schema.conceptAtoms)
       .set({ updatedAt: new Date() })
       .where(eq(schema.conceptAtoms.id, atomId));
+  }
+
+  async seedLearnConceptAtoms(
+    topicId: string,
+    atoms: Array<{ variantKey: string; title: string; summary: string }>,
+    model: string,
+    promptVersion: string,
+  ): Promise<number> {
+    if (!atoms.length) return 0;
+    let inserted = 0;
+    for (const atom of atoms) {
+      await this.db
+        .insert(schema.conceptAtoms)
+        .values({
+          topicId,
+          atomKind: 'learn_concept',
+          variantKey: atom.variantKey.slice(0, 120),
+          content: { title: atom.title, summary: atom.summary },
+          model,
+          promptVersion,
+        })
+        .onConflictDoNothing();
+      inserted += 1;
+    }
+    return inserted;
   }
 
   async findActiveOrchestratorSession(principal: StudentPrincipal) {
@@ -338,6 +364,7 @@ export class EdrionLearnRepository {
           model: row.model ?? null,
           promptVersion: row.promptVersion ?? null,
           expiresAt: row.expiresAt ?? null,
+          overriddenBy: row.overriddenBy ?? null,
           updatedAt: new Date(),
           version: sql`${schema.learnTopicProfiles.version} + 1`,
         },
@@ -359,7 +386,9 @@ export class EdrionLearnRepository {
     principal: StudentPrincipal,
     atomId: string,
     patch: { rating: number; attempts: number; correctWeight: number; lastAttemptAt: Date },
+    tx?: Database,
   ) {
+    const db = tx ?? this.db;
     const base =
       principal.kind === 'institutional'
         ? {
@@ -369,7 +398,7 @@ export class EdrionLearnRepository {
           }
         : { institutionId: null, studentId: null, independentUserId: principal.independentUserId };
 
-    const [row] = await this.db
+    const [row] = await db
       .insert(schema.learnerMastery)
       .values({
         ...base,
@@ -384,6 +413,10 @@ export class EdrionLearnRepository {
           principal.kind === 'institutional'
             ? [schema.learnerMastery.studentId, schema.learnerMastery.atomId]
             : [schema.learnerMastery.independentUserId, schema.learnerMastery.atomId],
+        targetWhere:
+          principal.kind === 'institutional'
+            ? sql`${schema.learnerMastery.studentId} IS NOT NULL`
+            : sql`${schema.learnerMastery.independentUserId} IS NOT NULL`,
         set: {
           rating: patch.rating,
           attempts: patch.attempts,
@@ -412,18 +445,21 @@ export class EdrionLearnRepository {
       .then((r) => r[0] ?? null);
   }
 
-  async insertAttempt(row: typeof schema.learnAttempts.$inferInsert) {
-    const [created] = await this.db.insert(schema.learnAttempts).values(row).returning();
+  async insertAttempt(row: typeof schema.learnAttempts.$inferInsert, tx?: Database) {
+    const db = tx ?? this.db;
+    const [created] = await db.insert(schema.learnAttempts).values(row).returning();
     return created!;
   }
 
-  async insertEvidenceTag(row: typeof schema.evidenceTags.$inferInsert) {
-    const [created] = await this.db.insert(schema.evidenceTags).values(row).returning();
+  async insertEvidenceTag(row: typeof schema.evidenceTags.$inferInsert, tx?: Database) {
+    const db = tx ?? this.db;
+    const [created] = await db.insert(schema.evidenceTags).values(row).returning();
     return created!;
   }
 
-  async insertModelEvent(row: typeof schema.learnerModelEvents.$inferInsert) {
-    const [created] = await this.db.insert(schema.learnerModelEvents).values(row).returning();
+  async insertModelEvent(row: typeof schema.learnerModelEvents.$inferInsert, tx?: Database) {
+    const db = tx ?? this.db;
+    const [created] = await db.insert(schema.learnerModelEvents).values(row).returning();
     return created!;
   }
 
@@ -505,5 +541,244 @@ export class EdrionLearnRepository {
 
   async runInTransaction<T>(fn: (tx: Database) => Promise<T>): Promise<T> {
     return this.db.transaction(fn);
+  }
+
+  async getTopicProfileById(principal: StudentPrincipal, profileId: string) {
+    const ownerCond =
+      principal.kind === 'institutional'
+        ? and(
+            eq(schema.learnTopicProfiles.institutionId, principal.institutionId),
+            isNull(schema.learnTopicProfiles.independentUserId),
+          )
+        : and(
+            isNull(schema.learnTopicProfiles.institutionId),
+            eq(schema.learnTopicProfiles.independentUserId, principal.independentUserId),
+          );
+    return this.db
+      .select()
+      .from(schema.learnTopicProfiles)
+      .where(and(ownerCond, eq(schema.learnTopicProfiles.id, profileId)))
+      .limit(1)
+      .then((r) => r[0] ?? null);
+  }
+
+  /** Staff/institution override: look up by id within an institution. */
+  async getTopicProfileByIdForInstitution(institutionId: string, profileId: string) {
+    return this.db
+      .select()
+      .from(schema.learnTopicProfiles)
+      .where(
+        and(
+          eq(schema.learnTopicProfiles.id, profileId),
+          eq(schema.learnTopicProfiles.institutionId, institutionId),
+        ),
+      )
+      .limit(1)
+      .then((r) => r[0] ?? null);
+  }
+
+  async updateTopicProfile(
+    profileId: string,
+    patch: Partial<typeof schema.learnTopicProfiles.$inferInsert>,
+  ) {
+    const [updated] = await this.db
+      .update(schema.learnTopicProfiles)
+      .set({ ...patch, updatedAt: new Date(), version: sql`${schema.learnTopicProfiles.version} + 1` })
+      .where(eq(schema.learnTopicProfiles.id, profileId))
+      .returning();
+    return updated ?? null;
+  }
+
+  async getLearnerModelState(principal: StudentPrincipal) {
+    const owner =
+      principal.kind === 'institutional'
+        ? eq(schema.learnerModelState.studentId, principal.studentId)
+        : eq(schema.learnerModelState.independentUserId, principal.independentUserId);
+    return this.db
+      .select()
+      .from(schema.learnerModelState)
+      .where(owner)
+      .limit(1)
+      .then((r) => r[0] ?? null);
+  }
+
+  async ensureLearnerModelState(principal: StudentPrincipal) {
+    const existing = await this.getLearnerModelState(principal);
+    if (existing) return existing;
+    const base =
+      principal.kind === 'institutional'
+        ? {
+            institutionId: principal.institutionId,
+            studentId: principal.studentId,
+            independentUserId: null,
+          }
+        : { institutionId: null, studentId: null, independentUserId: principal.independentUserId };
+    const [created] = await this.db.insert(schema.learnerModelState).values(base).returning();
+    return created!;
+  }
+
+  async updateLearnerModelState(
+    id: string,
+    patch: Partial<typeof schema.learnerModelState.$inferInsert>,
+  ) {
+    const [updated] = await this.db
+      .update(schema.learnerModelState)
+      .set({ ...patch, updatedAt: new Date(), version: sql`${schema.learnerModelState.version} + 1` })
+      .where(eq(schema.learnerModelState.id, id))
+      .returning();
+    return updated ?? null;
+  }
+
+  async listAttemptsForMasterySeed(scope: {
+    studentId?: string | null;
+    independentUserId?: string | null;
+  }) {
+    const conditions: SQL[] = [];
+    if (scope.studentId) conditions.push(eq(schema.learnAttempts.studentId, scope.studentId));
+    if (scope.independentUserId) {
+      conditions.push(eq(schema.learnAttempts.independentUserId, scope.independentUserId));
+    }
+    const attempts = await this.db
+      .select({
+        id: schema.learnAttempts.id,
+        studentId: schema.learnAttempts.studentId,
+        independentUserId: schema.learnAttempts.independentUserId,
+        evaluation: schema.learnAttempts.evaluation,
+        hintsUsed: schema.learnAttempts.hintsUsed,
+        createdAt: schema.learnAttempts.createdAt,
+        blockId: schema.learnAttempts.blockId,
+        questionId: schema.learnAttempts.questionId,
+        sessionId: schema.learnAttempts.sessionId,
+      })
+      .from(schema.learnAttempts)
+      .where(conditions.length ? and(...conditions) : undefined)
+      .orderBy(schema.learnAttempts.createdAt);
+
+    // Resolve atom_id from the block content's question when possible; also pull polarity.
+    const out: Array<{
+      id: string;
+      studentId: string | null;
+      independentUserId: string | null;
+      institutionId: string | null;
+      atomId: string | null;
+      evaluation: Record<string, unknown>;
+      hintsUsed: number;
+      createdAt: Date;
+      evidencePolarity: string | null;
+    }> = [];
+
+    for (const a of attempts) {
+      let atomId: string | null = null;
+      if (a.blockId && a.questionId) {
+        const block = await this.db
+          .select()
+          .from(schema.learnSessionBlocks)
+          .where(eq(schema.learnSessionBlocks.id, a.blockId))
+          .limit(1)
+          .then((r) => r[0] ?? null);
+        const content = block?.content as { questions?: Array<{ id: string; atom_id?: string }> } | null;
+        const q = content?.questions?.find((x) => x.id === a.questionId);
+        atomId = q?.atom_id ?? null;
+      }
+
+      const tagKey =
+        a.sessionId && a.blockId && a.questionId
+          ? `learn:${a.sessionId}:${a.blockId}:${a.questionId}`
+          : null;
+      let evidencePolarity: string | null = null;
+      if (tagKey) {
+        const tag = await this.db
+          .select({ polarity: schema.evidenceTags.polarity })
+          .from(schema.evidenceTags)
+          .where(eq(schema.evidenceTags.tagKey, tagKey))
+          .limit(1)
+          .then((r) => r[0] ?? null);
+        evidencePolarity = tag?.polarity ?? null;
+      }
+
+      // Institution id is on the session when present (attempts themselves are owner-xor only).
+      let institutionId: string | null = null;
+      if (a.sessionId) {
+        const sess = await this.db
+          .select({ institutionId: schema.learnSessions.institutionId })
+          .from(schema.learnSessions)
+          .where(eq(schema.learnSessions.id, a.sessionId))
+          .limit(1)
+          .then((r) => r[0] ?? null);
+        institutionId = sess?.institutionId ?? null;
+      }
+
+      out.push({
+        id: a.id,
+        studentId: a.studentId,
+        independentUserId: a.independentUserId,
+        institutionId,
+        atomId,
+        evaluation: (a.evaluation as Record<string, unknown>) ?? {},
+        hintsUsed: a.hintsUsed ?? 0,
+        createdAt: a.createdAt,
+        evidencePolarity,
+      });
+    }
+    return out;
+  }
+
+  async replaceMasteryForSeed(input: {
+    studentId: string | null;
+    independentUserId: string | null;
+    institutionId: string | null;
+    atomId: string;
+    rating: number;
+    attempts: number;
+    correctWeight: number;
+    lastAttemptAt: Date | null;
+  }) {
+    // Idempotent recompute-from-scratch: wipe then insert for this (owner, atom).
+    if (input.studentId) {
+      await this.db
+        .delete(schema.learnerMastery)
+        .where(
+          and(
+            eq(schema.learnerMastery.studentId, input.studentId),
+            eq(schema.learnerMastery.atomId, input.atomId),
+          ),
+        );
+    } else if (input.independentUserId) {
+      await this.db
+        .delete(schema.learnerMastery)
+        .where(
+          and(
+            eq(schema.learnerMastery.independentUserId, input.independentUserId),
+            eq(schema.learnerMastery.atomId, input.atomId),
+          ),
+        );
+    }
+    const [row] = await this.db
+      .insert(schema.learnerMastery)
+      .values({
+        institutionId: input.institutionId,
+        studentId: input.studentId,
+        independentUserId: input.independentUserId,
+        atomId: input.atomId,
+        rating: input.rating,
+        attempts: input.attempts,
+        correctWeight: String(input.correctWeight),
+        lastAttemptAt: input.lastAttemptAt,
+      })
+      .returning();
+    return row!;
+  }
+
+  async listAtomIdsForTopic(topicId: string): Promise<string[]> {
+    const rows = await this.listConceptAtoms(topicId);
+    return rows.map((r) => r.id);
+  }
+
+  /** Validate LLM-emitted atom ids; drop unknowns. */
+  async filterValidAtomIds(topicId: string | null | undefined, atomIds: string[]): Promise<Set<string>> {
+    if (!topicId || atomIds.length === 0) return new Set();
+    const valid = await this.listAtomIdsForTopic(topicId);
+    const set = new Set(valid);
+    return new Set(atomIds.filter((id) => set.has(id)));
   }
 }
