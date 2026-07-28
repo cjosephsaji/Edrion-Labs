@@ -486,28 +486,113 @@ BEGIN
   END LOOP;
 END $$;
 
-ALTER TABLE learn_topic_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE learn_topic_profiles FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS learn_topic_profiles_owner_private ON learn_topic_profiles;
-CREATE POLICY learn_topic_profiles_owner_private ON learn_topic_profiles FOR ALL
-USING (
-  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
-  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
-  OR (
-    edrion_current_institution() IS NOT NULL
-    AND institution_id::text = edrion_current_institution()
-    AND independent_user_id IS NULL
-  )
-)
-WITH CHECK (
-  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
-  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
-  OR (
-    edrion_current_institution() IS NOT NULL
-    AND institution_id::text = edrion_current_institution()
-    AND independent_user_id IS NULL
-  )
-);
+-- learn_topic_profiles (v1) — kept only while the table still exists on a DB.
+DO $$
+BEGIN
+  IF to_regclass('public.learn_topic_profiles') IS NOT NULL THEN
+    ALTER TABLE learn_topic_profiles ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE learn_topic_profiles FORCE ROW LEVEL SECURITY;
+    DROP POLICY IF EXISTS learn_topic_profiles_owner_private ON learn_topic_profiles;
+    CREATE POLICY learn_topic_profiles_owner_private ON learn_topic_profiles FOR ALL
+    USING (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      OR (
+        edrion_current_institution() IS NOT NULL
+        AND institution_id::text = edrion_current_institution()
+        AND independent_user_id IS NULL
+      )
+    )
+    WITH CHECK (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      OR (
+        edrion_current_institution() IS NOT NULL
+        AND institution_id::text = edrion_current_institution()
+        AND independent_user_id IS NULL
+      )
+    );
+  END IF;
+END $$;
+
+-- learn_topic_shapes (v2) — same owner-private pattern as profiles.
+DO $$
+BEGIN
+  IF to_regclass('public.learn_topic_shapes') IS NOT NULL THEN
+    ALTER TABLE learn_topic_shapes ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE learn_topic_shapes FORCE ROW LEVEL SECURITY;
+    DROP POLICY IF EXISTS learn_topic_shapes_owner_private ON learn_topic_shapes;
+    CREATE POLICY learn_topic_shapes_owner_private ON learn_topic_shapes FOR ALL
+    USING (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      OR (
+        edrion_current_institution() IS NOT NULL
+        AND institution_id::text = edrion_current_institution()
+        AND independent_user_id IS NULL
+      )
+    )
+    WITH CHECK (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      OR (
+        edrion_current_institution() IS NOT NULL
+        AND institution_id::text = edrion_current_institution()
+        AND independent_user_id IS NULL
+      )
+    );
+  END IF;
+END $$;
+
+-- learn_config + learner_model_state — owner-private (were missing after 0109 recreate).
+DO $$
+BEGIN
+  IF to_regclass('public.learn_config') IS NOT NULL THEN
+    ALTER TABLE learn_config ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE learn_config FORCE ROW LEVEL SECURITY;
+    DROP POLICY IF EXISTS learn_config_owner_private ON learn_config;
+    CREATE POLICY learn_config_owner_private ON learn_config FOR ALL
+    USING (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR scope = 'global'
+      OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      OR (
+        edrion_current_institution() IS NOT NULL
+        AND institution_id::text = edrion_current_institution()
+        AND independent_user_id IS NULL
+      )
+    )
+    WITH CHECK (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR scope = 'global'
+      OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      OR (
+        edrion_current_institution() IS NOT NULL
+        AND institution_id::text = edrion_current_institution()
+        AND independent_user_id IS NULL
+      )
+    );
+  END IF;
+
+  IF to_regclass('public.learner_model_state') IS NOT NULL THEN
+    ALTER TABLE learner_model_state ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE learner_model_state FORCE ROW LEVEL SECURITY;
+    DROP POLICY IF EXISTS learner_model_state_owner_private ON learner_model_state;
+    CREATE POLICY learner_model_state_owner_private ON learner_model_state FOR ALL
+    USING (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student()
+          AND (institution_id IS NULL OR edrion_current_institution() IS NULL OR institution_id::text = edrion_current_institution()))
+      OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+    )
+    WITH CHECK (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student()
+          AND (institution_id IS NULL OR edrion_current_institution() IS NULL OR institution_id::text = edrion_current_institution()))
+      OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+    );
+  END IF;
+END $$;
 
 -- learn_session_events: scoped via parent learn_sessions owner.
 ALTER TABLE learn_session_events ENABLE ROW LEVEL SECURITY;

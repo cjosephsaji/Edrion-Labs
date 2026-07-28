@@ -86,17 +86,15 @@ const preset: Omit<Config, 'content'> = {
           '100%': { transform: 'translateX(100%)' },
         },
         'st-block-in': {
-          '0%': { opacity: '0', transform: 'translateY(16px) scale(0.988)' },
-          '70%': { opacity: '1', transform: 'translateY(-2px) scale(1.002)' },
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
           '100%': { opacity: '1', transform: 'none' },
         },
         'st-fade-up': {
-          from: { opacity: '0', transform: 'translateY(8px)' },
+          from: { opacity: '0', transform: 'translateY(6px)' },
           to: { opacity: '1', transform: 'none' },
         },
         'st-pop-in': {
-          '0%': { transform: 'scale(0.3)', opacity: '0' },
-          '70%': { transform: 'scale(1.18)' },
+          '0%': { transform: 'scale(0.86)', opacity: '0' },
           '100%': { transform: 'scale(1)', opacity: '1' },
         },
         'st-soft-pulse': {
@@ -147,9 +145,9 @@ const preset: Omit<Config, 'content'> = {
         shimmer: 'shimmer 1.5s ease-in-out infinite',
         // Snappier button/action spinner (Tailwind's default is 1s) so clicks feel responsive.
         spin: 'spin 0.6s linear infinite',
-        'st-block-in': `st-block-in 420ms ease-out`,
-        'st-fade-up': 'st-fade-up 280ms ease-out',
-        'st-pop-in': 'st-pop-in 320ms ease-out',
+        'st-block-in': `st-block-in 180ms ease-out`,
+        'st-fade-up': 'st-fade-up 160ms ease-out',
+        'st-pop-in': 'st-pop-in 200ms ease-out',
         'st-soft-pulse': 'st-soft-pulse 2s ease-in-out infinite',
         'st-burst': 'st-burst 600ms ease-out forwards',
         'st-slide-in-drawer': 'st-slide-in-drawer 280ms ease-out',

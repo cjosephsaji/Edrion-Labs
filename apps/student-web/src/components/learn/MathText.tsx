@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import { MarkdownMath } from '@/components/visual-studio/MarkdownMath';
+import { prepareLearnMath } from '@/lib/learn/prepare-learn-math';
 
 type MathTextProps = {
   children: string;
@@ -89,27 +90,40 @@ function renderMixedInline(text: string, container: HTMLElement) {
   }
 }
 
+/**
+ * Typography's own palette hard-codes bold/code/heading colour to gray-900, which
+ * disappears on the dim and dark student themes. Inherit the caller's colour
+ * instead and let weight carry the emphasis. Callers set their own size.
+ */
+const PROSE_BASE = [
+  'prose prose-sm max-w-none text-inherit',
+  'prose-strong:text-inherit prose-headings:text-inherit prose-code:text-inherit',
+  'prose-code:before:content-none prose-code:after:content-none',
+  'prose-a:text-st-accent',
+].join(' ');
+
 export function MathText({ children, display = false, className = '' }: MathTextProps) {
   const ref = useRef<HTMLSpanElement>(null);
+  const prepared = prepareLearnMath(children);
 
   useEffect(() => {
     if (!ref.current) return;
     const el = ref.current;
 
     if (display) {
-      renderKatex(el, unwrapDisplayLatex(children), true);
+      renderKatex(el, unwrapDisplayLatex(prepared), true);
       return;
     }
 
-    if (!hasInlineMath(children)) {
+    if (!hasInlineMath(prepared)) {
       return;
     }
 
-    renderMixedInline(children, el);
-  }, [children, display]);
+    renderMixedInline(prepared, el);
+  }, [prepared, display]);
 
-  if (!display && !hasInlineMath(children)) {
-    return <MarkdownMath className={`prose prose-sm max-w-none text-inherit ${className}`}>{children}</MarkdownMath>;
+  if (!display && !hasInlineMath(prepared)) {
+    return <MarkdownMath className={`${PROSE_BASE} ${className}`}>{prepared}</MarkdownMath>;
   }
 
   return <span ref={ref} className={className} />;

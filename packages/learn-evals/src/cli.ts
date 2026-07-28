@@ -54,8 +54,10 @@ async function main() {
     process.exit(1);
   }
   if (provider === 'stub') {
-    process.env.LEARN_EVAL_STUB_PLANNER = '1';
-    console.log('learn-evals: --provider stub (deterministic planner, no LLM calls)');
+    console.error(
+      'learn-evals: --provider stub is retired. The Learn engine was rebuilt; use fixtures, not a live driver.',
+    );
+    process.exit(2);
   }
 
   const runId = `learn-eval-${suite}-${seed}-${Date.now()}`;

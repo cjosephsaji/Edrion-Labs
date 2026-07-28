@@ -161,6 +161,12 @@ export const apiEnvSchema = z.object({
   /** Embedding model for Visual Studio memory matching. */
   OPENAI_EMBEDDING_MODEL: z.string().default('text-embedding-3-small'),
 
+  /**
+   * Manual Learn session generation. When true AND OPENAI_API_KEY is set, session create
+   * calls TutorGenerationService. Default false — fixtures only (no spend in normal dev).
+   */
+  LEARN_SESSION_GENERATE: bool.default(false),
+
   // ── Petros cost controls ────────────────────────────────────────────────────
   /**
    * How hard the chat model thinks. Reasoning tokens bill at the OUTPUT rate, so this is the main

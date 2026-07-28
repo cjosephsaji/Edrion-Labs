@@ -22,7 +22,6 @@ import { DefaultHomeworkPolicyPort, HOMEWORK_POLICY_PORT } from './homework-poli
     {
       provide: LEARN_AI_PROVIDER,
       useFactory: (env: ApiEnv, openai: OpenAiLearnProvider, nil: NullLearnAiProvider) => {
-        if (process.env.LEARN_EVAL_STUB_PLANNER === '1') return nil;
         return env.OPENAI_API_KEY ? openai : nil;
       },
       inject: [API_ENV, OpenAiLearnProvider, NullLearnAiProvider],

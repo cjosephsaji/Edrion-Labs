@@ -6,10 +6,6 @@ import { LearningEventsModule } from '../ledger/learning-events.module';
 import { VisualStudioModule } from '../visual-studio/visual-studio.module';
 import { StudentAuthModule } from '../auth/student-auth.module';
 import { LearnRepository } from './learn.repository';
-import { AskController } from './ask.controller';
-import { AskService } from './ask.service';
-import { QuickController } from './quick.controller';
-import { QuickService } from './quick.service';
 import { PathController } from './path.controller';
 import { PathService } from './path.service';
 import { RevisionController } from './revision.controller';
@@ -18,6 +14,7 @@ import { StreaksController } from './streaks.controller';
 import { StreaksService } from './streaks.service';
 import { HistoryController } from './history.controller';
 import { HistoryService } from './history.service';
+import { LearnRebuildStubController } from './learn-rebuild-stub.controller';
 
 @Module({
   imports: [
@@ -29,22 +26,14 @@ import { HistoryService } from './history.service';
     StudentAuthModule,
   ],
   controllers: [
-    AskController,
-    QuickController,
     PathController,
     RevisionController,
     StreaksController,
     HistoryController,
+    // Keep stubs for ask/quick/intent; sessions live on LearnSessionsV2Controller.
+    LearnRebuildStubController,
   ],
-  providers: [
-    LearnRepository,
-    AskService,
-    QuickService,
-    PathService,
-    RevisionService,
-    StreaksService,
-    HistoryService,
-  ],
+  providers: [LearnRepository, PathService, RevisionService, StreaksService, HistoryService],
   exports: [LearnEngineModule, LearnRepository, PathService],
 })
 export class LearnModule {}

@@ -114,18 +114,11 @@ function pickAnswer(
 }
 
 export async function seedFrozenProfile(cfg: EvalClientConfig, topic: EvalTopicFixture): Promise<void> {
-  const res = await fetch(`${cfg.apiBase}/learn/eval/seed-profile`, {
-    method: 'POST',
-    headers: headers(cfg, { 'x-learn-eval-secret': cfg.evalSecret }),
-    body: JSON.stringify({
-      topicKey: topic.key,
-      title: topic.title,
-      profile: topic.profile,
-    }),
-  });
-  if (!res.ok) {
-    throw new Error(`seed-profile failed: ${res.status} ${await res.text()}`);
-  }
+  void cfg;
+  void topic;
+  throw new Error(
+    'seed-profile is retired. Learn eval seeding was removed with the engine rebuild; use hand-written fixtures.',
+  );
 }
 
 export async function runEvalSession(opts: {

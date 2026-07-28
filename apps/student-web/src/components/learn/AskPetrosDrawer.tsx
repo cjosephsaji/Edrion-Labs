@@ -7,7 +7,7 @@ import { useAskStreamClient, usePinAsk } from '@/lib/hooks/useAsk';
 import { PillButton } from '@/components/ui/pill-button';
 import { Eyebrow, PetrosMark } from '@/components/ui/primitives';
 import type { SseConnection } from '@/lib/student-client';
-import { LearnHandoffCard, shouldShowLearnHandoff } from '@/components/edrion-learn/LearnHandoffCard';
+import { LearnHandoffCard, shouldShowLearnHandoff } from '@/components/learn/LearnHandoffCard';
 
 type AskPetrosDrawerProps = {
   open: boolean;

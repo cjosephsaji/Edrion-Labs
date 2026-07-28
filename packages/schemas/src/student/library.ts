@@ -203,6 +203,21 @@ export const learnBlockFlashcardSchema = z.object({
   answer: z.string().min(1).max(4000),
 });
 
+/** Curated multi-card save from Learn completion — student chooses; no auto-save. */
+export const learnCuratedCardsSchema = z.object({
+  sessionId: z.string().uuid(),
+  topicTitle: z.string().min(1).max(200),
+  cards: z
+    .array(
+      z.object({
+        front: z.string().min(1).max(2000),
+        back: z.string().min(1).max(4000),
+      }),
+    )
+    .min(1)
+    .max(24),
+});
+
 export const knowledgeItemPageSchema = z.object({
   pageIndex: z.number().int().nonnegative(),
   objectId: z.string().uuid(),

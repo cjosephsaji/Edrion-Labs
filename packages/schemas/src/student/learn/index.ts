@@ -7,3 +7,4 @@ export * from './state';
 export * from './mastery';
 export * from './api';
 export * from './events';
+export * from './v2';

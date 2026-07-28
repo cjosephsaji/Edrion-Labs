@@ -194,7 +194,6 @@ export const DEFAULT_ROLES: readonly RoleDef[] = [
       'platform.dashboard.view',
       'ai.view',
       'ai.configure',
-      'learn.profile.override',
       'ai.approve_sensitive_action',
       'ai.disable',
       'audit.view',

@@ -3,8 +3,8 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {
   createCollectionSchema,
@@ -13,6 +13,7 @@ import {
   deckFromSessionSchema,
   learnBlockFlashcardSchema,
   learnBlockNoteSchema,
+  learnCuratedCardsSchema,
   deckGenerationSchema,
   flashcardReviewSchema,
   glossaryContentSchema,
@@ -42,7 +43,6 @@ import { EvaluatorService } from '../learn-ai/evaluator.service';
 import { LearnAiCallLogger } from '../learn-ai/learn-ai-call.logger';
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import { LearnRepository } from '../learn/learn.repository';
-import { PedagogyOrchestratorService } from '../learn/engine/pedagogy-orchestrator.service';
 import { StudentStorageService } from '../storage/student-storage.service';
 import type { StudentPrincipal } from '../student.types';
 import { LibraryRepository } from './library.repository';
@@ -69,7 +69,6 @@ export class LibraryService {
   constructor(
     private readonly repo: LibraryRepository,
     private readonly learn: LearnRepository,
-    private readonly orchestrator: PedagogyOrchestratorService,
     private readonly storage: StudentStorageService,
     @Inject(LEARN_AI_PROVIDER) private readonly ai: LearnAiProvider,
     private readonly budgets: BudgetsService,
@@ -705,29 +704,12 @@ export class LibraryService {
   }
 
   async tutor(principal: StudentPrincipal, itemId: string, body?: unknown) {
-    const focus = libraryTutorInputSchema.parse(body ?? {});
-    const item = await this.requireReadyItem(principal, itemId);
-    const timeBudget = focus.timeBudgetMinutes ?? 15;
-    const { session } = await this.orchestrator.createSession(principal, {
-      entryPoint: 'library_document',
-      topicKey: `material:${item.id}`,
-      knowledgeItemId: item.id,
-      goal: 'acquisition',
-      timeBudgetMinutes: timeBudget,
-      idempotencyKey: randomUUID(),
+    libraryTutorInputSchema.parse(body ?? {});
+    await this.requireReadyItem(principal, itemId);
+    throw new ServiceUnavailableException({
+      code: 'LEARN_REBUILD',
+      message: 'Learn sessions are being rebuilt. Library tutoring will return shortly.',
     });
-    await this.ledger.log({
-      eventType: 'session.started',
-      payload: {
-        sessionId: session.id,
-        topicKey: session.topicKey,
-        source: 'library_document',
-        knowledgeItemId: item.id,
-        focusConcept: focus.focusConcept,
-      },
-      principal,
-    });
-    return { sessionId: session.id };
   }
 
   async saveFromClassMaterial(principal: StudentPrincipal, materialId: string) {
@@ -840,6 +822,35 @@ export class LibraryService {
       },
     ]);
     return { deckId: row.id };
+  }
+
+  /** Student-curated cards from lesson completion — never auto-saves. */
+  async saveCuratedLearnCards(principal: StudentPrincipal, body: unknown) {
+    const parsed = learnCuratedCardsSchema.parse(body);
+    const session = await this.learn.getSession(principal, parsed.sessionId);
+    if (!session) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Session not found' });
+
+    const row = await this.repo.insertDeck({
+      ...this.repo.owner(principal),
+      sourceSessionId: parsed.sessionId,
+      title: `${parsed.topicTitle.slice(0, 60)} — session cards`,
+      fromLabel: 'From Edrion Learn',
+    });
+    await this.repo.insertCards(
+      parsed.cards.map((c, i) => ({
+        deckId: row.id,
+        sequence: i + 1,
+        prompt: c.front,
+        answer: c.back,
+        sourcePage: null,
+        nextDueAt: new Date(),
+        intervalDays: '0',
+        ease: '2.50',
+        reps: 0,
+        lapses: 0,
+      })),
+    );
+    return { deckId: row.id, saved: parsed.cards.length };
   }
 
   /** Deposit summary + deck + quiz from a completed Learn session (auto-artifacts). */

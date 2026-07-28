@@ -1,5 +1,37 @@
 -- 0109_learn_engine
--- Clean Petros Learn engine schema (dual-owner num_nonnulls form, no Plan-02 spine).
+-- Petros Learn v2 engine schema. Replaces topic profiles with topic shapes,
+-- adds lesson_shape on sessions, renames block move_type → surface, defaults
+-- block_schema_version to 2. Restores student-table FKs destroyed by CASCADE.
+
+CREATE TABLE learn_topic_shapes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  learn_topic_id uuid REFERENCES learn_topics(id) ON DELETE CASCADE,
+  topic_key text NOT NULL,
+  institution_id uuid REFERENCES institutions(id) ON DELETE CASCADE,
+  independent_user_id uuid REFERENCES independent_users(id) ON DELETE CASCADE,
+  shape jsonb NOT NULL,
+  shape_schema_version integer NOT NULL DEFAULT 1,
+  source text NOT NULL CHECK (source IN ('generated', 'human_override', 'provisional')),
+  model text,
+  prompt_version text,
+  computed_at timestamptz NOT NULL DEFAULT now(),
+  version integer NOT NULL DEFAULT 1,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT learn_topic_shapes_owner_ck CHECK (num_nonnulls(institution_id, independent_user_id) = 1)
+);
+
+CREATE UNIQUE INDEX learn_topic_shapes_institution_topic_id_uq
+  ON learn_topic_shapes (institution_id, learn_topic_id)
+  WHERE institution_id IS NOT NULL AND learn_topic_id IS NOT NULL;
+CREATE UNIQUE INDEX learn_topic_shapes_institution_topic_key_uq
+  ON learn_topic_shapes (institution_id, topic_key) WHERE institution_id IS NOT NULL;
+CREATE UNIQUE INDEX learn_topic_shapes_independent_topic_id_uq
+  ON learn_topic_shapes (independent_user_id, learn_topic_id)
+  WHERE independent_user_id IS NOT NULL AND learn_topic_id IS NOT NULL;
+CREATE UNIQUE INDEX learn_topic_shapes_independent_topic_key_uq
+  ON learn_topic_shapes (independent_user_id, topic_key)
+  WHERE independent_user_id IS NOT NULL;
 
 CREATE TABLE learn_sessions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -7,13 +39,14 @@ CREATE TABLE learn_sessions (
   student_id uuid REFERENCES students(id) ON DELETE CASCADE,
   independent_user_id uuid REFERENCES independent_users(id) ON DELETE CASCADE,
   topic_id uuid REFERENCES learn_topics(id) ON DELETE SET NULL,
-  topic_profile_id uuid,
+  topic_shape_id uuid REFERENCES learn_topic_shapes(id) ON DELETE SET NULL,
   path_item_id uuid REFERENCES learning_path_items(id) ON DELETE SET NULL,
   grounding_knowledge_item_id uuid,
   entry_point text,
   entry_ref jsonb,
   status text NOT NULL DEFAULT 'active',
   orchestrator_status text,
+  lesson_shape jsonb NOT NULL DEFAULT '{}'::jsonb,
   state jsonb NOT NULL DEFAULT '{}'::jsonb,
   session_context jsonb NOT NULL DEFAULT '{}'::jsonb,
   policy_snapshot jsonb NOT NULL DEFAULT '{}'::jsonb,
@@ -63,41 +96,6 @@ CREATE UNIQUE INDEX learn_sessions_independent_active_orchestrator_uq
     AND entry_point IS NOT NULL
     AND orchestrator_status IN ('created', 'active', 'awaiting_response', 'paused', 'closing');
 
-CREATE TABLE learn_topic_profiles (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  learn_topic_id uuid REFERENCES learn_topics(id) ON DELETE CASCADE,
-  topic_key text NOT NULL,
-  institution_id uuid REFERENCES institutions(id) ON DELETE CASCADE,
-  independent_user_id uuid REFERENCES independent_users(id) ON DELETE CASCADE,
-  title text NOT NULL,
-  profile jsonb NOT NULL,
-  profile_schema_version integer NOT NULL DEFAULT 1,
-  source text NOT NULL CHECK (source IN ('llm', 'generated', 'human_override')),
-  overridden_by uuid,
-  model text,
-  prompt_version text,
-  expires_at timestamptz,
-  version integer NOT NULL DEFAULT 1,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT learn_topic_profiles_owner_ck CHECK (num_nonnulls(institution_id, independent_user_id) = 1)
-);
-
-CREATE UNIQUE INDEX learn_topic_profiles_institution_topic_id_uq
-  ON learn_topic_profiles (institution_id, learn_topic_id)
-  WHERE institution_id IS NOT NULL AND learn_topic_id IS NOT NULL;
-CREATE UNIQUE INDEX learn_topic_profiles_institution_topic_key_uq
-  ON learn_topic_profiles (institution_id, topic_key) WHERE institution_id IS NOT NULL;
-CREATE UNIQUE INDEX learn_topic_profiles_independent_topic_id_uq
-  ON learn_topic_profiles (independent_user_id, learn_topic_id)
-  WHERE independent_user_id IS NOT NULL AND learn_topic_id IS NOT NULL;
-CREATE UNIQUE INDEX learn_topic_profiles_independent_topic_key_uq
-  ON learn_topic_profiles (independent_user_id, topic_key)
-  WHERE independent_user_id IS NOT NULL;
-
-ALTER TABLE learn_sessions ADD CONSTRAINT learn_sessions_topic_profile_id_fk
-  FOREIGN KEY (topic_profile_id) REFERENCES learn_topic_profiles(id) ON DELETE SET NULL;
-
 CREATE TABLE learn_session_blocks (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   session_id uuid NOT NULL REFERENCES learn_sessions(id) ON DELETE CASCADE,
@@ -105,8 +103,8 @@ CREATE TABLE learn_session_blocks (
   block_type text NOT NULL,
   content jsonb NOT NULL,
   state jsonb NOT NULL DEFAULT '{}'::jsonb,
-  move_type text,
-  block_schema_version integer NOT NULL DEFAULT 1,
+  surface text,
+  block_schema_version integer NOT NULL DEFAULT 2,
   reasoning text,
   degraded boolean NOT NULL DEFAULT false,
   interaction_state jsonb NOT NULL DEFAULT '{}'::jsonb,
@@ -151,6 +149,12 @@ CREATE TABLE learn_attempts (
 CREATE UNIQUE INDEX learn_attempts_session_block_question_uq
   ON learn_attempts (session_id, block_id, question_id)
   WHERE session_id IS NOT NULL AND block_id IS NOT NULL AND question_id IS NOT NULL;
+
+-- Learner-digest covering indexes (attempt history fan-in).
+CREATE INDEX learn_attempts_student_created_idx
+  ON learn_attempts (student_id, created_at DESC) WHERE student_id IS NOT NULL;
+CREATE INDEX learn_attempts_independent_created_idx
+  ON learn_attempts (independent_user_id, created_at DESC) WHERE independent_user_id IS NOT NULL;
 
 CREATE TABLE learner_mastery (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -272,6 +276,21 @@ CREATE UNIQUE INDEX learn_config_institution_key_uq ON learn_config (institution
 CREATE UNIQUE INDEX learn_config_independent_key_uq ON learn_config (independent_user_id, key)
   WHERE scope = 'independent_user';
 
+-- Fold back global defaults (formerly 0104).
+INSERT INTO learn_config (key, scope, value_type, value, description) VALUES
+  ('learn.move_cap', 'global', 'number', '14', 'Max planned moves / checkpoints per session.'),
+  ('learn.profile_ttl_days', 'global', 'number', '180', 'Deprecated with topic shapes; retained for config compatibility.'),
+  ('learn.plan_model_tier', 'global', 'string', 'small', 'Lesson-shape labelling tier.'),
+  ('learn.render_model_tier', 'global', 'string', 'mid', 'Block generation tier.'),
+  ('learn.grade_model_tier', 'global', 'string', 'small', 'Ambiguous short-text grading tier.'),
+  ('learn.judge_model_tier', 'global', 'string', 'mid', 'Eval harness judge tier.'),
+  ('learn.profiler_model_tier', 'global', 'string', 'small', 'Topic-shape generation tier (maps to large at call site when needed).'),
+  ('learn.max_free_questions_per_session', 'global', 'number', '5', 'Composer free questions per session.'),
+  ('learn.daily_session_cap_per_user', 'global', 'number', '12', 'Soft daily session cap.'),
+  ('learn.speculative_planning', 'global', 'boolean', 'true', 'Enable speculation across branch-invariant boundaries.'),
+  ('learn.default_session_minutes', 'global', 'number', '15', 'Default time budget when none is supplied.');
+
+-- Restore learn_ai_calls FKs.
 ALTER TABLE learn_ai_calls DROP CONSTRAINT IF EXISTS learn_ai_calls_session_id_fk;
 ALTER TABLE learn_ai_calls DROP CONSTRAINT IF EXISTS learn_ai_calls_block_id_fk;
 ALTER TABLE learn_ai_calls ADD CONSTRAINT learn_ai_calls_session_id_fk
@@ -279,8 +298,30 @@ ALTER TABLE learn_ai_calls ADD CONSTRAINT learn_ai_calls_session_id_fk
 ALTER TABLE learn_ai_calls ADD CONSTRAINT learn_ai_calls_block_id_fk
   FOREIGN KEY (block_id) REFERENCES learn_session_blocks(id) ON DELETE SET NULL;
 
+-- Restore student-owned FKs dropped by CASCADE. Null orphans first.
+UPDATE flashcard_decks SET source_session_id = NULL
+  WHERE source_session_id IS NOT NULL
+    AND NOT EXISTS (SELECT 1 FROM learn_sessions s WHERE s.id = flashcard_decks.source_session_id);
+UPDATE knowledge_artifacts SET source_session_id = NULL
+  WHERE source_session_id IS NOT NULL
+    AND NOT EXISTS (SELECT 1 FROM learn_sessions s WHERE s.id = knowledge_artifacts.source_session_id);
+UPDATE visual_canvases SET source_session_id = NULL
+  WHERE source_session_id IS NOT NULL
+    AND NOT EXISTS (SELECT 1 FROM learn_sessions s WHERE s.id = visual_canvases.source_session_id);
+
+ALTER TABLE flashcard_decks DROP CONSTRAINT IF EXISTS flashcard_decks_source_session_id_fk;
+ALTER TABLE knowledge_artifacts DROP CONSTRAINT IF EXISTS knowledge_artifacts_source_session_id_fk;
+ALTER TABLE visual_canvases DROP CONSTRAINT IF EXISTS visual_canvases_source_session_id_fk;
+
+ALTER TABLE flashcard_decks ADD CONSTRAINT flashcard_decks_source_session_id_fk
+  FOREIGN KEY (source_session_id) REFERENCES learn_sessions(id) ON DELETE SET NULL;
+ALTER TABLE knowledge_artifacts ADD CONSTRAINT knowledge_artifacts_source_session_id_fk
+  FOREIGN KEY (source_session_id) REFERENCES learn_sessions(id) ON DELETE SET NULL;
+ALTER TABLE visual_canvases ADD CONSTRAINT visual_canvases_source_session_id_fk
+  FOREIGN KEY (source_session_id) REFERENCES learn_sessions(id) ON DELETE SET NULL;
+
 GRANT SELECT, INSERT, UPDATE ON learn_sessions, learn_session_blocks, learn_attempts,
-  learn_topic_profiles, learner_mastery, learn_session_events, learner_model_state,
+  learn_topic_shapes, learner_mastery, learn_session_events, learner_model_state,
   evidence_tags, learn_config TO edrion_app;
 GRANT SELECT, INSERT ON learner_model_events TO edrion_app;
 REVOKE UPDATE, DELETE, TRUNCATE ON learner_model_events FROM edrion_app;

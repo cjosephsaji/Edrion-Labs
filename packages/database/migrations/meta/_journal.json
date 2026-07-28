@@ -680,6 +680,13 @@
       "when": 1788100000000,
       "tag": "0109_learn_engine",
       "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "7",
+      "when": 1788200000000,
+      "tag": "0110_ai_capability_values",
+      "breakpoints": true
     }
   ]
 }

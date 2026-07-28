@@ -1,17 +1,14 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { Inject, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { FRESHNESS_FADING_DAYS, FRESHNESS_FRESH_DAYS } from '@edrion/shared-types';
 import { LEARNING_EVENTS_WRITER } from '../../../common/tokens';
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import type { StudentPrincipal } from '../student.types';
-import { PedagogyOrchestratorService } from './engine/pedagogy-orchestrator.service';
 import { LearnRepository } from './learn.repository';
 
 @Injectable()
 export class RevisionService {
   constructor(
     private readonly repo: LearnRepository,
-    private readonly orchestrator: PedagogyOrchestratorService,
     @Inject(LEARNING_EVENTS_WRITER) private readonly ledger: LearningEventsWriter,
   ) {}
 
@@ -49,22 +46,11 @@ export class RevisionService {
   async refresh(principal: StudentPrincipal, topicId: string) {
     const topic = await this.repo.getTopic(topicId);
     if (!topic) throw new NotFoundException('Topic not found');
-
-    const { session } = await this.orchestrator.createSession(principal, {
-      entryPoint: 'review_queue',
-      topicKey: topic.topicKey,
-      goal: 'revision',
-      timeBudgetMinutes: 20,
-      idempotencyKey: randomUUID(),
+    void principal;
+    void this.ledger;
+    throw new ServiceUnavailableException({
+      code: 'LEARN_REBUILD',
+      message: 'Revision sessions are being rebuilt and will return shortly.',
     });
-
-    await this.ledger.log({
-      principal,
-      eventType: 'revision.started',
-      topicKey: topic.topicKey,
-      payload: { topicKey: topic.topicKey, sessionId: session.id },
-    });
-
-    return session;
   }
 }

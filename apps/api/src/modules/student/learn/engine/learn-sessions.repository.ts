@@ -294,26 +294,26 @@ export class LearnSessionsRepository {
       .orderBy(schema.learnSessionEvents.seq);
   }
 
-  async findTopicProfile(
+  async findTopicShape(
     principal: StudentPrincipal,
     opts: { learnTopicId?: string | null; topicKey: string },
   ) {
     const ownerCond =
       principal.kind === 'institutional'
         ? and(
-            eq(schema.learnTopicProfiles.institutionId, principal.institutionId),
-            isNull(schema.learnTopicProfiles.independentUserId),
+            eq(schema.learnTopicShapes.institutionId, principal.institutionId),
+            isNull(schema.learnTopicShapes.independentUserId),
           )
         : and(
-            isNull(schema.learnTopicProfiles.institutionId),
-            eq(schema.learnTopicProfiles.independentUserId, principal.independentUserId),
+            isNull(schema.learnTopicShapes.institutionId),
+            eq(schema.learnTopicShapes.independentUserId, principal.independentUserId),
           );
 
     if (opts.learnTopicId) {
       const byTopic = await this.db
         .select()
-        .from(schema.learnTopicProfiles)
-        .where(and(ownerCond, eq(schema.learnTopicProfiles.learnTopicId, opts.learnTopicId)))
+        .from(schema.learnTopicShapes)
+        .where(and(ownerCond, eq(schema.learnTopicShapes.learnTopicId, opts.learnTopicId)))
         .limit(1)
         .then((r) => r[0] ?? null);
       if (byTopic) return byTopic;
@@ -321,56 +321,66 @@ export class LearnSessionsRepository {
 
     return this.db
       .select()
-      .from(schema.learnTopicProfiles)
-      .where(and(ownerCond, eq(schema.learnTopicProfiles.topicKey, opts.topicKey)))
+      .from(schema.learnTopicShapes)
+      .where(and(ownerCond, eq(schema.learnTopicShapes.topicKey, opts.topicKey)))
       .limit(1)
       .then((r) => r[0] ?? null);
   }
 
-  async insertTopicProfile(row: typeof schema.learnTopicProfiles.$inferInsert) {
-    // Uniqueness is enforced by PARTIAL unique indexes, so the arbiter must repeat
-    // the index predicate via `targetWhere` (a bare column list raises 42P10).
+  /** @deprecated Use findTopicShape — alias during rebuild. */
+  async findTopicProfile(
+    principal: StudentPrincipal,
+    opts: { learnTopicId?: string | null; topicKey: string },
+  ) {
+    return this.findTopicShape(principal, opts);
+  }
+
+  async insertTopicShape(row: typeof schema.learnTopicShapes.$inferInsert) {
     const conflict =
       row.institutionId != null
         ? {
-            target: [schema.learnTopicProfiles.institutionId, schema.learnTopicProfiles.topicKey],
-            targetWhere: sql`${schema.learnTopicProfiles.institutionId} IS NOT NULL`,
+            target: [schema.learnTopicShapes.institutionId, schema.learnTopicShapes.topicKey],
+            targetWhere: sql`${schema.learnTopicShapes.institutionId} IS NOT NULL`,
           }
         : row.independentUserId != null
           ? {
               target: [
-                schema.learnTopicProfiles.independentUserId,
-                schema.learnTopicProfiles.topicKey,
+                schema.learnTopicShapes.independentUserId,
+                schema.learnTopicShapes.topicKey,
               ],
-              targetWhere: sql`${schema.learnTopicProfiles.independentUserId} IS NOT NULL`,
+              targetWhere: sql`${schema.learnTopicShapes.independentUserId} IS NOT NULL`,
             }
           : null;
 
     if (!conflict) {
-      const [inserted] = await this.db.insert(schema.learnTopicProfiles).values(row).returning();
+      const [inserted] = await this.db.insert(schema.learnTopicShapes).values(row).returning();
       return inserted!;
     }
 
     const [created] = await this.db
-      .insert(schema.learnTopicProfiles)
+      .insert(schema.learnTopicShapes)
       .values(row)
       .onConflictDoUpdate({
         ...conflict,
         set: {
           learnTopicId: row.learnTopicId ?? null,
-          title: row.title,
-          profile: row.profile,
+          shape: row.shape,
+          shapeSchemaVersion: row.shapeSchemaVersion ?? 1,
           source: row.source,
           model: row.model ?? null,
           promptVersion: row.promptVersion ?? null,
-          expiresAt: row.expiresAt ?? null,
-          overriddenBy: row.overriddenBy ?? null,
+          computedAt: row.computedAt ?? new Date(),
           updatedAt: new Date(),
-          version: sql`${schema.learnTopicProfiles.version} + 1`,
+          version: sql`${schema.learnTopicShapes.version} + 1`,
         },
       })
       .returning();
     return created!;
+  }
+
+  /** @deprecated Use insertTopicShape. */
+  async insertTopicProfile(row: typeof schema.learnTopicShapes.$inferInsert) {
+    return this.insertTopicShape(row);
   }
 
   async getMastery(principal: StudentPrincipal, atomId: string) {
@@ -543,50 +553,67 @@ export class LearnSessionsRepository {
     return this.db.transaction(fn);
   }
 
-  async getTopicProfileById(principal: StudentPrincipal, profileId: string) {
+  async getTopicShapeById(principal: StudentPrincipal, shapeId: string) {
     const ownerCond =
       principal.kind === 'institutional'
         ? and(
-            eq(schema.learnTopicProfiles.institutionId, principal.institutionId),
-            isNull(schema.learnTopicProfiles.independentUserId),
+            eq(schema.learnTopicShapes.institutionId, principal.institutionId),
+            isNull(schema.learnTopicShapes.independentUserId),
           )
         : and(
-            isNull(schema.learnTopicProfiles.institutionId),
-            eq(schema.learnTopicProfiles.independentUserId, principal.independentUserId),
+            isNull(schema.learnTopicShapes.institutionId),
+            eq(schema.learnTopicShapes.independentUserId, principal.independentUserId),
           );
     return this.db
       .select()
-      .from(schema.learnTopicProfiles)
-      .where(and(ownerCond, eq(schema.learnTopicProfiles.id, profileId)))
+      .from(schema.learnTopicShapes)
+      .where(and(ownerCond, eq(schema.learnTopicShapes.id, shapeId)))
       .limit(1)
       .then((r) => r[0] ?? null);
   }
 
-  /** Staff/institution override: look up by id within an institution. */
-  async getTopicProfileByIdForInstitution(institutionId: string, profileId: string) {
+  /** @deprecated Use getTopicShapeById. */
+  async getTopicProfileById(principal: StudentPrincipal, profileId: string) {
+    return this.getTopicShapeById(principal, profileId);
+  }
+
+  async getTopicShapeByIdForInstitution(institutionId: string, shapeId: string) {
     return this.db
       .select()
-      .from(schema.learnTopicProfiles)
+      .from(schema.learnTopicShapes)
       .where(
         and(
-          eq(schema.learnTopicProfiles.id, profileId),
-          eq(schema.learnTopicProfiles.institutionId, institutionId),
+          eq(schema.learnTopicShapes.id, shapeId),
+          eq(schema.learnTopicShapes.institutionId, institutionId),
         ),
       )
       .limit(1)
       .then((r) => r[0] ?? null);
   }
 
-  async updateTopicProfile(
-    profileId: string,
-    patch: Partial<typeof schema.learnTopicProfiles.$inferInsert>,
+  /** @deprecated Use getTopicShapeByIdForInstitution. */
+  async getTopicProfileByIdForInstitution(institutionId: string, profileId: string) {
+    return this.getTopicShapeByIdForInstitution(institutionId, profileId);
+  }
+
+  async updateTopicShape(
+    shapeId: string,
+    patch: Partial<typeof schema.learnTopicShapes.$inferInsert>,
   ) {
     const [updated] = await this.db
-      .update(schema.learnTopicProfiles)
-      .set({ ...patch, updatedAt: new Date(), version: sql`${schema.learnTopicProfiles.version} + 1` })
-      .where(eq(schema.learnTopicProfiles.id, profileId))
+      .update(schema.learnTopicShapes)
+      .set({ ...patch, updatedAt: new Date(), version: sql`${schema.learnTopicShapes.version} + 1` })
+      .where(eq(schema.learnTopicShapes.id, shapeId))
       .returning();
     return updated ?? null;
+  }
+
+  /** @deprecated Use updateTopicShape. */
+  async updateTopicProfile(
+    profileId: string,
+    patch: Partial<typeof schema.learnTopicShapes.$inferInsert>,
+  ) {
+    return this.updateTopicShape(profileId, patch);
   }
 
   async getLearnerModelState(principal: StudentPrincipal) {

@@ -70,8 +70,10 @@ export const learningPaths = pgTable(
   {
     id: primaryId(),
     institutionId: uuid('institution_id').references(() => institutions.id),
-    studentId: uuid('student_id').references(() => students.id),
-    independentUserId: uuid('independent_user_id').references(() => independentUsers.id),
+    studentId: uuid('student_id').references(() => students.id, { onDelete: 'cascade' }),
+    independentUserId: uuid('independent_user_id').references(() => independentUsers.id, {
+      onDelete: 'cascade',
+    }),
     title: text('title').notNull(),
     subjectLabel: text('subject_label').notNull(),
     source: text('source').notNull(),
@@ -109,8 +111,8 @@ export const learningPathItems = pgTable(
   }),
 );
 
-export const learnTopicProfiles = pgTable(
-  'learn_topic_profiles',
+export const learnTopicShapes = pgTable(
+  'learn_topic_shapes',
   {
     id: primaryId(),
     learnTopicId: uuid('learn_topic_id').references(() => learnTopics.id, { onDelete: 'cascade' }),
@@ -119,52 +121,55 @@ export const learnTopicProfiles = pgTable(
     independentUserId: uuid('independent_user_id').references(() => independentUsers.id, {
       onDelete: 'cascade',
     }),
-    title: text('title').notNull(),
-    profile: jsonb('profile').$type<Record<string, unknown>>().notNull(),
-    profileSchemaVersion: integer('profile_schema_version').notNull().default(1),
+    shape: jsonb('shape').$type<Record<string, unknown>>().notNull(),
+    shapeSchemaVersion: integer('shape_schema_version').notNull().default(1),
     source: text('source').notNull(),
-    overriddenBy: uuid('overridden_by'),
     model: text('model'),
     promptVersion: text('prompt_version'),
-    expiresAt: timestamp('expires_at', { withTimezone: true }),
+    computedAt: timestamp('computed_at', { withTimezone: true }).notNull().defaultNow(),
     version: integer('version').notNull().default(1),
     ...timestamps,
   },
   (t) => ({
-    ownerXor: check('learn_topic_profiles_owner_ck', ownerXor(t.institutionId, t.independentUserId)),
-    institutionTopicIdUq: uniqueIndex('learn_topic_profiles_institution_topic_id_uq')
+    ownerXor: check('learn_topic_shapes_owner_ck', ownerXor(t.institutionId, t.independentUserId)),
+    institutionTopicIdUq: uniqueIndex('learn_topic_shapes_institution_topic_id_uq')
       .on(t.institutionId, t.learnTopicId)
       .where(sql`${t.institutionId} IS NOT NULL AND ${t.learnTopicId} IS NOT NULL`),
-    institutionTopicKeyUq: uniqueIndex('learn_topic_profiles_institution_topic_key_uq')
+    institutionTopicKeyUq: uniqueIndex('learn_topic_shapes_institution_topic_key_uq')
       .on(t.institutionId, t.topicKey)
       .where(sql`${t.institutionId} IS NOT NULL`),
-    independentTopicIdUq: uniqueIndex('learn_topic_profiles_independent_topic_id_uq')
+    independentTopicIdUq: uniqueIndex('learn_topic_shapes_independent_topic_id_uq')
       .on(t.independentUserId, t.learnTopicId)
       .where(sql`${t.independentUserId} IS NOT NULL AND ${t.learnTopicId} IS NOT NULL`),
-    independentTopicKeyUq: uniqueIndex('learn_topic_profiles_independent_topic_key_uq')
+    independentTopicKeyUq: uniqueIndex('learn_topic_shapes_independent_topic_key_uq')
       .on(t.independentUserId, t.topicKey)
       .where(sql`${t.independentUserId} IS NOT NULL`),
   }),
 );
 
+/** @deprecated Alias during rebuild — prefer learnTopicShapes. */
+export const learnTopicProfiles = learnTopicShapes;
+
 export const learnSessions = pgTable(
   'learn_sessions',
   {
     id: primaryId(),
-    institutionId: uuid('institution_id').references(() => institutions.id),
-    studentId: uuid('student_id').references(() => students.id),
-    independentUserId: uuid('independent_user_id').references(() => independentUsers.id),
-    // Nullable since 0106 (DEC-14): ad-hoc free/material sessions carry no learn_topics row.
-    topicId: uuid('topic_id').references(() => learnTopics.id),
-    topicProfileId: uuid('topic_profile_id').references(() => learnTopicProfiles.id, {
+    institutionId: uuid('institution_id').references(() => institutions.id, { onDelete: 'cascade' }),
+    studentId: uuid('student_id').references(() => students.id, { onDelete: 'cascade' }),
+    independentUserId: uuid('independent_user_id').references(() => independentUsers.id, {
+      onDelete: 'cascade',
+    }),
+    topicId: uuid('topic_id').references(() => learnTopics.id, { onDelete: 'set null' }),
+    topicShapeId: uuid('topic_shape_id').references(() => learnTopicShapes.id, {
       onDelete: 'set null',
     }),
-    pathItemId: uuid('path_item_id').references(() => learningPathItems.id),
+    pathItemId: uuid('path_item_id').references(() => learningPathItems.id, { onDelete: 'set null' }),
     groundingKnowledgeItemId: uuid('grounding_knowledge_item_id'),
     entryPoint: text('entry_point'),
     entryRef: jsonb('entry_ref').$type<Record<string, unknown>>(),
     status: text('status').notNull().default('active'),
     orchestratorStatus: text('orchestrator_status'),
+    lessonShape: jsonb('lesson_shape').$type<Record<string, unknown>>().notNull().default({}),
     state: jsonb('state').$type<Record<string, unknown>>().notNull().default({}),
     sessionContext: jsonb('session_context').$type<Record<string, unknown>>().notNull().default({}),
     policySnapshot: jsonb('policy_snapshot').$type<Record<string, unknown>>().notNull().default({}),
@@ -214,8 +219,8 @@ export const learnSessionBlocks = pgTable(
     blockType: text('block_type').notNull(),
     content: jsonb('content').$type<Record<string, unknown>>().notNull(),
     state: jsonb('state').$type<Record<string, unknown>>().notNull().default({}),
-    moveType: text('move_type'),
-    blockSchemaVersion: integer('block_schema_version').notNull().default(1),
+    surface: text('surface'),
+    blockSchemaVersion: integer('block_schema_version').notNull().default(2),
     reasoning: text('reasoning'),
     degraded: boolean('degraded').notNull().default(false),
     interactionState: jsonb('interaction_state').$type<Record<string, unknown>>().notNull().default({}),
@@ -240,8 +245,10 @@ export const learnAttempts = pgTable(
     sessionId: uuid('session_id').references(() => learnSessions.id, { onDelete: 'set null' }),
     blockId: uuid('block_id').references(() => learnSessionBlocks.id, { onDelete: 'set null' }),
     questionId: text('question_id'),
-    studentId: uuid('student_id').references(() => students.id),
-    independentUserId: uuid('independent_user_id').references(() => independentUsers.id),
+    studentId: uuid('student_id').references(() => students.id, { onDelete: 'cascade' }),
+    independentUserId: uuid('independent_user_id').references(() => independentUsers.id, {
+      onDelete: 'cascade',
+    }),
     kind: text('kind').notNull(),
     input: jsonb('input').$type<Record<string, unknown>>().notNull(),
     evaluation: jsonb('evaluation').$type<Record<string, unknown>>().notNull(),
@@ -368,8 +375,10 @@ export const quickAnswers = pgTable(
   {
     id: primaryId(),
     institutionId: uuid('institution_id').references(() => institutions.id),
-    studentId: uuid('student_id').references(() => students.id),
-    independentUserId: uuid('independent_user_id').references(() => independentUsers.id),
+    studentId: uuid('student_id').references(() => students.id, { onDelete: 'cascade' }),
+    independentUserId: uuid('independent_user_id').references(() => independentUsers.id, {
+      onDelete: 'cascade',
+    }),
     question: text('question').notNull(),
     answerShort: text('answer_short').notNull(),
     answerDetail: text('answer_detail').notNull(),
@@ -386,8 +395,10 @@ export const revisionStates = pgTable(
   'revision_states',
   {
     id: primaryId(),
-    studentId: uuid('student_id').references(() => students.id),
-    independentUserId: uuid('independent_user_id').references(() => independentUsers.id),
+    studentId: uuid('student_id').references(() => students.id, { onDelete: 'cascade' }),
+    independentUserId: uuid('independent_user_id').references(() => independentUsers.id, {
+      onDelete: 'cascade',
+    }),
     topicId: uuid('topic_id')
       .notNull()
       .references(() => learnTopics.id),
@@ -421,8 +432,10 @@ export const evidenceTags = pgTable(
   'evidence_tags',
   {
     id: primaryId(),
-    studentId: uuid('student_id').references(() => students.id),
-    independentUserId: uuid('independent_user_id').references(() => independentUsers.id),
+    studentId: uuid('student_id').references(() => students.id, { onDelete: 'cascade' }),
+    independentUserId: uuid('independent_user_id').references(() => independentUsers.id, {
+      onDelete: 'cascade',
+    }),
     tagKey: text('tag_key').notNull(),
     label: text('label').notNull(),
     polarity: text('polarity').notNull(),
@@ -526,7 +539,9 @@ export const learnConfig = pgTable(
 
 export type LearnTopic = typeof learnTopics.$inferSelect;
 export type ConceptAtom = typeof conceptAtoms.$inferSelect;
-export type LearnTopicProfile = typeof learnTopicProfiles.$inferSelect;
+export type LearnTopicShape = typeof learnTopicShapes.$inferSelect;
+/** @deprecated Prefer LearnTopicShape. */
+export type LearnTopicProfile = LearnTopicShape;
 export type LearningPath = typeof learningPaths.$inferSelect;
 export type LearningPathItem = typeof learningPathItems.$inferSelect;
 export type LearnSession = typeof learnSessions.$inferSelect;

@@ -174,6 +174,12 @@ export class LibraryController {
     return this.library.flashcardFromLearnBlock(principal, body);
   }
 
+  @Post('library/from-learn-session/cards')
+  @RequireStudentPermissions('student.library.use')
+  curatedLearnCards(@CurrentStudent() principal: StudentPrincipal, @Body() body: unknown) {
+    return this.library.saveCuratedLearnCards(principal, body);
+  }
+
   @Get('library/decks/:id')
   @RequireStudentPermissions('student.library.use')
   getDeck(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {

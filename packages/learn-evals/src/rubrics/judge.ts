@@ -18,10 +18,10 @@ export async function judgeTranscript(
   t: SessionTranscript,
   opts: { apiKey?: string; model?: string; baseUrl?: string },
 ): Promise<JudgeScores> {
-  const apiKey = opts.apiKey ?? process.env.LEARN_EVAL_JUDGE_API_KEY ?? process.env.OPENAI_API_KEY;
+  const apiKey = opts.apiKey ?? process.env.LEARN_EVAL_JUDGE_API_KEY;
   if (!apiKey) {
     throw new Error(
-      'JUDGE_UNAVAILABLE: set LEARN_EVAL_JUDGE_API_KEY (or OPENAI_API_KEY). Structural-only runs are forbidden.',
+      'JUDGE_UNAVAILABLE: set LEARN_EVAL_JUDGE_API_KEY. Ambient OPENAI_API_KEY is never used.',
     );
   }
 
