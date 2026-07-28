@@ -43,11 +43,11 @@ import { ArtifactCommitService } from './artifact-commit.service';
 import { TopicResolutionService } from './topic-resolution.service';
 import { LearnerModelService } from './learner-model.service';
 
-/**
- * Hyperspec §3 fatigue rule threshold. Not one of the 9 tenant-tunable knobs, so
- * it stays a local constant rather than a `LearnConfigService` entry.
- */
-const LEARN_FATIGUE_MIN_ELAPSED_MINUTES = 15;
+/** Fatigue rule: ≥60% of session budget, capped at 15 minutes (plan conflict #7). */
+function fatigueMinElapsedMinutes(state: SessionStateV1): number {
+  const budget = state.time_budget_minutes ?? 15;
+  return Math.min(15, Math.ceil(budget * 0.6));
+}
 
 @Injectable()
 export class PedagogyOrchestratorService {
@@ -925,7 +925,7 @@ export class PedagogyOrchestratorService {
     emit?: (event: Record<string, unknown>) => void,
   ): Promise<boolean> {
     if (state.fatigue_notice_sent) return false;
-    if (state.elapsed_minutes < LEARN_FATIGUE_MIN_ELAPSED_MINUTES) return false;
+    if (state.elapsed_minutes < fatigueMinElapsedMinutes(state)) return false;
     if (state.recent_graded.length < 3) return false;
     if (!state.recent_graded.every((r) => r === 'wrong')) return false;
     state.fatigue_notice_sent = true;
