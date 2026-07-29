@@ -2,7 +2,8 @@ import 'reflect-metadata';
 import { config as loadDotenv } from 'dotenv';
 import { join } from 'node:path';
 // Load the workspace-root .env so the API has DATABASE_URL etc. when run via turbo (cwd = apps/api).
-loadDotenv({ path: join(__dirname, '../../../.env') });
+// override: true — a stale DATABASE_URL in the shell (e.g. localhost) must not win over repo .env.
+loadDotenv({ path: join(__dirname, '../../../.env'), override: true });
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { json, urlencoded } from 'express';

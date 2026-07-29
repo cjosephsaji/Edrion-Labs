@@ -29,8 +29,9 @@ export const aiPolicies = pgTable(
     enabled: boolean('enabled').notNull().default(true),
     /** Operating mode: disabled | read_only | draft_only | full. */
     mode: aiModeEnum('mode').notNull().default('disabled'),
-    /** Per-capability enable map. A capability absent from the map defaults to enabled. */
-    capabilities: jsonb('capabilities').$type<Partial<Record<AiCapability, boolean>>>().default({}),
+    /** Per-capability enable map. A capability absent from the map defaults to enabled.
+     *  Student-tutor keys store enum strings in the same jsonb (DEC-16). */
+    capabilities: jsonb('capabilities').$type<Partial<Record<AiCapability, boolean | string>>>().default({}),
     /** Hard ceiling on financial impact (minor units). Over this → BLOCKED. Null = no cap. */
     maxFinancialImpactMinor: integer('max_financial_impact_minor'),
     /** Hard ceiling on affected users. Over this → BLOCKED. Null = no cap. */
@@ -47,9 +48,9 @@ export const aiPolicies = pgTable(
     topicalityMode: text('topicality_mode'),
     /** Emergency kill switch — short-circuits every action under this scope to BLOCKED. */
     killSwitch: boolean('kill_switch').notNull().default(false),
-    /** Policy family: copilot guardrails vs student_tutor Learn domain config. */
+    /** Policy domain: copilot (default) or student_tutor (Edrion Learn). */
     policyDomain: text('policy_domain').notNull().default('copilot'),
-    /** Typed domain payload (LearnPolicyV1 for student_tutor). */
+    /** Typed domain config (LearnPolicyV1 for student_tutor). */
     domainConfig: jsonb('domain_config').$type<Record<string, unknown>>().notNull().default({}),
     reason: text('reason'),
     setByName: text('set_by_name'),
@@ -59,8 +60,7 @@ export const aiPolicies = pgTable(
     ...timestamps,
   },
   (t) => ({
-    scopeIdx: index('ai_policies_scope_idx').on(t.scope, t.scopeId),
-    scopeDomainUq: uniqueIndex('ai_policies_scope_domain_uq').on(t.scope, t.scopeId, t.policyDomain),
+    scopeDomainIdx: index('ai_policies_scope_domain_idx').on(t.scope, t.scopeId, t.policyDomain),
   }),
 );
 

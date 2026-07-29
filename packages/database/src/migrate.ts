@@ -17,7 +17,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
 
 // Load environment variables from the workspace root .env file
-dotenv.config({ path: join(root, '..', '..', '.env') });
+dotenv.config({ path: join(root, '..', '..', '.env'), override: true });
 
 async function run() {
   const url =

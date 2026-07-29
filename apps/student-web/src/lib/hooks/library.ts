@@ -436,7 +436,7 @@ export function useLibraryQuiz(itemId: string) {
 export function useLibraryTutor(itemId: string) {
   const client = useStudentClient();
   return useMutation({
-    mutationFn: (input?: { focusConcept?: string }) =>
+    mutationFn: (input?: { focusConcept?: string; timeBudgetMinutes?: number }) =>
       client.post<{ sessionId: string }>(`/library/items/${itemId}/tutor`, input ?? {}),
   });
 }

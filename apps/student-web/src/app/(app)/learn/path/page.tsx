@@ -1,23 +1,32 @@
 'use client';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCreateSession, usePath } from '@/lib/hooks';
+import { redirectIfSessionActive } from '@/lib/learn/session-active';
 import { FreshnessChip } from '@/components/learn/FreshnessChip';
 import { PillButton } from '@/components/ui/pill-button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Eyebrow, PageHeader } from '@/components/ui/primitives';
 
 export default function PathPage() {
+  const router = useRouter();
   const { data: path, isLoading } = usePath();
   const createSession = useCreateSession();
 
-  const startItem = async (itemId: string, title: string, topicKey: string) => {
-    const session = await createSession.mutateAsync({
-      pathItemId: itemId,
-      topicTitle: title,
-      topicKey,
-      source: 'path',
-    });
-    window.location.href = `/learn/session/${session.id}`;
+  const startItem = async (itemId: string) => {
+    try {
+      const session = await createSession.mutateAsync({
+        entryPoint: 'learning_path',
+        pathItemId: itemId,
+        goal: 'acquisition',
+        idempotencyKey: crypto.randomUUID(),
+      });
+      router.push(`/learn/session/${session.id}`);
+    } catch (err) {
+      if (!redirectIfSessionActive(err, router)) {
+        throw err;
+      }
+    }
   };
 
   if (isLoading) {
@@ -103,14 +112,17 @@ export default function PathPage() {
                   </div>
                   {item.freshness && <FreshnessChip freshness={item.freshness} />}
                 </div>
-                {item.status === 'current' && (
+                {item.status === 'current' && path.orchestratorEnabled !== false && (
                   <PillButton
                     className="mt-3"
-                    onClick={() => void startItem(item.id, item.title, item.topicKey)}
+                    onClick={() => void startItem(item.id)}
                     disabled={createSession.isPending}
                   >
-                    Start
+                    Start lesson
                   </PillButton>
+                )}
+                {item.status === 'current' && path.orchestratorEnabled === false && (
+                  <p className="mt-2 text-xs text-st-muted">Lessons are paused right now.</p>
                 )}
                 {item.status === 'completed' && (
                   <p className="mt-2 text-xs font-semibold text-st-success">Completed</p>

@@ -7,7 +7,10 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./schema": "./src/schema/index.ts"
+    "./schema": "./src/schema/index.ts",
+    "./seed-platform": "./src/seed-platform.ts",
+    "./dev-constants": "./src/dev-constants.ts",
+    "./app-schemas": "./src/app-schemas.ts"
   },
   "scripts": {
     "generate": "find migrations -name '._*' -delete 2>/dev/null; drizzle-kit generate",

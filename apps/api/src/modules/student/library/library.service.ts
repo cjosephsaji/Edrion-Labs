@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { z } from 'zod';
 import {
@@ -10,6 +11,9 @@ import {
   createFlashcardSchema,
   createKnowledgeItemSchema,
   deckFromSessionSchema,
+  learnBlockFlashcardSchema,
+  learnBlockNoteSchema,
+  learnCuratedCardsSchema,
   deckGenerationSchema,
   flashcardReviewSchema,
   glossaryContentSchema,
@@ -669,37 +673,12 @@ export class LibraryService {
   }
 
   async tutor(principal: StudentPrincipal, itemId: string, body?: unknown) {
-    const focus = libraryTutorInputSchema.parse(body ?? {});
-    const item = await this.requireReadyItem(principal, itemId);
-    const topic = await this.learn.upsertTopicByKey(
-      `doc:${item.id.slice(0, 8)}`,
-      item.title,
-      'Library',
-      principal.kind === 'institutional' ? 'institution' : 'independent',
-      principal.kind === 'institutional' ? principal.institutionId : null,
-    );
-    if (!topic) throw new Error('Failed to resolve topic');
-    const session = await this.learn.createSession({
-      institutionId: principal.kind === 'institutional' ? principal.institutionId : null,
-      studentId: principal.kind === 'institutional' ? principal.studentId : null,
-      independentUserId: principal.kind === 'independent' ? principal.independentUserId : null,
-      topicId: topic.id,
-      groundingKnowledgeItemId: item.id,
-      status: 'active',
-      spine: [],
-      sessionPlan: {
-        source: 'tutor_grounded',
-        knowledgeItemId: item.id,
-        focusConcept: focus.focusConcept,
-      },
+    libraryTutorInputSchema.parse(body ?? {});
+    await this.requireReadyItem(principal, itemId);
+    throw new ServiceUnavailableException({
+      code: 'LEARN_REBUILD',
+      message: 'Learn sessions are being rebuilt. Library tutoring will return shortly.',
     });
-    if (!session) throw new Error('Failed to create session');
-    await this.ledger.log({
-      eventType: 'session.started',
-      payload: { sessionId: session.id, topicKey: topic.topicKey, source: 'tutor_grounded' },
-      principal,
-    });
-    return { sessionId: session.id };
   }
 
   async saveFromClassMaterial(principal: StudentPrincipal, materialId: string) {
@@ -765,6 +744,82 @@ export class LibraryService {
       })),
     );
     return { deckId: row.id };
+  }
+
+  /** G3 overflow: Save to notes — Chat 8 artifact, Learn owns no note storage. */
+  async noteFromLearnBlock(principal: StudentPrincipal, body: unknown) {
+    const parsed = learnBlockNoteSchema.parse(body);
+    const session = await this.learn.getSession(principal, parsed.sessionId);
+    if (!session) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Session not found' });
+    const artifact = await this.repo.insertArtifact({
+      ...this.repo.owner(principal),
+      sourceSessionId: parsed.sessionId,
+      kind: 'summary',
+      title: parsed.title.slice(0, 120),
+      content: {
+        title: parsed.title,
+        sections: [{ heading: 'From lesson', body: parsed.bodyMd }],
+      },
+      fromLabel: 'From Edrion Learn',
+    });
+    return { artifactId: artifact.id };
+  }
+
+  /** G3 overflow: Make flashcard from this — Chat 8 deck, Learn owns no card storage. */
+  async flashcardFromLearnBlock(principal: StudentPrincipal, body: unknown) {
+    const parsed = learnBlockFlashcardSchema.parse(body);
+    const session = await this.learn.getSession(principal, parsed.sessionId);
+    if (!session) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Session not found' });
+    const row = await this.repo.insertDeck({
+      ...this.repo.owner(principal),
+      sourceSessionId: parsed.sessionId,
+      title: parsed.prompt.slice(0, 80),
+      fromLabel: 'From Edrion Learn',
+    });
+    await this.repo.insertCards([
+      {
+        deckId: row.id,
+        sequence: 1,
+        prompt: parsed.prompt,
+        answer: parsed.answer,
+        sourcePage: null,
+        nextDueAt: new Date(),
+        intervalDays: '0',
+        ease: '2.50',
+        reps: 0,
+        lapses: 0,
+      },
+    ]);
+    return { deckId: row.id };
+  }
+
+  /** Student-curated cards from lesson completion — never auto-saves. */
+  async saveCuratedLearnCards(principal: StudentPrincipal, body: unknown) {
+    const parsed = learnCuratedCardsSchema.parse(body);
+    const session = await this.learn.getSession(principal, parsed.sessionId);
+    if (!session) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Session not found' });
+
+    const row = await this.repo.insertDeck({
+      ...this.repo.owner(principal),
+      sourceSessionId: parsed.sessionId,
+      title: `${parsed.topicTitle.slice(0, 60)} — session cards`,
+      fromLabel: 'From Edrion Learn',
+    });
+    await this.repo.insertCards(
+      parsed.cards.map((c, i) => ({
+        deckId: row.id,
+        sequence: i + 1,
+        prompt: c.front,
+        answer: c.back,
+        sourcePage: null,
+        nextDueAt: new Date(),
+        intervalDays: '0',
+        ease: '2.50',
+        reps: 0,
+        lapses: 0,
+      })),
+    );
+    return { deckId: row.id, saved: parsed.cards.length };
   }
 
   /** Deposit summary + deck + quiz from a completed Learn session (auto-artifacts). */

@@ -79,6 +79,13 @@ export class StudentRequestsController {
     return this.documents.listStudentVault(principal);
   }
 
+  @Get('documents/digilocker-manifest')
+  async digilockerManifest(@CurrentStudent() principal: StudentPrincipal) {
+    requireInstitutional(principal);
+    await this.gate.assertSurface(principal, 'requests');
+    return this.documents.digilockerManifest(principal);
+  }
+
   @Get('documents/:vaultId/file')
   async vaultFile(
     @CurrentStudent() principal: StudentPrincipal,
@@ -90,7 +97,7 @@ export class StudentRequestsController {
     const row = await this.documents.studentFile(principal, vaultId);
     response.setHeader('Content-Type', 'application/pdf');
     response.setHeader('Content-Disposition', `inline; filename="${safeFilename(row.vault.title)}.pdf"`);
-    this.documents.stream(row.render.storagePath!).pipe(response);
+    this.documents.stream(row.storagePath).pipe(response);
   }
 
   @Get('leave-preview')

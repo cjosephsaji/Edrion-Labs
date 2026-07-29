@@ -19,23 +19,25 @@ export class LearningEventsWriter {
     @Inject(ERROR_REPORTER) private readonly errors: ErrorReporter,
   ) {}
 
+  /** Fire-and-forget path used by non-critical surfaces. Swallows errors. */
   async log(input: LearningEventLogInput): Promise<void> {
     try {
-      await this.insertEvent(this.repo.insert.bind(this.repo), input);
+      await this.write(input);
     } catch (err) {
       this.errors.captureException(err, { module: 'learning-events' });
     }
   }
 
-  /** Transactional write that rolls back the caller transaction on failure. */
-  async logStrictInTransaction(tx: Database, input: LearningEventLogInput): Promise<void> {
-    await this.insertEvent((row) => this.repo.insertInTransaction(tx, row), input);
+  /**
+   * Strict path for Learn mastery writebacks (DEC-9 / AC10). Propagates errors
+   * so the surrounding transaction can roll back. Optional `tx` joins the
+   * caller's transaction.
+   */
+  async logStrict(input: LearningEventLogInput, tx?: Database): Promise<void> {
+    await this.write(input, tx);
   }
 
-  private async insertEvent(
-    insert: (row: Parameters<LearningEventsRepository['insert']>[0]) => Promise<void>,
-    input: LearningEventLogInput,
-  ): Promise<void> {
+  private async write(input: LearningEventLogInput, tx?: Database): Promise<void> {
     const parsed = learningEventInputSchema.parse(input);
     const schemaForType =
       learningEventPayloadSchemas[parsed.eventType as keyof typeof learningEventPayloadSchemas];
@@ -57,22 +59,28 @@ export class LearningEventsWriter {
     };
 
     if (principal?.kind === 'institutional') {
-      await insert({
-        ...base,
-        institutionId: principal.institutionId,
-        campusId: principal.campusId,
-        studentId: principal.studentId,
-      });
+      await this.repo.insert(
+        {
+          ...base,
+          institutionId: principal.institutionId,
+          campusId: principal.campusId,
+          studentId: principal.studentId,
+        },
+        tx,
+      );
       return;
     }
     if (principal?.kind === 'independent') {
-      await insert({
-        ...base,
-        independentUserId: principal.independentUserId,
-      });
+      await this.repo.insert(
+        {
+          ...base,
+          independentUserId: principal.independentUserId,
+        },
+        tx,
+      );
       return;
     }
 
-    await insert(base);
+    await this.repo.insert(base, tx);
   }
 }

@@ -16,23 +16,7 @@ import { StudentStorageController } from './storage/student-storage.controller';
 import { StudentStorageService } from './storage/student-storage.service';
 import { LearningEventsModule } from './ledger/learning-events.module';
 import { LearnAiModule } from './learn-ai/learn-ai.module';
-import { LearnRepository } from './learn/learn.repository';
-import { SessionsController } from './learn/sessions.controller';
-import { SessionsService } from './learn/sessions.service';
-import { AskController } from './learn/ask.controller';
-import { AskService } from './learn/ask.service';
-import { QuickController } from './learn/quick.controller';
-import { QuickService } from './learn/quick.service';
-import { PathController } from './learn/path.controller';
-import { PathService } from './learn/path.service';
-import { RevisionController } from './learn/revision.controller';
-import { RevisionService } from './learn/revision.service';
-import { StreaksController } from './learn/streaks.controller';
-import { StreaksService } from './learn/streaks.service';
-import { NotesController } from './learn/notes.controller';
-import { NotesService } from './learn/notes.service';
-import { HistoryController } from './learn/history.controller';
-import { HistoryService } from './learn/history.service';
+import { LearnModule } from './learn/learn.module';
 import { LibraryController } from './library/library.controller';
 import { LibraryStreamController } from './library/library-stream.controller';
 import { LibraryRepository } from './library/library.repository';
@@ -104,20 +88,12 @@ import { StudentResultsController } from './results/student-results.controller';
 import { StudentResultsService } from './results/student-results.service';
 
 @Module({
-  imports: [FeatureControlsModule, PortalModule, LearnAiModule, LearningEventsModule, VisualStudioModule, LabHomeModule, ExamEngineModule, EdrionLearnModule, StudentAuthModule, TodayNotificationModule, DebateModule, CampusMirrorsModule, ExamPrepModule],
+  imports: [FeatureControlsModule, PortalModule, LearnAiModule, LearningEventsModule, VisualStudioModule, ExamEngineModule, StudentAuthModule, TodayNotificationModule, LearnModule],
   controllers: [
     StudentAuthController,
     StudentMeController,
     StudentHomeController,
     StudentStorageController,
-    SessionsController,
-    AskController,
-    QuickController,
-    PathController,
-    RevisionController,
-    StreaksController,
-    NotesController,
-    HistoryController,
     LibraryController,
     LibraryStreamController,
     LibraryReviewController,
@@ -149,15 +125,6 @@ import { StudentResultsService } from './results/student-results.service';
     SurfacesService,
     FeesSummaryService,
     StudentStorageService,
-    LearnRepository,
-    SessionsService,
-    AskService,
-    QuickService,
-    PathService,
-    RevisionService,
-    StreaksService,
-    NotesService,
-    HistoryService,
     LibraryRepository,
     LibraryService,
     LibraryIngestWorker,

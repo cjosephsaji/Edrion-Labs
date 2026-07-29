@@ -6,6 +6,7 @@ import {
   mergeObligations,
   normalizeObligationKind,
   obligationSchema,
+  parseLearningPathGoal,
   type CreateUserObligationInput,
   type Obligation,
   type UpdateTodayPreferencesInput,
@@ -46,7 +47,7 @@ export class TodayService {
     ]);
     const providers: Provider[] = [
       { key: 'self', sourceModule: 'learn', load: () => this.selfObligations(principal) },
-      { key: 'learn-goal', sourceModule: 'learn', load: () => this.learnGoals.loadStudyBlocks(principal) },
+      { key: 'learn_goal', sourceModule: 'learn', load: () => this.learnGoalObligations(principal) },
       { key: 'assignments', sourceModule: 'learn', load: () => principal.kind === 'institutional' ? this.assignmentObligations(principal, config.terminology.homework_word ?? 'Work') : Promise.resolve([]) },
       { key: 'fees', sourceModule: 'fees', load: () => principal.kind === 'institutional' ? this.feeObligations(principal, config.terminology.fee_word ?? 'Fees') : Promise.resolve([]) },
       { key: 'exams', sourceModule: 'results', load: () => principal.kind === 'institutional' ? this.examObligations(principal, config.terminology.exam_word ?? 'Exam') : Promise.resolve([]) },
@@ -156,6 +157,57 @@ export class TodayService {
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
     return this.db.update(schema.userObligations).set({ status: 'expired', updatedAt: new Date(), version: sql`${schema.userObligations.version}+1` })
       .where(and(eq(schema.userObligations.status, 'pending'), lt(schema.userObligations.dueAt, cutoff))).returning({ id: schema.userObligations.id });
+  }
+
+  private async learnGoalObligations(principal: StudentPrincipal): Promise<Obligation[]> {
+    const owner =
+      principal.kind === 'institutional'
+        ? eq(schema.learningPaths.studentId, principal.studentId)
+        : eq(schema.learningPaths.independentUserId, principal.independentUserId);
+    const [path] = await this.db
+      .select()
+      .from(schema.learningPaths)
+      .where(and(owner, eq(schema.learningPaths.status, 'active')))
+      .orderBy(desc(schema.learningPaths.createdAt))
+      .limit(1);
+    if (!path) return [];
+    const goal = parseLearningPathGoal(path.goal);
+    if (!goal) return [];
+
+    const items = await this.db
+      .select({ item: schema.learningPathItems, topic: schema.learnTopics })
+      .from(schema.learningPathItems)
+      .innerJoin(schema.learnTopics, eq(schema.learningPathItems.topicId, schema.learnTopics.id))
+      .where(
+        and(
+          eq(schema.learningPathItems.pathId, path.id),
+          inArray(schema.learningPathItems.status, ['upcoming', 'current']),
+        ),
+      )
+      .orderBy(asc(schema.learningPathItems.sequence))
+      .limit(1);
+    const next = items[0];
+    if (!next) return [];
+
+    const localDate = this.localDate(new Date(), await this.timezone(principal));
+    const minutes = goal.default_session_minutes ?? 15;
+    return [
+      {
+        id: `self:learn-goal:${path.id}:${next.item.id}:${localDate}`,
+        origin: 'self',
+        kind: 'study_block',
+        title: `${next.topic.title} — ${minutes} min lesson ready`,
+        due_at: `${localDate}T18:00:00.000Z`,
+        all_day: false,
+        status: 'pending',
+        action: {
+          label: 'Start lesson',
+          deep_link: `/learn/session/start?pathItemId=${next.item.id}`,
+        },
+        source_module: 'learn',
+        updated_at: path.updatedAt.toISOString(),
+      },
+    ];
   }
 
   private async selfObligations(principal: StudentPrincipal): Promise<Obligation[]> {

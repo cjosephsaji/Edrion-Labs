@@ -29,6 +29,7 @@ export const SETTING_CATEGORIES = [
   'security',
   'student_portal',
   'terminology',
+  'documents',
 ] as const;
 export const settingCategorySchema = z.enum(SETTING_CATEGORIES);
 export type SettingCategory = (typeof SETTING_CATEGORIES)[number];

@@ -87,6 +87,19 @@ export class DocumentsGenController {
     return this.svc.updateTemplate(this.ctx(p, s, r), id, body);
   }
 
+  /** Queue a real documents.render preview (never files to vault). */
+  @Post(':id/preview')
+  @RequireInstitutionPermissions('documents.templates.manage')
+  previewQueued(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body() body: { payload?: Record<string, unknown> },
+  ) {
+    return this.svc.previewTemplate(this.ctx(p, s, r), id, body?.payload);
+  }
+
   @Delete(':id')
   @RequireInstitutionPermissions('documents.templates.manage')
   remove(

@@ -60,8 +60,31 @@ export interface RequestTypeInfo {
   producesDocument: boolean;
 }
 
-export interface DocumentCatalogItem { docType: string; name: string; templateId: string | null; requiresSignOff: boolean; enabled: boolean; reason: string | null }
-export interface VaultDocument { id: string; title: string; docType: string; issuedAt: string; revokedAt: string | null; hasFile: boolean }
+export interface DocumentCatalogItem {
+  subtypeKey: string;
+  docType: string;
+  name: string;
+  description: string | null;
+  templateId: string | null;
+  requiresSignOff: boolean;
+  enabled: boolean;
+  reason: string | null;
+  deliveryModes: string[];
+  requiresPayment: boolean;
+  feeAmountMinor: number;
+  family: string;
+}
+export interface VaultDocument {
+  id: string;
+  title: string;
+  docType: string;
+  issuedAt: string;
+  revokedAt: string | null;
+  hasFile: boolean;
+  pickupReady?: boolean;
+  deliveryMode?: string | null;
+  pickupNote?: string | null;
+}
 
 type Cached<T> = { value: T; cachedAt: number };
 const listCache = 'student:requests:list:v1';

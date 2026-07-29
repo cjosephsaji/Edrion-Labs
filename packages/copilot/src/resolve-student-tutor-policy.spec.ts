@@ -1,111 +1,104 @@
 import { describe, expect, it } from 'vitest';
-import { FeatureScope, AiMode } from '@edrion/shared-types';
+import { AiCapability, FeatureScope } from '@edrion/shared-types';
 import { resolveStudentTutorPolicy } from './resolve-student-tutor-policy';
-import type { AiPolicyInput } from './types';
-
-function tutorPolicy(overrides: Partial<AiPolicyInput>): AiPolicyInput {
-  return {
-    scope: FeatureScope.Global,
-    scopeId: null,
-    enabled: true,
-    mode: AiMode.Full,
-    policyDomain: 'student_tutor',
-    domainConfig: {
-      v: 1,
-      curriculum_bounds: 'open',
-      answer_directness: 'default',
-      session_visibility: 'none',
-    },
-    ...overrides,
-  };
-}
 
 describe('resolveStudentTutorPolicy', () => {
-  it('returns permissive default when no student_tutor rows exist', () => {
-    const r = resolveStudentTutorPolicy([], {});
-    expect(r.curriculum_bounds).toBe('open');
-    expect(r.answer_directness).toBe('default');
-    expect(r.session_visibility).toBe('none');
-    expect(r.effective_kill).toBe(false);
-  });
-
-  it('uses global seeded student_tutor policy', () => {
-    const r = resolveStudentTutorPolicy([tutorPolicy({})], {});
-    expect(r.curriculum_bounds).toBe('open');
-    expect(r.resolved_layers.length).toBeGreaterThan(0);
-  });
-
-  it('most specific institution layer overrides global bounds', () => {
-    const r = resolveStudentTutorPolicy(
+  it('returns permissive P1 defaults from capabilities (DEC-16)', () => {
+    const policy = resolveStudentTutorPolicy(
       [
-        tutorPolicy({
-          domainConfig: {
-            v: 1,
-            curriculum_bounds: 'open',
-            answer_directness: 'default',
-            session_visibility: 'none',
+        {
+          scope: FeatureScope.Global,
+          scopeId: null,
+          enabled: true,
+          mode: 'full' as never,
+          policyDomain: 'student_tutor',
+          capabilities: {
+            [AiCapability.CurriculumBounds]: 'open',
+            [AiCapability.AnswerDirectness]: 'default',
+            [AiCapability.SessionVisibility]: 'none',
           },
-        }),
-        tutorPolicy({
-          scope: FeatureScope.Institution,
-          scopeId: 'inst-1',
+        },
+      ],
+      {},
+    );
+    expect(policy.curriculum_bounds).toBe('open');
+    expect(policy.session_visibility).toBe('none');
+    expect(policy.effective_mode).toBe('enabled');
+  });
+
+  it('falls back to legacy domain_config when capabilities omit Learn keys', () => {
+    const policy = resolveStudentTutorPolicy(
+      [
+        {
+          scope: FeatureScope.Global,
+          scopeId: null,
+          enabled: true,
+          mode: 'full' as never,
+          policyDomain: 'student_tutor',
           domainConfig: {
-            v: 1,
             curriculum_bounds: 'institution_curriculum',
             answer_directness: 'guided',
             session_visibility: 'aggregate',
           },
-        }),
-      ],
-      { institutionId: 'inst-1' },
-    );
-    expect(r.curriculum_bounds).toBe('institution_curriculum');
-    expect(r.answer_directness).toBe('guided');
-    expect(r.session_visibility).toBe('aggregate');
-  });
-
-  it('ORs kill switch from student_tutor layer', () => {
-    const r = resolveStudentTutorPolicy(
-      [tutorPolicy({ killSwitch: true })],
-      {},
-    );
-    expect(r.effective_kill).toBe(true);
-  });
-
-  it('ORs copilot global kill into effective_kill', () => {
-    const r = resolveStudentTutorPolicy(
-      [
-        tutorPolicy({}),
-        {
-          scope: FeatureScope.Global,
-          scopeId: null,
-          enabled: true,
-          mode: AiMode.Full,
-          policyDomain: 'copilot',
-          killSwitch: true,
         },
       ],
       {},
     );
-    expect(r.effective_kill).toBe(true);
+    expect(policy.curriculum_bounds).toBe('institution_curriculum');
+    expect(policy.answer_directness).toBe('guided');
+    expect(policy.session_visibility).toBe('aggregate');
   });
 
-  it('ignores copilot domain_config for Learn fields', () => {
-    const r = resolveStudentTutorPolicy(
+  it('disables when kill switch fires', () => {
+    const policy = resolveStudentTutorPolicy(
       [
         {
           scope: FeatureScope.Global,
           scopeId: null,
           enabled: true,
-          mode: AiMode.Full,
-          policyDomain: 'copilot',
-          domainConfig: {
-            curriculum_bounds: 'assigned_material_only',
+          mode: 'full' as never,
+          killSwitch: true,
+          policyDomain: 'student_tutor',
+          capabilities: { [AiCapability.CurriculumBounds]: 'open' },
+        },
+      ],
+      {},
+    );
+    expect(policy.effective_mode).toBe('disabled');
+    expect(policy.kill_switch).toBe(true);
+  });
+
+  it('lets institution capabilities override global via the same merge grammar', () => {
+    const policy = resolveStudentTutorPolicy(
+      [
+        {
+          scope: FeatureScope.Global,
+          scopeId: null,
+          enabled: true,
+          mode: 'full' as never,
+          policyDomain: 'student_tutor',
+          capabilities: {
+            [AiCapability.CurriculumBounds]: 'open',
+            [AiCapability.AnswerDirectness]: 'default',
+            [AiCapability.SessionVisibility]: 'none',
+          },
+        },
+        {
+          scope: FeatureScope.Institution,
+          scopeId: 'inst-1',
+          enabled: true,
+          mode: 'full' as never,
+          policyDomain: 'student_tutor',
+          capabilities: {
+            [AiCapability.CurriculumBounds]: 'institution_curriculum',
+            [AiCapability.AnswerDirectness]: 'never_direct_on_assignment',
           },
         },
       ],
-      {},
+      { institutionId: 'inst-1' },
     );
-    expect(r.curriculum_bounds).toBe('open');
+    expect(policy.curriculum_bounds).toBe('institution_curriculum');
+    expect(policy.answer_directness).toBe('never_direct_on_assignment');
+    expect(policy.session_visibility).toBe('none');
   });
 });

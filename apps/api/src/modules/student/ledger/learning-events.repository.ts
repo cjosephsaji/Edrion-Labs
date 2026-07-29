@@ -6,8 +6,9 @@ import { DATABASE } from '../../../common/tokens';
 export class LearningEventsRepository {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
 
-  async insert(row: typeof schema.learningEvents.$inferInsert): Promise<void> {
-    await this.db.insert(schema.learningEvents).values(row);
+  async insert(row: typeof schema.learningEvents.$inferInsert, tx?: Database): Promise<void> {
+    const db = tx ?? this.db;
+    await db.insert(schema.learningEvents).values(row);
   }
 
   async insertInTransaction(

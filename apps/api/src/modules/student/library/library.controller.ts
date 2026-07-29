@@ -162,6 +162,24 @@ export class LibraryController {
     return this.library.deckFromSession(principal, body);
   }
 
+  @Post('library/from-learn-block/note')
+  @RequireStudentPermissions('student.library.use')
+  noteFromLearnBlock(@CurrentStudent() principal: StudentPrincipal, @Body() body: unknown) {
+    return this.library.noteFromLearnBlock(principal, body);
+  }
+
+  @Post('library/from-learn-block/flashcard')
+  @RequireStudentPermissions('student.library.use')
+  flashcardFromLearnBlock(@CurrentStudent() principal: StudentPrincipal, @Body() body: unknown) {
+    return this.library.flashcardFromLearnBlock(principal, body);
+  }
+
+  @Post('library/from-learn-session/cards')
+  @RequireStudentPermissions('student.library.use')
+  curatedLearnCards(@CurrentStudent() principal: StudentPrincipal, @Body() body: unknown) {
+    return this.library.saveCuratedLearnCards(principal, body);
+  }
+
   @Get('library/decks/:id')
   @RequireStudentPermissions('student.library.use')
   getDeck(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {

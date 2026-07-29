@@ -11,18 +11,53 @@ export const EXAM_SOURCE_KINDS = ['studied', 'preset', 'library', 'manual'] as c
 export const examSourceKindSchema = z.enum(EXAM_SOURCE_KINDS);
 export type ExamSourceKind = (typeof EXAM_SOURCE_KINDS)[number];
 
-/** Pause mid-exam is allowed only for quick_check (plan lock). */
-export function examTemplateAllowsPause(template: ExamTemplate): boolean {
-  return template === 'quick_check';
+export const EXAM_SKINS = ['standard', 'nta', 'paper'] as const;
+export const examSkinSchema = z.enum(EXAM_SKINS);
+export type ExamSkin = (typeof EXAM_SKINS)[number];
+
+export const EXAM_GRADING_STYLES = ['auto', 'ai_assisted', 'self_graded'] as const;
+export const examGradingStyleSchema = z.enum(EXAM_GRADING_STYLES);
+export type ExamGradingStyle = (typeof EXAM_GRADING_STYLES)[number];
+
+export const NTA_QUESTION_TYPES = new Set<string>(['mcq_single', 'numerical']);
+
+/** @deprecated Timer never pauses for any skin including Quick (PLAN-MOCK-EXAMS §2.2). */
+export function examTemplateAllowsPause(_template: ExamTemplate): boolean {
+  return false;
 }
 
-export const examBlueprintSectionSchema = z.object({
-  id: z.string().trim().min(1).max(64),
-  name: z.string().trim().min(1).max(120),
-  questionCount: z.number().int().min(1).max(40),
-  questionTypes: z.array(examQuestionTypeSchema).min(1).max(9),
-  marksPerQuestion: z.number().int().min(1).max(20),
+export const examNegativeMarkingSchema = z.object({
+  mode: z.enum(['none', 'fraction', 'fixed']),
+  value: z.number().min(0).max(100).default(0),
 });
+export type ExamNegativeMarking = z.infer<typeof examNegativeMarkingSchema>;
+
+export const examOptionalitySchema = z.object({
+  answerAny: z.number().int().min(1).max(200),
+});
+export type ExamOptionality = z.infer<typeof examOptionalitySchema>;
+
+export const examBlueprintSectionSchema = z
+  .object({
+    id: z.string().trim().min(1).max(64),
+    name: z.string().trim().min(1).max(120),
+    questionCount: z.number().int().min(1).max(200),
+    questionTypes: z.array(examQuestionTypeSchema).min(1).max(9),
+    marksPerQuestion: z.number().int().min(1).max(100),
+    negative: examNegativeMarkingSchema.default({ mode: 'none', value: 0 }),
+    optionality: examOptionalitySchema.nullable().default(null),
+    sectionTimeSec: z.number().int().min(30).max(86_400).nullable().default(null),
+    shuffleQuestions: z.boolean().default(true),
+  })
+  .superRefine((sec, ctx) => {
+    if (sec.optionality && sec.optionality.answerAny > sec.questionCount) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'optionality.answerAny must be ≤ questionCount',
+        path: ['optionality', 'answerAny'],
+      });
+    }
+  });
 export type ExamBlueprintSection = z.infer<typeof examBlueprintSectionSchema>;
 
 export const examTopicWeightSchema = z.object({
@@ -47,28 +82,100 @@ export const examBlueprintSchema = z
     sourceKind: examSourceKindSchema,
     /** Library knowledge item ids when sourceKind === 'library'. */
     libraryItemIds: z.array(z.string().uuid()).max(10).optional(),
+    instructionsMd: z.string().max(20_000).optional(),
+    skin: examSkinSchema.default('standard'),
+    gradingStyle: examGradingStyleSchema.default('auto'),
+    examProfileKey: z
+      .string()
+      .trim()
+      .min(1)
+      .max(64)
+      .regex(/^[a-z0-9][a-z0-9_-]*$/i, 'Invalid exam_profile_key')
+      .nullable()
+      .optional(),
   })
   .superRefine((bp, ctx) => {
-    const totalQuestions = bp.sections.reduce((s, sec) => s + sec.questionCount, 0);
-    if (totalQuestions > 80) {
+    const ids = bp.sections.map((s) => s.id);
+    if (new Set(ids).size !== ids.length) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Total questions across sections must be ≤ 80',
+        message: 'Section ids must be unique',
         path: ['sections'],
       });
     }
-    if (bp.template === 'quick_check') {
-      if (bp.durationMin > 15) {
+
+    const totalQuestions = bp.sections.reduce((s, sec) => s + sec.questionCount, 0);
+    if (totalQuestions > 200) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Total questions across sections must be ≤ 200',
+        path: ['sections'],
+      });
+    }
+
+    const timed = bp.sections.filter((s) => s.sectionTimeSec != null);
+    if (timed.length > 0 && timed.length !== bp.sections.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'TIMING_INCONSISTENT: all sections must set sectionTimeSec or none',
+        path: ['sections'],
+      });
+    }
+    if (timed.length === bp.sections.length && bp.sections.length > 0) {
+      const sumSec = bp.sections.reduce((s, sec) => s + (sec.sectionTimeSec ?? 0), 0);
+      if (sumSec !== bp.durationMin * 60) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Quick check duration must be ≤ 15 minutes',
+          message: 'TIMING_INCONSISTENT: section times must sum to durationMin×60',
           path: ['durationMin'],
         });
       }
-      if (totalQuestions > 12) {
+    }
+
+    if (bp.skin === 'nta') {
+      for (const [i, sec] of bp.sections.entries()) {
+        for (const qt of sec.questionTypes) {
+          if (!NTA_QUESTION_TYPES.has(qt as 'mcq_single' | 'numerical')) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'SKIN_UNSUPPORTED: NTA skin allows only mcq_single|numerical',
+              path: ['sections', i, 'questionTypes'],
+            });
+          }
+        }
+      }
+    }
+
+    const hasLong = bp.sections.some((s) => s.questionTypes.includes('long_answer'));
+    if (hasLong) {
+      if (bp.skin !== 'paper') {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Quick check must have ≤ 12 questions',
+          message: 'long_answer requires skin=paper',
+          path: ['skin'],
+        });
+      }
+      if (bp.gradingStyle === 'auto') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'long_answer requires grading_style ≠ auto',
+          path: ['gradingStyle'],
+        });
+      }
+    }
+
+    if (bp.template === 'quick_check') {
+      if (bp.durationMin > 30) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Quick mock duration must be ≤ 30 minutes',
+          path: ['durationMin'],
+        });
+      }
+      if (totalQuestions > 20) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Quick mock must have ≤ 20 questions',
           path: ['sections'],
         });
       }
@@ -76,12 +183,31 @@ export const examBlueprintSchema = z
   });
 export type ExamBlueprint = z.infer<typeof examBlueprintSchema>;
 
+/** Parse legacy blueprint JSON that may lack section negative/optionality/timing defaults. */
+export function parseExamBlueprint(raw: unknown): ExamBlueprint {
+  return examBlueprintSchema.parse(raw);
+}
+
 export function examBlueprintTotalMarks(bp: ExamBlueprint): number {
-  return bp.sections.reduce((sum, s) => sum + s.questionCount * s.marksPerQuestion, 0);
+  return bp.sections.reduce((sum, s) => {
+    const count = s.optionality?.answerAny ?? s.questionCount;
+    return sum + count * s.marksPerQuestion;
+  }, 0);
 }
 
 export function examBlueprintTotalQuestions(bp: ExamBlueprint): number {
-  return bp.sections.reduce((sum, s) => sum + s.questionCount, 0);
+  return bp.sections.reduce((sum, s) => s + s.questionCount, 0);
+}
+
+/** Derive origin from dual-owner columns — no redundant origin column. */
+export function deriveBlueprintOrigin(row: {
+  institutionId?: string | null;
+  studentId?: string | null;
+  independentUserId?: string | null;
+}): 'system' | 'institution' | 'student' {
+  if (row.institutionId && !row.studentId && !row.independentUserId) return 'institution';
+  if (row.studentId || row.independentUserId) return 'student';
+  return 'system';
 }
 
 /** Default blueprints for each template (used by UI + API). */
@@ -103,21 +229,23 @@ export function defaultBlueprintForTemplate(
     case 'quick_check':
       return examBlueprintSchema.parse({
         template: 'quick_check',
-        title: `Quick check — ${opts.subjectLabel}`,
+        title: `Quick mock — ${opts.subjectLabel}`,
         subjectLabel: opts.subjectLabel,
-        durationMin: 10,
-        difficultyCurve: 'gentle',
+        durationMin: 30,
+        difficultyCurve: 'balanced',
         sections: [
           {
             id: 'sec-obj',
             name: 'Objective',
-            questionCount: 10,
-            questionTypes: ['mcq_single', 'fill_blank', 'assertion_reason'],
+            questionCount: 20,
+            questionTypes: ['mcq_single'],
             marksPerQuestion: 1,
           },
         ],
         topicWeights: topics,
         sourceKind,
+        skin: 'standard',
+        gradingStyle: 'auto',
       });
     case 'chapter_test':
       return examBlueprintSchema.parse({
@@ -178,6 +306,8 @@ export function defaultBlueprintForTemplate(
         topicWeights: topics,
         paperPatternId: opts.paperPatternId ?? null,
         sourceKind: opts.sourceKind ?? 'preset',
+        skin: 'paper',
+        gradingStyle: 'ai_assisted',
       });
     case 'custom':
     default:
@@ -204,12 +334,20 @@ export function defaultBlueprintForTemplate(
 
 export const createExamBlueprintInputSchema = z.object({
   blueprint: examBlueprintSchema,
+  skin: examSkinSchema.optional(),
+  gradingStyle: examGradingStyleSchema.optional(),
+  examProfileKey: z.string().trim().min(1).max(64).nullable().optional(),
+  isPublished: z.boolean().optional(),
 });
 export type CreateExamBlueprintInput = z.infer<typeof createExamBlueprintInputSchema>;
 
 export const updateExamBlueprintInputSchema = z.object({
   blueprint: examBlueprintSchema,
   version: z.number().int().nonnegative(),
+  skin: examSkinSchema.optional(),
+  gradingStyle: examGradingStyleSchema.optional(),
+  examProfileKey: z.string().trim().min(1).max(64).nullable().optional(),
+  isPublished: z.boolean().optional(),
 });
 export type UpdateExamBlueprintInput = z.infer<typeof updateExamBlueprintInputSchema>;
 
@@ -217,6 +355,12 @@ export const examBlueprintDtoSchema = z.object({
   id: z.string().uuid(),
   blueprint: examBlueprintSchema,
   version: z.number().int(),
+  skin: examSkinSchema,
+  gradingStyle: examGradingStyleSchema,
+  examProfileKey: z.string().nullable().optional(),
+  isPublished: z.boolean(),
+  archivedAt: z.string().nullable().optional(),
+  origin: z.enum(['system', 'institution', 'student']),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -232,5 +376,8 @@ export const examPaperPatternDtoSchema = z.object({
   totalMarks: z.number().int(),
   sections: z.array(examBlueprintSectionSchema),
   description: z.string().optional(),
+  skin: examSkinSchema.optional(),
+  gradingStyle: examGradingStyleSchema.optional(),
+  examProfileKey: z.string().nullable().optional(),
 });
 export type ExamPaperPatternDto = z.infer<typeof examPaperPatternDtoSchema>;

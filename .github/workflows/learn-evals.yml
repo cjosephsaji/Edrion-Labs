@@ -1,0 +1,64 @@
+# Learn eval regression gate (hyperspec 3 §1.5).
+# Path-filtered: prompts, block schemas, move constraints, model-tier config.
+# Requires secrets: LEARN_EVAL_AUTH_TOKEN, LEARN_EVAL_SECRET, LEARN_EVAL_JUDGE_API_KEY
+# and a reachable API (LEARN_EVAL_API_BASE). Confirm GitHub Actions is the intended CI host.
+
+name: learn-evals
+
+on:
+  pull_request:
+    paths:
+      - 'apps/api/src/modules/student/edrion-learn/prompts/**'
+      - 'apps/api/src/modules/student/edrion-learn/move-library.ts'
+      - 'apps/api/src/modules/student/edrion-learn/move-planner.service.ts'
+      - 'apps/api/src/modules/student/edrion-learn/block-renderer.service.ts'
+      - 'apps/api/src/modules/student/edrion-learn/constants.ts'
+      - 'apps/api/src/modules/student/edrion-learn/learn-config.service.ts'
+      - 'packages/schemas/src/student/edrion-learn/**'
+      - 'packages/learn-evals/**'
+      - '.github/workflows/learn-evals.yml'
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'core (24) or full (180)'
+        required: true
+        default: 'core'
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Fixture coverage check
+        run: pnpm --filter @edrion/learn-evals check-fixtures
+      - name: Run learn-evals
+        env:
+          LEARN_EVAL_API_BASE: ${{ secrets.LEARN_EVAL_API_BASE }}
+          LEARN_EVAL_AUTH_TOKEN: ${{ secrets.LEARN_EVAL_AUTH_TOKEN }}
+          LEARN_EVAL_SECRET: ${{ secrets.LEARN_EVAL_SECRET }}
+          LEARN_EVAL_JUDGE_API_KEY: ${{ secrets.LEARN_EVAL_JUDGE_API_KEY }}
+          LEARN_EVAL_STUDENT_EMAIL: ${{ secrets.LEARN_EVAL_STUDENT_EMAIL }}
+          LEARN_EVAL_SEED: '42'
+        run: |
+          SUITE="${{ github.event.inputs.suite || 'core' }}"
+          if [ -z "$LEARN_EVAL_API_BASE" ] || [ -z "$LEARN_EVAL_SECRET" ]; then
+            echo "Learn eval secrets not configured — failing closed (AC-4 / AC-10)."
+            exit 1
+          fi
+          pnpm --filter @edrion/learn-evals exec tsx src/cli.ts run --suite "$SUITE"
+      - name: Upload eval report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: learn-eval-report
+          path: eval-runs/
+          if-no-files-found: ignore

@@ -40,6 +40,10 @@ export class TodayNotifyService implements OnModuleInit {
   async fanoutInstitutionStudents(institutionId:string,studentIds:string[],event:TodayNotificationEvent){const unique=[...new Set(studentIds)];for(let offset=0;offset<unique.length;offset+=100){const ids=unique.slice(offset,offset+100);await this.jobs.enqueue('notifications',TODAY_FANOUT_JOB,{institutionId,studentIds:ids,event},{jobId:`today-fanout:${event.eventKey}:${offset/100}`});}return{queued:unique.length};}
 
   async dispatch(principal: StudentPrincipal, event: TodayNotificationEvent) {
+    // AC-12: exactly zero push notifications may originate from Learn in P1.
+    if (event.sourceModule === 'learn') {
+      return { eventWritten: false, push: 'learn_push_forbidden' as const };
+    }
     try{const visible=await this.features.resolveByKey(`student.surface.${event.sourceModule}`,principal.kind==='institutional'?{institutionId:principal.institutionId,campusId:principal.campusId??undefined,institutionUserId:principal.institutionUserId}:{independentUserId:principal.independentUserId});if(!visible.value)return{eventWritten:false,push:'module_disabled' as const};}catch{/* Writers for non-surface system events retain their feed contract. */}
     const owner = principal.kind === 'institutional'
       ? { institutionId: principal.institutionId, studentId: principal.studentId, independentUserId: null }

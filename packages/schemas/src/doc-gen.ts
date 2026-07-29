@@ -12,6 +12,14 @@ export const DOC_TYPES = [
   'report',
   'bonafide',
   'transcript',
+  'migration',
+  'conduct',
+  'report_card',
+  'hall_ticket',
+  'id_card',
+  'manual_upload',
+  'fee_receipt',
+  'fee_statement',
 ] as const;
 export type DocType = (typeof DOC_TYPES)[number];
 export const docTypeSchema = z.enum(DOC_TYPES);

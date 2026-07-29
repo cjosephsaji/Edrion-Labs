@@ -136,6 +136,7 @@ export const glossaryContentSchema = z.object({
 
 export const libraryTutorInputSchema = z.object({
   focusConcept: z.string().min(1).max(200).optional(),
+  timeBudgetMinutes: z.number().int().min(10).max(25).optional(),
 });
 
 export const quizAttemptSchema = z.object({
@@ -188,6 +189,33 @@ export const createFlashcardSchema = z.object({
 
 export const deckFromSessionSchema = z.object({
   sessionId: z.string().uuid(),
+});
+
+export const learnBlockNoteSchema = z.object({
+  sessionId: z.string().uuid(),
+  title: z.string().min(1).max(200),
+  bodyMd: z.string().min(1).max(8000),
+});
+
+export const learnBlockFlashcardSchema = z.object({
+  sessionId: z.string().uuid(),
+  prompt: z.string().min(1).max(2000),
+  answer: z.string().min(1).max(4000),
+});
+
+/** Curated multi-card save from Learn completion — student chooses; no auto-save. */
+export const learnCuratedCardsSchema = z.object({
+  sessionId: z.string().uuid(),
+  topicTitle: z.string().min(1).max(200),
+  cards: z
+    .array(
+      z.object({
+        front: z.string().min(1).max(2000),
+        back: z.string().min(1).max(4000),
+      }),
+    )
+    .min(1)
+    .max(24),
 });
 
 export const knowledgeItemPageSchema = z.object({

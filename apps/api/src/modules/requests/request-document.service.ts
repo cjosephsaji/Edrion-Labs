@@ -1,5 +1,4 @@
-import { randomUUID } from 'node:crypto';
-import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   and,
   desc,
@@ -14,11 +13,15 @@ import {
 import type { AuditWriter } from '@edrion/audit';
 import type { ApiEnv } from '@edrion/config';
 import { ActorType } from '@edrion/shared-types';
-import type { DocumentRequestPayload, VaultRevokeInput } from '@edrion/schemas';
+import type { DocumentRequestPayload, SignatureSlot, VaultRevokeInput, CreateDocumentRenderInput } from '@edrion/schemas';
 import QRCode from 'qrcode';
 import { API_ENV, AUDIT_WRITER, DATABASE } from '../../common/tokens';
 import { hmacSha256Base64Url } from '../../common/jwt';
-import { mintDocumentVerifyCode } from '../../common/crypto/document-verify-signer';
+import {
+  DOCUMENT_VERIFY_CODE_VERSION,
+  mintDocumentVerifyCode,
+  normalizeVerifyCodeInput,
+} from '../../common/crypto/document-verify-signer';
 import { JobsService } from '../../common/queue/jobs.service';
 import { AttachmentStorageService } from '../portal/attachment-storage.service';
 import type { PortalActionContext } from '../portal/portal-action-context';
@@ -27,7 +30,10 @@ import { resolveScopeFilter } from '@edrion/auth';
 import type { InstitutionalStudentPrincipal } from '../student/student.types';
 import { DocumentsGenService, RENDER_JOB } from '../documents/documents-gen.service';
 import { DocumentRenderProcessor } from '../documents/document-render.processor';
+import { DocumentCatalogService } from '../documents/document-catalog.service';
 import { RequestNotifyService } from './request-notify.service';
+import { familyFromDocType } from '@edrion/schemas';
+import { randomUUID } from 'node:crypto';
 
 type RequestRow = typeof schema.studentRequests.$inferSelect;
 
@@ -44,6 +50,7 @@ export class RequestDocumentService {
     private readonly jobs: JobsService,
     private readonly storage: AttachmentStorageService,
     private readonly notifications: RequestNotifyService,
+    private readonly catalog: DocumentCatalogService,
   ) {}
 
   async assertRequestableTemplate(institutionId: string, docType: string) {
@@ -67,20 +74,59 @@ export class RequestDocumentService {
   }
 
   async listRequestableTemplates(institutionId: string) {
+    const rows = await this.catalog.listActive(institutionId);
     const out = [];
-    for (const docType of ['bonafide', 'transcript']) {
+    for (const entry of rows) {
       try {
-        const template = await this.assertRequestableTemplate(institutionId, docType);
+        let template;
+        if (entry.templateId) {
+          [template] = await this.db
+            .select()
+            .from(schema.documentTemplates)
+            .where(
+              and(
+                eq(schema.documentTemplates.id, entry.templateId),
+                eq(schema.documentTemplates.active, true),
+                or(
+                  eq(schema.documentTemplates.institutionId, institutionId),
+                  isNull(schema.documentTemplates.institutionId),
+                ),
+              ),
+            )
+            .limit(1);
+        } else {
+          template = await this.assertRequestableTemplate(institutionId, entry.docType);
+        }
+        if (!template) throw new Error('missing template');
         out.push({
-          docType,
-          name: template.name,
+          subtypeKey: entry.subtypeKey,
+          docType: entry.docType,
+          name: entry.title,
+          description: entry.description ?? null,
           templateId: template.id,
           requiresSignOff: template.requiresSignOff,
           enabled: true,
           reason: null,
+          deliveryModes: (entry.deliveryModes as string[]) ?? ['digital'],
+          requiresPayment: entry.requiresPayment,
+          feeAmountMinor: entry.feeAmountMinor,
+          family: entry.family,
         });
       } catch {
-        out.push({ docType, name: docType.replace(/_/g, ' '), templateId: null, requiresSignOff: false, enabled: false, reason: 'No active template' });
+        out.push({
+          subtypeKey: entry.subtypeKey,
+          docType: entry.docType,
+          name: entry.title,
+          description: entry.description ?? null,
+          templateId: entry.templateId,
+          requiresSignOff: false,
+          enabled: false,
+          reason: 'No active template',
+          deliveryModes: (entry.deliveryModes as string[]) ?? ['digital'],
+          requiresPayment: entry.requiresPayment,
+          feeAmountMinor: entry.feeAmountMinor,
+          family: entry.family,
+        });
       }
     }
     return out;
@@ -129,7 +175,7 @@ export class RequestDocumentService {
         ctx,
         {
           templateId: template.id,
-          docType: payload.doc_type,
+          docType: payload.doc_type as unknown as CreateDocumentRenderInput['docType'],
           title: `${payload.doc_type.replace(/_/g, ' ')} · ${request.humanCode}`,
           payload: {
             student: {
@@ -236,7 +282,9 @@ export class RequestDocumentService {
       .where(
         and(
           eq(schema.studentRequests.id, render.runId),
-          eq(schema.studentRequests.institutionId, render.institutionId),
+          render.institutionId
+            ? eq(schema.studentRequests.institutionId, render.institutionId)
+            : sql`true`,
           eq(schema.studentRequests.type, 'document_request'),
         ),
       )
@@ -244,11 +292,14 @@ export class RequestDocumentService {
     if (!request) return { completed: false };
     const [template] = render.templateId
       ? await this.db
-          .select({ requiresSignOff: schema.documentTemplates.requiresSignOff })
+          .select({
+            requiresSignOff: schema.documentTemplates.requiresSignOff,
+            headerConfig: schema.documentTemplates.headerConfig,
+          })
           .from(schema.documentTemplates)
           .where(eq(schema.documentTemplates.id, render.templateId))
           .limit(1)
-      : [{ requiresSignOff: false }];
+      : [{ requiresSignOff: false, headerConfig: null }];
 
     const [existingVault] = await this.db
       .select()
@@ -258,10 +309,7 @@ export class RequestDocumentService {
     let vault = existingVault;
     if (!vault) {
       const vaultId = randomUUID();
-      const { code: verifyCode } = mintDocumentVerifyCode(
-        vaultId,
-        this.env.SESSION_COOKIE_SECRET,
-      );
+      const verifyCode = this.codeForVault(vaultId);
       const [created] = await this.db
         .insert(schema.studentDocumentVault)
         .values({
@@ -270,12 +318,18 @@ export class RequestDocumentService {
           studentId: request.studentId,
           requestId: request.id,
           documentRenderId: render.id,
+          storageKey: render.storagePath ?? null,
           title: render.title,
           docType: render.docType,
+          family: familyFromDocType(render.docType),
+          source: 'request',
+          templateId: render.templateId,
+          templateFingerprint: render.templateFingerprint,
           verifyCode,
+          verifyCodeVersion: DOCUMENT_VERIFY_CODE_VERSION,
           issuedBy: render.requestedBy,
         })
-        .onConflictDoNothing({ target: schema.studentDocumentVault.documentRenderId })
+        .onConflictDoNothing()
         .returning();
       vault = created;
       if (!vault) {
@@ -297,6 +351,9 @@ export class RequestDocumentService {
     if (template?.requiresSignOff || request.status === 'fulfilled') {
       return { completed: true, requestId: request.id };
     }
+    if (this.signStepsFromTemplate(template?.headerConfig as Record<string, unknown> | null).length > 0) {
+      return { completed: true, requestId: request.id };
+    }
 
     const [fulfilled] = await this.db
       .update(schema.studentRequests)
@@ -310,6 +367,10 @@ export class RequestDocumentService {
       )
       .returning();
     if (fulfilled) {
+      await this.db
+        .update(schema.studentDocumentVault)
+        .set({ deliveredAt: new Date(), updatedAt: new Date() })
+        .where(eq(schema.studentDocumentVault.id, vault.id));
       const seq = await this.appendEvent(fulfilled, 'fulfilled', 'system', null);
       await this.audit.logAudit({
         actorType: ActorType.System,
@@ -326,10 +387,14 @@ export class RequestDocumentService {
     return { completed: true, requestId: request.id };
   }
 
-  async listIssuance(ctx: PortalActionContext) {
+  async listIssuance(ctx: PortalActionContext, query?: { verifyCode?: string; q?: string }) {
     const scope = resolveScopeFilter(ctx.principal, ctx.scope);
     const requestScope = [eq(schema.studentRequests.institutionId, ctx.principal.institutionId)];
     if (scope.campusIds) requestScope.push(inArray(schema.studentRequests.campusId, scope.campusIds));
+    const verifyFilter = query?.verifyCode?.trim()
+      ? normalizeVerifyCodeInput(query.verifyCode.trim())
+      : null;
+    const textFilter = query?.q?.trim().toLowerCase();
     const rows = await this.db
       .select({
         vault: schema.studentDocumentVault,
@@ -365,10 +430,23 @@ export class RequestDocumentService {
           ...requestScope,
           eq(schema.studentRequests.type, 'document_request'),
           eq(schema.studentRequests.status, 'fulfilled'),
+          isNull(schema.studentDocumentVault.abandonedAt),
         ),
       )
       .orderBy(desc(schema.studentDocumentVault.issuedAt));
-    return { items: rows, issued };
+    const filterRow = (entry: { vault: typeof schema.studentDocumentVault.$inferSelect | null; studentName: string | null }) => {
+      if (!entry.vault) return true;
+      if (verifyFilter && entry.vault.verifyCode !== verifyFilter) return false;
+      if (textFilter) {
+        const hay = `${entry.studentName ?? ''} ${entry.vault.verifyCode} ${entry.vault.title}`.toLowerCase();
+        if (!hay.includes(textFilter)) return false;
+      }
+      return true;
+    };
+    return {
+      items: rows.filter(filterRow),
+      issued: issued.filter(filterRow),
+    };
   }
 
   async retryRender(ctx: PortalActionContext, renderId: string) {
@@ -410,16 +488,69 @@ export class RequestDocumentService {
     return { queued: true };
   }
 
-  async signAndDeliver(ctx: PortalActionContext, vaultId: string) {
-    const { vault, request } = await this.requireIssuance(ctx, vaultId);
+  async signAndDeliver(ctx: PortalActionContext, vaultId: string, pickupNote?: string) {
+    const { vault, request, render } = await this.requireIssuance(ctx, vaultId);
+    const payload = request.payload as unknown as DocumentRequestPayload;
+    const deliveryMode = payload.deliveryMode ?? 'digital';
+    const [template] = render.templateId
+      ? await this.db
+          .select()
+          .from(schema.documentTemplates)
+          .where(eq(schema.documentTemplates.id, render.templateId))
+          .limit(1)
+      : [null];
+
+    const signSteps = this.signStepsFromTemplate(template?.headerConfig);
+    const completed = await this.completedSignSlots(request.id);
+    const next = signSteps.find((slot) => !completed.has(slot.slotKey));
+
+    if (next) {
+      const roles = ctx.principal.roleKeys ?? [];
+      if (next.signRole && roles.length && !roles.includes(next.signRole)) {
+        throw new ConflictException({
+          code: 'SIGN_ORDER',
+          message: `This document awaits signature from ${next.signRole}.`,
+        });
+      }
+      await this.appendEvent(request, 'document_signed', 'staff', ctx.principal.institutionUserId, null, {
+        slotKey: next.slotKey,
+        label: next.label,
+      });
+      completed.add(next.slotKey);
+      const remaining = signSteps.some((slot) => !completed.has(slot.slotKey));
+      if (remaining) {
+        await this.audit.logAudit({
+          ...basePortalAudit(ctx),
+          actorType: ActorType.InstitutionUser,
+          action: 'student_request.document_sign_step',
+          module: 'request-engine',
+          entityType: 'student_request',
+          entityId: request.id,
+          newState: { vaultId, slotKey: next.slotKey, pending: true },
+        });
+        return { status: 'signing', slotKey: next.slotKey, vaultId };
+      }
+    }
+
+    const now = new Date();
+    const vaultPatch =
+      deliveryMode === 'physical_pickup'
+        ? {
+            pickupReadyAt: now,
+            pickupNote: pickupNote?.trim() || null,
+            deliveryMode,
+            updatedAt: now,
+          }
+        : { deliveredAt: now, deliveryMode, updatedAt: now };
+
     const [fulfilled] = await this.db
       .update(schema.studentRequests)
       .set({
         status: 'fulfilled',
-        resolvedAt: new Date(),
+        resolvedAt: now,
         fulfilmentDocumentId: vault.id,
         version: request.version + 1,
-        updatedAt: new Date(),
+        updatedAt: now,
       })
       .where(
         and(
@@ -430,7 +561,16 @@ export class RequestDocumentService {
       )
       .returning();
     if (!fulfilled) throw this.versionConflict();
-    const seq = await this.appendEvent(fulfilled, 'fulfilled', 'staff', ctx.principal.institutionUserId);
+
+    await this.db
+      .update(schema.studentDocumentVault)
+      .set(vaultPatch)
+      .where(eq(schema.studentDocumentVault.id, vault.id));
+
+    const seq = await this.appendEvent(fulfilled, 'fulfilled', 'staff', ctx.principal.institutionUserId, null, {
+      deliveryMode,
+      pickupNote: pickupNote?.trim() || null,
+    });
     await this.audit.logAudit({
       ...basePortalAudit(ctx),
       actorType: ActorType.InstitutionUser,
@@ -439,13 +579,134 @@ export class RequestDocumentService {
       entityType: 'student_request',
       entityId: request.id,
       previousState: { status: 'approved' },
-      newState: { status: 'fulfilled', vaultId },
+      newState: { status: 'fulfilled', vaultId, deliveryMode },
     });
     await this.notifications.dispatch({ institutionId: request.institutionId, requestId: request.id, eventSeq: seq });
-    return fulfilled;
+    return { status: 'fulfilled', deliveryMode, vaultId };
+  }
+
+  async markCollected(ctx: PortalActionContext, vaultId: string) {
+    const [row] = await this.db
+      .select({ vault: schema.studentDocumentVault, request: schema.studentRequests })
+      .from(schema.studentDocumentVault)
+      .innerJoin(schema.studentRequests, eq(schema.studentRequests.id, schema.studentDocumentVault.requestId))
+      .where(
+        and(
+          eq(schema.studentDocumentVault.id, vaultId),
+          eq(schema.studentDocumentVault.institutionId, ctx.principal.institutionId),
+          eq(schema.studentRequests.status, 'fulfilled'),
+          isNull(schema.studentDocumentVault.abandonedAt),
+        ),
+      )
+      .limit(1);
+    if (!row?.vault) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Issued document not found.' });
+    }
+    if (row.vault.deliveryMode !== 'physical_pickup') {
+      throw new ConflictException({
+        code: 'NOT_PICKUP',
+        message: 'Only physical pickup documents can be marked collected.',
+      });
+    }
+    if (row.vault.collectedAt) {
+      return row.vault;
+    }
+    const [updated] = await this.db
+      .update(schema.studentDocumentVault)
+      .set({
+        collectedAt: new Date(),
+        collectedBy: ctx.principal.institutionUserId,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.studentDocumentVault.id, vaultId))
+      .returning();
+    await this.audit.logAudit({
+      ...basePortalAudit(ctx),
+      actorType: ActorType.InstitutionUser,
+      action: 'student_document.collected',
+      module: 'request-engine',
+      entityType: 'student_document_vault',
+      entityId: vaultId,
+    });
+    return updated;
+  }
+
+  async reissueVault(ctx: PortalActionContext, vaultId: string, reason: string) {
+    const [row] = await this.db
+      .select({
+        vault: schema.studentDocumentVault,
+        request: schema.studentRequests,
+        render: schema.documentRenders,
+      })
+      .from(schema.studentDocumentVault)
+      .leftJoin(schema.studentRequests, eq(schema.studentRequests.id, schema.studentDocumentVault.requestId))
+      .leftJoin(schema.documentRenders, eq(schema.documentRenders.id, schema.studentDocumentVault.documentRenderId))
+      .where(
+        and(
+          eq(schema.studentDocumentVault.id, vaultId),
+          eq(schema.studentDocumentVault.institutionId, ctx.principal.institutionId),
+          isNull(schema.studentDocumentVault.abandonedAt),
+        ),
+      )
+      .limit(1);
+    if (!row?.vault || !row.render) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Document not found.' });
+    }
+    const newVaultId = randomUUID();
+    const verifyCode = this.codeForVault(newVaultId);
+    const [created] = await this.db
+      .insert(schema.studentDocumentVault)
+      .values({
+        id: newVaultId,
+        institutionId: row.vault.institutionId,
+        studentId: row.vault.studentId,
+        requestId: row.vault.requestId,
+        documentRenderId: row.render.id,
+        storageKey: row.render.storagePath ?? row.vault.storageKey,
+        title: row.vault.title,
+        docType: row.vault.docType,
+        family: row.vault.family,
+        source: row.vault.source,
+        templateId: row.vault.templateId,
+        templateFingerprint: row.vault.templateFingerprint,
+        verifyCode,
+        verifyCodeVersion: DOCUMENT_VERIFY_CODE_VERSION,
+        issuedBy: ctx.principal.institutionUserId,
+        deliveryMode: row.vault.deliveryMode,
+        supersedes: row.vault.id,
+        reissueReason: reason,
+      })
+      .returning();
+    await this.db
+      .update(schema.studentDocumentVault)
+      .set({ supersededBy: newVaultId, updatedAt: new Date() })
+      .where(eq(schema.studentDocumentVault.id, row.vault.id));
+    if (row.request) {
+      await this.db
+        .update(schema.studentRequests)
+        .set({ fulfilmentDocumentId: newVaultId, updatedAt: new Date() })
+        .where(eq(schema.studentRequests.id, row.request.id));
+    }
+    await this.audit.logAudit({
+      ...basePortalAudit(ctx),
+      actorType: ActorType.InstitutionUser,
+      action: 'student_document.reissue',
+      module: 'request-engine',
+      entityType: 'student_document_vault',
+      entityId: newVaultId,
+      previousState: { supersededVaultId: row.vault.id },
+      reason,
+    });
+    return created;
   }
 
   async sendBack(ctx: PortalActionContext, vaultId: string, note: string) {
+    if (note.trim().length < 10) {
+      throw new ConflictException({
+        code: 'NOTE_TOO_SHORT',
+        message: 'Send-back note must be at least 10 characters.',
+      });
+    }
     const { vault, request, render } = await this.requireIssuance(ctx, vaultId);
     const [updated] = await this.db
       .update(schema.studentRequests)
@@ -464,15 +725,24 @@ export class RequestDocumentService {
       )
       .returning();
     if (!updated) throw this.versionConflict();
-    await this.db.delete(schema.studentDocumentVault).where(eq(schema.studentDocumentVault.id, vault.id));
-    if (render.storagePath) await this.storage.remove(render.storagePath);
+    // Tombstone — do not hard-delete; student projection excludes abandoned_at rows.
+    await this.db
+      .update(schema.studentDocumentVault)
+      .set({
+        abandonedAt: new Date(),
+        deliveredAt: null,
+        version: vault.version + 1,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.studentDocumentVault.id, vault.id));
     await this.db
       .update(schema.documentRenders)
-      .set({ status: 'failed', storagePath: null, errorDetail: `Sent back: ${note}`, updatedAt: new Date() })
+      .set({ status: 'failed', errorDetail: `Sent back: ${note}`, updatedAt: new Date() })
       .where(eq(schema.documentRenders.id, render.id));
     await this.appendEvent(updated, 'note_added', 'staff', ctx.principal.institutionUserId, note, {
       internal: true,
       action: 'issuance_send_back',
+      vaultAbandoned: vault.id,
     });
     await this.audit.logAudit({
       ...basePortalAudit(ctx),
@@ -482,7 +752,7 @@ export class RequestDocumentService {
       entityType: 'student_request',
       entityId: request.id,
       previousState: { status: 'approved', vaultId },
-      newState: { status: 'in_review' },
+      newState: { status: 'in_review', abandonedVaultId: vault.id },
       reason: note,
     });
     return updated;
@@ -518,59 +788,141 @@ export class RequestDocumentService {
     const rows = await this.db
       .select({ vault: schema.studentDocumentVault, render: schema.documentRenders, requestStatus: schema.studentRequests.status })
       .from(schema.studentDocumentVault)
-      .innerJoin(schema.documentRenders, eq(schema.documentRenders.id, schema.studentDocumentVault.documentRenderId))
+      .leftJoin(schema.documentRenders, eq(schema.documentRenders.id, schema.studentDocumentVault.documentRenderId))
       .leftJoin(schema.studentRequests, eq(schema.studentRequests.id, schema.studentDocumentVault.requestId))
       .where(
         and(
           eq(schema.studentDocumentVault.institutionId, principal.institutionId),
           eq(schema.studentDocumentVault.studentId, principal.studentId),
+          isNull(schema.studentDocumentVault.abandonedAt),
+          isNull(schema.studentDocumentVault.supersededBy),
+          isNull(schema.studentDocumentVault.revokedAt),
+          or(
+            and(
+              eq(schema.studentDocumentVault.deliveryMode, 'physical_pickup'),
+              sql`${schema.studentDocumentVault.pickupReadyAt} IS NOT NULL`,
+              isNull(schema.studentDocumentVault.collectedAt),
+            ),
+            and(
+              sql`coalesce(${schema.studentDocumentVault.deliveryMode}, 'digital') <> 'physical_pickup'`,
+              sql`${schema.studentDocumentVault.deliveredAt} IS NOT NULL`,
+            ),
+          ),
           or(isNull(schema.studentDocumentVault.requestId), eq(schema.studentRequests.status, 'fulfilled')),
         ),
       )
       .orderBy(desc(schema.studentDocumentVault.issuedAt));
-    return { items: rows.map(({ vault, render }) => ({ ...vault, hasFile: Boolean(render.storagePath) })) };
+    return {
+      items: rows.map(({ vault, render }) => ({
+        ...vault,
+        hasFile:
+          vault.deliveryMode !== 'physical_pickup' && Boolean(render?.storagePath || vault.storageKey),
+        pickupReady: vault.deliveryMode === 'physical_pickup' && Boolean(vault.pickupReadyAt),
+      })),
+    };
   }
 
   async studentFile(principal: InstitutionalStudentPrincipal, vaultId: string) {
     const [row] = await this.db
       .select({ vault: schema.studentDocumentVault, render: schema.documentRenders, status: schema.studentRequests.status })
       .from(schema.studentDocumentVault)
-      .innerJoin(schema.documentRenders, eq(schema.documentRenders.id, schema.studentDocumentVault.documentRenderId))
+      .leftJoin(schema.documentRenders, eq(schema.documentRenders.id, schema.studentDocumentVault.documentRenderId))
       .leftJoin(schema.studentRequests, eq(schema.studentRequests.id, schema.studentDocumentVault.requestId))
       .where(
         and(
           eq(schema.studentDocumentVault.id, vaultId),
           eq(schema.studentDocumentVault.institutionId, principal.institutionId),
           eq(schema.studentDocumentVault.studentId, principal.studentId),
+          isNull(schema.studentDocumentVault.abandonedAt),
         ),
       )
       .limit(1);
-    if (!row || (row.vault.requestId && row.status !== 'fulfilled') || !row.render.storagePath) {
+    const storagePath = row?.render?.storagePath ?? row?.vault.storageKey;
+    if (!row || (row.vault.requestId && row.status !== 'fulfilled') || !storagePath) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Document not found.' });
     }
-    return row;
+    if (row.vault.revokedAt) {
+      throw new ForbiddenException({
+        code: 'DOCUMENT_REVOKED',
+        message: 'This document has been revoked and is no longer available for download.',
+      });
+    }
+    if (row.vault.deliveryMode === 'physical_pickup') {
+      throw new ConflictException({
+        code: 'PICKUP_ONLY',
+        message: 'This document is for physical pickup only.',
+      });
+    }
+    return { ...row, storagePath, revoked: Boolean(row.vault.revokedAt) };
   }
 
   async verify(code: string) {
+    const started = Date.now();
+    const normalized = normalizeVerifyCodeInput(code);
+    const notFound = () => {
+      // Equalize work for timing
+      while (Date.now() - started < 25) {
+        /* spin */
+      }
+      throw new NotFoundException({ code: 'VERIFY_NOT_FOUND', message: 'Document not found' });
+    };
+    if (!normalized) return notFound();
+
     const [row] = await this.db
       .select({
         vault: schema.studentDocumentVault,
         issuer: schema.institutions.displayName,
+        logo: schema.institutions.logoUrl,
         firstName: schema.students.firstName,
         lastName: schema.students.lastName,
       })
       .from(schema.studentDocumentVault)
-      .innerJoin(schema.institutions, eq(schema.institutions.id, schema.studentDocumentVault.institutionId))
-      .innerJoin(schema.students, eq(schema.students.id, schema.studentDocumentVault.studentId))
-      .where(eq(schema.studentDocumentVault.verifyCode, code))
+      .leftJoin(schema.institutions, eq(schema.institutions.id, schema.studentDocumentVault.institutionId))
+      .leftJoin(schema.students, eq(schema.students.id, schema.studentDocumentVault.studentId))
+      .where(
+        and(
+          eq(schema.studentDocumentVault.verifyCode, normalized),
+          isNull(schema.studentDocumentVault.abandonedAt),
+        ),
+      )
       .limit(1);
-    if (!row) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Verification code not found.' });
+    if (!row?.vault) return notFound();
+
+    let showFullName = false;
+    if (row.vault.institutionId) {
+      const [setting] = await this.db
+        .select({ value: schema.institutionSettings.value })
+        .from(schema.institutionSettings)
+        .where(
+          and(
+            eq(schema.institutionSettings.institutionId, row.vault.institutionId),
+            eq(schema.institutionSettings.category, 'documents'),
+            eq(schema.institutionSettings.key, 'verify_show_full_name'),
+          ),
+        )
+        .limit(1);
+      showFullName = setting?.value === 'true' || setting?.value === '1';
+    }
+
+    let status: 'Valid' | 'Revoked' | 'Superseded' = 'Valid';
+    if (row.vault.revokedAt) status = 'Revoked';
+    else if (row.vault.supersededBy) status = 'Superseded';
+
+    const initials = `${row.firstName?.[0] ?? ''}${row.lastName?.[0] ?? ''}`.toUpperCase() || '—';
+    const fullName = showFullName && row.firstName ? `${row.firstName} ${row.lastName ?? ''}`.trim() : null;
+
+    while (Date.now() - started < 25) {
+      /* spin */
+    }
+
     return {
-      issuer: row.issuer,
-      studentInitials: `${row.firstName[0] ?? ''}${row.lastName[0] ?? ''}`.toUpperCase(),
-      docType: row.vault.docType,
-      issueDate: row.vault.issuedAt.toISOString(),
-      status: row.vault.revokedAt ? 'revoked' : 'valid',
+      issuerName: row.issuer ?? 'Issuer',
+      issuerLogoUrl: row.logo ?? null,
+      docTypeLabel: row.vault.title || row.vault.docType,
+      studentInitials: initials,
+      studentFullName: fullName,
+      issueDate: row.vault.issuedAt.toISOString().slice(0, 10),
+      status,
     };
   }
 
@@ -578,6 +930,13 @@ export class RequestDocumentService {
     return this.storage.stream(key);
   }
 
+  /** v1 signer for new vault rows; legacy codes remain lookup-verifiable. */
+  private codeForVault(vaultId: string): string {
+    const secret = this.env.DOCUMENT_VERIFY_SECRET ?? this.env.SESSION_COOKIE_SECRET;
+    return mintDocumentVerifyCode(vaultId, secret, DOCUMENT_VERIFY_CODE_VERSION);
+  }
+
+  /** @deprecated legacy request-id codes — kept only for migration-era lookups */
   private codeFor(requestId: string): string {
     return hmacSha256Base64Url(`student-document:${requestId}`, this.env.SESSION_COOKIE_SECRET).slice(0, 12);
   }
@@ -593,6 +952,7 @@ export class RequestDocumentService {
           eq(schema.studentDocumentVault.id, vaultId),
           eq(schema.studentDocumentVault.institutionId, ctx.principal.institutionId),
           eq(schema.studentRequests.status, 'approved'),
+          isNull(schema.studentDocumentVault.abandonedAt),
         ),
       )
       .limit(1);
@@ -632,5 +992,69 @@ export class RequestDocumentService {
       code: 'VERSION_CONFLICT',
       message: 'This request changed since you loaded it. Reload and try again.',
     });
+  }
+
+  private signStepsFromTemplate(headerConfig: Record<string, unknown> | null | undefined): SignatureSlot[] {
+    const slots = (headerConfig as { signatureSlots?: SignatureSlot[] } | undefined)?.signatureSlots;
+    if (!Array.isArray(slots)) return [];
+    return slots
+      .filter((slot) => slot?.mode === 'sign_step')
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }
+
+  private async completedSignSlots(requestId: string): Promise<Set<string>> {
+    const events = await this.db
+      .select({ data: schema.studentRequestEvents.data })
+      .from(schema.studentRequestEvents)
+      .where(
+        and(
+          eq(schema.studentRequestEvents.requestId, requestId),
+          eq(schema.studentRequestEvents.eventType, 'document_signed'),
+        ),
+      );
+    const completed = new Set<string>();
+    for (const event of events) {
+      const slotKey = (event.data as { slotKey?: string } | null)?.slotKey;
+      if (slotKey) completed.add(slotKey);
+    }
+    return completed;
+  }
+
+  async digilockerManifest(principal: InstitutionalStudentPrincipal) {
+    const vault = await this.listStudentVault(principal);
+    return {
+      version: 1,
+      issuer: principal.institutionId,
+      documents: vault.items.map((item) => ({
+        id: item.id,
+        title: item.title,
+        docType: item.docType,
+        verifyCode: item.verifyCode,
+        issuedAt: item.issuedAt,
+        downloadable: item.hasFile === true,
+      })),
+    };
+  }
+
+  async listIndependentVault(independentUserId: string) {
+    const rows = await this.db
+      .select()
+      .from(schema.studentDocumentVault)
+      .where(
+        and(
+          eq(schema.studentDocumentVault.independentUserId, independentUserId),
+          isNull(schema.studentDocumentVault.abandonedAt),
+          isNull(schema.studentDocumentVault.supersededBy),
+          isNull(schema.studentDocumentVault.revokedAt),
+          sql`${schema.studentDocumentVault.deliveredAt} IS NOT NULL`,
+        ),
+      )
+      .orderBy(desc(schema.studentDocumentVault.issuedAt));
+    return {
+      items: rows.map((vault) => ({
+        ...vault,
+        hasFile: Boolean(vault.storageKey),
+      })),
+    };
   }
 }

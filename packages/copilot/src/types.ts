@@ -28,12 +28,9 @@ export interface AiPolicyInput {
   enabled: boolean;
   /** Operating mode for this scope. */
   mode: AiMode;
-  /** Which resolver consumes this row. Defaults to copilot. */
-  policyDomain?: AiPolicyDomain;
-  /** Domain-specific config (e.g. LearnPolicyV1 for student_tutor). */
-  domainConfig?: Record<string, unknown>;
-  /** Per-capability enable map. A capability absent from the map defaults to enabled. */
-  capabilities?: Partial<Record<AiCapability, boolean>>;
+  /** Per-capability enable map. A capability absent from the map defaults to enabled.
+   *  Student-tutor keys (`curriculum_bounds`, …) store enum *strings* in the same map. */
+  capabilities?: Partial<Record<AiCapability, boolean | string>>;
   /** Hard ceiling on financial impact (minor units). Over this → BLOCKED. `null`/undefined = no cap. */
   maxFinancialImpactMinor?: number | null;
   /** Hard ceiling on affected users. Over this → BLOCKED. `null`/undefined = no cap. */
@@ -113,7 +110,7 @@ export interface GuardrailTraceEntry {
 /** The fully-resolved effective policy for a context, with per-field provenance. */
 export interface EffectiveAiPolicy {
   mode: AiMode;
-  capabilities: Partial<Record<AiCapability, boolean>>;
+  capabilities: Partial<Record<AiCapability, boolean | string>>;
   maxFinancialImpactMinor: number | null;
   maxAffectedUsers: number | null;
   twoPersonThresholdMinor: number | null;

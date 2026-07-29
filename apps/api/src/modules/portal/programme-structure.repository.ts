@@ -461,7 +461,7 @@ export class ProgrammeStructureRepository {
       }
 
       for (const row of slotRows) {
-        const { slot, levelSequence, gradeLevelId } = row;
+        const { slot, gradeLevelId } = row;
 
         const [existing] = await tx
           .select({ id: schema.academicTerms.id })

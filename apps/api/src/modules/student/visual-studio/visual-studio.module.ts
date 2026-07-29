@@ -41,12 +41,6 @@ import { StudentAuthModule } from '../auth/student-auth.module';
     VisualSchemaBackfillProcessor,
     StudentRateLimitGuard,
   ],
-  exports: [
-    VisualGroundingService,
-    VisualStudioRepository,
-    VisualRevisionService,
-    VisualSchemaMigrationService,
-    CanvasGraphService,
-  ],
+  exports: [VisualGroundingService, VisualStudioRepository, VisualGenerationService],
 })
 export class VisualStudioModule {}

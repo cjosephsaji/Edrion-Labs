@@ -1,12 +1,29 @@
 /**
- * Lab Mock Exams DTOs — evolved for the Blueprint-driven exam engine.
+ * Lab Mock Exams DTOs — Blueprint-driven exam engine (PLAN-MOCK-EXAMS).
  * Legacy field names kept where History / badges still expect them.
  */
 import { z } from 'zod';
-import { examBlueprintSchema, examSourceKindSchema } from './exam-blueprint';
+import { examBlueprintSchema, examSourceKindSchema, examSkinSchema } from './exam-blueprint';
 import { examQuestionTypeSchema } from './exam-questions';
 import { examResultsSchema } from './exam-grading';
 import { saveExamAnswerSchema } from './exam-answers';
+import {
+  mockAnswerModeSchema,
+  mockAnswerStateSchema,
+  mockDifficultySchema,
+  mockExamStatusSchema,
+  mockGenerationMetaSchema,
+  mockScopeSchema,
+} from './mock/snapshot';
+
+export {
+  mockExamStatusSchema,
+  mockScopeSchema,
+  mockDifficultySchema,
+  mockGenerationMetaSchema,
+  MOCK_GENERATION_SHORTFALL_THRESHOLD,
+  MOCK_ANSWER_GRACE_MS,
+} from './mock/snapshot';
 
 export const mockExamContextSchema = z.object({
   level: z.string(),
@@ -29,6 +46,19 @@ export const createMockExamSchema = z.object({
   blueprintId: z.string().uuid().optional(),
 });
 
+export const createMockFromWizardSchema = z.object({
+  scope: mockScopeSchema,
+  blueprintId: z.string().uuid().optional(),
+  paperPatternKey: z.string().min(1).max(64).optional(),
+  quickMock: z.boolean().optional(),
+  difficulty: mockDifficultySchema.default('exam_level'),
+  scheduledFor: z.string().datetime({ offset: true }).or(z.string().datetime()).nullable().optional(),
+  strictMode: z.boolean().default(false),
+  idempotencyKey: z.string().min(8).max(128),
+  title: z.string().min(1).max(200).optional(),
+});
+export type CreateMockFromWizardInput = z.infer<typeof createMockFromWizardSchema>;
+
 export const mockAnswerUpdateSchema = saveExamAnswerSchema;
 
 export const mockResultsSchema = examResultsSchema;
@@ -45,16 +75,8 @@ export const mockExamQuestionSchema = z.object({
   difficulty: z.string().optional(),
   /** Full typed payload when available (keys stripped for in-progress attempts). */
   payload: z.record(z.unknown()).optional(),
+  source: z.enum(['bank', 'ai']).optional(),
 });
-
-export const mockExamStatusSchema = z.enum([
-  'draft',
-  'generating',
-  'ready',
-  'in_progress',
-  'completed',
-  'failed',
-]);
 
 export const mockExamDtoSchema = z.object({
   id: z.string().uuid(),
@@ -65,9 +87,17 @@ export const mockExamDtoSchema = z.object({
   status: mockExamStatusSchema,
   blueprintId: z.string().uuid().nullable().optional(),
   blueprint: examBlueprintSchema.optional(),
+  blueprintSnapshot: examBlueprintSchema.optional(),
+  blueprintVersion: z.number().int().nullable().optional(),
   sourceKind: examSourceKindSchema.optional(),
   generationNotice: z.string().nullable().optional(),
-  gradingStatus: z.enum(['pending', 'grading', 'graded']).nullable().optional(),
+  generationMeta: mockGenerationMetaSchema.nullable().optional(),
+  gradingStatus: z.enum(['pending', 'grading', 'graded', 'awaiting_self_grade']).nullable().optional(),
+  scope: mockScopeSchema.nullable().optional(),
+  difficulty: mockDifficultySchema.nullable().optional(),
+  scheduledFor: z.string().nullable().optional(),
+  strictMode: z.boolean().optional(),
+  skin: examSkinSchema.optional(),
   questions: z.array(mockExamQuestionSchema).optional(),
   attempt: z
     .object({
@@ -76,10 +106,25 @@ export const mockExamDtoSchema = z.object({
       startedAt: z.string(),
       endsAt: z.string(),
       finishedAt: z.string().nullable(),
+      submittedAt: z.string().nullable().optional(),
       status: z
-        .enum(['in_progress', 'submitted', 'grading', 'graded', 'expired', 'abandoned', 'paused'])
+        .enum([
+          'in_progress',
+          'submitted',
+          'scoring',
+          'awaiting_self_grade',
+          'scored',
+          'grading',
+          'graded',
+          'expired',
+          'abandoned',
+          'paused',
+        ])
         .optional(),
       pausedAt: z.string().nullable().optional(),
+      tabSwitches: z.number().int().optional(),
+      strictModeSnapshot: z.boolean().optional(),
+      currentSectionId: z.string().nullable().optional(),
     })
     .optional(),
   answers: z
@@ -87,6 +132,9 @@ export const mockExamDtoSchema = z.object({
       z.object({
         questionId: z.string().uuid(),
         flagged: z.boolean(),
+        state: mockAnswerStateSchema.optional(),
+        timeSpentMs: z.number().int().optional(),
+        answerMode: mockAnswerModeSchema.nullable().optional(),
         payload: z.record(z.unknown()).nullable().optional(),
         choiceKey: z.string().nullable().optional(),
         answerText: z.string().nullable().optional(),
@@ -137,6 +185,7 @@ export const examListItemSchema = z.object({
   createdAt: z.string(),
   awardedMarks: z.number().nullable().optional(),
   maxMarks: z.number().nullable().optional(),
+  scheduledFor: z.string().nullable().optional(),
 });
 
 export type CreateMockExamInput = z.infer<typeof createMockExamSchema>;

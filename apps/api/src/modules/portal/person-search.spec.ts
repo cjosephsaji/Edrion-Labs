@@ -36,7 +36,7 @@ describe('personSearchCondition', () => {
   it('studentSearchCondition matches personSearch wiring', () => {
     const t = schema.students;
     const cond = studentSearchCondition(t, 'Arjun');
-    const where = and(eq(t.institutionId, '00000000-0000-0000-0000-000000000001'), cond);
+    const where = and(eq(t.institutionId, '00000000-0000-0000-0000-000000000001'), cond)!;
     const q = dialect.sqlToQuery(where);
     expect(q.sql).toContain('ilike');
     expect(q.sql).not.toContain('undefined');

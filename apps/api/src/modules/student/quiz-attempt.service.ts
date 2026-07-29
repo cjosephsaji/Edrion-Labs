@@ -10,7 +10,7 @@ import { gradeObjective, isAutoGradable } from '../portal/objective-grader';
 
 type AttemptKind = 'exam' | 'assignment';
 
-interface SanitizedQuestion {
+export interface SanitizedQuestion {
   id: string;
   sequence: number;
   qtype: string;

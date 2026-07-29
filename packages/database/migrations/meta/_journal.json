@@ -629,623 +629,63 @@
       "idx": 89,
       "version": "7",
       "when": 1786800000000,
-      "tag": "0089_timetable_exceptions",
+      "tag": "0096_edrion_learn_orchestrator",
       "breakpoints": true
     },
     {
       "idx": 90,
       "version": "7",
       "when": 1786900000000,
-      "tag": "0090_attendance_forecaster",
+      "tag": "0097_student_tutor_policy_domain",
       "breakpoints": true
     },
     {
       "idx": 91,
       "version": "7",
       "when": 1787000000000,
-      "tag": "0091_attendance_day_view",
+      "tag": "0098_documents_issuance",
       "breakpoints": true
     },
     {
       "idx": 92,
       "version": "7",
       "when": 1787100000000,
-      "tag": "0092_marks_results",
+      "tag": "0099_mark_release_batches",
       "breakpoints": true
     },
     {
       "idx": 93,
       "version": "7",
       "when": 1787200000000,
-      "tag": "0093_term_recompute_feed",
+      "tag": "0100_mock_exam_extensions",
       "breakpoints": true
     },
     {
       "idx": 94,
       "version": "7",
       "when": 1787300000000,
-      "tag": "0094_library_fsrs",
+      "tag": "0101_mock_system_paper_pack",
       "breakpoints": true
     },
     {
       "idx": 95,
       "version": "7",
-      "when": 1787400000000,
-      "tag": "0095_graph_pipeline",
+      "when": 1788000000000,
+      "tag": "0108_learn_teardown",
       "breakpoints": true
     },
     {
       "idx": 96,
       "version": "7",
-      "when": 1787500000000,
-      "tag": "0096_lab_canvas_flags",
+      "when": 1788100000000,
+      "tag": "0109_learn_engine",
       "breakpoints": true
     },
     {
       "idx": 97,
       "version": "7",
-      "when": 1787600000000,
-      "tag": "0097_edrion_learn_orchestrator",
-      "breakpoints": true
-    },
-    {
-      "idx": 98,
-      "version": "7",
-      "when": 1787650000000,
-      "tag": "0098_documents_issuance",
-      "breakpoints": true
-    },
-    {
-      "idx": 99,
-      "version": "7",
-      "when": 1787680000000,
-      "tag": "0099_mock_exam_extensions",
-      "breakpoints": true
-    },
-    {
-      "idx": 100,
-      "version": "7",
-      "when": 1787700000000,
-      "tag": "0100_learn_student_tutor_policy",
-      "breakpoints": true
-    },
-    {
-      "idx": 101,
-      "version": "7",
-      "when": 1787750000000,
-      "tag": "0101_mock_exams_visibility",
-      "breakpoints": true
-    },
-    {
-      "idx": 102,
-      "version": "7",
-      "when": 1787800000000,
-      "tag": "0110_debate_core",
-      "breakpoints": true
-    },
-    {
-      "idx": 103,
-      "version": "7",
-      "when": 1787810000000,
-      "tag": "0111_debate_flags",
-      "breakpoints": true
-    },
-    {
-      "idx": 104,
-      "version": "7",
-      "when": 1787820000000,
-      "tag": "0112_debate_format_seeds",
-      "breakpoints": true
-    },
-    {
-      "idx": 105,
-      "version": "7",
-      "when": 1787830000000,
-      "tag": "0113_debate_capture_states",
-      "breakpoints": true
-    },
-    {
-      "idx": 106,
-      "version": "7",
-      "when": 1787840000000,
-      "tag": "0114_debate_transcript_index",
-      "breakpoints": true
-    },
-    {
-      "idx": 107,
-      "version": "7",
-      "when": 1787850000000,
-      "tag": "0115_debate_adjudication_primary",
-      "breakpoints": true
-    },
-    {
-      "idx": 108,
-      "version": "7",
-      "when": 1787860000000,
-      "tag": "0116_debate_report_share",
-      "breakpoints": true
-    },
-    {
-      "idx": 109,
-      "version": "7",
-      "when": 1787870000000,
-      "tag": "0117_debate_prep_notes",
-      "breakpoints": true
-    },
-    {
-      "idx": 110,
-      "version": "7",
-      "when": 1787880000000,
-      "tag": "0118_debate_spar_invite",
-      "breakpoints": true
-    },
-    {
-      "idx": 111,
-      "version": "7",
-      "when": 1787890000000,
-      "tag": "0119_debate_retention_marker",
-      "breakpoints": true
-    },
-    {
-      "idx": 112,
-      "version": "7",
-      "when": 1787900000000,
-      "tag": "0120_campus_bundle_a_core",
-      "breakpoints": true
-    },
-    {
-      "idx": 113,
-      "version": "7",
-      "when": 1787901000000,
-      "tag": "0121_campus_bundle_a_flags",
-      "breakpoints": true
-    },
-    {
-      "idx": 114,
-      "version": "7",
-      "when": 1787902000000,
-      "tag": "0122_campus_bundle_a_library_policy",
-      "breakpoints": true
-    },
-    {
-      "idx": 115,
-      "version": "7",
-      "when": 1787903000000,
-      "tag": "0123_campus_library",
-      "breakpoints": true
-    },
-    {
-      "idx": 116,
-      "version": "7",
-      "when": 1787904000000,
-      "tag": "0124_campus_transport",
-      "breakpoints": true
-    },
-    {
-      "idx": 117,
-      "version": "7",
-      "when": 1787905000000,
-      "tag": "0125_campus_digital_id",
-      "breakpoints": true
-    },
-    {
-      "idx": 118,
-      "version": "7",
-      "when": 1787906000000,
-      "tag": "0126_campus_identity_verify",
-      "breakpoints": true
-    },
-    {
-      "idx": 119,
-      "version": "7",
-      "when": 1787907000000,
-      "tag": "0127_campus_outpass",
-      "breakpoints": true
-    },
-    {
-      "idx": 120,
-      "version": "7",
-      "when": 1787908000000,
-      "tag": "0128_campus_access_scan",
-      "breakpoints": true
-    },
-    {
-      "idx": 121,
-      "version": "7",
-      "when": 1787909000000,
-      "tag": "0129_campus_hostel_mess",
-      "breakpoints": true
-    },
-    {
-      "idx": 122,
-      "version": "7",
-      "when": 1787910000000,
-      "tag": "0130_prep_core",
-      "breakpoints": true
-    },
-    {
-      "idx": 123,
-      "version": "7",
-      "when": 1787911000000,
-      "tag": "0131_prep_mock_fk",
-      "breakpoints": true
-    },
-    {
-      "idx": 124,
-      "version": "7",
-      "when": 1787912000000,
-      "tag": "0132_prep_flags",
-      "breakpoints": true
-    },
-    {
-      "idx": 125,
-      "version": "7",
-      "when": 1787913000000,
-      "tag": "0133_prep_enrollment",
-      "breakpoints": true
-    },
-    {
-      "idx": 126,
-      "version": "7",
-      "when": 1787914000000,
-      "tag": "0134_prep_plan_blocks",
-      "breakpoints": true
-    },
-    {
-      "idx": 127,
-      "version": "7",
-      "when": 1787915000000,
-      "tag": "0135_prep_error_notebook",
-      "breakpoints": true
-    },
-    {
-      "idx": 128,
-      "version": "7",
-      "when": 1787916000000,
-      "tag": "0136_prep_diagnostic",
-      "breakpoints": true
-    },
-    {
-      "idx": 129,
-      "version": "7",
-      "when": 1787917000000,
-      "tag": "0137_prep_mock_adaptive",
-      "breakpoints": true
-    },
-    {
-      "idx": 130,
-      "version": "7",
-      "when": 1787918000000,
-      "tag": "0138_prep_cohort",
-      "breakpoints": true
-    },
-    {
-      "idx": 131,
-      "version": "7",
-      "when": 1787919000000,
-      "tag": "0139_prep_exam_day",
-      "breakpoints": true
-    },
-    {
-      "idx": 132,
-      "version": "7",
-      "when": 1787920000000,
-      "tag": "0140_campus_bundle_b_placements",
-      "breakpoints": true
-    },
-    {
-      "idx": 133,
-      "version": "7",
-      "when": 1787921000000,
-      "tag": "0141_campus_bundle_b_events",
-      "breakpoints": true
-    },
-    {
-      "idx": 134,
-      "version": "7",
-      "when": 1787922000000,
-      "tag": "0142_placement_interviews",
-      "breakpoints": true
-    },
-    {
-      "idx": 135,
-      "version": "7",
-      "when": 1787923000000,
-      "tag": "0143_placement_eligibility",
-      "breakpoints": true
-    },
-    {
-      "idx": 136,
-      "version": "7",
-      "when": 1787924000000,
-      "tag": "0144_bundle_b_flags",
-      "breakpoints": true
-    },
-    {
-      "idx": 137,
-      "version": "7",
-      "when": 1787925000000,
-      "tag": "0145_placement_offers_idx",
-      "breakpoints": true
-    },
-    {
-      "idx": 138,
-      "version": "7",
-      "when": 1787926000000,
-      "tag": "0146_placement_events",
-      "breakpoints": true
-    },
-    {
-      "idx": 139,
-      "version": "7",
-      "when": 1787927000000,
-      "tag": "0147_placement_profiles",
-      "breakpoints": true
-    },
-    {
-      "idx": 140,
-      "version": "7",
-      "when": 1787928000000,
-      "tag": "0148_placement_resumes",
-      "breakpoints": true
-    },
-    {
-      "idx": 141,
-      "version": "7",
-      "when": 1787929000000,
-      "tag": "0149_clubs_events_flags",
-      "breakpoints": true
-    },
-    {
-      "idx": 142,
-      "version": "7",
-      "when": 1787930000000,
-      "tag": "0150_event_seats",
-      "breakpoints": true
-    },
-    {
-      "idx": 143,
-      "version": "7",
-      "when": 1787931000000,
-      "tag": "0151_ptm_slots",
-      "breakpoints": true
-    },
-    {
-      "idx": 144,
-      "version": "7",
-      "when": 1787932000000,
-      "tag": "0152_campus_diary",
-      "breakpoints": true
-    },
-    {
-      "idx": 145,
-      "version": "7",
-      "when": 1787933000000,
-      "tag": "0153_health_mirror",
-      "breakpoints": true
-    },
-    {
-      "idx": 146,
-      "version": "7",
-      "when": 1787934000000,
-      "tag": "0154_grievance",
-      "breakpoints": true
-    },
-    {
-      "idx": 147,
-      "version": "7",
-      "when": 1787935000000,
-      "tag": "0155_sensitive_report_seal",
-      "breakpoints": true
-    },
-    {
-      "idx": 148,
-      "version": "7",
-      "when": 1787936000000,
-      "tag": "0156_sensitive_audit",
-      "breakpoints": true
-    },
-    {
-      "idx": 149,
-      "version": "7",
-      "when": 1787937000000,
-      "tag": "0157_sensitive_unseal",
-      "breakpoints": true
-    },
-    {
-      "idx": 150,
-      "version": "7",
-      "when": 1787938000000,
-      "tag": "0158_sensitive_grants",
-      "breakpoints": true
-    },
-    {
-      "idx": 151,
-      "version": "7",
-      "when": 1787939000000,
-      "tag": "0159_sensitive_hardening",
-      "breakpoints": true
-    },
-    {
-      "idx": 152,
-      "version": "7",
-      "when": 1787940000000,
-      "tag": "0160_webhook_envelope",
-      "breakpoints": true
-    },
-    {
-      "idx": 153,
-      "version": "7",
-      "when": 1787941000000,
-      "tag": "0161_webhook_rotation_overlap",
-      "breakpoints": true
-    },
-    {
-      "idx": 154,
-      "version": "7",
-      "when": 1787942000000,
-      "tag": "0162_webhook_delivery_retries",
-      "breakpoints": true
-    },
-    {
-      "idx": 155,
-      "version": "7",
-      "when": 1787943000000,
-      "tag": "0163_webhook_ui",
-      "breakpoints": true
-    },
-    {
-      "idx": 156,
-      "version": "7",
-      "when": 1787944000000,
-      "tag": "0164_webhook_replay",
-      "breakpoints": true
-    },
-    {
-      "idx": 157,
-      "version": "7",
-      "when": 1787945000000,
-      "tag": "0165_webhook_ops",
-      "breakpoints": true
-    },
-    {
-      "idx": 158,
-      "version": "7",
-      "when": 1787946000000,
-      "tag": "0166_mfa_factors",
-      "breakpoints": true
-    },
-    {
-      "idx": 159,
-      "version": "7",
-      "when": 1787947000000,
-      "tag": "0167_mfa_recovery",
-      "breakpoints": true
-    },
-    {
-      "idx": 160,
-      "version": "7",
-      "when": 1787948000000,
-      "tag": "0168_mfa_challenge",
-      "breakpoints": true
-    },
-    {
-      "idx": 161,
-      "version": "7",
-      "when": 1787949000000,
-      "tag": "0169_mfa_aal2",
-      "breakpoints": true
-    },
-    {
-      "idx": 162,
-      "version": "7",
-      "when": 1787950000000,
-      "tag": "0170_mfa_catalogue",
-      "breakpoints": true
-    },
-    {
-      "idx": 163,
-      "version": "7",
-      "when": 1787951000000,
-      "tag": "0171_support_session_sweep",
-      "breakpoints": true
-    },
-    {
-      "idx": 164,
-      "version": "7",
-      "when": 1787952000000,
-      "tag": "0172_principal_metrics",
-      "breakpoints": true
-    },
-    {
-      "idx": 165,
-      "version": "7",
-      "when": 1787953000000,
-      "tag": "0173_principal_rollups_daily",
-      "breakpoints": true
-    },
-    {
-      "idx": 166,
-      "version": "7",
-      "when": 1787954000000,
-      "tag": "0174_principal_rollups_weekly",
-      "breakpoints": true
-    },
-    {
-      "idx": 167,
-      "version": "7",
-      "when": 1787955000000,
-      "tag": "0175_principal_dashboard",
-      "breakpoints": true
-    },
-    {
-      "idx": 168,
-      "version": "7",
-      "when": 1787956000000,
-      "tag": "0176_principal_dashboard_ui",
-      "breakpoints": true
-    },
-    {
-      "idx": 169,
-      "version": "7",
-      "when": 1787957000000,
-      "tag": "0177_compliance_evidence",
-      "breakpoints": true
-    },
-    {
-      "idx": 170,
-      "version": "7",
-      "when": 1787958000000,
-      "tag": "0178_compliance_posture",
-      "breakpoints": true
-    },
-    {
-      "idx": 171,
-      "version": "7",
-      "when": 1787959000000,
-      "tag": "0179_platform_audit_debt",
-      "breakpoints": true
-    },
-    {
-      "idx": 172,
-      "version": "7",
-      "when": 1787960000000,
-      "tag": "0180_debate_motion_seeds",
-      "breakpoints": true
-    },
-    {
-      "idx": 173,
-      "version": "7",
-      "when": 1787961000000,
-      "tag": "0181_tier3_completion",
-      "breakpoints": true
-    },
-    {
-      "idx": 174,
-      "version": "7",
-      "when": 1787962000000,
-      "tag": "0182_prep_sat_dev_corpus",
-      "breakpoints": true
-    },
-    {
-      "idx": 175,
-      "version": "7",
-      "when": 1787963000000,
-      "tag": "0183_prep_sat_cr1_active",
-      "breakpoints": true
-    },
-    {
-      "idx": 176,
-      "version": "7",
-      "when": 1787964000000,
-      "tag": "0184_federation_us_integrations",
-      "breakpoints": true
-    },
-    {
-      "idx": 177,
-      "version": "7",
-      "when": 1787965000000,
-      "tag": "0185_federation_classlink_saml",
+      "when": 1788200000000,
+      "tag": "0110_ai_capability_values",
       "breakpoints": true
     }
   ]

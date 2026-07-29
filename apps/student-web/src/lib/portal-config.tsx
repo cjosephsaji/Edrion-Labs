@@ -56,7 +56,18 @@ export function PortalConfigProvider({ children }: { children: ReactNode }) {
     return () => { window.removeEventListener('focus', onFocus); window.removeEventListener('edrion:module-disabled', onDisabled); };
   }, [refresh, updatedAt]);
 
-  const value = useMemo(() => ({ config, loading, offline, stale: Boolean(config && (offline || Date.now() - updatedAt > 15 * 60_000)), refresh }), [config, loading, offline, refresh, updatedAt]);
+  const value = useMemo(
+    () => ({
+      config,
+      loading,
+      // Only treat as offline when the browser is offline, or a fetch failed and we
+      // have no config at all. A 404/error while cached config exists is not "offline".
+      offline: typeof navigator !== 'undefined' && !navigator.onLine ? true : offline && !config,
+      stale: Boolean(config && ((offline && !navigator.onLine) || Date.now() - updatedAt > 15 * 60_000)),
+      refresh,
+    }),
+    [config, loading, offline, refresh, updatedAt],
+  );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 

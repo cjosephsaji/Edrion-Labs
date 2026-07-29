@@ -50,7 +50,8 @@ export function resolveAiPolicy(
   const topicalityMode = firstDefined(layered, (p) => p.topicalityMode);
 
   // Capabilities: apply least → most specific so the most specific override stands.
-  const capabilities: Partial<Record<AiCapability, boolean>> = {};
+  // Values may be boolean (admin) or string enums (student_tutor DEC-16).
+  const capabilities: Partial<Record<AiCapability, boolean | string>> = {};
   for (const p of [...layered].reverse()) {
     if (p.capabilities) Object.assign(capabilities, p.capabilities);
   }
@@ -94,7 +95,8 @@ function bestPolicyForScope(
   return [...candidates].sort((x, y) => setAtMs(y) - setAtMs(x))[0];
 }
 
-function scopeMatchesContext(
+/** Exported so domain wrappers apply the identical scope guard rather than re-deriving one. */
+export function scopeMatchesContext(
   scope: FeatureScope,
   scopeId: string | null,
   ctx: AiResolutionContext,

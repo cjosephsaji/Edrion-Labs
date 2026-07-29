@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@edrion/design-tokens": "workspace:*",
+    "@tailwindcss/typography": "^0.5.20",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {

@@ -66,6 +66,12 @@ export * from './petros';
 // Document generation engine (templates + renders)
 export * from './doc-gen';
 
+// Documents issuance (catalog, batches, report-card reviews)
+export * from './document-issuance';
+
+// Marks release batches (report-card / results binding)
+export * from './mark-releases';
+
 // Student Request Engine
 export * from './requests';
 

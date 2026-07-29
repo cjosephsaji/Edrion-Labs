@@ -1,6 +1,6 @@
 'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { LearnSessionDto } from '@edrion/schemas';
+import type { LearnSessionV1Dto } from '@edrion/schemas';
 import { useStudentClient } from '../student-client';
 
 export type RevisionQueueItem = {
@@ -31,7 +31,7 @@ export function useRevisionRefresh() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (topicId: string) =>
-      client.post<LearnSessionDto>(`/learn/revision/${topicId}/refresh`),
+      client.post<LearnSessionV1Dto>(`/learn/revision/${topicId}/refresh`),
     onSuccess: () => qc.invalidateQueries({ queryKey: REVISION_KEY }),
   });
 }

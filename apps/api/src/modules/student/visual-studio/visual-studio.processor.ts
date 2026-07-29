@@ -479,25 +479,21 @@ export class VisualStudioProcessor implements OnModuleInit {
 
 
 
+      const normalizedEdges = patchOutput.edges.map((edge) => ({
+        ...edge,
+        label: edge.label ?? undefined,
+      }));
+
       const stored = await this.storePatchProposal(principal, canvas, {
-
         kind,
-
         anchor_node_id: request.nodeId,
-
         summary: patchOutput.summary,
-
         nodes: patchOutput.nodes,
-
-        edges: patchOutput.edges,
-
+        edges: normalizedEdges,
       });
 
-
-
       const nodeBatches = this.generation.chunkNodes(patchOutput.nodes, 4);
-
-      const edgeBatches = this.generation.chunkEdges(patchOutput.edges, 8);
+      const edgeBatches = this.generation.chunkEdges(normalizedEdges, 8);
 
       let receivedNodes = 0;
 

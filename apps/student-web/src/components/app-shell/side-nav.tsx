@@ -15,8 +15,32 @@ import { useT } from '@/i18n/use-t';
 import { PetrosMark } from '@/components/ui/primitives';
 import { usePortalConfig } from '@/lib/portal-config';
 
-export function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
+export function NavLink({
+  item,
+  pathname,
+  compact,
+}: {
+  item: NavItem;
+  pathname: string;
+  compact?: boolean;
+}) {
   const active = pathname === item.href || (item.href !== '/home' && pathname.startsWith(item.href));
+  if (compact) {
+    return (
+      <Link
+        href={item.href}
+        title={item.label}
+        className={`grid h-10 w-10 place-items-center rounded-[10px] transition ${
+          active
+            ? 'bg-st-accentDeep/[0.12] text-st-accentDeep'
+            : 'text-st-inkSoft hover:bg-st-accentDeep/[0.07] hover:text-st-ink'
+        }`}
+      >
+        <item.icon size={18} strokeWidth={active ? 2 : 1.7} aria-hidden />
+        <span className="sr-only">{item.label}</span>
+      </Link>
+    );
+  }
   return (
     <Link
       href={item.href}
@@ -39,7 +63,7 @@ export function NavLink({ item, pathname }: { item: NavItem; pathname: string })
   );
 }
 
-export function SideNav() {
+export function SideNav({ immersive = false }: { immersive?: boolean }) {
   const pathname = usePathname();
   const { me } = usePersona();
   const terms = useStudentTerm();
@@ -49,8 +73,8 @@ export function SideNav() {
   const { config, stale, offline, refresh } = usePortalConfig();
 
   const resolvedItems = config ? configNav(config.modules) : [];
-  const instItems = config ? resolvedItems : (me?.kind === 'institutional' ? institutionalNav(terms) : coreNav);
-  const surfaceItems = config ? [] : (me?.kind === 'institutional' ? filterSurfaceNav(me.surfaces) : []);
+  const instItems = config ? resolvedItems : me?.kind === 'institutional' ? institutionalNav(terms) : coreNav;
+  const surfaceItems = config ? [] : me?.kind === 'institutional' ? filterSurfaceNav(me.surfaces) : [];
 
   async function logout() {
     try {
@@ -66,6 +90,41 @@ export function SideNav() {
       ? [me.student?.className, me.student?.curriculumLabel].filter(Boolean).join(' · ') ||
         me.institution?.name
       : t('shell.independentLearner');
+
+  const compactItems: NavItem[] = [
+    { href: '/home', label: 'Today', icon: coreNav[0]!.icon },
+    ...[...instItems, ...surfaceItems].filter((i) => i.href === '/learn' || i.key === 'learn'),
+    ...youNav.slice(0, 2),
+  ];
+
+  if (immersive) {
+    return (
+      <aside className="hidden min-[921px]:flex w-[56px] shrink-0 flex-col items-center border-r border-st-bd1 bg-st-sidebar py-3">
+        <Link
+          href="/learn"
+          title="Edrion Learn"
+          className="mb-3 grid h-9 w-9 place-items-center rounded-[10px] bg-st-accentDeep font-display text-[15px] font-bold text-[#F2EFE3]"
+        >
+          E
+        </Link>
+        <nav className="flex flex-1 flex-col items-center gap-1">
+          {compactItems.map((item) => (
+            <NavLink key={item.key ?? item.href} item={item} pathname={pathname} compact />
+          ))}
+        </nav>
+        {me && (
+          <button
+            type="button"
+            title={t('shell.logout')}
+            onClick={() => void logout()}
+            className="mt-2 grid h-9 w-9 place-items-center rounded-full bg-st-accentDeep font-display text-xs font-semibold text-[#F2EFE3]"
+          >
+            {me.initial}
+          </button>
+        )}
+      </aside>
+    );
+  }
 
   return (
     <aside className="hidden min-[921px]:flex w-[238px] shrink-0 flex-col border-r border-st-bd1 bg-st-sidebar">
@@ -88,8 +147,24 @@ export function SideNav() {
           ))}
         </div>
 
-        {(stale || offline) && <button type="button" onClick={() => void refresh()} className="mx-3 mt-2 rounded-lg bg-amber-50 px-2 py-1.5 text-left text-[10px] text-amber-800">Offline · showing saved navigation · Retry</button>}
-        {!config && <button type="button" onClick={() => void refresh()} className="mx-3 mt-2 rounded-lg border border-st-bd1 px-2 py-1.5 text-left text-[10px] text-st-muted">Portal modules unavailable · Retry</button>}
+        {(stale || offline) && typeof navigator !== 'undefined' && !navigator.onLine && (
+          <button
+            type="button"
+            onClick={() => void refresh()}
+            className="mx-3 mt-2 rounded-lg bg-amber-50 px-2 py-1.5 text-left text-[10px] text-amber-800"
+          >
+            Offline · showing saved navigation · Retry
+          </button>
+        )}
+        {!config && (
+          <button
+            type="button"
+            onClick={() => void refresh()}
+            className="mx-3 mt-2 rounded-lg border border-st-bd1 px-2 py-1.5 text-left text-[10px] text-st-muted"
+          >
+            Portal modules unavailable · Retry
+          </button>
+        )}
 
         {instItems.length > 0 && (
           <div className="mt-1">

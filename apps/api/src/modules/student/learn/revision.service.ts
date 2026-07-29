@@ -1,16 +1,14 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { FRESHNESS_FADING_DAYS, FRESHNESS_FRESH_DAYS } from '@edrion/shared-types';
 import { LEARNING_EVENTS_WRITER } from '../../../common/tokens';
 import type { LearningEventsWriter } from '../ledger/learning-events.writer';
 import type { StudentPrincipal } from '../student.types';
 import { LearnRepository } from './learn.repository';
-import { SessionsService } from './sessions.service';
 
 @Injectable()
 export class RevisionService {
   constructor(
     private readonly repo: LearnRepository,
-    private readonly sessions: SessionsService,
     @Inject(LEARNING_EVENTS_WRITER) private readonly ledger: LearningEventsWriter,
   ) {}
 
@@ -48,21 +46,11 @@ export class RevisionService {
   async refresh(principal: StudentPrincipal, topicId: string) {
     const topic = await this.repo.getTopic(topicId);
     if (!topic) throw new NotFoundException('Topic not found');
-
-    const session = await this.sessions.create(principal, {
-      topicKey: topic.topicKey,
-      topicTitle: topic.title,
-      source: 'refresh',
+    void principal;
+    void this.ledger;
+    throw new ServiceUnavailableException({
+      code: 'LEARN_REBUILD',
+      message: 'Revision sessions are being rebuilt and will return shortly.',
     });
-
-    await this.ledger.log({
-      principal,
-      eventType: 'revision.completed',
-      topicKey: topic.topicKey,
-      payload: { topicKey: topic.topicKey, mode: 'refresh10' },
-    });
-
-    await this.repo.upsertRevisionFresh(principal, topicId);
-    return session;
   }
 }

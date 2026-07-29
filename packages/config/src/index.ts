@@ -51,6 +51,13 @@ export const apiEnvSchema = z.object({
     .transform((s) => s.split(',').map((o) => o.trim())),
   SESSION_COOKIE_SECRET: z.string().min(16, 'SESSION_COOKIE_SECRET must be at least 16 chars'),
   /**
+   * Dedicated HMAC secret for document verification short codes.
+   * Must NOT reuse SESSION_COOKIE_SECRET. Falls back only in non-production for local bootstrap.
+   */
+  DOCUMENT_VERIFY_SECRET: z.string().min(16).optional(),
+  /** Public origin for QR verify URLs (e.g. https://verify.edrion.com). */
+  DOCUMENT_VERIFY_ORIGIN: z.string().url().default('http://localhost:3003/documents/verify'),
+  /**
    * Master switch for the sensitive-action recent-auth gate. When false (default) no route ever
    * returns RECENT_AUTH_REQUIRED — sensitive actions are allowed as long as the session is valid.
    * Flip on to re-enable step-up re-authentication using RECENT_AUTH_WINDOW_SECONDS.
@@ -154,21 +161,11 @@ export const apiEnvSchema = z.object({
   /** Embedding model for Visual Studio memory matching. */
   OPENAI_EMBEDDING_MODEL: z.string().default('text-embedding-3-small'),
 
-  /** Deepgram Nova batch STT for Debate P1 (optional — mock provider used when unset). */
-  DEEPGRAM_API_KEY: z.string().optional(),
-
-  /** Debate opponent TTS: `mock` or `openai` (default openai when OPENAI_API_KEY is set). */
-  TTS_PROVIDER: z.enum(['mock', 'openai']).default('openai'),
-  TTS_OPENAI_MODEL: z.string().default('tts-1'),
-  TTS_OPENAI_VOICE: z.string().default('alloy'),
-
-  /** Clever roster sync (US Tier 3). When unset, sync runs in dry-run mode. */
-  CLEVER_CLIENT_ID: z.string().optional(),
-  CLEVER_CLIENT_SECRET: z.string().optional(),
-
-  /** ClassLink OneRoster roster sync. Dry-run when unset. */
-  CLASSLINK_CLIENT_ID: z.string().optional(),
-  CLASSLINK_CLIENT_SECRET: z.string().optional(),
+  /**
+   * Manual Learn session generation. When true AND OPENAI_API_KEY is set, session create
+   * calls TutorGenerationService. Default false — fixtures only (no spend in normal dev).
+   */
+  LEARN_SESSION_GENERATE: bool.default(false),
 
   // ── Petros cost controls ────────────────────────────────────────────────────
   /**

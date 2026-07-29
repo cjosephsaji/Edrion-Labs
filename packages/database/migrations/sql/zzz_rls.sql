@@ -208,17 +208,11 @@ BEGIN
       ('student_requests', 'institution_id'),
       ('student_request_events', 'institution_id'),
       ('institution_request_type_config', 'institution_id'),
-      ('student_document_vault', 'institution_id'),
-      ('sensitive_report_audit_log', 'institution_id'),
-      ('sensitive_report_unseal_approvals', 'institution_id'),
-      ('student_sensitive_report_ownership', 'institution_id'),
-      ('principal_metric_rollups', 'institution_id'),
-      ('institution_identity_providers', 'institution_id'),
-      ('roster_sync_jobs', 'institution_id'),
-      ('library_fine_invoice_links', 'institution_id'),
-      ('clubs', 'institution_id'),
-      ('campus_events', 'institution_id'),
-      ('placement_seasons', 'institution_id'),
+      -- Document issuance catalog/batches (tenant-scoped).
+      ('document_catalog', 'institution_id'),
+      ('document_batches', 'institution_id'),
+      ('report_card_remarks', 'institution_id'),
+      ('mark_release_batches', 'institution_id'),
       -- Student portal (Plan 03): institutional bridge tables.
       ('homework', 'institution_id'),
       ('class_stream_posts', 'institution_id'),
@@ -295,11 +289,21 @@ WITH CHECK (EXISTS (
 ALTER TABLE exam_blueprints ENABLE ROW LEVEL SECURITY;
 ALTER TABLE exam_blueprints FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS exam_blueprints_student_private ON exam_blueprints;
+-- Owner rows + published institution blueprints readable by students of that institution.
 CREATE POLICY exam_blueprints_student_private ON exam_blueprints FOR ALL
 USING (
   (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
   OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
   OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+  OR (
+    edrion_current_student() IS NOT NULL
+    AND institution_id IS NOT NULL
+    AND student_id IS NULL
+    AND independent_user_id IS NULL
+    AND is_published = true
+    AND archived_at IS NULL
+    AND (edrion_current_institution() IS NULL OR institution_id::text = edrion_current_institution())
+  )
 )
 WITH CHECK (
   (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
@@ -411,11 +415,24 @@ CREATE POLICY exam_paper_patterns_read ON exam_paper_patterns FOR SELECT USING (
 
 ALTER TABLE question_bank ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS question_bank_read ON question_bank;
-CREATE POLICY question_bank_read ON question_bank FOR SELECT USING (true);
+-- Global (institution_id NULL) + own-institution rows; pending items still readable for review UIs.
+CREATE POLICY question_bank_read ON question_bank FOR SELECT USING (
+  institution_id IS NULL
+  OR edrion_current_institution() IS NULL
+  OR institution_id::text = edrion_current_institution()
+);
 DROP POLICY IF EXISTS question_bank_write ON question_bank;
-CREATE POLICY question_bank_write ON question_bank FOR INSERT WITH CHECK (true);
+CREATE POLICY question_bank_write ON question_bank FOR INSERT WITH CHECK (
+  institution_id IS NULL
+  OR edrion_current_institution() IS NULL
+  OR institution_id::text = edrion_current_institution()
+);
 DROP POLICY IF EXISTS question_bank_update ON question_bank;
-CREATE POLICY question_bank_update ON question_bank FOR UPDATE USING (true);
+CREATE POLICY question_bank_update ON question_bank FOR UPDATE USING (
+  institution_id IS NULL
+  OR edrion_current_institution() IS NULL
+  OR institution_id::text = edrion_current_institution()
+);
 
 -- Today Feed: every personal table is dual-owner. institution_id is context only.
 DO $$
@@ -443,36 +460,242 @@ BEGIN
   END LOOP;
 END $$;
 
--- Edrion Learn orchestrator (0097): student-private learner state.
-ALTER TABLE learn_topic_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE learn_topic_profiles FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS learn_topic_profiles_owner_private ON learn_topic_profiles;
-CREATE POLICY learn_topic_profiles_owner_private ON learn_topic_profiles FOR ALL
-USING (
-  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
-  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+-- Dual-owner document vault (evolved student_document_vault).
+ALTER TABLE student_document_vault ENABLE ROW LEVEL SECURITY;
+ALTER TABLE student_document_vault FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS student_document_vault_owner_split ON student_document_vault;
+CREATE POLICY student_document_vault_owner_split ON student_document_vault FOR ALL USING (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL AND edrion_current_institution() IS NULL)
   OR (
-    edrion_current_institution() IS NOT NULL
-    AND institution_id IS NOT NULL
-    AND institution_id::text = edrion_current_institution()
-    AND independent_user_id IS NULL
+    institution_id IS NOT NULL AND student_id IS NOT NULL AND independent_user_id IS NULL
+    AND (edrion_current_institution() IS NULL OR institution_id::text = edrion_current_institution())
+    AND (edrion_current_student() IS NULL OR student_id::text = edrion_current_student())
   )
-)
-WITH CHECK (
-  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
-  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
   OR (
-    edrion_current_institution() IS NOT NULL
-    AND institution_id IS NOT NULL
-    AND institution_id::text = edrion_current_institution()
-    AND independent_user_id IS NULL
+    independent_user_id IS NOT NULL AND institution_id IS NULL AND student_id IS NULL
+    AND (edrion_current_independent_user() IS NULL OR independent_user_id::text = edrion_current_independent_user())
+  )
+) WITH CHECK (
+  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL AND edrion_current_institution() IS NULL)
+  OR (
+    institution_id IS NOT NULL AND student_id IS NOT NULL AND independent_user_id IS NULL
+    AND (edrion_current_institution() IS NULL OR institution_id::text = edrion_current_institution())
+  )
+  OR (
+    independent_user_id IS NOT NULL AND institution_id IS NULL AND student_id IS NULL
+    AND (edrion_current_independent_user() IS NULL OR independent_user_id::text = edrion_current_independent_user())
   )
 );
 
+-- Edrion Learn orchestrator: owner-scoped tables.
 DO $$
 DECLARE tbl text;
 BEGIN
   FOREACH tbl IN ARRAY ARRAY['learner_mastery', 'learner_model_events'] LOOP
+    EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
+    EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', tbl);
+    EXECUTE format('DROP POLICY IF EXISTS %I_owner_private ON %I', tbl, tbl);
+    EXECUTE format(
+      'CREATE POLICY %I_owner_private ON %I FOR ALL USING (
+        (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+        OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student()
+            AND (institution_id IS NULL OR edrion_current_institution() IS NULL OR institution_id::text = edrion_current_institution()))
+        OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      ) WITH CHECK (
+        (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+        OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student()
+            AND (institution_id IS NULL OR edrion_current_institution() IS NULL OR institution_id::text = edrion_current_institution()))
+        OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      )', tbl, tbl
+    );
+  END LOOP;
+END $$;
+
+-- learn_topic_profiles (v1) — kept only while the table still exists on a DB.
+DO $$
+BEGIN
+  IF to_regclass('public.learn_topic_profiles') IS NOT NULL THEN
+    ALTER TABLE learn_topic_profiles ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE learn_topic_profiles FORCE ROW LEVEL SECURITY;
+    DROP POLICY IF EXISTS learn_topic_profiles_owner_private ON learn_topic_profiles;
+    CREATE POLICY learn_topic_profiles_owner_private ON learn_topic_profiles FOR ALL
+    USING (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      OR (
+        edrion_current_institution() IS NOT NULL
+        AND institution_id::text = edrion_current_institution()
+        AND independent_user_id IS NULL
+      )
+    )
+    WITH CHECK (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      OR (
+        edrion_current_institution() IS NOT NULL
+        AND institution_id::text = edrion_current_institution()
+        AND independent_user_id IS NULL
+      )
+    );
+  END IF;
+END $$;
+
+-- learn_topic_shapes (v2) — same owner-private pattern as profiles.
+DO $$
+BEGIN
+  IF to_regclass('public.learn_topic_shapes') IS NOT NULL THEN
+    ALTER TABLE learn_topic_shapes ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE learn_topic_shapes FORCE ROW LEVEL SECURITY;
+    DROP POLICY IF EXISTS learn_topic_shapes_owner_private ON learn_topic_shapes;
+    CREATE POLICY learn_topic_shapes_owner_private ON learn_topic_shapes FOR ALL
+    USING (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      OR (
+        edrion_current_institution() IS NOT NULL
+        AND institution_id::text = edrion_current_institution()
+        AND independent_user_id IS NULL
+      )
+    )
+    WITH CHECK (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      OR (
+        edrion_current_institution() IS NOT NULL
+        AND institution_id::text = edrion_current_institution()
+        AND independent_user_id IS NULL
+      )
+    );
+  END IF;
+END $$;
+
+-- learn_config + learner_model_state — owner-private (were missing after 0109 recreate).
+DO $$
+BEGIN
+  IF to_regclass('public.learn_config') IS NOT NULL THEN
+    ALTER TABLE learn_config ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE learn_config FORCE ROW LEVEL SECURITY;
+    DROP POLICY IF EXISTS learn_config_owner_private ON learn_config;
+    CREATE POLICY learn_config_owner_private ON learn_config FOR ALL
+    USING (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR scope = 'global'
+      OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      OR (
+        edrion_current_institution() IS NOT NULL
+        AND institution_id::text = edrion_current_institution()
+        AND independent_user_id IS NULL
+      )
+    )
+    WITH CHECK (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR scope = 'global'
+      OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      OR (
+        edrion_current_institution() IS NOT NULL
+        AND institution_id::text = edrion_current_institution()
+        AND independent_user_id IS NULL
+      )
+    );
+  END IF;
+
+  IF to_regclass('public.learner_model_state') IS NOT NULL THEN
+    ALTER TABLE learner_model_state ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE learner_model_state FORCE ROW LEVEL SECURITY;
+    DROP POLICY IF EXISTS learner_model_state_owner_private ON learner_model_state;
+    CREATE POLICY learner_model_state_owner_private ON learner_model_state FOR ALL
+    USING (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student()
+          AND (institution_id IS NULL OR edrion_current_institution() IS NULL OR institution_id::text = edrion_current_institution()))
+      OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+    )
+    WITH CHECK (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student()
+          AND (institution_id IS NULL OR edrion_current_institution() IS NULL OR institution_id::text = edrion_current_institution()))
+      OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+    );
+  END IF;
+END $$;
+
+-- learn_session_events: scoped via parent learn_sessions owner.
+ALTER TABLE learn_session_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE learn_session_events FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS learn_session_events_owner_private ON learn_session_events;
+CREATE POLICY learn_session_events_owner_private ON learn_session_events FOR ALL
+USING (EXISTS (
+  SELECT 1 FROM learn_sessions ls
+  WHERE ls.id = learn_session_events.session_id
+    AND (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_student() IS NOT NULL AND ls.student_id::text = edrion_current_student())
+      OR (edrion_current_independent_user() IS NOT NULL AND ls.independent_user_id::text = edrion_current_independent_user())
+    )
+))
+WITH CHECK (EXISTS (
+  SELECT 1 FROM learn_sessions ls
+  WHERE ls.id = learn_session_events.session_id
+    AND (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_student() IS NOT NULL AND ls.student_id::text = edrion_current_student())
+      OR (edrion_current_independent_user() IS NOT NULL AND ls.independent_user_id::text = edrion_current_independent_user())
+    )
+));
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Edrion Learn, Phase C (D12/DM-104): the nine remaining Learn tables.
+--
+-- Before this block only learner_mastery, learner_model_events,
+-- learn_topic_profiles and learn_session_events were covered. The rest —
+-- learn_sessions, learn_session_blocks, learn_attempts, learn_ai_calls,
+-- learning_paths, learning_path_items, quick_answers, revision_states,
+-- evidence_tags — held learner-private work with no storage-layer isolation at
+-- all. (learn_topics and concept_atoms are deliberately excluded: they are
+-- shared curriculum assets with no learner owner, like exam_paper_patterns.)
+--
+-- NOTE ON BLAST RADIUS: the API currently connects as a superuser, which
+-- implies BYPASSRLS, so nothing below can change the behaviour of the running
+-- app today. These policies are defence-in-depth that becomes load-bearing the
+-- moment the connection is moved to the `edrion_app` role the grants layer was
+-- written for. They follow the existing conventions exactly: transaction-local
+-- GUCs via edrion_current_student() / edrion_current_independent_user() /
+-- edrion_current_institution(), an allow-all branch when both learner GUCs are
+-- unset (migrations, seeds, platform jobs), and FORCE ROW LEVEL SECURITY.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- Direct dual-owner tables that also carry institution_id as context.
+DO $$
+DECLARE tbl text;
+BEGIN
+  FOREACH tbl IN ARRAY ARRAY['learn_sessions', 'learning_paths', 'quick_answers'] LOOP
+    EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
+    EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', tbl);
+    EXECUTE format('DROP POLICY IF EXISTS %I_owner_private ON %I', tbl, tbl);
+    EXECUTE format(
+      'CREATE POLICY %I_owner_private ON %I FOR ALL USING (
+        (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+        OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student()
+            AND (institution_id IS NULL OR edrion_current_institution() IS NULL OR institution_id::text = edrion_current_institution()))
+        OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      ) WITH CHECK (
+        (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+        OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student()
+            AND (institution_id IS NULL OR edrion_current_institution() IS NULL OR institution_id::text = edrion_current_institution()))
+        OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
+      )', tbl, tbl
+    );
+  END LOOP;
+END $$;
+
+-- Direct dual-owner tables with no institution_id column.
+-- learn_ai_calls is the append-only cost ledger: its owner FKs are ON DELETE
+-- SET NULL, so an ownerless row is legitimate and simply becomes invisible to
+-- any learner-scoped transaction — which is the desired outcome.
+DO $$
+DECLARE tbl text;
+BEGIN
+  FOREACH tbl IN ARRAY ARRAY['learn_attempts', 'revision_states', 'evidence_tags', 'learn_ai_calls'] LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
     EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', tbl);
     EXECUTE format('DROP POLICY IF EXISTS %I_owner_private ON %I', tbl, tbl);
@@ -490,12 +713,15 @@ BEGIN
   END LOOP;
 END $$;
 
-ALTER TABLE learn_session_events ENABLE ROW LEVEL SECURITY;
-ALTER TABLE learn_session_events FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS learn_session_events_owner_private ON learn_session_events;
-CREATE POLICY learn_session_events_owner_private ON learn_session_events FOR ALL
+-- learn_session_blocks: scoped via parent learn_sessions owner (same shape as
+-- learn_session_events above).
+ALTER TABLE learn_session_blocks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE learn_session_blocks FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS learn_session_blocks_owner_private ON learn_session_blocks;
+CREATE POLICY learn_session_blocks_owner_private ON learn_session_blocks FOR ALL
 USING (EXISTS (
-  SELECT 1 FROM learn_sessions ls WHERE ls.id = learn_session_events.session_id
+  SELECT 1 FROM learn_sessions ls
+  WHERE ls.id = learn_session_blocks.session_id
     AND (
       (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
       OR (edrion_current_student() IS NOT NULL AND ls.student_id::text = edrion_current_student())
@@ -503,7 +729,8 @@ USING (EXISTS (
     )
 ))
 WITH CHECK (EXISTS (
-  SELECT 1 FROM learn_sessions ls WHERE ls.id = learn_session_events.session_id
+  SELECT 1 FROM learn_sessions ls
+  WHERE ls.id = learn_session_blocks.session_id
     AND (
       (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
       OR (edrion_current_student() IS NOT NULL AND ls.student_id::text = edrion_current_student())
@@ -511,112 +738,26 @@ WITH CHECK (EXISTS (
     )
 ));
 
--- Debate P1 (0110): owner-scoped rounds and artefacts.
-ALTER TABLE debates ENABLE ROW LEVEL SECURITY;
-ALTER TABLE debates FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS debates_owner_private ON debates;
-CREATE POLICY debates_owner_private ON debates FOR ALL
-USING (
-  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
-  OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
-  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
-)
-WITH CHECK (
-  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
-  OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
-  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
-);
-
-DO $$
-DECLARE tbl text;
-BEGIN
-  FOREACH tbl IN ARRAY ARRAY[
-    'debate_participants', 'debate_turns', 'debate_consents', 'debate_transcripts',
-    'debate_adjudication_runs', 'debate_speech_analyses', 'debate_clashes', 'debate_verdicts',
-    'debate_speaker_scores', 'debate_feedback_reports', 'debate_ai_opponent_scripts'
-  ] LOOP
-    EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
-    EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', tbl);
-    EXECUTE format('DROP POLICY IF EXISTS %I_via_debate ON %I', tbl, tbl);
-    EXECUTE format(
-      'CREATE POLICY %I_via_debate ON %I FOR ALL USING (
-        EXISTS (
-          SELECT 1 FROM debates d WHERE d.id = %I.debate_id
-            AND (
-              (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
-              OR (edrion_current_student() IS NOT NULL AND d.student_id::text = edrion_current_student())
-              OR (edrion_current_independent_user() IS NOT NULL AND d.independent_user_id::text = edrion_current_independent_user())
-            )
-        )
-      ) WITH CHECK (
-        EXISTS (
-          SELECT 1 FROM debates d WHERE d.id = %I.debate_id
-            AND (
-              (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
-              OR (edrion_current_student() IS NOT NULL AND d.student_id::text = edrion_current_student())
-              OR (edrion_current_independent_user() IS NOT NULL AND d.independent_user_id::text = edrion_current_independent_user())
-            )
-        )
-      )', tbl, tbl, tbl, tbl
-    );
-  END LOOP;
-END $$;
-
-ALTER TABLE debate_prep_notes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE debate_prep_notes FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS debate_prep_notes_owner_private ON debate_prep_notes;
-CREATE POLICY debate_prep_notes_owner_private ON debate_prep_notes FOR ALL
-USING (
-  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
-  OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
-  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
-)
-WITH CHECK (
-  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
-  OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
-  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
-);
-
-ALTER TABLE debate_skill_snapshots ENABLE ROW LEVEL SECURITY;
-ALTER TABLE debate_skill_snapshots FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS debate_skill_snapshots_owner_private ON debate_skill_snapshots;
-CREATE POLICY debate_skill_snapshots_owner_private ON debate_skill_snapshots FOR ALL
-USING (
-  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
-  OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
-  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
-)
-WITH CHECK (
-  (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
-  OR (edrion_current_student() IS NOT NULL AND student_id::text = edrion_current_student())
-  OR (edrion_current_independent_user() IS NOT NULL AND independent_user_id::text = edrion_current_independent_user())
-);
-
-ALTER TABLE debate_adjudication_calls ENABLE ROW LEVEL SECURITY;
-ALTER TABLE debate_adjudication_calls FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS debate_adjudication_calls_via_run ON debate_adjudication_calls;
-CREATE POLICY debate_adjudication_calls_via_run ON debate_adjudication_calls FOR ALL
-USING (
-  EXISTS (
-    SELECT 1 FROM debate_adjudication_runs r
-    JOIN debates d ON d.id = r.debate_id
-    WHERE r.id = debate_adjudication_calls.run_id
-      AND (
-        (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
-        OR (edrion_current_student() IS NOT NULL AND d.student_id::text = edrion_current_student())
-        OR (edrion_current_independent_user() IS NOT NULL AND d.independent_user_id::text = edrion_current_independent_user())
-      )
-  )
-)
-WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM debate_adjudication_runs r
-    JOIN debates d ON d.id = r.debate_id
-    WHERE r.id = debate_adjudication_calls.run_id
-      AND (
-        (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
-        OR (edrion_current_student() IS NOT NULL AND d.student_id::text = edrion_current_student())
-        OR (edrion_current_independent_user() IS NOT NULL AND d.independent_user_id::text = edrion_current_independent_user())
-      )
-  )
-);
+-- learning_path_items: scoped via parent learning_paths owner.
+ALTER TABLE learning_path_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE learning_path_items FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS learning_path_items_owner_private ON learning_path_items;
+CREATE POLICY learning_path_items_owner_private ON learning_path_items FOR ALL
+USING (EXISTS (
+  SELECT 1 FROM learning_paths lp
+  WHERE lp.id = learning_path_items.path_id
+    AND (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_student() IS NOT NULL AND lp.student_id::text = edrion_current_student())
+      OR (edrion_current_independent_user() IS NOT NULL AND lp.independent_user_id::text = edrion_current_independent_user())
+    )
+))
+WITH CHECK (EXISTS (
+  SELECT 1 FROM learning_paths lp
+  WHERE lp.id = learning_path_items.path_id
+    AND (
+      (edrion_current_student() IS NULL AND edrion_current_independent_user() IS NULL)
+      OR (edrion_current_student() IS NOT NULL AND lp.student_id::text = edrion_current_student())
+      OR (edrion_current_independent_user() IS NOT NULL AND lp.independent_user_id::text = edrion_current_independent_user())
+    )
+));

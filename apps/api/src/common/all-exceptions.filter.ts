@@ -28,6 +28,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let message = 'Something went wrong';
     let details: Record<string, string[]> | undefined;
     let meta: Record<string, unknown> | undefined;
+    let activeSessionId: string | undefined;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
@@ -40,6 +41,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         code = (b.code as string) ?? defaultCode(status);
         details = b.details as Record<string, string[]> | undefined;
         meta = b.meta as Record<string, unknown> | undefined;
+        if (typeof b.activeSessionId === 'string') activeSessionId = b.activeSessionId;
       }
       if (code === 'INTERNAL_ERROR') code = defaultCode(status);
     } else if (isBodyParserError(exception)) {
@@ -81,6 +83,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message,
       ...(details ? { details } : {}),
       ...(meta ? { meta } : {}),
+      ...(activeSessionId ? { activeSessionId } : {}),
       correlationId: req.context?.correlationId,
     });
   }

@@ -66,6 +66,14 @@ export default function ExamsPage() {
                   Build a mock exam →
                 </PillButton>
               </Link>
+              <Link
+                href={`/learn/session/start?entryPoint=${exam.daysUntil <= 14 ? 'prep_countdown' : 'upcoming_exam'}&examScheduleId=${exam.examScheduleId}`}
+                className="mt-2 ml-2 inline-block"
+              >
+                <PillButton variant="soft" className="text-xs">
+                  Prep with Learn →
+                </PillButton>
+              </Link>
             </div>
           ))}
         </div>

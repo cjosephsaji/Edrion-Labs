@@ -28,7 +28,10 @@ export class ProgrammeStructureService {
   ) {}
 
   preview(_ctx: PortalActionContext, input: PreviewStructureInput) {
-    return generateStructure(input);
+    return generateStructure({
+      ...input,
+      durationMonths: input.durationMonths ?? null,
+    });
   }
 
   async get(ctx: PortalActionContext, departmentId: string): Promise<ProgrammeStructureDetail> {

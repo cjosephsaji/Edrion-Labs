@@ -11,6 +11,10 @@ export const examGenerationSseEventSchema = z.discriminatedUnion('type', [
     targetQuestionCount: z.number().int().positive(),
   }),
   z.object({
+    type: z.literal('stage'),
+    stage: z.string(),
+  }),
+  z.object({
     type: z.literal('section'),
     sectionId: z.string(),
     sectionName: z.string(),
@@ -34,7 +38,7 @@ export const examGenerationSseEventSchema = z.discriminatedUnion('type', [
     type: z.literal('saved'),
     examId: z.string().uuid(),
     questionCount: z.number().int(),
-    status: z.literal('ready'),
+    status: z.string(),
   }),
   z.object({
     type: z.literal('error'),

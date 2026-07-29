@@ -18,8 +18,12 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
     "db:generate": "pnpm --filter @edrion/database generate",
     "db:migrate": "pnpm --filter @edrion/database migrate",
-    "db:seed": "pnpm --filter @edrion/database seed",
+    "db:seed": "pnpm --filter @edrion/dev-scripts exec tsx dev/seed-only.ts",
+    "db:reset": "pnpm --filter @edrion/dev-scripts exec tsx dev/reset-db.ts",
     "db:studio": "pnpm --filter @edrion/database studio",
+    "learn-evals": "pnpm --filter @edrion/learn-evals run",
+    "learn-evals:core": "pnpm --filter @edrion/learn-evals run:core",
+    "learn-evals:full": "pnpm --filter @edrion/learn-evals run:full",
     "clean": "turbo run clean && rm -rf node_modules",
     "clean:apple": "find . -name '._*' -not -path '*/node_modules/*' -delete",
     "learn-evals": "pnpm --filter @edrion/learn-evals run"

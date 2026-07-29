@@ -6,8 +6,6 @@ import {
   desc,
   eq,
   ilike,
-  inArray,
-  isNull,
   or,
   schema,
   sql,

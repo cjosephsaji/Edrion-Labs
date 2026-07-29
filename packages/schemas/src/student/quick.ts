@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { svgSpecSchema } from './blocks';
+import { svgSpecSchema } from './svg-spec';
 
 export const quickAnswerInputSchema = z.object({
   question: z.string().min(1).max(2000),

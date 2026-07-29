@@ -606,7 +606,7 @@ export class VisualStudioService {
 
     const topic = session.topicId ? await this.repo.getTopic(session.topicId) : null;
 
-    const planText = JSON.stringify(session.sessionPlan ?? {}).slice(0, 8_000);
+    const planText = JSON.stringify(session.sessionContext ?? session.state ?? {}).slice(0, 8_000);
 
     return {
 
