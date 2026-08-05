@@ -14,6 +14,7 @@ export const transportRenewalRequestType: RequestTypeConfig<TransportRenewalPayl
   label: 'Renew transport pass',
   humanCodePrefix: 'TR',
   category: 'campus',
+  entrySurface: 'transport',
   payloadSchema: transportRenewalPayloadSchema,
   payloadSchemaVersion: 1,
   routing: { role: 'transport_coordinator' },

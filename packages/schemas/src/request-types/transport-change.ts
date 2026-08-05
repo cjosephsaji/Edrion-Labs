@@ -19,6 +19,7 @@ export const transportChangeRequestType: RequestTypeConfig<TransportChangePayloa
   label: 'Transport route change',
   humanCodePrefix: 'TC',
   category: 'campus',
+  entrySurface: 'transport',
   payloadSchema: transportChangePayloadSchema,
   payloadSchemaVersion: 1,
   routing: { role: 'transport_coordinator' },

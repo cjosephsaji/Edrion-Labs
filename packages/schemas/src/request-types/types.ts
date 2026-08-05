@@ -39,7 +39,7 @@ export interface RequestTypeConfig<TPayload extends Record<string, unknown> = Re
   label: string;
   humanCodePrefix: string;
   category: string;
-  entrySurface?: 'documents' | 'attendance' | 'results';
+  entrySurface?: 'documents' | 'attendance' | 'results' | 'transport';
   /** Schema inputs may omit fields that are filled by Zod defaults; its parsed output is TPayload. */
   payloadSchema: z.ZodType<TPayload, z.ZodTypeDef, unknown>;
   payloadSchemaVersion: number;
