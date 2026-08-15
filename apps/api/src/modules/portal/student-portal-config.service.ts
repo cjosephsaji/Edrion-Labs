@@ -20,7 +20,12 @@ import {
   type StudentPortalPresetKey,
   type TerminologyPack,
 } from '@edrion/feature-flags';
-import type { PutStudentPortalConfigInput, StudentPortalConfigResponse } from '@edrion/schemas';
+import {
+  defaultStudentHomePriorities,
+  type PutStudentPortalConfigInput,
+  type StudentHomePriorityKey,
+  type StudentPortalConfigResponse,
+} from '@edrion/schemas';
 import { ActorType, AuditResult, RiskLevel, type InstitutionType } from '@edrion/shared-types';
 import { AUDIT_WRITER, DATABASE } from '../../common/tokens';
 import { FeatureControlsService } from '../feature-controls/feature-controls.service';
@@ -103,6 +108,7 @@ export class StudentPortalConfigService {
         labelOverrides: this.labelOverrides(settings),
         attendanceThreshold: this.settingNumber(settings, 'student_portal', 'attendance_threshold', 75),
         gradingScheme: this.setting(settings, 'student_portal', 'grading_scheme') ?? 'percentage',
+        homePriorities: this.homePriorities(settings),
       },
       campuses,
       campusOverrides,
@@ -197,7 +203,9 @@ export class StudentPortalConfigService {
       }
       await this.upsertSetting(institutionId, 'student_portal', 'attendance_threshold', 'Attendance threshold', 'number', String(input.attendance_threshold ?? 75), ctx.principal.institutionUserId);
       await this.upsertSetting(institutionId, 'student_portal', 'grading_scheme', 'Grading scheme', 'string', input.grading_scheme ?? 'percentage', ctx.principal.institutionUserId);
-      presetKey = this.detectPreset(input.modules as Record<ModuleKey, boolean>, terminology, nextOverrides, input.attendance_threshold ?? 75, input.grading_scheme ?? 'percentage');
+      const homePriorities = input.home_priorities ?? before.settings.homePriorities;
+      await this.upsertSetting(institutionId, 'student_portal', 'home_priorities', 'Student home priorities', 'json', JSON.stringify(homePriorities), ctx.principal.institutionUserId);
+      presetKey = this.detectPreset(input.modules as Record<ModuleKey, boolean>, terminology, nextOverrides, input.attendance_threshold ?? 75, input.grading_scheme ?? 'percentage', homePriorities);
       await this.upsertSetting(institutionId, 'student_portal', 'preset_key', 'Student portal preset', 'string', presetKey, ctx.principal.institutionUserId);
     }
     const nextRevision = input.revision + 1;
@@ -314,6 +322,19 @@ export class StudentPortalConfigService {
     return Object.fromEntries(rows.filter((r) => r.category === 'student_portal' && r.key.startsWith('label_override.') && r.value)
       .map((r) => [r.key.slice('label_override.'.length), r.value!]));
   }
+  private homePriorities(rows: SettingRow[]): Record<StudentHomePriorityKey, number> {
+    const raw = this.setting(rows, 'student_portal', 'home_priorities');
+    if (!raw) return { ...defaultStudentHomePriorities };
+    try {
+      const parsed = JSON.parse(raw) as Partial<Record<StudentHomePriorityKey, unknown>>;
+      return Object.fromEntries(Object.entries(defaultStudentHomePriorities).map(([key, fallback]) => {
+        const value = Number(parsed[key as StudentHomePriorityKey]);
+        return [key, Number.isFinite(value) ? Math.max(0, Math.min(100, Math.round(value))) : fallback];
+      })) as Record<StudentHomePriorityKey, number>;
+    } catch {
+      return { ...defaultStudentHomePriorities };
+    }
+  }
   private async upsertSetting(institutionId: string, category: string, key: string, label: string, valueType: string, value: string, actor: string) {
     const [existing] = await this.db.select().from(schema.institutionSettings).where(and(
       eq(schema.institutionSettings.institutionId, institutionId), isNull(schema.institutionSettings.campusId),
@@ -322,8 +343,9 @@ export class StudentPortalConfigService {
     if (existing) await this.db.update(schema.institutionSettings).set({ value, valueType, label, updatedBy: actor, updatedAt: new Date(), version: existing.version + 1 }).where(eq(schema.institutionSettings.id, existing.id));
     else await this.db.insert(schema.institutionSettings).values({ institutionId, category, key, label, valueType, value, createdBy: actor });
   }
-  private detectPreset(modules: Record<ModuleKey, boolean>, terminology: TerminologyPack, overrides: Record<string, string>, threshold: number, scheme: string): StudentPortalPresetKey | 'custom' {
+  private detectPreset(modules: Record<ModuleKey, boolean>, terminology: TerminologyPack, overrides: Record<string, string>, threshold: number, scheme: string, homePriorities: Partial<Record<StudentHomePriorityKey, number>>): StudentPortalPresetKey | 'custom' {
     if (Object.keys(overrides).length) return 'custom';
+    if (Object.entries(defaultStudentHomePriorities).some(([key, value]) => (homePriorities[key as StudentHomePriorityKey] ?? value) !== value)) return 'custom';
     for (const preset of Object.values(STUDENT_PORTAL_PRESETS)) {
       if (preset.defaults.attendanceThreshold !== threshold || preset.defaults.gradingScheme !== scheme) continue;
       if (STUDENT_MODULE_CATALOG.some((m) => modules[m.key] !== preset.modules[m.key])) continue;

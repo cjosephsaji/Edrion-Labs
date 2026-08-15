@@ -1,0 +1,17 @@
+run_id,case_id,topic,persona,total_score,gate,cost_micros,latency_ms
+petros-stage5-live-smoke-v1,pq-01-integration-by-parts,topic:integration-by-parts,fast_confident,4.42,warn,16801,87696
+petros-stage5-live-smoke-v1,pq-01-integration-by-parts,topic:integration-by-parts,confidently_wrong,4.46,warn,17784,85632
+petros-stage5-live-smoke-v1,pq-01-integration-by-parts,topic:integration-by-parts,relevant_detour,4.36,warn,23059,63448
+petros-stage5-live-smoke-v1,pq-01-integration-by-parts,topic:integration-by-parts,repeated_struggle,4.26,fail,17161,63602
+petros-stage5-live-smoke-v1,pq-02-photosynthesis,topic:photosynthesis,fast_confident,4.49,warn,20793,72618
+petros-stage5-live-smoke-v1,pq-02-photosynthesis,topic:photosynthesis,confidently_wrong,4.39,warn,19840,72679
+petros-stage5-live-smoke-v1,pq-02-photosynthesis,topic:photosynthesis,relevant_detour,4.29,warn,20536,71207
+petros-stage5-live-smoke-v1,pq-02-photosynthesis,topic:photosynthesis,repeated_struggle,4.26,fail,20560,72451
+petros-stage5-live-smoke-v1,pq-03-french-revolution,topic:french-revolution,fast_confident,4.52,warn,18128,63417
+petros-stage5-live-smoke-v1,pq-03-french-revolution,topic:french-revolution,confidently_wrong,4.45,warn,17624,59340
+petros-stage5-live-smoke-v1,pq-03-french-revolution,topic:french-revolution,relevant_detour,4.27,warn,16853,58071
+petros-stage5-live-smoke-v1,pq-03-french-revolution,topic:french-revolution,repeated_struggle,4.28,fail,17637,62106
+petros-stage5-live-smoke-v1,pq-04-python-for-loops,topic:python-for-loops,fast_confident,4.67,warn,19039,63627
+petros-stage5-live-smoke-v1,pq-04-python-for-loops,topic:python-for-loops,confidently_wrong,4.07,warn,18656,63592
+petros-stage5-live-smoke-v1,pq-04-python-for-loops,topic:python-for-loops,relevant_detour,4.5,warn,19209,71204
+petros-stage5-live-smoke-v1,pq-04-python-for-loops,topic:python-for-loops,repeated_struggle,4.53,fail,19608,78917

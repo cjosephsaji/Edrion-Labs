@@ -1,53 +1,30 @@
 'use client';
-import { useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useCourses, useStudentMe } from '@/lib/hooks';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Eyebrow, PageHeader } from '@/components/ui/primitives';
 
-export default function CoursesPage() {
-  const router = useRouter();
-  const { data: me } = useStudentMe();
-  const { data, isLoading } = useCourses();
+import { ModuleListPage } from '@/components/module-page';
+import { SurfaceCard } from '@/components/ui/states';
 
-  useEffect(() => {
-    if (me?.persona === 'school') router.replace('/classes');
-  }, [me?.persona, router]);
+type Row = {
+  id: string;
+  name?: string | number | null; code?: string | number | null; instructorName?: string | number | null
+};
 
-  if (me?.persona === 'school') return null;
-
+export default function Page() {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
-      <PageHeader eyebrow={<Eyebrow>YOUR COLLEGE</Eyebrow>} title="Courses" />
-
-      {isLoading ? (
-        <div className="mt-8 h-32 shimmer rounded-[15px]" />
-      ) : (data?.items ?? []).length === 0 ? (
-        <EmptyState
-          className="mt-8"
-          eyebrow="NO COURSES"
-          title="No courses enrolled"
-          description="Your semester courses will appear here when registered."
-        />
-      ) : (
-        <div className="mt-6 space-y-2">
-          {(data?.items ?? []).map((course) => (
-            <Link key={course.id} href={`/courses/${course.id}`}>
-              <div className="flex items-center gap-4 rounded-[15px] border border-st-bd1 bg-st-card px-4 py-3.5 transition hover:border-st-accent/40">
-                <span className="font-mono-ui text-xs font-semibold text-st-accent">{course.code}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-st-ink">{course.name}</p>
-                  <p className="text-xs text-st-muted">
-                    {course.professorName}
-                    {course.credits != null && ` · ${course.credits} credits`}
-                  </p>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+    <ModuleListPage<Row>
+      title="Courses"
+      description="Courses you are enrolled in."
+      path="/student/courses"
+      queryKey="courses"
+      emptyTitle="No courses enrolled"
+      emptyDescription={undefined}
+      renderItem={(item) => (
+        <SurfaceCard>
+          <p className="font-medium text-[var(--s-ink)]">{item.name ?? 'Untitled'}</p>
+          <p className="mt-1 text-xs text-[var(--s-muted)]">
+            {[item.code ?? '', item.instructorName ?? ''].filter(Boolean).join(' · ') || '—'}
+          </p>
+        </SurfaceCard>
       )}
-    </div>
+    />
   );
 }

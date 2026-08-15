@@ -128,28 +128,28 @@ describe('labExamQuestionSchema', () => {
 });
 
 describe('examBlueprintSchema', () => {
-  it('builds quick_check defaults and allows pause', () => {
+  it('builds quick_check defaults without timer pause', () => {
     const bp = defaultBlueprintForTemplate('quick_check', {
       subjectLabel: 'Biology',
       topicWeights: [{ topicLabel: 'Cells', weight: 5 }],
     });
-    expect(examTemplateAllowsPause(bp.template)).toBe(true);
-    expect(examBlueprintTotalMarks(bp)).toBe(10);
-    expect(examBlueprintSchema.parse(bp).durationMin).toBe(10);
+    expect(examTemplateAllowsPause(bp.template)).toBe(false);
+    expect(examBlueprintTotalMarks(bp)).toBe(20);
+    expect(examBlueprintSchema.parse(bp).durationMin).toBe(30);
   });
 
   it('denies pause for board_pattern', () => {
     expect(examTemplateAllowsPause('board_pattern')).toBe(false);
   });
 
-  it('rejects quick_check over 15 minutes', () => {
+  it('rejects quick_check over 30 minutes', () => {
     expect(() =>
       examBlueprintSchema.parse({
         ...defaultBlueprintForTemplate('quick_check', {
           subjectLabel: 'Math',
           topicWeights: [{ topicLabel: 'Algebra', weight: 5 }],
         }),
-        durationMin: 30,
+        durationMin: 31,
       }),
     ).toThrow();
   });

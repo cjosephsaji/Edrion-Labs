@@ -127,7 +127,7 @@ async function upsertTerm(
   if (existing) return existing.id;
   const [created] = await db
     .insert(s.academicTerms)
-    .values({ institutionId, campusId, academicYearId, ...row, status: 'active' })
+    .values({ institutionId, campusId, academicYearId, ...row, status: 'active', isCurrent: true })
     .returning({ id: s.academicTerms.id });
   if (!created?.id) throw new Error('Failed to seed academic term');
   return created.id;

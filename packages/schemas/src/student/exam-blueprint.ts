@@ -196,7 +196,7 @@ export function examBlueprintTotalMarks(bp: ExamBlueprint): number {
 }
 
 export function examBlueprintTotalQuestions(bp: ExamBlueprint): number {
-  return bp.sections.reduce((sum, s) => s + s.questionCount, 0);
+  return bp.sections.reduce((sum, s) => sum + s.questionCount, 0);
 }
 
 /** Derive origin from dual-owner columns — no redundant origin column. */

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } fr
 import { createPortal } from 'react-dom';
 import { ArrowLeft, ArrowRight, CalendarDays, X } from 'lucide-react';
 import { ActionButton, Card, PageHeader, StatusPill } from '@/components/design-system';
+import { PetrosDoorButton } from '@/components/petros/petros-door-button';
 import { EmptyState, ErrorState, LoadingBlock } from '@/components/ui/states';
 import { formatApiError, useStudentApi } from '@/lib/api-client';
 import { useStudentMe } from '@/lib/hooks';
@@ -133,7 +134,10 @@ export default function CalendarPage() {
         <Card variant="urgent" className="mt-4 flex flex-wrap items-center gap-5">
           <div className="flex h-[58px] w-[58px] shrink-0 flex-col items-center justify-center rounded-[14px] bg-[var(--s-danger)] text-[var(--s-dangerSoft)]"><span className="font-display text-[22px] font-bold leading-none">{daysToExam}</span><span className="mt-0.5 font-mono-ui text-[7.5px] font-semibold tracking-[.08em]">DAYS</span></div>
           <div className="min-w-[200px] flex-1"><p className="font-mono-ui text-[9.5px] font-semibold tracking-[.08em] text-[var(--s-danger)]">NEXT EXAM · {new Date(data.nextExam.date).toLocaleDateString(undefined, { day: 'numeric', month: 'long' }).toUpperCase()}</p><h2 className="mt-1 font-display text-base font-semibold text-[var(--s-ink)]">{data.nextExam.name}</h2><p className="mt-0.5 text-xs text-[var(--s-muted)]">Published by your institution</p></div>
-          <Link href="/exams" className="inline-flex min-h-11 items-center bg-[var(--s-accentDeep)] px-4 py-2 font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">View exam details →</Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/exams" className="inline-flex min-h-11 items-center bg-[var(--s-accentDeep)] px-4 py-2 font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">View exam details →</Link>
+            <PetrosDoorButton door="upcoming_exam" sourceId={data.nextExam.id} label="Start focused revision" />
+          </div>
         </Card>
       ) : null}
 

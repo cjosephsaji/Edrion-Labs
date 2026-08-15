@@ -1,43 +1,57 @@
 'use client';
-import { useTransportSurface } from '@/lib/hooks';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Eyebrow, PageHeader } from '@/components/ui/primitives';
 
-export default function TransportPage() {
-  const { data, isLoading } = useTransportSurface();
-  const hasData = data?.routeName || data?.stopName;
+import { BusFront } from 'lucide-react';
+import { ActionLink, Card, PageHeader, StatusPill } from '@/components/design-system';
+import {
+  EmptyState,
+  ErrorState,
+  LoadingBlock,
+  UnauthorizedState,
+} from '@/components/ui/states';
+import { StudentApiError, formatApiError } from '@/lib/api-client';
+import { useStudentList } from '@/lib/hooks';
 
+type Transport = {
+  assignmentId?: string | null;
+  routeId?: string | null;
+  routeName?: string | null;
+  stopName?: string | null;
+  vehicleRegistration?: string | null;
+  driverName?: string | null;
+  driverPhone?: string | null;
+  status?: string | null;
+};
+
+export default function Page() {
+  const q = useStudentList<Transport>('transport', '/student/surfaces/transport');
+  if (q.isLoading) return <LoadingBlock />;
+  if (q.error instanceof StudentApiError && q.error.status === 401) return <UnauthorizedState />;
+  if (q.error) {
+    return <ErrorState description={formatApiError(q.error)} onRetry={() => void q.refetch()} />;
+  }
+  const item = q.data;
+  if (!item?.routeName) {
+    return (
+      <div className="mx-auto w-full max-w-[1120px]">
+        <PageHeader eyebrow="Campus services" title="Transport" description="Your transport assignment and route." />
+        <EmptyState icon={BusFront} title="No transport assignment" description="A route, stop, and vehicle will appear after your institution assigns them." actionHref="/requests/new" actionLabel="Request transport help" />
+      </div>
+    );
+  }
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
-      <PageHeader eyebrow={<Eyebrow>SCHOOL</Eyebrow>} title="Transport" />
-
-      {isLoading ? (
-        <div className="mt-8 h-32 shimmer rounded-[15px]" />
-      ) : !hasData ? (
-        <EmptyState
-          className="mt-8"
-          eyebrow="NOT ASSIGNED"
-          title="No transport details"
-          description="Your route and stop will show here when your school assigns them."
-        />
-      ) : (
-        <div className="mt-6 rounded-[15px] border border-st-bd1 bg-st-card divide-y divide-st-divider">
-          <Row label="Route" value={data?.routeName} />
-          <Row label="Stop" value={data?.stopName} />
-          <Row label="Vehicle" value={data?.vehicleRegistration} />
-          <Row label="Driver" value={data?.driverName} />
-          <Row label="Phone" value={data?.driverPhone} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Row({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <div className="px-4 py-3.5">
-      <p className="font-mono-ui text-[10px] font-semibold tracking-wide text-st-faint">{label}</p>
-      <p className="mt-1 text-sm text-st-ink">{value ?? '—'}</p>
+    <div className="mx-auto w-full max-w-[1120px]">
+      <PageHeader
+        eyebrow="Campus services"
+        title="Transport"
+        description="Your transport assignment and route."
+        actions={<ActionLink href="/requests/new" variant="secondary">Request change</ActionLink>}
+      />
+      <Card variant="emphasis" density="roomy" className="min-h-[240px]">
+        <div className="flex flex-wrap items-start justify-between gap-4"><BusFront className="h-8 w-8 text-[#a9c4ba]" /><StatusPill label={item.status ?? 'Assigned'} tone="positive" /></div>
+        <p className="mt-8 text-xs uppercase tracking-[.1em] text-[#a9c4ba]">Your route</p>
+        <h2 className="mt-2 text-[clamp(2rem,4vw,3.5rem)] leading-none">{item.routeName}</h2>
+        <p className="mt-4 text-base leading-7 text-[#cfddd8]">{[item.stopName, item.vehicleRegistration, item.driverName, item.driverPhone].filter(Boolean).join(' · ') || 'Details to follow'}</p>
+      </Card>
     </div>
   );
 }

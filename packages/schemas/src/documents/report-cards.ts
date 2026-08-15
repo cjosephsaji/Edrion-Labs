@@ -22,6 +22,7 @@ export const reportCardReviewCompleteSchema = z.object({
 });
 
 export const reportCardReissueSchema = z.object({
+  batchItemId: z.string().uuid(),
   reason: z.string().trim().min(3).max(500),
   version: versionSchema,
 });

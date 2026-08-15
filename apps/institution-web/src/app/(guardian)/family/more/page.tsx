@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { api } from '@/lib/guardian/api';
 import { useState } from 'react';
 import { Card, Section, Button } from '@/components/guardian/ui';
-import { CalendarDays, Users, FileText, UserCog, Settings, Eye, Mail, MessageSquarePlus } from 'lucide-react';
+import { CalendarDays, Users, FileText, UserCog, Settings, Eye, Mail, MessageSquarePlus, BookHeart } from 'lucide-react';
 
 const links = [
   { href: '/family/more/ptm', label: 'Parent-teacher meetings', icon: Users },
@@ -13,6 +13,7 @@ const links = [
   { href: '/family/more/profile-changes', label: 'Profile change requests', icon: UserCog },
   { href: '/family/more/settings', label: 'Settings & notifications', icon: Settings },
   { href: '/family/more/who-can-see', label: 'Who can see what', icon: Eye },
+  { href: '/family/more/petros-digest', label: 'Petros learning digest', icon: BookHeart },
 ];
 
 export default function MorePage() {

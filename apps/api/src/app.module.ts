@@ -37,6 +37,11 @@ import { StudentAuthModule } from './modules/student/auth/student-auth.module';
 import { RegistrationModule } from './modules/registration/registration.module';
 import { AdmissionsPublicModule } from './modules/admissions-public/admissions-public.module';
 import { RequestEngineModule } from './modules/requests/request-engine.module';
+import { PetrosAiRoutingModule } from './modules/petros-ai-routing/petros-ai-routing.module';
+import { PetrosTopicProfilesModule } from './modules/petros-topic-profiles/petros-topic-profiles.module';
+import { PetrosQualityModule } from './modules/petros-quality/petros-quality.module';
+import { PetrosLearnerModelModule } from './modules/petros-learner-model/petros-learner-model.module';
+import { PetrosInstitutionalModule } from './modules/petros-institutional/petros-institutional.module';
 
 /**
  * Root module. Global guards run in order: AuthGuard (authenticate + attach principal) →
@@ -77,6 +82,11 @@ import { RequestEngineModule } from './modules/requests/request-engine.module';
     RegistrationModule,
     AdmissionsPublicModule,
     RequestEngineModule,
+    PetrosAiRoutingModule,
+    PetrosTopicProfilesModule,
+    PetrosQualityModule,
+    PetrosLearnerModelModule,
+    PetrosInstitutionalModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },

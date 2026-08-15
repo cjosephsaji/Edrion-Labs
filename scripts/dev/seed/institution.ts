@@ -168,6 +168,17 @@ async function applyStudentPortalPreset(ctx: DevSeedContext, institutionId: stri
     }
   }
 
+  // Institution examinations use a legacy surface flag that is not part of the
+  // configurable student module catalogue yet. Keep it enabled for the full demo.
+  const examsSurface = byKey.get('student.surface.exams');
+  if (examsSurface) {
+    await upsertFeatureAssignment(db, {
+      featureId: examsSurface.id,
+      institutionId,
+      value: true,
+    });
+  }
+
   await db
     .insert(s.institutionSettings)
     .values({

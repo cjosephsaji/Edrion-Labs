@@ -178,7 +178,9 @@ function PendingActionsOverview({ pending }: { pending: ReturnType<typeof usePen
               <Badge tone={count > 0 ? (key === 'critical' ? 'danger' : key === 'today' ? 'warning' : 'primary') : 'neutral'}>{label}</Badge>
               <AlertCircle className={`h-4 w-4 ${tone}`} />
             </div>
-            <p className="mt-3 text-3xl font-semibold text-text-primary">{count}</p>
+            <p className="mt-3 font-display text-3xl font-semibold tabular-nums text-text-primary">
+              {count}
+            </p>
           </Card>
         );
       })}

@@ -1,48 +1,76 @@
 'use client';
+
 import Link from 'next/link';
-import { useClasses } from '@/lib/hooks';
-import { useStudentTerm } from '@/lib/persona';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Eyebrow, PageHeader } from '@/components/ui/primitives';
+import { ArrowRight, BookOpen } from 'lucide-react';
+import { ClassRail, SubjectIcon, type ClassNavItem } from '@/components/classes/class-rail';
+import styles from '@/components/classes/classes.module.css';
+import { PageHeader } from '@/components/design-system';
+import { EmptyState, ErrorState, LoadingBlock, UnauthorizedState } from '@/components/ui/states';
+import { StudentApiError, formatApiError } from '@/lib/api-client';
+import { useStudentList, useStudentMe } from '@/lib/hooks';
+
+type ClassRow = ClassNavItem & {
+  initial?: string;
+  nextMeta: string | null;
+  liveToday: boolean;
+};
+
+function classHref(row: ClassRow) {
+  const params = new URLSearchParams({ name: row.name });
+  if (row.teacherName) params.set('teacher', row.teacherName);
+  return `/classes/${row.subjectClassId ?? row.id}?${params.toString()}`;
+}
 
 export default function ClassesPage() {
-  const terms = useStudentTerm();
-  const { data, isLoading } = useClasses();
+  const query = useStudentList<{ items: ClassRow[] }>('classes', '/student/classes');
+  const { data: me } = useStudentMe();
+
+  if (query.isLoading) return <LoadingBlock label="Loading your classes..." />;
+  if (query.error instanceof StudentApiError && query.error.status === 401) return <UnauthorizedState />;
+  if (query.error) return <ErrorState description={formatApiError(query.error)} onRetry={() => void query.refetch()} />;
+
+  const rows = query.data?.items ?? [];
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
-      <PageHeader eyebrow={<Eyebrow>{terms.instLabel}</Eyebrow>} title={terms.unitP} />
+    <div className={styles.workspace}>
+      <ClassRail items={rows} />
 
-      {isLoading ? (
-        <div className="mt-8 h-32 shimmer rounded-[15px]" />
-      ) : (data?.items ?? []).length === 0 ? (
-        <EmptyState
-          className="mt-8"
-          eyebrow="NO CLASSES"
-          title="No classes yet"
-          description="Your timetable subjects will show up here once you're enrolled."
+      <div className={styles.indexContent}>
+        <PageHeader
+          eyebrow={`Classes · ${me?.className || 'Your school'}`}
+          title="Your classes"
+          description="Open a subject to find its updates, materials, homework, timetable, and attendance in one place."
         />
-      ) : (
-        <div className="mt-6 space-y-2">
-          {(data?.items ?? []).map((cls) => (
-            <Link key={cls.subjectClassId} href={`/classes/${cls.subjectClassId}`}>
-              <div className="flex items-center gap-4 rounded-[15px] border border-st-bd1 bg-st-card px-4 py-3.5 transition hover:border-st-accent/40">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[10px] bg-st-accentSoft font-display text-base font-bold text-st-accentDeep">
-                  {cls.initial}
+
+        {rows.length === 0 ? (
+          <EmptyState icon={BookOpen} title="No classes found" description="Your subjects appear after your class enrolment is published." />
+        ) : (
+          <div className={styles.classGrid}>
+            {rows.map((row, index) => (
+              <Link
+                key={row.id}
+                href={classHref(row)}
+                className={`${styles.classCard} animate-block-in focus-ring`}
+                style={{ animationDelay: `${Math.min(index * 40, 160)}ms` }}
+              >
+                <span className={styles.classMark}>
+                  <SubjectIcon name={row.name} className={styles.classMarkIcon} />
                 </span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-st-ink">{cls.name}</p>
-                  <p className="text-xs text-st-muted">
-                    {cls.teacherName}
-                    {cls.nextMeta && ` · ${cls.nextMeta}`}
-                  </p>
-                </div>
-                <span className="text-xs font-semibold text-st-accent">Open →</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+                <span className={styles.classCardBody}>
+                  <span className={styles.classCardTop}>
+                    <span className={styles.classCardTitle}>{row.name}</span>
+                    {row.liveToday ? <span className={styles.todayBadge}>Today</span> : null}
+                  </span>
+                  <span className={styles.classCardMeta}>
+                    {[row.teacherName, row.nextMeta || 'Schedule available in Timetable'].filter(Boolean).join(' · ')}
+                  </span>
+                  <span className={styles.classCardAction}>Open class <ArrowRight aria-hidden="true" /></span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

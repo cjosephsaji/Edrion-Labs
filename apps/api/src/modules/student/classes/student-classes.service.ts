@@ -30,6 +30,7 @@ export class StudentClassesService {
 
     return {
       items: rows.map((r) => ({
+        id: r.subjectId,
         subjectClassId: r.subjectId,
         name: r.subjectName,
         initial: r.subjectName.slice(0, 1).toUpperCase(),

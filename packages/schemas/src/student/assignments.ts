@@ -52,10 +52,20 @@ export const studentAssignmentDetailSchema = z.discriminatedUnion('deliveryMode'
   studentFileAssignmentDetailSchema,
 ]);
 
-export const submitAssignmentSchema = z.object({
-  fileObjectIds: z.array(z.string().uuid()).min(1),
-  note: z.string().max(2000).nullish(),
-});
+export const submitAssignmentSchema = z
+  .object({
+    fileObjectIds: z.array(z.string().uuid()).default([]),
+    note: z.string().max(2000).nullish(),
+  })
+  .superRefine((value, ctx) => {
+    if (!value.fileObjectIds.length && !value.note?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['fileObjectIds'],
+        message: 'Attach a file or include a submission note',
+      });
+    }
+  });
 
 export type StudentAssignmentListItemDto = z.infer<typeof studentAssignmentListItemSchema>;
 export type StudentAssignmentDetailDto = z.infer<typeof studentAssignmentDetailSchema>;

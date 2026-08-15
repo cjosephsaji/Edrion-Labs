@@ -1,0 +1,17 @@
+run_id,case_id,topic,persona,total_score,gate,cost_micros,latency_ms
+petros-quality-smoke-fixture-42-1786334642173,pq-01-integration-by-parts,topic:integration-by-parts,fast_confident,4.73,warn,0,0
+petros-quality-smoke-fixture-42-1786334642173,pq-01-integration-by-parts,topic:integration-by-parts,confidently_wrong,4.73,warn,0,0
+petros-quality-smoke-fixture-42-1786334642173,pq-01-integration-by-parts,topic:integration-by-parts,relevant_detour,4.73,warn,0,0
+petros-quality-smoke-fixture-42-1786334642173,pq-01-integration-by-parts,topic:integration-by-parts,repeated_struggle,4.71,warn,0,0
+petros-quality-smoke-fixture-42-1786334642173,pq-02-photosynthesis,topic:photosynthesis,fast_confident,4.73,warn,0,0
+petros-quality-smoke-fixture-42-1786334642173,pq-02-photosynthesis,topic:photosynthesis,confidently_wrong,4.73,warn,0,0
+petros-quality-smoke-fixture-42-1786334642173,pq-02-photosynthesis,topic:photosynthesis,relevant_detour,4.73,warn,0,0
+petros-quality-smoke-fixture-42-1786334642173,pq-02-photosynthesis,topic:photosynthesis,repeated_struggle,4.71,warn,0,0
+petros-quality-smoke-fixture-42-1786334642173,pq-03-french-revolution,topic:french-revolution,fast_confident,4.73,warn,0,0
+petros-quality-smoke-fixture-42-1786334642173,pq-03-french-revolution,topic:french-revolution,confidently_wrong,4.73,warn,0,0
+petros-quality-smoke-fixture-42-1786334642173,pq-03-french-revolution,topic:french-revolution,relevant_detour,4.73,warn,0,0
+petros-quality-smoke-fixture-42-1786334642173,pq-03-french-revolution,topic:french-revolution,repeated_struggle,4.7,warn,0,0
+petros-quality-smoke-fixture-42-1786334642173,pq-04-python-for-loops,topic:python-for-loops,fast_confident,4.73,warn,0,0
+petros-quality-smoke-fixture-42-1786334642173,pq-04-python-for-loops,topic:python-for-loops,confidently_wrong,4.73,warn,0,0
+petros-quality-smoke-fixture-42-1786334642173,pq-04-python-for-loops,topic:python-for-loops,relevant_detour,4.73,warn,0,0
+petros-quality-smoke-fixture-42-1786334642173,pq-04-python-for-loops,topic:python-for-loops,repeated_struggle,4.7,warn,0,0

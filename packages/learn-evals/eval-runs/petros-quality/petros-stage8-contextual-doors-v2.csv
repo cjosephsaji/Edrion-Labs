@@ -1,0 +1,17 @@
+run_id,case_id,topic,persona,total_score,gate,cost_micros,latency_ms
+petros-stage8-contextual-doors-v2,pq-01-integration-by-parts,topic:integration-by-parts,fast_confident,5,pass,0,0
+petros-stage8-contextual-doors-v2,pq-01-integration-by-parts,topic:integration-by-parts,confidently_wrong,5,pass,0,0
+petros-stage8-contextual-doors-v2,pq-01-integration-by-parts,topic:integration-by-parts,relevant_detour,5,pass,0,0
+petros-stage8-contextual-doors-v2,pq-01-integration-by-parts,topic:integration-by-parts,repeated_struggle,4.98,pass,0,0
+petros-stage8-contextual-doors-v2,pq-02-photosynthesis,topic:photosynthesis,fast_confident,5,pass,0,0
+petros-stage8-contextual-doors-v2,pq-02-photosynthesis,topic:photosynthesis,confidently_wrong,5,pass,0,0
+petros-stage8-contextual-doors-v2,pq-02-photosynthesis,topic:photosynthesis,relevant_detour,5,pass,0,0
+petros-stage8-contextual-doors-v2,pq-02-photosynthesis,topic:photosynthesis,repeated_struggle,4.97,pass,0,0
+petros-stage8-contextual-doors-v2,pq-03-french-revolution,topic:french-revolution,fast_confident,5,pass,0,0
+petros-stage8-contextual-doors-v2,pq-03-french-revolution,topic:french-revolution,confidently_wrong,5,pass,0,0
+petros-stage8-contextual-doors-v2,pq-03-french-revolution,topic:french-revolution,relevant_detour,5,pass,0,0
+petros-stage8-contextual-doors-v2,pq-03-french-revolution,topic:french-revolution,repeated_struggle,4.97,pass,0,0
+petros-stage8-contextual-doors-v2,pq-04-python-for-loops,topic:python-for-loops,fast_confident,5,pass,0,0
+petros-stage8-contextual-doors-v2,pq-04-python-for-loops,topic:python-for-loops,confidently_wrong,5,pass,0,0
+petros-stage8-contextual-doors-v2,pq-04-python-for-loops,topic:python-for-loops,relevant_detour,5,pass,0,0
+petros-stage8-contextual-doors-v2,pq-04-python-for-loops,topic:python-for-loops,repeated_struggle,4.97,pass,0,0

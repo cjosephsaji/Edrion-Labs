@@ -7,7 +7,7 @@ dotenv.config({ path: join(__dirname, '../../..', '.env') });
 
 import { createDatabase, closeDatabase } from './client';
 import * as s from './schema/index';
-import { and, asc, eq, or } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 
 const DEV_PASSWORD_HASH = '$2a$10$ByZT0oBbpXQboXG7ZlkzbOWfBfx9uAwu6Zf0HAt/G3yIcji9Rh.WG';
 

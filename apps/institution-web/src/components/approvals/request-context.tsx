@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { Badge } from '@edrion/ui';
 import type { PortalRequest } from '@/lib/requests';
 

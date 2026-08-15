@@ -91,7 +91,7 @@ export function GradebookReleasePanel() {
       case 'retracted':
         return 'danger' as const;
       default:
-        return 'muted' as const;
+        return 'neutral' as const;
     }
   }
 

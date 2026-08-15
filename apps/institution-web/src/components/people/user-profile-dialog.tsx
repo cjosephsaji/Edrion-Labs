@@ -744,7 +744,7 @@ function StaffBody({ row, edit, canEdit }: { row: StaffRow; edit: () => void; ca
       label: 'Portal',
       content: (
         <div className="flex flex-col gap-4">
-          {data.overview.institutionUserId ? (
+          {data.account?.institutionUserId ? (
             <FieldGrid
               fields={[
                 { label: 'Portal login', value: 'Linked' },

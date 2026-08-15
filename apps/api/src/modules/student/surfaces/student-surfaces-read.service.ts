@@ -35,11 +35,14 @@ export class StudentSurfacesReadService {
   async transport(principal: InstitutionalStudentPrincipal) {
     const [row] = await this.db
       .select({
+        assignmentId: schema.transportAssignments.id,
+        routeId: schema.transportAssignments.routeId,
         routeName: schema.transportRoutes.name,
         stopName: schema.transportAssignments.stopName,
         vehicleRegistration: schema.transportVehicles.registrationNo,
         driverName: schema.transportVehicles.driverName,
         driverPhone: schema.transportVehicles.driverPhone,
+        status: schema.transportAssignments.status,
       })
       .from(schema.transportAssignments)
       .innerJoin(schema.transportRoutes, eq(schema.transportAssignments.routeId, schema.transportRoutes.id))
@@ -48,11 +51,14 @@ export class StudentSurfacesReadService {
       .limit(1);
 
     return row ?? {
+      assignmentId: null,
+      routeId: null,
       routeName: null,
       stopName: null,
       vehicleRegistration: null,
       driverName: null,
       driverPhone: null,
+      status: null,
     };
   }
 

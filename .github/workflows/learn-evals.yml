@@ -1,64 +1,67 @@
-# Learn eval regression gate (hyperspec 3 §1.5).
-# Path-filtered: prompts, block schemas, move constraints, model-tier config.
-# Requires secrets: LEARN_EVAL_AUTH_TOKEN, LEARN_EVAL_SECRET, LEARN_EVAL_JUDGE_API_KEY
-# and a reachable API (LEARN_EVAL_API_BASE). Confirm GitHub Actions is the intended CI host.
-
-name: learn-evals
+name: petros-quality
 
 on:
   pull_request:
     paths:
-      - 'apps/api/src/modules/student/edrion-learn/prompts/**'
-      - 'apps/api/src/modules/student/edrion-learn/move-library.ts'
-      - 'apps/api/src/modules/student/edrion-learn/move-planner.service.ts'
-      - 'apps/api/src/modules/student/edrion-learn/block-renderer.service.ts'
-      - 'apps/api/src/modules/student/edrion-learn/constants.ts'
-      - 'apps/api/src/modules/student/edrion-learn/learn-config.service.ts'
-      - 'packages/schemas/src/student/edrion-learn/**'
+      - 'apps/api/src/modules/student/petros-loop/**'
+      - 'apps/api/src/modules/petros-topic-profiles/**'
+      - 'apps/api/src/modules/petros-ai-routing/**'
+      - 'apps/api/src/modules/petros-quality/**'
+      - 'packages/schemas/src/petros-*.ts'
       - 'packages/learn-evals/**'
       - '.github/workflows/learn-evals.yml'
   workflow_dispatch:
     inputs:
       suite:
-        description: 'core (24) or full (180)'
+        description: 'smoke, core, or full'
         required: true
-        default: 'core'
+        default: 'smoke'
+      live:
+        description: 'Explicitly opt into metered Petros gateway calls'
+        type: boolean
+        required: true
+        default: false
 
 jobs:
-  evaluate:
+  deterministic-quality-gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 11
+        with: { version: 11 }
       - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
+        with: { node-version: 20, cache: pnpm }
       - run: pnpm install --frozen-lockfile
-      - name: Fixture coverage check
-        run: pnpm --filter @edrion/learn-evals check-fixtures
-      - name: Run learn-evals
-        env:
-          LEARN_EVAL_API_BASE: ${{ secrets.LEARN_EVAL_API_BASE }}
-          LEARN_EVAL_AUTH_TOKEN: ${{ secrets.LEARN_EVAL_AUTH_TOKEN }}
-          LEARN_EVAL_SECRET: ${{ secrets.LEARN_EVAL_SECRET }}
-          LEARN_EVAL_JUDGE_API_KEY: ${{ secrets.LEARN_EVAL_JUDGE_API_KEY }}
-          LEARN_EVAL_STUDENT_EMAIL: ${{ secrets.LEARN_EVAL_STUDENT_EMAIL }}
-          LEARN_EVAL_SEED: '42'
-        run: |
-          SUITE="${{ github.event.inputs.suite || 'core' }}"
-          if [ -z "$LEARN_EVAL_API_BASE" ] || [ -z "$LEARN_EVAL_SECRET" ]; then
-            echo "Learn eval secrets not configured — failing closed (AC-4 / AC-10)."
-            exit 1
-          fi
-          pnpm --filter @edrion/learn-evals exec tsx src/cli.ts run --suite "$SUITE"
-      - name: Upload eval report
+      - run: pnpm --filter @edrion/learn-evals check-fixtures
+      - run: pnpm --filter @edrion/learn-evals test
+      - run: pnpm --filter @edrion/learn-evals typecheck
+      - name: Fixture smoke corpus
+        run: pnpm --filter @edrion/learn-evals exec tsx src/cli.ts run --suite "${{ inputs.suite || 'smoke' }}" --mode fixture --run-id "ci-${{ github.sha }}"
+      - uses: actions/upload-artifact@v4
         if: always()
-        uses: actions/upload-artifact@v4
         with:
-          name: learn-eval-report
-          path: eval-runs/
-          if-no-files-found: ignore
+          name: petros-quality-report
+          path: packages/learn-evals/eval-runs/petros-quality/
+          if-no-files-found: error
+
+  live-quality-preview:
+    if: github.event_name == 'workflow_dispatch' && inputs.live
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: petros-evaluation
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 11 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: Print bounded cost preview
+        run: pnpm --filter @edrion/learn-evals exec tsx src/cli.ts estimate --suite smoke --mode live --max-cost-micros 500000 --max-tokens 100000
+      - name: Explicit metered live subset
+        env:
+          PETROS_QUALITY_API_BASE: ${{ secrets.PETROS_QUALITY_API_BASE }}
+          PETROS_QUALITY_SESSION_COOKIE: ${{ secrets.PETROS_QUALITY_SESSION_COOKIE }}
+          PETROS_QUALITY_SESSION_COOKIE_NAME: ${{ secrets.PETROS_QUALITY_SESSION_COOKIE_NAME }}
+        run: pnpm --filter @edrion/learn-evals exec tsx src/cli.ts run --suite smoke --mode live --confirm-live --max-cost-micros 500000 --max-tokens 100000 --run-id "live-${{ github.sha }}"

@@ -1,10 +1,10 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { studentComponentDetailQuerySchema, studentTermResultsQuerySchema } from '@edrion/schemas';
 import { Public } from '../../../common/guards/auth.guard';
 import { SkipRateLimit } from '../../../common/decorators';
 import { StudentAuthGuard } from '../core/student-auth.guard';
 import { StudentPermissionsGuard } from '../core/student-permissions.guard';
+import { StudentPortalGuard } from '../core/student-portal.guard';
 import { CurrentStudent, RequireStudentPermissions } from '../core/student.decorators';
 import type { StudentPrincipal } from '../student.types';
 import { requireInstitutional } from '../surfaces/surface-gate.service';
@@ -14,35 +14,20 @@ import { StudentResultsService } from './student-results.service';
 @Controller('student/results')
 @Public()
 @SkipRateLimit()
-@UseGuards(StudentAuthGuard, StudentPermissionsGuard)
+@UseGuards(StudentAuthGuard, StudentPermissionsGuard, StudentPortalGuard)
+@RequireStudentPermissions('student.surface.results.view')
 export class StudentResultsController {
   constructor(private readonly service: StudentResultsService) {}
 
-  @Get('term')
-  @RequireStudentPermissions('student.surface.results.view')
-  term(@CurrentStudent() principal: StudentPrincipal, @Query() query: unknown) {
+  @Get()
+  list(@CurrentStudent() principal: StudentPrincipal) {
     requireInstitutional(principal);
-    const parsed = studentTermResultsQuerySchema.parse(query);
-    return this.service.termResults(principal, parsed.term_id);
+    return this.service.list(principal);
   }
 
-  @Get('cgpa')
-  @RequireStudentPermissions('student.surface.results.view')
-  cgpa(@CurrentStudent() principal: StudentPrincipal) {
+  @Get(':id')
+  detail(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {
     requireInstitutional(principal);
-    return this.service.cgpa(principal);
-  }
-
-  @Get(':termId/:subjectId/components')
-  @RequireStudentPermissions('student.surface.results.view')
-  components(
-    @CurrentStudent() principal: StudentPrincipal,
-    @Param('termId') termId: string,
-    @Param('subjectId') subjectId: string,
-    @Query() query: unknown,
-  ) {
-    requireInstitutional(principal);
-    const parsed = studentComponentDetailQuerySchema.parse({ ...query as object, term_id: termId, subject_id: subjectId });
-    return this.service.componentDetail(principal, subjectId, termId, parsed.cursor, parsed.limit);
+    return this.service.detail(principal, id);
   }
 }

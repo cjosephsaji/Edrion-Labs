@@ -29,7 +29,7 @@ import {
   ATTENDANCE_RECOMPUTE_JOB,
   type AttendanceRecomputeJobData,
 } from '../student/attendance/attendance.constants';
-import { and, eq, schema } from '@edrion/database';
+import { eq, schema } from '@edrion/database';
 
 const MODULE = 'portal-attendance';
 

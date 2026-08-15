@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   and,
   desc,
@@ -38,6 +38,14 @@ import { randomUUID } from 'node:crypto';
 type RequestRow = typeof schema.studentRequests.$inferSelect;
 
 export const REQUEST_RENDER_COMPLETE_JOB = 'requests.document_render_completed';
+
+/** Document requests always carry a student; studentId is nullable only for anonymous sensitive reports. */
+function requireStudentId(request: { studentId: string | null }): string {
+  if (!request.studentId) {
+    throw new BadRequestException({ code: 'STUDENT_REQUIRED', message: 'This request is not linked to a student.' });
+  }
+  return request.studentId;
+}
 
 @Injectable()
 export class RequestDocumentService {
@@ -162,7 +170,7 @@ export class RequestDocumentService {
         .leftJoin(schema.gradeLevels, eq(schema.gradeLevels.id, schema.students.gradeLevelId))
         .leftJoin(schema.departmentGradeLevels, eq(schema.departmentGradeLevels.id, schema.classes.programmeLevelId))
         .leftJoin(schema.departments, eq(schema.departments.id, schema.departmentGradeLevels.departmentId))
-        .where(eq(schema.students.id, request.studentId))
+        .where(eq(schema.students.id, requireStudentId(request)))
         .limit(1);
       const verifyCode = this.codeFor(request.id);
       const verifyUrl = `https://verify.edrion.com/${verifyCode}`;
@@ -229,7 +237,7 @@ export class RequestDocumentService {
       })
       .from(schema.students)
       .leftJoin(schema.classes, eq(schema.classes.id, schema.students.classId))
-      .where(eq(schema.students.id, request.studentId))
+      .where(eq(schema.students.id, requireStudentId(request)))
       .limit(1);
     const verifyCode = this.codeFor(request.id);
     const verifyUrl = `https://verify.edrion.com/${verifyCode}`;

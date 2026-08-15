@@ -296,6 +296,7 @@ async function seedReleasedAssessment(
       institutionId: input.institutionId,
       campusId: input.campusId,
       termId: input.termId,
+      subjectId: input.subjectId,
       scope: { classId: input.classId, assessment: 'Unit Test 1' },
       entryIds,
       status: 'released',
@@ -388,9 +389,10 @@ async function seedLibraryAndFlashcards(
   input: { institutionId: string; studentId: string },
 ): Promise<void> {
   const materials = [
-    { title: 'NCERT Mathematics — Grade 9', kind: 'pdf' },
-    { title: 'Science Fundamentals Notes', kind: 'notes' },
-    { title: 'English Grammar Workbook', kind: 'pdf' },
+    { title: 'NCERT Mathematics — Grade 9', kind: 'pdf', fixture: 'pending' as const },
+    { title: 'Mathematics Method Notes', kind: 'notes', fixture: 'ready_math' as const },
+    { title: 'Science Fundamentals Notes', kind: 'notes', fixture: 'ready' as const },
+    { title: 'English Grammar Workbook', kind: 'pdf', fixture: 'neutral' as const },
   ];
 
   const itemIds: string[] = [];
@@ -407,6 +409,13 @@ async function seedLibraryAndFlashcards(
       .limit(1);
     if (existing) {
       itemIds.push(existing.id);
+      await applyPetrosDocumentFixture(db, {
+        institutionId: input.institutionId,
+        studentId: input.studentId,
+        itemId: existing.id,
+        title: mat.title,
+        fixture: mat.fixture,
+      });
       continue;
     }
     const [row] = await db
@@ -420,6 +429,15 @@ async function seedLibraryAndFlashcards(
       })
       .returning({ id: s.knowledgeItems.id });
     if (row?.id) itemIds.push(row.id);
+    if (row?.id) {
+      await applyPetrosDocumentFixture(db, {
+        institutionId: input.institutionId,
+        studentId: input.studentId,
+        itemId: row.id,
+        title: mat.title,
+        fixture: mat.fixture,
+      });
+    }
   }
 
   const [deckExisting] = await db
@@ -468,5 +486,109 @@ async function seedLibraryAndFlashcards(
       answer: card.answer,
       nextDueAt: addDays(new Date(), dueOffsets[i] ?? 0),
     });
+  }
+}
+
+async function applyPetrosDocumentFixture(
+  db: DevSeedContext['db'],
+  input: {
+    institutionId: string;
+    studentId: string;
+    itemId: string;
+    title: string;
+    fixture: 'ready' | 'ready_math' | 'pending' | 'neutral';
+  },
+): Promise<void> {
+  if (input.fixture === 'neutral') return;
+  if (input.fixture === 'pending') {
+    await db
+      .update(s.knowledgeItems)
+      .set({
+        status: 'reading',
+        pageCount: 12,
+        pagesDone: 4,
+        extractedTextReady: false,
+        indexReady: false,
+        ingestStage: 'extracting',
+        version: 2,
+      })
+      .where(eq(s.knowledgeItems.id, input.itemId));
+    return;
+  }
+
+  const mathematics = input.fixture === 'ready_math';
+  const storageKey = mathematics
+    ? 'seed/petros-stage8/mathematics-method-notes.pdf'
+    : 'seed/petros-stage8/science-fundamentals-notes.pdf';
+  const [stored] = await db
+    .select({ id: s.storageObjects.id })
+    .from(s.storageObjects)
+    .where(and(eq(s.storageObjects.institutionId, input.institutionId), eq(s.storageObjects.storageKey, storageKey)))
+    .limit(1);
+  let objectId = stored?.id;
+  if (!objectId) {
+    const [created] = await db
+      .insert(s.storageObjects)
+      .values({
+        institutionId: input.institutionId,
+        ownerStudentId: input.studentId,
+        kind: 'petros-stage8-fixture',
+        driver: 'local',
+        storageKey,
+        filename: mathematics ? 'mathematics-method-notes.pdf' : 'science-fundamentals-notes.pdf',
+        mimeType: 'application/pdf',
+        sizeBytes: 16_384,
+        processingStatus: 'ready',
+      })
+      .returning({ id: s.storageObjects.id });
+    objectId = created?.id;
+  }
+  if (!objectId) throw new Error('Failed to create the Stage 8 document fixture object.');
+
+  await db
+    .update(s.knowledgeItems)
+    .set({
+      status: 'ready',
+      pageCount: 3,
+      pagesDone: 3,
+      extractedTextReady: true,
+      indexReady: true,
+      aiRead: true,
+      objectIds: [objectId],
+      ingestStage: 'finalizing',
+      version: 2,
+    })
+    .where(eq(s.knowledgeItems.id, input.itemId));
+
+  const pages = mathematics
+    ? [
+        'For a linear equation, preserve equality by applying the same reversible operation to both sides.',
+        'Choose the smallest operation that isolates the unknown. Check the result by substituting it into the original equation.',
+        'In an exam-shaped answer, state the operation, show the transformed equation, and finish with a substitution check.',
+      ]
+    : [
+        'Photosynthesis stores light energy as chemical energy. Chlorophyll absorbs light most strongly in the blue and red regions.',
+        'In the light-dependent reactions, water is split and oxygen is released. ATP and NADPH carry energy to the next stage.',
+        'The Calvin cycle uses carbon dioxide, ATP, and NADPH to build carbohydrate molecules. It does not directly require light.',
+      ];
+  for (let pageIndex = 0; pageIndex < pages.length; pageIndex += 1) {
+    const [existing] = await db
+      .select({ id: s.knowledgeItemPages.id })
+      .from(s.knowledgeItemPages)
+      .where(and(eq(s.knowledgeItemPages.itemId, input.itemId), eq(s.knowledgeItemPages.pageIndex, pageIndex)))
+      .limit(1);
+    if (existing) {
+      await db
+        .update(s.knowledgeItemPages)
+        .set({ objectId, text: pages[pageIndex]!, updatedAt: new Date() })
+        .where(eq(s.knowledgeItemPages.id, existing.id));
+    } else {
+      await db.insert(s.knowledgeItemPages).values({
+        itemId: input.itemId,
+        pageIndex,
+        objectId,
+        text: pages[pageIndex]!,
+      });
+    }
   }
 }

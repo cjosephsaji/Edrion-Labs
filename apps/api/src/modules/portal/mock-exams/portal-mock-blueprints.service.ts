@@ -85,8 +85,8 @@ export class PortalMockBlueprintsService {
   }
 
   async publish(ctx: PortalActionContext, id: string, publish: boolean) {
-    const perms = ctx.principal.permissions ?? [];
-    if (!perms.includes('lab.blueprints.publish') && !perms.includes('academics.manage')) {
+    const perms = ctx.principal.permissions;
+    if (!perms.hasWildcard && !perms.keys.has('lab.blueprints.publish') && !perms.keys.has('academics.manage')) {
       throw new ForbiddenException({ code: 'FORBIDDEN', message: 'lab.blueprints.publish required' });
     }
     await this.requireOwned(ctx.principal.institutionId, id);

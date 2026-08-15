@@ -11,8 +11,9 @@ import { SkipRateLimit } from '../../../common/decorators';
 import { zodBody } from '../../../common/zod-validation.pipe';
 import { StudentAuthGuard } from '../core/student-auth.guard';
 import { StudentPermissionsGuard } from '../core/student-permissions.guard';
+import { StudentPortalGuard } from '../core/student-portal.guard';
 import { CurrentStudent, RequireStudentPermissions } from '../core/student.decorators';
-import type { InstitutionalStudentPrincipal, StudentPrincipal } from '../student.types';
+import type { StudentPrincipal } from '../student.types';
 import { requireInstitutional } from '../surfaces/surface-gate.service';
 import { StudentHomeworkService } from './homework.service';
 
@@ -20,16 +21,13 @@ import { StudentHomeworkService } from './homework.service';
 @Controller('student/homework')
 @Public()
 @SkipRateLimit()
-@UseGuards(StudentAuthGuard, StudentPermissionsGuard)
+@UseGuards(StudentAuthGuard, StudentPermissionsGuard, StudentPortalGuard)
 export class StudentHomeworkController {
   constructor(private readonly service: StudentHomeworkService) {}
 
   @Get()
   @RequireStudentPermissions('student.homework.view')
-  list(
-    @CurrentStudent() principal: StudentPrincipal,
-    @Query('filter') filterRaw?: string,
-  ) {
+  list(@CurrentStudent() principal: StudentPrincipal, @Query('filter') filterRaw?: string) {
     requireInstitutional(principal);
     const filter = homeworkListFilterSchema.catch('all').parse(filterRaw ?? 'all') as HomeworkListFilter;
     return this.service.list(principal, filter);
@@ -59,12 +57,5 @@ export class StudentHomeworkController {
   submit(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {
     requireInstitutional(principal);
     return this.service.submit(principal, id);
-  }
-
-  @Get(':id/ai-policy')
-  @RequireStudentPermissions('student.homework.view')
-  aiPolicy(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {
-    requireInstitutional(principal);
-    return this.service.aiPolicy(principal as InstitutionalStudentPrincipal, id);
   }
 }

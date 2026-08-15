@@ -10,6 +10,7 @@ export class StudentCalendarService {
 
   async getCalendar(principal: InstitutionalStudentPrincipal, month: string) {
     const start = `${month}-01`;
+    const today = new Date().toISOString().slice(0, 10);
     // First of next month, exclusive upper bound (fixes off-by-one from lte).
     const [y, m] = month.split('-').map(Number);
     const nextMonth = m === 12 ? 1 : m! + 1;
@@ -58,11 +59,23 @@ export class StudentCalendarService {
       })
       .from(schema.examSchedules)
       .innerJoin(schema.exams, eq(schema.exams.id, schema.examSchedules.examId))
+      .innerJoin(
+        schema.students,
+        and(
+          eq(schema.students.id, principal.studentId),
+          eq(schema.students.institutionId, principal.institutionId),
+          eq(schema.students.classId, schema.examSchedules.classId),
+        ),
+      )
       .where(
         and(
           eq(schema.examSchedules.institutionId, principal.institutionId),
           eq(schema.examSchedules.published, true),
-          gte(schema.examSchedules.examDate, start),
+          eq(schema.exams.status, 'scheduled'),
+          gte(
+            schema.examSchedules.examDate,
+            start > today ? start : today,
+          ),
         ),
       )
       .orderBy(asc(schema.examSchedules.examDate))

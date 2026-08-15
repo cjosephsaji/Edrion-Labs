@@ -7,7 +7,7 @@ import type {
   RegistrationReviewAction,
   RegistrationStatus,
   SupportTier,
-} from '@edrion/shared-types';
+} from "@edrion/shared-types";
 
 /** DTOs the API returns. Kept explicit so the frontend stays decoupled from the ORM. */
 export interface InstitutionDto {
@@ -84,7 +84,7 @@ export interface SupportAccessSessionDto {
   reason: string;
   caseRef: string | null;
   campusId: string | null;
-  status: 'requested' | 'approved' | 'active' | 'ended' | 'expired';
+  status: "requested" | "approved" | "active" | "ended" | "expired";
   riskLevel: string;
   requestedAt: string;
   approvedAt: string | null;
@@ -539,7 +539,7 @@ export interface DashboardAggregatesDto {
 
 export interface PendingActionItemDto {
   id: string;
-  priority: 'critical' | 'today' | 'upcoming' | 'informational';
+  priority: "critical" | "today" | "upcoming" | "informational";
   category: string;
   title: string;
   description: string;
@@ -675,7 +675,11 @@ export interface GuardrailTraceEntryDto {
 
 /** Guardrail evaluation outcome — deciding rule + reason, never a bare flag. */
 export interface GuardrailResultDto {
-  decision: 'allow' | 'needs_confirmation' | 'needs_second_approver' | 'blocked';
+  decision:
+    | "allow"
+    | "needs_confirmation"
+    | "needs_second_approver"
+    | "blocked";
   layer: string;
   reason: string;
   capability: string;
@@ -688,6 +692,494 @@ export interface GuardrailResultDto {
   trace: GuardrailTraceEntryDto[];
 }
 
+// --- Petros AI routing -------------------------------------------------------
+
+export interface PetrosAiOverviewDto {
+  providerCount: number;
+  healthyProviderCount: number;
+  configuredFunctionCount: number;
+  functionCount: number;
+  enabledRuleCount: number;
+  monthlyCostMicros: number;
+  monthlyBudgetMicros: number | null;
+  failureRate: number;
+  averageResponseMs: number;
+  fallbackRate: number;
+}
+
+export interface PetrosAiModelDto {
+  id: string;
+  providerId: string;
+  modelKey: string;
+  displayName: string;
+  enabled: boolean;
+  custom: boolean;
+  capabilities: string[];
+  contextWindow: number | null;
+  maxOutputTokens: number | null;
+  pricing: Record<string, number>;
+  providerOptions: Record<string, unknown>;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PetrosAiProviderDto {
+  id: string;
+  key: string;
+  displayName: string;
+  adapterType: string;
+  baseUrl: string | null;
+  credentialHint: string | null;
+  credentialConfigured: boolean;
+  enabled: boolean;
+  paused: boolean;
+  priority: number;
+  dailyBudgetMicros: number | null;
+  monthlyBudgetMicros: number | null;
+  capabilities: string[];
+  metadata: Record<string, unknown>;
+  healthStatus: string;
+  latencyMs: number | null;
+  lastHealthCheckAt: string | null;
+  lastHealthError: string | null;
+  version: number;
+  models: PetrosAiModelDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PetrosAiFunctionSettingsDto {
+  maxInputTokens: number;
+  maxOutputTokens: number;
+  temperature: number;
+  reasoningLevel?: string;
+  timeoutMs: number;
+  maxRetries: number;
+  streaming: boolean;
+  caching: boolean;
+  dailyRequestLimit?: number;
+  monthlyRequestLimit?: number;
+  maxCostPerRequestMicros?: number;
+  maxCostPerStudentMicros?: number;
+  maxInstitutionUsage?: number;
+}
+
+export interface PetrosAiFunctionRouteDto {
+  id: string;
+  functionId: string;
+  providerId: string;
+  modelId: string;
+  tier: number;
+  trafficPercent: number;
+  enabled: boolean;
+  overrides: Record<string, unknown>;
+  providerKey: string;
+  providerName: string;
+  providerEnabled: boolean;
+  providerPaused: boolean;
+  modelKey: string;
+  modelName: string;
+  modelEnabled: boolean;
+  modelCapabilities: string[];
+}
+
+export interface PetrosAiFunctionDto {
+  id: string;
+  key: string;
+  displayName: string;
+  description: string;
+  category: string;
+  enabled: boolean;
+  allowedInputTypes: string[];
+  responseFormat: string;
+  requiredCapabilities: string[];
+  settings: PetrosAiFunctionSettingsDto;
+  activePromptVersion: string;
+  activeSchemaVersion: string;
+  source: string;
+  version: number;
+  routes: PetrosAiFunctionRouteDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PetrosAiRoutingRuleDto {
+  id: string;
+  name: string;
+  description: string | null;
+  functionId: string | null;
+  functionKey: string | null;
+  priority: number;
+  enabled: boolean;
+  conditions: {
+    all?: Array<{ field: string; operator: string; value: unknown }>;
+    any?: Array<{ field: string; operator: string; value: unknown }>;
+  };
+  action: {
+    kind: string;
+    providerId?: string;
+    modelId?: string;
+    maxTier?: number;
+    reason?: string;
+  };
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PetrosAiUsageSummaryDto {
+  from: string;
+  to: string;
+  totals: {
+    requests: number;
+    attempts: number;
+    successful: number;
+    failures: number;
+    fallbacks: number;
+    inputTokens: number;
+    outputTokens: number;
+    cachedTokens: number;
+    costMicros: number;
+    averageResponseMs: number;
+  };
+  breakdown: Array<{
+    label: string;
+    requests: number;
+    attempts: number;
+    successes: number;
+    costMicros: number;
+    averageResponseMs: number;
+  }>;
+}
+
+export interface PetrosAiBudgetPolicyDto {
+  id: string;
+  scope: string;
+  scopeId: string | null;
+  monthlyBudgetMicros: number | null;
+  dailyBudgetMicros: number | null;
+  thresholds: Array<{ percent: number; action: string }>;
+  preserveEssentialFunctions: boolean;
+  enabled: boolean;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PetrosRoutePreviewDto {
+  selected: {
+    providerId: string;
+    providerKey: string;
+    providerName: string;
+    modelId: string;
+    modelKey: string;
+    modelName: string;
+    tier: number;
+  };
+  attempts: Array<{
+    providerId: string;
+    providerKey: string;
+    providerName: string;
+    modelId: string;
+    modelKey: string;
+    modelName: string;
+    tier: number;
+  }>;
+  matchedRules: Array<{ id: string; name: string; action: string }>;
+  budgetAction: string;
+  cacheAllowed: boolean;
+  explanation: string[];
+}
+
+export interface PetrosDecisionDiagnosticDto {
+  id: string;
+  sessionId: string;
+  institutionRef: string;
+  studentRef: string;
+  sequence: number;
+  moveType: string;
+  originalMoveType: string | null;
+  status: string;
+  studentSafeReason: string;
+  decisionFactors: string[];
+  expectedEvidence: string;
+  policyInterventions: Array<Record<string, unknown>>;
+  selectionPolicy: {
+    normalizedCandidateWeights: Record<string, number>;
+    exclusions: Array<{ move: string; reason: string }>;
+    selectedWeight: number;
+    override: Record<string, unknown> | null;
+    capabilityFallback: string | null;
+  };
+  source: "ai" | "deterministic_fallback";
+  functionKey: string;
+  promptVersion: string;
+  schemaVersion: string;
+  routeReference: Record<string, unknown> | null;
+  planRequestId: string | null;
+  renderRequestId: string | null;
+  resultingBlockId: string | null;
+  correlationId: string;
+  createdAt: string;
+}
+
+export interface PetrosTopicProfileContentDto {
+  schemaVersion: string;
+  identity: {
+    topicKey: string;
+    canonicalTitle: string;
+    subjectKey: string;
+    subjectLabel: string;
+    gradeBand: string;
+    curriculumKey: string;
+    curriculumLabel: string;
+    syllabusReferences: Array<{
+      label: string;
+      reference: string | null;
+      licence: string | null;
+    }>;
+  };
+  dimensions: {
+    knowledgeTypes: Array<{ type: string; weightBasisPoints: number }>;
+    abstractionLevel: number;
+    representations: Array<{ type: string; weightBasisPoints: number }>;
+    prerequisiteDensity: number;
+    prerequisites: Array<{
+      conceptKey: string;
+      label: string;
+      requiredness: string;
+      sourceReferences: Array<Record<string, unknown>>;
+    }>;
+    misconceptionRichness: number;
+    misconceptions: Array<{
+      key: string;
+      summary: string;
+      correctionAnchor: string;
+      sourceReferences: Array<Record<string, unknown>>;
+    }>;
+    mathematicalLoad: number;
+    memorisationLoad: number;
+    realWorldAnchors: {
+      availability: number;
+      quality: number;
+      examples: string[];
+    };
+    moves: {
+      required: string[];
+      recommended: string[];
+      disallowed: string[];
+      weights: Record<string, number>;
+      openingPattern: string[];
+      practicePattern: string[];
+      closingPattern: string[];
+    };
+  };
+  provenance: {
+    source: string;
+    confidenceBasisPoints: number;
+    generatorVersion: string;
+    promptVersion: string;
+    sourceReferences: Array<Record<string, unknown>>;
+    reviewer: string | null;
+    reviewedAt: string | null;
+  };
+  cache: {
+    key: string;
+    version: number;
+    invalidationInputs: Record<string, string>;
+  };
+}
+
+export interface PetrosTopicProfileVersionDto {
+  id: string;
+  version: number;
+  status: string;
+  source: string;
+  profile: PetrosTopicProfileContentDto;
+  profileHash: string;
+  changeSummary: string;
+  generatedRequestId: string | null;
+  createdBy: string | null;
+  reviewedBy: string | null;
+  createdAt: string;
+  publishedAt: string | null;
+}
+
+export interface PetrosTopicProfileDto {
+  id: string;
+  learnTopicId: string | null;
+  topicKey: string;
+  canonicalTitle: string;
+  subjectKey: string;
+  subjectLabel: string;
+  gradeBand: string;
+  curriculumKey: string;
+  curriculumLabel: string;
+  status: "draft" | "published" | "stale" | "archived";
+  cacheKey: string;
+  cacheVersion: number;
+  cacheHitCount: number;
+  staleReason: string | null;
+  version: number;
+  publishedVersion: PetrosTopicProfileVersionDto | null;
+  latestVersion: PetrosTopicProfileVersionDto | null;
+  versions: PetrosTopicProfileVersionDto[];
+  overrides: Array<{
+    id: string;
+    institutionId: string;
+    version: number;
+    status: string;
+    patch: { dimensions: Partial<PetrosTopicProfileContentDto["dimensions"]> };
+    basedOnCanonicalVersion: number;
+    createdAt: string;
+    publishedAt: string | null;
+  }>;
+  prerequisites: PetrosTopicProfileContentDto["dimensions"]["prerequisites"];
+  misconceptions: PetrosTopicProfileContentDto["dimensions"]["misconceptions"];
+  auditHistory: Array<{
+    id: string;
+    action: string;
+    actorRef: string | null;
+    reason: string;
+    metadata: Record<string, unknown>;
+    createdAt: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PetrosObservationDiagnosticDto {
+  id: string;
+  sessionId: string;
+  institutionRef: string;
+  studentRef: string;
+  type: string;
+  targetId: string | null;
+  decisionId: string | null;
+  blockId: string | null;
+  questionId: string | null;
+  confidence: "sure" | "think_so" | "guessing" | null;
+  correctness: "correct" | "incorrect" | "partial" | "invalid" | null;
+  credit: number | null;
+  highValueMisconception: boolean;
+  fragileSuccess: boolean;
+  errorClass: string | null;
+  evaluator: "deterministic" | "ai" | "safe_fallback" | null;
+  functionKey: string | null;
+  promptVersion: string | null;
+  schemaVersion: string;
+  requestId: string | null;
+  routeReference: Record<string, unknown> | null;
+  correlationId: string;
+  ladderLevel: number | null;
+  supportKind: string | null;
+  occurredAt: string;
+}
+
+export interface PetrosQualityRunDto {
+  id: string;
+  externalRunId: string;
+  label: string;
+  status: "completed" | "failed" | "cancelled";
+  mode: "fixture" | "live";
+  source: "evaluation";
+  environment: "evaluation";
+  suite: string;
+  seed: number;
+  gate: "pass" | "warn" | "fail";
+  corpusVersion: string;
+  rubricVersion: string;
+  promptVersion: string;
+  schemaVersion: string;
+  profileVersion: string;
+  routingVersion: string;
+  codeVersion: string;
+  totals: Record<string, number>;
+  dimensions: Record<string, { mean: number; count: number }>;
+  blockingFailures: string[];
+  warnings: string[];
+  comparison: Record<string, unknown> | null;
+  report: Record<string, unknown>;
+  costMicros: number;
+  inputTokens: number;
+  outputTokens: number;
+  latencyMs: number;
+  startedAt: string;
+  completedAt: string | null;
+  createdAt: string;
+}
+
+export interface PetrosQualityRunDetailDto extends PetrosQualityRunDto {
+  sessions: Array<{
+    id: string;
+    externalSessionId: string;
+    caseId: string;
+    topicKey: string;
+    topicTitle: string;
+    subject: string;
+    personaId: string;
+    goal: string;
+    totalScoreBasisPoints: number;
+    status: string;
+    blockingFailures: string[];
+    warnings: string[];
+    transcript: {
+      moves?: Array<{
+        id: string;
+        blockId: string;
+        type: string;
+        phase: string;
+        title: string;
+        content: string;
+        studentSafeReason: string;
+        decisionFactors: string[];
+      }>;
+      observations?: Array<{
+        id: string;
+        moveId: string;
+        type: string;
+        correctness?: string;
+        confidence?: string;
+        summary: string;
+      }>;
+      usage?: Array<{
+        functionKey: string;
+        providerKey: string;
+        modelKey: string;
+        costMicros: number;
+        latencyMs: number;
+        validationFailures: number;
+      }>;
+      errors?: Array<{ class: string; code: string; message: string }>;
+    };
+  }>;
+  scores: Array<{
+    sessionId: string;
+    dimension: string;
+    scoreBasisPoints: number;
+    evaluator: string;
+    uncertaintyBasisPoints: number;
+    rationale: string;
+    evidence: Array<Record<string, unknown>>;
+  }>;
+  events: Array<Record<string, unknown>>;
+  baseline: {
+    id: string;
+    selected: boolean;
+    reason: string;
+    promotedAt: string;
+  } | null;
+  audit: Array<{
+    id: string;
+    action: string;
+    actorRef: string | null;
+    reason: string;
+    metadata: Record<string, unknown>;
+    createdAt: string;
+  }>;
+}
+
 // --- Copilot run lifecycle ----------------------------------------------------
 
 export interface AiRunDto {
@@ -697,7 +1189,14 @@ export interface AiRunDto {
   prompt: string;
   context: Record<string, unknown> | null;
   contextSources: string[] | null;
-  status: 'proposed' | 'awaiting_confirmation' | 'confirmed' | 'executed' | 'rejected' | 'expired' | 'failed';
+  status:
+    | "proposed"
+    | "awaiting_confirmation"
+    | "confirmed"
+    | "executed"
+    | "rejected"
+    | "expired"
+    | "failed";
   summary: string | null;
   model: string;
   promptVersion: string | null;
@@ -724,7 +1223,11 @@ export interface AiToolCallDto {
   args: Record<string, unknown> | null;
   explanation: string | null;
   requiredPermission: string | null;
-  decision: 'allow' | 'needs_confirmation' | 'needs_second_approver' | 'blocked';
+  decision:
+    | "allow"
+    | "needs_confirmation"
+    | "needs_second_approver"
+    | "blocked";
   decisionLayer: string | null;
   decisionReason: string | null;
   riskLevel: string | null;
@@ -1116,4 +1619,119 @@ export interface RegistrationApprovalResultDto {
   institutionPublicId: string;
   adminUserId: string;
   publicRef: string | null;
+}
+
+export interface PetrosLearnerDiagnosticDto {
+  institutionRef: string;
+  studentRef: string;
+  algorithmVersion: string;
+  retention: {
+    rawEvidence: string;
+    derivedSummaries: string;
+    transfer: string;
+  };
+  mastery: Array<{
+    id: string;
+    conceptId: string;
+    topicId: string;
+    masteryBasisPoints: number;
+    recallBasisPoints: number;
+    applicationBasisPoints: number;
+    confidenceBasisPoints: number;
+    uncertaintyBasisPoints: number;
+    evidenceCount: number;
+    evidenceSources: Record<string, number>;
+    lastTouchedAt: string;
+    nextReviewAt: string | null;
+    algorithmVersion: string;
+  }>;
+  moveOutcomes: Array<{
+    id: string;
+    moveType: string;
+    topicId: string;
+    profileDimension: string;
+    successes: number;
+    failures: number;
+    skips: number;
+    sampleSize: number;
+    effectivenessBasisPoints: number;
+    confidenceBasisPoints: number;
+    lastEvidenceAt: string;
+  }>;
+  preference: null | {
+    pace: string;
+    depth: string;
+    skipCount: number;
+    expandCount: number;
+    readCount: number;
+    responseCount: number;
+    evidenceCount: number;
+    confidenceBasisPoints: number;
+    minimumEvidenceMet: boolean;
+  };
+  errors: Array<{
+    id: string;
+    category: string;
+    topicId: string;
+    count: number;
+    contexts: string[];
+    confidenceBasisPoints: number;
+    evidenceEventIds: string[];
+    lastEvidenceAt: string;
+  }>;
+  calibration: null | {
+    buckets: Array<{ confidence: string; outcome: string; count: number }>;
+    scoreBasisPoints: number;
+    uncertaintyBasisPoints: number;
+    evidenceCount: number;
+  };
+  evidence: Array<{
+    id: string;
+    source: string;
+    sourceEventId: string;
+    sourceRecordId: string | null;
+    conceptId: string;
+    topicId: string;
+    kind: string;
+    outcome: string;
+    creditBasisPoints: number;
+    errorCategory: string;
+    occurredAt: string;
+    algorithmVersion: string;
+  }>;
+  quarantine: Array<Record<string, unknown>>;
+  jobs: Array<
+    Record<string, unknown> & {
+      id: string;
+      status: string;
+      processedEvents: number;
+      totalEvents: number;
+    }
+  >;
+  planSnapshots: Array<
+    Record<string, unknown> & {
+      id: string;
+      decisionId: string;
+      snapshot: Record<string, unknown>;
+      causalFactors: string[];
+    }
+  >;
+  boundedSnapshot: Record<string, unknown> & {
+    neutral: boolean;
+    stale: boolean;
+    causalFactors: string[];
+  };
+  stale: boolean;
+  lastUpdateAt: string | null;
+}
+
+export interface PetrosLearnerSourceSyncDto {
+  scope: { institutionId: string; studentId: string };
+  totals: {
+    scanned: number;
+    accepted: number;
+    duplicates: number;
+    quarantined: number;
+    failed: number;
+  };
 }

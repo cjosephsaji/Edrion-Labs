@@ -40,6 +40,7 @@ export const studentRequests = pgTable(
     campusId: uuid('campus_id')
       .notNull()
       .references(() => campuses.id, { onDelete: 'restrict' }),
+    /** Nullable only for anonymous sensitive reports (0155); enforced by student_requests_student_id_ck. */
     studentId: uuid('student_id').references(() => students.id, { onDelete: 'cascade' }),
     type: text('type').notNull(),
     payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),

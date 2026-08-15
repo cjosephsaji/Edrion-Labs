@@ -87,7 +87,7 @@ export function ReleaseConfirmDrawer({ batch, open, onClose, onConfirm, mode }: 
           )}
         </div>
 
-        <Badge tone="muted">v{batch.version}</Badge>
+        <Badge tone="neutral">v{batch.version}</Badge>
       </div>
     </Drawer>
   );

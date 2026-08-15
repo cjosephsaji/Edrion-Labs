@@ -1,44 +1,44 @@
 'use client';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useStudentMe } from '@/lib/hooks';
-import { AppShell } from '@/components/app-shell/app-shell';
-import { StudentClientError } from '@/lib/student-client';
-import { PortalConfigProvider } from '@/lib/portal-config';
 
-export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
+import { useEffect, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
+import { AppShell } from '@/components/app-shell/app-shell';
+import { LoadingBlock, UnauthorizedState } from '@/components/ui/states';
+import { StudentApiError } from '@/lib/api-client';
+import { useStudentMe } from '@/lib/hooks';
+
+export default function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const { data: me, isLoading, isError, error } = useStudentMe();
+  const me = useStudentMe();
 
   useEffect(() => {
-    if (!isLoading && isError) {
-      const status = error instanceof StudentClientError ? error.status : 0;
-      if (status === 401 || status === 403) {
-        router.replace('/login');
-      }
+    if (me.error instanceof StudentApiError && me.error.status === 401) {
+      router.replace('/login');
     }
-  }, [isLoading, isError, error, router]);
+  }, [me.error, router]);
 
-  if (isLoading) {
+  if (me.isLoading) {
+    return <AppShell><LoadingBlock label="Opening your portal…" /></AppShell>;
+  }
+
+  if (me.error instanceof StudentApiError && me.error.status === 401) {
     return (
-      <div className="grid min-h-dvh place-items-center bg-st-page">
-        <div className="h-10 w-48 shimmer rounded-xl" />
+      <div className="mx-auto flex min-h-screen max-w-lg items-center px-4">
+        <UnauthorizedState />
       </div>
     );
   }
 
-  if (isError && error instanceof StudentClientError && error.status === 403) {
+  if (me.error) {
     return (
-      <div className="mx-auto max-w-md px-6 py-20 text-center">
-        <h1 className="font-display text-2xl font-semibold text-st-ink">Access suspended</h1>
-        <p className="mt-2 text-sm text-st-muted">
-          Your student portal access is not available right now. Contact your school for help.
-        </p>
+      <div className="mx-auto flex min-h-screen max-w-lg items-center px-4">
+        <UnauthorizedState
+          title="Couldn’t verify your session"
+          description="Please sign in again to continue."
+        />
       </div>
     );
   }
 
-  if (!me) return null;
-
-  return <PortalConfigProvider><AppShell>{children}</AppShell></PortalConfigProvider>;
+  return <AppShell>{children}</AppShell>;
 }

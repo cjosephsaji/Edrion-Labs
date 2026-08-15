@@ -1,0 +1,333 @@
+.panel,
+.session {
+  margin-top: 22px;
+  border: 1px solid var(--s-bd1);
+  background: var(--s-card);
+  padding: clamp(18px, 4vw, 34px);
+  color: var(--s-ink);
+}
+.panel h2,
+.session h2 {
+  margin: 6px 0 10px;
+  font-size: clamp(24px, 5vw, 38px);
+  line-height: 1.12;
+}
+.panel p,
+.session p {
+  line-height: 1.6;
+}
+.eyebrow {
+  margin: 0;
+  color: var(--s-accentDeep);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 22px 0;
+}
+.formGrid label,
+.composer > label {
+  display: grid;
+  gap: 6px;
+  color: var(--s-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.formGrid input,
+.formGrid select,
+.composer textarea,
+.segment textarea {
+  width: 100%;
+  border: 1px solid var(--s-bd1);
+  background: var(--s-cardAlt);
+  padding: 12px;
+  color: var(--s-ink);
+  font: inherit;
+}
+.formGrid fieldset {
+  display: flex;
+  gap: 16px;
+  border: 1px solid var(--s-bd1);
+  padding: 12px;
+}
+.formGrid fieldset label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.primary,
+.secondary,
+.actions button,
+.lifecycle button,
+.textButton {
+  border: 1px solid var(--s-bd1);
+  background: transparent;
+  padding: 10px 14px;
+  color: var(--s-ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.primary {
+  border-color: var(--s-accentDeep);
+  background: var(--s-accentDeep);
+  color: white;
+}
+.primary:disabled,
+.secondary:disabled,
+.actions button:disabled,
+.lifecycle button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.gate,
+.warning {
+  border-left: 3px solid #b7791f;
+  background: #b7791f12;
+  padding: 10px 12px;
+  color: var(--s-muted);
+  font-size: 12px;
+}
+.sessionHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+.sessionHead h2 {
+  font-size: clamp(25px, 4vw, 34px);
+}
+.sessionHead p {
+  margin: 4px 0;
+  color: var(--s-muted);
+}
+.lifecycle {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.progress {
+  height: 7px;
+  margin-top: 20px;
+  overflow: hidden;
+  background: var(--s-bd1);
+}
+.progress span {
+  display: block;
+  height: 100%;
+  background: var(--s-accentDeep);
+  transition: width 0.25s ease;
+}
+.finite {
+  color: var(--s-muted);
+  font-size: 11px;
+}
+.coverage {
+  margin: 20px 0;
+  border: 1px solid var(--s-bd1);
+  background: var(--s-cardAlt);
+  padding: 14px;
+}
+.coverage h3 {
+  margin: 0 0 10px;
+}
+.coverage ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.coverage li {
+  display: grid;
+  grid-template-columns: 9px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 7px;
+  font-size: 12px;
+}
+.coverage li span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--s-bd1);
+}
+.coverage li[data-status='covered'] span {
+  background: var(--s-success);
+}
+.coverage li[data-status='partial'] span {
+  background: #b7791f;
+}
+.coverage small {
+  color: var(--s-muted);
+}
+.document {
+  display: grid;
+  gap: 14px;
+}
+.opening,
+.segment,
+.follow,
+.help {
+  border: 1px solid var(--s-bd1);
+  background: var(--s-cardAlt);
+  padding: 16px;
+}
+.opening h3,
+.follow h3 {
+  margin: 8px 0;
+  font-size: clamp(18px, 3vw, 24px);
+}
+.pair {
+  display: grid;
+  gap: 10px;
+}
+.segment {
+  border-left: 4px solid var(--s-accentDeep);
+}
+.segment > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--s-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.segment p {
+  white-space: pre-wrap;
+}
+.follow {
+  margin-left: clamp(12px, 5vw, 56px);
+  border-color: var(--s-accentBd);
+  background: var(--s-accentSoft);
+}
+.follow small {
+  display: block;
+  margin: 6px 0;
+  color: var(--s-muted);
+}
+.probe {
+  color: var(--s-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+.help {
+  margin-top: 10px;
+  border-color: var(--s-success);
+  background: color-mix(in srgb, var(--s-success) 8%, var(--s-card));
+  line-height: 1.5;
+}
+.composer {
+  position: sticky;
+  bottom: 12px;
+  z-index: 3;
+  margin-top: 20px;
+  border: 1px solid var(--s-accentBd);
+  background: color-mix(in srgb, var(--s-card) 94%, transparent);
+  padding: 16px;
+  box-shadow: 0 12px 32px #0002;
+  backdrop-filter: blur(12px);
+}
+.composer textarea,
+.segment textarea {
+  min-height: 130px;
+  margin-top: 8px;
+  resize: vertical;
+  line-height: 1.55;
+}
+.actions,
+.voiceControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.recording {
+  border: 2px solid #b42318 !important;
+  background: #b42318 !important;
+  color: white !important;
+}
+.confirmed {
+  color: var(--s-success);
+  font-size: 11px;
+}
+.verdict {
+  margin-top: 24px;
+  border: 2px solid var(--s-accentDeep);
+  background: var(--s-cardAlt);
+  padding: clamp(18px, 4vw, 30px);
+}
+.verdict > h2 {
+  max-width: 900px;
+  font-size: clamp(23px, 4vw, 34px);
+}
+.verdictGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.verdictGrid > div {
+  border: 1px solid var(--s-bd1);
+  background: var(--s-card);
+  padding: 14px;
+}
+.verdictGrid h3 {
+  margin: 0 0 7px;
+  font-size: 13px;
+}
+.verdictGrid p {
+  margin: 0;
+  font-size: 13px;
+}
+.verdictGrid small {
+  display: block;
+  margin-top: 8px;
+  color: var(--s-muted);
+}
+.official {
+  font-size: 12px;
+}
+.message {
+  color: var(--s-success);
+}
+.error {
+  color: var(--s-danger, #b42318);
+}
+.textButton {
+  padding: 4px 0;
+  border: 0;
+  color: var(--s-accentDeep);
+  background: transparent;
+  font-size: 11px;
+  text-decoration: underline;
+}
+@media (max-width: 720px) {
+  .formGrid,
+  .coverage ul,
+  .verdictGrid {
+    grid-template-columns: 1fr;
+  }
+  .sessionHead {
+    display: grid;
+  }
+  .lifecycle {
+    flex-wrap: wrap;
+  }
+  .follow {
+    margin-left: 8px;
+  }
+  .composer {
+    bottom: 0;
+    margin-inline: -14px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress span {
+    transition: none;
+  }
+}

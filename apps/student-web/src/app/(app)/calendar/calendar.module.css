@@ -1,0 +1,124 @@
+.modalLayer {
+  position: fixed;
+  z-index: 70;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgb(7 31 24 / .48);
+  animation: calendar-backdrop-in 160ms ease-out both;
+}
+
+.dialog {
+  position: relative;
+  width: min(540px, 100%);
+  max-height: min(680px, calc(100dvh - 40px));
+  overflow: auto;
+  border: 1px solid var(--s-bd2);
+  background: var(--s-card);
+  color: var(--s-ink);
+  box-shadow: var(--shadow-lg);
+  outline: none;
+  animation: calendar-dialog-in 200ms cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.dialogHeader {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 40px;
+  gap: 13px;
+  align-items: center;
+  border-bottom: 1px solid var(--s-divider);
+  background: var(--s-card);
+  padding: 18px 20px;
+}
+
+.dateIcon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  background: var(--s-accentSoft);
+  color: var(--s-accentDeep);
+}
+
+.dialogKicker {
+  margin: 0;
+  color: var(--s-accentDeep);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.dialogTitle {
+  margin: 4px 0 0;
+  color: var(--s-ink);
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+.closeButton {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid var(--s-bd1);
+  background: var(--s-card);
+  color: var(--s-muted);
+  cursor: pointer;
+}
+
+.closeButton:hover { border-color: var(--s-accent); color: var(--s-accentDeep); }
+.dialogBody { padding: 8px 20px 20px; }
+.eventRow { display: grid; grid-template-columns: 9px minmax(0, 1fr); gap: 12px; padding: 16px 0; }
+.eventRow + .eventRow { border-top: 1px solid var(--s-divider); }
+.eventMarker { width: 8px; height: 8px; margin-top: 4px; border-radius: 50%; }
+.eventKind { margin: 0; font-size: 10px; font-weight: 700; letter-spacing: .07em; }
+.eventTitle { margin: 5px 0 0; color: var(--s-ink); font-family: var(--font-display); font-size: 18px; font-weight: 500; line-height: 1.3; }
+.eventSource { margin: 4px 0 0; color: var(--s-muted); font-size: 12px; line-height: 1.5; }
+
+.quietDay {
+  padding: 42px 20px 34px;
+  color: var(--s-muted);
+  text-align: center;
+}
+
+.quietDay svg { color: var(--s-accent); }
+.quietDay h3 { margin: 12px 0 0; color: var(--s-ink); font-family: var(--font-display); font-size: 21px; font-weight: 500; }
+.quietDay p { max-width: 38ch; margin: 7px auto 0; font-size: 13px; line-height: 1.55; }
+
+@keyframes calendar-backdrop-in {
+  from { opacity: 0; }
+}
+
+@keyframes calendar-dialog-in {
+  from { opacity: 0; transform: translateY(10px) scale(.985); }
+}
+
+@media (max-width: 640px) {
+  .modalLayer { align-items: end; padding: 0; }
+  .dialog { width: 100%; max-height: 82dvh; border-right: 0; border-bottom: 0; border-left: 0; animation-name: calendar-sheet-in; }
+  .dialogHeader { grid-template-columns: 38px minmax(0, 1fr) 38px; gap: 10px; padding: 16px; }
+  .dateIcon { width: 38px; height: 38px; }
+  .dialogTitle { font-size: 21px; }
+  .dialogBody { padding: 6px 16px calc(18px + env(safe-area-inset-bottom)); }
+}
+
+@keyframes calendar-sheet-in {
+  from { opacity: 0; transform: translateY(28px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop, .dialog { animation-duration: 1ms; }
+}

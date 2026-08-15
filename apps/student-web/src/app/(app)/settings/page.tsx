@@ -1,413 +1,240 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { usePersona } from '@/lib/persona';
-import { usePreferences, useStudentMe } from '@/lib/hooks';
-import { useTheme, type StudentThemeName } from '@/lib/theme';
-import { useT } from '@/i18n/use-t';
-import { useToast } from '@/components/ui/toast';
-import { Card } from '@/components/ui/card';
-import { PillButton } from '@/components/ui/pill-button';
-import { Eyebrow, PageHeader, PillChip } from '@/components/ui/primitives';
-import { useStudentClient } from '@/lib/student-client';
-import { useStudentTerm } from '@/lib/persona';
 
-type SectionId =
-  | 'appearance'
-  | 'profile'
-  | 'learning'
-  | 'notifications'
-  | 'school'
-  | 'privacy'
-  | 'account';
+import { useState } from 'react';
+import { Check, Download, LockKeyhole, Trash2 } from 'lucide-react';
+import { ActionButton, Card, PageHeader } from '@/components/design-system';
+import { useStudentMe } from '@/lib/hooks';
+import { useStudentPreferences, type StudentTheme, type TextSize } from '@/lib/preferences';
 
-const themeOrder: StudentThemeName[] = ['standard', 'dim', 'dark'];
-type TodayPreferences={version:number;homeStatChips:string[];moduleNotifications:Record<string,boolean>};
+type Section = 'appearance' | 'profile' | 'notifications' | 'institution' | 'privacy' | 'account';
 
-function ThemeCard({
-  name,
-  theme,
-  active,
-  onSelect,
-}: {
-  name: StudentThemeName;
-  theme: { name: string; desc: string };
-  active: boolean;
-  onSelect: () => void;
-}) {
-  const swatches: Record<StudentThemeName, string[]> = {
-    standard: ['#F3F0E7', '#FFFFFF', '#1E7A5E'],
-    dim: ['#221E18', '#302A23', '#48B78C'],
-    dark: ['#14110D', '#221D17', '#5FCB9E'],
-  };
+const themeCards: Array<{
+  id: StudentTheme;
+  name: string;
+  description: string;
+  palette: { page: string; card: string; border: string; ink: string; muted: string; accent: string };
+}> = [
+  {
+    id: 'standard',
+    name: 'Editorial',
+    description: 'Forest ink on warm paper',
+    palette: { page: '#F5F2E9', card: '#FBFAF5', border: '#DDD9CD', ink: '#17372F', muted: '#8B958F', accent: '#1D674F' },
+  },
+  {
+    id: 'dim',
+    name: 'Dim',
+    description: 'Softer light for evening',
+    palette: { page: '#221E18', card: '#302A23', border: '#443D33', ink: '#ECE7DC', muted: '#938C80', accent: '#48B78C' },
+  },
+  {
+    id: 'dark',
+    name: 'Ink',
+    description: 'True dark, easy on the eyes',
+    palette: { page: '#14110D', card: '#221D17', border: '#332C22', ink: '#EDE7DB', muted: '#8B8478', accent: '#5FCB9E' },
+  },
+];
+
+function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (checked: boolean) => void; label: string }) {
   return (
     <button
       type="button"
-      onClick={onSelect}
-      className={`rounded-[15px] border p-4 text-left transition ${
-        active ? 'border-st-accent bg-st-accentSoft/40 ring-2 ring-st-accent/20' : 'border-st-bd2 bg-st-card hover:border-st-accent/40'
-      }`}
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className={`relative h-[22px] w-10 shrink-0 rounded-full transition-colors ${checked ? 'bg-[var(--s-accent)]' : 'bg-[var(--s-bd2)]'}`}
     >
-      <div className="flex gap-1">
-        {swatches[name].map((c) => (
-          <span key={c} className="h-6 w-6 rounded-full border border-st-bd1" style={{ background: c }} />
-        ))}
-      </div>
-      <p className="mt-3 font-display font-semibold text-st-ink">{theme.name}</p>
-      <p className="text-xs text-st-muted">{theme.desc}</p>
-      {active && <p className="mt-2 text-xs font-semibold text-st-accent">✓ Selected</p>}
+      <span className={`absolute top-0.5 h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-[left] ${checked ? 'left-5' : 'left-0.5'}`} />
     </button>
   );
 }
 
-export default function SettingsPage() {
-  const { t } = useT();
-  const { me } = usePersona();
-  const { data: profile } = useStudentMe();
-  const { update } = usePreferences();
-  const {
-    theme,
-    matchSystem,
-    reducedMotion,
-    textSize,
-    setTheme,
-    setMatchSystem,
-    setReducedMotion,
-    setTextSize,
-  } = useTheme();
-  const terms = useStudentTerm();
-  const { say } = useToast();
-  const client = useStudentClient();
-  const [section, setSection] = useState<SectionId>('appearance');
-  const [deleteConfirm, setDeleteConfirm] = useState('');
-  const [todayPrefs,setTodayPrefs]=useState<TodayPreferences>();
-
-  useEffect(()=>{if(section!=='notifications'||todayPrefs)return;void client.get<TodayPreferences>('/me/today-preferences').then(setTodayPrefs).catch(()=>undefined);},[client,section,todayPrefs]);
-
-  async function updateToday(patch:{home_stat_chips?:string[];module_notifications?:Record<string,boolean>}){if(!todayPrefs)return;try{const row=await client.patch<TodayPreferences>('/me/today-preferences',{version:todayPrefs.version,...patch});setTodayPrefs(row);say('Today preferences saved.');}catch{say("Couldn't save Today preferences.");}}
-
-  const sections: { id: SectionId; label: string; show?: boolean }[] = [
-    { id: 'appearance', label: t('settings.sections.appearance') },
-    { id: 'profile', label: t('settings.sections.profile') },
-    { id: 'learning', label: t('settings.sections.learning') },
-    { id: 'notifications', label: t('settings.sections.notifications') },
-    {
-      id: 'school' as const,
-      label: me?.persona === 'college' ? t('settings.sections.institution') : t('settings.sections.school'),
-      show: me?.kind === 'institutional',
-    },
-    { id: 'account', label: t('settings.sections.account') },
-    { id: 'privacy', label: t('settings.sections.privacy') },
-  ].filter((s) => s.show !== false) as { id: SectionId; label: string; show?: boolean }[];
-
-  const prefs = profile?.preferences;
-
+function Segmented<T extends string>({ values, value, onChange, label }: { values: T[]; value: T; onChange: (value: T) => void; label: string }) {
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-6 pb-24 md:flex-row md:py-10">
-      <nav className="flex gap-2 overflow-x-auto md:w-48 md:flex-col md:overflow-visible">
-        {sections.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => setSection(s.id)}
-            className={`shrink-0 rounded-[10px] px-4 py-2.5 text-left text-sm font-medium md:w-full ${
-              section === s.id ? 'bg-st-accentDeep/[0.07] text-st-accentDeep' : 'text-st-muted hover:bg-st-accentSoft/40'
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
-      </nav>
-
-      <div className="min-w-0 flex-1 space-y-4">
-        <PageHeader eyebrow={<Eyebrow>SETTINGS</Eyebrow>} title={t('settings.title')} />
-
-        {section === 'appearance' && (
-          <div className="space-y-6">
-            <div className="grid gap-3 sm:grid-cols-3">
-              {themeOrder.map((name) => (
-                <ThemeCard
-                  key={name}
-                  name={name}
-                  theme={{
-                    name: t(`settings.appearance.themes.${name}.name`),
-                    desc: t(`settings.appearance.themes.${name}.desc`),
-                  }}
-                  active={theme === name}
-                  onSelect={() => setTheme(name)}
-                />
-              ))}
-            </div>
-            <ToggleRow
-              label={t('settings.appearance.matchSystem')}
-              hint={t('settings.appearance.matchSystemHint')}
-              checked={matchSystem}
-              onChange={setMatchSystem}
-            />
-            <ToggleRow
-              label={t('settings.appearance.reduceMotion')}
-              hint={t('settings.appearance.reduceMotionHint')}
-              checked={reducedMotion}
-              onChange={setReducedMotion}
-            />
-            <div>
-              <p className="text-sm font-medium text-st-ink">{t('settings.appearance.textSize')}</p>
-              <div className="mt-2 flex gap-2">
-                {(['S', 'M', 'L'] as const).map((size) => (
-                  <PillChip key={size} variant={textSize === size ? 'primary' : 'default'} onClick={() => setTextSize(size)}>
-                    {size}
-                  </PillChip>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {section === 'profile' && me && (
-          <Card>
-            <div className="flex items-center gap-4">
-              <span className="grid h-14 w-14 place-items-center rounded-full bg-st-accentSoft text-lg font-bold text-st-accentDeep">
-                {me.initial}
-              </span>
-              <div>
-                <p className="font-display text-lg font-semibold">{me.fullName}</p>
-                <p className="text-sm text-st-muted">
-                  {me.kind === 'institutional'
-                    ? [me.student?.className, me.student?.gradeLevel].filter(Boolean).join(' · ')
-                    : 'Independent learner'}
-                </p>
-              </div>
-            </div>
-            <div className="mt-6">
-              <p className="text-sm font-medium">{t('settings.profile.language')}</p>
-              <p className="text-xs text-st-muted">{t('settings.profile.languageHint')}</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {[
-                  { code: 'en', label: 'English' },
-                  { code: 'hi', label: 'हिन्दी' },
-                  { code: 'es', label: 'Español' },
-                  { code: 'bn', label: 'বাংলা' },
-                ].map((lang) => (
-                  <button
-                    key={lang.code}
-                    type="button"
-                    onClick={() => update.mutate({ language: lang.code as 'en' | 'hi' | 'es' | 'bn' })}
-                    className={`rounded-full px-3 py-1.5 text-sm ${
-                      prefs?.language === lang.code ? 'bg-st-accent text-white' : 'bg-st-surface2 text-st-muted'
-                    }`}
-                  >
-                    {lang.label}
-                  </button>
-                ))}
-              </div>
-              {prefs?.language && prefs.language !== 'en' && (
-                <p className="mt-2 text-xs text-st-muted">{t('settings.profile.translationsSoon')}</p>
-              )}
-            </div>
-            {me.kind === 'institutional' ? (
-              <p className="mt-4 text-xs text-st-muted">{t('settings.profile.gradeReadonly')}</p>
-            ) : null}
-          </Card>
-        )}
-
-        {section === 'learning' && prefs && (
-          <div className="space-y-6">
-            <ChipGroup
-              label={t('settings.learning.hints')}
-              helper={t('settings.learning.hintsHelper')}
-              options={[
-                { value: 'gentle', label: t('settings.learning.hintsGentle') },
-                { value: 'balanced', label: t('settings.learning.hintsBalanced') },
-                { value: 'direct', label: t('settings.learning.hintsDirect') },
-              ]}
-              value={prefs.hintGenerosity}
-              onChange={(v) => update.mutate({ hintGenerosity: v as 'gentle' | 'balanced' | 'direct' })}
-            />
-            <ChipGroup
-              label={t('settings.learning.celebrations')}
-              helper={t('settings.learning.celebrationsHelper')}
-              options={[
-                { value: 'warm', label: t('settings.learning.celebrationsWarm') },
-                { value: 'calm', label: t('settings.learning.celebrationsCalm') },
-              ]}
-              value={prefs.celebration}
-              onChange={(v) => update.mutate({ celebration: v as 'warm' | 'calm' })}
-            />
-            <div>
-              <p className="text-sm font-medium">{t('settings.learning.weeklyGoal')}</p>
-              <input
-                type="range"
-                min={4}
-                max={14}
-                value={prefs.weeklyGoal}
-                onChange={(e) => update.mutate({ weeklyGoal: Number(e.target.value) })}
-                className="mt-2 w-full accent-st-accent"
-              />
-              <p className="text-sm text-st-muted">
-                {t('settings.learning.weeklyGoalHelper', { n: prefs.weeklyGoal })}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {section === 'notifications' && prefs && (
-          <div className="space-y-4">
-            <ToggleRow
-              label={t('settings.notifications.sessionReminders')}
-              hint={t('settings.notifications.sessionRemindersDesc')}
-              checked={prefs.notifSessionReminders}
-              onChange={(v) => update.mutate({ notifSessionReminders: v })}
-            />
-            <ToggleRow
-              label={t('settings.notifications.revisionDue')}
-              hint={t('settings.notifications.revisionDueDesc')}
-              checked={prefs.notifRevisionDue}
-              onChange={(v) => update.mutate({ notifRevisionDue: v })}
-            />
-            <ToggleRow
-              label={t('settings.notifications.announcements')}
-              hint={
-                me?.kind === 'institutional'
-                  ? t('settings.notifications.announcementsDescInstitutional')
-                  : t('settings.notifications.announcementsDescIndependent')
-              }
-              checked={prefs.notifAnnouncements}
-              onChange={(v) => update.mutate({ notifAnnouncements: v })}
-            />
-            {todayPrefs&&<Card><p className="font-medium text-st-ink">Today screen</p><p className="mt-1 text-xs text-st-muted">Choose up to three quick stats and which updates may send a push. Updates still remain in Today when push is off.</p><div className="mt-4"><p className="text-xs font-semibold text-st-muted">QUICK STATS</p><div className="mt-2 flex flex-wrap gap-2">{[
-              ['attendance_pct','Attendance'],['gpa_term','Published average'],['streak','Streak'],['review_due_count','Review due'],['fees_balance','Fee balance'],['mock_percentile','Mock percentile'],
-            ].map(([value,label])=>{const selected=todayPrefs.homeStatChips.includes(value!);return <button key={value} type="button" onClick={()=>{const next=selected?todayPrefs.homeStatChips.filter(key=>key!==value):[...todayPrefs.homeStatChips,value!].slice(-3);void updateToday({home_stat_chips:next});}} className={`rounded-full px-3 py-1.5 text-xs font-medium ${selected?'bg-st-accent text-white':'bg-st-surface2 text-st-muted'}`}>{label}</button>;})}</div></div><div className="mt-5 space-y-2">{[['announcements','Announcements'],['results','Results'],['fees','Fees'],['requests','Requests'],['clubs','Clubs']].map(([module,label])=><ToggleRow key={module} label={label!} checked={todayPrefs.moduleNotifications[module!]!==false} onChange={(checked)=>void updateToday({module_notifications:{...todayPrefs.moduleNotifications,[module!]:checked}})}/>)}</div></Card>}
-            <p className="text-xs text-st-muted">{t('settings.notifications.footer')}</p>
-          </div>
-        )}
-
-        {section === 'school' && me?.kind === 'institutional' && (
-          <div className="space-y-4">
-            <Card>
-              <p className="text-[10px] font-semibold tracking-wider text-st-faint">
-                {t('settings.school.linkedAccount')}
-              </p>
-              <p className="mt-1 font-display text-lg font-semibold">{me.institution?.name}</p>
-              <p className="text-sm text-st-muted">{t('settings.school.managedBy')}</p>
-            </Card>
-            <Card>
-              <p className="font-medium">{t('settings.school.petrosGraded')}</p>
-              <p className="text-sm text-st-muted">{t('settings.school.petrosGradedDesc')}</p>
-              <p className="mt-2 text-xs text-st-muted">
-                {t('settings.school.petrosGradedDefault').replace('school', terms.unitP.toLowerCase())}
-              </p>
-            </Card>
-            <PillButton variant="ghost" onClick={() => say(t('settings.school.unlinkToast'))}>
-              {t('settings.school.unlink')}
-            </PillButton>
-          </div>
-        )}
-
-        {section === 'privacy' && (
-          <Card>
-            {me?.kind === 'institutional' ? (
-              <>
-                <p className="font-medium">{t('settings.privacy.institutionalTitle')}</p>
-                <p className="mt-2 text-sm text-st-muted">{t('settings.privacy.institutionalNever')}</p>
-              </>
-            ) : (
-              <p className="text-sm text-st-muted">{t('settings.privacy.independent')}</p>
-            )}
-          </Card>
-        )}
-
-        {section === 'account' && (
-          <div className="space-y-4">
-            <Card>
-              <p className="font-medium">{t('settings.account.export')}</p>
-              <p className="text-sm text-st-muted">{t('settings.account.exportDesc')}</p>
-              <PillButton
-                className="mt-3"
-                onClick={async () => {
-                  await client.post('/account/export');
-                  say(t('settings.account.exportRequested'));
-                }}
-              >
-                {t('settings.account.export')}
-              </PillButton>
-            </Card>
-            <Card>
-              <p className="font-medium text-st-danger">{t('settings.account.delete')}</p>
-              <p className="text-sm text-st-muted">{t('settings.account.deleteDesc')}</p>
-              <input
-                className="mt-3 w-full rounded-xl border border-st-bd1 bg-st-card px-3 py-2 text-sm"
-                placeholder={t('settings.account.deleteConfirm')}
-                value={deleteConfirm}
-                onChange={(e) => setDeleteConfirm(e.target.value)}
-              />
-              <PillButton
-                variant="ghost"
-                className="mt-3 border-st-danger/30 text-st-danger"
-                disabled={deleteConfirm !== 'DELETE'}
-                onClick={async () => {
-                  await client.post('/account/delete-request');
-                  say('Deletion request recorded.');
-                }}
-              >
-                {t('settings.account.delete')}
-              </PillButton>
-            </Card>
-          </div>
-        )}
-      </div>
+    <div className="inline-flex border border-[var(--s-bd1)] bg-[var(--s-surface2)] p-[2px]" aria-label={label}>
+      {values.map((item) => (
+        <button
+          key={item}
+          type="button"
+          onClick={() => onChange(item)}
+          className={`px-4 py-1.5 text-[10px] font-semibold transition-colors ${value === item ? 'bg-[#0C3F31] text-[#F6F3E9]' : 'text-[var(--s-inkSoft)]'}`}
+        >
+          {item}
+        </button>
+      ))}
     </div>
   );
 }
 
-function ToggleRow({
-  label,
-  hint,
-  checked,
-  onChange,
-}: {
-  label: string;
-  hint?: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <label className="flex cursor-pointer items-start justify-between gap-4 rounded-[15px] border border-st-bd1 bg-st-card p-4">
-      <div>
-        <p className="text-sm font-medium text-st-ink">{label}</p>
-        {hint && <p className="text-xs text-st-muted">{hint}</p>}
-      </div>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="mt-1 h-5 w-5 accent-st-accent"
-      />
-    </label>
-  );
-}
+export default function SettingsPage() {
+  const { data: me } = useStudentMe();
+  const preferences = useStudentPreferences();
+  const [section, setSection] = useState<Section>('appearance');
+  const [announcements, setAnnouncements] = useState(true);
+  const [deadlines, setDeadlines] = useState(true);
+  const [feeReminders, setFeeReminders] = useState(false);
+  const college = Boolean(me?.programmeName);
+  const institutionLabel = college ? 'College' : 'School';
+  const institutionName = me?.programmeName || me?.className || `Your ${institutionLabel.toLowerCase()}`;
+  const sections: Array<{ id: Section; label: string }> = [
+    { id: 'appearance', label: 'Appearance' },
+    { id: 'profile', label: 'Profile' },
+    { id: 'notifications', label: 'Notifications' },
+    ...(me?.kind === 'institutional' ? [{ id: 'institution' as const, label: institutionLabel }] : []),
+    { id: 'privacy', label: 'Privacy' },
+    { id: 'account', label: 'Account' },
+  ];
 
-function ChipGroup({
-  label,
-  helper,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  helper?: string;
-  options: { value: string; label: string }[];
-  value: string;
-  onChange: (v: string) => void;
-}) {
   return (
-    <div>
-      <p className="text-sm font-medium">{label}</p>
-      {helper && <p className="text-xs text-st-muted">{helper}</p>}
-      <div className="mt-2 flex flex-wrap gap-2">
-        {options.map((opt) => (
-          <PillChip key={opt.value} variant={value === opt.value ? 'primary' : 'default'} onClick={() => onChange(opt.value)}>
-            {opt.label}
-          </PillChip>
-        ))}
+    <div className="mx-auto w-full max-w-[1120px]">
+      <PageHeader eyebrow="Settings" title="Make Edrion yours" description="Choose how the portal looks, moves, and keeps you informed." />
+
+      <div className="flex flex-col gap-6 min-[700px]:flex-row">
+        <nav className="flex shrink-0 gap-1 overflow-x-auto pb-1 min-[700px]:w-[170px] min-[700px]:flex-col" aria-label="Settings sections">
+          {sections.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setSection(item.id)}
+              className={`whitespace-nowrap border-l px-[13px] py-2.5 text-left text-[11px] font-semibold transition-colors ${section === item.id ? 'border-[var(--s-accent)] bg-[var(--s-accentSoft)] text-[var(--s-accentDeep)]' : 'border-transparent text-[var(--s-inkSoft)] hover:bg-[var(--s-surface2)]'}`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="min-w-0 flex-1">
+          {section === 'appearance' ? (
+            <Card>
+              <h2 className="font-display text-[15px] font-semibold text-[var(--s-ink)]">Theme</h2>
+              <p className="mt-1 text-[11px] leading-5 text-[var(--s-faint)]">Warm paper, forest ink and quiet rules. Dusk and Ink retain the same academic character after dark.</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                {themeCards.map((item) => {
+                  const active = !preferences.matchSystem && preferences.theme === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => preferences.setTheme(item.id)}
+                      className="overflow-hidden text-left"
+                      style={{ border: `${active ? 2.5 : 1.5}px solid ${active ? item.palette.accent : item.palette.border}` }}
+                      aria-pressed={active}
+                    >
+                      <span className="block p-3" style={{ background: item.palette.page }}>
+                        <span className="block p-2.5" style={{ background: item.palette.card, border: `1px solid ${item.palette.border}` }}>
+                          <span className="block h-[7px] w-3/5 rounded-full" style={{ background: item.palette.ink }} />
+                          <span className="mt-1.5 block h-[5px] w-4/5 rounded-full" style={{ background: item.palette.muted }} />
+                          <span className="mt-2 inline-block rounded-full px-2 py-1 font-mono-ui text-[7px] font-bold" style={{ background: item.palette.accent, color: item.palette.page }}>EDRION</span>
+                        </span>
+                      </span>
+                      <span className="block px-3 pb-3 pt-2" style={{ background: item.palette.card }}>
+                        <span className="flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: item.palette.ink }}>
+                          {item.name}
+                          {active ? <Check className="ml-auto h-3.5 w-3.5" style={{ color: item.palette.accent }} /> : null}
+                        </span>
+                        <span className="mt-0.5 block text-[10.5px]" style={{ color: item.palette.muted }}>{item.description}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-[18px] flex items-center gap-3 border-t border-[var(--s-divider)] pt-4">
+                <div className="flex-1">
+                  <p className="text-[13px] font-semibold text-[var(--s-ink)]">Match system</p>
+                  <p className="mt-0.5 text-[11.5px] text-[var(--s-faint)]">Follow your device&apos;s light or dark setting automatically</p>
+                </div>
+                <Toggle checked={preferences.matchSystem} onChange={preferences.setMatchSystem} label="Match system theme" />
+              </div>
+              <div className="mt-4 flex items-center gap-3">
+                <div className="flex-1">
+                  <p className="text-[13px] font-semibold text-[var(--s-ink)]">Reduce motion</p>
+                  <p className="mt-0.5 text-[11.5px] text-[var(--s-faint)]">Calmer transitions everywhere — your OS setting is respected too</p>
+                </div>
+                <Toggle checked={preferences.reduceMotion} onChange={preferences.setReduceMotion} label="Reduce motion" />
+              </div>
+              <div className="mt-4">
+                <p className="mb-2 text-[13px] font-semibold text-[var(--s-ink)]">Text size</p>
+                <Segmented<TextSize> values={['S', 'M', 'L']} value={preferences.textSize} onChange={preferences.setTextSize} label="Text size" />
+              </div>
+            </Card>
+          ) : null}
+
+          {section === 'profile' ? (
+            <Card>
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[#0C3F31] font-display text-[21px] font-semibold text-[#F2EFE3]">{me?.fullName?.slice(0, 1).toUpperCase() || 'S'}</div>
+                <div>
+                  <h2 className="font-display text-base font-semibold text-[var(--s-ink)]">{me?.fullName || 'Student'}</h2>
+                  <p className="mt-0.5 text-xs text-[var(--s-faint)]">{[me?.className, me?.sectionName, me?.termName].filter(Boolean).join(' · ') || me?.email}</p>
+                </div>
+              </div>
+              <div className="mt-[18px] border-t border-[var(--s-divider)] pt-4">
+                <p className="text-[13px] font-semibold text-[var(--s-ink)]">Interface language</p>
+                <p className="mt-0.5 text-[11.5px] text-[var(--s-faint)]">More portal languages will appear as your institution enables them.</p>
+                <div className="mt-3"><ActionButton>English</ActionButton></div>
+              </div>
+            </Card>
+          ) : null}
+
+          {section === 'notifications' ? (
+            <Card className="space-y-4">
+              {[
+                { label: 'Teacher announcements', description: `New posts from your ${institutionLabel.toLowerCase()}`, checked: announcements, change: setAnnouncements },
+                { label: 'Assignment deadlines', description: 'One useful reminder before work is due', checked: deadlines, change: setDeadlines },
+                { label: 'Fee reminders', description: 'When a published invoice is approaching its due date', checked: feeReminders, change: setFeeReminders },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <p className="text-[13px] font-semibold text-[var(--s-ink)]">{item.label}</p>
+                    <p className="mt-0.5 text-[11.5px] text-[var(--s-faint)]">{item.description}</p>
+                  </div>
+                  <Toggle checked={item.checked} onChange={item.change} label={item.label} />
+                </div>
+              ))}
+              <p className="border-t border-[var(--s-divider)] pt-3 text-[11.5px] leading-5 text-[var(--s-faint)]">No guilt notifications, ever. Nothing here nags you for stepping away.</p>
+            </Card>
+          ) : null}
+
+          {section === 'institution' ? (
+            <Card>
+              <p className="eyebrow">LINKED ACCOUNT</p>
+              <h2 className="mt-2 font-display text-base font-semibold text-[var(--s-ink)]">{institutionName}</h2>
+              <p className="mt-1 text-xs text-[var(--s-faint)]">Your academic record and campus services are managed here.</p>
+              <div className="mt-4 rounded-xl border border-[var(--s-bd1)] bg-[var(--s-surface2)] p-4">
+                <div className="flex items-center gap-2 text-xs font-semibold text-[var(--s-inkSoft)]"><LockKeyhole className="h-3.5 w-3.5 text-[var(--s-faint)]" /> Institutional controls</div>
+                <p className="mt-2 font-display text-sm font-semibold text-[var(--s-accentDeep)]">Your permissions follow your student record</p>
+                <p className="mt-1 text-[11.5px] leading-5 text-[var(--s-faint)]">Modules are shown only when your {institutionLabel.toLowerCase()} has enabled them for you. Contact the office if something expected is missing.</p>
+              </div>
+            </Card>
+          ) : null}
+
+          {section === 'privacy' ? (
+            <Card>
+              <h2 className="text-[13px] font-semibold text-[var(--s-ink)]">What your {institutionLabel.toLowerCase()} can see</h2>
+              <div className="mt-3 space-y-2 text-[12.5px] text-[var(--s-inkSoft)]">
+                <p>✓ Submitted assignments and teacher feedback</p>
+                <p>✓ Attendance, timetable, results, and service requests</p>
+                <p>✗ Your private device preferences</p>
+                <p>✗ Anything outside your linked institution account</p>
+              </div>
+              <p className="mt-4 border-t border-[var(--s-divider)] pt-3 text-[11.5px] leading-5 text-[var(--s-faint)]">Your portal only shows records your institution has published to you.</p>
+            </Card>
+          ) : null}
+
+          {section === 'account' ? (
+            <Card>
+              <h2 className="text-[13px] font-semibold text-[var(--s-ink)]">Your data</h2>
+              <p className="mt-1 text-[11.5px] leading-5 text-[var(--s-faint)]">Everything in your account is yours. Take a copy with you any time.</p>
+              <div className="mt-3"><ActionButton variant="secondary"><Download className="h-4 w-4" /> Export my data</ActionButton></div>
+              <div className="mt-5 border-t border-[var(--s-divider)] pt-4">
+                <h3 className="text-[13px] font-semibold text-[var(--s-danger)]">Delete account</h3>
+                <p className="mt-1 text-[11.5px] leading-5 text-[var(--s-faint)]">Permanent, after a 14-day grace period. Your institution may still retain official academic records it is legally required to keep.</p>
+                <div className="mt-3"><ActionButton variant="danger"><Trash2 className="h-4 w-4" /> Delete my account</ActionButton></div>
+              </div>
+            </Card>
+          ) : null}
+        </div>
       </div>
     </div>
   );

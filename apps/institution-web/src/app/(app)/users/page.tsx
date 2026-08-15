@@ -1,7 +1,12 @@
 'use client';
 import { useCallback, useMemo } from 'react';
 import { Badge, type BadgeTone, type Column } from '@edrion/ui';
-import { ResourceManager, type FilterDef, type ResourcePermissions } from '@/components/academics/resource-manager';
+import {
+  ResourceManager,
+  type FilterDef,
+  type MutationLike,
+  type ResourcePermissions,
+} from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
 import { RoleLabelsText } from '@/components/admin/role-badges';
 import { RoleMultiSelect } from '@/components/admin/role-multi-select';
@@ -156,7 +161,11 @@ export default function UsersPage() {
   );
 
   const onSubmitUpdate = useCallback(
-    async (row: UserRow, body: Record<string, unknown>, { update }) => {
+    async (
+      row: UserRow,
+      body: Record<string, unknown>,
+      { update }: { update: MutationLike<{ id: string; body: Record<string, unknown> }> },
+    ) => {
       let userVersion = (body.userVersion as number | undefined) ?? row.version;
 
       const nextStatus = String(body.status ?? row.status);

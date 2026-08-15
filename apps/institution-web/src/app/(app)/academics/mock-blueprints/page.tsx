@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePortalClient } from '@/lib/portal-client';
+import { useScope } from '@/lib/scope';
 
 type BlueprintRow = {
   id: string;
@@ -13,15 +14,16 @@ type BlueprintRow = {
 
 export default function MockBlueprintsPage() {
   const client = usePortalClient();
+  const { scope } = useScope();
   const [items, setItems] = useState<BlueprintRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     void client
-      .get<{ items: BlueprintRow[] }>('/lab/blueprints')
+      .get<{ items: BlueprintRow[] }>('/lab/blueprints', scope)
       .then((r) => setItems(r.items ?? []))
       .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load'));
-  }, [client]);
+  }, [client, scope]);
 
   return (
     <div className="mx-auto max-w-4xl p-6">

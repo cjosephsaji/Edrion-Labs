@@ -1,0 +1,190 @@
+'use client';
+
+import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { createElement } from 'react';
+
+export type ApiErrorBody = {
+  code?: string;
+  message?: string;
+  correlationId?: string;
+  details?: unknown;
+};
+
+export class StudentApiError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+    message: string,
+    readonly correlationId?: string,
+    readonly details?: unknown,
+  ) {
+    super(message);
+    this.name = 'StudentApiError';
+  }
+}
+
+export class StudentApiClient {
+  constructor(
+    private readonly baseUrl: string,
+    private readonly devStudentEmail?: string,
+  ) {}
+
+  private async request<T>(
+    path: string,
+    init: RequestInit = {},
+    opts?: { rawBody?: boolean },
+  ): Promise<T> {
+    const headers = new Headers(init.headers);
+    if (
+      !opts?.rawBody &&
+      init.body !== undefined &&
+      !headers.has('content-type')
+    ) {
+      headers.set('content-type', 'application/json');
+    }
+    if (this.devStudentEmail) headers.set('x-student-email', this.devStudentEmail);
+
+    const res = await fetch(`${this.baseUrl}/v1${path}`, {
+      ...init,
+      credentials: 'include',
+      headers,
+    });
+
+    if (res.status === 204) return undefined as T;
+    const body = (await res.json().catch(() => ({}))) as ApiErrorBody;
+    if (!res.ok) {
+      throw new StudentApiError(
+        res.status,
+        body.code ?? 'ERROR',
+        body.message ?? res.statusText,
+        body.correlationId,
+        body.details,
+      );
+    }
+    return body as T;
+  }
+
+  get<T>(path: string, signal?: AbortSignal): Promise<T> {
+    return this.request<T>(path, { method: 'GET', signal });
+  }
+
+  post<T>(path: string, body?: unknown, headers?: Record<string, string>, signal?: AbortSignal): Promise<T> {
+    return this.request<T>(path, {
+      method: 'POST',
+      body: body === undefined ? undefined : JSON.stringify(body),
+      headers,
+      signal,
+    });
+  }
+
+  put<T>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
+    return this.request<T>(path, {
+      method: 'PUT',
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal,
+    });
+  }
+
+  patch<T>(path: string, body?: unknown): Promise<T> {
+    return this.request<T>(path, {
+      method: 'PATCH',
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  }
+
+  del<T>(path: string, body?: unknown): Promise<T> {
+    return this.request<T>(path, {
+      method: 'DELETE',
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  }
+
+  async upload(
+    kind: string,
+    file: File,
+  ): Promise<{ id: string; filename: string | null; mimeType: string; sizeBytes: number }> {
+    const params = new URLSearchParams({ kind });
+    if (file.name) params.set('filename', file.name);
+    return this.request(
+      `/student/uploads?${params.toString()}`,
+      {
+        method: 'POST',
+        body: file,
+        headers: {
+          'content-type': file.type || 'application/octet-stream',
+        },
+      },
+      { rawBody: true },
+    );
+  }
+
+  async uploadPetrosMedia(
+    path: string,
+    file: Blob,
+    options: {
+      idempotencyKey: string;
+      rotationDegrees?: 0 | 90 | 180 | 270;
+      crop?: { x: number; y: number; width: number; height: number } | null;
+    },
+  ): Promise<unknown> {
+    const params = new URLSearchParams({
+      idempotencyKey: options.idempotencyKey,
+      rotationDegrees: String(options.rotationDegrees ?? 0),
+    });
+    if (options.crop) params.set('crop', JSON.stringify(options.crop));
+    return this.request(
+      `${path}?${params.toString()}`,
+      {
+        method: 'PUT',
+        body: file,
+        headers: { 'content-type': file.type || 'application/octet-stream' },
+      },
+      { rawBody: true },
+    );
+  }
+
+  fileUrl(path: string): string {
+    return `${this.baseUrl}/v1${path}`;
+  }
+}
+
+const StudentApiContext = createContext<StudentApiClient | null>(null);
+
+export function StudentApiProvider({
+  baseUrl,
+  devStudentEmail,
+  children,
+}: {
+  baseUrl: string;
+  devStudentEmail?: string;
+  children: ReactNode;
+}) {
+  const client = useMemo(
+    () => new StudentApiClient(baseUrl, devStudentEmail),
+    [baseUrl, devStudentEmail],
+  );
+  return createElement(StudentApiContext.Provider, { value: client }, children);
+}
+
+export function useStudentApi(): StudentApiClient {
+  const ctx = useContext(StudentApiContext);
+  if (!ctx) throw new Error('useStudentApi must be used within StudentApiProvider');
+  return ctx;
+}
+
+export function formatApiError(err: unknown): string {
+  if (err instanceof StudentApiError) return err.message;
+  if (err instanceof Error) return err.message;
+  return 'Something went wrong.';
+}
+
+export function newIdempotencyKey(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}

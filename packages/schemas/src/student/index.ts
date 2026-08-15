@@ -32,7 +32,6 @@ export * from './learn';
 export type { CheckpointBlock, PracticeItemBlock } from './legacy-teaching';
 export * from './blocks';
 export * from './session';
-export * from './edrion-learn';
 export * from './intent';
 export * from './path';
 export * from './quick';

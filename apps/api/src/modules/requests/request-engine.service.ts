@@ -27,6 +27,7 @@ import type { InstitutionPrincipal, ScopeFilter } from '@edrion/auth';
 import { resolveScopeFilter } from '@edrion/auth';
 import { ActorType } from '@edrion/shared-types';
 import type {
+  AttendanceCorrectionPayload,
   DocumentRequestPayload,
   LeaveRequestPayload,
   OdRequestPayload,
@@ -62,8 +63,17 @@ import { RequestNotifyService } from './request-notify.service';
 import { addWorkingDays, codeSuffix, dateDiffDays, decodeCursor, encodeCursor } from './request-utils';
 import { RequestDocumentService } from './request-document.service';
 import { DocumentRequestPolicyService } from './document-request-policy.service';
+import { SensitiveReportService } from './sensitive-report.service';
 import { assertRequestTransition, canStudentCancel } from './request-state';
 import { revaluationApproveFormSchema } from '@edrion/schemas';
+
+/** Side-effect appliers only run for request types that always carry a student (0155 allows null solely for anonymous sensitive reports). */
+function requireStudentId(row: { studentId: string | null }): string {
+  if (!row.studentId) {
+    throw new BadRequestException({ code: 'STUDENT_REQUIRED', message: 'This request is not linked to a student.' });
+  }
+  return row.studentId;
+}
 
 type RequestRow = typeof schema.studentRequests.$inferSelect;
 type EventActor = {
@@ -93,6 +103,11 @@ export class RequestEngineService {
     private readonly attendance: AttendanceService,
     private readonly documents: RequestDocumentService,
     private readonly documentPolicy: DocumentRequestPolicyService,
+    private readonly policy: AttendancePolicyService,
+    private readonly jobs: JobsService,
+    private readonly feeLedger: FeeLedgerService,
+    private readonly resultsSettings: ResultsSettingsService,
+    private readonly sensitiveReports: SensitiveReportService,
   ) {}
 
   async submit(ctx: StudentRequestContext, input: SubmitStudentRequestInput) {
@@ -439,7 +454,7 @@ export class RequestEngineService {
         and(
           eq(schema.storageObjects.id, storageObjectId),
           eq(schema.storageObjects.institutionId, request.institutionId),
-          eq(schema.storageObjects.ownerStudentId, request.studentId),
+          eq(schema.storageObjects.ownerStudentId, requireStudentId(request)),
         ),
       )
       .limit(1);
@@ -590,7 +605,7 @@ export class RequestEngineService {
     }
 
     if(resolved.config.approvalSideEffectKey==='fee_waiver'){
-      const[invoice]=await this.db.select().from(schema.feeInvoices).where(and(eq(schema.feeInvoices.id,String(row.payload.invoice_id)),eq(schema.feeInvoices.institutionId,row.institutionId),eq(schema.feeInvoices.studentId,row.studentId),sql`${schema.feeInvoices.status}<>'cancelled'`)).limit(1);if(!invoice)throw new NotFoundException({code:'INVOICE_NOT_FOUND',message:'The selected fee invoice was not found.'});const amount=Number(row.payload.requested_amount_minor??(invoice.amount-invoice.amountPaid));if(amount<=0||amount>invoice.amount-invoice.amountPaid)throw new BadRequestException({code:'WAIVER_AMOUNT_INVALID',message:'The waiver must be within the outstanding invoice balance.'});const[config]=await this.db.select().from(schema.institutionFeeConfig).where(eq(schema.institutionFeeConfig.institutionId,row.institutionId)).limit(1);const threshold=config?.waiverTwoPersonThresholdMinor??1_000_000;const requiresSecond=amount>threshold;const[waiver]=await this.db.insert(schema.feeWaivers).values({institutionId:row.institutionId,studentId:row.studentId,invoiceId:invoice.id,label:'Requested fee waiver',amountMinor:amount,reason:String(row.payload.reason),status:requiresSecond?'pending_second_approval':'approved',proposedBy:ctx.principal.institutionUserId,approvedBy:ctx.principal.institutionUserId,thresholdSnapshotMinor:threshold,requestId:row.id}).returning();if(!requiresSecond){await this.db.transaction(async tx=>{await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`fees:${row.institutionId}:${row.studentId}`}))`);await tx.insert(schema.feeInvoiceItems).values({institutionId:row.institutionId,invoiceId:invoice.id,studentId:row.studentId,kind:'waiver',category:'other',label:waiver!.label,amountMinor:-amount,source:{waiver_id:waiver!.id,request_id:row.id}});await tx.update(schema.feeInvoices).set({amount:sql`${schema.feeInvoices.amount}-${amount}`,updatedAt:new Date()}).where(eq(schema.feeInvoices.id,invoice.id));await tx.update(schema.feeWaivers).set({status:'posted',version:1}).where(eq(schema.feeWaivers.id,waiver!.id));});}
+      const[invoice]=await this.db.select().from(schema.feeInvoices).where(and(eq(schema.feeInvoices.id,String(row.payload.invoice_id)),eq(schema.feeInvoices.institutionId,row.institutionId),eq(schema.feeInvoices.studentId,requireStudentId(row)),sql`${schema.feeInvoices.status}<>'cancelled'`)).limit(1);if(!invoice)throw new NotFoundException({code:'INVOICE_NOT_FOUND',message:'The selected fee invoice was not found.'});const amount=Number(row.payload.requested_amount_minor??(invoice.amount-invoice.amountPaid));if(amount<=0||amount>invoice.amount-invoice.amountPaid)throw new BadRequestException({code:'WAIVER_AMOUNT_INVALID',message:'The waiver must be within the outstanding invoice balance.'});const[config]=await this.db.select().from(schema.institutionFeeConfig).where(eq(schema.institutionFeeConfig.institutionId,row.institutionId)).limit(1);const threshold=config?.waiverTwoPersonThresholdMinor??1_000_000;const requiresSecond=amount>threshold;const[waiver]=await this.db.insert(schema.feeWaivers).values({institutionId:row.institutionId,studentId:requireStudentId(row),invoiceId:invoice.id,label:'Requested fee waiver',amountMinor:amount,reason:String(row.payload.reason),status:requiresSecond?'pending_second_approval':'approved',proposedBy:ctx.principal.institutionUserId,approvedBy:ctx.principal.institutionUserId,thresholdSnapshotMinor:threshold,requestId:row.id}).returning();if(!requiresSecond){await this.db.transaction(async tx=>{await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`fees:${row.institutionId}:${row.studentId}`}))`);await tx.insert(schema.feeInvoiceItems).values({institutionId:row.institutionId,invoiceId:invoice.id,studentId:requireStudentId(row),kind:'waiver',category:'other',label:waiver!.label,amountMinor:-amount,source:{waiver_id:waiver!.id,request_id:row.id}});await tx.update(schema.feeInvoices).set({amount:sql`${schema.feeInvoices.amount}-${amount}`,updatedAt:new Date()}).where(eq(schema.feeInvoices.id,invoice.id));await tx.update(schema.feeWaivers).set({status:'posted',version:1}).where(eq(schema.feeWaivers.id,waiver!.id));});}
       const approved=await this.updateDecisionVersioned(row,input.version,{status:'approved',assignedUserId,decisionNote:input.note??null},ctx.principal);await this.appendEvents(approved,[...events,{type:'approved',note:input.note}],this.staffActor(ctx.principal));await this.writePortalAudit(ctx,approved,'student_request.approve',row.status,'approved',input.note);if(requiresSecond)return this.toViewResolved(approved);const fulfilled=await this.updateVersioned(approved,approved.version,{status:'fulfilled',resolvedAt:new Date()});const seq=await this.appendEvent(fulfilled,'fulfilled',this.staffActor(ctx.principal),null,{waiver_id:waiver!.id});await this.writePortalAudit(ctx,fulfilled,'student_request.fulfil','approved','fulfilled');await this.notifications.dispatch({institutionId:row.institutionId,requestId:row.id,eventSeq:seq});return this.toViewResolved(fulfilled);
     }
 
@@ -978,7 +993,7 @@ export class RequestEngineService {
         const [student] = await this.db
           .select({ classId: schema.students.classId })
           .from(schema.students)
-          .where(eq(schema.students.id, row.studentId))
+          .where(eq(schema.students.id, requireStudentId(row)))
           .limit(1);
         if (!student?.classId) continue;
         await this.db
@@ -986,7 +1001,7 @@ export class RequestEngineService {
           .values({
             institutionId: row.institutionId,
             requestId: row.id,
-            studentId: row.studentId,
+            studentId: requireStudentId(row),
             classId: student.classId,
             subjectId: session.subject_id,
             occurrenceDate: session.date,
@@ -997,7 +1012,7 @@ export class RequestEngineService {
         continue;
       }
       await this.attendance.markSystem(row.institutionId, session.session_id, {
-        studentId: row.studentId,
+        studentId: requireStudentId(row),
         status: mark,
         remarks: `Leave ${row.humanCode}`,
         provenance,
@@ -1017,7 +1032,7 @@ export class RequestEngineService {
     const [student] = await this.db
       .select({ classId: schema.students.classId })
       .from(schema.students)
-      .where(eq(schema.students.id, row.studentId))
+      .where(eq(schema.students.id, requireStudentId(row)))
       .limit(1);
     if (!student?.classId) return;
     for (const occurrence of payload.sessions_snapshot ?? []) {
@@ -1028,7 +1043,7 @@ export class RequestEngineService {
           .values({
             institutionId: row.institutionId,
             requestId: row.id,
-            studentId: row.studentId,
+            studentId: requireStudentId(row),
             classId: student.classId,
             subjectId: occurrence.subject_id,
             occurrenceDate: occurrence.date,
@@ -1054,7 +1069,7 @@ export class RequestEngineService {
         .limit(1);
       if (!session) continue;
       await this.attendance.markSystem(row.institutionId, session.id, {
-        studentId: row.studentId,
+        studentId: requireStudentId(row),
         status: 'od',
         remarks: `OD ${row.humanCode}`,
         provenance,
@@ -1078,7 +1093,7 @@ export class RequestEngineService {
         continue;
       }
       await this.attendance.markSystem(row.institutionId, ref.session_id, {
-        studentId: row.studentId,
+        studentId: requireStudentId(row),
         status: 'present',
         remarks: input.note ?? `Correction ${row.humanCode}`,
         provenance: { kind: 'correction_approval', request_id: row.id },
@@ -1100,7 +1115,7 @@ export class RequestEngineService {
         and(
           eq(schema.feeInvoices.id, row.paymentRequestId),
           eq(schema.feeInvoices.institutionId, row.institutionId),
-          eq(schema.feeInvoices.studentId, row.studentId),
+          eq(schema.feeInvoices.studentId, requireStudentId(row)),
         ),
       )
       .limit(1);
@@ -1139,7 +1154,7 @@ export class RequestEngineService {
         and(
           eq(schema.gradeEntries.id, payload.grade_entry_id),
           eq(schema.gradeEntries.institutionId, row.institutionId),
-          eq(schema.gradeEntries.studentId, row.studentId),
+          eq(schema.gradeEntries.studentId, requireStudentId(row)),
         ),
       )
       .limit(1);
@@ -1161,7 +1176,7 @@ export class RequestEngineService {
         .insert(schema.markRevisions)
         .values({
           institutionId: row.institutionId,
-          studentId: row.studentId,
+          studentId: requireStudentId(row),
           gradeEntryId: entry.id,
           oldScore: entry.marksObtained,
           newScore: form.new_score,
@@ -1195,7 +1210,7 @@ export class RequestEngineService {
     return { grade_entry_id: entry.id, old_score: entry.marksObtained, new_score: form.new_score };
   }
 
-  private async applyHostelOutpass(ctx: PortalActionContext, row: RequestRow): Promise<void> {
+  private async applyHostelOutpass(_ctx: PortalActionContext, row: RequestRow): Promise<void> {
     const payload = row.payload as {
       leave_at: string;
       expected_return_at: string;
@@ -1203,14 +1218,14 @@ export class RequestEngineService {
       reason: string;
     };
     const [student] = await this.db
-      .select({ fullName: schema.students.fullName })
+      .select({ firstName: schema.students.firstName, lastName: schema.students.lastName })
       .from(schema.students)
-      .where(eq(schema.students.id, row.studentId))
+      .where(eq(schema.students.id, requireStudentId(row)))
       .limit(1);
     await this.db.insert(schema.gatePasses).values({
       institutionId: row.institutionId,
-      campusId: ctx.principal.campusId,
-      holderName: student?.fullName ?? 'Student',
+      campusId: row.campusId,
+      holderName: [student?.firstName, student?.lastName].filter(Boolean).join(' ') || 'Student',
       kind: 'student',
       reason: `${payload.reason}: ${payload.destination}`,
       issuedAt: new Date(payload.leave_at),
@@ -1231,7 +1246,7 @@ export class RequestEngineService {
       .where(
         and(
           eq(schema.libraryLoans.id, payload.loan_id),
-          eq(schema.libraryLoans.studentId, row.studentId),
+          eq(schema.libraryLoans.studentId, requireStudentId(row)),
           eq(schema.libraryLoans.status, 'issued'),
         ),
       )
@@ -1254,7 +1269,7 @@ export class RequestEngineService {
       .where(
         and(
           eq(schema.transportAssignments.id, payload.assignment_id),
-          eq(schema.transportAssignments.studentId, row.studentId),
+          eq(schema.transportAssignments.studentId, requireStudentId(row)),
           eq(schema.transportAssignments.status, 'active'),
         ),
       )
@@ -1271,20 +1286,20 @@ export class RequestEngineService {
       .where(eq(schema.transportAssignments.id, assignment.id));
   }
 
-  private async applyIdCardReissue(ctx: PortalActionContext, row: RequestRow): Promise<void> {
+  private async applyIdCardReissue(_ctx: PortalActionContext, row: RequestRow): Promise<void> {
     await this.db
       .update(schema.studentIdCards)
       .set({ status: 'revoked', revokedAt: new Date(), updatedAt: new Date() })
       .where(
         and(
-          eq(schema.studentIdCards.studentId, row.studentId),
+          eq(schema.studentIdCards.studentId, requireStudentId(row)),
           eq(schema.studentIdCards.status, 'active'),
         ),
       );
     await this.db.insert(schema.studentIdCards).values({
       institutionId: row.institutionId,
-      campusId: ctx.principal.campusId,
-      studentId: row.studentId,
+      campusId: row.campusId,
+      studentId: requireStudentId(row),
       status: 'pending_issue',
       tokenVersion: 1,
     });
@@ -1575,7 +1590,7 @@ export class RequestEngineService {
         .from(schema.students)
         .leftJoin(schema.classes, eq(schema.classes.id, schema.students.classId))
         .leftJoin(schema.staff, eq(schema.staff.id, schema.classes.classTeacherId))
-        .where(eq(schema.students.id, row.studentId))
+        .where(eq(schema.students.id, requireStudentId(row)))
         .limit(1);
       entitled = teacher?.userId === ctx.principal.institutionUserId;
     } else if (!entitled) {
@@ -1689,7 +1704,7 @@ export class RequestEngineService {
         schema.departments,
         eq(schema.departments.id, schema.departmentGradeLevels.departmentId),
       )
-      .where(eq(schema.students.id, row.studentId))
+      .where(eq(schema.students.id, requireStudentId(row)))
       .limit(1);
     if (row.type === 'leave_request') {
       const payload = row.payload as unknown as LeaveRequestPayload;
@@ -1710,7 +1725,7 @@ export class RequestEngineService {
             .leftJoin(schema.subjects, eq(schema.subjects.id, schema.attendanceSessions.subjectId))
             .where(
               and(
-                eq(schema.attendanceRecords.studentId, row.studentId),
+                eq(schema.attendanceRecords.studentId, requireStudentId(row)),
                 inArray(schema.attendanceSessions.subjectId, subjectIds),
               ),
             )
@@ -1742,7 +1757,7 @@ export class RequestEngineService {
             .from(schema.attendanceRecords)
             .innerJoin(schema.attendanceSessions, eq(schema.attendanceSessions.id, schema.attendanceRecords.sessionId))
             .leftJoin(schema.subjects, eq(schema.subjects.id, schema.attendanceSessions.subjectId))
-            .where(and(eq(schema.attendanceRecords.studentId, row.studentId), inArray(schema.attendanceSessions.subjectId, subjectIds)))
+            .where(and(eq(schema.attendanceRecords.studentId, requireStudentId(row)), inArray(schema.attendanceSessions.subjectId, subjectIds)))
             .groupBy(schema.attendanceSessions.subjectId, schema.subjects.name)
         : [];
       return {
@@ -1777,7 +1792,7 @@ export class RequestEngineService {
               schema.attendanceRecords,
               and(
                 eq(schema.attendanceRecords.sessionId, schema.attendanceSessions.id),
-                eq(schema.attendanceRecords.studentId, row.studentId),
+                eq(schema.attendanceRecords.studentId, requireStudentId(row)),
               ),
             )
             .where(inArray(schema.attendanceSessions.id, sessionIds))
@@ -1801,12 +1816,12 @@ export class RequestEngineService {
       .from(schema.studentDocumentVault)
       .where(
         and(
-          eq(schema.studentDocumentVault.studentId, row.studentId),
+          eq(schema.studentDocumentVault.studentId, requireStudentId(row)),
           eq(schema.studentDocumentVault.docType, String(payload.doc_type)),
           gte(schema.studentDocumentVault.issuedAt, new Date(Date.UTC(new Date().getUTCFullYear(), 0, 1))),
         ),
       );
-    const feeDues = await this.feeDuesSnapshot(row.institutionId, row.studentId);
+    const feeDues = await this.feeDuesSnapshot(row.institutionId, requireStudentId(row));
     return { student, priorDocuments: prior, feeDues };
   }
 

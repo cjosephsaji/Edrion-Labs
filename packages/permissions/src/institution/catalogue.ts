@@ -141,6 +141,10 @@ export const INSTITUTION_PERMISSIONS: readonly PermissionDef[] = [
   // AI
   def('ai.use', 'AI', 'Use Petros, the AI assistant.'),
   def('ai.configure', 'AI', 'Configure AI settings and guardrails.', true),
+  def('petros.policy.view', 'AI', 'View effective Petros institutional policy and disclosure previews.'),
+  def('petros.policy.configure', 'AI', 'Draft, test, publish and roll back Petros institutional policy.', true),
+  def('petros.teacher_support.view', 'AI', 'View assigned Petros teacher handoffs and privacy-safe class struggle signals.'),
+  def('petros.digest.manage', 'AI', 'Preview and operate policy-bounded parent learning digests.', true),
   def('ai.assessments.generate', 'AI', 'Fully generate exams/assignments/tests with Petros.', true),
   def('ai.files.upload', 'AI', 'Attach files to Petros conversations.'),
   def(

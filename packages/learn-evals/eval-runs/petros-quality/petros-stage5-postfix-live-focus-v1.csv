@@ -1,0 +1,2 @@
+run_id,case_id,topic,persona,total_score,gate,cost_micros,latency_ms
+petros-stage5-postfix-live-focus-v1,pq-01-integration-by-parts,topic:integration-by-parts,repeated_struggle,4.12,warn,26345,122830

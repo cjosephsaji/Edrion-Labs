@@ -46,7 +46,7 @@ export type ResourceListHook = (
   params: ListParams,
 ) => { data?: { items: unknown[]; total: number } | undefined; isLoading: boolean; isError: boolean };
 
-interface MutationLike<TArgs> {
+export interface MutationLike<TArgs> {
   mutateAsync: (args: TArgs) => Promise<unknown>;
   isPending: boolean;
 }

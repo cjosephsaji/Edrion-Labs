@@ -13,7 +13,7 @@ export const TODAY_QUIET_RELEASE_JOB = 'today.quiet_hours.release';
 export const TODAY_FANOUT_JOB = 'today.feed.fanout';
 
 export interface TodayNotificationEvent {
-  eventKey: string; type: 'announcement'|'marks_released'|'request_update'|'club_event'|'nudge';
+  eventKey: string; type: 'announcement'|'marks_released'|'mark_revised'|'results_complete'|'request_update'|'club_event'|'nudge';
   sourceModule: string; title: string; body: string; deepLink: string; emergency?: boolean;
 }
 

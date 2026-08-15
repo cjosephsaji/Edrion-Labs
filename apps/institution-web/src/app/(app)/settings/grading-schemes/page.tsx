@@ -70,7 +70,7 @@ export default function GradingSchemesPage() {
               </div>
               <div className="flex items-center gap-2">
                 {scheme.isDefault ? <Badge tone="primary">Default</Badge> : null}
-                <Badge tone="muted">{scheme.bands.length} bands</Badge>
+                <Badge tone="neutral">{scheme.bands.length} bands</Badge>
               </div>
             </div>
           ))}

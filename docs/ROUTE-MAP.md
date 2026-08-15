@@ -81,6 +81,8 @@ directly.
 
   ── AI Administration ───────────────────────
   /ai                                         [ai.view]
+  /ai/petros-routing                          [ai.view; writes require ai.configure]
+  /ai/petros-institutional                    [ai.view; aggregate-only audited view]
   /ai/policies                                [ai.configure]
   /ai/guardrails                              [ai.configure]
   /ai/usage                                   [ai.view]
@@ -114,6 +116,21 @@ module, e.g. `/v1/institutions`, `/v1/campuses`, `/v1/institution-users`,
 Institution Portal: `/v1/portal/*`. Parent Portal: `/v1/parent/*` (guardian-scoped) and
 `/v1/parent-staff/*` (staff counterparts) — see [PARENT-PORTAL.md](PARENT-PORTAL.md) §8.
 ```
+
+## Petros Stage 12 cross-app routes
+
+| App | Route | Guard/boundary |
+| --- | --- | --- |
+| Institution web | `/settings/petros-policy` | `petros.policy.view`; mutations require manage/publish/rollback permissions and explicit confirmation |
+| Institution web | `/petros-support` | Assigned teacher/class/subject scope; privacy-safe handoffs and thresholded signals |
+| Institution guardian shell | `/family/more/petros-digest` | Linked-guardian scope only |
+| Student web | `/petros/session?session=…` | Owner-scoped session; stable institution disclosure and optional handoff |
+| Super Admin | `/ai/petros-institutional` | `ai.view`, aggregate-only, audited |
+| Super Admin | `/ai/petros-routing` | Stage 12 function contracts under `ai.view`; writes require `ai.configure` |
+
+API prefixes are `/v1/portal/petros/institutional`, `/v1/student/petros/institutional`,
+`/v1/parent/petros`, and `/v1/petros-institutional`. Delivery processing is normally owned by the
+tracked `petros.institutional.delivery` job; the operations endpoint is permission- and recent-auth-gated.
 
 ---
 

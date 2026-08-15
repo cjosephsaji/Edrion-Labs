@@ -6,7 +6,6 @@ import { ErrorState, Skeleton } from '@edrion/ui';
 import { Topbar } from '@/components/app-shell/topbar';
 import { formatPortalError, usePortalClient } from '@/lib/portal-client';
 import { useScope } from '@/lib/scope';
-import { useTeachingStaffOptions, teachingStaffSelectOptions } from '@/lib/people';
 
 type Season = { id: string; name: string; status: string };
 type Company = { id: string; name: string; sector: string | null };

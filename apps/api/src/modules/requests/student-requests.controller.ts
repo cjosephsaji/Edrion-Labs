@@ -37,6 +37,7 @@ import { requireInstitutional, SurfaceGateService } from '../student/surfaces/su
 import { RequestDocumentService } from './request-document.service';
 import { RequestEngineService } from './request-engine.service';
 import { RequestRegistryService } from './request-registry.service';
+import { StudentRequestOptionsService } from './student-request-options.service';
 
 @ApiTags('student-requests')
 @Controller('student/requests')
@@ -51,6 +52,7 @@ export class StudentRequestsController {
     private readonly gate: SurfaceGateService,
     private readonly registry: RequestRegistryService,
     private readonly documents: RequestDocumentService,
+    private readonly options: StudentRequestOptionsService,
   ) {}
 
   @Get('types')
@@ -70,6 +72,13 @@ export class StudentRequestsController {
     );
     const types = registeredTypes.filter((_, index) => visibility[index]);
     return { types, documentCatalog };
+  }
+
+  @Get('form-options')
+  async formOptions(@CurrentStudent() principal: StudentPrincipal) {
+    requireInstitutional(principal);
+    await this.gate.assertSurface(principal, 'requests');
+    return this.options.formOptions(principal);
   }
 
   @Get('documents')

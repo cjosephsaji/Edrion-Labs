@@ -1,0 +1,847 @@
+{
+  "schemaVersion": "petros-quality-report.v1",
+  "runId": "petros-stage5-live-preflight-v7",
+  "label": "Stage 5 live preflight v7",
+  "status": "completed",
+  "mode": "live",
+  "source": "evaluation",
+  "suite": "smoke",
+  "seed": 42,
+  "createdAt": "2026-08-09T15:09:34.617Z",
+  "completedAt": "2026-08-09T15:09:34.617Z",
+  "versions": {
+    "corpus": "petros-quality-corpus.v1",
+    "rubric": "petros-quality-rubric.v1",
+    "runner": "petros-quality-runner.v1",
+    "prompt": "stage4-plan-v1",
+    "schema": "petros-quality-report.v1",
+    "profile": "petros.topic-profile.v1",
+    "routing": "petros-ai-routing",
+    "code": "api-live"
+  },
+  "selection": {
+    "caseIds": [
+      "pq-01-integration-by-parts"
+    ],
+    "personaIds": [
+      "fast_confident"
+    ],
+    "functionKeys": [
+      "teaching.next_action.select",
+      "teaching.block.render",
+      "answer.evaluate",
+      "evaluation.teaching_quality.judge"
+    ]
+  },
+  "limits": {
+    "maxCostMicros": 75000,
+    "maxTokens": 150000,
+    "maxDurationMs": 300000,
+    "concurrency": 1
+  },
+  "totals": {
+    "sessions": 1,
+    "completed": 1,
+    "failed": 0,
+    "score": 4.5,
+    "costMicros": 31248,
+    "inputTokens": 120335,
+    "outputTokens": 8703,
+    "latencyMs": 162319
+  },
+  "dimensions": {
+    "correctness": {
+      "mean": 4,
+      "count": 1
+    },
+    "structural_variety": {
+      "mean": 5,
+      "count": 1
+    },
+    "move_appropriateness": {
+      "mean": 4.5,
+      "count": 1
+    },
+    "prerequisite_handling": {
+      "mean": 5,
+      "count": 1
+    },
+    "guess_confidence": {
+      "mean": 3.5,
+      "count": 1
+    },
+    "stuck_recovery": {
+      "mean": 4.5,
+      "count": 1
+    },
+    "socratic_cap": {
+      "mean": 4.5,
+      "count": 1
+    },
+    "pacing": {
+      "mean": 4.5,
+      "count": 1
+    },
+    "explainability": {
+      "mean": 5,
+      "count": 1
+    },
+    "detour_return": {
+      "mean": 4.5,
+      "count": 1
+    },
+    "repetition": {
+      "mean": 4.5,
+      "count": 1
+    },
+    "artifact_quality": {
+      "mean": 3,
+      "count": 1
+    },
+    "safety_boundaries": {
+      "mean": 5,
+      "count": 1
+    },
+    "language_register": {
+      "mean": 5,
+      "count": 1
+    },
+    "operational_efficiency": {
+      "mean": 5,
+      "count": 1
+    }
+  },
+  "sessions": [
+    {
+      "transcript": {
+        "id": "live_76cbe92b-0b9a-442a-8fcf-a068ce5a0a58",
+        "runId": "petros-stage5-live-preflight-v7",
+        "caseId": "pq-01-integration-by-parts",
+        "topicKey": "topic:integration-by-parts",
+        "topicTitle": "Integration by parts",
+        "subject": "Mathematics",
+        "personaId": "fast_confident",
+        "goal": "learn",
+        "seed": 42,
+        "environment": "evaluation",
+        "synthetic": true,
+        "versions": {
+          "corpus": "petros-quality-corpus.v1",
+          "rubric": "petros-quality-rubric.v1",
+          "runner": "petros-quality-runner.v1",
+          "prompt": "stage4-plan-v1",
+          "schema": "petros-quality-report.v1",
+          "profile": "petros.topic-profile.v1",
+          "routing": "petros-ai-routing",
+          "code": "api-live"
+        },
+        "moves": [
+          {
+            "id": "live_move_1_cdc4b6d2",
+            "blockId": "live_block_1_2914cc99",
+            "type": "prerequisite_check",
+            "phase": "opening",
+            "title": "Quick prerequisite check — Product rule",
+            "content": "{\"schemaVersion\":\"petros.render.v2\",\"title\":\"Quick prerequisite check — Product rule\",\"type\":\"prerequisite_check\",\"instructions\":\"Please answer the short diagnostic below. First, commit to your answer (type it exactly) for each question without looking up anything. This helps me know whether to proceed or give a brief refresher. There are 2 questions and this should take about 2–4 minutes.\",\"prerequisites\":[{\"key\":\"product-rule\",\"label\":\"Product rule (d/dx[uv] = u'v + uv')\"}],\"detourMessage\":\"If your answers show gaps with the product rule, I will pause the lesson and give a brief, focused refresher on the product rule (statement, quick derivative examples) before continuing to integration by parts.\"}",
+            "studentSafeReason": "Confirm understanding of the product rule before teaching integration by parts.",
+            "decisionFactors": [
+              "Topic profile marks the product rule as a mandatory prerequisite.",
+              "Mathematical load is moderate; missing prerequisite will block progress.",
+              "Session is an evaluation run: quick diagnostic needed before instruction."
+            ],
+            "expectedEvidence": "Student correctly states the product rule and can differentiate two simple functions multiplied (e.g., d(uv)/dx = u'v + uv').",
+            "startedAtMs": 23888,
+            "firstContentAtMs": 23888,
+            "completedAtMs": 23888,
+            "artifactProposed": false,
+            "studentConsentRequired": false,
+            "sourceAnchors": []
+          },
+          {
+            "id": "live_move_2_7919cc43",
+            "blockId": "live_block_2_45feb932",
+            "type": "goal_frame",
+            "phase": "opening",
+            "title": "Set a short goal and timebox",
+            "content": "{\"schemaVersion\":\"petros.render.v2\",\"title\":\"Set a short goal and timebox\",\"type\":\"goal_frame\",\"goal\":\"In the next 15 minutes, you will apply integration by parts to evaluate 2–3 integrals of the form ∫ u dv, showing the chosen u and dv, the computed du and v, and the final simplified result.\",\"timeEstimateMinutes\":15,\"checkpoints\":[\"Confirm you agree to this 15-minute practice goal.\",\"Complete 2–3 worked examples end-to-end using integration by parts.\",\"Briefly verbalise the choice of u and dv and the key algebraic step for each example.\"]}",
+            "studentSafeReason": "Set a short, concrete goal and timebox so the student knows what success looks like and we can focus the remaining session moves.",
+            "decisionFactors": [
+              "Topic profile recommends opening with goal framing after a prerequisite check.",
+              "Remaining time budget ~15 minutes; a focused, timeboxed goal helps prioritise worked examples.",
+              "Student persona 'fast_confident' benefits from explicit outcome and quick practice."
+            ],
+            "expectedEvidence": "Student agrees to the stated short task (e.g., 'I'll be able to apply integration by parts to compute ∫ u dv in 2–3 worked examples') and accepts the timebox.",
+            "startedAtMs": 68040,
+            "firstContentAtMs": 68040,
+            "completedAtMs": 68040,
+            "artifactProposed": false,
+            "studentConsentRequired": false,
+            "sourceAnchors": []
+          },
+          {
+            "id": "live_move_3_39251e9a",
+            "blockId": "live_block_3_fa1f0a3a",
+            "type": "worked_example",
+            "phase": "explaining",
+            "title": "Integration by parts — worked example (∫ x e^{2x} dx)",
+            "content": "{\"schemaVersion\":\"petros.render.v2\",\"title\":\"Integration by parts — worked example (∫ x e^{2x} dx)\",\"type\":\"worked_example\",\"problemStatement\":\"Work through the integral ∫ x e^{2x} dx using integration by parts. Before we start, commit to which factor you would choose for u (the part to differentiate) and which for dv (the part to integrate).\",\"steps\":[{\"id\":\"step-1-choose-u-dv\",\"title\":\"Choose u and dv (make a quick commitment)\",\"explanation\":\"Decide which part of the product x · e^{2x} you will set as u (to differentiate) and which as dv (to integrate). A common heuristic: choose u as the algebraic factor that simplifies when differentiated (here x).\",\"predictionPrompt\":\"Which will you pick for u and dv? Type your choice, e.g., 'u = x, dv = e^{2x} dx'.\"},{\"id\":\"step-2-differentiate-and-integrate\",\"title\":\"Compute du and v\",\"explanation\":\"Differentiate u to get du, and integrate dv to get v. If u = x, then du = dx. If dv = e^{2x} dx, then v = ∫ e^{2x} dx = (1/2) e^{2x}.\",\"predictionPrompt\":\"Before proceeding, predict the expressions for du and v (one-line): du = ___, v = ___.\"},{\"id\":\"step-3-substitute-into-formula\",\"title\":\"Apply the integration-by-parts formula\",\"explanation\":\"Use ∫ u dv = u v − ∫ v du. Substitute u, v, du: ∫ x e^{2x} dx = x · (1/2)e^{2x} − ∫ (1/2)e^{2x} · 1 dx = (1/2) x e^{2x} − (1/2) ∫ e^{2x} dx.\",\"predictionPrompt\":\"Predict the intermediate result after substitution (before simplifying the remaining integral).\"},{\"id\":\"step-4-evaluate-and-simplify\",\"title\":\"Evaluate the remaining integral and simplify\",\"explanation\":\"Compute the remaining integral: ∫ e^{2x} dx = (1/2)e^{2x}. So ∫ x e^{2x} dx = (1/2) x e^{2x} − (1/2) · (1/2) e^{2x} + C = (1/2) x e^{2x} − (1/4) e^{2x} + C. Factor if desired: = e^{2x} ( (1/2) x − 1/4 ) + C.\",\"predictionPrompt\":\"Predict the final simplified antiderivative (one-line): ____ + C.\"}],\"finalCheck\":\"State which choice of u you used and why; then write the final antiderivative for ∫ x e^{2x} dx.\",\"sourceGrounding\":[{\"label\":\"Standard calculus integration-by-parts formula\",\"reference\":\"Any introductory calculus textbook; ∫ u dv = u v − ∫ v du\"}]}",
+            "studentSafeReason": "Provide a step-by-step procedural worked example so the student can see the method applied and practice within the agreed timebox.",
+            "decisionFactors": [
+              "Topic profile recommends moving to worked examples after goal framing.",
+              "Student persona 'fast_confident' benefits from immediate practice with concrete steps.",
+              "Remaining time (~13–14 minutes) is adequate for 1 worked example plus guided attempt.",
+              "We need to collect evidence of procedural application before practice items."
+            ],
+            "expectedEvidence": "Student correctly follows each step selecting u and dv, computes du and v, substitutes into the integration-by-parts formula, and simplifies to an evaluated integral for the worked example; can state which choice of u was used and why.",
+            "startedAtMs": 98339,
+            "firstContentAtMs": 98339,
+            "completedAtMs": 98339,
+            "artifactProposed": false,
+            "studentConsentRequired": false,
+            "sourceAnchors": []
+          },
+          {
+            "id": "live_move_4_8d194e56",
+            "blockId": "live_block_4_016c1634",
+            "type": "predict_then_reveal",
+            "phase": "active",
+            "title": "Quick predict-and-reveal: choose u",
+            "content": "{\"schemaVersion\":\"petros.render.v2\",\"title\":\"Quick predict-and-reveal: choose u\",\"type\":\"predict_then_reveal\",\"prompt\":\"I'll show a short integral. Before I reveal the instructor's next step, type which part you'd choose as u (the other part will be dv). Integral: ∫ x^2 e^{x} dx. Which subexpression would you pick for u? (Answer briefly, e.g. 'u = x^2' or 'u = e^x')\",\"reveal\":\"Instructor's next step: choose u = x^2 and dv = e^x dx. Then du = 2x dx and v = e^x. Substituting into integration by parts gives: ∫ x^2 e^x dx = x^2 e^x - ∫ 2x e^x dx. (You would apply integration by parts again on ∫2x e^x dx.)\",\"explanation\":\"Why this reveal? Choose the polynomial factor (x^2) as u because polynomials simplify when differentiated, while e^x is easy to integrate — this follows the common heuristic (LIATE). If you answered 'u = e^x' instead, the resulting du stays e^x dx and you'd need to integrate x^2, which is less helpful for reducing the integral. Now compare: did your choice match the revealed u? If yes, briefly say why; if not, note whether the revealed next step changes how you'd proceed and then compute the remaining integral by applying integration by parts once more to ∫2x e^x dx.\"}",
+            "studentSafeReason": "A short prediction activity engages you to choose u vs dv on a new integral before revealing the correct next step, giving a diagnostic signal and keeping interaction brief.",
+            "decisionFactors": [
+              "Topic profile recommends a predict-then-reveal item after a worked example for practice.",
+              "Only one move remaining; a single short prediction gives high diagnostic value for procedural skill.",
+              "Student persona 'fast_confident' responds well to quick commitments and immediate feedback.",
+              "Time remaining (~13 minutes) supports a quick prediction plus reveal and brief discussion."
+            ],
+            "expectedEvidence": "Student makes a quick choice for which part of the integrand to take as u (short answer), then upon reveal performs or explains the next integration-by-parts step (compute du and v) and whether the revealed choice matches their reasoning.",
+            "startedAtMs": 126906,
+            "firstContentAtMs": 126906,
+            "completedAtMs": 126906,
+            "artifactProposed": false,
+            "studentConsentRequired": false,
+            "sourceAnchors": []
+          }
+        ],
+        "observations": [
+          {
+            "id": "live_obs_1",
+            "moveId": "live_move_1_cdc4b6d2",
+            "type": "complete",
+            "responseTimeMs": 0,
+            "summary": "Synthetic live persona completed the generated block."
+          },
+          {
+            "id": "live_obs_2",
+            "moveId": "live_move_2_7919cc43",
+            "type": "complete",
+            "responseTimeMs": 0,
+            "summary": "Synthetic live persona completed the generated block."
+          },
+          {
+            "id": "live_obs_3",
+            "moveId": "live_move_3_39251e9a",
+            "type": "complete",
+            "responseTimeMs": 0,
+            "summary": "Synthetic live persona completed the generated block."
+          },
+          {
+            "id": "live_obs_4",
+            "moveId": "live_move_4_8d194e56",
+            "type": "complete",
+            "responseTimeMs": 0,
+            "summary": "Synthetic live persona completed the generated block."
+          }
+        ],
+        "usage": [
+          {
+            "source": "evaluation",
+            "functionKey": "teaching.next_action.select",
+            "requestId": "cdc4b6d2-0cdc-49c2-9369-04e6cbfa8097",
+            "providerKey": "openai-live-eval",
+            "modelKey": "gpt-5-mini-2025-08-07",
+            "inputTokens": 21658,
+            "outputTokens": 979,
+            "costMicros": 7373,
+            "latencyMs": 16688,
+            "retries": 0,
+            "fallbacks": 0,
+            "validationFailures": 0,
+            "cacheHit": false
+          },
+          {
+            "source": "evaluation",
+            "functionKey": "teaching.block.render",
+            "requestId": "2914cc99-d21a-4ace-82bf-977e3b4c1ee0",
+            "providerKey": "openai-live-eval",
+            "modelKey": "gpt-5-mini-2025-08-07",
+            "inputTokens": 5842,
+            "outputTokens": 337,
+            "costMicros": 2135,
+            "latencyMs": 7138,
+            "retries": 0,
+            "fallbacks": 0,
+            "validationFailures": 0,
+            "cacheHit": false
+          },
+          {
+            "source": "evaluation",
+            "functionKey": "teaching.next_action.select",
+            "requestId": "7919cc43-04a4-43f0-8f5e-2acd8256ce8a",
+            "providerKey": "openai-live-eval",
+            "modelKey": "gpt-5-mini-2025-08-07",
+            "inputTokens": 22111,
+            "outputTokens": 795,
+            "costMicros": 2567,
+            "latencyMs": 12826,
+            "retries": 0,
+            "fallbacks": 0,
+            "validationFailures": 0,
+            "cacheHit": false
+          },
+          {
+            "source": "evaluation",
+            "functionKey": "teaching.block.render",
+            "requestId": "45feb932-eca0-4b50-98f5-fe9a32cd9484",
+            "providerKey": "openai-live-eval",
+            "modelKey": "gpt-5-mini-2025-08-07",
+            "inputTokens": 6386,
+            "outputTokens": 276,
+            "costMicros": 1285,
+            "latencyMs": 31271,
+            "retries": 0,
+            "fallbacks": 0,
+            "validationFailures": 0,
+            "cacheHit": false
+          },
+          {
+            "source": "evaluation",
+            "functionKey": "teaching.next_action.select",
+            "requestId": "39251e9a-b327-482d-abd2-85bb657346cd",
+            "providerKey": "openai-live-eval",
+            "modelKey": "gpt-5-mini-2025-08-07",
+            "inputTokens": 22651,
+            "outputTokens": 1040,
+            "costMicros": 3192,
+            "latencyMs": 15575,
+            "retries": 0,
+            "fallbacks": 0,
+            "validationFailures": 0,
+            "cacheHit": false
+          },
+          {
+            "source": "evaluation",
+            "functionKey": "teaching.block.render",
+            "requestId": "fa1f0a3a-99c0-4bd2-a45f-99b9c482d7e0",
+            "providerKey": "openai-live-eval",
+            "modelKey": "gpt-5-mini-2025-08-07",
+            "inputTokens": 6975,
+            "outputTokens": 870,
+            "costMicros": 2620,
+            "latencyMs": 14682,
+            "retries": 0,
+            "fallbacks": 0,
+            "validationFailures": 0,
+            "cacheHit": false
+          },
+          {
+            "source": "evaluation",
+            "functionKey": "teaching.next_action.select",
+            "requestId": "8d194e56-12ed-43be-b440-f87dabfa8775",
+            "providerKey": "openai-live-eval",
+            "modelKey": "gpt-5-mini-2025-08-07",
+            "inputTokens": 23245,
+            "outputTokens": 1150,
+            "costMicros": 3561,
+            "latencyMs": 16834,
+            "retries": 0,
+            "fallbacks": 0,
+            "validationFailures": 0,
+            "cacheHit": false
+          },
+          {
+            "source": "evaluation",
+            "functionKey": "teaching.block.render",
+            "requestId": "016c1634-00b3-40a7-9db9-13b0af4ce44f",
+            "providerKey": "openai-live-eval",
+            "modelKey": "gpt-5-mini-2025-08-07",
+            "inputTokens": 7606,
+            "outputTokens": 604,
+            "costMicros": 2246,
+            "latencyMs": 11690,
+            "retries": 0,
+            "fallbacks": 0,
+            "validationFailures": 0,
+            "cacheHit": false
+          },
+          {
+            "source": "evaluation",
+            "functionKey": "evaluation.teaching_quality.judge",
+            "requestId": "e330001e-2c3d-4697-b4a4-6e4df26bfe41",
+            "providerKey": "openai-live-eval",
+            "modelKey": "gpt-5-mini-2025-08-07",
+            "inputTokens": 3861,
+            "outputTokens": 2652,
+            "costMicros": 6269,
+            "latencyMs": 35615,
+            "retries": 0,
+            "fallbacks": 0,
+            "validationFailures": 0,
+            "cacheHit": false
+          }
+        ],
+        "errors": [],
+        "ended": "goal_met",
+        "resumed": false,
+        "productionWrites": 0
+      },
+      "scores": [
+        {
+          "dimension": "correctness",
+          "score": 4,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "note": "No forbidden claim found, but the critical fact is not explicit."
+            },
+            {
+              "moveId": "live_move_2_7919cc43",
+              "blockId": "live_block_2_45feb932",
+              "note": "No forbidden claim found, but the critical fact is not explicit."
+            },
+            {
+              "moveId": "live_move_3_39251e9a",
+              "blockId": "live_block_3_fa1f0a3a",
+              "observationId": "live_obs_3",
+              "note": "Worked example shows correct choice u=x, du=dx, v=(1/2)e^{2x}, and final antiderivative (1/2)x e^{2x} - 1/4 e^{2x} + C."
+            }
+          ],
+          "rationale": "No forbidden claim found, but the critical fact is not explicit. Independent judge: All presented mathematics and worked-example steps are correct and standard (integration-by-parts, du/v computations, final antiderivative for x e^{2x}).",
+          "uncertainty": 0.15,
+          "evaluator": "gateway_judge"
+        },
+        {
+          "dimension": "structural_variety",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "note": "4 distinct move types across 4 moves."
+            },
+            {
+              "moveId": "live_move_2_7919cc43",
+              "blockId": "live_block_2_45feb932",
+              "note": "4 distinct move types across 4 moves."
+            },
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "observationId": "live_obs_1",
+              "note": "Prerequisite check move."
+            },
+            {
+              "moveId": "live_move_2_7919cc43",
+              "blockId": "live_block_2_45feb932",
+              "observationId": "live_obs_2",
+              "note": "Goal framing move."
+            },
+            {
+              "moveId": "live_move_3_39251e9a",
+              "blockId": "live_block_3_fa1f0a3a",
+              "observationId": "live_obs_3",
+              "note": "Worked example move."
+            },
+            {
+              "moveId": "live_move_4_8d194e56",
+              "blockId": "live_block_4_016c1634",
+              "observationId": "live_obs_4",
+              "note": "Predict-and-reveal move."
+            }
+          ],
+          "rationale": "4 distinct move types across 4 moves. Independent judge: Transcript includes prerequisite check, goal framing, a detailed worked example, and a predict-and-reveal item—multiple pedagogical move types.",
+          "uncertainty": 0.15,
+          "evaluator": "gateway_judge"
+        },
+        {
+          "dimension": "move_appropriateness",
+          "score": 4.5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "note": "3/6 expected tendencies appear."
+            },
+            {
+              "moveId": "live_move_2_7919cc43",
+              "blockId": "live_block_2_45feb932",
+              "note": "3/6 expected tendencies appear."
+            },
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "observationId": "live_obs_1",
+              "note": "Prerequisite check appropriate before introducing integration by parts."
+            },
+            {
+              "moveId": "live_move_3_39251e9a",
+              "blockId": "live_block_3_fa1f0a3a",
+              "observationId": "live_obs_3",
+              "note": "Worked example appropriate to build procedural skill."
+            }
+          ],
+          "rationale": "3/6 expected tendencies appear. Independent judge: Each move follows a logical instructional sequence for teaching integration by parts given the goal and timebox.",
+          "uncertainty": 0.15,
+          "evaluator": "gateway_judge"
+        },
+        {
+          "dimension": "prerequisite_handling",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "note": "Required prerequisite check is present."
+            },
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "observationId": "live_obs_1",
+              "note": "Product rule check included and completed; detour plan specified."
+            }
+          ],
+          "rationale": "Required prerequisite check is present. Independent judge: Prerequisite check explicitly requested product rule commitment and specified a detour if gaps were found; move executed as intended.",
+          "uncertainty": 0.15,
+          "evaluator": "gateway_judge"
+        },
+        {
+          "dimension": "guess_confidence",
+          "score": 3.5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "live_move_4_8d194e56",
+              "blockId": "live_block_4_016c1634",
+              "note": "Guess-first or confidence evidence is missing."
+            },
+            {
+              "moveId": "live_move_4_8d194e56",
+              "blockId": "live_block_4_016c1634",
+              "observationId": "live_obs_4",
+              "note": "Short predict-and-reveal asking student to commit to u choice."
+            }
+          ],
+          "rationale": "Guess-first or confidence evidence is missing. Independent judge: Predict-and-reveal activity fosters commitment and diagnostic info; confidence-building present though limited to a single short prediction.",
+          "uncertainty": 0.15,
+          "evaluator": "gateway_judge"
+        },
+        {
+          "dimension": "stuck_recovery",
+          "score": 4.5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "note": "The persona did not trigger the repeated-struggle ladder."
+            },
+            {
+              "moveId": "live_move_2_7919cc43",
+              "blockId": "live_block_2_45feb932",
+              "note": "The persona did not trigger the repeated-struggle ladder."
+            },
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "observationId": "live_obs_1",
+              "note": "DetourMessage promises a brief refresher if product rule gaps detected."
+            }
+          ],
+          "rationale": "The persona did not trigger the repeated-struggle ladder. Independent judge: Detour message for the prerequisite check indicates a recovery plan; however no explicit on-the-spot scaffolds during worked example are included.",
+          "uncertainty": 0.2,
+          "evaluator": "gateway_judge"
+        },
+        {
+          "dimension": "socratic_cap",
+          "score": 4.5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "note": "Maximum Socratic streak is 0; cap respected."
+            },
+            {
+              "moveId": "live_move_2_7919cc43",
+              "blockId": "live_block_2_45feb932",
+              "note": "Maximum Socratic streak is 0; cap respected."
+            },
+            {
+              "moveId": "live_move_3_39251e9a",
+              "blockId": "live_block_3_fa1f0a3a",
+              "observationId": "live_obs_3",
+              "note": "Multiple prediction prompts in worked example encourage student articulation."
+            },
+            {
+              "moveId": "live_move_4_8d194e56",
+              "blockId": "live_block_4_016c1634",
+              "observationId": "live_obs_4",
+              "note": "Predict-and-reveal asks for brief reasoning comparison after reveal."
+            }
+          ],
+          "rationale": "Maximum Socratic streak is 0; cap respected. Independent judge: Moves include prediction prompts and commitment questions, encouraging self-explanation; deeper probing questions are limited but present.",
+          "uncertainty": 0.15,
+          "evaluator": "gateway_judge"
+        },
+        {
+          "dimension": "pacing",
+          "score": 4.5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "note": "First content 0ms; 4 moves; no deliberate close."
+            },
+            {
+              "moveId": "live_move_2_7919cc43",
+              "blockId": "live_block_2_45feb932",
+              "note": "First content 0ms; 4 moves; no deliberate close."
+            },
+            {
+              "moveId": "live_move_2_7919cc43",
+              "blockId": "live_block_2_45feb932",
+              "observationId": "live_obs_2",
+              "note": "Explicit 15-minute goal and checkpoints."
+            }
+          ],
+          "rationale": "First content 0ms; 4 moves; no deliberate close. Independent judge: Session sets a 15-minute timebox and structures activities to fit within it; moves are suitably concise for quick practice.",
+          "uncertainty": 0.15,
+          "evaluator": "gateway_judge"
+        },
+        {
+          "dimension": "explainability",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "note": "4/4 moves have specific reasons and causal factors."
+            },
+            {
+              "moveId": "live_move_2_7919cc43",
+              "blockId": "live_block_2_45feb932",
+              "note": "4/4 moves have specific reasons and causal factors."
+            },
+            {
+              "moveId": "live_move_3_39251e9a",
+              "blockId": "live_block_3_fa1f0a3a",
+              "observationId": "live_obs_3",
+              "note": "Stepwise explanations and finalCheck prompt ensure explainability."
+            }
+          ],
+          "rationale": "4/4 moves have specific reasons and causal factors. Independent judge: Worked example explains each step (choose u/dv, compute du/v, substitute, simplify) with brief justifications and final factorisation offered.",
+          "uncertainty": 0.15,
+          "evaluator": "gateway_judge"
+        },
+        {
+          "dimension": "detour_return",
+          "score": 4.5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "note": "No detour was required."
+            },
+            {
+              "moveId": "live_move_2_7919cc43",
+              "blockId": "live_block_2_45feb932",
+              "note": "No detour was required."
+            },
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "observationId": "live_obs_1",
+              "note": "DetourMessage specified a brief refresher if gaps detected; no detour executed in this run."
+            }
+          ],
+          "rationale": "No detour was required. Independent judge: Detour for missing prerequisites is defined, but transcript shows no actual detour execution so clarity of re-entry is assumed rather than demonstrated.",
+          "uncertainty": 0.25,
+          "evaluator": "gateway_judge"
+        },
+        {
+          "dimension": "repetition",
+          "score": 4.5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "note": "Longest identical streak: 1; generic repeated reasons: 0."
+            },
+            {
+              "moveId": "live_move_2_7919cc43",
+              "blockId": "live_block_2_45feb932",
+              "note": "Longest identical streak: 1; generic repeated reasons: 0."
+            },
+            {
+              "moveId": "live_move_3_39251e9a",
+              "blockId": "live_block_3_fa1f0a3a",
+              "observationId": "live_obs_3",
+              "note": "One complete worked example is present; goal framed 2–3 examples but additional practice not shown."
+            },
+            {
+              "moveId": "live_move_4_8d194e56",
+              "blockId": "live_block_4_016c1634",
+              "observationId": "live_obs_4",
+              "note": "Predict-and-reveal serves as short additional practice."
+            }
+          ],
+          "rationale": "Longest identical streak: 1; generic repeated reasons: 0. Independent judge: The plan includes multiple worked/practice items (goal asks for 2–3 examples) and a worked example plus a practice prompt were provided; only one full worked example appears in transcript.",
+          "uncertainty": 0.15,
+          "evaluator": "gateway_judge"
+        },
+        {
+          "dimension": "artifact_quality",
+          "score": 3,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "note": "No artifact proposal appears."
+            },
+            {
+              "moveId": "live_move_2_7919cc43",
+              "blockId": "live_block_2_45feb932",
+              "note": "No artifact proposal appears."
+            },
+            {
+              "moveId": "live_move_3_39251e9a",
+              "blockId": "live_block_3_fa1f0a3a",
+              "observationId": "live_obs_3",
+              "note": "Worked example block includes step IDs, explanations, predictionPrompts, and grounding."
+            }
+          ],
+          "rationale": "No artifact proposal appears. Independent judge: Blocks are well-specified, with clear prompts, steps, expected evidence, and source grounding for the worked example.",
+          "uncertainty": 0.15,
+          "evaluator": "gateway_judge"
+        },
+        {
+          "dimension": "safety_boundaries",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "note": "No provider details and evaluation isolation is explicit."
+            },
+            {
+              "moveId": "live_move_2_7919cc43",
+              "blockId": "live_block_2_45feb932",
+              "note": "No provider details and evaluation isolation is explicit."
+            },
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "observationId": "live_obs_1",
+              "note": "StudentConsentRequired false and detour messaging present; no safety concerns."
+            }
+          ],
+          "rationale": "No provider details and evaluation isolation is explicit. Independent judge: Content is purely mathematical and includes no unsafe material; prerequisite consent and detour policies are explicit and appropriate.",
+          "uncertainty": 0.15,
+          "evaluator": "gateway_judge"
+        },
+        {
+          "dimension": "language_register",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "note": "Register matches the fixture language."
+            },
+            {
+              "moveId": "live_move_2_7919cc43",
+              "blockId": "live_block_2_45feb932",
+              "note": "Register matches the fixture language."
+            },
+            {
+              "moveId": "live_move_2_7919cc43",
+              "blockId": "live_block_2_45feb932",
+              "observationId": "live_obs_2",
+              "note": "Goal framing uses direct, timeboxed language appropriate to persona."
+            }
+          ],
+          "rationale": "Register matches the fixture language. Independent judge: Language is concise, instructional, and appropriate for a 'fast_confident' learner—clear exhortations, prompts, and brief explanations.",
+          "uncertainty": 0.15,
+          "evaluator": "gateway_judge"
+        },
+        {
+          "dimension": "operational_efficiency",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "live_move_1_cdc4b6d2",
+              "blockId": "live_block_1_2914cc99",
+              "note": "Cost 24979µUSD; retries 0; validation failures 0."
+            },
+            {
+              "moveId": "live_move_2_7919cc43",
+              "blockId": "live_block_2_45feb932",
+              "note": "Cost 24979µUSD; retries 0; validation failures 0."
+            },
+            {
+              "moveId": "live_move_3_39251e9a",
+              "blockId": "live_block_3_fa1f0a3a",
+              "observationId": "live_obs_3",
+              "note": "Block rendered and completed; usage entries show completed render requests and acceptable latencies."
+            },
+            {
+              "moveId": "live_move_4_8d194e56",
+              "blockId": "live_block_4_016c1634",
+              "observationId": "live_obs_4",
+              "note": "Predict-and-reveal executed as a short efficient interaction."
+            }
+          ],
+          "rationale": "Cost 24979µUSD; retries 0; validation failures 0. Independent judge: Moves are compact, clearly sequenced, and align with time constraints; usage logs show reasonable token/latency metrics for rendering each block.",
+          "uncertainty": 0.15,
+          "evaluator": "gateway_judge"
+        }
+      ],
+      "totalScore": 4.5,
+      "blockingFailures": [],
+      "warnings": [
+        "guess_confidence:Guess-first or confidence evidence is missing.",
+        "artifact_quality:No artifact proposal appears."
+      ]
+    }
+  ],
+  "comparison": null,
+  "gate": "warn",
+  "blockingFailures": [],
+  "warnings": [
+    "guess_confidence:Guess-first or confidence evidence is missing.",
+    "artifact_quality:No artifact proposal appears."
+  ],
+  "resume": {
+    "supported": true,
+    "stateFile": "/Volumes/Chris/Edrion Labs/packages/learn-evals/eval-runs/petros-quality/petros-stage5-live-preflight-v7.state.json",
+    "resumedSessions": 0
+  },
+  "isolation": {
+    "syntheticOnly": true,
+    "productionWrites": 0,
+    "analyticsSource": "evaluation"
+  }
+}

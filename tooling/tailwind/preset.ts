@@ -16,7 +16,7 @@ const stColors = [
   'page', 'card', 'cardAlt', 'surface2', 'bd1', 'bd2', 'divider', 'ink', 'inkSoft', 'muted', 'faint', 'faint2',
   'accent', 'accentDeep', 'accentSoft', 'accentSoft2', 'accentBd', 'accentLine', 'amber', 'amberSoft', 'amberBd', 'amberInk',
   'danger', 'dangerSoft', 'violet', 'violetSoft', 'blue', 'blueSoft', 'gold', 'goldSoftBg', 'goldBd', 'goldInk', 'mintBg',
-  'selection', 'success', 'sidebar',
+  'selection', 'success', 'sidebar', 'canvasGrid', 'canvasEdge', 'canvasAlternative', 'canvasMissing',
 ].reduce(
   (acc, key) => {
     acc[`st-${key}`] = `var(--st-${key})`;
@@ -44,9 +44,9 @@ const preset: Omit<Config, 'content'> = {
       fontFamily: {
         sans: ['var(--font-sans)'],
         mono: ['var(--font-mono)'],
-        display: ['Source Serif 4', 'Georgia', 'serif'],
-        body: ['Instrument Sans', 'system-ui', 'sans-serif'],
-        'mono-ui': ['IBM Plex Mono', 'ui-monospace', 'monospace'],
+        display: ['var(--font-display)'],
+        body: ['var(--font-body)'],
+        'mono-ui': ['var(--font-mono-ui)'],
       },
       fontSize: Object.fromEntries(
         Object.entries(fontSize).map(([k, [size, line]]) => [k, [size, { lineHeight: line }]]),

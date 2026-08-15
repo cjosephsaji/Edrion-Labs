@@ -99,19 +99,21 @@ export class PortalMockBanksService {
       throw new ForbiddenException({ code: 'FEATURE_DISABLED', message: 'Aggregates disabled' });
     }
 
-    const [{ count }] = await this.db
+    const [countRow] = await this.db
       .select({ count: sql<number>`count(distinct ${schema.mockExams.studentId})::int` })
       .from(schema.mockExams)
       .where(eq(schema.mockExams.institutionId, institutionId));
+    const count = countRow?.count ?? 0;
 
-    if ((count ?? 0) < settings.min_cohort_size) {
+    if (count < settings.min_cohort_size) {
       return { status: 'insufficient_cohort' as const, minCohortSize: settings.min_cohort_size };
     }
 
-    const [{ mocks }] = await this.db
+    const [mocksRow] = await this.db
       .select({ mocks: sql<number>`count(*)::int` })
       .from(schema.mockExams)
       .where(eq(schema.mockExams.institutionId, institutionId));
+    const mocks = mocksRow?.mocks ?? 0;
 
     const result: Record<string, unknown> = {
       status: 'ok',
@@ -132,14 +134,14 @@ export class PortalMockBanksService {
           AND a.results ? 'awardedMarks'
           AND a.status IN ('scored', 'graded', 'completed')
       `);
-      result.scoreDistribution = dist.rows?.[0] ?? dist[0] ?? null;
+      result.scoreDistribution = (dist as unknown as Record<string, unknown>[])[0] ?? null;
     }
 
     return result;
   }
 
   async itemPsychometrics(questionBankId: string) {
-    const [{ n }] = await this.db
+    const [nRow] = await this.db
       .select({ n: sql<number>`count(*)::int` })
       .from(schema.mockExamAnswers)
       .innerJoin(
@@ -147,12 +149,13 @@ export class PortalMockBanksService {
         eq(schema.mockExamQuestions.id, schema.mockExamAnswers.questionId),
       )
       .where(eq(schema.mockExamQuestions.questionBankId, questionBankId));
+    const n = nRow?.n ?? 0;
 
-    if ((n ?? 0) < MOCK_PSYCHOMETRIC_MIN_N) {
-      return { questionBankId, n: n ?? 0, p: null, avgTimeMs: null, effectiveBand: null };
+    if (n < MOCK_PSYCHOMETRIC_MIN_N) {
+      return { questionBankId, n, p: null, avgTimeMs: null, effectiveBand: null };
     }
 
-    const [{ p, avgMs }] = await this.db
+    const [statsRow] = await this.db
       .select({
         p: sql<number>`avg(case when (evaluation->>'awardedMarks')::float >= (evaluation->>'maxMarks')::float then 1.0 else 0.0 end)`,
         avgMs: sql<number>`avg(time_spent_ms)::int`,
@@ -164,13 +167,13 @@ export class PortalMockBanksService {
       )
       .where(eq(schema.mockExamQuestions.questionBankId, questionBankId));
 
-    const pVal = Number(p ?? 0);
+    const pVal = Number(statsRow?.p ?? 0);
     const effectiveBand = pVal > 0.75 ? 'easy' : pVal < 0.4 ? 'hard' : 'medium';
     return {
       questionBankId,
       n,
       p: pVal,
-      avgTimeMs: avgMs ?? null,
+      avgTimeMs: statsRow?.avgMs ?? null,
       effectiveBand,
     };
   }

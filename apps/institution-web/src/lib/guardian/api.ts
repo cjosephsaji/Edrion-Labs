@@ -42,6 +42,13 @@ export const api = {
       credentials: 'include',
       body: body === undefined ? undefined : JSON.stringify(body),
     }).then(handle<T>),
+  put: <T>(path: string, body?: unknown): Promise<T> =>
+    fetch(`${BASE}/parent${path}`, {
+      method: 'PUT',
+      headers: headers(),
+      credentials: 'include',
+      body: body === undefined ? undefined : JSON.stringify(body),
+    }).then(handle<T>),
 };
 
 export const money = (minor: number, currency = 'INR') =>

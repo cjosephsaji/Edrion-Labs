@@ -1,7 +1,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { and, eq, isNull } from 'drizzle-orm';
-import { authenticator } from 'otplib';
+import { generateSecret, generateURI, verifySync } from 'otplib';
 import { schema, type Database } from '@edrion/database';
 import type { InstitutionPrincipal } from '@edrion/auth';
 import { DATABASE } from '../../common/tokens';
@@ -38,7 +38,7 @@ export class MfaService {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
 
   async enrollBegin(principal: InstitutionPrincipal) {
-    const secret = authenticator.generateSecret();
+    const secret = generateSecret();
     const [row] = await this.db
       .insert(schema.mfaFactors)
       .values({
@@ -47,14 +47,14 @@ export class MfaService {
         label: 'Authenticator',
       })
       .returning();
-    const otpauth = authenticator.keyuri(principal.email, 'Edrion', secret);
+    const otpauth = generateURI({ issuer: 'Edrion', label: principal.email, secret });
     return { factorId: row!.id, otpauthUrl: otpauth, secret };
   }
 
   async enrollVerify(principal: InstitutionPrincipal, factorId: string, code: string) {
     const factor = await this.requireFactor(principal, factorId);
     const secret = openSecret(factor.secretEncrypted);
-    if (!authenticator.check(code, secret)) {
+    if (!verifySync({ token: code, secret }).valid) {
       throw new BadRequestException({ code: 'INVALID_CODE', message: 'Invalid authenticator code.' });
     }
     await this.db
@@ -83,7 +83,7 @@ export class MfaService {
       throw new BadRequestException({ code: 'MFA_NOT_ENROLLED', message: 'MFA not configured.' });
     }
     const secret = openSecret(factor.secretEncrypted);
-    if (!authenticator.check(code, secret)) {
+    if (!verifySync({ token: code, secret }).valid) {
       throw new BadRequestException({ code: 'INVALID_CODE', message: 'Invalid authenticator code.' });
     }
     return { aal: 'aal2' as const };

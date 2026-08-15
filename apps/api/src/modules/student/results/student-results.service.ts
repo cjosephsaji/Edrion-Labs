@@ -1,208 +1,87 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { and, desc, eq, gt, inArray, isNull, or, schema, sql, type Database } from '@edrion/database';
+import { and, desc, eq, schema, type Database } from '@edrion/database';
 import { DATABASE } from '../../../common/tokens';
-import { FeatureControlsService } from '../../feature-controls/feature-controls.service';
-import type { StudentPrincipal } from '../student.types';
-import { requireInstitutional } from '../surfaces/surface-gate.service';
+import type { InstitutionalStudentPrincipal } from '../student.types';
+import { SurfaceGateService } from '../surfaces/surface-gate.service';
 
 @Injectable()
 export class StudentResultsService {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
-    private readonly features: FeatureControlsService,
+    private readonly gate: SurfaceGateService,
   ) {}
 
-  async termResults(principal: StudentPrincipal, termId?: string) {
-    requireInstitutional(principal);
-    await this.assertResultsSurface(principal);
+  async list(principal: InstitutionalStudentPrincipal) {
+    await this.gate.assertSurface(principal, 'results');
 
-    const resolvedTermId = termId ?? (await this.currentTermId(principal.institutionId));
-    if (!resolvedTermId) throw new NotFoundException({ code: 'TERM_NOT_FOUND', message: 'No term found.' });
-
-    const [row] = await this.db
+    const [termResult] = await this.db
       .select()
       .from(schema.studentTermResults)
-      .where(
-        and(
-          eq(schema.studentTermResults.studentId, principal.studentId),
-          eq(schema.studentTermResults.termId, resolvedTermId),
-        ),
-      )
+      .where(eq(schema.studentTermResults.studentId, principal.studentId))
+      .orderBy(desc(schema.studentTermResults.computedAt))
       .limit(1);
 
-    if (!row) {
-      return { term_id: resolvedTermId, subjects: [], term_gpa: null, term_pct: null, is_complete: false, features: await this.featuresPayload(principal) };
-    }
-
-    const showAverage = await this.showClassAverage(principal.institutionId);
-    const scheme = await this.schemePayload(principal.institutionId, row.schemeId, row.schemeVersion);
-    const subjects = (row.subjects as Array<Record<string, unknown>>).map((subject) => {
-      if (!showAverage) {
-        const { class_avg_pct: _removed, ...rest } = subject;
-        return rest;
-      }
-      return subject;
-    });
-
-    return {
-      term_id: row.termId,
-      scheme_id: row.schemeId,
-      scheme_version: row.schemeVersion,
-      scheme,
-      subjects,
-      term_gpa: row.termGpa,
-      term_pct: row.termPct,
-      credits_earned: row.creditsEarned,
-      credits_total: row.creditsTotal,
-      is_complete: row.isComplete,
-      computed_at: row.computedAt.toISOString(),
-      features: await this.featuresPayload(principal),
-    };
-  }
-
-  async componentDetail(
-    principal: StudentPrincipal,
-    subjectId: string,
-    termId: string,
-    cursor?: string,
-    limit = 20,
-  ) {
-    requireInstitutional(principal);
-    await this.assertResultsSurface(principal);
-
-    const conditions = [
-      eq(schema.gradeEntries.studentId, principal.studentId),
-      eq(schema.gradeEntries.subjectId, subjectId),
-      eq(schema.gradeEntries.termId, termId),
-      eq(schema.gradeEntries.published, true),
-    ];
-    if (cursor) {
-      const [at, id] = cursor.split('|');
-      conditions.push(
-        or(
-          gt(schema.gradeEntries.updatedAt, new Date(at!)),
-          and(eq(schema.gradeEntries.updatedAt, new Date(at!)), gt(schema.gradeEntries.id, id!)),
-        )!,
-      );
+    if (termResult) {
+      const subjects = (termResult.subjects as Array<Record<string, unknown>>) ?? [];
+      return {
+        items: subjects.map((s, idx) => ({
+          id: String(s.subject_id ?? idx),
+          subjectName: s.subject_name ?? s.subjectName ?? 'Subject',
+          marksObtained: s.marks_obtained ?? s.marksObtained ?? null,
+          maxMarks: s.max_marks ?? s.maxMarks ?? null,
+          letterGrade: s.letter_grade ?? s.letterGrade ?? null,
+          termGpa: termResult.termGpa,
+          termPct: termResult.termPct,
+        })),
+        termId: termResult.termId,
+        computedAt: termResult.computedAt.toISOString(),
+      };
     }
 
     const rows = await this.db
       .select({
         id: schema.gradeEntries.id,
-        assessment_name: schema.gradeEntries.assessmentName,
-        marks_obtained: schema.gradeEntries.marksObtained,
-        max_marks: schema.gradeEntries.maxMarks,
-        letter_grade: schema.gradeEntries.letterGrade,
-        updated_at: schema.gradeEntries.updatedAt,
+        assessmentName: schema.gradeEntries.assessmentName,
+        marksObtained: schema.gradeEntries.marksObtained,
+        maxMarks: schema.gradeEntries.maxMarks,
+        letterGrade: schema.gradeEntries.letterGrade,
+        subject: schema.subjects.name,
+        examName: schema.exams.name,
       })
       .from(schema.gradeEntries)
-      .where(and(...conditions))
-      .orderBy(schema.gradeEntries.updatedAt, schema.gradeEntries.id)
-      .limit(limit + 1);
-
-    const page = rows.slice(0, limit);
-    const next = rows.length > limit ? rows[limit] : null;
-    const revisions = page.length
-      ? await this.db
-          .select()
-          .from(schema.markRevisions)
-          .where(
-            and(
-              eq(schema.markRevisions.studentId, principal.studentId),
-              inArray(
-                schema.markRevisions.gradeEntryId,
-                page.map((entry) => entry.id),
-              ),
-            ),
-          )
-      : [];
+      .leftJoin(schema.subjects, eq(schema.subjects.id, schema.gradeEntries.subjectId))
+      .leftJoin(schema.exams, eq(schema.exams.id, schema.gradeEntries.examId))
+      .where(and(eq(schema.gradeEntries.studentId, principal.studentId), eq(schema.gradeEntries.published, true)))
+      .orderBy(desc(schema.gradeEntries.createdAt));
 
     return {
-      items: page.map((entry) => ({
-        ...entry,
-        revisions: revisions.filter((rev) => rev.gradeEntryId === entry.id),
+      items: rows.map((r) => ({
+        id: r.id,
+        subjectName: r.subject ?? r.assessmentName,
+        title: r.examName ?? r.assessmentName,
+        marksObtained: r.marksObtained,
+        maxMarks: r.maxMarks,
+        letterGrade: r.letterGrade,
       })),
-      next_cursor: next ? `${next.updated_at.toISOString()}|${next.id}` : null,
+      termId: null,
+      computedAt: null,
     };
   }
 
-  async cgpa(principal: StudentPrincipal) {
-    requireInstitutional(principal);
-    await this.assertResultsSurface(principal);
-
-    const rows = await this.db
-      .select()
-      .from(schema.studentCgpaSnapshots)
-      .where(eq(schema.studentCgpaSnapshots.studentId, principal.studentId))
-      .orderBy(desc(schema.studentCgpaSnapshots.computedAt))
-      .limit(1);
-    return rows[0] ?? null;
-  }
-
-  private async assertResultsSurface(principal: Extract<StudentPrincipal, { kind: 'institutional' }>) {
-    const resolved = await this.features.resolveByKey('student.surface.results', {
-      institutionId: principal.institutionId,
-      campusId: principal.campusId ?? undefined,
-      institutionUserId: principal.institutionUserId,
-    });
-    if (!resolved.value) {
-      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Not found.' });
-    }
-  }
-
-  private async currentTermId(institutionId: string) {
-    const [term] = await this.db
-      .select({ id: schema.academicTerms.id })
-      .from(schema.academicTerms)
-      .where(and(eq(schema.academicTerms.institutionId, institutionId), eq(schema.academicTerms.isCurrent, true)))
-      .limit(1);
-    if (term) return term.id;
-    const [fallback] = await this.db
-      .select({ id: schema.academicTerms.id })
-      .from(schema.academicTerms)
-      .where(eq(schema.academicTerms.institutionId, institutionId))
-      .orderBy(desc(schema.academicTerms.startDate))
-      .limit(1);
-    return fallback?.id ?? null;
-  }
-
-  private async showClassAverage(institutionId: string) {
+  async detail(principal: InstitutionalStudentPrincipal, entryId: string) {
+    await this.gate.assertSurface(principal, 'results');
     const [row] = await this.db
       .select()
-      .from(schema.institutionSettings)
+      .from(schema.gradeEntries)
       .where(
         and(
-          eq(schema.institutionSettings.institutionId, institutionId),
-          eq(schema.institutionSettings.key, 'results.show_class_average'),
+          eq(schema.gradeEntries.id, entryId),
+          eq(schema.gradeEntries.studentId, principal.studentId),
+          eq(schema.gradeEntries.published, true),
         ),
       )
       .limit(1);
-    return row?.value !== 'false';
-  }
-
-  private async featuresPayload(principal: Extract<StudentPrincipal, { kind: 'institutional' }>) {
-    const whatif = await this.features.resolveByKey('student.results.whatif', {
-      institutionId: principal.institutionId,
-      campusId: principal.campusId ?? undefined,
-      institutionUserId: principal.institutionUserId,
-    });
-    return { whatif: whatif.value };
-  }
-
-  private async schemePayload(institutionId: string, schemeId: string, schemeVersion: number) {
-    const [version] = await this.db
-      .select()
-      .from(schema.gradingSchemeVersions)
-      .where(
-        and(
-          eq(schema.gradingSchemeVersions.schemeId, schemeId),
-          eq(schema.gradingSchemeVersions.version, schemeVersion),
-          eq(schema.gradingSchemeVersions.institutionId, institutionId),
-        ),
-      )
-      .limit(1);
-    const snap = version?.snapshot as { kind?: string; bands?: unknown; gpa_formula?: string } | undefined;
-    if (!snap) return null;
-    return { kind: snap.kind, bands: snap.bands, gpa_formula: snap.gpa_formula };
+    if (!row) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Result not found' });
+    return row;
   }
 }

@@ -187,6 +187,27 @@ export const createFlashcardSchema = z.object({
   sourcePage: z.number().int().positive().optional(),
 });
 
+/**
+ * Canvas cards remain proposals until this payload is submitted. The API
+ * re-checks that every source node still belongs to the canvas. Shaky state is
+ * recorded by the existing revision queue and may not yet be reflected in the
+ * autosaved graph while the device is offline.
+ */
+export const visualFlashcardConfirmationSchema = z.object({
+  title: z.string().min(1).max(200),
+  cards: z
+    .array(
+      z.object({
+        nodeId: z.string().min(1).max(120),
+        prompt: z.string().min(1).max(2000),
+        answer: z.string().min(1).max(4000),
+      }),
+    )
+    .min(1)
+    .max(24),
+  clientMutationId: z.string().uuid(),
+});
+
 export const deckFromSessionSchema = z.object({
   sessionId: z.string().uuid(),
 });
@@ -278,6 +299,9 @@ export type CreateKnowledgeItemInput = z.infer<typeof createKnowledgeItemSchema>
 export type LibraryOverviewDto = z.infer<typeof libraryOverviewSchema>;
 export type ConceptMapContent = z.infer<typeof conceptMapContentSchema>;
 export type GlossaryContent = z.infer<typeof glossaryContentSchema>;
+export type VisualFlashcardConfirmationInput = z.infer<
+  typeof visualFlashcardConfirmationSchema
+>;
 export type LibraryTutorInput = z.infer<typeof libraryTutorInputSchema>;
 export type QuizAttemptResult = z.infer<typeof quizAttemptResultSchema>;
 export type KnowledgeItemStatus = z.infer<typeof knowledgeItemStatusSchema>;

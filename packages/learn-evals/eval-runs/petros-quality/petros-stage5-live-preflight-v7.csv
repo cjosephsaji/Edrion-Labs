@@ -1,0 +1,2 @@
+run_id,case_id,topic,persona,total_score,gate,cost_micros,latency_ms
+petros-stage5-live-preflight-v7,pq-01-integration-by-parts,topic:integration-by-parts,fast_confident,4.5,warn,31248,162319

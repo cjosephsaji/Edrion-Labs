@@ -104,7 +104,7 @@ export function UserAccessPanel({
   function getGroupOverrideState(defs: PermissionDef[]): GroupOverrideState {
     if (defs.length === 0) return 'inherit';
     const states = defs.map((p) => overrides.get(p.key) ?? 'inherit');
-    const first = states[0];
+    const first: OverrideState = states[0] ?? 'inherit';
     return states.every((s) => s === first) ? first : 'mixed';
   }
 

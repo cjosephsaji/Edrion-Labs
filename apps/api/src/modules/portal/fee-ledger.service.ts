@@ -188,6 +188,32 @@ export class FeeLedgerService {
     return{...this.intentResponse({...intent,status:'settled'},false),receipt:result.receipt};
   }
 
+  /** Dev/mock checkout completion — never available for live providers. */
+  async completeMockStudentIntent(principal: InstitutionalStudentPrincipal, id: string) {
+    const [intent] = await this.db
+      .select()
+      .from(schema.parentPaymentIntents)
+      .where(
+        and(
+          eq(schema.parentPaymentIntents.id, id),
+          eq(schema.parentPaymentIntents.institutionId, principal.institutionId),
+          eq(schema.parentPaymentIntents.studentUserId, principal.institutionUserId),
+        ),
+      )
+      .limit(1);
+    if (!intent) throw new NotFoundException({ code: 'INTENT_NOT_FOUND', message: 'Payment intent not found.' });
+    if (intent.provider !== 'mock') {
+      throw new BadRequestException({
+        code: 'MOCK_CHECKOUT_UNAVAILABLE',
+        message: 'Mock checkout is only available for the mock payment provider.',
+      });
+    }
+    if (intent.status === 'settled') return { ...this.intentResponse(intent, true), receipt: null };
+    const paymentId = `mock_pay_${randomUUID()}`;
+    const result = await this.settleVerifiedIntent(intent, paymentId);
+    return { ...this.intentResponse({ ...intent, status: 'settled' }, false), receipt: result.receipt };
+  }
+
   async recordDeskPayment(ctx: PortalActionContext, input: RecordDeskFeePaymentInput, key?: string) {
     if (!key) throw new BadRequestException({ code: 'IDEMPOTENCY_KEY_REQUIRED', message: 'Idempotency-Key is required.' });
     const replay = await this.idempotency.run(key, 'fee_desk_payment', () => this.allocateAndReceipt({

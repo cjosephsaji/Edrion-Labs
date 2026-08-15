@@ -209,6 +209,20 @@ export type {
   NewAiConfirmation,
   AiApproval,
   NewAiApproval,
+  PetrosAiProvider,
+  NewPetrosAiProvider,
+  PetrosAiModel,
+  NewPetrosAiModel,
+  PetrosAiFunction,
+  NewPetrosAiFunction,
+  PetrosAiFunctionRoute,
+  NewPetrosAiFunctionRoute,
+  PetrosAiRoutingRule,
+  NewPetrosAiRoutingRule,
+  PetrosAiFunctionVersion,
+  PetrosAiUsageEvent,
+  NewPetrosAiUsageEvent,
+  PetrosAiBudgetPolicy,
   PlatformEmployee,
   NewPlatformEmployee,
   PlatformRole,
@@ -305,6 +319,7 @@ export type {
   NewVisualCanvas,
   VisualCanvasRevision,
   VisualManualReason,
+  AttendanceForecast,
 } from './schema/index';
 export { sql, eq, and, or, desc, asc, ilike, inArray, notInArray, count, gte, lte, lt, gt, isNull, isNotNull } from 'drizzle-orm';
 export { personSqlName } from './person-name';

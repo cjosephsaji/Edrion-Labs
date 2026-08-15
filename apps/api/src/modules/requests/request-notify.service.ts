@@ -112,13 +112,13 @@ export class RequestNotifyService implements OnModuleInit {
                   html: `<p>${escapeHtml(payload.body)}</p><p><a href="${escapeHtml(payload.deepLink)}">Open request</a></p>`,
                 })
                 .catch(() => undefined) : Promise.resolve(),
-              recipient.kind === 'student'
+              recipient.kind === 'student' && request.studentId
                 ? this.todayNotify.dispatch({
                     kind: 'institutional',
                     institutionId: request.institutionId,
                     campusId: request.campusId,
                     institutionUserId: recipient.id,
-                    studentId: request.studentId,
+                    studentId: request.studentId as string,
                     email: recipient.email ?? '',
                     fullName: '',
                     lastAuthAt: null,
@@ -198,6 +198,7 @@ export class RequestNotifyService implements OnModuleInit {
     eventType: string,
   ): Promise<Array<{ id: string; email: string | null; kind: 'student' | 'staff' }>> {
     if (['info_requested', 'approved', 'fulfilled', 'rejected', 'expired'].includes(eventType)) {
+      if (!request.studentId) return [];
       const [student] = await this.db
         .select({ id: schema.students.institutionUserId, email: schema.institutionUsers.email })
         .from(schema.students)
@@ -218,7 +219,7 @@ export class RequestNotifyService implements OnModuleInit {
         .limit(1);
       return user?.id ? [{ id: user.id, email: user.email ?? null, kind: 'staff' }] : [];
     }
-    if (request.type === 'leave_request' && request.assignedRole === 'teacher') {
+    if (request.type === 'leave_request' && request.assignedRole === 'teacher' && request.studentId) {
       const [teacher] = await this.db
         .select({ id: schema.institutionUsers.id, email: schema.institutionUsers.email })
         .from(schema.students)

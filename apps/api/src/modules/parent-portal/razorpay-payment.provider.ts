@@ -10,9 +10,9 @@ export class RazorpayPaymentProvider implements PaymentProvider {
   readonly key = 'razorpay';
   constructor(@Inject(API_ENV) private readonly env: ApiEnv) {}
 
-  clientConfig(): { keyId: string } {
+  clientConfig(): { keyId: string; mode: 'razorpay' } {
     if (!this.env.RAZORPAY_KEY_ID) throw new ServiceUnavailableException({ code: 'PAYMENT_PROVIDER_NOT_CONFIGURED', message: 'Razorpay credentials are not configured.' });
-    return { keyId: this.env.RAZORPAY_KEY_ID };
+    return { keyId: this.env.RAZORPAY_KEY_ID, mode: 'razorpay' };
   }
 
   async createIntent(args: CreateIntentArgs): Promise<CreatedIntent> {

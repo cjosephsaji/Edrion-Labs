@@ -1,5 +1,5 @@
 'use client';
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PortalClientError } from './portal-client';
 import { usePortalClient } from './portal-client';
 import { useScope } from './scope';

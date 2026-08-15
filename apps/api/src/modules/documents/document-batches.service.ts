@@ -1,6 +1,6 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
-import { createDocumentBatchSchema, reportCardReissueSchema, computeTermAggregate, presetSnapshot } from '@edrion/schemas';
+import { createDocumentBatchSchema, reportCardReissueSchema, computeSchemeTermAggregate, presetSnapshot } from '@edrion/schemas';
 import { schema, type Database } from '@edrion/database';
 import { DATABASE } from '../../common/tokens';
 import type { PortalActionContext } from '../portal/portal-action-context';
@@ -19,9 +19,9 @@ export class DocumentBatchesService {
       .insert(schema.documentBatches)
       .values({
         institutionId: ctx.principal.institutionId,
-        campusId: input.campus_id ?? campusIdFromScope(ctx.scope),
+        campusId: input.campusId ?? campusIdFromScope(ctx.scope),
         kind: input.kind,
-        templateId: input.template_id ?? null,
+        templateId: input.templateId ?? null,
         scope: input.scope,
         status: 'draft',
         createdBy: ctx.principal.institutionUserId,
@@ -87,14 +87,14 @@ export class DocumentBatchesService {
       .innerJoin(schema.documentBatches, eq(schema.documentBatches.id, schema.documentBatchItems.batchId))
       .where(
         and(
-          eq(schema.documentBatchItems.id, input.batch_item_id),
+          eq(schema.documentBatchItems.id, input.batchItemId),
           eq(schema.documentBatches.institutionId, ctx.principal.institutionId),
         ),
       )
       .limit(1);
     const row = rows[0];
-    if (!row?.item.vaultId) throw new NotFoundException({ code: 'NO_VAULT' });
-    return { ok: true, batchItemId: row.item.id, vaultId: row.item.vaultId, reason: input.reason };
+    if (!row?.item.vaultDocumentId) throw new NotFoundException({ code: 'NO_VAULT' });
+    return { ok: true, batchItemId: row.item.id, vaultId: row.item.vaultDocumentId, reason: input.reason };
   }
 
   previewTermAggregate(
@@ -106,6 +106,6 @@ export class DocumentBatchesService {
       open_weight_pct: number;
     }>,
   ) {
-    return computeTermAggregate(presetSnapshot('points_10'), standings);
+    return computeSchemeTermAggregate(presetSnapshot('points_10'), standings);
   }
 }

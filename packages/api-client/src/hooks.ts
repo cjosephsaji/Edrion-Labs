@@ -1,13 +1,13 @@
-'use client';
+"use client";
 import {
   useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
   type UseQueryOptions,
-} from '@tanstack/react-query';
-import { qs } from './client';
-import { useApiClient } from './provider';
+} from "@tanstack/react-query";
+import { qs } from "./client";
+import { useApiClient } from "./provider";
 import type {
   AccessPreviewDto,
   CampusChargeBreakdownDto,
@@ -78,65 +78,99 @@ import type {
   RegistrationDetailDto,
   RegistrationRequestDto,
   RegistrationApprovalResultDto,
-} from './types';
+  PetrosAiOverviewDto,
+  PetrosAiProviderDto,
+  PetrosAiFunctionDto,
+  PetrosAiFunctionSettingsDto,
+  PetrosAiRoutingRuleDto,
+  PetrosAiUsageSummaryDto,
+  PetrosAiBudgetPolicyDto,
+  PetrosAiModelDto,
+  PetrosRoutePreviewDto,
+  PetrosDecisionDiagnosticDto,
+  PetrosObservationDiagnosticDto,
+  PetrosTopicProfileDto,
+  PetrosTopicProfileContentDto,
+  PetrosQualityRunDto,
+  PetrosQualityRunDetailDto,
+  PetrosLearnerDiagnosticDto,
+  PetrosLearnerSourceSyncDto,
+} from "./types";
 
 /** A fresh idempotency key for a financial mutation. */
 function newIdemKey(): string {
-  return (globalThis.crypto?.randomUUID?.() ?? `idem-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `idem-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
 }
 
 export const queryKeys = {
-  me: ['me'] as const,
-  institutions: (params: Record<string, unknown>) => ['institutions', params] as const,
-  institutionsSummary: ['institutions', 'summary'] as const,
-  institution: (id: string) => ['institutions', id] as const,
-  supportSessions: (params: Record<string, unknown>) => ['support-sessions', params] as const,
-  supportSession: (id: string) => ['support-sessions', id] as const,
-  institutionUsers: (params: Record<string, unknown>) => ['institution-users', params] as const,
+  me: ["me"] as const,
+  institutions: (params: Record<string, unknown>) =>
+    ["institutions", params] as const,
+  institutionsSummary: ["institutions", "summary"] as const,
+  institution: (id: string) => ["institutions", id] as const,
+  supportSessions: (params: Record<string, unknown>) =>
+    ["support-sessions", params] as const,
+  supportSession: (id: string) => ["support-sessions", id] as const,
+  institutionUsers: (params: Record<string, unknown>) =>
+    ["institution-users", params] as const,
   institutionUsersSummary: (institutionId?: string) =>
-    ['institution-users', 'summary', institutionId ?? 'all'] as const,
-  institutionUser: (id: string) => ['institution-users', id] as const,
-  independentUsers: (params: Record<string, unknown>) => ['independent-users', params] as const,
-  independentUser: (id: string) => ['independent-users', id] as const,
-  employees: (params: Record<string, unknown>) => ['employees', params] as const,
-  employee: (id: string) => ['employees', id] as const,
-  platformRoles: ['platform-roles'] as const,
-  permissionCatalogue: ['platform-roles', 'permissions'] as const,
-  webhookEndpoints: (params: Record<string, unknown>) => ['integrations', params] as const,
-  webhookEndpoint: (id: string) => ['integrations', id] as const,
-  supportCases: (params: Record<string, unknown>) => ['support-cases', params] as const,
-  supportCase: (id: string) => ['support-cases', id] as const,
-  plans: (params: Record<string, unknown>) => ['plans', params] as const,
-  plansSummary: ['plans', 'summary'] as const,
-  plan: (id: string) => ['plans', id] as const,
-  subscriptions: (params: Record<string, unknown>) => ['subscriptions', params] as const,
+    ["institution-users", "summary", institutionId ?? "all"] as const,
+  institutionUser: (id: string) => ["institution-users", id] as const,
+  independentUsers: (params: Record<string, unknown>) =>
+    ["independent-users", params] as const,
+  independentUser: (id: string) => ["independent-users", id] as const,
+  employees: (params: Record<string, unknown>) =>
+    ["employees", params] as const,
+  employee: (id: string) => ["employees", id] as const,
+  platformRoles: ["platform-roles"] as const,
+  permissionCatalogue: ["platform-roles", "permissions"] as const,
+  webhookEndpoints: (params: Record<string, unknown>) =>
+    ["integrations", params] as const,
+  webhookEndpoint: (id: string) => ["integrations", id] as const,
+  supportCases: (params: Record<string, unknown>) =>
+    ["support-cases", params] as const,
+  supportCase: (id: string) => ["support-cases", id] as const,
+  plans: (params: Record<string, unknown>) => ["plans", params] as const,
+  plansSummary: ["plans", "summary"] as const,
+  plan: (id: string) => ["plans", id] as const,
+  subscriptions: (params: Record<string, unknown>) =>
+    ["subscriptions", params] as const,
   subscriptionsSummary: (institutionId?: string) =>
-    ['subscriptions', 'summary', institutionId ?? 'all'] as const,
-  subscription: (id: string) => ['subscriptions', id] as const,
+    ["subscriptions", "summary", institutionId ?? "all"] as const,
+  subscription: (id: string) => ["subscriptions", id] as const,
   subscriptionByInstitution: (institutionId: string) =>
-    ['subscriptions', 'by-institution', institutionId] as const,
-  invoices: (params: Record<string, unknown>) => ['invoices', params] as const,
-  invoice: (id: string) => ['invoices', id] as const,
-  payments: (params: Record<string, unknown>) => ['payments', params] as const,
-  credits: (params: Record<string, unknown>) => ['credits', params] as const,
-  discounts: (params: Record<string, unknown>) => ['discounts', params] as const,
-  billingSummary: (institutionId: string) => ['billing', 'summary', institutionId] as const,
-  entitlements: (institutionId: string) => ['entitlements', institutionId] as const,
-  features: (params: Record<string, unknown>) => ['features', params] as const,
-  featuresSummary: ['features', 'summary'] as const,
-  feature: (id: string) => ['features', id] as const,
+    ["subscriptions", "by-institution", institutionId] as const,
+  invoices: (params: Record<string, unknown>) => ["invoices", params] as const,
+  invoice: (id: string) => ["invoices", id] as const,
+  payments: (params: Record<string, unknown>) => ["payments", params] as const,
+  credits: (params: Record<string, unknown>) => ["credits", params] as const,
+  discounts: (params: Record<string, unknown>) =>
+    ["discounts", params] as const,
+  billingSummary: (institutionId: string) =>
+    ["billing", "summary", institutionId] as const,
+  entitlements: (institutionId: string) =>
+    ["entitlements", institutionId] as const,
+  features: (params: Record<string, unknown>) => ["features", params] as const,
+  featuresSummary: ["features", "summary"] as const,
+  feature: (id: string) => ["features", id] as const,
   featureResolve: (id: string, ctx: Record<string, unknown>) =>
-    ['features', id, 'resolve', ctx] as const,
-  registrationRequests: (params: Record<string, unknown>) => ['registration-requests', params] as const,
-  registrationSummary: ['registration-requests', 'summary'] as const,
-  registrationRequest: (id: string) => ['registration-requests', id] as const,
+    ["features", id, "resolve", ctx] as const,
+  registrationRequests: (params: Record<string, unknown>) =>
+    ["registration-requests", params] as const,
+  registrationSummary: ["registration-requests", "summary"] as const,
+  registrationRequest: (id: string) => ["registration-requests", id] as const,
 };
 
-export function useCurrentEmployee(options?: Partial<UseQueryOptions<CurrentEmployee>>) {
+export function useCurrentEmployee(
+  options?: Partial<UseQueryOptions<CurrentEmployee>>,
+) {
   const client = useApiClient();
   return useQuery({
     queryKey: queryKeys.me,
-    queryFn: () => client.get<CurrentEmployee>('/auth/me'),
+    queryFn: () => client.get<CurrentEmployee>("/auth/me"),
     staleTime: 5 * 60 * 1000,
     ...options,
   });
@@ -148,7 +182,7 @@ export function useLogin() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: { accessToken?: string; email?: string }) =>
-      client.post<{ authenticated: true }>('/auth/login', input),
+      client.post<{ authenticated: true }>("/auth/login", input),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.me });
     },
@@ -164,7 +198,7 @@ export function useReauth() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: { accessToken?: string; confirm?: true }) =>
-      client.post<{ reauthenticated: true }>('/auth/reauth', input),
+      client.post<{ reauthenticated: true }>("/auth/reauth", input),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.me });
     },
@@ -176,7 +210,7 @@ export function useLogout() {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => client.post<{ loggedOut: true }>('/auth/logout'),
+    mutationFn: () => client.post<{ loggedOut: true }>("/auth/logout"),
     onSuccess: () => {
       qc.clear();
     },
@@ -190,7 +224,7 @@ export interface IndependentUsersFilter {
   page?: number;
   pageSize?: number;
   sortBy?: string;
-  sortDir?: 'asc' | 'desc';
+  sortDir?: "asc" | "desc";
 }
 
 export function useIndependentUsers(filter: IndependentUsersFilter) {
@@ -198,7 +232,8 @@ export function useIndependentUsers(filter: IndependentUsersFilter) {
   const params = filter as Record<string, unknown>;
   return useQuery({
     queryKey: queryKeys.independentUsers(params),
-    queryFn: () => client.get<IndependentUserList>(`/independent-users${qs(params)}`),
+    queryFn: () =>
+      client.get<IndependentUserList>(`/independent-users${qs(params)}`),
     placeholderData: (prev) => prev,
   });
 }
@@ -212,19 +247,26 @@ export function useIndependentUser(id: string) {
   });
 }
 
-export type IndependentUserAction = 'disable' | 'restore';
+export type IndependentUserAction = "disable" | "restore";
 
 export function useIndependentUserStatusAction(id: string) {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (vars: { action: IndependentUserAction; reason: string; version: number }) =>
-      client.post<IndependentUserDto>(`/independent-users/${id}/${vars.action}`, {
-        reason: vars.reason,
-        version: vars.version,
-      }),
+    mutationFn: (vars: {
+      action: IndependentUserAction;
+      reason: string;
+      version: number;
+    }) =>
+      client.post<IndependentUserDto>(
+        `/independent-users/${id}/${vars.action}`,
+        {
+          reason: vars.reason,
+          version: vars.version,
+        },
+      ),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['independent-users'] });
+      void qc.invalidateQueries({ queryKey: ["independent-users"] });
     },
   });
 }
@@ -238,7 +280,7 @@ export interface EmployeesFilter {
   page?: number;
   pageSize?: number;
   sortBy?: string;
-  sortDir?: 'asc' | 'desc';
+  sortDir?: "asc" | "desc";
 }
 
 export function useEmployees(filter: EmployeesFilter) {
@@ -265,8 +307,8 @@ export function useCreateEmployee() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: { email: string; fullName: string; title?: string }) =>
-      client.post<EmployeeDto>('/employees', input),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['employees'] }),
+      client.post<EmployeeDto>("/employees", input),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["employees"] }),
   });
 }
 
@@ -274,24 +316,31 @@ export function useUpdateEmployee(id: string) {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { fullName?: string; title?: string | null; version: number }) =>
-      client.patch<EmployeeDto>(`/employees/${id}`, input),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['employees'] }),
+    mutationFn: (input: {
+      fullName?: string;
+      title?: string | null;
+      version: number;
+    }) => client.patch<EmployeeDto>(`/employees/${id}`, input),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["employees"] }),
   });
 }
 
-export type EmployeeStatusAction = 'disable' | 'restore';
+export type EmployeeStatusAction = "disable" | "restore";
 
 export function useEmployeeStatusAction(id: string) {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (vars: { action: EmployeeStatusAction; reason: string; version: number }) =>
+    mutationFn: (vars: {
+      action: EmployeeStatusAction;
+      reason: string;
+      version: number;
+    }) =>
       client.post<EmployeeDto>(`/employees/${id}/${vars.action}`, {
         reason: vars.reason,
         version: vars.version,
       }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['employees'] }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["employees"] }),
   });
 }
 
@@ -300,9 +349,12 @@ export function useAssignRoles(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: { roleIds: string[]; reason: string }) =>
-      client.post<{ roles: PlatformRoleList['items'] }>(`/employees/${id}/roles`, input),
+      client.post<{ roles: PlatformRoleList["items"] }>(
+        `/employees/${id}/roles`,
+        input,
+      ),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['employees'] });
+      void qc.invalidateQueries({ queryKey: ["employees"] });
       void qc.invalidateQueries({ queryKey: queryKeys.platformRoles });
     },
   });
@@ -314,7 +366,7 @@ export function usePlatformRoles() {
   const client = useApiClient();
   return useQuery({
     queryKey: queryKeys.platformRoles,
-    queryFn: () => client.get<PlatformRoleList>('/platform-roles'),
+    queryFn: () => client.get<PlatformRoleList>("/platform-roles"),
   });
 }
 
@@ -322,7 +374,8 @@ export function usePermissionCatalogue() {
   const client = useApiClient();
   return useQuery({
     queryKey: queryKeys.permissionCatalogue,
-    queryFn: () => client.get<PermissionCatalogue>('/platform-roles/permissions'),
+    queryFn: () =>
+      client.get<PermissionCatalogue>("/platform-roles/permissions"),
     staleTime: 10 * 60 * 1000,
   });
 }
@@ -342,7 +395,8 @@ export function useWebhookEndpoints(filter: WebhookEndpointsFilter) {
   const params = filter as Record<string, unknown>;
   return useQuery({
     queryKey: queryKeys.webhookEndpoints(params),
-    queryFn: () => client.get<WebhookEndpointList>(`/integrations${qs(params)}`),
+    queryFn: () =>
+      client.get<WebhookEndpointList>(`/integrations${qs(params)}`),
     placeholderData: (prev) => prev,
   });
 }
@@ -360,9 +414,13 @@ export function useCreateEndpoint() {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { url: string; events: string[]; institutionId?: string; description?: string }) =>
-      client.post<WebhookEndpointDto>('/integrations', input),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['integrations'] }),
+    mutationFn: (input: {
+      url: string;
+      events: string[];
+      institutionId?: string;
+      description?: string;
+    }) => client.post<WebhookEndpointDto>("/integrations", input),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["integrations"] }),
   });
 }
 
@@ -377,7 +435,7 @@ export function useUpdateEndpoint(id: string) {
       description?: string | null;
       version: number;
     }) => client.patch<WebhookEndpointDto>(`/integrations/${id}`, input),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['integrations'] }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["integrations"] }),
   });
 }
 
@@ -386,8 +444,11 @@ export function useRotateSecret(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: { reason: string; version: number }) =>
-      client.post<WebhookEndpointDto>(`/integrations/${id}/rotate-secret`, input),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['integrations'] }),
+      client.post<WebhookEndpointDto>(
+        `/integrations/${id}/rotate-secret`,
+        input,
+      ),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["integrations"] }),
   });
 }
 
@@ -397,7 +458,8 @@ export function useTestDelivery(id: string) {
   return useMutation({
     mutationFn: (input: { eventType?: string }) =>
       client.post<TestDeliveryResultDto>(`/integrations/${id}/test`, input),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: queryKeys.webhookEndpoint(id) }),
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: queryKeys.webhookEndpoint(id) }),
   });
 }
 
@@ -410,7 +472,7 @@ export interface SupportCasesFilter {
   page?: number;
   pageSize?: number;
   sortBy?: string;
-  sortDir?: 'asc' | 'desc';
+  sortDir?: "asc" | "desc";
 }
 
 export function useSupportCases(filter: SupportCasesFilter) {
@@ -436,8 +498,9 @@ export function useCreateSupportCase() {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: Record<string, unknown>) => client.post<SupportCaseDto>('/support-cases', input),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['support-cases'] }),
+    mutationFn: (input: Record<string, unknown>) =>
+      client.post<SupportCaseDto>("/support-cases", input),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["support-cases"] }),
   });
 }
 
@@ -447,7 +510,8 @@ export function useAddSupportMessage(id: string) {
   return useMutation({
     mutationFn: (input: { body: string; internal: boolean }) =>
       client.post<SupportMessageDto>(`/support-cases/${id}/messages`, input),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: queryKeys.supportCase(id) }),
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: queryKeys.supportCase(id) }),
   });
 }
 
@@ -455,10 +519,13 @@ export function useChangeSupportCaseStatus(id: string) {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { status: string; resolution?: string; reason: string }) =>
-      client.post<SupportCaseDto>(`/support-cases/${id}/status`, input),
+    mutationFn: (input: {
+      status: string;
+      resolution?: string;
+      reason: string;
+    }) => client.post<SupportCaseDto>(`/support-cases/${id}/status`, input),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['support-cases'] });
+      void qc.invalidateQueries({ queryKey: ["support-cases"] });
     },
   });
 }
@@ -471,7 +538,7 @@ export interface InstitutionsFilter {
   page?: number;
   pageSize?: number;
   sortBy?: string;
-  sortDir?: 'asc' | 'desc';
+  sortDir?: "asc" | "desc";
 }
 
 export function useInstitutions(filter: InstitutionsFilter) {
@@ -488,7 +555,8 @@ export function useInstitutionsSummary() {
   const client = useApiClient();
   return useQuery({
     queryKey: queryKeys.institutionsSummary,
-    queryFn: () => client.get<InstitutionStatusSummary>('/institutions/summary'),
+    queryFn: () =>
+      client.get<InstitutionStatusSummary>("/institutions/summary"),
     staleTime: 60 * 1000,
   });
 }
@@ -507,27 +575,32 @@ export function useCreateInstitution() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: Record<string, unknown>) =>
-      client.post<InstitutionDto>('/institutions', input),
+      client.post<InstitutionDto>("/institutions", input),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['institutions'] });
+      void qc.invalidateQueries({ queryKey: ["institutions"] });
     },
   });
 }
 
-export type InstitutionAction = 'activate' | 'restrict' | 'suspend' | 'archive';
+export type InstitutionAction = "activate" | "restrict" | "suspend" | "archive";
 
 export function useInstitutionStatusAction(id: string) {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (vars: { action: InstitutionAction; reason: string; caseRef?: string; version: number }) =>
+    mutationFn: (vars: {
+      action: InstitutionAction;
+      reason: string;
+      caseRef?: string;
+      version: number;
+    }) =>
       client.post<InstitutionDto>(`/institutions/${id}/${vars.action}`, {
         reason: vars.reason,
         caseRef: vars.caseRef,
         version: vars.version,
       }),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['institutions'] });
+      void qc.invalidateQueries({ queryKey: ["institutions"] });
     },
   });
 }
@@ -544,17 +617,23 @@ export function useCampuses(filter: CampusesFilter) {
   const client = useApiClient();
   const params = filter as Record<string, unknown>;
   return useQuery({
-    queryKey: ['campuses', params] as const,
+    queryKey: ["campuses", params] as const,
     queryFn: () => client.get<CampusList>(`/campuses${qs(params)}`),
-    enabled: filter.institutionId === undefined || Boolean(filter.institutionId),
+    enabled:
+      filter.institutionId === undefined || Boolean(filter.institutionId),
   });
 }
 
 export function useCampusChargePreview() {
   const client = useApiClient();
   return useMutation({
-    mutationFn: (input: { institutionId: string; effectiveDate?: string; forcePaidAddon?: boolean; customDiscountBps?: number }) =>
-      client.post<CampusChargeBreakdownDto>('/campuses/charge-preview', input),
+    mutationFn: (input: {
+      institutionId: string;
+      effectiveDate?: string;
+      forcePaidAddon?: boolean;
+      customDiscountBps?: number;
+    }) =>
+      client.post<CampusChargeBreakdownDto>("/campuses/charge-preview", input),
   });
 }
 
@@ -574,9 +653,10 @@ export function useCreateCampus() {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: CreateCampusVars) => client.post<CreateCampusResult>('/campuses', input),
+    mutationFn: (input: CreateCampusVars) =>
+      client.post<CreateCampusResult>("/campuses", input),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['campuses'] });
+      void qc.invalidateQueries({ queryKey: ["campuses"] });
     },
   });
 }
@@ -597,7 +677,8 @@ export function useSupportSessions(filter: SupportSessionsFilter = {}) {
   const params = filter as Record<string, unknown>;
   return useQuery({
     queryKey: queryKeys.supportSessions(params),
-    queryFn: () => client.get<SupportAccessSessionList>(`/support-access${qs(params)}`),
+    queryFn: () =>
+      client.get<SupportAccessSessionList>(`/support-access${qs(params)}`),
     placeholderData: (prev) => prev,
   });
 }
@@ -625,9 +706,9 @@ export function useStartSupportSession() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: StartSupportSessionVars) =>
-      client.post<SupportAccessSessionDto>('/support-access/start', input),
+      client.post<SupportAccessSessionDto>("/support-access/start", input),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['support-sessions'] });
+      void qc.invalidateQueries({ queryKey: ["support-sessions"] });
     },
   });
 }
@@ -637,9 +718,12 @@ export function useExtendSupportSession(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (vars: { addMinutes: number; reason: string }) =>
-      client.post<SupportAccessSessionDto>(`/support-access/${id}/extend`, vars),
+      client.post<SupportAccessSessionDto>(
+        `/support-access/${id}/extend`,
+        vars,
+      ),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['support-sessions'] });
+      void qc.invalidateQueries({ queryKey: ["support-sessions"] });
     },
   });
 }
@@ -649,9 +733,11 @@ export function useEndSupportSession() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (vars: { id: string; reason?: string }) =>
-      client.post<SupportAccessSessionDto>(`/support-access/${vars.id}/end`, { reason: vars.reason }),
+      client.post<SupportAccessSessionDto>(`/support-access/${vars.id}/end`, {
+        reason: vars.reason,
+      }),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['support-sessions'] });
+      void qc.invalidateQueries({ queryKey: ["support-sessions"] });
     },
   });
 }
@@ -661,7 +747,9 @@ export function useMarkPortalEntered() {
   const client = useApiClient();
   return useMutation({
     mutationFn: (id: string) =>
-      client.post<SupportAccessSessionDto>(`/support-access/${id}/portal-entered`),
+      client.post<SupportAccessSessionDto>(
+        `/support-access/${id}/portal-entered`,
+      ),
   });
 }
 
@@ -673,13 +761,18 @@ export interface InstitutionUsersFilter {
   campusId?: string;
   roleKey?: string;
   status?: string;
-  invitation?: 'pending' | 'accepted';
-  lastActivity?: 'active_7d' | 'active_30d' | 'inactive_30d' | 'never';
-  security?: 'mfa_missing' | 'mfa_required' | 'locked' | 'password_reset' | 'disabled';
+  invitation?: "pending" | "accepted";
+  lastActivity?: "active_7d" | "active_30d" | "inactive_30d" | "never";
+  security?:
+    | "mfa_missing"
+    | "mfa_required"
+    | "locked"
+    | "password_reset"
+    | "disabled";
   page?: number;
   pageSize?: number;
   sortBy?: string;
-  sortDir?: 'asc' | 'desc';
+  sortDir?: "asc" | "desc";
 }
 
 export function useInstitutionUsers(filter: InstitutionUsersFilter) {
@@ -687,7 +780,8 @@ export function useInstitutionUsers(filter: InstitutionUsersFilter) {
   const params = filter as Record<string, unknown>;
   return useQuery({
     queryKey: queryKeys.institutionUsers(params),
-    queryFn: () => client.get<InstitutionUserList>(`/institution-users${qs(params)}`),
+    queryFn: () =>
+      client.get<InstitutionUserList>(`/institution-users${qs(params)}`),
     placeholderData: (prev) => prev,
   });
 }
@@ -701,11 +795,16 @@ export interface AvailableRoleDto {
   isSystem: boolean;
 }
 
-export function useInstitutionAvailableRoles(institutionId: string | undefined) {
+export function useInstitutionAvailableRoles(
+  institutionId: string | undefined,
+) {
   const client = useApiClient();
   return useQuery({
-    queryKey: ['institutions', institutionId, 'available-roles'] as const,
-    queryFn: () => client.get<AvailableRoleDto[]>(`/institutions/${institutionId}/available-roles`),
+    queryKey: ["institutions", institutionId, "available-roles"] as const,
+    queryFn: () =>
+      client.get<AvailableRoleDto[]>(
+        `/institutions/${institutionId}/available-roles`,
+      ),
     enabled: Boolean(institutionId),
   });
 }
@@ -726,7 +825,8 @@ export function useInstitutionUser(id: string) {
   const client = useApiClient();
   return useQuery({
     queryKey: queryKeys.institutionUser(id),
-    queryFn: () => client.get<InstitutionUserDetailDto>(`/institution-users/${id}`),
+    queryFn: () =>
+      client.get<InstitutionUserDetailDto>(`/institution-users/${id}`),
     enabled: Boolean(id),
   });
 }
@@ -746,9 +846,9 @@ export function useInviteInstitutionUser() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: InviteInstitutionUserVars) =>
-      client.post<InstitutionUserDetailDto>('/institution-users', input),
+      client.post<InstitutionUserDetailDto>("/institution-users", input),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['institution-users'] });
+      void qc.invalidateQueries({ queryKey: ["institution-users"] });
     },
   });
 }
@@ -757,10 +857,14 @@ export function useUpdateInstitutionUser(id: string) {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (vars: { fullName?: string; phone?: string; version: number }) =>
+    mutationFn: (vars: {
+      fullName?: string;
+      phone?: string;
+      version: number;
+    }) =>
       client.patch<InstitutionUserDetailDto>(`/institution-users/${id}`, vars),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['institution-users'] });
+      void qc.invalidateQueries({ queryKey: ["institution-users"] });
     },
   });
 }
@@ -775,9 +879,12 @@ export function useInstitutionUserAction(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (vars: { action: string; body?: Record<string, unknown> }) =>
-      client.post<InstitutionUserDetailDto>(`/institution-users/${id}/${vars.action}`, vars.body),
+      client.post<InstitutionUserDetailDto>(
+        `/institution-users/${id}/${vars.action}`,
+        vars.body,
+      ),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['institution-users'] });
+      void qc.invalidateQueries({ queryKey: ["institution-users"] });
     },
   });
 }
@@ -787,7 +894,10 @@ export function usePreviewInstitutionUserAccess(id: string) {
   const client = useApiClient();
   return useMutation({
     mutationFn: (change: Record<string, unknown>) =>
-      client.post<AccessPreviewDto>(`/institution-users/${id}/preview-access`, change),
+      client.post<AccessPreviewDto>(
+        `/institution-users/${id}/preview-access`,
+        change,
+      ),
   });
 }
 
@@ -800,7 +910,7 @@ export interface PlansFilter {
   page?: number;
   pageSize?: number;
   sortBy?: string;
-  sortDir?: 'asc' | 'desc';
+  sortDir?: "asc" | "desc";
 }
 
 export function usePlans(filter: PlansFilter) {
@@ -817,7 +927,7 @@ export function usePlansSummary() {
   const client = useApiClient();
   return useQuery({
     queryKey: queryKeys.plansSummary,
-    queryFn: () => client.get<PlanStatusSummary>('/plans/summary'),
+    queryFn: () => client.get<PlanStatusSummary>("/plans/summary"),
     staleTime: 60 * 1000,
   });
 }
@@ -843,9 +953,10 @@ export function useCreatePlanDraft() {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: CreatePlanDraftVars) => client.post<PlanDetailDto>('/plans', input),
+    mutationFn: (input: CreatePlanDraftVars) =>
+      client.post<PlanDetailDto>("/plans", input),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['plans'] });
+      void qc.invalidateQueries({ queryKey: ["plans"] });
     },
   });
 }
@@ -854,11 +965,13 @@ export function useCreatePlanVersion(id: string) {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { pricing: PlanVersionPricingPayload; note?: string }) =>
-      client.post<PlanDetailDto>(`/plans/${id}/versions`, input),
+    mutationFn: (input: {
+      pricing: PlanVersionPricingPayload;
+      note?: string;
+    }) => client.post<PlanDetailDto>(`/plans/${id}/versions`, input),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.plan(id) });
-      void qc.invalidateQueries({ queryKey: ['plans'] });
+      void qc.invalidateQueries({ queryKey: ["plans"] });
     },
   });
 }
@@ -868,10 +981,15 @@ export function usePublishPlanVersion(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (vars: { versionId: string; reason: string }) =>
-      client.post<PlanDetailDto>(`/plans/${id}/versions/${vars.versionId}/publish`, { reason: vars.reason }),
+      client.post<PlanDetailDto>(
+        `/plans/${id}/versions/${vars.versionId}/publish`,
+        {
+          reason: vars.reason,
+        },
+      ),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.plan(id) });
-      void qc.invalidateQueries({ queryKey: ['plans'] });
+      void qc.invalidateQueries({ queryKey: ["plans"] });
     },
   });
 }
@@ -884,7 +1002,7 @@ export function useArchivePlan(id: string) {
       client.post<PlanDetailDto>(`/plans/${id}/archive`, vars),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.plan(id) });
-      void qc.invalidateQueries({ queryKey: ['plans'] });
+      void qc.invalidateQueries({ queryKey: ["plans"] });
     },
   });
 }
@@ -899,7 +1017,7 @@ export interface SubscriptionsFilter {
   page?: number;
   pageSize?: number;
   sortBy?: string;
-  sortDir?: 'asc' | 'desc';
+  sortDir?: "asc" | "desc";
 }
 
 export function useSubscriptions(filter: SubscriptionsFilter) {
@@ -917,7 +1035,9 @@ export function useSubscriptionsSummary(institutionId?: string) {
   return useQuery({
     queryKey: queryKeys.subscriptionsSummary(institutionId),
     queryFn: () =>
-      client.get<SubscriptionStatusSummary>(`/subscriptions/summary${qs({ institutionId })}`),
+      client.get<SubscriptionStatusSummary>(
+        `/subscriptions/summary${qs({ institutionId })}`,
+      ),
     staleTime: 60 * 1000,
   });
 }
@@ -945,11 +1065,17 @@ export function useSubscriptionByInstitution(institutionId: string) {
 }
 
 /** Read-only proration preview for a plan or cycle change, shown before commit. */
-export function useSubscriptionPreview(id: string, kind: 'plan-change' | 'cycle-change') {
+export function useSubscriptionPreview(
+  id: string,
+  kind: "plan-change" | "cycle-change",
+) {
   const client = useApiClient();
   return useMutation({
     mutationFn: (body: Record<string, unknown>) =>
-      client.post<PlanChangeProrationDto>(`/subscriptions/${id}/${kind}-preview`, body),
+      client.post<PlanChangeProrationDto>(
+        `/subscriptions/${id}/${kind}-preview`,
+        body,
+      ),
   });
 }
 
@@ -963,11 +1089,16 @@ export function useSubscriptionAction(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (vars: { action: string; body: Record<string, unknown> }) =>
-      client.post<SubscriptionDetailDto>(`/subscriptions/${id}/${vars.action}`, vars.body),
+      client.post<SubscriptionDetailDto>(
+        `/subscriptions/${id}/${vars.action}`,
+        vars.body,
+      ),
     onSuccess: (data) => {
-      void qc.invalidateQueries({ queryKey: ['subscriptions'] });
+      void qc.invalidateQueries({ queryKey: ["subscriptions"] });
       if (data?.institutionId) {
-        void qc.invalidateQueries({ queryKey: queryKeys.subscriptionByInstitution(data.institutionId) });
+        void qc.invalidateQueries({
+          queryKey: queryKeys.subscriptionByInstitution(data.institutionId),
+        });
       }
     },
   });
@@ -1006,16 +1137,17 @@ export function useBillingSummary(institutionId: string) {
   const client = useApiClient();
   return useQuery({
     queryKey: queryKeys.billingSummary(institutionId),
-    queryFn: () => client.get<BillingSummaryDto>(`/billing/summary${qs({ institutionId })}`),
+    queryFn: () =>
+      client.get<BillingSummaryDto>(`/billing/summary${qs({ institutionId })}`),
     enabled: Boolean(institutionId),
   });
 }
 
 function invalidateBilling(qc: ReturnType<typeof useQueryClient>) {
-  void qc.invalidateQueries({ queryKey: ['invoices'] });
-  void qc.invalidateQueries({ queryKey: ['payments'] });
-  void qc.invalidateQueries({ queryKey: ['credits'] });
-  void qc.invalidateQueries({ queryKey: ['billing'] });
+  void qc.invalidateQueries({ queryKey: ["invoices"] });
+  void qc.invalidateQueries({ queryKey: ["payments"] });
+  void qc.invalidateQueries({ queryKey: ["credits"] });
+  void qc.invalidateQueries({ queryKey: ["billing"] });
 }
 
 /** Create a draft invoice from a subscription. Sends an Idempotency-Key for replay safety. */
@@ -1024,7 +1156,9 @@ export function useCreateInvoice() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: Record<string, unknown>) =>
-      client.post<InvoiceDetailDto>('/billing/invoices', input, { 'idempotency-key': newIdemKey() }),
+      client.post<InvoiceDetailDto>("/billing/invoices", input, {
+        "idempotency-key": newIdemKey(),
+      }),
     onSuccess: () => invalidateBilling(qc),
   });
 }
@@ -1034,8 +1168,14 @@ export function useInvoiceAction(id: string) {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (vars: { action: 'finalize' | 'void' | 'dunning'; body: Record<string, unknown> }) =>
-      client.post<InvoiceDetailDto>(`/billing/invoices/${id}/${vars.action}`, vars.body),
+    mutationFn: (vars: {
+      action: "finalize" | "void" | "dunning";
+      body: Record<string, unknown>;
+    }) =>
+      client.post<InvoiceDetailDto>(
+        `/billing/invoices/${id}/${vars.action}`,
+        vars.body,
+      ),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.invoice(id) });
       invalidateBilling(qc);
@@ -1043,7 +1183,13 @@ export function useInvoiceAction(id: string) {
   });
 }
 
-export function usePayments(filter: { institutionId?: string; invoiceId?: string; status?: string; page?: number; pageSize?: number }) {
+export function usePayments(filter: {
+  institutionId?: string;
+  invoiceId?: string;
+  status?: string;
+  page?: number;
+  pageSize?: number;
+}) {
   const client = useApiClient();
   const params = filter as Record<string, unknown>;
   return useQuery({
@@ -1058,7 +1204,9 @@ export function useRecordPayment() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: Record<string, unknown>) =>
-      client.post('/billing/payments', input, { 'idempotency-key': newIdemKey() }),
+      client.post("/billing/payments", input, {
+        "idempotency-key": newIdemKey(),
+      }),
     onSuccess: () => invalidateBilling(qc),
   });
 }
@@ -1067,7 +1215,8 @@ export function useRetryPayment(id: string) {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: Record<string, unknown>) => client.post(`/billing/payments/${id}/retry`, body),
+    mutationFn: (body: Record<string, unknown>) =>
+      client.post(`/billing/payments/${id}/retry`, body),
     onSuccess: () => invalidateBilling(qc),
   });
 }
@@ -1077,12 +1226,18 @@ export function useCreateRefund() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: Record<string, unknown>) =>
-      client.post('/billing/refunds', input, { 'idempotency-key': newIdemKey() }),
+      client.post("/billing/refunds", input, {
+        "idempotency-key": newIdemKey(),
+      }),
     onSuccess: () => invalidateBilling(qc),
   });
 }
 
-export function useCredits(filter: { institutionId?: string; page?: number; pageSize?: number }) {
+export function useCredits(filter: {
+  institutionId?: string;
+  page?: number;
+  pageSize?: number;
+}) {
   const client = useApiClient();
   const params = filter as Record<string, unknown>;
   return useQuery({
@@ -1097,12 +1252,18 @@ export function useIssueCredit() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: Record<string, unknown>) =>
-      client.post('/billing/credits', input, { 'idempotency-key': newIdemKey() }),
+      client.post("/billing/credits", input, {
+        "idempotency-key": newIdemKey(),
+      }),
     onSuccess: () => invalidateBilling(qc),
   });
 }
 
-export function useDiscounts(filter: { institutionId?: string; page?: number; pageSize?: number }) {
+export function useDiscounts(filter: {
+  institutionId?: string;
+  page?: number;
+  pageSize?: number;
+}) {
   const client = useApiClient();
   const params = filter as Record<string, unknown>;
   return useQuery({
@@ -1116,8 +1277,9 @@ export function useCreateDiscount() {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: Record<string, unknown>) => client.post('/billing/discounts', input),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['discounts'] }),
+    mutationFn: (input: Record<string, unknown>) =>
+      client.post("/billing/discounts", input),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["discounts"] }),
   });
 }
 
@@ -1125,7 +1287,8 @@ export function useEntitlements(institutionId: string) {
   const client = useApiClient();
   return useQuery({
     queryKey: queryKeys.entitlements(institutionId),
-    queryFn: () => client.get<EntitlementsDto>(`/entitlements${qs({ institutionId })}`),
+    queryFn: () =>
+      client.get<EntitlementsDto>(`/entitlements${qs({ institutionId })}`),
     enabled: Boolean(institutionId),
   });
 }
@@ -1140,7 +1303,7 @@ export interface FeaturesFilter {
   page?: number;
   pageSize?: number;
   sortBy?: string;
-  sortDir?: 'asc' | 'desc';
+  sortDir?: "asc" | "desc";
 }
 
 export function useFeatures(filter: FeaturesFilter) {
@@ -1157,7 +1320,7 @@ export function useFeaturesSummary() {
   const client = useApiClient();
   return useQuery({
     queryKey: queryKeys.featuresSummary,
-    queryFn: () => client.get<FeatureStatusSummary>('/features/summary'),
+    queryFn: () => client.get<FeatureStatusSummary>("/features/summary"),
     staleTime: 60 * 1000,
   });
 }
@@ -1184,12 +1347,17 @@ export interface ResolveFeatureContext {
   at?: string;
 }
 
-export function useResolveFeature(id: string, ctx: ResolveFeatureContext, enabled = true) {
+export function useResolveFeature(
+  id: string,
+  ctx: ResolveFeatureContext,
+  enabled = true,
+) {
   const client = useApiClient();
   const params = ctx as Record<string, unknown>;
   return useQuery({
     queryKey: queryKeys.featureResolve(id, params),
-    queryFn: () => client.get<FeatureResolutionDto>(`/features/${id}/resolve${qs(params)}`),
+    queryFn: () =>
+      client.get<FeatureResolutionDto>(`/features/${id}/resolve${qs(params)}`),
     enabled: Boolean(id) && enabled,
   });
 }
@@ -1199,8 +1367,8 @@ export function useCreateFeature() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: Record<string, unknown>) =>
-      client.post<FeatureDefinitionDto>('/features', input),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['features'] }),
+      client.post<FeatureDefinitionDto>("/features", input),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["features"] }),
   });
 }
 
@@ -1210,7 +1378,7 @@ export function useUpdateFeature(id: string) {
   return useMutation({
     mutationFn: (input: Record<string, unknown>) =>
       client.patch<FeatureDefinitionDto>(`/features/${id}`, input),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['features'] }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["features"] }),
   });
 }
 
@@ -1220,7 +1388,7 @@ export function useSetFeatureStatus(id: string) {
   return useMutation({
     mutationFn: (vars: { status: string; version: number; reason: string }) =>
       client.post<FeatureDefinitionDto>(`/features/${id}/status`, vars),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['features'] }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["features"] }),
   });
 }
 
@@ -1240,10 +1408,10 @@ export function useUpsertFeatureAssignment(id: string) {
   return useMutation({
     mutationFn: (input: UpsertFeatureAssignmentVars) =>
       client.request<FeatureAssignmentDto>(`/features/${id}/assignments`, {
-        method: 'PUT',
+        method: "PUT",
         body: JSON.stringify(input),
       }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['features', id] }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["features", id] }),
   });
 }
 
@@ -1253,10 +1421,10 @@ export function useRemoveFeatureAssignment(id: string) {
   return useMutation({
     mutationFn: (vars: { assignmentId: string; reason: string }) =>
       client.request<void>(`/features/${id}/assignments/${vars.assignmentId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         body: JSON.stringify({ reason: vars.reason }),
       }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['features', id] }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["features", id] }),
   });
 }
 
@@ -1278,10 +1446,10 @@ export function useUpsertFeatureRollout(id: string) {
   return useMutation({
     mutationFn: (input: UpsertFeatureRolloutVars) =>
       client.request<FeatureRolloutDto>(`/features/${id}/rollouts`, {
-        method: 'PUT',
+        method: "PUT",
         body: JSON.stringify(input),
       }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['features', id] }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["features", id] }),
   });
 }
 
@@ -1291,10 +1459,10 @@ export function useRemoveFeatureRollout(id: string) {
   return useMutation({
     mutationFn: (vars: { rolloutId: string; reason: string }) =>
       client.request<void>(`/features/${id}/rollouts/${vars.rolloutId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         body: JSON.stringify({ reason: vars.reason }),
       }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['features', id] }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["features", id] }),
   });
 }
 
@@ -1304,7 +1472,7 @@ export function useSetFeatureKillSwitch(id: string) {
   return useMutation({
     mutationFn: (vars: { enabled: boolean; reason: string }) =>
       client.post<FeatureRolloutDto>(`/features/${id}/kill-switch`, vars),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['features', id] }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["features", id] }),
   });
 }
 
@@ -1313,8 +1481,8 @@ export function useSetFeatureKillSwitch(id: string) {
 export function useDashboard() {
   const client = useApiClient();
   return useQuery({
-    queryKey: ['analytics', 'dashboard'] as const,
-    queryFn: () => client.get<DashboardAggregatesDto>('/analytics/dashboard'),
+    queryKey: ["analytics", "dashboard"] as const,
+    queryFn: () => client.get<DashboardAggregatesDto>("/analytics/dashboard"),
     staleTime: 60 * 1000,
   });
 }
@@ -1322,8 +1490,8 @@ export function useDashboard() {
 export function usePendingActions() {
   const client = useApiClient();
   return useQuery({
-    queryKey: ['analytics', 'pending-actions'] as const,
-    queryFn: () => client.get<PendingActionsDto>('/analytics/pending-actions'),
+    queryKey: ["analytics", "pending-actions"] as const,
+    queryFn: () => client.get<PendingActionsDto>("/analytics/pending-actions"),
     staleTime: 30 * 1000,
   });
 }
@@ -1350,9 +1518,11 @@ export function useAuditEvents(filter: AuditFilter = {}) {
   const client = useApiClient();
   const params = filter as Record<string, unknown>;
   return useInfiniteQuery({
-    queryKey: ['audit', params] as const,
+    queryKey: ["audit", params] as const,
     queryFn: ({ pageParam }) =>
-      client.get<AuditEventPage>(`/audit${qs({ ...params, cursor: pageParam })}`),
+      client.get<AuditEventPage>(
+        `/audit${qs({ ...params, cursor: pageParam })}`,
+      ),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
@@ -1361,7 +1531,7 @@ export function useAuditEvents(filter: AuditFilter = {}) {
 export function useAuditEvent(id: string, enabled = true) {
   const client = useApiClient();
   return useQuery({
-    queryKey: ['audit', 'event', id] as const,
+    queryKey: ["audit", "event", id] as const,
     queryFn: () => client.get<AuditEventDto>(`/audit/${id}`),
     enabled: Boolean(id) && enabled,
   });
@@ -1378,9 +1548,11 @@ export function useActivityFeed(filter: ActivityFilter = {}) {
   const client = useApiClient();
   const params = filter as Record<string, unknown>;
   return useInfiniteQuery({
-    queryKey: ['activity', params] as const,
+    queryKey: ["activity", params] as const,
     queryFn: ({ pageParam }) =>
-      client.get<ActivityEventPage>(`/audit/activity${qs({ ...params, cursor: pageParam })}`),
+      client.get<ActivityEventPage>(
+        `/audit/activity${qs({ ...params, cursor: pageParam })}`,
+      ),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
@@ -1394,10 +1566,12 @@ export function useAuditExport() {
   const client = useApiClient();
   return useMutation({
     mutationFn: async (filter: AuditFilter) => {
-      const csv = await client.getText(`/audit/export${qs(filter as Record<string, unknown>)}`);
-      const blob = new Blob([csv], { type: 'text/csv' });
+      const csv = await client.getText(
+        `/audit/export${qs(filter as Record<string, unknown>)}`,
+      );
+      const blob = new Blob([csv], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = `audit-export-${new Date().toISOString().slice(0, 10)}.csv`;
       document.body.appendChild(a);
@@ -1421,8 +1595,9 @@ export interface AiPoliciesFilter {
 export function useAiOverview() {
   const client = useApiClient();
   return useQuery({
-    queryKey: ['ai-governance', 'overview'] as const,
-    queryFn: () => client.get<AiGovernanceOverviewDto>('/ai-governance/overview'),
+    queryKey: ["ai-governance", "overview"] as const,
+    queryFn: () =>
+      client.get<AiGovernanceOverviewDto>("/ai-governance/overview"),
     staleTime: 30 * 1000,
   });
 }
@@ -1431,8 +1606,9 @@ export function useAiPolicies(filter: AiPoliciesFilter = {}) {
   const client = useApiClient();
   const params = filter as Record<string, unknown>;
   return useQuery({
-    queryKey: ['ai-governance', 'policies', params] as const,
-    queryFn: () => client.get<AiPolicyList>(`/ai-governance/policies${qs(params)}`),
+    queryKey: ["ai-governance", "policies", params] as const,
+    queryFn: () =>
+      client.get<AiPolicyList>(`/ai-governance/policies${qs(params)}`),
     placeholderData: (prev) => prev,
   });
 }
@@ -1440,8 +1616,8 @@ export function useAiPolicies(filter: AiPoliciesFilter = {}) {
 export function useAiRules() {
   const client = useApiClient();
   return useQuery({
-    queryKey: ['ai-governance', 'rules'] as const,
-    queryFn: () => client.get<AiActionRuleDto[]>('/ai-governance/rules'),
+    queryKey: ["ai-governance", "rules"] as const,
+    queryFn: () => client.get<AiActionRuleDto[]>("/ai-governance/rules"),
   });
 }
 
@@ -1458,8 +1634,11 @@ export function useEffectiveAiPolicy(ctx: AiPolicyContext, enabled = true) {
   const client = useApiClient();
   const params = ctx as Record<string, unknown>;
   return useQuery({
-    queryKey: ['ai-governance', 'effective-policy', params] as const,
-    queryFn: () => client.get<EffectiveAiPolicyDto>(`/ai-governance/effective-policy${qs(params)}`),
+    queryKey: ["ai-governance", "effective-policy", params] as const,
+    queryFn: () =>
+      client.get<EffectiveAiPolicyDto>(
+        `/ai-governance/effective-policy${qs(params)}`,
+      ),
     enabled,
   });
 }
@@ -1482,7 +1661,7 @@ export function useEvaluateGuardrail() {
   const client = useApiClient();
   return useMutation({
     mutationFn: (input: EvaluateGuardrailVars) =>
-      client.post<GuardrailResultDto>('/ai-governance/evaluate', {
+      client.post<GuardrailResultDto>("/ai-governance/evaluate", {
         proposed: input.proposed,
         context: input.context ?? {},
       }),
@@ -1490,7 +1669,7 @@ export function useEvaluateGuardrail() {
 }
 
 function invalidateAiGovernance(qc: ReturnType<typeof useQueryClient>) {
-  void qc.invalidateQueries({ queryKey: ['ai-governance'] });
+  void qc.invalidateQueries({ queryKey: ["ai-governance"] });
 }
 
 export interface UpsertAiPolicyVars {
@@ -1511,7 +1690,8 @@ export function useUpsertAiPolicy() {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: UpsertAiPolicyVars) => client.post<AiPolicyDto>('/ai-governance/policies', input),
+    mutationFn: (input: UpsertAiPolicyVars) =>
+      client.post<AiPolicyDto>("/ai-governance/policies", input),
     onSuccess: () => invalidateAiGovernance(qc),
   });
 }
@@ -1522,7 +1702,7 @@ export function useRemoveAiPolicy() {
   return useMutation({
     mutationFn: (vars: { id: string; reason: string }) =>
       client.request<void>(`/ai-governance/policies/${vars.id}`, {
-        method: 'DELETE',
+        method: "DELETE",
         body: JSON.stringify({ reason: vars.reason }),
       }),
     onSuccess: () => invalidateAiGovernance(qc),
@@ -1533,8 +1713,12 @@ export function useSetAiKillSwitch() {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (vars: { scope: string; scopeId?: string | null; enabled: boolean; reason: string }) =>
-      client.post<AiPolicyDto>('/ai-governance/kill-switch', vars),
+    mutationFn: (vars: {
+      scope: string;
+      scopeId?: string | null;
+      enabled: boolean;
+      reason: string;
+    }) => client.post<AiPolicyDto>("/ai-governance/kill-switch", vars),
     onSuccess: () => invalidateAiGovernance(qc),
   });
 }
@@ -1554,7 +1738,8 @@ export function useUpsertAiRule() {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: UpsertAiRuleVars) => client.post<AiActionRuleDto>('/ai-governance/rules', input),
+    mutationFn: (input: UpsertAiRuleVars) =>
+      client.post<AiActionRuleDto>("/ai-governance/rules", input),
     onSuccess: () => invalidateAiGovernance(qc),
   });
 }
@@ -1565,10 +1750,556 @@ export function useRemoveAiRule() {
   return useMutation({
     mutationFn: (vars: { id: string; reason: string }) =>
       client.request<void>(`/ai-governance/rules/${vars.id}`, {
-        method: 'DELETE',
+        method: "DELETE",
         body: JSON.stringify({ reason: vars.reason }),
       }),
     onSuccess: () => invalidateAiGovernance(qc),
+  });
+}
+
+// --- Petros AI routing -------------------------------------------------------
+
+function invalidatePetrosRouting(qc: ReturnType<typeof useQueryClient>) {
+  void qc.invalidateQueries({ queryKey: ["petros-ai-routing"] });
+}
+
+function invalidatePetrosProfiles(qc: ReturnType<typeof useQueryClient>) {
+  void qc.invalidateQueries({ queryKey: ["petros-topic-profiles"] });
+}
+
+export function usePetrosAiOverview() {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: ["petros-ai-routing", "overview"] as const,
+    queryFn: () =>
+      client.get<PetrosAiOverviewDto>("/petros-ai-routing/overview"),
+  });
+}
+
+export function usePetrosAiProviders() {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: ["petros-ai-routing", "providers"] as const,
+    queryFn: () =>
+      client.get<PetrosAiProviderDto[]>("/petros-ai-routing/providers"),
+  });
+}
+
+export function usePetrosAiFunctions() {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: ["petros-ai-routing", "functions"] as const,
+    queryFn: () =>
+      client.get<PetrosAiFunctionDto[]>("/petros-ai-routing/functions"),
+  });
+}
+
+export function usePetrosAiRules() {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: ["petros-ai-routing", "rules"] as const,
+    queryFn: () =>
+      client.get<PetrosAiRoutingRuleDto[]>("/petros-ai-routing/rules"),
+  });
+}
+
+export function usePetrosAiUsage(
+  groupBy = "function",
+  functionId?: string,
+  filters: { door?: string; sessionType?: string } = {},
+) {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: [
+      "petros-ai-routing",
+      "usage",
+      groupBy,
+      functionId ?? "all",
+      filters.door ?? "all-doors",
+      filters.sessionType ?? "all-session-types",
+    ] as const,
+    queryFn: () =>
+      client.get<PetrosAiUsageSummaryDto>(
+        `/petros-ai-routing/usage${qs({ groupBy, functionId, ...filters })}`,
+      ),
+  });
+}
+
+export function usePetrosDecisionDiagnostics(
+  filters: { sessionId?: string; moveType?: string; source?: string } = {},
+) {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: ["petros-ai-routing", "decisions", filters] as const,
+    queryFn: () =>
+      client.get<PetrosDecisionDiagnosticDto[]>(
+        `/petros-ai-routing/decisions${qs({ ...filters, limit: 100 })}`,
+      ),
+  });
+}
+
+export function usePetrosObservationDiagnostics(
+  filters: {
+    sessionId?: string;
+    observationType?: string;
+    functionKey?: string;
+    institutionId?: string;
+    sessionType?: string;
+    from?: string;
+    to?: string;
+  } = {},
+) {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: ["petros-ai-routing", "observations", filters] as const,
+    queryFn: () =>
+      client.get<PetrosObservationDiagnosticDto[]>(
+        `/petros-ai-routing/observations${qs({ ...filters, limit: 100 })}`,
+      ),
+  });
+}
+
+export function usePetrosAiBudget() {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: ["petros-ai-routing", "budget"] as const,
+    queryFn: () =>
+      client.get<PetrosAiBudgetPolicyDto>("/petros-ai-routing/budget"),
+  });
+}
+
+export type PetrosProviderPayload = Omit<
+  PetrosAiProviderDto,
+  | "id"
+  | "credentialConfigured"
+  | "credentialHint"
+  | "healthStatus"
+  | "latencyMs"
+  | "lastHealthCheckAt"
+  | "lastHealthError"
+  | "models"
+  | "createdAt"
+  | "updatedAt"
+> & { apiKey?: string; reason: string };
+
+export function useSavePetrosProvider() {
+  const client = useApiClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...payload
+    }: PetrosProviderPayload & { id?: string }) =>
+      id
+        ? client.request<PetrosAiProviderDto>(
+            `/petros-ai-routing/providers/${id}`,
+            {
+              method: "PUT",
+              body: JSON.stringify(payload),
+            },
+          )
+        : client.post<PetrosAiProviderDto>(
+            "/petros-ai-routing/providers",
+            payload,
+          ),
+    onSuccess: () => invalidatePetrosRouting(qc),
+  });
+}
+
+export function useTestPetrosProvider() {
+  const client = useApiClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      client.post<{
+        ok: boolean;
+        latencyMs: number;
+        models: string[];
+        error?: string;
+      }>(`/petros-ai-routing/providers/${id}/test`, {}),
+    onSuccess: () => invalidatePetrosRouting(qc),
+  });
+}
+
+export type PetrosModelPayload = Omit<
+  PetrosAiModelDto,
+  "id" | "createdAt" | "updatedAt"
+> & {
+  reason: string;
+};
+
+export function useSavePetrosModel() {
+  const client = useApiClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...payload }: PetrosModelPayload & { id?: string }) =>
+      id
+        ? client.request<PetrosAiModelDto>(`/petros-ai-routing/models/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(payload),
+          })
+        : client.post<PetrosAiModelDto>("/petros-ai-routing/models", payload),
+    onSuccess: () => invalidatePetrosRouting(qc),
+  });
+}
+
+export function useConfigurePetrosFunction() {
+  const client = useApiClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...payload
+    }: {
+      id: string;
+      enabled: boolean;
+      allowedInputTypes: string[];
+      responseFormat: string;
+      requiredCapabilities: string[];
+      settings: PetrosAiFunctionSettingsDto;
+      routes: Array<Record<string, unknown>>;
+      reason: string;
+      version: number;
+    }) =>
+      client.request<PetrosAiFunctionDto>(
+        `/petros-ai-routing/functions/${id}/config`,
+        {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        },
+      ),
+    onSuccess: () => invalidatePetrosRouting(qc),
+  });
+}
+
+export function useSavePetrosRule() {
+  const client = useApiClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...payload
+    }: {
+      id?: string;
+      name: string;
+      description?: string | null;
+      functionId?: string | null;
+      priority: number;
+      enabled: boolean;
+      conditions: Record<string, unknown>;
+      action: Record<string, unknown>;
+      reason: string;
+      version?: number;
+    }) =>
+      id
+        ? client.request<PetrosAiRoutingRuleDto>(
+            `/petros-ai-routing/rules/${id}`,
+            {
+              method: "PUT",
+              body: JSON.stringify(payload),
+            },
+          )
+        : client.post<PetrosAiRoutingRuleDto>(
+            "/petros-ai-routing/rules",
+            payload,
+          ),
+    onSuccess: () => invalidatePetrosRouting(qc),
+  });
+}
+
+export function useRemovePetrosRule() {
+  const client = useApiClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      client.request<void>(`/petros-ai-routing/rules/${id}`, {
+        method: "DELETE",
+        body: JSON.stringify({ reason }),
+      }),
+    onSuccess: () => invalidatePetrosRouting(qc),
+  });
+}
+
+export function useUpdatePetrosBudget() {
+  const client = useApiClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>) =>
+      client.request<PetrosAiBudgetPolicyDto>("/petros-ai-routing/budget", {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => invalidatePetrosRouting(qc),
+  });
+}
+
+export function usePreviewPetrosRoute() {
+  const client = useApiClient();
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>) =>
+      client.post<PetrosRoutePreviewDto>(
+        "/petros-ai-routing/route-preview",
+        payload,
+      ),
+  });
+}
+
+export function usePetrosTopicProfiles(
+  filters: {
+    search?: string;
+    subject?: string;
+    grade?: string;
+    curriculum?: string;
+    institutionId?: string;
+    status?: string;
+    stale?: boolean;
+  } = {},
+) {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: ["petros-topic-profiles", filters] as const,
+    queryFn: () =>
+      client.get<PetrosTopicProfileDto[]>(
+        `/petros-topic-profiles${qs({ ...filters, limit: 100 })}`,
+      ),
+  });
+}
+
+export function useGeneratePetrosTopicProfile() {
+  const client = useApiClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>) =>
+      client.post<PetrosTopicProfileDto>(
+        "/petros-topic-profiles/generate",
+        payload,
+      ),
+    onSuccess: () => invalidatePetrosProfiles(qc),
+  });
+}
+
+export function useUpdatePetrosTopicProfile() {
+  const client = useApiClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...payload
+    }: {
+      id: string;
+      expectedVersion: number;
+      profile: PetrosTopicProfileContentDto;
+      reason: string;
+    }) =>
+      client.request<PetrosTopicProfileDto>(`/petros-topic-profiles/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => invalidatePetrosProfiles(qc),
+  });
+}
+
+export function useValidatePetrosTopicProfile() {
+  const client = useApiClient();
+  return useMutation({
+    mutationFn: (profile: PetrosTopicProfileContentDto) =>
+      client.post<{
+        valid: boolean;
+        issues: Array<{ path: string; message: string }>;
+      }>("/petros-topic-profiles/validate", { profile }),
+  });
+}
+
+export function usePublishPetrosTopicProfile() {
+  const client = useApiClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...payload
+    }: {
+      id: string;
+      expectedVersion: number;
+      reason: string;
+    }) =>
+      client.post<PetrosTopicProfileDto>(
+        `/petros-topic-profiles/${id}/publish`,
+        payload,
+      ),
+    onSuccess: () => invalidatePetrosProfiles(qc),
+  });
+}
+
+export function useRollbackPetrosTopicProfile() {
+  const client = useApiClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...payload
+    }: {
+      id: string;
+      targetVersion: number;
+      expectedVersion: number;
+      reason: string;
+    }) =>
+      client.post<PetrosTopicProfileDto>(
+        `/petros-topic-profiles/${id}/rollback`,
+        payload,
+      ),
+    onSuccess: () => invalidatePetrosProfiles(qc),
+  });
+}
+
+export function usePublishPetrosTopicProfileOverride() {
+  const client = useApiClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...payload
+    }: {
+      id: string;
+      institutionId: string;
+      expectedVersion: number;
+      patch: {
+        dimensions: Partial<PetrosTopicProfileContentDto["dimensions"]>;
+      };
+      reason: string;
+    }) =>
+      client.request<PetrosTopicProfileDto>(
+        `/petros-topic-profiles/${id}/override`,
+        {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        },
+      ),
+    onSuccess: () => invalidatePetrosProfiles(qc),
+  });
+}
+
+export function usePetrosQualityRuns(
+  filters: { status?: string; mode?: string; gate?: string } = {},
+) {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: ["petros-quality-runs", filters] as const,
+    queryFn: () =>
+      client.get<PetrosQualityRunDto[]>(
+        `/petros-quality/runs${qs({ ...filters, limit: 100 })}`,
+      ),
+  });
+}
+
+export function usePetrosQualityRun(id: string) {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: ["petros-quality-run", id] as const,
+    queryFn: () =>
+      client.get<PetrosQualityRunDetailDto>(`/petros-quality/runs/${id}`),
+    enabled: Boolean(id),
+  });
+}
+
+export function usePromotePetrosQualityBaseline() {
+  const client = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      client.post(`/petros-quality/runs/${id}/promote`, {
+        reason,
+        confirmation: "PROMOTE BASELINE",
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["petros-quality-runs"] }),
+        queryClient.invalidateQueries({ queryKey: ["petros-quality-run"] }),
+      ]);
+    },
+  });
+}
+
+export function useRequestPetrosQualityRerun() {
+  const client = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      reason,
+      failedOnly = true,
+    }: {
+      id: string;
+      reason: string;
+      failedOnly?: boolean;
+    }) =>
+      client.post(`/petros-quality/runs/${id}/rerun`, { reason, failedOnly }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["petros-quality-runs"] }),
+        queryClient.invalidateQueries({ queryKey: ["petros-quality-run"] }),
+      ]);
+    },
+  });
+}
+
+// --- Petros structured learner model ---------------------------------------
+
+export function usePetrosLearnerDiagnostic(input: {
+  institutionId: string;
+  studentId: string;
+  topicId?: string;
+}) {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: ["petros-learner-model", "diagnostic", input] as const,
+    queryFn: () =>
+      client.get<PetrosLearnerDiagnosticDto>(
+        `/petros-learner-model/diagnostic${qs(input)}`,
+      ),
+    enabled: Boolean(input.institutionId && input.studentId),
+  });
+}
+
+export function useRebuildPetrosLearnerModel() {
+  const client = useApiClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      institutionId: string;
+      studentId: string;
+      algorithmVersion: string;
+      reason: string;
+      batchSize?: number;
+    }) => {
+      const job = await client.post<{ id: string }>(
+        "/petros-learner-model/jobs",
+        input,
+      );
+      return client.post<Record<string, unknown>>(
+        `/petros-learner-model/jobs/${job.id}/run`,
+        {},
+      );
+    },
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: ["petros-learner-model"] }),
+  });
+}
+
+export function useSyncPetrosLearnerSources() {
+  const client = useApiClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: {
+      institutionId: string;
+      studentId: string;
+      reason: string;
+    }) =>
+      client.post<PetrosLearnerSourceSyncDto>(
+        "/petros-learner-model/evidence/sync-sources",
+        input,
+      ),
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: ["petros-learner-model"] }),
   });
 }
 
@@ -1589,15 +2320,18 @@ export function useCreateRun() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: { prompt: string; context?: CopilotContext }) =>
-      client.post<AiRunDetailDto>('/copilot/runs', { prompt: input.prompt, context: input.context ?? {} }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['copilot'] }),
+      client.post<AiRunDetailDto>("/copilot/runs", {
+        prompt: input.prompt,
+        context: input.context ?? {},
+      }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["copilot"] }),
   });
 }
 
 export function useRun(id: string, enabled = true) {
   const client = useApiClient();
   return useQuery({
-    queryKey: ['copilot', 'run', id] as const,
+    queryKey: ["copilot", "run", id] as const,
     queryFn: () => client.get<AiRunDetailDto>(`/copilot/runs/${id}`),
     enabled: Boolean(id) && enabled,
   });
@@ -1609,7 +2343,7 @@ export function useConfirmRun(id: string) {
   return useMutation({
     mutationFn: (vars: { reason: string; confirmationText?: string }) =>
       client.post<AiRunDetailDto>(`/copilot/runs/${id}/confirm`, vars),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['copilot'] }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["copilot"] }),
   });
 }
 
@@ -1617,8 +2351,9 @@ export function useRejectRun(id: string) {
   const client = useApiClient();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (vars: { reason: string }) => client.post<AiRunDetailDto>(`/copilot/runs/${id}/reject`, vars),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['copilot'] }),
+    mutationFn: (vars: { reason: string }) =>
+      client.post<AiRunDetailDto>(`/copilot/runs/${id}/reject`, vars),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["copilot"] }),
   });
 }
 
@@ -1627,8 +2362,11 @@ export function useApproveRun(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (vars: { approved?: boolean; reason: string }) =>
-      client.post<AiRunDetailDto>(`/copilot/runs/${id}/approve`, { approved: vars.approved ?? true, reason: vars.reason }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['copilot'] }),
+      client.post<AiRunDetailDto>(`/copilot/runs/${id}/approve`, {
+        approved: vars.approved ?? true,
+        reason: vars.reason,
+      }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["copilot"] }),
   });
 }
 
@@ -1645,9 +2383,11 @@ export function useAiRuns(filter: AiRunsFilter = {}) {
   const client = useApiClient();
   const params = filter as Record<string, unknown>;
   return useInfiniteQuery({
-    queryKey: ['copilot', 'runs', params] as const,
+    queryKey: ["copilot", "runs", params] as const,
     queryFn: ({ pageParam }) =>
-      client.get<AiRunPage>(`/copilot/runs${qs({ ...params, cursor: pageParam })}`),
+      client.get<AiRunPage>(
+        `/copilot/runs${qs({ ...params, cursor: pageParam })}`,
+      ),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
@@ -1658,8 +2398,8 @@ export function useAiRuns(filter: AiRunsFilter = {}) {
 export function useSystemHealth() {
   const client = useApiClient();
   return useQuery({
-    queryKey: ['system', 'health'] as const,
-    queryFn: () => client.get<SystemHealthDto>('/system/health'),
+    queryKey: ["system", "health"] as const,
+    queryFn: () => client.get<SystemHealthDto>("/system/health"),
     refetchInterval: 30 * 1000,
   });
 }
@@ -1679,7 +2419,7 @@ export interface RegistrationsFilter {
   page?: number;
   pageSize?: number;
   sortBy?: string;
-  sortDir?: 'asc' | 'desc';
+  sortDir?: "asc" | "desc";
 }
 
 export function useRegistrationRequests(filter: RegistrationsFilter) {
@@ -1687,7 +2427,8 @@ export function useRegistrationRequests(filter: RegistrationsFilter) {
   const params = filter as Record<string, unknown>;
   return useQuery({
     queryKey: queryKeys.registrationRequests(params),
-    queryFn: () => client.get<RegistrationList>(`/registration-requests${qs(params)}`),
+    queryFn: () =>
+      client.get<RegistrationList>(`/registration-requests${qs(params)}`),
     placeholderData: (prev) => prev,
   });
 }
@@ -1696,7 +2437,8 @@ export function useRegistrationsSummary() {
   const client = useApiClient();
   return useQuery({
     queryKey: queryKeys.registrationSummary,
-    queryFn: () => client.get<RegistrationStatusSummary>('/registration-requests/summary'),
+    queryFn: () =>
+      client.get<RegistrationStatusSummary>("/registration-requests/summary"),
   });
 }
 
@@ -1704,7 +2446,8 @@ export function useRegistrationRequest(id: string) {
   const client = useApiClient();
   return useQuery({
     queryKey: queryKeys.registrationRequest(id),
-    queryFn: () => client.get<RegistrationDetailDto>(`/registration-requests/${id}`),
+    queryFn: () =>
+      client.get<RegistrationDetailDto>(`/registration-requests/${id}`),
     enabled: Boolean(id),
   });
 }
@@ -1713,7 +2456,7 @@ export function useRegistrationRequest(id: string) {
 function useRegistrationInvalidate(id: string) {
   const qc = useQueryClient();
   return () => {
-    void qc.invalidateQueries({ queryKey: ['registration-requests'] });
+    void qc.invalidateQueries({ queryKey: ["registration-requests"] });
     void qc.invalidateQueries({ queryKey: queryKeys.registrationRequest(id) });
   };
 }
@@ -1723,7 +2466,10 @@ export function useStartRegistrationReview(id: string) {
   const invalidate = useRegistrationInvalidate(id);
   return useMutation({
     mutationFn: (input: { version: number }) =>
-      client.post<RegistrationRequestDto>(`/registration-requests/${id}/start-review`, input),
+      client.post<RegistrationRequestDto>(
+        `/registration-requests/${id}/start-review`,
+        input,
+      ),
     onSuccess: invalidate,
   });
 }
@@ -1733,7 +2479,10 @@ export function useAssignRegistrationReviewer(id: string) {
   const invalidate = useRegistrationInvalidate(id);
   return useMutation({
     mutationFn: (input: { reviewerId: string; version: number }) =>
-      client.post<RegistrationRequestDto>(`/registration-requests/${id}/assign`, input),
+      client.post<RegistrationRequestDto>(
+        `/registration-requests/${id}/assign`,
+        input,
+      ),
     onSuccess: invalidate,
   });
 }
@@ -1743,21 +2492,24 @@ export function useAddRegistrationNote(id: string) {
   const invalidate = useRegistrationInvalidate(id);
   return useMutation({
     mutationFn: (input: { note: string }) =>
-      client.post<RegistrationRequestDto>(`/registration-requests/${id}/notes`, input),
+      client.post<RegistrationRequestDto>(
+        `/registration-requests/${id}/notes`,
+        input,
+      ),
     onSuccess: invalidate,
   });
 }
 
 export interface ApproveRegistrationPayload {
   version: number;
-  supportTier?: 'standard' | 'priority' | 'enterprise';
+  supportTier?: "standard" | "priority" | "enterprise";
   planKey?: string;
   campus: { name: string; code?: string };
   admin: {
     fullName: string;
     email: string;
     roleKeys?: string[];
-    credentialDelivery?: 'activation' | 'temporary_password';
+    credentialDelivery?: "activation" | "temporary_password";
   };
   note?: string;
 }
@@ -1767,7 +2519,10 @@ export function useApproveRegistration(id: string) {
   const invalidate = useRegistrationInvalidate(id);
   return useMutation({
     mutationFn: (input: ApproveRegistrationPayload) =>
-      client.post<RegistrationApprovalResultDto>(`/registration-requests/${id}/approve`, input),
+      client.post<RegistrationApprovalResultDto>(
+        `/registration-requests/${id}/approve`,
+        input,
+      ),
     onSuccess: () => {
       invalidate();
     },
@@ -1778,8 +2533,15 @@ export function useRejectRegistration(id: string) {
   const client = useApiClient();
   const invalidate = useRegistrationInvalidate(id);
   return useMutation({
-    mutationFn: (input: { version: number; reason: string; internalNote?: string }) =>
-      client.post<RegistrationRequestDto>(`/registration-requests/${id}/reject`, input),
+    mutationFn: (input: {
+      version: number;
+      reason: string;
+      internalNote?: string;
+    }) =>
+      client.post<RegistrationRequestDto>(
+        `/registration-requests/${id}/reject`,
+        input,
+      ),
     onSuccess: invalidate,
   });
 }

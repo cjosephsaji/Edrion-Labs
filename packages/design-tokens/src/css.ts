@@ -19,8 +19,20 @@ function staticVars(): string {
     lines.push(`    --size-${kebab}: ${v};`);
   }
   for (const [k, v] of Object.entries(shadow)) lines.push(`    --shadow-${k}: ${v};`);
-  lines.push(`    --font-sans: 'Google Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`);
-  lines.push(`    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;`);
+  // `next/font` publishes the actual self-hosted family names through the
+  // --font-st-*-face variables. Keep the semantic aliases separate so the
+  // generated token sheet never overwrites those injected values.
+  lines.push(
+    `    --font-sans: var(--font-st-body-face), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`,
+  );
+  lines.push(`    --font-display: var(--font-st-display-face), Georgia, serif;`);
+  lines.push(`    --font-body: var(--font-st-body-face), system-ui, sans-serif;`);
+  lines.push(
+    `    --font-mono: var(--font-st-mono-face), ui-monospace, SFMono-Regular, monospace;`,
+  );
+  lines.push(
+    `    --font-mono-ui: var(--font-st-mono-face), ui-monospace, SFMono-Regular, monospace;`,
+  );
   lines.push(`    --ease-standard: ${motion.easing.standard};`);
   lines.push(`    --ease-emphasized: ${motion.easing.emphasized};`);
   lines.push(`    --ease-exit: ${motion.easing.exit};`);

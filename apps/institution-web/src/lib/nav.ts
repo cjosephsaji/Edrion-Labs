@@ -88,6 +88,7 @@ export const NAV: NavGroup[] = [
       { id: 'dashboard', label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'portal.dashboard.view' },
       { id: 'attention', label: 'Attention Centre', href: '/attention', icon: Gauge, permission: 'portal.dashboard.view' },
       { id: 'petros', label: 'Petros', href: '/petros', icon: Sparkles, permission: 'ai.use' },
+      { id: 'petros-support', label: 'Petros support', href: '/petros-support', icon: HeartHandshake, permission: 'petros.teacher_support.view' },
     ],
   },
   {
@@ -239,6 +240,7 @@ export const NAV: NavGroup[] = [
       { id: 'users', label: 'User Management', href: '/users', icon: UserCog, permission: 'users.view' },
       { id: 'roles', label: 'Roles & Permissions', href: '/roles', icon: ShieldCheck, permission: 'roles.view' },
       { id: 'settings', label: 'Settings', href: '/settings', icon: Settings, permission: 'institution_settings.view' },
+      { id: 'settings-petros-policy', label: 'Petros policy', href: '/settings/petros-policy', icon: ShieldCheck, permission: 'petros.policy.view' },
       { id: 'settings-federation', label: 'SSO & roster', href: '/settings/federation', icon: KeyRound, permission: 'institution_settings.manage' },
       { id: 'billing', label: 'Billing', href: '/billing', icon: CreditCard, permission: 'billing.view' },
       { id: 'audit', label: 'Audit Logs', href: '/audit', icon: ShieldCheck, permission: 'audit.view' },

@@ -102,7 +102,7 @@ export function useTeachingStaffOptions() {
     { page: 1, pageSize: 100, sortDir: 'asc' as const, filters: {} },
     'year',
   );
-  const filters = scoped.filters ?? {};
+  const filters = (scoped.filters ?? {}) as { academicYearId?: string; termId?: string };
   const qs = new URLSearchParams();
   if (filters.academicYearId) qs.set('academicYearId', filters.academicYearId);
   if (filters.termId) qs.set('termId', filters.termId);

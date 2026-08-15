@@ -123,6 +123,26 @@ export const apiEnvSchema = z.object({
   STUDENT_UPLOAD_MAX_BYTES_IMAGE: z.coerce.number().int().positive().default(15_728_640),
   /** Max size (bytes) for a single student document upload. Default 40 MiB. */
   STUDENT_UPLOAD_MAX_BYTES_DOC: z.coerce.number().int().positive().default(41_943_040),
+  /** Stage 9 raw image ceiling. Kept below the general student-image ceiling by default. */
+  PETROS_MEDIA_MAX_IMAGE_BYTES: z.coerce.number().int().positive().default(10_485_760),
+  /** Stage 9 raw voice-turn ceiling. */
+  PETROS_MEDIA_MAX_AUDIO_BYTES: z.coerce.number().int().positive().default(12_582_912),
+  /** One voice turn cannot silently become continuous background recording. */
+  PETROS_MEDIA_MAX_AUDIO_SECONDS: z.coerce.number().int().positive().default(120),
+  /** Reject decompression-bomb-sized images before provider processing. */
+  PETROS_MEDIA_MAX_PIXELS: z.coerce.number().int().positive().default(24_000_000),
+  /** Per-student upload-intent ceiling for a rolling UTC day. */
+  PETROS_MEDIA_DAILY_UPLOAD_LIMIT: z.coerce.number().int().positive().default(50),
+  /** Raw question/handwriting media retention after upload. */
+  PETROS_MEDIA_IMAGE_RETENTION_HOURS: z.coerce.number().int().positive().default(24),
+  /** Raw voice is shorter-lived than extracted learning evidence. */
+  PETROS_MEDIA_AUDIO_RETENTION_HOURS: z.coerce.number().int().positive().default(1),
+  /** HMAC secret for short-lived owner-scoped preview links. Required in production. */
+  PETROS_MEDIA_SIGNING_SECRET: z.string().min(16).optional(),
+  /** Optional external malware-scanner endpoint. Production deployments should configure it. */
+  PETROS_MEDIA_SCAN_URL: z.string().url().optional(),
+  /** Bearer token used only by the API when calling the external scanner. */
+  PETROS_MEDIA_SCAN_TOKEN: z.string().min(8).optional(),
   /** Base URL of the super-admin web app — used to build employee password-reset links. */
   SUPER_ADMIN_WEB_URL: z.string().url().default('http://localhost:3000'),
 
@@ -212,6 +232,12 @@ export const apiEnvSchema = z.object({
   RAZORPAY_KEY_ID: z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
+  /** Clever SSO OAuth app credentials (federation). */
+  CLEVER_CLIENT_ID: z.string().optional(),
+  CLEVER_CLIENT_SECRET: z.string().optional(),
+  /** ClassLink SSO OAuth app credentials (federation). */
+  CLASSLINK_CLIENT_ID: z.string().optional(),
+  CLASSLINK_CLIENT_SECRET: z.string().optional(),
 
   // ── Message attachments (real upload; local-disk store, swap for object store later) ───────
   /** Directory uploaded message attachments are written to (resolved from the API process cwd). */

@@ -1,9 +1,8 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
 import { schema, type Database } from '@edrion/database';
 import { DATABASE } from '../../../common/tokens';
 import { FeatureControlsService } from '../../feature-controls/feature-controls.service';
-import type { StudentPrincipal } from '../student.types';
 
 @Injectable()
 export class LibraryFinesService {

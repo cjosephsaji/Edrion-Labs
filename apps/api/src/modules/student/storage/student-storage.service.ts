@@ -13,6 +13,7 @@ import { API_ENV, DATABASE } from '../../../common/tokens';
 import type { StudentPrincipal } from '../student.types';
 import { LocalDiskDriver } from './drivers/local-disk.driver';
 
+const IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic']);
 const AUDIO_MIMES = new Set([
   'audio/webm',
   'audio/webm;codecs=opus',
@@ -126,6 +127,7 @@ export class StudentStorageService {
       'library_upload',
       'homework_answer',
       'assignment_file',
+      'exam_answer',
       'practice_photo',
       'mock_answer',
       'class_material',
@@ -135,6 +137,9 @@ export class StudentStorageService {
       'debate_exhibit',
       'debate_turn_chunk',
       'avatar',
+      'petros_question_photo',
+      'petros_handwriting_page',
+      'petros_voice_turn',
     ];
     if (!allowed.includes(kind)) {
       throw new BadRequestException({ code: 'INVALID_KIND', message: `Unknown upload kind: ${kind}` });

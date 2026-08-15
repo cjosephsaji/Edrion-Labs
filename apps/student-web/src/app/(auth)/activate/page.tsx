@@ -1,73 +1,87 @@
 'use client';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useState, type FormEvent } from 'react';
-import { Button, FieldError, Input, Label } from '@edrion/ui';
-import { useStudentClient, StudentClientError } from '@/lib/student-client';
-import { useT } from '@/i18n/use-t';
 
-function ActivateForm() {
-  const { t } = useT();
-  const client = useStudentClient();
+import { useState, type FormEvent } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { formatApiError, useStudentApi } from '@/lib/api-client';
+
+export default function ActivatePage() {
+  const api = useStudentApi();
   const router = useRouter();
-  const params = useSearchParams();
-  const token = params.get('token') ?? '';
+  const [token, setToken] = useState('');
   const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
+  const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    setPending(true);
     setError(null);
-    if (password !== confirm) {
-      setError('Passwords do not match.');
-      return;
-    }
-    setBusy(true);
     try {
-      await client.post('/auth/activate', { token, password });
+      await api.post('/student/auth/activate', {
+        token: token.trim(),
+        password,
+      });
       router.replace('/home');
     } catch (err) {
-      setError(err instanceof StudentClientError ? err.message : 'Activation failed.');
+      setError(formatApiError(err));
     } finally {
-      setBusy(false);
+      setPending(false);
     }
   }
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-st-page px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-st-bd1 bg-st-card p-6 shadow-sm">
-        <h1 className="font-display text-2xl font-semibold text-st-ink">{t('auth.activateTitle')}</h1>
-        <p className="mt-1 text-sm text-st-muted">Choose a password to finish setting up your account.</p>
-        <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          </div>
-          <div>
-            <Label htmlFor="confirm">Confirm password</Label>
-            <Input id="confirm" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
-          </div>
-          {error && <FieldError>{error}</FieldError>}
-          <Button type="submit" disabled={busy || !token} className="w-full bg-st-accent hover:bg-st-accentDeep">
-            {busy ? 'Activating…' : 'Activate account'}
-          </Button>
-        </form>
-        <p className="mt-4 text-center text-sm">
-          <Link href="/login" className="text-st-accent hover:underline">
-            Back to sign in
-          </Link>
+    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10">
+      <div className="mb-8">
+        <p className="font-display text-3xl font-semibold text-[var(--s-accentDeep)]">Edrion</p>
+        <h1 className="mt-3 font-display text-2xl font-semibold text-[var(--s-ink)]">
+          Activate your account
+        </h1>
+        <p className="mt-1 text-sm text-[var(--s-muted)]">
+          Enter the invite code from your institution and choose a password.
         </p>
       </div>
-    </main>
-  );
-}
 
-export default function ActivatePage() {
-  return (
-    <Suspense fallback={<div className="min-h-dvh bg-st-page" />}>
-      <ActivateForm />
-    </Suspense>
+      <form
+        onSubmit={onSubmit}
+        className="rounded-2xl border border-[var(--s-bd1)] bg-[var(--s-card)] p-5 shadow-[0_16px_40px_-28px_rgba(23,37,31,0.45)]"
+      >
+        <label className="block text-sm">
+          <span className="mb-1.5 block font-medium text-[var(--s-inkSoft)]">Activation code</span>
+          <input
+            required
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            className="w-full rounded-xl border border-[var(--s-bd1)] bg-[var(--s-cardAlt)] px-3 py-2.5 text-[var(--s-ink)] outline-none focus:border-[var(--s-accent)]"
+          />
+        </label>
+        <label className="mt-4 block text-sm">
+          <span className="mb-1.5 block font-medium text-[var(--s-inkSoft)]">New password</span>
+          <input
+            type="password"
+            required
+            minLength={8}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full rounded-xl border border-[var(--s-bd1)] bg-[var(--s-cardAlt)] px-3 py-2.5 text-[var(--s-ink)] outline-none focus:border-[var(--s-accent)]"
+          />
+        </label>
+        {error ? <p className="mt-3 text-sm text-[var(--s-danger)]">{error}</p> : null}
+        <button
+          type="submit"
+          disabled={pending}
+          className="mt-5 w-full rounded-xl bg-[var(--s-accent)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+        >
+          {pending ? 'Activating…' : 'Activate'}
+        </button>
+      </form>
+
+      <p className="mt-5 text-center text-sm text-[var(--s-muted)]">
+        Already activated?{' '}
+        <Link href="/login" className="font-medium text-[var(--s-accentDeep)] underline-offset-2 hover:underline">
+          Sign in
+        </Link>
+      </p>
+    </div>
   );
 }

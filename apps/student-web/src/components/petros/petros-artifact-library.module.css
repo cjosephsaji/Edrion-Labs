@@ -1,0 +1,76 @@
+.page { width: min(1100px, calc(100% - 32px)); margin: 0 auto; padding: 26px 0 60px; color: var(--s-ink); }
+.page > header { border-bottom: 1px solid var(--s-bd1); padding-bottom: 18px; }
+.page > header a { display: inline-flex; gap: 6px; align-items: center; color: var(--s-muted); font-size: 12px; }
+.page > header a svg { width: 15px; }
+.page > header p { margin: 24px 0 5px; color: var(--s-accentDeep); font-size: 10px; font-weight: 750; letter-spacing: .13em; }
+.page h1 { margin: 0; font-size: clamp(26px, 5vw, 42px); }
+.page > header span { display: block; margin-top: 7px; color: var(--s-muted); }
+.page section { margin-top: 34px; }
+.sectionTitle { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 14px; }
+.sectionTitle > svg { width: 22px; color: var(--s-accentDeep); }
+.sectionTitle h2 { margin: 0; font-size: 20px; }
+.sectionTitle p { margin: 3px 0 0; color: var(--s-muted); font-size: 12px; }
+.empty { border: 1px dashed var(--s-bd1); background: var(--s-cardAlt); padding: 18px; color: var(--s-muted); }
+.error,
+.notice { display: flex; gap: 9px; align-items: center; margin-top: 18px; border: 1px solid var(--s-bd1); padding: 12px; }
+.error { color: var(--s-danger, #b42318); }
+.notice { color: var(--s-success); }
+.error button { margin-left: auto; border: 0; background: transparent; color: inherit; }
+.error svg,
+.notice svg { width: 16px; }
+.review { max-width: 760px; }
+.reviewCard { border: 1px solid var(--s-bd1); background: var(--s-card); padding: clamp(16px, 3vw, 24px); }
+.reviewCard + .reviewCard { margin-top: 12px; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.meta span { border: 1px solid var(--s-bd1); padding: 4px 7px; color: var(--s-muted); font-size: 10px; }
+.reviewCard h3 { margin: 20px 0; font-size: 20px; }
+.reveal { width: 100%; border: 1px solid var(--s-accentBd); background: var(--s-accentSoft); padding: 11px; color: var(--s-accentDeep); font-weight: 700; }
+.answer { border-left: 3px solid var(--s-accentDeep); background: var(--s-cardAlt); padding: 12px 14px; }
+.answer p { margin: 0; }
+.answer small { display: block; margin-top: 8px; color: var(--s-muted); }
+.confidence { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; border: 0; padding: 0; }
+.confidence legend { margin-bottom: 8px; color: var(--s-muted); font-size: 11px; }
+.confidence label { font-size: 12px; }
+.grades { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 14px; }
+.grades button { border: 1px solid var(--s-bd1); background: var(--s-cardAlt); padding: 10px 5px; color: var(--s-ink); }
+.explanation { display: block; margin-top: 12px; color: var(--s-muted); }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+.savedCard { border: 1px solid var(--s-bd1); background: var(--s-card); padding: 16px; }
+.savedHead { display: flex; gap: 7px; align-items: center; color: var(--s-accentDeep); font-size: 11px; text-transform: capitalize; }
+.savedHead svg { width: 15px; }
+.savedHead small { margin-left: auto; color: var(--s-muted); }
+.savedCard h3 { margin: 14px 0 8px; }
+.savedCard p { color: var(--s-muted); line-height: 1.55; }
+.nodeList,
+.sourceList { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.nodeList span,
+.sourceList a,
+.sourceList button { border: 1px solid var(--s-bd1); background: transparent; padding: 4px 7px; color: var(--s-muted); font-size: 10px; }
+.sourceList button { cursor: pointer; }
+.sourceReference { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.sourceReference small { max-width: 320px; color: var(--s-danger, #b42318); font-size: 10px; line-height: 1.35; }
+.savedCard > small { display: block; margin-top: 12px; color: var(--s-muted); }
+.delete { display: inline-flex; gap: 6px; align-items: center; margin-top: 14px; border: 0; background: transparent; padding: 0; color: var(--s-danger, #b42318); font-size: 11px; }
+.delete svg { width: 13px; }
+.canvasButton { display: inline-flex; gap: 6px; align-items: center; margin-top: 12px; border: 1px solid var(--s-accentBd); background: var(--s-accentSoft); padding: 8px 10px; color: var(--s-accentDeep); font-size: 11px; font-weight: 700; }
+.canvasButton svg,
+.canvasActions svg { width: 14px; }
+.canvasEditor { margin-top: 14px !important; border: 1px solid var(--s-accentBd); background: var(--s-cardAlt); padding: 14px; }
+.canvasEditorHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.canvasEditorHead button { border: 0; background: transparent; color: var(--s-muted); }
+.canvasEditorHead svg { width: 16px; }
+.canvasEditor label { display: grid; gap: 5px; margin-top: 10px; color: var(--s-muted); font-size: 10px; font-weight: 700; }
+.canvasEditor input,
+.canvasEditor textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--s-bd1); background: var(--s-card); padding: 8px; color: var(--s-ink); font: inherit; font-size: 12px; }
+.canvasEditor textarea { resize: vertical; line-height: 1.4; }
+.canvasEditor fieldset { margin: 14px 0 0; border: 1px solid var(--s-bd1); padding: 10px; }
+.canvasEditor legend { padding: 0 5px; color: var(--s-ink); font-size: 11px; font-weight: 750; }
+.canvasNode + .canvasNode { margin-top: 10px; border-top: 1px solid var(--s-bd1); padding-top: 2px; }
+.canvasSafety { margin: 11px 0 0 !important; color: var(--s-muted); font-size: 10px; }
+.canvasActions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; margin-top: 12px; }
+.canvasActions button { display: inline-flex; gap: 5px; align-items: center; border: 1px solid var(--s-bd1); background: var(--s-card); padding: 8px 10px; color: var(--s-ink); font-size: 11px; font-weight: 700; }
+.canvasActions button:last-child { border-color: var(--s-accentBd); background: var(--s-accentSoft); color: var(--s-accentDeep); }
+.spin { width: 20px; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 700px) { .grid { grid-template-columns: 1fr; } .grades { grid-template-columns: repeat(2, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }

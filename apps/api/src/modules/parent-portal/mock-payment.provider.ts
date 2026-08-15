@@ -13,6 +13,10 @@ export class MockPaymentProvider implements PaymentProvider {
   readonly key = 'mock';
   private readonly secret = process.env.PARENT_PAYMENT_WEBHOOK_SECRET ?? 'dev-parent-webhook-secret';
 
+  clientConfig(): { keyId: string; mode: 'mock' } {
+    return { keyId: 'mock', mode: 'mock' };
+  }
+
   async createIntent(args: CreateIntentArgs): Promise<CreatedIntent> {
     return { providerRef: `mock_${args.invoiceNo}_${randomUUID().slice(0, 8)}`, status: 'pending' };
   }

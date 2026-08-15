@@ -16,6 +16,7 @@ import { RequestJobsService } from './request-jobs.service';
 import { RequestNotifyService } from './request-notify.service';
 import { RequestRegistryService } from './request-registry.service';
 import { StudentRequestsController } from './student-requests.controller';
+import { StudentRequestOptionsService } from './student-request-options.service';
 import { PortalSensitiveReportsController } from './portal-sensitive-reports.controller';
 import { SensitiveReportService } from './sensitive-report.service';
 
@@ -39,6 +40,7 @@ import { SensitiveReportService } from './sensitive-report.service';
     RequestJobsService,
     RequestConfigService,
     SensitiveReportService,
+    StudentRequestOptionsService,
   ],
 })
 export class RequestEngineModule {}

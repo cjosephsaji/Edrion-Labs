@@ -35,7 +35,7 @@ async function main() {
 
     // 2. Delete students who do not have a proper portal login
     console.log('→ Deleting students without a proper login...');
-    const deleteStudents = await tx.execute(sql`
+    await tx.execute(sql`
       DELETE FROM students
       WHERE institution_user_id IS NULL
          OR institution_user_id NOT IN (
@@ -49,7 +49,7 @@ async function main() {
 
     // 3. Delete staff who do not have a proper portal login
     console.log('→ Deleting staff without a proper login...');
-    const deleteStaff = await tx.execute(sql`
+    await tx.execute(sql`
       DELETE FROM staff
       WHERE institution_user_id IS NULL
          OR institution_user_id NOT IN (
@@ -63,7 +63,7 @@ async function main() {
 
     // 4. Delete institution users who do not have a proper portal login
     console.log('→ Deleting institution_users without a proper login...');
-    const deleteUsers = await tx.execute(sql`
+    await tx.execute(sql`
       DELETE FROM institution_users
       WHERE status != 'active'
          OR password_hash IS NULL
@@ -73,7 +73,7 @@ async function main() {
 
     // 5. Delete academic terms whose names contain the word "bad" (case-insensitive)
     console.log('→ Deleting academic terms containing "bad"...');
-    const deleteBadTerms = await tx.execute(sql`
+    await tx.execute(sql`
       DELETE FROM academic_terms
       WHERE name ILIKE '%bad%'
     `);

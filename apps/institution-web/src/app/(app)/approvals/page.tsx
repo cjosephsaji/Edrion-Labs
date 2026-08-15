@@ -37,7 +37,12 @@ type Composer = 'reject' | 'request-info' | 'note' | 'reassign' | null;
 export default function ApprovalsPage() {
   const { can } = usePermissions();
   const search = useSearchParams();
-  const [tab, setTab] = useState<'inbox' | 'issuance' | 'batches'>('inbox');
+  const canReview = can('requests.review');
+  const canApproveReleases = can('gradebook.approve_release');
+  const canRecomputeApproval = can('results.recompute_approval');
+  const [tab, setTab] = useState<'inbox' | 'issuance' | 'batches' | 'releases' | 'recompute'>(
+    canReview ? 'inbox' : canApproveReleases ? 'releases' : 'recompute',
+  );
 
   if (!canReview && !canApproveReleases && !canRecomputeApproval) {
     return <><Topbar title="Approvals" /><div className="p-6"><PermissionDenied description="You don’t have permission to review approvals." /></div></>;
@@ -48,13 +53,17 @@ export default function ApprovalsPage() {
       <Topbar title="Approvals" />
       <div className="page-enter flex min-h-0 flex-1 flex-col p-4 lg:p-6">
         <div className="mb-4 flex items-center gap-2">
-          <Tab active={tab === 'inbox'} onClick={() => setTab('inbox')}>Inbox</Tab>
-          {can('documents.issue') && <Tab active={tab === 'issuance'} onClick={() => setTab('issuance')}>Issuance</Tab>}
-          {can('documents.issue') && <Tab active={tab === 'batches'} onClick={() => setTab('batches')}>Batches</Tab>}
+          {canReview ? <Tab active={tab === 'inbox'} onClick={() => setTab('inbox')}>Inbox</Tab> : null}
+          {canReview && can('documents.issue') ? <Tab active={tab === 'issuance'} onClick={() => setTab('issuance')}>Issuance</Tab> : null}
+          {canReview && can('documents.issue') ? <Tab active={tab === 'batches'} onClick={() => setTab('batches')}>Batches</Tab> : null}
+          {canApproveReleases ? <Tab active={tab === 'releases'} onClick={() => setTab('releases')}>Mark releases</Tab> : null}
+          {canRecomputeApproval ? <Tab active={tab === 'recompute'} onClick={() => setTab('recompute')}>Term recompute</Tab> : null}
         </div>
-        {tab === 'inbox' ? <InboxView initialRequestId={search.get('request')} /> : null}
-        {tab === 'issuance' ? <IssuanceView /> : null}
-        {tab === 'batches' ? <BatchesView /> : null}
+        {tab === 'inbox' && canReview ? <InboxView initialRequestId={search.get('request')} /> : null}
+        {tab === 'issuance' && canReview ? <IssuanceView /> : null}
+        {tab === 'batches' && canReview ? <BatchesView /> : null}
+        {tab === 'releases' && canApproveReleases ? <ReleaseApprovalsView /> : null}
+        {tab === 'recompute' && canRecomputeApproval ? <TermRecomputeApprovalsView /> : null}
       </div>
     </>
   );

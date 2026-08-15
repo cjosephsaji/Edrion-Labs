@@ -1,12 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   and,
-  asc,
   desc,
   eq,
-  gt,
   gte,
-  inArray,
   isNull,
   lte,
   or,
@@ -426,7 +423,7 @@ export class AttendanceRollupService {
     return new Set(rows.map((row) => (row.slotId ? `${row.date}:${row.slotId}` : `${row.date}:full`)));
   }
 
-  private async subjectIdsForStudent(institutionId: string, studentId: string, classId: string) {
+  private async subjectIdsForStudent(institutionId: string, _studentId: string, classId: string) {
     const rows = await this.db
       .select({ subjectId: schema.classSubjectTeachers.subjectId })
       .from(schema.classSubjectTeachers)

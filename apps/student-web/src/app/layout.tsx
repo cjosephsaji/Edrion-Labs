@@ -1,56 +1,46 @@
-import type { Metadata, Viewport } from 'next';
-import { IBM_Plex_Mono, Instrument_Sans, Source_Serif_4 } from 'next/font/google';
-import '@xyflow/react/dist/style.css';
-import './globals.css';
-import '@/components/visual-studio/thinking-canvas.css';
+import type { Metadata } from 'next';
+import { Newsreader, Source_Sans_3 } from 'next/font/google';
 import { Providers } from './providers';
-import { RegisterSW } from '@/components/register-sw';
+import './globals.css';
 
-const sourceSerif = Source_Serif_4({
+const newsreader = Newsreader({
   subsets: ['latin'],
-  variable: '--font-display',
+  weight: 'variable',
+  style: ['normal', 'italic'],
+  axes: ['opsz'],
+  variable: '--font-st-display-face',
   display: 'swap',
+  preload: true,
+  fallback: ['Georgia', 'serif'],
+  adjustFontFallback: true,
 });
 
-const instrumentSans = Instrument_Sans({
+const sourceSans = Source_Sans_3({
   subsets: ['latin'],
-  variable: '--font-body',
+  weight: 'variable',
+  style: ['normal', 'italic'],
+  variable: '--font-st-body-face',
   display: 'swap',
-});
-
-const ibmPlexMono = IBM_Plex_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500'],
-  variable: '--font-mono-ui',
-  display: 'swap',
+  preload: true,
+  fallback: ['Arial', 'sans-serif'],
+  adjustFontFallback: true,
 });
 
 export const metadata: Metadata = {
-  title: 'Edrion Student',
-  description: 'Your learning portal — practice, progress, and everything your school shares.',
-  manifest: '/manifest.webmanifest',
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Edrion Student' },
-};
-
-export const viewport: Viewport = {
-  themeColor: '#1E7A5E',
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 1,
-  viewportFit: 'cover',
+  title: 'Student Portal · Edrion',
+  description: 'Your academic life — timetable, assignments, fees, and results.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
-      suppressHydrationWarning
-      className={`h-full ${sourceSerif.variable} ${instrumentSans.variable} ${ibmPlexMono.variable}`}
+      className={`${newsreader.variable} ${sourceSans.variable}`}
       data-student-theme="standard"
+      suppressHydrationWarning
     >
-      <body className="h-full antialiased">
+      <body className="antialiased">
         <Providers>{children}</Providers>
-        <RegisterSW />
       </body>
     </html>
   );

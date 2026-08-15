@@ -1,7 +1,12 @@
 'use client';
 import { useCallback, useMemo } from 'react';
 import { type Column } from '@edrion/ui';
-import { ResourceManager, type FilterDef, type ResourcePermissions } from '@/components/academics/resource-manager';
+import {
+  ResourceManager,
+  type FilterDef,
+  type MutationLike,
+  type ResourcePermissions,
+} from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
 import { ParentPortalLoginSetup } from '@/components/admin/parent-portal-login-setup';
 import { UserProfileDialog } from '@/components/people/user-profile-dialog';
@@ -78,7 +83,11 @@ export default function ParentsPage() {
   );
 
   const onSubmitUpdate = useCallback(
-    async (row: ParentRow, body: Record<string, unknown>, { update }) => {
+    async (
+      row: ParentRow,
+      body: Record<string, unknown>,
+      { update }: { update: MutationLike<{ id: string; body: Record<string, unknown> }> },
+    ) => {
       const profile: Record<string, unknown> = { version: row.version };
       for (const [key, value] of Object.entries(body)) {
         if (!ACCESS_KEYS.has(key)) profile[key] = value;

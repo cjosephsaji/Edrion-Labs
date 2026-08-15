@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { StudentHomePriorityKey } from '@edrion/schemas';
 import { usePortalClient } from './portal-client';
 import { useScope } from './scope';
 
@@ -69,6 +70,7 @@ export interface StudentPortalConfigAdminResponse {
     labelOverrides: Record<string, string>;
     attendanceThreshold: number;
     gradingScheme: string;
+    homePriorities: Record<StudentHomePriorityKey, number>;
   };
   campuses: Array<{ id: string; name: string }>;
   campusOverrides: Record<string, Record<string, boolean>>;

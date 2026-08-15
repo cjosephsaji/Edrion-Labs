@@ -4,9 +4,13 @@ import {
   Inject,
   Injectable,
   NotFoundException,
-} from '@nestjs/common';
-import { resolveScopeFilter, type InstitutionScope, type ScopeFilter } from '@edrion/auth';
-import type { AuditWriter, AuditEventInput } from '@edrion/audit';
+} from "@nestjs/common";
+import {
+  resolveScopeFilter,
+  type InstitutionScope,
+  type ScopeFilter,
+} from "@edrion/auth";
+import type { AuditWriter, AuditEventInput } from "@edrion/audit";
 import type {
   CreateExamInput,
   CreateExamScheduleInput,
@@ -18,15 +22,19 @@ import type {
   UpdateExamInput,
   UpdateExamQuestionInput,
   UpdateExamScheduleInput,
-} from '@edrion/schemas';
-import { AUDIT_WRITER } from '../../common/tokens';
-import type { Page } from './academics.repository';
-import type { ListResult } from './academics.service';
-import { ExamsRepository, type ExamRefTable } from './exams.repository';
-import { basePortalAudit, type PortalActionContext } from './portal-action-context';
-import { PortalAudienceService } from './portal-audience.service';
+} from "@edrion/schemas";
+import { AUDIT_WRITER } from "../../common/tokens";
+import type { Page } from "./academics.repository";
+import type { ListResult } from "./academics.service";
+import { ExamsRepository, type ExamRefTable } from "./exams.repository";
+import {
+  basePortalAudit,
+  type PortalActionContext,
+} from "./portal-action-context";
+import { PortalAudienceService } from "./portal-audience.service";
+import { PetrosLearningSourceIngestionService } from "../petros-learner-model/petros-learning-source-ingestion.service";
 
-const MODULE = 'portal-exams';
+const MODULE = "portal-exams";
 
 /**
  * Institution-portal Exams service (Phase 6). An exam is campus-scoped and version-guarded like
@@ -39,6 +47,7 @@ export class ExamsService {
   constructor(
     private readonly repo: ExamsRepository,
     private readonly audience: PortalAudienceService,
+    private readonly learnerEvidence: PetrosLearningSourceIngestionService,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
   ) {}
 
@@ -46,7 +55,10 @@ export class ExamsService {
 
   async list(ctx: PortalActionContext, q: ExamsListQuery) {
     const f = this.filter(ctx);
-    return this.paginate(await this.repo.list(ctx.principal.institutionId, f.campusIds, q), q);
+    return this.paginate(
+      await this.repo.list(ctx.principal.institutionId, f.campusIds, q),
+      q,
+    );
   }
 
   /** Exam + schedules + questions for the builder. */
@@ -63,29 +75,35 @@ export class ExamsService {
   }
 
   async create(ctx: PortalActionContext, input: CreateExamInput) {
-    await this.assertOptional(ctx, 'academicYears', input.academicYearId, 'academic year');
-    await this.assertOptional(ctx, 'academicTerms', input.termId, 'term');
+    await this.assertOptional(
+      ctx,
+      "academicYears",
+      input.academicYearId,
+      "academic year",
+    );
+    await this.assertOptional(ctx, "academicTerms", input.termId, "term");
     const campusId = this.createCampusId(ctx.scope);
     const actorId = ctx.principal.institutionUserId;
     const schedules = input.schedules ?? [];
 
     for (const s of schedules) {
-      await this.assertRef(ctx, 'classes', s.classId, 'class');
-      await this.assertRef(ctx, 'subjects', s.subjectId, 'subject');
+      await this.assertRef(ctx, "classes", s.classId, "class");
+      await this.assertRef(ctx, "subjects", s.subjectId, "subject");
     }
     const keys = new Set<string>();
     for (const s of schedules) {
       const key = `${s.classId}:${s.subjectId}`;
       if (keys.has(key)) {
         throw new ConflictException({
-          code: 'SCHEDULE_EXISTS',
-          message: 'A paper already exists for this class and subject in this exam.',
+          code: "SCHEDULE_EXISTS",
+          message:
+            "A paper already exists for this class and subject in this exam.",
         });
       }
       keys.add(key);
     }
 
-    const publishPapers = input.status === 'published';
+    const publishPapers = input.status === "published";
     const examValues = {
       institutionId: ctx.principal.institutionId,
       campusId,
@@ -130,7 +148,9 @@ export class ExamsService {
                 correctKey: q.correctKey ?? null,
                 markingNote: q.markingNote ?? null,
                 marks: q.marks,
-                config: (q.config as Record<string, unknown> | null | undefined) ?? null,
+                config:
+                  (q.config as Record<string, unknown> | null | undefined) ??
+                  null,
                 createdBy: actorId,
               })),
             })),
@@ -140,7 +160,7 @@ export class ExamsService {
     if (input.audience?.length) {
       await this.audience.materializeExamAssignees(ctx, row.id, input.audience);
     }
-    await this.write(ctx, 'exam.create', 'exam', row.id, campusId, {
+    await this.write(ctx, "exam.create", "exam", row.id, campusId, {
       newState: {
         name: row.name,
         examType: row.examType,
@@ -152,22 +172,32 @@ export class ExamsService {
   }
 
   /** Atomic update of exam + schedules + questions from the builder. */
-  async reconcile(ctx: PortalActionContext, id: string, input: ReconcileExamInput) {
+  async reconcile(
+    ctx: PortalActionContext,
+    id: string,
+    input: ReconcileExamInput,
+  ) {
     const f = this.filter(ctx);
     const existing = await this.repo.find(id, ctx.principal.institutionId);
     this.assertInScope(existing?.campusId ?? null, existing, f);
-    await this.assertOptional(ctx, 'academicYears', input.academicYearId, 'academic year');
-    await this.assertOptional(ctx, 'academicTerms', input.termId, 'term');
+    await this.assertOptional(
+      ctx,
+      "academicYears",
+      input.academicYearId,
+      "academic year",
+    );
+    await this.assertOptional(ctx, "academicTerms", input.termId, "term");
 
     const keys = new Set<string>();
     for (const s of input.schedules) {
-      await this.assertRef(ctx, 'classes', s.classId, 'class');
-      await this.assertRef(ctx, 'subjects', s.subjectId, 'subject');
+      await this.assertRef(ctx, "classes", s.classId, "class");
+      await this.assertRef(ctx, "subjects", s.subjectId, "subject");
       const key = `${s.classId}:${s.subjectId}`;
       if (keys.has(key)) {
         throw new ConflictException({
-          code: 'SCHEDULE_EXISTS',
-          message: 'A paper already exists for this class and subject in this exam.',
+          code: "SCHEDULE_EXISTS",
+          message:
+            "A paper already exists for this class and subject in this exam.",
         });
       }
       keys.add(key);
@@ -175,7 +205,7 @@ export class ExamsService {
 
     const actorId = ctx.principal.institutionUserId;
     const nextStatus = input.status ?? existing!.status;
-    const publishPapers = nextStatus === 'published';
+    const publishPapers = nextStatus === "published";
     let updated;
     try {
       updated = await this.repo.reconcileFull({
@@ -184,15 +214,32 @@ export class ExamsService {
         examPatch: {
           name: input.name ?? existing!.name,
           examType: input.examType ?? existing!.examType,
-          academicYearId: input.academicYearId === undefined ? existing!.academicYearId : input.academicYearId,
+          academicYearId:
+            input.academicYearId === undefined
+              ? existing!.academicYearId
+              : input.academicYearId,
           termId: input.termId === undefined ? existing!.termId : input.termId,
-          termLabel: input.termLabel === undefined ? existing!.termLabel : input.termLabel,
-          startDate: input.startDate === undefined ? existing!.startDate : input.startDate,
-          endDate: input.endDate === undefined ? existing!.endDate : input.endDate,
+          termLabel:
+            input.termLabel === undefined
+              ? existing!.termLabel
+              : input.termLabel,
+          startDate:
+            input.startDate === undefined
+              ? existing!.startDate
+              : input.startDate,
+          endDate:
+            input.endDate === undefined ? existing!.endDate : input.endDate,
           status: nextStatus,
-          description: input.description === undefined ? existing!.description : input.description,
-          audience: input.audience === undefined ? existing!.audience : input.audience,
-          durationMin: input.durationMin === undefined ? existing!.durationMin : input.durationMin,
+          description:
+            input.description === undefined
+              ? existing!.description
+              : input.description,
+          audience:
+            input.audience === undefined ? existing!.audience : input.audience,
+          durationMin:
+            input.durationMin === undefined
+              ? existing!.durationMin
+              : input.durationMin,
           updatedBy: actorId,
         },
         schedules: input.schedules.map((s) => ({
@@ -220,14 +267,15 @@ export class ExamsService {
             correctKey: q.correctKey ?? null,
             markingNote: q.markingNote ?? null,
             marks: q.marks,
-            config: (q.config as Record<string, unknown> | null | undefined) ?? null,
+            config:
+              (q.config as Record<string, unknown> | null | undefined) ?? null,
             actorId,
           })),
         })),
       });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '';
-      if (msg.includes('VERSION_CONFLICT') || msg.includes('NOT_FOUND')) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("VERSION_CONFLICT") || msg.includes("NOT_FOUND")) {
         throw this.versionConflict();
       }
       throw err;
@@ -236,8 +284,12 @@ export class ExamsService {
     if (input.audience !== undefined) {
       await this.audience.materializeExamAssignees(ctx, id, input.audience);
     }
-    await this.write(ctx, 'exam.reconcile', 'exam', id, updated.campusId, {
-      newState: { name: updated.name, status: updated.status, scheduleCount: input.schedules.length },
+    await this.write(ctx, "exam.reconcile", "exam", id, updated.campusId, {
+      newState: {
+        name: updated.name,
+        status: updated.status,
+        scheduleCount: input.schedules.length,
+      },
     });
     return updated;
   }
@@ -246,27 +298,44 @@ export class ExamsService {
     const f = this.filter(ctx);
     const existing = await this.repo.find(id, ctx.principal.institutionId);
     this.assertInScope(existing?.campusId ?? null, existing, f);
-    await this.assertOptional(ctx, 'academicYears', input.academicYearId, 'academic year');
-    await this.assertOptional(ctx, 'academicTerms', input.termId, 'term');
+    await this.assertOptional(
+      ctx,
+      "academicYears",
+      input.academicYearId,
+      "academic year",
+    );
+    await this.assertOptional(ctx, "academicTerms", input.termId, "term");
     const updated = await this.repo.update(id, input.version, {
       name: input.name ?? existing!.name,
       examType: input.examType ?? existing!.examType,
-      academicYearId: input.academicYearId === undefined ? existing!.academicYearId : input.academicYearId,
+      academicYearId:
+        input.academicYearId === undefined
+          ? existing!.academicYearId
+          : input.academicYearId,
       termId: input.termId === undefined ? existing!.termId : input.termId,
-      termLabel: input.termLabel === undefined ? existing!.termLabel : input.termLabel,
-      startDate: input.startDate === undefined ? existing!.startDate : input.startDate,
+      termLabel:
+        input.termLabel === undefined ? existing!.termLabel : input.termLabel,
+      startDate:
+        input.startDate === undefined ? existing!.startDate : input.startDate,
       endDate: input.endDate === undefined ? existing!.endDate : input.endDate,
       status: input.status ?? existing!.status,
-      description: input.description === undefined ? existing!.description : input.description,
-      audience: input.audience === undefined ? existing!.audience : input.audience,
-      durationMin: input.durationMin === undefined ? existing!.durationMin : input.durationMin,
+      description:
+        input.description === undefined
+          ? existing!.description
+          : input.description,
+      audience:
+        input.audience === undefined ? existing!.audience : input.audience,
+      durationMin:
+        input.durationMin === undefined
+          ? existing!.durationMin
+          : input.durationMin,
       updatedBy: ctx.principal.institutionUserId,
     });
     if (!updated) throw this.versionConflict();
     if (input.audience !== undefined) {
       await this.audience.materializeExamAssignees(ctx, id, input.audience);
     }
-    await this.write(ctx, 'exam.update', 'exam', id, updated.campusId, {
+    await this.write(ctx, "exam.update", "exam", id, updated.campusId, {
       newState: { name: updated.name, status: updated.status },
     });
     return updated;
@@ -278,7 +347,7 @@ export class ExamsService {
     this.assertInScope(existing?.campusId ?? null, existing, f);
     const ok = await this.repo.delete(id, version);
     if (!ok) throw this.versionConflict();
-    await this.write(ctx, 'exam.delete', 'exam', id, existing!.campusId, {
+    await this.write(ctx, "exam.delete", "exam", id, existing!.campusId, {
       previousState: { name: existing!.name, examType: existing!.examType },
     });
     return { deleted: true };
@@ -291,15 +360,24 @@ export class ExamsService {
     return this.repo.listSchedules(examId);
   }
 
-  async createSchedule(ctx: PortalActionContext, examId: string, input: CreateExamScheduleInput) {
+  async createSchedule(
+    ctx: PortalActionContext,
+    examId: string,
+    input: CreateExamScheduleInput,
+  ) {
     const exam = await this.requireExamInScope(ctx, examId);
-    await this.assertRef(ctx, 'classes', input.classId, 'class');
-    await this.assertRef(ctx, 'subjects', input.subjectId, 'subject');
-    const dupe = await this.repo.findScheduleByKey(examId, input.classId, input.subjectId);
+    await this.assertRef(ctx, "classes", input.classId, "class");
+    await this.assertRef(ctx, "subjects", input.subjectId, "subject");
+    const dupe = await this.repo.findScheduleByKey(
+      examId,
+      input.classId,
+      input.subjectId,
+    );
     if (dupe) {
       throw new ConflictException({
-        code: 'SCHEDULE_EXISTS',
-        message: 'A paper already exists for this class and subject in this exam.',
+        code: "SCHEDULE_EXISTS",
+        message:
+          "A paper already exists for this class and subject in this exam.",
       });
     }
     const row = await this.repo.insertSchedule({
@@ -315,56 +393,106 @@ export class ExamsService {
       room: input.room ?? null,
       createdBy: ctx.principal.institutionUserId,
     });
-    await this.write(ctx, 'exam.schedule.create', 'exam_schedule', row.id, exam.campusId, {
-      newState: { examId, classId: row.classId, subjectId: row.subjectId },
-    });
+    await this.write(
+      ctx,
+      "exam.schedule.create",
+      "exam_schedule",
+      row.id,
+      exam.campusId,
+      {
+        newState: { examId, classId: row.classId, subjectId: row.subjectId },
+      },
+    );
     return row;
   }
 
-  async updateSchedule(ctx: PortalActionContext, examId: string, scheduleId: string, input: UpdateExamScheduleInput) {
+  async updateSchedule(
+    ctx: PortalActionContext,
+    examId: string,
+    scheduleId: string,
+    input: UpdateExamScheduleInput,
+  ) {
     const exam = await this.requireExamInScope(ctx, examId);
     const existing = await this.repo.findSchedule(scheduleId, examId);
-    if (!existing) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Exam paper not found' });
-    await this.assertOptional(ctx, 'classes', input.classId, 'class');
-    await this.assertOptional(ctx, 'subjects', input.subjectId, 'subject');
+    if (!existing)
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Exam paper not found",
+      });
+    await this.assertOptional(ctx, "classes", input.classId, "class");
+    await this.assertOptional(ctx, "subjects", input.subjectId, "subject");
     const nextClass = input.classId ?? existing.classId;
     const nextSubject = input.subjectId ?? existing.subjectId;
     if (nextClass !== existing.classId || nextSubject !== existing.subjectId) {
-      const dupe = await this.repo.findScheduleByKey(examId, nextClass, nextSubject);
+      const dupe = await this.repo.findScheduleByKey(
+        examId,
+        nextClass,
+        nextSubject,
+      );
       if (dupe && dupe.id !== scheduleId) {
         throw new ConflictException({
-          code: 'SCHEDULE_EXISTS',
-          message: 'A paper already exists for this class and subject in this exam.',
+          code: "SCHEDULE_EXISTS",
+          message:
+            "A paper already exists for this class and subject in this exam.",
         });
       }
     }
     const updated = await this.repo.updateSchedule(scheduleId, input.version, {
       classId: nextClass,
       subjectId: nextSubject,
-      examDate: input.examDate === undefined ? existing.examDate : input.examDate,
-      startTime: input.startTime === undefined ? existing.startTime : input.startTime,
+      examDate:
+        input.examDate === undefined ? existing.examDate : input.examDate,
+      startTime:
+        input.startTime === undefined ? existing.startTime : input.startTime,
       endTime: input.endTime === undefined ? existing.endTime : input.endTime,
       maxMarks: input.maxMarks ?? existing.maxMarks,
-      passMarks: input.passMarks === undefined ? existing.passMarks : input.passMarks,
+      passMarks:
+        input.passMarks === undefined ? existing.passMarks : input.passMarks,
       room: input.room === undefined ? existing.room : input.room,
       updatedBy: ctx.principal.institutionUserId,
     });
     if (!updated) throw this.versionConflict();
-    await this.write(ctx, 'exam.schedule.update', 'exam_schedule', scheduleId, exam.campusId, {
-      newState: { classId: updated.classId, subjectId: updated.subjectId },
-    });
+    await this.write(
+      ctx,
+      "exam.schedule.update",
+      "exam_schedule",
+      scheduleId,
+      exam.campusId,
+      {
+        newState: { classId: updated.classId, subjectId: updated.subjectId },
+      },
+    );
     return updated;
   }
 
-  async deleteSchedule(ctx: PortalActionContext, examId: string, scheduleId: string, version: number) {
+  async deleteSchedule(
+    ctx: PortalActionContext,
+    examId: string,
+    scheduleId: string,
+    version: number,
+  ) {
     const exam = await this.requireExamInScope(ctx, examId);
     const existing = await this.repo.findSchedule(scheduleId, examId);
-    if (!existing) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Exam paper not found' });
+    if (!existing)
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Exam paper not found",
+      });
     const ok = await this.repo.deleteSchedule(scheduleId, version);
     if (!ok) throw this.versionConflict();
-    await this.write(ctx, 'exam.schedule.delete', 'exam_schedule', scheduleId, exam.campusId, {
-      previousState: { classId: existing.classId, subjectId: existing.subjectId },
-    });
+    await this.write(
+      ctx,
+      "exam.schedule.delete",
+      "exam_schedule",
+      scheduleId,
+      exam.campusId,
+      {
+        previousState: {
+          classId: existing.classId,
+          subjectId: existing.subjectId,
+        },
+      },
+    );
     return { deleted: true };
   }
 
@@ -376,12 +504,21 @@ export class ExamsService {
 
   // === paper questions ========================================================
 
-  async listQuestions(ctx: PortalActionContext, examId: string, scheduleId: string) {
+  async listQuestions(
+    ctx: PortalActionContext,
+    examId: string,
+    scheduleId: string,
+  ) {
     await this.requireScheduleInScope(ctx, examId, scheduleId);
     return this.repo.listQuestions(scheduleId);
   }
 
-  async createQuestion(ctx: PortalActionContext, examId: string, scheduleId: string, input: ExamQuestionInput) {
+  async createQuestion(
+    ctx: PortalActionContext,
+    examId: string,
+    scheduleId: string,
+    input: ExamQuestionInput,
+  ) {
     const exam = await this.requireScheduleInScope(ctx, examId, scheduleId);
     const row = await this.repo.insertQuestion({
       examScheduleId: scheduleId,
@@ -393,12 +530,20 @@ export class ExamsService {
       correctKey: input.correctKey ?? null,
       markingNote: input.markingNote ?? null,
       marks: input.marks,
-      config: (input.config as Record<string, unknown> | null | undefined) ?? null,
+      config:
+        (input.config as Record<string, unknown> | null | undefined) ?? null,
       createdBy: ctx.principal.institutionUserId,
     });
-    await this.write(ctx, 'exam.question.create', 'exam_paper_question', row.id, exam.campusId, {
-      newState: { scheduleId, sequence: row.sequence, qtype: row.qtype },
-    });
+    await this.write(
+      ctx,
+      "exam.question.create",
+      "exam_paper_question",
+      row.id,
+      exam.campusId,
+      {
+        newState: { scheduleId, sequence: row.sequence, qtype: row.qtype },
+      },
+    );
     return row;
   }
 
@@ -411,49 +556,94 @@ export class ExamsService {
   ) {
     const exam = await this.requireScheduleInScope(ctx, examId, scheduleId);
     const existing = await this.repo.findQuestion(questionId, scheduleId);
-    if (!existing) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Question not found' });
+    if (!existing)
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Question not found",
+      });
     const updated = await this.repo.updateQuestion(questionId, input.version, {
       sequence: input.sequence ?? existing.sequence,
       qtype: input.qtype ?? existing.qtype,
       prompt: input.prompt ?? existing.prompt,
-      promptImageObjectId: input.promptImageObjectId === undefined ? existing.promptImageObjectId : input.promptImageObjectId,
+      promptImageObjectId:
+        input.promptImageObjectId === undefined
+          ? existing.promptImageObjectId
+          : input.promptImageObjectId,
       options: input.options === undefined ? existing.options : input.options,
-      correctKey: input.correctKey === undefined ? existing.correctKey : input.correctKey,
-      markingNote: input.markingNote === undefined ? existing.markingNote : input.markingNote,
+      correctKey:
+        input.correctKey === undefined ? existing.correctKey : input.correctKey,
+      markingNote:
+        input.markingNote === undefined
+          ? existing.markingNote
+          : input.markingNote,
       marks: input.marks ?? existing.marks,
       config:
         input.config === undefined
           ? existing.config
-          : ((input.config as Record<string, unknown> | null | undefined) ?? null),
+          : ((input.config as Record<string, unknown> | null | undefined) ??
+            null),
       updatedBy: ctx.principal.institutionUserId,
     });
     if (!updated) throw this.versionConflict();
-    await this.write(ctx, 'exam.question.update', 'exam_paper_question', questionId, exam.campusId, {
-      newState: { sequence: updated.sequence },
-    });
+    await this.write(
+      ctx,
+      "exam.question.update",
+      "exam_paper_question",
+      questionId,
+      exam.campusId,
+      {
+        newState: { sequence: updated.sequence },
+      },
+    );
     return updated;
   }
 
-  async deleteQuestion(ctx: PortalActionContext, examId: string, scheduleId: string, questionId: string, version: number) {
+  async deleteQuestion(
+    ctx: PortalActionContext,
+    examId: string,
+    scheduleId: string,
+    questionId: string,
+    version: number,
+  ) {
     const exam = await this.requireScheduleInScope(ctx, examId, scheduleId);
     const existing = await this.repo.findQuestion(questionId, scheduleId);
-    if (!existing) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Question not found' });
+    if (!existing)
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Question not found",
+      });
     const ok = await this.repo.deleteQuestion(questionId, version);
     if (!ok) throw this.versionConflict();
-    await this.write(ctx, 'exam.question.delete', 'exam_paper_question', questionId, exam.campusId, {
-      previousState: { sequence: existing.sequence },
-    });
+    await this.write(
+      ctx,
+      "exam.question.delete",
+      "exam_paper_question",
+      questionId,
+      exam.campusId,
+      {
+        previousState: { sequence: existing.sequence },
+      },
+    );
     return { deleted: true };
   }
 
   // === attempts (grading) ===================================================
 
-  async listAttempts(ctx: PortalActionContext, examId: string, scheduleId: string) {
+  async listAttempts(
+    ctx: PortalActionContext,
+    examId: string,
+    scheduleId: string,
+  ) {
     await this.requireScheduleInScope(ctx, examId, scheduleId);
     return this.repo.listAttempts(scheduleId);
   }
 
-  async getAttemptDetail(ctx: PortalActionContext, examId: string, scheduleId: string, attemptId: string) {
+  async getAttemptDetail(
+    ctx: PortalActionContext,
+    examId: string,
+    scheduleId: string,
+    attemptId: string,
+  ) {
     await this.requireScheduleInScope(ctx, examId, scheduleId);
     return this.repo.listAttemptAnswers(attemptId);
   }
@@ -471,10 +661,33 @@ export class ExamsService {
       teacherMarks: input.teacherMarks ?? null,
       teacherFeedback: input.teacherFeedback ?? null,
     });
-    if (!updated) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Answer not found' });
-    await this.write(ctx, 'exam.answer.grade', 'exam_answer', answerId, exam.campusId, {
-      newState: { teacherMarks: updated.teacherMarks },
-    });
+    if (!updated)
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Answer not found",
+      });
+    await this.write(
+      ctx,
+      "exam.answer.grade",
+      "exam_answer",
+      answerId,
+      exam.campusId,
+      {
+        newState: { teacherMarks: updated.teacherMarks },
+      },
+    );
+    const attempt = (await this.repo.listAttempts(scheduleId)).find(
+      (item) => item.id === _attemptId,
+    );
+    if (attempt) {
+      await this.learnerEvidence.ingestExamAnswer(
+        {
+          institutionId: ctx.principal.institutionId,
+          studentId: attempt.studentId,
+        },
+        answerId,
+      );
+    }
     return updated;
   }
 
@@ -485,15 +698,23 @@ export class ExamsService {
   }
 
   private createCampusId(scope: InstitutionScope): string | null {
-    return scope.mode === 'campus' ? scope.campusId : null;
+    return scope.mode === "campus" ? scope.campusId : null;
   }
 
-  private assertInScope<T>(campusId: string | null, row: T | undefined, filter: ScopeFilter): asserts row is T {
-    if (!row) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Not found' });
+  private assertInScope<T>(
+    campusId: string | null,
+    row: T | undefined,
+    filter: ScopeFilter,
+  ): asserts row is T {
+    if (!row)
+      throw new NotFoundException({ code: "NOT_FOUND", message: "Not found" });
     if (campusId === null) return;
     if (filter.campusIds === null) return;
     if (!filter.campusIds.includes(campusId)) {
-      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Not found in the current scope' });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Not found in the current scope",
+      });
     }
   }
 
@@ -504,16 +725,37 @@ export class ExamsService {
     return exam;
   }
 
-  private async requireScheduleInScope(ctx: PortalActionContext, examId: string, scheduleId: string) {
+  private async requireScheduleInScope(
+    ctx: PortalActionContext,
+    examId: string,
+    scheduleId: string,
+  ) {
     const exam = await this.requireExamInScope(ctx, examId);
     const sched = await this.repo.findSchedule(scheduleId, examId);
-    if (!sched) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Exam paper not found' });
+    if (!sched)
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Exam paper not found",
+      });
     return exam;
   }
 
-  private async assertRef(ctx: PortalActionContext, table: ExamRefTable, id: string, label: string): Promise<void> {
-    const ok = await this.repo.existsInInstitution(table, id, ctx.principal.institutionId);
-    if (!ok) throw new BadRequestException({ code: 'INVALID_REFERENCE', message: `Unknown ${label}` });
+  private async assertRef(
+    ctx: PortalActionContext,
+    table: ExamRefTable,
+    id: string,
+    label: string,
+  ): Promise<void> {
+    const ok = await this.repo.existsInInstitution(
+      table,
+      id,
+      ctx.principal.institutionId,
+    );
+    if (!ok)
+      throw new BadRequestException({
+        code: "INVALID_REFERENCE",
+        message: `Unknown ${label}`,
+      });
   }
 
   private async assertOptional(
@@ -527,7 +769,12 @@ export class ExamsService {
   }
 
   private paginate<T>(page: Page<T>, q: ExamsListQuery): ListResult<T> {
-    return { ...page, page: q.page, pageSize: q.pageSize, hasMore: q.page * q.pageSize < page.total };
+    return {
+      ...page,
+      page: q.page,
+      pageSize: q.pageSize,
+      hasMore: q.page * q.pageSize < page.total,
+    };
   }
 
   private async write(
@@ -551,8 +798,8 @@ export class ExamsService {
 
   private versionConflict() {
     return new ConflictException({
-      code: 'VERSION_CONFLICT',
-      message: 'This record changed since you loaded it. Reload and try again.',
+      code: "VERSION_CONFLICT",
+      message: "This record changed since you loaded it. Reload and try again.",
     });
   }
 }

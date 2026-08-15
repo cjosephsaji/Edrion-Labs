@@ -1,75 +1,107 @@
 'use client';
-import Link from 'next/link';
-import type { DocumentSurfaceItemDto } from '@edrion/schemas';
-import { useDocumentsSurface, useStudentMe } from '@/lib/hooks';
-import { useStudentVault } from '@/lib/requests';
-import { useStudentClient } from '@/lib/student-client';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Eyebrow, PageHeader } from '@/components/ui/primitives';
 
-export default function DocumentsPage() {
-  const { data, isLoading } = useDocumentsSurface();
-  const { data: me } = useStudentMe();
-  const requestsEnabled = Boolean(me?.surfaces.requests);
-  const vault = useStudentVault(requestsEnabled);
-  const client = useStudentClient();
+import { useState } from 'react';
+import { Award, FileBadge2, FileText, FolderOpen, IdCard, Search, type LucideIcon } from 'lucide-react';
+import { PageHeader } from '@/components/design-system';
+import { QueryPage } from '@/components/query-page';
+import styles from '@/components/student-content.module.css';
+import { EmptyState } from '@/components/ui/states';
+import { useStudentList } from '@/lib/hooks';
+
+type Document = {
+  id: string;
+  title: string;
+  docType: string | null;
+  issuedAt: string | null;
+  contentType: string | null;
+};
+type Response = { items: Document[] };
+
+function typeLabel(value: string | null) {
+  return (value ?? 'other').replaceAll('_', ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function documentIcon(value: string | null): LucideIcon {
+  if (value === 'certificate') return Award;
+  if (value === 'id_card') return IdCard;
+  if (value === 'report_card') return FileBadge2;
+  return FileText;
+}
+
+export default function Page() {
+  const query = useStudentList<Response>('documents', '/student/documents');
+  const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
-      <PageHeader eyebrow={<Eyebrow>SCHOOL</Eyebrow>} title="Documents" />
-      {requestsEnabled && <div className="mt-5 flex gap-2">
-          <Link href="/requests?new=document_request" className="rounded-full bg-st-accent px-4 py-2 text-sm font-semibold text-white">Request a document</Link>
-          <Link href="/requests" className="rounded-full border border-st-bd2 bg-st-card px-4 py-2 text-sm font-semibold text-st-ink">Requests</Link>
-        </div>}
+    <QueryPage query={query} loadingLabel="Loading documents…">
+      {(data) => {
+        const items = data.items ?? [];
+        const types = [...new Set(items.map((item) => item.docType ?? 'other'))];
+        const queryText = search.trim().toLowerCase();
+        const visibleItems = items.filter((item) =>
+          (filter === 'all' || (item.docType ?? 'other') === filter) &&
+          (!queryText || item.title.toLowerCase().includes(queryText) || typeLabel(item.docType).toLowerCase().includes(queryText)),
+        );
 
-      {(vault.data?.items ?? []).length > 0 && (
-        <section className="mt-7">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-st-faint">Your vault</p>
-          <div className="space-y-2">{vault.data!.items.map((doc) => (
-            <div key={doc.id} className="flex items-center justify-between rounded-[15px] border border-st-bd1 bg-st-card px-4 py-3.5">
-              <div>
-                <p className="font-semibold text-st-ink">{doc.title}</p>
-                <p className="text-xs text-st-faint">
-                  Issued {new Date(doc.issuedAt).toLocaleDateString()}
-                  {doc.family ? ` · ${doc.family}` : ''}
-                </p>
-                {doc.deliveryMode === 'physical_pickup' && doc.pickupNote ? (
-                  <p className="mt-1 text-xs text-st-accentDeep">{doc.pickupNote}</p>
-                ) : null}
-              </div>
-              {doc.deliveryMode === 'physical_pickup' ? (
-                <span className="rounded-full bg-st-amberSoft px-2 py-1 text-xs font-semibold text-st-ink">Collect at office</span>
-              ) : doc.revokedAt ? (
-                <span className="rounded-full bg-st-page px-2 py-1 text-xs text-st-muted">Revoked</span>
-              ) : (
-                <a href={client.resourceUrl(`/requests/documents/${doc.id}/file`)} target="_blank" className="text-sm font-semibold text-st-accentDeep">Open</a>
-              )}
-            </div>
-          ))}</div>
-        </section>
-      )}
+        return (
+          <div className={styles.page}>
+            <PageHeader
+              eyebrow="Student vault"
+              title="Documents"
+              description="Your issued reports, certificates, and official student records."
+            />
 
-      {isLoading ? (
-        <div className="mt-8 h-32 shimmer rounded-[15px]" />
-      ) : (data?.items ?? []).length === 0 ? (
-        <EmptyState
-          className="mt-8"
-          eyebrow="NO DOCUMENTS"
-          title="No documents available"
-          description="Certificates and school documents will appear here when published."
-        />
-      ) : (
-        <div className="mt-6 space-y-2">
-          {((data?.items ?? []) as DocumentSurfaceItemDto[]).map((doc) => (
-            <a key={doc.id} href={doc.url} target="_blank" rel="noopener noreferrer">
-              <div className="rounded-[15px] border border-st-bd1 bg-st-card px-4 py-3.5 transition hover:border-st-accent/40">
-                <p className="font-semibold text-st-ink">{doc.title}</p>
-                <p className="font-mono-ui text-xs text-st-faint">{doc.category}</p>
-              </div>
-            </a>
-          ))}
-        </div>
-      )}
-    </div>
+            {items.length === 0 ? (
+              <EmptyState icon={FolderOpen} title="No documents issued" description="Official records will appear here after they are published." />
+            ) : (
+              <>
+                <div className={styles.summaryGrid}>
+                  <div className={styles.summaryItem}><span className={styles.summaryLabel}>All documents</span><strong className={styles.summaryValue}>{items.length}</strong><span className={styles.summarySupporting}>Published to your vault</span></div>
+                  <div className={styles.summaryItem}><span className={styles.summaryLabel}>Certificates</span><strong className={styles.summaryValue}>{items.filter((item) => item.docType === 'certificate').length}</strong><span className={styles.summarySupporting}>Awards and participation</span></div>
+                  <div className={styles.summaryItem}><span className={styles.summaryLabel}>Latest issue</span><strong className={styles.summaryValue}>{items[0]?.issuedAt ? new Date(items[0].issuedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : '—'}</strong><span className={styles.summarySupporting}>{items[0]?.title ?? 'No recent document'}</span></div>
+                </div>
+
+                <div className={styles.sectionHeader}><h2 className={styles.sectionTitle}>Document library</h2><span className={styles.sectionMeta}>{visibleItems.length} shown</span></div>
+                <div className={styles.toolbar}>
+                  <div className={styles.filters} aria-label="Filter documents">
+                    <button className={styles.filterButton} type="button" aria-pressed={filter === 'all'} onClick={() => setFilter('all')}>All</button>
+                    {types.map((type) => <button className={styles.filterButton} type="button" aria-pressed={filter === type} onClick={() => setFilter(type)} key={type}>{typeLabel(type)}</button>)}
+                  </div>
+                  <label className={styles.searchBox}>
+                    <span className="sr-only">Search documents</span>
+                    <Search aria-hidden="true" />
+                    <input className={styles.searchInput} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search documents" />
+                  </label>
+                </div>
+
+                {visibleItems.length === 0 ? (
+                  <EmptyState icon={Search} title="No matching documents" description="Try a different document type or search." />
+                ) : (
+                  <div className={styles.resourceGrid}>
+                    {visibleItems.map((item) => {
+                      const Icon = documentIcon(item.docType);
+                      return (
+                        <article className={styles.resourceCard} key={item.id}>
+                          <span className={styles.resourceIcon}><Icon aria-hidden="true" size={22} /></span>
+                          <div>
+                            <h3 className={styles.resourceTitle}>{item.title}</h3>
+                            <p className={styles.resourceDescription}>{typeLabel(item.docType)}</p>
+                            <div className={styles.resourceFooter}>
+                              <span className={styles.resourceTag}>{item.contentType === 'application/pdf' ? 'PDF' : 'Document'}</span>
+                              <span>{item.issuedAt ? `Issued ${new Date(item.issuedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : 'Issue date unavailable'}</span>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        );
+      }}
+    </QueryPage>
   );
 }

@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { BookOpen, ClipboardCheck, FileText, FolderOpen, NotebookTabs, Search, type LucideIcon } from 'lucide-react';
 import { PageHeader } from '@/components/design-system';
+import { PetrosDocumentDoor } from '@/components/petros/petros-door-button';
 import { QueryPage } from '@/components/query-page';
 import styles from '@/components/student-content.module.css';
 import { EmptyState } from '@/components/ui/states';
+import { formatApiError } from '@/lib/api-client';
 import { useStudentList } from '@/lib/hooks';
 
 type Material = {
@@ -18,6 +20,8 @@ type Material = {
   publishedAt: string;
 };
 type Response = { items: Material[] };
+type PetrosSource = { id: string; title: string; kind: string; pageCount: number | null; status: string; extractionReady: boolean; pagesDone: number; version: number; updatedAt: string };
+type PetrosSourcesResponse = { items: PetrosSource[] };
 const pageTitle = 'Study materials';
 const pageDescription = 'Notes, worksheets, and resources shared by your teachers.';
 
@@ -31,6 +35,7 @@ function materialIcon(kind: string): LucideIcon {
 
 export default function Page() {
   const query = useStudentList<Response>('materials', '/student/materials');
+  const petrosSources = useStudentList<PetrosSourcesResponse>('petros-sources', '/student/petros/sources');
   const [context, setContext] = useState('all');
   const [search, setSearch] = useState('');
 
@@ -99,6 +104,29 @@ export default function Page() {
                       );
                     })}
                   </div>
+                )}
+
+                <div className={styles.sectionHeader}><h2 className={styles.sectionTitle}>Your uploaded documents</h2><span className={styles.sectionMeta}>Petros uses extracted pages only</span></div>
+                {petrosSources.error ? (
+                  <p className={styles.inlineError} role="alert">Could not load uploaded documents: {formatApiError(petrosSources.error)}</p>
+                ) : petrosSources.data?.items.length ? (
+                  <div className={styles.resourceGrid}>
+                    {petrosSources.data.items.map((item) => {
+                      const ready = item.status === 'ready' && item.extractionReady;
+                      return (
+                        <article className={styles.resourceCard} key={item.id}>
+                          <span className={styles.resourceIcon}><FileText aria-hidden="true" size={22} /></span>
+                          <div>
+                            <h3 className={styles.resourceTitle}>{item.title}</h3>
+                            <p className={styles.resourceDescription}>{ready ? `${item.pageCount ?? item.pagesDone} extracted pages ready` : item.status === 'error' ? 'Extraction failed — review this upload before retrying' : `Reading pages ${item.pagesDone}/${item.pageCount ?? '?'}`}</p>
+                            <PetrosDocumentDoor sourceId={item.id} title={item.title} pageCount={item.pageCount} ready={ready} />
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className={styles.sectionMeta}>{petrosSources.isLoading ? 'Checking your uploads…' : 'No extracted student uploads are available yet.'}</p>
                 )}
               </>
             )}

@@ -37,7 +37,6 @@ export class PortalIntegrationsController {
           email: principal.email,
           permissions: principal.permissions,
         } as never,
-        kind: 'institution',
       },
       request,
     };

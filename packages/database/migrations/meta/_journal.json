@@ -628,64 +628,225 @@
     {
       "idx": 89,
       "version": "7",
+      "when": 1786700500000,
+      "tag": "0089_timetable_exceptions",
+      "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "7",
+      "when": 1786701000000,
+      "tag": "0090_attendance_forecaster",
+      "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1786701500000,
+      "tag": "0091_attendance_day_view",
+      "breakpoints": true
+    },
+    {
+      "idx": 92,
+      "version": "7",
+      "when": 1786702000000,
+      "tag": "0092_marks_results",
+      "breakpoints": true
+    },
+    {
+      "idx": 93,
+      "version": "7",
+      "when": 1786702500000,
+      "tag": "0093_term_recompute_feed",
+      "breakpoints": true
+    },
+    {
+      "idx": 94,
+      "version": "7",
+      "when": 1786703000000,
+      "tag": "0094_library_fsrs",
+      "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "7",
+      "when": 1786703500000,
+      "tag": "0095_graph_pipeline",
+      "breakpoints": true
+    },
+    {
+      "idx": 96,
+      "version": "7",
+      "when": 1786704000000,
+      "tag": "0096_lab_canvas_flags",
+      "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "7",
       "when": 1786800000000,
       "tag": "0096_edrion_learn_orchestrator",
       "breakpoints": true
     },
     {
-      "idx": 90,
+      "idx": 98,
       "version": "7",
       "when": 1786900000000,
       "tag": "0097_student_tutor_policy_domain",
       "breakpoints": true
     },
     {
-      "idx": 91,
+      "idx": 99,
       "version": "7",
       "when": 1787000000000,
       "tag": "0098_documents_issuance",
       "breakpoints": true
     },
     {
-      "idx": 92,
+      "idx": 100,
       "version": "7",
       "when": 1787100000000,
       "tag": "0099_mark_release_batches",
       "breakpoints": true
     },
     {
-      "idx": 93,
+      "idx": 101,
       "version": "7",
       "when": 1787200000000,
       "tag": "0100_mock_exam_extensions",
       "breakpoints": true
     },
     {
-      "idx": 94,
+      "idx": 102,
       "version": "7",
       "when": 1787300000000,
       "tag": "0101_mock_system_paper_pack",
       "breakpoints": true
     },
     {
-      "idx": 95,
+      "idx": 103,
       "version": "7",
       "when": 1788000000000,
       "tag": "0108_learn_teardown",
       "breakpoints": true
     },
     {
-      "idx": 96,
+      "idx": 104,
       "version": "7",
       "when": 1788100000000,
       "tag": "0109_learn_engine",
       "breakpoints": true
     },
     {
-      "idx": 97,
+      "idx": 105,
       "version": "7",
       "when": 1788200000000,
       "tag": "0110_ai_capability_values",
+      "breakpoints": true
+    },
+    {
+      "idx": 106,
+      "version": "7",
+      "when": 1788300000000,
+      "tag": "0186_petros_ai_routing",
+      "breakpoints": true
+    },
+    {
+      "idx": 107,
+      "version": "7",
+      "when": 1788400000000,
+      "tag": "0187_petros_learning_loop",
+      "breakpoints": true
+    },
+    {
+      "idx": 108,
+      "version": "7",
+      "when": 1788500000000,
+      "tag": "0188_petros_observation_loop",
+      "breakpoints": true
+    },
+    {
+      "idx": 109,
+      "version": "7",
+      "when": 1788600000000,
+      "tag": "0189_petros_topic_profiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 110,
+      "version": "7",
+      "when": 1788700000000,
+      "tag": "0190_petros_quality_harness",
+      "breakpoints": true
+    },
+    {
+      "idx": 111,
+      "version": "7",
+      "when": 1788800000000,
+      "tag": "0191_petros_quality_seed_bigint",
+      "breakpoints": true
+    },
+    {
+      "idx": 112,
+      "version": "7",
+      "when": 1788900000000,
+      "tag": "0192_petros_learner_model",
+      "breakpoints": true
+    },
+    {
+      "idx": 113,
+      "version": "7",
+      "when": 1789000000000,
+      "tag": "0193_petros_artifacts",
+      "breakpoints": true
+    },
+    {
+      "idx": 114,
+      "version": "7",
+      "when": 1789100000000,
+      "tag": "0194_petros_visual_canvas_compat",
+      "breakpoints": true
+    },
+    {
+      "idx": 115,
+      "version": "7",
+      "when": 1789200000000,
+      "tag": "0195_petros_session_intents",
+      "breakpoints": true
+    },
+    {
+      "idx": 116,
+      "version": "7",
+      "when": 1789300000000,
+      "tag": "0196_petros_input_modes",
+      "breakpoints": true
+    },
+    {
+      "idx": 117,
+      "version": "7",
+      "when": 1789400000000,
+      "tag": "0197_petros_teach_back",
+      "breakpoints": true
+    },
+    {
+      "idx": 118,
+      "version": "7",
+      "when": 1789500000000,
+      "tag": "0198_petros_reflection",
+      "breakpoints": true
+    },
+    {
+      "idx": 119,
+      "version": "7",
+      "when": 1789600000000,
+      "tag": "0199_petros_institutional",
+      "breakpoints": true
+    },
+    {
+      "idx": 120,
+      "version": "7",
+      "when": 1789700000000,
+      "tag": "0200_petros_failure_fixes",
       "breakpoints": true
     }
   ]

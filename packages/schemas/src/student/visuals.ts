@@ -956,6 +956,36 @@ export const visualCanvasSummarySchema = z
     origin: visualCanvasDtoSchema.shape.origin,
     node_count: z.number().int().nonnegative(),
     from_label: z.string().nullable(),
+    subject_label: z.string().nullable(),
+    revision_count: z.number().int().positive(),
+    pinned_count: z.number().int().nonnegative(),
+    shaky_count: z.number().int().nonnegative(),
+    preview_graph: z
+      .object({
+        nodes: z
+          .array(
+            z
+              .object({
+                id: graphLocalIdSchema,
+                title: z.string(),
+                depth: z.number().int().nonnegative(),
+                status: visualNodeStatusSchema,
+              })
+              .strict(),
+          )
+          .max(24),
+        edges: z
+          .array(
+            z
+              .object({
+                source: graphLocalIdSchema,
+                target: graphLocalIdSchema,
+              })
+              .strict(),
+          )
+          .max(48),
+      })
+      .strict(),
     updated_at: z.string().datetime(),
   })
   .strict();

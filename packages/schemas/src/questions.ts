@@ -157,7 +157,7 @@ export type AnswerJson = z.infer<typeof answerJsonSchema>;
 /** Student answer update during an attempt. */
 export const attemptAnswerUpdateSchema = z.object({
   choiceKey: z.string().trim().max(64).nullish(),
-  answerText: z.string().trim().max(10000).nullish(),
+  answerText: z.string().trim().max(20000).nullish(),
   answerObjectId: z.string().uuid().nullish(),
   answerJson: answerJsonSchema,
 });

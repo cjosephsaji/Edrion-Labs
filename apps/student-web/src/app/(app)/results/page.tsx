@@ -1,116 +1,122 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
-import { Eyebrow, PageHeader } from '@/components/ui/primitives';
-import { fetchTermResults, isResultsStale, schemeSnapshotFromPayload, type TermSubject } from '@/lib/results';
-import { WhatIfDrawer } from '@/components/institutional/results/what-if-drawer';
+import { Award, BookOpenCheck, CalendarDays, TrendingUp } from 'lucide-react';
+import { PageHeader } from '@/components/design-system';
+import { PetrosDoorButton } from '@/components/petros/petros-door-button';
+import { QueryPage } from '@/components/query-page';
+import styles from '@/components/student-content.module.css';
+import { EmptyState } from '@/components/ui/states';
+import { useStudentList } from '@/lib/hooks';
 
-export default function ResultsPage() {
-  const { data, isError, isLoading, refetch } = useQuery({
-    queryKey: ['student-results-term'],
-    queryFn: () => fetchTermResults(),
-  });
-  const [expanded, setExpanded] = useState<string | null>(null);
-  const [whatIfSubject, setWhatIfSubject] = useState<TermSubject | null>(null);
+type Numeric = number | string;
+type Result = {
+  id: string;
+  title?: string | null;
+  subjectName?: string | null;
+  marksObtained?: Numeric | null;
+  maxMarks?: Numeric | null;
+  letterGrade?: string | null;
+  termGpa?: Numeric | null;
+  termPct?: Numeric | null;
+};
+type Response = { items: Result[]; termId: string | null; computedAt: string | null };
 
-  const stale = useMemo(
-    () => isResultsStale(data?.computed_at, data ? new Date().toISOString() : undefined),
-    [data],
-  );
+function number(value: Numeric | null | undefined) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
-  if (isError) {
-    return (
-      <div className="mx-auto max-w-3xl px-4 py-6">
-        <button type="button" onClick={() => void refetch()} className="rounded-[12px] border border-st-bd1 bg-st-card p-4 text-sm">
-          Couldn&apos;t load results. Tap to retry.
-        </button>
-      </div>
-    );
-  }
+function percentage(item: Result) {
+  const obtained = number(item.marksObtained);
+  const maximum = number(item.maxMarks);
+  return obtained != null && maximum ? Math.round((obtained / maximum) * 100) : null;
+}
 
-  if (isLoading || !data) {
-    return (
-      <div className="mx-auto max-w-3xl space-y-4 px-4 py-6">
-        <div className="h-8 w-48 shimmer rounded-lg" />
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-24 shimmer rounded-[15px]" />
-        ))}
-      </div>
-    );
-  }
-
-  const empty = data.subjects.length === 0;
-  const whatIfEnabled = data.features?.whatif === true;
-  const scheme = schemeSnapshotFromPayload(data);
+export default function Page() {
+  const query = useStudentList<Response>('results', '/student/results');
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-24 animate-st-block-in">
-      <PageHeader eyebrow={<Eyebrow>ACADEMICS</Eyebrow>} title="Marks" subtitle="Released assessments only" />
+    <QueryPage query={query} loadingLabel="Loading results…">
+      {(data) => {
+        const items = data.items ?? [];
+        const percentages = items.map(percentage).filter((value): value is number => value != null);
+        const termPercentage = number(items[0]?.termPct);
+        const average = termPercentage ?? (percentages.length ? Math.round(percentages.reduce((sum, value) => sum + value, 0) / percentages.length) : null);
+        const best = items.reduce<Result | null>((current, item) => !current || (percentage(item) ?? -1) > (percentage(current) ?? -1) ? item : current, null);
+        const gpa = number(items[0]?.termGpa);
 
-      {stale ? (
-        <p className="rounded-full bg-st-amberSoft px-3 py-1.5 text-xs text-st-amberInk">
-          Last updated {data.computed_at ? new Date(data.computed_at).toLocaleString() : 'recently'}
-        </p>
-      ) : null}
+        return (
+          <div className={styles.page}>
+            <PageHeader
+              eyebrow="Academic performance"
+              title="Results"
+              description="Published assessment marks and your latest term performance."
+            />
 
-      {empty ? (
-        <p className="rounded-[15px] border border-st-bd1 bg-st-card p-6 text-sm text-st-muted">
-          No marks released yet this term. You&apos;ll get a notification the moment they are.
-        </p>
-      ) : (
-        <div className="space-y-3">
-          {data.subjects.map((subject) => {
-            const open = expanded === subject.subject_id;
-            const soFar = subject.open_weight_pct > 0;
-            return (
-              <article key={subject.subject_id} className="rounded-[15px] border border-st-bd1 bg-st-card shadow-sm">
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between gap-3 p-4 text-left"
-                  onClick={() => setExpanded(open ? null : subject.subject_id)}
-                >
-                  <div>
-                    <p className="font-medium text-st-ink">{subject.subject_name_snapshot}</p>
-                    <p className="text-sm text-st-muted">
-                      {subject.weighted_pct}% · {subject.grade ?? '—'}
-                      {soFar ? ' so far' : ''}
-                    </p>
-                    {subject.credits_not_set ? (
-                      <p className="text-xs text-st-amberInk">Credits not set</p>
-                    ) : null}
+            {items.length === 0 ? (
+              <EmptyState icon={BookOpenCheck} title="No published results" description="Results will appear after your institution releases them." />
+            ) : (
+              <>
+                <div className={styles.summaryGrid}>
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Overall score</span>
+                    <strong className={styles.summaryValue}>{average != null ? `${average}%` : '—'}</strong>
+                    <span className={styles.summarySupporting}>Across published results</span>
                   </div>
-                </button>
-                {open ? (
-                  <div className="space-y-2 border-t border-st-bd1 px-4 py-3">
-                    {subject.components.map((component) => (
-                      <div key={component.key} className="flex justify-between text-sm">
-                        <span>{component.label}</span>
-                        <span className="text-st-muted">
-                          {component.released && component.score !== null
-                            ? `${component.score}/${component.max}`
-                            : '—'}
-                        </span>
-                      </div>
-                    ))}
-                    {whatIfEnabled && subject.open_weight_pct > 0 ? (
-                      <button
-                        type="button"
-                        className="text-sm font-medium text-st-primary"
-                        onClick={() => setWhatIfSubject(subject)}
-                      >
-                        What do I need?
-                      </button>
-                    ) : null}
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>Strongest subject</span>
+                    <strong className={styles.summaryValue}>{best?.letterGrade ?? '—'}</strong>
+                    <span className={styles.summarySupporting}>{best?.subjectName ?? 'Not available'}</span>
                   </div>
-                ) : null}
-              </article>
-            );
-          })}
-        </div>
-      )}
+                  <div className={styles.summaryItem}>
+                    <span className={styles.summaryLabel}>{gpa != null ? 'Term GPA' : 'Published'}</span>
+                    <strong className={styles.summaryValue}>{gpa != null ? gpa.toFixed(2) : items.length}</strong>
+                    <span className={styles.summarySupporting}>{gpa != null ? 'Current term' : `${items.length === 1 ? 'assessment' : 'assessments'}`}</span>
+                  </div>
+                </div>
 
-      <WhatIfDrawer subject={whatIfSubject} scheme={scheme} onClose={() => setWhatIfSubject(null)} />
-    </div>
+                <div className={styles.sectionHeader}>
+                  <h2 className={styles.sectionTitle}>Subject results</h2>
+                  {data.computedAt ? <span className={styles.sectionMeta}><CalendarDays aria-hidden="true" size={13} className="mr-1 inline" />Updated {new Date(data.computedAt).toLocaleDateString('en-IN')}</span> : null}
+                </div>
+                <div className={styles.resultList}>
+                  {items.map((item) => {
+                    const pct = percentage(item);
+                    return (
+                      <article className={styles.resultRow} key={item.id}>
+                        <div>
+                          <h3 className={styles.resultSubject}>{item.subjectName ?? 'Subject'}</h3>
+                          <p className={styles.resultAssessment}>{item.title ?? 'Published assessment'}</p>
+                        </div>
+                        <div className={styles.resultProgress}>
+                          <div className={styles.progressTrack} aria-label={pct != null ? `${pct}%` : 'Score unavailable'}>
+                            <div className={styles.progressFill} style={{ width: `${Math.max(0, Math.min(100, pct ?? 0))}%` }} />
+                          </div>
+                        </div>
+                        <div className={styles.mark}>{item.marksObtained ?? '—'}{item.maxMarks != null ? ` / ${item.maxMarks}` : ''}</div>
+                        <div className={styles.grade} aria-label={`Grade ${item.letterGrade ?? 'unavailable'}`}>{item.letterGrade ?? '—'}</div>
+                        {pct != null && pct < 70 ? (
+                          <PetrosDoorButton className={styles.petrosRepair} door="result_repair" sourceId={item.id} label="See what to fix" timeBudgetSeconds={900} />
+                        ) : <span aria-hidden="true" />}
+                      </article>
+                    );
+                  })}
+                </div>
+
+                <div className={styles.sectionHeader}><h2 className={styles.sectionTitle}>Performance note</h2></div>
+                <div className={styles.featureNotice}>
+                  <div className={styles.featureDate}><TrendingUp aria-hidden="true" size={28} /><span>Progress</span></div>
+                  <div className={styles.featureBody}>
+                    <div className={styles.featureKicker}><Award aria-hidden="true" size={14} />Latest release</div>
+                    <h2 className={styles.featureTitle}>{best?.subjectName ?? 'Results'} is your strongest published result</h2>
+                    <p className={styles.featureCopy}>Your institution publishes marks here after review. Use the subject breakdown above to decide where to focus next.</p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        );
+      }}
+    </QueryPage>
   );
 }

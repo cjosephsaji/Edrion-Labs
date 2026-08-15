@@ -8,7 +8,7 @@ import {
   schema,
   type Database,
 } from '@edrion/database';
-import { computeStanding, computeTermAggregate, presetSnapshot, SCHEME_PRESETS, type SchemeSnapshot } from '@edrion/schemas';
+import { computeStanding, computeSchemeTermAggregate, presetSnapshot, SCHEME_PRESETS, type SchemeSnapshot } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 
 @Injectable()
@@ -176,7 +176,7 @@ export class ResultsRecomputeService {
       });
     }
 
-    const { termPct, termGpa, creditsEarned, creditsTotal, isComplete } = computeTermAggregate(
+    const { termPct, termGpa, creditsEarned, creditsTotal, isComplete } = computeSchemeTermAggregate(
       scheme,
       aggregateInputs,
     );
@@ -276,7 +276,7 @@ export class ResultsRecomputeService {
       .insert(schema.gradingSchemes)
       .values({
         institutionId,
-        name: SCHEME_PRESETS.points_10.name,
+        name: SCHEME_PRESETS.points_10?.name ?? '10-Point GPA',
         kind: 'points_10',
         bands: preset.bands,
         gpaFormula: preset.gpa_formula,

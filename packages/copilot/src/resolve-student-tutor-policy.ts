@@ -74,7 +74,13 @@ export function resolveStudentTutorPolicy(
   context: AiResolutionContext,
 ): ResolvedStudentTutorPolicy {
   const tutorRows = policies.filter((p) => p.policyDomain === 'student_tutor');
-  const base = resolveAiPolicy(tutorRows, context);
+  // The shared resolver intentionally ignores non-copilot domains when called directly.
+  // This domain wrapper has already isolated student-tutor rows, so normalize the domain
+  // before delegating to reuse its precedence, capability merge, and kill-switch logic.
+  const base = resolveAiPolicy(
+    tutorRows.map((policy) => ({ ...policy, policyDomain: 'copilot' })),
+    context,
+  );
 
   const layered = [
     FeatureScope.EmployeeRole,

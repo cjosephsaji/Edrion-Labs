@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap');
-
 @import '../styles/tokens.css';
 
 @tailwind base;
@@ -12,15 +10,43 @@
   }
   html {
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
   body {
     background-color: var(--background);
     color: var(--text-primary);
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     font-feature-settings:
       'rlig' 1,
       'calt' 1;
     font-synthesis: none;
+    letter-spacing: -0.006em;
+    text-rendering: optimizeLegibility;
+  }
+  :where(h1, h2, h3) {
+    font-family: var(--font-display);
+    font-feature-settings:
+      'kern' 1,
+      'liga' 1;
+    font-synthesis: none;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+  :where(h4, h5, h6) {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+  }
+  :where(button, input, select, textarea) {
+    font: inherit;
+    letter-spacing: inherit;
+  }
+  :where(code, kbd, samp, pre) {
+    font-family: var(--font-mono-ui);
+    font-variant-ligatures: none;
+  }
+  :where(table, .tabular-nums) {
+    font-variant-numeric: tabular-nums;
   }
   :focus-visible {
     outline: none;

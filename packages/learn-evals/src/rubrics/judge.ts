@@ -1,93 +1,69 @@
-import type { SessionTranscript } from './structural';
+import {
+  PETROS_QUALITY_JUDGE_FUNCTION_KEY,
+  QUALITY_DIMENSIONS,
+  type QualityScore,
+  type QualityTranscript,
+  type QualityUsage,
+} from '../contracts';
+import { qualityApiAuthHeaders, type QualityApiAuth } from '../api-auth';
 
-export const JUDGE_PROMPT_VERSION = 'learn-eval-judge-v1';
+export const JUDGE_PROMPT_VERSION = 'petros-quality-judge.v1';
+export const JUDGE_SCHEMA_VERSION = 'petros-quality-judge-response.v1';
 
-export type JudgeScores = {
-  pedagogical_fit: number;
-  content_correctness: number;
-  artifact_quality: number;
-  answer_key_error: boolean;
-  notes: string;
+export type GatewayJudgeOptions = {
+  apiBase: string;
+  auth: QualityApiAuth;
+  timeoutMs?: number;
 };
 
 /**
- * LLM judge (hyperspec §1.4). Temperature 0, mid tier via OpenAI-compatible API.
- * Removing the judge (no key / outage) MUST fail the run — never silently pass content dims.
+ * Calls Edrion's provider-independent control plane. The harness never accepts a provider key,
+ * model name, or API credential and therefore cannot bypass routing, budgets, or usage metering.
  */
-export async function judgeTranscript(
-  t: SessionTranscript,
-  opts: { apiKey?: string; model?: string; baseUrl?: string },
-): Promise<JudgeScores> {
-  const apiKey = opts.apiKey ?? process.env.LEARN_EVAL_JUDGE_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      'JUDGE_UNAVAILABLE: set LEARN_EVAL_JUDGE_API_KEY. Ambient OPENAI_API_KEY is never used.',
-    );
+export async function judgeThroughGateway(transcript: QualityTranscript, options: GatewayJudgeOptions): Promise<{ scores: QualityScore[]; usage: QualityUsage }> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 60_000);
+  try {
+    const response = await fetch(`${options.apiBase.replace(/\/$/, '')}/petros-quality/judge`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...qualityApiAuthHeaders(options.auth) },
+      signal: controller.signal,
+      body: JSON.stringify({
+        functionKey: PETROS_QUALITY_JUDGE_FUNCTION_KEY,
+        source: 'evaluation',
+        environment: 'evaluation',
+        promptVersion: JUDGE_PROMPT_VERSION,
+        schemaVersion: JUDGE_SCHEMA_VERSION,
+        transcript,
+      }),
+    });
+    if (!response.ok) throw new Error(`JUDGE_UNAVAILABLE: gateway HTTP ${response.status}`);
+    const payload = await response.json() as { scores?: unknown; usage?: QualityUsage };
+    if (!payload.usage || payload.usage.source !== 'evaluation' || payload.usage.functionKey !== PETROS_QUALITY_JUDGE_FUNCTION_KEY) {
+      throw new Error('JUDGE_SCHEMA_INVALID: metered evaluation usage is required');
+    }
+    return { scores: validateJudgeScores(payload.scores), usage: payload.usage };
+  } finally {
+    clearTimeout(timer);
   }
+}
 
-  const model = opts.model ?? process.env.LEARN_EVAL_JUDGE_MODEL ?? 'gpt-4o-mini';
-  const baseUrl = (opts.baseUrl ?? process.env.LEARN_EVAL_JUDGE_BASE_URL ?? 'https://api.openai.com/v1').replace(
-    /\/$/,
-    '',
-  );
-
-  const body = {
-    model,
-    temperature: 0,
-    response_format: { type: 'json_object' },
-    messages: [
-      {
-        role: 'system',
-        content: `You are a strict pedagogy judge (${JUDGE_PROMPT_VERSION}). Score 1–5 integers.
-Return JSON: {"pedagogical_fit":n,"content_correctness":n,"artifact_quality":n,"answer_key_error":bool,"notes":"..."}.
-Rules: any factual/answer-key error ⇒ content_correctness ≤ 2 and answer_key_error true.
-artifact_quality: if no cards, score ≤ 3 unless commit was offered.`,
-      },
-      {
-        role: 'user',
-        content: JSON.stringify({
-          topic: t.topicKey,
-          persona: t.persona,
-          goal: t.goal,
-          moves: t.moves,
-          blocks: t.blocks.slice(0, 20).map((b) => ({
-            move: b.moveType,
-            type: b.blockType,
-            degraded: b.degraded,
-            content: b.content,
-          })),
-          cards: t.committedCards,
-          artifact_commit_offered: t.artifactCommitOffered,
-        }),
-      },
-    ],
-  };
-
-  const res = await fetch(`${baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(body),
+export function validateJudgeScores(value: unknown): QualityScore[] {
+  if (!Array.isArray(value)) throw new Error('JUDGE_SCHEMA_INVALID: expected score array');
+  const dimensions = new Set(QUALITY_DIMENSIONS);
+  const seen = new Set<string>();
+  const scores = value.map((entry) => {
+    if (!entry || typeof entry !== 'object') throw new Error('JUDGE_SCHEMA_INVALID: score entry must be an object');
+    const item = entry as Record<string, unknown>;
+    if (typeof item.dimension !== 'string' || !dimensions.has(item.dimension as never)) throw new Error(`JUDGE_SCHEMA_INVALID: unknown dimension ${String(item.dimension)}`);
+    if (seen.has(item.dimension)) throw new Error(`JUDGE_SCHEMA_INVALID: duplicate dimension ${item.dimension}`);
+    seen.add(item.dimension);
+    const score = Number(item.score);
+    if (!Number.isFinite(score) || score < 1 || score > 5) throw new Error(`JUDGE_SCHEMA_INVALID: score for ${item.dimension} must be 1..5`);
+    if (!Array.isArray(item.evidence) || item.evidence.length === 0) throw new Error(`JUDGE_SCHEMA_INVALID: evidence required for ${item.dimension}`);
+    if (typeof item.rationale !== 'string' || item.rationale.trim().length < 8) throw new Error(`JUDGE_SCHEMA_INVALID: rationale required for ${item.dimension}`);
+    return { ...item, score, maxScore: 5, evaluator: 'gateway_judge' } as QualityScore;
   });
-  if (!res.ok) {
-    throw new Error(`JUDGE_UNAVAILABLE: HTTP ${res.status}`);
-  }
-  const json = (await res.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  const raw = json.choices?.[0]?.message?.content;
-  if (!raw) throw new Error('JUDGE_UNAVAILABLE: empty response');
-  const parsed = JSON.parse(raw) as JudgeScores;
-  const clamp = (n: unknown) => Math.max(1, Math.min(5, Number(n) || 1));
-  let content = clamp(parsed.content_correctness);
-  if (parsed.answer_key_error) content = Math.min(content, 2);
-  return {
-    pedagogical_fit: clamp(parsed.pedagogical_fit),
-    content_correctness: content,
-    artifact_quality: clamp(parsed.artifact_quality),
-    answer_key_error: Boolean(parsed.answer_key_error),
-    notes: String(parsed.notes ?? ''),
-  };
+  if (scores.length !== QUALITY_DIMENSIONS.length) throw new Error(`JUDGE_SCHEMA_INVALID: expected ${QUALITY_DIMENSIONS.length} dimensions, received ${scores.length}`);
+  return scores;
 }

@@ -1,73 +1,129 @@
 'use client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { HomeTileDto, StudentHomeDto, StudentMeDto, StudentPreferencesDto } from '@edrion/schemas';
-import { useStudentClient } from './student-client';
 
-const ME_KEY = ['student', 'me'] as const;
-const HOME_KEY = ['student', 'home'] as const;
-const PREFERENCES_KEY = ['student', 'preferences'] as const;
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { useStudentApi } from './api-client';
+
+export type StudentMe = {
+  kind: 'institutional' | 'independent';
+  fullName: string;
+  email: string | null;
+  studentId: string | null;
+  institutionId: string | null;
+  campusId: string | null;
+  programmeName: string | null;
+  className: string | null;
+  sectionName: string | null;
+  termName: string | null;
+  academicYearName: string | null;
+  permissions: string[];
+  surfaces: Record<string, boolean>;
+};
+
+export type DashboardData = {
+  me: StudentMe;
+  priorityCards: StudentHomeCard[];
+  ranking: {
+    generatedAt: string;
+    weights: Record<StudentHomeCardKind, number>;
+  };
+  todaySlots: Array<{
+    id: string;
+    start: string;
+    end: string;
+    subjectName: string;
+    teacherName: string | null;
+    roomName: string | null;
+  }>;
+  attendancePct: number | null;
+  pendingAssignments: number;
+  upcomingDeadlines: Array<{ id: string; title: string; dueAt: string; kind: 'assignment' | 'homework' }>;
+  outstandingFees: { amount: number; currency: string; invoiceCount: number; overdueCount: number; nextDueDate: string | null } | null;
+  recentAnnouncements: Array<{ id: string; title: string; summary: string | null; category: string | null; pinned: boolean; publishedAt: string }>;
+  unreadNotifications: number;
+  upcomingExams: Array<{ id: string; title: string; startsAt: string; status: string }>;
+};
+
+export type StudentHomeCardKind =
+  | 'exam'
+  | 'due_work'
+  | 'learning'
+  | 'fees'
+  | 'attendance'
+  | 'schedule'
+  | 'announcement'
+  | 'notification';
+
+export type StudentHomeCard = {
+  id: string;
+  kind: StudentHomeCardKind;
+  eyebrow: string;
+  title: string;
+  description: string;
+  href: string;
+  actionLabel: string;
+  reason: string;
+  metric?: string | null;
+  meta?: string[];
+  occurredAt?: string | null;
+  source: 'institution' | 'program' | 'continuity';
+  score: number;
+  rank: number;
+  priority: 'critical' | 'high' | 'normal' | 'low';
+  prominence: 'featured' | 'high' | 'standard';
+};
 
 export function useStudentMe() {
-  const client = useStudentClient();
+  const api = useStudentApi();
   return useQuery({
-    queryKey: ME_KEY,
-    queryFn: () => client.get<StudentMeDto>('/me'),
-    staleTime: 5 * 60_000,
-    retry: (count, err) => {
-      if (err && typeof err === 'object' && 'status' in err && (err as { status: number }).status === 401) {
-        return false;
-      }
-      return count < 1;
-    },
+    queryKey: ['student', 'me'],
+    queryFn: () => api.get<StudentMe>('/student/me'),
+    retry: false,
   });
 }
 
-export function usePreferences() {
-  const client = useStudentClient();
+export function useDashboard() {
+  const api = useStudentApi();
+  return useQuery({
+    queryKey: ['student', 'home'],
+    queryFn: () => api.get<DashboardData>('/student/home'),
+    retry: false,
+  });
+}
+
+export function useStudentLogin() {
+  const api = useStudentApi();
   const qc = useQueryClient();
-  const query = useQuery({
-    queryKey: PREFERENCES_KEY,
-    queryFn: () => client.get<StudentPreferencesDto>('/preferences'),
-    staleTime: 60_000,
-  });
-  const mutation = useMutation({
-    mutationFn: (patch: Partial<StudentPreferencesDto>) =>
-      client.patch<StudentPreferencesDto>('/preferences', patch),
-    onSuccess: (data) => {
-      qc.setQueryData(PREFERENCES_KEY, data);
-      qc.invalidateQueries({ queryKey: ME_KEY });
+  const router = useRouter();
+  return useMutation({
+    mutationFn: (body: { identifier: string; password: string; institutionCode?: string }) =>
+      api.post<{ authenticated: true }>('/student/auth/login', body),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['student'] });
+      router.replace('/home');
     },
   });
-  return { ...query, update: mutation };
 }
 
-export function useHomeTiles() {
-  const client = useStudentClient();
-  return useQuery({
-    queryKey: HOME_KEY,
-    queryFn: () => client.get<StudentHomeDto>('/home'),
-    select: (data) => data.tiles as HomeTileDto[],
+export function useStudentLogout() {
+  const api = useStudentApi();
+  const qc = useQueryClient();
+  const router = useRouter();
+  return useMutation({
+    mutationFn: () => api.post<{ loggedOut: true }>('/student/auth/logout'),
+    onSuccess: () => {
+      qc.clear();
+      router.replace('/login');
+    },
   });
 }
 
-export function useHome() {
-  const client = useStudentClient();
+export function useStudentList<T>(key: string, path: string, enabled = true) {
+  const api = useStudentApi();
   return useQuery({
-    queryKey: HOME_KEY,
-    queryFn: () => client.get<StudentHomeDto>('/home'),
+    queryKey: ['student', key],
+    queryFn: () => api.get<T>(path),
+    enabled,
+    retry: false,
   });
 }
-
-export * from './hooks/useCreateLearnSession';
-export * from './hooks/useIntent';
-export * from './hooks/usePath';
-export * from './hooks/useQuick';
-export * from './hooks/useRevisionQueue';
-export * from './hooks/useStreaks';
-export * from './hooks/useHistory';
-export * from './hooks/useAsk';
-export * from './hooks/institutional';
-export * from './hooks/library';
-export * from './hooks/exam-engine';
-export * from './hooks/useVisualStudio';
-export * from './hooks/quiz-attempts';

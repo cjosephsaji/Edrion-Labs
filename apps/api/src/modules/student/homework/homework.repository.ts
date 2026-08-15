@@ -1,115 +1,125 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, count, eq, inArray, schema, sql, type Database } from '@edrion/database';
-
+import { and, eq, inArray, schema, sql, type Database } from '@edrion/database';
+import type { HomeworkListFilter } from '@edrion/schemas';
 import { DATABASE } from '../../../common/tokens';
 
 const teacherName = sql<string>`concat_ws(' ', ${schema.staff.firstName}, ${schema.staff.lastName})`;
+const VISIBLE_HOMEWORK_STATUSES = ['assigned', 'closed'];
 
 @Injectable()
 export class HomeworkRepository {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
 
-  listForStudent(studentId: string, institutionId: string, filter: string) {
-    const t = schema.homework;
-    const s = schema.homeworkSubmissions;
-    const conds = [
-      eq(s.studentId, studentId),
-      eq(t.institutionId, institutionId),
-      inArray(t.status, ['assigned', 'closed']),
-    ];
-    if (filter === 'progress') conds.push(inArray(s.status, ['assigned', 'in_progress']));
-    else if (filter === 'submitted') conds.push(eq(s.status, 'submitted'));
-    else if (filter === 'returned') conds.push(eq(s.status, 'returned'));
-
-    return this.db
+  async listForStudent(studentId: string, institutionId: string, filter: HomeworkListFilter) {
+    const rows = await this.db
       .select({
-        id: t.id,
-        title: t.title,
-        dueAt: t.dueAt,
+        id: schema.homework.id,
+        title: schema.homework.title,
+        dueAt: schema.homework.dueAt,
         subjectName: schema.subjects.name,
         teacherName,
-        status: s.status,
-        submissionId: s.id,
-        totalMarks: s.totalMarks,
-        totalMax: s.totalMax,
+        status: schema.homeworkSubmissions.status,
+        submissionId: schema.homeworkSubmissions.id,
+        totalMarks: schema.homeworkSubmissions.totalMarks,
+        totalMax: schema.homeworkSubmissions.totalMax,
       })
-      .from(s)
-      .innerJoin(t, eq(s.homeworkId, t.id))
-      .leftJoin(schema.subjects, eq(t.subjectId, schema.subjects.id))
-      .leftJoin(schema.staff, eq(t.teacherId, schema.staff.id))
-      .where(and(...conds))
-      .orderBy(asc(t.dueAt));
-  }
-
-  async questionCount(homeworkId: string): Promise<number> {
-    const [r] = await this.db
-      .select({ c: count() })
-      .from(schema.homeworkQuestions)
-      .where(eq(schema.homeworkQuestions.homeworkId, homeworkId));
-    return Number(r?.c ?? 0);
-  }
-
-  async answeredCount(submissionId: string): Promise<number> {
-    const [r] = await this.db
-      .select({ c: count() })
-      .from(schema.homeworkAnswers)
+      .from(schema.homeworkSubmissions)
+      .innerJoin(schema.homework, eq(schema.homeworkSubmissions.homeworkId, schema.homework.id))
+      .leftJoin(schema.subjects, eq(schema.homework.subjectId, schema.subjects.id))
+      .leftJoin(schema.staff, eq(schema.homework.teacherId, schema.staff.id))
       .where(
         and(
-          eq(schema.homeworkAnswers.submissionId, submissionId),
-          sql`(${schema.homeworkAnswers.answerText} IS NOT NULL OR ${schema.homeworkAnswers.answerObjectId} IS NOT NULL)`,
+          eq(schema.homeworkSubmissions.studentId, studentId),
+          eq(schema.homework.institutionId, institutionId),
+          inArray(schema.homework.status, VISIBLE_HOMEWORK_STATUSES),
         ),
-      );
-    return Number(r?.c ?? 0);
+      )
+      .orderBy(schema.homework.dueAt);
+
+    return rows.filter((r) => this.matchesFilter(r.status, filter));
   }
 
-  getDetail(homeworkId: string, studentId: string) {
+  async getDetail(homeworkId: string, studentId: string) {
     return this.db
       .select({
         homework: schema.homework,
         submission: schema.homeworkSubmissions,
+        subjectName: schema.subjects.name,
       })
       .from(schema.homeworkSubmissions)
       .innerJoin(schema.homework, eq(schema.homeworkSubmissions.homeworkId, schema.homework.id))
+      .leftJoin(schema.subjects, eq(schema.homework.subjectId, schema.subjects.id))
       .where(and(eq(schema.homework.id, homeworkId), eq(schema.homeworkSubmissions.studentId, studentId)))
       .limit(1);
   }
 
-  listQuestions(homeworkId: string) {
+  async listQuestions(homeworkId: string) {
     return this.db
       .select()
       .from(schema.homeworkQuestions)
       .where(eq(schema.homeworkQuestions.homeworkId, homeworkId))
-      .orderBy(asc(schema.homeworkQuestions.sequence));
+      .orderBy(schema.homeworkQuestions.sequence);
   }
 
-  listAnswers(submissionId: string) {
-    return this.db.select().from(schema.homeworkAnswers).where(eq(schema.homeworkAnswers.submissionId, submissionId));
+  async listAnswers(submissionId: string) {
+    return this.db
+      .select()
+      .from(schema.homeworkAnswers)
+      .where(eq(schema.homeworkAnswers.submissionId, submissionId));
   }
 
   async upsertAnswer(
     submissionId: string,
     questionId: string,
-    data: { mode: string; answerText?: string | null; answerObjectId?: string | null },
+    input: { mode?: string; answerText?: string | null; answerObjectId?: string | null },
   ) {
-    const existing = await this.db
+    const [existing] = await this.db
       .select({ id: schema.homeworkAnswers.id })
       .from(schema.homeworkAnswers)
-      .where(and(eq(schema.homeworkAnswers.submissionId, submissionId), eq(schema.homeworkAnswers.questionId, questionId)))
+      .where(
+        and(
+          eq(schema.homeworkAnswers.submissionId, submissionId),
+          eq(schema.homeworkAnswers.questionId, questionId),
+        ),
+      )
       .limit(1);
-    if (existing[0]) {
+    if (existing) {
       await this.db
         .update(schema.homeworkAnswers)
-        .set({ ...data, updatedAt: new Date() })
-        .where(eq(schema.homeworkAnswers.id, existing[0].id));
+        .set({
+          mode: input.mode ?? 'type',
+          answerText: input.answerText ?? null,
+          answerObjectId: input.answerObjectId ?? null,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.homeworkAnswers.id, existing.id));
       return;
     }
-    await this.db.insert(schema.homeworkAnswers).values({ submissionId, questionId, ...data });
+    await this.db.insert(schema.homeworkAnswers).values({
+      submissionId,
+      questionId,
+      mode: input.mode ?? 'type',
+      answerText: input.answerText ?? null,
+      answerObjectId: input.answerObjectId ?? null,
+    });
   }
 
-  async setSubmissionStatus(submissionId: string, status: string, extra?: { submittedAt?: Date }) {
+  async setSubmissionStatus(
+    submissionId: string,
+    status: string,
+    patch: { submittedAt?: Date } = {},
+  ) {
     await this.db
       .update(schema.homeworkSubmissions)
-      .set({ status, updatedAt: new Date(), ...extra })
+      .set({ status, ...patch, updatedAt: new Date() })
       .where(eq(schema.homeworkSubmissions.id, submissionId));
+  }
+
+  private matchesFilter(status: string, filter: HomeworkListFilter) {
+    if (filter === 'all') return true;
+    if (filter === 'progress') return ['assigned', 'in_progress'].includes(status);
+    if (filter === 'submitted') return status === 'submitted';
+    if (filter === 'returned') return ['returned', 'graded'].includes(status);
+    return true;
   }
 }

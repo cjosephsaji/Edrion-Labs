@@ -1,0 +1,59 @@
+.page {
+  display: grid;
+  width: 100%;
+  max-width: var(--content-page);
+  gap: var(--space-10);
+  margin: 0 auto;
+}
+.section { display: grid; gap: var(--space-4); }
+.sectionHeader { display: grid; gap: var(--space-1); }
+.sectionTitle { margin: 0; color: var(--s-ink); font-size: 1.625rem; font-weight: 400; line-height: 1.2; }
+.sectionDescription { max-width: var(--content-reading); margin: 0; color: var(--s-muted); font-size: 1rem; line-height: 1.55; }
+.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-4); }
+.primaryStat { grid-column: span 6; }
+.secondaryStat { grid-column: span 3; }
+.wide { grid-column: span 8; }
+.narrow { grid-column: span 4; }
+.half { grid-column: span 6; }
+.cardTitle { margin: 0; color: currentColor; font-size: 1.5rem; font-weight: 400; line-height: 1.2; }
+.cardCopy { max-width: 62ch; margin: var(--space-2) 0 0; color: currentColor; font-size: 1rem; line-height: 1.55; opacity: .82; }
+.cardMeta { margin: 0 0 var(--space-2); color: currentColor; font-size: .8125rem; letter-spacing: .09em; opacity: .72; text-transform: uppercase; }
+.pillRow { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.actionRow { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-3); }
+.specimen {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, .55fr);
+  gap: var(--space-8);
+  align-items: start;
+}
+.displaySample { margin: 0; color: var(--s-ink); font-size: clamp(2.5rem, 7vw, 5rem); font-weight: 400; line-height: .98; }
+.bodySample { max-width: 68ch; margin: var(--space-4) 0 0; color: var(--s-inkSoft); font-size: 1.125rem; line-height: 1.65; }
+.mathSample { margin: 0; color: var(--s-ink); font-size: 2rem; line-height: 1.4; }
+.tokenList { display: grid; gap: var(--space-2); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
+.tokenList li { display: flex; justify-content: space-between; gap: var(--space-4); border-top: 1px solid var(--s-divider); padding-top: var(--space-2); color: var(--s-muted); font-size: .9375rem; }
+.tokenList strong { color: var(--s-ink); font-weight: 400; }
+.stateGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.liveRegion { min-height: 24px; color: var(--s-success); font-size: .9375rem; }
+.stateAction { margin-top: var(--space-5); }
+.total { margin: var(--space-3) 0 0; color: currentColor; font-size: clamp(2.75rem, 6vw, 4.75rem); font-weight: 400; line-height: 1; }
+.totalLabel { display: block; margin-top: var(--space-2); color: currentColor; font-size: .9375rem; opacity: .76; }
+
+@media (max-width: 900px) {
+  .primaryStat,
+  .secondaryStat,
+  .wide,
+  .narrow,
+  .half { grid-column: span 6; }
+  .specimen { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .page { gap: var(--space-8); }
+  .grid { grid-template-columns: 1fr; }
+  .primaryStat,
+  .secondaryStat,
+  .wide,
+  .narrow,
+  .half { grid-column: auto; }
+  .stateGrid { grid-template-columns: 1fr; }
+}

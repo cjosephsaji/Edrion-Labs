@@ -144,7 +144,7 @@ export class FederationService {
   async completeSamlAcs(samlResponse: string, relayState: string) {
     let state: AuthStatePayload;
     try {
-      state = verifyHs256(relayState, this.env.SESSION_COOKIE_SECRET) as AuthStatePayload;
+      state = verifyHs256(relayState, this.env.SESSION_COOKIE_SECRET) as unknown as AuthStatePayload;
     } catch {
       throw new BadRequestException({ code: 'INVALID_STATE', message: 'SAML relay state is invalid or expired.' });
     }
@@ -226,7 +226,7 @@ export class FederationService {
   async completeOidcCallback(code: string, stateToken: string) {
     let state: AuthStatePayload;
     try {
-      state = verifyHs256(stateToken, this.env.SESSION_COOKIE_SECRET) as AuthStatePayload;
+      state = verifyHs256(stateToken, this.env.SESSION_COOKIE_SECRET) as unknown as AuthStatePayload;
     } catch {
       throw new BadRequestException({ code: 'INVALID_STATE', message: 'OIDC state is invalid or expired.' });
     }

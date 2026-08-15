@@ -1,6 +1,6 @@
 import { Inject, Injectable, type OnModuleInit } from '@nestjs/common';
 import type { Job } from 'bullmq';
-import { runInInstitutionTenant, schema, eq, and, isNull, lte, gte, type Database } from '@edrion/database';
+import { runInInstitutionTenant, schema, eq, and, isNull, lte, type Database } from '@edrion/database';
 import { DATABASE } from '../../../common/tokens';
 import { JobsService } from '../../../common/queue/jobs.service';
 import { QueueWorkers } from '../../../common/queue/queue.worker';
@@ -57,7 +57,7 @@ export class AttendanceJobsService implements OnModuleInit {
 
   async enqueueRecompute(data: AttendanceRecomputeJobData) {
     const jobId = `attendance:${data.studentId}:${data.subjectId ?? 'overall'}:${data.termId}`;
-    await this.jobs.enqueue('notifications', ATTENDANCE_RECOMPUTE_JOB, data, {
+    await this.jobs.enqueue('notifications', ATTENDANCE_RECOMPUTE_JOB, data as unknown as Record<string, unknown>, {
       jobId,
       delay: 30_000,
     });
@@ -156,7 +156,7 @@ export class AttendanceJobsService implements OnModuleInit {
 
   private async findOrCreateSession(
     row: typeof schema.requestMarksPending.$inferSelect,
-    today: string,
+    _today: string,
   ) {
     if (row.slotId) {
       const [existing] = await this.db

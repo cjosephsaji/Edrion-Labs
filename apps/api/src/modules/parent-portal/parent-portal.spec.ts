@@ -73,6 +73,7 @@ describe('ParentDigestService.render (pure)', () => {
     feesDueMinor: 0,
     libraryOverdue: 0,
     documentsPublished: 0,
+    prepSummary: null,
     prompt: null,
   };
 

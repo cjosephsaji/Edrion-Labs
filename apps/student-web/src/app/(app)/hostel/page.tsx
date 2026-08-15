@@ -1,41 +1,45 @@
 'use client';
-import { useHostelSurface } from '@/lib/hooks';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Eyebrow, PageHeader } from '@/components/ui/primitives';
 
-export default function HostelPage() {
-  const { data, isLoading } = useHostelSurface();
-  const hasData = data?.blockName || data?.roomNo;
+import { BedDouble } from 'lucide-react';
+import { Card, PageHeader, StatusPill } from '@/components/design-system';
+import {
+  EmptyState,
+  ErrorState,
+  LoadingBlock,
+  UnauthorizedState,
+} from '@/components/ui/states';
+import { StudentApiError, formatApiError } from '@/lib/api-client';
+import { useStudentList } from '@/lib/hooks';
 
+type Hostel = {
+  blockName?: string | null;
+  roomNo?: string | null;
+  warden?: string | null;
+};
+
+export default function Page() {
+  const q = useStudentList<Hostel>('hostel', '/student/surfaces/hostel');
+  if (q.isLoading) return <LoadingBlock />;
+  if (q.error instanceof StudentApiError && q.error.status === 401) return <UnauthorizedState />;
+  if (q.error) return <ErrorState description={formatApiError(q.error)} onRetry={() => void q.refetch()} />;
+  const item = q.data;
+  if (!item?.blockName && !item?.roomNo) {
+    return (
+      <div className="mx-auto w-full max-w-[1120px]">
+        <PageHeader eyebrow="Campus services" title="Hostel" description="Your hostel allocation details." />
+        <EmptyState icon={BedDouble} title="No hostel allocation" description="Your block, room, and warden details appear after allocation is published." actionHref="/requests/new" actionLabel="Request hostel help" />
+      </div>
+    );
+  }
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 pb-24 animate-st-block-in">
-      <PageHeader eyebrow={<Eyebrow>SCHOOL</Eyebrow>} title="Hostel" />
-
-      {isLoading ? (
-        <div className="mt-8 h-32 shimmer rounded-[15px]" />
-      ) : !hasData ? (
-        <EmptyState
-          className="mt-8"
-          eyebrow="NOT ASSIGNED"
-          title="No hostel assignment"
-          description="Room and warden details appear here when you're allocated a hostel."
-        />
-      ) : (
-        <div className="mt-6 rounded-[15px] border border-st-bd1 bg-st-card divide-y divide-st-divider">
-          <Row label="Block" value={data?.blockName} />
-          <Row label="Room" value={data?.roomNo} />
-          <Row label="Warden" value={data?.warden} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Row({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <div className="px-4 py-3.5">
-      <p className="font-mono-ui text-[10px] font-semibold tracking-wide text-st-faint">{label}</p>
-      <p className="mt-1 text-sm text-st-ink">{value ?? '—'}</p>
+    <div className="mx-auto w-full max-w-[1120px]">
+      <PageHeader eyebrow="Campus services" title="Hostel" description="Your hostel allocation details." />
+      <Card variant="emphasis" density="roomy" className="min-h-[240px]">
+        <div className="flex items-start justify-between gap-4"><BedDouble className="h-8 w-8 text-[#a9c4ba]" /><StatusPill label="Allocated" tone="positive" /></div>
+        <p className="mt-8 text-xs uppercase tracking-[.1em] text-[#a9c4ba]">Your room</p>
+        <h2 className="mt-2 text-[clamp(2rem,4vw,3.5rem)] leading-none">{item.blockName ?? 'Hostel'}{item.roomNo ? ` · ${item.roomNo}` : ''}</h2>
+        <p className="mt-4 text-base leading-7 text-[#cfddd8]">{item.warden ? `Warden · ${item.warden}` : 'Warden details to follow'}</p>
+      </Card>
     </div>
   );
 }

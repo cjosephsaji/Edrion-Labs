@@ -81,6 +81,7 @@ export const gradingSchemeUpsertSchema = z.object({
   is_default: z.boolean().optional(),
   version: z.number().int().min(0).optional(),
 });
+export type GradingSchemeUpsertInput = z.infer<typeof gradingSchemeUpsertSchema>;
 
 export type MarkReleaseUpsertInput = z.infer<typeof markReleaseUpsertSchema>;
 export type ResultsSettingsInput = z.infer<typeof resultsSettingsSchema>;

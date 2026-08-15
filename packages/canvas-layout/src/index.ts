@@ -7,4 +7,5 @@ export type {
   LayoutResponseMessage,
 } from './types';
 
-export { runLayout, isLayoutErrorMessage } from './layout';
+export { runLayout } from './layout';
+export { isLayoutErrorMessage } from './types';

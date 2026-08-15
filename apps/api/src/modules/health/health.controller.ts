@@ -1,25 +1,21 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import type { ApiEnv } from '@edrion/config';
 import { count, eq, schema, sql, type Database } from '@edrion/database';
-import { API_ENV, DATABASE } from '../../common/tokens';
+import { DATABASE } from '../../common/tokens';
 import { Public } from '../../common/guards/auth.guard';
 import { RequirePermissions } from '../../common/decorators';
 import { RedisService } from '../../common/redis/redis.service';
 import { JobsService } from '../../common/queue/jobs.service';
 import { JobTracker } from '../../common/queue/job-tracker.service';
-import { OpenAiLearnProvider } from '../student/learn-ai/openai.provider';
 
 @ApiTags('system')
 @Controller()
 export class HealthController {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
-    @Inject(API_ENV) private readonly env: ApiEnv,
     private readonly redis: RedisService,
     private readonly jobs: JobsService,
     private readonly jobTracker: JobTracker,
-    private readonly openAiLearn: OpenAiLearnProvider,
   ) {}
 
   @Public()
@@ -33,17 +29,6 @@ export class HealthController {
       database = 'down';
     }
     return { status: database === 'ok' ? 'ok' : 'degraded', database, time: new Date().toISOString() };
-  }
-
-  @Public()
-  @Get('health/ai')
-  aiHealth() {
-    const models = this.openAiLearn.getConfiguredModels();
-    return {
-      configured: Boolean(this.env.OPENAI_API_KEY),
-      models,
-      lastError: this.openAiLearn.getLastError(),
-    };
   }
 
   /** Operational system status — DB latency/version, record counts, process uptime. */

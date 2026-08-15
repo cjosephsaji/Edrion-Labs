@@ -5,10 +5,10 @@
   "scripts": {
     "gen:tokens": "tsx scripts/gen-tokens.ts",
     "predev": "pnpm gen:tokens",
-    "dev": "next dev -p 3003",
+    "dev": "next dev -p 3009",
     "prebuild": "pnpm gen:tokens",
     "build": "next build",
-    "start": "next start -p 3003",
+    "start": "next start -p 3009",
     "typecheck": "tsc --noEmit",
     "lint": "next lint",
     "clean": "rm -rf .next .turbo"

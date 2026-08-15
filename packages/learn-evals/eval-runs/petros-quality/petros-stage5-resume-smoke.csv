@@ -1,0 +1,3 @@
+run_id,case_id,topic,persona,total_score,gate,cost_micros,latency_ms
+petros-stage5-resume-smoke,pq-01-integration-by-parts,topic:integration-by-parts,fast_confident,5,pass,0,0
+petros-stage5-resume-smoke,pq-01-integration-by-parts,topic:integration-by-parts,slow_careful,5,pass,0,0

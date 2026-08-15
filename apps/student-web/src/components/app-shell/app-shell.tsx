@@ -7,6 +7,7 @@ import { Bell, ChevronRight, LayoutGrid, LogOut, RotateCcw, Settings, Star, User
 import { STUDENT_NAV, type NavItem } from '@/lib/nav';
 import { useStudentLogout, useStudentMe, type StudentMe } from '@/lib/hooks';
 import { useStudentPreferences } from '@/lib/preferences';
+import { PetrosContextAssistant } from '@/components/petros/petros-context-assistant';
 
 function canSee(me: StudentMe | undefined, permission?: string, surface?: string): boolean {
   if (!me) return !permission && !surface;
@@ -285,6 +286,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         {mobileTabs.map((item) => <PortalTab key={item.href} item={item} pathname={pathname} />)}
         <button type="button" onClick={openMenu} className="portal-tab" aria-expanded={menuOpen} aria-controls="portal-directory"><LayoutGrid className="h-4 w-4" aria-hidden="true" />Explore</button>
       </nav>
+
+      <PetrosContextAssistant route={pathname} />
 
       {menuPhase !== 'closed' ? (
         <div className="portal-directory-layer" data-state={menuPhase}>

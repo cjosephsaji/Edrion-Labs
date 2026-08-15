@@ -3,6 +3,8 @@ import { seedAcademics } from './academics.js';
 import { seedInstitution } from './institution.js';
 import { seedIndependentUser } from './independent.js';
 import { seedOperations } from './operations.js';
+import { seedPetrosLearnerModelFixtures } from './petros-learner-model.js';
+import { seedStudentPortalDemo } from './student-portal-demo.js';
 import { seedPlatform } from './platform.js';
 import { seedUsers } from './users.js';
 
@@ -12,6 +14,8 @@ export async function runDevSeed(ctx: DevSeedContext): Promise<DevLoginRow[]> {
   const people = await seedUsers(ctx, inst);
   const academics = await seedAcademics(ctx, inst, people);
   await seedOperations(ctx, inst, academics, people);
+  await seedStudentPortalDemo(ctx, inst, academics, people);
+  await seedPetrosLearnerModelFixtures(ctx, inst, people);
   await seedIndependentUser(ctx);
   return ctx.logins;
 }

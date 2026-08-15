@@ -8,16 +8,22 @@
   },
   "scripts": {
     "run": "tsx src/cli.ts run",
-    "run:core": "tsx src/cli.ts run --suite core",
-    "run:full": "tsx src/cli.ts run --suite full",
-    "check-fixtures": "tsx -e \"import { assertTopicCoverage } from './src/fixtures/topics.ts'; assertTopicCoverage(); console.log('ok')\""
+    "run:smoke": "tsx src/cli.ts run --suite smoke --mode fixture",
+    "run:core": "tsx src/cli.ts run --suite core --mode fixture",
+    "run:full": "tsx src/cli.ts run --suite full --mode fixture",
+    "estimate:live": "tsx src/cli.ts estimate --suite smoke --mode live",
+    "check-fixtures": "tsx -e \"import { assertQualityCorpusCoverage } from './src/fixtures/manifest.ts'; assertQualityCorpusCoverage(); console.log('Petros quality corpus ok')\"",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@edrion/schemas": "workspace:*"
   },
   "devDependencies": {
     "@edrion/tsconfig": "workspace:*",
+    "@edrion/vitest-config": "workspace:*",
     "tsx": "^4.19.1",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.1"
   }
 }

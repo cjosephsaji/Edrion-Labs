@@ -17,7 +17,7 @@ export function CreatedProgrammesPanel({ items }: { items: ProgrammeStructureDet
             <div className="flex items-center justify-between gap-3">
               <span className="font-medium text-text-primary">{p.department.name}</span>
               <span className="shrink-0 text-xs text-text-muted">
-                {p.totals.years} {tp('gradeLevel').toLowerCase()} · {p.totals.slots}{' '}
+                {p.totals.levels} {tp('gradeLevel').toLowerCase()} · {p.totals.slots}{' '}
                 {tp('term').toLowerCase()}
               </span>
             </div>

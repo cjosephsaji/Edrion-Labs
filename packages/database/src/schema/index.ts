@@ -35,6 +35,17 @@ export * from './features';
 export * from './records';
 export * from './support';
 export * from './ai';
+export * from './petros-ai-routing';
+export * from './petros-learning';
+export * from './petros-session-intent';
+export * from './petros-input-modes';
+export * from './petros-teach-back';
+export * from './petros-reflection';
+export * from './petros-institutional';
+export * from './petros-artifacts';
+export * from './petros-learner-model';
+export * from './petros-topic-profiles';
+export * from './petros-quality';
 export * from './jobs';
 export * from './integrations';
 // Phase 13: functional staff modules
@@ -70,7 +81,7 @@ export * from './doc-gen';
 export * from './document-issuance';
 
 // Marks release batches (report-card / results binding)
-export * from './mark-releases';
+// mark_release_batches is defined in ./grading.ts (0092); avoid duplicate export.
 
 // Student Request Engine
 export * from './requests';

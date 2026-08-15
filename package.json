@@ -25,8 +25,7 @@
     "learn-evals:core": "pnpm --filter @edrion/learn-evals run:core",
     "learn-evals:full": "pnpm --filter @edrion/learn-evals run:full",
     "clean": "turbo run clean && rm -rf node_modules",
-    "clean:apple": "find . -name '._*' -not -path '*/node_modules/*' -delete",
-    "learn-evals": "pnpm --filter @edrion/learn-evals run"
+    "clean:apple": "find . -name '._*' -not -path '*/node_modules/*' -delete"
   },
   "devDependencies": {
     "prettier": "^3.3.3",

@@ -157,10 +157,12 @@ async function main() {
 
   // Link the demo student portal login to the first directory student (idempotent).
   const studentPortalUserId = userIdByEmail.get('student@greenwood.edu');
-  if (studentPortalUserId && studentIds[0]) {
+  const student1PortalUserId = userIdByEmail.get('student1@greenwood.edu');
+  const primaryStudentPortalUserId = student1PortalUserId ?? studentPortalUserId;
+  if (primaryStudentPortalUserId && studentIds[0]) {
     await db
       .update(s.students)
-      .set({ institutionUserId: studentPortalUserId })
+      .set({ institutionUserId: primaryStudentPortalUserId })
       .where(
         and(eq(s.students.id, studentIds[0].id), isNull(s.students.institutionUserId)),
       );

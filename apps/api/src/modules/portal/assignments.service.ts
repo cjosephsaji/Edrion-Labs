@@ -4,9 +4,13 @@ import {
   Inject,
   Injectable,
   NotFoundException,
-} from '@nestjs/common';
-import { resolveScopeFilter, type InstitutionScope, type ScopeFilter } from '@edrion/auth';
-import type { AuditWriter, AuditEventInput } from '@edrion/audit';
+} from "@nestjs/common";
+import {
+  resolveScopeFilter,
+  type InstitutionScope,
+  type ScopeFilter,
+} from "@edrion/auth";
+import type { AuditWriter, AuditEventInput } from "@edrion/audit";
 import type {
   AssignmentAudiencePreviewInput,
   AssignmentQuestionInput,
@@ -17,17 +21,24 @@ import type {
   ReconcileAssignmentInput,
   UpdateAssignmentInput,
   UpdateAssignmentQuestionInput,
-} from '@edrion/schemas';
-import { AUDIT_WRITER, DATABASE } from '../../common/tokens';
-import type { Database } from '@edrion/database';
-import type { Page } from './academics.repository';
-import type { ListResult } from './academics.service';
-import { resolveAcademicScope } from './academic-scope-stamp';
-import { AssignmentsRepository, type AssignmentRefTable } from './assignments.repository';
-import { basePortalAudit, type PortalActionContext } from './portal-action-context';
-import { PortalAudienceService } from './portal-audience.service';
+} from "@edrion/schemas";
+import { AUDIT_WRITER, DATABASE } from "../../common/tokens";
+import type { Database } from "@edrion/database";
+import type { Page } from "./academics.repository";
+import type { ListResult } from "./academics.service";
+import { resolveAcademicScope } from "./academic-scope-stamp";
+import {
+  AssignmentsRepository,
+  type AssignmentRefTable,
+} from "./assignments.repository";
+import {
+  basePortalAudit,
+  type PortalActionContext,
+} from "./portal-action-context";
+import { PortalAudienceService } from "./portal-audience.service";
+import { PetrosLearningSourceIngestionService } from "../petros-learner-model/petros-learning-source-ingestion.service";
 
-const MODULE = 'portal-assignments';
+const MODULE = "portal-assignments";
 
 /**
  * Institution-portal Assignments service (Phase 6). An assignment is campus-scoped and version-guarded
@@ -40,6 +51,7 @@ export class AssignmentsService {
   constructor(
     private readonly repo: AssignmentsRepository,
     private readonly audience: PortalAudienceService,
+    private readonly learnerEvidence: PetrosLearningSourceIngestionService,
     @Inject(DATABASE) private readonly db: Database,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
   ) {}
@@ -48,7 +60,10 @@ export class AssignmentsService {
 
   async list(ctx: PortalActionContext, q: AssignmentsListQuery) {
     const f = this.filter(ctx);
-    return this.paginate(await this.repo.list(ctx.principal.institutionId, f.campusIds, q), q);
+    return this.paginate(
+      await this.repo.list(ctx.principal.institutionId, f.campusIds, q),
+      q,
+    );
   }
 
   /** Assignment + questions for the builder. */
@@ -59,11 +74,13 @@ export class AssignmentsService {
   }
 
   async create(ctx: PortalActionContext, input: CreateAssignmentInput) {
-    await this.assertRef(ctx, 'classes', input.classId, 'class');
-    await this.assertOptional(ctx, 'subjects', input.subjectId, 'subject');
-    await this.assertOptional(ctx, 'staff', input.teacherId, 'teacher');
+    await this.assertRef(ctx, "classes", input.classId, "class");
+    await this.assertOptional(ctx, "subjects", input.subjectId, "subject");
+    await this.assertOptional(ctx, "staff", input.teacherId, "teacher");
     const campusId = this.createCampusId(ctx.scope);
-    const audience = input.audience?.length ? input.audience : [{ kind: 'class' as const, refId: input.classId }];
+    const audience = input.audience?.length
+      ? input.audience
+      : [{ kind: "class" as const, refId: input.classId }];
     const actorId = ctx.principal.institutionUserId;
     const f = this.filter(ctx);
     const scope = await resolveAcademicScope(this.db, {
@@ -103,25 +120,36 @@ export class AssignmentsService {
               correctKey: q.correctKey ?? null,
               markingNote: q.markingNote ?? null,
               marks: q.marks,
-              config: (q.config as Record<string, unknown> | null | undefined) ?? null,
+              config:
+                (q.config as Record<string, unknown> | null | undefined) ??
+                null,
               createdBy: actorId,
             })),
           )
         : await this.repo.insert(assignmentValues);
     await this.audience.materializeAssignmentAssignees(ctx, row.id, audience);
-    await this.write(ctx, 'assignment.create', 'assignment', row.id, campusId, {
-      newState: { title: row.title, classId: row.classId, status: row.status, questionCount: questions.length },
+    await this.write(ctx, "assignment.create", "assignment", row.id, campusId, {
+      newState: {
+        title: row.title,
+        classId: row.classId,
+        status: row.status,
+        questionCount: questions.length,
+      },
     });
     return row;
   }
 
-  async reconcile(ctx: PortalActionContext, id: string, input: ReconcileAssignmentInput) {
+  async reconcile(
+    ctx: PortalActionContext,
+    id: string,
+    input: ReconcileAssignmentInput,
+  ) {
     const f = this.filter(ctx);
     const existing = await this.repo.find(id, ctx.principal.institutionId);
     this.assertInScope(existing?.campusId ?? null, existing, f);
-    await this.assertOptional(ctx, 'classes', input.classId, 'class');
-    await this.assertOptional(ctx, 'subjects', input.subjectId, 'subject');
-    await this.assertOptional(ctx, 'staff', input.teacherId, 'teacher');
+    await this.assertOptional(ctx, "classes", input.classId, "class");
+    await this.assertOptional(ctx, "subjects", input.subjectId, "subject");
+    await this.assertOptional(ctx, "staff", input.teacherId, "teacher");
     const actorId = ctx.principal.institutionUserId;
     let updated;
     try {
@@ -131,14 +159,28 @@ export class AssignmentsService {
         patch: {
           title: input.title ?? existing!.title,
           classId: input.classId ?? existing!.classId,
-          subjectId: input.subjectId === undefined ? existing!.subjectId : input.subjectId,
-          teacherId: input.teacherId === undefined ? existing!.teacherId : input.teacherId,
-          instructions: input.instructions === undefined ? existing!.instructions : input.instructions,
-          dueDate: input.dueDate === undefined ? existing!.dueDate : input.dueDate,
+          subjectId:
+            input.subjectId === undefined
+              ? existing!.subjectId
+              : input.subjectId,
+          teacherId:
+            input.teacherId === undefined
+              ? existing!.teacherId
+              : input.teacherId,
+          instructions:
+            input.instructions === undefined
+              ? existing!.instructions
+              : input.instructions,
+          dueDate:
+            input.dueDate === undefined ? existing!.dueDate : input.dueDate,
           maxPoints: input.maxPoints ?? existing!.maxPoints,
           status: input.status ?? existing!.status,
-          audience: input.audience === undefined ? existing!.audience : input.audience,
-          durationMin: input.durationMin === undefined ? existing!.durationMin : input.durationMin,
+          audience:
+            input.audience === undefined ? existing!.audience : input.audience,
+          durationMin:
+            input.durationMin === undefined
+              ? existing!.durationMin
+              : input.durationMin,
           deliveryMode: input.deliveryMode ?? existing!.deliveryMode,
           updatedBy: actorId,
         },
@@ -153,55 +195,95 @@ export class AssignmentsService {
           correctKey: q.correctKey ?? null,
           markingNote: q.markingNote ?? null,
           marks: q.marks,
-          config: (q.config as Record<string, unknown> | null | undefined) ?? null,
+          config:
+            (q.config as Record<string, unknown> | null | undefined) ?? null,
           actorId,
         })),
       });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '';
-      if (msg.includes('VERSION_CONFLICT') || msg.includes('NOT_FOUND')) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("VERSION_CONFLICT") || msg.includes("NOT_FOUND")) {
         throw this.versionConflict();
       }
       throw err;
     }
     if (!updated) throw this.versionConflict();
     if (input.audience !== undefined) {
-      await this.audience.materializeAssignmentAssignees(ctx, id, input.audience);
+      await this.audience.materializeAssignmentAssignees(
+        ctx,
+        id,
+        input.audience,
+      );
     }
-    await this.write(ctx, 'assignment.reconcile', 'assignment', id, updated.campusId, {
-      newState: { title: updated.title, status: updated.status, questionCount: input.questions?.length ?? 0 },
-    });
+    await this.write(
+      ctx,
+      "assignment.reconcile",
+      "assignment",
+      id,
+      updated.campusId,
+      {
+        newState: {
+          title: updated.title,
+          status: updated.status,
+          questionCount: input.questions?.length ?? 0,
+        },
+      },
+    );
     return updated;
   }
 
-  async update(ctx: PortalActionContext, id: string, input: UpdateAssignmentInput) {
+  async update(
+    ctx: PortalActionContext,
+    id: string,
+    input: UpdateAssignmentInput,
+  ) {
     const f = this.filter(ctx);
     const existing = await this.repo.find(id, ctx.principal.institutionId);
     this.assertInScope(existing?.campusId ?? null, existing, f);
-    await this.assertOptional(ctx, 'classes', input.classId, 'class');
-    await this.assertOptional(ctx, 'subjects', input.subjectId, 'subject');
-    await this.assertOptional(ctx, 'staff', input.teacherId, 'teacher');
+    await this.assertOptional(ctx, "classes", input.classId, "class");
+    await this.assertOptional(ctx, "subjects", input.subjectId, "subject");
+    await this.assertOptional(ctx, "staff", input.teacherId, "teacher");
     const updated = await this.repo.update(id, input.version, {
       title: input.title ?? existing!.title,
       classId: input.classId ?? existing!.classId,
-      subjectId: input.subjectId === undefined ? existing!.subjectId : input.subjectId,
-      teacherId: input.teacherId === undefined ? existing!.teacherId : input.teacherId,
-      instructions: input.instructions === undefined ? existing!.instructions : input.instructions,
+      subjectId:
+        input.subjectId === undefined ? existing!.subjectId : input.subjectId,
+      teacherId:
+        input.teacherId === undefined ? existing!.teacherId : input.teacherId,
+      instructions:
+        input.instructions === undefined
+          ? existing!.instructions
+          : input.instructions,
       dueDate: input.dueDate === undefined ? existing!.dueDate : input.dueDate,
       maxPoints: input.maxPoints ?? existing!.maxPoints,
       status: input.status ?? existing!.status,
-      audience: input.audience === undefined ? existing!.audience : input.audience,
-      durationMin: input.durationMin === undefined ? existing!.durationMin : input.durationMin,
+      audience:
+        input.audience === undefined ? existing!.audience : input.audience,
+      durationMin:
+        input.durationMin === undefined
+          ? existing!.durationMin
+          : input.durationMin,
       deliveryMode: input.deliveryMode ?? existing!.deliveryMode,
       updatedBy: ctx.principal.institutionUserId,
     });
     if (!updated) throw this.versionConflict();
     if (input.audience !== undefined) {
-      await this.audience.materializeAssignmentAssignees(ctx, id, input.audience);
+      await this.audience.materializeAssignmentAssignees(
+        ctx,
+        id,
+        input.audience,
+      );
     }
-    await this.write(ctx, 'assignment.update', 'assignment', id, updated.campusId, {
-      newState: { title: updated.title, status: updated.status },
-    });
+    await this.write(
+      ctx,
+      "assignment.update",
+      "assignment",
+      id,
+      updated.campusId,
+      {
+        newState: { title: updated.title, status: updated.status },
+      },
+    );
     return updated;
   }
 
@@ -211,9 +293,16 @@ export class AssignmentsService {
     this.assertInScope(existing?.campusId ?? null, existing, f);
     const ok = await this.repo.delete(id, version);
     if (!ok) throw this.versionConflict();
-    await this.write(ctx, 'assignment.delete', 'assignment', id, existing!.campusId, {
-      previousState: { title: existing!.title, classId: existing!.classId },
-    });
+    await this.write(
+      ctx,
+      "assignment.delete",
+      "assignment",
+      id,
+      existing!.campusId,
+      {
+        previousState: { title: existing!.title, classId: existing!.classId },
+      },
+    );
     return { deleted: true };
   }
 
@@ -225,17 +314,24 @@ export class AssignmentsService {
   }
 
   /** Bulk upsert submissions. Each entry's student is pre-checked for a friendly 400; points are capped. */
-  async grade(ctx: PortalActionContext, assignmentId: string, input: GradeSubmissionsInput) {
+  async grade(
+    ctx: PortalActionContext,
+    assignmentId: string,
+    input: GradeSubmissionsInput,
+  ) {
     const assignment = await this.requireAssignmentInScope(ctx, assignmentId);
     const seen = new Set<string>();
     for (const sub of input.submissions) {
       if (!seen.has(sub.studentId)) {
-        await this.assertRef(ctx, 'students', sub.studentId, 'student');
+        await this.assertRef(ctx, "students", sub.studentId, "student");
         seen.add(sub.studentId);
       }
-      if (sub.pointsAwarded != null && sub.pointsAwarded > assignment.maxPoints) {
+      if (
+        sub.pointsAwarded != null &&
+        sub.pointsAwarded > assignment.maxPoints
+      ) {
         throw new BadRequestException({
-          code: 'INVALID_POINTS',
+          code: "INVALID_POINTS",
           message: `Points awarded cannot exceed the maximum (${assignment.maxPoints}).`,
         });
       }
@@ -249,27 +345,61 @@ export class AssignmentsService {
         feedback: sub.feedback ?? null,
         createdBy: ctx.principal.institutionUserId,
       });
+      if (sub.status === "graded" && sub.pointsAwarded != null) {
+        await this.learnerEvidence.ingestAssignmentSubmission(
+          {
+            institutionId: ctx.principal.institutionId,
+            studentId: sub.studentId,
+          },
+          assignmentId,
+        );
+      }
     }
-    await this.write(ctx, 'assignment.grade', 'assignment', assignmentId, assignment.campusId, {
-      newState: { submissions: input.submissions.length },
-    });
+    await this.write(
+      ctx,
+      "assignment.grade",
+      "assignment",
+      assignmentId,
+      assignment.campusId,
+      {
+        newState: { submissions: input.submissions.length },
+      },
+    );
     return this.repo.listSubmissions(assignmentId);
   }
 
-  async removeSubmission(ctx: PortalActionContext, assignmentId: string, submissionId: string) {
+  async removeSubmission(
+    ctx: PortalActionContext,
+    assignmentId: string,
+    submissionId: string,
+  ) {
     const assignment = await this.requireAssignmentInScope(ctx, assignmentId);
     const sub = await this.repo.findSubmission(submissionId, assignmentId);
-    if (!sub) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Submission not found' });
+    if (!sub)
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Submission not found",
+      });
     const ok = await this.repo.deleteSubmission(submissionId);
-    await this.write(ctx, 'assignment.submission.remove', 'assignment_submission', submissionId, assignment.campusId, {
-      previousState: { studentId: sub.studentId, status: sub.status },
-    });
+    await this.write(
+      ctx,
+      "assignment.submission.remove",
+      "assignment_submission",
+      submissionId,
+      assignment.campusId,
+      {
+        previousState: { studentId: sub.studentId, status: sub.status },
+      },
+    );
     return { deleted: ok };
   }
 
   // === audience preview ======================================================
 
-  previewAudience(ctx: PortalActionContext, input: AssignmentAudiencePreviewInput) {
+  previewAudience(
+    ctx: PortalActionContext,
+    input: AssignmentAudiencePreviewInput,
+  ) {
     return this.audience.previewStudents(ctx, input.targets);
   }
 
@@ -280,7 +410,11 @@ export class AssignmentsService {
     return this.repo.listQuestions(assignmentId);
   }
 
-  async createQuestion(ctx: PortalActionContext, assignmentId: string, input: AssignmentQuestionInput) {
+  async createQuestion(
+    ctx: PortalActionContext,
+    assignmentId: string,
+    input: AssignmentQuestionInput,
+  ) {
     const assignment = await this.requireAssignmentInScope(ctx, assignmentId);
     const row = await this.repo.insertQuestion({
       assignmentId,
@@ -292,12 +426,20 @@ export class AssignmentsService {
       correctKey: input.correctKey ?? null,
       markingNote: input.markingNote ?? null,
       marks: input.marks,
-      config: (input.config as Record<string, unknown> | null | undefined) ?? null,
+      config:
+        (input.config as Record<string, unknown> | null | undefined) ?? null,
       createdBy: ctx.principal.institutionUserId,
     });
-    await this.write(ctx, 'assignment.question.create', 'assignment_question', row.id, assignment.campusId, {
-      newState: { assignmentId, sequence: row.sequence },
-    });
+    await this.write(
+      ctx,
+      "assignment.question.create",
+      "assignment_question",
+      row.id,
+      assignment.campusId,
+      {
+        newState: { assignmentId, sequence: row.sequence },
+      },
+    );
     return row;
   }
 
@@ -309,38 +451,73 @@ export class AssignmentsService {
   ) {
     const assignment = await this.requireAssignmentInScope(ctx, assignmentId);
     const existing = await this.repo.findQuestion(questionId, assignmentId);
-    if (!existing) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Question not found' });
+    if (!existing)
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Question not found",
+      });
     const updated = await this.repo.updateQuestion(questionId, input.version, {
       sequence: input.sequence ?? existing.sequence,
       qtype: input.qtype ?? existing.qtype,
       prompt: input.prompt ?? existing.prompt,
-      promptImageObjectId: input.promptImageObjectId === undefined ? existing.promptImageObjectId : input.promptImageObjectId,
+      promptImageObjectId:
+        input.promptImageObjectId === undefined
+          ? existing.promptImageObjectId
+          : input.promptImageObjectId,
       options: input.options === undefined ? existing.options : input.options,
-      correctKey: input.correctKey === undefined ? existing.correctKey : input.correctKey,
-      markingNote: input.markingNote === undefined ? existing.markingNote : input.markingNote,
+      correctKey:
+        input.correctKey === undefined ? existing.correctKey : input.correctKey,
+      markingNote:
+        input.markingNote === undefined
+          ? existing.markingNote
+          : input.markingNote,
       marks: input.marks ?? existing.marks,
       config:
         input.config === undefined
           ? existing.config
-          : ((input.config as Record<string, unknown> | null | undefined) ?? null),
+          : ((input.config as Record<string, unknown> | null | undefined) ??
+            null),
       updatedBy: ctx.principal.institutionUserId,
     });
     if (!updated) throw this.versionConflict();
-    await this.write(ctx, 'assignment.question.update', 'assignment_question', questionId, assignment.campusId, {
-      newState: { sequence: updated.sequence },
-    });
+    await this.write(
+      ctx,
+      "assignment.question.update",
+      "assignment_question",
+      questionId,
+      assignment.campusId,
+      {
+        newState: { sequence: updated.sequence },
+      },
+    );
     return updated;
   }
 
-  async deleteQuestion(ctx: PortalActionContext, assignmentId: string, questionId: string, version: number) {
+  async deleteQuestion(
+    ctx: PortalActionContext,
+    assignmentId: string,
+    questionId: string,
+    version: number,
+  ) {
     const assignment = await this.requireAssignmentInScope(ctx, assignmentId);
     const existing = await this.repo.findQuestion(questionId, assignmentId);
-    if (!existing) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Question not found' });
+    if (!existing)
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Question not found",
+      });
     const ok = await this.repo.deleteQuestion(questionId, version);
     if (!ok) throw this.versionConflict();
-    await this.write(ctx, 'assignment.question.delete', 'assignment_question', questionId, assignment.campusId, {
-      previousState: { sequence: existing.sequence },
-    });
+    await this.write(
+      ctx,
+      "assignment.question.delete",
+      "assignment_question",
+      questionId,
+      assignment.campusId,
+      {
+        previousState: { sequence: existing.sequence },
+      },
+    );
     return { deleted: true };
   }
 
@@ -351,7 +528,11 @@ export class AssignmentsService {
     return this.repo.listAttempts(assignmentId);
   }
 
-  async getAttemptDetail(ctx: PortalActionContext, assignmentId: string, attemptId: string) {
+  async getAttemptDetail(
+    ctx: PortalActionContext,
+    assignmentId: string,
+    attemptId: string,
+  ) {
     await this.requireAssignmentInScope(ctx, assignmentId);
     return this.repo.listAttemptAnswers(attemptId);
   }
@@ -368,10 +549,33 @@ export class AssignmentsService {
       teacherMarks: input.teacherMarks ?? null,
       teacherFeedback: input.teacherFeedback ?? null,
     });
-    if (!updated) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Answer not found' });
-    await this.write(ctx, 'assignment.answer.grade', 'assignment_answer', answerId, assignment.campusId, {
-      newState: { teacherMarks: updated.teacherMarks },
-    });
+    if (!updated)
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Answer not found",
+      });
+    await this.write(
+      ctx,
+      "assignment.answer.grade",
+      "assignment_answer",
+      answerId,
+      assignment.campusId,
+      {
+        newState: { teacherMarks: updated.teacherMarks },
+      },
+    );
+    const attempt = (await this.repo.listAttempts(assignmentId)).find(
+      (item) => item.id === _attemptId,
+    );
+    if (attempt) {
+      await this.learnerEvidence.ingestAssignmentAnswer(
+        {
+          institutionId: ctx.principal.institutionId,
+          studentId: attempt.studentId,
+        },
+        answerId,
+      );
+    }
     return updated;
   }
 
@@ -382,28 +586,55 @@ export class AssignmentsService {
   }
 
   private createCampusId(scope: InstitutionScope): string | null {
-    return scope.mode === 'campus' ? scope.campusId : null;
+    return scope.mode === "campus" ? scope.campusId : null;
   }
 
-  private assertInScope<T>(campusId: string | null, row: T | undefined, filter: ScopeFilter): asserts row is T {
-    if (!row) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Not found' });
+  private assertInScope<T>(
+    campusId: string | null,
+    row: T | undefined,
+    filter: ScopeFilter,
+  ): asserts row is T {
+    if (!row)
+      throw new NotFoundException({ code: "NOT_FOUND", message: "Not found" });
     if (campusId === null) return;
     if (filter.campusIds === null) return;
     if (!filter.campusIds.includes(campusId)) {
-      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Not found in the current scope' });
+      throw new NotFoundException({
+        code: "NOT_FOUND",
+        message: "Not found in the current scope",
+      });
     }
   }
 
-  private async requireAssignmentInScope(ctx: PortalActionContext, assignmentId: string) {
+  private async requireAssignmentInScope(
+    ctx: PortalActionContext,
+    assignmentId: string,
+  ) {
     const f = this.filter(ctx);
-    const assignment = await this.repo.find(assignmentId, ctx.principal.institutionId);
+    const assignment = await this.repo.find(
+      assignmentId,
+      ctx.principal.institutionId,
+    );
     this.assertInScope(assignment?.campusId ?? null, assignment, f);
     return assignment;
   }
 
-  private async assertRef(ctx: PortalActionContext, table: AssignmentRefTable, id: string, label: string): Promise<void> {
-    const ok = await this.repo.existsInInstitution(table, id, ctx.principal.institutionId);
-    if (!ok) throw new BadRequestException({ code: 'INVALID_REFERENCE', message: `Unknown ${label}` });
+  private async assertRef(
+    ctx: PortalActionContext,
+    table: AssignmentRefTable,
+    id: string,
+    label: string,
+  ): Promise<void> {
+    const ok = await this.repo.existsInInstitution(
+      table,
+      id,
+      ctx.principal.institutionId,
+    );
+    if (!ok)
+      throw new BadRequestException({
+        code: "INVALID_REFERENCE",
+        message: `Unknown ${label}`,
+      });
   }
 
   private async assertOptional(
@@ -417,7 +648,12 @@ export class AssignmentsService {
   }
 
   private paginate<T>(page: Page<T>, q: AssignmentsListQuery): ListResult<T> {
-    return { ...page, page: q.page, pageSize: q.pageSize, hasMore: q.page * q.pageSize < page.total };
+    return {
+      ...page,
+      page: q.page,
+      pageSize: q.pageSize,
+      hasMore: q.page * q.pageSize < page.total,
+    };
   }
 
   private async write(
@@ -441,8 +677,8 @@ export class AssignmentsService {
 
   private versionConflict() {
     return new ConflictException({
-      code: 'VERSION_CONFLICT',
-      message: 'This record changed since you loaded it. Reload and try again.',
+      code: "VERSION_CONFLICT",
+      message: "This record changed since you loaded it. Reload and try again.",
     });
   }
 }

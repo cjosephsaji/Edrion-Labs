@@ -51,6 +51,10 @@ export interface AiPolicyInput {
    * confirmation invariant — that has no knob.
    */
   topicalityMode?: 'enforce' | 'off' | null;
+  /** Which product surface the policy governs (e.g. 'copilot', 'student_tutor'). */
+  policyDomain?: string;
+  /** Domain-specific configuration blob for non-copilot policy domains. */
+  domainConfig?: Record<string, unknown>;
   setByName?: string | null;
   setAt?: string | Date | null;
 }

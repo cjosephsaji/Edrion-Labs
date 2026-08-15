@@ -132,14 +132,14 @@ export default function FederationSettingsPage() {
             <p className="text-sm font-medium text-text-primary">OneRoster CSV</p>
             <textarea className="mt-2 h-20 w-full rounded-md border border-border bg-background p-2 text-xs font-mono" value={csv} onChange={(e) => setCsv(e.target.value)} />
             <button type="button" className="mt-2 rounded-md border border-border px-3 py-1.5 text-xs" onClick={() => importCsv.mutate()}>Import</button>
-            {importCsv.data && <pre className="mt-2 text-xs">{JSON.stringify(importCsv.data, null, 2)}</pre>}
+            {importCsv.data != null ? <pre className="mt-2 text-xs">{JSON.stringify(importCsv.data, null, 2)}</pre> : null}
           </div>
           <div className="rounded-xl border border-border bg-surface p-4">
             <p className="text-sm font-medium text-text-primary">OneRoster REST</p>
             <input className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="Base URL (…/ims/oneroster/v1p1)" value={onerosterUrl} onChange={(e) => setOnerosterUrl(e.target.value)} />
             <input className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="Bearer token" type="password" value={onerosterToken} onChange={(e) => setOnerosterToken(e.target.value)} />
             <button type="button" className="mt-2 rounded-md border border-border px-3 py-1.5 text-xs" onClick={() => onerosterRest.mutate()}>Sync</button>
-            {onerosterRest.data && <pre className="mt-2 text-xs">{JSON.stringify(onerosterRest.data, null, 2)}</pre>}
+            {onerosterRest.data != null ? <pre className="mt-2 text-xs">{JSON.stringify(onerosterRest.data, null, 2)}</pre> : null}
           </div>
         </div>
 
@@ -147,12 +147,12 @@ export default function FederationSettingsPage() {
           <div className="rounded-xl border border-border bg-surface p-4">
             <p className="text-sm font-medium text-text-primary">Clever</p>
             <button type="button" className="mt-2 rounded-md border border-border px-3 py-1.5 text-xs" onClick={() => cleverSync.mutate()}>Run sync</button>
-            {cleverSync.data && <pre className="mt-2 text-xs">{JSON.stringify(cleverSync.data, null, 2)}</pre>}
+            {cleverSync.data != null ? <pre className="mt-2 text-xs">{JSON.stringify(cleverSync.data, null, 2)}</pre> : null}
           </div>
           <div className="rounded-xl border border-border bg-surface p-4">
             <p className="text-sm font-medium text-text-primary">ClassLink</p>
             <button type="button" className="mt-2 rounded-md border border-border px-3 py-1.5 text-xs" onClick={() => classlinkSync.mutate()}>Run sync</button>
-            {classlinkSync.data && <pre className="mt-2 text-xs">{JSON.stringify(classlinkSync.data, null, 2)}</pre>}
+            {classlinkSync.data != null ? <pre className="mt-2 text-xs">{JSON.stringify(classlinkSync.data, null, 2)}</pre> : null}
           </div>
         </div>
 

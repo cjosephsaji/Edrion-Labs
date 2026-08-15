@@ -1,0 +1,1329 @@
+{
+  "schemaVersion": "petros-quality-report.v1",
+  "runId": "petros-stage5-resume-smoke",
+  "label": "smoke fixture",
+  "status": "completed",
+  "mode": "fixture",
+  "source": "evaluation",
+  "suite": "smoke",
+  "seed": 42,
+  "createdAt": "2026-08-09T06:47:09.980Z",
+  "completedAt": "2026-08-09T06:47:09.980Z",
+  "versions": {
+    "corpus": "petros-quality-corpus.v1",
+    "rubric": "petros-quality-rubric.v1",
+    "runner": "petros-quality-runner.v1",
+    "prompt": "stage4-plan-v1",
+    "schema": "petros-quality-report.v1",
+    "profile": "topic-profile.v1",
+    "routing": "fixture:no-provider",
+    "code": "2556ba2+dirty"
+  },
+  "selection": {
+    "caseIds": [
+      "pq-01-integration-by-parts"
+    ],
+    "personaIds": [
+      "fast_confident",
+      "slow_careful"
+    ],
+    "functionKeys": [
+      "teaching.next_action.select",
+      "teaching.block.render",
+      "answer.evaluate",
+      "evaluation.teaching_quality.judge"
+    ]
+  },
+  "limits": {
+    "maxCostMicros": 0,
+    "maxTokens": 0,
+    "maxDurationMs": 900000,
+    "concurrency": 2
+  },
+  "totals": {
+    "sessions": 2,
+    "completed": 2,
+    "failed": 0,
+    "score": 5,
+    "costMicros": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "latencyMs": 0
+  },
+  "dimensions": {
+    "correctness": {
+      "mean": 5,
+      "count": 2
+    },
+    "structural_variety": {
+      "mean": 5,
+      "count": 2
+    },
+    "move_appropriateness": {
+      "mean": 5,
+      "count": 2
+    },
+    "prerequisite_handling": {
+      "mean": 5,
+      "count": 2
+    },
+    "guess_confidence": {
+      "mean": 5,
+      "count": 2
+    },
+    "stuck_recovery": {
+      "mean": 5,
+      "count": 2
+    },
+    "socratic_cap": {
+      "mean": 5,
+      "count": 2
+    },
+    "pacing": {
+      "mean": 5,
+      "count": 2
+    },
+    "explainability": {
+      "mean": 5,
+      "count": 2
+    },
+    "detour_return": {
+      "mean": 5,
+      "count": 2
+    },
+    "repetition": {
+      "mean": 5,
+      "count": 2
+    },
+    "artifact_quality": {
+      "mean": 5,
+      "count": 2
+    },
+    "safety_boundaries": {
+      "mean": 5,
+      "count": 2
+    },
+    "language_register": {
+      "mean": 5,
+      "count": 2
+    },
+    "operational_efficiency": {
+      "mean": 5,
+      "count": 2
+    }
+  },
+  "sessions": [
+    {
+      "transcript": {
+        "id": "session_164ab5640a4739d6",
+        "runId": "petros-stage5-resume-smoke",
+        "caseId": "pq-01-integration-by-parts",
+        "topicKey": "topic:integration-by-parts",
+        "topicTitle": "Integration by parts",
+        "subject": "Mathematics",
+        "personaId": "fast_confident",
+        "goal": "learn",
+        "seed": 2436420476,
+        "environment": "evaluation",
+        "synthetic": true,
+        "versions": {
+          "corpus": "petros-quality-corpus.v1",
+          "rubric": "petros-quality-rubric.v1",
+          "runner": "petros-quality-runner.v1",
+          "prompt": "stage4-plan-v1",
+          "schema": "petros-quality-report.v1",
+          "profile": "topic-profile.v1",
+          "routing": "fixture:no-provider",
+          "code": "2556ba2+dirty"
+        },
+        "moves": [
+          {
+            "id": "move_dfa1dea6089551ed",
+            "blockId": "block_3aa3bd06a0c186de",
+            "type": "prerequisite_check",
+            "phase": "opening",
+            "title": "Prerequisite Check",
+            "content": "Before Integration by parts, check the smallest required foundation.",
+            "studentSafeReason": "This topic depends on earlier ideas, so Petros checks the foundation first.",
+            "decisionFactors": [
+              "Topic profile: Integration by parts",
+              "Goal: learn",
+              "Prerequisite density: high"
+            ],
+            "expectedEvidence": "A quick prerequisite response.",
+            "startedAtMs": 0,
+            "firstContentAtMs": 120,
+            "completedAtMs": 650,
+            "artifactProposed": false,
+            "studentConsentRequired": false,
+            "sourceAnchors": [
+              "∫u dv = uv − ∫v du"
+            ]
+          },
+          {
+            "id": "move_0c9aa00e377afbf4",
+            "blockId": "block_9fc62e49a56be857",
+            "type": "goal_frame",
+            "phase": "opening",
+            "title": "Goal Frame",
+            "content": "By the end, you can explain and apply Integration by parts.",
+            "studentSafeReason": "The 15-minute target makes the session finite.",
+            "decisionFactors": [
+              "Topic profile: Integration by parts",
+              "Goal: learn"
+            ],
+            "expectedEvidence": "The learner can name the target.",
+            "startedAtMs": 900,
+            "firstContentAtMs": 1060,
+            "completedAtMs": 1550,
+            "artifactProposed": false,
+            "studentConsentRequired": false,
+            "sourceAnchors": [
+              "∫u dv = uv − ∫v du"
+            ]
+          },
+          {
+            "id": "move_f23bfd4dde87fc47",
+            "blockId": "block_e90dab1e263ab10b",
+            "type": "predict_then_reveal",
+            "phase": "active",
+            "title": "Predict Then Reveal",
+            "content": "Commit first: what do you expect about Integration by parts?",
+            "studentSafeReason": "A cheap commitment comes before new teaching.",
+            "decisionFactors": [
+              "Topic profile: Integration by parts",
+              "Goal: learn"
+            ],
+            "expectedEvidence": "A prediction plus confidence.",
+            "startedAtMs": 1800,
+            "firstContentAtMs": 2000,
+            "completedAtMs": 2450,
+            "artifactProposed": false,
+            "studentConsentRequired": false,
+            "sourceAnchors": [
+              "∫u dv = uv − ∫v du"
+            ]
+          },
+          {
+            "id": "move_c445cf5a3cb3bd40",
+            "blockId": "block_a12cce43cf8bb34f",
+            "type": "misconception_demolition",
+            "phase": "active",
+            "title": "Misconception Demolition",
+            "content": "Test the tempting wrong intuition, then compare it with: ∫u dv = uv − ∫v du",
+            "studentSafeReason": "The published profile names a common wrong intuition worth testing.",
+            "decisionFactors": [
+              "Topic profile: Integration by parts",
+              "Goal: learn",
+              "Misconception richness: high"
+            ],
+            "expectedEvidence": "The learner commits before seeing the correction.",
+            "startedAtMs": 2700,
+            "firstContentAtMs": 2820,
+            "completedAtMs": 3350,
+            "artifactProposed": false,
+            "studentConsentRequired": false,
+            "sourceAnchors": [
+              "∫u dv = uv − ∫v du"
+            ]
+          },
+          {
+            "id": "move_5db24ec3a71b96c7",
+            "blockId": "block_0f5c10624b4dd9c7",
+            "type": "worked_example",
+            "phase": "explaining",
+            "title": "Worked Example",
+            "content": "Identify the demand, choose the smallest fitting method, then check the result. ∫u dv = uv − ∫v du",
+            "studentSafeReason": "A worked decision sequence fits procedural or performance knowledge.",
+            "decisionFactors": [
+              "Topic profile: Integration by parts",
+              "Goal: learn",
+              "Knowledge type: procedural/skill"
+            ],
+            "expectedEvidence": "A prediction at the next step.",
+            "startedAtMs": 3600,
+            "firstContentAtMs": 3760,
+            "completedAtMs": 4250,
+            "artifactProposed": false,
+            "studentConsentRequired": false,
+            "sourceAnchors": [
+              "∫u dv = uv − ∫v du"
+            ]
+          },
+          {
+            "id": "move_c2c1709a8f0ae908",
+            "blockId": "block_100accf5f8a76523",
+            "type": "recall_check",
+            "phase": "active",
+            "title": "Recall Check",
+            "content": "Without looking back, state the useful relationship in Integration by parts.",
+            "studentSafeReason": "Recall provides durable evidence before closing.",
+            "decisionFactors": [
+              "Topic profile: Integration by parts",
+              "Goal: learn"
+            ],
+            "expectedEvidence": "A confidence-tagged response.",
+            "startedAtMs": 4500,
+            "firstContentAtMs": 4700,
+            "completedAtMs": 5150,
+            "artifactProposed": false,
+            "studentConsentRequired": false,
+            "sourceAnchors": [
+              "∫u dv = uv − ∫v du"
+            ]
+          },
+          {
+            "id": "move_7ca379e75188c825",
+            "blockId": "block_165906205e8a0106",
+            "type": "artifact_commit",
+            "phase": "closing",
+            "title": "Artifact Commit",
+            "content": "Proposed rule card: ∫u dv = uv − ∫v du. Review or edit it; nothing is auto-saved.",
+            "studentSafeReason": "Petros proposes a student-owned residue and waits for consent.",
+            "decisionFactors": [
+              "Topic profile: Integration by parts",
+              "Goal: learn"
+            ],
+            "expectedEvidence": "The learner reviews rather than auto-saves the proposal.",
+            "startedAtMs": 5400,
+            "firstContentAtMs": 5520,
+            "completedAtMs": 6050,
+            "artifactProposed": true,
+            "studentConsentRequired": true,
+            "sourceAnchors": [
+              "∫u dv = uv − ∫v du"
+            ]
+          },
+          {
+            "id": "move_2fce2adb0bb26c2f",
+            "blockId": "block_63e0d3fca89b211f",
+            "type": "synthesis",
+            "phase": "closing",
+            "title": "Synthesis",
+            "content": "Complete: “The most useful thing I now understand about Integration by parts is…”",
+            "studentSafeReason": "The learner closes by stating the idea in one sentence.",
+            "decisionFactors": [
+              "Topic profile: Integration by parts",
+              "Goal: learn"
+            ],
+            "expectedEvidence": "A learner-authored synthesis.",
+            "startedAtMs": 6300,
+            "firstContentAtMs": 6460,
+            "completedAtMs": 6950,
+            "artifactProposed": false,
+            "studentConsentRequired": false,
+            "sourceAnchors": [
+              "∫u dv = uv − ∫v du"
+            ]
+          }
+        ],
+        "observations": [
+          {
+            "id": "obs_89a928dbf0de4155",
+            "moveId": "move_dfa1dea6089551ed",
+            "type": "answer",
+            "responseTimeMs": 1500,
+            "summary": "incorrect answer with sure confidence.",
+            "correctness": "incorrect",
+            "confidence": "sure"
+          },
+          {
+            "id": "obs_68c743229eacd562",
+            "moveId": "move_dfa1dea6089551ed",
+            "type": "confidence",
+            "responseTimeMs": 0,
+            "summary": "Confidence: sure.",
+            "confidence": "sure"
+          },
+          {
+            "id": "obs_c6732a8aaa8b73fc",
+            "moveId": "move_0c9aa00e377afbf4",
+            "type": "complete",
+            "responseTimeMs": 1500,
+            "summary": "Completed the block."
+          },
+          {
+            "id": "obs_f43833fcc4f30468",
+            "moveId": "move_f23bfd4dde87fc47",
+            "type": "answer",
+            "responseTimeMs": 1500,
+            "summary": "incorrect answer with sure confidence.",
+            "correctness": "incorrect",
+            "confidence": "sure"
+          },
+          {
+            "id": "obs_8f09d26ad75fc02a",
+            "moveId": "move_f23bfd4dde87fc47",
+            "type": "confidence",
+            "responseTimeMs": 0,
+            "summary": "Confidence: sure.",
+            "confidence": "sure"
+          },
+          {
+            "id": "obs_5a3b9ddcde1ce889",
+            "moveId": "move_c445cf5a3cb3bd40",
+            "type": "answer",
+            "responseTimeMs": 1500,
+            "summary": "correct answer with sure confidence.",
+            "correctness": "correct",
+            "confidence": "sure"
+          },
+          {
+            "id": "obs_e4818555b6d02dd5",
+            "moveId": "move_c445cf5a3cb3bd40",
+            "type": "confidence",
+            "responseTimeMs": 0,
+            "summary": "Confidence: sure.",
+            "confidence": "sure"
+          },
+          {
+            "id": "obs_181d6e2f796606e2",
+            "moveId": "move_5db24ec3a71b96c7",
+            "type": "complete",
+            "responseTimeMs": 1500,
+            "summary": "Completed the block."
+          },
+          {
+            "id": "obs_1a156527228b515e",
+            "moveId": "move_c2c1709a8f0ae908",
+            "type": "answer",
+            "responseTimeMs": 1500,
+            "summary": "correct answer with sure confidence.",
+            "correctness": "correct",
+            "confidence": "sure"
+          },
+          {
+            "id": "obs_e94b7396262412dd",
+            "moveId": "move_c2c1709a8f0ae908",
+            "type": "confidence",
+            "responseTimeMs": 0,
+            "summary": "Confidence: sure.",
+            "confidence": "sure"
+          },
+          {
+            "id": "obs_1e355861149b2bda",
+            "moveId": "move_7ca379e75188c825",
+            "type": "complete",
+            "responseTimeMs": 1500,
+            "summary": "Completed the block."
+          },
+          {
+            "id": "obs_b0b85d16a344fb78",
+            "moveId": "move_2fce2adb0bb26c2f",
+            "type": "complete",
+            "responseTimeMs": 1500,
+            "summary": "Completed the block."
+          }
+        ],
+        "usage": [],
+        "errors": [],
+        "ended": "goal_met",
+        "resumed": false,
+        "productionWrites": 0
+      },
+      "scores": [
+        {
+          "dimension": "correctness",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_dfa1dea6089551ed",
+              "blockId": "block_3aa3bd06a0c186de",
+              "note": "Critical fixture facts are explicitly grounded."
+            },
+            {
+              "moveId": "move_0c9aa00e377afbf4",
+              "blockId": "block_9fc62e49a56be857",
+              "note": "Critical fixture facts are explicitly grounded."
+            }
+          ],
+          "rationale": "Critical fixture facts are explicitly grounded.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "structural_variety",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_dfa1dea6089551ed",
+              "blockId": "block_3aa3bd06a0c186de",
+              "note": "8 distinct move types across 8 moves."
+            },
+            {
+              "moveId": "move_0c9aa00e377afbf4",
+              "blockId": "block_9fc62e49a56be857",
+              "note": "8 distinct move types across 8 moves."
+            }
+          ],
+          "rationale": "8 distinct move types across 8 moves.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "move_appropriateness",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_dfa1dea6089551ed",
+              "blockId": "block_3aa3bd06a0c186de",
+              "note": "6/6 expected tendencies appear."
+            },
+            {
+              "moveId": "move_0c9aa00e377afbf4",
+              "blockId": "block_9fc62e49a56be857",
+              "note": "6/6 expected tendencies appear."
+            }
+          ],
+          "rationale": "6/6 expected tendencies appear.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "prerequisite_handling",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_dfa1dea6089551ed",
+              "blockId": "block_3aa3bd06a0c186de",
+              "note": "Required prerequisite check is present."
+            }
+          ],
+          "rationale": "Required prerequisite check is present.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "guess_confidence",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_f23bfd4dde87fc47",
+              "blockId": "block_e90dab1e263ab10b",
+              "note": "Cheap commitment and confidence evidence are both recorded."
+            },
+            {
+              "moveId": "move_c2c1709a8f0ae908",
+              "blockId": "block_100accf5f8a76523",
+              "note": "Cheap commitment and confidence evidence are both recorded."
+            }
+          ],
+          "rationale": "Cheap commitment and confidence evidence are both recorded.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "stuck_recovery",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_dfa1dea6089551ed",
+              "blockId": "block_3aa3bd06a0c186de",
+              "note": "The persona did not trigger the repeated-struggle ladder."
+            },
+            {
+              "moveId": "move_0c9aa00e377afbf4",
+              "blockId": "block_9fc62e49a56be857",
+              "note": "The persona did not trigger the repeated-struggle ladder."
+            }
+          ],
+          "rationale": "The persona did not trigger the repeated-struggle ladder.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "socratic_cap",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_dfa1dea6089551ed",
+              "blockId": "block_3aa3bd06a0c186de",
+              "note": "Maximum Socratic streak is 0; cap respected."
+            },
+            {
+              "moveId": "move_0c9aa00e377afbf4",
+              "blockId": "block_9fc62e49a56be857",
+              "note": "Maximum Socratic streak is 0; cap respected."
+            }
+          ],
+          "rationale": "Maximum Socratic streak is 0; cap respected.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "pacing",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_2fce2adb0bb26c2f",
+              "blockId": "block_63e0d3fca89b211f",
+              "note": "First content 120ms; 8 moves; deliberate close."
+            }
+          ],
+          "rationale": "First content 120ms; 8 moves; deliberate close.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "explainability",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_dfa1dea6089551ed",
+              "blockId": "block_3aa3bd06a0c186de",
+              "note": "8/8 moves have specific reasons and causal factors."
+            },
+            {
+              "moveId": "move_0c9aa00e377afbf4",
+              "blockId": "block_9fc62e49a56be857",
+              "note": "8/8 moves have specific reasons and causal factors."
+            }
+          ],
+          "rationale": "8/8 moves have specific reasons and causal factors.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "detour_return",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_dfa1dea6089551ed",
+              "blockId": "block_3aa3bd06a0c186de",
+              "note": "No detour was required."
+            },
+            {
+              "moveId": "move_0c9aa00e377afbf4",
+              "blockId": "block_9fc62e49a56be857",
+              "note": "No detour was required."
+            }
+          ],
+          "rationale": "No detour was required.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "repetition",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_dfa1dea6089551ed",
+              "blockId": "block_3aa3bd06a0c186de",
+              "note": "Longest identical streak: 1; generic repeated reasons: 0."
+            },
+            {
+              "moveId": "move_0c9aa00e377afbf4",
+              "blockId": "block_9fc62e49a56be857",
+              "note": "Longest identical streak: 1; generic repeated reasons: 0."
+            }
+          ],
+          "rationale": "Longest identical streak: 1; generic repeated reasons: 0.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "artifact_quality",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_7ca379e75188c825",
+              "blockId": "block_165906205e8a0106",
+              "note": "Artifact is proposed with explicit learner consent."
+            }
+          ],
+          "rationale": "Artifact is proposed with explicit learner consent.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "safety_boundaries",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_dfa1dea6089551ed",
+              "blockId": "block_3aa3bd06a0c186de",
+              "note": "No provider details and evaluation isolation is explicit."
+            },
+            {
+              "moveId": "move_0c9aa00e377afbf4",
+              "blockId": "block_9fc62e49a56be857",
+              "note": "No provider details and evaluation isolation is explicit."
+            }
+          ],
+          "rationale": "No provider details and evaluation isolation is explicit.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "language_register",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_dfa1dea6089551ed",
+              "blockId": "block_3aa3bd06a0c186de",
+              "note": "Register matches the fixture language."
+            },
+            {
+              "moveId": "move_0c9aa00e377afbf4",
+              "blockId": "block_9fc62e49a56be857",
+              "note": "Register matches the fixture language."
+            }
+          ],
+          "rationale": "Register matches the fixture language.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "operational_efficiency",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_dfa1dea6089551ed",
+              "blockId": "block_3aa3bd06a0c186de",
+              "note": "Cost 0µUSD; retries 0; validation failures 0."
+            },
+            {
+              "moveId": "move_0c9aa00e377afbf4",
+              "blockId": "block_9fc62e49a56be857",
+              "note": "Cost 0µUSD; retries 0; validation failures 0."
+            }
+          ],
+          "rationale": "Cost 0µUSD; retries 0; validation failures 0.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        }
+      ],
+      "totalScore": 5,
+      "blockingFailures": [],
+      "warnings": []
+    },
+    {
+      "transcript": {
+        "id": "session_d0020b381f4dc965",
+        "runId": "petros-stage5-resume-smoke",
+        "caseId": "pq-01-integration-by-parts",
+        "topicKey": "topic:integration-by-parts",
+        "topicTitle": "Integration by parts",
+        "subject": "Mathematics",
+        "personaId": "slow_careful",
+        "goal": "learn",
+        "seed": 2270977163,
+        "environment": "evaluation",
+        "synthetic": true,
+        "versions": {
+          "corpus": "petros-quality-corpus.v1",
+          "rubric": "petros-quality-rubric.v1",
+          "runner": "petros-quality-runner.v1",
+          "prompt": "stage4-plan-v1",
+          "schema": "petros-quality-report.v1",
+          "profile": "topic-profile.v1",
+          "routing": "fixture:no-provider",
+          "code": "2556ba2+dirty"
+        },
+        "moves": [
+          {
+            "id": "move_8d8480dcf51e4530",
+            "blockId": "block_cae3f9453004e834",
+            "type": "prerequisite_check",
+            "phase": "opening",
+            "title": "Prerequisite Check",
+            "content": "Before Integration by parts, check the smallest required foundation.",
+            "studentSafeReason": "This topic depends on earlier ideas, so Petros checks the foundation first.",
+            "decisionFactors": [
+              "Topic profile: Integration by parts",
+              "Goal: learn",
+              "Prerequisite density: high"
+            ],
+            "expectedEvidence": "A quick prerequisite response.",
+            "startedAtMs": 0,
+            "firstContentAtMs": 120,
+            "completedAtMs": 650,
+            "artifactProposed": false,
+            "studentConsentRequired": false,
+            "sourceAnchors": [
+              "∫u dv = uv − ∫v du"
+            ]
+          },
+          {
+            "id": "move_0e6dc9e8c776dee4",
+            "blockId": "block_36f52fa57842eb8f",
+            "type": "goal_frame",
+            "phase": "opening",
+            "title": "Goal Frame",
+            "content": "By the end, you can explain and apply Integration by parts.",
+            "studentSafeReason": "The 15-minute target makes the session finite.",
+            "decisionFactors": [
+              "Topic profile: Integration by parts",
+              "Goal: learn"
+            ],
+            "expectedEvidence": "The learner can name the target.",
+            "startedAtMs": 900,
+            "firstContentAtMs": 1060,
+            "completedAtMs": 1550,
+            "artifactProposed": false,
+            "studentConsentRequired": false,
+            "sourceAnchors": [
+              "∫u dv = uv − ∫v du"
+            ]
+          },
+          {
+            "id": "move_0d98edd43383cbb5",
+            "blockId": "block_b1e6707891367778",
+            "type": "predict_then_reveal",
+            "phase": "active",
+            "title": "Predict Then Reveal",
+            "content": "Commit first: what do you expect about Integration by parts?",
+            "studentSafeReason": "A cheap commitment comes before new teaching.",
+            "decisionFactors": [
+              "Topic profile: Integration by parts",
+              "Goal: learn"
+            ],
+            "expectedEvidence": "A prediction plus confidence.",
+            "startedAtMs": 1800,
+            "firstContentAtMs": 2000,
+            "completedAtMs": 2450,
+            "artifactProposed": false,
+            "studentConsentRequired": false,
+            "sourceAnchors": [
+              "∫u dv = uv − ∫v du"
+            ]
+          },
+          {
+            "id": "move_d241ccbe37b9fead",
+            "blockId": "block_142f42c5b69b488f",
+            "type": "misconception_demolition",
+            "phase": "active",
+            "title": "Misconception Demolition",
+            "content": "Test the tempting wrong intuition, then compare it with: ∫u dv = uv − ∫v du",
+            "studentSafeReason": "The published profile names a common wrong intuition worth testing.",
+            "decisionFactors": [
+              "Topic profile: Integration by parts",
+              "Goal: learn",
+              "Misconception richness: high"
+            ],
+            "expectedEvidence": "The learner commits before seeing the correction.",
+            "startedAtMs": 2700,
+            "firstContentAtMs": 2820,
+            "completedAtMs": 3350,
+            "artifactProposed": false,
+            "studentConsentRequired": false,
+            "sourceAnchors": [
+              "∫u dv = uv − ∫v du"
+            ]
+          },
+          {
+            "id": "move_f26e94f2d7ef82fa",
+            "blockId": "block_9ccea1604d2e8a3e",
+            "type": "worked_example",
+            "phase": "explaining",
+            "title": "Worked Example",
+            "content": "Identify the demand, choose the smallest fitting method, then check the result. ∫u dv = uv − ∫v du",
+            "studentSafeReason": "A worked decision sequence fits procedural or performance knowledge.",
+            "decisionFactors": [
+              "Topic profile: Integration by parts",
+              "Goal: learn",
+              "Knowledge type: procedural/skill"
+            ],
+            "expectedEvidence": "A prediction at the next step.",
+            "startedAtMs": 3600,
+            "firstContentAtMs": 3760,
+            "completedAtMs": 4250,
+            "artifactProposed": false,
+            "studentConsentRequired": false,
+            "sourceAnchors": [
+              "∫u dv = uv − ∫v du"
+            ]
+          },
+          {
+            "id": "move_593cb4db6fa47d50",
+            "blockId": "block_9db3c145bc4f230d",
+            "type": "recall_check",
+            "phase": "active",
+            "title": "Recall Check",
+            "content": "Without looking back, state the useful relationship in Integration by parts.",
+            "studentSafeReason": "Recall provides durable evidence before closing.",
+            "decisionFactors": [
+              "Topic profile: Integration by parts",
+              "Goal: learn"
+            ],
+            "expectedEvidence": "A confidence-tagged response.",
+            "startedAtMs": 4500,
+            "firstContentAtMs": 4700,
+            "completedAtMs": 5150,
+            "artifactProposed": false,
+            "studentConsentRequired": false,
+            "sourceAnchors": [
+              "∫u dv = uv − ∫v du"
+            ]
+          },
+          {
+            "id": "move_3af78b499bc41a97",
+            "blockId": "block_6bda98894cd4bba0",
+            "type": "artifact_commit",
+            "phase": "closing",
+            "title": "Artifact Commit",
+            "content": "Proposed rule card: ∫u dv = uv − ∫v du. Review or edit it; nothing is auto-saved.",
+            "studentSafeReason": "Petros proposes a student-owned residue and waits for consent.",
+            "decisionFactors": [
+              "Topic profile: Integration by parts",
+              "Goal: learn"
+            ],
+            "expectedEvidence": "The learner reviews rather than auto-saves the proposal.",
+            "startedAtMs": 5400,
+            "firstContentAtMs": 5520,
+            "completedAtMs": 6050,
+            "artifactProposed": true,
+            "studentConsentRequired": true,
+            "sourceAnchors": [
+              "∫u dv = uv − ∫v du"
+            ]
+          },
+          {
+            "id": "move_4f4aba63ffaf7531",
+            "blockId": "block_b6000ae8b11a0b3a",
+            "type": "synthesis",
+            "phase": "closing",
+            "title": "Synthesis",
+            "content": "Complete: “The most useful thing I now understand about Integration by parts is…”",
+            "studentSafeReason": "The learner closes by stating the idea in one sentence.",
+            "decisionFactors": [
+              "Topic profile: Integration by parts",
+              "Goal: learn"
+            ],
+            "expectedEvidence": "A learner-authored synthesis.",
+            "startedAtMs": 6300,
+            "firstContentAtMs": 6460,
+            "completedAtMs": 6950,
+            "artifactProposed": false,
+            "studentConsentRequired": false,
+            "sourceAnchors": [
+              "∫u dv = uv − ∫v du"
+            ]
+          }
+        ],
+        "observations": [
+          {
+            "id": "obs_ba6e3254f07c928f",
+            "moveId": "move_8d8480dcf51e4530",
+            "type": "answer",
+            "responseTimeMs": 9000,
+            "summary": "incorrect answer with think_so confidence.",
+            "correctness": "incorrect",
+            "confidence": "think_so"
+          },
+          {
+            "id": "obs_9ae06321d20f7130",
+            "moveId": "move_8d8480dcf51e4530",
+            "type": "confidence",
+            "responseTimeMs": 0,
+            "summary": "Confidence: think_so.",
+            "confidence": "think_so"
+          },
+          {
+            "id": "obs_fa96b7f962f113f3",
+            "moveId": "move_0e6dc9e8c776dee4",
+            "type": "complete",
+            "responseTimeMs": 9000,
+            "summary": "Completed the block."
+          },
+          {
+            "id": "obs_e5900a939ab33873",
+            "moveId": "move_0d98edd43383cbb5",
+            "type": "answer",
+            "responseTimeMs": 9000,
+            "summary": "correct answer with think_so confidence.",
+            "correctness": "correct",
+            "confidence": "think_so"
+          },
+          {
+            "id": "obs_3b923da8fe7361b5",
+            "moveId": "move_0d98edd43383cbb5",
+            "type": "confidence",
+            "responseTimeMs": 0,
+            "summary": "Confidence: think_so.",
+            "confidence": "think_so"
+          },
+          {
+            "id": "obs_d70f4646e8d9cbf5",
+            "moveId": "move_d241ccbe37b9fead",
+            "type": "answer",
+            "responseTimeMs": 9000,
+            "summary": "correct answer with think_so confidence.",
+            "correctness": "correct",
+            "confidence": "think_so"
+          },
+          {
+            "id": "obs_fe35b54fedbb3aa1",
+            "moveId": "move_d241ccbe37b9fead",
+            "type": "confidence",
+            "responseTimeMs": 0,
+            "summary": "Confidence: think_so.",
+            "confidence": "think_so"
+          },
+          {
+            "id": "obs_e42843f59762e1ce",
+            "moveId": "move_f26e94f2d7ef82fa",
+            "type": "complete",
+            "responseTimeMs": 9000,
+            "summary": "Completed the block."
+          },
+          {
+            "id": "obs_b0829bd9834ed271",
+            "moveId": "move_593cb4db6fa47d50",
+            "type": "answer",
+            "responseTimeMs": 9000,
+            "summary": "correct answer with think_so confidence.",
+            "correctness": "correct",
+            "confidence": "think_so"
+          },
+          {
+            "id": "obs_a4a8c6b8e816fa97",
+            "moveId": "move_593cb4db6fa47d50",
+            "type": "confidence",
+            "responseTimeMs": 0,
+            "summary": "Confidence: think_so.",
+            "confidence": "think_so"
+          },
+          {
+            "id": "obs_e33c4f92ee8e4803",
+            "moveId": "move_3af78b499bc41a97",
+            "type": "complete",
+            "responseTimeMs": 9000,
+            "summary": "Completed the block."
+          },
+          {
+            "id": "obs_7ecc2e40acef90f9",
+            "moveId": "move_4f4aba63ffaf7531",
+            "type": "complete",
+            "responseTimeMs": 9000,
+            "summary": "Completed the block."
+          }
+        ],
+        "usage": [],
+        "errors": [],
+        "ended": "goal_met",
+        "resumed": true,
+        "productionWrites": 0
+      },
+      "scores": [
+        {
+          "dimension": "correctness",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_8d8480dcf51e4530",
+              "blockId": "block_cae3f9453004e834",
+              "note": "Critical fixture facts are explicitly grounded."
+            },
+            {
+              "moveId": "move_0e6dc9e8c776dee4",
+              "blockId": "block_36f52fa57842eb8f",
+              "note": "Critical fixture facts are explicitly grounded."
+            }
+          ],
+          "rationale": "Critical fixture facts are explicitly grounded.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "structural_variety",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_8d8480dcf51e4530",
+              "blockId": "block_cae3f9453004e834",
+              "note": "8 distinct move types across 8 moves."
+            },
+            {
+              "moveId": "move_0e6dc9e8c776dee4",
+              "blockId": "block_36f52fa57842eb8f",
+              "note": "8 distinct move types across 8 moves."
+            }
+          ],
+          "rationale": "8 distinct move types across 8 moves.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "move_appropriateness",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_8d8480dcf51e4530",
+              "blockId": "block_cae3f9453004e834",
+              "note": "6/6 expected tendencies appear."
+            },
+            {
+              "moveId": "move_0e6dc9e8c776dee4",
+              "blockId": "block_36f52fa57842eb8f",
+              "note": "6/6 expected tendencies appear."
+            }
+          ],
+          "rationale": "6/6 expected tendencies appear.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "prerequisite_handling",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_8d8480dcf51e4530",
+              "blockId": "block_cae3f9453004e834",
+              "note": "Required prerequisite check is present."
+            }
+          ],
+          "rationale": "Required prerequisite check is present.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "guess_confidence",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_0d98edd43383cbb5",
+              "blockId": "block_b1e6707891367778",
+              "note": "Cheap commitment and confidence evidence are both recorded."
+            },
+            {
+              "moveId": "move_593cb4db6fa47d50",
+              "blockId": "block_9db3c145bc4f230d",
+              "note": "Cheap commitment and confidence evidence are both recorded."
+            }
+          ],
+          "rationale": "Cheap commitment and confidence evidence are both recorded.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "stuck_recovery",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_8d8480dcf51e4530",
+              "blockId": "block_cae3f9453004e834",
+              "note": "The persona did not trigger the repeated-struggle ladder."
+            },
+            {
+              "moveId": "move_0e6dc9e8c776dee4",
+              "blockId": "block_36f52fa57842eb8f",
+              "note": "The persona did not trigger the repeated-struggle ladder."
+            }
+          ],
+          "rationale": "The persona did not trigger the repeated-struggle ladder.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "socratic_cap",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_8d8480dcf51e4530",
+              "blockId": "block_cae3f9453004e834",
+              "note": "Maximum Socratic streak is 0; cap respected."
+            },
+            {
+              "moveId": "move_0e6dc9e8c776dee4",
+              "blockId": "block_36f52fa57842eb8f",
+              "note": "Maximum Socratic streak is 0; cap respected."
+            }
+          ],
+          "rationale": "Maximum Socratic streak is 0; cap respected.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "pacing",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_4f4aba63ffaf7531",
+              "blockId": "block_b6000ae8b11a0b3a",
+              "note": "First content 120ms; 8 moves; deliberate close."
+            }
+          ],
+          "rationale": "First content 120ms; 8 moves; deliberate close.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "explainability",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_8d8480dcf51e4530",
+              "blockId": "block_cae3f9453004e834",
+              "note": "8/8 moves have specific reasons and causal factors."
+            },
+            {
+              "moveId": "move_0e6dc9e8c776dee4",
+              "blockId": "block_36f52fa57842eb8f",
+              "note": "8/8 moves have specific reasons and causal factors."
+            }
+          ],
+          "rationale": "8/8 moves have specific reasons and causal factors.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "detour_return",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_8d8480dcf51e4530",
+              "blockId": "block_cae3f9453004e834",
+              "note": "No detour was required."
+            },
+            {
+              "moveId": "move_0e6dc9e8c776dee4",
+              "blockId": "block_36f52fa57842eb8f",
+              "note": "No detour was required."
+            }
+          ],
+          "rationale": "No detour was required.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "repetition",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_8d8480dcf51e4530",
+              "blockId": "block_cae3f9453004e834",
+              "note": "Longest identical streak: 1; generic repeated reasons: 0."
+            },
+            {
+              "moveId": "move_0e6dc9e8c776dee4",
+              "blockId": "block_36f52fa57842eb8f",
+              "note": "Longest identical streak: 1; generic repeated reasons: 0."
+            }
+          ],
+          "rationale": "Longest identical streak: 1; generic repeated reasons: 0.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "artifact_quality",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_3af78b499bc41a97",
+              "blockId": "block_6bda98894cd4bba0",
+              "note": "Artifact is proposed with explicit learner consent."
+            }
+          ],
+          "rationale": "Artifact is proposed with explicit learner consent.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "safety_boundaries",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_8d8480dcf51e4530",
+              "blockId": "block_cae3f9453004e834",
+              "note": "No provider details and evaluation isolation is explicit."
+            },
+            {
+              "moveId": "move_0e6dc9e8c776dee4",
+              "blockId": "block_36f52fa57842eb8f",
+              "note": "No provider details and evaluation isolation is explicit."
+            }
+          ],
+          "rationale": "No provider details and evaluation isolation is explicit.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "language_register",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_8d8480dcf51e4530",
+              "blockId": "block_cae3f9453004e834",
+              "note": "Register matches the fixture language."
+            },
+            {
+              "moveId": "move_0e6dc9e8c776dee4",
+              "blockId": "block_36f52fa57842eb8f",
+              "note": "Register matches the fixture language."
+            }
+          ],
+          "rationale": "Register matches the fixture language.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        },
+        {
+          "dimension": "operational_efficiency",
+          "score": 5,
+          "maxScore": 5,
+          "evidence": [
+            {
+              "moveId": "move_8d8480dcf51e4530",
+              "blockId": "block_cae3f9453004e834",
+              "note": "Cost 0µUSD; retries 0; validation failures 0."
+            },
+            {
+              "moveId": "move_0e6dc9e8c776dee4",
+              "blockId": "block_36f52fa57842eb8f",
+              "note": "Cost 0µUSD; retries 0; validation failures 0."
+            }
+          ],
+          "rationale": "Cost 0µUSD; retries 0; validation failures 0.",
+          "uncertainty": 0.05,
+          "evaluator": "deterministic"
+        }
+      ],
+      "totalScore": 5,
+      "blockingFailures": [],
+      "warnings": []
+    }
+  ],
+  "comparison": null,
+  "gate": "pass",
+  "blockingFailures": [],
+  "warnings": [],
+  "resume": {
+    "supported": true,
+    "stateFile": "/Volumes/Chris/Edrion Labs/packages/learn-evals/eval-runs/petros-quality/petros-stage5-resume-smoke.state.json",
+    "resumedSessions": 1
+  },
+  "isolation": {
+    "syntheticOnly": true,
+    "productionWrites": 0,
+    "analyticsSource": "evaluation"
+  }
+}
