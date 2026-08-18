@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 import {
   EmptyState,
   ErrorState,
@@ -65,6 +66,7 @@ export function ModuleListPage<T extends { id: string }>({
   emptyTitle,
   emptyDescription,
   renderItem,
+  getItemHref,
 }: {
   title: string;
   description?: string;
@@ -73,6 +75,7 @@ export function ModuleListPage<T extends { id: string }>({
   emptyTitle: string;
   emptyDescription?: string;
   renderItem: (item: T) => ReactNode;
+  getItemHref?: (item: T) => string;
 }) {
   const q = useStudentList<unknown>(queryKey, path);
 
@@ -112,15 +115,20 @@ export function ModuleListPage<T extends { id: string }>({
           {items.map((item, index) => {
             const itemRecord = item as unknown as Record<string, unknown>;
             const itemTitle = String(itemRecord.title ?? itemRecord.name ?? title);
+            const itemHref = getItemHref?.(item);
             return (
               <li
                 key={item.id}
                 data-petros-target={index === 0 ? 'primary' : undefined}
                 data-petros-title={index === 0 ? itemTitle : undefined}
                 data-petros-message={index === 0 ? `This is the first item in your ${title.toLowerCase()} list.` : undefined}
-                data-petros-href={index === 0 ? path : undefined}
+                data-petros-href={index === 0 ? itemHref ?? path : undefined}
               >
-                {renderItem(item)}
+                {itemHref ? (
+                  <Link href={itemHref} className="focus-ring block rounded-[var(--s-radius)]">
+                    {renderItem(item)}
+                  </Link>
+                ) : renderItem(item)}
               </li>
             );
           })}

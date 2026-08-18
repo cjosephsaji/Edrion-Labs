@@ -9,7 +9,7 @@ import { StudentApiError, formatApiError } from '@/lib/api-client';
 import { useStudentList, useStudentMe } from '@/lib/hooks';
 
 type Filter = 'all' | 'progress' | 'submitted' | 'returned';
-type Row = {
+export type AssignmentRow = {
   id: string;
   title: string;
   subjectName: string | null;
@@ -17,6 +17,10 @@ type Row = {
   status: string | null;
   late?: boolean;
 };
+
+export function petrosAssignmentFocusId(rows: AssignmentRow[]) {
+  return rows.find((row) => ['assigned', 'in_progress'].includes(row.status ?? 'assigned'))?.id ?? null;
+}
 
 function statusStyle(status: string, late: boolean) {
   if (late || status === 'late') return { label: 'Late', tone: 'critical' as StatusTone };
@@ -40,7 +44,7 @@ function dueLabel(value: string | null) {
 export function AssignmentListScreen({ kind }: { kind: 'assignments' | 'homework' }) {
   const [filter, setFilter] = React.useState<Filter>('all');
   const { data: me } = useStudentMe();
-  const query = useStudentList<{ items: Row[] }>(`${kind}-${filter}`, `/student/${kind}?filter=${filter}`);
+  const query = useStudentList<{ items: AssignmentRow[] }>(`${kind}-${filter}`, `/student/${kind}?filter=${filter}`);
   const college = Boolean(me?.programmeName);
   const title = kind === 'homework' ? 'Homework' : 'Assignments';
   const institutionLabel = college ? 'COLLEGE' : 'SCHOOL';
@@ -50,6 +54,7 @@ export function AssignmentListScreen({ kind }: { kind: 'assignments' | 'homework
   if (query.error) return <ErrorState description={formatApiError(query.error)} onRetry={() => void query.refetch()} />;
 
   const rows = query.data?.items ?? [];
+  const petrosFocusId = petrosAssignmentFocusId(rows);
   const filters: Array<{ id: Filter; label: string }> = [
     { id: 'all', label: 'All' },
     { id: 'progress', label: 'In progress' },
@@ -86,16 +91,17 @@ export function AssignmentListScreen({ kind }: { kind: 'assignments' | 'homework
           {rows.map((row, index) => {
             const status = statusStyle(row.status ?? 'assigned', Boolean(row.late));
             const urgent = Boolean(row.late) || row.status === 'late';
+            const petrosFocus = row.id === petrosFocusId;
             return (
               <Link
                 key={row.id}
                 href={`/${kind}/${row.id}`}
                 className="focus-ring animate-block-in block"
-                data-petros-target={index === 0 ? 'primary' : undefined}
-                data-petros-title={index === 0 ? row.title : undefined}
-                data-petros-message={index === 0 ? dueLabel(row.dueAt) : undefined}
-                data-petros-source-id={index === 0 && kind === 'assignments' ? row.id : undefined}
-                data-petros-href={index === 0 ? `/${kind}/${row.id}` : undefined}
+                data-petros-target={petrosFocus ? 'primary' : undefined}
+                data-petros-title={petrosFocus ? row.title : undefined}
+                data-petros-message={petrosFocus ? dueLabel(row.dueAt) : undefined}
+                data-petros-source-id={petrosFocus && kind === 'assignments' ? row.id : undefined}
+                data-petros-href={petrosFocus ? `/${kind}/${row.id}` : undefined}
                 style={{ animationDelay: `${Math.min(index * 35, 140)}ms` }}
               >
                 <Card variant={urgent ? 'urgent' : 'default'} interactive className="flex min-h-[148px] flex-col justify-between">

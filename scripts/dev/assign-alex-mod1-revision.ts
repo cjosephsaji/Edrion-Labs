@@ -35,7 +35,7 @@ async function main(): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) throw new Error('DATABASE_URL is not set');
 
-  const sourcePath = process.argv[2] || process.env.MOD1_REVISION_DOCX;
+  const sourcePath = process.argv.slice(2).find((argument) => argument !== '--') || process.env.MOD1_REVISION_DOCX;
   if (!sourcePath) throw new Error('Pass the Mod 1 revision.docx path as the first argument');
   const file = await readFile(sourcePath);
   const db = createDatabase({ url: databaseUrl });
@@ -64,6 +64,12 @@ async function main(): Promise<void> {
     if (!teacher) throw new Error('No teacher is available for Alex’s class');
 
     const subject = await ensureSubject(db, student.institutionId, student.campusId, 'CST423', 'Cloud Computing');
+    const [course] = await db
+      .select({ id: s.courses.id, code: s.courses.code, name: s.courses.name })
+      .from(s.courseEnrollments)
+      .innerJoin(s.courses, eq(s.courses.id, s.courseEnrollments.courseId))
+      .where(and(eq(s.courseEnrollments.studentId, student.id), eq(s.courses.name, 'Cloud Computing')))
+      .limit(1);
     await db.insert(s.classSubjectTeachers).values({
       institutionId: student.institutionId,
       classId: classRow.id,
@@ -80,7 +86,8 @@ async function main(): Promise<void> {
 
     const material = await ensureMaterial(db, {
       institutionId: student.institutionId,
-      classId: classRow.id,
+      contextType: course ? 'course' : 'class',
+      contextId: course?.id ?? classRow.id,
       teacherId: teacher.id,
       objectId: object.id,
     });
@@ -168,6 +175,7 @@ async function main(): Promise<void> {
       student: `${student.firstName} ${student.lastName}`,
       teacher: `${teacher.firstName} ${teacher.lastName}`,
       class: classRow.name,
+      course: course ? `${course.code} ${course.name}` : null,
       subject: `${subject.code} ${subject.name}`,
       materialId: material.id,
       homeworkId: homework.id,
@@ -241,11 +249,13 @@ async function ensureStoredDocument(db: Db, input: {
   return created;
 }
 
-async function ensureMaterial(db: Db, input: { institutionId: string; classId: string; teacherId: string; objectId: string }) {
+async function ensureMaterial(db: Db, input: { institutionId: string; contextType: 'class' | 'course'; contextId: string; teacherId: string; objectId: string }) {
   const [existing] = await db.select().from(s.classMaterials)
-    .where(and(eq(s.classMaterials.institutionId, input.institutionId), eq(s.classMaterials.contextType, 'class'), eq(s.classMaterials.contextId, input.classId), eq(s.classMaterials.title, TITLE)))
+    .where(and(eq(s.classMaterials.institutionId, input.institutionId), eq(s.classMaterials.title, TITLE)))
     .limit(1);
   const values = {
+    contextType: input.contextType,
+    contextId: input.contextId,
     description: 'Teacher-assigned Semester VII revision sheet covering grid, cluster, cloud deployment models, NIST architecture and actors, IaaS, PaaS, benefits, and challenges. Petros teaching is available from the extracted page.',
     kindLabel: 'DOCX',
     objectId: input.objectId,
@@ -259,8 +269,6 @@ async function ensureMaterial(db: Db, input: { institutionId: string; classId: s
   }
   const [created] = await db.insert(s.classMaterials).values({
     institutionId: input.institutionId,
-    contextType: 'class',
-    contextId: input.classId,
     title: TITLE,
     ...values,
   }).returning();
