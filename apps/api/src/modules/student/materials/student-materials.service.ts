@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, eq, schema, type Database } from '@edrion/database';
 import { DATABASE } from '../../../common/tokens';
 import type { InstitutionalStudentPrincipal } from '../student.types';
@@ -66,5 +66,33 @@ export class StudentMaterialsService {
 
     items.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
     return { items };
+  }
+
+  async file(principal: InstitutionalStudentPrincipal, materialId: string) {
+    const visibleMaterials = await this.list(principal);
+    if (!visibleMaterials.items.some((material) => material.id === materialId)) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Study material not found' });
+    }
+
+    const [file] = await this.db
+      .select({
+        storageKey: schema.storageObjects.storageKey,
+        filename: schema.storageObjects.filename,
+        mimeType: schema.storageObjects.mimeType,
+      })
+      .from(schema.classMaterials)
+      .innerJoin(schema.storageObjects, eq(schema.storageObjects.id, schema.classMaterials.objectId))
+      .where(
+        and(
+          eq(schema.classMaterials.id, materialId),
+          eq(schema.classMaterials.institutionId, principal.institutionId),
+        ),
+      )
+      .limit(1);
+
+    if (!file) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Study material file not found' });
+    }
+    return file;
   }
 }

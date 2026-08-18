@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { BookOpen, ClipboardCheck, FileText, FolderOpen, NotebookTabs, Search, type LucideIcon } from 'lucide-react';
+import { BookOpen, ClipboardCheck, ExternalLink, FileText, FolderOpen, NotebookTabs, Search, type LucideIcon } from 'lucide-react';
 import { PageHeader } from '@/components/design-system';
 import { PetrosDocumentDoor } from '@/components/petros/petros-door-button';
 import { QueryPage } from '@/components/query-page';
 import styles from '@/components/student-content.module.css';
 import { EmptyState } from '@/components/ui/states';
-import { formatApiError } from '@/lib/api-client';
+import { formatApiError, useStudentApi } from '@/lib/api-client';
 import { useStudentList } from '@/lib/hooks';
 
 type Material = {
@@ -34,6 +34,7 @@ function materialIcon(kind: string): LucideIcon {
 }
 
 export default function Page() {
+  const api = useStudentApi();
   const query = useStudentList<Response>('materials', '/student/materials');
   const petrosSources = useStudentList<PetrosSourcesResponse>('petros-sources', '/student/petros/sources');
   const [context, setContext] = useState('all');
@@ -96,6 +97,7 @@ export default function Page() {
                       const Icon = materialIcon(item.kindLabel);
                       const petrosSource = sourceByMaterialId.get(item.id);
                       const readyForPetros = Boolean(petrosSource?.status === 'ready' && petrosSource.extractionReady);
+                      const fileHref = api.fileUrl(`/student/materials/${item.id}/file`);
                       return (
                         <article
                           className={styles.resourceCard}
@@ -108,13 +110,24 @@ export default function Page() {
                         >
                           <span className={styles.resourceIcon}><Icon aria-hidden="true" size={22} /></span>
                           <div>
-                            <h3 className={styles.resourceTitle}>{item.title}</h3>
+                            <h3 className={styles.resourceTitle}>
+                              <a
+                                className={styles.resourceOpenLink}
+                                href={fileHref}
+                                target="_blank"
+                                rel="noreferrer"
+                                aria-label={`Open ${item.title}`}
+                              >
+                                {item.title}
+                              </a>
+                            </h3>
                             {item.description ? <p className={styles.resourceDescription}>{item.description}</p> : null}
                             <div className={styles.resourceFooter}>
                               <span className={styles.resourceTag}>{item.kindLabel}</span>
                               <span>{item.className ?? 'General'}</span>
                               {item.weekNo ? <span>Week {item.weekNo}</span> : null}
                               <span>{new Date(item.publishedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                              <span className={styles.resourceOpenHint}><ExternalLink aria-hidden="true" size={13} /> Open document</span>
                             </div>
                             {petrosSource ? (
                               <PetrosDocumentDoor
