@@ -50,6 +50,13 @@ describe('Petros Stage 8 intent contract', () => {
     });
     expect(result.success).toBe(false);
     expect(petrosAssistantQuestionSchema.safeParse({ question: 'When is it?', route: '/exams', idempotencyKey: id('2') }).success).toBe(true);
+    expect(petrosAssistantQuestionSchema.safeParse({
+      question: 'What is this?',
+      route: '/assignments',
+      sourceId: id('3'),
+      selectedCard: { title: 'Cloud revision', description: 'Due tomorrow', href: `/assignments/${id('3')}` },
+      idempotencyKey: id('4'),
+    }).success).toBe(true);
   });
 
   it('rejects external return URLs and unbounded emotional labels', () => {

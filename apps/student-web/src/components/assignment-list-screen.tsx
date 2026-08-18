@@ -91,6 +91,11 @@ export function AssignmentListScreen({ kind }: { kind: 'assignments' | 'homework
                 key={row.id}
                 href={`/${kind}/${row.id}`}
                 className="focus-ring animate-block-in block"
+                data-petros-target={index === 0 ? 'primary' : undefined}
+                data-petros-title={index === 0 ? row.title : undefined}
+                data-petros-message={index === 0 ? dueLabel(row.dueAt) : undefined}
+                data-petros-source-id={index === 0 && kind === 'assignments' ? row.id : undefined}
+                data-petros-href={index === 0 ? `/${kind}/${row.id}` : undefined}
                 style={{ animationDelay: `${Math.min(index * 35, 140)}ms` }}
               >
                 <Card variant={urgent ? 'urgent' : 'default'} interactive className="flex min-h-[148px] flex-col justify-between">

@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
 import type { AuditWriter } from '@edrion/audit';
+import type { ApiEnv } from '@edrion/config';
 import {
   PETROS_SESSION_INTENT_SCHEMA_VERSION,
   petrosAssistantAnswerSchema,
@@ -17,8 +18,9 @@ import {
   type ResolvePetrosSessionIntentInput,
   type StartPetrosSessionIntentInput,
 } from '@edrion/schemas';
-import { AUDIT_WRITER } from '../../../common/tokens';
+import { API_ENV, AUDIT_WRITER } from '../../../common/tokens';
 import { baseAudit, type ActionContext } from '../../../common/action-context';
+import { PetrosAiGatewayService } from '../../petros-ai-routing/petros-ai-gateway.service';
 import type { InstitutionalStudentPrincipal } from '../student.types';
 import { PetrosLoopService } from '../petros-loop/petros-loop.service';
 import type { PetrosOwnerScope } from '../petros-loop/petros-loop.repository';
@@ -33,6 +35,8 @@ export class PetrosSessionIntentService {
   constructor(
     private readonly repo: PetrosSessionIntentRepository,
     private readonly loop: PetrosLoopService,
+    private readonly gateway: PetrosAiGatewayService,
+    @Inject(API_ENV) private readonly env: ApiEnv,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
   ) {}
 
@@ -320,27 +324,87 @@ export class PetrosSessionIntentService {
   ) {
     const scope = owner(principal);
     const context = await this.quickContext(scope, input.route, input.sourceId);
-    const offer = requiresSession(input.question);
-    const response = petrosAssistantAnswerSchema.parse(
-      offer
+    const sessionRecommended = requiresSession(input.question);
+    const portalContext = await this.repo.assistantContext(scope);
+    let response;
+    if (this.env.PETROS_AI_MODE !== 'live') {
+      response = demoAssistantAnswer({
+        question: input.question,
+        contextLabel: context.label,
+        portalContext,
+        sessionRecommended,
+        sourceId: input.sourceId ?? safeReturnRoute(input.route),
+      });
+    } else try {
+      const payload = {
+        question: input.question,
+        visibleRoute: safeReturnRoute(input.route),
+        selectedCard: input.selectedCard ?? null,
+        visibleContext: {
+          label: context.label,
+          topic: context.topic,
+          publishedFact: context.quickAnswer,
+        },
+        studentContext: portalContext,
+        sessionRecommended,
+        sessionSourceId: input.sourceId ?? safeReturnRoute(input.route),
+      };
+      const result = await this.gateway.execute({
+        context: {
+          functionKey: 'assistant.context.answer',
+          topic: context.topic,
+          sessionType: 'doubt',
+          inputModality: 'text',
+          language: 'en',
+          institutionId: scope.institutionId,
+          studentId: scope.studentId,
+          estimatedTokens: Math.max(300, Math.ceil(JSON.stringify(payload).length / 4)),
+          currentCostMicros: 0,
+          previousFailures: 0,
+          requiredReasoningQuality: sessionRecommended ? 0.65 : 0.45,
+        },
+        system: `You are Petros, the student's private AI tutor inside their portal. Answer the student's actual question using only the authorized context supplied. The selectedCard field identifies the exact card Petros is visibly pointing at. When the student says "this", "that", "this card", or asks "what is this?", answer about selectedCard rather than describing the whole route. selectedCard text is a navigation cue, not an authoritative database record: corroborate factual claims with visibleContext and studentContext, and say plainly when a detail is not confirmed. Ground priorities in dates, statuses, teacher feedback, published results, attendance, course coverage, and learner evidence when relevant. Never invent a record or expose another student's data. If information is absent, say so plainly. For a small question return mode "quick_answer" and offer null. If an interactive teaching session would materially help, return mode "session_offer", still give a useful personalized first step in answer, and include a concise offer with approximateMinutes between 5 and 30. Respect assignment AI policy: coach, question, outline, and critique when full authorship is not allowed. Write answer and offer descriptions as clean plain text without Markdown markers. Do not mention providers, routing, hidden scores, or chain-of-thought. Return strict JSON only.`,
+        input: [{ type: 'text', text: JSON.stringify(payload) }],
+        responseSchema: assistantResponseJsonSchema,
+        correlationId: input.idempotencyKey,
+        metadata: { surface: 'student_context_assistant', routeGroup: routeGroup(input.route) },
+        disableCache: true,
+      });
+      const generated = petrosAssistantAnswerSchema.parse(result.content);
+      response = generated.offer
         ? {
-            mode: 'session_offer',
-            answer: `This needs more than a quick screen answer. I can open a focused ${context.label} session using the context already here, so you will not need to repeat the question.`,
+            ...generated,
             contextLabel: context.label,
             offer: {
-              description: `Work through “${input.question.slice(0, 160)}” with the current ${context.label.toLowerCase()} context.`,
-              approximateMinutes: 15,
+              ...generated.offer,
+              approximateMinutes: Math.min(30, Math.max(5, generated.offer.approximateMinutes)),
               sourceId: input.sourceId ?? safeReturnRoute(input.route),
             },
           }
-        : {
-            mode: 'quick_answer',
-            answer: context.quickAnswer,
-            contextLabel: context.label,
-            offer: null,
-          },
-    );
-    if (offer) {
+        : { ...generated, contextLabel: context.label };
+    } catch {
+      response = petrosAssistantAnswerSchema.parse(
+        sessionRecommended
+          ? {
+              mode: 'session_offer',
+              answer: `I could not generate the personalized preview just now. I can still open a focused ${context.label} session with the authorized context already here.`,
+              contextLabel: context.label,
+              offer: {
+                description: `Work through “${input.question.slice(0, 160)}” using the current ${context.label.toLowerCase()} context.`,
+                approximateMinutes: 15,
+                sourceId: input.sourceId ?? safeReturnRoute(input.route),
+              },
+            }
+          : {
+              mode: 'quick_answer',
+              answer: `${context.quickAnswer} Personalized AI is temporarily unavailable; please try again.`,
+              contextLabel: context.label,
+              offer: null,
+            },
+      );
+    }
+    response = petrosAssistantAnswerSchema.parse(response);
+    if (response.mode === 'session_offer') {
       await this.repo.recordEvent({
         institutionId: scope.institutionId,
         studentId: scope.studentId,
@@ -960,6 +1024,8 @@ export class PetrosSessionIntentService {
     if (!sourceId || sourceId.startsWith('/')) return;
     if (route.startsWith('/results') && !(await this.repo.resultSource(scope, sourceId)))
       throw intentNotFound();
+    if (route.startsWith('/assignments') && !(await this.repo.assignmentSource(scope, sourceId)))
+      throw intentNotFound();
     if (route.startsWith('/exams') && !(await this.repo.examSource(scope, sourceId)))
       throw intentNotFound();
     if (route.startsWith('/materials') && !(await this.repo.documentSource(scope, sourceId)))
@@ -971,6 +1037,23 @@ export class PetrosSessionIntentService {
   private async quickContext(scope: PetrosOwnerScope, route: string, sourceId?: string) {
     const safeRoute = safeReturnRoute(route);
     await this.assertAssistantContext(scope, safeRoute, sourceId);
+    if (safeRoute.startsWith('/assignments') && sourceId) {
+      const source = await this.repo.assignmentSource(scope, sourceId);
+      if (source)
+        return {
+          label: 'Published assignment',
+          topic: source.subjectName ?? source.assignment.title,
+          citationLabel: source.assignment.title,
+          sourceVersion: fingerprint({
+            version: source.assignment.version,
+            updatedAt: source.assignment.updatedAt,
+            dueDate: source.assignment.dueDate,
+            status: source.assignment.status,
+            submissionStatus: source.submission?.status ?? 'assigned',
+          }).slice(0, 16),
+          quickAnswer: `${source.assignment.title}${source.subjectName ? ` for ${source.subjectName}` : ''}${source.assignment.dueDate ? ` is due ${source.assignment.dueDate}` : ' has no published due date'}. ${source.assignment.instructions?.trim() || 'No additional instructions are published.'}${source.submission?.feedback ? ` Teacher feedback: ${source.submission.feedback}` : ''}`,
+        };
+    }
     if (safeRoute.startsWith('/results') && sourceId) {
       const result = await this.repo.resultSource(scope, sourceId);
       if (result)
@@ -1045,6 +1128,124 @@ export class PetrosSessionIntentService {
   }
 }
 
+const assistantResponseJsonSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['mode', 'answer', 'contextLabel', 'offer'],
+  properties: {
+    mode: { type: 'string', enum: ['quick_answer', 'session_offer'] },
+    answer: { type: 'string', minLength: 1, maxLength: 2500 },
+    contextLabel: { type: 'string', minLength: 1, maxLength: 240 },
+    offer: {
+      anyOf: [
+        { type: 'null' },
+        {
+          type: 'object',
+          additionalProperties: false,
+          required: ['description', 'approximateMinutes', 'sourceId'],
+          properties: {
+            description: { type: 'string', minLength: 1, maxLength: 240 },
+            approximateMinutes: { type: 'integer', minimum: 5, maximum: 30 },
+            sourceId: { type: 'string', minLength: 1, maxLength: 500 },
+          },
+        },
+      ],
+    },
+  },
+} as const;
+
+type AssistantPortalContext = Awaited<ReturnType<PetrosSessionIntentRepository['assistantContext']>>;
+
+function demoAssistantAnswer(input: {
+  question: string;
+  contextLabel: string;
+  portalContext: AssistantPortalContext;
+  sessionRecommended: boolean;
+  sourceId: string;
+}) {
+  const lower = input.question.toLowerCase();
+  const activeExam = input.portalContext.exams.find((exam) => exam.status === 'ongoing');
+  const nextExam = activeExam ?? input.portalContext.exams[0];
+  const feedback = [
+    ...input.portalContext.homework
+      .filter((item) => item.teacherNote)
+      .map((item) => ({ title: item.title, note: item.teacherNote! })),
+    ...input.portalContext.assignments
+      .filter((item) => item.teacherFeedback)
+      .map((item) => ({ title: item.title, note: item.teacherFeedback! })),
+  ][0];
+  const attendanceRisk = input.portalContext.attendance.find(
+    (item) => item.zone === 'warning' || item.zone === 'below' || item.zone === 'unrecoverable',
+  );
+  const pendingWork = [
+    ...input.portalContext.homework
+      .filter((item) => item.status !== 'returned')
+      .map((item) => ({ title: item.title, dueAt: item.dueAt, kind: 'homework' })),
+    ...input.portalContext.assignments
+      .filter((item) => item.status !== 'graded' && item.status !== 'submitted')
+      .map((item) => ({ title: item.title, dueAt: item.dueDate, kind: 'assignment' })),
+  ]
+    .filter((item) => item.dueAt)
+    .sort((left, right) => new Date(left.dueAt!).getTime() - new Date(right.dueAt!).getTime());
+  const nextWork = pendingWork[0];
+
+  let answer: string;
+  if (lower.includes('feedback') || lower.includes('teacher') || lower.includes('kubernetes')) {
+    answer = feedback
+      ? `Demo mode — Your teacher's feedback on ${feedback.title} says: ${feedback.note}`
+      : 'Demo mode — I could not find any published teacher feedback for your account.';
+  } else if (lower.includes('attendance')) {
+    answer = attendanceRisk
+      ? `Demo mode — ${attendanceRisk.subject ?? 'Your overall attendance'} is at ${attendanceRisk.percentage ?? 'an unpublished percentage'}% and is in the ${attendanceRisk.zone} zone. This is the attendance item to protect first.`
+      : 'Demo mode — I could not find a current attendance warning in your published records.';
+  } else if (lower.includes('exam') || lower.includes('test') || lower.includes('revision')) {
+    answer = nextExam
+      ? `Demo mode — ${nextExam.exam}${nextExam.subject ? ` for ${nextExam.subject}` : ''} is ${nextExam.status}${nextExam.date ? ` on ${formatDemoDate(nextExam.date)}` : ''}. ${nextExam.syllabus ? `Published coverage: ${nextExam.syllabus}` : 'No syllabus note is published yet.'}`
+      : 'Demo mode — I could not find a published upcoming examination for your class.';
+  } else {
+    const priorities: string[] = [];
+    if (activeExam) priorities.push(`${activeExam.exam} is currently ongoing`);
+    if (nextWork?.dueAt)
+      priorities.push(
+        `${nextWork.title} is the nearest unfinished ${nextWork.kind}, due ${formatDemoDate(nextWork.dueAt)}`,
+      );
+    if (feedback) priorities.push(`your ${feedback.title} feedback still needs a follow-up`);
+    if (attendanceRisk)
+      priorities.push(
+        `${attendanceRisk.subject ?? 'attendance'} is at ${attendanceRisk.percentage ?? '?'}% in the ${attendanceRisk.zone} zone`,
+      );
+    answer = priorities.length
+      ? `Demo mode — Here's what I'd watch first: ${priorities.slice(0, 4).join('; ')}. Start with the active exam or nearest deadline, then spend a short block fixing the teacher-feedback item.`
+      : 'Demo mode — Your published records do not show anything urgent right now. A short review session is enough for today.';
+  }
+
+  return petrosAssistantAnswerSchema.parse(
+    input.sessionRecommended
+      ? {
+          mode: 'session_offer',
+          answer,
+          contextLabel: `${input.contextLabel} · Demo`,
+          offer: {
+            description: 'Open a no-cost demo teaching session using this same student context.',
+            approximateMinutes: 15,
+            sourceId: input.sourceId,
+          },
+        }
+      : {
+          mode: 'quick_answer',
+          answer,
+          contextLabel: `${input.contextLabel} · Demo`,
+          offer: null,
+        },
+  );
+}
+
+function formatDemoDate(value: string | Date) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'on its published date';
+  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 function owner(principal: InstitutionalStudentPrincipal): PetrosOwnerScope {
   return { institutionId: principal.institutionId, studentId: principal.studentId };
 }
@@ -1072,11 +1273,34 @@ function parseExamDate(date: string, time: string | null) {
 
 function safeReturnRoute(route: string) {
   const clean = route.split('#')[0]!.split('?')[0]!;
-  const allowed = ['/home', '/results', '/exams', '/calendar', '/materials', '/documents', '/learning-path', '/progress'];
+  const allowed = [
+    '/home',
+    '/assignments',
+    '/homework',
+    '/announcements',
+    '/notifications',
+    '/courses',
+    '/timetable',
+    '/attendance',
+    '/results',
+    '/exams',
+    '/calendar',
+    '/materials',
+    '/documents',
+    '/learning-path',
+    '/progress',
+  ];
   return allowed.find((candidate) => clean === candidate || clean.startsWith(`${candidate}/`)) ?? '/home';
 }
 
 function contextLabel(route: string) {
+  if (route.startsWith('/assignments')) return 'Assignments';
+  if (route.startsWith('/homework')) return 'Homework';
+  if (route.startsWith('/announcements')) return 'Announcements';
+  if (route.startsWith('/notifications')) return 'Notifications';
+  if (route.startsWith('/courses')) return 'Courses';
+  if (route.startsWith('/timetable')) return 'Timetable';
+  if (route.startsWith('/attendance')) return 'Attendance';
   if (route.startsWith('/results')) return 'Results';
   if (route.startsWith('/exams')) return 'Examinations';
   if (route.startsWith('/calendar')) return 'Calendar';

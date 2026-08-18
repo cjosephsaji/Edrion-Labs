@@ -1,6 +1,9 @@
 import { BadGatewayException, Injectable } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
+import type { ApiEnv } from '@edrion/config';
 import { RedisService } from '../../common/redis/redis.service';
+import { API_ENV } from '../../common/tokens';
 import { petrosRouteContextSchema, type PetrosRouteContext } from '@edrion/schemas';
 import { PetrosAiRoutingRepository } from './petros-ai-routing.repository';
 import { PetrosAiRoutingService } from './petros-ai-routing.service';
@@ -49,9 +52,16 @@ export class PetrosAiGatewayService {
     private readonly repo: PetrosAiRoutingRepository,
     private readonly adapters: PetrosProviderAdapterRegistry,
     private readonly redis: RedisService,
+    @Inject(API_ENV) private readonly env: ApiEnv,
   ) {}
 
   async execute(raw: PetrosAiExecuteRequest): Promise<PetrosAiExecuteResult> {
+    if (this.env.PETROS_AI_MODE !== 'live') {
+      throw new BadGatewayException({
+        code: 'PETROS_DEMO_MODE',
+        message: 'Petros is running in no-cost demo mode.',
+      });
+    }
     const requestId = raw.context.requestId ?? randomUUID();
     const context = petrosRouteContextSchema.parse({ ...raw.context, requestId });
     await this.routing.ensureRegistry();

@@ -40,6 +40,10 @@ function PriorityCard({ card, index }: { card: StudentHomeCard; index: number })
       data-priority={card.priority}
       data-prominence={card.prominence}
       data-kind={card.kind}
+      data-petros-target={index === 0 ? 'primary' : undefined}
+      data-petros-title={index === 0 ? card.title : undefined}
+      data-petros-message={index === 0 ? card.reason : undefined}
+      data-petros-href={index === 0 ? card.href : undefined}
       style={{ '--card-order': index } as React.CSSProperties}
     >
       <div className={styles.cardTop}>

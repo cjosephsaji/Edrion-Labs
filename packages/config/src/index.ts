@@ -172,6 +172,8 @@ export const apiEnvSchema = z.object({
   // ── Petros (OpenAI) ─────────────────────────────────────────────────────────
   /** OpenAI API key. Petros endpoints refuse turns with a clear error when unset. */
   OPENAI_API_KEY: z.string().optional(),
+  /** Global Petros execution switch. Demo mode never contacts a model provider. */
+  PETROS_AI_MODE: z.enum(['demo', 'live']).default('demo'),
   /** Interactive agent loop: chat turns, tool orchestration, everyday drafting. */
   OPENAI_MODEL: z.string().default('gpt-5.2'),
   /** Cheap classifier-style calls: topicality, titles, permission suggestions, summaries. */

@@ -59,7 +59,15 @@ export default function LearningPathPage() {
                 const complete = item.status === 'completed';
                 const current = item.status === 'current';
                 return (
-                  <li key={item.id} className={`grid grid-cols-[44px_1fr] gap-3 border p-4 ${current ? 'border-[#1f604a] bg-[#eef6f2]' : 'border-[var(--s-bd1)] bg-[var(--s-card)]'}`}>
+                  <li
+                    key={item.id}
+                    className={`grid grid-cols-[44px_1fr] gap-3 border p-4 ${current ? 'border-[#1f604a] bg-[#eef6f2]' : 'border-[var(--s-bd1)] bg-[var(--s-card)]'}`}
+                    data-petros-target={current ? 'primary' : undefined}
+                    data-petros-title={current ? item.title : undefined}
+                    data-petros-message={current ? item.whyHere ?? 'This is the current step in your learning path.' : undefined}
+                    data-petros-source-id={current ? item.id : undefined}
+                    data-petros-href={current ? '/learning-path' : undefined}
+                  >
                     <span className={`grid h-10 w-10 place-items-center ${complete ? 'bg-[#1f604a] text-white' : current ? 'border-2 border-[#1f604a] text-[#1f604a]' : 'border border-dashed border-[var(--s-bd2)] text-[var(--s-faint)]'}`}>
                       {complete ? <Check aria-hidden="true" /> : current ? <Route aria-hidden="true" /> : <Circle aria-hidden="true" />}
                     </span>

@@ -19,6 +19,8 @@
     "db:generate": "pnpm --filter @edrion/database generate",
     "db:migrate": "pnpm --filter @edrion/database migrate",
     "db:seed": "pnpm --filter @edrion/dev-scripts exec tsx dev/seed-only.ts",
+    "db:seed:test-student": "pnpm --filter @edrion/dev-scripts exec tsx dev/enrich-test-student-learning.ts",
+    "db:seed:test-student:mod1": "pnpm --filter @edrion/dev-scripts exec tsx dev/assign-alex-mod1-revision.ts",
     "db:reset": "pnpm --filter @edrion/dev-scripts exec tsx dev/reset-db.ts",
     "db:studio": "pnpm --filter @edrion/database studio",
     "learn-evals": "pnpm --filter @edrion/learn-evals run",

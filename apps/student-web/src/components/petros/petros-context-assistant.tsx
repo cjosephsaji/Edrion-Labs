@@ -1,18 +1,22 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, LoaderCircle, MessageSquareText, Sparkles, X } from 'lucide-react';
+import { ArrowRight, Focus, LoaderCircle, Send, Sparkles, X } from 'lucide-react';
 import type {
   PetrosAssistantAnswer,
   PetrosLearningSessionDocument,
   PetrosSessionIntent,
 } from '@edrion/schemas';
 import { formatApiError, newIdempotencyKey, useStudentApi } from '@/lib/api-client';
+import styles from './petros-context-assistant.module.css';
 
-const APPROPRIATE_ROUTES = ['/home', '/results', '/exams', '/calendar', '/materials', '/documents', '/learning-path'];
+const SUGGESTIONS = ['What is this card?', 'Why does this matter?', 'Help me act on this'];
+type Placement = { attached: boolean; x: number; y: number; side: 'left' | 'right'; bubbleSide: 'left' | 'right' };
+type TargetContext = { title: string; message: string; sourceId?: string; href?: string } | null;
 
-export function PetrosContextAssistant({ route }: { route: string }) {
+export function PetrosContextAssistant({ route, studentName }: { route: string; studentName?: string }) {
   const api = useStudentApi();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -21,9 +25,21 @@ export function PetrosContextAssistant({ route }: { route: string }) {
   const [loading, setLoading] = useState(false);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
+  const [placement, setPlacement] = useState<Placement>({ attached: false, x: 0, y: 0, side: 'right', bubbleSide: 'left' });
+  const [targetContext, setTargetContext] = useState<TargetContext>(null);
   const panelRef = useRef<HTMLElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const visible = APPROPRIATE_ROUTES.some((allowed) => route === allowed || route.startsWith(`${allowed}/`));
+  const visible = !route.startsWith('/petros/session') && !route.includes('/attempt');
+  const firstName = studentName?.split(' ')[0] || 'there';
+  const isHome = route === '/home';
+
+  const close = useCallback(() => {
+    if (starting) return;
+    setOpen(false);
+    setAnswer(null);
+    setError('');
+    window.requestAnimationFrame(() => triggerRef.current?.focus());
+  }, [starting]);
 
   useEffect(() => {
     if (!open) return;
@@ -33,17 +49,96 @@ export function PetrosContextAssistant({ route }: { route: string }) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, starting]);
+  }, [close, open, starting]);
+
+  useEffect(() => {
+    if (!visible) return;
+    let frame = 0;
+    let activeTarget: HTMLElement | null = null;
+    const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => schedule());
+
+    function update() {
+      const target = document.querySelector<HTMLElement>('[data-petros-target="primary"]');
+      if (activeTarget !== target) {
+        if (activeTarget) {
+          delete activeTarget.dataset.petrosActive;
+          resizeObserver?.unobserve(activeTarget);
+        }
+        activeTarget = target;
+        if (activeTarget) {
+          activeTarget.dataset.petrosActive = 'true';
+          resizeObserver?.observe(activeTarget);
+        }
+      }
+
+      const nextTargetContext: TargetContext = target ? {
+        title: target.dataset.petrosTitle || 'This deserves a look',
+        message: target.dataset.petrosMessage || 'I can help you work out the next step.',
+        ...(target.dataset.petrosSourceId ? { sourceId: target.dataset.petrosSourceId } : {}),
+        ...(target.dataset.petrosHref ? { href: target.dataset.petrosHref } : {}),
+      } : null;
+      setTargetContext((current) =>
+        current?.title === nextTargetContext?.title &&
+        current?.message === nextTargetContext?.message &&
+        current?.sourceId === nextTargetContext?.sourceId &&
+        current?.href === nextTargetContext?.href
+          ? current
+          : nextTargetContext,
+      );
+
+      if (!target || window.innerWidth < 800) {
+        setPlacement((current) => current.attached ? { ...current, attached: false } : current);
+        return;
+      }
+
+      const rect = target.getBoundingClientRect();
+      const inView = rect.bottom > 118 && rect.top < window.innerHeight - 48;
+      if (!inView) {
+        setPlacement((current) => current.attached ? { ...current, attached: false } : current);
+        return;
+      }
+
+      const width = isHome ? 144 : 116;
+      const height = isHome ? 184 : 152;
+      const gap = 14;
+      const rightX = rect.right + gap;
+      const leftX = rect.left - width - gap;
+      const side: Placement['side'] = rightX + width <= window.innerWidth - 16 ? 'right' : 'left';
+      const rawX = side === 'right' ? rightX : leftX;
+      const rawY = rect.bottom - height * 0.8;
+      const x = Math.max(12, Math.min(window.innerWidth - width - 12, rawX));
+      const y = Math.max(108, Math.min(window.innerHeight - height - 14, rawY));
+      const bubbleSide: Placement['bubbleSide'] = side === 'left'
+        ? x >= 310 ? 'left' : 'right'
+        : window.innerWidth - (x + width) >= 310 ? 'right' : 'left';
+
+      setPlacement({ attached: true, x, y, side, bubbleSide });
+    }
+
+    function schedule() {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(update);
+    }
+
+    const main = document.querySelector('main');
+    const mutationObserver = main ? new MutationObserver(schedule) : null;
+    mutationObserver?.observe(main!, { childList: true, subtree: true });
+    window.addEventListener('resize', schedule);
+    window.addEventListener('scroll', schedule, true);
+    const timers = [0, 300, 900, 1800].map((delay) => window.setTimeout(schedule, delay));
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      timers.forEach((timer) => window.clearTimeout(timer));
+      window.removeEventListener('resize', schedule);
+      window.removeEventListener('scroll', schedule, true);
+      mutationObserver?.disconnect();
+      resizeObserver?.disconnect();
+      if (activeTarget) delete activeTarget.dataset.petrosActive;
+    };
+  }, [isHome, route, visible]);
 
   if (!visible) return null;
-
-  function close() {
-    if (starting) return;
-    setOpen(false);
-    setAnswer(null);
-    setError('');
-    window.requestAnimationFrame(() => triggerRef.current?.focus());
-  }
 
   async function ask() {
     if (loading || question.trim().length < 2) return;
@@ -54,6 +149,14 @@ export function PetrosContextAssistant({ route }: { route: string }) {
       const response = await api.post<PetrosAssistantAnswer>('/student/petros/assistant', {
         question: question.trim(),
         route,
+        ...(targetContext?.sourceId ? { sourceId: targetContext.sourceId } : {}),
+        ...(targetContext ? {
+          selectedCard: {
+            title: targetContext.title,
+            description: targetContext.message,
+            ...(targetContext.href ? { href: targetContext.href } : {}),
+          },
+        } : {}),
         idempotencyKey: newIdempotencyKey(),
       });
       setAnswer(response);
@@ -91,46 +194,136 @@ export function PetrosContextAssistant({ route }: { route: string }) {
     }
   }
 
+  const companionTitle = targetContext ? `This one, ${firstName}.` : `Hey ${firstName}!`;
+  const companionMessage = targetContext
+    ? `${targetContext.title} — ${targetContext.message}`
+    : 'Want me to help you figure out the next move?';
+  const companionStyle = placement.attached ? {
+    '--petros-x': `${placement.x}px`,
+    '--petros-y': `${placement.y}px`,
+  } as CSSProperties : undefined;
+
   return (
     <>
       <button
         ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-20 right-4 z-50 inline-flex min-h-12 items-center gap-2 rounded-full bg-[#1f604a] px-4 py-3 text-sm font-bold text-white shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 min-[921px]:bottom-7 min-[921px]:right-8"
+        className={styles.companion}
+        data-home={isHome || undefined}
+        data-attached={placement.attached || undefined}
+        data-side={placement.side}
+        data-bubble-side={placement.bubbleSide}
+        style={companionStyle}
+        aria-label="Talk to Petros"
         aria-haspopup="dialog"
       >
-        <Sparkles className="h-4 w-4" aria-hidden="true" /> Ask Petros
+        {placement.attached && targetContext ? (
+          <span className={styles.speechBubble}>
+            <strong>{companionTitle}</strong>
+            <span>{companionMessage}</span>
+            <small>Tap me and we’ll make a plan.</small>
+          </span>
+        ) : null}
+        <span className={styles.characterStage}>
+          <Image
+            src="/petros/petros-pointing.png"
+            alt=""
+            width={724}
+            height={760}
+            className={styles.character}
+            priority={isHome}
+            unoptimized
+          />
+          <span className={styles.presenceDot} aria-hidden="true" />
+        </span>
+        <span className={styles.nameplate}><strong>Petros</strong><small>Your study sidekick</small></span>
       </button>
+
       {open ? (
-        <div className="fixed inset-0 z-[90] flex items-end justify-end bg-black/40 p-0 min-[700px]:items-center min-[700px]:p-6">
-          <button type="button" className="absolute inset-0" onClick={close} aria-label="Close contextual assistant" />
-          <section ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="petros-assistant-title" className="relative max-h-[88dvh] w-full overflow-auto bg-[var(--s-card)] shadow-2xl min-[700px]:w-[460px]">
-            <header className="flex items-start gap-3 border-b border-[var(--s-bd1)] bg-[#eef6f2] p-5">
-              <span className="grid h-10 w-10 shrink-0 place-items-center bg-[#dcece5] text-[#1f604a]"><MessageSquareText aria-hidden="true" /></span>
-              <div className="min-w-0 flex-1"><p className="text-[10px] font-bold uppercase tracking-[.1em] text-[#557066]">Contextual assistant</p><h2 id="petros-assistant-title" className="mt-1 text-lg font-semibold">Ask about this screen</h2><p className="mt-1 text-xs text-[var(--s-muted)]">Quick questions stay here. A teaching session starts only if you accept a clear offer.</p></div>
-              <button type="button" onClick={close} disabled={starting} className="grid min-h-11 min-w-11 place-items-center" aria-label="Close assistant"><X aria-hidden="true" /></button>
+        <div className={styles.layer}>
+          <button type="button" className={styles.backdrop} onClick={close} aria-label="Close Petros" />
+          <section
+            ref={panelRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="petros-assistant-title"
+            className={styles.dialog}
+          >
+            <header className={styles.header}>
+              <span className={styles.dialogCharacter} aria-hidden="true">
+                <Image src="/petros/petros-pointing.png" alt="" width={724} height={760} unoptimized />
+              </span>
+              <div className={styles.headerCopy}>
+                <p><Sparkles aria-hidden="true" /> Petros · your study sidekick</p>
+                <h2 id="petros-assistant-title">What’s up, {firstName}?</h2>
+                <span>I know this screen and the academic records connected to you.</span>
+              </div>
+              <button type="button" onClick={close} disabled={starting} className={styles.close} aria-label="Close Petros"><X aria-hidden="true" /></button>
             </header>
-            <div className="space-y-4 p-5">
-              <label className="block text-xs font-bold uppercase tracking-[.08em] text-[var(--s-muted)]">Your question<textarea value={question} onChange={(event) => { setQuestion(event.target.value); setAnswer(null); }} rows={3} maxLength={2000} placeholder="Ask about what is visible here…" className="mt-2 w-full border border-[var(--s-bd2)] bg-[var(--s-page)] p-3 text-sm font-normal normal-case tracking-normal" /></label>
-              <button type="button" onClick={() => void ask()} disabled={loading || starting || question.trim().length < 2} className="inline-flex min-h-11 w-full items-center justify-center gap-2 bg-[#1f604a] px-4 py-2 font-bold text-white disabled:opacity-50">{loading ? <LoaderCircle className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <ArrowRight className="h-4 w-4" aria-hidden="true" />}{loading ? 'Answering from this screen…' : 'Ask'}</button>
+
+            <div className={styles.body} data-has-answer={answer ? 'true' : undefined}>
+              {targetContext ? (
+                <section className={styles.focusStrip} aria-label="Current Petros focus">
+                  <span><Focus aria-hidden="true" /></span>
+                  <p><small>We’re talking about</small><strong>{targetContext.title}</strong></p>
+                  <p>{targetContext.message}</p>
+                </section>
+              ) : null}
+
               {answer ? (
-                <section className="border border-[var(--s-bd1)] bg-[var(--s-surface2)] p-4" aria-live="polite">
-                  <p className="text-[10px] font-bold uppercase tracking-[.08em] text-[var(--s-faint)]">{answer.mode === 'quick_answer' ? 'Quick answer' : 'A session may help'}</p>
-                  <p className="mt-2 text-sm leading-6 text-[var(--s-ink)]">{answer.answer}</p>
+                <section className={styles.answer} aria-live="polite">
+                  <div className={styles.answerHeading}>
+                    <span><Image src="/petros/petros-pointing.png" alt="" width={724} height={760} unoptimized /></span>
+                    <p>{answer.contextLabel.endsWith('· Demo') ? 'Demo Petros · no AI charge' : 'Petros says'}</p>
+                  </div>
+                  <p className={styles.answerText}>{answer.answer}</p>
                   {answer.offer ? (
-                    <div className="mt-4 border-l-4 border-[#1f604a] bg-[var(--s-card)] p-3">
-                      <p className="text-sm font-semibold">{answer.offer.description}</p>
-                      <p className="mt-1 text-xs text-[var(--s-muted)]">About {answer.offer.approximateMinutes} minutes · question and screen context transfer once</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button type="button" onClick={() => setAnswer(null)} disabled={starting} className="min-h-11 border border-[var(--s-bd2)] px-4 py-2 font-semibold">No, keep it quick</button>
-                        <button type="button" onClick={() => void accept()} disabled={starting} className="inline-flex min-h-11 items-center gap-2 bg-[#1f604a] px-4 py-2 font-semibold text-white">{starting ? <LoaderCircle className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <ArrowRight className="h-4 w-4" aria-hidden="true" />}{starting ? 'Transferring context…' : 'Accept and start session'}</button>
+                    <div className={styles.offer}>
+                      <p><strong>Want to work through it together?</strong><span>{answer.offer.description}</span></p>
+                      <small>About {answer.offer.approximateMinutes} minutes · I’ll carry this question into the session</small>
+                      <div>
+                        <button type="button" onClick={() => setAnswer(null)} disabled={starting}>Not right now</button>
+                        <button type="button" onClick={() => void accept()} disabled={starting}>
+                          {starting ? <LoaderCircle className={styles.spin} aria-hidden="true" /> : <ArrowRight aria-hidden="true" />}
+                          {starting ? 'Getting things ready…' : 'Let’s do it'}
+                        </button>
                       </div>
                     </div>
                   ) : null}
                 </section>
               ) : null}
-              {error ? <p className="text-sm text-[var(--s-danger)]" role="alert">{error}</p> : null}
+
+              {!answer ? (
+                <section className={styles.opening}>
+                  <p>{targetContext ? `I’m watching ${targetContext.title} right now. Ask me why it matters, or pick a shortcut.` : 'Ask me about what you’re looking at, or let’s work out what to do next.'}</p>
+                  <div className={styles.suggestions} aria-label="Suggested questions">
+                    {SUGGESTIONS.map((suggestion) => (
+                      <button type="button" key={suggestion} onClick={() => setQuestion(suggestion)}>{suggestion}</button>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              <section className={styles.composer}>
+                <label className={styles.questionLabel}>
+                  {answer ? 'Ask a follow-up' : 'Tell me what’s on your mind'}
+                  <textarea
+                    value={question}
+                    onChange={(event) => setQuestion(event.target.value)}
+                    rows={answer ? 2 : 3}
+                    maxLength={2000}
+                    placeholder={targetContext ? `Ask about “${targetContext.title}”…` : 'Ask about this page, plan your next move, or explain something…'}
+                  />
+                </label>
+                <button type="button" onClick={() => void ask()} disabled={loading || starting || question.trim().length < 2} className={styles.askButton}>
+                  {loading ? <LoaderCircle className={styles.spin} aria-hidden="true" /> : <Send aria-hidden="true" />}
+                  {loading ? 'Petros is thinking…' : answer ? 'Ask follow-up' : 'Send to Petros'}
+                </button>
+                <p className={styles.usageNote}>Nothing is sent—and no AI request is made—until you press Send.</p>
+              </section>
+              {error ? <p className={styles.error} role="alert">{error}</p> : null}
             </div>
           </section>
         </div>

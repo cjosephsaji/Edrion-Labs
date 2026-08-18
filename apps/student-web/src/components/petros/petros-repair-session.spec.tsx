@@ -159,10 +159,10 @@ describe('Petros Stage 2 student document', () => {
     };
     render(<PetrosRepairSession topic="photosynthesis" source="result" sessionId={memory.document.id} />);
     expect(await screen.findByRole('region', { name: 'Petros institution policy disclosure' })).toBeVisible();
-    expect(screen.getByText('Approved syllabus only.')).toBeVisible();
-    fireEvent.click(screen.getByText('Exactly who can see what'));
-    expect(screen.getByText(/Teacher: concept_and_goal, teacher_handoff/i)).toBeVisible();
-    expect(screen.getByText(/Parent: session_metadata/i)).toBeVisible();
+    expect(screen.getByText(/approved by your institution/i)).toBeVisible();
+    fireEvent.click(screen.getByText('Who can see information from this session?'));
+    expect(screen.getByText(/topic and learning goal/i)).toBeVisible();
+    expect(screen.getByText(/basic session details such as the date and duration/i)).toBeVisible();
     expect(screen.getByText(/Voice is optional/i)).toBeVisible();
     expect(screen.getByRole('button', { name: /preview teacher handoff/i })).toBeVisible();
   });
@@ -178,7 +178,7 @@ describe('Petros Stage 2 student document', () => {
     const progress = screen.getByRole('progressbar');
     expect(progress).toHaveAttribute('aria-valuemax', '4');
     expect(progress).toHaveAttribute('aria-valuenow', '0');
-    const why = screen.getByRole('button', { name: 'Why this?' });
+    const why = screen.getByRole('button', { name: 'Why this step?' });
     expect(why).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(why);
     expect(why).toHaveAttribute('aria-expanded', 'true');
@@ -237,7 +237,7 @@ describe('Petros Stage 2 student document', () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
     });
-    expect(screen.getByText('Choosing the next teaching move')).toBeVisible();
+    expect(screen.getByText('Choosing the next helpful step')).toBeVisible();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(4_100);
@@ -257,7 +257,7 @@ describe('Petros Stage 2 student document', () => {
       <PetrosRepairSession topic="photosynthesis" source="result" sessionId={memory.document.id} />,
     );
     await screen.findByRole('heading', { name: 'Follow the energy change' });
-    fireEvent.click(screen.getByRole('button', { name: 'Why this?' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Why this step?' }));
     await waitFor(() => expect(api.put).toHaveBeenCalled());
     fireEvent.click(screen.getByRole('button', { name: 'Go one layer deeper' }));
     await waitFor(() => expect(screen.getByText(/light-dependent reactions/i)).toBeVisible());
@@ -273,7 +273,7 @@ describe('Petros Stage 2 student document', () => {
     );
     expect(await screen.findByText(/topic is conceptual/i)).toBeVisible();
     expect(screen.getByText(/light-dependent reactions/i)).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Why this?' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Why this step?' })).toHaveAttribute(
       'aria-expanded',
       'true',
     );

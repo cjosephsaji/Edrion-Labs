@@ -287,7 +287,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <button type="button" onClick={openMenu} className="portal-tab" aria-expanded={menuOpen} aria-controls="portal-directory"><LayoutGrid className="h-4 w-4" aria-hidden="true" />Explore</button>
       </nav>
 
-      <PetrosContextAssistant route={pathname} />
+      <PetrosContextAssistant route={pathname} studentName={me?.fullName} />
 
       {menuPhase !== 'closed' ? (
         <div className="portal-directory-layer" data-state={menuPhase}>

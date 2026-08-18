@@ -31,6 +31,10 @@ function harness(overrides: Record<string, unknown> = {}) {
     recordFailureEvent: vi.fn().mockResolvedValue({ id: 'failure-event' }),
     findIntent: vi.fn(async () => savedRow),
     studentClassId: vi.fn().mockResolvedValue(null),
+    assistantContext: vi.fn().mockResolvedValue({
+      student: { name: 'Learner', className: 'Class A' },
+      assignments: [], homework: [], results: [], attendance: [], exams: [], courses: [], planner: [], learnerEvidence: [], classNotices: [],
+    }),
     markStarted: vi.fn(async (_scope: unknown, _id: string, sessionId: string) => {
       savedRow = { ...savedRow, status: 'started', sessionId, startedAt: new Date('2026-08-12T08:01:00.000Z') };
       return savedRow;
@@ -47,7 +51,28 @@ function harness(overrides: Record<string, unknown> = {}) {
     document: vi.fn().mockResolvedValue({ id: '88888888-8888-4888-8888-888888888888' }),
   };
   const audit: any = { logAudit: vi.fn() };
-  return { service: new PetrosSessionIntentService(repo, loop, audit), repo, loop, row: () => savedRow };
+  const gateway: any = {
+    execute: vi.fn(async (request: any) => {
+      const payload = JSON.parse(request.input[0].text);
+      return {
+        content: payload.sessionRecommended
+          ? {
+              mode: 'session_offer',
+              answer: 'Here is a personalized first step before we continue.',
+              contextLabel: 'Student portal',
+              offer: { description: 'Continue in a focused session.', approximateMinutes: 15, sourceId: payload.sessionSourceId },
+            }
+          : { mode: 'quick_answer', answer: 'This is a generated grounded answer.', contextLabel: 'Student portal', offer: null },
+      };
+    }),
+  };
+  return {
+    service: new PetrosSessionIntentService(repo, loop, gateway, { PETROS_AI_MODE: 'live' } as never, audit),
+    repo,
+    loop,
+    gateway,
+    row: () => savedRow,
+  };
 }
 
 function input(door: string, extra: Record<string, unknown> = {}) {
@@ -168,14 +193,47 @@ describe('Petros Stage 8 session intent resolver', () => {
   });
 
   it('keeps a small assistant question inline and makes a deep handoff an explicit offer', async () => {
-    const { service, loop, repo } = harness();
-    const quick = await service.assistant(principal, { question: 'What is shown here?', route: '/home', idempotencyKey: crypto.randomUUID() });
+    const { service, loop, repo, gateway } = harness();
+    const quick = await service.assistant(principal, {
+      question: 'What is this?',
+      route: '/home',
+      selectedCard: { title: 'Technical essay', description: 'Due tomorrow', href: '/assignments' },
+      idempotencyKey: crypto.randomUUID(),
+    });
     expect(quick.mode).toBe('quick_answer');
+    const payload = JSON.parse(gateway.execute.mock.calls[0]![0].input[0].text);
+    expect(payload.selectedCard).toEqual({ title: 'Technical essay', description: 'Due tomorrow', href: '/assignments' });
+    expect(gateway.execute.mock.calls[0]![0].system).toContain('answer about selectedCard');
     const deep = await service.assistant(principal, { question: 'Explain step-by-step why this result needs a different method', route: '/results', idempotencyKey: crypto.randomUUID() });
     expect(deep.mode).toBe('session_offer');
     expect(deep.offer).not.toBeNull();
     expect(loop.create).not.toHaveBeenCalled();
     expect(repo.recordEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'assistant_offered' }));
+  });
+
+  it('uses grounded deterministic demo text without contacting an AI provider', async () => {
+    const base = harness({
+      assistantContext: vi.fn().mockResolvedValue({
+        student: { name: 'Alex', className: 'Class A' },
+        assignments: [{ title: 'Cloud design', dueDate: '2026-08-20', status: 'assigned', teacherFeedback: null }],
+        homework: [], results: [], attendance: [], exams: [], courses: [], planner: [], learnerEvidence: [], classNotices: [],
+      }),
+    });
+    const demoService = new PetrosSessionIntentService(
+      base.repo,
+      base.loop,
+      base.gateway,
+      { PETROS_AI_MODE: 'demo' } as never,
+      { logAudit: vi.fn() } as never,
+    );
+    const result = await demoService.assistant(principal, {
+      question: 'What should I focus on today?',
+      route: '/home',
+      idempotencyKey: crypto.randomUUID(),
+    });
+    expect(result.answer).toContain('Demo mode');
+    expect(result.answer).toContain('Cloud design');
+    expect(base.gateway.execute).not.toHaveBeenCalled();
   });
 
   it('transfers the authorized visible subject and version into an assistant handoff', async () => {

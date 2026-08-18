@@ -43,6 +43,7 @@ export default function Page() {
         const termPercentage = number(items[0]?.termPct);
         const average = termPercentage ?? (percentages.length ? Math.round(percentages.reduce((sum, value) => sum + value, 0) / percentages.length) : null);
         const best = items.reduce<Result | null>((current, item) => !current || (percentage(item) ?? -1) > (percentage(current) ?? -1) ? item : current, null);
+        const focusResult = items.reduce<Result | null>((current, item) => !current || (percentage(item) ?? 101) < (percentage(current) ?? 101) ? item : current, null);
         const gpa = number(items[0]?.termGpa);
 
         return (
@@ -83,7 +84,15 @@ export default function Page() {
                   {items.map((item) => {
                     const pct = percentage(item);
                     return (
-                      <article className={styles.resultRow} key={item.id}>
+                      <article
+                        className={styles.resultRow}
+                        key={item.id}
+                        data-petros-target={item.id === focusResult?.id ? 'primary' : undefined}
+                        data-petros-title={item.id === focusResult?.id ? `${item.subjectName ?? 'Subject'} result` : undefined}
+                        data-petros-message={item.id === focusResult?.id && pct != null ? `${pct}% is the result that deserves the closest look.` : undefined}
+                        data-petros-source-id={item.id === focusResult?.id ? item.id : undefined}
+                        data-petros-href={item.id === focusResult?.id ? '/results' : undefined}
+                      >
                         <div>
                           <h3 className={styles.resultSubject}>{item.subjectName ?? 'Subject'}</h3>
                           <p className={styles.resultAssessment}>{item.title ?? 'Published assessment'}</p>

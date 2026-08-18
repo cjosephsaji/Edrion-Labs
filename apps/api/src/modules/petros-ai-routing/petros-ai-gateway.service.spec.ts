@@ -17,7 +17,7 @@ describe('PetrosAiGatewayService validation fallback', () => {
       ensureRegistry: vi.fn(async () => undefined),
       previewRoute: vi.fn(async () => { throw new PetrosRoutingError('NO_CAPABLE_ROUTE', 'paused'); }),
     };
-    const gateway = new PetrosAiGatewayService(routing as never, repo as never, {} as never, {} as never);
+    const gateway = new PetrosAiGatewayService(routing as never, repo as never, {} as never, {} as never, { PETROS_AI_MODE: 'live' } as never);
 
     await expect(gateway.execute({
       context: { functionKey: fn.key, inputModality: 'text', estimatedTokens: 10, currentCostMicros: 0, previousFailures: 0 },
@@ -72,7 +72,7 @@ describe('PetrosAiGatewayService validation fallback', () => {
       adapter: vi.fn((provider: { key: string }) => ({ execute: provider.key === 'primary' ? primaryExecute : fallbackExecute })),
     };
     const redis = { enabled: false, get: vi.fn(), set: vi.fn() };
-    const gateway = new PetrosAiGatewayService(routing as never, repo as never, adapters as never, redis as never);
+    const gateway = new PetrosAiGatewayService(routing as never, repo as never, adapters as never, redis as never, { PETROS_AI_MODE: 'live' } as never);
 
     const result = await gateway.execute({
       context: {

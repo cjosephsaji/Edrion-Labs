@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { FeatureControlsModule } from '../../feature-controls/feature-controls.module';
+import { PetrosAiRoutingModule } from '../../petros-ai-routing/petros-ai-routing.module';
 import { StudentPortalGuard } from '../core/student-portal.guard';
 import { StudentRateLimitGuard } from '../core/student-rate-limit.guard';
 import { PetrosLoopModule } from '../petros-loop/petros-loop.module';
@@ -12,7 +13,7 @@ import { PetrosSessionIntentRepository } from './petros-session-intent.repositor
 import { PetrosSessionIntentService } from './petros-session-intent.service';
 
 @Module({
-  imports: [FeatureControlsModule, PetrosLoopModule],
+  imports: [FeatureControlsModule, PetrosAiRoutingModule, PetrosLoopModule],
   controllers: [StudentPetrosSessionIntentController, PetrosDoorsDashboardController],
   providers: [
     PetrosSessionIntentRepository,

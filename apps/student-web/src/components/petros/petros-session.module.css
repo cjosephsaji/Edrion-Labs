@@ -933,24 +933,88 @@
   padding: 4px 6px;
 }
 .policyDisclosure {
-  align-items: stretch;
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
   border: 1px solid var(--s-accentBd);
   border-radius: 14px;
-  background: var(--s-accentSoft);
-  padding: 14px;
-  font-size: 12px;
+  background: color-mix(in srgb, var(--s-card) 72%, var(--s-accentSoft));
+  padding: 18px;
+  color: var(--s-inkSoft);
+  font-size: 13px;
   line-height: 1.55;
 }
-.policyDisclosure > strong,
-.policyDisclosure > details,
-.policyDisclosure > div {
-  flex-basis: 100%;
+.policyHeader {
+  display: flex;
+  align-items: center;
+  gap: 11px;
 }
-.policyDisclosure details,
-.policyDisclosure > div {
+.policyHeader > span {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--s-accentDeep);
+  color: #fff;
+}
+.policyHeader svg { width: 18px; }
+.policyHeader strong { display: block; color: var(--s-ink); font-size: 14px; }
+.policyHeader p { margin: 2px 0 0; color: var(--s-muted); font-size: 11px; }
+.policySummary {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.policySummary li {
+  position: relative;
+  border-left: 3px solid var(--s-accent);
+  background: var(--s-card);
+  padding: 9px 11px;
+  color: var(--s-inkSoft);
+}
+.privacyDetails,
+.policyDisclosure > div:not(.policyFooter) {
   border-radius: 10px;
   background: var(--s-card);
-  padding: 10px;
+  padding: 11px 12px;
+}
+.privacyDetails summary {
+  color: var(--s-accentDeep);
+  font-weight: 750;
+  cursor: pointer;
+}
+.privacyDetails > div {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  border-top: 1px solid var(--s-divider);
+  padding-top: 12px;
+}
+.privacyDetails p { margin: 0; color: var(--s-muted); }
+.privacyDetails p strong { display: block; margin-bottom: 2px; color: var(--s-ink); }
+.policyFooter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  color: var(--s-muted);
+  font-size: 11px;
+}
+.policyAcknowledged {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  color: var(--s-success);
+  font-size: 12px;
+  font-weight: 700;
+}
+.policyAcknowledged svg { width: 15px; }
+.policyDisclosure > div:not(.policyFooter) p {
+  margin-top: 0;
 }
 .policyDisclosure textarea {
   display: block;

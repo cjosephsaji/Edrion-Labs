@@ -61,7 +61,13 @@ export default function Page() {
               />
             ) : (
               <>
-                <article className={styles.featureNotice}>
+                <article
+                  className={styles.featureNotice}
+                  data-petros-target="primary"
+                  data-petros-title={featured.title}
+                  data-petros-message={featured.pinned ? 'Your institution pinned this notice, so it is worth checking.' : 'This is the latest notice from your institution.'}
+                  data-petros-href="/announcements"
+                >
                   <div className={styles.featureDate}>
                     <strong>{dateParts(featured.publishedAt).day}</strong>
                     <span>{dateParts(featured.publishedAt).month}</span>

@@ -598,9 +598,23 @@
   }
 }
 
+.student-shell main [data-petros-active='true'] {
+  outline: 2px solid rgb(189 145 46 / 48%);
+  outline-offset: 4px;
+  box-shadow: 0 16px 42px rgb(9 61 49 / 12%);
+  scroll-margin: 120px;
+  animation: petros-target-pulse 2.8s ease-in-out 1;
+}
+
+@keyframes petros-target-pulse {
+  0%, 100% { outline-color: rgb(189 145 46 / 34%); }
+  50% { outline-color: rgb(189 145 46 / 78%); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .page-enter,
-  .animate-block-in {
+  .animate-block-in,
+  .student-shell main [data-petros-active='true'] {
     animation: none !important;
   }
   .portal-masthead,

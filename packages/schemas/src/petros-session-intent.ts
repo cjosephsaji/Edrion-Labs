@@ -163,6 +163,14 @@ export const petrosAssistantQuestionSchema = z
     question: z.string().trim().min(2).max(2_000),
     route: z.string().trim().startsWith('/').max(500),
     sourceId: referenceId.optional(),
+    selectedCard: z
+      .object({
+        title: z.string().trim().min(1).max(240),
+        description: z.string().trim().min(1).max(1_000),
+        href: z.string().trim().startsWith('/').max(500).optional(),
+      })
+      .strict()
+      .optional(),
     idempotencyKey: z.string().uuid(),
   })
   .strict();

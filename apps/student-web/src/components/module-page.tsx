@@ -109,9 +109,21 @@ export function ModuleListPage<T extends { id: string }>({
         <EmptyState title={emptyTitle} description={emptyDescription} />
       ) : (
         <ul className="space-y-3">
-          {items.map((item) => (
-            <li key={item.id}>{renderItem(item)}</li>
-          ))}
+          {items.map((item, index) => {
+            const itemRecord = item as unknown as Record<string, unknown>;
+            const itemTitle = String(itemRecord.title ?? itemRecord.name ?? title);
+            return (
+              <li
+                key={item.id}
+                data-petros-target={index === 0 ? 'primary' : undefined}
+                data-petros-title={index === 0 ? itemTitle : undefined}
+                data-petros-message={index === 0 ? `This is the first item in your ${title.toLowerCase()} list.` : undefined}
+                data-petros-href={index === 0 ? path : undefined}
+              >
+                {renderItem(item)}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

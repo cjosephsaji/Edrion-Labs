@@ -340,6 +340,243 @@ export class PetrosSessionIntentRepository {
       .then((rows) => rows[0]);
   }
 
+  async assistantContext(scope: PetrosOwnerScope) {
+    const [student] = await this.db
+      .select({
+        name: sql<string>`concat_ws(' ', ${schema.students.firstName}, ${schema.students.lastName})`,
+        classId: schema.students.classId,
+        className: schema.classes.name,
+        termName: schema.academicTerms.name,
+        academicYearName: schema.academicYears.name,
+        programmeName: schema.departments.name,
+      })
+      .from(schema.students)
+      .leftJoin(schema.classes, eq(schema.classes.id, schema.students.classId))
+      .leftJoin(schema.academicTerms, eq(schema.academicTerms.id, schema.classes.termId))
+      .leftJoin(schema.academicYears, eq(schema.academicYears.id, schema.classes.academicYearId))
+      .leftJoin(
+        schema.departmentGradeLevels,
+        eq(schema.departmentGradeLevels.id, schema.classes.programmeLevelId),
+      )
+      .leftJoin(schema.departments, eq(schema.departments.id, schema.departmentGradeLevels.departmentId))
+      .where(
+        and(
+          eq(schema.students.id, scope.studentId),
+          eq(schema.students.institutionId, scope.institutionId),
+        ),
+      )
+      .limit(1);
+
+    const classId = student?.classId ?? null;
+    const [assignments, homework, results, attendance, exams, courses, planner, evidence, notices] =
+      await Promise.all([
+        this.db
+          .select({
+            title: schema.assignments.title,
+            subject: schema.subjects.name,
+            instructions: schema.assignments.instructions,
+            dueDate: schema.assignments.dueDate,
+            aiPolicy: schema.assignments.aiPolicy,
+            status: schema.assignmentSubmissions.status,
+            pointsAwarded: schema.assignmentSubmissions.pointsAwarded,
+            maxPoints: schema.assignments.maxPoints,
+            teacherFeedback: schema.assignmentSubmissions.feedback,
+          })
+          .from(schema.assignmentAssignees)
+          .innerJoin(schema.assignments, eq(schema.assignments.id, schema.assignmentAssignees.assignmentId))
+          .leftJoin(schema.subjects, eq(schema.subjects.id, schema.assignments.subjectId))
+          .leftJoin(
+            schema.assignmentSubmissions,
+            and(
+              eq(schema.assignmentSubmissions.assignmentId, schema.assignments.id),
+              eq(schema.assignmentSubmissions.studentId, scope.studentId),
+            ),
+          )
+          .where(
+            and(
+              eq(schema.assignmentAssignees.studentId, scope.studentId),
+              eq(schema.assignments.institutionId, scope.institutionId),
+              eq(schema.assignments.status, 'published'),
+            ),
+          )
+          .orderBy(asc(schema.assignments.dueDate))
+          .limit(12),
+        this.db
+          .select({
+            title: schema.homework.title,
+            subject: schema.subjects.name,
+            instructions: schema.homework.instructions,
+            dueAt: schema.homework.dueAt,
+            aiPolicy: schema.homework.aiPolicy,
+            status: schema.homeworkSubmissions.status,
+            marks: schema.homeworkSubmissions.totalMarks,
+            maxMarks: schema.homeworkSubmissions.totalMax,
+            teacherNote: schema.homeworkSubmissions.teacherNote,
+          })
+          .from(schema.homeworkSubmissions)
+          .innerJoin(schema.homework, eq(schema.homework.id, schema.homeworkSubmissions.homeworkId))
+          .leftJoin(schema.subjects, eq(schema.subjects.id, schema.homework.subjectId))
+          .where(
+            and(
+              eq(schema.homeworkSubmissions.studentId, scope.studentId),
+              eq(schema.homework.institutionId, scope.institutionId),
+              eq(schema.homework.status, 'assigned'),
+            ),
+          )
+          .orderBy(asc(schema.homework.dueAt))
+          .limit(12),
+        this.db
+          .select({
+            assessment: schema.gradeEntries.assessmentName,
+            subject: schema.subjects.name,
+            marks: schema.gradeEntries.marksObtained,
+            maxMarks: schema.gradeEntries.maxMarks,
+            grade: schema.gradeEntries.letterGrade,
+            remarks: schema.gradeEntries.remarks,
+          })
+          .from(schema.gradeEntries)
+          .leftJoin(schema.subjects, eq(schema.subjects.id, schema.gradeEntries.subjectId))
+          .where(
+            and(
+              eq(schema.gradeEntries.studentId, scope.studentId),
+              eq(schema.gradeEntries.institutionId, scope.institutionId),
+              eq(schema.gradeEntries.published, true),
+            ),
+          )
+          .orderBy(desc(schema.gradeEntries.updatedAt))
+          .limit(10),
+        this.db
+          .select({
+            subject: schema.subjects.name,
+            attended: schema.attendanceRollups.attended,
+            conducted: schema.attendanceRollups.conducted,
+            percentage: schema.attendanceRollups.pct,
+            zone: schema.attendanceRollups.zone,
+          })
+          .from(schema.attendanceRollups)
+          .leftJoin(schema.subjects, eq(schema.subjects.id, schema.attendanceRollups.subjectId))
+          .where(
+            and(
+              eq(schema.attendanceRollups.studentId, scope.studentId),
+              eq(schema.attendanceRollups.institutionId, scope.institutionId),
+            ),
+          )
+          .limit(10),
+        classId
+          ? this.db
+              .select({
+                exam: schema.exams.name,
+                subject: schema.subjects.name,
+                date: schema.examSchedules.examDate,
+                startTime: schema.examSchedules.startTime,
+                syllabus: schema.examSchedules.syllabusNote,
+                status: schema.exams.status,
+              })
+              .from(schema.examSchedules)
+              .innerJoin(schema.exams, eq(schema.exams.id, schema.examSchedules.examId))
+              .leftJoin(schema.subjects, eq(schema.subjects.id, schema.examSchedules.subjectId))
+              .where(
+                and(
+                  eq(schema.examSchedules.classId, classId),
+                  eq(schema.examSchedules.institutionId, scope.institutionId),
+                  eq(schema.examSchedules.published, true),
+                ),
+              )
+              .orderBy(asc(schema.examSchedules.examDate))
+              .limit(12)
+          : Promise.resolve([]),
+        this.db
+          .select({
+            code: schema.courses.code,
+            name: schema.courses.name,
+            officeHours: schema.courses.officeHours,
+          })
+          .from(schema.courseEnrollments)
+          .innerJoin(schema.courses, eq(schema.courses.id, schema.courseEnrollments.courseId))
+          .where(
+            and(
+              eq(schema.courseEnrollments.studentId, scope.studentId),
+              eq(schema.courseEnrollments.institutionId, scope.institutionId),
+            ),
+          )
+          .limit(10),
+        this.db
+          .select({
+            title: schema.userObligations.title,
+            kind: schema.userObligations.kind,
+            dueAt: schema.userObligations.dueAt,
+            status: schema.userObligations.status,
+          })
+          .from(schema.userObligations)
+          .where(
+            and(
+              eq(schema.userObligations.studentId, scope.studentId),
+              eq(schema.userObligations.status, 'pending'),
+            ),
+          )
+          .orderBy(asc(schema.userObligations.dueAt))
+          .limit(10),
+        this.db
+          .select({
+            concept: schema.petrosLearnerEvidenceEvents.conceptId,
+            outcome: schema.petrosLearnerEvidenceEvents.outcome,
+            errorCategory: schema.petrosLearnerEvidenceEvents.errorCategory,
+            moveType: schema.petrosLearnerEvidenceEvents.moveType,
+            occurredAt: schema.petrosLearnerEvidenceEvents.occurredAt,
+          })
+          .from(schema.petrosLearnerEvidenceEvents)
+          .where(
+            and(
+              eq(schema.petrosLearnerEvidenceEvents.studentId, scope.studentId),
+              eq(schema.petrosLearnerEvidenceEvents.institutionId, scope.institutionId),
+            ),
+          )
+          .orderBy(desc(schema.petrosLearnerEvidenceEvents.occurredAt))
+          .limit(12),
+        classId
+          ? this.db
+              .select({
+                title: schema.classStreamPosts.title,
+                body: schema.classStreamPosts.body,
+                kind: schema.classStreamPosts.kind,
+                postedAt: schema.classStreamPosts.postedAt,
+              })
+              .from(schema.classStreamPosts)
+              .where(
+                and(
+                  eq(schema.classStreamPosts.institutionId, scope.institutionId),
+                  eq(schema.classStreamPosts.contextType, 'class'),
+                  eq(schema.classStreamPosts.contextId, classId),
+                ),
+              )
+              .orderBy(desc(schema.classStreamPosts.postedAt))
+              .limit(8)
+          : Promise.resolve([]),
+      ]);
+
+    return {
+      generatedAt: new Date().toISOString(),
+      student: student
+        ? {
+            name: student.name,
+            className: student.className,
+            programmeName: student.programmeName,
+            termName: student.termName,
+            academicYearName: student.academicYearName,
+          }
+        : null,
+      assignments,
+      homework,
+      results,
+      attendance,
+      exams,
+      courses,
+      planner,
+      learnerEvidence: evidence,
+      classNotices: notices,
+    };
+  }
+
   listUploadedDocuments(scope: PetrosOwnerScope) {
     return this.db
       .select({
@@ -350,6 +587,7 @@ export class PetrosSessionIntentRepository {
         status: schema.knowledgeItems.status,
         extractionReady: schema.knowledgeItems.extractedTextReady,
         pagesDone: schema.knowledgeItems.pagesDone,
+        origin: schema.knowledgeItems.origin,
         version: schema.knowledgeItems.version,
         updatedAt: schema.knowledgeItems.updatedAt,
       })

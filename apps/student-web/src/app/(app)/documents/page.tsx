@@ -79,10 +79,16 @@ export default function Page() {
                   <EmptyState icon={Search} title="No matching documents" description="Try a different document type or search." />
                 ) : (
                   <div className={styles.resourceGrid}>
-                    {visibleItems.map((item) => {
+                    {visibleItems.map((item, index) => {
                       const Icon = documentIcon(item.docType);
                       return (
-                        <article className={styles.resourceCard} key={item.id}>
+                        <article
+                          className={styles.resourceCard}
+                          key={item.id}
+                          data-petros-target={index === 0 ? 'primary' : undefined}
+                          data-petros-title={index === 0 ? item.title : undefined}
+                          data-petros-message={index === 0 ? 'This is the first document in your current view.' : undefined}
+                        >
                           <span className={styles.resourceIcon}><Icon aria-hidden="true" size={22} /></span>
                           <div>
                             <h3 className={styles.resourceTitle}>{item.title}</h3>

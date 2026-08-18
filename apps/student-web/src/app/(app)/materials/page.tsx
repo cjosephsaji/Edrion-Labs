@@ -20,7 +20,7 @@ type Material = {
   publishedAt: string;
 };
 type Response = { items: Material[] };
-type PetrosSource = { id: string; title: string; kind: string; pageCount: number | null; status: string; extractionReady: boolean; pagesDone: number; version: number; updatedAt: string };
+type PetrosSource = { id: string; title: string; kind: string; pageCount: number | null; status: string; extractionReady: boolean; pagesDone: number; origin: Record<string, unknown>; version: number; updatedAt: string };
 type PetrosSourcesResponse = { items: PetrosSource[] };
 const pageTitle = 'Study materials';
 const pageDescription = 'Notes, worksheets, and resources shared by your teachers.';
@@ -45,6 +45,13 @@ export default function Page() {
         const items = data.items ?? [];
         const contexts = [...new Set(items.map((item) => item.className ?? 'General'))];
         const queryText = search.trim().toLowerCase();
+        const allPetrosSources = petrosSources.data?.items ?? [];
+        const sourceByMaterialId = new Map(
+          allPetrosSources
+            .filter((source) => typeof source.origin?.classMaterialId === 'string')
+            .map((source) => [String(source.origin.classMaterialId), source]),
+        );
+        const studentUploads = allPetrosSources.filter((source) => typeof source.origin?.classMaterialId !== 'string');
         const visibleItems = items.filter((item) =>
           (context === 'all' || (item.className ?? 'General') === context) &&
           (!queryText || [item.title, item.description, item.kindLabel, item.className].some((value) => value?.toLowerCase().includes(queryText))),
@@ -85,10 +92,20 @@ export default function Page() {
                   <EmptyState icon={Search} title="No matching materials" description="Try another collection or search." />
                 ) : (
                   <div className={styles.resourceGrid}>
-                    {visibleItems.map((item) => {
+                    {visibleItems.map((item, index) => {
                       const Icon = materialIcon(item.kindLabel);
+                      const petrosSource = sourceByMaterialId.get(item.id);
+                      const readyForPetros = Boolean(petrosSource?.status === 'ready' && petrosSource.extractionReady);
                       return (
-                        <article className={styles.resourceCard} key={item.id}>
+                        <article
+                          className={styles.resourceCard}
+                          key={item.id}
+                          data-petros-target={index === 0 ? 'primary' : undefined}
+                          data-petros-title={index === 0 ? item.title : undefined}
+                          data-petros-message={index === 0 ? 'This is the first resource in your current view.' : undefined}
+                          data-petros-source-id={index === 0 && petrosSource ? petrosSource.id : undefined}
+                          data-petros-href={index === 0 ? '/materials' : undefined}
+                        >
                           <span className={styles.resourceIcon}><Icon aria-hidden="true" size={22} /></span>
                           <div>
                             <h3 className={styles.resourceTitle}>{item.title}</h3>
@@ -99,6 +116,14 @@ export default function Page() {
                               {item.weekNo ? <span>Week {item.weekNo}</span> : null}
                               <span>{new Date(item.publishedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
                             </div>
+                            {petrosSource ? (
+                              <PetrosDocumentDoor
+                                sourceId={petrosSource.id}
+                                title={petrosSource.title}
+                                pageCount={petrosSource.pageCount}
+                                ready={readyForPetros}
+                              />
+                            ) : null}
                           </div>
                         </article>
                       );
@@ -109,9 +134,9 @@ export default function Page() {
                 <div className={styles.sectionHeader}><h2 className={styles.sectionTitle}>Your uploaded documents</h2><span className={styles.sectionMeta}>Petros uses extracted pages only</span></div>
                 {petrosSources.error ? (
                   <p className={styles.inlineError} role="alert">Could not load uploaded documents: {formatApiError(petrosSources.error)}</p>
-                ) : petrosSources.data?.items.length ? (
+                ) : studentUploads.length ? (
                   <div className={styles.resourceGrid}>
-                    {petrosSources.data.items.map((item) => {
+                    {studentUploads.map((item) => {
                       const ready = item.status === 'ready' && item.extractionReady;
                       return (
                         <article className={styles.resourceCard} key={item.id}>

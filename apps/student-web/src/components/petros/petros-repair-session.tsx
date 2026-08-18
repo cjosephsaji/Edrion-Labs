@@ -480,7 +480,7 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
                 <strong>
                   About {Math.ceil((document?.timeBudgetSeconds ?? 480) / 60)} minutes
                 </strong>{' '}
-                · one move at a time · {document?.maxMoves ?? 4} checkpoints maximum
+                · one step at a time · up to {document?.maxMoves ?? 4} guided steps
               </span>
             </div>
           </section>
@@ -760,7 +760,7 @@ function TeachingBlock({
         </span>
         <div>
           <p>
-            {labelFor(block.content.type)} · move {block.sequence}
+            {labelFor(block.content.type)}
           </p>
           <h2>{block.content.title}</h2>
         </div>
@@ -769,12 +769,12 @@ function TeachingBlock({
           aria-controls={`why-${block.id}`}
           onClick={() => onInteraction({ whyOpen: !showWhy }, true)}
         >
-          Why this?
+          Why this step?
         </button>
       </div>
       {showWhy && (
         <div id={`why-${block.id}`} className={styles.why}>
-          {block.whyThis}
+          {studentFriendlyWhy(block.content.type, block.whyThis)}
         </div>
       )}
       <div className={styles.blockBody}>
@@ -961,19 +961,19 @@ function BlockContent({
                 className={styles.reveal}
                 onClick={() => onInteraction({ revealed: true }, true)}
               >
-                Reveal after your commitment <ChevronRight aria-hidden="true" />
+                Show the connection <ChevronRight aria-hidden="true" />
               </button>
             ) : (
               <div className={styles.keyIdea}>
                 <Lightbulb aria-hidden="true" />
                 <div>
-                  <strong>{content.type === 'hook' ? 'The anchor' : 'What happens'}</strong>
+                  <strong>{content.type === 'hook' ? 'Why this matters' : 'What happens'}</strong>
                   <p>{content.reveal}</p>
-                  {content.type === 'hook' ? (
+                  {content.type === 'hook' && !isGenericAnchor(content.anchor) ? (
                     <small>{content.anchor}</small>
-                  ) : (
+                  ) : content.type !== 'hook' ? (
                     <small>{content.explanation}</small>
-                  )}
+                  ) : null}
                 </div>
               </div>
             )}
@@ -1808,14 +1808,25 @@ function InstitutionalPolicyPanel({ document }: { document: PetrosLearningSessio
   }
 
   return (
-    <section className={`${styles.grounding} ${styles.policyDisclosure}`} aria-label="Petros institution policy disclosure">
-      <strong><ShieldCheck aria-hidden="true" /> The rules active in this session</strong>
-      {policy.disclosure.plainLanguage.map((line) => <span key={line}>{line}</span>)}
-      <details>
-        <summary>Exactly who can see what</summary>
-        <p>Teacher: {policy.disclosure.visibleToTeacher.join(', ') || 'nothing from this session'} · up to {policy.disclosure.teacherRetentionDays} days.</p>
-        <p>Parent: {policy.disclosure.visibleToParent.join(', ') || 'nothing from this session'} · up to {policy.disclosure.parentRetentionDays} days.</p>
-        <p>Always excluded: {policy.disclosure.excludedByPlatform.join(', ')}.</p>
+    <section className={styles.policyDisclosure} aria-label="Petros institution policy disclosure">
+      <header className={styles.policyHeader}>
+        <span><ShieldCheck aria-hidden="true" /></span>
+        <div>
+          <strong>Your privacy and learning boundaries</strong>
+          <p>A short summary of how Petros works in this session.</p>
+        </div>
+      </header>
+      <ul className={styles.policySummary}>
+        <li>Petros stays within learning material approved by your institution.</li>
+        <li>For active homework, Petros teaches with hints and feedback instead of completing the final answer for you.</li>
+      </ul>
+      <details className={styles.privacyDetails}>
+        <summary>Who can see information from this session?</summary>
+        <div>
+          <p><strong>Your teacher</strong>{audienceAccess(policy.disclosure.visibleToTeacher, policy.disclosure.teacherRetentionDays, policy.disclosure.teacherPurpose)}</p>
+          <p><strong>A linked parent or guardian</strong>{audienceAccess(policy.disclosure.visibleToParent, policy.disclosure.parentRetentionDays, policy.disclosure.parentPurpose)}</p>
+          <p><strong>Never shared</strong>{excludedAccess(policy.disclosure.excludedByPlatform)}</p>
+        </div>
       </details>
       {homeworkDecision?.mode === 'guided_homework' && homeworkDecision.correctionAllowed === true && assignmentId ? (
         <div>
@@ -1823,9 +1834,11 @@ function InstitutionalPolicyPanel({ document }: { document: PetrosLearningSessio
           {!homeworkCorrected ? <button type="button" disabled={busy} onClick={() => void correctHomework()}>This is not related homework</button> : null}
         </div>
       ) : null}
-      <span>These rules are stable for this session. A published change applies to the next session.</span>
-      <span>Voice is optional; every step remains available in text.</span>
-      {!acknowledged ? <button disabled={busy} onClick={() => void acknowledge()}>I have seen these rules</button> : <span role="status">Disclosure acknowledged.</span>}
+      <div className={styles.policyFooter}>
+        <span>These settings will not change halfway through this session.</span>
+        <span>Voice is optional; every step is also available as text.</span>
+      </div>
+      {!acknowledged ? <button disabled={busy} onClick={() => void acknowledge()}>Got it</button> : <span className={styles.policyAcknowledged} role="status"><Check aria-hidden="true" /> Privacy summary acknowledged</span>}
       {offerHandoff ? (
         <div>
           <p><strong>Would you like to hand this to your teacher?</strong> This is optional. You review the summary before anything is delivered.</p>
@@ -2028,11 +2041,11 @@ function BlockSkeleton({
           <Icon aria-hidden="true" />
         </span>
         <div>
-          <p>PLAN → RENDER</p>
+          <p>PETROS IS PREPARING</p>
           <strong>
             {expected
-              ? `Rendering ${labelFor(expected).toLowerCase()}`
-              : 'Choosing the next teaching move'}
+              ? `Preparing: ${labelFor(expected).toLowerCase()}`
+              : 'Choosing the next helpful step'}
           </strong>
         </div>
         <LoaderCircle aria-hidden="true" />
@@ -2102,26 +2115,80 @@ function iconFor(type: PetrosTeachingBlockContent['type']) {
   return Flag;
 }
 
+function studentFriendlyWhy(type: PetrosTeachingBlockContent['type'], fallback: string) {
+  const explanations: Partial<Record<PetrosTeachingBlockContent['type'], string>> = {
+    hook: 'A quick opening question helps Petros understand what stands out to you and where to begin.',
+    prerequisite_check: 'This checks whether a small foundation needs strengthening before you continue.',
+    goal_frame: 'A clear goal keeps this session focused on what you actually need to achieve.',
+    recall_check: 'A short memory check shows what is secure and what deserves another pass.',
+    worked_example: 'A worked example makes the method visible before you try it independently.',
+    predict_then_reveal: 'Making a prediction first helps the explanation stick.',
+    socratic_probe: 'Thinking it through in your own words gives Petros better evidence than simply showing an answer.',
+    synthesis: 'Bringing the ideas together checks that the full picture makes sense.',
+  };
+  return explanations[type] ?? fallback;
+}
+
+function isGenericAnchor(value: string) {
+  return ['question', 'hook', 'prompt', 'opening question'].includes(value.trim().toLowerCase());
+}
+
+const VISIBILITY_LABELS: Record<string, string> = {
+  session_metadata: 'basic session details such as the date and duration',
+  concept_and_goal: 'the topic and learning goal',
+  attempt_summary: 'a summary of your attempts and progress',
+  teacher_handoff: 'a support summary you explicitly choose to send',
+  raw_transcript: 'the session transcript',
+  private_questions: 'questions you asked privately',
+  voice_recording: 'voice recordings',
+  images: 'images shared in the session',
+  unsaved_artifacts: 'unsaved notes and learning drafts',
+};
+
+function naturalList(items: string[]) {
+  if (items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  return `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`;
+}
+
+function audienceAccess(categories: string[], retentionDays: number, purpose: string) {
+  if (categories.length === 0) return ': cannot see anything from this session.';
+  const visible = naturalList(categories.map((category) => VISIBILITY_LABELS[category] ?? category.replaceAll('_', ' ')));
+  const purposeText = purpose.trim().replace(/[.]+$/, '').replace(/^./, (character) => character.toLowerCase());
+  return `: can see ${visible}. This is kept for up to ${retentionDays} days and used to ${purposeText}.`;
+}
+
+function excludedAccess(items: string[]) {
+  const labels = items.map((item) => item
+    .replace('provider or model identity', 'private AI system details')
+    .replace('hidden chain-of-thought', 'Petros’s private internal reasoning')
+    .replace('unsaved artifact drafts', 'notes and drafts you have not saved')
+    .replace('unrelated personal history', 'unrelated personal history')
+    .replace('credentials', 'passwords or sign-in details')
+    .replace('internal routing data', 'internal technical routing information'));
+  return `: ${naturalList(labels)}.`;
+}
+
 function labelFor(type: PetrosTeachingBlockContent['type']) {
   const labels: Record<PetrosTeachingBlockContent['type'], string> = {
-    hook: 'Hook',
-    prerequisite_check: 'Prerequisite check',
-    goal_frame: 'Goal frame',
-    layered_explanation: 'Layered explanation',
+    hook: 'Let’s get started',
+    prerequisite_check: 'Quick foundation check',
+    goal_frame: 'Your goal',
+    layered_explanation: 'Step-by-step explanation',
     worked_example: 'Worked example',
-    analogy: 'Analogy',
-    story: 'Story',
-    derivation: 'Derivation',
-    diagram: 'Editable diagram',
-    predict_then_reveal: 'Predict then reveal',
-    contrast_case: 'Contrast case',
-    misconception_demolition: 'Misconception demolition',
-    socratic_probe: 'Socratic probe',
-    recall_check: 'Recall check',
-    apply_to_your_world: 'Apply to your world',
-    synthesis: 'Synthesis',
-    artifact_commit: 'Artifact commit',
-    forward_link: 'Forward link',
+    analogy: 'A helpful comparison',
+    story: 'A story to remember',
+    derivation: 'How it works',
+    diagram: 'Visual explanation',
+    predict_then_reveal: 'Make a prediction',
+    contrast_case: 'Spot the difference',
+    misconception_demolition: 'Clear up a common mix-up',
+    socratic_probe: 'Think it through',
+    recall_check: 'Quick recall',
+    apply_to_your_world: 'Use it in context',
+    synthesis: 'Bring it together',
+    artifact_commit: 'Save what matters',
+    forward_link: 'What’s next',
   };
   return labels[type];
 }
