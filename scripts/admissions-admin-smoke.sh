@@ -13,11 +13,11 @@
 #
 # Self-cleaning + idempotent: unique run suffix, everything deleted at the end.
 #
-# Prereqs: API on :3001, portal users seeded (`pnpm --filter @edrion/database seed:portal`),
+# Prereqs: API on :3007, portal users seeded (`pnpm --filter @edrion/database seed:portal`),
 # migrations through 0031 applied, and in .env PORTAL_AUTH_DEV_HEADER=true (dev only).
 set -u
 set +B
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 ADM="$API/portal/admissions"
 AC="$API/portal/academics"
 NOTIF="$API/portal/notifications"

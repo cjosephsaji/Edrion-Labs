@@ -2,7 +2,7 @@
 # Phase 10e proof: a tracked maintenance job runs, records a background_jobs row, and shows in
 # System Health. Run from repo root with the API up (QUEUE_WORKERS_ENABLED=true).
 set -u
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 H=(-H 'x-employee-email: owner@edrion.dev')
 pass=0; fail=0
 chk(){ if [ "$2" = "$3" ]; then echo "  PASS  $1 ($2)"; pass=$((pass+1)); else echo "  FAIL  $1 expected=$3 got=$2"; fail=$((fail+1)); fi; }

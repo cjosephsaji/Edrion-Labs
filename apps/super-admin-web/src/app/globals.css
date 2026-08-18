@@ -9,6 +9,7 @@
     border-color: var(--border);
   }
   html {
+    --font-st-display-face: var(--font-st-body-face);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;

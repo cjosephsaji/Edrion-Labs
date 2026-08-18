@@ -4,7 +4,7 @@
 # Run from repo root with the API up; pass the API log path so the script can grep it:
 #   API_LOG=/path/to/api.log bash scripts/observability-smoke.sh
 set -u
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 LOG="${API_LOG:-}"
 CORR="corr-proof-$(date +%s)"
 pass=0; fail=0

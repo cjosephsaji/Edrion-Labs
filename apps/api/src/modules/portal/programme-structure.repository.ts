@@ -18,6 +18,7 @@ import type {
 } from '@edrion/database';
 import type { CommitStructureInput } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
+import { scheduleProgrammeSlots } from './programme-schedule';
 
 export interface StructureSlotSubjectRow {
   id: string;
@@ -435,18 +436,19 @@ export class ProgrammeStructureRepository {
     const slotRows = await this.listSlotsForInstitution(institutionId);
     if (slotRows.length === 0) return { created: 0, skipped: 0 };
 
-    const start = new Date(year.startDate);
-    const end = new Date(year.endDate);
-    const totalMs = end.getTime() - start.getTime();
-    const totalWeight = slotRows.reduce(
-      (sum, r) => sum + (r.slot.durationMonths ?? 12),
-      0,
+    const schedule = scheduleProgrammeSlots(
+      year.startDate,
+      year.endDate,
+      slotRows.map(({ slot }) => ({
+        id: slot.id,
+        programmeLevelId: slot.programmeLevelId,
+        sequenceInYear: slot.sequenceInYear,
+        durationMonths: slot.durationMonths,
+      })),
     );
 
     let created = 0;
     let skipped = 0;
-    let cursor = start.getTime();
-
     return this.db.transaction(async (tx) => {
       if (replaceExisting) {
         const slotIds = slotRows.map((r) => r.slot.id);
@@ -479,13 +481,7 @@ export class ProgrammeStructureRepository {
           continue;
         }
 
-        const weight = slot.durationMonths ?? 12;
-        const slotMs = Math.round((weight / totalWeight) * totalMs);
-        const slotStart = new Date(cursor);
-        const slotEnd = new Date(Math.min(cursor + slotMs, end.getTime()));
-        cursor = slotEnd.getTime() + 86400000;
-
-        const fmt = (d: Date) => d.toISOString().slice(0, 10);
+        const dates = schedule.get(slot.id)!;
 
         await tx.insert(schema.academicTerms).values({
           institutionId,
@@ -498,8 +494,8 @@ export class ProgrammeStructureRepository {
           name: slot.name,
           kind: slot.kind,
           sequence: slot.sequenceInYear,
-          startDate: fmt(slotStart),
-          endDate: fmt(slotEnd),
+          startDate: dates.startDate,
+          endDate: dates.endDate,
           status: 'active',
           createdBy: actorId,
         });

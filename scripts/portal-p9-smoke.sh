@@ -18,10 +18,10 @@
 # Self-cleaning + idempotent: every row is created with a unique run suffix and deleted at the end; the
 # view-only test user is (re)seeded at the start and removed at the end.
 #
-# Prereqs: API on :3001, DB seeded + migration 0019 applied, and in .env PORTAL_AUTH_DEV_HEADER=true.
+# Prereqs: API on :3007, DB seeded + migration 0019 applied, and in .env PORTAL_AUTH_DEV_HEADER=true.
 set -u
 set +B
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 DBURL="${DATABASE_URL:-postgres://macbook@localhost:5432/edrion}"
 AN="$API/portal/announcements"
 NT="$API/portal/notifications"

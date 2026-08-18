@@ -6,7 +6,7 @@
 # Note: JSON bodies are built as single-quote-concatenated variables and passed as -d "$BODY".
 # A literal {"a":1,"b":2} inline can be word-split in some shells; a variable value never is.
 set -u
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 DB="${DATABASE_URL:-postgres://macbook@localhost:5432/edrion}"
 EMAIL="${EMPLOYEE_EMAIL:-owner@edrion.dev}"
 H=(-H "x-employee-email: $EMAIL" -H 'Content-Type: application/json')

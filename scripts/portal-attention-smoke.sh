@@ -8,10 +8,10 @@
 #   3. honest placeholders — Student Performance + Learning Progress report `not_yet_available`.
 #   4. permission-scoped — a nurse (no fees.view) gets Fees as `no_access` but Health as `ok`.
 #
-# Self-cleaning: seeds one overdue invoice via psql and deletes it. Prereqs: API on :3001 with
+# Self-cleaning: seeds one overdue invoice via psql and deletes it. Prereqs: API on :3007 with
 # PORTAL_AUTH_DEV_HEADER=true; DB seeded (uis).
 set -u
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 DBURL="${DATABASE_URL:-postgres://macbook@localhost:5432/edrion}"
 OWNER="${OWNER:-owner@uis.edu.in}"
 NURSE="${NURSE:-nurse@uis.edu.in}"

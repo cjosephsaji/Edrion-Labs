@@ -73,7 +73,7 @@ export default function IndependentUsersPage() {
         {isLoading ? (
           <TableSkeleton />
         ) : isError || !data ? (
-          <ErrorState description="Could not load independent users. Confirm the API is running on :3001." />
+          <ErrorState description="Could not load independent users. Confirm the API is running on :3007." />
         ) : data.items.length === 0 ? (
           <EmptyState title="No independent users" description="No users match these filters." />
         ) : (

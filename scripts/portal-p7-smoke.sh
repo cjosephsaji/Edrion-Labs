@@ -13,11 +13,11 @@
 #
 # Self-cleaning + idempotent: every row is created with a unique run suffix and deleted at the end.
 #
-# Prereqs: API on :3001, DB seeded + `pnpm --filter @edrion/database seed:portal` (adds hr@greenwood.edu),
+# Prereqs: API on :3007, DB seeded + `pnpm --filter @edrion/database seed:portal` (adds hr@greenwood.edu),
 # migration 0017 applied, and in .env PORTAL_AUTH_DEV_HEADER=true (dev only).
 set -u
 set +B
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 FEES="$API/portal/fees"
 PR="$API/portal/payroll"
 AC="$API/portal/academics"

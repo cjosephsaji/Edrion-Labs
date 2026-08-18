@@ -32,7 +32,7 @@ pnpm --filter @edrion/learn-evals exec tsx src/cli.ts estimate \
   --suite smoke --mode live --max-cost-micros 500000 --max-tokens 100000
 
 # Deliberate, metered live subset after reviewing the preview
-PETROS_QUALITY_API_BASE=http://localhost:3001/v1 \
+PETROS_QUALITY_API_BASE=http://localhost:3007/v1 \
 PETROS_QUALITY_EMPLOYEE_EMAIL='owner@edrion.dev' \
 pnpm --filter @edrion/learn-evals exec tsx src/cli.ts run \
   --suite smoke --mode live --confirm-live \

@@ -101,20 +101,24 @@ export function useAcademicMutations(resource: Resource) {
   const { scope } = useScope();
   const qc = useQueryClient();
   const invalidate = () => {
-    qc.invalidateQueries({ queryKey: ['academics', resource] });
-    if (resource === 'programme-subjects') {
-      qc.invalidateQueries({ queryKey: ['academics', 'programme-structure-detail'] });
-      qc.invalidateQueries({ queryKey: ['academics', 'programme-structure'] });
-      // Subjects list embeds placements — keep "Taught in" in sync after curriculum changes.
-      qc.invalidateQueries({ queryKey: ['academics', 'subjects'] });
-    }
-    if (resource === 'subjects') {
-      qc.invalidateQueries({ queryKey: ['academics', 'programme-structure'] });
-      qc.invalidateQueries({ queryKey: ['academics', 'programme-structure-detail'] });
-    }
-    if (resource === 'classes') {
-      qc.invalidateQueries({ queryKey: ['academics', 'programme-structure'] });
-      qc.invalidateQueries({ queryKey: ['academics', 'programme-structure-detail'] });
+    // Academic structure is a graph, not a set of independent directories. A term edit changes
+    // class labels; a class edit changes rosters and counts; curriculum edits change both subjects
+    // and class inheritance. Refresh the graph so a successful write is visible on every page.
+    qc.invalidateQueries({ queryKey: ['academics'] });
+    qc.invalidateQueries({ queryKey: ['people'] });
+
+    // These active screens embed academic names/counts or use academic rows as pickers.
+    for (const key of [
+      'attendance',
+      'timetable',
+      'gradebook',
+      'assignments',
+      'exams',
+      'fees',
+      'reports',
+      'recipients',
+    ]) {
+      qc.invalidateQueries({ queryKey: [key] });
     }
   };
 
@@ -437,8 +441,8 @@ export function useScheduleAcademicYear() {
         replaceExisting,
       }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['academics', 'academic-terms'] });
-      qc.invalidateQueries({ queryKey: ['academics', 'academic-years'] });
+      qc.invalidateQueries({ queryKey: ['academics'] });
+      qc.invalidateQueries({ queryKey: ['people'] });
     },
   });
 }
@@ -459,8 +463,12 @@ export function useClassSubjectMutations(classId: string) {
   const client = usePortalClient();
   const { scope } = useScope();
   const qc = useQueryClient();
-  const invalidate = () =>
-    qc.invalidateQueries({ queryKey: ['academics', 'classes', classId, 'subjects'] });
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['academics'] });
+    qc.invalidateQueries({ queryKey: ['people'] });
+    qc.invalidateQueries({ queryKey: ['timetable'] });
+    qc.invalidateQueries({ queryKey: ['attendance'] });
+  };
 
   const assign = useMutation({
     mutationFn: (body: { subjectId: string; teacherId?: string | null }) =>

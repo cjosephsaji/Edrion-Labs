@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button, Input, Select, Skeleton } from '@edrion/ui';
 import { usePermissions } from '@/lib/permissions';
 import { usePeopleList, type StudentRow } from '@/lib/people';
@@ -59,7 +59,7 @@ export function AssignmentSubmissionsPanel({
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  const roster = students?.items ?? [];
+  const roster = useMemo(() => students?.items ?? [], [students?.items]);
 
   useEffect(() => {
     const byStudent = new Map((submissions ?? []).map((s) => [s.studentId, s]));

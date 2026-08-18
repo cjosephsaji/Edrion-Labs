@@ -42,7 +42,7 @@ fixed, the invariants now expected of every screen, and the few items intentiona
 
 ## Verification
 
-Live curl smokes (run against the API on `:3001` with `PORTAL_AUTH_DEV_HEADER=true`, seeded DB):
+Live curl smokes (run against the API on `:3007` with `PORTAL_AUTH_DEV_HEADER=true`, seeded DB):
 
 | Phase | Script | Result |
 |------|--------|--------|

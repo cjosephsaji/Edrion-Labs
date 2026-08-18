@@ -17,11 +17,11 @@
 # This is an API-only smoke (no browser). The public funnel UI now lives in apps/public-web on
 # port 3003 (moved out of apps/super-admin-web); the reviewer workflow stays in super-admin-web.
 #
-# Prereqs: API on :3001 booted with AUTH_DEV_HEADER=true and REGISTRATION_OTP_DEV_RETURN=true;
+# Prereqs: API on :3007 booted with AUTH_DEV_HEADER=true and REGISTRATION_OTP_DEV_RETURN=true;
 # Postgres seeded with the platform owner (owner@edrion.dev); migrations through 0026 applied.
 set -u
 set +B
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 DBURL="${DATABASE_URL:-postgres://macbook@localhost:5432/edrion}"
 OWNER='owner@edrion.dev'                       # platform_owner (wildcard) via AUTH_DEV_HEADER
 RUN="$(date +%s)"

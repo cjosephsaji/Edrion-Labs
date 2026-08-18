@@ -7,9 +7,9 @@
 #   3. unknown keys ignored — a bogus key is not stored.
 #   4. permission gating — a teacher (no institution_settings.view) gets 403.
 #
-# Restores currency to USD at the end. Prereqs: API on :3001 with PORTAL_AUTH_DEV_HEADER=true.
+# Restores currency to USD at the end. Prereqs: API on :3007 with PORTAL_AUTH_DEV_HEADER=true.
 set -u
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 OWNER="${OWNER:-owner@uis.edu.in}"
 TEACHER="${TEACHER:-teacher@uis.edu.in}"
 INST='institution'

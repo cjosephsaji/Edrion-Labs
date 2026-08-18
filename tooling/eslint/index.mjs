@@ -21,7 +21,7 @@ export const base = [
         'warn',
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
       ],
-      eqeqeq: ['error', 'always'],
+      eqeqeq: ['error', 'always', { null: 'ignore' }],
       'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
   },
@@ -29,6 +29,7 @@ export const base = [
     ignores: [
       'dist/**',
       '.next/**',
+      '**/.next/**',
       'coverage/**',
       'node_modules/**',
       '**/*.config.*',

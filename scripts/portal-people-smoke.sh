@@ -9,11 +9,11 @@
 #   5. profiles           — staff profile + class roster endpoints return 200
 #   6. tenancy/refs       — unknown FKs -> 400; stale version -> 409; scope isolation -> 403
 #
-# Prereqs: API on :3001, DB migrated + `pnpm --filter @edrion/database seed:portal`,
+# Prereqs: API on :3007, DB migrated + `pnpm --filter @edrion/database seed:portal`,
 # PORTAL_AUTH_DEV_HEADER=true (dev only).
 set -u
 set +B
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 PP="$API/portal/people"
 AC="$API/portal/academics"
 OWNER='owner@greenwood.edu'

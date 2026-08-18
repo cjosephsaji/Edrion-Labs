@@ -259,7 +259,6 @@ function ProfileSection({ canManage }: { canManage: boolean }) {
           <Field label="Logo URL" hint="A public https link to your logo image.">
             <div className="flex items-center gap-3">
               {form.logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img src={form.logoUrl} alt="" className="h-10 w-10 shrink-0 rounded-md border border-border object-contain" />
               ) : (
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-dashed border-border text-text-muted">

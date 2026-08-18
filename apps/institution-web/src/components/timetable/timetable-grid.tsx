@@ -112,7 +112,7 @@ export function TimetableGrid() {
 
   const { data, isLoading, isError } = useTimetableList<TimetableSlotRow>('timetable', listParams);
   const { create, update, remove } = useTimetableMutations('timetable');
-  const slots = data?.items ?? [];
+  const slots = useMemo(() => data?.items ?? [], [data?.items]);
   const { config, saveConfig } = useTimetableGridConfig(classId, slots);
   const slotMap = useMemo(() => buildSlotMap(slots), [slots]);
 

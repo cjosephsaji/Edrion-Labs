@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Parent Portal — live end-to-end smoke against the running API (:3001) + Postgres.
+# Parent Portal — live end-to-end smoke against the running API (:3007) + Postgres.
 #
 # Proves the full guardian journey and its guarantees:
 #   dashboard → results publish-gate → acknowledge notice → respond consent → book + cancel PTM
@@ -16,7 +16,7 @@
 # `seed:parent`). No browser — API only.
 set -uo pipefail
 
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 DBURL="${DATABASE_URL:-postgres://postgres:postgres@localhost:5432/edrion}"
 WEBHOOK_SECRET="${PARENT_PAYMENT_WEBHOOK_SECRET:-dev-parent-webhook-secret}"
 G='guardian.a@greenwood.edu'

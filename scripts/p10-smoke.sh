@@ -5,7 +5,7 @@
 #   auth · redis · jobs · observability · RLS · 10f modules · full-lifecycle e2e.
 # Each sub-script exits non-zero on failure; this aggregates them into one verdict.
 #
-# Prereqs: `pnpm --filter @edrion/api dev` up on :3001 with AUTH_DEV_HEADER=true, Postgres
+# Prereqs: `pnpm --filter @edrion/api dev` up on :3007 with AUTH_DEV_HEADER=true, Postgres
 # seeded, Redis running with QUEUE_WORKERS_ENABLED=true.
 #
 # Note on redis-smoke: two of its checks (request-rate 429, AI-run daily cap) only trip when the

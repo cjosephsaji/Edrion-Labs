@@ -11,10 +11,10 @@
 #   6. lifecycle — archive hides from the default list; unarchive restores.
 #   7. access gate — a portal user who is NOT a participant gets 404 (membership is the boundary).
 #
-# Self-cleaning-ish (conversations are left; they carry a unique marker). Prereqs: API on :3001 with
+# Self-cleaning-ish (conversations are left; they carry a unique marker). Prereqs: API on :3007 with
 # PORTAL_AUTH_DEV_HEADER=true; DB seeded + migration 0029.
 set -u
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 OWNER="${OWNER:-owner@uis.edu.in}"
 OTHER="${OTHER:-admin@uis.edu.in}"   # a different portal user, NOT a participant
 INST='institution'

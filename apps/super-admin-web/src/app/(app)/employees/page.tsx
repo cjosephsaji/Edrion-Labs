@@ -96,7 +96,7 @@ export default function EmployeesPage() {
         {isLoading ? (
           <TableSkeleton />
         ) : isError || !data ? (
-          <ErrorState description="Could not load employees. Confirm the API is running on :3001." />
+          <ErrorState description="Could not load employees. Confirm the API is running on :3007." />
         ) : data.items.length === 0 ? (
           <EmptyState title="No employees" description="No employees match these filters." />
         ) : (

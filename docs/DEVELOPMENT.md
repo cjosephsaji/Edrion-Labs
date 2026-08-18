@@ -15,12 +15,12 @@ cp .env.example .env          # fill DATABASE_URL, SESSION_COOKIE_SECRET at mini
 pnpm db:generate              # (only if you changed schema) regenerate SQL migrations
 pnpm db:migrate               # apply migrations + append-only grants
 pnpm db:seed                  # roles, permissions, owner employee, sample institutions
-pnpm dev                      # api on :3001, web on :3000
+pnpm dev                      # api on :3007, web on :3000
 ```
 
-- API docs (Swagger/OpenAPI): http://localhost:3001/docs
+- API docs (Swagger/OpenAPI): http://localhost:3007/docs
 - Web app: http://localhost:3000 (redirects to `/dashboard`)
-- Health: http://localhost:3001/v1/health
+- Health: http://localhost:3007/v1/health
 
 A quick local Postgres:
 
@@ -62,7 +62,7 @@ Supabase instance. Set them in your local `.env`:
 To exercise the real cookie flow locally without Supabase, mint a Supabase-shaped HS256 token
 with `SUPABASE_JWT_SECRET` and post it to `/v1/auth/login` (see the seeded owner's
 `auth_user_id`). Reproducible full-coverage smoke (401 / MFA / identical perms / recent-auth /
-reauth / revoke / lockout): `bash scripts/auth-smoke.sh` (API on :3001, DB seeded).
+reauth / revoke / lockout): `bash scripts/auth-smoke.sh` (API on :3007, DB seeded).
 
 ## Useful commands
 

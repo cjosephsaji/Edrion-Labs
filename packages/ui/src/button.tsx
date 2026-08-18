@@ -1,5 +1,5 @@
 'use client';
-import { forwardRef } from 'react';
+import { Children, forwardRef, isValidElement } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Loader2 } from 'lucide-react';
 import { cn } from './cn';
@@ -41,6 +41,12 @@ export interface ButtonProps
   loading?: boolean;
 }
 
+function isButtonIcon(child: React.ReactNode): boolean {
+  if (!isValidElement<{ className?: unknown }>(child)) return false;
+  const className = child.props.className;
+  return typeof className === 'string' && /\bh-\S+\b/.test(className) && /\bw-\S+\b/.test(className);
+}
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, loading, disabled, children, ...props }, ref) => (
     <button
@@ -50,7 +56,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       {...props}
     >
       {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-      {children}
+      {loading ? Children.map(children, (child) => (isButtonIcon(child) ? null : child)) : children}
     </button>
   ),
 );

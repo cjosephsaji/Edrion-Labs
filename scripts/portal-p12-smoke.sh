@@ -27,12 +27,12 @@
 #
 # Self-cleaning + idempotent: seeded users + invitations + probe settings are removed at the end.
 #
-# Prereqs: API on :3001; DB seeded + migration 0022 applied; in .env PORTAL_AUTH_DEV_HEADER=true,
+# Prereqs: API on :3007; DB seeded + migration 0022 applied; in .env PORTAL_AUTH_DEV_HEADER=true,
 # PORTAL_AUTH_DEV_LOGIN=true, and SUPABASE_JWT_SECRET set (used to mint test access tokens).
 set -u
 set +B
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 DBURL="${DATABASE_URL:-postgres://macbook@localhost:5432/edrion}"
 PA="$API/portal/auth"
 OWNER='owner@greenwood.edu'

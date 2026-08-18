@@ -72,7 +72,23 @@ export function usePeopleMutations(resource: string) {
   const client = usePortalClient();
   const { scope } = useScope();
   const qc = useQueryClient();
-  const invalidate = () => qc.invalidateQueries({ queryKey: ['people', resource] });
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['people'] });
+
+    // Students and staff are embedded throughout the academic graph (rosters, class counts,
+    // class teachers and subject teachers), so directory writes must refresh those consumers too.
+    if (resource === 'students' || resource === 'staff') {
+      qc.invalidateQueries({ queryKey: ['academics'] });
+      qc.invalidateQueries({ queryKey: ['class-roster'] });
+      qc.invalidateQueries({ queryKey: ['attendance'] });
+      qc.invalidateQueries({ queryKey: ['timetable'] });
+      qc.invalidateQueries({ queryKey: ['gradebook'] });
+      qc.invalidateQueries({ queryKey: ['reports'] });
+      qc.invalidateQueries({ queryKey: ['recipients'] });
+    }
+    if (resource === 'students') qc.invalidateQueries({ queryKey: ['fees'] });
+    if (resource === 'staff') qc.invalidateQueries({ queryKey: ['payroll'] });
+  };
 
   const create = useMutation({
     mutationFn: (body: Record<string, unknown>) => client.post(`/portal/people/${resource}`, scope, body),

@@ -58,23 +58,25 @@ export default function MessagesPage() {
   const active = useConversation(activeId);
   const messages = useMessages(activeId);
   const mut = useConversationMutations();
+  const messageRows = messages.data;
+  const refetchMessages = messages.refetch;
+  const markRead = mut.markRead;
 
   // Mark read whenever a conversation is opened / gains messages.
   useEffect(() => {
-    if (activeId) mut.markRead.mutate(activeId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeId, messages.data?.length]);
+    if (activeId) markRead.mutate(activeId);
+  }, [activeId, markRead, messageRows?.length]);
 
   // If the sidebar preview already shows a newer message, pull the thread immediately.
   useEffect(() => {
     if (!activeId) return;
     const summary = conversations.data?.items.find((c) => c.id === activeId);
     if (!summary?.lastMessageAt) return;
-    const latest = messages.data?.at(-1)?.createdAt;
+    const latest = messageRows?.at(-1)?.createdAt;
     if (!latest || new Date(summary.lastMessageAt).getTime() > new Date(latest).getTime()) {
-      void messages.refetch();
+      void refetchMessages();
     }
-  }, [activeId, conversations.data?.items, messages.data, messages.refetch]);
+  }, [activeId, conversations.data?.items, messageRows, refetchMessages]);
 
   useEffect(() => { setReplyTo(null); }, [activeId]);
 

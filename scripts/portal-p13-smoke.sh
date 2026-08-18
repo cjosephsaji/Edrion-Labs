@@ -14,11 +14,11 @@
 # Self-cleaning: created rows + the campus-admin-invited target are removed at the end. The seeded
 # functional demo users (nurse@/counselor@/…) are left in place.
 #
-# Prereqs: API on :3001, DB seeded (pnpm db:seed && seed:portal) + migration 0023 applied, and in
+# Prereqs: API on :3007, DB seeded (pnpm db:seed && seed:portal) + migration 0023 applied, and in
 # .env PORTAL_AUTH_DEV_HEADER=true.
 set -u
 set +B
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 DBURL="${DATABASE_URL:-postgres://macbook@localhost:5432/edrion}"
 P="$API/portal"
 US="$P/users"

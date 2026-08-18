@@ -54,7 +54,7 @@ export default function ActivityPage() {
                 {[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12" />)}
               </div>
             ) : isError ? (
-              <ErrorState description="Could not load the activity feed. Confirm the API is running on :3001." />
+              <ErrorState description="Could not load the activity feed. Confirm the API is running on :3007." />
             ) : items.length === 0 ? (
               <EmptyState title="No activity yet" description="Activity from across the platform will appear here." />
             ) : (

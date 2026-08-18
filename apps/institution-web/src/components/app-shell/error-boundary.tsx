@@ -22,7 +22,6 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error) {
-    // eslint-disable-next-line no-console
     console.error('[portal] render error:', error);
   }
 

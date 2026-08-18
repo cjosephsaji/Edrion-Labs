@@ -1,5 +1,5 @@
 'use client';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { StatusBadge, type Column } from '@edrion/ui';
 import { ResourceManager, type FilterDef, type ResourcePermissions } from '@/components/academics/resource-manager';
 import type { FieldDef } from '@/components/academics/resource-form';
@@ -8,6 +8,7 @@ import { StudentPortalInviteDialog } from '@/components/students/student-portal-
 import { UserProfileDialog } from '@/components/people/user-profile-dialog';
 import { usePermissions } from '@/lib/permissions';
 import { useClassOptions, useGradeLevelOptions } from '@/lib/academics';
+import type { ClassRow } from '@/lib/academics-types';
 import { usePeopleList, usePeopleMutations, type StudentRow } from '@/lib/people';
 import { formatPersonName } from '@/lib/person-name';
 import { useTerm } from '@/lib/term';
@@ -27,12 +28,34 @@ const STATUS_OPTIONS = [
   { value: 'alumni', label: 'Alumni' },
 ];
 
+function withPlacementFromClass(
+  body: Record<string, unknown>,
+  classes: ClassRow[],
+): Record<string, unknown> {
+  const classId = String(body.classId ?? '');
+  if (!classId) return body;
+  const cls = classes.find((item) => item.id === classId);
+  return cls ? { ...body, gradeLevelId: cls.gradeLevelId } : body;
+}
+
 export default function StudentsPage() {
   const { t, tp } = useTerm();
   const { can } = usePermissions();
   const canInvitePortal = can('student_portal.manage');
   const { data: grades } = useGradeLevelOptions();
   const { data: classes } = useClassOptions();
+  const classItems = useMemo(() => classes?.items ?? [], [classes?.items]);
+
+  const classOptions = useMemo(
+    () =>
+      classItems.map((c) => ({
+        value: c.id,
+        label:
+          [c.departmentName, c.gradeLevelName, c.termName, c.name].filter(Boolean).join(' · ') ||
+          c.name,
+      })),
+    [classItems],
+  );
 
   const filters = useMemo<FilterDef[]>(
     () => [
@@ -45,7 +68,7 @@ export default function StudentsPage() {
       {
         key: 'classId',
         label: `All ${tp('class')}`,
-        options: (classes?.items ?? []).map((c) => ({ value: c.id, label: c.name })),
+        options: classOptions,
       },
       {
         key: 'gender',
@@ -57,7 +80,7 @@ export default function StudentsPage() {
         ],
       },
     ],
-    [grades, classes, tp],
+    [grades, classOptions, tp],
   );
 
   const fields = useMemo<FieldDef[]>(
@@ -97,7 +120,8 @@ export default function StudentsPage() {
         label: t('class'),
         type: 'select',
         nullable: true,
-        options: (classes?.items ?? []).map((c) => ({ value: c.id, label: c.name })),
+        options: classOptions,
+        help: `Selecting a ${t('class').toLowerCase()} automatically keeps the ${t('gradeLevel').toLowerCase()} and enrolment in sync.`,
       },
       { name: 'rollNo', label: 'Roll no.', type: 'text', nullable: true, placeholder: 'Optional' },
       { name: 'enrollmentDate', label: 'Enrolment date', type: 'date', nullable: true },
@@ -105,7 +129,12 @@ export default function StudentsPage() {
       { name: 'phone', label: 'Phone', type: 'phone', nullable: true },
       { name: 'address', label: 'Address', type: 'textarea', nullable: true, placeholder: 'Optional' },
     ],
-    [grades, classes, t],
+    [grades, classOptions, t],
+  );
+
+  const submitStudent = useCallback(
+    (body: Record<string, unknown>) => withPlacementFromClass(body, classItems),
+    [classItems],
   );
 
   const columns = useMemo<Column<StudentRow>[]>(
@@ -157,6 +186,15 @@ export default function StudentsPage() {
           <StudentGuardiansPanel studentId={row.id} studentName={formatPersonName(row)} />
         </>
       )}
+      onSubmitCreate={async (body, { create }) => {
+        await create.mutateAsync(submitStudent(body));
+      }}
+      onSubmitUpdate={async (row, body, { update }) => {
+        await update.mutateAsync({
+          id: row.id,
+          body: { ...submitStudent(body), version: row.version },
+        });
+      }}
       toFormValues={(r) => ({
         admissionNo: r.admissionNo,
         firstName: r.firstName,

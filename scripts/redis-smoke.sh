@@ -4,7 +4,7 @@
 #   AI_MAX_RUNS_PER_EMPLOYEE_PER_DAY=2 RATE_LIMIT_MAX_UNAUTH=3 pnpm --filter @edrion/api dev
 # Requires AUTH_DEV_HEADER=true (owner via x-employee-email).
 set -u
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 DB="${DATABASE_URL:-postgres://macbook@localhost:5432/edrion}"
 H=(-H 'x-employee-email: owner@edrion.dev')
 INST="$(psql "$DB" -t -A -c "select id from institutions order by created_at limit 1")"

@@ -32,7 +32,7 @@ export default function AiControlCentrePage() {
         {overview.isLoading ? (
           <Skeleton className="h-24" />
         ) : overview.isError || !o ? (
-          <ErrorState description="Could not load AI governance. Confirm the API is running on :3001." />
+          <ErrorState description="Could not load AI governance. Confirm the API is running on :3007." />
         ) : (
           <>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">

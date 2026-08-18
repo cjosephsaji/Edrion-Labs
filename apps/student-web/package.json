@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "next lint",
+    "lint": "eslint .",
     "clean": "rm -rf .next .turbo"
   },
   "dependencies": {

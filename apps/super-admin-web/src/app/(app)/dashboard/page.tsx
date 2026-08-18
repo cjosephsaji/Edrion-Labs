@@ -71,7 +71,7 @@ export default function DashboardPage() {
           </div>
           {isError && (
             <p className="mt-2 text-sm text-danger">
-              Could not load metrics. Is the API running on :3001?
+              Could not load metrics. Is the API running on :3007?
             </p>
           )}
         </section>

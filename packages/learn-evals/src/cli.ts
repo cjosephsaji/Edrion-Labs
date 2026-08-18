@@ -62,12 +62,12 @@ async function main(): Promise<void> {
     const results = await Promise.all(batch.map(async ({ qualityCase, persona }) => {
       const transcript = mode === 'fixture'
         ? runFixtureSession({ runId, case: qualityCase, persona, runSeed: seed, mutation, resumed: resume, codeVersion })
-        : await runLiveSession({ apiBase: value('--api-base') ?? process.env.PETROS_QUALITY_API_BASE ?? 'http://localhost:3001/v1', auth: apiAuth, runId, qualityCase, persona, seed, limits: { maxCostMicros, maxTokens, maxDurationMs } });
+        : await runLiveSession({ apiBase: value('--api-base') ?? process.env.PETROS_QUALITY_API_BASE ?? 'http://localhost:3007/v1', auth: apiAuth, runId, qualityCase, persona, seed, limits: { maxCostMicros, maxTokens, maxDurationMs } });
       const deterministic = evaluateTranscript(transcript, qualityCase);
       let scores = deterministic.scores;
       if (mode === 'live' && !flag('--deterministic-only')) {
         try {
-          const judged = await judgeThroughGateway(transcript, { apiBase: value('--api-base') ?? process.env.PETROS_QUALITY_API_BASE ?? 'http://localhost:3001/v1', auth: apiAuth });
+          const judged = await judgeThroughGateway(transcript, { apiBase: value('--api-base') ?? process.env.PETROS_QUALITY_API_BASE ?? 'http://localhost:3007/v1', auth: apiAuth });
           transcript.usage.push(judged.usage);
           scores = scores.map((score) => {
             const judge = judged.scores.find((item) => item.dimension === score.dimension);

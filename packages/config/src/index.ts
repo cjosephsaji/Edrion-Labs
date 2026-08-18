@@ -43,11 +43,11 @@ export const apiEnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   SUPABASE_JWT_SECRET: z.string().optional(),
 
-  API_PORT: z.coerce.number().int().positive().default(3001),
-  API_BASE_URL: z.string().url().default('http://localhost:3001'),
+  API_PORT: z.coerce.number().int().positive().default(3007),
+  API_BASE_URL: z.string().url().default('http://localhost:3007'),
   API_CORS_ORIGINS: z
     .string()
-    .default('http://localhost:3000,http://localhost:3002,http://localhost:3003,http://localhost:3005')
+    .default('http://localhost:3006,http://localhost:3008,http://localhost:3009,http://localhost:3010,http://localhost:3011')
     .transform((s) => s.split(',').map((o) => o.trim())),
   SESSION_COOKIE_SECRET: z.string().min(16, 'SESSION_COOKIE_SECRET must be at least 16 chars'),
   /**
@@ -261,7 +261,7 @@ export function loadApiEnv(raw: NodeJS.ProcessEnv = process.env): ApiEnv {
 }
 
 export const publicWebEnvSchema = z.object({
-  NEXT_PUBLIC_API_BASE_URL: z.string().url().default('http://localhost:3001'),
+  NEXT_PUBLIC_API_BASE_URL: z.string().url().default('http://localhost:3007'),
   NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
 });

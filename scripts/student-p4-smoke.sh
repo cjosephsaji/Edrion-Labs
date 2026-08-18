@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Student Portal Plan 04 smoke — library, lab, achievements.
 set -u
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 STU="${STUDENT_EMAIL:-student@greenwood.edu}"
 pass=0; fail=0
 chk(){ if [ "$2" = "$3" ]; then echo "  PASS  $1 ($2)"; pass=$((pass+1)); else echo "  FAIL  $1 expected=$3 got=$2"; fail=$((fail+1)); fi; }

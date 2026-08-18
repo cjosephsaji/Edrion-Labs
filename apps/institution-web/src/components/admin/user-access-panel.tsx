@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { Button, Skeleton, Select, cn } from '@edrion/ui';
 import { useScope } from '@/lib/scope';
@@ -119,7 +119,7 @@ export function UserAccessPanel({
     });
   }
 
-  function directFromOverrides() {
+  const directFromOverrides = useCallback(() => {
     const directGrants: string[] = [];
     const directDenies: string[] = [];
     for (const [key, state] of overrides) {
@@ -127,7 +127,7 @@ export function UserAccessPanel({
       else if (state === 'deny') directDenies.push(key);
     }
     return { directGrants, directDenies };
-  }
+  }, [overrides]);
 
   const accessPayload = useMemo(() => {
     const { directGrants, directDenies } = canSetOverrides
@@ -139,7 +139,7 @@ export function UserAccessPanel({
       ...(canSetOverrides ? { directGrants, directDenies } : {}),
       ...(embedded ? { userVersion: user.version } : {}),
     };
-  }, [roleKeys, campusIds, overrides, embedded, user.version, canSetOverrides, user.directGrants, user.directDenies]);
+  }, [roleKeys, campusIds, embedded, user.version, canSetOverrides, user.directGrants, user.directDenies, directFromOverrides]);
 
   useEffect(() => {
     if (embedded && setSubmitPayload) {

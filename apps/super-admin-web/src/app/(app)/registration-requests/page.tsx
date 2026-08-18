@@ -102,7 +102,7 @@ export default function RegistrationRequestsPage() {
             <TableSkeleton rows={8} cols={7} />
           ) : isError ? (
             <div className="p-6">
-              <ErrorState description="Could not load registration requests. Confirm the API is running on :3001." />
+              <ErrorState description="Could not load registration requests. Confirm the API is running on :3007." />
             </div>
           ) : !data || data.items.length === 0 ? (
             <div className="p-6">

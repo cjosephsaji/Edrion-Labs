@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Exams & assignments questions: author → target → attempt → auto-grade → manual-grade smoke.
 #
-# Prereqs: API on :3001, DB migrated (0062), seeded portal users, PORTAL_AUTH_DEV_HEADER=true.
+# Prereqs: API on :3007, DB migrated (0062), seeded portal users, PORTAL_AUTH_DEV_HEADER=true.
 set -u
 set +B
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 EX="$API/portal/exams"
 AS="$API/portal/assignments"
 AC="$API/portal/academics"

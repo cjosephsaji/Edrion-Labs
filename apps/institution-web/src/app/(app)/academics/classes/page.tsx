@@ -62,7 +62,7 @@ export default function ClassesPage() {
         options: (years?.items ?? []).map((y) => ({ value: y.id, label: y.name })),
       },
     ],
-    [years, departments, levelOptions, termOptions, t, tp],
+    [years, departments, levelOptions, termOptions, tp],
   );
 
   const fields = useMemo<FieldDef[]>(
@@ -102,7 +102,7 @@ export default function ClassesPage() {
       { name: 'room', label: 'Room', type: 'text', nullable: true, placeholder: 'Optional' },
       { name: 'capacity', label: 'Capacity', type: 'number', min: 0, nullable: true, placeholder: 'Optional' },
     ],
-    [years, levelOptions, termOptions, teacherOptions, t],
+    [years, levelOptions, termOptions, teacherOptions, t, tp],
   );
 
   const submitClass = useCallback(

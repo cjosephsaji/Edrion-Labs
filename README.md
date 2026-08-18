@@ -24,7 +24,7 @@ pnpm install
 cp .env.example .env        # fill DATABASE_URL + SESSION_COOKIE_SECRET at minimum
 pnpm db:migrate             # apply migrations (through 0008) + append-only grants
 pnpm db:seed                # roles, permissions, owner employee, sample data
-pnpm dev                    # api on :3001, web on :3000
+pnpm dev                    # api on :3007, web on :3000
 ```
 
 Verify a change:
@@ -35,12 +35,12 @@ pnpm -r test                # vitest across all packages
 pnpm build                  # turbo build (web + api)
 ```
 
-- API docs (OpenAPI/Swagger): http://localhost:3001/docs
+- API docs (OpenAPI/Swagger): http://localhost:3007/docs
 - Dev auth: until Supabase sessions are wired, the API resolves the employee from an
   `x-employee-email` header (the web app sends `owner@edrion.dev`). Permissions are still
   loaded authoritatively from the DB — only the identity shortcut is dev-only.
 - Local smoke: `DISABLE_SUPPORT_SWEEP=1 pnpm --filter @edrion/api dev`, then
-  `curl -H 'x-employee-email: owner@edrion.dev' http://localhost:3001/v1/institutions`.
+  `curl -H 'x-employee-email: owner@edrion.dev' http://localhost:3007/v1/institutions`.
 
 ## Layout
 

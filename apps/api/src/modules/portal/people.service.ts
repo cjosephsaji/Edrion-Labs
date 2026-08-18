@@ -27,8 +27,8 @@ import {
   closeActiveStudentEnrollments,
   findCurrentYearId,
   insertStaffAssignment,
-  insertStudentEnrollment,
   loadClassScope,
+  upsertStudentEnrollment,
 } from './academic-scope-stamp';
 import { FeesRepository } from './fees.repository';
 import { PeopleRepository, type RefTable } from './people.repository';
@@ -66,8 +66,13 @@ export class PeopleService {
 
   async createStudent(ctx: PortalActionContext, input: CreateStudentInput) {
     await this.assertOptional(ctx, 'gradeLevels', input.gradeLevelId, 'grade level');
-    await this.assertOptional(ctx, 'classes', input.classId, 'class');
-    const campusId = this.createCampusId(ctx.scope);
+    const classScope = input.classId
+      ? await loadClassScope(this.db, input.classId, ctx.principal.institutionId)
+      : null;
+    if (input.classId && !classScope) {
+      throw new BadRequestException({ code: 'INVALID_REFERENCE', message: 'Unknown class' });
+    }
+    const campusId = this.createCampusId(ctx.scope) ?? classScope?.campusId ?? null;
     const row = await this.repo.insertStudent({
       institutionId: ctx.principal.institutionId,
       campusId,
@@ -79,7 +84,9 @@ export class PeopleService {
       dateOfBirth: input.dateOfBirth ?? null,
       email: input.email ?? null,
       phone: input.phone ?? null,
-      gradeLevelId: input.gradeLevelId ?? null,
+      // A class is the authoritative placement. Never allow the student directory to disagree
+      // with the class roster about which grade/year the student belongs to.
+      gradeLevelId: classScope?.gradeLevelId ?? input.gradeLevelId ?? null,
       classId: input.classId ?? null,
       rollNo: input.rollNo ?? null,
       address: input.address ?? null,
@@ -99,7 +106,13 @@ export class PeopleService {
     const existing = await this.repo.findStudent(id, ctx.principal.institutionId);
     this.assertInScope(existing?.campusId ?? null, existing, f);
     await this.assertOptional(ctx, 'gradeLevels', input.gradeLevelId, 'grade level');
-    await this.assertOptional(ctx, 'classes', input.classId, 'class');
+    const nextClassId = input.classId === undefined ? existing!.classId : input.classId;
+    const classScope = nextClassId
+      ? await loadClassScope(this.db, nextClassId, ctx.principal.institutionId)
+      : null;
+    if (nextClassId && !classScope) {
+      throw new BadRequestException({ code: 'INVALID_REFERENCE', message: 'Unknown class' });
+    }
     const updated = await this.repo.updateStudent(id, input.version, {
       admissionNo: input.admissionNo ?? existing!.admissionNo,
       firstName: input.firstName ?? existing!.firstName,
@@ -109,8 +122,10 @@ export class PeopleService {
       dateOfBirth: input.dateOfBirth === undefined ? existing!.dateOfBirth : input.dateOfBirth,
       email: input.email === undefined ? existing!.email : input.email,
       phone: input.phone === undefined ? existing!.phone : input.phone,
-      gradeLevelId: input.gradeLevelId === undefined ? existing!.gradeLevelId : input.gradeLevelId,
-      classId: input.classId === undefined ? existing!.classId : input.classId,
+      gradeLevelId:
+        classScope?.gradeLevelId ??
+        (input.gradeLevelId === undefined ? existing!.gradeLevelId : input.gradeLevelId),
+      classId: nextClassId,
       rollNo: input.rollNo === undefined ? existing!.rollNo : input.rollNo,
       address: input.address === undefined ? existing!.address : input.address,
       status: input.status ?? existing!.status,
@@ -118,11 +133,20 @@ export class PeopleService {
       updatedBy: ctx.principal.institutionUserId,
     });
     if (!updated) throw this.versionConflict();
-    const nextClassId = input.classId === undefined ? existing!.classId : input.classId;
-    if (nextClassId !== existing!.classId) {
+    const placementChanged =
+      nextClassId !== existing!.classId ||
+      updated.gradeLevelId !== existing!.gradeLevelId ||
+      updated.rollNo !== existing!.rollNo ||
+      input.enrollmentDate !== undefined;
+    if (placementChanged) {
       const today = new Date().toISOString().slice(0, 10);
       await closeActiveStudentEnrollments(this.db, id, today);
-      await this.ensureStudentEnrollment(ctx, updated, nextClassId ?? null, today);
+      await this.ensureStudentEnrollment(
+        ctx,
+        updated,
+        nextClassId ?? null,
+        input.enrollmentDate ?? updated.enrollmentDate ?? today,
+      );
     }
     await this.write(ctx, 'student.update', 'student', id, updated.campusId, {
       previousState: { name: this.fullName(existing!), status: existing!.status },
@@ -584,7 +608,7 @@ export class PeopleService {
         academicYearId = cls.academicYearId;
         termId = cls.termId;
         programmeLevelId = cls.programmeLevelId;
-        gradeLevelId = gradeLevelId ?? cls.gradeLevelId;
+        gradeLevelId = cls.gradeLevelId;
         campusId = campusId ?? cls.campusId;
       }
     }
@@ -593,7 +617,7 @@ export class PeopleService {
     }
     if (!academicYearId) return;
 
-    await insertStudentEnrollment(this.db, {
+    await upsertStudentEnrollment(this.db, {
       institutionId,
       campusId,
       studentId: student.id,
@@ -605,6 +629,7 @@ export class PeopleService {
       rollNo: student.rollNo,
       status: 'active',
       enrolledOn,
+      exitedOn: null,
       createdBy: ctx.principal.institutionUserId,
     });
   }

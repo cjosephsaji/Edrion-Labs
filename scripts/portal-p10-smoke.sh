@@ -22,10 +22,10 @@
 # Self-cleaning + idempotent: runs + announcements created carry a unique suffix and are deleted at the
 # end; the two seeded test users are (re)seeded at the start and removed at the end.
 #
-# Prereqs: API on :3001 (with the P10 module), DB migrated to 0020, and in .env PORTAL_AUTH_DEV_HEADER=true.
+# Prereqs: API on :3007 (with the P10 module), DB migrated to 0020, and in .env PORTAL_AUTH_DEV_HEADER=true.
 set -u
 set +B
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 DBURL="${DATABASE_URL:-postgres://macbook@localhost:5432/edrion}"
 CP="$API/portal/copilot"
 AN="$API/portal/announcements"

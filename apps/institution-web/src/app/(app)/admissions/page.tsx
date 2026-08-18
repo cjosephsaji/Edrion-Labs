@@ -95,7 +95,7 @@ export default function AdmissionsPage() {
       { key: 'appliedDate', header: 'Applied', sortable: true, render: (r) => <span className="tabular-nums text-text-muted">{r.appliedDate ?? '—'}</span> },
       { key: 'status', header: 'Status', sortable: true, render: (r) => <StatusBadge status={r.status} /> },
     ],
-    [],
+    [t],
   );
 
   const filters = useMemo<FilterDef[]>(
@@ -110,7 +110,7 @@ export default function AdmissionsPage() {
         ],
       },
     ],
-    [t],
+    [],
   );
 
   const detail = useMemo(

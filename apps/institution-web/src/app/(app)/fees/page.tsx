@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable react-hooks/exhaustive-deps -- compact legacy tabs list their closure inputs directly */
 import { useEffect, useMemo, useState } from 'react';
 import { type Column } from '@edrion/ui';
 import { ResourceManager, type FilterDef, type ResourcePermissions } from '@/components/academics/resource-manager';

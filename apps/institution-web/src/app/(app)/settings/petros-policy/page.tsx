@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BookOpenCheck, Eye, History, RotateCcw, Save, ShieldCheck } from 'lucide-react';
 import type { PetrosInstitutionPolicyConfig, PetrosResolvedPolicy } from '@edrion/schemas';
 import { Button, Card, ErrorState, Skeleton } from '@edrion/ui';
@@ -39,7 +39,7 @@ export default function PetrosPolicyPage() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true); setError('');
     try {
       const next = await client.get<Dashboard>('/portal/petros/institutional/policy', scope);
@@ -47,8 +47,8 @@ export default function PetrosPolicyPage() {
       setSelectedVersion(next.versions.find((row) => row.status === 'draft')?.id ?? next.versions[0]?.id ?? '');
     } catch (caught) { setError(formatPortalError(caught, 'Petros policy could not load.')); }
     finally { setLoading(false); }
-  }
-  useEffect(() => { void load(); }, [client, scope]);
+  }, [client, scope]);
+  useEffect(() => { void load(); }, [load]);
 
   const selected = useMemo(() => data?.versions.find((row) => row.id === selectedVersion) ?? null, [data, selectedVersion]);
   const policyScope = () => ({

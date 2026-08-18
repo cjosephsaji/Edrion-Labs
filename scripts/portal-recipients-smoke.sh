@@ -12,9 +12,9 @@
 #      labels; publishing fans out a notification stamped with recipient_count + target_summary.
 #   6. permission gating — a teacher (no announcements.send) can't preview.
 #
-# Self-cleaning. Prereqs: API on :3001 with PORTAL_AUTH_DEV_HEADER=true; DB seeded + migration 0028.
+# Self-cleaning. Prereqs: API on :3007 with PORTAL_AUTH_DEV_HEADER=true; DB seeded + migration 0028.
 set -u
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 OWNER="${OWNER:-owner@uis.edu.in}"
 TEACHER="${TEACHER:-teacher@uis.edu.in}"
 INST='institution'

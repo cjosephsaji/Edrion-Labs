@@ -838,8 +838,7 @@ function DefaultStepPanel({
   const { data: gradeLevels } = useGradeLevelOptions();
   const { data: classes } = useClassOptions();
   const { options: levelOptions } = useProgrammeLevelSelectOptions();
-  const cfg = STEP_CFG[step.key];
-  if (!cfg) return null;
+  const cfg = STEP_CFG[step.key]!;
   const fields = useMemo(() => {
     const deptOptions = (departments?.items ?? []).map((d) => ({ value: d.id, label: d.name }));
     const yearOptions = (years?.items ?? []).map((y) => ({ value: y.id, label: y.name }));

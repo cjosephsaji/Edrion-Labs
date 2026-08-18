@@ -36,6 +36,7 @@ import type {
   NewProgrammeSubject,
   NewSubject,
   ProgrammeSubject,
+  Student,
   Subject,
 } from '@edrion/database';
 import type { AcademicsListQuery, RosterCandidateQuery } from '@edrion/schemas';
@@ -277,9 +278,10 @@ export class AcademicsRepository {
     const t = schema.academicYears;
     const conds: SQL[] = [eq(t.institutionId, institutionId), eq(t.isCurrent, true)];
     conds.push(campusId === null ? isNull(t.campusId) : eq(t.campusId, campusId));
-    await this.db.update(t).set({ isCurrent: false, updatedAt: new Date() }).where(and(...conds, eq(t.isCurrent, true)));
-    // exceptId is re-set to true by the caller's update; excluding it here is unnecessary.
-    void exceptId;
+    await this.db
+      .update(t)
+      .set({ isCurrent: false, updatedAt: new Date() })
+      .where(and(...conds, notInArray(t.id, [exceptId])));
   }
 
   deleteAcademicYear = (id: string, version: number) => this.del(schema.academicYears, id, version);
@@ -438,8 +440,10 @@ export class AcademicsRepository {
     const t = schema.academicTerms;
     const conds: SQL[] = [eq(t.institutionId, institutionId), eq(t.isCurrent, true)];
     conds.push(campusId === null ? isNull(t.campusId) : eq(t.campusId, campusId));
-    await this.db.update(t).set({ isCurrent: false, updatedAt: new Date() }).where(and(...conds));
-    void exceptId;
+    await this.db
+      .update(t)
+      .set({ isCurrent: false, updatedAt: new Date() })
+      .where(and(...conds, notInArray(t.id, [exceptId])));
   }
 
   deleteAcademicTerm = (id: string, version: number) => this.del(schema.academicTerms, id, version);
@@ -1322,6 +1326,17 @@ export class AcademicsRepository {
       .leftJoin(schema.departments, eq(schema.departments.id, ps.departmentId))
       .leftJoin(schema.departmentGradeLevels, eq(schema.departmentGradeLevels.id, ps.programmeLevelId))
       .leftJoin(schema.gradeLevels, eq(schema.gradeLevels.id, schema.departmentGradeLevels.gradeLevelId))
+      .leftJoin(
+        schema.programmeTermSlots,
+        or(
+          eq(ps.slotId, schema.programmeTermSlots.id),
+          and(
+            isNull(ps.slotId),
+            eq(ps.programmeLevelId, schema.programmeTermSlots.programmeLevelId),
+            eq(ps.semesterSequence, schema.programmeTermSlots.sequenceInYear),
+          ),
+        ),
+      )
       .where(and(...conds))
       .orderBy(asc(ps.semesterSequence), asc(ps.sequence), asc(schema.subjects.name));
 
@@ -1507,6 +1522,7 @@ export class AcademicsRepository {
   async updateClassRoster(
     institutionId: string,
     classId: string,
+    gradeLevelId: string,
     add: string[],
     remove: string[],
     actorId: string | null,
@@ -1519,7 +1535,7 @@ export class AcademicsRepository {
       if (add.length > 0) {
         const rows = await tx
           .update(t)
-          .set({ classId, updatedBy: actorId, updatedAt: new Date() })
+          .set({ classId, gradeLevelId, updatedBy: actorId, updatedAt: new Date() })
           .where(and(eq(t.institutionId, institutionId), inArray(t.id, add)))
           .returning({ id: t.id });
         added = rows.length;
@@ -1540,6 +1556,24 @@ export class AcademicsRepository {
     });
   }
 
+  /** Keep every current student row aligned when a class is moved to another grade/year. */
+  async syncClassStudentGrades(
+    institutionId: string,
+    classId: string,
+    gradeLevelId: string,
+    actorId: string | null,
+  ): Promise<void> {
+    await this.db
+      .update(schema.students)
+      .set({ gradeLevelId, updatedBy: actorId, updatedAt: new Date() })
+      .where(
+        and(
+          eq(schema.students.institutionId, institutionId),
+          eq(schema.students.classId, classId),
+        ),
+      );
+  }
+
   /** Every one of these student ids exists inside the institution (FK pre-check for bulk writes). */
   async countStudentsInInstitution(institutionId: string, ids: string[]): Promise<number> {
     if (ids.length === 0) return 0;
@@ -1549,6 +1583,16 @@ export class AcademicsRepository {
       .from(t)
       .where(and(eq(t.institutionId, institutionId), inArray(t.id, ids)));
     return Number(row?.value ?? 0);
+  }
+
+  async findStudentForRoster(id: string, institutionId: string): Promise<Student | undefined> {
+    const t = schema.students;
+    const [row] = await this.db
+      .select()
+      .from(t)
+      .where(and(eq(t.id, id), eq(t.institutionId, institutionId)))
+      .limit(1);
+    return row;
   }
 
   async findCurrentAcademicYear(institutionId: string, campusIds: CampusFilter) {

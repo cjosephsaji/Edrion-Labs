@@ -16,12 +16,12 @@
 #   9. cross-device resume — POST /resume + /resume/verify rotates the resume token.
 #  10. geo           — GET /geo returns a JSON object (may be empty on localhost).
 #
-# Prereqs: API on :3001 booted with REGISTRATION_OTP_DEV_RETURN=true; Postgres with at least one
+# Prereqs: API on :3007 booted with REGISTRATION_OTP_DEV_RETURN=true; Postgres with at least one
 # institution in an applicable status (active/trial) that has campuses/years/grades; migrations
 # through 0032 applied. API-only smoke (no browser); the funnel UI lives in apps/public-web.
 set -u
 set +B
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 DBURL="${DATABASE_URL:-postgres://macbook@localhost:5432/edrion}"
 REDIS="${REDIS_URL:-redis://localhost:6379}"
 RUN="$(date +%s)"

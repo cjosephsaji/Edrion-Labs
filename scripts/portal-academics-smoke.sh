@@ -12,11 +12,11 @@
 # Self-cleaning + idempotent: every row is created with a unique run suffix and deleted at the end
 # (versions are re-read from the API before deleting, so it survives version drift).
 #
-# Prereqs: API on :3001, DB seeded + `pnpm --filter @edrion/database seed:portal`, and in .env
+# Prereqs: API on :3007, DB seeded + `pnpm --filter @edrion/database seed:portal`, and in .env
 #   PORTAL_AUTH_DEV_HEADER=true (dev only).
 set -u
 set +B  # disable brace expansion so JSON bodies like {"a":1,"b":2} aren't split on commas
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 AC="$API/portal/academics"
 OWNER='owner@greenwood.edu'      # institution_owner (wildcard)
 TEACHER='teacher@greenwood.edu'  # academics.view, NOT academics.manage

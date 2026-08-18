@@ -104,7 +104,7 @@ export default function FeaturesPage() {
             <TableSkeleton rows={6} cols={5} />
           ) : isError ? (
             <div className="p-6">
-              <ErrorState description="Could not load features. Confirm the API is running on :3001." />
+              <ErrorState description="Could not load features. Confirm the API is running on :3007." />
             </div>
           ) : !data || data.items.length === 0 ? (
             <div className="p-6">

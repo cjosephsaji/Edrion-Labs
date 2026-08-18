@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Programme structure layer smoke (department_grade_levels + programme-structure tree).
 #
-# Prereqs: API on :3001, DB migrated (0044), PORTAL_AUTH_DEV_HEADER=true, UIS seed.
+# Prereqs: API on :3007, DB migrated (0044), PORTAL_AUTH_DEV_HEADER=true, UIS seed.
 set -u
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 AC="$API/portal/academics"
 OWNER="${OWNER:-owner@uis.edu.in}"
 TEACHER="${TEACHER:-teacher@uis.edu.in}"

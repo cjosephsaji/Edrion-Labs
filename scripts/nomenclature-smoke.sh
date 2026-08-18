@@ -6,9 +6,9 @@
 #   2. POST /portal/settings/nomenclature stores overrides that win over the preset.
 #   3. academic-terms CRUD is gated by academics.view / academics.manage.
 #
-# Prereqs: API on :3001, DB seeded, PORTAL_AUTH_DEV_HEADER=true.
+# Prereqs: API on :3007, DB seeded, PORTAL_AUTH_DEV_HEADER=true.
 set -u
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 AC="$API/portal/academics"
 OWNER="${OWNER:-owner@uis.edu.in}"
 TEACHER="${TEACHER:-teacher@uis.edu.in}"

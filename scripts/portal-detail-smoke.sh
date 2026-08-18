@@ -11,9 +11,9 @@
 #
 # Read-only: creates nothing, deletes nothing. Needs seeded students + a few health/counseling rows.
 #
-# Prereqs: API on :3001 started with PORTAL_AUTH_DEV_HEADER=true; DB seeded (seed-portal).
+# Prereqs: API on :3007 started with PORTAL_AUTH_DEV_HEADER=true; DB seeded (seed-portal).
 set -u
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 OWNER="${OWNER:-owner@uis.edu.in}"         # institution_owner (wildcard perms)
 TEACHER="${TEACHER:-teacher@uis.edu.in}"   # no health_records.view
 INST='institution'

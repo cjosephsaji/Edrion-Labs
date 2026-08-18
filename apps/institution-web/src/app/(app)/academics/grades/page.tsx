@@ -17,8 +17,6 @@ export default function GradeLevelsPage() {
     if (PROGRAMME_TYPES.has(type)) router.replace('/academics/programme-structure');
   }, [type, router]);
 
-  if (PROGRAMME_TYPES.has(type)) return null;
-
   const { data } = useDepartmentOptions();
 
   const filters = useMemo<FilterDef[]>(
@@ -56,6 +54,8 @@ export default function GradeLevelsPage() {
     ],
     [data, t],
   );
+
+  if (PROGRAMME_TYPES.has(type)) return null;
 
   return (
     <ResourceManager<GradeLevelRow>

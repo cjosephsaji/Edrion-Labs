@@ -37,7 +37,7 @@ export default function IntegrationsPage() {
         {isLoading ? (
           <TableSkeleton />
         ) : isError || !data ? (
-          <ErrorState description="Could not load webhook endpoints. Confirm the API is running on :3001." />
+          <ErrorState description="Could not load webhook endpoints. Confirm the API is running on :3007." />
         ) : data.items.length === 0 ? (
           <EmptyState title="No endpoints" description="Create one with “New endpoint”." />
         ) : (

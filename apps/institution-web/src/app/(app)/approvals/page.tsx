@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { CheckCircle2, Clock3, FileCheck2, Inbox, Paperclip, UserCheck } from 'lucide-react';
 import { Badge, Button, PermissionDenied, Skeleton } from '@edrion/ui';
@@ -37,6 +37,7 @@ type Composer = 'reject' | 'request-info' | 'note' | 'reassign' | null;
 export default function ApprovalsPage() {
   const { can } = usePermissions();
   const search = useSearchParams();
+  const grievanceLane = search.get('lane') === 'grievance';
   const canReview = can('requests.review');
   const canApproveReleases = can('gradebook.approve_release');
   const canRecomputeApproval = can('results.recompute_approval');
@@ -44,26 +45,32 @@ export default function ApprovalsPage() {
     canReview ? 'inbox' : canApproveReleases ? 'releases' : 'recompute',
   );
 
-  if (!canReview && !canApproveReleases && !canRecomputeApproval) {
-    return <><Topbar title="Approvals" /><div className="p-6"><PermissionDenied description="You don’t have permission to review approvals." /></div></>;
+  if ((grievanceLane && !canReview) || (!canReview && !canApproveReleases && !canRecomputeApproval)) {
+    return <><Topbar title={grievanceLane ? 'Grievances' : 'Approvals'} /><div className="p-6"><PermissionDenied description={`You don’t have permission to review ${grievanceLane ? 'grievances' : 'approvals'}.`} /></div></>;
   }
 
   return (
     <>
-      <Topbar title="Approvals" />
+      <Topbar title={grievanceLane ? 'Grievances' : 'Approvals'} />
       <div className="page-enter flex min-h-0 flex-1 flex-col p-4 lg:p-6">
-        <div className="mb-4 flex items-center gap-2">
+        {!grievanceLane && <div className="mb-4 flex items-center gap-2">
           {canReview ? <Tab active={tab === 'inbox'} onClick={() => setTab('inbox')}>Inbox</Tab> : null}
           {canReview && can('documents.issue') ? <Tab active={tab === 'issuance'} onClick={() => setTab('issuance')}>Issuance</Tab> : null}
           {canReview && can('documents.issue') ? <Tab active={tab === 'batches'} onClick={() => setTab('batches')}>Batches</Tab> : null}
           {canApproveReleases ? <Tab active={tab === 'releases'} onClick={() => setTab('releases')}>Mark releases</Tab> : null}
           {canRecomputeApproval ? <Tab active={tab === 'recompute'} onClick={() => setTab('recompute')}>Term recompute</Tab> : null}
-        </div>
-        {tab === 'inbox' && canReview ? <InboxView initialRequestId={search.get('request')} /> : null}
-        {tab === 'issuance' && canReview ? <IssuanceView /> : null}
-        {tab === 'batches' && canReview ? <BatchesView /> : null}
-        {tab === 'releases' && canApproveReleases ? <ReleaseApprovalsView /> : null}
-        {tab === 'recompute' && canRecomputeApproval ? <TermRecomputeApprovalsView /> : null}
+        </div>}
+        {grievanceLane ? (
+          <InboxView initialRequestId={search.get('request')} lockType="grievance" heading="Grievance inbox" />
+        ) : (
+          <>
+            {tab === 'inbox' && canReview ? <InboxView initialRequestId={search.get('request')} /> : null}
+            {tab === 'issuance' && canReview ? <IssuanceView /> : null}
+            {tab === 'batches' && canReview ? <BatchesView /> : null}
+            {tab === 'releases' && canApproveReleases ? <ReleaseApprovalsView /> : null}
+            {tab === 'recompute' && canRecomputeApproval ? <TermRecomputeApprovalsView /> : null}
+          </>
+        )}
       </div>
     </>
   );
@@ -71,18 +78,6 @@ export default function ApprovalsPage() {
 
 function Tab({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return <button type="button" onClick={onClick} className={`rounded-full px-4 py-2 text-sm font-semibold ${active ? 'bg-primary text-primary-foreground' : 'bg-surface-elevated text-text-secondary hover:bg-primary-soft'}`}>{children}</button>;
-}
-
-export function RequestsInboxView({
-  lockType,
-  heading = 'Requests inbox',
-  initialRequestId,
-}: {
-  lockType?: string;
-  heading?: string;
-  initialRequestId: string | null;
-}) {
-  return <InboxView initialRequestId={initialRequestId} lockType={lockType} heading={heading} />;
 }
 
 function InboxView({
@@ -105,13 +100,13 @@ function InboxView({
 
   const list = usePortalRequests(filters);
   const [selectedId, setSelectedId] = useState<string | null>(initialRequestId);
-  const items = list.data?.items ?? [];
+  const items = useMemo(() => list.data?.items ?? [], [list.data?.items]);
 
   useEffect(() => {
     if (list.isLoading) return;
     if (!selectedId && items[0]) setSelectedId(items[0].id);
     if (selectedId && !items.some((item) => item.id === selectedId)) setSelectedId(items[0]?.id ?? null);
-  }, [items, selectedId]);
+  }, [items, selectedId, list.isLoading]);
 
   useEffect(() => {
     function keyboard(event: KeyboardEvent) {
@@ -191,7 +186,7 @@ function RequestDetail({ id }: { id: string | null }) {
     }
     const sessions = Array.isArray(request.context?.sessions) ? request.context.sessions : [];
     setAcceptedIds(sessions.map((session) => String((session as Record<string, unknown>).session_id)));
-  }, [request?.id, request?.type, request?.context]);
+  }, [request]);
 
   async function act(name: string, body: Record<string, unknown> = {}) {
     if (!request) return;

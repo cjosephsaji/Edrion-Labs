@@ -5,7 +5,9 @@ import { SurfaceCard } from '@/components/ui/states';
 
 type Row = {
   id: string;
-  name?: string | number | null; code?: string | number | null; instructorName?: string | number | null
+  name?: string | number | null;
+  code?: string | number | null;
+  professorName?: string | number | null;
 };
 
 export default function Page() {
@@ -21,7 +23,7 @@ export default function Page() {
         <SurfaceCard>
           <p className="font-medium text-[var(--s-ink)]">{item.name ?? 'Untitled'}</p>
           <p className="mt-1 text-xs text-[var(--s-muted)]">
-            {[item.code ?? '', item.instructorName ?? ''].filter(Boolean).join(' · ') || '—'}
+            {[item.code ?? '', item.professorName ?? ''].filter(Boolean).join(' · ') || '—'}
           </p>
         </SurfaceCard>
       )}

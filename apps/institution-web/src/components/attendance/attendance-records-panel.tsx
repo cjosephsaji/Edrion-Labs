@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button, Skeleton, cn, useToast } from '@edrion/ui';
 import { usePermissions } from '@/lib/permissions';
 import { usePeopleList, type StudentRow } from '@/lib/people';
@@ -43,7 +43,7 @@ export function AttendanceRecordsPanel({
   const [marks, setMarks] = useState<Record<string, AttendanceStatus>>({});
   const [dirty, setDirty] = useState(false);
 
-  const roster = students?.items ?? [];
+  const roster = useMemo(() => students?.items ?? [], [students?.items]);
 
   useEffect(() => {
     const byStudent = new Map((records ?? []).map((r) => [r.studentId, r.status]));

@@ -19,7 +19,7 @@ export default function PlatformRolesPage() {
         {isLoading ? (
           <TableSkeleton />
         ) : isError || !data ? (
-          <ErrorState description="Could not load platform roles. Confirm the API is running on :3001." />
+          <ErrorState description="Could not load platform roles. Confirm the API is running on :3007." />
         ) : data.items.length === 0 ? (
           <EmptyState title="No roles" description="No platform roles are defined." />
         ) : (

@@ -1,4 +1,4 @@
-import { and, eq, schema, type Database } from '@edrion/database';
+import { and, eq, isNull, schema, type Database } from '@edrion/database';
 import type { CampusFilter } from './portal-scope';
 import { scopeConds } from './portal-scope';
 
@@ -138,11 +138,49 @@ export async function closeActiveStudentEnrollments(
     );
 }
 
-export async function insertStudentEnrollment(
+/**
+ * Keep the single placement row for a student/year/term current. A student can move between
+ * sections inside the same term, so insert-only semantics are insufficient: the partial unique
+ * indexes correctly identify the row, but an old transferred row must be reactivated and updated.
+ */
+export async function upsertStudentEnrollment(
   db: Database,
   values: typeof schema.studentEnrollments.$inferInsert,
 ): Promise<void> {
-  await db.insert(schema.studentEnrollments).values(values).onConflictDoNothing();
+  const t = schema.studentEnrollments;
+  const termCondition = values.termId ? eq(t.termId, values.termId) : isNull(t.termId);
+  const [existing] = await db
+    .select({ id: t.id })
+    .from(t)
+    .where(
+      and(
+        eq(t.studentId, values.studentId),
+        eq(t.academicYearId, values.academicYearId),
+        termCondition,
+      ),
+    )
+    .limit(1);
+
+  if (existing) {
+    await db
+      .update(t)
+      .set({
+        campusId: values.campusId ?? null,
+        programmeLevelId: values.programmeLevelId ?? null,
+        gradeLevelId: values.gradeLevelId ?? null,
+        classId: values.classId ?? null,
+        rollNo: values.rollNo ?? null,
+        status: values.status ?? 'active',
+        enrolledOn: values.enrolledOn ?? null,
+        exitedOn: values.exitedOn ?? null,
+        updatedBy: values.createdBy ?? null,
+        updatedAt: new Date(),
+      })
+      .where(eq(t.id, existing.id));
+    return;
+  }
+
+  await db.insert(t).values(values);
 }
 
 export async function insertStaffAssignment(

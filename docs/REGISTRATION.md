@@ -105,7 +105,7 @@ the future onboarding module.
 - Unit: `pnpm --filter @edrion/api test` (OTP hashing/expiry/lockout/cooldown, submit gating,
   resume-token guard, reject path).
 - Live: boot the API with `AUTH_DEV_HEADER=true REGISTRATION_OTP_DEV_RETURN=true` (and, to avoid the
-  shared IP rate-bucket, `RATE_LIMIT_ENABLED=false`) on :3001, then `bash scripts/registration-smoke.sh`
+  shared IP rate-bucket, `RATE_LIMIT_ENABLED=false`) on :3007, then `bash scripts/registration-smoke.sh`
   — drives draft→OTP→verify→submit→review→approve and asserts the institution + campus + admin +
   6-item checklist + audit rows. Expect `PASS=29 FAIL=0`.
 - UI: run `pnpm --filter @edrion/public-web dev` and load `http://localhost:3003/register` (premium

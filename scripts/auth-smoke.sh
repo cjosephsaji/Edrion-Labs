@@ -10,10 +10,10 @@
 # Non-destructive: sensitive calls use bad/empty bodies so the recent-auth gate is exercised
 # without performing the real mutation; owner lockout is reset at the end.
 #
-# Prereqs: API running on :3001, DB seeded, and in .env:
+# Prereqs: API running on :3007, DB seeded, and in .env:
 #   SUPABASE_JWT_SECRET set, AUTH_DEV_HEADER=true, AUTH_DEV_LOGIN=true (dev only).
 set -u
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 DB="${DATABASE_URL:-postgres://macbook@localhost:5432/edrion}"
 SECRET="$(grep -E '^SUPABASE_JWT_SECRET=' .env | head -1 | cut -d= -f2-)"
 OWNER_SUB='00000000-0000-0000-0000-000000000001'   # seeded owner.auth_user_id

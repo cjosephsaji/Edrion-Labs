@@ -93,7 +93,7 @@ export default function SubscriptionsPage() {
           {isLoading ? (
             <TableSkeleton rows={8} cols={6} />
           ) : isError ? (
-            <div className="p-6"><ErrorState description="Could not load subscriptions. Confirm the API is running on :3001." /></div>
+            <div className="p-6"><ErrorState description="Could not load subscriptions. Confirm the API is running on :3007." /></div>
           ) : !data || data.items.length === 0 ? (
             <div className="p-6"><EmptyState title="No subscriptions found" description={search || status || cycle ? 'Try clearing filters.' : 'Subscriptions appear here once institutions are on a plan.'} /></div>
           ) : (

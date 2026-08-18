@@ -65,7 +65,7 @@ export default function AiAuditPage() {
             <TableSkeleton rows={6} cols={6} />
           ) : isError ? (
             <div className="p-6">
-              <ErrorState description="Could not load AI runs. Confirm the API is running on :3001." />
+              <ErrorState description="Could not load AI runs. Confirm the API is running on :3007." />
             </div>
           ) : runs.length === 0 ? (
             <div className="p-6">

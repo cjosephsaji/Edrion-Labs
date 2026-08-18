@@ -20,7 +20,7 @@ export default function SystemHealthPage() {
         {isLoading ? (
           <Skeleton className="h-24" />
         ) : isError || !data ? (
-          <ErrorState description="Could not load system health. Confirm the API is running on :3001." />
+          <ErrorState description="Could not load system health. Confirm the API is running on :3007." />
         ) : (
           <>
             <div className="flex items-center gap-2">

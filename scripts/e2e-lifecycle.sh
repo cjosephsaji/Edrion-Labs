@@ -12,7 +12,7 @@
 #
 # Run from repo root with the API up (AUTH_DEV_HEADER=true) and Postgres seeded.
 set -u
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 DB="${DATABASE_URL:-postgres://macbook@localhost:5432/edrion}"
 EMAIL="${EMPLOYEE_EMAIL:-owner@edrion.dev}"
 H=(-H "x-employee-email: $EMAIL" -H 'Content-Type: application/json')

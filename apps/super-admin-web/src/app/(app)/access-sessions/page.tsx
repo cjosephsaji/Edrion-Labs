@@ -60,7 +60,7 @@ export default function AccessSessionsPage() {
             <TableSkeleton rows={8} cols={7} />
           ) : isError || !data ? (
             <div className="p-6">
-              <ErrorState description="Could not load access sessions. Confirm the API is running on :3001." />
+              <ErrorState description="Could not load access sessions. Confirm the API is running on :3007." />
             </div>
           ) : (
             <div className="p-1">

@@ -272,7 +272,7 @@ identity, never authorisation. Two env-gated dev escape hatches (`AUTH_DEV_HEADE
 pnpm install
 pnpm db:migrate
 pnpm db:seed
-pnpm dev          # turbo runs api (:3001) + super-admin-web (:3000)
+pnpm dev          # turbo runs api (:3007) + super-admin-web (:3000)
 ```
 
 Env in `.env.example`. Live Supabase optional for dev: the database package targets any

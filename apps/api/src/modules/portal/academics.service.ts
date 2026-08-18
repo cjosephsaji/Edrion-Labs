@@ -34,7 +34,11 @@ import { AUDIT_WRITER, DATABASE } from '../../common/tokens';
 import type { Database } from '@edrion/database';
 import { AcademicsRepository, type Page, type ProgrammeStructureDepartment } from './academics.repository';
 import { LabScheduleSyncService } from './lab-schedule-sync.service';
-import { insertStaffAssignment } from './academic-scope-stamp';
+import {
+  closeActiveStudentEnrollments,
+  insertStaffAssignment,
+  upsertStudentEnrollment,
+} from './academic-scope-stamp';
 import { basePortalAudit, type PortalActionContext } from './portal-action-context';
 
 const MODULE = 'portal-academics';
@@ -115,7 +119,6 @@ export class AcademicsService {
     if (!updated) throw this.versionConflict();
     if (updated.isCurrent) {
       await this.repo.clearCurrentAcademicYear(ctx.principal.institutionId, updated.campusId, updated.id);
-      await this.repo.updateAcademicYear(updated.id, updated.version, { isCurrent: true });
     }
     await this.write(ctx, 'academic_year.update', 'academic_year', id, updated.campusId, {
       previousState: { name: existing!.name, status: existing!.status },
@@ -199,7 +202,6 @@ export class AcademicsService {
     if (!updated) throw this.versionConflict();
     if (updated.isCurrent) {
       await this.repo.clearCurrentAcademicTerm(ctx.principal.institutionId, updated.campusId, updated.id);
-      await this.repo.updateAcademicTerm(updated.id, updated.version, { isCurrent: true });
     }
     await this.write(ctx, 'academic_term.update', 'academic_term', id, updated.campusId, {
       previousState: { name: existing!.name, status: existing!.status },
@@ -595,6 +597,8 @@ export class AcademicsService {
     const departmentId = link.departmentId ?? existing!.departmentId;
     const semesterSequence = input.semesterSequence ?? existing!.semesterSequence;
     const subjectId = input.subjectId ?? existing!.subjectId;
+    const slot = await this.repo.findProgrammeTermSlotBySequence(programmeLevelId, semesterSequence);
+    const slotId = slot?.id ?? null;
 
     const slotMoved =
       programmeLevelId !== existing!.programmeLevelId ||
@@ -619,6 +623,7 @@ export class AcademicsService {
       departmentId,
       programmeLevelId,
       semesterSequence,
+      slotId,
       subjectId,
       credits: input.credits === undefined ? existing!.credits : input.credits,
       isElective: input.isElective ?? existing!.isElective,
@@ -678,6 +683,27 @@ export class AcademicsService {
     await this.assertRef(ctx, 'gradeLevels', input.gradeLevelId, 'grade level');
     let programmeLevelId = input.programmeLevelId ?? null;
     let termId = input.termId ?? null;
+    const term = termId
+      ? await this.repo.findAcademicTerm(termId, ctx.principal.institutionId)
+      : null;
+    if (termId && !term) {
+      throw new BadRequestException({ code: 'INVALID_REFERENCE', message: 'Unknown term.' });
+    }
+    if (term && term.academicYearId !== input.academicYearId) {
+      throw new BadRequestException({
+        code: 'INVALID_ACADEMIC_YEAR',
+        message: 'The selected semester does not belong to this academic year.',
+      });
+    }
+    if (term?.programmeLevelId) {
+      if (programmeLevelId && programmeLevelId !== term.programmeLevelId) {
+        throw new BadRequestException({
+          code: 'INVALID_PROGRAMME_LEVEL',
+          message: 'The selected semester does not belong to this programme year.',
+        });
+      }
+      programmeLevelId = term.programmeLevelId;
+    }
     if (programmeLevelId) {
       const pl = await this.requireProgrammeLevel(ctx, programmeLevelId);
       if (input.gradeLevelId !== pl.gradeLevelId) {
@@ -688,9 +714,7 @@ export class AcademicsService {
       }
     }
     if (termId) {
-      await this.assertRef(ctx, 'academicTerms', termId, 'term');
       if (programmeLevelId) {
-        const term = await this.repo.findAcademicTerm(termId, ctx.principal.institutionId);
         if (term?.programmeLevelId && term.programmeLevelId !== programmeLevelId) {
           throw new BadRequestException({
             code: 'INVALID_PROGRAMME_LEVEL',
@@ -728,23 +752,44 @@ export class AcademicsService {
     this.assertInScope(existing?.campusId ?? null, existing, f);
     if (input.academicYearId) await this.assertRef(ctx, 'academicYears', input.academicYearId, 'academic year');
     if (input.gradeLevelId) await this.assertRef(ctx, 'gradeLevels', input.gradeLevelId, 'grade level');
-    const programmeLevelId =
+    let programmeLevelId =
       input.programmeLevelId !== undefined ? input.programmeLevelId : existing!.programmeLevelId;
     const termId = input.termId !== undefined ? input.termId : existing!.termId;
+    const academicYearId = input.academicYearId ?? existing!.academicYearId;
+    const term = termId
+      ? await this.repo.findAcademicTerm(termId, ctx.principal.institutionId)
+      : null;
+    if (termId && !term) {
+      throw new BadRequestException({ code: 'INVALID_REFERENCE', message: 'Unknown term.' });
+    }
+    if (term && term.academicYearId !== academicYearId) {
+      throw new BadRequestException({
+        code: 'INVALID_ACADEMIC_YEAR',
+        message: 'The selected semester does not belong to this academic year.',
+      });
+    }
+    if (term?.programmeLevelId) {
+      if (programmeLevelId && programmeLevelId !== term.programmeLevelId) {
+        throw new BadRequestException({
+          code: 'INVALID_PROGRAMME_LEVEL',
+          message: 'The selected semester does not belong to this programme year.',
+        });
+      }
+      programmeLevelId = term.programmeLevelId;
+    }
+    let gradeLevelId = input.gradeLevelId ?? existing!.gradeLevelId;
     if (programmeLevelId) {
       const pl = await this.requireProgrammeLevel(ctx, programmeLevelId);
-      const gradeId = input.gradeLevelId ?? existing!.gradeLevelId;
-      if (gradeId !== pl.gradeLevelId) {
+      if (input.gradeLevelId && input.gradeLevelId !== pl.gradeLevelId) {
         throw new BadRequestException({
           code: 'INVALID_PROGRAMME_LEVEL',
           message: 'The selected year does not match the programme level.',
         });
       }
+      gradeLevelId = pl.gradeLevelId;
     }
     if (termId) {
-      await this.assertRef(ctx, 'academicTerms', termId, 'term');
       if (programmeLevelId) {
-        const term = await this.repo.findAcademicTerm(termId, ctx.principal.institutionId);
         if (term?.programmeLevelId && term.programmeLevelId !== programmeLevelId) {
           throw new BadRequestException({
             code: 'INVALID_PROGRAMME_LEVEL',
@@ -756,7 +801,7 @@ export class AcademicsService {
     await this.assertUser(ctx, input.classTeacherId);
     const updated = await this.repo.updateClass(id, input.version, {
       academicYearId: input.academicYearId ?? existing!.academicYearId,
-      gradeLevelId: input.gradeLevelId ?? existing!.gradeLevelId,
+      gradeLevelId,
       programmeLevelId,
       termId,
       name: input.name ?? existing!.name,
@@ -767,6 +812,14 @@ export class AcademicsService {
       updatedBy: ctx.principal.institutionUserId,
     });
     if (!updated) throw this.versionConflict();
+    if (
+      updated.gradeLevelId !== existing!.gradeLevelId ||
+      updated.academicYearId !== existing!.academicYearId ||
+      updated.termId !== existing!.termId ||
+      updated.programmeLevelId !== existing!.programmeLevelId
+    ) {
+      await this.syncClassRosterPlacement(ctx, updated);
+    }
     if (updated.classTeacherId && updated.classTeacherId !== existing!.classTeacherId) {
       await this.ensureStaffYearAssignment(
         ctx,
@@ -921,10 +974,22 @@ export class AcademicsService {
     const result = await this.repo.updateClassRoster(
       ctx.principal.institutionId,
       classId,
+      cls.gradeLevelId,
       input.add,
       input.remove,
       ctx.principal.institutionUserId,
     );
+    const today = new Date().toISOString().slice(0, 10);
+    for (const studentId of input.add) {
+      await closeActiveStudentEnrollments(this.db, studentId, today);
+      const student = await this.repo.findStudentForRoster(studentId, ctx.principal.institutionId);
+      if (student) await this.upsertEnrollmentForClass(ctx, student, cls, today);
+    }
+    for (const studentId of input.remove) {
+      await closeActiveStudentEnrollments(this.db, studentId, today);
+      const student = await this.repo.findStudentForRoster(studentId, ctx.principal.institutionId);
+      if (student) await this.upsertEnrollmentWithoutClass(ctx, student, today);
+    }
     await this.write(ctx, 'class.roster_update', 'class', classId, cls.campusId, {
       newState: { added: result.added, removed: result.removed },
     });
@@ -932,6 +997,73 @@ export class AcademicsService {
   }
 
   // === helpers ===============================================================
+
+  private async syncClassRosterPlacement(
+    ctx: PortalActionContext,
+    cls: NonNullable<Awaited<ReturnType<AcademicsRepository['findClass']>>>,
+  ): Promise<void> {
+    await this.repo.syncClassStudentGrades(
+      ctx.principal.institutionId,
+      cls.id,
+      cls.gradeLevelId,
+      ctx.principal.institutionUserId,
+    );
+    const roster = await this.repo.listClassRoster(cls.id, ctx.principal.institutionId);
+    const today = new Date().toISOString().slice(0, 10);
+    for (const entry of roster) {
+      await closeActiveStudentEnrollments(this.db, entry.id, today);
+      const student = await this.repo.findStudentForRoster(entry.id, ctx.principal.institutionId);
+      if (student) await this.upsertEnrollmentForClass(ctx, student, cls, today);
+    }
+  }
+
+  private async upsertEnrollmentForClass(
+    ctx: PortalActionContext,
+    student: { id: string; campusId: string | null; rollNo: string | null },
+    cls: NonNullable<Awaited<ReturnType<AcademicsRepository['findClass']>>>,
+    enrolledOn: string,
+  ): Promise<void> {
+    await upsertStudentEnrollment(this.db, {
+      institutionId: ctx.principal.institutionId,
+      campusId: student.campusId ?? cls.campusId,
+      studentId: student.id,
+      academicYearId: cls.academicYearId,
+      termId: cls.termId,
+      programmeLevelId: cls.programmeLevelId,
+      gradeLevelId: cls.gradeLevelId,
+      classId: cls.id,
+      rollNo: student.rollNo,
+      status: 'active',
+      enrolledOn,
+      exitedOn: null,
+      createdBy: ctx.principal.institutionUserId,
+    });
+  }
+
+  private async upsertEnrollmentWithoutClass(
+    ctx: PortalActionContext,
+    student: { id: string; campusId: string | null; gradeLevelId: string | null; rollNo: string | null },
+    enrolledOn: string,
+  ): Promise<void> {
+    const f = this.filter(ctx);
+    const year = await this.repo.findCurrentAcademicYear(ctx.principal.institutionId, f.campusIds);
+    if (!year) return;
+    await upsertStudentEnrollment(this.db, {
+      institutionId: ctx.principal.institutionId,
+      campusId: student.campusId,
+      studentId: student.id,
+      academicYearId: year.id,
+      termId: null,
+      programmeLevelId: null,
+      gradeLevelId: student.gradeLevelId,
+      classId: null,
+      rollNo: student.rollNo,
+      status: 'active',
+      enrolledOn,
+      exitedOn: null,
+      createdBy: ctx.principal.institutionUserId,
+    });
+  }
 
   private filter(ctx: PortalActionContext): ScopeFilter {
     return resolveScopeFilter(ctx.principal, ctx.scope);

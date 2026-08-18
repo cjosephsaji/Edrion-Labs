@@ -53,7 +53,7 @@ invalid. Defaults shown; **bold = must set explicitly in production**.
 | `SESSION_TTL_SECONDS` | `28800` (8h) | Session lifetime. |
 | `RECENT_AUTH_WINDOW_SECONDS` | `900` | Recent-auth window for sensitive actions. |
 | `API_PORT` | `3001` | |
-| `API_BASE_URL` | `http://localhost:3001` | **Public API origin.** |
+| `API_BASE_URL` | `http://localhost:3007` | **Public API origin.** |
 | `API_CORS_ORIGINS` | `http://localhost:3000` | **Comma-separated web origins.** |
 | `LOG_LEVEL` | `info` | `info` or `warn` in prod. |
 
@@ -103,7 +103,7 @@ invalid. Defaults shown; **bold = must set explicitly in production**.
 
 | Var | Default |
 |-----|---------|
-| **`NEXT_PUBLIC_API_BASE_URL`** | `http://localhost:3001` |
+| **`NEXT_PUBLIC_API_BASE_URL`** | `http://localhost:3007` |
 | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | — |
 
 ---

@@ -31,7 +31,7 @@ export const Checkbox = forwardRef<HTMLInputElement, React.InputHTMLAttributes<H
         aria-hidden="true"
         className={cn(
           'pointer-events-none absolute inset-0 m-auto h-3 w-3 scale-50 text-primary-foreground opacity-0',
-          'transition-[transform,opacity] duration-150 ease-[var(--ease-emphasized)]',
+          'transition-[transform,opacity] duration-150 [transition-timing-function:var(--ease-emphasized)]',
           'peer-checked:scale-100 peer-checked:opacity-100',
         )}
       >

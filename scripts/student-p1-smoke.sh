@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Student Portal Plan 01 smoke — foundations (auth, me, home, preferences, storage).
 #
-# Prereqs: API :3001, DB seeded (`pnpm --filter @edrion/database seed:portal`),
+# Prereqs: API :3007, DB seeded (`pnpm --filter @edrion/database seed:portal`),
 # STUDENT_AUTH_DEV_HEADER=true, student@greenwood.edu in seed.
 set -u
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 STU="${STUDENT_EMAIL:-student@greenwood.edu}"
 RUN="p1-$(date +%s)"
 pass=0; fail=0

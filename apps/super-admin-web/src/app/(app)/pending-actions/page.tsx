@@ -24,7 +24,7 @@ export default function PendingActionsPage() {
             {[0, 1, 2].map((i) => <Skeleton key={i} className="h-40" />)}
           </div>
         ) : isError ? (
-          <ErrorState description="Could not load pending actions. Confirm the API is running on :3001." />
+          <ErrorState description="Could not load pending actions. Confirm the API is running on :3007." />
         ) : (data?.total ?? 0) === 0 ? (
           <Card>
             <CardContent className="py-10">

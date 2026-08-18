@@ -91,7 +91,7 @@ export default function SupportCasesPage() {
         {isLoading ? (
           <TableSkeleton />
         ) : isError || !data ? (
-          <ErrorState description="Could not load support cases. Confirm the API is running on :3001." />
+          <ErrorState description="Could not load support cases. Confirm the API is running on :3007." />
         ) : data.items.length === 0 ? (
           <EmptyState title="No support cases" description="Create one with “New case”." />
         ) : (

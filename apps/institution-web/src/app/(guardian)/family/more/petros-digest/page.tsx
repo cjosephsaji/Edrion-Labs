@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BookHeart, Eye, Languages, RefreshCw, Send, ShieldCheck } from 'lucide-react';
 import { useMe } from '@/lib/guardian/hooks';
 import { api, ApiError } from '@/lib/guardian/api';
@@ -35,7 +35,7 @@ export default function PetrosDigestPage() {
     return { periodStart: start.toISOString(), periodEnd: end.toISOString() };
   }, []);
 
-  async function load(studentId: string) {
+  const load = useCallback(async (studentId: string) => {
     try {
       const [nextDigests, preference] = await Promise.all([
         api.get<Digest[]>(`/petros/students/${studentId}/digests`),
@@ -46,8 +46,8 @@ export default function PetrosDigestPage() {
       setLanguage(preference.language);
     }
     catch (caught) { setError(errorMessage(caught)); }
-  }
-  useEffect(() => { if (student) void load(student.studentId); }, [student?.studentId]);
+  }, []);
+  useEffect(() => { if (student) void load(student.studentId); }, [load, student]);
 
   async function savePreference(nextOptedOut = optedOut) {
     if (!student) return;

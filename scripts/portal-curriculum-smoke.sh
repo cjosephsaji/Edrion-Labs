@@ -12,10 +12,10 @@
 #                     capacity enforced and foreign students rejected.
 #
 # Self-cleaning: everything is created under a unique run suffix and deleted at the end.
-# Prereqs: API on :3001, portal seed, PORTAL_AUTH_DEV_HEADER=true.
+# Prereqs: API on :3007, portal seed, PORTAL_AUTH_DEV_HEADER=true.
 set -u
 set +B
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 AC="$API/portal/academics"
 OWNER="${OWNER:-owner@greenwood.edu}"
 TEACHER="${TEACHER:-teacher@greenwood.edu}"   # academics.view only — must not be able to mutate

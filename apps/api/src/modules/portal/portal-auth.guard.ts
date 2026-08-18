@@ -70,9 +70,6 @@ export class InstitutionAuthGuard implements CanActivate {
   private async resolvePrincipal(
     req: Request,
   ): Promise<{ principal: InstitutionPrincipal; authSessionId?: string }> {
-    // A valid portal session cookie wins. The dev `x-institution-user-email` header is sent on every
-    // request in development (NEXT_PUBLIC_DEV_INSTITUTION_USER), so it must not override a user who
-    // has actually signed in — otherwise every login resolves to the dev default user.
     const token = readCookie(req.headers.cookie, this.sessions.cookieName);
     if (token) {
       try {

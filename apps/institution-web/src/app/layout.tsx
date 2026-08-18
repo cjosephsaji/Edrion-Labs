@@ -1,22 +1,12 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono, Manrope } from 'next/font/google';
+import { JetBrains_Mono, Outfit } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 
-const inter = Inter({
+const outfit = Outfit({
   subsets: ['latin'],
   weight: 'variable',
   variable: '--font-st-body-face',
-  display: 'swap',
-  preload: true,
-  fallback: ['Arial', 'sans-serif'],
-  adjustFontFallback: true,
-});
-
-const manrope = Manrope({
-  subsets: ['latin'],
-  weight: 'variable',
-  variable: '--font-st-display-face',
   display: 'swap',
   preload: true,
   fallback: ['Arial', 'sans-serif'],
@@ -43,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       suppressHydrationWarning
-      className={`h-full ${inter.variable} ${manrope.variable} ${jetBrainsMono.variable}`}
+      className={`h-full ${outfit.variable} ${jetBrainsMono.variable}`}
     >
       <body className="h-full font-sans antialiased">
         <Providers>{children}</Providers>

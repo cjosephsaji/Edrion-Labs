@@ -8,9 +8,9 @@
 #   4. permission gating works — a teacher (no expenses.view) is 403.
 #
 # Self-cleaning: creates one expense with a unique title and deletes it at the end.
-# Prereqs: API on :3001 with PORTAL_AUTH_DEV_HEADER=true; DB seeded (seed-uis) + migration 0030.
+# Prereqs: API on :3007 with PORTAL_AUTH_DEV_HEADER=true; DB seeded (seed-uis) + migration 0030.
 set -u
-API="${API:-http://localhost:3001/v1}"
+API="${API:-http://localhost:3007/v1}"
 OWNER="${OWNER:-owner@uis.edu.in}"
 TEACHER="${TEACHER:-teacher@uis.edu.in}"
 INST='institution'
