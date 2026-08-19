@@ -55,7 +55,49 @@ export class PetrosAiRoutingRepository {
             updatedAt: new Date(),
           },
         });
+      if (definition.routeTemplateKey) {
+        await this.inheritRoutes(definition.key, definition.routeTemplateKey);
+      }
     }
+  }
+
+  /**
+   * Copies a template function's routes onto a function that has none, so a newly
+   * registered capability is callable instead of failing with NO_ELIGIBLE_ROUTE until an
+   * administrator configures it. A function that already has any route is left alone, so
+   * an administrator's choices are never overwritten.
+   */
+  private async inheritRoutes(targetKey: string, templateKey: string): Promise<void> {
+    const [target, template] = await Promise.all([
+      this.findFunctionByKey(targetKey),
+      this.findFunctionByKey(templateKey),
+    ]);
+    if (!target || !template) return;
+    const existing = await this.db
+      .select({ id: schema.petrosAiFunctionRoutes.id })
+      .from(schema.petrosAiFunctionRoutes)
+      .where(eq(schema.petrosAiFunctionRoutes.functionId, target.id))
+      .limit(1);
+    if (existing.length) return;
+    const templateRoutes = await this.db
+      .select()
+      .from(schema.petrosAiFunctionRoutes)
+      .where(eq(schema.petrosAiFunctionRoutes.functionId, template.id));
+    if (!templateRoutes.length) return;
+    await this.db
+      .insert(schema.petrosAiFunctionRoutes)
+      .values(
+        templateRoutes.map((route) => ({
+          functionId: target.id,
+          providerId: route.providerId,
+          modelId: route.modelId,
+          tier: route.tier,
+          trafficPercent: route.trafficPercent,
+          enabled: route.enabled,
+          overrides: route.overrides,
+        })),
+      )
+      .onConflictDoNothing();
   }
 
   listProviders() {

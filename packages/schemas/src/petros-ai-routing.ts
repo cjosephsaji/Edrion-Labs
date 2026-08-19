@@ -77,6 +77,12 @@ export interface PetrosFunctionDefinition {
   responseFormat: (typeof PETROS_RESPONSE_FORMATS)[number];
   requiredCapabilities: (typeof PETROS_MODEL_CAPABILITIES)[number][];
   essential?: boolean;
+  /**
+   * Key of an existing function whose routes a newly registered function inherits.
+   * Without this a new capability lands with zero routes and fails every call until an
+   * administrator configures it by hand. Inheritance applies once, on first insert only.
+   */
+  routeTemplateKey?: string;
 }
 
 const fn = (
@@ -84,7 +90,7 @@ const fn = (
   displayName: string,
   category: string,
   description: string,
-  options: Partial<Pick<PetrosFunctionDefinition, 'allowedInputTypes' | 'responseFormat' | 'requiredCapabilities' | 'essential'>> = {},
+  options: Partial<Pick<PetrosFunctionDefinition, 'allowedInputTypes' | 'responseFormat' | 'requiredCapabilities' | 'essential' | 'routeTemplateKey'>> = {},
 ): PetrosFunctionDefinition => ({
   key,
   displayName,
@@ -94,6 +100,7 @@ const fn = (
   responseFormat: options.responseFormat ?? 'structured_teaching_block',
   requiredCapabilities: options.requiredCapabilities ?? ['text', 'structured_output'],
   essential: options.essential,
+  routeTemplateKey: options.routeTemplateKey,
 });
 
 /**
@@ -105,6 +112,9 @@ export const PETROS_FUNCTION_CATALOG: PetrosFunctionDefinition[] = [
   fn('teaching.next_action.select', 'PLAN — next teaching action', 'Orchestration', 'Choose one strictly structured teaching move from explicit learner and session state.', { essential: true }),
   fn('teaching.block.render', 'RENDER — teaching block', 'Orchestration', 'Render one validated PLAN decision as a typed learning block.', { essential: true }),
   fn('assistant.context.answer', 'Contextual assistant answer', 'Orchestration', 'Answer one small portal-screen question or produce an explicit structured session offer.', { responseFormat: 'json', essential: true }),
+  fn('companion.turn', 'Companion turn', 'Companion', 'Answer one grounded companion turn as typed blocks, optionally proposing one registered action.', { responseFormat: 'json', essential: true, routeTemplateKey: 'assistant.context.answer' }),
+  fn('companion.thread.summarize', 'Companion thread summary', 'Companion', 'Compact older companion turns into a short factual thread summary.', { responseFormat: 'json', routeTemplateKey: 'assistant.context.answer' }),
+  fn('companion.briefing.phrase', 'Companion briefing phrasing', 'Companion', 'Phrase an already selected deterministic briefing without adding facts or changing priority.', { responseFormat: 'json', routeTemplateKey: 'assistant.context.answer' }),
   ...PETROS_MOVE_TYPES.map((move) =>
     fn(
       `teaching.move.${move}.render`,

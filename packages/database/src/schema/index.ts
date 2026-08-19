@@ -38,6 +38,7 @@ export * from './ai';
 export * from './petros-ai-routing';
 export * from './petros-learning';
 export * from './petros-session-intent';
+export * from './petros-companion';
 export * from './petros-input-modes';
 export * from './petros-teach-back';
 export * from './petros-reflection';

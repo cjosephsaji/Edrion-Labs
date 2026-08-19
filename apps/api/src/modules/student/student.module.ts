@@ -61,6 +61,7 @@ import { StudentPortalRuntimeConfigController } from "./surfaces/student-portal-
 import { PetrosLoopModule } from "./petros-loop/petros-loop.module";
 import { PetrosArtifactsModule } from "./petros-artifacts/petros-artifacts.module";
 import { PetrosSessionIntentModule } from "./petros-session-intent/petros-session-intent.module";
+import { PetrosCompanionModule } from "./petros-companion/petros-companion.module";
 import { PetrosInputModesModule } from "./petros-input-modes/petros-input-modes.module";
 import { PetrosTeachBackModule } from "./petros-teach-back/petros-teach-back.module";
 import { PetrosReflectionModule } from "./petros-reflection/petros-reflection.module";
@@ -85,6 +86,7 @@ import { PetrosLearnerModelModule } from "../petros-learner-model/petros-learner
     PetrosLoopModule,
     PetrosArtifactsModule,
     PetrosSessionIntentModule,
+    PetrosCompanionModule,
     PetrosInputModesModule,
     PetrosTeachBackModule,
     PetrosReflectionModule,

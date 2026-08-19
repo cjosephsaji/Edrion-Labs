@@ -1,0 +1,544 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { and, eq, inArray, schema, type Database } from '@edrion/database';
+import type { StudentSurfaceKey } from '@edrion/shared-types';
+import {
+  resolvePetrosRoute,
+  type PetrosEntityType,
+  type PetrosPageCandidate,
+  type PetrosSurface,
+} from '@edrion/schemas';
+import { DATABASE } from '../../../common/tokens';
+import { SurfaceGateService } from '../surfaces/surface-gate.service';
+import type { InstitutionalStudentPrincipal } from '../student.types';
+
+/**
+ * A candidate the API itself resolved. `title`/`summary` here come from the database,
+ * never from the browser. Client-supplied text is a navigation hint only.
+ */
+export type ResolvedCandidate = {
+  ref: string;
+  entityType: PetrosEntityType;
+  entityId: string | null;
+  title: string;
+  summary: string;
+  href: string | null;
+  /** Facts the model may quote. Values are already permission- and surface-filtered. */
+  facts: Record<string, string | number | null>;
+};
+
+export type ResolvedPageContext = {
+  route: string;
+  surface: PetrosSurface;
+  label: string;
+  /** IANA zone of the student's institution; previews and dates render in it. */
+  timeZone: string;
+  support: 'supported' | 'unavailable' | 'hidden';
+  reason?: string;
+  candidates: ResolvedCandidate[];
+  focus: ResolvedCandidate | null;
+  /** Refs the client sent that the API could not verify. Never shown to the model as fact. */
+  unresolvedRefs: string[];
+};
+
+/** Entity type -> the permission and surface that must both allow it. */
+const ENTITY_GATES: Record<
+  PetrosEntityType,
+  { permission?: string; surface?: StudentSurfaceKey }
+> = {
+  assignment: { permission: 'student.assignments.view' },
+  homework: { permission: 'student.homework.view' },
+  exam_schedule: { permission: 'student.exams.view', surface: 'exams' },
+  result: { permission: 'student.surface.results.view', surface: 'results' },
+  report_card: { permission: 'student.report_cards.view' },
+  material: { permission: 'student.classes.view' },
+  document: { permission: 'student.surface.documents.view', surface: 'documents' },
+  announcement: {},
+  notification: {},
+  timetable_slot: { permission: 'student.classes.view' },
+  calendar_event: { permission: 'student.calendar.view' },
+  course: { permission: 'student.courses.view' },
+  class: { permission: 'student.classes.view' },
+  learning_path_step: { permission: 'student.learn.use' },
+  reflection_recommendation: { permission: 'student.learn.use' },
+  artifact: { permission: 'student.learn.use' },
+  petros_session: { permission: 'student.learn.use' },
+  attendance_summary: { permission: 'student.attendance.view', surface: 'attendance' },
+  planner_item: { permission: 'student.learn.use' },
+  screen: {},
+};
+
+@Injectable()
+export class PetrosStudentContextService {
+  constructor(
+    @Inject(DATABASE) private readonly db: Database,
+    private readonly surfaceGate: SurfaceGateService,
+  ) {}
+
+  private has(principal: InstitutionalStudentPrincipal, permission?: string) {
+    if (!permission) return true;
+    return principal.permissions.includes(permission) || principal.permissions.includes('*');
+  }
+
+  private async allows(principal: InstitutionalStudentPrincipal, entityType: PetrosEntityType) {
+    const gate = ENTITY_GATES[entityType];
+    if (!this.has(principal, gate.permission)) return false;
+    if (gate.surface && !(await this.surfaceGate.isSurfaceEnabled(principal, gate.surface))) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Resolves the client's navigation hint into authoritative records.
+   *
+   * Rules enforced here, not in the prompt:
+   * - a candidate the student does not own is dropped, not denied loudly;
+   * - a candidate behind a disabled surface or missing permission is dropped;
+   * - focus is whatever the student explicitly selected, never array position;
+   * - an unsupported route resolves to zero candidates and a stated reason.
+   */
+  async resolve(
+    principal: InstitutionalStudentPrincipal,
+    input: {
+      route: string;
+      surface: PetrosSurface;
+      candidates: PetrosPageCandidate[];
+      focusRef?: string;
+    },
+  ): Promise<ResolvedPageContext> {
+    const rule = resolvePetrosRoute(input.route);
+    const { timeZone } = await this.clock(principal);
+    const base = {
+      route: rule.route,
+      surface: rule.surface,
+      label: rule.label,
+      timeZone,
+      support: rule.support,
+      ...(rule.reason ? { reason: rule.reason } : {}),
+    };
+
+    if (rule.support !== 'supported') {
+      return { ...base, candidates: [], focus: null, unresolvedRefs: [] };
+    }
+
+    const byType = new Map<PetrosEntityType, PetrosPageCandidate[]>();
+    for (const candidate of input.candidates.slice(0, 40)) {
+      if (!candidate.entityId) continue;
+      const list = byType.get(candidate.entityType) ?? [];
+      list.push(candidate);
+      byType.set(candidate.entityType, list);
+    }
+
+    const resolved: ResolvedCandidate[] = [];
+    for (const [entityType, group] of byType) {
+      if (!(await this.allows(principal, entityType))) continue;
+      const ids = [...new Set(group.map((candidate) => candidate.entityId as string))];
+      const rows = await this.lookup(principal, entityType, ids);
+      for (const candidate of group) {
+        const row = rows.get(candidate.entityId as string);
+        if (!row) continue;
+        resolved.push({
+          ref: candidate.ref,
+          entityType,
+          entityId: candidate.entityId as string,
+          title: row.title,
+          // The database record wins over the client hint on every field a model can quote.
+          summary: row.summary,
+          href: row.href ?? candidate.href ?? null,
+          facts: row.facts,
+        });
+      }
+    }
+
+    const resolvedRefs = new Set(resolved.map((candidate) => candidate.ref));
+    const unresolvedRefs = input.candidates
+      .map((candidate) => candidate.ref)
+      .filter((ref) => !resolvedRefs.has(ref));
+
+    const focus = input.focusRef
+      ? (resolved.find((candidate) => candidate.ref === input.focusRef) ?? null)
+      : null;
+
+    return { ...base, candidates: resolved, focus, unresolvedRefs };
+  }
+
+  /** Owner-scoped lookup per entity type. Every query filters by student and institution. */
+  private async lookup(
+    principal: InstitutionalStudentPrincipal,
+    entityType: PetrosEntityType,
+    ids: string[],
+  ): Promise<Map<string, LookupRow>> {
+    const out = new Map<string, LookupRow>();
+    if (!ids.length) return out;
+    const institutionId = principal.institutionId;
+    const studentId = principal.studentId;
+
+    switch (entityType) {
+      case 'assignment': {
+        const rows = await this.db
+          .select({
+            id: schema.assignments.id,
+            title: schema.assignments.title,
+            subject: schema.subjects.name,
+            dueDate: schema.assignments.dueDate,
+            aiPolicy: schema.assignments.aiPolicy,
+            maxPoints: schema.assignments.maxPoints,
+            status: schema.assignmentSubmissions.status,
+            pointsAwarded: schema.assignmentSubmissions.pointsAwarded,
+            feedback: schema.assignmentSubmissions.feedback,
+          })
+          .from(schema.assignmentAssignees)
+          .innerJoin(
+            schema.assignments,
+            eq(schema.assignments.id, schema.assignmentAssignees.assignmentId),
+          )
+          .leftJoin(schema.subjects, eq(schema.subjects.id, schema.assignments.subjectId))
+          .leftJoin(
+            schema.assignmentSubmissions,
+            and(
+              eq(schema.assignmentSubmissions.assignmentId, schema.assignments.id),
+              eq(schema.assignmentSubmissions.studentId, studentId),
+            ),
+          )
+          .where(
+            and(
+              eq(schema.assignmentAssignees.studentId, studentId),
+              eq(schema.assignments.institutionId, institutionId),
+              eq(schema.assignments.status, 'published'),
+              inArray(schema.assignments.id, ids),
+            ),
+          );
+        for (const row of rows) {
+          out.set(row.id, {
+            title: row.title,
+            summary: [row.subject, row.dueDate ? `due ${row.dueDate}` : null, row.status ?? 'assigned']
+              .filter(Boolean)
+              .join(' \u00b7 '),
+            href: `/assignments/${row.id}`,
+            facts: {
+              subject: row.subject ?? null,
+              dueDate: row.dueDate ?? null,
+              submissionStatus: row.status ?? 'assigned',
+              pointsAwarded: row.pointsAwarded ?? null,
+              maxPoints: row.maxPoints ?? null,
+              aiPolicy: row.aiPolicy ?? null,
+              teacherFeedback: row.feedback ?? null,
+            },
+          });
+        }
+        return out;
+      }
+
+      case 'homework': {
+        const rows = await this.db
+          .select({
+            id: schema.homework.id,
+            title: schema.homework.title,
+            subject: schema.subjects.name,
+            dueAt: schema.homework.dueAt,
+            aiPolicy: schema.homework.aiPolicy,
+            status: schema.homeworkSubmissions.status,
+            marks: schema.homeworkSubmissions.totalMarks,
+            maxMarks: schema.homeworkSubmissions.totalMax,
+            teacherNote: schema.homeworkSubmissions.teacherNote,
+          })
+          .from(schema.homeworkAssignees)
+          .innerJoin(schema.homework, eq(schema.homework.id, schema.homeworkAssignees.homeworkId))
+          .leftJoin(schema.subjects, eq(schema.subjects.id, schema.homework.subjectId))
+          .leftJoin(
+            schema.homeworkSubmissions,
+            and(
+              eq(schema.homeworkSubmissions.homeworkId, schema.homework.id),
+              eq(schema.homeworkSubmissions.studentId, studentId),
+            ),
+          )
+          .where(
+            and(
+              eq(schema.homeworkAssignees.studentId, studentId),
+              eq(schema.homework.institutionId, institutionId),
+              inArray(schema.homework.id, ids),
+            ),
+          );
+        for (const row of rows) {
+          out.set(row.id, {
+            title: row.title,
+            summary: [row.subject, row.dueAt ? `due ${formatDate(row.dueAt)}` : null, row.status ?? 'assigned']
+              .filter(Boolean)
+              .join(' \u00b7 '),
+            href: `/homework/${row.id}`,
+            facts: {
+              subject: row.subject ?? null,
+              dueAt: row.dueAt ? String(row.dueAt) : null,
+              submissionStatus: row.status ?? 'assigned',
+              marks: row.marks ?? null,
+              maxMarks: row.maxMarks ?? null,
+              aiPolicy: row.aiPolicy ?? null,
+              teacherNote: row.teacherNote ?? null,
+            },
+          });
+        }
+        return out;
+      }
+
+      case 'exam_schedule': {
+        const classId = await this.classId(principal);
+        if (!classId) return out;
+        const rows = await this.db
+          .select({
+            id: schema.examSchedules.id,
+            examName: schema.exams.name,
+            subject: schema.subjects.name,
+            examDate: schema.examSchedules.examDate,
+            startTime: schema.examSchedules.startTime,
+            syllabus: schema.examSchedules.syllabusNote,
+          })
+          .from(schema.examSchedules)
+          .innerJoin(schema.exams, eq(schema.exams.id, schema.examSchedules.examId))
+          .leftJoin(schema.subjects, eq(schema.subjects.id, schema.examSchedules.subjectId))
+          .where(
+            and(
+              eq(schema.examSchedules.institutionId, institutionId),
+              eq(schema.examSchedules.classId, classId),
+              eq(schema.examSchedules.published, true),
+              inArray(schema.examSchedules.id, ids),
+            ),
+          );
+        for (const row of rows) {
+          out.set(row.id, {
+            title: `${row.subject ?? 'Exam'} \u2014 ${row.examName}`,
+            summary: [row.examDate, row.startTime].filter(Boolean).join(' '),
+            href: '/exams',
+            facts: {
+              subject: row.subject ?? null,
+              examDate: row.examDate ?? null,
+              startTime: row.startTime ?? null,
+              publishedSyllabus: row.syllabus ?? null,
+            },
+          });
+        }
+        return out;
+      }
+
+      case 'result': {
+        const rows = await this.db
+          .select({
+            id: schema.gradeEntries.id,
+            assessment: schema.gradeEntries.assessmentName,
+            subject: schema.subjects.name,
+            marks: schema.gradeEntries.marksObtained,
+            maxMarks: schema.gradeEntries.maxMarks,
+            grade: schema.gradeEntries.letterGrade,
+            remarks: schema.gradeEntries.remarks,
+          })
+          .from(schema.gradeEntries)
+          .leftJoin(schema.subjects, eq(schema.subjects.id, schema.gradeEntries.subjectId))
+          .where(
+            and(
+              eq(schema.gradeEntries.studentId, studentId),
+              eq(schema.gradeEntries.institutionId, institutionId),
+              eq(schema.gradeEntries.published, true),
+              inArray(schema.gradeEntries.id, ids),
+            ),
+          );
+        for (const row of rows) {
+          out.set(row.id, {
+            title: `${row.subject ?? 'Subject'} \u2014 ${row.assessment}`,
+            summary: `${row.marks ?? '\u2014'} / ${row.maxMarks ?? '\u2014'}`,
+            href: '/results',
+            facts: {
+              subject: row.subject ?? null,
+              assessment: row.assessment,
+              marksObtained: row.marks ?? null,
+              maxMarks: row.maxMarks ?? null,
+              grade: row.grade ?? null,
+              teacherRemarks: row.remarks ?? null,
+            },
+          });
+        }
+        return out;
+      }
+
+      case 'material': {
+        const contexts = await this.materialContexts(principal);
+        if (!contexts.length) return out;
+        const rows = await this.db
+          .select({
+            id: schema.classMaterials.id,
+            title: schema.classMaterials.title,
+            description: schema.classMaterials.description,
+            kindLabel: schema.classMaterials.kindLabel,
+            weekNo: schema.classMaterials.weekNo,
+            contextType: schema.classMaterials.contextType,
+            contextId: schema.classMaterials.contextId,
+          })
+          .from(schema.classMaterials)
+          .where(
+            and(
+              eq(schema.classMaterials.institutionId, institutionId),
+              inArray(schema.classMaterials.id, ids),
+            ),
+          );
+        const allowed = new Set(contexts.map((ctx) => `${ctx.type}:${ctx.id}`));
+        for (const row of rows) {
+          if (!allowed.has(`${row.contextType}:${row.contextId}`)) continue;
+          out.set(row.id, {
+            title: row.title,
+            summary: [row.kindLabel, row.weekNo ? `week ${row.weekNo}` : null]
+              .filter(Boolean)
+              .join(' \u00b7 '),
+            href: '/materials',
+            facts: {
+              kind: row.kindLabel,
+              weekNo: row.weekNo ?? null,
+              description: row.description ?? null,
+            },
+          });
+        }
+        return out;
+      }
+
+      case 'announcement': {
+        const rows = await this.db
+          .select({
+            id: schema.announcements.id,
+            title: schema.announcements.title,
+            body: schema.announcements.body,
+            category: schema.announcements.category,
+            publishedAt: schema.announcements.publishedAt,
+          })
+          .from(schema.announcements)
+          .where(
+            and(
+              eq(schema.announcements.institutionId, institutionId),
+              eq(schema.announcements.status, 'published'),
+              inArray(schema.announcements.id, ids),
+            ),
+          );
+        for (const row of rows) {
+          out.set(row.id, {
+            title: row.title,
+            summary: (row.body ?? '').slice(0, 300),
+            href: '/announcements',
+            facts: {
+              category: row.category ?? null,
+              publishedAt: row.publishedAt ? String(row.publishedAt) : null,
+            },
+          });
+        }
+        return out;
+      }
+
+      case 'petros_session': {
+        const rows = await this.db
+          .select({
+            id: schema.petrosLearningSessions.id,
+            topic: schema.petrosLearningSessions.topic,
+            status: schema.petrosLearningSessions.status,
+            sessionType: schema.petrosLearningSessions.sessionType,
+            updatedAt: schema.petrosLearningSessions.updatedAt,
+          })
+          .from(schema.petrosLearningSessions)
+          .where(
+            and(
+              eq(schema.petrosLearningSessions.studentId, studentId),
+              eq(schema.petrosLearningSessions.institutionId, institutionId),
+              inArray(schema.petrosLearningSessions.id, ids),
+            ),
+          );
+        for (const row of rows) {
+          out.set(row.id, {
+            title: row.topic,
+            summary: `${row.sessionType} session \u00b7 ${row.status}`,
+            href: `/petros/session?session=${row.id}`,
+            facts: {
+              status: row.status,
+              sessionType: row.sessionType,
+              lastActivity: row.updatedAt ? String(row.updatedAt) : null,
+            },
+          });
+        }
+        return out;
+      }
+
+      // Entity types that are not individually addressable yet resolve to nothing, which is the
+      // honest outcome: Petros states he cannot confirm that item rather than inventing it.
+      default:
+        return out;
+    }
+  }
+
+  /**
+   * The institution's wall clock. Without this the model has no idea what "tomorrow"
+   * means and will invent a date from its training data.
+   */
+  async clock(principal: InstitutionalStudentPrincipal, now = new Date()) {
+    const [row] = await this.db
+      .select({ timezone: schema.institutions.timezone })
+      .from(schema.institutions)
+      .where(eq(schema.institutions.id, principal.institutionId))
+      .limit(1);
+    const timeZone = row?.timezone || 'UTC';
+    let localNow: string;
+    try {
+      localNow = new Intl.DateTimeFormat('en-CA', {
+        timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        weekday: 'long',
+        hour12: false,
+      }).format(now);
+    } catch {
+      localNow = now.toISOString();
+    }
+    return { timeZone, localNow, isoNow: now.toISOString() };
+  }
+
+  private classId(principal: InstitutionalStudentPrincipal) {
+    return this.db
+      .select({ classId: schema.students.classId })
+      .from(schema.students)
+      .where(
+        and(
+          eq(schema.students.id, principal.studentId),
+          eq(schema.students.institutionId, principal.institutionId),
+        ),
+      )
+      .limit(1)
+      .then((rows) => rows[0]?.classId ?? null);
+  }
+
+  /** Material visibility follows class membership plus course enrolment, same as /materials. */
+  private async materialContexts(principal: InstitutionalStudentPrincipal) {
+    const [classId, courses] = await Promise.all([
+      this.classId(principal),
+      this.db
+        .select({ courseId: schema.courseEnrollments.courseId })
+        .from(schema.courseEnrollments)
+        .where(
+          and(
+            eq(schema.courseEnrollments.studentId, principal.studentId),
+            eq(schema.courseEnrollments.institutionId, principal.institutionId),
+          ),
+        ),
+    ]);
+    const contexts: Array<{ type: string; id: string }> = [];
+    if (classId) contexts.push({ type: 'class', id: classId });
+    for (const course of courses) contexts.push({ type: 'course', id: course.courseId });
+    return contexts;
+  }
+}
+
+type LookupRow = {
+  title: string;
+  summary: string;
+  href: string | null;
+  facts: ResolvedCandidate['facts'];
+};
+
+function formatDate(value: Date | string) {
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value) : date.toISOString().slice(0, 10);
+}
