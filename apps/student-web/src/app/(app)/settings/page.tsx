@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import { Check, Download, LockKeyhole, Trash2 } from 'lucide-react';
 import { ActionButton, Card, PageHeader } from '@/components/design-system';
+import { PetrosSettingsSection } from '@/components/petros/petros-settings-section';
 import { useStudentMe } from '@/lib/hooks';
 import { useStudentPreferences, type StudentTheme, type TextSize } from '@/lib/preferences';
 
-type Section = 'appearance' | 'profile' | 'notifications' | 'institution' | 'privacy' | 'account';
+type Section = 'appearance' | 'petros' | 'profile' | 'notifications' | 'institution' | 'privacy' | 'account';
 
 const themeCards: Array<{
   id: StudentTheme;
@@ -78,6 +79,7 @@ export default function SettingsPage() {
   const institutionName = me?.programmeName || me?.className || `Your ${institutionLabel.toLowerCase()}`;
   const sections: Array<{ id: Section; label: string }> = [
     { id: 'appearance', label: 'Appearance' },
+    ...(me?.kind === 'institutional' ? [{ id: 'petros' as const, label: 'Petros' }] : []),
     { id: 'profile', label: 'Profile' },
     { id: 'notifications', label: 'Notifications' },
     ...(me?.kind === 'institutional' ? [{ id: 'institution' as const, label: institutionLabel }] : []),
@@ -104,6 +106,7 @@ export default function SettingsPage() {
         </nav>
 
         <div className="min-w-0 flex-1">
+          {section === 'petros' ? <PetrosSettingsSection /> : null}
           {section === 'appearance' ? (
             <Card>
               <h2 className="font-display text-[15px] font-semibold text-[var(--s-ink)]">Theme</h2>

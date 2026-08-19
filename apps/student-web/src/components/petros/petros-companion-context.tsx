@@ -58,6 +58,8 @@ type CompanionApi = CompanionState & {
   select: (ref: string | null) => void;
   /** Select an item and open the panel with a starter question. */
   askAbout: (ref: string, question?: string) => void;
+  /** Open the panel with a starter question and no item selected. */
+  openWith: (question: string) => void;
   setThread: (threadId: string | null, messages: PetrosCompanionMessage[]) => void;
   appendMessages: (messages: PetrosCompanionMessage[]) => void;
   consumePendingQuestion: () => string;
@@ -108,6 +110,11 @@ export function PetrosCompanionProvider({ children }: { children: ReactNode }) {
   const askAbout = useCallback((ref: string, question?: string) => {
     setFocusRef(ref);
     if (question) setPendingQuestion(question);
+    setOpen(true);
+  }, []);
+
+  const openWith = useCallback((question: string) => {
+    setPendingQuestion(question);
     setOpen(true);
   }, []);
 
@@ -167,6 +174,7 @@ export function PetrosCompanionProvider({ children }: { children: ReactNode }) {
       setOpen,
       select,
       askAbout,
+      openWith,
       setThread,
       appendMessages,
       consumePendingQuestion,
@@ -180,6 +188,7 @@ export function PetrosCompanionProvider({ children }: { children: ReactNode }) {
       focusRef,
       messages,
       open,
+      openWith,
       page,
       pendingQuestion,
       registerPage,
