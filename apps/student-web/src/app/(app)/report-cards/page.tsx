@@ -12,6 +12,17 @@ type Row = {
   gpa?: number | null;
 };
 
+/**
+ * `kind` is a storage discriminator ("structured"), not something a student should read,
+ * so the row shows what the report card actually says instead.
+ */
+function publishedLabel(publishedAt?: string | null) {
+  if (!publishedAt) return '';
+  const date = new Date(publishedAt);
+  if (Number.isNaN(date.getTime())) return '';
+  return `Published ${new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(date)}`;
+}
+
 export default function Page() {
   return (
     <ModuleListPage<Row>
@@ -24,8 +35,10 @@ export default function Page() {
       petros={(item) => ({
         entityType: 'report_card',
         entityId: item.id,
-        title: String(item.termLabel ?? item.kind ?? 'Report card'),
-        summary: [item.kind, item.gpa != null ? `GPA ${item.gpa}` : null].filter(Boolean).join(' · '),
+        title: String(item.termLabel ?? 'Report card'),
+        summary: [item.gpa != null ? `GPA ${item.gpa}` : null, publishedLabel(item.publishedAt)]
+          .filter(Boolean)
+          .join(' · '),
         href: `/report-cards/${item.id}`,
       })}
       renderItem={(item) => (
@@ -35,14 +48,11 @@ export default function Page() {
               {item.termLabel ?? item.kind ?? 'Report card'}
             </p>
             <p className="mt-1 text-xs text-[var(--s-muted)]">
-              {[
-                item.kind,
-                item.gpa != null ? `GPA ${item.gpa}` : '',
-                item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : '',
-              ]
+              {[item.gpa != null ? `GPA ${item.gpa}` : '', publishedLabel(item.publishedAt)]
                 .filter(Boolean)
-                .join(' · ') || '—'}
+                .join(' · ') || 'Published report card'}
             </p>
+            <p className="mt-3 text-sm font-semibold text-[var(--s-accentDeep)]">Open report card →</p>
           </SurfaceCard>
         </Link>
       )}
