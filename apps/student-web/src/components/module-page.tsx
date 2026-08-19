@@ -115,7 +115,8 @@ export function ModuleListPage<T extends { id: string }>({
     return (
       <ErrorState
         title="You don’t have access"
-        description="This module isn’t enabled for your account."
+        description="This module isn’t enabled for your account. Ask your institution if you think it should be."
+        retryable={false}
       />
     );
   }

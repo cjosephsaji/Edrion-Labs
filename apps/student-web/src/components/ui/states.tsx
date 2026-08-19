@@ -64,14 +64,18 @@ export function ErrorState({
   title = 'Couldn’t load this page',
   description,
   onRetry,
+  /** Set for outcomes retrying cannot change, such as a module the account cannot open. */
+  retryable = true,
 }: {
   title?: string;
   description?: string;
   onRetry?: () => void;
+  retryable?: boolean;
 }) {
   const retry = onRetry ?? (() => window.location.reload());
   const offline = typeof navigator !== 'undefined' && (!navigator.onLine || description?.toLowerCase().includes('failed to fetch'));
   if (offline) return <OfflineState onRetry={retry} />;
+  if (!retryable) return <DesignErrorState title={title} description={description} />;
   return <DesignErrorState onRetry={retry} title={title} description={description} />;
 }
 

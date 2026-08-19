@@ -34,7 +34,8 @@ export function QueryPage<T>({
     return (
       <ErrorState
         title="You don’t have access"
-        description="This module isn’t enabled for your account."
+        description="This module isn’t enabled for your account. Ask your institution if you think it should be."
+        retryable={false}
       />
     );
   }

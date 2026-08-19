@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
-import { StudentApiProvider } from '@/lib/api-client';
+import { StudentApiError, StudentApiProvider } from '@/lib/api-client';
 import { StudentPreferencesProvider } from '@/lib/preferences';
 
 const API_BASE = (
@@ -19,6 +19,18 @@ export function Providers({ children }: { children: ReactNode }) {
           queries: {
             staleTime: 30_000,
             refetchOnWindowFocus: false,
+            /*
+             * Never retry a request the server has already answered. A disabled module
+             * returns 403 immediately, but the default three retries with backoff left the
+             * student staring at a loading skeleton for several seconds before the
+             * "you don't have access" message appeared.
+             */
+            retry: (failureCount, error) => {
+              if (error instanceof StudentApiError && error.status >= 400 && error.status < 500) {
+                return false;
+              }
+              return failureCount < 2;
+            },
           },
         },
       }),

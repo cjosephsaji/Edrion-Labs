@@ -17,7 +17,8 @@ function SystemState({
   title: string;
   description: string;
   actionLabel: string;
-  onRetry: () => void;
+  /** Omitted when there is nothing the student can do by trying again. */
+  onRetry?: () => void;
 }) {
   return (
     <section className={styles.systemState} data-tone={tone} role="status" aria-live="polite">
@@ -25,7 +26,9 @@ function SystemState({
         <span className={styles.stateIcon} aria-hidden="true"><Icon /></span>
         <h2 className={styles.stateTitle}>{title}</h2>
         <p className={styles.stateDescription}>{description}</p>
-        <div className={styles.stateAction}><ActionButton onClick={onRetry}>{actionLabel}</ActionButton></div>
+        {onRetry ? (
+          <div className={styles.stateAction}><ActionButton onClick={onRetry}>{actionLabel}</ActionButton></div>
+        ) : null}
       </div>
     </section>
   );
@@ -37,7 +40,7 @@ export function ErrorState({
   description = 'Your information is safe. Try the request again, or return later if the problem continues.',
   actionLabel = 'Try again',
 }: {
-  onRetry: () => void;
+  onRetry?: () => void;
   title?: string;
   description?: string;
   actionLabel?: string;

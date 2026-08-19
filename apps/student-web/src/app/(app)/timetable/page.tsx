@@ -1,8 +1,13 @@
 'use client';
 
-import { CalendarDays, Clock3, MapPin, UserRound } from 'lucide-react';
-import { ModuleListPage } from '@/components/module-page';
-import { SurfaceCard } from '@/components/ui/states';
+import { CalendarDays, MapPin, UserRound } from 'lucide-react';
+import { PageHeader } from '@/components/design-system';
+import { PetrosAskButton } from '@/components/petros/petros-ask-button';
+import { usePetrosPage } from '@/components/petros/petros-companion-context';
+import { QueryPage } from '@/components/query-page';
+import { EmptyState } from '@/components/ui/states';
+import { useStudentList } from '@/lib/hooks';
+import styles from './timetable.module.css';
 
 type Row = {
   id: string;
@@ -14,6 +19,8 @@ type Row = {
   room: { name: string | null };
   state: 'normal' | 'cancelled' | 'room_changed' | 'substituted';
 };
+/** The timetable endpoint returns expanded occurrences, not a generic item list. */
+type Response = { occurrences: Row[] };
 
 const stateLabels: Record<Row['state'], string | null> = {
   normal: null,
@@ -21,10 +28,23 @@ const stateLabels: Record<Row['state'], string | null> = {
   room_changed: 'Room changed',
   substituted: 'Substitute teacher',
 };
-const title = 'Timetable';
-const description = 'Your class schedule for this week.';
 
-function formatDate(value: string) {
+const pageTitle = 'Timetable';
+const pageDescription = 'Your class schedule for this week.';
+
+function weekRange(today: Date) {
+  const day = today.getUTCDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  const monday = new Date(
+    Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + mondayOffset),
+  );
+  const sunday = new Date(monday);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+  const iso = (value: Date) => value.toISOString().slice(0, 10);
+  return { from: iso(monday), to: iso(sunday) };
+}
+
+function dayHeading(value: string) {
   return new Intl.DateTimeFormat('en-IN', {
     weekday: 'long',
     day: 'numeric',
@@ -33,75 +53,108 @@ function formatDate(value: string) {
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
-function weekRange() {
-  const now = new Date();
-  const day = now.getUTCDay();
-  const mondayOffset = day === 0 ? -6 : 1 - day;
-  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + mondayOffset));
-  const sunday = new Date(monday);
-  sunday.setUTCDate(monday.getUTCDate() + 6);
-  const iso = (d: Date) => d.toISOString().slice(0, 10);
-  return { from: iso(monday), to: iso(sunday) };
-}
-
 export default function Page() {
-  const { from, to } = weekRange();
-  return (
-    <ModuleListPage<Row>
-      title={title}
-      description={description}
-      path={`/student/timetable?from=${from}&to=${to}`}
-      queryKey={`timetable-${from}`}
-      emptyTitle="No timetable slots yet"
-      petros={(item) => ({
-        entityType: 'timetable_slot',
-        entityId: item.id,
-        title: item.subject.name || 'Class',
-        summary: [formatDate(item.date), `${item.start} - ${item.end}`, item.teacher.name, stateLabels[item.state]]
-          .filter(Boolean)
-          .join(' · '),
-        href: '/timetable',
-      })}
-      emptyDescription="Your institution hasn’t published a timetable for your class."
-      renderItem={(item) => (
-        <SurfaceCard className="grid gap-4 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center">
-          <div className="flex items-center gap-3 border-b border-[var(--s-divider)] pb-4 sm:border-b-0 sm:border-r sm:pb-0 sm:pr-5">
-            <span className="grid size-10 shrink-0 place-items-center rounded-md bg-[var(--s-accentSoft)] text-[var(--s-accentDeep)]">
-              <CalendarDays aria-hidden="true" className="size-5" />
-            </span>
-            <div className="min-w-0">
-              <p className="font-medium text-[var(--s-ink)]">{formatDate(item.date)}</p>
-              <p className="mt-1 flex items-center gap-1.5 text-xs text-[var(--s-muted)]">
-                <Clock3 aria-hidden="true" className="size-3.5" />
-                {item.start} - {item.end}
-              </p>
-            </div>
-          </div>
+  const today = new Date();
+  const todayKey = today.toISOString().slice(0, 10);
+  const { from, to } = weekRange(today);
+  const query = useStudentList<Response>(
+    `timetable-${from}`,
+    `/student/timetable?from=${from}&to=${to}`,
+  );
 
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-base font-semibold text-[var(--s-ink)]">{item.subject.name}</p>
-              {stateLabels[item.state] ? (
-                <span className="rounded-full bg-[var(--s-amberSoft)] px-2 py-0.5 text-xs font-medium text-[var(--s-amberInk)]">
-                  {stateLabels[item.state]}
-                </span>
-              ) : null}
-            </div>
-            <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-[var(--s-muted)]">
-              <span className="flex items-center gap-1.5">
-                <UserRound aria-hidden="true" className="size-4" />
-                {item.teacher.name}
-              </span>
-              {item.room.name ? (
-                <span className="flex items-center gap-1.5">
-                  <MapPin aria-hidden="true" className="size-4" />
-                  {item.room.name}
-                </span>
-              ) : null}
-            </div>
+  usePetrosPage(
+    query.data
+      ? {
+          title: pageTitle,
+          summary: pageDescription,
+          candidates: (query.data.occurrences ?? []).map((row) => ({
+            ref: row.id,
+            entityType: 'timetable_slot' as const,
+            entityId: row.id,
+            title: row.subject.name || 'Class',
+            summary: [dayHeading(row.date), `${row.start}–${row.end}`, row.teacher.name, stateLabels[row.state]]
+              .filter(Boolean)
+              .join(' · '),
+            href: '/timetable',
+          })),
+        }
+      : null,
+  );
+
+  return (
+    <QueryPage query={query} loadingLabel="Loading timetable…">
+      {(data) => {
+        const items = [...(data.occurrences ?? [])].sort(
+          (left, right) => left.date.localeCompare(right.date) || left.start.localeCompare(right.start),
+        );
+        // One heading per day instead of repeating the date on every single row.
+        const days = items.reduce<Array<{ date: string; slots: Row[] }>>((groups, row) => {
+          const last = groups[groups.length - 1];
+          if (last && last.date === row.date) last.slots.push(row);
+          else groups.push({ date: row.date, slots: [row] });
+          return groups;
+        }, []);
+
+        return (
+          <div className="mx-auto w-full max-w-[1120px]">
+            <PageHeader eyebrow="This week" title={pageTitle} description={pageDescription} />
+
+            {days.length === 0 ? (
+              <EmptyState
+                icon={CalendarDays}
+                title="No timetable published"
+                description="Your institution has not published a schedule for this week."
+              />
+            ) : (
+              <div className={styles.week}>
+                {days.map((day) => {
+                  const isToday = day.date === todayKey;
+                  return (
+                    <section className={styles.day} key={day.date} data-today={isToday || undefined}>
+                      <h2 className={styles.dayHead}>
+                        <span>{dayHeading(day.date)}</span>
+                        {isToday ? <em className={styles.todayTag}>Today</em> : null}
+                        <small>{day.slots.length} {day.slots.length === 1 ? 'class' : 'classes'}</small>
+                      </h2>
+
+                      <ul className={styles.slots}>
+                        {day.slots.map((slot) => {
+                          const note = stateLabels[slot.state];
+                          return (
+                            <li className={styles.slot} key={slot.id} data-state={slot.state}>
+                              <span className={styles.time}>
+                                <strong>{slot.start}</strong>
+                                <small>{slot.end}</small>
+                              </span>
+                              <div className={styles.slotBody}>
+                                <h3 className={styles.subject}>{slot.subject.name || 'Class'}</h3>
+                                <p className={styles.meta}>
+                                  {slot.teacher.name ? (
+                                    <span><UserRound aria-hidden="true" />{slot.teacher.name}</span>
+                                  ) : null}
+                                  {slot.room.name ? (
+                                    <span><MapPin aria-hidden="true" />{slot.room.name}</span>
+                                  ) : null}
+                                </p>
+                                {note ? <p className={styles.note}>{note}</p> : null}
+                              </div>
+                              <PetrosAskButton
+                                candidateRef={slot.id}
+                                label={`${slot.subject.name} on ${dayHeading(slot.date)}`}
+                                variant="icon"
+                              />
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </section>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        </SurfaceCard>
-      )}
-    />
+        );
+      }}
+    </QueryPage>
   );
 }
