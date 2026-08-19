@@ -109,13 +109,17 @@ describe('Petros companion contracts', () => {
     expect(parsed.success).toBe(false);
   });
 
-  it('rejects an off-origin navigation href', () => {
-    const parsed = petrosCompanionBlockSchema.safeParse({
-      type: 'navigation',
-      label: 'Go',
-      href: 'https://evil.example/steal',
-    });
-    expect(parsed.success).toBe(false);
+  it('rejects any destination that leaves the portal', () => {
+    // `//host` is protocol-relative: browsers resolve it off-site even though it starts
+    // with a slash, so a startsWith('/') check alone is an open redirect.
+    for (const href of ['https://evil.example/steal', '//evil.example', '/\\evil.example']) {
+      expect(
+        petrosCompanionBlockSchema.safeParse({ type: 'navigation', label: 'Go', href }).success,
+      ).toBe(false);
+    }
+    expect(
+      petrosCompanionBlockSchema.safeParse({ type: 'navigation', label: 'Go', href: '/results' }).success,
+    ).toBe(true);
   });
 
   it('requires an idempotency key on every turn', () => {

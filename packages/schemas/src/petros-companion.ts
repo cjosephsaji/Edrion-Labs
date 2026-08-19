@@ -186,6 +186,20 @@ export type PetrosEntityType = (typeof PETROS_ENTITY_TYPES)[number];
 
 const shortText = z.string().trim().min(1).max(300);
 
+/**
+ * A path inside the student portal.
+ *
+ * `startsWith('/')` alone is not enough: `//evil.example` is a protocol-relative URL that
+ * browsers resolve off-site, so a model-supplied destination could navigate the student
+ * away from the portal. Backslashes are rejected for the same reason.
+ */
+const portalPath = z
+  .string()
+  .trim()
+  .max(500)
+  .refine((value) => value.startsWith('/'), 'Must be a portal path')
+  .refine((value) => !value.startsWith('//') && !value.startsWith('/\\'), 'Must not leave the portal');
+
 export const petrosPageCandidateSchema = z
   .object({
     /** Stable client reference, unique within a page registration. */
@@ -194,7 +208,7 @@ export const petrosPageCandidateSchema = z
     entityId: z.string().trim().min(1).max(240).optional(),
     title: shortText,
     summary: z.string().trim().max(600).default(''),
-    href: z.string().trim().startsWith('/').max(500).optional(),
+    href: portalPath.optional(),
     sourceVersion: z.string().trim().min(1).max(120).optional(),
     availableActions: z.array(z.string().trim().min(1).max(80)).max(12).default([]),
   })
@@ -203,7 +217,7 @@ export type PetrosPageCandidate = z.infer<typeof petrosPageCandidateSchema>;
 
 export const petrosPageContextSchema = z
   .object({
-    route: z.string().trim().startsWith('/').max(500),
+    route: portalPath,
     surface: z.enum(PETROS_SURFACES),
     title: shortText,
     summary: z.string().trim().max(600).optional(),
@@ -258,7 +272,7 @@ export const petrosCompanionBlockSchema = z.discriminatedUnion('type', [
     .object({
       type: z.literal('source'),
       label: shortText,
-      href: z.string().trim().startsWith('/').max(500).optional(),
+      href: portalPath.optional(),
       sourceRef: z.string().trim().min(1).max(240),
     })
     .strict(),
@@ -283,7 +297,7 @@ export const petrosCompanionBlockSchema = z.discriminatedUnion('type', [
     .object({
       type: z.literal('navigation'),
       label: shortText,
-      href: z.string().trim().startsWith('/').max(500),
+      href: portalPath,
     })
     .strict(),
   z
@@ -337,7 +351,7 @@ export const petrosCompanionTurnInputSchema = z
   .object({
     threadId: z.string().uuid().optional(),
     message: z.string().trim().min(1).max(2_000),
-    route: z.string().trim().startsWith('/').max(500),
+    route: portalPath,
     surface: z.enum(PETROS_SURFACES),
     focusRef: z.string().trim().min(1).max(160).optional(),
     visibleCandidates: z.array(petrosPageCandidateSchema).max(40).default([]),
@@ -401,7 +415,7 @@ export const petrosActionResultSchema = z
     actionKey: z.enum(PETROS_ACTION_KEYS),
     status: z.enum(PETROS_ACTION_STATUSES),
     /** Where the portal should send the student, when the action produced a destination. */
-    href: z.string().trim().startsWith('/').max(500).nullable(),
+    href: portalPath.nullable(),
     message: shortText,
   })
   .strict();
@@ -453,7 +467,7 @@ export const petrosBriefingItemSchema = z
     kind: z.enum(PETROS_BRIEFING_KINDS),
     title: shortText,
     detail: z.string().trim().max(400),
-    href: z.string().trim().startsWith('/').max(500).nullable(),
+    href: portalPath.nullable(),
     /** Deterministic score; lower sorts first. Never model-assigned. */
     priority: z.number().int().min(0).max(1_000),
     entityType: z.enum(PETROS_ENTITY_TYPES).nullable(),

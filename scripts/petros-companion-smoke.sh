@@ -138,7 +138,23 @@ chk "same facts, same ordering" "$(printf '%s' "$B1" | jq_ items | md5 -q 2>/dev
 chk "briefing has a headline" "$([ -n "$(printf '%s' "$B1" | jq_ headline)" ] && echo ok)" ok
 
 echo
-echo "== 11. Thread lifecycle =="
+echo "== 11. Session handoff returns to the same thread =="
+CLOSED_SESSION="$(psql "$PSQL" -tAc "select id from petros_learning_sessions where status='closed' and student_id=(select s.id from students s join institution_users u on u.id=s.institution_user_id where u.email='$STU') limit 1")"
+if [ -n "$CLOSED_SESSION" ]; then
+  SID="$(psql "$PSQL" -tAc "select s.id from students s join institution_users u on u.id=s.institution_user_id where u.email='$STU' limit 1")"
+  IID="$(psql "$PSQL" -tAc "select institution_id from students where id='$SID'")"
+  psql "$PSQL" -qc "insert into petros_student_action_proposals (institution_id, student_id, thread_id, action_key, arguments, preview, status, result_ref, expires_at, executed_at) values ('$IID','$SID','$THREAD','session.preview_and_start','{}','[]','executed','$CLOSED_SESSION', now()+interval '1 hour', now());" >/dev/null
+  RES1="$(sget "/petros/companion/thread?threadId=$THREAD")"
+  chkc "finished session is reported in the thread" "$RES1" "Session complete"
+  chkc "the summary names the topic" "$RES1" "You finished"
+  sget "/petros/companion/thread?threadId=$THREAD" > /dev/null
+  chk "the result lands exactly once" "$(psql "$PSQL" -tAc "select count(*) from petros_student_messages where thread_id='$THREAD' and blocks::text like '%Session complete%'")" 1
+else
+  echo "  SKIP  no closed session for this student"
+fi
+
+echo
+echo "== 12. Thread lifecycle =="
 chk "archive thread" "$(printf '%s' "$(spost "/petros/companion/threads/$THREAD/archive" '{}')" | jq_ status)" archived
 chk "delete thread"  "$(curl -s -m 30 -X DELETE "$API/student/petros/companion/threads/$THREAD" -H "x-student-email: $STU" | jq_ deleted)" true
 chk "messages cascade away" "$(psql "$PSQL" -tAc "select count(*) from petros_student_messages where thread_id='$THREAD'")" 0

@@ -48,8 +48,16 @@ const futureDateTime = isoDateTime.refine((value) => {
   return time > now - PLAN_PAST_GRACE_MS && time < now + MAX_PLAN_HORIZON_DAYS * 86_400_000;
 }, 'Expected a date-time within the next six months');
 
+/** Same rule as the shared contract: a portal path, never a protocol-relative URL. */
+const portalPath = z
+  .string()
+  .trim()
+  .max(500)
+  .refine((value) => value.startsWith('/'), 'Must be a portal path')
+  .refine((value) => !value.startsWith('//') && !value.startsWith('/\\'), 'Must not leave the portal');
+
 const ARGUMENT_SCHEMAS = {
-  'navigate.open': z.object({ href: z.string().trim().startsWith('/').max(500) }).strict(),
+  'navigate.open': z.object({ href: portalPath }).strict(),
   'session.preview_and_start': z
     .object({
       sourceRef: z.string().trim().min(1).max(160),
@@ -498,6 +506,47 @@ export class PetrosActionRegistryService {
         if (!row?.dueAt || row.dueAt.getTime() > Date.now()) return undefined;
         return { id: row.id, title: row.content.title, dueAt: row.dueAt };
       });
+  }
+
+  /**
+   * Facts about a finished session, for the thread that started it. Returns null while the
+   * session is still open, so an unfinished session is never reported as complete.
+   */
+  async closedSessionSummary(principal: InstitutionalStudentPrincipal, sessionId: string) {
+    const [session] = await this.db
+      .select({
+        topic: schema.petrosLearningSessions.topic,
+        status: schema.petrosLearningSessions.status,
+        checkpoints: schema.petrosLearningSessions.checkpoints,
+      })
+      .from(schema.petrosLearningSessions)
+      .where(
+        and(
+          eq(schema.petrosLearningSessions.id, sessionId),
+          eq(schema.petrosLearningSessions.studentId, principal.studentId),
+          eq(schema.petrosLearningSessions.institutionId, principal.institutionId),
+        ),
+      )
+      .limit(1);
+    if (!session || session.status !== 'closed') return null;
+
+    const saved = await this.db
+      .select({ id: schema.petrosSavedArtifacts.id })
+      .from(schema.petrosSavedArtifacts)
+      .where(
+        and(
+          eq(schema.petrosSavedArtifacts.sessionId, sessionId),
+          eq(schema.petrosSavedArtifacts.studentId, principal.studentId),
+        ),
+      );
+
+    const checkpoints = session.checkpoints ?? [];
+    return {
+      topic: session.topic,
+      total: checkpoints.length,
+      completed: checkpoints.filter((checkpoint) => checkpoint.status === 'complete').length,
+      artifactCount: saved.length,
+    };
   }
 
   /** Latest owned session, used by the briefing and by "continue where we stopped". */

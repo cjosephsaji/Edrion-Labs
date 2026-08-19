@@ -1,4 +1,5 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import type { ApiEnv } from '@edrion/config';
 import {
@@ -130,8 +131,57 @@ export class PetrosCompanionService {
       ? await this.repo.findThread(scope, threadId)
       : await this.repo.latestActiveThread(scope);
     if (!thread) return { thread: null };
+    await this.syncSessionResults(principal, thread.id);
     const messages = await this.repo.listMessages(scope, thread.id);
     return { thread: this.threadDto(thread, messages as MessageRow[]) };
+  }
+
+  /**
+   * Closes the loop on a teaching session the companion started.
+   *
+   * When the student finishes a session they came to from this thread, the thread should say
+   * so rather than ending on "Session ready." The summary is assembled from stored session
+   * state, never a model, and the derived idempotency key means it lands exactly once
+   * however many times the thread is reloaded.
+   */
+  private async syncSessionResults(principal: InstitutionalStudentPrincipal, threadId: string) {
+    const scope = this.scope(principal);
+    const proposals = await this.repo.listProposals(scope, threadId);
+    const sessionProposals = proposals.filter(
+      (proposal) =>
+        proposal.status === 'executed' &&
+        proposal.resultRef &&
+        (proposal.actionKey === 'session.preview_and_start' || proposal.actionKey === 'session.resume'),
+    );
+    if (!sessionProposals.length) return;
+
+    for (const proposal of sessionProposals) {
+      const summary = await this.actions.closedSessionSummary(principal, proposal.resultRef!);
+      if (!summary) continue;
+      const blocks: PetrosCompanionBlock[] = [
+        {
+          type: 'text',
+          text: summary.artifactCount
+            ? `You finished ${summary.topic}. ${summary.completed} of ${summary.total} checkpoints done, and you saved ${summary.artifactCount} ${summary.artifactCount === 1 ? 'thing' : 'things'} to review later.`
+            : `You finished ${summary.topic}. ${summary.completed} of ${summary.total} checkpoints done.`,
+        },
+        { type: 'status', label: 'Session complete', tone: 'positive' },
+      ];
+      if (summary.artifactCount) {
+        blocks.push({ type: 'navigation', label: 'Open what you saved', href: '/petros/artifacts' });
+      }
+      await this.repo.insertMessage({
+        institutionId: principal.institutionId,
+        studentId: principal.studentId,
+        threadId,
+        role: 'petros',
+        blocks,
+        route: '/petros/session',
+        surface: 'unknown',
+        idempotencyKey: derivedUuid(proposal.resultRef!, 'session-result'),
+        schemaVersion: PETROS_COMPANION_SCHEMA_VERSION,
+      });
+    }
   }
 
   async listThreads(principal: InstitutionalStudentPrincipal) {
@@ -661,6 +711,12 @@ export class PetrosCompanionService {
       createdAt: message.createdAt.toISOString(),
     };
   }
+}
+
+/** Stable key per session, so the result message is inserted exactly once. */
+function derivedUuid(value: string, purpose: string) {
+  const hex = createHash('sha256').update(`${value}:${purpose}`).digest('hex');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 }
 
 function blockText(blocks: unknown[]) {
