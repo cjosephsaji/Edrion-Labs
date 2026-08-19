@@ -565,6 +565,52 @@ describe('PetrosLoopService coordination', () => {
     );
   });
 
+  it('asks an uploaded document question directly and retries it without duplicated ladder wording', async () => {
+    const harness = makeHarness();
+    harness.session.sourceContext = {
+      door: 'uploaded_document',
+      citations: [
+        {
+          excerpt:
+            '1. Why is grid computing considered the predecessor of cloud computing? Explain.',
+        },
+      ],
+    } as never;
+    const document = await harness.service.continue(
+      principal,
+      SESSION_ID,
+      '81818181-8181-4181-8181-818181818181',
+    );
+    const question = harness.questionSpecs[0]!;
+    expect(question.prompt).toBe(
+      'Why is grid computing considered the predecessor of cloud computing?',
+    );
+    Object.assign(question, {
+      evaluationMode: 'deterministic',
+      responseType: 'short_answer',
+      acceptableAnswers: ['correct response'],
+      correctChoiceId: null,
+    });
+
+    await harness.service.submitAnswer(principal, SESSION_ID, document.blocks[0]!.id, {
+      idempotencyKey: '82828282-8282-4282-8282-828282828282',
+      questionId: question.id,
+      answer: 'incorrect response',
+      confidence: 'guessing',
+      expectedBlockVersion: 0,
+    });
+
+    expect(harness.repo.commitAnswer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rewordedQuestion: expect.objectContaining({
+          prompt:
+            'What features of grid computing explain why it is considered the predecessor of cloud computing?',
+          purpose: 'equivalent_retry',
+        }),
+      }),
+    );
+  });
+
   it('rejoins an active composer detour only after its changed block is completed', async () => {
     const harness = makeHarness({ outage: true });
     const document = await harness.service.continue(

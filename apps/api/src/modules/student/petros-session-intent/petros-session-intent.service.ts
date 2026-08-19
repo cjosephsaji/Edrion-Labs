@@ -22,6 +22,7 @@ import { API_ENV, AUDIT_WRITER } from '../../../common/tokens';
 import { baseAudit, type ActionContext } from '../../../common/action-context';
 import { PetrosAiGatewayService } from '../../petros-ai-routing/petros-ai-gateway.service';
 import type { InstitutionalStudentPrincipal } from '../student.types';
+import { documentStudyQuestions } from '../petros-document-grounding';
 import { PetrosLoopService } from '../petros-loop/petros-loop.service';
 import type { PetrosOwnerScope } from '../petros-loop/petros-loop.repository';
 import { PetrosSessionIntentRepository } from './petros-session-intent.repository';
@@ -710,6 +711,7 @@ export class PetrosSessionIntentService {
       }
       if (!document.pages.length) throw intentNotFound();
       const selectedPages = document.pages.slice(0, 8);
+      const studyQuestions = documentStudyQuestions(selectedPages.map((page) => page.text));
       return {
         sessionType: 'learn' as const,
         goal: `Understand the selected part of ${document.item.title} and explain it using the document's own evidence.`,
@@ -720,7 +722,7 @@ export class PetrosSessionIntentService {
             'Ground every document claim in extracted pages the student can access.',
             'Cite exact page numbers and do not reconstruct missing or unextracted content.',
           ],
-          curriculum: [],
+          curriculum: studyQuestions,
           knownFailureDetails: [],
           learningPathPosition: null,
         },
@@ -739,7 +741,7 @@ export class PetrosSessionIntentService {
           label: `${document.item.title} (p. ${page.pageIndex + 1})`,
           page: page.pageIndex + 1,
           section: input.section ?? null,
-          excerpt: page.text.trim().slice(0, 600) || null,
+          excerpt: page.text.trim().slice(0, 1_200) || null,
         })),
         returnHref: '/materials',
         returnLabel: 'Study materials',

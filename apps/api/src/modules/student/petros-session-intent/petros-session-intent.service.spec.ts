@@ -145,6 +145,21 @@ describe('Petros Stage 8 session intent resolver', () => {
     }));
   });
 
+  it('uses explicit revision questions from an uploaded document as the teaching curriculum', async () => {
+    const ready = {
+      item: { id: SOURCE_ID, title: 'Module 1 revision', kind: 'docx', pageCount: 1, extractedTextReady: true, indexReady: true, status: 'ready', pagesDone: 1, version: 1 },
+      pages: [{ id: PAGE_ID, itemId: SOURCE_ID, pageIndex: 0, text: 'MODULE 1 REVISION QUESTIONS\n1. Why is grid computing considered the predecessor of cloud computing? Explain.\n2. How does IaaS divide responsibility?', updatedAt: new Date('2026-08-12T06:00:00.000Z') }],
+    };
+    const { service } = harness({ documentSource: vi.fn().mockResolvedValue(ready) });
+
+    const intent = await service.resolve(principal, input('uploaded_document', { page: 1 }));
+
+    expect(intent.scope.curriculum).toEqual([
+      'Why is grid computing considered the predecessor of cloud computing?',
+      'How does IaaS divide responsibility?',
+    ]);
+  });
+
   it('resolves only the next evidence-gated path item and does not complete it on preview', async () => {
     const pathSource = vi.fn().mockResolvedValue({
       path: { id: PATH_ID, title: 'Mechanics path', subjectLabel: 'Physics', version: 2 },

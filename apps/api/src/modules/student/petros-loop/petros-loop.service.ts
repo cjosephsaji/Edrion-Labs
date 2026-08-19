@@ -47,6 +47,10 @@ import { mapLegacyErrorCategory } from '../../petros-learner-model/petros-learne
 import { PetrosInstitutionalService } from '../../petros-institutional/petros-institutional.service';
 import type { InstitutionalStudentPrincipal } from '../student.types';
 import {
+  documentQuestionFromSourceContext,
+  documentRetryPrompt,
+} from '../petros-document-grounding';
+import {
   applyRepetitionGuard,
   deterministicPlan,
   deterministicRender,
@@ -1449,6 +1453,8 @@ export class PetrosLoopService {
       studentId: scope.studentId,
       decision,
       deterministic: delivery === 'deterministic_fallback',
+      sourceContext: state.sourceContext,
+      moveSequence: row.sequence,
     });
     const block = await this.repo.insertRenderedBlock(
       row.id,
@@ -1768,10 +1774,16 @@ function buildQuestionSpecs(
     studentId: string;
     decision: PetrosPlanDecision;
     deterministic: boolean;
+    sourceContext: Record<string, unknown> | null;
+    moveSequence: number;
   },
 ): Array<typeof schema.petrosQuestionSpecs.$inferInsert> {
   if (context.decision.guessFirst.status !== 'required') return [];
   const targetBase = context.decision.guessFirst.targetId ?? context.decision.targetConcept;
+  const documentQuestion =
+    content.type === 'recall_check'
+      ? null
+      : documentQuestionFromSourceContext(context.sourceContext, context.moveSequence);
   const common = (values: {
     key: string;
     prompt: string;
@@ -1786,6 +1798,11 @@ function buildQuestionSpecs(
     rewordedPrompt: string;
   }) => {
     const id = randomUUID();
+    const prompt = documentQuestion ?? values.prompt;
+    const responseType = documentQuestion ? 'short_answer' : values.responseType;
+    const rewordedPrompt = documentQuestion
+      ? documentRetryPrompt(documentQuestion)
+      : values.rewordedPrompt;
     return {
       id,
       sessionId: context.sessionId,
@@ -1799,22 +1816,25 @@ function buildQuestionSpecs(
         .update(`${context.sessionId}:${context.decision.targetConcept}:${values.key}`)
         .digest('hex')
         .slice(0, 48),
-      prompt: values.prompt,
-      responseType: values.responseType,
-      choices: values.choices ?? null,
+      prompt,
+      responseType,
+      choices: documentQuestion ? null : (values.choices ?? null),
       purpose: values.purpose,
       evaluationMode:
+        !documentQuestion &&
         context.deterministic &&
         (Boolean(values.correctChoiceId) || Boolean(values.acceptableAnswers?.length))
           ? 'deterministic'
           : 'ai',
-      acceptableAnswers: values.acceptableAnswers ?? [],
-      correctChoiceId: values.correctChoiceId ?? null,
-      rubric: `Evaluate whether the learner identifies the useful relationship or decision for ${context.decision.targetConcept}. Partial credit must not count as a conceptual failure.`,
+      acceptableAnswers: documentQuestion ? [] : (values.acceptableAnswers ?? []),
+      correctChoiceId: documentQuestion ? null : (values.correctChoiceId ?? null),
+      rubric: documentQuestion
+        ? `Evaluate whether the learner makes a relevant, source-grounded attempt to answer: “${documentQuestion}” Partial credit must not count as a conceptual failure.`
+        : `Evaluate whether the learner identifies the useful relationship or decision for ${context.decision.targetConcept}. Partial credit must not count as a conceptual failure.`,
       hint: values.hint,
       missingStep: values.missingStep,
       workedSolution: values.workedSolution,
-      rewordedPrompt: values.rewordedPrompt,
+      rewordedPrompt,
       attemptOrdinal: 1,
       active: true,
     };
@@ -1859,7 +1879,7 @@ function buildQuestionSpecs(
               missingStep:
                 'The missing step is identifying the relationship before listing details.',
               workedSolution: content.firstLayer,
-              rewordedPrompt: `Try the same target another way: what relationship would you use to explain ${context.decision.targetConcept} to someone seeing it for the first time?`,
+              rewordedPrompt: `What relationship would you use to explain ${context.decision.targetConcept} to someone seeing it for the first time?`,
             },
       ),
     ];
@@ -2041,7 +2061,7 @@ function buildQuestionSpecs(
             missingStep:
               'The missing step is naming the controlling clue before seeing the teaching.',
             workedSolution: teachingSummary(content),
-            rewordedPrompt: `Try the same target another way: what clue controls ${context.decision.targetConcept}?`,
+            rewordedPrompt: `What clue controls ${context.decision.targetConcept}?`,
           },
     ),
   ];
@@ -2087,9 +2107,7 @@ function followupQuestionSpec(
     parentQuestionId: question.id,
     targetId: question.targetId,
     equivalenceKey: question.equivalenceKey,
-    prompt: transition.needsRewordedQuestion
-      ? question.rewordedPrompt
-      : `Try the same target from another angle: ${question.rewordedPrompt}`,
+    prompt: question.rewordedPrompt,
     responseType: question.responseType,
     choices: question.choices,
     purpose: transition.needsRewordedQuestion ? 'reworded_success' : 'equivalent_retry',

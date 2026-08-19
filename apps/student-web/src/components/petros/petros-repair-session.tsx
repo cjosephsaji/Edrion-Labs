@@ -1559,7 +1559,7 @@ function QuestionCard({
       : question.purpose === 'reworded_success'
         ? 'Earned-success attempt'
         : question.purpose === 'equivalent_retry'
-          ? 'Equivalent retry'
+          ? 'Try it another way'
           : 'Recall check';
   return (
     <section className={styles.questionCard} data-locked={locked} data-purpose={question.purpose}>
