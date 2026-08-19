@@ -469,10 +469,14 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
               <WandSparkles aria-hidden="true" /> Opened from{' '}
               {sourceView.openedFrom}
             </div>
-            <h1>{sourceView.heading}</h1>
+            {/*
+              The goal is what this session is actually for, so it is the headline. The mode
+              slogan is the same sentence for every student in that mode, so it sits under it
+              as supporting text rather than dominating the screen.
+            */}
+            <h1>{document?.currentGoal ?? `A focused session on ${topic}.`}</h1>
             <p>
-              {sourceView.contextLine ? `${sourceView.contextLine} ` : ''}
-              {document?.currentGoal ?? `This is a focused Petros session for ${topic}.`}
+              {[sourceView.contextLine, sourceView.heading].filter(Boolean).join(' · ')}
             </p>
             <div className={styles.goal}>
               <Clock3 aria-hidden="true" />
@@ -692,29 +696,51 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
               </div>
             ))}
           </div>
-          <div className={styles.railCard}>
-            <p>WHAT YOU’RE BUILDING</p>
-            <dl>
-              <div>
-                <dt>Artifact proposals</dt>
-                <dd>{artifactCounts?.proposed ?? artifactIntents}</dd>
+          {(() => {
+            const proposed = artifactCounts?.proposed ?? artifactIntents;
+            const saved = artifactCounts?.saved ?? 0;
+            const completed =
+              document?.blocks.filter((block) => block.status === 'completed').length ?? 0;
+            // At the start of a session every count is zero. Three zeroes under a paragraph
+            // of explanation is noise, so the card stays quiet until there is something to show.
+            if (!proposed && !saved && !completed) {
+              return (
+                <div className={styles.railCard}>
+                  <p>WHAT YOU’RE BUILDING</p>
+                  <small>
+                    Notes and flashcards you make here appear in this list. Nothing is saved until
+                    you choose it.
+                  </small>
+                </div>
+              );
+            }
+            return (
+              <div className={styles.railCard}>
+                <p>WHAT YOU’RE BUILDING</p>
+                <dl>
+                  {proposed ? (
+                    <div>
+                      <dt>Suggested</dt>
+                      <dd>{proposed}</dd>
+                    </div>
+                  ) : null}
+                  {saved ? (
+                    <div>
+                      <dt>Saved</dt>
+                      <dd>{saved}</dd>
+                    </div>
+                  ) : null}
+                  {completed ? (
+                    <div>
+                      <dt>Steps done</dt>
+                      <dd>{completed}</dd>
+                    </div>
+                  ) : null}
+                </dl>
+                <small>Suggestions stay out of your saved work until you pick them.</small>
               </div>
-              <div>
-                <dt>Saved artifacts</dt>
-                <dd>{artifactCounts?.saved ?? 0}</dd>
-              </div>
-              <div>
-                <dt>Completed blocks</dt>
-                <dd>
-                  {document?.blocks.filter((block) => block.status === 'completed').length ?? 0}
-                </dd>
-              </div>
-            </dl>
-            <small>
-              These counts come from the artifact store. Proposals remain outside your products
-              until you edit or select them and explicitly save.
-            </small>
-          </div>
+            );
+          })()}
           <div className={styles.rules}>
             <ShieldIcon />
             <div>

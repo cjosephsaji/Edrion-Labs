@@ -35,7 +35,7 @@ function isActive(pathname: string, href: string) {
  * not rendered at all there.
  */
 function isFocusRoute(pathname: string) {
-  return /^\/exams\/[^/]+\/attempt$/.test(pathname);
+  return /^\/exams\/[^/]+\/attempt$/.test(pathname) || pathname.startsWith('/petros/session');
 }
 
 function uniqueItems(items: Array<NavItem | undefined>) {

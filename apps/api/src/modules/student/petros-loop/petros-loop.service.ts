@@ -1683,13 +1683,23 @@ function elapsed(session: PetrosLearningSession) {
   return Math.max(0, session.elapsedSeconds + active);
 }
 
+/**
+ * A checkpoint tells the student what they are about to do, so every one carries a real
+ * name. The last is always the close, whatever the move budget, and the middle stretches
+ * with practice rather than falling back to "Checkpoint 5".
+ */
 function checkpointPlan(maxMoves: number) {
-  const labels = ['Find the useful entry', 'Build the idea', 'Bring it back', 'Make it yours'];
-  return Array.from({ length: maxMoves }, (_, index) => ({
-    id: `checkpoint-${index + 1}`,
-    label: labels[index] ?? `Checkpoint ${index + 1}`,
-    status: index === 0 ? ('current' as const) : ('pending' as const),
-  }));
+  const opening = ['Find the useful entry', 'Build the idea', 'Bring it back', 'Make it yours'];
+  const total = Math.max(1, maxMoves);
+  return Array.from({ length: total }, (_, index) => {
+    const isLast = index === total - 1;
+    const label = isLast && total > 1 ? 'Close it out' : (opening[index] ?? 'Practise it again');
+    return {
+      id: `checkpoint-${index + 1}`,
+      label,
+      status: index === 0 ? ('current' as const) : ('pending' as const),
+    };
+  });
 }
 
 function advanceCheckpoints(
