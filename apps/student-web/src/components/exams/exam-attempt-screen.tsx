@@ -39,11 +39,6 @@ function countdown(ms: number) {
     : `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
-function displayDate(value: string | null) {
-  if (!value) return 'Schedule pending';
-  return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(value));
-}
-
 export function ExamAttemptScreen({ scheduleId }: { scheduleId: string }) {
   const api = useStudentApi();
   const router = useRouter();
@@ -259,6 +254,9 @@ export function ExamAttemptScreen({ scheduleId }: { scheduleId: string }) {
               >
                 <Play aria-hidden="true" size={17} />{starting ? 'Starting…' : 'Start examination'}
               </button>
+              {paper.canStart && !agreement ? (
+                <p className={styles.sideHint}>Tick the box on the left to begin.</p>
+              ) : null}
               {!paper.canStart ? <p className={styles.errorText}>{paper.blockedReason}</p> : null}
               {actionError ? <p className={styles.errorText}>{actionError}</p> : null}
             </div>
@@ -276,23 +274,35 @@ export function ExamAttemptScreen({ scheduleId }: { scheduleId: string }) {
     <div className={styles.attemptPage}>
       <header className={styles.attemptHeader}>
         <div className={styles.attemptIdentity}>
-          <button className={styles.iconButton} type="button" title="Exit examination" onClick={() => {
+          <button className={styles.iconButton} type="button" title="Leave examination" onClick={() => {
             if (window.confirm('Leave the examination? Your saved answers and timer will remain active.')) router.push('/exams');
           }}><X aria-hidden="true" size={18} /></button>
-          <div className="min-w-0"><h1 className={styles.attemptTitle}>{paper.title}</h1><p className={styles.attemptSubject}>Question {currentIndex + 1} of {questions.length}</p></div>
+          <div className="min-w-0">
+            <h1 className={styles.attemptTitle}>{paper.title}</h1>
+            <p className={styles.attemptSubject}>
+              Question {currentIndex + 1} of {questions.length}
+              <span className={styles.saveState} data-state={!online ? 'offline' : saveState}>
+                {!online ? <><WifiOff aria-hidden="true" size={13} /> Offline</> : saveState === 'saving' ? <><LoaderCircle aria-hidden="true" className="animate-spin" size={13} /> Saving</> : saveState === 'error' ? <><CloudOff aria-hidden="true" size={13} /> Not saved</> : <><Cloud aria-hidden="true" size={13} /> Saved</>}
+              </span>
+            </p>
+          </div>
         </div>
         <div className={styles.headerTools}>
-          <span className={styles.saveState}>
-            {!online ? <><WifiOff aria-hidden="true" size={15} /> Offline</> : saveState === 'saving' ? <><LoaderCircle aria-hidden="true" className="animate-spin" size={15} /> Saving</> : saveState === 'error' ? <><CloudOff aria-hidden="true" size={15} /> Save failed</> : <><Cloud aria-hidden="true" size={15} /> Saved</>}
-          </span>
           <button className={styles.iconButton} type="button" title="Enter full screen" onClick={() => void document.documentElement.requestFullscreen?.()}><Maximize2 aria-hidden="true" size={17} /></button>
-          <span className={styles.timer} data-urgent={remaining <= 5 * 60_000}><Clock3 aria-hidden="true" size={16} />{countdown(remaining)}</span>
+          <span className={styles.timer} data-urgent={remaining <= 5 * 60_000 || undefined} role="timer" aria-label={`${countdown(remaining)} remaining`}>
+            <Clock3 aria-hidden="true" size={15} />
+            <strong>{countdown(remaining)}</strong>
+            <small>left</small>
+          </span>
         </div>
       </header>
 
       <div className={styles.workspace}>
         <aside className={styles.toolPanel}>
-          <div className={styles.toolHead}><h2>Question palette</h2><p>{answeredCount} of {questions.length} answered</p></div>
+          <div className={styles.toolHead}>
+            <h2>Questions</h2>
+            <p>{answeredCount} of {questions.length} answered{flaggedCount ? ` · ${flaggedCount} flagged` : ''}</p>
+          </div>
           <div className={styles.palette}>
             {questions.map((question, index) => (
               <button
@@ -308,6 +318,17 @@ export function ExamAttemptScreen({ scheduleId }: { scheduleId: string }) {
             ))}
           </div>
           <div className={styles.legend}><span><i className={styles.legendDot} data-tone="answered" /> Answered</span><span><i className={styles.legendDot} data-tone="flagged" /> Flagged</span><span><i className={styles.legendDot} /> Not answered</span></div>
+          <div className={styles.sideAction}>
+            <button className={styles.submitButton} type="button" onClick={() => setShowSubmit(true)}>
+              <UploadCloud aria-hidden="true" size={16} /> Review and submit
+            </button>
+            {unansweredCount > 0 ? (
+              <p className={styles.paletteNote}>{unansweredCount} still unanswered</p>
+            ) : (
+              <p className={styles.paletteNote}>Every question answered</p>
+            )}
+            {actionError ? <p className={styles.errorText}>{actionError}</p> : null}
+          </div>
         </aside>
 
         <main className={styles.questionCard}>
@@ -346,14 +367,6 @@ export function ExamAttemptScreen({ scheduleId }: { scheduleId: string }) {
           </div>
         </main>
 
-        <aside>
-          <div className={styles.toolPanel}>
-            <div className={styles.toolHead}><h2>Attempt progress</h2><p>{displayDate(paper.attempt.endsAt)}</p></div>
-            <div className={styles.sideStats}><div className={styles.sideStat}><span>Answered</span><strong>{answeredCount}</strong></div><div className={styles.sideStat}><span>Flagged</span><strong>{flaggedCount}</strong></div></div>
-            <ul className={styles.instructionList}><li>Answers save automatically.</li><li>Use the palette to move between questions.</li><li>Submit only after reviewing unanswered items.</li></ul>
-            <div className={styles.sideAction}><button className={styles.submitButton} type="button" onClick={() => setShowSubmit(true)}><UploadCloud aria-hidden="true" size={16} /> Review and submit</button>{actionError ? <p className={styles.errorText}>{actionError}</p> : null}</div>
-          </div>
-        </aside>
       </div>
 
       {showSubmit ? (

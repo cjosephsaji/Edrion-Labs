@@ -29,6 +29,15 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+/**
+ * Routes that own the whole screen. A live examination must not offer a way to wander off
+ * into Timetable mid-attempt, so the portal chrome — masthead, tabs, directory, Petros — is
+ * not rendered at all there.
+ */
+function isFocusRoute(pathname: string) {
+  return /^\/exams\/[^/]+\/attempt$/.test(pathname);
+}
+
 function uniqueItems(items: Array<NavItem | undefined>) {
   const seen = new Set<string>();
   return items.filter((item): item is NavItem => {
@@ -244,6 +253,12 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (menuCloseTimerRef.current) window.clearTimeout(menuCloseTimerRef.current);
     setMenuPhase('open');
   };
+
+  if (isFocusRoute(pathname)) {
+    return (
+      <div className="student-shell min-h-screen bg-[var(--s-page)] text-[var(--s-ink)]">{children}</div>
+    );
+  }
 
   return (
     <PetrosCompanionProvider>
