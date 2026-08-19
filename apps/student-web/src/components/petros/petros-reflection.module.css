@@ -1,4 +1,7 @@
 .page{width:min(1180px,100%);margin:0 auto;display:grid;gap:24px;color:var(--s-text,#17231f)}
+/* Grid items default to min-width:auto, so one wide child (a table, the map) stretched the
+   track and pushed the whole page into horizontal scroll. */
+.page>*{min-width:0}
 .hero{position:relative;overflow:hidden;padding:28px;background:linear-gradient(125deg,#122d26,#1f604a 62%,#517d67);color:#fff;border-radius:2px}
 .hero:after{content:"";position:absolute;width:260px;height:260px;right:-100px;top:-100px;border:1px solid rgba(255,255,255,.16);border-radius:50%;box-shadow:0 0 0 45px rgba(255,255,255,.04),0 0 0 90px rgba(255,255,255,.025)}
 .hero>p:first-child,.sectionHead p,.mapToolbar>div>p,.cardHead p,.recommendation>p,.recapCard>p:first-child{margin:0;text-transform:uppercase;letter-spacing:.12em;font-size:10px;font-weight:800}

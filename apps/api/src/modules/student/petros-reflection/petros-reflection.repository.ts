@@ -165,14 +165,29 @@ export class PetrosReflectionRepository {
       };
     });
     const titleById = new Map(topics.map((topic) => [topic.topicId, topic]));
+    // Learner evidence is keyed by entity reference ("assignment:<uuid>"), so humanizing the
+    // key produced titles like "assignment 35dcabe7 2dac 41d5". Resolve the real names first.
+    const entityLabels = await this.entityLabels(scope, [
+      ...masteryRows.map((row) => row.conceptId),
+      ...masteryRows.map((row) => row.topicId),
+    ]);
     for (const mastery of masteryRows) {
       if (topics.some((topic) => topic.conceptId === mastery.conceptId)) continue;
       const known = titleById.get(mastery.topicId);
       topics.push({
         conceptId: mastery.conceptId,
         topicId: mastery.topicId,
-        title: known?.title ?? humanize(mastery.conceptId),
-        subjectLabel: known?.subjectLabel ?? humanize(mastery.topicId),
+        title:
+          known?.title ??
+          entityLabels.get(mastery.conceptId) ??
+          conceptFallback(
+            mastery.conceptId,
+            known?.subjectLabel ?? entityLabels.get(mastery.topicId),
+          ),
+        subjectLabel:
+          known?.subjectLabel ??
+          entityLabels.get(mastery.topicId) ??
+          conceptFallback(mastery.topicId),
         curriculumLabel: known?.curriculumLabel ?? 'Learner evidence without a published syllabus link',
         prerequisiteConceptIds: mastery.prerequisiteConceptIds,
         learnerGoal: false,
@@ -850,6 +865,72 @@ export class PetrosReflectionRepository {
     ]);
     return { events, snapshots, states, calibration, recaps, alarms };
   }
+
+  /**
+   * Resolves `kind:<uuid>` evidence keys to the record's own title, scoped to the student's
+   * institution. Unknown kinds and missing rows simply do not appear in the map.
+   */
+  private async entityLabels(
+    scope: PetrosOwnerScope,
+    keys: string[],
+  ): Promise<Map<string, string>> {
+    const out = new Map<string, string>();
+    const byKind = new Map<string, Set<string>>();
+    for (const key of new Set(keys)) {
+      const match = UUID_KEY.exec(key ?? '');
+      if (!match) continue;
+      const kind = match[1]!.toLowerCase();
+      const set = byKind.get(kind) ?? new Set<string>();
+      set.add(match[2]!);
+      byKind.set(kind, set);
+    }
+    if (!byKind.size) return out;
+
+    const assignmentIds = [...(byKind.get('assignment') ?? [])];
+    if (assignmentIds.length) {
+      const rows = await this.db
+        .select({ id: schema.assignments.id, title: schema.assignments.title })
+        .from(schema.assignments)
+        .where(
+          and(
+            eq(schema.assignments.institutionId, scope.institutionId),
+            inArray(schema.assignments.id, assignmentIds),
+          ),
+        );
+      for (const row of rows) out.set(`assignment:${row.id}`, row.title);
+    }
+
+    const homeworkIds = [...(byKind.get('homework') ?? [])];
+    if (homeworkIds.length) {
+      const rows = await this.db
+        .select({ id: schema.homework.id, title: schema.homework.title })
+        .from(schema.homework)
+        .where(
+          and(
+            eq(schema.homework.institutionId, scope.institutionId),
+            inArray(schema.homework.id, homeworkIds),
+          ),
+        );
+      for (const row of rows) out.set(`homework:${row.id}`, row.title);
+    }
+
+    const subjectIds = [...(byKind.get('subject') ?? [])];
+    if (subjectIds.length) {
+      const rows = await this.db
+        .select({ id: schema.subjects.id, name: schema.subjects.name })
+        .from(schema.subjects)
+        .where(
+          and(
+            eq(schema.subjects.institutionId, scope.institutionId),
+            inArray(schema.subjects.id, subjectIds),
+          ),
+        );
+      for (const row of rows) out.set(`subject:${row.id}`, row.name);
+    }
+
+    return out;
+  }
+
 }
 
 function evidenceValues(
@@ -917,4 +998,27 @@ function groupBy<T>(values: T[], key: (value: T) => string) {
 
 function humanize(value: string) {
   return value.replace(/[_:-]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+const UUID_KEY = /^([a-z_]+):([0-9a-f-]{36})$/i;
+
+/**
+ * Titles a concept whose key is an internal identifier rather than a syllabus topic.
+ *
+ * Evidence keys look like `assignment:<uuid>` or `checkpoint:2:mathematics:contrast_case`.
+ * Humanizing those produced student-facing titles such as "assignment 35dcabe7 2dac 41d5"
+ * and "checkpoint 2 mathematics contrast case commitment". Nothing internal is ever shown:
+ * an unresolved key falls back to the subject it belongs to.
+ */
+function conceptFallback(conceptId: string, subjectLabel?: string) {
+  const entity = UUID_KEY.exec(conceptId);
+  if (entity) {
+    const kind = humanize(entity[1]!).toLowerCase();
+    return subjectLabel ? `${subjectLabel} — a ${kind} you worked on` : `A ${kind} you worked on`;
+  }
+  // Teaching-move keys the loop writes per checkpoint are not concept names.
+  if (/^checkpoint-\d/i.test(conceptId)) {
+    return subjectLabel ? `${subjectLabel} — a step you practised` : 'A step you practised';
+  }
+  return humanize(conceptId);
 }

@@ -47,8 +47,7 @@ export class StudentAttendanceService {
       .map((row) => {
         const conducted = row.rollup.conducted;
         const present = row.rollup.attended;
-        const pct =
-          row.rollup.pct == null ? null : truncateAttendancePctNumber(Number(row.rollup.pct) * 100);
+        const pct = attendancePercentage(row.rollup.pct, row.rollup.attended, row.rollup.conducted);
         return {
           id: row.rollup.subjectId!,
           subjectName: row.subjectName ?? 'Subject',
@@ -72,10 +71,11 @@ export class StudentAttendanceService {
         subjectName: 'Overall',
         present: overall.rollup.attended,
         total: overall.rollup.conducted,
-        percentage:
-          overall.rollup.pct == null
-            ? null
-            : truncateAttendancePctNumber(Number(overall.rollup.pct) * 100),
+        percentage: attendancePercentage(
+          overall.rollup.pct,
+          overall.rollup.attended,
+          overall.rollup.conducted,
+        ),
         zone: overall.rollup.zone,
         forecast: computeForecast({
           attended: overall.rollup.attended,
@@ -89,4 +89,23 @@ export class StudentAttendanceService {
 
     return { items };
   }
+}
+
+/**
+ * `attendance_rollups.pct` is written as a fraction between 0 and 1, but rows seeded before
+ * that was settled hold a percentage. Multiplying those by 100 again showed students
+ * "9333%", so anything already above 1 is taken as a percentage and passed through. When the
+ * column is empty the value is recomputed from the counts rather than shown as unknown.
+ */
+function attendancePercentage(
+  stored: string | null,
+  attended: number,
+  conducted: number,
+): number | null {
+  const raw = stored == null ? null : Number(stored);
+  if (raw != null && Number.isFinite(raw)) {
+    return truncateAttendancePctNumber(raw > 1 ? raw : raw * 100);
+  }
+  if (!conducted) return null;
+  return truncateAttendancePctNumber((attended / conducted) * 100);
 }

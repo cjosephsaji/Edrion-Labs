@@ -148,6 +148,10 @@ export function deriveKnowledgeMap(input: {
   const stateByConcept = new Map(topics.map((topic) => [topic.conceptId, topic]));
   const sourceByConcept = new Map(normalizedTopics.map((topic) => [topic.conceptId, topic]));
   const recommendations = topics
+    // Concepts keyed by an internal identifier still count as evidence, but they cannot be
+    // named for a student. Recommending "A step you practised" four times helps nobody, so
+    // only nameable concepts become next actions.
+    .filter((topic) => isNameableConcept(topic.conceptId))
     .map((topic) => recommendationFor(topic, sourceByConcept.get(topic.conceptId)!, stateByConcept, masteryByConcept, input.now))
     .filter((row): row is PetrosReflectionRecommendation => Boolean(row))
     .sort((left, right) => right.score - left.score || left.title.localeCompare(right.title))
@@ -650,6 +654,20 @@ function unique<T>(values: T[]) {
 
 function mean(values: number[]) {
   return values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : 0;
+}
+
+/**
+ * True when a concept key names something a student would recognise. Evidence keys such as
+ * `checkpoint:2:mathematics:contrast_case` or `assignment:<uuid>` do not, and the repository
+ * gives those a generic title; they should not be offered as study targets.
+ */
+function isNameableConcept(conceptId: string) {
+  // `assignment:<uuid>` and friends.
+  if (conceptId.includes(':')) return false;
+  // Teaching-move keys the loop writes per checkpoint, e.g.
+  // "checkpoint-2-mathematics-recall-check-key-idea".
+  if (/^checkpoint-\d/i.test(conceptId)) return false;
+  return !/^[0-9a-f-]{36}$/i.test(conceptId);
 }
 
 function humanize(value: string) {

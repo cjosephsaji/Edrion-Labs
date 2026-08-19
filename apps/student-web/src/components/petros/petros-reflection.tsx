@@ -120,7 +120,7 @@ export function PetrosReflection() {
         </p>
         <div className={styles.heroMeta}>
           <span><Clock3 aria-hidden="true" />{data.rebuiltAt ? `Updated ${formatAge(data.rebuiltAt)}` : 'Not built yet'}</span>
-          <span><BrainCircuit aria-hidden="true" />{data.algorithmVersion}</span>
+          <span><BrainCircuit aria-hidden="true" />Built from your own work</span>
           <button type="button" onClick={() => void rebuild()} disabled={rebuilding}>
             <RefreshCw aria-hidden="true" className={rebuilding ? styles.spin : ''} />
             {rebuilding ? 'Rebuilding…' : 'Rebuild from evidence'}
@@ -362,7 +362,14 @@ function RecommendationCard({
   return (
     <article className={styles.recommendation}>
       <span className={styles.rank}>#{rank}</span>
-      <p>{recommendation.sessionType} · {recommendation.evidenceAgeDays == null ? 'no prior evidence' : `${recommendation.evidenceAgeDays}d evidence age`}</p>
+      <p>
+        {recommendation.sessionType} ·{' '}
+        {recommendation.evidenceAgeDays == null
+          ? 'nothing recorded yet'
+          : recommendation.evidenceAgeDays === 0
+            ? 'from today'
+            : `last worked on ${recommendation.evidenceAgeDays} ${recommendation.evidenceAgeDays === 1 ? 'day' : 'days'} ago`}
+      </p>
       <h3>{recommendation.title}</h3>
       <details>
         <summary><HelpCircle aria-hidden="true" /> Why this?</summary>
@@ -489,7 +496,7 @@ function KnowledgeMapList({
               <th scope="row"><button type="button" onClick={() => onSelect(topic.conceptId)}>{topic.title}</button><small>{topic.subjectLabel}</small></th>
               <td><span className={styles.statePill} data-state={topic.state}>{STATE_LABELS[topic.state]}</span></td>
               <td>{topic.evidenceCount}</td>
-              <td>{topic.evidenceAgeDays == null ? 'None' : `${topic.evidenceAgeDays}d`}</td>
+              <td>{topic.evidenceAgeDays == null ? 'None' : `${topic.evidenceAgeDays} ${topic.evidenceAgeDays === 1 ? 'day' : 'days'}`}</td>
               <td>{topic.prerequisiteConceptIds.length} prerequisites · {topic.dependentConceptIds.length} dependents</td>
             </tr>
           ))}
@@ -507,7 +514,7 @@ function TopicDetail({ topic, relatedAlarms }: { topic: PetrosKnowledgeMapTopic;
       <p>{topic.stateExplanation}</p>
       <dl>
         <div><dt>Uncertainty</dt><dd>{formatPercent(topic.uncertaintyBasisPoints)}</dd></div>
-        <div><dt>Freshness</dt><dd>{topic.freshness}{topic.evidenceAgeDays == null ? '' : ` · ${topic.evidenceAgeDays} days`}</dd></div>
+        <div><dt>Freshness</dt><dd>{topic.freshness}{topic.evidenceAgeDays == null ? '' : ` · ${topic.evidenceAgeDays} ${topic.evidenceAgeDays === 1 ? 'day' : 'days'} ago`}</dd></div>
         <div><dt>Prerequisites</dt><dd>{topic.prerequisiteConceptIds.length ? topic.prerequisiteConceptIds.map(humanize).join(', ') : 'None linked'}</dd></div>
         <div><dt>Unlocks</dt><dd>{topic.dependentConceptIds.length ? topic.dependentConceptIds.map(humanize).join(', ') : 'No dependents linked'}</dd></div>
       </dl>

@@ -1,0 +1,121 @@
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  border: 1px solid var(--s-bd1);
+  background: var(--s-card);
+  padding: 18px 20px;
+}
+
+.overall {
+  display: grid;
+  gap: 2px;
+  border-left: 3px solid var(--s-accent);
+  padding-left: 14px;
+}
+.overall[data-zone='warning'] { border-left-color: var(--s-amber); }
+
+.overallLabel {
+  color: var(--s-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.overallValue {
+  color: var(--s-ink);
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 1;
+}
+.overallMeta { color: var(--s-muted); font-size: 12px; }
+
+.summaryNote {
+  flex: 1;
+  min-width: 240px;
+  max-width: 60ch;
+  color: var(--s-inkSoft);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.list { display: grid; gap: 10px; margin-top: 14px; }
+
+.row {
+  border: 1px solid var(--s-bd1);
+  background: var(--s-card);
+  padding: 15px 18px;
+}
+.row[data-zone='warning'] { border-color: var(--s-amberBd); }
+.row[data-zone='critical'] { border-color: var(--s-danger); }
+
+.rowHead { display: flex; align-items: baseline; gap: 12px; }
+.subject { flex: 1; color: var(--s-ink); font-size: 15px; font-weight: 600; }
+.count { color: var(--s-muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.pct {
+  color: var(--s-ink);
+  font-family: var(--font-mono-ui);
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.row[data-zone='warning'] .pct { color: var(--s-amberInk); }
+.row[data-zone='critical'] .pct { color: var(--s-danger); }
+.rowHead > button { align-self: center; }
+
+.track {
+  position: relative;
+  height: 8px;
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--s-surface2);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--s-accent);
+}
+.row[data-zone='warning'] .fill { background: var(--s-amber); }
+.row[data-zone='critical'] .fill { background: var(--s-danger); }
+
+/* The 75% line: the number that decides whether attendance becomes a problem. */
+.threshold {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  left: 75%;
+  width: 2px;
+  background: var(--s-bd2);
+}
+
+.forecast {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 9px;
+  color: var(--s-muted);
+  font-size: 12.5px;
+}
+.forecast svg { width: 14px; height: 14px; flex: none; color: var(--s-amber); }
+.row[data-zone='warning'] .forecast,
+.row[data-zone='critical'] .forecast { color: var(--s-inkSoft); }
+
+.note {
+  max-width: 72ch;
+  margin-top: 16px;
+  border-left: 2px solid var(--s-bd2);
+  padding: 6px 14px;
+  color: var(--s-muted);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+@media (max-width: 560px) {
+  .overallValue { font-size: 32px; }
+  .rowHead { flex-wrap: wrap; }
+}

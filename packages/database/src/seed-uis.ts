@@ -763,11 +763,13 @@ async function main() {
       forecast: { branch: 'can_miss' as const, n: 1 },
       zone: 'safe' as const,
     };
+    // `pct` holds a fraction between 0 and 1, the same unit AttendanceRollupService writes.
+    // Seeding percentages here made the portal render "8333%".
     await db.insert(s.attendanceRollups).values([
-      { ...rollupBase, studentId: s1Id!, subjectId: null, attended: 5, conducted: 6, remaining: 0, pct: '83.33' },
-      { ...rollupBase, studentId: s1Id!, subjectId: subByCode['MATH101']!, attended: 5, conducted: 6, remaining: 0, pct: '83.33' },
-      { ...rollupBase, studentId: s1Id!, subjectId: subByCode['ENG101']!, attended: 6, conducted: 6, remaining: 0, pct: '100' },
-      { ...rollupBase, studentId: s1Id!, subjectId: subByCode['PHY301']!, attended: 4, conducted: 6, remaining: 0, pct: '66.67', zone: 'warning' },
+      { ...rollupBase, studentId: s1Id!, subjectId: null, attended: 5, conducted: 6, remaining: 0, pct: '0.8333' },
+      { ...rollupBase, studentId: s1Id!, subjectId: subByCode['MATH101']!, attended: 5, conducted: 6, remaining: 0, pct: '0.8333' },
+      { ...rollupBase, studentId: s1Id!, subjectId: subByCode['ENG101']!, attended: 6, conducted: 6, remaining: 0, pct: '1' },
+      { ...rollupBase, studentId: s1Id!, subjectId: subByCode['PHY301']!, attended: 4, conducted: 6, remaining: 0, pct: '0.6667', zone: 'warning' },
     ]).onConflictDoNothing();
     console.log('  ✓ Attendance rollups for demo student (Arjun)');
   }
