@@ -21,6 +21,13 @@ export default function Page() {
       queryKey="report-cards"
       emptyTitle="No report cards yet"
       emptyDescription="Report cards appear after your institution publishes them."
+      petros={(item) => ({
+        entityType: 'report_card',
+        entityId: item.id,
+        title: String(item.termLabel ?? item.kind ?? 'Report card'),
+        summary: [item.kind, item.gpa != null ? `GPA ${item.gpa}` : null].filter(Boolean).join(' · '),
+        href: `/report-cards/${item.id}`,
+      })}
       renderItem={(item) => (
         <Link href={`/report-cards/${item.id}`} className="block">
           <SurfaceCard className="transition hover:border-[var(--s-accentBd)]">

@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { Check, Circle, Map, Route } from 'lucide-react';
 import type { PetrosReflectionSurface } from '@edrion/schemas';
 import { PageHeader } from '@/components/design-system';
+import { PetrosAskButton } from '@/components/petros/petros-ask-button';
+import { usePetrosPage } from '@/components/petros/petros-companion-context';
 import { PetrosDoorButton } from '@/components/petros/petros-door-button';
 import { QueryPage } from '@/components/query-page';
 import { EmptyState } from '@/components/ui/states';
@@ -35,6 +37,26 @@ export default function LearningPathPage() {
     '/student/petros/reflection',
   );
   const nextReflection = reflectionQuery.data?.recommendations[0] ?? null;
+
+  usePetrosPage(
+    query.data
+      ? {
+          title: query.data.title,
+          summary: query.data.metaLine ?? 'Adaptive learning path',
+          candidates: query.data.items.map((item) => ({
+            ref: item.id,
+            entityType: 'learning_path_step' as const,
+            entityId: item.id,
+            title: item.title,
+            summary: [`step ${item.sequence}`, item.status, item.subjectLabel]
+              .filter(Boolean)
+              .join(' · '),
+            href: '/learning-path',
+          })),
+        }
+      : null,
+  );
+
   return (
     <QueryPage query={query} loadingLabel="Loading your learning path…">
       {(path) => (
@@ -62,11 +84,6 @@ export default function LearningPathPage() {
                   <li
                     key={item.id}
                     className={`grid grid-cols-[44px_1fr] gap-3 border p-4 ${current ? 'border-[#1f604a] bg-[#eef6f2]' : 'border-[var(--s-bd1)] bg-[var(--s-card)]'}`}
-                    data-petros-target={current ? 'primary' : undefined}
-                    data-petros-title={current ? item.title : undefined}
-                    data-petros-message={current ? item.whyHere ?? 'This is the current step in your learning path.' : undefined}
-                    data-petros-source-id={current ? item.id : undefined}
-                    data-petros-href={current ? '/learning-path' : undefined}
                   >
                     <span className={`grid h-10 w-10 place-items-center ${complete ? 'bg-[#1f604a] text-white' : current ? 'border-2 border-[#1f604a] text-[#1f604a]' : 'border border-dashed border-[var(--s-bd2)] text-[var(--s-faint)]'}`}>
                       {complete ? <Check aria-hidden="true" /> : current ? <Route aria-hidden="true" /> : <Circle aria-hidden="true" />}
@@ -75,7 +92,10 @@ export default function LearningPathPage() {
                       <p className="text-[10px] font-bold uppercase tracking-[.1em] text-[var(--s-faint)]">Step {item.sequence} · {item.status}</p>
                       <h2 className="mt-1 text-lg font-semibold">{item.title}</h2>
                       {item.whyHere ? <p className="mt-1 text-sm text-[var(--s-muted)]">{item.whyHere}</p> : null}
-                      {current ? <div className="mt-3"><PetrosDoorButton door="learning_path" sourceId={item.id} label="Start this adaptive topic" /></div> : null}
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        {current ? <PetrosDoorButton door="learning_path" sourceId={item.id} label="Start this adaptive topic" /> : null}
+                        <PetrosAskButton candidateRef={item.id} label={item.title} />
+                      </div>
                       {complete ? <p className="mt-2 text-xs font-semibold text-[#1f604a]">Completed from demonstrated evidence</p> : null}
                     </div>
                   </li>

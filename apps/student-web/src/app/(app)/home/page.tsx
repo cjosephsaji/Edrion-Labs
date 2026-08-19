@@ -16,10 +16,32 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { Card, PageHeader } from '@/components/design-system';
+import { PetrosAskButton } from '@/components/petros/petros-ask-button';
+import { usePetrosPage, type PetrosCandidateInput } from '@/components/petros/petros-companion-context';
 import { ErrorState, LoadingBlock, UnauthorizedState } from '@/components/ui/states';
 import { StudentApiError, formatApiError } from '@/lib/api-client';
 import { useDashboard, type StudentHomeCard, type StudentHomeCardKind } from '@/lib/hooks';
 import styles from './home.module.css';
+
+/**
+ * Home card ids are prefixed by the service (`due:assignment:<id>`, `exam:<id>`, …), so the
+ * underlying record can be named without a second request. Cards that summarise a whole
+ * surface rather than one record resolve to nothing, and Petros then says so rather than
+ * inventing a source.
+ */
+function cardEntity(card: StudentHomeCard): Pick<PetrosCandidateInput, 'entityType' | 'entityId'> {
+  const parts = card.id.split(':');
+  if (parts[0] === 'due' && parts[2]) {
+    return { entityType: parts[1] === 'homework' ? 'homework' : 'assignment', entityId: parts[2] };
+  }
+  if ((parts[0] === 'exam' || parts[0] === 'active-exam') && parts[1]) {
+    return { entityType: 'exam_schedule', entityId: parts[1] };
+  }
+  if (parts[0] === 'announcement' && parts[1]) return { entityType: 'announcement', entityId: parts[1] };
+  if (parts[0] === 'schedule' && parts[1]) return { entityType: 'timetable_slot', entityId: parts[1] };
+  if (parts[0] === 'continuity' && parts[2]) return { entityType: 'petros_session', entityId: parts[2] };
+  return { entityType: 'screen' };
+}
 
 const CARD_ICONS: Record<StudentHomeCardKind, LucideIcon> = {
   exam: BookOpenCheck,
@@ -40,10 +62,6 @@ function PriorityCard({ card, index }: { card: StudentHomeCard; index: number })
       data-priority={card.priority}
       data-prominence={card.prominence}
       data-kind={card.kind}
-      data-petros-target={index === 0 ? 'primary' : undefined}
-      data-petros-title={index === 0 ? card.title : undefined}
-      data-petros-message={index === 0 ? card.reason : undefined}
-      data-petros-href={index === 0 ? card.href : undefined}
       style={{ '--card-order': index } as React.CSSProperties}
     >
       <div className={styles.cardTop}>
@@ -62,9 +80,12 @@ function PriorityCard({ card, index }: { card: StudentHomeCard; index: number })
       </div>
       <div className={styles.cardFoot}>
         <span className={styles.reason}>{card.reason}</span>
-        <Link href={card.href} className={styles.action}>
-          {card.actionLabel}<ArrowUpRight aria-hidden="true" />
-        </Link>
+        <span className={styles.cardActions}>
+          <PetrosAskButton candidateRef={card.id} label={card.title} />
+          <Link href={card.href} className={styles.action}>
+            {card.actionLabel}<ArrowUpRight aria-hidden="true" />
+          </Link>
+        </span>
       </div>
     </article>
   );
@@ -72,6 +93,22 @@ function PriorityCard({ card, index }: { card: StudentHomeCard; index: number })
 
 export default function HomePage() {
   const dash = useDashboard();
+
+  usePetrosPage(
+    dash.data
+      ? {
+          title: 'Your priorities',
+          summary: `${dash.data.priorityCards.length} ranked items`,
+          candidates: dash.data.priorityCards.map((card) => ({
+            ref: card.id,
+            title: card.title,
+            summary: card.description,
+            href: card.href,
+            ...cardEntity(card),
+          })),
+        }
+      : null,
+  );
 
   if (dash.isLoading) return <LoadingBlock label="Opening your day…" />;
   if (dash.error instanceof StudentApiError && dash.error.status === 401) return <UnauthorizedState />;

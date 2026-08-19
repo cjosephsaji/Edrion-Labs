@@ -19,6 +19,13 @@ export default function Page() {
       queryKey="courses"
       emptyTitle="No courses enrolled"
       emptyDescription={undefined}
+      petros={(item) => ({
+        entityType: 'course',
+        entityId: item.id,
+        title: String(item.name ?? 'Untitled course'),
+        summary: [item.code, item.professorName].filter(Boolean).join(' · '),
+        href: `/courses/${item.id}`,
+      })}
       getItemHref={(item) => {
         const query = new URLSearchParams();
         if (item.name) query.set('name', String(item.name));

@@ -2,6 +2,8 @@
 
 import { Award, BookOpenCheck, CalendarDays, TrendingUp } from 'lucide-react';
 import { PageHeader } from '@/components/design-system';
+import { PetrosAskButton } from '@/components/petros/petros-ask-button';
+import { usePetrosPage } from '@/components/petros/petros-companion-context';
 import { PetrosDoorButton } from '@/components/petros/petros-door-button';
 import { QueryPage } from '@/components/query-page';
 import styles from '@/components/student-content.module.css';
@@ -35,6 +37,28 @@ function percentage(item: Result) {
 export default function Page() {
   const query = useStudentList<Response>('results', '/student/results');
 
+  usePetrosPage(
+    query.data
+      ? {
+          title: 'Results',
+          summary: `${query.data.items?.length ?? 0} published assessments`,
+          candidates: (query.data.items ?? []).map((item) => ({
+            ref: item.id,
+            entityType: 'result' as const,
+            entityId: item.id,
+            title: `${item.subjectName ?? 'Subject'} — ${item.title ?? 'Published assessment'}`,
+            summary: [
+              item.marksObtained != null ? `${item.marksObtained} / ${item.maxMarks ?? '—'}` : null,
+              item.letterGrade,
+            ]
+              .filter(Boolean)
+              .join(' · '),
+            href: '/results',
+          })),
+        }
+      : null,
+  );
+
   return (
     <QueryPage query={query} loadingLabel="Loading results…">
       {(data) => {
@@ -43,7 +67,6 @@ export default function Page() {
         const termPercentage = number(items[0]?.termPct);
         const average = termPercentage ?? (percentages.length ? Math.round(percentages.reduce((sum, value) => sum + value, 0) / percentages.length) : null);
         const best = items.reduce<Result | null>((current, item) => !current || (percentage(item) ?? -1) > (percentage(current) ?? -1) ? item : current, null);
-        const focusResult = items.reduce<Result | null>((current, item) => !current || (percentage(item) ?? 101) < (percentage(current) ?? 101) ? item : current, null);
         const gpa = number(items[0]?.termGpa);
 
         return (
@@ -84,15 +107,7 @@ export default function Page() {
                   {items.map((item) => {
                     const pct = percentage(item);
                     return (
-                      <article
-                        className={styles.resultRow}
-                        key={item.id}
-                        data-petros-target={item.id === focusResult?.id ? 'primary' : undefined}
-                        data-petros-title={item.id === focusResult?.id ? `${item.subjectName ?? 'Subject'} result` : undefined}
-                        data-petros-message={item.id === focusResult?.id && pct != null ? `${pct}% is the result that deserves the closest look.` : undefined}
-                        data-petros-source-id={item.id === focusResult?.id ? item.id : undefined}
-                        data-petros-href={item.id === focusResult?.id ? '/results' : undefined}
-                      >
+                      <article className={styles.resultRow} key={item.id}>
                         <div>
                           <h3 className={styles.resultSubject}>{item.subjectName ?? 'Subject'}</h3>
                           <p className={styles.resultAssessment}>{item.title ?? 'Published assessment'}</p>
@@ -106,7 +121,13 @@ export default function Page() {
                         <div className={styles.grade} aria-label={`Grade ${item.letterGrade ?? 'unavailable'}`}>{item.letterGrade ?? '—'}</div>
                         {pct != null && pct < 70 ? (
                           <PetrosDoorButton className={styles.petrosRepair} door="result_repair" sourceId={item.id} label="See what to fix" timeBudgetSeconds={900} />
-                        ) : <span aria-hidden="true" />}
+                        ) : (
+                          <PetrosAskButton
+                            candidateRef={item.id}
+                            label={`${item.subjectName ?? 'Subject'} result`}
+                            variant="icon"
+                          />
+                        )}
                       </article>
                     );
                   })}

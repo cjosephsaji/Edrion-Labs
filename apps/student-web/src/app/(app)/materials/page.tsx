@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { BookOpen, ClipboardCheck, ExternalLink, FileText, FolderOpen, NotebookTabs, Search, type LucideIcon } from 'lucide-react';
 import { PageHeader } from '@/components/design-system';
+import { PetrosAskButton } from '@/components/petros/petros-ask-button';
+import { usePetrosPage } from '@/components/petros/petros-companion-context';
 import { PetrosDocumentDoor } from '@/components/petros/petros-door-button';
 import { QueryPage } from '@/components/query-page';
 import styles from '@/components/student-content.module.css';
@@ -39,6 +41,25 @@ export default function Page() {
   const petrosSources = useStudentList<PetrosSourcesResponse>('petros-sources', '/student/petros/sources');
   const [context, setContext] = useState('all');
   const [search, setSearch] = useState('');
+
+  usePetrosPage(
+    query.data
+      ? {
+          title: pageTitle,
+          summary: pageDescription,
+          candidates: (query.data.items ?? []).map((item) => ({
+            ref: item.id,
+            entityType: 'material' as const,
+            entityId: item.id,
+            title: item.title,
+            summary: [item.kindLabel, item.className, item.weekNo ? `week ${item.weekNo}` : null]
+              .filter(Boolean)
+              .join(' · '),
+            href: '/materials',
+          })),
+        }
+      : null,
+  );
 
   return (
     <QueryPage query={query} loadingLabel="Loading study materials…">
@@ -93,21 +114,13 @@ export default function Page() {
                   <EmptyState icon={Search} title="No matching materials" description="Try another collection or search." />
                 ) : (
                   <div className={styles.resourceGrid}>
-                    {visibleItems.map((item, index) => {
+                    {visibleItems.map((item) => {
                       const Icon = materialIcon(item.kindLabel);
                       const petrosSource = sourceByMaterialId.get(item.id);
                       const readyForPetros = Boolean(petrosSource?.status === 'ready' && petrosSource.extractionReady);
                       const fileHref = api.fileUrl(`/student/materials/${item.id}/file`);
                       return (
-                        <article
-                          className={styles.resourceCard}
-                          key={item.id}
-                          data-petros-target={index === 0 ? 'primary' : undefined}
-                          data-petros-title={index === 0 ? item.title : undefined}
-                          data-petros-message={index === 0 ? 'This is the first resource in your current view.' : undefined}
-                          data-petros-source-id={index === 0 && petrosSource ? petrosSource.id : undefined}
-                          data-petros-href={index === 0 ? '/materials' : undefined}
-                        >
+                        <article className={styles.resourceCard} key={item.id}>
                           <a
                             className={styles.resourceOpenLink}
                             href={fileHref}
@@ -128,16 +141,17 @@ export default function Page() {
                               </div>
                             </div>
                           </a>
-                          {petrosSource ? (
-                            <div className={styles.resourcePetrosAction}>
+                          <div className={styles.resourcePetrosAction}>
+                            {petrosSource ? (
                               <PetrosDocumentDoor
                                 sourceId={petrosSource.id}
                                 title={petrosSource.title}
                                 pageCount={petrosSource.pageCount}
                                 ready={readyForPetros}
                               />
-                            </div>
-                          ) : null}
+                            ) : null}
+                            <PetrosAskButton candidateRef={item.id} label={item.title} />
+                          </div>
                         </article>
                       );
                     })}

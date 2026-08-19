@@ -53,6 +53,15 @@ export default function Page() {
       path={`/student/timetable?from=${from}&to=${to}`}
       queryKey={`timetable-${from}`}
       emptyTitle="No timetable slots yet"
+      petros={(item) => ({
+        entityType: 'timetable_slot',
+        entityId: item.id,
+        title: item.subject.name || 'Class',
+        summary: [formatDate(item.date), `${item.start} - ${item.end}`, item.teacher.name, stateLabels[item.state]]
+          .filter(Boolean)
+          .join(' · '),
+        href: '/timetable',
+      })}
       emptyDescription="Your institution hasn’t published a timetable for your class."
       renderItem={(item) => (
         <SurfaceCard className="grid gap-4 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center">

@@ -1,7 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PetrosContextAssistant } from './petros-context-assistant';
 import { PetrosDoorButton } from './petros-door-button';
 
 const mocks = vi.hoisted(() => ({
@@ -97,65 +96,4 @@ describe('Petros contextual entry points', () => {
     expect(dialog.parentElement?.parentElement).toBe(document.body);
   });
 
-  it('keeps a small assistant answer inline without creating a session', async () => {
-    mocks.post.mockResolvedValueOnce({ mode: 'quick_answer', answer: 'This is the published results screen.', contextLabel: 'Results', offer: null });
-    render(<PetrosContextAssistant route="/results" />);
-    fireEvent.click(screen.getByRole('button', { name: 'Talk to Petros' }));
-    fireEvent.change(screen.getByPlaceholderText('Ask about this page, plan your next move, or explain something…'), { target: { value: 'What is this?' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Send to Petros' }));
-
-    expect(await screen.findByText('This is the published results screen.')).toBeInTheDocument();
-    expect(mocks.post).toHaveBeenCalledTimes(1);
-    expect(mocks.post.mock.calls[0]?.[0]).toBe('/student/petros/assistant');
-    expect(mocks.push).not.toHaveBeenCalled();
-  });
-
-  it('sends the exact selected card with demonstrative questions', async () => {
-    mocks.post.mockResolvedValueOnce({ mode: 'quick_answer', answer: 'This card is your Cloud revision assignment.', contextLabel: 'Assignments', offer: null });
-    render(
-      <>
-        <article
-          data-petros-target="primary"
-          data-petros-title="Cloud revision assignment"
-          data-petros-message="Due tomorrow"
-          data-petros-source-id={intent.sourceEntityIds[0]}
-          data-petros-href={`/assignments/${intent.sourceEntityIds[0]}`}
-        />
-        <PetrosContextAssistant route="/assignments" />
-      </>,
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Talk to Petros' }));
-    expect(await screen.findByText('Cloud revision assignment')).toBeInTheDocument();
-    fireEvent.change(screen.getByPlaceholderText('Ask about “Cloud revision assignment”…'), { target: { value: 'What is this?' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Send to Petros' }));
-
-    expect(await screen.findByText('This card is your Cloud revision assignment.')).toBeInTheDocument();
-    expect(mocks.post.mock.calls[0]?.[1]).toMatchObject({
-      route: '/assignments',
-      sourceId: intent.sourceEntityIds[0],
-      selectedCard: {
-        title: 'Cloud revision assignment',
-        description: 'Due tomorrow',
-        href: `/assignments/${intent.sourceEntityIds[0]}`,
-      },
-    });
-  });
-
-  it('does not create a deep assistant session until the learner explicitly accepts', async () => {
-    mocks.post
-      .mockResolvedValueOnce({ mode: 'session_offer', answer: 'A focused session may help.', contextLabel: 'Results', offer: { description: 'Work through the result.', approximateMinutes: 15, sourceId: '/results' } })
-      .mockResolvedValueOnce({ ...intent, door: 'assistant_handoff', sessionType: 'doubt' })
-      .mockResolvedValueOnce({ intent, session: { id: '99999999-9999-4999-8999-999999999999' } });
-    render(<PetrosContextAssistant route="/results" />);
-    fireEvent.click(screen.getByRole('button', { name: 'Talk to Petros' }));
-    fireEvent.change(screen.getByPlaceholderText('Ask about this page, plan your next move, or explain something…'), { target: { value: 'Explain step by step why I need a different method.' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Send to Petros' }));
-
-    expect(await screen.findByRole('button', { name: 'Let’s do it' })).toBeInTheDocument();
-    expect(mocks.post).toHaveBeenCalledTimes(1);
-    fireEvent.click(screen.getByRole('button', { name: 'Let’s do it' }));
-    await waitFor(() => expect(mocks.post).toHaveBeenCalledTimes(3));
-    expect(mocks.post.mock.calls[1]?.[1]).toMatchObject({ door: 'assistant_handoff', question: 'Explain step by step why I need a different method.' });
-    expect(mocks.push).toHaveBeenCalledWith('/petros/session?session=99999999-9999-4999-8999-999999999999');
-  });
 });

@@ -9,6 +9,8 @@ import {
   PageHeader,
   UnauthorizedState,
 } from '@/components/ui/states';
+import { PetrosAskButton } from '@/components/petros/petros-ask-button';
+import { usePetrosPage, type PetrosCandidateInput } from '@/components/petros/petros-companion-context';
 import { StudentApiError, formatApiError } from '@/lib/api-client';
 import { useStudentList } from '@/lib/hooks';
 
@@ -67,6 +69,7 @@ export function ModuleListPage<T extends { id: string }>({
   emptyDescription,
   renderItem,
   getItemHref,
+  petros,
 }: {
   title: string;
   description?: string;
@@ -76,8 +79,27 @@ export function ModuleListPage<T extends { id: string }>({
   emptyDescription?: string;
   renderItem: (item: T) => ReactNode;
   getItemHref?: (item: T) => string;
+  /**
+   * Describes each row to Petros. Omit it and the page registers nothing, which is the
+   * honest default: Petros will say he cannot see the items rather than guess at them.
+   */
+  petros?: (item: T) => Omit<PetrosCandidateInput, 'ref'> | null;
 }) {
   const q = useStudentList<unknown>(queryKey, path);
+  const registered = asItems<T>(q.data);
+
+  usePetrosPage(
+    q.data && petros
+      ? {
+          title,
+          ...(description ? { summary: description } : {}),
+          candidates: registered.flatMap((item) => {
+            const candidate = petros(item);
+            return candidate ? [{ ref: item.id, ...candidate }] : [];
+          }),
+        }
+      : null,
+  );
 
   if (q.isLoading) return <LoadingBlock />;
   if (q.error instanceof StudentApiError && q.error.status === 401) {
@@ -103,7 +125,7 @@ export function ModuleListPage<T extends { id: string }>({
     );
   }
 
-  const items = asItems<T>(q.data);
+  const items = registered;
 
   return (
     <div className="mx-auto w-full max-w-[1120px]">
@@ -112,18 +134,18 @@ export function ModuleListPage<T extends { id: string }>({
         <EmptyState title={emptyTitle} description={emptyDescription} />
       ) : (
         <ul className="space-y-3">
-          {items.map((item, index) => {
+          {items.map((item) => {
             const itemRecord = item as unknown as Record<string, unknown>;
             const itemTitle = String(itemRecord.title ?? itemRecord.name ?? title);
             const itemHref = getItemHref?.(item);
+            const askable = petros ? petros(item) : null;
             return (
-              <li
-                key={item.id}
-                data-petros-target={index === 0 ? 'primary' : undefined}
-                data-petros-title={index === 0 ? itemTitle : undefined}
-                data-petros-message={index === 0 ? `This is the first item in your ${title.toLowerCase()} list.` : undefined}
-                data-petros-href={index === 0 ? itemHref ?? path : undefined}
-              >
+              <li key={item.id} className="relative">
+                {askable ? (
+                  <span className="absolute right-3 top-3 z-10">
+                    <PetrosAskButton candidateRef={item.id} label={itemTitle} variant="icon" />
+                  </span>
+                ) : null}
                 {itemHref ? (
                   <Link href={itemHref} className="focus-ring block rounded-[var(--s-radius)]">
                     {renderItem(item)}

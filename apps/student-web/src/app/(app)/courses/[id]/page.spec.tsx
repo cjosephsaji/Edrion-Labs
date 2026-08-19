@@ -2,12 +2,14 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { PetrosCompanionProvider } from '@/components/petros/petros-companion-context';
 import CourseDetailPage from './page';
 
 const mocks = vi.hoisted(() => ({ get: vi.fn() }));
 
 vi.mock('next/navigation', () => ({
   useParams: () => ({ id: 'cloud-course' }),
+  usePathname: () => '/courses/cloud-course',
   useSearchParams: () => new URLSearchParams('name=Cloud+Computing&code=CSE102&professor=Mary+Saji'),
 }));
 
@@ -47,10 +49,16 @@ describe('Course detail page', () => {
 
   it('opens a useful Cloud Computing workspace with its material and assignment', async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(<QueryClientProvider client={client}><CourseDetailPage /></QueryClientProvider>);
+    render(
+      <QueryClientProvider client={client}>
+        <PetrosCompanionProvider>
+          <CourseDetailPage />
+        </PetrosCompanionProvider>
+      </QueryClientProvider>,
+    );
 
-    const heading = screen.getByRole('heading', { level: 1, name: 'Cloud Computing' });
-    expect(heading.closest('section')).toHaveAttribute('data-petros-href', '/courses/cloud-course');
+    screen.getByRole('heading', { level: 1, name: 'Cloud Computing' });
+    expect(screen.getByRole('button', { name: 'Ask Petros about Cloud Computing' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: /Module 1 Revision Questions/ })).toHaveAttribute(
       'href',
       'http://localhost:3007/v1/student/materials/material-1/file',

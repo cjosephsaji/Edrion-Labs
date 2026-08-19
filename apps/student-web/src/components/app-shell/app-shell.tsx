@@ -7,7 +7,8 @@ import { Bell, ChevronRight, LayoutGrid, LogOut, RotateCcw, Settings, Star, User
 import { STUDENT_NAV, type NavItem } from '@/lib/nav';
 import { useStudentLogout, useStudentMe, type StudentMe } from '@/lib/hooks';
 import { useStudentPreferences } from '@/lib/preferences';
-import { PetrosContextAssistant } from '@/components/petros/petros-context-assistant';
+import { PetrosCompanionProvider } from '@/components/petros/petros-companion-context';
+import { PetrosCompanionPanel } from '@/components/petros/petros-companion-panel';
 
 function canSee(me: StudentMe | undefined, permission?: string, surface?: string): boolean {
   if (!me) return !permission && !surface;
@@ -245,6 +246,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   };
 
   return (
+    <PetrosCompanionProvider>
     <div className="student-shell min-h-screen bg-[var(--s-page)] text-[var(--s-ink)]">
       <header className={`portal-header sticky top-0 z-40 ${headerCompact ? 'is-compact' : ''}`}>
         <div className="portal-masthead">
@@ -287,7 +289,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         <button type="button" onClick={openMenu} className="portal-tab" aria-expanded={menuOpen} aria-controls="portal-directory"><LayoutGrid className="h-4 w-4" aria-hidden="true" />Explore</button>
       </nav>
 
-      <PetrosContextAssistant route={pathname} studentName={me?.fullName} />
+      {/*
+        Institutional students only. The companion's context adapters, action registry and
+        thread storage are all institution-scoped, so showing the control to an independent
+        learner would offer something the API cannot serve.
+      */}
+      {me?.kind === 'institutional' ? <PetrosCompanionPanel studentName={me.fullName} /> : null}
 
       {menuPhase !== 'closed' ? (
         <div className="portal-directory-layer" data-state={menuPhase}>
@@ -342,5 +349,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       ) : null}
     </div>
+    </PetrosCompanionProvider>
   );
 }

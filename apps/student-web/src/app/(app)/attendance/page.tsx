@@ -16,6 +16,17 @@ export default function Page() {
       path="/student/attendance"
       queryKey="attendance"
       emptyTitle="No attendance recorded yet"
+      petros={(item) => ({
+        entityType: 'attendance_summary',
+        title: String(item.subjectName ?? 'Attendance'),
+        summary: [
+          `${item.present}/${item.total} sessions`,
+          item.percentage == null ? null : `${Math.round(Number(item.percentage))}%`,
+        ]
+          .filter(Boolean)
+          .join(' · '),
+        href: '/attendance',
+      })}
       emptyDescription={'Attendance appears after staff mark sessions.'}
       renderItem={(item) => (
         <SurfaceCard>

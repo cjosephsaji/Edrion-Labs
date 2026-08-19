@@ -4,6 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { ListTodo } from 'lucide-react';
 import { ActionButton, Card, PageHeader, StatusPill, type StatusTone } from '@/components/design-system';
+import { PetrosAskButton } from '@/components/petros/petros-ask-button';
+import { usePetrosPage } from '@/components/petros/petros-companion-context';
 import { EmptyState, ErrorState, LoadingBlock, UnauthorizedState } from '@/components/ui/states';
 import { StudentApiError, formatApiError } from '@/lib/api-client';
 import { useStudentList, useStudentMe } from '@/lib/hooks';
@@ -18,6 +20,10 @@ export type AssignmentRow = {
   late?: boolean;
 };
 
+/**
+ * The first unfinished row, used only to order the list's own emphasis. It is no longer
+ * what Petros talks about: the student picks that with "Ask Petros" on the card they mean.
+ */
 export function petrosAssignmentFocusId(rows: AssignmentRow[]) {
   return rows.find((row) => ['assigned', 'in_progress'].includes(row.status ?? 'assigned'))?.id ?? null;
 }
@@ -48,13 +54,32 @@ export function AssignmentListScreen({ kind }: { kind: 'assignments' | 'homework
   const college = Boolean(me?.programmeName);
   const title = kind === 'homework' ? 'Homework' : 'Assignments';
   const institutionLabel = college ? 'COLLEGE' : 'SCHOOL';
+  const allRows = query.data?.items ?? [];
+
+  usePetrosPage(
+    query.data
+      ? {
+          title,
+          summary: `${allRows.length} ${title.toLowerCase()} shown, filter: ${filter}`,
+          candidates: allRows.map((row) => ({
+            ref: row.id,
+            entityType: kind === 'homework' ? ('homework' as const) : ('assignment' as const),
+            entityId: row.id,
+            title: row.title || 'Untitled',
+            summary: [row.subjectName, dueLabel(row.dueAt), row.status ?? 'assigned']
+              .filter(Boolean)
+              .join(' · '),
+            href: `/${kind}/${row.id}`,
+          })),
+        }
+      : null,
+  );
 
   if (query.isLoading) return <LoadingBlock label={`Loading ${title.toLowerCase()}…`} />;
   if (query.error instanceof StudentApiError && query.error.status === 401) return <UnauthorizedState />;
   if (query.error) return <ErrorState description={formatApiError(query.error)} onRetry={() => void query.refetch()} />;
 
-  const rows = query.data?.items ?? [];
-  const petrosFocusId = petrosAssignmentFocusId(rows);
+  const rows = allRows;
   const filters: Array<{ id: Filter; label: string }> = [
     { id: 'all', label: 'All' },
     { id: 'progress', label: 'In progress' },
@@ -91,17 +116,11 @@ export function AssignmentListScreen({ kind }: { kind: 'assignments' | 'homework
           {rows.map((row, index) => {
             const status = statusStyle(row.status ?? 'assigned', Boolean(row.late));
             const urgent = Boolean(row.late) || row.status === 'late';
-            const petrosFocus = row.id === petrosFocusId;
             return (
               <Link
                 key={row.id}
                 href={`/${kind}/${row.id}`}
                 className="focus-ring animate-block-in block"
-                data-petros-target={petrosFocus ? 'primary' : undefined}
-                data-petros-title={petrosFocus ? row.title : undefined}
-                data-petros-message={petrosFocus ? dueLabel(row.dueAt) : undefined}
-                data-petros-source-id={petrosFocus && kind === 'assignments' ? row.id : undefined}
-                data-petros-href={petrosFocus ? `/${kind}/${row.id}` : undefined}
                 style={{ animationDelay: `${Math.min(index * 35, 140)}ms` }}
               >
                 <Card variant={urgent ? 'urgent' : 'default'} interactive className="flex min-h-[148px] flex-col justify-between">
@@ -112,7 +131,10 @@ export function AssignmentListScreen({ kind }: { kind: 'assignments' | 'homework
                     </div>
                     <p className="mt-2 text-sm text-[var(--s-muted)]">{[row.subjectName, kind === 'homework' ? 'Homework set' : 'Published assignment'].filter(Boolean).join(' · ')}</p>
                   </div>
-                  <p className={`mt-6 text-base font-semibold ${urgent ? 'text-[var(--s-danger)]' : 'text-[var(--s-inkSoft)]'}`}>{dueLabel(row.dueAt)}</p>
+                  <div className="mt-6 flex items-center justify-between gap-3">
+                    <p className={`text-base font-semibold ${urgent ? 'text-[var(--s-danger)]' : 'text-[var(--s-inkSoft)]'}`}>{dueLabel(row.dueAt)}</p>
+                    <PetrosAskButton candidateRef={row.id} label={row.title || 'Untitled'} variant="icon" />
+                  </div>
                 </Card>
               </Link>
             );

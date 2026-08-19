@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '@/components/design-system';
 import styles from '@/components/exams/exams.module.css';
+import { PetrosAskButton } from '@/components/petros/petros-ask-button';
+import { usePetrosPage } from '@/components/petros/petros-companion-context';
 import { PetrosDoorButton } from '@/components/petros/petros-door-button';
 import { QueryPage } from '@/components/query-page';
 import { EmptyState } from '@/components/ui/states';
@@ -77,6 +79,23 @@ function statusLabel(exam: ExamRow) {
 export default function Page() {
   const query = useStudentList<Response>('exams', '/student/exams');
 
+  usePetrosPage(
+    query.data
+      ? {
+          title: 'Examinations',
+          summary: `${query.data.items?.length ?? 0} published examinations`,
+          candidates: (query.data.items ?? []).map((exam) => ({
+            ref: exam.id,
+            entityType: 'exam_schedule' as const,
+            entityId: exam.id,
+            title: exam.title,
+            summary: [scheduleText(exam.startsAt), statusLabel(exam)].filter(Boolean).join(' · '),
+            href: '/exams',
+          })),
+        }
+      : null,
+  );
+
   return (
     <QueryPage query={query} loadingLabel="Loading examinations…">
       {(data) => {
@@ -120,14 +139,7 @@ export default function Page() {
                 {featured ? (
                   <>
                     <div className={styles.sectionHead}><h2>Available examination</h2><span>Timer begins after you start</span></div>
-                    <article
-                      className={styles.liveCard}
-                      data-petros-target="primary"
-                      data-petros-title={featured.title}
-                      data-petros-message={featured.attemptStatus === 'in_progress' ? 'Your examination attempt is already in progress.' : 'This examination is available now.'}
-                      data-petros-source-id={featured.id}
-                      data-petros-href="/exams"
-                    >
+                    <article className={styles.liveCard}>
                       <span className={styles.liveIcon}><MonitorCheck aria-hidden="true" size={27} /></span>
                       <div>
                         <p className={styles.liveKicker}><Clock3 aria-hidden="true" size={13} />{featured.attemptStatus === 'in_progress' ? 'Attempt in progress' : 'Open for attendance'}</p>
@@ -141,6 +153,7 @@ export default function Page() {
                       <div className="flex flex-wrap gap-2">
                         <Link className={styles.primaryLink} href={`/exams/${featured.id}/attempt`}>{actionLabel(featured)} <ArrowRight aria-hidden="true" size={16} /></Link>
                         {featured.attemptStatus !== 'completed' && featured.availability === 'upcoming' ? <PetrosDoorButton className={styles.primaryLink} door="upcoming_exam" sourceId={featured.id} label="Revise with Petros" /> : null}
+                        <PetrosAskButton candidateRef={featured.id} label={featured.title} />
                       </div>
                     </article>
                   </>
@@ -150,19 +163,11 @@ export default function Page() {
                   <>
                     <div className={styles.sectionHead}><h2>Examination schedule</h2><span>{remaining.length} published</span></div>
                     <ul className={styles.scheduleList}>
-                      {remaining.map((exam, index) => {
+                      {remaining.map((exam) => {
                         const date = dateParts(exam.startsAt);
                         const isOnline = exam.questionCount > 0;
                         return (
-                          <li
-                            className={styles.scheduleRow}
-                            key={exam.id}
-                            data-petros-target={!featured && index === 0 ? 'primary' : undefined}
-                            data-petros-title={!featured && index === 0 ? exam.title : undefined}
-                            data-petros-message={!featured && index === 0 ? scheduleText(exam.startsAt) : undefined}
-                            data-petros-source-id={!featured && index === 0 ? exam.id : undefined}
-                            data-petros-href={!featured && index === 0 ? '/exams' : undefined}
-                          >
+                          <li className={styles.scheduleRow} key={exam.id}>
                             <div className={styles.dateTile}><strong>{date.day}</strong><span>{date.month}</span></div>
                             <div>
                               <h3 className={styles.rowTitle}>{exam.title}</h3>
@@ -178,6 +183,7 @@ export default function Page() {
                             <div className="flex flex-wrap gap-2">
                               {isOnline ? <Link className={styles.primaryLink} href={`/exams/${exam.id}/attempt`}>{actionLabel(exam)} <ArrowRight aria-hidden="true" size={15} /></Link> : <span className={styles.rowSub}>{exam.seatInfo ?? 'Seat details pending'}</span>}
                               {exam.attemptStatus !== 'completed' && exam.availability === 'upcoming' ? <PetrosDoorButton className={styles.primaryLink} door="upcoming_exam" sourceId={exam.id} label="Revise with Petros" /> : null}
+                              <PetrosAskButton candidateRef={exam.id} label={exam.title} variant="icon" />
                             </div>
                           </li>
                         );

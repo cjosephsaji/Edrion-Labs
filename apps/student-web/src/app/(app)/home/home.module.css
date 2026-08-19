@@ -60,13 +60,11 @@
   color: #f5f1e8;
 }
 
-.card[data-petros-target='primary'] {
-  box-shadow: 0 0 0 1px rgb(189 145 46 / 20%), 0 14px 36px rgb(9 61 49 / 10%);
-  animation-name: priority-card-in, petros-focus;
-  animation-duration: 360ms, 2.8s;
-  animation-delay: calc(var(--card-order) * 45ms), 700ms;
-  animation-timing-function: cubic-bezier(.2, .8, .2, 1), ease-in-out;
-  animation-fill-mode: both, both;
+.cardActions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
 }
 
 .card[data-priority='critical']:not([data-prominence='featured']) { --card-accent: var(--s-danger); }
@@ -209,11 +207,6 @@
   from { opacity: 0; transform: translateY(9px); }
 }
 
-@keyframes petros-focus {
-  0%, 100% { box-shadow: 0 0 0 1px rgb(189 145 46 / 20%), 0 14px 36px rgb(9 61 49 / 10%); }
-  50% { box-shadow: 0 0 0 4px rgb(189 145 46 / 22%), 0 18px 44px rgb(9 61 49 / 16%); }
-}
-
 @media (max-width: 900px) {
   .card { grid-column: span 6; }
   .card[data-prominence='featured'] { grid-column: span 12; }
@@ -229,6 +222,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card,
-  .card[data-petros-target='primary'] { animation: none; }
+  .card { animation: none; }
 }

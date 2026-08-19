@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Award, FileBadge2, FileText, FolderOpen, IdCard, Search, type LucideIcon } from 'lucide-react';
 import { PageHeader } from '@/components/design-system';
+import { PetrosAskButton } from '@/components/petros/petros-ask-button';
+import { usePetrosPage } from '@/components/petros/petros-companion-context';
 import { QueryPage } from '@/components/query-page';
 import styles from '@/components/student-content.module.css';
 import { EmptyState } from '@/components/ui/states';
@@ -32,6 +34,23 @@ export default function Page() {
   const query = useStudentList<Response>('documents', '/student/documents');
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+
+  usePetrosPage(
+    query.data
+      ? {
+          title: 'Documents',
+          summary: `${query.data.items?.length ?? 0} issued documents`,
+          candidates: (query.data.items ?? []).map((item) => ({
+            ref: item.id,
+            entityType: 'document' as const,
+            entityId: item.id,
+            title: item.title,
+            summary: typeLabel(item.docType),
+            href: '/documents',
+          })),
+        }
+      : null,
+  );
 
   return (
     <QueryPage query={query} loadingLabel="Loading documents…">
@@ -79,16 +98,10 @@ export default function Page() {
                   <EmptyState icon={Search} title="No matching documents" description="Try a different document type or search." />
                 ) : (
                   <div className={styles.resourceGrid}>
-                    {visibleItems.map((item, index) => {
+                    {visibleItems.map((item) => {
                       const Icon = documentIcon(item.docType);
                       return (
-                        <article
-                          className={styles.resourceCard}
-                          key={item.id}
-                          data-petros-target={index === 0 ? 'primary' : undefined}
-                          data-petros-title={index === 0 ? item.title : undefined}
-                          data-petros-message={index === 0 ? 'This is the first document in your current view.' : undefined}
-                        >
+                        <article className={styles.resourceCard} key={item.id}>
                           <span className={styles.resourceIcon}><Icon aria-hidden="true" size={22} /></span>
                           <div>
                             <h3 className={styles.resourceTitle}>{item.title}</h3>
@@ -96,6 +109,7 @@ export default function Page() {
                             <div className={styles.resourceFooter}>
                               <span className={styles.resourceTag}>{item.contentType === 'application/pdf' ? 'PDF' : 'Document'}</span>
                               <span>{item.issuedAt ? `Issued ${new Date(item.issuedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : 'Issue date unavailable'}</span>
+                              <PetrosAskButton candidateRef={item.id} label={item.title} variant="icon" />
                             </div>
                           </div>
                         </article>

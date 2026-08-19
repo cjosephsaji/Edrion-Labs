@@ -14,6 +14,8 @@ import {
   UserRound,
 } from 'lucide-react';
 import { Card, PageHeader } from '@/components/design-system';
+import { PetrosAskButton } from '@/components/petros/petros-ask-button';
+import { usePetrosPage } from '@/components/petros/petros-companion-context';
 import { EmptyState, ErrorState, LoadingBlock } from '@/components/ui/states';
 import { formatApiError, useStudentApi } from '@/lib/api-client';
 import { useStudentList } from '@/lib/hooks';
@@ -95,18 +97,40 @@ export default function CourseDetailPage() {
     ? Math.round((attendance.present / attendance.total) * 100)
     : null;
 
+  usePetrosPage(
+    course
+      ? {
+          title: name,
+          summary: [code, professor ? `taught by ${professor}` : null].filter(Boolean).join(' · '),
+          candidates: [
+            {
+              ref: course.id,
+              entityType: 'course',
+              entityId: course.id,
+              title: name,
+              summary: [code, professor].filter(Boolean).join(' · '),
+              href: `/courses/${course.id}`,
+            },
+            ...(materials.data?.items ?? []).map((item) => ({
+              ref: `material:${item.id}`,
+              entityType: 'material' as const,
+              entityId: item.id,
+              title: item.title,
+              summary: 'Course material',
+              href: `/courses/${id}`,
+            })),
+          ],
+        }
+      : null,
+  );
+
   return (
     <div className="mx-auto w-full max-w-[1120px]">
       <Link href="/courses" className="focus-ring mb-5 inline-flex items-center gap-2 text-sm font-semibold text-[var(--s-accentDeep)]">
         <ArrowLeft aria-hidden="true" size={16} /> All courses
       </Link>
 
-      <section
-        data-petros-target="primary"
-        data-petros-title={name}
-        data-petros-message={[code, professor ? `Taught by ${professor}` : null].filter(Boolean).join(' · ')}
-        data-petros-href={`/courses/${id}`}
-      >
+      <section>
         <PageHeader
           eyebrow={code ?? 'Your course'}
           title={name}
@@ -114,6 +138,7 @@ export default function CourseDetailPage() {
             professor ? `Taught by ${professor}` : 'Professor details will appear here.',
             course?.credits ? `${course.credits} credits` : null,
           ].filter(Boolean).join(' · ')}
+          actions={course ? <PetrosAskButton candidateRef={course.id} label={name} /> : undefined}
         />
       </section>
 

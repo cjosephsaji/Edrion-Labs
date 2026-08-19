@@ -2,6 +2,8 @@
 
 import { CalendarDays, Megaphone, Pin } from 'lucide-react';
 import { PageHeader } from '@/components/design-system';
+import { PetrosAskButton } from '@/components/petros/petros-ask-button';
+import { usePetrosPage } from '@/components/petros/petros-companion-context';
 import { QueryPage } from '@/components/query-page';
 import styles from '@/components/student-content.module.css';
 import { EmptyState } from '@/components/ui/states';
@@ -36,6 +38,23 @@ function label(value: string | null) {
 export default function Page() {
   const query = useStudentList<Response>('announcements', '/student/announcements');
 
+  usePetrosPage(
+    query.data
+      ? {
+          title: 'Announcements',
+          summary: `${query.data.items?.length ?? 0} published notices`,
+          candidates: (query.data.items ?? []).map((item) => ({
+            ref: item.id,
+            entityType: 'announcement' as const,
+            entityId: item.id,
+            title: item.title,
+            summary: [label(item.category), item.pinned ? 'pinned' : null].filter(Boolean).join(' · '),
+            href: '/announcements',
+          })),
+        }
+      : null,
+  );
+
   return (
     <QueryPage query={query} loadingLabel="Loading announcements…">
       {(data) => {
@@ -61,13 +80,7 @@ export default function Page() {
               />
             ) : (
               <>
-                <article
-                  className={styles.featureNotice}
-                  data-petros-target="primary"
-                  data-petros-title={featured.title}
-                  data-petros-message={featured.pinned ? 'Your institution pinned this notice, so it is worth checking.' : 'This is the latest notice from your institution.'}
-                  data-petros-href="/announcements"
-                >
+                <article className={styles.featureNotice}>
                   <div className={styles.featureDate}>
                     <strong>{dateParts(featured.publishedAt).day}</strong>
                     <span>{dateParts(featured.publishedAt).month}</span>
@@ -82,6 +95,7 @@ export default function Page() {
                     <div className={styles.metaRow}>
                       <span className={styles.metaItem}><CalendarDays aria-hidden="true" size={14} />{dateParts(featured.publishedAt).full}</span>
                       <span>{label(featured.category)}</span>
+                      <PetrosAskButton candidateRef={featured.id} label={featured.title} />
                     </div>
                   </div>
                 </article>
