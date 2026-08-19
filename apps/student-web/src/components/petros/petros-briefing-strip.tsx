@@ -34,6 +34,9 @@ export function PetrosBriefingStrip({ firstName }: { firstName: string }) {
   });
 
   if (briefing.isLoading || briefing.error || !briefing.data) return null;
+  // The student switched proactive help off; honour it silently rather than showing a
+  // strip that explains why it is empty.
+  if (briefing.data.mutedBy) return null;
   const { headline, items, quiet } = briefing.data;
   const lead = items[0];
 

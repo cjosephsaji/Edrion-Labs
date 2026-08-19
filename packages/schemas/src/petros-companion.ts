@@ -483,6 +483,12 @@ export const petrosBriefingSchema = z
     headline: shortText,
     items: z.array(petrosBriefingItemSchema).max(8),
     quiet: z.boolean(),
+    /**
+     * Why the briefing is holding back, when it is. `null` means it ran normally.
+     * Distinguishing this from an empty list matters: "you switched this off" and
+     * "nothing is urgent" are different statements and must not be confused.
+     */
+    mutedBy: z.enum(['quiet_mode', 'check_ins_off']).nullable().default(null),
   })
   .strict();
 export type PetrosBriefing = z.infer<typeof petrosBriefingSchema>;

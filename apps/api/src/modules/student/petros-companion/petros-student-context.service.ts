@@ -461,6 +461,246 @@ export class PetrosStudentContextService {
         return out;
       }
 
+      case 'learning_path_step': {
+        const rows = await this.db
+          .select({
+            id: schema.learningPathItems.id,
+            title: schema.learnTopics.title,
+            subjectLabel: schema.learnTopics.subjectLabel,
+            sequence: schema.learningPathItems.sequence,
+            status: schema.learningPathItems.status,
+            whyHere: schema.learningPathItems.whyHere,
+          })
+          .from(schema.learningPathItems)
+          .innerJoin(schema.learningPaths, eq(schema.learningPaths.id, schema.learningPathItems.pathId))
+          .innerJoin(schema.learnTopics, eq(schema.learnTopics.id, schema.learningPathItems.topicId))
+          .where(
+            and(
+              eq(schema.learningPaths.studentId, studentId),
+              inArray(schema.learningPathItems.id, ids),
+            ),
+          );
+        for (const row of rows) {
+          out.set(row.id, {
+            title: row.title,
+            summary: [`step ${row.sequence}`, row.status, row.subjectLabel].filter(Boolean).join(' \u00b7 '),
+            href: '/learning-path',
+            facts: {
+              subject: row.subjectLabel,
+              step: row.sequence,
+              status: row.status,
+              whyItIsHere: row.whyHere ?? null,
+            },
+          });
+        }
+        return out;
+      }
+
+      case 'artifact': {
+        const rows = await this.db
+          .select({
+            id: schema.petrosSavedArtifacts.id,
+            content: schema.petrosSavedArtifacts.content,
+            kind: schema.petrosSavedArtifacts.kind,
+            dueAt: schema.petrosSavedArtifacts.dueAt,
+          })
+          .from(schema.petrosSavedArtifacts)
+          .where(
+            and(
+              eq(schema.petrosSavedArtifacts.studentId, studentId),
+              eq(schema.petrosSavedArtifacts.institutionId, institutionId),
+              inArray(schema.petrosSavedArtifacts.id, ids),
+            ),
+          );
+        for (const row of rows) {
+          out.set(row.id, {
+            title: row.content.title,
+            summary: [row.kind, row.dueAt ? `review due ${humanDate(row.dueAt, timeZone)}` : null]
+              .filter(Boolean)
+              .join(' \u00b7 '),
+            href: `/petros/artifacts?artifact=${row.id}`,
+            facts: {
+              kind: row.kind,
+              reviewDue: humanDate(row.dueAt, timeZone),
+            },
+          });
+        }
+        return out;
+      }
+
+      case 'document': {
+        const rows = await this.db
+          .select({
+            id: schema.studentDocuments.id,
+            title: schema.studentDocuments.title,
+            type: schema.studentDocuments.type,
+            issuedAt: schema.studentDocuments.issuedAt,
+          })
+          .from(schema.studentDocuments)
+          .where(
+            and(
+              eq(schema.studentDocuments.studentId, studentId),
+              eq(schema.studentDocuments.institutionId, institutionId),
+              eq(schema.studentDocuments.published, true),
+              inArray(schema.studentDocuments.id, ids),
+            ),
+          );
+        for (const row of rows) {
+          out.set(row.id, {
+            title: row.title,
+            summary: humanize(row.type),
+            href: '/documents',
+            facts: { type: humanize(row.type), issued: humanDate(row.issuedAt, timeZone) },
+          });
+        }
+        return out;
+      }
+
+      case 'report_card': {
+        const rows = await this.db
+          .select({
+            id: schema.reportCards.id,
+            termLabel: schema.reportCards.termLabel,
+            gpa: schema.reportCards.gpa,
+            publishedAt: schema.reportCards.publishedAt,
+          })
+          .from(schema.reportCards)
+          .where(
+            and(
+              eq(schema.reportCards.studentId, studentId),
+              eq(schema.reportCards.institutionId, institutionId),
+              eq(schema.reportCards.status, 'published'),
+              inArray(schema.reportCards.id, ids),
+            ),
+          );
+        for (const row of rows) {
+          out.set(row.id, {
+            title: row.termLabel,
+            summary: [row.gpa ? `GPA ${row.gpa}` : null, humanDate(row.publishedAt, timeZone)]
+              .filter(Boolean)
+              .join(' \u00b7 '),
+            href: `/report-cards/${row.id}`,
+            facts: { gpa: row.gpa ?? null, published: humanDate(row.publishedAt, timeZone) },
+          });
+        }
+        return out;
+      }
+
+      case 'course': {
+        const rows = await this.db
+          .select({
+            id: schema.courses.id,
+            name: schema.courses.name,
+            code: schema.courses.code,
+          })
+          .from(schema.courseEnrollments)
+          .innerJoin(schema.courses, eq(schema.courses.id, schema.courseEnrollments.courseId))
+          .where(
+            and(
+              eq(schema.courseEnrollments.studentId, studentId),
+              eq(schema.courseEnrollments.institutionId, institutionId),
+              inArray(schema.courses.id, ids),
+            ),
+          );
+        for (const row of rows) {
+          out.set(row.id, {
+            title: row.name,
+            summary: row.code,
+            href: `/courses/${row.id}`,
+            facts: { code: row.code },
+          });
+        }
+        return out;
+      }
+
+      case 'timetable_slot': {
+        const classId = await this.classId(principal);
+        if (!classId) return out;
+        // The portal addresses a slot as "<slotId>:<date>" because one slot repeats weekly.
+        const bySlot = new Map<string, string[]>();
+        for (const id of ids) {
+          const slotId = id.split(':')[0]!;
+          bySlot.set(slotId, [...(bySlot.get(slotId) ?? []), id]);
+        }
+        const rows = await this.db
+          .select({
+            id: schema.timetableSlots.id,
+            subject: schema.subjects.name,
+            startTime: schema.timetableSlots.startTime,
+            endTime: schema.timetableSlots.endTime,
+            room: schema.timetableSlots.room,
+            label: schema.timetableSlots.label,
+          })
+          .from(schema.timetableSlots)
+          .leftJoin(schema.subjects, eq(schema.subjects.id, schema.timetableSlots.subjectId))
+          .where(
+            and(
+              eq(schema.timetableSlots.institutionId, institutionId),
+              eq(schema.timetableSlots.classId, classId),
+              inArray(schema.timetableSlots.id, [...bySlot.keys()]),
+            ),
+          );
+        for (const row of rows) {
+          for (const original of bySlot.get(row.id) ?? []) {
+            const date = original.split(':')[1] ?? null;
+            out.set(original, {
+              title: row.subject ?? row.label ?? 'Class',
+              summary: [date, `${row.startTime}\u2013${row.endTime}`, row.room]
+                .filter(Boolean)
+                .join(' \u00b7 '),
+              href: '/timetable',
+              facts: {
+                subject: row.subject ?? null,
+                date,
+                startTime: row.startTime,
+                endTime: row.endTime,
+                room: row.room ?? null,
+              },
+            });
+          }
+        }
+        return out;
+      }
+
+      case 'attendance_summary': {
+        const rows = await this.db
+          .select({
+            subjectId: schema.attendanceRollups.subjectId,
+            subject: schema.subjects.name,
+            attended: schema.attendanceRollups.attended,
+            conducted: schema.attendanceRollups.conducted,
+            pct: schema.attendanceRollups.pct,
+            zone: schema.attendanceRollups.zone,
+          })
+          .from(schema.attendanceRollups)
+          .leftJoin(schema.subjects, eq(schema.subjects.id, schema.attendanceRollups.subjectId))
+          .where(
+            and(
+              eq(schema.attendanceRollups.studentId, studentId),
+              eq(schema.attendanceRollups.institutionId, institutionId),
+            ),
+          );
+        for (const row of rows) {
+          if (!row.subjectId || !ids.includes(row.subjectId)) continue;
+          // Older rows stored a percentage where the writer stores a fraction.
+          const raw = row.pct == null ? null : Number(row.pct);
+          const pct = raw == null || !Number.isFinite(raw) ? null : Math.round((raw > 1 ? raw : raw * 100) * 10) / 10;
+          out.set(row.subjectId, {
+            title: row.subject ?? 'Attendance',
+            summary: `${row.attended}/${row.conducted}${pct == null ? '' : ` \u00b7 ${pct}%`}`,
+            href: '/attendance',
+            facts: {
+              subject: row.subject ?? null,
+              attended: row.attended,
+              conducted: row.conducted,
+              percentage: pct,
+              standing: row.zone,
+            },
+          });
+        }
+        return out;
+      }
+
       // Entity types that are not individually addressable yet resolve to nothing, which is the
       // honest outcome: Petros states he cannot confirm that item rather than inventing it.
       default:
@@ -574,6 +814,13 @@ type LookupRow = {
  * Dates reach the model already written the way the student reads them. Handing over a raw
  * ISO string makes Petros quote "2026-07-31" back at them mid-sentence.
  */
+/** Turns a stored enum-ish value into something a student reads. */
+function humanize(value: string | null | undefined) {
+  if (!value) return '';
+  const spaced = value.replace(/[_-]+/g, ' ').trim();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
 function humanDate(value: Date | string | null | undefined, timeZone: string) {
   if (!value) return null;
   const date = value instanceof Date ? value : new Date(value);

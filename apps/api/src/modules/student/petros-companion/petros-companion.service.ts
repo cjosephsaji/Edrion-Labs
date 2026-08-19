@@ -293,6 +293,7 @@ export class PetrosCompanionService {
       }));
 
     const history = (await this.repo.listMessages(scope, thread.id)) as MessageRow[];
+    const compacted = await this.compact(principal, thread, history);
 
     const studentMessage =
       replayedStudent ??
@@ -315,7 +316,7 @@ export class PetrosCompanionService {
     const preferences = await this.preferences(principal);
     const blocks = await this.generate({
       principal,
-      thread,
+      thread: { id: thread.id, summary: compacted },
       history,
       context,
       preferences,
@@ -352,6 +353,76 @@ export class PetrosCompanionService {
       reply: this.messageDto(reply as MessageRow),
       replayed: false,
     };
+  }
+
+  /**
+   * Folds turns older than the verbatim window into a short thread summary.
+   *
+   * Without this a long conversation silently loses everything past the last dozen turns:
+   * the prompt would simply stop including it and Petros would forget what was agreed
+   * earlier with no sign that anything had gone. Returns the summary to use for this turn.
+   */
+  private async compact(
+    principal: InstitutionalStudentPrincipal,
+    thread: { id: string; summary: string | null; summaryWatermark: number },
+    history: MessageRow[],
+  ): Promise<string | null> {
+    const foldTo = history.length - COMPANION_VERBATIM_WINDOW;
+    if (foldTo <= thread.summaryWatermark) return thread.summary;
+
+    const pending = history.slice(thread.summaryWatermark, foldTo);
+    if (!pending.length) return thread.summary;
+
+    const transcript = pending
+      .map((message) => `${message.role === 'petros' ? 'Petros' : 'Student'}: ${blockText(message.blocks)}`)
+      .join('\n');
+
+    let summary = deterministicSummary(thread.summary, pending);
+    if (this.env.PETROS_AI_MODE === 'live') {
+      try {
+        const result = await this.gateway.execute({
+          context: {
+            functionKey: 'companion.thread.summarize',
+            topic: 'companion thread',
+            sessionType: 'doubt',
+            inputModality: 'text',
+            language: 'en',
+            institutionId: principal.institutionId,
+            studentId: principal.studentId,
+            estimatedTokens: 600,
+            currentCostMicros: 0,
+            previousFailures: 0,
+            requiredReasoningQuality: 0.3,
+          },
+          system:
+            'Compress a study conversation into a short factual note for continuity. Record what the student asked about, what was agreed, and anything they accepted or declined. Keep every specific name, date and number that was discussed. No advice, no invention, no personality judgements about the student. Plain text, at most 120 words. Return strict JSON.',
+          input: [
+            {
+              type: 'text',
+              text: JSON.stringify({ previousSummary: thread.summary, olderTurns: transcript }),
+            },
+          ],
+          responseSchema: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['summary'],
+            properties: { summary: { type: 'string', maxLength: 900 } },
+          },
+          correlationId: thread.id,
+          metadata: { surface: 'student_companion_summary' },
+        });
+        const parsed = z.object({ summary: z.string().trim().min(1).max(900) }).safeParse(result.content);
+        if (parsed.success) summary = parsed.data.summary;
+      } catch {
+        // Keep the deterministic fold rather than losing the older turns entirely.
+      }
+    }
+
+    await this.repo.touchThread(this.scope(principal), thread.id, {
+      summary,
+      summaryWatermark: foldTo,
+    });
+    return summary;
   }
 
   /** Builds the reply blocks. Never throws: a failure degrades to an honest status block. */
@@ -717,6 +788,21 @@ export class PetrosCompanionService {
 function derivedUuid(value: string, purpose: string) {
   const hex = createHash('sha256').update(`${value}:${purpose}`).digest('hex');
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
+
+/**
+ * The fallback fold: the older turns in the student's own words, truncated. Loses nuance,
+ * but never loses the thread.
+ */
+function deterministicSummary(previous: string | null, pending: MessageRow[]) {
+  const lines = pending
+    .map((message) => {
+      const text = blockText(message.blocks).trim();
+      if (!text) return '';
+      return `${message.role === 'petros' ? 'Petros' : 'Student'}: ${text.slice(0, 140)}`;
+    })
+    .filter(Boolean);
+  return [previous, ...lines].filter(Boolean).join(' | ').slice(-900);
 }
 
 function blockText(blocks: unknown[]) {

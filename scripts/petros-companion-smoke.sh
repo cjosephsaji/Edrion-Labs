@@ -128,6 +128,14 @@ echo "== 9. Preferences round-trip =="
 PUT="$(curl -s -m 30 -X PUT "$API/student/petros/companion/preferences" -H "x-student-email: $STU" -H 'content-type: application/json' -d '{"preferredName":"Sam","responseDepth":"brief","energy":"calm","humour":"off","proactiveCheckIns":false,"language":"en","quietMode":true}')"
 chk "humour saved as off"  "$(printf '%s' "$PUT" | jq_ humour)" off
 chk "preference persists"  "$(sget /petros/companion/preferences | jq_ preferredName)" Sam
+# The PUT above deliberately set quiet mode, so restore defaults before asserting the
+# unmuted case — otherwise the test's own setup is what silences the briefing.
+curl -s -m 30 -o /dev/null -X PUT "$API/student/petros/companion/preferences" -H "x-student-email: $STU" -H 'content-type: application/json' -d '{"preferredName":null,"responseDepth":"balanced","energy":"warm","humour":"light","proactiveCheckIns":true,"language":"en","quietMode":false}'
+chk "briefing runs by default" "$(sget /petros/companion/briefing | jq_ mutedBy)" null
+curl -s -m 30 -o /dev/null -X PUT "$API/student/petros/companion/preferences" -H "x-student-email: $STU" -H 'content-type: application/json' -d '{"preferredName":null,"responseDepth":"balanced","energy":"warm","humour":"light","proactiveCheckIns":false,"language":"en","quietMode":false}'
+chk "turning check-ins off silences the briefing" "$(sget /petros/companion/briefing | jq_ mutedBy)" check_ins_off
+curl -s -m 30 -o /dev/null -X PUT "$API/student/petros/companion/preferences" -H "x-student-email: $STU" -H 'content-type: application/json' -d '{"preferredName":null,"responseDepth":"balanced","energy":"warm","humour":"light","proactiveCheckIns":true,"language":"en","quietMode":true}'
+chk "quiet mode silences the briefing" "$(sget /petros/companion/briefing | jq_ mutedBy)" quiet_mode
 curl -s -m 30 -o /dev/null -X PUT "$API/student/petros/companion/preferences" -H "x-student-email: $STU" -H 'content-type: application/json' -d '{"preferredName":null,"responseDepth":"balanced","energy":"warm","humour":"light","proactiveCheckIns":true,"language":"en","quietMode":false}'
 
 echo
@@ -138,7 +146,33 @@ chk "same facts, same ordering" "$(printf '%s' "$B1" | jq_ items | md5 -q 2>/dev
 chk "briefing has a headline" "$([ -n "$(printf '%s' "$B1" | jq_ headline)" ] && echo ok)" ok
 
 echo
-echo "== 11. Session handoff returns to the same thread =="
+echo "== 11. Every entity type the portal offers can be grounded =="
+SID="$(psql "$PSQL" -tAc "select s.id from students s join institution_users u on u.id=s.institution_user_id where u.email='$STU' limit 1")"
+IID="$(psql "$PSQL" -tAc "select institution_id from students where id='$SID'")"
+grounds(){ # kind, id, route, surface
+  if [ -z "$2" ]; then echo "  SKIP  $1 (no seeded row)"; return; fi
+  local key resp focus
+  key="$(uuid)"
+  resp="$(spost /petros/companion/turns "{\"message\":\"What is this?\",\"route\":\"$3\",\"surface\":\"$4\",\"focusRef\":\"g1\",\"visibleCandidates\":[{\"ref\":\"g1\",\"entityType\":\"$1\",\"entityId\":\"$2\",\"title\":\"CLIENT TITLE\",\"summary\":\"\"}],\"idempotencyKey\":\"$key\"}")"
+  focus="$(printf '%s' "$resp" | jq_ reply.focusRef)"
+  chk "$1 grounds" "$focus" "g1"
+  chknc "$1 ignores the client title" "$resp" "CLIENT TITLE"
+}
+grounds assignment "$AID" /assignments assignments
+grounds homework "$(psql "$PSQL" -tAc "select h.id from homework h join homework_submissions hs on hs.homework_id=h.id where hs.student_id='$SID' and h.status in ('assigned','closed') limit 1")" /homework homework
+grounds result "$(psql "$PSQL" -tAc "select id from grade_entries where student_id='$SID' and published=true limit 1")" /results results
+grounds exam_schedule "$(psql "$PSQL" -tAc "select es.id from exam_schedules es where es.published=true and es.class_id=(select class_id from students where id='$SID') limit 1")" /exams exams
+grounds material "$(psql "$PSQL" -tAc "select id from class_materials where context_id=(select class_id from students where id='$SID') limit 1")" /materials materials
+grounds announcement "$(psql "$PSQL" -tAc "select id from announcements where institution_id='$IID' and status='published' limit 1")" /announcements announcements
+grounds learning_path_step "$(psql "$PSQL" -tAc "select i.id from learning_path_items i join learning_paths p on p.id=i.path_id where p.student_id='$SID' limit 1")" /learning-path learning_path
+grounds report_card "$(psql "$PSQL" -tAc "select id from report_cards where student_id='$SID' and status='published' limit 1")" /report-cards report_cards
+grounds document "$(psql "$PSQL" -tAc "select id from student_documents where student_id='$SID' and published=true limit 1")" /documents documents
+grounds attendance_summary "$(psql "$PSQL" -tAc "select subject_id from attendance_rollups where student_id='$SID' and subject_id is not null limit 1")" /attendance attendance
+grounds artifact "$(psql "$PSQL" -tAc "select id from petros_saved_artifacts where student_id='$SID' limit 1")" /petros/artifacts petros_artifacts
+grounds petros_session "$(psql "$PSQL" -tAc "select id from petros_learning_sessions where student_id='$SID' limit 1")" /home home
+
+echo
+echo "== 12. Session handoff returns to the same thread =="
 CLOSED_SESSION="$(psql "$PSQL" -tAc "select id from petros_learning_sessions where status='closed' and student_id=(select s.id from students s join institution_users u on u.id=s.institution_user_id where u.email='$STU') limit 1")"
 if [ -n "$CLOSED_SESSION" ]; then
   SID="$(psql "$PSQL" -tAc "select s.id from students s join institution_users u on u.id=s.institution_user_id where u.email='$STU' limit 1")"
@@ -154,7 +188,7 @@ else
 fi
 
 echo
-echo "== 12. Thread lifecycle =="
+echo "== 13. Thread lifecycle =="
 chk "archive thread" "$(printf '%s' "$(spost "/petros/companion/threads/$THREAD/archive" '{}')" | jq_ status)" archived
 chk "delete thread"  "$(curl -s -m 30 -X DELETE "$API/student/petros/companion/threads/$THREAD" -H "x-student-email: $STU" | jq_ deleted)" true
 chk "messages cascade away" "$(psql "$PSQL" -tAc "select count(*) from petros_student_messages where thread_id='$THREAD'")" 0

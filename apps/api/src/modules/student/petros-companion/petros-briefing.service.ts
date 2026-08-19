@@ -52,6 +52,30 @@ export class PetrosBriefingService {
    */
   async build(principal: InstitutionalStudentPrincipal, now = new Date()): Promise<PetrosBriefing> {
     const scope = { institutionId: principal.institutionId, studentId: principal.studentId };
+
+    // The student's own settings decide whether Petros speaks first at all. Returning an
+    // empty list without saying why would read as "nothing is urgent", which is a different
+    // and possibly false claim.
+    const preferences = await this.repo.findPreferences(scope);
+    const mutedBy = preferences?.quietMode
+      ? ('quiet_mode' as const)
+      : preferences && !preferences.proactiveCheckIns
+        ? ('check_ins_off' as const)
+        : null;
+    if (mutedBy) {
+      return petrosBriefingSchema.parse({
+        schemaVersion: PETROS_COMPANION_SCHEMA_VERSION,
+        generatedAt: now.toISOString(),
+        headline:
+          mutedBy === 'quiet_mode'
+            ? 'Quiet mode is on. Ask me whenever you want.'
+            : 'Check-ins are off. Ask me whenever you want.',
+        items: [],
+        quiet: true,
+        mutedBy,
+      });
+    }
+
     const suppressed = new Set(
       (await this.repo.listSuppressedNudges(scope)).map((row) => row.nudgeKey),
     );
@@ -180,6 +204,7 @@ export class PetrosBriefingService {
       items: top,
       // "Nothing urgent" is calm availability, never invented work.
       quiet: top.length === 0,
+      mutedBy: null,
     });
   }
 

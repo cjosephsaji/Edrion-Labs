@@ -25,6 +25,16 @@ export function PetrosAskButton({
 }) {
   const companion = usePetrosCompanionOptional();
   if (!companion || companion.support !== 'supported') return null;
+
+  /*
+   * Only offer the control where Petros can actually work. A candidate registered without an
+   * entity id — a card that summarises a whole surface rather than one record — cannot be
+   * resolved server-side, so pressing "Ask Petros" would select something he then says he
+   * cannot confirm. Better not to offer it.
+   */
+  const candidate = companion.page?.candidates.find((item) => item.ref === candidateRef);
+  if (!candidate?.entityId) return null;
+
   const active = companion.focusRef === candidateRef;
 
   return (

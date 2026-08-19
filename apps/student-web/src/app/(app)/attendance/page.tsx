@@ -40,6 +40,8 @@ export default function Page() {
           candidates: (query.data.items ?? []).map((row) => ({
             ref: row.id,
             entityType: 'attendance_summary' as const,
+            // The row id is the subject; the API resolves the rollup from it.
+            entityId: row.id,
             title: row.subjectName,
             summary: `${row.present}/${row.total} sessions${row.percentage == null ? '' : ` · ${row.percentage}%`}`,
             href: '/attendance',
