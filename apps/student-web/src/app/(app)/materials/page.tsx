@@ -108,36 +108,36 @@ export default function Page() {
                           data-petros-source-id={index === 0 && petrosSource ? petrosSource.id : undefined}
                           data-petros-href={index === 0 ? '/materials' : undefined}
                         >
-                          <span className={styles.resourceIcon}><Icon aria-hidden="true" size={22} /></span>
-                          <div>
-                            <h3 className={styles.resourceTitle}>
-                              <a
-                                className={styles.resourceOpenLink}
-                                href={fileHref}
-                                target="_blank"
-                                rel="noreferrer"
-                                aria-label={`Open ${item.title}`}
-                              >
-                                {item.title}
-                              </a>
-                            </h3>
-                            {item.description ? <p className={styles.resourceDescription}>{item.description}</p> : null}
-                            <div className={styles.resourceFooter}>
-                              <span className={styles.resourceTag}>{item.kindLabel}</span>
-                              <span>{item.className ?? 'General'}</span>
-                              {item.weekNo ? <span>Week {item.weekNo}</span> : null}
-                              <span>{new Date(item.publishedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
-                              <span className={styles.resourceOpenHint}><ExternalLink aria-hidden="true" size={13} /> Open document</span>
+                          <a
+                            className={styles.resourceOpenLink}
+                            href={fileHref}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={`Open ${item.title}`}
+                          >
+                            <span className={styles.resourceIcon}><Icon aria-hidden="true" size={22} /></span>
+                            <div>
+                              <h3 className={styles.resourceTitle}>{item.title}</h3>
+                              {item.description ? <p className={styles.resourceDescription}>{item.description}</p> : null}
+                              <div className={styles.resourceFooter}>
+                                <span className={styles.resourceTag}>{item.kindLabel}</span>
+                                <span>{item.className ?? 'General'}</span>
+                                {item.weekNo ? <span>Week {item.weekNo}</span> : null}
+                                <span>{new Date(item.publishedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                                <span className={styles.resourceOpenHint}><ExternalLink aria-hidden="true" size={13} /> Open document</span>
+                              </div>
                             </div>
-                            {petrosSource ? (
+                          </a>
+                          {petrosSource ? (
+                            <div className={styles.resourcePetrosAction}>
                               <PetrosDocumentDoor
                                 sourceId={petrosSource.id}
                                 title={petrosSource.title}
                                 pageCount={petrosSource.pageCount}
                                 ready={readyForPetros}
                               />
-                            ) : null}
-                          </div>
+                            </div>
+                          ) : null}
                         </article>
                       );
                     })}
@@ -153,10 +153,14 @@ export default function Page() {
                       const ready = item.status === 'ready' && item.extractionReady;
                       return (
                         <article className={styles.resourceCard} key={item.id}>
-                          <span className={styles.resourceIcon}><FileText aria-hidden="true" size={22} /></span>
-                          <div>
-                            <h3 className={styles.resourceTitle}>{item.title}</h3>
-                            <p className={styles.resourceDescription}>{ready ? `${item.pageCount ?? item.pagesDone} extracted pages ready` : item.status === 'error' ? 'Extraction failed — review this upload before retrying' : `Reading pages ${item.pagesDone}/${item.pageCount ?? '?'}`}</p>
+                          <div className={styles.resourceCardMain}>
+                            <span className={styles.resourceIcon}><FileText aria-hidden="true" size={22} /></span>
+                            <div>
+                              <h3 className={styles.resourceTitle}>{item.title}</h3>
+                              <p className={styles.resourceDescription}>{ready ? `${item.pageCount ?? item.pagesDone} extracted pages ready` : item.status === 'error' ? 'Extraction failed — review this upload before retrying' : `Reading pages ${item.pagesDone}/${item.pageCount ?? '?'}`}</p>
+                            </div>
+                          </div>
+                          <div className={styles.resourcePetrosAction}>
                             <PetrosDocumentDoor sourceId={item.id} title={item.title} pageCount={item.pageCount} ready={ready} />
                           </div>
                         </article>

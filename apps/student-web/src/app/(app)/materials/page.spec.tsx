@@ -58,7 +58,7 @@ vi.mock('@/components/petros/petros-door-button', () => ({
 }));
 
 describe('Study materials', () => {
-  it('opens the teacher document when the material card is clicked', () => {
+  it('keeps document download and Petros teaching as separate actions', () => {
     render(<Page />);
 
     const link = screen.getByRole('link', {
@@ -70,6 +70,9 @@ describe('Study materials', () => {
     );
     expect(link).toHaveAttribute('target', '_blank');
     expect(screen.getByText('Open document')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Teach me this page/ })).toBeEnabled();
+    const teachButton = screen.getByRole('button', { name: /Teach me this page/ });
+    expect(teachButton).toBeEnabled();
+    expect(teachButton.closest('a')).toBeNull();
+    expect(link).not.toContainElement(teachButton);
   });
 });

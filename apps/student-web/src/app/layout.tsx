@@ -12,7 +12,9 @@ const newsreader = Newsreader({
   display: 'swap',
   preload: true,
   fallback: ['Georgia', 'serif'],
-  adjustFontFallback: true,
+  // Next.js has no fallback-metric table for Newsreader, so asking it to
+  // calculate overrides only produces a noisy build warning.
+  adjustFontFallback: false,
 });
 
 const sourceSans = Source_Sans_3({
