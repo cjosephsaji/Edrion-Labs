@@ -52,9 +52,12 @@ export function PetrosCompanionPanel({ studentName }: { studentName?: string }) 
     if (restored || hidden) return;
     setRestored(true);
     void api
-      .get<PetrosCompanionThread | null>('/student/petros/companion/thread')
-      .then((thread) => {
-        if (thread) companion.setThread(thread.id, thread.messages);
+      .get<{ thread: PetrosCompanionThread | null }>('/student/petros/companion/thread')
+      .then((result) => {
+        const thread = result?.thread;
+        if (thread?.id && Array.isArray(thread.messages)) {
+          companion.setThread(thread.id, thread.messages);
+        }
       })
       .catch(() => undefined);
   }, [api, companion, hidden, restored]);
@@ -327,7 +330,7 @@ function MessageBubble({
         </span>
       )}
       <div className={styles.messageBody}>
-        {message.blocks.map((block, index) => (
+        {(message.blocks ?? []).map((block, index) => (
           <Block
             key={`${message.id}-${index}`}
             block={block}

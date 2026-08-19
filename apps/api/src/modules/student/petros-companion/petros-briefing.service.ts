@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, eq, gte, lte, schema, sql, type Database } from '@edrion/database';
+import { and, asc, eq, gte, inArray, lte, schema, sql, type Database } from '@edrion/database';
 import {
   PETROS_COMPANION_SCHEMA_VERSION,
   petrosBriefingSchema,
@@ -11,6 +11,7 @@ import { SurfaceGateService } from '../surfaces/surface-gate.service';
 import type { InstitutionalStudentPrincipal } from '../student.types';
 import { PetrosActionRegistryService } from './petros-action-registry.service';
 import { PetrosCompanionRepository } from './petros-companion.repository';
+import { PetrosStudentContextService } from './petros-student-context.service';
 
 /**
  * Priority bands. Lower sorts first. These are fixed constants, not model output:
@@ -38,6 +39,7 @@ export class PetrosBriefingService {
     private readonly surfaceGate: SurfaceGateService,
     private readonly actions: PetrosActionRegistryService,
     private readonly repo: PetrosCompanionRepository,
+    private readonly context: PetrosStudentContextService,
   ) {}
 
   private has(principal: InstitutionalStudentPrincipal, permission: string) {
@@ -113,8 +115,8 @@ export class PetrosBriefingService {
           kind: 'exam',
           title: `${row.subject ?? 'Exam'} — ${row.examName}`,
           detail: row.syllabus
-            ? `${describeDue(date, now, null)} · covers ${row.syllabus.slice(0, 120)}`
-            : describeDue(date, now, null),
+            ? `${describeWhen(date, now)} · covers ${row.syllabus.slice(0, 120)}`
+            : describeWhen(date, now),
           href: '/exams',
           priority: days <= 0 ? PRIORITY.examToday : PRIORITY.examThisWeek,
           entityType: 'exam_schedule',
@@ -191,7 +193,13 @@ export class PetrosBriefingService {
     return { nudgeKey, suppressedUntil: suppressUntil.toISOString() };
   }
 
-  private dueAssignments(principal: InstitutionalStudentPrincipal) {
+  /**
+   * Both queries reuse the portal's own visibility rules. Anything stricter would make the
+   * briefing quietly omit work the student can plainly see on their own list.
+   */
+  private async dueAssignments(principal: InstitutionalStudentPrincipal) {
+    const visibility = await this.context.assignmentVisibility(principal);
+    if (!visibility) return [];
     return this.db
       .select({
         id: schema.assignments.id,
@@ -199,8 +207,7 @@ export class PetrosBriefingService {
         subject: schema.subjects.name,
         dueDate: schema.assignments.dueDate,
       })
-      .from(schema.assignmentAssignees)
-      .innerJoin(schema.assignments, eq(schema.assignments.id, schema.assignmentAssignees.assignmentId))
+      .from(schema.assignments)
       .leftJoin(schema.subjects, eq(schema.subjects.id, schema.assignments.subjectId))
       .leftJoin(
         schema.assignmentSubmissions,
@@ -211,10 +218,10 @@ export class PetrosBriefingService {
       )
       .where(
         and(
-          eq(schema.assignmentAssignees.studentId, principal.studentId),
           eq(schema.assignments.institutionId, principal.institutionId),
           eq(schema.assignments.status, 'published'),
-          sql`coalesce(${schema.assignmentSubmissions.status}, 'assigned') in ('assigned','missing','late')`,
+          visibility,
+          sql`coalesce(${schema.assignmentSubmissions.status}, 'assigned') in ('assigned','in_progress','missing','late')`,
         ),
       )
       .orderBy(asc(schema.assignments.dueDate))
@@ -229,22 +236,15 @@ export class PetrosBriefingService {
         subject: schema.subjects.name,
         dueAt: schema.homework.dueAt,
       })
-      .from(schema.homeworkAssignees)
-      .innerJoin(schema.homework, eq(schema.homework.id, schema.homeworkAssignees.homeworkId))
+      .from(schema.homeworkSubmissions)
+      .innerJoin(schema.homework, eq(schema.homework.id, schema.homeworkSubmissions.homeworkId))
       .leftJoin(schema.subjects, eq(schema.subjects.id, schema.homework.subjectId))
-      .leftJoin(
-        schema.homeworkSubmissions,
-        and(
-          eq(schema.homeworkSubmissions.homeworkId, schema.homework.id),
-          eq(schema.homeworkSubmissions.studentId, principal.studentId),
-        ),
-      )
       .where(
         and(
-          eq(schema.homeworkAssignees.studentId, principal.studentId),
+          eq(schema.homeworkSubmissions.studentId, principal.studentId),
           eq(schema.homework.institutionId, principal.institutionId),
-          eq(schema.homework.status, 'assigned'),
-          sql`coalesce(${schema.homeworkSubmissions.status}, 'assigned') in ('assigned','missing','late')`,
+          inArray(schema.homework.status, ['assigned', 'closed']),
+          sql`${schema.homeworkSubmissions.status} in ('assigned','in_progress','missing','late')`,
         ),
       )
       .orderBy(asc(schema.homework.dueAt))
@@ -347,6 +347,17 @@ function describeDue(due: Date | null, now: Date, subject: string | null) {
   if (diff < 0) return `${prefix}overdue by ${Math.abs(days) || 1} day${Math.abs(days) === 1 ? '' : 's'}`;
   if (diff <= DAY_MS) return `${prefix}due today`;
   return `${prefix}due in ${days} day${days === 1 ? '' : 's'}`;
+}
+
+/** Exams happen, they are not "due". */
+function describeWhen(at: Date | null, now: Date) {
+  if (!at) return 'date not published';
+  const diff = at.getTime() - now.getTime();
+  const days = Math.round(diff / DAY_MS);
+  if (diff < 0) return 'already sat';
+  if (diff <= DAY_MS) return 'today';
+  if (days === 1) return 'tomorrow';
+  return `in ${days} days`;
 }
 
 function headlineFor(item: PetrosBriefingItem) {

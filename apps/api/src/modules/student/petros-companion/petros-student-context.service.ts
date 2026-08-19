@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, inArray, schema, type Database } from '@edrion/database';
+import { and, eq, inArray, or, schema, type Database } from '@edrion/database';
 import type { StudentSurfaceKey } from '@edrion/shared-types';
 import {
   resolvePetrosRoute,
@@ -41,6 +41,9 @@ export type ResolvedPageContext = {
 };
 
 /** Entity type -> the permission and surface that must both allow it. */
+/** Homework rows a student may see at all, matching the homework repository. */
+const VISIBLE_HOMEWORK_STATUSES = ['assigned', 'closed'];
+
 const ENTITY_GATES: Record<
   PetrosEntityType,
   { permission?: string; surface?: StudentSurfaceKey }
@@ -133,7 +136,7 @@ export class PetrosStudentContextService {
     for (const [entityType, group] of byType) {
       if (!(await this.allows(principal, entityType))) continue;
       const ids = [...new Set(group.map((candidate) => candidate.entityId as string))];
-      const rows = await this.lookup(principal, entityType, ids);
+      const rows = await this.lookup(principal, entityType, ids, timeZone);
       for (const candidate of group) {
         const row = rows.get(candidate.entityId as string);
         if (!row) continue;
@@ -167,6 +170,7 @@ export class PetrosStudentContextService {
     principal: InstitutionalStudentPrincipal,
     entityType: PetrosEntityType,
     ids: string[],
+    timeZone: string,
   ): Promise<Map<string, LookupRow>> {
     const out = new Map<string, LookupRow>();
     if (!ids.length) return out;
@@ -175,6 +179,11 @@ export class PetrosStudentContextService {
 
     switch (entityType) {
       case 'assignment': {
+        // Same visibility rule as GET /student/assignments: published, and reachable by
+        // class, course enrolment or an explicit assignee row. Using assignees alone would
+        // hide most of the student's own work.
+        const visibility = await this.assignmentVisibility(principal);
+        if (!visibility) return out;
         const rows = await this.db
           .select({
             id: schema.assignments.id,
@@ -187,11 +196,7 @@ export class PetrosStudentContextService {
             pointsAwarded: schema.assignmentSubmissions.pointsAwarded,
             feedback: schema.assignmentSubmissions.feedback,
           })
-          .from(schema.assignmentAssignees)
-          .innerJoin(
-            schema.assignments,
-            eq(schema.assignments.id, schema.assignmentAssignees.assignmentId),
-          )
+          .from(schema.assignments)
           .leftJoin(schema.subjects, eq(schema.subjects.id, schema.assignments.subjectId))
           .leftJoin(
             schema.assignmentSubmissions,
@@ -202,22 +207,22 @@ export class PetrosStudentContextService {
           )
           .where(
             and(
-              eq(schema.assignmentAssignees.studentId, studentId),
               eq(schema.assignments.institutionId, institutionId),
               eq(schema.assignments.status, 'published'),
               inArray(schema.assignments.id, ids),
+              visibility,
             ),
           );
         for (const row of rows) {
           out.set(row.id, {
             title: row.title,
-            summary: [row.subject, row.dueDate ? `due ${row.dueDate}` : null, row.status ?? 'assigned']
+            summary: [row.subject, row.dueDate ? `due ${humanDate(row.dueDate, timeZone)}` : null, row.status ?? 'assigned']
               .filter(Boolean)
               .join(' \u00b7 '),
             href: `/assignments/${row.id}`,
             facts: {
               subject: row.subject ?? null,
-              dueDate: row.dueDate ?? null,
+              dueDate: humanDate(row.dueDate, timeZone),
               submissionStatus: row.status ?? 'assigned',
               pointsAwarded: row.pointsAwarded ?? null,
               maxPoints: row.maxPoints ?? null,
@@ -230,6 +235,8 @@ export class PetrosStudentContextService {
       }
 
       case 'homework': {
+        // Same rule as GET /student/homework: one submission row per student, and only
+        // homework whose own status is visible to students.
         const rows = await this.db
           .select({
             id: schema.homework.id,
@@ -242,33 +249,27 @@ export class PetrosStudentContextService {
             maxMarks: schema.homeworkSubmissions.totalMax,
             teacherNote: schema.homeworkSubmissions.teacherNote,
           })
-          .from(schema.homeworkAssignees)
-          .innerJoin(schema.homework, eq(schema.homework.id, schema.homeworkAssignees.homeworkId))
+          .from(schema.homeworkSubmissions)
+          .innerJoin(schema.homework, eq(schema.homework.id, schema.homeworkSubmissions.homeworkId))
           .leftJoin(schema.subjects, eq(schema.subjects.id, schema.homework.subjectId))
-          .leftJoin(
-            schema.homeworkSubmissions,
-            and(
-              eq(schema.homeworkSubmissions.homeworkId, schema.homework.id),
-              eq(schema.homeworkSubmissions.studentId, studentId),
-            ),
-          )
           .where(
             and(
-              eq(schema.homeworkAssignees.studentId, studentId),
+              eq(schema.homeworkSubmissions.studentId, studentId),
               eq(schema.homework.institutionId, institutionId),
+              inArray(schema.homework.status, VISIBLE_HOMEWORK_STATUSES),
               inArray(schema.homework.id, ids),
             ),
           );
         for (const row of rows) {
           out.set(row.id, {
             title: row.title,
-            summary: [row.subject, row.dueAt ? `due ${formatDate(row.dueAt)}` : null, row.status ?? 'assigned']
+            summary: [row.subject, row.dueAt ? `due ${humanDate(row.dueAt, timeZone)}` : null, row.status ?? 'assigned']
               .filter(Boolean)
               .join(' \u00b7 '),
             href: `/homework/${row.id}`,
             facts: {
               subject: row.subject ?? null,
-              dueAt: row.dueAt ? String(row.dueAt) : null,
+              dueAt: humanDate(row.dueAt, timeZone),
               submissionStatus: row.status ?? 'assigned',
               marks: row.marks ?? null,
               maxMarks: row.maxMarks ?? null,
@@ -310,7 +311,7 @@ export class PetrosStudentContextService {
             href: '/exams',
             facts: {
               subject: row.subject ?? null,
-              examDate: row.examDate ?? null,
+              examDate: humanDate(row.examDate, timeZone),
               startTime: row.startTime ?? null,
               publishedSyllabus: row.syllabus ?? null,
             },
@@ -421,7 +422,7 @@ export class PetrosStudentContextService {
             href: '/announcements',
             facts: {
               category: row.category ?? null,
-              publishedAt: row.publishedAt ? String(row.publishedAt) : null,
+              publishedAt: humanDate(row.publishedAt, timeZone),
             },
           });
         }
@@ -453,7 +454,7 @@ export class PetrosStudentContextService {
             facts: {
               status: row.status,
               sessionType: row.sessionType,
-              lastActivity: row.updatedAt ? String(row.updatedAt) : null,
+              lastActivity: humanDate(row.updatedAt, timeZone),
             },
           });
         }
@@ -494,6 +495,37 @@ export class PetrosStudentContextService {
       localNow = now.toISOString();
     }
     return { timeZone, localNow, isoNow: now.toISOString() };
+  }
+
+  /** Class OR course enrolment OR explicit assignee, mirroring the assignments module. */
+  async assignmentVisibility(principal: InstitutionalStudentPrincipal) {
+    const [classId, courses, assignees] = await Promise.all([
+      this.classId(principal),
+      this.db
+        .select({ courseId: schema.courseEnrollments.courseId })
+        .from(schema.courseEnrollments)
+        .where(
+          and(
+            eq(schema.courseEnrollments.studentId, principal.studentId),
+            eq(schema.courseEnrollments.institutionId, principal.institutionId),
+          ),
+        ),
+      this.db
+        .select({ assignmentId: schema.assignmentAssignees.assignmentId })
+        .from(schema.assignmentAssignees)
+        .where(eq(schema.assignmentAssignees.studentId, principal.studentId)),
+    ]);
+    const parts = [
+      classId ? eq(schema.assignments.classId, classId) : undefined,
+      courses.length
+        ? inArray(schema.assignments.courseId, courses.map((row) => row.courseId))
+        : undefined,
+      assignees.length
+        ? inArray(schema.assignments.id, assignees.map((row) => row.assignmentId))
+        : undefined,
+    ].filter((part): part is NonNullable<typeof part> => Boolean(part));
+    if (!parts.length) return null;
+    return parts.length === 1 ? parts[0]! : or(...parts);
   }
 
   private classId(principal: InstitutionalStudentPrincipal) {
@@ -538,7 +570,23 @@ type LookupRow = {
   facts: ResolvedCandidate['facts'];
 };
 
-function formatDate(value: Date | string) {
+/**
+ * Dates reach the model already written the way the student reads them. Handing over a raw
+ * ISO string makes Petros quote "2026-07-31" back at them mid-sentence.
+ */
+function humanDate(value: Date | string | null | undefined, timeZone: string) {
+  if (!value) return null;
   const date = value instanceof Date ? value : new Date(value);
-  return Number.isNaN(date.getTime()) ? String(value) : date.toISOString().slice(0, 10);
+  if (Number.isNaN(date.getTime())) return String(value);
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone,
+      weekday: 'short',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(date);
+  } catch {
+    return date.toISOString().slice(0, 10);
+  }
 }

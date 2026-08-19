@@ -117,17 +117,21 @@ export class PetrosCompanionService {
    * Threads
    * ---------------------------------------------------------------- */
 
+  /**
+   * Always returns an envelope. A bare `null` body serialises to an empty HTTP response,
+   * which a JSON client cannot distinguish from a parse failure.
+   */
   async openThread(
     principal: InstitutionalStudentPrincipal,
     threadId?: string,
-  ): Promise<PetrosCompanionThread | null> {
+  ): Promise<{ thread: PetrosCompanionThread | null }> {
     const scope = this.scope(principal);
     const thread = threadId
       ? await this.repo.findThread(scope, threadId)
       : await this.repo.latestActiveThread(scope);
-    if (!thread) return null;
+    if (!thread) return { thread: null };
     const messages = await this.repo.listMessages(scope, thread.id);
-    return this.threadDto(thread, messages as MessageRow[]);
+    return { thread: this.threadDto(thread, messages as MessageRow[]) };
   }
 
   async listThreads(principal: InstitutionalStudentPrincipal) {

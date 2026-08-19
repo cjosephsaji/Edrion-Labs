@@ -20,7 +20,7 @@ scode(){ curl -s -m 30 -o /dev/null -w '%{http_code}' "$API/student$1" -H "x-stu
 spost(){ curl -s -m 90 -X POST "$API/student$1" -H "x-student-email: ${3:-$STU}" -H 'content-type: application/json' -d "$2"; }
 
 AID="$(psql "$PSQL" -tAc "select a.id from assignments a join assignment_assignees aa on aa.assignment_id=a.id join students s on s.id=aa.student_id join institution_users u on u.id=s.institution_user_id where u.email='$STU' and a.status='published' limit 1")"
-OTHER_AID="$(psql "$PSQL" -tAc "select a.id from assignments a where a.status='published' and a.id not in (select aa.assignment_id from assignment_assignees aa join students s on s.id=aa.student_id join institution_users u on u.id=s.institution_user_id where u.email='$STU') limit 1")"
+OTHER_AID="$(psql "$PSQL" -tAc "select a.id from assignments a where a.status='published' and a.institution_id <> (select s.institution_id from students s join institution_users u on u.id=s.institution_user_id where u.email='$STU' limit 1) limit 1")"
 OTHER_GRADE="$(psql "$PSQL" -tAc "select g.id from grade_entries g where g.published=true and g.student_id <> (select s.id from students s join institution_users u on u.id=s.institution_user_id where u.email='$STU' limit 1) limit 1")"
 
 echo "== Petros companion smoke ($STU) =="
@@ -58,7 +58,7 @@ K2="$(uuid)"
 T2="$(spost /petros/companion/turns "{\"threadId\":\"$THREAD\",\"message\":\"Why does that one matter for my next exam?\",\"route\":\"/calendar\",\"surface\":\"calendar\",\"visibleCandidates\":[],\"idempotencyKey\":\"$K2\"}")"
 chk "same thread across routes" "$(printf '%s' "$T2" | jq_ threadId)" "$THREAD"
 chk "thread now has 4 messages" "$(psql "$PSQL" -tAc "select count(*) from petros_student_messages where thread_id='$THREAD'")" 4
-chk "thread reload returns history" "$(sget "/petros/companion/thread?threadId=$THREAD" | jq_ messages | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).length)}catch{console.log(0)}})')" 4
+chk "thread reload returns history" "$(sget "/petros/companion/thread?threadId=$THREAD" | jq_ thread.messages | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).length)}catch{console.log(0)}})')" 4
 
 echo
 echo "== 5. Route honesty: Petros never claims an unsupported screen =="
@@ -74,7 +74,7 @@ if [ -n "$OTHER_AID" ]; then
   T4="$(spost /petros/companion/turns "{\"message\":\"Tell me the teacher feedback on this.\",\"route\":\"/assignments\",\"surface\":\"assignments\",\"focusRef\":\"x1\",\"visibleCandidates\":[{\"ref\":\"x1\",\"entityType\":\"assignment\",\"entityId\":\"$OTHER_AID\",\"title\":\"Someone else work\",\"summary\":\"\"}],\"idempotencyKey\":\"$K4\"}")"
   chknull "another student's row does not become focus" "$(printf '%s' "$T4" | jq_ reply.focusRef)"
 else
-  echo "  SKIP  no assignment outside this student's list in seed"
+  echo "  SKIP  no cross-institution assignment in seed"
 fi
 if [ -n "$OTHER_GRADE" ]; then
   K4B="$(uuid)"
@@ -98,8 +98,9 @@ for attempt in 1 2; do
 done
 if [ -n "$PID" ]; then
   chk "proposal starts unexecuted" "$(psql "$PSQL" -tAc "select status from petros_student_action_proposals where id='$PID'")" proposed
-  chk "nothing was written before confirmation" "$(psql "$PSQL" -tAc "select count(*) from user_obligations where source='plan_engine' and created_at > now() - interval '2 minutes'")" 0
-  BEFORE="$(psql "$PSQL" -tAc "select count(*) from user_obligations where source='plan_engine'")"
+  PLAN_BEFORE="$(psql "$PSQL" -tAc "select count(*) from user_obligations where source='plan_engine'")"
+  chk "proposal is not yet executed" "$(psql "$PSQL" -tAc "select count(*) from petros_student_action_proposals where id='$PID' and executed_at is null")" 1
+  BEFORE="$PLAN_BEFORE"
   CK="$(uuid)"
   R1="$(spost "/petros/companion/actions/$PID/decision" "{\"decision\":\"confirm\",\"idempotencyKey\":\"$CK\"}")"
   chk "confirm executes" "$(printf '%s' "$R1" | jq_ status)" executed

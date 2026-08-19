@@ -84,7 +84,7 @@ function mount(ui: React.ReactNode = <Screen />) {
 
 describe('Petros companion', () => {
   beforeEach(() => {
-    mocks.get.mockReset().mockResolvedValue(null);
+    mocks.get.mockReset().mockResolvedValue({ thread: null });
     mocks.post.mockReset();
     mocks.push.mockReset();
     mocks.pathname = '/assignments';
