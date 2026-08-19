@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Clock3, FileText, LoaderCircle, ShieldCheck, Sparkles, X } from 'lucide-react';
 import type { PetrosLearningSessionDocument, PetrosSessionIntent } from '@edrion/schemas';
@@ -42,6 +43,13 @@ export function PetrosDoorButton({
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const keySuffix = `${door}:${sourceId}:${page ?? 'all'}:${section ?? ''}`;
 
+  const close = useCallback(() => {
+    if (starting) return;
+    setIntent(null);
+    setError('');
+    window.requestAnimationFrame(() => triggerRef.current?.focus());
+  }, [starting]);
+
   useEffect(() => {
     if (!intent) return;
     const previous = document.body.style.overflow;
@@ -55,14 +63,7 @@ export function PetrosDoorButton({
       document.body.style.overflow = previous;
       window.removeEventListener('keydown', onKey);
     };
-  }, [intent, starting]);
-
-  function close() {
-    if (starting) return;
-    setIntent(null);
-    setError('');
-    window.requestAnimationFrame(() => triggerRef.current?.focus());
-  }
+  }, [close, intent, starting]);
 
   async function preview() {
     if (loading || disabled) return;
@@ -126,8 +127,8 @@ export function PetrosDoorButton({
         {loading ? 'Checking context…' : label}
       </button>
       {error && !intent ? <p className={styles.inlineError} role="alert">{error}</p> : null}
-      {intent ? (
-        <div className={styles.layer}>
+      {intent && typeof document !== 'undefined' ? createPortal(
+        <div className={styles.layer} data-petros-preview-layer="true">
           <button type="button" className={styles.backdrop} onClick={close} aria-label="Close Petros preview" />
           <section
             ref={dialogRef}
@@ -183,7 +184,8 @@ export function PetrosDoorButton({
               </button>
             </footer>
           </section>
-        </div>
+        </div>,
+        document.body,
       ) : null}
     </>
   );

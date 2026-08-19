@@ -82,6 +82,21 @@ describe('Petros contextual entry points', () => {
     expect(mocks.push).toHaveBeenCalledWith('/petros/session?session=88888888-8888-4888-8888-888888888888');
   });
 
+  it('portals the preview outside transformed and clipped cards', async () => {
+    mocks.post.mockResolvedValueOnce(intent);
+    render(
+      <article data-testid="material-card" style={{ overflow: 'hidden', transform: 'translateY(-1px)' }}>
+        <PetrosDoorButton door="uploaded_document" sourceId={intent.sourceEntityIds[0]} label="Teach me this page" />
+      </article>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Teach me this page' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Preview this Petros session' });
+    expect(dialog.closest('article')).toBeNull();
+    expect(dialog.parentElement).toHaveAttribute('data-petros-preview-layer', 'true');
+    expect(dialog.parentElement?.parentElement).toBe(document.body);
+  });
+
   it('keeps a small assistant answer inline without creating a session', async () => {
     mocks.post.mockResolvedValueOnce({ mode: 'quick_answer', answer: 'This is the published results screen.', contextLabel: 'Results', offer: null });
     render(<PetrosContextAssistant route="/results" />);
