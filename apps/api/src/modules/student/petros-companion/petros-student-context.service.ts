@@ -32,6 +32,8 @@ export type ResolvedPageContext = {
   label: string;
   /** IANA zone of the student's institution; previews and dates render in it. */
   timeZone: string;
+  /** Resolved once per turn and carried, so the prompt does not re-query it. */
+  clock: { timeZone: string; localNow: string; isoNow: string };
   support: 'supported' | 'unavailable' | 'hidden';
   reason?: string;
   candidates: ResolvedCandidate[];
@@ -110,12 +112,14 @@ export class PetrosStudentContextService {
     },
   ): Promise<ResolvedPageContext> {
     const rule = resolvePetrosRoute(input.route);
-    const { timeZone } = await this.clock(principal);
+    const clock = await this.clock(principal);
+    const timeZone = clock.timeZone;
     const base = {
       route: rule.route,
       surface: rule.surface,
       label: rule.label,
       timeZone,
+      clock,
       support: rule.support,
       ...(rule.reason ? { reason: rule.reason } : {}),
     };

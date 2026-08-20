@@ -19,12 +19,19 @@ function prefs(patch: Partial<PetrosCompanionPreferences> = {}): PetrosCompanion
   return { ...PETROS_DEFAULT_COMPANION_PREFERENCES, ...patch };
 }
 
+const CLOCK = {
+  timeZone: 'Asia/Kolkata',
+  localNow: 'Wednesday, 19/08/2026, 17:00',
+  isoNow: '2026-08-19T11:30:00.000Z',
+};
+
 function context(patch: Partial<ResolvedPageContext> = {}): ResolvedPageContext {
   return {
     route: '/assignments',
     surface: 'assignments',
     label: 'Assignments',
     timeZone: 'Asia/Kolkata',
+    clock: CLOCK,
     support: 'supported',
     candidates: [],
     focus: null,
@@ -32,12 +39,6 @@ function context(patch: Partial<ResolvedPageContext> = {}): ResolvedPageContext 
     ...patch,
   };
 }
-
-const CLOCK = {
-  timeZone: 'Asia/Kolkata',
-  localNow: 'Wednesday, 19/08/2026, 17:00',
-  isoNow: '2026-08-19T11:30:00.000Z',
-};
 
 function prompt(patch: Parameters<typeof buildCompanionSystemPrompt>[0] extends infer T ? Partial<T> : never = {}) {
   return buildCompanionSystemPrompt({

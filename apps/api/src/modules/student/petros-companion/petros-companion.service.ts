@@ -292,7 +292,10 @@ export class PetrosCompanionService {
         campusId: principal.campusId,
       }));
 
-    const history = (await this.repo.listMessages(scope, thread.id)) as MessageRow[];
+    const [history, preferences] = await Promise.all([
+      this.repo.listMessages(scope, thread.id) as Promise<MessageRow[]>,
+      this.preferences(principal),
+    ]);
     const compacted = await this.compact(principal, thread, history);
 
     const studentMessage =
@@ -313,7 +316,6 @@ export class PetrosCompanionService {
 
     if (!studentMessage) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Not found' });
 
-    const preferences = await this.preferences(principal);
     const blocks = await this.generate({
       principal,
       thread: { id: thread.id, summary: compacted },
@@ -440,9 +442,10 @@ export class PetrosCompanionService {
     const availableActions = this.availableActions(context);
     const distressed = isDistressed(input.message);
     const recentSetback = this.recentSetback(context);
-    const clock = await this.context.clock(principal);
+    // Resolved with the page context; querying the institution's timezone twice per turn
+    // added a round trip to every message for no new information.
     const system = buildCompanionSystemPrompt({
-      clock,
+      clock: context.clock,
       preferences,
       context,
       studentFirstName: principal.fullName.split(' ')[0] ?? 'there',
