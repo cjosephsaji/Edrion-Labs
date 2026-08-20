@@ -7,6 +7,7 @@ import {
   ArrowRight,
   BookOpen,
   Check,
+  History,
   CircleDashed,
   Compass,
   FileText,
@@ -73,6 +74,26 @@ type Material = {
 };
 type MaterialsResponse = { items: Material[] };
 
+/** Session history: every session the student has started, finished or not. */
+type SessionHistory = {
+  items: Array<{
+    id: string;
+    topic: string;
+    sessionType: string;
+    status: string;
+    elapsedSeconds: number;
+    checkpointsComplete: number;
+    checkpointsTotal: number;
+    blockCount: number;
+    artifactCount: number;
+    closeReason: string | null;
+    startedAt: string;
+    lastActivityAt: string;
+    href: string;
+    resumable: boolean;
+  }>;
+};
+
 /** One row of "do this next", whatever produced it. */
 type NextAction = {
   key: string;
@@ -138,6 +159,10 @@ export default function LearnPage() {
     '/student/petros/reflection',
   );
   const materialsQuery = useStudentList<MaterialsResponse>('learn-materials', '/student/materials');
+  const historyQuery = useStudentList<SessionHistory>(
+    'petros-session-history',
+    '/student/petros/sessions/history',
+  );
   const artifactsQuery = useStudentList<PetrosSavedArtifact[]>(
     'petros-artifacts',
     '/student/petros/artifacts?limit=100',
@@ -149,6 +174,13 @@ export default function LearnPage() {
     queryFn: () => api.get<PetrosBriefing>('/student/petros/companion/briefing'),
     staleTime: 5 * 60_000,
   });
+
+  const sessions = useMemo(() => historyQuery.data?.items ?? [], [historyQuery.data]);
+  const recentSessions = useMemo(() => sessions.slice(0, 4), [sessions]);
+  const openSessions = useMemo(
+    () => sessions.filter((session) => session.resumable),
+    [sessions],
+  );
 
   const path = pathQuery.data ?? null;
   const steps = useMemo(() => path?.items ?? [], [path]);
@@ -669,6 +701,66 @@ export default function LearnPage() {
                         </Link>
                       </p>
                     </>
+                  )}
+                </section>
+
+                <section className={styles.band} aria-labelledby="learn-history-heading">
+                  <div className={styles.bandHead}>
+                    <h2 className={styles.bandTitle} id="learn-history-heading">
+                      Sessions you have had
+                    </h2>
+                    {openSessions.length > 0 ? (
+                      <span className={styles.bandMeta}>
+                        {openSessions.length} still open
+                      </span>
+                    ) : null}
+                  </div>
+                  {historyQuery.isPending ? (
+                    <div className={styles.loading} role="status" aria-live="polite">
+                      <Skeleton height={72} />
+                    </div>
+                  ) : recentSessions.length === 0 ? (
+                    <div className={styles.empty}>
+                      <strong>No sessions yet</strong>
+                      <p>
+                        Every session you start is kept here, finished or not, so you can pick one
+                        up again later.
+                      </p>
+                    </div>
+                  ) : (
+                    <ul className={styles.shelf} aria-label="Recent Petros sessions">
+                      {recentSessions.map((session) => (
+                        <li
+                          className={styles.tile}
+                          key={session.id}
+                          data-due={session.resumable ? 'true' : undefined}
+                        >
+                          <span className={styles.tileKind}>
+                            <History aria-hidden="true" />
+                            {session.status === 'closed'
+                              ? 'Finished'
+                              : session.status === 'paused'
+                                ? 'Paused'
+                                : 'Still open'}
+                          </span>
+                          <h3 className={styles.tileTitle}>{session.topic}</h3>
+                          <span className={styles.tileMeta}>
+                            {session.checkpointsTotal
+                              ? `${session.checkpointsComplete} of ${session.checkpointsTotal} checkpoints`
+                              : `${session.blockCount} ${session.blockCount === 1 ? 'step' : 'steps'}`}
+                            {session.artifactCount
+                              ? ` · ${session.artifactCount} saved`
+                              : ''}
+                          </span>
+                          <div className={styles.tileFoot}>
+                            <Link href={session.href} className={styles.bandLink}>
+                              {session.resumable ? 'Pick it up' : 'Look back'}
+                              <ArrowRight aria-hidden="true" />
+                            </Link>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </section>
 

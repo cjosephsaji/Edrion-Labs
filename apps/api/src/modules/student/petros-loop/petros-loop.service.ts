@@ -169,6 +169,37 @@ export class PetrosLoopService {
     return this.document(scope, row.id);
   }
 
+  /**
+   * Session history. Returns the student's own sessions with a resume destination, so a
+   * session survives closing the tab as something they can find again.
+   */
+  async history(principal: InstitutionalStudentPrincipal) {
+    const rows = await this.repo.listSessions(owner(principal));
+    const counts = await this.repo.sessionCounts(rows.map((row) => row.id));
+    return {
+      items: rows.map((row) => {
+        const checkpoints = row.checkpoints ?? [];
+        const count = counts.get(row.id) ?? { blocks: 0, artifacts: 0 };
+        return {
+          id: row.id,
+          topic: row.topic,
+          sessionType: row.sessionType,
+          status: row.status,
+          elapsedSeconds: row.elapsedSeconds,
+          checkpointsComplete: checkpoints.filter((point) => point.status === 'complete').length,
+          checkpointsTotal: checkpoints.length,
+          blockCount: count.blocks,
+          artifactCount: count.artifacts,
+          closeReason: row.closeReason,
+          startedAt: row.createdAt.toISOString(),
+          lastActivityAt: row.updatedAt.toISOString(),
+          href: `/petros/session?session=${row.id}`,
+          resumable: row.status !== 'closed',
+        };
+      }),
+    };
+  }
+
   async document(
     scopeOrPrincipal: PetrosOwnerScope | InstitutionalStudentPrincipal,
     sessionId: string,

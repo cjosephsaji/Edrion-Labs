@@ -62,6 +62,70 @@ export class PetrosLoopRepository {
       .then((rows) => rows[0]);
   }
 
+  /**
+   * The student's own sessions, newest first, with enough detail to decide whether to
+   * resume one. There was previously no way to list sessions at all: a session could only
+   * be reached by its id, so closing the tab lost the only route back to it.
+   */
+  listSessions(scope: PetrosOwnerScope, limit = 40) {
+    return this.db
+      .select({
+        id: schema.petrosLearningSessions.id,
+        topic: schema.petrosLearningSessions.topic,
+        sessionType: schema.petrosLearningSessions.sessionType,
+        status: schema.petrosLearningSessions.status,
+        elapsedSeconds: schema.petrosLearningSessions.elapsedSeconds,
+        checkpoints: schema.petrosLearningSessions.checkpoints,
+        closeReason: schema.petrosLearningSessions.closeReason,
+        createdAt: schema.petrosLearningSessions.createdAt,
+        updatedAt: schema.petrosLearningSessions.updatedAt,
+      })
+      .from(schema.petrosLearningSessions)
+      .where(
+        and(
+          eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
+          eq(schema.petrosLearningSessions.studentId, scope.studentId),
+        ),
+      )
+      .orderBy(desc(schema.petrosLearningSessions.updatedAt))
+      .limit(limit);
+  }
+
+  /**
+   * Counts per session, fetched separately rather than as correlated subqueries — those
+   * rendered against the wrong scope and silently returned zero for every row.
+   */
+  async sessionCounts(sessionIds: string[]) {
+    const counts = new Map<string, { blocks: number; artifacts: number }>();
+    if (!sessionIds.length) return counts;
+    const bump = (id: string, key: 'blocks' | 'artifacts', value: number) => {
+      const entry = counts.get(id) ?? { blocks: 0, artifacts: 0 };
+      entry[key] = value;
+      counts.set(id, entry);
+    };
+    const [blocks, artifacts] = await Promise.all([
+      this.db
+        .select({
+          sessionId: schema.petrosTeachingBlocks.sessionId,
+          total: sql<number>`count(*)::int`,
+        })
+        .from(schema.petrosTeachingBlocks)
+        .where(inArray(schema.petrosTeachingBlocks.sessionId, sessionIds))
+        .groupBy(schema.petrosTeachingBlocks.sessionId),
+      this.db
+        .select({
+          sessionId: schema.petrosSavedArtifacts.sessionId,
+          total: sql<number>`count(*)::int`,
+        })
+        .from(schema.petrosSavedArtifacts)
+        .where(inArray(schema.petrosSavedArtifacts.sessionId, sessionIds))
+        .groupBy(schema.petrosSavedArtifacts.sessionId),
+    ]);
+    for (const row of blocks) bump(row.sessionId, 'blocks', row.total);
+    for (const row of artifacts) if (row.sessionId) bump(row.sessionId, 'artifacts', row.total);
+    return counts;
+  }
+
   findSessionByRequest(scope: PetrosOwnerScope, clientRequestId: string) {
     return this.db
       .select()

@@ -62,6 +62,13 @@ export class StudentPetrosLoopController {
     return this.service.createUnresolved(raw, body);
   }
 
+  /** Must be declared before `:sessionId` or Nest matches "history" as an id. */
+  @Get('history')
+  history(@CurrentStudent() raw: StudentPrincipal) {
+    requireInstitutional(raw);
+    return this.service.history(raw);
+  }
+
   @Get(':sessionId')
   read(@CurrentStudent() raw: StudentPrincipal, @Param('sessionId') sessionId: string) {
     requireInstitutional(raw);

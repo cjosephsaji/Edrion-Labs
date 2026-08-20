@@ -92,6 +92,30 @@ export class StudentApiClient {
     });
   }
 
+  /**
+   * A write that must survive the page going away.
+   *
+   * Normal fetches are cancelled when a tab closes, so anything still in flight — or still
+   * sitting behind a debounce — was simply lost. `keepalive` hands the request to the
+   * browser to finish after unload. Fire-and-forget by design: there is no page left to
+   * show an error to.
+   */
+  keepalive(path: string, body: unknown, method: 'POST' | 'PUT' = 'POST'): void {
+    const headers: Record<string, string> = { 'content-type': 'application/json' };
+    if (this.devStudentEmail) headers['x-student-email'] = this.devStudentEmail;
+    try {
+      void fetch(`${this.baseUrl}/v1${path}`, {
+        method,
+        credentials: 'include',
+        headers,
+        body: JSON.stringify(body),
+        keepalive: true,
+      }).catch(() => undefined);
+    } catch {
+      // Never let a best-effort save break the unload path.
+    }
+  }
+
   del<T>(path: string, body?: unknown): Promise<T> {
     return this.request<T>(path, {
       method: 'DELETE',

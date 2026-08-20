@@ -72,6 +72,8 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
   const requestAbort = useRef<AbortController | null>(null);
   const continueKey = useRef<string | null>(null);
   const interactionTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+  /** Interaction state written locally but not yet accepted by the server. */
+  const pendingInteractions = useRef(new Map<string, Record<string, unknown>>());
 
   const requestNext = useCallback(
     async (id: string) => {
@@ -182,16 +184,15 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
       if (!document) return;
       const existing = interactionTimers.current.get(blockId);
       if (existing) clearTimeout(existing);
+      const currentBlock = document.blocks.find((block) => block.id === blockId);
+      const interactionState = { ...currentBlock?.interactionState, ...patch };
+      pendingInteractions.current.set(blockId, interactionState);
       const persist = () => {
-        const currentBlock = document.blocks.find((block) => block.id === blockId);
-        const interactionState = {
-          ...currentBlock?.interactionState,
-          ...patch,
-        };
         void api
           .put(`/student/petros/sessions/${document.id}/blocks/${blockId}/interaction`, {
             interactionState,
           })
+          .then(() => pendingInteractions.current.delete(blockId))
           .catch(() => undefined);
         interactionTimers.current.delete(blockId);
       };
@@ -200,6 +201,55 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
     },
     [api, document],
   );
+
+  /**
+   * A session used to die with the tab. Work typed in the last half-second sat behind the
+   * debounce and was dropped, and the session itself was never paused, so it stayed
+   * `active` for ever with no elapsed time recorded and no way back to it.
+   *
+   * `visibilitychange` flushes pending writes when the student switches away — cheap, and
+   * they may not come back. `pagehide` is the real departure, so it also parks the session,
+   * which is what makes it resumable rather than an orphan.
+   */
+  useEffect(() => {
+    if (!document || document.status === 'closed') return;
+    const sessionId = document.id;
+    const isActive = document.status === 'active';
+
+    const flush = () => {
+      for (const [blockId, interactionState] of pendingInteractions.current) {
+        const timer = interactionTimers.current.get(blockId);
+        if (timer) clearTimeout(timer);
+        interactionTimers.current.delete(blockId);
+        api.keepalive(
+          `/student/petros/sessions/${sessionId}/blocks/${blockId}/interaction`,
+          { interactionState },
+          'PUT',
+        );
+      }
+      pendingInteractions.current.clear();
+    };
+
+    const onHidden = () => {
+      if (window.document.visibilityState === 'hidden') flush();
+    };
+    const onLeave = () => {
+      flush();
+      // Parked, not closed: the student did not say they were finished.
+      if (isActive) {
+        api.keepalive(`/student/petros/sessions/${sessionId}/pause`, {
+          idempotencyKey: newIdempotencyKey(),
+        });
+      }
+    };
+
+    window.document.addEventListener('visibilitychange', onHidden);
+    window.addEventListener('pagehide', onLeave);
+    return () => {
+      window.document.removeEventListener('visibilitychange', onHidden);
+      window.removeEventListener('pagehide', onLeave);
+    };
+  }, [api, document]);
 
   const completeBlock = useCallback(
     async (block: PetrosSessionBlock) => {
