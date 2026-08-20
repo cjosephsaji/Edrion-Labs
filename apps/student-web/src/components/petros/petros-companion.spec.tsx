@@ -30,7 +30,7 @@ const CANDIDATES = [
   { ref: 'a3', entityType: 'assignment' as const, entityId: 'id-3', title: 'Third card', summary: 'due Friday' },
 ];
 
-function reply(blocks: unknown[], threadId = 'thread-1') {
+function reply(blocks: unknown[], threadId = 'thread-1', studentText = 'question') {
   mocks.id += 1;
   return {
     schemaVersion: 'petros.companion.v1',
@@ -39,7 +39,7 @@ function reply(blocks: unknown[], threadId = 'thread-1') {
       id: `s${mocks.id}`,
       threadId,
       role: 'student',
-      blocks: [{ type: 'text', text: 'question' }],
+      blocks: [{ type: 'text', text: studentText }],
       route: '/assignments',
       surface: 'assignments',
       focusRef: null,
@@ -109,6 +109,44 @@ describe('Petros companion', () => {
     });
     // Every visible item travels with the turn, so the API can resolve any of them.
     expect(mocks.post.mock.calls[0]?.[1].visibleCandidates).toHaveLength(3);
+  });
+
+  it('shows the student their own message while Petros is still thinking', async () => {
+    let release: (value: unknown) => void = () => {};
+    mocks.post.mockReturnValueOnce(new Promise((resolve) => { release = resolve; }));
+    mount();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Petros' }));
+    fireEvent.change(screen.getByLabelText('Message Petros'), { target: { value: 'Why is this due Friday?' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send to Petros' }));
+
+    // Echoed locally before the server has answered: the student must never watch their
+    // own words disappear for the length of a turn.
+    expect(await screen.findByText('Why is this due Friday?')).toBeInTheDocument();
+    expect(screen.getByText(/Petros is thinking/)).toBeInTheDocument();
+
+    release(
+      reply(
+        [{ type: 'text', text: 'Because your teacher set it for Friday.' }],
+        'thread-1',
+        'Why is this due Friday?',
+      ),
+    );
+    expect(await screen.findByText('Because your teacher set it for Friday.')).toBeInTheDocument();
+    // Exactly one copy once the server's own message arrives.
+    expect(screen.getAllByText('Why is this due Friday?')).toHaveLength(1);
+  });
+
+  it('puts the message back in the composer when the turn fails', async () => {
+    mocks.post.mockRejectedValueOnce(new Error('Network down'));
+    mount();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Petros' }));
+    fireEvent.change(screen.getByLabelText('Message Petros'), { target: { value: 'Plan my week' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send to Petros' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Network down');
+    expect(screen.getByLabelText('Message Petros')).toHaveValue('Plan my week');
   });
 
   it('keeps one thread across turns and route changes', async () => {

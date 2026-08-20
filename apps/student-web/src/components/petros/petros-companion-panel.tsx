@@ -34,6 +34,12 @@ export function PetrosCompanionPanel({ studentName }: { studentName?: string }) 
   const companion = usePetrosCompanion();
   const [question, setQuestion] = useState('');
   const [sending, setSending] = useState(false);
+  /*
+   * The student's own message, echoed locally the instant they press send.
+   * Without this their words vanish from the screen for the whole turn — several
+   * seconds of staring at an empty log wondering whether it registered.
+   */
+  const [pending, setPending] = useState<PetrosCompanionMessage | null>(null);
   const [error, setError] = useState('');
   const [actions, setActions] = useState<ActionState>({});
   const [busyProposal, setBusyProposal] = useState<string | null>(null);
@@ -89,7 +95,7 @@ export function PetrosCompanionPanel({ studentName }: { studentName?: string }) 
     if (typeof log?.scrollTo === 'function') {
       log.scrollTo({ top: log.scrollHeight, behavior: 'smooth' });
     }
-  }, [messages.length, sending]);
+  }, [messages.length, sending, pending]);
 
   const send = useCallback(
     async (text: string) => {
@@ -98,6 +104,16 @@ export function PetrosCompanionPanel({ studentName }: { studentName?: string }) 
       setSending(true);
       setError('');
       setQuestion('');
+      setPending({
+        id: `pending-${Date.now()}`,
+        threadId: threadId ?? 'pending',
+        role: 'student',
+        blocks: [{ type: 'text', text: message }],
+        route: companion.route,
+        surface: companion.surface,
+        focusRef: companion.focusRef,
+        createdAt: new Date().toISOString(),
+      });
       try {
         const result = await api.post<PetrosCompanionTurnResult>('/student/petros/companion/turns', {
           ...(threadId ? { threadId } : {}),
@@ -114,6 +130,9 @@ export function PetrosCompanionPanel({ studentName }: { studentName?: string }) 
         setError(formatApiError(caught));
         setQuestion(message);
       } finally {
+        // Cleared either way: on success the server's own copy replaces it, on failure
+        // the text goes back in the composer where the student can retry it.
+        setPending(null);
         setSending(false);
       }
     },
@@ -238,7 +257,7 @@ export function PetrosCompanionPanel({ studentName }: { studentName?: string }) 
             </div>
           ) : null}
 
-          {messages.map((message) => (
+          {[...messages, ...(pending ? [pending] : [])].map((message) => (
             <MessageBubble
               key={message.id}
               message={message}
@@ -323,7 +342,11 @@ function MessageBubble({
 }) {
   const mine = message.role === 'student';
   return (
-    <article className={styles.message} data-role={message.role}>
+    <article
+      className={styles.message}
+      data-role={message.role}
+      data-pending={message.id.startsWith('pending-') || undefined}
+    >
       {mine ? null : (
         <span className={styles.messageMark} aria-hidden="true">
           <Image src="/petros/petros-pointing.png" alt="" width={724} height={760} unoptimized />

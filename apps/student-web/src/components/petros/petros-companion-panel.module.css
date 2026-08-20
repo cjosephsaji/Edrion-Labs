@@ -274,6 +274,9 @@
   background: var(--st-accent);
   color: #fff;
 }
+
+/* Echoed locally, not yet acknowledged by the server. */
+.message[data-pending] .text { opacity: 0.72; }
 .message[data-role='petros'] .text { border-radius: 14px 14px 14px 4px; }
 
 .source {
