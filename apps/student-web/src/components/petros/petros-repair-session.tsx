@@ -489,6 +489,12 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
             </div>
           </section>
 
+          {/*
+            Everything from here to the teaching blocks is context, not the lesson: sources,
+            the privacy summary, and status notices. Grouping it lets it recede as a block
+            rather than stacking full-weight cards between the student and the first move.
+          */}
+          <div className={styles.advisories}>
           {sourceView.citations.length ? (
             <section className={styles.grounding} aria-label="Verified session sources">
               <strong>Verified source context</strong>
@@ -570,14 +576,17 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
             />
           )}
 
+          </div>
+
           {document?.detours.map((detour) => (
             <DetourBanner key={detour.id} detour={detour} />
           ))}
 
-          {document?.blocks.map((block) => (
+          {document?.blocks.map((block, index) => (
             <TeachingBlock
               key={block.id}
               block={block}
+              live={index === (document?.blocks.length ?? 0) - 1}
               onInteraction={(patch, immediate) => updateInteraction(block.id, patch, immediate)}
             >
               <BlockContent
@@ -766,10 +775,13 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
 function TeachingBlock({
   block,
   onInteraction,
+  live,
   children,
 }: {
   block: PetrosSessionBlock;
   onInteraction: (patch: Record<string, unknown>, immediate?: boolean) => void;
+  /** The move the student is on. Earlier moves stay readable but recede. */
+  live?: boolean;
   children: ReactNode;
 }) {
   const Icon = iconFor(block.content.type);
@@ -778,6 +790,7 @@ function TeachingBlock({
     <section
       className={styles.block}
       data-complete={block.status === 'completed'}
+      data-live={live || undefined}
       data-block-type={block.content.type}
     >
       <div className={styles.blockHead}>

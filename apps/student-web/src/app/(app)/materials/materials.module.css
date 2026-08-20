@@ -287,26 +287,29 @@
 /* Kind badge: glyph plus the teacher's own label word. */
 .kind {
   display: grid;
-  width: 58px;
+  /* Sized to the teacher's own word. A fixed 58px box clipped "CHECKLIST" to
+     "CHECKL…", and a truncated label tells a student less than no label. */
+  min-width: 58px;
+  max-width: 92px;
   flex: none;
   justify-items: center;
   gap: 5px;
   border: 1px solid var(--s-bd1);
   background: var(--s-cardAlt);
-  padding: 9px 4px 7px;
+  padding: 9px 7px 7px;
 }
 .kind svg { width: 19px; height: 19px; color: var(--s-inkSoft); }
 
 .kindWord {
   max-width: 100%;
-  overflow: hidden;
   color: var(--s-muted);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.05em;
-  text-overflow: ellipsis;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  text-align: center;
   text-transform: uppercase;
-  white-space: nowrap;
 }
 
 .card[data-petros='ready'] .kind { border-color: var(--s-accentBd); background: var(--s-accentSoft); }

@@ -167,6 +167,39 @@
   border-color: var(--s-accentBd);
   background: color-mix(in srgb, var(--s-card) 86%, var(--s-accentSoft));
 }
+
+/*
+ * The move the student is on is the subject of the page; earlier moves are history they
+ * can still read. Previously every move carried identical weight, so after two or three
+ * the page was an undifferentiated column and nothing said "you are here".
+ */
+.block[data-live] {
+  border-color: var(--s-accentBd);
+  box-shadow: 0 14px 34px -26px rgb(9 61 49 / 42%);
+}
+.block:not([data-live]) {
+  border-color: var(--s-divider);
+  background: var(--s-cardAlt);
+}
+.block:not([data-live]) .blockHead { opacity: 0.82; }
+
+/*
+ * Context, not content: verified sources, the privacy summary, and status notices. They
+ * must stay present and readable — several are institutional commitments — but they sit
+ * between the student and the lesson, so they read quieter and tighter.
+ */
+.advisories {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+.advisories:empty { display: none; }
+.advisories > * { margin-top: 0; }
+.advisories > *:not(:hover):not(:focus-within) { opacity: 0.94; }
+
+@media (prefers-reduced-motion: reduce) {
+  .block { animation: none; }
+}
 .blockHead {
   display: grid;
   align-items: start;
