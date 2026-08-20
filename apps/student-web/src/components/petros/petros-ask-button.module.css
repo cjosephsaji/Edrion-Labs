@@ -36,6 +36,16 @@
 
 .button svg { width: 13px; height: 13px; }
 
+/*
+ * Touch targets. On a phone this button was 27px tall; a finger needs closer to 44px to
+ * hit it reliably, and this control sits on nearly every card in the portal.
+ */
+@media (max-width: 920px) {
+  .button { min-height: 40px; padding: 8px 14px; }
+  .button[data-variant='icon'] { width: 40px; height: 40px; }
+  .button svg { width: 15px; height: 15px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .button { transition: none; }
 }

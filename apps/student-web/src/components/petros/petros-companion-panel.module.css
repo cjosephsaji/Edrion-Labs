@@ -495,6 +495,17 @@
   to { transform: rotate(360deg); }
 }
 
+/* Touch targets inside the sheet: chips and replies were mouse-sized. */
+@media (max-width: 920px) {
+  .replies button,
+  .suggestions button,
+  .source,
+  .navigation,
+  .focusBar button { min-height: 40px; }
+  .proposalActions button { min-height: 44px; }
+  .headerButton { width: 40px; height: 40px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .launcher,
   .panel { transition: none; }

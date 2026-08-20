@@ -83,7 +83,14 @@
 .dismiss:focus-visible { outline: 2px solid var(--s-accent); outline-offset: 1px; }
 .dismiss svg { width: 14px; height: 14px; }
 
+@media (max-width: 920px) {
+  /* 24px was a mouse-sized target. */
+  .dismiss { top: 6px; right: 6px; width: 40px; height: 40px; }
+  .open,
+  .plan { min-height: 44px; }
+}
+
 @media (max-width: 720px) {
-  .strip { flex-wrap: wrap; }
+  .strip { flex-wrap: wrap; padding-right: 52px; }
   .actions { width: 100%; }
 }

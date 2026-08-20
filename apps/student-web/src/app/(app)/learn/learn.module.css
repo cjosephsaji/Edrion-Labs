@@ -508,3 +508,12 @@
   .open,
   .crossLink { transition: none; }
 }
+
+/*
+ * Touch targets. These inline links sat at 19px tall — accurate with a cursor, a coin toss
+ * with a thumb. The hub is the screen a student lands on, so its links must be reachable.
+ */
+@media (max-width: 920px) {
+  .bandLink { min-height: 44px; align-items: center; }
+  .tileFoot { min-height: 44px; align-items: center; }
+}

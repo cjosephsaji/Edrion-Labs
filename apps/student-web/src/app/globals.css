@@ -159,6 +159,11 @@
   }
   .portal-brand-group { display: flex; min-width: 0; align-items: center; gap: 18px; }
   .portal-brand {
+    /* Inline-flex with a touch-sized box: as a bare inline link this was 24px tall,
+       below the size a thumb can hit reliably. */
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
     font-family: var(--font-display);
     font-size: 32px;
     font-weight: 600;
@@ -628,4 +633,27 @@
   ::view-transition-group(*),
   ::view-transition-old(*),
   ::view-transition-new(*) { animation: none !important; }
+}
+
+/*
+ * Touch targets for the small controls in Settings.
+ *
+ * The toggle track is deliberately 40x22 — that is how a switch should look. Growing it to
+ * 44px would stretch the pill and misplace the knob, so the hit area is extended with a
+ * transparent overlay instead: same appearance, thumb-sized target.
+ */
+@media (max-width: 920px) {
+  [role='switch'] { position: relative; }
+  [role='switch']::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+    content: '';
+  }
+  [role='tablist'] button,
+  [aria-label='Text size'] button,
+  [aria-label='Density'] button { min-height: 44px; }
 }

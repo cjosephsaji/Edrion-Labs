@@ -94,3 +94,28 @@ item — which is the correct failure, not a silent guess.
   distress, completion claims, charter honesty, forged keys and destinations.
 - `packages/schemas/src/petros-companion.spec.ts` — route matrix and block contract.
 - `apps/student-web/.../petros-companion.spec.tsx` — selection, continuity, confirmation.
+
+## Checking mobile
+
+Chrome's `resize_window` reports success but leaves `window.innerWidth` unchanged in this
+setup, so screenshots are not evidence of mobile layout. Render the portal in a phone-sized
+same-origin iframe instead — CSS media queries evaluate against the frame's own viewport:
+
+```js
+const f = document.createElement('iframe');
+f.src = '/learn';
+f.style.cssText = 'width:390px;height:844px;border:0';
+document.body.appendChild(f);
+// f.contentWindow.innerWidth === 390, matchMedia('(max-width: 920px)').matches === true
+```
+
+Two checks worth running per route:
+
+- **Horizontal overflow** — `documentElement.scrollWidth > innerWidth`. This found
+  `/progress` rendering 16,485px wide on a 390px phone.
+- **Tap targets** — any `a[href]`, `button`, `input`, `[role="switch"]` under ~40px in
+  either dimension. Apple's floor is 44px.
+
+One caveat: CSS transitions do not always tick inside the probe iframe, so a panel measured
+mid-transition reads as off-screen. Set `transition: none` on the element before measuring
+position, or you will chase a bug that is not there.

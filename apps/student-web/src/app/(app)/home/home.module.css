@@ -224,3 +224,9 @@
 @media (prefers-reduced-motion: reduce) {
   .card { animation: none; }
 }
+
+/* Touch targets: the card's own call to action was a 20px-tall inline link. */
+@media (max-width: 920px) {
+  .action { min-height: 44px; align-items: center; }
+  .cardActions { gap: 6px; }
+}
