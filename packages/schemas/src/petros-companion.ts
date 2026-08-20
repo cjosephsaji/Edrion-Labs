@@ -69,6 +69,10 @@ export const PETROS_ROUTE_RULES: readonly RouteRule[] = [
   { prefix: '/assignments', support: 'supported', surface: 'assignments', label: 'Assignments' },
   { prefix: '/homework', support: 'supported', surface: 'homework', label: 'Homework' },
   { prefix: '/materials', support: 'supported', surface: 'materials', label: 'Study materials' },
+  // The Learn hub aggregates the learning-path, reflection, materials and artifact surfaces.
+  // It reports as `learning_path` because that is the surface its candidates come from; the
+  // API needs no new adapter for it.
+  { prefix: '/learn', support: 'supported', surface: 'learning_path', label: 'Learn' },
   { prefix: '/learning-path', support: 'supported', surface: 'learning_path', label: 'Learning path' },
   { prefix: '/progress', support: 'supported', surface: 'progress', label: 'Learning progress' },
   { prefix: '/results', support: 'supported', surface: 'results', label: 'Results' },

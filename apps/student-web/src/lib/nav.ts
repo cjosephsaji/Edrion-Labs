@@ -38,6 +38,9 @@ export const STUDENT_NAV: NavSection[] = [
     id: 'learning',
     label: 'Learning',
     items: [
+      // Front door to the learning half of the portal. Listed first because the pages under
+      // it — path, progress, materials, Petros — are what it exists to make findable.
+      { href: '/learn', label: 'Learn', permission: 'student.learn.use' },
       { href: '/assignments', label: 'Assignments', permission: 'student.assignments.view' },
       { href: '/homework', label: 'Homework', permission: 'student.homework.view' },
       { href: '/materials', label: 'Study materials', permission: 'student.classes.view' },

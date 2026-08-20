@@ -26,6 +26,7 @@ const PORTAL_ROUTES = [
   '/homework',
   '/homework/abc',
   '/materials',
+  '/learn',
   '/learning-path',
   '/progress',
   '/exams',

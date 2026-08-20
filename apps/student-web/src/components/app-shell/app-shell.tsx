@@ -146,12 +146,21 @@ export function AppShell({ children }: { children: ReactNode }) {
   const itemAt = (href: string) => allItems.find((item) => item.href === href);
   const workItem = itemAt('/homework') ?? itemAt('/assignments');
   const classItem = itemAt('/classes') ?? itemAt('/courses');
+  /*
+   * Five tabs, and the second slot is Learn.
+   *
+   * Calendar lost its place: it repeats what Timetable already shows day to day, and its
+   * unique content (exams, events) already reaches the student through the dashboard
+   * priority cards and the Petros briefing. Learning had no default entry point at all.
+   * Position two also matters — the mobile bar renders the first four, so a tab appended
+   * at the end would be invisible on a phone.
+   */
   const defaultQuickItems = uniqueItems([
     itemAt('/home'),
+    itemAt('/learn'),
     classItem,
     workItem,
     itemAt('/timetable'),
-    itemAt('/calendar'),
   ]);
   const selectedQuickHrefs = preferences.quickNav ?? defaultQuickItems.map((item) => item.href);
   const primaryTabs = selectedQuickHrefs

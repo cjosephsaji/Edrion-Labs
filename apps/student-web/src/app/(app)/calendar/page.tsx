@@ -23,6 +23,19 @@ type Payload = {
 type View = 'month' | 'agenda';
 const pageDescription = 'Published classes, due work, exams, events, and holidays in one place.';
 
+/** The term map is student-facing, so it reads like a date rather than an ISO string. */
+function termDate(value: string | null) {
+  if (!value) return '';
+  const date = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(date);
+}
+
 function monthKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
@@ -140,7 +153,7 @@ export default function CalendarPage() {
 
       {data.semesterBar ? (
         <Card density="compact">
-          <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-xs font-semibold uppercase tracking-[.08em] text-[var(--s-muted)]">{data.semesterBar.name} · Term map</p><span className="text-sm text-[var(--s-muted)]">{[data.semesterBar.startDate, data.semesterBar.endDate].filter(Boolean).join(' → ')}</span></div>
+          <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-xs font-semibold uppercase tracking-[.08em] text-[var(--s-muted)]">{data.semesterBar.name} · Term map</p><span className="text-sm text-[var(--s-muted)]">{[termDate(data.semesterBar.startDate), termDate(data.semesterBar.endDate)].filter(Boolean).join(' → ')}</span></div>
           <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-[var(--s-surface2)]"><span className="w-[42%] bg-[var(--s-accent)]" /><span className="w-[18%] bg-[var(--s-amber)]" /><span className="w-[40%] bg-[var(--s-bd2)]" /></div>
         </Card>
       ) : null}

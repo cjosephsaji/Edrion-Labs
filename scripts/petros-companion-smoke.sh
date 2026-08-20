@@ -2,7 +2,12 @@
 # Petros companion smoke — grounding, continuity, actions, isolation.
 #
 # Prereqs: API on :3007, STUDENT_AUTH_DEV_HEADER=true, seeded greenwood students.
+#
+# COST: every companion turn is a billed model call. The default run makes about five;
+# FULL=1 adds the exhaustive per-entity-type grounding sweep and costs roughly four times
+# as much. Use the default while iterating, FULL=1 before shipping.
 set -u
+FULL="${FULL:-0}"
 API="${API:-http://localhost:3007/v1}"
 STU="${STUDENT_EMAIL:-student1@greenwood.edu}"
 OTHER="${OTHER_STUDENT_EMAIL:-student2@greenwood.edu}"
@@ -83,9 +88,13 @@ if [ -n "$OTHER_GRADE" ]; then
 else
   echo "  SKIP  no other-student grade row in seed"
 fi
+if [ "$FULL" = "1" ]; then
 K5="$(uuid)"
 T5="$(spost /petros/companion/turns "{\"message\":\"Summarise this.\",\"route\":\"/assignments\",\"surface\":\"assignments\",\"focusRef\":\"g1\",\"visibleCandidates\":[{\"ref\":\"g1\",\"entityType\":\"assignment\",\"entityId\":\"11111111-1111-4111-8111-111111111111\",\"title\":\"Ghost\",\"summary\":\"\"}],\"idempotencyKey\":\"$K5\"}")"
 chknull "nonexistent id does not become focus" "$(printf '%s' "$T5" | jq_ reply.focusRef)"
+else
+  echo "  SKIP  nonexistent-id check (set FULL=1)"
+fi
 
 echo
 echo "== 7. Actions: propose, confirm once, execute once =="
@@ -158,18 +167,25 @@ grounds(){ # kind, id, route, surface
   chk "$1 grounds" "$focus" "g1"
   chknc "$1 ignores the client title" "$resp" "CLIENT TITLE"
 }
+# One per resolver family by default; the whole matrix only under FULL=1, because each
+# `grounds` call is a billed turn.
 grounds assignment "$AID" /assignments assignments
+grounds learning_path_step "$(psql "$PSQL" -tAc "select i.id from learning_path_items i join learning_paths p on p.id=i.path_id where p.student_id='$SID' limit 1")" /learning-path learning_path
+if [ "$FULL" != "1" ]; then
+  echo "  SKIP  remaining entity types (set FULL=1 to sweep all twelve)"
+fi
+if [ "$FULL" = "1" ]; then
 grounds homework "$(psql "$PSQL" -tAc "select h.id from homework h join homework_submissions hs on hs.homework_id=h.id where hs.student_id='$SID' and h.status in ('assigned','closed') limit 1")" /homework homework
 grounds result "$(psql "$PSQL" -tAc "select id from grade_entries where student_id='$SID' and published=true limit 1")" /results results
 grounds exam_schedule "$(psql "$PSQL" -tAc "select es.id from exam_schedules es where es.published=true and es.class_id=(select class_id from students where id='$SID') limit 1")" /exams exams
 grounds material "$(psql "$PSQL" -tAc "select id from class_materials where context_id=(select class_id from students where id='$SID') limit 1")" /materials materials
 grounds announcement "$(psql "$PSQL" -tAc "select id from announcements where institution_id='$IID' and status='published' limit 1")" /announcements announcements
-grounds learning_path_step "$(psql "$PSQL" -tAc "select i.id from learning_path_items i join learning_paths p on p.id=i.path_id where p.student_id='$SID' limit 1")" /learning-path learning_path
 grounds report_card "$(psql "$PSQL" -tAc "select id from report_cards where student_id='$SID' and status='published' limit 1")" /report-cards report_cards
 grounds document "$(psql "$PSQL" -tAc "select id from student_documents where student_id='$SID' and published=true limit 1")" /documents documents
 grounds attendance_summary "$(psql "$PSQL" -tAc "select subject_id from attendance_rollups where student_id='$SID' and subject_id is not null limit 1")" /attendance attendance
 grounds artifact "$(psql "$PSQL" -tAc "select id from petros_saved_artifacts where student_id='$SID' limit 1")" /petros/artifacts petros_artifacts
 grounds petros_session "$(psql "$PSQL" -tAc "select id from petros_learning_sessions where student_id='$SID' limit 1")" /home home
+fi
 
 echo
 echo "== 12. Session handoff returns to the same thread =="

@@ -10,6 +10,7 @@ import { PetrosDoorButton } from '@/components/petros/petros-door-button';
 import { QueryPage } from '@/components/query-page';
 import { EmptyState } from '@/components/ui/states';
 import { useStudentList } from '@/lib/hooks';
+import { LearnCrossLinks } from '../learn/learn-links';
 
 type Path = {
   id: string;
@@ -103,6 +104,7 @@ export default function LearningPathPage() {
               })}
             </ol>
           )}
+          <LearnCrossLinks />
         </div>
       )}
     </QueryPage>
