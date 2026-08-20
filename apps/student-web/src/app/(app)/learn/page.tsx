@@ -198,6 +198,12 @@ export default function LearnPage() {
     [reflectionQuery.data],
   );
   const coverage = reflectionQuery.data?.map.coverage ?? null;
+  /*
+   * True once the student has done anything Petros can reason from. "Solid" and "Shaky"
+   * are evidence-backed states; "not started" and "not enough evidence yet" are the
+   * absence of evidence, so they do not count.
+   */
+  const hasEvidence = Boolean((coverage?.solid ?? 0) + (coverage?.shaky ?? 0) > 0);
 
   const materials = useMemo(() => materialsQuery.data?.items ?? [], [materialsQuery.data]);
   const savedArtifacts = useMemo(
@@ -257,11 +263,15 @@ export default function LearnPage() {
     if (topRecommendation) {
       actions.push({
         key: `recommendation:${topRecommendation.id}`,
-        eyebrow: `Evidence-ranked · ${topRecommendation.sessionType}`,
+        // A student who has done nothing yet has no evidence to rank. Calling a syllabus
+        // topic "evidence-ranked" on their first login is simply untrue.
+        eyebrow: hasEvidence
+          ? `Evidence-ranked · ${topRecommendation.sessionType}`
+          : `From your syllabus · ${topRecommendation.sessionType}`,
         title: topRecommendation.actionLabel,
         detail: topRecommendation.whyThis,
         href: '/progress',
-        actionLabel: 'See the evidence',
+        actionLabel: hasEvidence ? 'See the evidence' : 'See where it sits',
       });
     }
 
@@ -339,6 +349,16 @@ export default function LearnPage() {
   return (
     <QueryPage query={pathQuery} loadingLabel="Loading your learning hub…">
       {() => {
+        // Not "no data at all" — a student can have a syllabus ranked for them and still
+        // have done nothing. First run is about the absence of their own work.
+        const firstRun =
+          !hasEvidence &&
+          savedArtifacts.length === 0 &&
+          sessions.length === 0 &&
+          steps.length === 0 &&
+          !artifactsQuery.isPending &&
+          !historyQuery.isPending;
+
         const nothingAtAll =
           steps.length === 0 &&
           nextActions.length === 0 &&
@@ -361,6 +381,40 @@ export default function LearnPage() {
               />
             ) : (
               <>
+                {firstRun ? (
+                  /*
+                   * First login. There is no history to show and no evidence to reason from,
+                   * so the hub says what is true and offers the one thing that works with an
+                   * empty account: bring your own material. No invented progress, no
+                   * pretending the institution has published something it has not.
+                   */
+                  <section className={styles.firstRun} aria-labelledby="learn-first-run">
+                    <h2 className={styles.firstRunTitle} id="learn-first-run">
+                      Nothing here is yours yet
+                    </h2>
+                    <p className={styles.firstRunLead}>
+                      This page fills in as you work — what to do next, what you have learned,
+                      and everything you make. You can start it yourself right now.
+                    </p>
+                    <div className={styles.firstRunActions}>
+                      <Link href="/petros" className={styles.firstRunPrimary}>
+                        <Upload aria-hidden="true" />
+                        Photograph or upload something you are stuck on
+                      </Link>
+                      {materials.length > 0 ? (
+                        <Link href="/materials" className={styles.firstRunSecondary}>
+                          Read what your teachers have shared
+                          <ArrowRight aria-hidden="true" />
+                        </Link>
+                      ) : null}
+                    </div>
+                    <p className={styles.firstRunNote}>
+                      Petros works from a photo of a question, a page of your notes, or a topic
+                      you type in — it does not need your school to publish anything first.
+                    </p>
+                  </section>
+                ) : null}
+
                 {/* The three questions, answered before anything scrolls. */}
                 <section className={styles.compass} aria-label="Where you stand">
                   <div className={styles.compassCell}>
@@ -412,7 +466,11 @@ export default function LearnPage() {
                         : `${Math.min(completedSteps + 1, steps.length)} / ${steps.length}`}
                     </strong>
                     <span className={styles.figureSub}>
-                      {path ? `${path.title} · ${path.subjectLabel}` : 'No active learning path'}
+                      {/* Guarded on the fields, not the object: an endpoint that returns
+                          nothing must not render as "undefined · undefined". */}
+                      {path?.title
+                        ? [path.title, path.subjectLabel].filter(Boolean).join(' · ')
+                        : 'No active learning path'}
                     </span>
                     {steps.length > 0 ? (
                       <div

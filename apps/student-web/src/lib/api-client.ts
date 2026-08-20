@@ -23,6 +23,15 @@ export class StudentApiError extends Error {
   }
 }
 
+/** A non-JSON body from an otherwise successful response is not worth throwing over. */
+function safeJson(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 export class StudentApiClient {
   constructor(
     private readonly baseUrl: string,
@@ -51,14 +60,22 @@ export class StudentApiClient {
     });
 
     if (res.status === 204) return undefined as T;
-    const body = (await res.json().catch(() => ({}))) as ApiErrorBody;
+
+    /*
+     * Nest serialises a handler that returns null as a 200 with an empty body. Parsing that
+     * as `{}` invents an object the server never sent, and callers then read undefined
+     * fields off it — a student with no learning path was shown "undefined · undefined".
+     * An empty body means null, and callers can check for it.
+     */
+    const raw = await res.text();
+    const body = (raw ? safeJson(raw) : null) as ApiErrorBody | null;
     if (!res.ok) {
       throw new StudentApiError(
         res.status,
-        body.code ?? 'ERROR',
-        body.message ?? res.statusText,
-        body.correlationId,
-        body.details,
+        body?.code ?? 'ERROR',
+        body?.message ?? res.statusText,
+        body?.correlationId,
+        body?.details,
       );
     }
     return body as T;

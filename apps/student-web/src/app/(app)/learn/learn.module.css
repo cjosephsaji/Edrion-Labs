@@ -517,3 +517,77 @@
   .bandLink { min-height: 44px; align-items: center; }
   .tileFoot { min-height: 44px; align-items: center; }
 }
+
+/*
+ * First login. Deliberately the warmest thing on the page — it is the only moment where the
+ * portal has nothing of the student's to show, and the answer is an invitation, not an
+ * apology or a fabricated dashboard.
+ */
+.firstRun {
+  border: 1px solid var(--s-accentBd);
+  background: var(--s-accentSoft);
+  padding: 26px 28px;
+}
+
+.firstRunTitle {
+  color: var(--s-ink);
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3vw, 28px);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.firstRunLead {
+  max-width: 58ch;
+  margin-top: 10px;
+  color: var(--s-inkSoft);
+  font-size: 14.5px;
+  line-height: 1.65;
+}
+
+.firstRunActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.firstRunPrimary,
+.firstRunSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  border: 1px solid var(--s-accentDeep);
+  background: var(--s-accentDeep);
+  padding: 10px 16px;
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.firstRunSecondary {
+  border-color: var(--s-accentBd);
+  background: var(--s-card);
+  color: var(--s-accentDeep);
+}
+
+.firstRunPrimary svg,
+.firstRunSecondary svg { width: 15px; height: 15px; flex: none; }
+
+.firstRunPrimary:focus-visible,
+.firstRunSecondary:focus-visible { outline: 2px solid var(--s-accent); outline-offset: 3px; }
+
+.firstRunNote {
+  max-width: 62ch;
+  margin-top: 14px;
+  color: var(--s-muted);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+@media (max-width: 560px) {
+  .firstRun { padding: 20px 18px; }
+  .firstRunActions > * { width: 100%; justify-content: center; }
+}
