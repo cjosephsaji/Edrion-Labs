@@ -37,13 +37,25 @@ export class StudentMaterialsService {
       kindLabel: string;
       weekNo: number | null;
       className: string | null;
+      filename: string | null;
+      mimeType: string;
       publishedAt: string;
     }> = [];
 
     for (const ctx of contexts) {
       const rows = await this.db
-        .select()
+        .select({
+          id: schema.classMaterials.id,
+          title: schema.classMaterials.title,
+          description: schema.classMaterials.description,
+          kindLabel: schema.classMaterials.kindLabel,
+          weekNo: schema.classMaterials.weekNo,
+          filename: schema.storageObjects.filename,
+          mimeType: schema.storageObjects.mimeType,
+          createdAt: schema.classMaterials.createdAt,
+        })
         .from(schema.classMaterials)
+        .innerJoin(schema.storageObjects, eq(schema.storageObjects.id, schema.classMaterials.objectId))
         .where(
           and(
             eq(schema.classMaterials.institutionId, principal.institutionId),
@@ -59,6 +71,8 @@ export class StudentMaterialsService {
           kindLabel: m.kindLabel,
           weekNo: m.weekNo,
           className: ctx.name,
+          filename: m.filename,
+          mimeType: m.mimeType,
           publishedAt: m.createdAt.toISOString(),
         });
       }

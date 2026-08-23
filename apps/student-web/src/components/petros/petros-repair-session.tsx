@@ -66,6 +66,8 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
   const [submittingQuestionId, setSubmittingQuestionId] = useState<string | null>(null);
   const [hintingQuestionId, setHintingQuestionId] = useState<string | null>(null);
   const [submittingComposer, setSubmittingComposer] = useState(false);
+  const [adaptingBlockId, setAdaptingBlockId] = useState<string | null>(null);
+  const [adaptingLevel, setAdaptingLevel] = useState<'simpler' | 'deeper' | null>(null);
   const [artifactCounts, setArtifactCounts] = useState<PetrosArtifactCounts | null>(null);
   const [expanding, setExpanding] = useState(false);
   const expansionOfferedFor = useRef<string | null>(null);
@@ -273,6 +275,44 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
       }
     },
     [api, document, online, requestNext],
+  );
+
+  const requestReexplanation = useCallback(
+    async (block: PetrosSessionBlock, level: 'simpler' | 'deeper') => {
+      if (!document || !online || document.status === 'closed' || adaptingBlockId) return;
+      setAdaptingBlockId(block.id);
+      setAdaptingLevel(level);
+      setError('');
+      try {
+        let activeDocument = document;
+        if (activeDocument.status === 'paused') {
+          activeDocument = await api.post<PetrosLearningSessionDocument>(
+            `/student/petros/sessions/${activeDocument.id}/resume`,
+            { idempotencyKey: newIdempotencyKey() },
+          );
+          setDocument(activeDocument);
+        }
+        if (activeDocument.status !== 'active')
+          throw new Error('This session could not be resumed. Use Resume and try again.');
+        const queued = await api.post<PetrosLearningSessionDocument>(
+          `/student/petros/sessions/${activeDocument.id}/blocks/${block.id}/reexplain`,
+          {
+            idempotencyKey: newIdempotencyKey(),
+            level,
+            expectedBlockVersion: block.version,
+            interactionState: block.interactionState,
+          },
+        );
+        setDocument(queued);
+        if (queued.status === 'active') await requestNext(queued.id);
+      } catch (caught) {
+        setError(formatApiError(caught));
+      } finally {
+        setAdaptingBlockId(null);
+        setAdaptingLevel(null);
+      }
+    },
+    [adaptingBlockId, api, document, online, requestNext],
   );
 
   const submitAnswer = useCallback(
@@ -638,6 +678,10 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
               block={block}
               live={index === (document?.blocks.length ?? 0) - 1}
               onInteraction={(patch, immediate) => updateInteraction(block.id, patch, immediate)}
+              onReexplain={(level) => void requestReexplanation(block, level)}
+              adaptingLevel={adaptingBlockId === block.id ? adaptingLevel : null}
+              adaptationDisabled={document.status === 'closed' || !online || continuing}
+              sessionPaused={document.status === 'paused'}
             >
               <BlockContent
                 block={block}
@@ -825,11 +869,19 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
 function TeachingBlock({
   block,
   onInteraction,
+  onReexplain,
+  adaptingLevel,
+  adaptationDisabled,
+  sessionPaused,
   live,
   children,
 }: {
   block: PetrosSessionBlock;
   onInteraction: (patch: Record<string, unknown>, immediate?: boolean) => void;
+  onReexplain: (level: 'simpler' | 'deeper') => void;
+  adaptingLevel: 'simpler' | 'deeper' | null;
+  adaptationDisabled: boolean;
+  sessionPaused: boolean;
   /** The move the student is on. Earlier moves stay readable but recede. */
   live?: boolean;
   children: ReactNode;
@@ -863,12 +915,19 @@ function TeachingBlock({
       </div>
       {showWhy && (
         <div id={`why-${block.id}`} className={styles.why}>
-          {studentFriendlyWhy(block.content.type, block.whyThis)}
+          {block.whyThis.trim() || studentFriendlyWhy(block.content.type, block.whyThis)}
         </div>
       )}
       <div className={styles.blockBody}>
         {children}
-        <BlockActions block={block} onInteraction={onInteraction} />
+        <BlockActions
+          block={block}
+          onInteraction={onInteraction}
+          onReexplain={onReexplain}
+          adaptingLevel={adaptingLevel}
+          adaptationDisabled={adaptationDisabled}
+          sessionPaused={sessionPaused}
+        />
       </div>
     </section>
   );
@@ -2011,9 +2070,17 @@ function DetourBanner({ detour }: { detour: PetrosDetour }) {
 function BlockActions({
   block,
   onInteraction,
+  onReexplain,
+  adaptingLevel,
+  adaptationDisabled,
+  sessionPaused,
 }: {
   block: PetrosSessionBlock;
   onInteraction: (patch: Record<string, unknown>, immediate?: boolean) => void;
+  onReexplain: (level: 'simpler' | 'deeper') => void;
+  adaptingLevel: 'simpler' | 'deeper' | null;
+  adaptationDisabled: boolean;
+  sessionPaused: boolean;
 }) {
   const action =
     typeof block.interactionState.requestedAction === 'string'
@@ -2033,17 +2100,43 @@ function BlockActions({
       >
         <Sparkles aria-hidden="true" /> Make a flashcard
       </button>
-      <button onClick={() => onInteraction({ requestedAction: 'simpler' }, true)}>
-        <Lightbulb aria-hidden="true" /> Explain simpler
+      <button
+        disabled={adaptationDisabled || adaptingLevel !== null}
+        aria-busy={adaptingLevel === 'simpler'}
+        onClick={() => onReexplain('simpler')}
+      >
+        {adaptingLevel === 'simpler' ? (
+          <LoaderCircle className={styles.adaptingIcon} aria-hidden="true" />
+        ) : (
+          <Lightbulb aria-hidden="true" />
+        )}
+        {adaptingLevel === 'simpler'
+          ? 'Preparing simpler…'
+          : sessionPaused
+            ? 'Resume & explain simpler'
+            : 'Explain simpler'}
       </button>
-      <button onClick={() => onInteraction({ requestedAction: 'deeper' }, true)}>
-        <Layers3 aria-hidden="true" /> Explain deeper
+      <button
+        disabled={adaptationDisabled || adaptingLevel !== null}
+        aria-busy={adaptingLevel === 'deeper'}
+        onClick={() => onReexplain('deeper')}
+      >
+        {adaptingLevel === 'deeper' ? (
+          <LoaderCircle className={styles.adaptingIcon} aria-hidden="true" />
+        ) : (
+          <Layers3 aria-hidden="true" />
+        )}
+        {adaptingLevel === 'deeper'
+          ? 'Preparing deeper…'
+          : sessionPaused
+            ? 'Resume & explain deeper'
+            : 'Explain deeper'}
       </button>
       {action && (
         <small>
           {action === 'note' || action === 'flashcard'
             ? 'Proposed only—nothing was auto-saved.'
-            : 'Your choice applies immediately to this session and does not become a durable preference from one use.'}
+            : 'This explanation was adapted for this session only.'}
         </small>
       )}
     </div>

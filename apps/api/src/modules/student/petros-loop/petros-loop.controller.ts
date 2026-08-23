@@ -8,6 +8,7 @@ import {
   petrosCreateLearningSessionSchema,
   petrosDecisionDiagnosticQuerySchema,
   petrosRequestHintSchema,
+  petrosReexplainBlockSchema,
   petrosSubmitAnswerSchema,
   petrosUpdateBlockInteractionSchema,
   type PetrosCloseSessionInput,
@@ -17,6 +18,7 @@ import {
   type PetrosCreateLearningSessionInput,
   type PetrosDecisionDiagnosticQuery,
   type PetrosRequestHintInput,
+  type PetrosReexplainBlockInput,
   type PetrosSubmitAnswerInput,
   type PetrosUpdateBlockInteractionInput,
 } from '@edrion/schemas';
@@ -94,6 +96,18 @@ export class StudentPetrosLoopController {
   ) {
     requireInstitutional(raw);
     return this.service.updateInteraction(raw, sessionId, blockId, body.interactionState);
+  }
+
+  @Post(':sessionId/blocks/:blockId/reexplain')
+  @StudentRateLimit(12, 60)
+  reexplain(
+    @CurrentStudent() raw: StudentPrincipal,
+    @Param('sessionId') sessionId: string,
+    @Param('blockId') blockId: string,
+    @Body(zodBody(petrosReexplainBlockSchema)) body: PetrosReexplainBlockInput,
+  ) {
+    requireInstitutional(raw);
+    return this.service.reexplain(raw, sessionId, blockId, body);
   }
 
   @Post(':sessionId/blocks/:blockId/complete')

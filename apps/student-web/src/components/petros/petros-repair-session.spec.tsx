@@ -186,6 +186,121 @@ describe('Petros Stage 2 student document', () => {
     expect(screen.queryByRole('main')).not.toBeInTheDocument();
   });
 
+  it('shows the real decision reason and renders a requested simpler explanation without advancing the checkpoint', async () => {
+    memory.document = storedDocument();
+    const original = memory.document.blocks[0]!;
+    const originalContent = original.content;
+    if (originalContent.type !== 'layered_explanation')
+      throw new Error('Expected the fixture to begin with a layered explanation.');
+    const realReason =
+      'The authorized source begins with a naming distinction, so this question checks that exact entry point before moving into the mechanism.';
+    original.whyThis = realReason;
+    const queued: PetrosLearningSessionDocument = {
+      ...memory.document,
+      blocks: [
+        {
+          ...original,
+          status: 'completed',
+          version: 1,
+          interactionState: { ...original.interactionState, requestedAction: 'simpler' },
+        },
+      ],
+    };
+    const replacement: PetrosLearningSessionDocument = {
+      ...queued,
+      blocks: [
+        ...queued.blocks,
+        {
+          ...original,
+          id: '88888888-8888-4888-8888-888888888888',
+          decisionId: '99999999-9999-4999-8999-999999999998',
+          sequence: 2,
+          status: 'current',
+          version: 0,
+          content: {
+            ...originalContent,
+            title: 'The same idea in plain language',
+            firstLayer: 'Light goes in, and the plant keeps that energy in a form it can use later.',
+          },
+          interactionState: { expandedLayerIds: [] },
+          whyThis: 'You asked for plainer language, so this replacement holds the same checkpoint.',
+        },
+      ],
+    };
+    api.post.mockResolvedValueOnce(queued).mockResolvedValueOnce(replacement);
+
+    render(
+      <PetrosRepairSession topic="photosynthesis" source="result" sessionId={memory.document.id} />,
+    );
+    await screen.findByRole('heading', { name: 'Follow the energy change' });
+    fireEvent.click(screen.getByRole('button', { name: 'Why this step?' }));
+    expect(screen.getByText(realReason)).toBeVisible();
+    expect(screen.queryByText(/topic is conceptual, so/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Explain simpler' }));
+    await waitFor(() =>
+      expect(api.post).toHaveBeenNthCalledWith(
+        1,
+        expect.stringMatching(/\/blocks\/.*\/reexplain$/),
+        expect.objectContaining({
+          level: 'simpler',
+          expectedBlockVersion: 0,
+          interactionState: expect.objectContaining({ whyOpen: true }),
+        }),
+      ),
+    );
+    expect(await screen.findByRole('heading', { name: 'The same idea in plain language' })).toBeVisible();
+    expect(api.post).toHaveBeenNthCalledWith(
+      2,
+      expect.stringMatching(/\/continue$/),
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+      undefined,
+      expect.any(AbortSignal),
+    );
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
+  });
+
+  it('resumes a paused session and requests the explanation from one clear action', async () => {
+    const paused: PetrosLearningSessionDocument = {
+      ...storedDocument(),
+      status: 'paused',
+      blocks: storedDocument().blocks.map((block) => ({
+        ...block,
+        status: 'completed' as const,
+        version: 1,
+      })),
+    };
+    const resumed = { ...paused, status: 'active' as const };
+    memory.document = paused;
+    api.post.mockResolvedValueOnce(resumed).mockResolvedValueOnce(resumed).mockResolvedValueOnce(resumed);
+
+    render(
+      <PetrosRepairSession topic="photosynthesis" source="result" sessionId={paused.id} />,
+    );
+    const action = await screen.findByRole('button', { name: 'Resume & explain simpler' });
+    expect(action).toBeEnabled();
+    fireEvent.click(action);
+
+    await waitFor(() => expect(api.post).toHaveBeenCalledTimes(3));
+    expect(api.post).toHaveBeenNthCalledWith(
+      1,
+      expect.stringMatching(/\/resume$/),
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
+    expect(api.post).toHaveBeenNthCalledWith(
+      2,
+      expect.stringMatching(/\/blocks\/.*\/reexplain$/),
+      expect.objectContaining({ level: 'simpler', expectedBlockVersion: 1 }),
+    );
+    expect(api.post).toHaveBeenNthCalledWith(
+      3,
+      expect.stringMatching(/\/continue$/),
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+      undefined,
+      expect.any(AbortSignal),
+    );
+  });
+
   it('keeps stale personalization explicit and safe', async () => {
     memory.document = {
       ...storedDocument(),

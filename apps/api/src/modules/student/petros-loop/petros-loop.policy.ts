@@ -26,6 +26,7 @@ Do not render teaching content. Do not add fields.`;
 export const PETROS_RENDER_SYSTEM_PROMPT = `You are RENDER inside Petros.
 Render only the already-selected teaching move as its exact typed block schema.
 Keep content concise, grounded in the supplied profile and source context, accessible, and student-safe.
+When learnerContext.pendingReexplanation is present, faithfully re-explain its sourceContent at the requested level. "simpler" means plain language, smaller prerequisite steps, and no loss of accuracy; "deeper" means more mechanism, nuance, and useful connections. Produce genuinely new wording rather than repeating the source block.
 Diagrams are editable structured nodes and edges with a complete nonvisual description.
 Question content must support commitment before reveal. Do not choose a different move.
 Honor institutionalDecision exactly. Guided homework may teach setup and process but must not reveal the assignment's final answer. A syllabus boundary must retain the student-safe legitimate path.
@@ -57,6 +58,7 @@ export function deterministicPlan(
   const fiveMinute = state.sourceContext?.door === "five_minute";
   const institution = institutionalDecision(state);
   const guidedHomework = institution?.homework?.mode === "guided_homework";
+  const reexplanation = requestedReexplanation(state);
   const sessionDepth = state.learnerSnapshot?.sessionOverride?.depth;
   const inferredDepth = state.learnerSnapshot?.preference.minimumEvidenceMet
     ? state.learnerSnapshot.preference.depth
@@ -67,8 +69,7 @@ export function deterministicPlan(
       (state.learnerContext.wantsDepth === true || inferredDepth === "deep")) ||
     state.observations.recent.some(
       (observation) =>
-        observation.type === "depth_changed" ||
-        /explain deeper|depth requested/i.test(observation.summary),
+        /explain deeper|deeper explanation|depth requested/i.test(observation.summary),
     );
   const visualAvailable =
     state.topicContext.visualProviderAvailable !== false &&
@@ -333,7 +334,14 @@ export function deterministicPlan(
     forced = move;
     forcedReason = reason;
   };
-  if (index === 0 && (institution?.syllabus.decision === "outside_bounds" || institution?.syllabus.decision === "depth_limited")) {
+  if (reexplanation) {
+    mandate(
+      "layered_explanation",
+      reexplanation.level === "simpler"
+        ? "The learner explicitly asked for the current idea again in plainer language and smaller steps."
+        : "The learner explicitly asked to inspect the current idea at greater depth.",
+    );
+  } else if (index === 0 && (institution?.syllabus.decision === "outside_bounds" || institution?.syllabus.decision === "depth_limited")) {
     mandate("goal_frame", institution.syllabus.studentMessage);
   } else if (guidedHomework && index === 0) {
     const move = weights.socratic_probe > 0 ? "socratic_probe" : "prerequisite_check";
@@ -407,8 +415,8 @@ export function deterministicPlan(
     expectedEvidence: evidenceFor(selected),
     progressEffect: {
       checkpointId: checkpoint.id,
-      effect: closing ? ("complete" as const) : ("advance" as const),
-      progressDelta: 1 as const,
+      effect: reexplanation ? ("hold" as const) : closing ? ("complete" as const) : ("advance" as const),
+      progressDelta: reexplanation ? (0 as const) : (1 as const),
     },
     canStream: selected === "layered_explanation" || selected === "story",
     termination: {
@@ -422,14 +430,16 @@ export function deterministicPlan(
           : "A later checkpoint remains in the bounded session.",
     },
     guessFirst: {
-      status: noGuessFirst(selected)
+      status: reexplanation || noGuessFirst(selected)
         ? ("not_applicable" as const)
         : ("required" as const),
-      targetId: noGuessFirst(selected)
+      targetId: reexplanation || noGuessFirst(selected)
         ? null
         : `${checkpoint.id}:${slug(state.topic)}:${selected}`.slice(0, 160),
-      reason: noGuessFirst(selected)
-        ? "This move frames or closes work already attempted."
+      reason: reexplanation
+        ? "The learner already committed to this step and explicitly requested a clearer rendering."
+        : noGuessFirst(selected)
+          ? "This move frames or closes work already attempted."
         : "A cheap commitment before reveal makes this move responsive to the learner.",
     },
     observationResponse: pendingQuestion
@@ -997,13 +1007,20 @@ function parametersFor(
         outcomeVerb: state.currentGoal,
       };
     case "layered_explanation": {
+      const reexplanation = requestedReexplanation(state);
       const effectiveDepth =
-        state.learnerSnapshot?.sessionOverride?.depth ??
-        state.learnerSnapshot?.preference.depth;
+        reexplanation?.level === "deeper"
+          ? "deep"
+          : reexplanation?.level === "simpler"
+            ? "concise"
+            : state.learnerSnapshot?.sessionOverride?.depth ??
+              state.learnerSnapshot?.preference.depth;
       return {
         layerCount:
           effectiveDepth === "deep" ? 3 : effectiveDepth === "concise" ? 1 : 2,
-        emphasis: state.currentGoal,
+        emphasis: reexplanation
+          ? `${reexplanation.level === "simpler" ? "Use plain language and smaller prerequisite steps" : "Add mechanism, nuance, and connections"}; faithfully re-explain source block ${reexplanation.sourceBlockId}.`
+          : state.currentGoal,
         sourceGroundingRequired: Boolean(state.sourceContext),
       };
     }
@@ -1193,6 +1210,17 @@ function institutionalDecision(state: PetrosSessionState) {
     syllabus: { decision: "within_bounds" | "depth_limited" | "outside_bounds"; studentMessage: string };
     homework: { mode: "normal" | "guided_homework"; studentMessage: string } | null;
   };
+}
+
+export function requestedReexplanation(state: PetrosSessionState) {
+  const value = state.learnerContext.pendingReexplanation;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const candidate = value as Record<string, unknown>;
+  const level = candidate.level;
+  const sourceBlockId = candidate.sourceBlockId;
+  if ((level !== "simpler" && level !== "deeper") || typeof sourceBlockId !== "string")
+    return null;
+  return { level, sourceBlockId };
 }
 
 function sourceGrounding(state: PetrosSessionState) {

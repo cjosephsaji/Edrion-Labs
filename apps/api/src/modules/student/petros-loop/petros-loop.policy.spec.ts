@@ -113,6 +113,33 @@ describe('Petros Stage 4 loop policy', () => {
     }
   });
 
+  it.each([
+    ['simpler', 1],
+    ['deeper', 3],
+  ] as const)('turns an explicit %s request into a checkpoint-holding explanation', (level, layers) => {
+    const current = state('photosynthesis', 1);
+    current.learnerContext.pendingReexplanation = {
+      level,
+      sourceBlockId: '55555555-5555-4555-8555-555555555555',
+      sourceBlockType: 'hook',
+      sourceContent: { type: 'hook', title: 'Original explanation' },
+    };
+
+    const decision = deterministicPlan(current);
+
+    expect(decision).toMatchObject({
+      selectedMoveType: 'layered_explanation',
+      moveParameters: { layerCount: layers },
+      progressEffect: {
+        checkpointId: current.currentCheckpointId,
+        effect: 'hold',
+        progressDelta: 0,
+      },
+      guessFirst: { status: 'not_applicable' },
+    });
+    expect(decision.studentSafeReason).toMatch(/explicitly asked/i);
+  });
+
   it('renders the complete move vocabulary as exact typed blocks', () => {
     for (const move of PETROS_MOVE_TYPES) {
       const current = stateForMove(move);

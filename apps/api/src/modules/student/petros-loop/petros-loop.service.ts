@@ -1,4 +1,11 @@
-import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
 import { schema } from '@edrion/database';
 import type { AuditWriter } from '@edrion/audit';
@@ -28,6 +35,7 @@ import {
   type PetrosDecisionDiagnosticQuery,
   type PetrosAnswerEvaluation,
   type PetrosRequestHintInput,
+  type PetrosReexplainBlockInput,
   type PetrosSubmitAnswerInput,
   type PetrosPlanDecision,
   type PetrosSessionState,
@@ -56,6 +64,7 @@ import {
   deterministicRender,
   PETROS_PLAN_SYSTEM_PROMPT,
   PETROS_RENDER_SYSTEM_PROMPT,
+  requestedReexplanation,
   terminalReason,
 } from './petros-loop.policy';
 import {
@@ -236,9 +245,17 @@ export class PetrosLoopService {
       sessionOverride: sessionOverride(session.learnerContext),
     });
     const institutionalPolicy = this.institutional
-      ? (principal
-          ? await this.institutional.resolveForStudentSession(principal, sessionId, subjectIdFromContext(session.topicContext))
-          : await this.institutional.readSessionPolicy(scope.institutionId, scope.studentId, sessionId))
+      ? principal
+        ? await this.institutional.resolveForStudentSession(
+            principal,
+            sessionId,
+            subjectIdFromContext(session.topicContext),
+          )
+        : await this.institutional.readSessionPolicy(
+            scope.institutionId,
+            scope.studentId,
+            sessionId,
+          )
       : null;
     return petrosLearningSessionDocumentSchema.parse({
       stateVersion: PETROS_SESSION_STATE_VERSION,
@@ -311,17 +328,24 @@ export class PetrosLoopService {
         reasons: learnerSnapshot.causalFactors,
         sessionOverride: learnerSnapshot.sessionOverride,
       },
-      ...(institutionalPolicy ? {
-        institutionalPolicy: {
-          snapshotId: institutionalPolicy.snapshotId,
-          disclosure: institutionalPolicy.disclosure,
-          stableForSession: true,
-          midSessionPolicyChangesDeferred: true,
-          voiceRequired: false,
-          handoffEnabled: institutionalPolicy.config.escalation.enabled && institutionalPolicy.config.visibility.teacher.categories.includes('teacher_handoff'),
-          handoffOfferAfterFailedRepairCount: institutionalPolicy.config.escalation.offerAfterFailedRepairCount,
-        },
-      } : {}),
+      ...(institutionalPolicy
+        ? {
+            institutionalPolicy: {
+              snapshotId: institutionalPolicy.snapshotId,
+              disclosure: institutionalPolicy.disclosure,
+              stableForSession: true,
+              midSessionPolicyChangesDeferred: true,
+              voiceRequired: false,
+              handoffEnabled:
+                institutionalPolicy.config.escalation.enabled &&
+                institutionalPolicy.config.visibility.teacher.categories.includes(
+                  'teacher_handoff',
+                ),
+              handoffOfferAfterFailedRepairCount:
+                institutionalPolicy.config.escalation.offerAfterFailedRepairCount,
+            },
+          }
+        : {}),
       createdAt: session.createdAt.toISOString(),
       updatedAt: session.updatedAt.toISOString(),
     });
@@ -672,6 +696,115 @@ export class PetrosLoopService {
       });
     }
     return { ok: true, updatedAt: block.updatedAt.toISOString() };
+  }
+
+  /**
+   * Turn an explicit depth request into a real teaching move.
+   *
+   * This deliberately retires the current block without moving its checkpoint. The ordinary
+   * continue path then plans and renders a replacement from the original block plus the
+   * authorized session source. Keeping this separate from the debounced interaction endpoint
+   * prevents a button tap from being mistaken for passive UI state.
+   */
+  async reexplain(
+    principal: InstitutionalStudentPrincipal,
+    sessionId: string,
+    blockId: string,
+    input: PetrosReexplainBlockInput,
+  ) {
+    const scope = owner(principal);
+    const [session, block, current] = await Promise.all([
+      this.requireSession(scope, sessionId),
+      this.repo.findBlock(scope, sessionId, blockId),
+      this.repo.findCurrentBlock(scope, sessionId),
+    ]);
+    if (!block) throw notFound();
+    if (session.status !== 'active')
+      throw new ConflictException({
+        code: 'PETROS_SESSION_NOT_ACTIVE',
+        message: 'Resume this session before changing the explanation.',
+      });
+    if (block.version !== input.expectedBlockVersion) throw staleBlock();
+
+    const command = await this.repo.beginCommand(
+      scope,
+      sessionId,
+      input.idempotencyKey,
+      `reexplain:${blockId}:${input.level}`,
+    );
+    if (command.state === 'completed')
+      return petrosLearningSessionDocumentSchema.parse(command.response);
+    if (command.state === 'in_flight' || !command.row) throw inFlight();
+
+    try {
+      const override = {
+        pace: null,
+        depth: input.level === 'deeper' ? ('deep' as const) : ('concise' as const),
+        source: 'student_current_session' as const,
+        updatedAt: new Date().toISOString(),
+      };
+      const interactionState = {
+        ...block.interactionState,
+        ...input.interactionState,
+        requestedAction: input.level,
+      };
+      if (current) {
+        const completed = await this.repo.completeBlock(scope, sessionId, current.id, {
+          expectedBlockVersion: current.version,
+          interactionState: current.id === block.id ? interactionState : current.interactionState,
+          observedOutcome: {
+            completed: false,
+            reexplanationRequested: input.level,
+            reexplanationSourceBlockId: block.id,
+            checkpointAdvanced: false,
+          },
+          checkpoints: session.checkpoints,
+          currentCheckpointId: session.currentCheckpointId,
+          elapsedSeconds: elapsed(session),
+          retireQuestions: true,
+        });
+        if (!completed) throw staleBlock();
+      }
+      if (!current || current.id !== block.id) {
+        await this.repo.updateBlockInteraction(scope, sessionId, block.id, interactionState);
+      }
+
+      await this.repo.updateSessionLearnerContext(scope, sessionId, {
+        ...session.learnerContext,
+        sessionOverride: override,
+        pendingReexplanation: {
+          level: input.level,
+          sourceBlockId: block.id,
+          sourceBlockType: block.type,
+          sourceContent: block.content,
+        },
+      });
+      await this.observation(scope, sessionId, 'depth_changed', {
+        blockId,
+        decisionId: block.decisionId,
+        targetId: session.currentCheckpointId,
+        payload: {
+          requested: input.level,
+          override,
+          reexplanationQueued: true,
+          durablePreferenceUpdated: false,
+        },
+        correlationId: block.correlationId,
+      });
+      await this.event(
+        scope,
+        sessionId,
+        'reexplanation.requested',
+        { level: input.level, sourceBlockId: blockId, checkpointAdvanced: false },
+        block.correlationId,
+        block.decisionId,
+        block.id,
+      );
+      return await this.finishWithDocument(scope, sessionId, command.row.id);
+    } catch (error) {
+      await this.repo.failCommand(command.row.id, errorCode(error));
+      throw error;
+    }
   }
 
   async submitAnswer(
@@ -1409,7 +1542,15 @@ export class PetrosLoopService {
         },
         cacheTtlSeconds: 0,
       });
-      return { decision: petrosPlanDecisionSchema.parse(result.content), source: 'ai', result };
+      const decision = petrosPlanDecisionSchema.parse(result.content);
+      // A learner's explicit depth request is a command, not a soft preference. PLAN still runs
+      // for observability, while the deterministic policy envelope guarantees a re-explanation
+      // that holds the current checkpoint even if a provider returns a different move.
+      return {
+        decision: requestedReexplanation(state) ? deterministicPlan(state) : decision,
+        source: 'ai',
+        result,
+      };
     } catch {
       return { decision: deterministicPlan(state), source: 'deterministic_fallback' };
     }
@@ -1517,6 +1658,11 @@ export class PetrosLoopService {
       },
       questions,
     );
+    if (requestedReexplanation(state)) {
+      const { pendingReexplanation: _completedRequest, ...learnerContext } =
+        latestSession.learnerContext;
+      await this.repo.updateSessionLearnerContext(scope, state.sessionId, learnerContext);
+    }
     await this.event(
       scope,
       state.sessionId,
@@ -1590,8 +1736,7 @@ export class PetrosLoopService {
         `session.${action}`,
         action === 'close' ? { reason: closeReason } : {},
       );
-      if (action === 'pause')
-        await this.repo.recordDoorLifecycle(scope, sessionId, 'paused');
+      if (action === 'pause') await this.repo.recordDoorLifecycle(scope, sessionId, 'paused');
       if (action === 'close')
         await this.finishContextualOrigin(scope, session, sessionId, closeReason);
       return await this.finishWithDocument(scope, sessionId, command.row.id);
@@ -1737,6 +1882,7 @@ function advanceCheckpoints(
   checkpoints: PetrosLearningSession['checkpoints'],
   effect: { checkpointId?: string; effect?: string },
 ) {
+  if (effect.effect === 'hold') return checkpoints;
   const index = Math.max(
     0,
     checkpoints.findIndex((checkpoint) => checkpoint.id === effect.checkpointId),
@@ -2418,12 +2564,13 @@ function guidedHomework(session: PetrosLearningSession) {
   const context = session.sourceContext;
   if (!context || typeof context !== 'object' || Array.isArray(context)) return false;
   const institutional = context.institutionalDecision;
-  if (!institutional || typeof institutional !== 'object' || Array.isArray(institutional)) return false;
+  if (!institutional || typeof institutional !== 'object' || Array.isArray(institutional))
+    return false;
   const homework = (institutional as Record<string, unknown>).homework;
   return Boolean(
     homework &&
-      typeof homework === 'object' &&
-      !Array.isArray(homework) &&
-      (homework as Record<string, unknown>).mode === 'guided_homework',
+    typeof homework === 'object' &&
+    !Array.isArray(homework) &&
+    (homework as Record<string, unknown>).mode === 'guided_homework',
   );
 }

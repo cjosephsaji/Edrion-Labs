@@ -913,6 +913,16 @@ export const petrosUpdateBlockInteractionSchema = z
   .strict();
 export type PetrosUpdateBlockInteractionInput = z.infer<typeof petrosUpdateBlockInteractionSchema>;
 
+export const petrosReexplainBlockSchema = z
+  .object({
+    idempotencyKey: z.string().uuid(),
+    level: z.enum(['simpler', 'deeper']),
+    expectedBlockVersion: z.number().int().nonnegative(),
+    interactionState: z.record(z.unknown()).default({}),
+  })
+  .strict();
+export type PetrosReexplainBlockInput = z.infer<typeof petrosReexplainBlockSchema>;
+
 export const petrosSubmitAnswerSchema = z
   .object({
     idempotencyKey: z.string().uuid(),

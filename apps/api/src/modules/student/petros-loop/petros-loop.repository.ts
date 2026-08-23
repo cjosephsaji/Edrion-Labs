@@ -801,6 +801,7 @@ export class PetrosLoopRepository {
       currentCheckpointId: string;
       elapsedSeconds: number;
       closeReason?: string;
+      retireQuestions?: boolean;
     },
   ) {
     return this.db.transaction(async (tx) => {
@@ -826,6 +827,19 @@ export class PetrosLoopRepository {
         )
         .returning();
       if (!block) return undefined;
+      if (values.retireQuestions) {
+        await tx
+          .update(schema.petrosQuestionSpecs)
+          .set({ active: false, updatedAt: new Date() })
+          .where(
+            and(
+              eq(schema.petrosQuestionSpecs.blockId, blockId),
+              eq(schema.petrosQuestionSpecs.sessionId, sessionId),
+              eq(schema.petrosQuestionSpecs.institutionId, scope.institutionId),
+              eq(schema.petrosQuestionSpecs.studentId, scope.studentId),
+            ),
+          );
+      }
       await tx
         .update(schema.petrosPlanningDecisions)
         .set({
@@ -955,7 +969,10 @@ export class PetrosLoopRepository {
       const [owned] = await tx
         .select({ item: schema.learningPathItems, path: schema.learningPaths })
         .from(schema.learningPathItems)
-        .innerJoin(schema.learningPaths, eq(schema.learningPaths.id, schema.learningPathItems.pathId))
+        .innerJoin(
+          schema.learningPaths,
+          eq(schema.learningPaths.id, schema.learningPathItems.pathId),
+        )
         .where(
           and(
             eq(schema.learningPathItems.id, pathItemId),

@@ -7,7 +7,6 @@ import {
   CircleAlert,
   ClipboardCheck,
   Clock3,
-  ExternalLink,
   Eye,
   FileText,
   FolderOpen,
@@ -21,6 +20,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { PageHeader } from '@/components/design-system';
+import { DocumentViewer } from '@/components/materials/document-viewer';
 import { PetrosAskButton } from '@/components/petros/petros-ask-button';
 import { usePetrosPage } from '@/components/petros/petros-companion-context';
 import { PetrosDocumentDoor } from '@/components/petros/petros-door-button';
@@ -37,6 +37,8 @@ type Material = {
   kindLabel: string;
   weekNo: number | null;
   className: string | null;
+  filename: string | null;
+  mimeType: string;
   publishedAt: string;
 };
 type Response = { items: Material[] };
@@ -194,6 +196,7 @@ export default function Page() {
   const [onlyUnopened, setOnlyUnopened] = useState(false);
   const [opened, setOpened] = useState<Record<string, number>>({});
   const [openedLoaded, setOpenedLoaded] = useState(false);
+  const [activeMaterial, setActiveMaterial] = useState<Material | null>(null);
 
   useEffect(() => {
     try {
@@ -251,8 +254,9 @@ export default function Page() {
   };
 
   return (
-    <QueryPage query={query} loadingLabel="Loading study materials…">
-      {(data) => {
+    <>
+      <QueryPage query={query} loadingLabel="Loading study materials…">
+        {(data) => {
         const items = data.items ?? [];
         const allSources = petrosSources.data?.items ?? [];
         const sourceByMaterialId = new Map<string, PetrosSource>();
@@ -333,8 +337,6 @@ export default function Page() {
           const Icon = kindIcon(item.kindLabel);
           const minutes = readingMinutes(petros?.pages ?? null);
           const published = publishedOn(item.publishedAt);
-          const fileHref = api.fileUrl(`/student/materials/${item.id}/file`);
-
           return (
             <li className={styles.card} key={item.id} data-petros={petros?.tone ?? 'none'}>
               <div className={styles.cardHead}>
@@ -377,19 +379,19 @@ export default function Page() {
               </div>
 
               <div className={styles.actions}>
-                {/* Opening downloads the file. It is deliberately its own control: no
-                    student should start an AI session by trying to read a document. */}
-                <a
+                {/* Reading remains its own control: opening a document never starts an AI session. */}
+                <button
                   className={styles.open}
-                  href={fileHref}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={`Open ${item.title}`}
-                  onClick={() => markOpened(item.id)}
+                  type="button"
+                  aria-label={`View ${item.title} in Edrion`}
+                  onClick={() => {
+                    markOpened(item.id);
+                    setActiveMaterial(item);
+                  }}
                 >
-                  <ExternalLink aria-hidden="true" />
+                  <Eye aria-hidden="true" />
                   <span>Open document</span>
-                </a>
+                </button>
                 <span className={styles.askSlot}>
                   <PetrosAskButton candidateRef={item.id} label={item.title} />
                 </span>
@@ -693,7 +695,16 @@ export default function Page() {
             )}
           </div>
         );
-      }}
-    </QueryPage>
+        }}
+      </QueryPage>
+      {activeMaterial ? (
+        <DocumentViewer
+          material={activeMaterial}
+          previewUrl={api.fileUrl(`/student/materials/${activeMaterial.id}/view`)}
+          downloadUrl={api.fileUrl(`/student/materials/${activeMaterial.id}/file`)}
+          onClose={() => setActiveMaterial(null)}
+        />
+      ) : null}
+    </>
   );
 }

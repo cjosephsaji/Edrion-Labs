@@ -387,7 +387,7 @@
   padding: 12px 16px 12px 19px;
 }
 
-/* Opening the file downloads it. It is its own control, never the whole card, and never
+/* Opens the in-Edrion reader. It is its own control, never the whole card, and never
  * shares a target with anything that starts an AI session. */
 .open {
   display: inline-flex;
@@ -398,9 +398,11 @@
   background: var(--s-accentDeep);
   padding: 8px 13px;
   color: var(--s-card);
+  font: inherit;
   font-size: 13px;
   font-weight: 650;
   text-decoration: none;
+  cursor: pointer;
   transition: background-color 140ms ease, border-color 140ms ease;
 }
 .open:hover { border-color: var(--s-accent); background: var(--s-accent); }

@@ -197,8 +197,44 @@ function makeHarness(
     findQuestionSpec: vi.fn(async (_scope, _sessionId, _blockId, questionId: string) =>
       questionSpecs.find((question) => question.id === questionId),
     ),
-    updateBlockInteraction: vi.fn(),
-    completeBlock: vi.fn(),
+    updateBlockInteraction: vi.fn(async (_scope, _sessionId, blockId, interactionState) => {
+      const block = blocks.find((candidate) => candidate.id === blockId);
+      if (!block) return undefined;
+      Object.assign(block, { interactionState, updatedAt: now });
+      return block;
+    }),
+    updateSessionLearnerContext: vi.fn(async (_scope, _sessionId, learnerContext) => {
+      Object.assign(session, { learnerContext, version: session.version + 1, updatedAt: now });
+      return session;
+    }),
+    completeBlock: vi.fn(async (_scope, _sessionId, blockId, values) => {
+      const block = blocks.find(
+        (candidate) =>
+          candidate.id === blockId &&
+          candidate.status === 'current' &&
+          candidate.version === values.expectedBlockVersion,
+      );
+      if (!block) return undefined;
+      Object.assign(block, {
+        status: 'completed',
+        version: block.version + 1,
+        interactionState: values.interactionState,
+        observedOutcome: values.observedOutcome,
+        completedAt: now,
+        updatedAt: now,
+      });
+      const decision = decisions.find((candidate) => candidate.id === block.decisionId);
+      if (decision)
+        Object.assign(decision, { status: 'completed', observedOutcome: values.observedOutcome });
+      Object.assign(session, {
+        checkpoints: values.checkpoints,
+        currentCheckpointId: values.currentCheckpointId,
+        elapsedSeconds: values.elapsedSeconds,
+        version: session.version + 1,
+        updatedAt: now,
+      });
+      return block;
+    }),
     commitAnswer: vi.fn(async () => ({ state: 'committed' as const })),
     recordHint: vi.fn(async () => blocks[0]),
     createDetour: vi.fn(async () => session),
@@ -648,6 +684,52 @@ describe('PetrosLoopService coordination', () => {
         sourceEventId: `block-completed:${block.id}`,
         evidenceKind: 'engagement',
         metadata: expect.objectContaining({ action: 'read' }),
+      }),
+    );
+  });
+
+  it('queues a real re-explanation while holding the current checkpoint', async () => {
+    const harness = makeHarness();
+    const started = await harness.service.continue(
+      principal,
+      SESSION_ID,
+      '81818181-8181-4181-8181-818181818181',
+    );
+    const block = started.blocks[0]!;
+    const checkpointsBefore = structuredClone(started.checkpoints);
+
+    const queued = await harness.service.reexplain(principal, SESSION_ID, block.id, {
+      idempotencyKey: '82828282-8282-4282-8282-828282828282',
+      level: 'simpler',
+      expectedBlockVersion: block.version,
+      interactionState: block.interactionState,
+    });
+
+    expect(queued.checkpoints).toEqual(checkpointsBefore);
+    expect(queued.blocks[0]).toMatchObject({
+      status: 'completed',
+      interactionState: { requestedAction: 'simpler' },
+      observedOutcome: {
+        reexplanationRequested: 'simpler',
+        checkpointAdvanced: false,
+      },
+    });
+    expect(harness.repo.updateSessionLearnerContext).toHaveBeenCalledWith(
+      expect.anything(),
+      SESSION_ID,
+      expect.objectContaining({
+        sessionOverride: expect.objectContaining({ depth: 'concise' }),
+        pendingReexplanation: expect.objectContaining({
+          level: 'simpler',
+          sourceBlockId: block.id,
+          sourceContent: block.content,
+        }),
+      }),
+    );
+    expect(harness.repo.recordObservation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'depth_changed',
+        payload: expect.objectContaining({ requested: 'simpler', reexplanationQueued: true }),
       }),
     );
   });
