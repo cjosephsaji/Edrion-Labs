@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /c/Users/karol/Edrion-Labs/packages/database && node --version && ls node_modules/.bin/ 2>/dev/null | grep -i drizzle; ls ../../node_modules/.bin/ 2>/dev/null | grep -i drizzle)",
+      "Read(//c/Users/node_modules/**)"
+    ]
+  }
+}
