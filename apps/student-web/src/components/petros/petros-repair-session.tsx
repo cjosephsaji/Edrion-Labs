@@ -47,6 +47,22 @@ interface SessionProps {
   sessionId?: string;
 }
 
+function hasCurrentBlock(document: PetrosLearningSessionDocument) {
+  return document.blocks.some((block) => block.status === 'current');
+}
+
+function requiresAnswerBeforeProgress(content: PetrosTeachingBlockContent) {
+  return (
+    content.type !== 'goal_frame' &&
+    content.type !== 'artifact_commit' &&
+    content.type !== 'forward_link'
+  );
+}
+
+function needsNextBlock(document: PetrosLearningSessionDocument) {
+  return document.status === 'active' && !hasCurrentBlock(document);
+}
+
 type SnapOpening = {
   prompt?: string;
   fastestUsefulNextStep?: string;
@@ -65,6 +81,7 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
   const [parkedQuestion, setParkedQuestion] = useState('');
   const [submittingQuestionId, setSubmittingQuestionId] = useState<string | null>(null);
   const [hintingQuestionId, setHintingQuestionId] = useState<string | null>(null);
+  const [preparingQuestionBlockId, setPreparingQuestionBlockId] = useState<string | null>(null);
   const [submittingComposer, setSubmittingComposer] = useState(false);
   const [adaptingBlockId, setAdaptingBlockId] = useState<string | null>(null);
   const [adaptingLevel, setAdaptingLevel] = useState<'simpler' | 'deeper' | null>(null);
@@ -76,6 +93,7 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
   const interactionTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   /** Interaction state written locally but not yet accepted by the server. */
   const pendingInteractions = useRef(new Map<string, Record<string, unknown>>());
+  const questionRepairAttempted = useRef(new Set<string>());
 
   const requestNext = useCallback(
     async (id: string) => {
@@ -146,8 +164,7 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
         setDocument(current);
         const savedQuestion = sessionStorage.getItem(`petros:parked-question:${current.id}`);
         if (savedQuestion) setParkedQuestion(savedQuestion);
-        if (current.status === 'active' && current.blocks.length === 0)
-          void requestNext(current.id);
+        if (needsNextBlock(current)) void requestNext(current.id);
       } catch (caught) {
         if (!(caught instanceof DOMException && caught.name === 'AbortError'))
           setError(formatApiError(caught));
@@ -165,6 +182,37 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
       window.removeEventListener('offline', offlineListener);
     };
   }, [api, requestNext, resultId, score, sessionId, source, topic]);
+
+  /*
+   * Older sessions can contain a genuine learner prompt without a persisted question spec.
+   * Repair it in place so the student gets the same answer, feedback, hint, and retry contract
+   * as a newly planned move. The block id is also the server-side idempotency key.
+   */
+  useEffect(() => {
+    if (!document || document.status !== 'active') return;
+    const block = document.blocks.find((candidate) => candidate.status === 'current');
+    if (
+      !block ||
+      block.questions.length > 0 ||
+      !requiresAnswerBeforeProgress(block.content) ||
+      questionRepairAttempted.current.has(block.id)
+    )
+      return;
+    questionRepairAttempted.current.add(block.id);
+    setPreparingQuestionBlockId(block.id);
+    setError('');
+    void api
+      .post<PetrosLearningSessionDocument>(
+        `/student/petros/sessions/${document.id}/blocks/${block.id}/question`,
+        { idempotencyKey: block.id },
+      )
+      .then((next) => setDocument(next))
+      .catch((caught) => {
+        questionRepairAttempted.current.delete(block.id);
+        setError(formatApiError(caught));
+      })
+      .finally(() => setPreparingQuestionBlockId(null));
+  }, [api, document]);
 
   const updateInteraction = useCallback(
     (blockId: string, patch: Record<string, unknown>, immediate = false) => {
@@ -409,11 +457,12 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
         );
         setDocument(next);
         setConfirmClose(false);
+        if (action === 'resume' && needsNextBlock(next)) void requestNext(next.id);
       } catch (caught) {
         setError(formatApiError(caught));
       }
     },
-    [api, document],
+    [api, document, requestNext],
   );
 
   const expandFiveMinute = useCallback(async () => {
@@ -451,6 +500,7 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
       .length ?? 0;
   const artifactCommitReady = document?.blocks.some((block) => block.content.type === 'artifact_commit') ?? false;
   const closed = document?.status === 'closed';
+  const resumeWillContinue = document?.status === 'paused' && !hasCurrentBlock(document);
   const sourceView = contextualSourceView(document, source);
   const isFiveMinute = document?.sourceContext?.door === 'five_minute';
   useEffect(() => {
@@ -504,7 +554,7 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
                 data-action="resume"
                 onClick={() => void lifecycle('resume')}
               >
-                <Play aria-hidden="true" /> Resume
+                <Play aria-hidden="true" /> {resumeWillContinue ? 'Resume and continue' : 'Resume'}
               </button>
             ) : (
               <button
@@ -693,6 +743,10 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
                 onHint={(questionId) => void requestHint(block, questionId)}
                 submittingQuestionId={submittingQuestionId}
                 hintingQuestionId={hintingQuestionId}
+                preparingQuestion={preparingQuestionBlockId === block.id}
+                hasRemainingCheckpoint={document.checkpoints.some(
+                  (checkpoint) => checkpoint.status === 'pending',
+                )}
               />
             </TeachingBlock>
           ))}
@@ -941,6 +995,8 @@ function BlockContent({
   onHint,
   submittingQuestionId,
   hintingQuestionId,
+  preparingQuestion,
+  hasRemainingCheckpoint,
 }: {
   block: PetrosSessionBlock;
   onInteraction: (patch: Record<string, unknown>, immediate?: boolean) => void;
@@ -954,6 +1010,8 @@ function BlockContent({
   onHint: (questionId: string) => void;
   submittingQuestionId: string | null;
   hintingQuestionId: string | null;
+  preparingQuestion: boolean;
+  hasRemainingCheckpoint: boolean;
 }) {
   const content = block.content;
   const completed = block.status === 'completed';
@@ -976,6 +1034,13 @@ function BlockContent({
       hintingQuestionId={hintingQuestionId}
     />
   ) : null;
+  if (
+    !completed &&
+    block.questions.length === 0 &&
+    requiresAnswerBeforeProgress(content)
+  ) {
+    return <AnswerCheckPreparing busy={preparingQuestion} />;
+  }
   if (content.type === 'layered_explanation') {
     const expanded = Array.isArray(block.interactionState.expandedLayerIds)
       ? block.interactionState.expandedLayerIds.filter(
@@ -1575,32 +1640,28 @@ function BlockContent({
     );
   }
   if (content.type !== 'synthesis') return null;
-  const response =
-    typeof block.interactionState.response === 'string' ? block.interactionState.response : '';
   return (
     <>
-      <label className={styles.textLabel} htmlFor={`synthesis-${block.id}`}>
-        {content.prompt}
-      </label>
-      <textarea
-        id={`synthesis-${block.id}`}
-        value={response}
-        disabled={completed}
-        onChange={(event) => onInteraction({ response: event.target.value })}
-      />
-      <p className={styles.helper}>{content.tighteningGuidance}</p>
-      {content.forwardLink && (
-        <div className={styles.forwardLink}>
-          <Flag aria-hidden="true" /> {content.forwardLink}
-        </div>
+      {questions}
+      {recovered ? (
+        <>
+          <p className={styles.helper}>{content.tighteningGuidance}</p>
+          {content.forwardLink && (
+            <div className={styles.forwardLink}>
+              <Flag aria-hidden="true" /> {content.forwardLink}
+            </div>
+          )}
+        </>
+      ) : (
+        <TeachingLocked />
       )}
       {completed ? (
         <div className={styles.submitted}>
           <Check aria-hidden="true" /> Synthesis recorded
         </div>
       ) : (
-        <CompleteButton onClick={onComplete} disabled={response.trim().length < 12}>
-          Finish the session
+        <CompleteButton onClick={onComplete} disabled={!recovered}>
+          {hasRemainingCheckpoint ? 'Save verified response and continue' : 'Finish the session'}
         </CompleteButton>
       )}
     </>
@@ -2017,6 +2078,21 @@ function TeachingLocked() {
         <p>
           Use the support step, then commit to the active equivalent question. This stretch will not
           end on a failure.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function AnswerCheckPreparing({ busy }: { busy: boolean }) {
+  return (
+    <div className={styles.teachingLocked} role="status" aria-live="polite">
+      {busy ? <LoaderCircle aria-hidden="true" /> : <CircleHelp aria-hidden="true" />}
+      <div>
+        <strong>{busy ? 'Preparing your answer check…' : 'Your answer check is required.'}</strong>
+        <p>
+          Respond to the teaching question, get feedback, and resolve any support step before this
+          part of the session can continue.
         </p>
       </div>
     </div>

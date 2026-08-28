@@ -459,6 +459,11 @@ export class PetrosLoopRepository {
       .orderBy(asc(schema.petrosQuestionSpecs.createdAt));
   }
 
+  insertQuestionSpecs(values: Array<typeof schema.petrosQuestionSpecs.$inferInsert>) {
+    if (!values.length) return Promise.resolve([]);
+    return this.db.insert(schema.petrosQuestionSpecs).values(values).returning();
+  }
+
   findQuestionSpec(
     scope: PetrosOwnerScope,
     sessionId: string,

@@ -5,6 +5,7 @@ import {
   PETROS_RENDER_SCHEMA_VERSION,
   PETROS_SESSION_STATE_VERSION,
   type PetrosLearningSessionDocument,
+  type PetrosTeachingBlockContent,
 } from '@edrion/schemas';
 import { PetrosRepairSession } from './petros-repair-session';
 
@@ -13,7 +14,7 @@ const memory = vi.hoisted(() => ({
 }));
 const api = vi.hoisted(() => ({
   get: vi.fn(async () => memory.document),
-  post: vi.fn(async () => memory.document),
+  post: vi.fn(async (_path: string, ..._args: unknown[]) => memory.document),
   put: vi.fn(async (path: string, body: { interactionState: Record<string, unknown> }) => {
     const blockId = path.split('/').at(-2)!;
     if (memory.document) {
@@ -107,7 +108,42 @@ function storedDocument(): PetrosLearningSessionDocument {
         },
         interactionState: { whyOpen: false, expandedLayerIds: [] },
         observedOutcome: null,
-        questions: [],
+        questions: [
+          {
+            id: 'aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa',
+            rootQuestionId: 'aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa',
+            parentQuestionId: null,
+            targetId: 'photosynthesis:verified-fixture',
+            equivalenceKey: 'photosynthesis-verified-fixture',
+            prompt: 'What relationship should be tracked?',
+            responseType: 'short_answer',
+            choices: null,
+            purpose: 'recall',
+            active: false,
+            locked: true,
+            hints: [],
+            attempts: [
+              {
+                observationId: 'bbbbbbbb-1111-4111-8111-bbbbbbbbbbbb',
+                questionId: 'aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa',
+                rawAnswer: 'Track how light energy becomes stored chemical energy.',
+                confidence: 'think_so',
+                correctness: 'correct',
+                credit: 1,
+                feedback: 'Correct. The relationship is secure.',
+                why: ['The answer follows the changing form of energy.'],
+                errorClass: '',
+                submittedAt: '2026-08-08T08:00:30.000Z',
+                ladderLevel: 0,
+                supportKind: 'none',
+                supportText: null,
+                highValueMisconception: false,
+                fragileSuccess: false,
+                recovery: false,
+              },
+            ],
+          },
+        ],
         whyThis:
           'This topic is conceptual, so the first checkpoint needs a compact relationship before procedural practice.',
         correlationId: '77777777-7777-4777-8777-777777777777',
@@ -118,6 +154,194 @@ function storedDocument(): PetrosLearningSessionDocument {
     ],
     createdAt: '2026-08-08T08:00:00.000Z',
     updatedAt: '2026-08-08T08:00:00.000Z',
+  };
+}
+
+function documentWithCompletedBlock(
+  status: 'active' | 'paused',
+): PetrosLearningSessionDocument {
+  const document = storedDocument();
+  return {
+    ...document,
+    status,
+    checkpoints: document.checkpoints.map((checkpoint, index) => ({
+      ...checkpoint,
+      status: index === 0 ? ('complete' as const) : index === 1 ? ('current' as const) : ('pending' as const),
+    })),
+    currentCheckpointId: 'checkpoint-2',
+    blocks: document.blocks.map((block) => ({
+      ...block,
+      status: 'completed' as const,
+      version: 1,
+      completedAt: '2026-08-08T08:01:00.000Z',
+    })),
+  };
+}
+
+function documentWithNextBlock(): PetrosLearningSessionDocument {
+  const document = documentWithCompletedBlock('active');
+  const prior = document.blocks[0]!;
+  return {
+    ...document,
+    blocks: [
+      prior,
+      {
+        ...prior,
+        id: '66666666-6666-4666-8666-666666666666',
+        decisionId: '77777777-7777-4777-8777-777777777778',
+        sequence: 2,
+        status: 'current',
+        version: 0,
+        content: {
+          ...prior.content,
+          title: 'Build the idea with the next relationship',
+        },
+        interactionState: { expandedLayerIds: [] },
+        completedAt: null,
+      },
+    ],
+  };
+}
+
+const fiveStageLabels = [
+  'Find the useful entry',
+  'Build the idea',
+  'Bring it back',
+  'Make it yours',
+  'Close it out',
+] as const;
+
+const fiveStageContent: PetrosTeachingBlockContent[] = [
+  {
+    schemaVersion: PETROS_RENDER_SCHEMA_VERSION,
+    type: 'hook',
+    title: 'Find the useful starting point',
+    prompt: 'What is the first useful relationship to notice in this topic?',
+    reveal: 'Start from the relationship between the evidence and the controlling idea.',
+    anchor: 'The authorized learning source',
+  },
+  {
+    schemaVersion: PETROS_RENDER_SCHEMA_VERSION,
+    type: 'layered_explanation',
+    title: 'Build the idea one layer at a time',
+    firstLayer: 'The main idea connects the available evidence to the result you need to explain.',
+    deeperLayers: [
+      {
+        id: 'mechanism',
+        label: 'See the mechanism',
+        content: 'The mechanism explains why that relationship produces the observed result.',
+      },
+    ],
+    keyIdea: 'Keep the relationship and its mechanism together.',
+    sourceGrounding: [],
+  },
+  {
+    schemaVersion: PETROS_RENDER_SCHEMA_VERSION,
+    type: 'recall_check',
+    title: 'Bring the idea back from memory',
+    instructions: 'Recall the controlling relationship before looking back at the explanation.',
+    questions: [
+      {
+        id: 'recall-1',
+        prompt: 'What relationship controls the result?',
+        responseType: 'short_answer',
+      },
+    ],
+    answerContract: {
+      completion: 'all_questions_answered',
+      responseHandling: 'evaluate_stage_3',
+    },
+    feedback: {
+      submittedMessage: 'Recall recorded.',
+      stageBoundary: 'This brings the idea back before you apply it.',
+    },
+  },
+  {
+    schemaVersion: PETROS_RENDER_SCHEMA_VERSION,
+    type: 'synthesis',
+    title: 'Make the idea yours',
+    prompt: 'Write one specific sentence explaining the relationship in your own words.',
+    tighteningGuidance: 'Name both the relationship and why it matters.',
+    forwardLink: 'Your synthesis becomes the basis for the closing choice.',
+  },
+  {
+    schemaVersion: PETROS_RENDER_SCHEMA_VERSION,
+    type: 'artifact_commit',
+    title: 'Close it out deliberately',
+    prompt: 'Choose what, if anything, should remain in your saved work.',
+    proposals: [
+      {
+        id: 'note',
+        kind: 'note',
+        label: 'Session synthesis note',
+        preview: 'The relationship explained in your own words.',
+      },
+    ],
+    consentRequired: true,
+  },
+];
+
+function fiveStageDocument(
+  currentStage: number,
+  currentCompleted = false,
+  closed = false,
+): PetrosLearningSessionDocument {
+  const document = storedDocument();
+  const blockIds = [
+    '10000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000002',
+    '10000000-0000-4000-8000-000000000003',
+    '10000000-0000-4000-8000-000000000004',
+    '10000000-0000-4000-8000-000000000005',
+  ];
+  const decisionIds = [
+    '20000000-0000-4000-8000-000000000001',
+    '20000000-0000-4000-8000-000000000002',
+    '20000000-0000-4000-8000-000000000003',
+    '20000000-0000-4000-8000-000000000004',
+    '20000000-0000-4000-8000-000000000005',
+  ];
+  return {
+    ...document,
+    status: closed ? 'closed' : 'active',
+    maxMoves: 5,
+    checkpoints: fiveStageLabels.map((label, index) => ({
+      id: `checkpoint-${index + 1}`,
+      label,
+      status:
+        index < currentStage || (index === currentStage && currentCompleted)
+          ? ('complete' as const)
+          : index === currentStage || (currentCompleted && index === currentStage + 1)
+            ? ('current' as const)
+            : ('pending' as const),
+    })),
+    currentCheckpointId: `checkpoint-${Math.min(currentStage + (currentCompleted ? 2 : 1), 5)}`,
+    closeReason: closed ? 'goal_met' : null,
+    blocks: fiveStageContent.slice(0, currentStage + 1).map((content, index) => {
+      const completed = index < currentStage || (index === currentStage && currentCompleted);
+      const interactionState =
+        content.type === 'hook'
+          ? { revealed: completed }
+          : content.type === 'layered_explanation'
+            ? { expandedLayerIds: [] }
+            : content.type === 'recall_check'
+              ? { answers: {} }
+              : content.type === 'synthesis'
+                ? { response: completed ? 'The relationship connects the evidence to the result.' : '' }
+                : { selectedProposalIds: [], artifactsDeclined: completed };
+      return {
+        ...document.blocks[0]!,
+        id: blockIds[index]!,
+        decisionId: decisionIds[index]!,
+        sequence: index + 1,
+        status: completed ? ('completed' as const) : ('current' as const),
+        version: completed ? 1 : 0,
+        content,
+        interactionState,
+        whyThis: `This is the ${fiveStageLabels[index]} stage.`,
+        completedAt: completed ? '2026-08-08T08:01:00.000Z' : null,
+      };
+    }),
   };
 }
 
@@ -184,6 +408,60 @@ describe('Petros Stage 2 student document', () => {
     expect(why).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText(/topic is conceptual/i)).toBeVisible();
     expect(screen.queryByRole('main')).not.toBeInTheDocument();
+  });
+
+  it('resumes and prepares the next block when a paused session has no current action', async () => {
+    const paused = documentWithCompletedBlock('paused');
+    const resumed = { ...paused, status: 'active' as const };
+    const continued = documentWithNextBlock();
+    memory.document = paused;
+    api.post.mockResolvedValueOnce(resumed).mockResolvedValueOnce(continued);
+
+    render(
+      <PetrosRepairSession topic="photosynthesis" source="result" sessionId={paused.id} />,
+    );
+    const resume = await screen.findByRole('button', { name: 'Resume and continue' });
+    fireEvent.click(resume);
+
+    expect(
+      await screen.findByRole('heading', { name: 'Build the idea with the next relationship' }),
+    ).toBeVisible();
+    expect(api.post).toHaveBeenNthCalledWith(
+      1,
+      expect.stringMatching(/\/resume$/),
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
+    expect(api.post).toHaveBeenNthCalledWith(
+      2,
+      expect.stringMatching(/\/continue$/),
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+      undefined,
+      expect.any(AbortSignal),
+    );
+  });
+
+  it('repairs an active session gap after refresh by preparing the next block', async () => {
+    memory.document = documentWithCompletedBlock('active');
+    const continued = documentWithNextBlock();
+    api.post.mockResolvedValueOnce(continued);
+
+    render(
+      <PetrosRepairSession
+        topic="photosynthesis"
+        source="result"
+        sessionId={memory.document.id}
+      />,
+    );
+
+    expect(
+      await screen.findByRole('heading', { name: 'Build the idea with the next relationship' }),
+    ).toBeVisible();
+    expect(api.post).toHaveBeenCalledWith(
+      expect.stringMatching(/\/continue$/),
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+      undefined,
+      expect.any(AbortSignal),
+    );
   });
 
   it('shows the real decision reason and renders a requested simpler explanation without advancing the checkpoint', async () => {
@@ -396,6 +674,54 @@ describe('Petros Stage 2 student document', () => {
 });
 
 describe('Petros Stage 3 observation UI', () => {
+  it('repairs a legacy prompt with an answer box and blocks progression until it is verified', async () => {
+    const legacy = storedDocument();
+    legacy.blocks[0]!.questions = [];
+    const repaired: PetrosLearningSessionDocument = {
+      ...legacy,
+      blocks: legacy.blocks.map((block) => ({
+        ...block,
+        questions: [
+          {
+            id: 'abababab-abab-4bab-8bab-abababababab',
+            rootQuestionId: 'abababab-abab-4bab-8bab-abababababab',
+            parentQuestionId: null,
+            targetId: 'photosynthesis:relationship',
+            equivalenceKey: 'photosynthesis:relationship',
+            prompt: 'How does light energy become useful to the organism?',
+            responseType: 'short_answer' as const,
+            choices: null,
+            purpose: 'recall' as const,
+            active: true,
+            locked: false,
+            hints: [],
+            attempts: [],
+          },
+        ],
+      })),
+    };
+    memory.document = legacy;
+    api.post.mockImplementation(async (path: string) => {
+      if (path.endsWith('/question')) {
+        memory.document = repaired;
+        return repaired;
+      }
+      return memory.document;
+    });
+
+    render(
+      <PetrosRepairSession topic="photosynthesis" source="result" sessionId={legacy.id} />,
+    );
+
+    expect(await screen.findByRole('textbox', { name: 'Your answer' })).toBeVisible();
+    expect(api.post).toHaveBeenCalledWith(
+      expect.stringMatching(/\/blocks\/[^/]+\/question$/),
+      { idempotencyKey: legacy.blocks[0]!.id },
+    );
+    expect(screen.queryByRole('button', { name: 'I have the key idea' })).not.toBeInTheDocument();
+    expect(screen.getByText(/teaching stays covered/i)).toBeVisible();
+  });
+
   it('requires an explicit confidence choice, locks the card, and announces feedback accessibly', async () => {
     memory.document = storedDocument();
     memory.document.blocks[0]!.questions = [
@@ -661,5 +987,62 @@ describe('Petros Stage 4 typed move UI', () => {
         name: /photosynthesis structure/i,
       }),
     ).toHaveAttribute('aria-checked', 'true');
+  });
+});
+
+describe('Petros five-part session progression', () => {
+  it('provides a working completion action for every checkpoint and closes only after step five', async () => {
+    let stage = 0;
+    memory.document = fiveStageDocument(stage);
+    api.post.mockImplementation(async (path: string) => {
+      if (path.endsWith('/complete')) {
+        const result = fiveStageDocument(stage, true, stage === 4);
+        memory.document = result;
+        return result;
+      }
+      if (path.endsWith('/continue')) {
+        stage += 1;
+        const result = fiveStageDocument(stage);
+        memory.document = result;
+        return result;
+      }
+      return memory.document;
+    });
+
+    render(
+      <PetrosRepairSession
+        topic="five-stage topic"
+        source="result"
+        sessionId={memory.document.id}
+      />,
+    );
+
+    expect(await screen.findByText('Find the useful entry')).toBeVisible();
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '5');
+    fireEvent.click(screen.getByRole('button', { name: 'Show the connection' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Keep going' }));
+
+    expect(
+      await screen.findByRole('heading', { name: 'Build the idea one layer at a time' }),
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'I have the key idea' }));
+
+    expect(
+      await screen.findByRole('heading', { name: 'Bring the idea back from memory' }),
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Complete this check' }));
+
+    expect(await screen.findByRole('heading', { name: 'Make the idea yours' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Finish the session' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Save verified response and continue' }));
+
+    expect(await screen.findByRole('heading', { name: 'Close it out deliberately' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Save nothing from these proposals' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm this artifact choice' }));
+
+    expect(await screen.findByText(/your session document is saved/i)).toBeVisible();
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '5');
+    expect(api.post.mock.calls.filter(([path]) => String(path).endsWith('/complete'))).toHaveLength(5);
+    expect(api.post.mock.calls.filter(([path]) => String(path).endsWith('/continue'))).toHaveLength(4);
   });
 });

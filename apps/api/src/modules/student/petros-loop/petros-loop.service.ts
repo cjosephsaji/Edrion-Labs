@@ -404,7 +404,9 @@ export class PetrosLoopService {
             sessionId,
             institutionId: scope.institutionId,
             studentId: scope.studentId,
-            sequence: planningState.moves.used + 1,
+            // Re-explanations deliberately hold the checkpoint, but they are still persisted
+            // decisions and need their own monotonically increasing sequence number.
+            sequence: planningState.priorMoves.length + 1,
             status: guarded.intervention ? 'overridden' : 'planned',
             selectedMoveType: guarded.decision.selectedMoveType,
             originalMoveType: guarded.intervention ? planned.decision.selectedMoveType : null,
@@ -696,6 +698,73 @@ export class PetrosLoopService {
       });
     }
     return { ok: true, updatedAt: block.updatedAt.toISOString() };
+  }
+
+  /**
+   * Repair a rendered prompt that predates the enforced answer contract (or came from a PLAN
+   * provider that marked guess-first as not applicable). The block id is used by the client as
+   * the idempotency key, so concurrent tabs cannot create two initial question sets.
+   */
+  async ensureQuestion(
+    principal: InstitutionalStudentPrincipal,
+    sessionId: string,
+    blockId: string,
+    idempotencyKey: string,
+  ) {
+    const scope = owner(principal);
+    const [session, block, decisions, existing] = await Promise.all([
+      this.requireSession(scope, sessionId),
+      this.repo.findBlock(scope, sessionId, blockId),
+      this.repo.listDecisions(scope, sessionId),
+      this.repo.listQuestionSpecs(scope, sessionId),
+    ]);
+    if (!block) throw notFound();
+    if (existing.some((question) => question.blockId === blockId))
+      return this.document(principal, sessionId);
+    if (session.status !== 'active' || block.status !== 'current')
+      throw new ConflictException({
+        code: 'PETROS_BLOCK_NOT_ANSWERABLE',
+        message: 'Resume the current teaching step before answering it.',
+      });
+    const content = petrosTeachingBlockContentSchema.parse(block.content);
+    if (!requiresEvaluatedResponse(content)) return this.document(principal, sessionId);
+    const decisionRow = decisions.find((candidate) => candidate.id === block.decisionId);
+    if (!decisionRow) throw notFound();
+    const command = await this.repo.beginCommand(
+      scope,
+      sessionId,
+      idempotencyKey,
+      `question:ensure:${blockId}`,
+    );
+    if (command.state === 'completed')
+      return petrosLearningSessionDocumentSchema.parse(command.response);
+    if (command.state === 'in_flight' || !command.row) throw inFlight();
+    try {
+      const questions = buildQuestionSpecs(content, {
+        blockId,
+        sessionId,
+        institutionId: scope.institutionId,
+        studentId: scope.studentId,
+        decision: rowToDecision(decisionRow),
+        deterministic: block.delivery === 'deterministic_fallback',
+        sourceContext: session.sourceContext,
+        moveSequence: block.sequence,
+      });
+      await this.repo.insertQuestionSpecs(questions);
+      await this.event(
+        scope,
+        sessionId,
+        'question.required',
+        { blockType: block.type, questionCount: questions.length, repaired: true },
+        block.correlationId,
+        block.decisionId,
+        block.id,
+      );
+      return await this.finishWithDocument(scope, sessionId, command.row.id);
+    } catch (error) {
+      await this.repo.failCommand(command.row.id, errorCode(error));
+      throw error;
+    }
   }
 
   /**
@@ -1466,9 +1535,12 @@ export class PetrosLoopService {
         remainingSeconds: Math.max(0, session.timeBudgetSeconds - elapsedSeconds),
       },
       moves: {
-        maximum: session.maxMoves,
-        used: decisions.length,
-        remaining: Math.max(0, session.maxMoves - decisions.length),
+        // The visible session contract is checkpoint-based. A simpler/deeper replacement has a
+        // `hold` progress effect, so counting raw decisions here could exhaust the five-part plan
+        // while the student was still on checkpoint two.
+        maximum: session.checkpoints.length,
+        used: session.checkpoints.filter((checkpoint) => checkpoint.status === 'complete').length,
+        remaining: session.checkpoints.filter((checkpoint) => checkpoint.status !== 'complete').length,
       },
       checkpointPlan: session.checkpoints,
       currentCheckpointId: session.currentCheckpointId,
@@ -1965,7 +2037,7 @@ function buildQuestionSpecs(
     moveSequence: number;
   },
 ): Array<typeof schema.petrosQuestionSpecs.$inferInsert> {
-  if (context.decision.guessFirst.status !== 'required') return [];
+  if (!requiresEvaluatedResponse(content)) return [];
   const targetBase = context.decision.guessFirst.targetId ?? context.decision.targetConcept;
   const documentQuestion =
     content.type === 'recall_check'
@@ -2231,7 +2303,7 @@ function buildQuestionSpecs(
               },
               { id: 'length', label: 'Prefer the longest method regardless of the demand.' },
             ],
-            purpose: 'guess_first',
+            purpose: content.type === 'synthesis' ? 'recall' : 'guess_first',
             correctChoiceId: 'relationship',
             hint: 'Look for the option driven by the controlling relationship.',
             missingStep:
@@ -2243,7 +2315,7 @@ function buildQuestionSpecs(
             key: 'commitment',
             prompt,
             responseType: 'short_answer',
-            purpose: 'guess_first',
+            purpose: content.type === 'synthesis' ? 'recall' : 'guess_first',
             hint: 'Name one controlling relationship or clue. A rough attempt is enough.',
             missingStep:
               'The missing step is naming the controlling clue before seeing the teaching.',
@@ -2258,6 +2330,7 @@ function commitmentPrompt(content: PetrosTeachingBlockContent, topic: string) {
   if (content.type === 'hook' || content.type === 'predict_then_reveal') return content.prompt;
   if (content.type === 'misconception_demolition') return content.commitmentPrompt;
   if (content.type === 'socratic_probe') return content.prompt;
+  if (content.type === 'synthesis' || content.type === 'apply_to_your_world') return content.prompt;
   if (content.type === 'contrast_case')
     return `Before comparing them, what clue could make these two ${topic} cases need different methods?`;
   if (content.type === 'diagram')
@@ -2276,7 +2349,17 @@ function teachingSummary(content: PetrosTeachingBlockContent) {
   if (content.type === 'story') return content.takeaway;
   if (content.type === 'derivation') return content.conclusion;
   if (content.type === 'apply_to_your_world') return content.examples.join('; ');
+  if (content.type === 'synthesis')
+    return content.tighteningGuidance ?? 'State the controlling relationship in your own words.';
   return `Use the controlling relationship in ${content.title}.`;
+}
+
+function requiresEvaluatedResponse(content: PetrosTeachingBlockContent) {
+  return !(
+    content.type === 'goal_frame' ||
+    content.type === 'artifact_commit' ||
+    content.type === 'forward_link'
+  );
 }
 
 function followupQuestionSpec(

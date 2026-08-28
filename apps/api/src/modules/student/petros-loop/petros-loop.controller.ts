@@ -98,6 +98,17 @@ export class StudentPetrosLoopController {
     return this.service.updateInteraction(raw, sessionId, blockId, body.interactionState);
   }
 
+  @Post(':sessionId/blocks/:blockId/question')
+  ensureQuestion(
+    @CurrentStudent() raw: StudentPrincipal,
+    @Param('sessionId') sessionId: string,
+    @Param('blockId') blockId: string,
+    @Body(zodBody(petrosContinueSessionSchema)) body: PetrosContinueSessionInput,
+  ) {
+    requireInstitutional(raw);
+    return this.service.ensureQuestion(raw, sessionId, blockId, body.idempotencyKey);
+  }
+
   @Post(':sessionId/blocks/:blockId/reexplain')
   @StudentRateLimit(12, 60)
   reexplain(

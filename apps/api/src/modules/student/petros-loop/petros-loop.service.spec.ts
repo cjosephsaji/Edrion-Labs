@@ -39,7 +39,10 @@ const principal: InstitutionalStudentPrincipal = {
 };
 
 function makeHarness(
-  options: { outage?: boolean; commandState?: 'started' | 'completed' | 'in_flight' } = {},
+  options: {
+    outage?: boolean;
+    commandState?: 'started' | 'completed' | 'in_flight';
+  } = {},
 ) {
   const now = new Date('2026-08-08T08:00:00.000Z');
   const publishedProfile = stage4ProfileFixture('photosynthesis', INSTITUTION_ID);
@@ -183,6 +186,10 @@ function makeHarness(
         return row;
       },
     ),
+    insertQuestionSpecs: vi.fn(async (values: Array<Record<string, unknown>>) => {
+      questionSpecs.push(...values);
+      return values;
+    }),
     recordEvent: vi.fn(async () => ({})),
     recordObservation: vi.fn(async () => ({})),
     finishCommand: vi.fn(async () => undefined),
@@ -385,6 +392,79 @@ describe('PetrosLoopService coordination', () => {
     });
     expect(harness.decisions[0]!.planRequestId).toBeTruthy();
     expect(harness.decisions[0]!.renderRequestId).toBeTruthy();
+  });
+
+  it('requires an evaluated response even when the provider omits guess-first', async () => {
+    const harness = makeHarness();
+    const result = await harness.service.continue(
+      principal,
+      SESSION_ID,
+      '87878787-8787-4787-8787-878787878787',
+    );
+    Object.assign(harness.decisions[0]!.guessFirst, {
+      status: 'not_applicable',
+      targetId: null,
+      reason: 'The provider omitted the answer commitment.',
+    });
+    harness.questionSpecs.splice(0);
+
+    const repaired = await harness.service.ensureQuestion(
+      principal,
+      SESSION_ID,
+      result.blocks[0]!.id,
+      result.blocks[0]!.id,
+    );
+
+    expect(harness.decisions[0]!.guessFirst).toMatchObject({ status: 'not_applicable' });
+    expect(repaired.blocks[0]!.questions).toHaveLength(1);
+    expect(repaired.blocks[0]!.questions[0]).toMatchObject({ active: true, locked: false });
+  });
+
+  it('budgets the visible plan by checkpoint progress instead of held re-explanations', async () => {
+    const harness = makeHarness();
+    await harness.service.continue(
+      principal,
+      SESSION_ID,
+      '89898989-8989-4989-8989-898989898989',
+    );
+    const first = harness.decisions[0]!;
+    harness.decisions.push(
+      {
+        ...first,
+        id: '45454545-4545-4545-8545-454545454545',
+        sequence: 2,
+        progressEffect: { checkpointId: 'checkpoint-1', effect: 'hold', progressDelta: 0 },
+      },
+      {
+        ...first,
+        id: '46464646-4646-4646-8646-464646464646',
+        sequence: 3,
+        progressEffect: { checkpointId: 'checkpoint-1', effect: 'hold', progressDelta: 0 },
+      },
+    );
+    Object.assign(harness.session, {
+      checkpoints: [0, 1, 2, 3].map((index) => ({
+        id: `checkpoint-${index + 1}`,
+        label: `Checkpoint ${index + 1}`,
+        status: index === 0 ? 'complete' : index === 1 ? 'current' : 'pending',
+      })),
+      currentCheckpointId: 'checkpoint-2',
+    });
+    const stateReader = harness.service as unknown as {
+      state(
+        scope: { institutionId: string; studentId: string },
+        session: typeof harness.session,
+      ): Promise<PetrosSessionState>;
+    };
+
+    const state = await stateReader.state(
+      { institutionId: INSTITUTION_ID, studentId: STUDENT_ID },
+      harness.session,
+    );
+
+    expect(state.priorMoves).toHaveLength(3);
+    expect(state.moves).toEqual({ maximum: 4, used: 1, remaining: 3 });
+    expect(state.currentCheckpointId).toBe('checkpoint-2');
   });
 
   it('uses a provider-neutral deterministic block when every AI route is unavailable', async () => {
