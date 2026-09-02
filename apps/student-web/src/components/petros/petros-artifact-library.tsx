@@ -15,7 +15,7 @@ import styles from './petros-artifact-library.module.css';
 
 type Confidence = 'sure' | 'think_so' | 'guessing';
 
-export function PetrosArtifactLibrary() {
+export function PetrosArtifactLibrary({ view = 'all' }: { view?: 'all' | 'flashcards' }) {
   const api = useStudentApi();
   const [artifacts, setArtifacts] = useState<PetrosSavedArtifact[]>([]);
   const [queue, setQueue] = useState<PetrosReviewQueue | null>(null);
@@ -44,6 +44,13 @@ export function PetrosArtifactLibrary() {
   }, [api]);
 
   useEffect(() => { void load(); }, [load]);
+
+  const visibleArtifacts = view === 'flashcards'
+    ? artifacts.filter((artifact) => artifact.content.kind === 'flashcard' || artifact.content.kind === 'rule_card')
+    : artifacts;
+  const visibleReviewCards = view === 'flashcards'
+    ? queue?.cards.filter(({ artifact }) => artifact.content.kind === 'flashcard' || artifact.content.kind === 'rule_card') ?? []
+    : queue?.cards ?? [];
 
   const review = async (artifactId: string, grade: 'again' | 'hard' | 'good' | 'easy') => {
     const selectedConfidence = confidence[artifactId];
@@ -90,10 +97,10 @@ export function PetrosArtifactLibrary() {
   return (
     <main className={styles.page}>
       <header>
-        <Link href="/petros/session"><ArrowLeft aria-hidden="true" /> Petros</Link>
+        <Link href={view === 'flashcards' ? '/learn' : '/petros'}><ArrowLeft aria-hidden="true" /> {view === 'flashcards' ? 'Learn' : 'Petros'}</Link>
         <p>LEARNER-OWNED</p>
-        <h1>Your artifacts and review deck</h1>
-        <span>Only explicitly saved, student-curated items appear here.</span>
+        <h1>{view === 'flashcards' ? 'Your flashcards' : 'Your artifacts and review deck'}</h1>
+        <span>{view === 'flashcards' ? 'Every card you make with Petros appears here immediately.' : 'Only explicitly saved, student-curated items appear here.'}</span>
       </header>
 
       {error && <div className={styles.error} role="alert">{error}<button onClick={() => void load()}><RotateCcw aria-hidden="true" /> Retry</button></div>}
@@ -104,8 +111,8 @@ export function PetrosArtifactLibrary() {
           <Clock3 aria-hidden="true" />
           <div><h2 id="review-title">Due for review</h2><p>{queue?.mixingExplanation}</p></div>
         </div>
-        {!queue?.cards.length && <p className={styles.empty}>Nothing is due right now. There is no artificial urgency.</p>}
-        {queue?.cards.map(({ artifact, topic, dueAt, scheduleExplanation, examDate }) => {
+        {!visibleReviewCards.length && <p className={styles.empty}>Nothing is due right now. There is no artificial urgency.</p>}
+        {visibleReviewCards.map(({ artifact, topic, dueAt, scheduleExplanation, examDate }) => {
           const content = artifact.content;
           if (content.kind !== 'flashcard' && content.kind !== 'rule_card') return null;
           const open = revealed.includes(artifact.id);
@@ -137,11 +144,11 @@ export function PetrosArtifactLibrary() {
       <section aria-labelledby="library-title">
         <div className={styles.sectionTitle}>
           <BookOpen aria-hidden="true" />
-          <div><h2 id="library-title">Saved artifacts</h2><p>{artifacts.length} authoritative {artifacts.length === 1 ? 'item' : 'items'}</p></div>
+          <div><h2 id="library-title">{view === 'flashcards' ? 'All flashcards' : 'Saved artifacts'}</h2><p>{visibleArtifacts.length} saved {visibleArtifacts.length === 1 ? 'item' : 'items'}</p></div>
         </div>
-        {!artifacts.length && <p className={styles.empty}>Your library is empty. AI proposals do not count until you explicitly save them.</p>}
+        {!visibleArtifacts.length && <p className={styles.empty}>{view === 'flashcards' ? 'No flashcards yet. Use “Make a flashcard” in any Petros lesson and it will appear here.' : 'No saved artifacts yet.'}</p>}
         <div className={styles.grid}>
-          {artifacts.map((artifact) => (
+          {visibleArtifacts.map((artifact) => (
             <SavedArtifactCard
               key={artifact.id}
               artifact={artifact}
@@ -176,7 +183,7 @@ function SavedArtifactCard({
   const content = artifact.content;
   const Icon = content.kind === 'diagram' ? Layers3 : content.kind === 'note' ? FileText : BookOpen;
   return (
-    <article className={styles.savedCard}>
+    <article id={`artifact-${artifact.id}`} className={styles.savedCard}>
       <div className={styles.savedHead}><Icon aria-hidden="true" /><span>{content.kind.replace('_', ' ')}</span><small>Revision {artifact.revision}</small></div>
       <h3>{content.title}</h3>
       {(content.kind === 'flashcard' || content.kind === 'rule_card') && <p>{content.front}</p>}
@@ -275,7 +282,7 @@ function DiagramCanvasEditor({
       <p className={styles.canvasSafety}>Text is rendered safely. Markup and executable content are rejected without changing your draft.</p>
       <div className={styles.canvasActions}>
         <button type="button" onClick={() => { setDraft(content); setOpen(false); }}><X aria-hidden="true" /> Cancel</button>
-        <button type="button" onClick={() => void save()} disabled={saving || busy || !draft.title.trim() || !draft.accessibleDescription.trim()}><Save aria-hidden="true" /> {saving ? 'Saving revision…' : 'Save canvas revision'}</button>
+        <button type="button" onClick={() => void save()} disabled={saving || busy || !draft.title.trim() || !draft.accessibleDescription.trim()} aria-busy={saving}><Save aria-hidden="true" /> {saving ? 'Saving revision…' : 'Save canvas revision'}</button>
       </div>
     </section>
   );
@@ -305,7 +312,7 @@ function ArtifactSourceLink({ artifactId, source, sourceIndex }: { artifactId: s
 
   return (
     <span className={styles.sourceReference}>
-      <button type="button" onClick={() => void open()} disabled={resolving}>
+      <button type="button" onClick={() => void open()} disabled={resolving} aria-busy={resolving}>
         {resolving ? 'Opening source…' : source.label}
         {source.pageIndex == null ? '' : ` · page ${source.pageIndex + 1}`}
         {source.institutionRestricted ? ' · restricted source' : ''}

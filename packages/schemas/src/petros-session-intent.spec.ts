@@ -4,6 +4,7 @@ import {
   petrosAssistantQuestionSchema,
   petrosSessionIntentSchema,
   resolvePetrosSessionIntentSchema,
+  startPetrosSessionIntentSchema,
 } from './petros-session-intent';
 
 const id = (prefix: string) => `${prefix.repeat(8)}-${prefix.repeat(4)}-4${prefix.repeat(3)}-8${prefix.repeat(3)}-${prefix.repeat(12)}`;
@@ -62,5 +63,16 @@ describe('Petros Stage 8 intent contract', () => {
   it('rejects external return URLs and unbounded emotional labels', () => {
     expect(resolvePetrosSessionIntentSchema.safeParse({ door: 'result_repair', sourceId: id('1'), idempotencyKey: id('2'), route: 'https://example.com' }).success).toBe(false);
     expect(petrosSessionIntentSchema.shape.emotionalRegister.safeParse('clinically_depressed').success).toBe(false);
+  });
+
+  it('accepts a bounded pre-teaching selection and rejects unknown priorities', () => {
+    expect(startPetrosSessionIntentSchema.safeParse({
+      idempotencyKey: id('1'),
+      plan: { topicId: 'topic-1-2', priority: 'exam_prep', timeBudgetSeconds: 900, existingDoubt: 'Why does this happen?' },
+    }).success).toBe(true);
+    expect(startPetrosSessionIntentSchema.safeParse({
+      idempotencyKey: id('1'),
+      plan: { topicId: 'topic-1-2', priority: 'get_answers', timeBudgetSeconds: 900, existingDoubt: null },
+    }).success).toBe(false);
   });
 });

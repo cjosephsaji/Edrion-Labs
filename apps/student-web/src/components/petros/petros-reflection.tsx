@@ -1,14 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   AlertTriangle,
-  ArrowDown,
   ArrowRight,
-  BrainCircuit,
-  Check,
-  CircleDot,
+  ChevronDown,
+  LayoutGrid,
+  Search,
   Clock3,
   EyeOff,
   FileText,
@@ -16,14 +16,11 @@ import {
   HelpCircle,
   List,
   Map as MapIcon,
-  Maximize2,
   MessageSquareOff,
   RefreshCw,
   RotateCcw,
   Sparkles,
   Target,
-  ZoomIn,
-  ZoomOut,
 } from 'lucide-react';
 import type {
   PetrosGapAlarm,
@@ -34,6 +31,8 @@ import type {
   PetrosSessionIntent,
   PetrosSessionRecap,
 } from '@edrion/schemas';
+import { PageHeader } from '@/components/design-system';
+import { usePetrosPage } from './petros-companion-context';
 import { EmptyState, ErrorState, LoadingBlock } from '@/components/ui/states';
 import {
   formatApiError,
@@ -44,19 +43,23 @@ import styles from './petros-reflection.module.css';
 
 const STATE_LABELS = {
   solid: 'Solid',
-  shaky: 'Shaky',
+  shaky: 'Needs practice',
   untouched: 'Not attempted',
-  insufficient_evidence: 'Insufficient evidence',
+  insufficient_evidence: 'Still learning',
 } as const;
 
 export function PetrosReflection() {
   const api = useStudentApi();
+  const needsPracticeFocus = typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('focus') === 'needs-practice';
   const [data, setData] = useState<PetrosReflectionSurface | null>(null);
   const [loading, setLoading] = useState(true);
   const [rebuilding, setRebuilding] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const [view, setView] = useState<'map' | 'list'>('map');
+  const [view, setView] = useState<'subjects' | 'list'>('subjects');
+  const [search, setSearch] = useState('');
+  const [stateFilter, setStateFilter] = useState(needsPracticeFocus ? 'shaky' : 'all');
   const [selectedConceptId, setSelectedConceptId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -81,6 +84,12 @@ export function PetrosReflection() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (!needsPracticeFocus) return;
+    setStateFilter('shaky');
+    setNotice('These recommendations are based on places where your own work shows another pass would help.');
+  }, [needsPracticeFocus]);
+
   const rebuild = async () => {
     setRebuilding(true);
     setError('');
@@ -89,7 +98,7 @@ export function PetrosReflection() {
         idempotencyKey: newIdempotencyKey(),
       });
       setData(result);
-      setNotice('Reflection rebuilt from current learner evidence.');
+      setNotice('Your progress is up to date.');
     } catch (caught) {
       setError(formatApiError(caught));
     } finally {
@@ -97,198 +106,180 @@ export function PetrosReflection() {
     }
   };
 
-  if (loading) return <LoadingBlock label="Building your evidence map…" />;
-  if (error && !data) return <ErrorState description={error} onRetry={() => void load()} />;
-  if (!data) return null;
+  usePetrosPage(data ? {
+    title: 'Learning progress',
+    summary: `${data.map.topics.length} topics. ${data.map.coverage.solid ?? 0} solid, ${data.map.coverage.shaky ?? 0} need practice.${data.stale ? ' Progress needs refreshing before starting a recommendation.' : ''}`,
+    candidates: data.recommendations.slice(0, 4).map((recommendation) => ({
+      ref: recommendation.id,
+      entityType: 'reflection_recommendation' as const,
+      entityId: recommendation.id,
+      title: recommendation.title,
+      summary: recommendation.whyThis,
+      href: '/progress',
+    })),
+  } : null);
 
-  const selected = data.map.topics.find((topic) => topic.conceptId === selectedConceptId) ?? null;
-  const activeCalibration = data.calibration?.status === 'active' ? data.calibration : null;
-  const activeAlarms = data.alarms.filter(
+  const topics = data?.map.topics ?? [];
+  const filteredTopics = topics.filter((topic) =>
+    (stateFilter === 'all' || topic.state === stateFilter) &&
+    `${topic.title} ${topic.subjectLabel}`.toLowerCase().includes(search.trim().toLowerCase()),
+  );
+  const selected = filteredTopics.find((topic) => topic.conceptId === selectedConceptId) ?? null;
+  const activeCalibration = data?.calibration?.status === 'active' ? data.calibration : null;
+  const activeAlarms = data?.alarms.filter(
     (alarm) =>
       alarm.status === 'active' ||
       (alarm.status === 'snoozed' && alarm.snoozedUntil && Date.parse(alarm.snoozedUntil) <= Date.now()),
-  );
+  ) ?? [];
+  const recommendations = data?.recommendations.slice(0, 4) ?? [];
+  const recaps = data?.recaps.filter((recap) => recap.status !== 'dismissed').slice(0, 4) ?? [];
 
   return (
-    <main className={styles.page}>
-      <header className={styles.hero}>
-        <p><MapIcon aria-hidden="true" /> Learning progress</p>
-        <h1>What should I do next?</h1>
-        <p className={styles.heroCopy}>
-          A syllabus map built from your evidence. “Not attempted” is kept separate from “not
-          mastered,” and every action says why it appears.
-        </p>
-        <div className={styles.heroMeta}>
-          <span><Clock3 aria-hidden="true" />{data.rebuiltAt ? `Updated ${formatAge(data.rebuiltAt)}` : 'Not built yet'}</span>
-          <span><BrainCircuit aria-hidden="true" />Built from your own work</span>
-          <button type="button" onClick={() => void rebuild()} disabled={rebuilding}>
-            <RefreshCw aria-hidden="true" className={rebuilding ? styles.spin : ''} />
-            {rebuilding ? 'Rebuilding…' : 'Rebuild from evidence'}
-          </button>
-        </div>
-      </header>
-
-      {data.stale ? (
-        <section className={styles.stale} role="status">
-          <AlertTriangle aria-hidden="true" />
-          <div>
-            <strong>This reflection may be behind the latest evidence.</strong>
-            <p>Rebuild before relying on a next action. No state is silently treated as current.</p>
-          </div>
-        </section>
-      ) : null}
-      {notice ? <p className={styles.notice} role="status">{notice}</p> : null}
-      {error ? <p className={styles.inlineError} role="alert">{error}</p> : null}
-
-      <section className={styles.nextSection} aria-labelledby="next-actions-heading">
-        <div className={styles.sectionHead}>
-          <div><p>Finite next steps</p><h2 id="next-actions-heading">Highest-value actions</h2></div>
-          <span>{data.recommendations.length} shown at most</span>
-        </div>
-        {data.recommendations.length ? (
-          <div className={styles.recommendationGrid}>
-            {data.recommendations.slice(0, 4).map((recommendation, index) => (
-              <RecommendationCard
-                key={recommendation.id}
-                recommendation={recommendation}
-                rank={index + 1}
-                stale={data.stale}
-                onStart={(intent) => setNotice(`Preview ready: ${intent.goal}`)}
-                onChanged={() => void load()}
-                onError={setError}
-              />
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            icon={Target}
-            title="No ranked next action yet"
-            description="The map will not invent a weakness. Try a syllabus topic or complete a checked response to create useful evidence."
-            action={<a href="/learning-path">Open learning path</a>}
-          />
-        )}
-      </section>
-
-      <section className={styles.mapSection} aria-labelledby="knowledge-map-heading">
-        <div className={styles.mapToolbar}>
-          <div>
-            <p>Syllabus evidence</p>
-            <h2 id="knowledge-map-heading">Knowledge map</h2>
-          </div>
-          <div role="group" aria-label="Knowledge map view">
-            <button type="button" aria-pressed={view === 'map'} onClick={() => setView('map')}>
-              <MapIcon aria-hidden="true" /> Visual map
-            </button>
-            <button type="button" aria-pressed={view === 'list'} onClick={() => setView('list')}>
-              <List aria-hidden="true" /> Accessible list
+    <div className={styles.page}>
+      <PageHeader
+        eyebrow="Your learning"
+        title="Progress"
+        description="See what’s clicking, what needs practice, and where to go next."
+        actions={data ? (
+          <div className={styles.updateActions}>
+            <span>{data.rebuiltAt ? `Updated ${formatAge(data.rebuiltAt)}` : 'Not updated yet'}</span>
+            <button type="button" onClick={() => void rebuild()} disabled={rebuilding || loading} aria-busy={rebuilding} data-loading-indicator={rebuilding || undefined}>
+              <RefreshCw aria-hidden="true" className={rebuilding ? styles.spin : ''} />
+              {rebuilding ? 'Refreshing…' : 'Refresh progress'}
             </button>
           </div>
-        </div>
-        <Legend coverage={data.map.coverage} />
-        {!data.map.topics.length ? (
-          <EmptyState
-            icon={MapIcon}
-            title="No published syllabus topics are linked"
-            description="Nothing is labelled weak. A published curriculum/topic link or owned learning path is needed before a map can be drawn."
-          />
-        ) : view === 'map' ? (
-          <VisualKnowledgeMap
-            topics={data.map.topics}
-            selectedConceptId={selectedConceptId}
-            onSelect={setSelectedConceptId}
-          />
-        ) : (
-          <KnowledgeMapList
-            topics={data.map.topics}
-            selectedConceptId={selectedConceptId}
-            onSelect={setSelectedConceptId}
-          />
-        )}
-        {selected ? (
-          <TopicDetail
-            topic={selected}
-            relatedAlarms={activeAlarms.filter((alarm) =>
-              alarm.content.affectedTopics.some((topic) => topic.topicId === selected.topicId) ||
-              alarm.content.prerequisiteConceptId === selected.conceptId,
-            )}
-          />
+        ) : undefined}
+      />
+      {loading && !data ? <LoadingBlock label="Loading your progress…" /> : null}
+      {error && !data ? <ErrorState description={error} onRetry={() => void load()} /> : null}
+      {data ? <>
+        {data.stale ? (
+          <div className={styles.stale} role="status">
+            <AlertTriangle aria-hidden="true" />
+            <p>There’s newer learning activity. Refresh your progress to update these suggestions.</p>
+            <button type="button" onClick={() => void rebuild()} disabled={rebuilding} aria-busy={rebuilding}>
+              {rebuilding ? 'Refreshing…' : 'Refresh now'}<ArrowRight aria-hidden="true" />
+            </button>
+          </div>
         ) : null}
-        <details className={styles.thresholds}>
-          <summary>How the map decides each state</summary>
-          <ul>
-            <li>Not attempted: zero learner evidence.</li>
-            <li>Insufficient evidence: fewer than {data.thresholds.mapMinimumEvidence} independent evidence items.</li>
-            <li>Solid: mastery at least {formatPercent(data.thresholds.solidMasteryBasisPoints)}, uncertainty no more than {formatPercent(data.thresholds.maximumSolidUncertaintyBasisPoints)}, and evidence no older than {data.thresholds.staleDays} days.</li>
-            <li>Shaky: enough evidence exists, but one or more solid conditions is not met.</li>
-          </ul>
-        </details>
-      </section>
+        {notice ? <p className={styles.notice} role="status">{notice}</p> : null}
+        {error ? <p className={styles.inlineError} role="alert">{error}</p> : null}
 
-      <div className={styles.reflectionGrid}>
-        {activeCalibration ? (
-          <CalibrationMirror
-            insight={activeCalibration}
-            stale={data.stale}
-            onChanged={() => void load()}
-            onError={setError}
-          />
-        ) : (
-          <section className={styles.quietCard} aria-labelledby="calibration-heading">
-            <EyeOff aria-hidden="true" />
-            <div>
-              <h2 id="calibration-heading">Calibration mirror is quiet</h2>
-              <p>
-                {data.calibration?.eligible
-                  ? 'You quieted or dismissed this optional insight. Core learning remains unchanged.'
-                  : `It stays hidden until at least ${data.thresholds.calibrationMinimumEvidence} confidence-and-outcome pairs exist.`}
-              </p>
+        <section className={styles.summary} aria-label="Topic progress summary">
+          {(Object.keys(STATE_LABELS) as Array<keyof typeof STATE_LABELS>).map((state) => (
+            <div key={state} data-state={state}>
+              <span className={styles.statePill}>{STATE_LABELS[state]}</span>
+              <strong>{data.map.coverage[state] ?? 0}</strong>
+              <small>{state === 'solid' ? 'Backed by recent practice' : state === 'shaky' ? 'Worth another look' : state === 'untouched' ? 'Ready when you are' : 'A few more attempts will help'}</small>
             </div>
-          </section>
-        )}
-        <section className={styles.recapSection} aria-labelledby="recaps-heading">
-          <div className={styles.cardHead}>
-            <span><FileText aria-hidden="true" /></span>
-            <div><p>Session history</p><h2 id="recaps-heading">How you learned</h2></div>
+          ))}
+        </section>
+
+        <section className={styles.nextSection} aria-labelledby="next-actions-heading">
+          <div className={styles.sectionHead}>
+            <div><h2 id="next-actions-heading">Where to focus next</h2></div>
+            <Link href="/learning-path">Your learning path <ArrowRight aria-hidden="true" /></Link>
           </div>
-          {data.recaps.filter((recap) => recap.status !== 'dismissed').length ? (
-            <div className={styles.recapList}>
-              {data.recaps.filter((recap) => recap.status !== 'dismissed').slice(0, 4).map((recap) => (
-                <RecapCard key={recap.id} recap={recap} onChanged={() => void load()} onError={setError} />
+          {recommendations.length ? (
+            <div className={styles.recommendationGrid}>
+              {recommendations.map((recommendation, index) => (
+                <RecommendationCard
+                  key={recommendation.id}
+                  recommendation={recommendation}
+                  rank={index + 1}
+                  stale={data.stale}
+                  onStart={(intent) => setNotice(`Session ready: ${intent.goal}`)}
+                  onChanged={() => void load()}
+                  onError={setError}
+                />
               ))}
             </div>
           ) : (
-            <p className={styles.emptyCopy}>Close a learning session to see observations about that session’s process. One session never becomes a permanent preference.</p>
+            <div className={styles.emptyPanel}>
+              <Target aria-hidden="true" />
+              <div><h3>Your next step starts with a little practice</h3><p>Try a topic with Petros. Your answers will help identify what to work on next.</p></div>
+              <Link href="/learn">Start learning <ArrowRight aria-hidden="true" /></Link>
+            </div>
           )}
         </section>
-      </div>
 
-      <section className={styles.alarmSection} aria-labelledby="gap-alarms-heading">
-        <div className={styles.sectionHead}>
-          <div><p>Prerequisite hypotheses</p><h2 id="gap-alarms-heading">Gap alarms</h2></div>
-          <span>Shown only after minimum independent evidence</span>
+        <section className={styles.mapSection} aria-labelledby="knowledge-map-heading">
+          <div className={styles.mapToolbar}>
+            <div><h2 id="knowledge-map-heading">Your topics</h2></div>
+            <div role="group" aria-label="Topic view">
+              <button type="button" aria-pressed={view === 'subjects'} onClick={() => setView('subjects')}>
+                <LayoutGrid aria-hidden="true" /> By subject
+              </button>
+              <button type="button" aria-pressed={view === 'list'} onClick={() => setView('list')}>
+                <List aria-hidden="true" /> List
+              </button>
+            </div>
+          </div>
+          {topics.length ? <>
+            <div className={styles.topicFilters}>
+              <label className={styles.search}><Search aria-hidden="true" /><input aria-label="Search topics or subjects" placeholder="Find a topic or subject…" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
+              <select aria-label="Filter topics by progress" value={stateFilter} onChange={(event) => setStateFilter(event.target.value)}>
+                <option value="all">All progress</option>
+                {Object.entries(STATE_LABELS).map(([state, label]) => <option key={state} value={state}>{label}</option>)}
+              </select>
+            </div>
+            {data.map.missingSyllabusLinks > 0 ? <p className={styles.contextNote}>Includes topics from your own sessions. This is your learning history, not a measure of syllabus completion.</p> : null}
+            {!filteredTopics.length ? (
+              <div className={styles.emptyPanel}>
+                <Search aria-hidden="true" />
+                <div><h3>No matching topics</h3><p>Try another name or show all progress.</p></div>
+                <button type="button" onClick={() => { setSearch(''); setStateFilter('all'); }}>Clear filters</button>
+              </div>
+            ) : view === 'subjects' ? (
+              <TopicGroups topics={filteredTopics} selectedConceptId={selectedConceptId} onSelect={setSelectedConceptId} />
+            ) : (
+              <KnowledgeMapList topics={filteredTopics} selectedConceptId={selectedConceptId} onSelect={setSelectedConceptId} />
+            )}
+            {selected ? (
+              <TopicDetail
+                topic={selected}
+                relatedAlarms={activeAlarms.filter((alarm) =>
+                  alarm.content.affectedTopics.some((topic) => topic.topicId === selected.topicId) ||
+                  alarm.content.prerequisiteConceptId === selected.conceptId,
+                )}
+              />
+            ) : null}
+          </> : <EmptyState icon={MapIcon} title="Your progress starts here" description="Topics will appear as you learn with Petros or follow a learning path. Untried topics won’t be marked as weaknesses." action={<Link href="/learn">Start learning</Link>} />}
+          <details className={styles.thresholds}>
+            <summary>How progress is measured</summary>
+            <ul>
+              <li>Not attempted: no practice recorded yet. This does not mean you are weak at the topic.</li>
+              <li>Still learning: fewer than {data.thresholds.mapMinimumEvidence} independent practice results. There is not enough evidence to judge understanding yet.</li>
+              <li>Solid: mastery at least {formatPercent(data.thresholds.solidMasteryBasisPoints)}, uncertainty no more than {formatPercent(data.thresholds.maximumSolidUncertaintyBasisPoints)}, and practice within {data.thresholds.staleDays} days.</li>
+              <li>Needs practice: enough evidence exists, but understanding or freshness needs another check.</li>
+            </ul>
+          </details>
+        </section>
+
+        <div className={styles.reflectionGrid} data-calibration={Boolean(activeCalibration)}>
+          {activeCalibration ? <CalibrationMirror insight={activeCalibration} stale={data.stale} onChanged={() => void load()} onError={setError} /> : null}
+          <section className={styles.recapSection} aria-labelledby="recaps-heading">
+            <div className={styles.cardHead}>
+              <span><FileText aria-hidden="true" /></span>
+              <div><h2 id="recaps-heading">Recent learning</h2></div>
+            </div>
+            {recaps.length ? (
+              <div className={styles.recapList}>{recaps.map((recap) => <RecapCard key={recap.id} recap={recap} onChanged={() => void load()} onError={setError} />)}</div>
+            ) : <p className={styles.emptyCopy}>Finish a session with Petros to see what you tried, what helped, and what to try next.</p>}
+          </section>
         </div>
-        {activeAlarms.length ? (
-          <div className={styles.alarmGrid}>
-            {activeAlarms.map((alarm) => (
-              <GapAlarmCard key={alarm.id} alarm={alarm} stale={data.stale} onChanged={() => void load()} onError={setError} />
-            ))}
-          </div>
-        ) : (
-          <div className={styles.noAlarm}>
-            <Check aria-hidden="true" />
-            <div><strong>No supported prerequisite cluster right now.</strong><p>Unrelated doubts and small samples stay unlabelled.</p></div>
-          </div>
-        )}
-      </section>
 
-      <footer className={styles.disclosure}>
-        <Focus aria-hidden="true" />
-        <p>
-          Reflection uses structured learning evidence, not personality profiling. Voice is optional
-          elsewhere and is never required here. This surface is not a score, rank, feed, or public comparison.
-        </p>
-      </footer>
-    </main>
+        {activeAlarms.length ? <section className={styles.alarmSection} aria-labelledby="gap-alarms-heading">
+          <div className={styles.sectionHead}><div><h2 id="gap-alarms-heading">A foundation to revisit</h2></div></div>
+          <div className={styles.alarmGrid}>{activeAlarms.map((alarm) => <GapAlarmCard key={alarm.id} alarm={alarm} stale={data.stale} onChanged={() => void load()} onError={setError} />)}</div>
+        </section> : null}
+
+        <footer className={styles.disclosure}>
+          <Focus aria-hidden="true" />
+          <p>Based on your own work. Untried topics aren’t weaknesses, and a single session doesn’t define how you learn.</p>
+        </footer>
+      </> : null}
+    </div>
   );
 }
 
@@ -360,10 +351,10 @@ function RecommendationCard({
     }
   };
   return (
-    <article className={styles.recommendation}>
+    <article className={styles.recommendation} data-petros-target={`entity:reflection_recommendation:${recommendation.id}`}>
       <span className={styles.rank}>#{rank}</span>
       <p>
-        {recommendation.sessionType} ·{' '}
+        {humanize(recommendation.sessionType)} ·{' '}
         {recommendation.evidenceAgeDays == null
           ? 'nothing recorded yet'
           : recommendation.evidenceAgeDays === 0
@@ -371,12 +362,13 @@ function RecommendationCard({
             : `last worked on ${recommendation.evidenceAgeDays} ${recommendation.evidenceAgeDays === 1 ? 'day' : 'days'} ago`}
       </p>
       <h3>{recommendation.title}</h3>
+      <p className={styles.recommendationReason}>{recommendation.whyThis}</p>
       <details>
         <summary><HelpCircle aria-hidden="true" /> Why this?</summary>
         <ol>{recommendation.reasons.map((reason) => <li key={reason.code}><strong>{reason.code.replaceAll('_', ' ')}</strong> — {reason.label}</li>)}</ol>
         <p>Transparent rank total: {recommendation.score} points.</p>
       </details>
-      <button type="button" disabled={loading || stale} onClick={() => void start()}>
+      <button type="button" disabled={loading || stale} aria-busy={loading} onClick={() => void start()}>
         <Sparkles aria-hidden="true" />{loading ? 'Preparing preview…' : recommendation.actionLabel}
       </button>
       <button type="button" className={styles.dismissAction} disabled={loading} onClick={() => void dismiss()}>
@@ -384,94 +376,51 @@ function RecommendationCard({
       </button>
       {preview ? (
         <div className={styles.intentPreview} role="status">
-          <strong>Stage 8 preview created</strong>
+          <strong>Your session is ready</strong>
           <p>{preview.goal}</p>
-          <button type="button" onClick={() => void confirmStart()} disabled={loading}>Start this scoped session <ArrowRight aria-hidden="true" /></button>
+          <button type="button" onClick={() => void confirmStart()} disabled={loading || stale}>Start session <ArrowRight aria-hidden="true" /></button>
         </div>
       ) : null}
     </article>
   );
 }
 
-function Legend({ coverage }: { coverage: Record<string, number> }) {
-  return (
-    <ul className={styles.legend} aria-label="Knowledge state legend">
-      {(Object.keys(STATE_LABELS) as Array<keyof typeof STATE_LABELS>).map((state) => (
-        <li key={state} data-state={state}><span aria-hidden="true" />{STATE_LABELS[state]} <strong>{coverage[state] ?? 0}</strong></li>
-      ))}
-    </ul>
-  );
-}
-
-function VisualKnowledgeMap({
-  topics,
-  selectedConceptId,
-  onSelect,
-}: {
+function TopicGroups({ topics, selectedConceptId, onSelect }: {
   topics: PetrosKnowledgeMapTopic[];
   selectedConceptId: string | null;
   onSelect: (conceptId: string) => void;
 }) {
-  const viewportRef = useRef<HTMLDivElement | null>(null);
-  const [zoom, setZoom] = useState(1);
-  const bySubject = useMemo(() => {
-    const groups = new Map<string, PetrosKnowledgeMapTopic[]>();
-    for (const topic of topics) groups.set(topic.subjectLabel, [...(groups.get(topic.subjectLabel) ?? []), topic]);
-    return [...groups.entries()];
+  const [showAll, setShowAll] = useState(false);
+  const groups = useMemo(() => {
+    const subjects = new Map<string, PetrosKnowledgeMapTopic[]>();
+    for (const topic of topics) {
+      const label = topic.subjectLabel.trim() || 'Other topics';
+      subjects.set(label, [...(subjects.get(label) ?? []), topic]);
+    }
+    // Bring subjects with actual practice to the top, without calling untouched topics weak.
+    return [...subjects.entries()].sort((a, b) =>
+      Number(b[1].some((topic) => topic.evidenceCount > 0)) - Number(a[1].some((topic) => topic.evidenceCount > 0)) || a[0].localeCompare(b[0]),
+    );
   }, [topics]);
-  const focusTopic = (direction: number) => {
-    const index = Math.max(0, topics.findIndex((topic) => topic.conceptId === selectedConceptId));
-    const next = topics[(index + direction + topics.length) % topics.length];
-    if (!next) return;
-    onSelect(next.conceptId);
-    viewportRef.current?.querySelector<HTMLButtonElement>(`[data-concept="${CSS.escape(next.conceptId)}"]`)?.focus();
-  };
+
   return (
-    <div className={styles.visualShell}>
-      <div className={styles.zoomControls} role="group" aria-label="Map zoom controls">
-        <button type="button" onClick={() => setZoom((value) => Math.max(.75, value - .25))} aria-label="Zoom out"><ZoomOut aria-hidden="true" /></button>
-        <span>{Math.round(zoom * 100)}%</span>
-        <button type="button" onClick={() => setZoom((value) => Math.min(1.5, value + .25))} aria-label="Zoom in"><ZoomIn aria-hidden="true" /></button>
-        <button type="button" onClick={() => setZoom(1)} aria-label="Reset zoom"><Maximize2 aria-hidden="true" /></button>
-      </div>
-      <p className={styles.keyboardHelp}>Arrow keys move between topics. The map scrolls normally and does not capture Tab.</p>
-      <div
-        ref={viewportRef}
-        className={styles.visualViewport}
-        tabIndex={0}
-        aria-label="Scrollable knowledge map. Use arrow keys to move between topic buttons."
-        onKeyDown={(event) => {
-          if (event.key === 'ArrowRight' || event.key === 'ArrowDown') { event.preventDefault(); focusTopic(1); }
-          if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') { event.preventDefault(); focusTopic(-1); }
-        }}
-      >
-        <div className={styles.visualMap} style={{ '--map-zoom': zoom } as React.CSSProperties}>
-          {bySubject.map(([subject, items]) => (
-            <section key={subject} className={styles.subjectLane} aria-labelledby={`subject-${safeId(subject)}`}>
-              <h3 id={`subject-${safeId(subject)}`}>{subject}</h3>
-              <div>
-                {items.map((topic, index) => (
-                  <div key={topic.conceptId} className={styles.nodeStep}>
-                    {index ? <ArrowDown aria-hidden="true" /> : null}
-                    <button
-                      type="button"
-                      data-concept={topic.conceptId}
-                      data-state={topic.state}
-                      aria-pressed={selectedConceptId === topic.conceptId}
-                      aria-label={`${topic.title}: ${STATE_LABELS[topic.state]}, ${topic.stateExplanation}`}
-                      onClick={() => onSelect(topic.conceptId)}
-                    >
-                      <span aria-hidden="true"><CircleDot /></span>
-                      <strong>{topic.title}</strong>
-                      <small>{STATE_LABELS[topic.state]} · {topic.freshness}</small>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      </div>
+    <div className={styles.subjectGroups}>
+      {(showAll ? groups : groups.slice(0, 6)).map(([subject, items]) => (
+        <details className={styles.subjectGroup} key={subject} open>
+          <summary><span><strong>{subject}</strong><small>{items.length} {items.length === 1 ? 'topic' : 'topics'} · {items.filter((topic) => topic.state === 'solid').length} solid</small></span><ChevronDown aria-hidden="true" /></summary>
+          <ul>
+            {items.map((topic) => (
+              <li key={topic.conceptId}>
+                <button type="button" aria-pressed={selectedConceptId === topic.conceptId} aria-label={`${topic.title}: ${STATE_LABELS[topic.state]}`} onClick={() => onSelect(topic.conceptId)}>
+                  <span className={styles.topicName}>{topic.title}<small>{topic.evidenceCount ? `${topic.evidenceCount} practice ${topic.evidenceCount === 1 ? 'result' : 'results'}` : 'No practice yet'}</small></span>
+                  <span className={styles.statePill} data-state={topic.state}>{STATE_LABELS[topic.state]}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </details>
+      ))}
+      {groups.length > 6 ? <button type="button" className={styles.showSubjects} onClick={() => setShowAll((value) => !value)}>{showAll ? 'Show fewer subjects' : `Show all ${groups.length} subjects`}</button> : null}
     </div>
   );
 }
@@ -488,8 +437,8 @@ function KnowledgeMapList({
   return (
     <div className={styles.tableWrap}>
       <table>
-        <caption className="sr-only">Knowledge map list equivalent</caption>
-        <thead><tr><th scope="col">Topic</th><th scope="col">State</th><th scope="col">Evidence</th><th scope="col">Age</th><th scope="col">Relationships</th></tr></thead>
+        <caption className="sr-only">Topic progress list</caption>
+        <thead><tr><th scope="col">Topic</th><th scope="col">Progress</th><th scope="col">Practice results</th><th scope="col">Last practiced</th><th scope="col">Relationships</th></tr></thead>
         <tbody>
           {topics.map((topic) => (
             <tr key={topic.conceptId} data-selected={selectedConceptId === topic.conceptId}>
@@ -543,7 +492,7 @@ function CalibrationMirror({ insight, stale, onChanged, onError }: { insight: No
   };
   return (
     <section className={styles.calibrationCard} aria-labelledby="calibration-heading">
-      <div className={styles.cardHead}><span><Target aria-hidden="true" /></span><div><p>Occasional, optional</p><h2 id="calibration-heading">{insight.headline}</h2></div></div>
+      <div className={styles.cardHead}><span><Target aria-hidden="true" /></span><div><h2 id="calibration-heading">{insight.headline}</h2></div></div>
       <p>{insight.explanation}</p>
       <dl>
         <div><dt>Sample</dt><dd>{insight.evidenceCount} predictions</dd></div>
@@ -636,4 +585,3 @@ function ReflectionIntentButton({ recommendationId, label, disabled, onError }: 
 function formatPercent(basisPoints: number) { return `${Math.round(basisPoints / 100)}%`; }
 function formatAge(value: string) { const days = Math.max(0, Math.floor((Date.now() - Date.parse(value)) / 86_400_000)); return days === 0 ? 'today' : `${days} day${days === 1 ? '' : 's'} ago`; }
 function humanize(value: string) { return value.replace(/[_:-]+/g, ' ').replace(/\s+/g, ' ').trim(); }
-function safeId(value: string) { return value.toLowerCase().replace(/[^a-z0-9]+/g, '-'); }

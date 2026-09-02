@@ -51,7 +51,11 @@ import { StudentCommsService } from "./comms/student-comms.service";
 import { StudentCalendarController } from "./calendar/student-calendar.controller";
 import { StudentCalendarService } from "./calendar/student-calendar.service";
 import { StudentMaterialsController } from "./materials/student-materials.controller";
+import { MaterialDocumentPreviewService } from "./materials/material-document-preview.service";
+import { MaterialVisualPreviewService } from "./materials/material-visual-preview.service";
 import { StudentMaterialsService } from "./materials/student-materials.service";
+import { StudentNotesController } from "./notes/student-notes.controller";
+import { StudentNotesService } from "./notes/student-notes.service";
 import { StudentDocumentsController } from "./documents/student-documents.controller";
 import { StudentDocumentsService } from "./documents/student-documents.service";
 import { StudentSurfacesController } from "./surfaces/student-surfaces.controller";
@@ -111,6 +115,7 @@ import { PetrosLearnerModelModule } from "../petros-learner-model/petros-learner
     StudentNotificationsController,
     StudentCalendarController,
     StudentMaterialsController,
+    StudentNotesController,
     StudentDocumentsController,
     StudentSurfacesController,
     StudentPortalRuntimeConfigController,
@@ -138,7 +143,10 @@ import { PetrosLearnerModelModule } from "../petros-learner-model/petros-learner
     StudentReportCardsService,
     StudentCommsService,
     StudentCalendarService,
+    MaterialDocumentPreviewService,
+    MaterialVisualPreviewService,
     StudentMaterialsService,
+    StudentNotesService,
     StudentDocumentsService,
     StudentSurfacesReadService,
     FeesSummaryService,

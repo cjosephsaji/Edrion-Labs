@@ -210,6 +210,10 @@ import { PortalHomeworkController } from "./homework/portal-homework.controller"
 import { PortalHomeworkService } from "./homework/portal-homework.service";
 import { PortalCourseContentController } from "./course-content/portal-course-content.controller";
 import { PortalCourseContentService } from "./course-content/portal-course-content.service";
+import { MaterialDocumentPreviewService } from "../student/materials/material-document-preview.service";
+import { MaterialVisualPreviewService } from "../student/materials/material-visual-preview.service";
+import { PortalTeachingController } from "./teaching/portal-teaching.controller";
+import { PortalTeachingService } from "./teaching/portal-teaching.service";
 import { PortalCoursesController } from "./courses/portal-courses.controller";
 import { PortalCoursesService } from "./courses/portal-courses.service";
 import { PortalReportCardsController } from "./report-cards/portal-report-cards.controller";
@@ -302,6 +306,7 @@ import { CalendarEventsService } from "./calendar-events/calendar-events.service
     AdmissionInfoController,
     PortalHomeworkController,
     PortalCourseContentController,
+    PortalTeachingController,
     PortalCoursesController,
     PortalReportCardsController,
     PortalMockExamsController,
@@ -441,6 +446,9 @@ import { CalendarEventsService } from "./calendar-events/calendar-events.service
     AdmissionInfoService,
     PortalHomeworkService,
     PortalCourseContentService,
+    MaterialDocumentPreviewService,
+    MaterialVisualPreviewService,
+    PortalTeachingService,
     PortalCoursesService,
     PortalReportCardsService,
     PortalLearningSummaryService,

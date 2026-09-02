@@ -76,6 +76,7 @@ export * from './petros-learner-model';
 export * from './petros-topic-profiles';
 export * from './petros-quality';
 export * from './petros-companion';
+export * from './petros-mentor';
 export * from './copilot';
 export * from './integrations';
 export * from './registration';

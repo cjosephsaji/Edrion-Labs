@@ -278,7 +278,10 @@ export const petrosHandwritingEvaluationSchema = z
 export type PetrosHandwritingEvaluation = z.infer<typeof petrosHandwritingEvaluationSchema>;
 
 export const processPetrosMediaSchema = z
-  .object({ idempotencyKey: z.string().uuid() })
+  .object({
+    idempotencyKey: z.string().uuid(),
+    language: z.enum(['en', 'hi', 'ml', 'ta', 'te', 'kn', 'auto']).optional(),
+  })
   .strict();
 export type ProcessPetrosMediaInput = z.infer<typeof processPetrosMediaSchema>;
 

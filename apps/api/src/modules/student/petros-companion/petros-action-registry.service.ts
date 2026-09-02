@@ -1,7 +1,7 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { and, desc, eq, schema, type Database } from '@edrion/database';
+import { and, desc, eq, schema, sql, type Database } from '@edrion/database';
 import {
   PETROS_MUTATING_ACTIONS,
   resolvePetrosRoute,
@@ -56,15 +56,26 @@ const portalPath = z
   .refine((value) => value.startsWith('/'), 'Must be a portal path')
   .refine((value) => !value.startsWith('//') && !value.startsWith('/\\'), 'Must not leave the portal');
 
+const sessionProposalArguments = z.object({
+  sourceRef: z.string().trim().min(1).max(160),
+  question: z.string().trim().min(3).max(600),
+  minutes: z.number().int().min(5).max(45).default(15),
+}).strict();
+
+/** Stored after the browser hint has been resolved to an owner-scoped record. */
+const sessionExecutionArguments = z.object({
+  sourceId: z.string().trim().min(1).max(240),
+  question: z.string().trim().min(3).max(600),
+  minutes: z.number().int().min(5).max(45),
+  route: portalPath,
+  door: z.enum(['assistant_handoff', 'uploaded_document']),
+}).strict();
+
 const ARGUMENT_SCHEMAS = {
   'navigate.open': z.object({ href: portalPath }).strict(),
-  'session.preview_and_start': z
-    .object({
-      sourceRef: z.string().trim().min(1).max(160),
-      question: z.string().trim().min(3).max(600),
-      minutes: z.number().int().min(5).max(45).default(15),
-    })
-    .strict(),
+  // The first shape is accepted from the model. The second is the authoritative shape
+  // persisted after validation and accepted again when the student confirms.
+  'session.preview_and_start': z.union([sessionProposalArguments, sessionExecutionArguments]),
   'session.resume': z.object({ sessionId: z.string().uuid() }).strict(),
   'planner.create': z
     .object({
@@ -169,19 +180,30 @@ export class PetrosActionRegistryService {
       case 'session.preview_and_start': {
         const candidate = context.candidates.find((item) => item.ref === args.sourceRef);
         if (!candidate?.entityId) return null;
+        const materialSource = candidate.entityType === 'material'
+          ? await this.learningSourceForMaterial(principal, candidate.entityId)
+          : null;
+        // A material lesson must be grounded in its extracted pages. Falling back to a
+        // generic assistant session is what made "teach this" feel like a revision detour.
+        if (candidate.entityType === 'material' && !materialSource) return null;
         return {
           actionKey,
           title: `Work through ${candidate.title}`,
           preview: [
-            `Opens a guided Petros session on ${candidate.title}`,
+            materialSource
+              ? materialSource.pageCount
+                ? `Teaches directly from ${materialSource.pageCount} extracted ${materialSource.pageCount === 1 ? 'page' : 'pages'} of ${candidate.title}`
+                : `Teaches directly from the extracted pages of ${candidate.title}`
+              : `Opens a guided Petros session on ${candidate.title}`,
             `About ${args.minutes} minutes`,
             'Your question is carried into the session',
           ],
           arguments: {
-            sourceId: candidate.entityId,
+            sourceId: materialSource?.id ?? candidate.entityId,
             question: args.question,
             minutes: args.minutes,
             route: context.route,
+            door: materialSource ? 'uploaded_document' : 'assistant_handoff',
           },
           confirmationRequired,
         };
@@ -314,13 +336,15 @@ export class PetrosActionRegistryService {
       }
 
       case 'session.preview_and_start': {
+        const door = args.door === 'uploaded_document' ? 'uploaded_document' : 'assistant_handoff';
         const intent = await this.intents.resolve(principal, {
-          door: 'assistant_handoff',
+          door,
           sourceId: String(args.sourceId),
           idempotencyKey: derive(executionKey, 'resolve'),
           timeBudgetSeconds: Number(args.minutes ?? 15) * 60,
-          question: String(args.question),
-          route: String(args.route ?? '/home'),
+          ...(door === 'assistant_handoff'
+            ? { question: String(args.question), route: String(args.route ?? '/home') }
+            : {}),
           language: 'en',
           accessibility: [],
         } as never);
@@ -330,7 +354,7 @@ export class PetrosActionRegistryService {
         const sessionId = (started as { session: { id: string } }).session.id;
         return {
           href: `/petros/session?session=${sessionId}`,
-          message: 'Session ready.',
+          message: door === 'uploaded_document' ? 'Document lesson ready.' : 'Session ready.',
           resultRef: sessionId,
         };
       }
@@ -443,6 +467,25 @@ export class PetrosActionRegistryService {
           eq(schema.petrosLearningSessions.institutionId, principal.institutionId),
         ),
       )
+      .limit(1)
+      .then((rows) => rows[0]);
+  }
+
+  private learningSourceForMaterial(principal: InstitutionalStudentPrincipal, materialId: string) {
+    return this.db
+      .select({ id: schema.knowledgeItems.id, pageCount: schema.knowledgeItems.pageCount })
+      .from(schema.knowledgeItems)
+      .where(
+        and(
+          eq(schema.knowledgeItems.institutionId, principal.institutionId),
+          eq(schema.knowledgeItems.studentId, principal.studentId),
+          eq(schema.knowledgeItems.status, 'ready'),
+          eq(schema.knowledgeItems.extractedTextReady, true),
+          eq(schema.knowledgeItems.indexReady, true),
+          sql`${schema.knowledgeItems.origin}->>'classMaterialId' = ${materialId}`,
+        ),
+      )
+      .orderBy(desc(schema.knowledgeItems.updatedAt))
       .limit(1)
       .then((rows) => rows[0]);
   }

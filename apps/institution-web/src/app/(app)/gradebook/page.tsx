@@ -91,7 +91,7 @@ export default function GradebookPage() {
       <ResourceManager<GradeEntryRow>
       resource="gradebook"
       title="Gradebook"
-      noun={t('gradeLevel').toLowerCase()}
+      noun="grade entry"
       columns={columns}
       fields={fields}
       defaultSortBy="createdAt"

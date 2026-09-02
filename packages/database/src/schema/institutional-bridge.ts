@@ -156,6 +156,8 @@ export const classStreamPosts = pgTable(
     campusId: uuid('campus_id').references(() => campuses.id, { onDelete: 'cascade' }),
     contextType: text('context_type').notNull(),
     contextId: uuid('context_id').notNull(),
+    /** The subject this post belongs to. Null for class-wide posts with no single subject. */
+    subjectId: uuid('subject_id').references(() => subjects.id, { onDelete: 'set null' }),
     kind: text('kind').notNull(),
     title: text('title'),
     body: text('body'),
@@ -197,6 +199,8 @@ export const classMaterials = pgTable(
       .references(() => institutions.id, { onDelete: 'cascade' }),
     contextType: text('context_type').notNull(),
     contextId: uuid('context_id').notNull(),
+    /** The subject this material belongs to. Null for course-wide or legacy rows. */
+    subjectId: uuid('subject_id').references(() => subjects.id, { onDelete: 'set null' }),
     title: text('title').notNull(),
     description: text('description'),
     kindLabel: text('kind_label').notNull().default('PDF'),
@@ -213,6 +217,81 @@ export const classMaterials = pgTable(
   }),
 );
 
+/**
+ * Teacher-written lesson notes. Distinct from `classMaterials`, which is a file
+ * plus a label and cannot exist without an upload — a note is the writing itself,
+ * so `body` is required and attachments are optional.
+ */
+export const classNotes = pgTable(
+  'class_notes',
+  {
+    id: primaryId(),
+    institutionId: uuid('institution_id')
+      .notNull()
+      .references(() => institutions.id, { onDelete: 'cascade' }),
+    campusId: uuid('campus_id').references(() => campuses.id, { onDelete: 'cascade' }),
+    contextType: text('context_type').notNull(),
+    contextId: uuid('context_id').notNull(),
+    subjectId: uuid('subject_id').references(() => subjects.id, { onDelete: 'set null' }),
+    title: text('title').notNull(),
+    summary: text('summary'),
+    body: text('body').notNull(),
+    topicKey: text('topic_key'),
+    weekNo: integer('week_no'),
+    /** draft | published | archived — students only ever read `published`. */
+    status: text('status').notNull().default('draft'),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
+    /** storage_objects ids; optional, unlike class_materials.object_id. */
+    attachmentObjectIds: jsonb('attachment_object_ids').notNull().default([]),
+    authorStaffId: uuid('author_staff_id').references(() => staff.id, { onDelete: 'set null' }),
+    version: integer('version').notNull().default(1),
+    ...actorColumns,
+    ...timestamps,
+  },
+  (t) => ({
+    ctxIdx: index('class_notes_ctx_idx').on(t.contextType, t.contextId, t.status),
+    subjectIdx: index('class_notes_subject_idx').on(t.subjectId, t.status),
+  }),
+);
+
+/** Immutable history: one row per saved edit, so a published note can be traced back. */
+export const classNoteRevisions = pgTable(
+  'class_note_revisions',
+  {
+    id: primaryId(),
+    noteId: uuid('note_id')
+      .notNull()
+      .references(() => classNotes.id, { onDelete: 'cascade' }),
+    version: integer('version').notNull(),
+    title: text('title').notNull(),
+    summary: text('summary'),
+    body: text('body').notNull(),
+    editedBy: uuid('edited_by').references(() => staff.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    uniq: uniqueIndex('class_note_revisions_uq').on(t.noteId, t.version),
+  }),
+);
+
+/** Read receipts, so a teacher can see who has actually opened a note. */
+export const classNoteReads = pgTable(
+  'class_note_reads',
+  {
+    id: primaryId(),
+    noteId: uuid('note_id')
+      .notNull()
+      .references(() => classNotes.id, { onDelete: 'cascade' }),
+    studentId: uuid('student_id')
+      .notNull()
+      .references(() => students.id, { onDelete: 'cascade' }),
+    readAt: timestamp('read_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    uniq: uniqueIndex('class_note_reads_uq').on(t.noteId, t.studentId),
+  }),
+);
+
 export const courses = pgTable(
   'courses',
   {
@@ -223,6 +302,8 @@ export const courses = pgTable(
     campusId: uuid('campus_id').references(() => campuses.id, { onDelete: 'cascade' }),
     code: text('code').notNull(),
     name: text('name').notNull(),
+    /** The curriculum subject this course teaches. Null until an institution links them. */
+    subjectId: uuid('subject_id').references(() => subjects.id, { onDelete: 'set null' }),
     credits: integer('credits'),
     professorTeacherId: uuid('professor_teacher_id').references(() => staff.id, { onDelete: 'set null' }),
     termId: uuid('term_id').references(() => academicTerms.id, { onDelete: 'set null' }),

@@ -16,10 +16,10 @@ Choose exactly one next move from the complete move vocabulary declared by the r
 Use only the explicit resolved topic profile, session state, observation summary, time, and capabilities supplied.
 Return strict JSON. selectionPolicy must contain normalized candidate weights, exclusions, and any policy override.
 studentSafeReason and decisionFactors are visible policy facts, never hidden reasoning or chain-of-thought.
-Enforce two Socratic probes maximum, mathematical-plus-depth eligibility for derivation, mandatory high-density prerequisites, sourced misconceptions, no hooks after a bad result or with little time, and capability fallback.
-For the five_minute door, enforce exactly one guess, one targeted teaching move, one check, and one artifact commit; never expand automatically.
+Enforce two Socratic probes maximum, mathematical-plus-depth eligibility for derivation, high-density prerequisite repair after the opening explanation, sourced misconceptions, no hooks after a bad result or with little time, and capability fallback.
+For the five_minute door, enforce exactly one concise explanation, one visual teaching move (or text fallback), one check, and one artifact commit; never expand automatically.
 For snap_question, begin at the student-confirmed stuck point without revealing a complete solution. For handwriting, teach from the first confirmed logical break rather than replacing the solution.
-Every new teaching target requires a cheap commitment first. Composer questions become explicit route changes.
+Teach a new target before assessing it. The first move must explain the idea directly; questions and checks come only after that explanation, and document-led lessons should follow with a diagram when the capability is available. Composer questions become explicit route changes.
 Honor institutionalDecision exactly. For outside/depth-limited syllabus decisions, stay inside the declared source boundary and give the stated legitimate next path. In guided_homework mode, never select or imply a final answer: use questions, hints, setup, prerequisite repair, critique, or process feedback.
 Do not render teaching content. Do not add fields.`;
 
@@ -28,7 +28,7 @@ Render only the already-selected teaching move as its exact typed block schema.
 Keep content concise, grounded in the supplied profile and source context, accessible, and student-safe.
 When learnerContext.pendingReexplanation is present, faithfully re-explain its sourceContent at the requested level. "simpler" means plain language, smaller prerequisite steps, and no loss of accuracy; "deeper" means more mechanism, nuance, and useful connections. Produce genuinely new wording rather than repeating the source block.
 Diagrams are editable structured nodes and edges with a complete nonvisual description.
-Question content must support commitment before reveal. Do not choose a different move.
+Question content must support commitment before reveal, but explanatory and visual teaching blocks must render immediately without forcing a preliminary answer. Do not choose a different move.
 Honor institutionalDecision exactly. Guided homework may teach setup and process but must not reveal the assignment's final answer. A syllabus boundary must retain the student-safe legitimate path.
 Do not add provider details, hidden reasoning, chain-of-thought, or fields outside the schema.`;
 
@@ -344,17 +344,31 @@ export function deterministicPlan(
   } else if (index === 0 && (institution?.syllabus.decision === "outside_bounds" || institution?.syllabus.decision === "depth_limited")) {
     mandate("goal_frame", institution.syllabus.studentMessage);
   } else if (guidedHomework && index === 0) {
-    const move = weights.socratic_probe > 0 ? "socratic_probe" : "prerequisite_check";
-    mandate(move, institution.homework!.studentMessage);
+    mandate("layered_explanation", `${institution.homework!.studentMessage} Teach the setup and method before asking the learner to continue it.`);
   } else if (fiveMinute) {
-    if (index === 0) mandate("predict_then_reveal", "Five-minute mode begins with exactly one cheap guess.");
-    else if (index === 1) mandate("layered_explanation", "Five-minute mode permits one targeted teaching move after the guess.");
+    if (index === 0) mandate("layered_explanation", "Five-minute mode begins with one concise explanation instead of a test.");
+    else if (index === 1 && visualAvailable) mandate("diagram", "Five-minute mode now makes the explanation visible with one bounded diagram.");
+    else if (index === 1) mandate("worked_example", "The visual capability is unavailable, so one compact worked example makes the idea concrete.");
     else if (index === 2) mandate("recall_check", "Five-minute mode now uses its single retrieval check.");
     else mandate("artifact_commit", "Five-minute mode closes with one curated card and never expands automatically.");
   } else if (index === 0 && fromSnap) {
     mandate("layered_explanation", "The photographed-question opening teaches the student-confirmed stuck point before any full solution.");
   } else if (index === 0 && fromHandwriting) {
     mandate("worked_example", "The handwriting repair begins at the confirmed first logical break and supports a reattempt.");
+  } else if (index === 0) {
+    mandate(
+      "layered_explanation",
+      state.sourceContext?.door === "uploaded_document"
+        ? "The selected document page grounds a direct explanation before Petros asks the learner to answer anything."
+        : "A new teaching target starts with a direct explanation before Petros asks the learner to answer anything.",
+    );
+  } else if (
+    index === 1 &&
+    state.sourceContext?.door === "uploaded_document" &&
+    visualAvailable &&
+    !used.includes("diagram")
+  ) {
+    mandate("diagram", "The document-led explanation now becomes a visual, editable diagram before any knowledge check.");
   }
 
   const lastTwo = used.slice(-2);
@@ -439,7 +453,7 @@ export function deterministicPlan(
       reason: reexplanation
         ? "The learner already committed to this step and explicitly requested a clearer rendering."
         : noGuessFirst(selected)
-          ? "This move frames or closes work already attempted."
+          ? "This teaching, framing, or closing move is shown directly; it does not require a preliminary answer."
         : "A cheap commitment before reveal makes this move responsive to the learner.",
     },
     observationResponse: pendingQuestion
@@ -494,6 +508,22 @@ export function deterministicPlan(
     selectedMoveType: selected,
     moveParameters: parametersFor(selected, state, probeCount),
   });
+}
+
+/**
+ * These decisions are product guarantees, not model preferences. A live PLAN response still runs
+ * for observability, but the server must replace it when it conflicts with a bounded teaching
+ * contract (most importantly: teach before testing a new target).
+ */
+export function requiresDeterministicPolicyEnvelope(state: PetrosSessionState): boolean {
+  const index = state.moves.used;
+  return Boolean(
+    requestedReexplanation(state) ||
+    index === 0 ||
+    state.moves.remaining <= 1 ||
+    state.sourceContext?.door === "five_minute" ||
+    (index === 1 && state.sourceContext?.door === "uploaded_document"),
+  );
 }
 
 export function deterministicRender(
@@ -1199,6 +1229,15 @@ function studentReason(
 function noGuessFirst(move: PetrosMoveType) {
   return (
     move === "goal_frame" ||
+    move === "hook" ||
+    move === "layered_explanation" ||
+    move === "worked_example" ||
+    move === "contrast_case" ||
+    move === "story" ||
+    move === "diagram" ||
+    move === "derivation" ||
+    move === "misconception_demolition" ||
+    move === "apply_to_your_world" ||
     PETROS_CLOSING_MOVES.includes(move as (typeof PETROS_CLOSING_MOVES)[number])
   );
 }

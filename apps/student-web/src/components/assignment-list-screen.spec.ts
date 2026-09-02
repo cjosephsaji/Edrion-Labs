@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { petrosAssignmentFocusId, type AssignmentRow } from './assignment-list-screen';
+import {
+  assignmentEmptyTitle,
+  petrosAssignmentFocusId,
+  type AssignmentRow,
+} from './assignment-list-screen';
 
 const assignment = (id: string, status: string): AssignmentRow => ({
   id,
@@ -23,5 +27,12 @@ describe('Petros assignment focus', () => {
       assignment('machine-learning', 'returned'),
       assignment('ethics', 'submitted'),
     ])).toBeNull();
+  });
+});
+
+describe('assignment empty-state wording', () => {
+  it('uses natural wording for an empty assignment list', () => {
+    expect(assignmentEmptyTitle('assignments', 'all')).toBe('No assignments yet');
+    expect(assignmentEmptyTitle('homework', 'all')).toBe('No homework yet');
   });
 });

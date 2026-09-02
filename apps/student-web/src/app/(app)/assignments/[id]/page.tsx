@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Check, FileCheck2, FileUp, LockKeyhole, Paperclip, X } from 'lucide-react';
 import { QueryPage } from '@/components/query-page';
 import { PetrosDoorButton } from '@/components/petros/petros-door-button';
+import { usePetrosPage } from '@/components/petros/petros-companion-context';
 import { formatApiError, useStudentApi } from '@/lib/api-client';
 
 type Detail = {
@@ -70,10 +71,13 @@ export default function AssignmentDetailPage() {
       setNote('');
       setDeclared(false);
       await qc.invalidateQueries({ queryKey: ['student', 'assignments'] });
+      await qc.invalidateQueries({ queryKey: ['student', 'petros', 'mentor'] });
       await query.refetch();
     },
     onError: (error) => setFormError(formatApiError(error)),
   });
+
+  usePetrosPage(query.data ? { title: query.data.title, candidates: [{ ref: id, entityType: 'assignment', entityId: id, title: query.data.title, href: `/assignments/${id}` }] } : null);
 
   return (
     <QueryPage query={query} loadingLabel="Loading assignment…">
@@ -87,35 +91,29 @@ export default function AssignmentDetailPage() {
           <div className="mx-auto max-w-[760px] py-0">
             <div className="flex flex-wrap items-center gap-3">
               <Link href="/assignments" className="text-[12.5px] font-semibold text-[var(--s-faint)] hover:text-[var(--s-accentDeep)]">← All assignments</Link>
-              <span className="ml-auto font-mono-ui text-[10px] text-[var(--s-faint2)]">FILES SAVE WHEN YOU SUBMIT</span>
             </div>
 
-            <header className="mt-4">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <p className="eyebrow">ASSIGNMENT WORK</p>
-                <GovernancePill policy={data.aiPolicy} />
-              </div>
+            <header className="mt-4" data-petros-target={`entity:assignment:${id}`}>
+              <GovernancePill policy={data.aiPolicy} />
               <h1 className="mt-2 font-display text-[26px] font-semibold tracking-[-.01em] text-[var(--s-ink)]">{data.title}</h1>
               <p className="mt-1 text-[12.5px] text-[var(--s-faint)]">Due {due}{data.maxPoints != null ? ` · ${data.maxPoints} points` : ''} · {data.status.replaceAll('_', ' ')}</p>
             </header>
 
-            <section className="mt-5 rounded-[15px] border border-[var(--s-bd1)] bg-[var(--s-card)] p-[18px_22px]">
-              <p className="font-mono-ui text-[9px] font-semibold tracking-[.08em] text-[var(--s-faint)]">BRIEF &amp; INSTRUCTIONS</p>
+            <section data-petros-target="assignment:brief" className="mt-5 rounded-[15px] border border-[var(--s-bd1)] bg-[var(--s-card)] p-[18px_22px]">
+              <h2 className="font-display text-[16px] font-semibold text-[var(--s-ink)]">Instructions</h2>
               <p className="mt-3 whitespace-pre-wrap font-display text-[14.5px] leading-7 text-[var(--s-inkSoft)]">{data.instructions?.trim() || 'No additional instructions were provided.'}</p>
             </section>
 
             {!['submitted', 'graded', 'returned'].includes(data.status) ? (
               <section className="mt-3.5 rounded-[15px] border border-[var(--s-accentBd)] bg-[var(--s-accentSoft)] p-[18px_22px]">
-                <p className="eyebrow">PETROS · ACTIVE ASSIGNMENT</p>
-                <h2 className="mt-2 font-display text-[16px] font-semibold text-[var(--s-ink)]">Get help without replacing your work</h2>
-                <p className="mt-1.5 text-[12.5px] leading-6 text-[var(--s-inkSoft)]">During the related assignment window, Petros uses questions, hints, setup, prerequisite repair and feedback instead of supplying a final answer. The preview shows the exact rule before the session starts.</p>
+                <h2 className="font-display text-[16px] font-semibold text-[var(--s-ink)]">Work through it with Petros</h2>
                 <div className="mt-3"><PetrosDoorButton door="active_homework" sourceId={data.id} label="Work on this with Petros" timeBudgetSeconds={900} /></div>
               </section>
             ) : null}
 
             {data.feedback || data.pointsAwarded != null ? (
               <section className="mt-3.5 rounded-[15px] border border-[var(--s-accentBd)] bg-[var(--s-accentSoft)] p-[18px_22px]">
-                <p className="eyebrow !text-[var(--s-success)]">RETURNED BY YOUR PROFESSOR</p>
+                <h2 className="font-display text-[16px] font-semibold text-[var(--s-success)]">Returned by your professor</h2>
                 {data.pointsAwarded != null ? <p className="mt-2 font-display text-2xl font-semibold text-[var(--s-ink)]">{data.pointsAwarded}{data.maxPoints != null ? ` / ${data.maxPoints}` : ''}</p> : null}
                 {data.feedback ? <p className="mt-2 text-[13px] leading-6 text-[var(--s-inkSoft)]">{data.feedback}</p> : null}
               </section>
@@ -141,8 +139,8 @@ export default function AssignmentDetailPage() {
             ) : null}
 
             {canSubmit ? (
-              <section className="mt-3.5 rounded-[15px] border-[1.5px] border-[var(--s-accentBd)] bg-[var(--s-card)] p-[18px_22px] shadow-[0_12px_30px_-24px_rgba(12,63,49,.5)]">
-                <p className="font-mono-ui text-[10px] font-semibold text-[var(--s-accentDeep)]">{data.versions.length ? 'ADD A NEW VERSION' : 'YOUR SUBMISSION'}</p>
+              <section data-petros-target="assignment:submission" className="mt-3.5 rounded-[15px] border-[1.5px] border-[var(--s-accentBd)] bg-[var(--s-card)] p-[18px_22px] shadow-[0_12px_30px_-24px_rgba(12,63,49,.5)]">
+                <h2 className="font-display text-[16px] font-semibold text-[var(--s-ink)]">{data.versions.length ? 'Add a new version' : 'Your submission'}</h2>
                 <label className="mt-3 block cursor-pointer rounded-xl border-[1.5px] border-dashed border-[var(--s-bd2)] bg-[var(--s-cardAlt)] px-5 py-7 text-center hover:border-[var(--s-accent)]">
                   <input type="file" className="sr-only" accept=".pdf,image/*,.doc,.docx,.txt" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
                   {file ? <FileCheck2 className="mx-auto h-6 w-6 text-[var(--s-success)]" /> : <FileUp className="mx-auto h-6 w-6 text-[var(--s-faint)]" />}
@@ -159,8 +157,7 @@ export default function AssignmentDetailPage() {
                 </label>
                 {formError ? <p className="mt-3 text-xs text-[var(--s-danger)]">{formError}</p> : null}
                 <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <button type="button" disabled={(!file && !note.trim()) || !declared || submit.isPending} onClick={() => setReviewOpen(true)} className="rounded-[11px] bg-[#0C3F31] px-[18px] py-[11px] text-[13px] font-semibold text-[#F6F3E9] disabled:cursor-not-allowed disabled:opacity-45">Review submission</button>
-                  <p className="text-[11.5px] text-[var(--s-faint)]">Nothing sends until you say so.</p>
+                  <button type="button" disabled={(!file && !note.trim()) || !declared || submit.isPending} onClick={() => setReviewOpen(true)} className="rounded-[11px] bg-[var(--s-accentDeep)] px-[18px] py-[11px] text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-45">Review submission</button>
                 </div>
               </section>
             ) : (
@@ -172,8 +169,7 @@ export default function AssignmentDetailPage() {
                 <div className="w-full max-w-md rounded-t-[20px] border border-[var(--s-bd1)] bg-[var(--s-card)] p-5 shadow-2xl sm:rounded-[18px]">
                   <div className="flex items-center gap-3">
                     <div>
-                      <p className="eyebrow">FINAL CHECK</p>
-                      <h2 className="mt-1 font-display text-xl font-semibold text-[var(--s-ink)]">Ready to submit?</h2>
+                      <h2 className="font-display text-xl font-semibold text-[var(--s-ink)]">Ready to submit?</h2>
                     </div>
                     <button type="button" onClick={() => setReviewOpen(false)} className="ml-auto rounded-full p-2 text-[var(--s-faint)]"><X className="h-5 w-5" /></button>
                   </div>
@@ -185,7 +181,7 @@ export default function AssignmentDetailPage() {
                   {formError ? <p className="mt-2 text-xs text-[var(--s-danger)]">{formError}</p> : null}
                   <div className="mt-4 flex gap-2.5">
                     <button type="button" onClick={() => setReviewOpen(false)} className="flex-1 rounded-[11px] border border-[var(--s-bd2)] px-4 py-2.5 text-[13px] font-semibold text-[var(--s-inkSoft)]">Go back</button>
-                    <button type="button" disabled={submit.isPending} onClick={() => submit.mutate()} className="flex-1 rounded-[11px] bg-[#0C3F31] px-4 py-2.5 text-[13px] font-semibold text-[#F6F3E9] disabled:opacity-50">{submit.isPending ? 'Submitting…' : 'Submit now'}</button>
+                    <button type="button" disabled={submit.isPending} aria-busy={submit.isPending} onClick={() => submit.mutate()} className="flex-1 rounded-[11px] bg-[var(--s-accentDeep)] px-4 py-2.5 text-[13px] font-semibold text-white disabled:opacity-50">{submit.isPending ? 'Submitting…' : 'Submit now'}</button>
                   </div>
                 </div>
               </div>

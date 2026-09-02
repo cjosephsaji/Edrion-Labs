@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Clock3, FileText, LoaderCircle, ShieldCheck, Sparkles, X } from 'lucide-react';
-import type { PetrosLearningSessionDocument, PetrosSessionIntent } from '@edrion/schemas';
+import type { PetrosLearningSessionDocument, PetrosSessionIntent, PetrosTeachingPriority } from '@edrion/schemas';
 import { formatApiError, newIdempotencyKey, useStudentApi } from '@/lib/api-client';
 import styles from './petros-door-button.module.css';
 
@@ -39,6 +39,10 @@ export function PetrosDoorButton({
   const [loading, setLoading] = useState(false);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
+  const [topicId, setTopicId] = useState('');
+  const [priority, setPriority] = useState<PetrosTeachingPriority>('understand');
+  const [sessionMinutes, setSessionMinutes] = useState(Math.ceil(timeBudgetSeconds / 60));
+  const [existingDoubt, setExistingDoubt] = useState('');
   const dialogRef = useRef<HTMLElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const keySuffix = `${door}:${sourceId}:${page ?? 'all'}:${section ?? ''}`;
@@ -86,6 +90,10 @@ export function PetrosDoorButton({
         accessibility: [],
       });
       setIntent(resolved);
+      setTopicId(resolved.planning?.suggestedTopicId ?? '');
+      setPriority(resolved.planning?.suggestedPriority ?? (resolved.time.examDate ? 'exam_prep' : 'understand'));
+      setSessionMinutes(Math.ceil(resolved.time.budgetSeconds / 60));
+      setExistingDoubt('');
     } catch (caught) {
       setError(formatApiError(caught));
     } finally {
@@ -104,7 +112,17 @@ export function PetrosDoorButton({
       const response = await api.post<{
         intent: PetrosSessionIntent;
         session: PetrosLearningSessionDocument;
-      }>(`/student/petros/intents/${intent.id}/start`, { idempotencyKey });
+      }>(`/student/petros/intents/${intent.id}/start`, {
+        idempotencyKey,
+        ...(intent.planning ? {
+          plan: {
+            topicId: topicId || intent.planning.suggestedTopicId,
+            priority,
+            timeBudgetSeconds: sessionMinutes * 60,
+            existingDoubt: existingDoubt.trim() || null,
+          },
+        } : {}),
+      });
       sessionStorage.removeItem(storageKey);
       sessionStorage.removeItem(`petros:intent:${keySuffix}`);
       router.push(`/petros/session?session=${response.session.id}`);
@@ -122,6 +140,8 @@ export function PetrosDoorButton({
         className={className ?? styles.trigger}
         onClick={() => void preview()}
         disabled={disabled || loading}
+        aria-busy={loading}
+        data-loading-indicator={loading || undefined}
       >
         {loading ? <LoaderCircle aria-hidden="true" className={styles.spin} /> : <Sparkles aria-hidden="true" />}
         {loading ? 'Checking context…' : label}
@@ -151,8 +171,58 @@ export function PetrosDoorButton({
                 <strong>{intent.goal}</strong>
                 <p>{intent.scope.summary}</p>
               </section>
+              {intent.planning ? (
+                <section className={styles.planning} aria-labelledby={`petros-plan-${intent.id}`}>
+                  <div className={styles.planningHead}>
+                    <div>
+                      <p>Before I teach</p>
+                      <h3 id={`petros-plan-${intent.id}`}>Let’s shape a useful lesson</h3>
+                    </div>
+                    <span>{intent.planning.outlineStatus === 'cached' ? 'Outline reused' : intent.planning.outlineStatus === 'generated' ? 'Outline prepared once' : 'Context ready'}</span>
+                  </div>
+                  {intent.planning.deadline ? (
+                    <p className={styles.scheduleNote}>
+                      I found <strong>{intent.planning.deadline.title}</strong> on your teacher’s schedule for {formatPlanningDate(intent.planning.deadline.at)}. I’ve used that to suggest what to prioritize.
+                    </p>
+                  ) : null}
+                  <fieldset>
+                    <legend>What would you like to learn first?</legend>
+                    <div className={styles.choices}>
+                      {intent.planning.topics.map((topic) => (
+                        <button key={topic.id} type="button" aria-pressed={topicId === topic.id} onClick={() => setTopicId(topic.id)}>
+                          <strong>{topic.title}</strong>
+                          <span>{topic.pageStart ? `p. ${topic.pageStart}${topic.pageEnd && topic.pageEnd !== topic.pageStart ? `–${topic.pageEnd}` : ''} · ` : ''}{topic.estimatedMinutes} min</span>
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+                  <fieldset>
+                    <legend>What’s your priority right now?</legend>
+                    <div className={styles.compactChoices}>
+                      {([
+                        ['exam_prep', 'Exam prep'],
+                        ['understand', 'Understand it'],
+                        ['revisit_weak_topic', 'Revisit a weak spot'],
+                        ['quick_review', 'Quick review'],
+                      ] as const).map(([value, label]) => (
+                        <button key={value} type="button" aria-pressed={priority === value} onClick={() => setPriority(value)}>{label}</button>
+                      ))}
+                    </div>
+                  </fieldset>
+                  <fieldset>
+                    <legend>How much time do you have?</legend>
+                    <div className={styles.compactChoices}>
+                      {[10, 15, 25, 40].map((value) => <button key={value} type="button" aria-pressed={sessionMinutes === value} onClick={() => setSessionMinutes(value)}>{value} min</button>)}
+                    </div>
+                  </fieldset>
+                  <label className={styles.doubt}>
+                    Any doubt already in mind? <span>Optional</span>
+                    <textarea value={existingDoubt} onChange={(event) => setExistingDoubt(event.target.value)} maxLength={2_000} rows={2} placeholder="For example: I understand the definition, but not why it matters." />
+                  </label>
+                </section>
+              ) : null}
               <div className={styles.facts}>
-                <span><Clock3 aria-hidden="true" />About {Math.ceil(intent.time.budgetSeconds / 60)} minutes</span>
+                <span><Clock3 aria-hidden="true" />About {intent.planning ? sessionMinutes : Math.ceil(intent.time.budgetSeconds / 60)} minutes</span>
                 <span><FileText aria-hidden="true" />{intent.citations.length || 1} verified source reference{intent.citations.length === 1 ? '' : 's'}</span>
               </div>
               {intent.scope.knownFailureDetails.length ? (
@@ -178,9 +248,9 @@ export function PetrosDoorButton({
             </div>
             <footer className={styles.foot}>
               <button type="button" onClick={close} disabled={starting}>Not now</button>
-              <button type="button" onClick={() => void start()} disabled={starting}>
+              <button type="button" onClick={() => void start()} disabled={starting} aria-busy={starting} data-loading-indicator={starting || undefined}>
                 {starting ? <LoaderCircle aria-hidden="true" className={styles.spin} /> : <ArrowRight aria-hidden="true" />}
-                {starting ? 'Starting one session…' : 'Start this session'}
+                {starting ? 'Starting your lesson…' : intent.planning ? 'Start planned lesson' : 'Start this session'}
               </button>
             </footer>
           </section>
@@ -203,10 +273,16 @@ export function PetrosDocumentDoor({
   ready: boolean;
 }) {
   const [page, setPage] = useState(1);
+  const [scope, setScope] = useState<'document' | 'page'>('document');
   return (
     <div className={styles.documentDoor}>
-      <label>
-        Page
+      <label>Teach
+        <select value={scope} disabled={!ready} onChange={(event) => setScope(event.target.value as 'document' | 'page')}>
+          <option value="document">Whole document</option>
+          <option value="page">One page</option>
+        </select>
+      </label>
+      {scope === 'page' ? <label>Page
         <input
           type="number"
           min={1}
@@ -216,23 +292,29 @@ export function PetrosDocumentDoor({
           onChange={(event) => setPage(Math.max(1, Math.min(pageCount ?? 1, Number(event.target.value) || 1)))}
         />
         {pageCount ? ` of ${pageCount}` : ''}
-      </label>
+      </label> : null}
       <PetrosDoorButton
         door="uploaded_document"
         sourceId={sourceId}
-        page={page}
-        label={ready ? `Teach me this page from ${title}` : 'Extraction in progress'}
+        page={scope === 'page' ? page : undefined}
+        label={ready ? `Plan a lesson from ${title}` : 'Extraction in progress'}
         disabled={!ready}
       />
     </div>
   );
 }
 
+function formatPlanningDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'its published date';
+  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 function doorLabel(door: Door) {
   return {
     result_repair: 'Published result',
     upcoming_exam: 'Upcoming exam',
-    uploaded_document: 'Uploaded document',
+    uploaded_document: 'Study document',
     learning_path: 'Learning path',
     assistant_handoff: 'Assistant handoff',
     reflection_action: 'Reflection next action',

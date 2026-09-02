@@ -5,7 +5,7 @@ import { PetrosReflection } from './petros-reflection';
 
 const mocks = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), push: vi.fn(), id: 0 }));
 const mockApi = vi.hoisted(() => ({ get: mocks.get, post: mocks.post }));
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }) }));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }), usePathname: () => '/progress' }));
 vi.mock('@/lib/api-client', () => ({
   useStudentApi: () => mockApi,
   newIdempotencyKey: () => `00000000-0000-4000-8000-${String(++mocks.id).padStart(12, '0')}`,
@@ -46,21 +46,21 @@ describe('Petros reflection accessible surface', () => {
 
   it('renders a finite evidence-linked next action and keeps not attempted honest', async () => {
     render(<PetrosReflection />);
-    expect(await screen.findByRole('heading', { name: 'What should I do next?' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Progress' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: /Forces: Not attempted/i }));
     expect(screen.getByText(/Not attempted: there is no learner evidence/i)).toBeVisible();
     fireEvent.click(screen.getByText('Why this?'));
     expect(screen.getByText(/This is a prerequisite for one affected topic/i)).toBeVisible();
-    expect(screen.getByText(/not a score, rank, feed, or public comparison/i)).toBeVisible();
+    expect(screen.getByText(/Based on your own work/i)).toBeVisible();
   });
 
-  it('provides visual and nonvisual map parity with accessible state names', async () => {
+  it('provides subject and list views with the same topics and accessible progress labels', async () => {
     render(<PetrosReflection />);
-    const visual = await screen.findByLabelText(/Scrollable knowledge map/i);
-    expect(within(visual).getByRole('button', { name: /Vectors: Shaky/i })).toBeVisible();
+    const visual = await screen.findByRole('region', { name: 'Your topics' });
+    expect(within(visual).getByRole('button', { name: /Vectors: Needs practice/i })).toBeVisible();
     expect(within(visual).getByRole('button', { name: /Forces: Not attempted/i })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Accessible list' }));
-    const table = screen.getByRole('table', { name: 'Knowledge map list equivalent' });
+    fireEvent.click(screen.getByRole('button', { name: 'List' }));
+    const table = screen.getByRole('table', { name: 'Topic progress list' });
     expect(within(table).getByRole('button', { name: 'Vectors' })).toBeVisible();
     expect(within(table).getByRole('button', { name: 'Forces' })).toBeVisible();
     expect(within(table).getAllByText('Not attempted').length).toBeGreaterThan(0);
@@ -78,8 +78,8 @@ describe('Petros reflection accessible surface', () => {
   it('keeps the calibration mirror hidden below the sample threshold', async () => {
     mocks.get.mockResolvedValue(fixture({ calibration: { ...fixture().calibration, eligible: false, status: 'hidden', evidenceCount: 3, direction: 'hidden', trend: 'insufficient_history', headline: 'More predictions are needed', explanation: 'This mirror stays hidden until eight pairs exist.' } }));
     render(<PetrosReflection />);
-    expect(await screen.findByRole('heading', { name: 'Calibration mirror is quiet' })).toBeVisible();
-    expect(screen.getByText(/at least 8 confidence-and-outcome pairs/i)).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Progress' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Calibration mirror is quiet' })).not.toBeInTheDocument();
     expect(screen.queryByText('More predictions are needed')).not.toBeInTheDocument();
   });
 
@@ -89,8 +89,8 @@ describe('Petros reflection accessible surface', () => {
     render(<PetrosReflection />);
     fireEvent.click(await screen.findByRole('button', { name: 'Repair Vectors' }));
     await waitFor(() => expect(mocks.post).toHaveBeenCalledWith(`/student/petros/reflection/recommendations/${ids.recommendation}/intent`, expect.objectContaining({ idempotencyKey: expect.any(String) })));
-    expect(await screen.findByText('Stage 8 preview created')).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: /Start this scoped session/i }));
+    expect(await screen.findByText('Your session is ready')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: /Start session/i }));
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith(`/petros/session?session=${ids.session}`));
   });
 
@@ -103,4 +103,40 @@ describe('Petros reflection accessible surface', () => {
       expect.objectContaining({ action: 'dismiss', idempotencyKey: expect.any(String) }),
     ));
   });
+
+  it('combines topic search and progress filters without labelling untried topics as weak', async () => {
+    render(<PetrosReflection />);
+    await screen.findByRole('button', { name: 'Vectors: Needs practice' });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Filter topics by progress' }), { target: { value: 'untouched' } });
+    expect(screen.queryByRole('button', { name: 'Vectors: Needs practice' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Forces: Not attempted' })).toBeVisible();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search topics or subjects' }), { target: { value: 'vectors' } });
+    expect(screen.getByRole('heading', { name: 'No matching topics' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+    expect(screen.getByRole('button', { name: 'Vectors: Needs practice' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Forces: Not attempted' })).toBeVisible();
+  });
+
+  it('keeps stale recommendations disabled until refresh succeeds', async () => {
+    mocks.get.mockResolvedValue(fixture({ stale: true }));
+    mocks.post.mockRejectedValueOnce(new Error('Refresh unavailable')).mockResolvedValueOnce(fixture());
+    render(<PetrosReflection />);
+    expect(await screen.findByRole('button', { name: 'Repair Vectors' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh now' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Refresh unavailable');
+    expect(screen.getByRole('button', { name: 'Repair Vectors' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh now' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Repair Vectors' })).toBeEnabled());
+    expect(mocks.post).toHaveBeenCalledWith('/student/petros/reflection/rebuild', expect.objectContaining({ idempotencyKey: expect.any(String) }));
+    expect(screen.queryByRole('button', { name: 'Refresh now' })).not.toBeInTheDocument();
+  });
+
+  it('offers a useful first step with no learning history or optional insights', async () => {
+    mocks.get.mockResolvedValue(fixture({ map: { topics: [], relationships: [], coverage: {}, missingSyllabusLinks: 0 }, recommendations: [], calibration: null, recaps: [], alarms: [] }));
+    render(<PetrosReflection />);
+    expect(await screen.findByRole('heading', { name: 'Your progress starts here' })).toBeVisible();
+    expect(screen.getAllByRole('link', { name: 'Start learning' }).every((link) => link.getAttribute('href') === '/learn')).toBe(true);
+    expect(screen.queryByRole('heading', { name: 'A foundation to revisit' })).not.toBeInTheDocument();
+  });
+
 });

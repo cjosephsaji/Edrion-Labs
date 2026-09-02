@@ -36,24 +36,33 @@ export const STUDENT_NAV: NavSection[] = [
   },
   {
     id: 'learning',
-    label: 'Learning',
+    label: 'Learn',
     items: [
-      // Front door to the learning half of the portal. Listed first because the pages under
-      // it — path, progress, materials, Petros — are what it exists to make findable.
-      { href: '/learn', label: 'Learn', permission: 'student.learn.use' },
+      { href: '/learn', label: 'Overview', permission: 'student.learn.use' },
+      { href: '/materials', label: 'Library', permission: 'student.classes.view' },
+      { href: '/notes', label: 'Notes', permission: 'student.classes.view' },
+      { href: '/flashcards', label: 'Flashcards', permission: 'student.learn.use' },
+      { href: '/progress', label: 'Progress', permission: 'student.learn.use' },
+    ],
+  },
+  {
+    id: 'coursework',
+    label: 'Coursework',
+    items: [
       { href: '/assignments', label: 'Assignments', permission: 'student.assignments.view' },
       { href: '/homework', label: 'Homework', permission: 'student.homework.view' },
-      { href: '/materials', label: 'Study materials', permission: 'student.classes.view' },
-      { href: '/learning-path', label: 'Learning path', permission: 'student.learn.use' },
-      { href: '/progress', label: 'Learning progress', permission: 'student.learn.use' },
-      { href: '/petros', label: 'Petros input modes', permission: 'student.learn.use' },
     ],
   },
   {
     id: 'assessments',
     label: 'Assessments',
     items: [
-      { href: '/exams', label: 'Examinations', permission: 'student.exams.view' },
+      {
+        href: '/exams',
+        label: 'Examinations',
+        permission: 'student.exams.view',
+        surface: 'exams',
+      },
       {
         href: '/results',
         label: 'Results',
@@ -164,6 +173,11 @@ export const INSTITUTION_TO_STUDENT: Array<{ admin: string; student: string; gat
     admin: 'Uploads class materials',
     student: 'Access at /materials',
     gate: 'class membership',
+  },
+  {
+    admin: 'Publishes a lesson note',
+    student: 'Read at /notes',
+    gate: 'status=published + class/course membership',
   },
   {
     admin: 'Approves student request',

@@ -217,6 +217,7 @@ BEGIN
       ('homework', 'institution_id'),
       ('class_stream_posts', 'institution_id'),
       ('class_materials', 'institution_id'),
+      ('class_notes', 'institution_id'),
       ('courses', 'institution_id'),
       ('course_enrollments', 'institution_id'),
       ('report_cards', 'institution_id'),

@@ -1,0 +1,108 @@
+.layer {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  pointer-events: none;
+}
+
+.track {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  overflow: hidden;
+  background: transparent;
+}
+
+.track span {
+  display: block;
+  width: 42%;
+  height: 100%;
+  opacity: 0;
+  background: linear-gradient(90deg, var(--s-accent), #78a84c, var(--s-accent));
+  transform: translateX(-120%);
+}
+
+.layer[data-active='true'] .track {
+  background: color-mix(in srgb, var(--s-accentSoft) 72%, transparent);
+}
+
+.layer[data-active='true'] .track span {
+  opacity: 1;
+  animation: routeProgress 900ms ease-in-out infinite;
+}
+
+.shield {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: rgb(241 247 242 / 6%);
+  cursor: progress;
+  pointer-events: auto;
+}
+
+.notice {
+  position: absolute;
+  z-index: 2;
+  top: 11px;
+  left: 50%;
+  display: inline-flex;
+  max-width: min(520px, calc(100vw - 32px));
+  min-height: 44px;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--s-accentBd);
+  border-radius: 4px 14px 4px 4px;
+  background: color-mix(in srgb, var(--s-card) 94%, transparent);
+  box-shadow: 0 16px 36px -24px rgb(11 74 52 / 62%);
+  padding: 8px 13px;
+  color: var(--s-accentDeep);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.25;
+  text-align: center;
+  transform: translateX(-50%);
+  backdrop-filter: blur(14px);
+}
+
+.notice svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+  animation: routeSpin 720ms linear infinite;
+}
+
+.notice span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes routeProgress {
+  0% { transform: translateX(-120%); }
+  70%, 100% { transform: translateX(340%); }
+}
+
+@keyframes routeSpin { to { transform: rotate(360deg); } }
+
+@media (max-width: 620px) {
+  .notice {
+    top: 8px;
+    min-height: 40px;
+    max-width: calc(100vw - 24px);
+    padding: 7px 11px;
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layer[data-active='true'] .track span,
+  .notice svg { animation: none; }
+  .layer[data-active='true'] .track span { width: 100%; transform: none; }
+}
+
+:global(html[data-reduced-motion='true']) .layer[data-active='true'] .track span,
+:global(html[data-reduced-motion='true']) .notice svg { animation: none; }
+:global(html[data-reduced-motion='true']) .layer[data-active='true'] .track span { width: 100%; transform: none; }

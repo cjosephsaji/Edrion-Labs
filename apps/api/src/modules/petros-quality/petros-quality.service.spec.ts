@@ -118,15 +118,15 @@ describe('PetrosQualityService', () => {
       .filter((move) => ['hint', 'missing_step', 'worked_solution', 'reworded_success'].includes(String(move.type)))
       .map((move) => move.type);
     expect(ladder).toEqual(['hint', 'missing_step', 'worked_solution', 'reworded_success']);
-    expect(transcript.observations).toContainEqual(expect.objectContaining({ moveId: 'live_move_recovery_5_reworded_success', correctness: 'correct' }));
-    expect(live.planStates[1]).toMatchObject({
+    expect(transcript.observations).toContainEqual(expect.objectContaining({ moveId: 'live_move_recovery_6_reworded_success', correctness: 'correct' }));
+    expect(live.planStates.at(-1)).toMatchObject({
       topicContext: { evaluation: true },
       observations: {
         summarizedOutcomes: { answered: 4, correct: 1, incorrect: 3, activeStruggleLevel: 0 },
         recent: expect.arrayContaining([expect.objectContaining({ type: 'answer_submitted', summary: expect.stringContaining('correct answer') })]),
       },
     });
-    expect((live.planStates[1]?.topicContext as Record<string, unknown>).personaId).toBeUndefined();
+    expect((live.planStates.at(-1)?.topicContext as Record<string, unknown>).personaId).toBeUndefined();
     expect(transcript.usage).toHaveLength(6);
     expect(transcript.productionWrites).toBe(0);
   });

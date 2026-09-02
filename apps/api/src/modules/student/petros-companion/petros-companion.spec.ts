@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   PETROS_ACTION_KEYS,
   PETROS_DEFAULT_COMPANION_PREFERENCES,
@@ -12,7 +12,10 @@ import {
   correctCompletionClaim,
   humourAllowed,
   isDistressed,
+  isWholePlanRequest,
 } from './petros-companion.prompt';
+import { PetrosActionRegistryService } from './petros-action-registry.service';
+import { isMaterialTeachingRequest, minimumCompletePlanBlocks, PetrosCompanionService } from './petros-companion.service';
 import type { ResolvedPageContext } from './petros-student-context.service';
 
 function prefs(patch: Partial<PetrosCompanionPreferences> = {}): PetrosCompanionPreferences {
@@ -48,6 +51,8 @@ function prompt(patch: Parameters<typeof buildCompanionSystemPrompt>[0] extends 
     allowHumour: true,
     distressed: false,
     greetedAlready: false,
+    wholePlanRequested: false,
+    planningPriorities: [],
     availableActions: [...PETROS_ACTION_KEYS],
     clock: CLOCK,
     ...patch,
@@ -232,6 +237,51 @@ describe('companion charter', () => {
     expect(system).toContain('The student is Sam.');
     expect(system).toContain('at most three short sentences'.replace('at most ', 'at most '));
   });
+
+  it('treats a whole-day request as one complete multi-block plan', () => {
+    expect(isWholePlanRequest('Plan my day')).toBe(true);
+    expect(isWholePlanRequest('Can you map out my study time today?')).toBe(true);
+    expect(isWholePlanRequest('What should I do next?')).toBe(false);
+    expect(isWholePlanRequest('I have one hour')).toBe(true);
+    expect(isWholePlanRequest('I can spare 45 minutes')).toBe(true);
+
+    const system = prompt({
+      wholePlanRequested: true,
+      planningPriorities: [
+        {
+          key: 'assignment:maths',
+          kind: 'assignment',
+          title: 'Maths problem set',
+          detail: 'due today',
+        },
+      ],
+    });
+    expect(system).toContain('COMPLETE-PLAN MODE');
+    expect(system).toContain('for only the first priority when two or more relevant priorities are present');
+    expect(system).toContain('[assignment:maths] Maths problem set — due today');
+    expect(system).not.toContain('Prefer doing one small useful thing');
+  });
+
+  it('keeps requests to teach the student’s own material out of revision', () => {
+    expect(isMaterialTeachingRequest('Teach me my stuff')).toBe(true);
+    expect(isMaterialTeachingRequest('Can you explain my class notes?')).toBe(true);
+    expect(isMaterialTeachingRequest('Help me revise for the exam')).toBe(false);
+    expect(prompt()).toContain('mean the student’s Library, not Progress or exam revision');
+  });
+
+  it('requires more than one block when several verified priorities exist', () => {
+    const candidates = ['one', 'two', 'three'].map((id) => ({
+      ref: id,
+      entityType: 'assignment' as const,
+      entityId: id,
+      title: id,
+      summary: '',
+      href: null,
+      facts: {},
+    }));
+    expect(minimumCompletePlanBlocks(context({ candidates }))).toBe(2);
+    expect(minimumCompletePlanBlocks(context({ candidates: candidates.slice(0, 1) }))).toBe(1);
+  });
 });
 
 describe('block contract, adversarially', () => {
@@ -270,6 +320,37 @@ describe('block contract, adversarially', () => {
     // so the parsed value here must never be trusted as the source of truth.
     expect(parsed.success).toBe(true);
   });
+
+  it('revalidates and starts a selected material as a document lesson', async () => {
+    const intents = {
+      resolve: vi.fn(async () => ({ id: 'intent-1' })),
+      start: vi.fn(async () => ({ session: { id: 'session-1' } })),
+    };
+    const registry = new PetrosActionRegistryService({} as never, intents as never);
+    const argumentsAfterResolution = {
+      sourceId: 'knowledge-source-1',
+      question: 'Teach me this material',
+      minutes: 15,
+      route: '/materials',
+      door: 'uploaded_document',
+    };
+
+    expect(registry.revalidate('session.preview_and_start', argumentsAfterResolution)).toEqual(argumentsAfterResolution);
+    await expect(registry.execute(
+      { institutionId: 'institution-1', studentId: 'student-1', permissions: ['student.learn.use'] } as never,
+      'session.preview_and_start',
+      argumentsAfterResolution,
+      'execution-key',
+    )).resolves.toEqual({
+      href: '/petros/session?session=session-1',
+      message: 'Document lesson ready.',
+      resultRef: 'session-1',
+    });
+    expect(intents.resolve).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ door: 'uploaded_document', sourceId: 'knowledge-source-1' }),
+    );
+  });
 });
 
 describe('route registry, from the API side', () => {
@@ -283,8 +364,49 @@ describe('route registry, from the API side', () => {
   });
 
   it('hides Petros where he must not appear at all', () => {
-    for (const route of ['/exams/abc/attempt', '/fees/pay', '/petros/session', '/design-system']) {
+    for (const route of ['/exams/abc/attempt', '/fees/pay', '/design-system']) {
       expect(resolvePetrosRoute(route).support).toBe('hidden');
     }
+  });
+
+  it('keeps the embodied tutor beside a live learning session', () => {
+    const route = resolvePetrosRoute('/petros/session?session=abc');
+    expect(route.support).toBe('supported');
+    expect(route.surface).toBe('learning_path');
+  });
+});
+
+describe('portal character speech', () => {
+  it('routes transient TTS through the governed gateway without caching audio', async () => {
+    const execute = vi.fn().mockResolvedValue({
+      content: { dataBase64: 'AA==', mimeType: 'audio/mpeg' },
+    });
+    const service = new PetrosCompanionService(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { execute } as never,
+      {} as never,
+      {} as never,
+    );
+    await expect(
+      service.speak(
+        { institutionId: 'institution-1', studentId: 'student-1' } as never,
+        'Come on. I will show you.',
+        { voice: 'marin', speed: 1 },
+      ),
+    ).resolves.toEqual({
+      audio: { dataBase64: 'AA==', mimeType: 'audio/mpeg' },
+      transcript: 'Come on. I will show you.',
+    });
+    expect(execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        disableCache: true,
+        speech: { voice: 'marin', speed: 1 },
+        context: expect.objectContaining({ functionKey: 'speech.synthesise' }),
+        metadata: { surface: 'portal_character', transient: true },
+      }),
+    );
   });
 });

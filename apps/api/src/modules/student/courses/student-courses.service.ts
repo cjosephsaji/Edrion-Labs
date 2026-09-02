@@ -52,19 +52,20 @@ export class StudentCoursesService {
   async materials(principal: InstitutionalStudentPrincipal, courseId: string) {
     await this.requireEnrollment(principal.studentId, courseId);
     const rows = await this.db
-      .select()
+      .select({
+        id: schema.classMaterials.id,
+        title: schema.classMaterials.title,
+        kindLabel: schema.classMaterials.kindLabel,
+        weekNo: schema.classMaterials.weekNo,
+        description: schema.classMaterials.description,
+        filename: schema.storageObjects.filename,
+        mimeType: schema.storageObjects.mimeType,
+      })
       .from(schema.classMaterials)
+      .innerJoin(schema.storageObjects, eq(schema.storageObjects.id, schema.classMaterials.objectId))
       .where(and(eq(schema.classMaterials.contextType, 'course'), eq(schema.classMaterials.contextId, courseId)))
       .orderBy(asc(schema.classMaterials.weekNo));
-    return {
-      items: rows.map((m) => ({
-        id: m.id,
-        title: m.title,
-        kindLabel: m.kindLabel,
-        weekNo: m.weekNo,
-        description: m.description,
-      })),
-    };
+    return { items: rows };
   }
 
   async projects(principal: InstitutionalStudentPrincipal, courseId: string) {

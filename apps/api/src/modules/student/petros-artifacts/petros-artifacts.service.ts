@@ -28,6 +28,7 @@ import {
   type PetrosArtifactLifecycleInput,
   type PetrosArtifactSource,
   type PetrosCommitArtifactBundleInput,
+  type PetrosSaveBlockArtifactInput,
   type PetrosSubmitArtifactReviewInput,
   type PetrosUpdateArtifactProposalInput,
   type PetrosUpdateSavedArtifactInput,
@@ -63,6 +64,60 @@ export class PetrosArtifactsService {
     }
     if (!bundle) throw artifactNotFound('PETROS_BUNDLE_NOT_FOUND', 'Artifact bundle not found.');
     return this.bundleDto(scope, bundle);
+  }
+
+  async saveBlockArtifact(
+    principal: InstitutionalStudentPrincipal,
+    sessionId: string,
+    blockId: string,
+    input: PetrosSaveBlockArtifactInput,
+  ) {
+    const scope = owner(principal);
+    const session = await this.repo.findSession(scope, sessionId);
+    if (!session) throw artifactNotFound('PETROS_SESSION_NOT_FOUND', 'Session not found.');
+    const blocks = await this.repo.listSessionBlocks(scope, sessionId);
+    if (!blocks.some((block) => block.id === blockId)) {
+      throw artifactNotFound('PETROS_BLOCK_NOT_FOUND', 'Teaching block not found.');
+    }
+
+    const content = petrosArtifactContentSchema.parse(input.content);
+    if (content.kind !== 'note' && content.kind !== 'flashcard' && content.kind !== 'rule_card') {
+      throw new BadRequestException({
+        code: 'PETROS_BLOCK_ARTIFACT_KIND_INVALID',
+        message: 'This block action supports notes and flashcards only.',
+      });
+    }
+    assertStudentSafeContent(content);
+
+    const examDate = sourceExamDate(session.sourceContext) ?? await this.repo.findNextExamDate(scope);
+    const firstReview = content.kind === 'flashcard' || content.kind === 'rule_card'
+      ? firstPetrosReview(new Date(), sourceTimezone(session.learnerContext), examDate)
+      : null;
+    const result = await this.repo.saveBlockArtifact({
+      scope,
+      sessionId,
+      blockId,
+      idempotencyKey: input.idempotencyKey,
+      topic: session.topic,
+      content,
+      sources: sourceReferences(session, blockId),
+      firstReview,
+      examDate,
+    });
+    if (!result.artifact) {
+      throw new ConflictException({
+        code: 'PETROS_BLOCK_ARTIFACT_SAVE_FAILED',
+        message: 'This item could not be saved. Your text is still here; try again.',
+      });
+    }
+    if (result.state === 'saved') {
+      try {
+        await this.repo.recordDoorArtifactSave(scope, sessionId, 1);
+      } catch {
+        // The student-owned product is committed; telemetry cannot turn success into failure.
+      }
+    }
+    return savedDto(result.artifact);
   }
 
   async updateProposal(

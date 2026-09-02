@@ -321,7 +321,8 @@ function planState(learnerSnapshot: ReturnType<typeof snapshot>) {
     topic: 'integration by parts',
     currentGoal: 'Choose and apply integration by parts.',
     time: { budgetSeconds: 900, elapsedSeconds: 0, remainingSeconds: 900 },
-    moves: { maximum: 6, used: 0, remaining: 6 },
+    // Personalisation differentiates the lesson after the shared teach-first opening.
+    moves: { maximum: 6, used: 1, remaining: 5 },
     checkpointPlan: [{ id: 'one', label: 'Choose a method', status: 'current' }],
     currentCheckpointId: 'one',
     priorMoves: [],

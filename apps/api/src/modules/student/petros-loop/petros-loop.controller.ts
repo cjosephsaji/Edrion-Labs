@@ -167,6 +167,17 @@ export class StudentPetrosLoopController {
     return this.service.composerQuestion(raw, sessionId, body);
   }
 
+  @Post(':sessionId/questions/:detourId/understood')
+  rejoinQuestion(
+    @CurrentStudent() raw: StudentPrincipal,
+    @Param('sessionId') sessionId: string,
+    @Param('detourId') detourId: string,
+    @Body(zodBody(petrosContinueSessionSchema)) body: PetrosContinueSessionInput,
+  ) {
+    requireInstitutional(raw);
+    return this.service.rejoinComposerQuestion(raw, sessionId, detourId, body.idempotencyKey);
+  }
+
   @Post(':sessionId/pause')
   pause(
     @CurrentStudent() raw: StudentPrincipal,

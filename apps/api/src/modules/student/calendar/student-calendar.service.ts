@@ -17,6 +17,12 @@ export class StudentCalendarService {
     const nextYear = m === 12 ? y! + 1 : y!;
     const end = `${String(nextYear).padStart(4, '0')}-${String(nextMonth).padStart(2, '0')}-01`;
     const daysMap = new Map<string, { kind: string; label: string; sourceLine: string }[]>();
+    const [institution] = await this.db
+      .select({ timezone: schema.institutions.timezone })
+      .from(schema.institutions)
+      .where(eq(schema.institutions.id, principal.institutionId))
+      .limit(1);
+    const timeZone = institution?.timezone || 'UTC';
 
     const push = (date: string, event: { kind: string; label: string; sourceLine: string }) => {
       const list = daysMap.get(date) ?? [];
@@ -114,6 +120,39 @@ export class StudentCalendarService {
       });
     }
 
+    // Petros uses user_obligations because those rows have an exact timestamp and an
+    // idempotency key. Project them into the same calendar feed as manually-created planner
+    // items; previously Petros reported success but the calendar page read a different table.
+    const obligationStart = new Date(`${start}T00:00:00.000Z`);
+    obligationStart.setUTCDate(obligationStart.getUTCDate() - 1);
+    const obligationEnd = new Date(`${end}T00:00:00.000Z`);
+    obligationEnd.setUTCDate(obligationEnd.getUTCDate() + 1);
+    const petrosPlan = await this.db
+      .select({
+        title: schema.userObligations.title,
+        dueAt: schema.userObligations.dueAt,
+      })
+      .from(schema.userObligations)
+      .where(
+        and(
+          eq(schema.userObligations.studentId, principal.studentId),
+          eq(schema.userObligations.status, 'pending'),
+          eq(schema.userObligations.kind, 'study_block'),
+          gte(schema.userObligations.dueAt, obligationStart),
+          lt(schema.userObligations.dueAt, obligationEnd),
+        ),
+      )
+      .orderBy(asc(schema.userObligations.dueAt));
+    for (const block of petrosPlan) {
+      const date = localDateKey(block.dueAt, timeZone);
+      if (date < start || date >= end) continue;
+      push(date, {
+        kind: 'learn',
+        label: block.title,
+        sourceLine: `Petros plan · ${localTime(block.dueAt, timeZone)}`,
+      });
+    }
+
     const days = [...daysMap.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, events]) => ({ date, events }));
@@ -190,5 +229,34 @@ export class StudentCalendarService {
     const [row] = await this.db.select().from(schema.studentPlannerItems).where(cond).limit(1);
     if (!row) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Planner item not found' });
     return row;
+  }
+}
+
+function localDateKey(date: Date, timeZone: string) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(date);
+    const value = (type: Intl.DateTimeFormatPartTypes) =>
+      parts.find((part) => part.type === type)?.value ?? '';
+    return `${value('year')}-${value('month')}-${value('day')}`;
+  } catch {
+    return date.toISOString().slice(0, 10);
+  }
+}
+
+function localTime(date: Date, timeZone: string) {
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(date);
+  } catch {
+    return date.toISOString().slice(11, 16);
   }
 }

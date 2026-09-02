@@ -96,4 +96,46 @@ describe('Petros contextual entry points', () => {
     expect(dialog.parentElement?.parentElement).toBe(document.body);
   });
 
+  it('gathers a schedule-aware lesson plan before creating the teaching session', async () => {
+    const planned = {
+      ...intent,
+      door: 'uploaded_document' as const,
+      planning: {
+        topics: [
+          { id: 'topic-1-2', title: 'Cloud foundations', summary: 'Core models', pageStart: 1, pageEnd: 2, estimatedMinutes: 12, keyTerms: ['elasticity'], likelyDoubts: [] },
+          { id: 'topic-3-4', title: 'Service models', summary: 'IaaS and PaaS', pageStart: 3, pageEnd: 4, estimatedMinutes: 14, keyTerms: ['iaas'], likelyDoubts: [] },
+        ],
+        suggestedTopicId: 'topic-1-2',
+        suggestedPriority: 'exam_prep' as const,
+        deadline: { kind: 'exam' as const, title: 'Cloud Computing final', at: '2099-09-20T09:30:00.000Z', source: 'teacher_schedule' as const },
+        outlineCacheKey: 'doc:3:fingerprint',
+        outlineStatus: 'generated' as const,
+        estimatedTotalMinutes: 26,
+      },
+    };
+    mocks.post
+      .mockResolvedValueOnce(planned)
+      .mockResolvedValueOnce({ intent: { ...planned, status: 'started' }, session: { id: '88888888-8888-4888-8888-888888888888' } });
+
+    render(<PetrosDoorButton door="uploaded_document" sourceId={planned.sourceEntityIds[0]} label="Teach this document" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Teach this document' }));
+
+    expect(await screen.findByText(/Cloud Computing final/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Service models/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Quick review' }));
+    fireEvent.click(screen.getByRole('button', { name: '10 min' }));
+    fireEvent.change(screen.getByLabelText(/Any doubt already in mind/), { target: { value: 'Why does responsibility shift?' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Start planned lesson' }));
+
+    await waitFor(() => expect(mocks.post).toHaveBeenCalledTimes(2));
+    expect(mocks.post.mock.calls[1]?.[1]).toMatchObject({
+      plan: {
+        topicId: 'topic-3-4',
+        priority: 'quick_review',
+        timeBudgetSeconds: 600,
+        existingDoubt: 'Why does responsibility shift?',
+      },
+    });
+  });
+
 });

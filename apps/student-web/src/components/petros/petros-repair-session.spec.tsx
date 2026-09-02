@@ -356,6 +356,61 @@ afterEach(() => {
 });
 
 describe('Petros Stage 2 student document', () => {
+  it('keeps a compact source label without injecting its excerpt into the lesson', async () => {
+    memory.document = {
+      ...storedDocument(),
+      sourceContext: {
+        door: 'uploaded_document',
+        label: 'Biology notes',
+        citations: [{
+          label: 'Chapter 3',
+          page: 12,
+          section: 'Energy transfer',
+          excerpt: 'Light energy is converted into chemical energy during photosynthesis.',
+        }],
+      },
+    };
+    render(
+      <PetrosRepairSession
+        topic="photosynthesis"
+        source="material"
+        sessionId={memory.document.id}
+      />,
+    );
+
+    expect(await screen.findByText('Source checked')).toBeVisible();
+    expect(screen.getByText(/Chapter 3 · p\. 12 · Energy transfer/)).toBeVisible();
+    expect(screen.queryByLabelText(
+      'Light energy is converted into chemical energy during photosynthesis.',
+    )).not.toBeInTheDocument();
+    expect(screen.queryByText(
+      'Light energy is converted into chemical energy during photosynthesis.',
+    )).not.toBeInTheDocument();
+  });
+
+  it('does not dump fragmented multi-slide extraction into the lesson', async () => {
+    const fragmented = 'Slide 1 MODULE 3 Slide 2 Major hazards of construction Falls Electrocution Being struck by falling objects Slide 3 Major hazards Slide 4 Fall Protection Slide 5 Conditions that required use of fall protection';
+    memory.document = {
+      ...storedDocument(),
+      sourceContext: {
+        door: 'uploaded_document',
+        label: 'Construction notes',
+        citations: [{ label: 'Module 3', page: 1, section: null, excerpt: fragmented }],
+      },
+    };
+    render(
+      <PetrosRepairSession
+        topic="construction hazards"
+        source="material"
+        sessionId={memory.document.id}
+      />,
+    );
+
+    expect(await screen.findByText('Module 3 · p. 1')).toBeVisible();
+    expect(screen.queryByLabelText(fragmented)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Slide 1 MODULE 3 Slide 2/)).not.toBeInTheDocument();
+  });
+
   it('shows the exact stable visibility disclosure and offers an editable handoff only at the exhausted struggle level', async () => {
     memory.document = {
       ...storedDocument(),
@@ -538,6 +593,58 @@ describe('Petros Stage 2 student document', () => {
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
   });
 
+  it('saves a visible teaching block as a real note and confirms the completed action', async () => {
+    memory.document = storedDocument();
+    api.post.mockResolvedValueOnce({ id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd' } as never);
+
+    render(
+      <PetrosRepairSession topic="photosynthesis" source="result" sessionId={memory.document.id} />,
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Save to notes' }));
+
+    expect(await screen.findByText('Saved to Notes')).toBeVisible();
+    expect(api.post).toHaveBeenCalledWith(
+      expect.stringMatching(/\/student\/petros\/artifacts\/sessions\/.*\/blocks\/.*/i),
+      expect.objectContaining({
+        idempotencyKey: expect.any(String),
+        content: expect.objectContaining({
+          kind: 'note',
+          title: 'Follow the energy change',
+          body: expect.stringMatching(/chemical bonds/i),
+        }),
+      }),
+    );
+    expect(screen.getByRole('button', { name: 'Saved to notes' })).toBeDisabled();
+  });
+
+  it('opens an editable flashcard sheet and saves the reviewed front and back', async () => {
+    memory.document = storedDocument();
+    api.post.mockResolvedValueOnce({ id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee' } as never);
+
+    render(
+      <PetrosRepairSession topic="photosynthesis" source="result" sessionId={memory.document.id} />,
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Make a flashcard' }));
+    const front = screen.getByRole('textbox', { name: 'Front' });
+    const back = screen.getByRole('textbox', { name: 'Back' });
+    fireEvent.change(front, { target: { value: 'Where does photosynthesis keep incoming energy?' } });
+    fireEvent.change(back, { target: { value: 'In chemical bonds that the organism can use later.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add flashcard' }));
+
+    expect(await screen.findByText('Flashcard added to your Petros deck')).toBeVisible();
+    expect(api.post).toHaveBeenCalledWith(
+      expect.stringMatching(/\/student\/petros\/artifacts\/sessions\/.*\/blocks\/.*/i),
+      expect.objectContaining({
+        content: expect.objectContaining({
+          kind: 'flashcard',
+          front: 'Where does photosynthesis keep incoming energy?',
+          back: 'In chemical bonds that the organism can use later.',
+        }),
+      }),
+    );
+    expect(screen.getByRole('button', { name: 'Flashcard added' })).toBeDisabled();
+  });
+
   it('resumes a paused session and requests the explanation from one clear action', async () => {
     const paused: PetrosLearningSessionDocument = {
       ...storedDocument(),
@@ -579,7 +686,7 @@ describe('Petros Stage 2 student document', () => {
     );
   });
 
-  it('keeps stale personalization explicit and safe', async () => {
+  it('keeps stale personalization safe without exposing internal model status', async () => {
     memory.document = {
       ...storedDocument(),
       personalization: {
@@ -593,8 +700,9 @@ describe('Petros Stage 2 student document', () => {
       <PetrosRepairSession topic="photosynthesis" source="result" sessionId={memory.document.id} />,
     );
 
-    expect(await screen.findByText('Using a safe topic-first route')).toBeVisible();
-    expect(screen.getByText(/learning model is being refreshed/i)).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Follow the energy change' })).toBeVisible();
+    expect(screen.queryByText('Using a safe topic-first route')).not.toBeInTheDocument();
+    expect(screen.queryByText(/learning model is being refreshed/i)).not.toBeInTheDocument();
   });
 
   it('keeps the saved document readable when the browser goes offline', async () => {
@@ -653,8 +761,13 @@ describe('Petros Stage 2 student document', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Why this step?' }));
     await waitFor(() => expect(api.put).toHaveBeenCalled());
     fireEvent.click(screen.getByRole('button', { name: 'Go one layer deeper' }));
-    await waitFor(() => expect(screen.getByText(/light-dependent reactions/i)).toBeVisible());
-    await waitFor(() => expect(api.put).toHaveBeenCalledTimes(2));
+    expect(screen.getByText('Predict before Petros reveals')).toBeVisible();
+    fireEvent.change(screen.getByRole('textbox', { name: /what do you think/i }), {
+      target: { value: 'Light reactions prepare the energy carriers used next.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /lock in my prediction/i }));
+    await waitFor(() => expect(screen.getByLabelText(/light-dependent reactions/i)).toBeVisible());
+    await waitFor(() => expect(api.put.mock.calls.length).toBeGreaterThanOrEqual(3));
     first.unmount();
 
     render(
@@ -665,7 +778,7 @@ describe('Petros Stage 2 student document', () => {
       />,
     );
     expect(await screen.findByText(/topic is conceptual/i)).toBeVisible();
-    expect(screen.getByText(/light-dependent reactions/i)).toBeVisible();
+    expect(screen.getByLabelText(/light-dependent reactions/i)).toBeVisible();
     expect(screen.getByRole('button', { name: 'Why this step?' })).toHaveAttribute(
       'aria-expanded',
       'true',
@@ -674,7 +787,7 @@ describe('Petros Stage 2 student document', () => {
 });
 
 describe('Petros Stage 3 observation UI', () => {
-  it('repairs a legacy prompt with an answer box and blocks progression until it is verified', async () => {
+  it('shows a legacy explanation immediately instead of manufacturing a test question', async () => {
     const legacy = storedDocument();
     legacy.blocks[0]!.questions = [];
     const repaired: PetrosLearningSessionDocument = {
@@ -713,13 +826,13 @@ describe('Petros Stage 3 observation UI', () => {
       <PetrosRepairSession topic="photosynthesis" source="result" sessionId={legacy.id} />,
     );
 
-    expect(await screen.findByRole('textbox', { name: 'Your answer' })).toBeVisible();
-    expect(api.post).toHaveBeenCalledWith(
+    expect(await screen.findByRole('heading', { name: 'Follow the energy change' })).toBeVisible();
+    expect(screen.queryByRole('textbox', { name: 'Your answer' })).not.toBeInTheDocument();
+    expect(api.post).not.toHaveBeenCalledWith(
       expect.stringMatching(/\/blocks\/[^/]+\/question$/),
-      { idempotencyKey: legacy.blocks[0]!.id },
+      expect.anything(),
     );
-    expect(screen.queryByRole('button', { name: 'I have the key idea' })).not.toBeInTheDocument();
-    expect(screen.getByText(/teaching stays covered/i)).toBeVisible();
+    expect(screen.getByRole('button', { name: 'I have the key idea' })).toBeVisible();
   });
 
   it('requires an explicit confidence choice, locks the card, and announces feedback accessibly', async () => {
@@ -747,12 +860,12 @@ describe('Petros Stage 3 observation UI', () => {
     render(
       <PetrosRepairSession topic="photosynthesis" source="result" sessionId={memory.document.id} />,
     );
-    expect(await screen.findByText('Guess first')).toBeVisible();
+    expect(await screen.findByText('Quick check')).toBeVisible();
     const confidence = screen.getByRole('radiogroup', {
       name: 'How confident are you?',
     });
     expect(confidence.querySelector('[aria-checked="true"]')).toBeNull();
-    const commit = screen.getByRole('button', { name: 'Commit answer' });
+    const commit = screen.getByRole('button', { name: 'Check answer' });
     expect(commit).toBeDisabled();
     fireEvent.click(screen.getByRole('radio', { name: 'It is stored as chemical energy.' }));
     expect(commit).toBeDisabled();
@@ -829,17 +942,18 @@ describe('Petros Stage 3 observation UI', () => {
     render(
       <PetrosRepairSession topic="photosynthesis" source="result" sessionId={memory.document.id} />,
     );
+    fireEvent.click(await screen.findByText('Previous attempt'));
     expect(
       await screen.findByText('Full worked solution · now earn the reworded success'),
     ).toBeVisible();
-    expect(screen.getByText('Earned-success attempt')).toBeVisible();
-    expect(screen.getByText(/teaching stays covered/i)).toBeVisible();
+    expect(screen.getByText('One more try')).toBeVisible();
+    expect(screen.queryByText(/teaching stays covered/i)).not.toBeInTheDocument();
     expect(screen.getByText(/confident miss is worth slowing down/i)).toBeVisible();
   });
 
-  it('submits composer text into PLAN and renders a structured route indicator', async () => {
+  it('renders structured detours without a duplicate lesson composer', async () => {
     memory.document = storedDocument();
-    const redirected = {
+    memory.document = {
       ...memory.document,
       version: 1,
       detours: [
@@ -858,27 +972,17 @@ describe('Petros Stage 3 observation UI', () => {
         },
       ],
     };
-    api.post.mockResolvedValueOnce(redirected);
     render(
       <PetrosRepairSession topic="photosynthesis" source="result" sessionId={memory.document.id} />,
     );
-    const composer = await screen.findByRole('textbox', {
-      name: 'Question for the Petros teaching loop',
-    });
-    fireEvent.change(composer, {
-      target: { value: 'Why is oxygen released?' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Send into the plan' }));
     expect(
       await screen.findByRole('heading', {
         name: 'Question added to the next PLAN',
       }),
     ).toBeVisible();
     expect(screen.getByText('Why is oxygen released?')).toBeVisible();
-    expect(api.post).toHaveBeenCalledWith(
-      expect.stringMatching(/\/questions$/),
-      expect.objectContaining({ expectedSessionVersion: 0 }),
-    );
+    expect(screen.queryByText('Ask Petros something else')).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Question for the Petros teaching loop' })).not.toBeInTheDocument();
   });
 });
 
@@ -917,7 +1021,30 @@ describe('Petros Stage 4 typed move UI', () => {
       <PetrosRepairSession topic="photosynthesis" source="result" sessionId={memory.document.id} />,
     );
 
-    const light = await screen.findByRole('textbox', { name: 'Edit Light' });
+    const narrated = vi.fn();
+    window.addEventListener('petros:diagram-step', narrated);
+    fireEvent.click(await screen.findByRole('button', { name: 'Explain diagram' }));
+    await waitFor(() => expect(narrated).toHaveBeenCalledOnce());
+    const firstStep = (narrated.mock.calls[0]![0] as CustomEvent<{
+      diagramId: string;
+      step: number;
+    }>).detail;
+    expect(document.querySelector('[data-petros-target$="node:light"]')).toHaveAttribute('data-active', 'true');
+    fireEvent(window, new CustomEvent('petros:diagram-advance', { detail: firstStep }));
+    expect(await screen.findByText(/follow the connection from light to glucose/i)).toBeVisible();
+    expect(document.querySelector('[data-petros-target$="edge:0"]')).toHaveAttribute('data-active', 'true');
+    await waitFor(() => expect(narrated).toHaveBeenCalledTimes(2));
+    const pausedStep = (narrated.mock.calls[1]![0] as CustomEvent<{
+      diagramId: string;
+      step: number;
+    }>).detail;
+    fireEvent(window, new CustomEvent('petros:diagram-stop', { detail: pausedStep }));
+    fireEvent(window, new CustomEvent('petros:diagram-resume', { detail: pausedStep }));
+    await waitFor(() => expect(narrated).toHaveBeenCalledTimes(3));
+    expect(document.querySelector('[data-petros-target$="node:glucose"]')).toHaveAttribute('data-active', 'true');
+    window.removeEventListener('petros:diagram-step', narrated);
+
+    const light = screen.getByRole('textbox', { name: 'Edit Light' });
     fireEvent.change(light, { target: { value: 'Sunlight' } });
     await waitFor(() => expect(api.put).toHaveBeenCalled(), { timeout: 1_500 });
     fireEvent.click(screen.getByRole('button', { name: /open diagram larger/i }));
@@ -938,6 +1065,49 @@ describe('Petros Stage 4 typed move UI', () => {
       'aria-pressed',
       'true',
     );
+  });
+
+  it('makes the student build a concept map before replay and completion unlock', async () => {
+    memory.document = storedDocument();
+    memory.document.blocks[0]!.content = {
+      schemaVersion: PETROS_RENDER_SCHEMA_VERSION,
+      type: 'diagram',
+      title: 'Build the energy concept map',
+      diagramType: 'concept_map',
+      nodes: [
+        { id: 'light', label: 'Light', description: 'Incoming energy' },
+        { id: 'glucose', label: 'Glucose', description: 'Stored chemical energy' },
+        { id: 'growth', label: 'Growth', description: 'Energy used by the organism' },
+      ],
+      edges: [
+        { from: 'light', to: 'glucose', label: 'is stored as' },
+        { from: 'glucose', to: 'growth', label: 'can support' },
+      ],
+      altText: 'Light becomes stored chemical energy that can support growth.',
+      editable: true,
+      fallbackText: 'Light → glucose → growth',
+    };
+    memory.document.blocks[0]!.interactionState = {
+      diagramNodeLabels: {},
+      diagramExpanded: false,
+      diagramBuildEdgeCount: 0,
+      diagramBuilt: false,
+    };
+
+    render(
+      <PetrosRepairSession topic="photosynthesis" source="result" sessionId={memory.document.id} />,
+    );
+
+    expect(await screen.findByText('Your turn: build the map')).toBeVisible();
+    expect(screen.getByRole('button', { name: /build every connection/i })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: /glucose.*light/i }));
+    expect(screen.getByText(/close — start at light/i)).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: /light.*glucose/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /glucose.*growth/i }));
+
+    expect(await screen.findByText('Map built · replay unlocked')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Explain diagram' })).toBeVisible();
+    expect(screen.getByRole('button', { name: /keep this edited diagram/i })).toBeEnabled();
   });
 
   it('persists an explicit learner-owned artifact choice', async () => {
@@ -1017,7 +1187,7 @@ describe('Petros five-part session progression', () => {
       />,
     );
 
-    expect(await screen.findByText('Find the useful entry')).toBeVisible();
+    expect(await screen.findByText(/Step 1 of 5 · Find the useful entry/)).toBeVisible();
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '5');
     fireEvent.click(screen.getByRole('button', { name: 'Show the connection' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Keep going' }));
@@ -1040,8 +1210,18 @@ describe('Petros five-part session progression', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save nothing from these proposals' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirm this artifact choice' }));
 
-    expect(await screen.findByText(/your session document is saved/i)).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Session saved.' })).toBeVisible();
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '5');
+    expect(screen.getByText(/close the notes/i)).toBeVisible();
+    for (let recall = 0; recall < 3; recall += 1) {
+      const answer = await screen.findByRole('textbox', { name: 'Your final recall answer' });
+      fireEvent.change(answer, { target: { value: 'The relationship links the evidence to the result.' } });
+      fireEvent.click(screen.getByRole('button', { name: /compare with the source/i }));
+      expect(await screen.findByText(/grounded in/i)).toBeVisible();
+      fireEvent.click(screen.getByRole('button', { name: 'Got it' }));
+    }
+    expect(await screen.findByText('You earned this one.')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Copy my win' })).toBeVisible();
     expect(api.post.mock.calls.filter(([path]) => String(path).endsWith('/complete'))).toHaveLength(5);
     expect(api.post.mock.calls.filter(([path]) => String(path).endsWith('/continue'))).toHaveLength(4);
   });

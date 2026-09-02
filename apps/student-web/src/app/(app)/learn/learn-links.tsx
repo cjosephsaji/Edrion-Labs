@@ -2,37 +2,66 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Compass, Layers3, Map, Sparkles, TrendingUp, type LucideIcon } from 'lucide-react';
+import { BookOpen, Compass, NotebookPen, TrendingUp, type LucideIcon } from 'lucide-react';
 import styles from './learn.module.css';
 
-/**
- * The row that stops the learning pages being islands.
- *
- * Every learning surface renders the same set, minus itself, so a student who lands on any
- * one of them can reach the other five without going back through Explore.
- */
-export const LEARN_SURFACES: Array<{ href: string; label: string; icon: LucideIcon }> = [
-  { href: '/learn', label: 'Learn', icon: Compass },
-  { href: '/learning-path', label: 'Learning path', icon: Map },
-  { href: '/progress', label: 'Learning progress', icon: TrendingUp },
-  { href: '/materials', label: 'Study materials', icon: BookOpen },
-  { href: '/petros', label: 'Petros input modes', icon: Sparkles },
-  { href: '/petros/artifacts', label: 'Saved artifacts', icon: Layers3 },
+/** Three student-facing rooms. Paths, uploads and saved artifacts are tools inside them. */
+export const LEARN_SURFACES: Array<{
+  href: string;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  matches: (pathname: string) => boolean;
+}> = [
+  {
+    href: '/learn',
+    label: 'Overview',
+    description: 'Continue or start',
+    icon: Compass,
+    matches: (pathname) => ['/learn', '/petros', '/petros/artifacts'].includes(pathname),
+  },
+  {
+    href: '/materials',
+    label: 'Library',
+    description: 'Teacher files and uploads',
+    icon: BookOpen,
+    matches: (pathname) => pathname === '/materials',
+  },
+  {
+    href: '/notes',
+    label: 'Notes',
+    description: 'Lessons from your teachers',
+    icon: NotebookPen,
+    matches: (pathname) => pathname === '/notes' || pathname.startsWith('/notes/'),
+  },
+  {
+    href: '/progress',
+    label: 'Progress',
+    description: 'Next topics and evidence',
+    icon: TrendingUp,
+    matches: (pathname) => pathname === '/progress' || pathname === '/learning-path',
+  },
 ];
 
 export function LearnCrossLinks() {
-  const pathname = usePathname();
-  const links = LEARN_SURFACES.filter((surface) => surface.href !== pathname);
+  const pathname = usePathname() ?? '';
 
   return (
-    <nav className={styles.crossLinks} aria-label="Other learning pages">
-      <span className={styles.crossLabel}>Also in learning</span>
-      {links.map(({ href, label, icon: Icon }) => (
-        <Link key={href} href={href} className={styles.crossLink}>
+    <nav className={styles.crossLinks} aria-label="Learning workspace">
+      <span className={styles.crossLabel}>Learn</span>
+      {LEARN_SURFACES.map(({ href, label, icon: Icon, matches }) => {
+        const active = matches(pathname);
+        return <Link
+          key={href}
+          href={href}
+          className={styles.crossLink}
+          data-active={active || undefined}
+          aria-current={active ? 'page' : undefined}
+        >
           <Icon aria-hidden="true" />
-          {label}
-        </Link>
-      ))}
+          <span>{label}</span>
+        </Link>;
+      })}
     </nav>
   );
 }

@@ -139,6 +139,7 @@ export const petrosStudentCompanionPreferences = pgTable(
     proactiveCheckIns: boolean('proactive_check_ins').notNull().default(true),
     language: text('language').notNull().default('en'),
     quietMode: boolean('quiet_mode').notNull().default(false),
+    mentorState: jsonb('mentor_state').$type<Record<string, unknown>>().notNull().default({}),
     version: integer('version').notNull().default(1),
     ...timestamps,
   },

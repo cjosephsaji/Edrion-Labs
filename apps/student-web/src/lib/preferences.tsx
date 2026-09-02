@@ -61,7 +61,7 @@ export function StudentPreferencesProvider({ children }: { children: ReactNode }
         reduceMotion: Boolean(saved.reduceMotion),
         textSize: isTextSize(saved.textSize) ? saved.textSize : defaults.textSize,
         quickNav: Array.isArray(saved.quickNav)
-          ? saved.quickNav.filter((href): href is string => typeof href === 'string' && href.startsWith('/')).slice(0, 5)
+          ? [...new Set(saved.quickNav.filter((href): href is string => typeof href === 'string' && href.startsWith('/')))]
           : defaults.quickNav,
       });
     } catch {
@@ -73,7 +73,11 @@ export function StudentPreferencesProvider({ children }: { children: ReactNode }
 
   useEffect(() => {
     if (!ready) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
+    } catch {
+      // Preferences still work for this visit when browser storage is unavailable.
+    }
     const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const resolvedTheme = preferences.matchSystem
       ? systemDark
@@ -104,7 +108,7 @@ export function StudentPreferencesProvider({ children }: { children: ReactNode }
       setReduceMotion: (reduceMotion) =>
         setPreferences((current) => ({ ...current, reduceMotion })),
       setTextSize: (textSize) => setPreferences((current) => ({ ...current, textSize })),
-      setQuickNav: (quickNav) => setPreferences((current) => ({ ...current, quickNav: [...new Set(quickNav)].slice(0, 5) })),
+      setQuickNav: (quickNav) => setPreferences((current) => ({ ...current, quickNav: [...new Set(quickNav)] })),
       resetQuickNav: () => setPreferences((current) => ({ ...current, quickNav: null })),
     }),
     [preferences],

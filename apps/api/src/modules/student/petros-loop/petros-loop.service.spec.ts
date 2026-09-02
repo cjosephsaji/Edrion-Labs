@@ -42,10 +42,23 @@ function makeHarness(
   options: {
     outage?: boolean;
     commandState?: 'started' | 'completed' | 'in_flight';
+    answerable?: boolean;
+    documentAnswerable?: boolean;
   } = {},
 ) {
   const now = new Date('2026-08-08T08:00:00.000Z');
   const publishedProfile = stage4ProfileFixture('photosynthesis', INSTITUTION_ID);
+  const initialMovesUsed = options.documentAnswerable ? 2 : options.answerable ? 1 : 0;
+  const checkpointCount = options.documentAnswerable ? 5 : 4;
+  if (options.answerable || options.documentAnswerable) {
+    const interactiveMove = options.documentAnswerable ? 'predict_then_reveal' : 'recall_check';
+    publishedProfile.profile.dimensions.prerequisiteDensity = 0;
+    publishedProfile.profile.dimensions.prerequisites = [];
+    publishedProfile.profile.dimensions.moves.required = [];
+    publishedProfile.profile.dimensions.moves.openingPattern = [interactiveMove];
+    publishedProfile.profile.dimensions.moves.practicePattern = [interactiveMove];
+    publishedProfile.profile.dimensions.moves.weights[interactiveMove] = 10_000;
+  }
   const session = {
     id: SESSION_ID,
     institutionId: INSTITUTION_ID,
@@ -59,13 +72,18 @@ function makeHarness(
     timeBudgetSeconds: 480,
     elapsedSeconds: 10,
     activeSince: null,
-    maxMoves: 4,
-    checkpoints: [0, 1, 2, 3].map((index) => ({
+    maxMoves: checkpointCount,
+    checkpoints: Array.from({ length: checkpointCount }, (_, index) => ({
       id: `checkpoint-${index + 1}`,
       label: `Checkpoint ${index + 1}`,
-      status: index === 0 ? ('current' as const) : ('pending' as const),
+      status:
+        index < initialMovesUsed
+          ? ('complete' as const)
+          : index === initialMovesUsed
+            ? ('current' as const)
+            : ('pending' as const),
     })),
-    currentCheckpointId: 'checkpoint-1',
+    currentCheckpointId: `checkpoint-${initialMovesUsed + 1}`,
     learnerContext: {},
     topicContext: {},
     topicProfileId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
@@ -104,7 +122,7 @@ function makeHarness(
     currentGoal: session.currentGoal,
     timeBudgetSeconds: 480,
     elapsedSeconds: 10,
-    maxMoves: 4,
+    maxMoves: checkpointCount,
     checkpoints: session.checkpoints,
     currentCheckpointId: 'checkpoint-1',
     closeReason: null,
@@ -245,6 +263,7 @@ function makeHarness(
     commitAnswer: vi.fn(async () => ({ state: 'committed' as const })),
     recordHint: vi.fn(async () => blocks[0]),
     createDetour: vi.fn(async () => session),
+    rejoinDetour: vi.fn(async () => ({ id: 'detour-1', status: 'rejoined' })),
     activateDetours: vi.fn(async () => []),
     rejoinDecisionDetours: vi.fn(async () => []),
     listDecisionDiagnostics: vi.fn(),
@@ -262,9 +281,13 @@ function makeHarness(
     topic: session.topic,
     currentGoal: session.currentGoal,
     time: { budgetSeconds: 480, elapsedSeconds: 10, remainingSeconds: 470 },
-    moves: { maximum: 4, used: 0, remaining: 4 },
+    moves: {
+      maximum: checkpointCount,
+      used: initialMovesUsed,
+      remaining: checkpointCount - initialMovesUsed,
+    },
     checkpointPlan: session.checkpoints,
-    currentCheckpointId: 'checkpoint-1',
+    currentCheckpointId: `checkpoint-${initialMovesUsed + 1}`,
     priorMoves: [],
     learnerContext: {},
     topicContext: {},
@@ -392,9 +415,11 @@ describe('PetrosLoopService coordination', () => {
     });
     expect(harness.decisions[0]!.planRequestId).toBeTruthy();
     expect(harness.decisions[0]!.renderRequestId).toBeTruthy();
+    expect(result.blocks[0]!.content.type).toBe('layered_explanation');
+    expect(result.blocks[0]!.questions).toHaveLength(0);
   });
 
-  it('requires an evaluated response even when the provider omits guess-first', async () => {
+  it('does not manufacture a test question for a direct explanation', async () => {
     const harness = makeHarness();
     const result = await harness.service.continue(
       principal,
@@ -416,8 +441,7 @@ describe('PetrosLoopService coordination', () => {
     );
 
     expect(harness.decisions[0]!.guessFirst).toMatchObject({ status: 'not_applicable' });
-    expect(repaired.blocks[0]!.questions).toHaveLength(1);
-    expect(repaired.blocks[0]!.questions[0]).toMatchObject({ active: true, locked: false });
+    expect(repaired.blocks[0]!.questions).toHaveLength(0);
   });
 
   it('budgets the visible plan by checkpoint progress instead of held re-explanations', async () => {
@@ -569,7 +593,7 @@ describe('PetrosLoopService coordination', () => {
   });
 
   it('submits answer and confidence atomically while objective evaluation avoids an AI call', async () => {
-    const harness = makeHarness();
+    const harness = makeHarness({ answerable: true });
     const document = await harness.service.continue(
       principal,
       SESSION_ID,
@@ -613,7 +637,7 @@ describe('PetrosLoopService coordination', () => {
   });
 
   it('returns an answer command idempotently without evaluating or advancing twice', async () => {
-    const harness = makeHarness();
+    const harness = makeHarness({ answerable: true });
     const document = await harness.service.continue(
       principal,
       SESSION_ID,
@@ -637,7 +661,7 @@ describe('PetrosLoopService coordination', () => {
   });
 
   it('rejects a stale concurrent answer before evaluation can advance the ladder', async () => {
-    const harness = makeHarness();
+    const harness = makeHarness({ answerable: true });
     const document = await harness.service.continue(
       principal,
       SESSION_ID,
@@ -658,7 +682,7 @@ describe('PetrosLoopService coordination', () => {
   });
 
   it('falls back safely on malformed evaluator output without counting a conceptual failure', async () => {
-    const harness = makeHarness();
+    const harness = makeHarness({ answerable: true });
     const document = await harness.service.continue(
       principal,
       SESSION_ID,
@@ -682,7 +706,7 @@ describe('PetrosLoopService coordination', () => {
   });
 
   it('asks an uploaded document question directly and retries it without duplicated ladder wording', async () => {
-    const harness = makeHarness();
+    const harness = makeHarness({ documentAnswerable: true });
     harness.session.sourceContext = {
       door: 'uploaded_document',
       citations: [
@@ -728,7 +752,7 @@ describe('PetrosLoopService coordination', () => {
   });
 
   it('rejoins an active composer detour only after its changed block is completed', async () => {
-    const harness = makeHarness({ outage: true });
+    const harness = makeHarness({ outage: true, answerable: true });
     const document = await harness.service.continue(
       principal,
       SESSION_ID,
@@ -765,6 +789,59 @@ describe('PetrosLoopService coordination', () => {
         evidenceKind: 'engagement',
         metadata: expect.objectContaining({ action: 'read' }),
       }),
+    );
+  });
+
+  it('answers a composer interruption immediately and records the exact return point', async () => {
+    const harness = makeHarness({ outage: true });
+    const current = await harness.service.continue(
+      principal,
+      SESSION_ID,
+      '93939393-9393-4393-8393-939393939393',
+    );
+
+    await harness.service.composerQuestion(principal, SESSION_ID, {
+      idempotencyKey: '94949494-9494-4494-8494-949494949494',
+      question: 'What is cement?',
+      expectedSessionVersion: current.version,
+      pausePoint: {
+        blockId: current.blocks[0]!.id,
+        segmentId: `${current.blocks[0]!.id}:first-layer`,
+        targetKey: `lesson:block:${current.blocks[0]!.id}:first-layer`,
+        label: 'first explanation',
+        spokenText: 'Cement binds the other materials together.',
+        wordIndex: 3,
+      },
+    });
+
+    expect(harness.repo.createDetour).toHaveBeenCalledWith(expect.objectContaining({
+      question: 'What is cement?',
+      answer: expect.stringMatching(/binding powder/i),
+      routeChange: expect.stringContaining('first explanation'),
+      returnPlan: expect.stringContaining('first explanation'),
+      observation: expect.objectContaining({
+        payload: expect.objectContaining({
+          pausePoint: expect.objectContaining({
+            blockId: current.blocks[0]!.id,
+            wordIndex: 3,
+          }),
+        }),
+      }),
+    }));
+  });
+
+  it('rejoins only the confirmed interruption before resuming the lesson', async () => {
+    const harness = makeHarness();
+    await harness.service.rejoinComposerQuestion(
+      principal,
+      SESSION_ID,
+      '95959595-9595-4595-8595-959595959595',
+      '96969696-9696-4696-8696-969696969696',
+    );
+    expect(harness.repo.rejoinDetour).toHaveBeenCalledWith(
+      { institutionId: INSTITUTION_ID, studentId: STUDENT_ID },
+      SESSION_ID,
+      '95959595-9595-4595-8595-959595959595',
     );
   });
 

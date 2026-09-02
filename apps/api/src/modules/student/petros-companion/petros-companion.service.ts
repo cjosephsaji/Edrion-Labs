@@ -18,11 +18,18 @@ import {
   type PetrosCompanionTurnInput,
   type PetrosCompanionTurnResult,
   type PetrosSurface,
+  type PetrosMentorDecision,
 } from '@edrion/schemas';
 import { API_ENV } from '../../../common/tokens';
 import { PetrosAiGatewayService } from '../../petros-ai-routing/petros-ai-gateway.service';
 import type { InstitutionalStudentPrincipal } from '../student.types';
 import { PetrosActionRegistryService } from './petros-action-registry.service';
+import { PetrosMentorService } from './petros-mentor.service';
+import { mentorMessage } from './petros-mentor.engine';
+import {
+  PetrosBriefingService,
+  type PetrosPlanningPriority,
+} from './petros-briefing.service';
 import {
   COMPANION_RESPONSE_JSON_SCHEMA,
   PETROS_COMPANION_PROMPT_VERSION,
@@ -30,6 +37,7 @@ import {
   correctCompletionClaim,
   humourAllowed,
   isDistressed,
+  isWholePlanRequest,
 } from './petros-companion.prompt';
 import { COMPANION_VERBATIM_WINDOW, PetrosCompanionRepository } from './petros-companion.repository';
 import {
@@ -38,6 +46,13 @@ import {
 } from './petros-student-context.service';
 
 const PROPOSAL_TTL_MINUTES = 30;
+
+const PLAN_RELEVANT_ENTITY_TYPES = new Set([
+  'assignment',
+  'homework',
+  'exam_schedule',
+  'learning_path_step',
+]);
 
 const modelReplySchema = z.object({
   answer: z.string().trim().min(1).max(2_000),
@@ -89,6 +104,44 @@ function actionArguments(action: NonNullable<z.infer<typeof modelReplySchema>['a
   return flat;
 }
 
+/**
+ * A broad request with several priorities must never collapse to one block. The model still
+ * decides how many fit the student's stated availability; requiring every outstanding item
+ * would make a short evening impossible to plan honestly.
+ */
+export function minimumCompletePlanBlocks(
+  context: ResolvedPageContext,
+  planningPriorities: readonly PetrosPlanningPriority[] = [],
+) {
+  const globalPriorities = planningPriorities
+    .filter((priority) => priority.kind !== 'existing_block')
+    .map((priority) => priority.key);
+  const pagePriorities = context.candidates
+    .filter((candidate) => PLAN_RELEVANT_ENTITY_TYPES.has(candidate.entityType))
+    .map((candidate) => `${candidate.entityType}:${candidate.entityId ?? candidate.ref}`);
+  return Math.min(2, new Set([...globalPriorities, ...pagePriorities]).size);
+}
+
+export function isMaterialTeachingRequest(message: string) {
+  const teaching = /\b(?:teach|explain|learn|study)\b/i.test(message);
+  const material = /\b(?:my\s+stuff|materials?|notes?|documents?|files?|slides?|worksheets?)\b/i.test(message);
+  return teaching && material;
+}
+
+function wholePlanDraftNeedsRepair(
+  draft: z.infer<typeof modelReplySchema>,
+  minimumPlanBlocks: number,
+) {
+  if (minimumPlanBlocks === 0) return false;
+  // Asking for missing availability is explicitly allowed; a plain chatbot answer is not.
+  if (!draft.action) return !draft.answer.includes('?');
+  if (draft.action.actionKey !== 'planner.create') return true;
+  const distinctBlocks = new Set(
+    (draft.action.items ?? []).map((item) => item.title.trim().toLocaleLowerCase()),
+  ).size;
+  return distinctBlocks < minimumPlanBlocks;
+}
+
 type MessageRow = {
   id: string;
   threadId: string;
@@ -106,12 +159,64 @@ export class PetrosCompanionService {
     private readonly repo: PetrosCompanionRepository,
     private readonly context: PetrosStudentContextService,
     private readonly actions: PetrosActionRegistryService,
+    private readonly briefing: PetrosBriefingService,
     private readonly gateway: PetrosAiGatewayService,
     @Inject(API_ENV) private readonly env: ApiEnv,
+    private readonly mentor: PetrosMentorService,
   ) {}
 
   private scope(principal: InstitutionalStudentPrincipal) {
     return { institutionId: principal.institutionId, studentId: principal.studentId };
+  }
+
+  /**
+   * Gives the portal-wide character a voice without exposing provider credentials to the
+   * browser. Speech is deliberately transient: the authoritative response remains the
+   * companion message stored in the thread and the audio never enters the shared cache.
+   */
+  async speak(principal: InstitutionalStudentPrincipal, rawText: string, speech: { voice?: 'cedar' | 'marin'; speed?: number } = {}) {
+    const text = rawText.trim().slice(0, 2_000);
+    const spoken = await this.gateway.execute({
+      context: {
+        functionKey: 'speech.synthesise',
+        topic: 'student portal guidance',
+        sessionType: 'learn',
+        inputModality: 'text',
+        language: 'en',
+        institutionId: principal.institutionId,
+        studentId: principal.studentId,
+        estimatedTokens: Math.ceil(text.length / 4),
+        currentCostMicros: 0,
+        previousFailures: 0,
+        requiredResponseMs: 8_000,
+      },
+      input: [{ type: 'text', text }],
+      metadata: { surface: 'portal_character', transient: true },
+      speech,
+      disableCache: true,
+    });
+    const content = spoken.content;
+    if (
+      !content ||
+      typeof content !== 'object' ||
+      !('dataBase64' in content) ||
+      typeof content.dataBase64 !== 'string'
+    ) {
+      throw new NotFoundException({
+        code: 'PETROS_SPEECH_UNAVAILABLE',
+        message: 'Petros could not prepare audio for this response.',
+      });
+    }
+    return {
+      audio: {
+        dataBase64: content.dataBase64,
+        mimeType:
+          'mimeType' in content && typeof content.mimeType === 'string'
+            ? content.mimeType
+            : 'audio/mpeg',
+      },
+      transcript: text,
+    };
   }
 
   /* ---------------------------------------------------------------- *
@@ -439,8 +544,40 @@ export class PetrosCompanionService {
   }): Promise<PetrosCompanionBlock[]> {
     const { principal, context, preferences, input } = args;
 
+    if (!context.focus && isMaterialTeachingRequest(input.message)) {
+      const alreadyInLibrary = context.route === '/materials' || context.route.startsWith('/notes');
+      return [
+        {
+          type: 'text',
+          text: alreadyInLibrary
+            ? 'Choose the exact file with “Ask Petros”, and I’ll teach from that source.'
+            : 'Let’s use your Library. Choose the exact file with “Ask Petros”, and I’ll teach from that source.',
+        },
+        ...(alreadyInLibrary
+          ? []
+          : [{ type: 'navigation' as const, label: 'Open Library', href: '/materials' }]),
+      ];
+    }
+
     const availableActions = this.availableActions(context);
     const distressed = isDistressed(input.message);
+    const wholePlanRequested = isWholePlanRequest(input.message);
+    // Motivation, breaks and quick questions need the same academic context as planning.
+    // A failure must never become permission to tell the student their day is clear.
+    let mentorDecision: PetrosMentorDecision | null = null;
+    try { mentorDecision = await this.mentor.build(principal); } catch { /* Report unavailable context in the charter. */ }
+    let planningPriorities: PetrosPlanningPriority[] = [];
+    if (wholePlanRequested) {
+      try {
+        planningPriorities = await this.briefing.planningPriorities(principal);
+      } catch {
+        // The visible page context remains usable. Planning should degrade to verified items
+        // already on screen rather than making the entire companion turn fail.
+      }
+    }
+    const minimumPlanBlocks = wholePlanRequested
+      ? minimumCompletePlanBlocks(context, planningPriorities)
+      : 0;
     const recentSetback = this.recentSetback(context);
     // Resolved with the page context; querying the institution's timezone twice per turn
     // added a round trip to every message for no new information.
@@ -457,15 +594,17 @@ export class PetrosCompanionService {
       }),
       distressed,
       greetedAlready: args.history.some((message) => message.role === 'petros'),
+      wholePlanRequested,
+      planningPriorities,
+      mentorDecision,
       availableActions,
     });
 
     if (this.env.PETROS_AI_MODE !== 'live') {
-      return this.offlineReply(context);
+      return this.offlineReply(context, mentorDecision, input.message);
     }
 
-    let parsed: z.infer<typeof modelReplySchema>;
-    try {
+    const requestReply = async (planningRepair?: Record<string, unknown>) => {
       const result = await this.gateway.execute({
         context: {
           functionKey: 'companion.turn',
@@ -488,45 +627,118 @@ export class PetrosCompanionService {
               conversationSummary: args.thread.summary,
               recentTurns: this.recentTurns(args.history),
               studentMessage: input.message,
+              ...(wholePlanRequested ? { planningPriorities } : {}),
+              ...(wholePlanRequested
+                ? {
+                    planningContract: {
+                      mode: 'complete_period',
+                      minimumStudyBlocks: minimumPlanBlocks,
+                      maximumStudyBlocks: 6,
+                      instruction:
+                        'Return one planner.create action containing the complete plan. Never return a one-block proposal when minimumStudyBlocks is greater than one.',
+                    },
+                  }
+                : {}),
+              ...(planningRepair ? { planningRepair } : {}),
             }),
           },
         ],
         responseSchema: COMPANION_RESPONSE_JSON_SCHEMA,
         correlationId: input.idempotencyKey,
         metadata: { surface: 'student_companion', route: context.route },
+        disableCache: Boolean(planningRepair),
       });
-      parsed = modelReplySchema.parse(result.content);
-    } catch {
-      return this.offlineReply(context);
+      return modelReplySchema.parse(result.content);
+    };
+
+    const selectedMaterialTeaching = context.focus?.entityType === 'material'
+      && isMaterialTeachingRequest(input.message);
+    let parsed: z.infer<typeof modelReplySchema>;
+    if (selectedMaterialTeaching) {
+      parsed = {
+        answer: `I can teach directly from ${context.focus!.title}. Confirm the document lesson below and I’ll start from its extracted pages.`,
+        action: {
+          actionKey: 'session.preview_and_start',
+          sourceRef: context.focus!.ref,
+          question: input.message,
+          minutes: 15,
+        },
+      };
+    } else {
+      try {
+        parsed = await requestReply();
+      } catch {
+        return this.offlineReply(context, mentorDecision, input.message);
+      }
+    }
+
+    // Models sometimes interpret "one action" as "one study block". Give a partial draft one
+    // bounded repair attempt, then refuse to surface it: confirming an incomplete whole-day plan
+    // is worse than asking the student one useful availability question.
+    if (wholePlanDraftNeedsRepair(parsed, minimumPlanBlocks)) {
+      const rejectedDraft = parsed;
+      try {
+        parsed = await requestReply({
+          reason: 'The previous draft did not satisfy the complete-period planning contract.',
+          rejectedAnswer: rejectedDraft.answer,
+          rejectedAction: rejectedDraft.action ?? null,
+          instruction: `Return a complete planner.create proposal with at least ${minimumPlanBlocks} study blocks, or ask exactly one availability question without proposing any action.`,
+        });
+      } catch {
+        parsed = rejectedDraft;
+      }
+    }
+
+    if (wholePlanDraftNeedsRepair(parsed, minimumPlanBlocks)) {
+      parsed = {
+        answer:
+          'I can see several things that need a proper plan, but I could not arrange all of them safely yet. Nothing has been added. How much study time do you have left today?',
+        suggestedReplies: ['About 1 hour', 'About 2 hours', 'Plan until 9 pm'],
+      };
     }
 
     let proposalBlock: PetrosCompanionBlock | null = null;
+    let sessionOfferBlock: PetrosCompanionBlock | null = null;
     if (parsed.action) {
       const validated = await this.actions.validate(principal, context, {
         actionKey: parsed.action.actionKey,
         arguments: actionArguments(parsed.action),
       });
       if (validated) {
-        const proposal = await this.repo.insertProposal({
-          institutionId: principal.institutionId,
-          studentId: principal.studentId,
-          threadId: args.thread.id,
-          messageId: args.messageId,
-          actionKey: validated.actionKey,
-          arguments: validated.arguments,
-          preview: validated.preview,
-          confirmationRequired: validated.confirmationRequired,
-          expiresAt: new Date(Date.now() + PROPOSAL_TTL_MINUTES * 60_000),
-        });
-        proposalBlock = {
-          type: 'action_proposal',
-          proposalId: proposal.id,
-          actionKey: validated.actionKey,
-          title: validated.title,
-          preview: validated.preview,
-          confirmationRequired: validated.confirmationRequired,
-          status: 'proposed',
-        };
+        if (validated.actionKey === 'session.preview_and_start') {
+          // A teaching request opens the pre-session planning conversation. It is not a
+          // mutating action and must not jump straight from a generic offer into a session.
+          sessionOfferBlock = {
+            type: 'session_offer',
+            intentPreviewRef: String(validated.arguments.sourceId),
+            door: validated.arguments.door === 'uploaded_document' ? 'uploaded_document' : 'assistant_handoff',
+            question: String(validated.arguments.question),
+            route: String(validated.arguments.route),
+            title: validated.title,
+            minutes: Number(validated.arguments.minutes),
+          };
+        } else {
+          const proposal = await this.repo.insertProposal({
+            institutionId: principal.institutionId,
+            studentId: principal.studentId,
+            threadId: args.thread.id,
+            messageId: args.messageId,
+            actionKey: validated.actionKey,
+            arguments: validated.arguments,
+            preview: validated.preview,
+            confirmationRequired: validated.confirmationRequired,
+            expiresAt: new Date(Date.now() + PROPOSAL_TTL_MINUTES * 60_000),
+          });
+          proposalBlock = {
+            type: 'action_proposal',
+            proposalId: proposal.id,
+            actionKey: validated.actionKey,
+            title: validated.title,
+            preview: validated.preview,
+            confirmationRequired: validated.confirmationRequired,
+            status: 'proposed',
+          };
+        }
       }
     }
 
@@ -546,6 +758,7 @@ export class PetrosCompanionService {
       });
     }
 
+    if (sessionOfferBlock) blocks.push(sessionOfferBlock);
     if (proposalBlock) blocks.push(proposalBlock);
 
     const replies = (parsed.suggestedReplies ?? []).filter(Boolean).slice(0, 3);
@@ -597,7 +810,7 @@ export class PetrosCompanionService {
    * The honest fallback. It never claims a fact and never pretends an action ran; it says
    * what Petros can see and offers the one thing that still works.
    */
-  private offlineReply(context: ResolvedPageContext): PetrosCompanionBlock[] {
+  private offlineReply(context: ResolvedPageContext, decision?: PetrosMentorDecision | null, message = ''): PetrosCompanionBlock[] {
     if (context.support !== 'supported') {
       return [
         { type: 'text', text: context.reason ?? 'I cannot read this screen.' },
@@ -616,6 +829,15 @@ export class PetrosCompanionService {
           text: `Here is what your record says about ${context.focus.title}${facts ? ` — ${facts}` : ''}. I cannot give you a personalized answer right now, so try again in a moment.`,
         },
         { type: 'status', label: 'Personalized answers unavailable', tone: 'warning' },
+      ];
+    }
+    if (decision) {
+      const lowEnergy = /\b(?:lazy|tired|exhausted|don.t (?:want|feel)|skip|no energy)\b/i.test(message);
+      const text = lowEnergy && decision.priorities.length ? mentorMessage(decision.priorities, 'low', decision.status === 'partial') : decision.message;
+      return [
+        { type: 'text', text },
+        ...(decision.priorities[0] ? [{ type: 'navigation' as const, label: 'Show me the next step', href: decision.priorities[0].href }] : []),
+        { type: 'status', label: 'Conversation is temporarily unavailable. This guidance uses your verified records.', tone: 'warning' },
       ];
     }
     return [

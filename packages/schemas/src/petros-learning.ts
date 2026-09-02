@@ -949,6 +949,17 @@ export const petrosComposerQuestionSchema = z
     idempotencyKey: z.string().uuid(),
     question: z.string().trim().min(2).max(2_000),
     expectedSessionVersion: z.number().int().nonnegative(),
+    pausePoint: z
+      .object({
+        blockId: z.string().uuid(),
+        segmentId: z.string().trim().min(1).max(240),
+        targetKey: z.string().trim().min(1).max(300),
+        label: z.string().trim().min(1).max(180),
+        spokenText: z.string().trim().min(1).max(2_000),
+        wordIndex: z.number().int().nonnegative().max(10_000),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 export type PetrosComposerQuestionInput = z.infer<typeof petrosComposerQuestionSchema>;

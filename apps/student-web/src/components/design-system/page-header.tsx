@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import styles from './primitives.module.css';
 
 export function PageHeader({
-  eyebrow,
   title,
   description,
   actions,
@@ -15,7 +14,6 @@ export function PageHeader({
   return (
     <header className={styles.pageHeader}>
       <div className={styles.pageHeaderCopy}>
-        {eyebrow ? <p className={styles.eyebrow}>{eyebrow}</p> : null}
         <h1 className={styles.pageTitle}>{title}</h1>
         {description ? <p className={styles.pageDescription}>{description}</p> : null}
       </div>

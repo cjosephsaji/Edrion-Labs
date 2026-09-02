@@ -20,12 +20,21 @@ export type AssignmentRow = {
   late?: boolean;
 };
 
+type CourseworkRow = AssignmentRow & {
+  sourceKind: 'assignments' | 'homework';
+};
+
 /**
  * The first unfinished row, used only to order the list's own emphasis. It is no longer
  * what Petros talks about: the student picks that with "Ask Petros" on the card they mean.
  */
 export function petrosAssignmentFocusId(rows: AssignmentRow[]) {
   return rows.find((row) => ['assigned', 'in_progress'].includes(row.status ?? 'assigned'))?.id ?? null;
+}
+
+export function assignmentEmptyTitle(kind: 'assignments' | 'homework', filter: Filter) {
+  if (filter !== 'all') return `No ${filter} work`;
+  return kind === 'homework' ? 'No homework yet' : 'No assignments yet';
 }
 
 function statusStyle(status: string, late: boolean) {
@@ -49,35 +58,66 @@ function dueLabel(value: string | null) {
 
 export function AssignmentListScreen({ kind }: { kind: 'assignments' | 'homework' }) {
   const [filter, setFilter] = React.useState<Filter>('all');
-  const { data: me } = useStudentMe();
-  const query = useStudentList<{ items: AssignmentRow[] }>(`${kind}-${filter}`, `/student/${kind}?filter=${filter}`);
+  const { data: me, isLoading: meLoading } = useStudentMe();
   const college = Boolean(me?.programmeName);
+  const canViewHomework = Boolean(
+    me?.permissions.includes('*') || me?.permissions.includes('student.homework.view'),
+  );
+  // College coursework is authored through both assignment generations. The college shell hides
+  // the separate Homework destination, so its rows must be included on the visible Assignments
+  // page or submitted/returned classwork becomes unreachable from every filter.
+  const includeHomework = kind === 'assignments' && college && canViewHomework;
+  const assignmentsQuery = useStudentList<{ items: AssignmentRow[] }>(
+    ['assignments', filter],
+    `/student/assignments?filter=${filter}`,
+    kind === 'assignments',
+  );
+  const homeworkQuery = useStudentList<{ items: AssignmentRow[] }>(
+    ['homework', filter],
+    `/student/homework?filter=${filter}`,
+    kind === 'homework' || includeHomework,
+  );
   const title = kind === 'homework' ? 'Homework' : 'Assignments';
-  const institutionLabel = college ? 'COLLEGE' : 'SCHOOL';
-  const allRows = query.data?.items ?? [];
+  const activeQueries = kind === 'homework'
+    ? [homeworkQuery]
+    : includeHomework
+      ? [assignmentsQuery, homeworkQuery]
+      : [assignmentsQuery];
+  const queryError = activeQueries.find((query) => query.error)?.error;
+  const isLoading = meLoading || activeQueries.some((query) => query.isLoading);
+  const allRows: CourseworkRow[] = [
+    ...(kind === 'assignments'
+      ? (assignmentsQuery.data?.items ?? []).map((row) => ({ ...row, sourceKind: 'assignments' as const }))
+      : []),
+    ...(kind === 'homework' || includeHomework
+      ? (homeworkQuery.data?.items ?? []).map((row) => ({ ...row, sourceKind: 'homework' as const }))
+      : []),
+  ];
 
   usePetrosPage(
-    query.data
+    !isLoading && !queryError
       ? {
           title,
           summary: `${allRows.length} ${title.toLowerCase()} shown, filter: ${filter}`,
           candidates: allRows.map((row) => ({
             ref: row.id,
-            entityType: kind === 'homework' ? ('homework' as const) : ('assignment' as const),
+            entityType: row.sourceKind === 'homework' ? ('homework' as const) : ('assignment' as const),
             entityId: row.id,
             title: row.title || 'Untitled',
             summary: [row.subjectName, dueLabel(row.dueAt), row.status ?? 'assigned']
               .filter(Boolean)
               .join(' · '),
-            href: `/${kind}/${row.id}`,
+            href: `/${row.sourceKind}/${row.id}`,
           })),
         }
       : null,
   );
 
-  if (query.isLoading) return <LoadingBlock label={`Loading ${title.toLowerCase()}…`} />;
-  if (query.error instanceof StudentApiError && query.error.status === 401) return <UnauthorizedState />;
-  if (query.error) return <ErrorState description={formatApiError(query.error)} onRetry={() => void query.refetch()} />;
+  if (isLoading) return <LoadingBlock label={`Loading ${title.toLowerCase()}…`} />;
+  if (queryError instanceof StudentApiError && queryError.status === 401) return <UnauthorizedState />;
+  if (queryError) return <ErrorState description={formatApiError(queryError)} onRetry={() => {
+    for (const query of activeQueries) void query.refetch();
+  }} />;
 
   const rows = allRows;
   const filters: Array<{ id: Filter; label: string }> = [
@@ -90,7 +130,6 @@ export function AssignmentListScreen({ kind }: { kind: 'assignments' | 'homework
   return (
     <div className="mx-auto w-full max-w-[1120px]">
       <PageHeader
-        eyebrow={`${title} · From your ${institutionLabel}`}
         title={title}
         description={`Review what needs attention, what is underway, and what your ${college ? 'professor' : 'teacher'} has returned.`}
       />
@@ -110,7 +149,7 @@ export function AssignmentListScreen({ kind }: { kind: 'assignments' | 'homework
       </div>
 
       {rows.length === 0 ? (
-        <div className="mt-4"><EmptyState icon={ListTodo} title={`No ${filter === 'all' ? title.toLowerCase() : filter} work`} description={filter === 'all' ? `Published ${title.toLowerCase()} will appear here.` : 'This filter is clear. Show all work to check another status.'} action={filter === 'all' ? undefined : <ActionButton variant="secondary" onClick={() => setFilter('all')}>Show all work</ActionButton>} /></div>
+        <div className="mt-4"><EmptyState icon={ListTodo} title={assignmentEmptyTitle(kind, filter)} description={filter === 'all' ? `Published ${title.toLowerCase()} will appear here.` : 'This filter is clear. Show all work to check another status.'} action={filter === 'all' ? undefined : <ActionButton variant="secondary" onClick={() => setFilter('all')}>Show all work</ActionButton>} /></div>
       ) : (
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           {rows.map((row, index) => {
@@ -119,7 +158,8 @@ export function AssignmentListScreen({ kind }: { kind: 'assignments' | 'homework
             return (
               <Link
                 key={row.id}
-                href={`/${kind}/${row.id}`}
+                href={`/${row.sourceKind}/${row.id}`}
+                data-petros-card
                 className="focus-ring animate-block-in block"
                 style={{ animationDelay: `${Math.min(index * 35, 140)}ms` }}
               >
@@ -129,7 +169,7 @@ export function AssignmentListScreen({ kind }: { kind: 'assignments' | 'homework
                       <h2 className="text-xl leading-tight text-[var(--s-ink)]">{row.title || 'Untitled'}</h2>
                       <StatusPill label={status.label} tone={status.tone} />
                     </div>
-                    <p className="mt-2 text-sm text-[var(--s-muted)]">{[row.subjectName, kind === 'homework' ? 'Homework set' : 'Published assignment'].filter(Boolean).join(' · ')}</p>
+                    <p className="mt-2 text-sm text-[var(--s-muted)]">{[row.subjectName, row.sourceKind === 'homework' ? 'Homework set' : 'Published assignment'].filter(Boolean).join(' · ')}</p>
                   </div>
                   <div className="mt-6 flex items-center justify-between gap-3">
                     <p className={`text-base font-semibold ${urgent ? 'text-[var(--s-danger)]' : 'text-[var(--s-inkSoft)]'}`}>{dueLabel(row.dueAt)}</p>
@@ -141,10 +181,6 @@ export function AssignmentListScreen({ kind }: { kind: 'assignments' | 'homework
           })}
         </div>
       )}
-
-      <p className="mt-4 max-w-[72ch] border-l-2 border-[var(--s-bd2)] px-4 py-2 text-sm leading-6 text-[var(--s-muted)]">
-        Your work stays editable until you submit. Nothing sends to your {college ? 'professor' : 'teacher'} until you say so.
-      </p>
     </div>
   );
 }

@@ -124,6 +124,19 @@ export const petrosArtifactContentSchema = z.union([
 ]);
 export type PetrosArtifactContent = z.infer<typeof petrosArtifactContentSchema>;
 
+/**
+ * A deliberate one-item save from a visible teaching block. Notes are saved immediately;
+ * flashcards reach this command only after the learner has reviewed the editable front/back
+ * sheet in the session UI.
+ */
+export const petrosSaveBlockArtifactSchema = z
+  .object({
+    idempotencyKey: z.string().uuid(),
+    content: z.union([petrosFlashcardContentSchema, petrosNoteContentSchema]),
+  })
+  .strict();
+export type PetrosSaveBlockArtifactInput = z.infer<typeof petrosSaveBlockArtifactSchema>;
+
 export const petrosArtifactProposalSchema = z
   .object({
     schemaVersion: z.literal(PETROS_ARTIFACT_PROPOSAL_VERSION),

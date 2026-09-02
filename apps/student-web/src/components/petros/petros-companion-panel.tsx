@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowRight,
@@ -24,13 +25,15 @@ import type {
 } from '@edrion/schemas';
 import { formatApiError, newIdempotencyKey, useStudentApi } from '@/lib/api-client';
 import { usePetrosCompanion } from './petros-companion-context';
+import { PetrosDoorButton } from './petros-door-button';
 import styles from './petros-companion-panel.module.css';
 
 type ActionState = Record<string, { status: PetrosActionResult['status']; message: string } | undefined>;
 
-export function PetrosCompanionPanel({ studentName }: { studentName?: string }) {
+export function PetrosCompanionPanel({ studentName, showLauncher = true }: { studentName?: string; showLauncher?: boolean }) {
   const api = useStudentApi();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const companion = usePetrosCompanion();
   const [question, setQuestion] = useState('');
   const [sending, setSending] = useState(false);
@@ -70,7 +73,7 @@ export function PetrosCompanionPanel({ studentName }: { studentName?: string }) 
 
   const close = useCallback(() => {
     setOpen(false);
-    window.requestAnimationFrame(() => triggerRef.current?.focus());
+    window.requestAnimationFrame(() => (triggerRef.current ?? document.getElementById('petros-mentor-toggle'))?.focus());
   }, [setOpen]);
 
   useEffect(() => {
@@ -153,14 +156,26 @@ export function PetrosCompanionPanel({ studentName }: { studentName?: string }) 
           ...current,
           [proposalId]: { status: result.status, message: result.message },
         }));
-        if (result.status === 'executed' && result.href) router.push(result.href);
+        if (
+          result.status === 'executed' &&
+          (result.actionKey === 'planner.create' || result.actionKey === 'planner.update')
+        ) {
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['student', 'calendar'] }),
+            queryClient.invalidateQueries({ queryKey: ['student', 'petros', 'briefing'] }),
+          ]);
+        }
+        if (result.status === 'executed' && result.href) {
+          if (result.actionKey === 'navigate.open') companion.requestGuide(result.href);
+          else router.push(result.href);
+        }
       } catch (caught) {
         setError(formatApiError(caught));
       } finally {
         setBusyProposal(null);
       }
     },
-    [api, busyProposal, router],
+    [api, busyProposal, queryClient, router, companion],
   );
 
   const suggestions = useMemo(() => {
@@ -179,7 +194,7 @@ export function PetrosCompanionPanel({ studentName }: { studentName?: string }) 
 
   return (
     <>
-      <button
+      {showLauncher ? <button
         ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
@@ -197,7 +212,7 @@ export function PetrosCompanionPanel({ studentName }: { studentName?: string }) 
           <small>{focus ? truncate(focus.title, 26) : 'Ask about this screen'}</small>
         </span>
         {focus ? <span className={styles.launcherDot} aria-hidden="true" /> : null}
-      </button>
+      </button> : null}
 
       <section
         id="petros-companion-panel"
@@ -381,6 +396,7 @@ function Block({
   onDecide: (proposalId: string, decision: 'confirm' | 'decline') => void;
   onSuggestion: (text: string) => void;
 }) {
+  const companion = usePetrosCompanion();
   switch (block.type) {
     case 'text':
       return <p className={styles.text}>{block.text}</p>;
@@ -397,7 +413,7 @@ function Block({
 
     case 'navigation':
       return (
-        <a className={styles.navigation} href={block.href}>
+        <a className={styles.navigation} href={block.href} onClick={(event) => { event.preventDefault(); companion.requestGuide(block.href); }}>
           {block.label}
           <ArrowRight aria-hidden="true" />
         </a>
@@ -441,6 +457,14 @@ function Block({
         <div className={styles.plan}>
           <strong>{block.title}</strong>
           <small>About {block.minutes} minutes</small>
+          <PetrosDoorButton
+            door={block.door}
+            sourceId={block.intentPreviewRef}
+            question={block.question}
+            route={block.route || companion.route}
+            label="Plan this lesson"
+            timeBudgetSeconds={block.minutes * 60}
+          />
         </div>
       );
 

@@ -1,3 +1,6 @@
+import { PetrosMentorService } from './petros-mentor.service';
+import { StudentMaterialsService } from '../materials/student-materials.service';
+import { PetrosReflectionModule } from '../petros-reflection/petros-reflection.module';
 import { Module } from '@nestjs/common';
 import { FeatureControlsModule } from '../../feature-controls/feature-controls.module';
 import { PetrosAiRoutingModule } from '../../petros-ai-routing/petros-ai-routing.module';
@@ -14,7 +17,7 @@ import { PetrosCompanionService } from './petros-companion.service';
 import { PetrosStudentContextService } from './petros-student-context.service';
 
 @Module({
-  imports: [FeatureControlsModule, PetrosAiRoutingModule, PetrosSessionIntentModule],
+  imports: [PetrosReflectionModule, FeatureControlsModule, PetrosAiRoutingModule, PetrosSessionIntentModule],
   controllers: [StudentPetrosCompanionController],
   providers: [
     PetrosCompanionRepository,
@@ -22,6 +25,8 @@ import { PetrosStudentContextService } from './petros-student-context.service';
     PetrosStudentContextService,
     PetrosActionRegistryService,
     PetrosBriefingService,
+    PetrosMentorService,
+    StudentMaterialsService,
     StudentPortalGuard,
     StudentRateLimitGuard,
     SurfaceGateService,

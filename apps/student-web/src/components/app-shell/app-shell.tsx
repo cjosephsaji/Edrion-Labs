@@ -8,7 +8,9 @@ import { STUDENT_NAV, type NavItem } from '@/lib/nav';
 import { useStudentLogout, useStudentMe, type StudentMe } from '@/lib/hooks';
 import { useStudentPreferences } from '@/lib/preferences';
 import { PetrosCompanionProvider } from '@/components/petros/petros-companion-context';
-import { PetrosCompanionPanel } from '@/components/petros/petros-companion-panel';
+import { PetrosMentor } from '@/components/petros/petros-mentor';
+import { NavigationFeedback } from './navigation-feedback';
+import { activeSectionNavigation, SectionNavigation } from './section-navigation';
 
 function canSee(me: StudentMe | undefined, permission?: string, surface?: string): boolean {
   if (!me) return !permission && !surface;
@@ -35,7 +37,7 @@ function isActive(pathname: string, href: string) {
  * not rendered at all there.
  */
 function isFocusRoute(pathname: string) {
-  return /^\/exams\/[^/]+\/attempt$/.test(pathname) || pathname.startsWith('/petros/session');
+  return /^\/exams\/[^/]+\/attempt$/.test(pathname);
 }
 
 function uniqueItems(items: Array<NavItem | undefined>) {
@@ -69,6 +71,7 @@ function PortalTab({ item, pathname, onNavigate }: { item: NavItem; pathname: st
   return (
     <Link
       href={item.href}
+      data-petros-target={`nav:${item.href}`}
       onClick={navigate}
       aria-current={active ? 'page' : undefined}
       className={`portal-tab ${active ? 'portal-tab-active' : ''}`}
@@ -83,14 +86,12 @@ function DirectoryLink({
   pathname,
   onNavigate,
   favorite,
-  canFavorite,
   onToggleFavorite,
 }: {
   item: NavItem;
   pathname: string;
   onNavigate: () => void;
   favorite: boolean;
-  canFavorite: boolean;
   onToggleFavorite: () => void;
 }) {
   const active = isActive(pathname, item.href);
@@ -98,6 +99,7 @@ function DirectoryLink({
     <div className="portal-directory-link-row" data-current={active || undefined}>
       <Link
         href={item.href}
+        data-petros-target={`directory:${item.href}`}
         onClick={onNavigate}
         aria-current={active ? 'page' : undefined}
         className="portal-directory-link"
@@ -110,10 +112,9 @@ function DirectoryLink({
         className="portal-favorite-button"
         data-favorite={favorite || undefined}
         onClick={onToggleFavorite}
-        disabled={!favorite && !canFavorite}
         aria-pressed={favorite}
         aria-label={`${favorite ? 'Remove' : 'Add'} ${item.label} ${favorite ? 'from' : 'to'} quick navigation`}
-        title={!favorite && !canFavorite ? 'Quick navigation is full' : favorite ? 'Remove from quick navigation' : 'Add to quick navigation'}
+        title={favorite ? 'Remove from quick navigation' : 'Add to quick navigation'}
       >
         <Star aria-hidden="true" />
       </button>
@@ -128,6 +129,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const preferences = useStudentPreferences();
   const [menuPhase, setMenuPhase] = useState<'closed' | 'open' | 'closing'>('closed');
   const [headerCompact, setHeaderCompact] = useState(false);
+  const [mentorGuideHost, setMentorGuideHost] = useState<HTMLDivElement | null>(null);
+  const [mentorPerchHost, setMentorPerchHost] = useState<HTMLDivElement | null>(null);
   const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
   const menuPanelRef = useRef<HTMLElement>(null);
   const menuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -146,15 +149,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const itemAt = (href: string) => allItems.find((item) => item.href === href);
   const workItem = itemAt('/homework') ?? itemAt('/assignments');
   const classItem = itemAt('/classes') ?? itemAt('/courses');
-  /*
-   * Five tabs, and the second slot is Learn.
-   *
-   * Calendar lost its place: it repeats what Timetable already shows day to day, and its
-   * unique content (exams, events) already reaches the student through the dashboard
-   * priority cards and the Petros briefing. Learning had no default entry point at all.
-   * Position two also matters — the mobile bar renders the first four, so a tab appended
-   * at the end would be invisible on a phone.
-   */
+  // Defaults are a starting point; students can star any additional pages in Explore.
   const defaultQuickItems = uniqueItems([
     itemAt('/home'),
     itemAt('/learn'),
@@ -167,7 +162,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     .map((href) => itemAt(href))
     .filter((item): item is NavItem => Boolean(item));
   const visibleQuickHrefs = primaryTabs.map((item) => item.href);
-  const mobileTabs = primaryTabs.slice(0, 4);
+  const sectionNavigation = activeSectionNavigation(pathname, sections);
 
   const toggleFavorite = (href: string) => {
     const current = preferences.quickNav ? visibleQuickHrefs : defaultQuickItems.map((item) => item.href);
@@ -203,8 +198,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const panel = menuPanelRef.current;
-    const focusable = panel?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
-    if (menuPhase === 'open') focusable?.[0]?.focus();
+    if (menuPhase === 'open') panel?.querySelector<HTMLElement>('a[href], button:not([disabled])')?.focus();
 
     const handleKey = (event: KeyboardEvent) => {
       if (menuPhase !== 'open') return;
@@ -212,6 +206,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         closeMenu(true);
         return;
       }
+      const focusable = panel?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
       if (event.key !== 'Tab' || !focusable?.length) return;
       const first = focusable.item(0);
       const last = focusable.item(focusable.length - 1);
@@ -265,13 +260,17 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (isFocusRoute(pathname)) {
     return (
-      <div className="student-shell min-h-screen bg-[var(--s-page)] text-[var(--s-ink)]">{children}</div>
+      <div className="student-shell min-h-screen bg-[var(--s-page)] text-[var(--s-ink)]">
+        <NavigationFeedback />
+        {children}
+      </div>
     );
   }
 
   return (
     <PetrosCompanionProvider>
     <div className="student-shell min-h-screen bg-[var(--s-page)] text-[var(--s-ink)]">
+      <NavigationFeedback />
       <header className={`portal-header sticky top-0 z-40 ${headerCompact ? 'is-compact' : ''}`}>
         <div className="portal-masthead">
           <div className="portal-brand-group">
@@ -281,6 +280,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="portal-brand-divider" aria-hidden="true" />
             <span className="portal-context">Student portal</span>
           </div>
+          <div ref={setMentorPerchHost} className="portal-petros-perch" />
           <div className="portal-date" suppressHydrationWarning aria-label={`${weekday}, ${day} ${month} ${year}`}>
             <span className="portal-date-weekday">{weekday}</span>
             <span className="portal-date-number">{day}</span>
@@ -291,8 +291,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <div className="portal-nav-row">
           <nav className="portal-tabs" aria-label="Student portal">
-            {primaryTabs.map((item) => <PortalTab key={item.href} item={item} pathname={pathname} />)}
-            <button type="button" onClick={openMenu} className="portal-tab portal-more" aria-expanded={menuOpen} aria-controls="portal-directory"><LayoutGrid className="h-4 w-4" aria-hidden="true" />Explore</button>
+            <div className="portal-quick-tabs">
+              {primaryTabs.map((item) => <PortalTab key={item.href} item={item} pathname={pathname} />)}
+            </div>
+            <button type="button" onClick={openMenu} data-petros-target="nav:explore" className="portal-tab portal-more" aria-expanded={menuOpen} aria-controls="portal-directory"><LayoutGrid className="h-4 w-4" aria-hidden="true" />Explore</button>
           </nav>
           <Link href="/profile" className="portal-identity">
             <span className="portal-avatar">{initial}</span>
@@ -304,31 +306,37 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main key={pathname} className="portal-main page-enter min-h-[calc(100vh-114px)] px-4 pb-24 pt-8 min-[921px]:px-10 min-[921px]:pb-16 min-[921px]:pt-12">
+      {me?.kind === 'institutional' && me.studentId && canSee(me, 'student.learn.use') ? <PetrosMentor
+        studentId={me.studentId}
+        navigation={allItems}
+        guideHost={menuOpen ? mentorGuideHost : null}
+        perchHost={mentorPerchHost}
+        onExplore={() => { if (menuCloseTimerRef.current) window.clearTimeout(menuCloseTimerRef.current); setMenuPhase('open'); }}
+        onCloseExplore={() => closeMenu(false)}
+      /> : null}
+
+      <main data-petros-target={`page:${pathname}`} key={pathname} className="portal-main page-enter min-h-[calc(100vh-114px)] px-4 pb-24 pt-8 min-[921px]:px-10 min-[921px]:pb-16 min-[921px]:pt-12">
+        {sectionNavigation ? <SectionNavigation {...sectionNavigation} /> : null}
         {children}
       </main>
 
       <nav className="portal-mobile-nav min-[921px]:hidden" aria-label="Quick navigation">
-        {mobileTabs.map((item) => <PortalTab key={item.href} item={item} pathname={pathname} />)}
-        <button type="button" onClick={openMenu} className="portal-tab" aria-expanded={menuOpen} aria-controls="portal-directory"><LayoutGrid className="h-4 w-4" aria-hidden="true" />Explore</button>
+        <div className="portal-quick-tabs">
+          {primaryTabs.map((item) => <PortalTab key={item.href} item={item} pathname={pathname} />)}
+        </div>
+        <button type="button" onClick={openMenu} data-petros-target="nav:explore" className="portal-tab" aria-expanded={menuOpen} aria-controls="portal-directory"><LayoutGrid className="h-4 w-4" aria-hidden="true" />Explore</button>
       </nav>
-
-      {/*
-        Institutional students only. The companion's context adapters, action registry and
-        thread storage are all institution-scoped, so showing the control to an independent
-        learner would offer something the API cannot serve.
-      */}
-      {me?.kind === 'institutional' ? <PetrosCompanionPanel studentName={me.fullName} /> : null}
 
       {menuPhase !== 'closed' ? (
         <div className="portal-directory-layer" data-state={menuPhase}>
           <button className="portal-directory-backdrop" onClick={() => closeMenu(true)} aria-label="Close portal directory" />
           <section ref={menuPanelRef} id="portal-directory" className="portal-menu" role="dialog" aria-modal="true" aria-labelledby="portal-directory-title">
+            <div ref={setMentorGuideHost} className="portal-mentor-guide-host" />
             <div className="portal-menu-head">
               <div>
-                <p className="portal-menu-kicker">Quick navigation · {primaryTabs.length}/5 starred</p>
+                <p className="portal-menu-kicker" aria-live="polite">Quick navigation · {primaryTabs.length} starred</p>
                 <h2 id="portal-directory-title" className="portal-menu-title">Portal directory</h2>
-                <p className="portal-menu-description">Star up to five pages to keep them in your quick navigation.</p>
+                <p className="portal-menu-description">Star pages to keep them in your quick navigation. Scroll your tabs to see them all.</p>
               </div>
               <div className="portal-menu-head-actions">
                 {preferences.quickNav ? (
@@ -349,7 +357,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                         pathname={pathname}
                         onNavigate={() => closeMenu(false)}
                         favorite={visibleQuickHrefs.includes(item.href)}
-                        canFavorite={visibleQuickHrefs.length < 5}
                         onToggleFavorite={() => toggleFavorite(item.href)}
                       />
                     ))}
@@ -366,7 +373,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Link href="/profile" onClick={() => closeMenu(false)}><UserRound className="h-4 w-4" />Profile</Link>
                 <Link href="/notifications" onClick={() => closeMenu(false)}><Bell className="h-4 w-4" />Notifications</Link>
                 {itemAt('/settings') ? <Link href="/settings" onClick={() => closeMenu(false)}><Settings className="h-4 w-4" />Settings</Link> : null}
-                <button type="button" onClick={() => logout.mutate()} disabled={logout.isPending}><LogOut className="h-4 w-4" />{logout.isPending ? 'Signing out…' : 'Sign out'}</button>
+                <button type="button" onClick={() => logout.mutate()} disabled={logout.isPending} aria-busy={logout.isPending}><LogOut className="h-4 w-4" />{logout.isPending ? 'Signing out…' : 'Sign out'}</button>
               </div>
             </div>
           </section>

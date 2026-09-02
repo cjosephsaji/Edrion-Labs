@@ -111,12 +111,13 @@ export default function RequestDetailPage() {
               {data.canCancel ? (
                 <Button
                   variant="danger"
-                  disabled={cancel.isPending}
+                  loading={cancel.isPending}
+                  loadingLabel="Cancelling…"
                   onClick={() => {
                     if (confirm('Cancel this request?')) cancel.mutate();
                   }}
                 >
-                  {cancel.isPending ? 'Cancelling…' : 'Cancel request'}
+                  Cancel request
                 </Button>
               ) : null}
             </div>

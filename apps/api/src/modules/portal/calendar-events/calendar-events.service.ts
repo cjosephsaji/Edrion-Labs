@@ -21,6 +21,12 @@ export class CalendarEventsService extends PortalResourceService {
         startsOn: schema.calendarEvents.startsOn,
         createdAt: schema.calendarEvents.createdAt,
       },
+      // calendarEventListQuerySchema accepts these three; without declaring them here the
+      // engine accepted the values and returned unfiltered rows.
+      filters: {
+        equals: { eventTypeId: schema.calendarEvents.eventTypeId },
+        dateRange: schema.calendarEvents.startsOn,
+      },
       snapshot: (r) => ({ title: r.title, eventTypeId: r.eventTypeId, status: r.status }),
     }),
   };

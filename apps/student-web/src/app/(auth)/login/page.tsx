@@ -2,77 +2,159 @@
 
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
+import {
+  ArrowRight,
+  BookOpen,
+  CalendarDays,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  TrendingUp,
+} from 'lucide-react';
 import { formatApiError } from '@/lib/api-client';
 import { useStudentLogin } from '@/lib/hooks';
+import styles from './login.module.css';
+
+const portalFeatures = [
+  {
+    icon: CalendarDays,
+    title: 'Your day, already organised',
+    detail: 'Classes, deadlines and important updates in one view.',
+  },
+  {
+    icon: BookOpen,
+    title: 'Learning that keeps its place',
+    detail: 'Continue materials, homework and Petros sessions where you stopped.',
+  },
+  {
+    icon: TrendingUp,
+    title: 'Progress with context',
+    detail: 'See results, feedback and the next useful topic—not just a score.',
+  },
+];
 
 export default function LoginPage() {
   const login = useStudentLogin();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
-  function onSubmit(e: FormEvent) {
-    e.preventDefault();
+  function onSubmit(event: FormEvent) {
+    event.preventDefault();
     login.mutate({ identifier: identifier.trim(), password });
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10">
-      <div className="mb-8">
-        <p className="font-display text-3xl font-semibold text-[var(--s-accentDeep)]">Edrion</p>
-        <h1 className="mt-3 font-display text-2xl font-semibold text-[var(--s-ink)]">
-          Student sign in
-        </h1>
-        <p className="mt-1 text-sm text-[var(--s-muted)]">
-          Use the email and password from your institution invite.
-        </p>
-      </div>
+    <div className={styles.page}>
+      <header className={styles.masthead}>
+        <div className={styles.brandGroup}>
+          <Link href="/login" className={styles.brand} aria-label="Edrion student portal sign in">
+            edrion
+          </Link>
+          <span className={styles.brandDivider} aria-hidden="true" />
+          <span className={styles.portalLabel}>Student portal</span>
+        </div>
+        <span className={styles.accessLabel}>Institution access</span>
+      </header>
 
-      <form
-        onSubmit={onSubmit}
-        className="rounded-2xl border border-[var(--s-bd1)] bg-[var(--s-card)] p-5 shadow-[0_16px_40px_-28px_rgba(23,37,31,0.45)]"
-      >
-        <label className="block text-sm">
-          <span className="mb-1.5 block font-medium text-[var(--s-inkSoft)]">Email or student ID</span>
-          <input
-            type="text"
-            required
-            autoComplete="username"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            className="w-full rounded-xl border border-[var(--s-bd1)] bg-[var(--s-cardAlt)] px-3 py-2.5 text-[var(--s-ink)] outline-none focus:border-[var(--s-accent)]"
-          />
-        </label>
-        <label className="mt-4 block text-sm">
-          <span className="mb-1.5 block font-medium text-[var(--s-inkSoft)]">Password</span>
-          <input
-            type="password"
-            required
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-[var(--s-bd1)] bg-[var(--s-cardAlt)] px-3 py-2.5 text-[var(--s-ink)] outline-none focus:border-[var(--s-accent)]"
-          />
-        </label>
+      <main className={styles.main}>
+        <section className={styles.introduction} aria-labelledby="portal-welcome">
+          <p className={styles.kicker}>Your academic day, connected</p>
+          <h1 id="portal-welcome">Everything you need to move learning forward.</h1>
+          <p className={styles.introCopy}>
+            Timetable, assignments, study material and progress live in the same calm workspace—personal to you and shaped by your institution.
+          </p>
 
-        {login.error ? (
-          <p className="mt-3 text-sm text-[var(--s-danger)]">{formatApiError(login.error)}</p>
-        ) : null}
+          <div className={styles.portalPreview} aria-label="Inside the student portal">
+            <div className={styles.previewHeader}>
+              <span>Inside your portal</span>
+              <span>Personal to you</span>
+            </div>
+            <ul>
+              {portalFeatures.map(({ icon: Icon, title, detail }) => (
+                <li key={title}>
+                  <span className={styles.featureIcon}><Icon aria-hidden="true" /></span>
+                  <span>
+                    <strong>{title}</strong>
+                    <small>{detail}</small>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-        <button
-          type="submit"
-          disabled={login.isPending}
-          className="mt-5 w-full rounded-xl bg-[var(--s-accent)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-        >
-          {login.isPending ? 'Signing in…' : 'Sign in'}
-        </button>
-      </form>
+          <p className={styles.securityNote}>
+            <ShieldCheck aria-hidden="true" />
+            Your account is issued and managed by your institution.
+          </p>
+        </section>
 
-      <p className="mt-5 text-center text-sm text-[var(--s-muted)]">
-        Have an activation code?{' '}
-        <Link href="/activate" className="font-medium text-[var(--s-accentDeep)] underline-offset-2 hover:underline">
-          Activate account
-        </Link>
-      </p>
+        <section className={styles.signInColumn} aria-labelledby="student-sign-in">
+          <div className={styles.signInPanel}>
+            <header className={styles.panelHeader}>
+              <p>Student access</p>
+              <h2 id="student-sign-in">Welcome back.</h2>
+              <span>Use the same details provided by your institution.</span>
+            </header>
+
+            <form onSubmit={onSubmit} className={styles.form}>
+              <label htmlFor="student-identifier">Email or student ID</label>
+              <input
+                id="student-identifier"
+                type="text"
+                required
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
+                value={identifier}
+                onChange={(event) => setIdentifier(event.target.value)}
+                placeholder="Enter your email or ID"
+              />
+
+              <div className={styles.passwordLabel}>
+                <label htmlFor="student-password">Password</label>
+              </div>
+              <div className={styles.passwordField}>
+                <input
+                  id="student-password"
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="Enter your password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
+                >
+                  {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                </button>
+              </div>
+
+              {login.error ? (
+                <p className={styles.error} role="alert">{formatApiError(login.error)}</p>
+              ) : null}
+
+              <button type="submit" disabled={login.isPending} aria-busy={login.isPending} className={styles.submit}>
+                <span>{login.isPending ? 'Signing in…' : 'Sign in to your portal'}</span>
+                {!login.isPending ? <ArrowRight aria-hidden="true" /> : null}
+              </button>
+            </form>
+
+            <div className={styles.activation}>
+              <span>First time here?</span>
+              <Link href="/activate">Activate your account <ArrowRight aria-hidden="true" /></Link>
+            </div>
+          </div>
+
+          <p className={styles.helpText}>
+            Can’t access your account? Contact your institution administrator.
+          </p>
+        </section>
+      </main>
     </div>
   );
 }

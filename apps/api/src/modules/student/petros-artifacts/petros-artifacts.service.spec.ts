@@ -38,6 +38,37 @@ describe('PetrosArtifactsService ownership boundary', () => {
     expect(owned).toEqual([]);
   });
 
+  it('saves an explicitly reviewed block note into the owned notes product', async () => {
+    const repo = repository();
+    repo.findSession.mockResolvedValue(session());
+    repo.listSessionBlocks.mockResolvedValue([{ id: proposalId }]);
+    repo.findNextExamDate.mockResolvedValue(null);
+    repo.saveBlockArtifact.mockResolvedValue({
+      state: 'saved',
+      artifact: { ...savedArtifact(), kind: 'note', content: noteContent(), productType: 'note' },
+    });
+    const service = new PetrosArtifactsService(repo as never, learnerModels() as never);
+
+    const result = await service.saveBlockArtifact(principal, sessionId, proposalId, {
+      idempotencyKey: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      content: noteContent(),
+    });
+
+    expect(result.content).toEqual(noteContent());
+    expect(repo.saveBlockArtifact).toHaveBeenCalledWith(expect.objectContaining({
+      sessionId,
+      blockId: proposalId,
+      content: noteContent(),
+      firstReview: null,
+      sources: [expect.objectContaining({ kind: 'session_block', sessionId, blockId: proposalId })],
+    }));
+    expect(repo.recordDoorArtifactSave).toHaveBeenCalledWith(
+      expect.objectContaining({ institutionId, studentId }),
+      sessionId,
+      1,
+    );
+  });
+
   it('rejects executable markup without silently changing the student edit', async () => {
     const repo = repository();
     const service = new PetrosArtifactsService(repo as never, learnerModels() as never);
@@ -205,12 +236,12 @@ function repository() {
   return {
     findSession: vi.fn(), findBundle: vi.fn(), findBundleById: vi.fn(), listSessionBlocks: vi.fn(),
     createBundle: vi.fn(), listProposals: vi.fn(), updateProposal: vi.fn(), discardBundle: vi.fn(),
-    beginCommit: vi.fn(), finishCommit: vi.fn(), failCommit: vi.fn(), saveProposal: vi.fn(),
+    beginCommit: vi.fn(), finishCommit: vi.fn(), failCommit: vi.fn(), saveProposal: vi.fn(), saveBlockArtifact: vi.fn(),
     markProposalFailed: vi.fn(), refreshBundleState: vi.fn(), findNextExamDate: vi.fn(),
     listSaved: vi.fn(), findSaved: vi.fn(), updateSaved: vi.fn(), deleteSaved: vi.fn(),
     listDue: vi.fn(), commitReview: vi.fn(), attachReviewEvidence: vi.fn(), findReviewByClient: vi.fn(),
     setLifecycle: vi.fn(), rebuildSchedulerVersion: vi.fn(), resolveKnowledgeSource: vi.fn(), resolveSessionBlock: vi.fn(),
-    recordOperationalEvent: vi.fn(), recordFailureEvent: vi.fn(),
+    recordOperationalEvent: vi.fn(), recordFailureEvent: vi.fn(), recordDoorArtifactSave: vi.fn(),
   };
 }
 

@@ -70,6 +70,7 @@ export default function ActivatePage() {
         <button
           type="submit"
           disabled={pending}
+          aria-busy={pending}
           className="mt-5 w-full rounded-xl bg-[var(--s-accent)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
         >
           {pending ? 'Activating…' : 'Activate'}

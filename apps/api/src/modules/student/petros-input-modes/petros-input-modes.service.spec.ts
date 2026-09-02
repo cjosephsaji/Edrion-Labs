@@ -165,9 +165,9 @@ describe('Petros input-mode service', () => {
       requestId: 'request-1', providerKey: 'speech-provider', modelKey: 'stt-model', fallbackTier: 1, cached: false,
       functionKey: 'speech.transcribe', promptVersion: '1', schemaVersion: '1', estimatedCostMicros: 17, responseTimeMs: 240, retryCount: 1,
     });
-    const result = await h.service.process(principal, voice.id, { idempotencyKey: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc' });
+    const result = await h.service.process(principal, voice.id, { idempotencyKey: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', language: 'en' });
     expect(h.gateway.execute).toHaveBeenCalledWith(expect.objectContaining({
-      context: expect.objectContaining({ functionKey: 'speech.transcribe', inputModality: 'audio' }),
+      context: expect.objectContaining({ functionKey: 'speech.transcribe', inputModality: 'audio', language: 'en' }),
       disableCache: true,
     }));
     expect(h.repo.createJob).toHaveBeenCalledWith(expect.objectContaining({ kind: 'speech_transcription', functionKey: 'speech.transcribe', maxAttempts: 3 }));

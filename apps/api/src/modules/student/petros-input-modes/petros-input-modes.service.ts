@@ -294,6 +294,7 @@ export class PetrosInputModesService {
           [mediaPart],
           petrosSpeechTranscriptionSchema,
           job.id,
+          { transcriptionLanguage: input.language ?? 'auto' },
         );
         const transcription = petrosSpeechTranscriptionSchema.parse(request.content);
         structuredResult = { ...media.structuredResult, transcription };
@@ -1070,6 +1071,8 @@ export class PetrosInputModesService {
           estimatedTokens: 0,
           currentCostMicros: 0,
           previousFailures: 0,
+          ...(typeof metadata.transcriptionLanguage === 'string' && metadata.transcriptionLanguage !== 'auto'
+            ? { language: metadata.transcriptionLanguage } : {}),
         },
         system: mediaSystemPrompt(functionKey),
         input,

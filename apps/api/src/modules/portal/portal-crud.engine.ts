@@ -5,9 +5,11 @@ import {
   count,
   desc,
   eq,
+  gte,
   ilike,
   inArray,
   isNull,
+  lte,
   or,
   type Database,
   type PgColumn,
@@ -54,6 +56,22 @@ export interface CrudColumns {
   createdAt: PgColumn;
   status?: PgColumn;
   kind?: PgColumn;
+  /** Content filed against a class/course. Present together, or not at all. */
+  contextType?: PgColumn;
+  contextId?: PgColumn;
+  /** Teaching content is filed under the subject it belongs to. */
+  subjectId?: PgColumn;
+}
+
+/**
+ * Extra equality filters a resource declares, keyed by the query parameter that drives them,
+ * plus an optional date column for `from`/`to`. Anything a list schema accepts should appear
+ * here or be removed from that schema — a filter the caller can send and the engine ignores
+ * silently returns the wrong rows.
+ */
+export interface CrudFilters {
+  equals?: Record<string, PgColumn>;
+  dateRange?: PgColumn;
 }
 
 export interface CrudConfig {
@@ -84,6 +102,8 @@ export interface CrudConfig {
    * column is left untouched, so the web can show a name and still edit by id.
    */
   refs?: RefSpec[];
+  /** Extra equality filters and an optional date-range column. */
+  filters?: CrudFilters;
   /**
    * Bespoke enrichment escape-hatch, run after `refs`. Receives the (already ref-enriched) page and
    * returns it with any extra derived fields (e.g. a student's guardian + age for Health). Must be
@@ -101,6 +121,17 @@ export interface CrudListQuery {
   search?: string;
   status?: string;
   kind?: string;
+  contextType?: string;
+  contextId?: string;
+  /** Several contexts at once; takes precedence over contextId. */
+  contextIds?: string[];
+  subjectId?: string;
+  from?: string;
+  to?: string;
+  /** Also return rows with no subject, so legacy content is never orphaned. */
+  includeUnfiled?: boolean;
+  /** Resource-declared equality filters (see CrudConfig.filters). */
+  [key: string]: unknown;
 }
 
 /**
@@ -129,6 +160,33 @@ export class PortalCrudEngine {
     }
     if (q.status && c.status) conds.push(eq(c.status, q.status));
     if (q.kind && c.kind) conds.push(eq(c.kind, q.kind));
+    // Context and subject narrow teaching content to one class and one subject. Without these
+    // the caller's contextId was accepted and silently ignored, so every list returned every
+    // row in the institution no matter which class was selected.
+    if (q.contextType && c.contextType && !q.contextIds) conds.push(eq(c.contextType, q.contextType));
+    // A subject taught to a class can carry content filed against the class or against the
+    // course that teaches it, so callers may pass several context ids.
+    const contextIds = q.contextIds ?? (q.contextId ? [q.contextId] : []);
+    if (contextIds.length && c.contextId) {
+      conds.push(contextIds.length === 1 ? eq(c.contextId, contextIds[0]!) : inArray(c.contextId, contextIds));
+    }
+    if (q.subjectId && c.subjectId) {
+      // Content created before subjects existed has no subject. Filtering it out would hide it
+      // from every workspace while it stayed published to students, so callers can ask for it
+      // alongside the subject's own rows and label it in the UI.
+      const subjectCond = q.includeUnfiled
+        ? or(eq(c.subjectId, q.subjectId), isNull(c.subjectId))
+        : eq(c.subjectId, q.subjectId);
+      if (subjectCond) conds.push(subjectCond);
+    }
+    for (const [key, col] of Object.entries(cfg.filters?.equals ?? {})) {
+      const v = q[key];
+      if (typeof v === 'string' && v) conds.push(eq(col, v));
+    }
+    if (cfg.filters?.dateRange) {
+      if (q.from) conds.push(gte(cfg.filters.dateRange, q.from));
+      if (q.to) conds.push(lte(cfg.filters.dateRange, q.to));
+    }
     if (q.search && cfg.search.length > 0) {
       const s = or(...cfg.search.map((col) => ilike(col, `%${q.search}%`)));
       if (s) conds.push(s);

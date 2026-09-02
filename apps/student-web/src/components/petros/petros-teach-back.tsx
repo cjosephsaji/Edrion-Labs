@@ -343,7 +343,6 @@ export function PetrosTeachBack() {
         aria-labelledby="mode-tab-teach-back"
         className={styles.panel}
       >
-        <p className={styles.eyebrow}>REVERSED SESSION</p>
         <h2>Explain this to Petros as if teaching a junior.</h2>
         <p>
           You generate the explanation. Petros listens, asks one genuinely confused question at a
@@ -405,6 +404,7 @@ export function PetrosTeachBack() {
         <button
           className={styles.primary}
           disabled={busy || topic.trim().length < 2 || audienceLabel.trim().length < 2}
+          aria-busy={busy}
           onClick={() => void start()}
         >
           {busy ? 'Opening…' : 'Start Teach-it-back'}
@@ -433,7 +433,6 @@ export function PetrosTeachBack() {
     >
       <header className={styles.sessionHead}>
         <div>
-          <p className={styles.eyebrow}>TEACH-IT-BACK · {session.mode.toUpperCase()}</p>
           <h2>{session.topic}</h2>
           <p>
             Teaching {session.audience.label}
@@ -469,8 +468,8 @@ export function PetrosTeachBack() {
         {Math.max(0, session.progress.timeBudgetSeconds - session.progress.elapsedSeconds)} seconds
         remain · maximum two probes per gap
       </p>
-      {!session.voice.productionDeviceQaPassed && (
-        <p className={styles.gate}>{session.voice.disclosure}</p>
+      {session.mode === 'voice' && !session.voice.productionDeviceQaPassed && (
+        <p className={styles.gate}>Voice input is in preview. You can switch any turn to text.</p>
       )}
 
       <aside className={styles.coverage} aria-label="Explanation coverage">
@@ -488,11 +487,7 @@ export function PetrosTeachBack() {
 
       <div className={styles.document}>
         <article className={styles.opening}>
-          <p className={styles.eyebrow}>PETROS IS LISTENING</p>
           <h3>{session.opening}</h3>
-          <p>
-            Start anywhere sensible. Petros will not show you a rubric or seize the explanation.
-          </p>
         </article>
         {session.segments.map((segment) => {
           const follow = session.followUps.find((item) => item.segmentId === segment.id);
@@ -536,7 +531,6 @@ export function PetrosTeachBack() {
               </article>
               {follow && (
                 <article className={styles.follow} data-status={follow.status}>
-                  <p className={styles.eyebrow}>JUNIOR IS CONFUSED ABOUT…</p>
                   <small>{follow.followUp.juniorTransition}</small>
                   <h3>{follow.followUp.question}</h3>
                   <p>Grounded in: “{follow.followUp.groundedIn.excerpt}”</p>
@@ -651,7 +645,6 @@ export function PetrosTeachBack() {
 
       {session.verdict && (
         <section className={styles.verdict}>
-          <p className={styles.eyebrow}>EXPLANATION VERDICT · NOT A SCORE</p>
           <h2>{session.verdict.oneLine}</h2>
           <div className={styles.verdictGrid}>
             <div>

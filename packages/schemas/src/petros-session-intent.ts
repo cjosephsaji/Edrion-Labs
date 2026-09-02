@@ -58,6 +58,50 @@ export const petrosReturnDestinationSchema = z
   })
   .strict();
 
+export const PETROS_TEACHING_PRIORITIES = [
+  'exam_prep',
+  'understand',
+  'revisit_weak_topic',
+  'quick_review',
+] as const;
+export const petrosTeachingPrioritySchema = z.enum(PETROS_TEACHING_PRIORITIES);
+export type PetrosTeachingPriority = z.infer<typeof petrosTeachingPrioritySchema>;
+
+export const petrosLessonTopicSchema = z.object({
+  id: z.string().trim().min(1).max(160),
+  title: shortText,
+  summary: z.string().trim().max(600),
+  pageStart: z.number().int().positive().nullable(),
+  pageEnd: z.number().int().positive().nullable(),
+  estimatedMinutes: z.number().int().min(5).max(120),
+  keyTerms: z.array(z.string().trim().min(1).max(80)).max(12),
+  likelyDoubts: z.array(shortText).max(5),
+}).strict();
+
+export const petrosTeachingPlanningSchema = z.object({
+  topics: z.array(petrosLessonTopicSchema).min(1).max(12),
+  suggestedTopicId: z.string().trim().min(1).max(160),
+  suggestedPriority: petrosTeachingPrioritySchema,
+  deadline: z.object({
+    kind: z.enum(['exam', 'assignment', 'teacher_schedule']),
+    title: shortText,
+    at: z.string().datetime(),
+    source: z.literal('teacher_schedule'),
+  }).strict().nullable(),
+  outlineCacheKey: z.string().trim().min(1).max(240).nullable(),
+  outlineStatus: z.enum(['cached', 'generated', 'not_applicable']),
+  estimatedTotalMinutes: z.number().int().min(5).max(1_440),
+}).strict();
+export type PetrosTeachingPlanning = z.infer<typeof petrosTeachingPlanningSchema>;
+
+export const petrosTeachingPlanSelectionSchema = z.object({
+  topicId: z.string().trim().min(1).max(160),
+  priority: petrosTeachingPrioritySchema,
+  timeBudgetSeconds: z.number().int().min(300).max(2_400),
+  existingDoubt: z.string().trim().max(2_000).nullable().default(null),
+}).strict();
+export type PetrosTeachingPlanSelection = z.infer<typeof petrosTeachingPlanSelectionSchema>;
+
 export const petrosSessionIntentSchema = z
   .object({
     schemaVersion: z.literal(PETROS_SESSION_INTENT_SCHEMA_VERSION),
@@ -102,6 +146,7 @@ export const petrosSessionIntentSchema = z
     accessibility: z.array(z.string().trim().min(1).max(120)).max(12),
     returnDestination: petrosReturnDestinationSchema,
     policyDisclosures: z.array(shortText).min(1).max(12),
+    planning: petrosTeachingPlanningSchema.nullable().default(null),
     homeworkContext: z
       .object({
         assignmentId: z.string().uuid(),
@@ -154,7 +199,10 @@ export const resolvePetrosSessionIntentSchema = z
 export type ResolvePetrosSessionIntentInput = z.infer<typeof resolvePetrosSessionIntentSchema>;
 
 export const startPetrosSessionIntentSchema = z
-  .object({ idempotencyKey: z.string().uuid() })
+  .object({
+    idempotencyKey: z.string().uuid(),
+    plan: petrosTeachingPlanSelectionSchema.optional(),
+  })
   .strict();
 export type StartPetrosSessionIntentInput = z.infer<typeof startPetrosSessionIntentSchema>;
 

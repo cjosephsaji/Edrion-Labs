@@ -95,7 +95,7 @@ export default function Page() {
               title={pageTitle}
               description={pageDescription}
               actions={unreadCount > 0 ? (
-                <ActionButton variant="secondary" disabled={markAll.isPending} onClick={() => markAll.mutate()}>
+                <ActionButton variant="secondary" loading={markAll.isPending} loadingLabel="Marking all…" onClick={() => markAll.mutate()}>
                   <CheckCheck aria-hidden="true" size={17} />
                   Mark all read
                 </ActionButton>
@@ -149,6 +149,7 @@ export default function Page() {
                                 className={styles.inboxAction}
                                 type="button"
                                 disabled={markRead.isPending && markRead.variables === item.id}
+                                aria-busy={markRead.isPending && markRead.variables === item.id}
                                 onClick={() => markRead.mutate(item.id)}
                               >
                                 <Check aria-hidden="true" size={14} /> Mark read

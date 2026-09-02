@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -8,17 +9,19 @@ import {
   ArrowRight,
   BookOpen,
   CalendarClock,
+  Check,
   FileText,
   GraduationCap,
   Megaphone,
   UserRound,
 } from 'lucide-react';
-import { Card, PageHeader } from '@/components/design-system';
+import { DocumentViewer } from '@/components/materials/document-viewer';
 import { PetrosAskButton } from '@/components/petros/petros-ask-button';
 import { usePetrosPage } from '@/components/petros/petros-companion-context';
-import { EmptyState, ErrorState, LoadingBlock } from '@/components/ui/states';
+import { ErrorState, LoadingBlock } from '@/components/ui/states';
 import { formatApiError, useStudentApi } from '@/lib/api-client';
 import { useStudentList } from '@/lib/hooks';
+import styles from './course-detail.module.css';
 
 type Course = {
   id: string;
@@ -27,12 +30,7 @@ type Course = {
   credits: number | null;
   professorName: string | null;
 };
-type Announcement = {
-  id: string;
-  title: string;
-  body: string | null;
-  postedAt: string;
-};
+type Announcement = { id: string; title: string; body: string | null; postedAt: string };
 type SyllabusModule = {
   weekNo: number;
   title: string;
@@ -46,6 +44,8 @@ type Material = {
   kindLabel: string;
   weekNo: number | null;
   description: string | null;
+  filename: string | null;
+  mimeType: string;
 };
 type Project = { id: string; title: string; dueDate: string | null };
 type About = {
@@ -64,6 +64,7 @@ export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const search = useSearchParams();
   const api = useStudentApi();
+  const [activeMaterial, setActiveMaterial] = useState<Material | null>(null);
   const courses = useStudentList<{ items: Course[] }>('courses', '/student/courses');
   const announcements = useQuery({
     queryKey: ['student', 'courses', id, 'announcements'],
@@ -93,9 +94,13 @@ export default function CourseDetailPage() {
   const firstError = announcements.error ?? syllabus.error ?? materials.error ?? projects.error ?? about.error;
   const loading = announcements.isLoading || syllabus.isLoading || materials.isLoading || projects.isLoading || about.isLoading;
   const attendance = about.data?.attendance;
-  const attendancePct = attendance?.total
-    ? Math.round((attendance.present / attendance.total) * 100)
-    : null;
+  const attendancePct = attendance?.total ? Math.round((attendance.present / attendance.total) * 100) : null;
+  const modules = syllabus.data?.modules ?? [];
+  const courseMaterials = materials.data?.items ?? [];
+  const courseProjects = projects.data?.items ?? [];
+  const courseAnnouncements = announcements.data?.items ?? [];
+  const coveredModules = modules.filter((module) => module.covered).length;
+  const currentModule = modules.find((module) => module.isCurrentWeek);
 
   usePetrosPage(
     course
@@ -111,7 +116,7 @@ export default function CourseDetailPage() {
               summary: [code, professor].filter(Boolean).join(' · '),
               href: `/courses/${course.id}`,
             },
-            ...(materials.data?.items ?? []).map((item) => ({
+            ...courseMaterials.map((item) => ({
               ref: `material:${item.id}`,
               entityType: 'material' as const,
               entityId: item.id,
@@ -125,124 +130,201 @@ export default function CourseDetailPage() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-[1120px]">
-      <Link href="/courses" className="focus-ring mb-5 inline-flex items-center gap-2 text-sm font-semibold text-[var(--s-accentDeep)]">
-        <ArrowLeft aria-hidden="true" size={16} /> All courses
+    <div className={styles.page}>
+      <Link href="/courses" className={styles.backLink}>
+        <ArrowLeft aria-hidden="true" /> Courses
       </Link>
 
-      <section>
-        <PageHeader
-          eyebrow={code ?? 'Your course'}
-          title={name}
-          description={[
-            professor ? `Taught by ${professor}` : 'Professor details will appear here.',
-            course?.credits ? `${course.credits} credits` : null,
-          ].filter(Boolean).join(' · ')}
-          actions={course ? <PetrosAskButton candidateRef={course.id} label={name} /> : undefined}
-        />
-      </section>
+      <header className={styles.hero}>
+        <div className={styles.heroCopy}>
+          <div className={styles.badges}>
+            {code ? <span>{code}</span> : null}
+            {course?.credits ? <span>{course.credits} credits</span> : null}
+          </div>
+          <h1>{name}</h1>
+          <p>{professor ? `Professor ${professor}` : 'Professor to be confirmed'}</p>
+          <div className={styles.heroActions}>
+            {course ? <PetrosAskButton candidateRef={course.id} label={name} /> : null}
+            <Link href="/materials">Browse library <ArrowRight aria-hidden="true" /></Link>
+          </div>
+        </div>
+        <span className={styles.courseMark} aria-hidden="true">{courseInitials(name)}</span>
+      </header>
 
       {firstError ? (
-        <ErrorState description={formatApiError(firstError)} onRetry={() => window.location.reload()} />
-      ) : loading ? (
-        <LoadingBlock label={`Opening ${name}…`} />
-      ) : (
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,.75fr)]">
-          <div className="space-y-4">
-            <Card className="p-5">
-              <div className="flex items-center gap-3">
-                <span className="rounded-xl bg-[var(--s-accentSoft)] p-2 text-[var(--s-accentDeep)]"><BookOpen aria-hidden="true" size={20} /></span>
-                <div><p className="text-xs font-bold uppercase tracking-[.12em] text-[var(--s-muted)]">Course plan</p><h2 className="text-xl text-[var(--s-ink)]">Syllabus</h2></div>
-              </div>
-              {syllabus.data?.modules.length ? (
-                <div className="mt-4 divide-y divide-[var(--s-bd1)]">
-                  {syllabus.data.modules.map((module) => (
-                    <div key={`${module.weekNo}:${module.title}`} className="py-4 first:pt-0 last:pb-0">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <strong className="text-[var(--s-ink)]">Week {module.weekNo} · {module.title}</strong>
-                        <span className="text-xs font-semibold text-[var(--s-muted)]">{module.covered ? 'Covered' : module.isCurrentWeek ? 'Current' : 'Upcoming'}</span>
-                      </div>
-                      {module.topics.length ? <p className="mt-1 text-sm leading-6 text-[var(--s-muted)]">{module.topics.join(' · ')}</p> : null}
-                    </div>
-                  ))}
-                </div>
-              ) : <EmptyState icon={BookOpen} title="No syllabus published yet" description="Your professor’s weekly course plan will appear here." actionHref="/courses" actionLabel="Back to courses" />}
-            </Card>
-
-            <Card className="p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3"><FileText aria-hidden="true" className="text-[var(--s-accentDeep)]" size={20} /><h2 className="text-xl text-[var(--s-ink)]">Course materials</h2></div>
-                <Link href="/materials" className="text-sm font-semibold text-[var(--s-accentDeep)]">All materials</Link>
-              </div>
-              {materials.data?.items.length ? (
-                <div className="mt-4 grid gap-3">
-                  {materials.data.items.map((material) => (
-                    <a
-                      key={material.id}
-                      href={api.fileUrl(`/student/materials/${material.id}/file`)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="focus-ring flex items-start justify-between gap-4 rounded-xl border border-[var(--s-bd1)] p-4 transition hover:border-[var(--s-accentBd)] hover:bg-[var(--s-cardAlt)]"
-                    >
-                      <span><strong className="text-[var(--s-ink)]">{material.title}</strong><span className="mt-1 block text-sm text-[var(--s-muted)]">{[material.kindLabel, material.weekNo ? `Week ${material.weekNo}` : null, material.description].filter(Boolean).join(' · ')}</span></span>
-                      <ArrowRight aria-hidden="true" className="mt-1 shrink-0 text-[var(--s-accentDeep)]" size={17} />
-                    </a>
-                  ))}
-                </div>
-              ) : <p className="mt-4 text-sm text-[var(--s-muted)]">No files have been attached to this course yet.</p>}
-            </Card>
-
-            <Card className="p-5">
-              <div className="flex items-center gap-3"><GraduationCap aria-hidden="true" className="text-[var(--s-accentDeep)]" size={21} /><h2 className="text-xl text-[var(--s-ink)]">Assignments and projects</h2></div>
-              {projects.data?.items.length ? (
-                <div className="mt-4 grid gap-3">
-                  {projects.data.items.map((project) => (
-                    <Link key={project.id} href={`/assignments/${project.id}`} className="focus-ring rounded-xl border border-[var(--s-bd1)] p-4 transition hover:border-[var(--s-accentBd)]">
-                      <strong className="text-[var(--s-ink)]">{project.title}</strong>
-                      <span className="mt-1 block text-sm text-[var(--s-muted)]">{project.dueDate ? `Due ${new Date(project.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}` : 'No due date'}</span>
-                    </Link>
-                  ))}
-                </div>
-              ) : <p className="mt-4 text-sm text-[var(--s-muted)]">No course projects are currently published.</p>}
-            </Card>
-          </div>
-
-          <aside className="space-y-4">
-            <Card className="p-5">
-              <div className="flex items-center gap-3"><Megaphone aria-hidden="true" className="text-[var(--s-accentDeep)]" size={19} /><h2 className="text-lg text-[var(--s-ink)]">Announcements</h2></div>
-              {announcements.data?.items.length ? (
-                <div className="mt-4 space-y-4">
-                  {announcements.data.items.slice(0, 4).map((item) => (
-                    <article key={item.id} className="border-b border-[var(--s-bd1)] pb-4 last:border-0 last:pb-0">
-                      <strong className="text-sm text-[var(--s-ink)]">{item.title}</strong>
-                      {item.body ? <p className="mt-1 text-sm leading-6 text-[var(--s-muted)]">{item.body}</p> : null}
-                    </article>
-                  ))}
-                </div>
-              ) : <p className="mt-3 text-sm text-[var(--s-muted)]">No course announcements yet.</p>}
-            </Card>
-
-            <Card className="p-5">
-              <div className="flex items-center gap-3"><UserRound aria-hidden="true" className="text-[var(--s-accentDeep)]" size={19} /><h2 className="text-lg text-[var(--s-ink)]">Course details</h2></div>
-              <dl className="mt-4 space-y-4 text-sm">
-                <div><dt className="text-[var(--s-muted)]">Professor</dt><dd className="mt-1 font-semibold text-[var(--s-ink)]">{professor || 'To be confirmed'}</dd></div>
-                <div><dt className="text-[var(--s-muted)]">Office hours</dt><dd className="mt-1 font-semibold text-[var(--s-ink)]">{about.data?.officeHours || 'Not published'}</dd></div>
-                <div><dt className="text-[var(--s-muted)]">Attendance</dt><dd className="mt-1 font-semibold text-[var(--s-ink)]">{attendancePct === null ? 'No attendance recorded' : `${attendancePct}% · ${attendance?.present}/${attendance?.total}`}</dd></div>
-              </dl>
-              {attendance?.warningLine ? <p className="mt-4 rounded-xl bg-[var(--s-warningSoft)] p-3 text-sm text-[var(--s-inkSoft)]">{attendance.warningLine}</p> : null}
-            </Card>
-
-            <Card className="p-5">
-              <div className="flex items-center gap-3"><CalendarClock aria-hidden="true" className="text-[var(--s-accentDeep)]" size={19} /><h2 className="text-lg text-[var(--s-ink)]">Grading</h2></div>
-              {about.data?.gradingScheme.length ? (
-                <dl className="mt-4 space-y-3 text-sm">
-                  {about.data.gradingScheme.map((item) => <div key={item.component} className="flex justify-between gap-4"><dt className="text-[var(--s-muted)]">{item.component}</dt><dd className="font-semibold text-[var(--s-ink)]">{item.weightPct}%</dd></div>)}
-                </dl>
-              ) : <p className="mt-3 text-sm text-[var(--s-muted)]">The grading breakdown has not been published.</p>}
-            </Card>
-          </aside>
+        <div className={styles.systemState}>
+          <ErrorState description={formatApiError(firstError)} onRetry={() => window.location.reload()} />
         </div>
+      ) : loading ? (
+        <div className={styles.systemState}>
+          <LoadingBlock label={`Opening ${name}…`} />
+        </div>
+      ) : (
+        <>
+          <section className={styles.summary} aria-label="Course overview">
+            <SummaryItem label="Materials" value={String(courseMaterials.length)} note={courseMaterials.length === 1 ? 'file ready to open' : 'files ready to open'} />
+            <SummaryItem label="Course plan" value={modules.length ? `${coveredModules}/${modules.length}` : '—'} note={currentModule ? `Week ${currentModule.weekNo} now` : modules.length ? 'modules covered' : 'not published'} />
+            <SummaryItem label="Assignments" value={String(courseProjects.length)} note={courseProjects.length ? 'currently published' : 'nothing due'} />
+            <SummaryItem label="Attendance" value={attendancePct === null ? '—' : `${attendancePct}%`} note={attendancePct === null ? 'not recorded' : `${attendance?.present} of ${attendance?.total} classes`} warning={attendance?.belowThreshold} />
+          </section>
+
+          {attendance?.warningLine ? <p className={styles.attendanceWarning}>{attendance.warningLine}</p> : null}
+
+          <div className={styles.workspace}>
+            <main className={styles.primary}>
+              <section className={styles.panel} aria-labelledby="course-materials-title">
+                <PanelHeader icon={FileText} title="Materials" note="Notes and files shared for this course" id="course-materials-title">
+                  <Link href="/materials">View library <ArrowRight aria-hidden="true" /></Link>
+                </PanelHeader>
+
+                {courseMaterials.length ? (
+                  <div className={styles.materialList}>
+                    {courseMaterials.map((material, index) => (
+                      <button
+                        className={styles.materialCard}
+                        type="button"
+                        key={material.id}
+                        onClick={() => setActiveMaterial(material)}
+                        aria-label={`Open ${material.title}`}
+                      >
+                        <span className={styles.fileType}>{material.kindLabel || 'File'}</span>
+                        <span className={styles.materialCopy}>
+                          {index === 0 ? <span className={styles.latest}>Latest</span> : null}
+                          <strong>{material.title}</strong>
+                          {material.description ? <small>{material.description}</small> : null}
+                          <span className={styles.materialMeta}>
+                            {material.weekNo ? `Week ${material.weekNo}` : 'Course material'}
+                            <span aria-hidden="true">·</span> Open preview
+                          </span>
+                        </span>
+                        <ArrowRight className={styles.rowArrow} aria-hidden="true" />
+                      </button>
+                    ))}
+                  </div>
+                ) : <CompactEmpty icon={FileText} title="No materials shared" note="Files from your professor will appear here." />}
+              </section>
+
+              <section className={styles.panel} aria-labelledby="course-assignments-title">
+                <PanelHeader icon={GraduationCap} title="Assignments" note="Published work for this course" id="course-assignments-title">
+                  {courseProjects.length ? <Link href="/assignments">All assignments <ArrowRight aria-hidden="true" /></Link> : null}
+                </PanelHeader>
+                {courseProjects.length ? (
+                  <div className={styles.projectList}>
+                    {courseProjects.map((project) => (
+                      <Link key={project.id} href={`/assignments/${project.id}`} className={styles.projectRow}>
+                        <span><strong>{project.title}</strong><small>{project.dueDate ? `Due ${shortDate(project.dueDate)}` : 'No due date'}</small></span>
+                        <ArrowRight aria-hidden="true" />
+                      </Link>
+                    ))}
+                  </div>
+                ) : <CompactEmpty icon={GraduationCap} title="Nothing due" note="New assignments will appear here." />}
+              </section>
+
+              <section className={styles.panel} aria-labelledby="course-plan-title">
+                <PanelHeader icon={BookOpen} title="Course plan" note="Weekly topics and coverage" id="course-plan-title" />
+                {modules.length ? (
+                  <ol className={styles.moduleList}>
+                    {modules.map((module) => (
+                      <li key={`${module.weekNo}:${module.title}`} data-state={module.covered ? 'covered' : module.isCurrentWeek ? 'current' : 'upcoming'}>
+                        <span className={styles.weekNumber}>{module.covered ? <Check aria-hidden="true" /> : module.weekNo}</span>
+                        <div>
+                          <span className={styles.moduleState}>{module.covered ? 'Covered' : module.isCurrentWeek ? 'Current week' : `Week ${module.weekNo}`}</span>
+                          <strong>{module.title}</strong>
+                          {module.topics.length ? <small>{module.topics.join(' · ')}</small> : null}
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                ) : <CompactEmpty icon={BookOpen} title="Course plan not published" note="Weekly topics will appear when they are available." />}
+              </section>
+            </main>
+
+            <aside className={styles.sidebar}>
+              <section className={styles.sidePanel} aria-labelledby="course-information-title">
+                <h2 id="course-information-title">Course information</h2>
+                <div className={styles.instructor}>
+                  <span aria-hidden="true">{personInitials(professor)}</span>
+                  <div><small>Professor</small><strong>{professor || 'To be confirmed'}</strong></div>
+                </div>
+                <dl className={styles.details}>
+                  <div><dt>Course code</dt><dd>{code || 'Not set'}</dd></div>
+                  <div><dt>Credits</dt><dd>{course?.credits ?? '—'}</dd></div>
+                  <div><dt>Office hours</dt><dd>{about.data?.officeHours || 'Not published'}</dd></div>
+                  <div><dt>Attendance requirement</dt><dd>{attendance?.requiredPct ? `${attendance.requiredPct}%` : 'Not set'}</dd></div>
+                </dl>
+              </section>
+
+              <section className={styles.sidePanel} aria-labelledby="course-announcements-title">
+                <SideTitle icon={Megaphone} id="course-announcements-title">Announcements</SideTitle>
+                {courseAnnouncements.length ? (
+                  <div className={styles.announcementList}>
+                    {courseAnnouncements.slice(0, 4).map((item) => (
+                      <article key={item.id}>
+                        <strong>{item.title}</strong>
+                        {item.body ? <p>{item.body}</p> : null}
+                        <time dateTime={item.postedAt}>{shortDate(item.postedAt)}</time>
+                      </article>
+                    ))}
+                  </div>
+                ) : <p className={styles.sideEmpty}>No announcements.</p>}
+              </section>
+
+              <section className={styles.sidePanel} aria-labelledby="course-grading-title">
+                <SideTitle icon={CalendarClock} id="course-grading-title">Grading</SideTitle>
+                {about.data?.gradingScheme.length ? (
+                  <div className={styles.gradingList}>
+                    {about.data.gradingScheme.map((item) => (
+                      <div key={item.component}>
+                        <p><span>{item.component}</span><strong>{item.weightPct}%</strong></p>
+                        <span className={styles.gradeTrack}><span style={{ width: `${Math.min(100, item.weightPct)}%` }} /></span>
+                      </div>
+                    ))}
+                  </div>
+                ) : <p className={styles.sideEmpty}>Grading details have not been published.</p>}
+              </section>
+            </aside>
+          </div>
+        </>
       )}
+
+      {activeMaterial ? (
+        <DocumentViewer
+          material={activeMaterial}
+          previewUrl={api.fileUrl(`/student/materials/${activeMaterial.id}/view`)}
+          documentPreviewUrl={api.fileUrl(`/student/materials/${activeMaterial.id}/preview`)}
+          downloadUrl={api.fileUrl(`/student/materials/${activeMaterial.id}/file`)}
+          onClose={() => setActiveMaterial(null)}
+        />
+      ) : null}
     </div>
   );
+}
+
+function SummaryItem({ label, value, note, warning = false }: { label: string; value: string; note: string; warning?: boolean }) {
+  return <article data-warning={warning ? 'true' : 'false'}><span>{label}</span><strong>{value}</strong><small>{note}</small></article>;
+}
+
+function PanelHeader({ icon: Icon, title, note, id, children }: { icon: typeof UserRound; title: string; note: string; id: string; children?: React.ReactNode }) {
+  return <div className={styles.panelHead}><div><span className={styles.panelIcon}><Icon aria-hidden="true" /></span><div><h2 id={id}>{title}</h2><p>{note}</p></div></div>{children}</div>;
+}
+
+function SideTitle({ icon: Icon, id, children }: { icon: typeof UserRound; id: string; children: React.ReactNode }) {
+  return <div className={styles.sideTitle}><Icon aria-hidden="true" /><h2 id={id}>{children}</h2></div>;
+}
+
+function CompactEmpty({ icon: Icon, title, note }: { icon: typeof UserRound; title: string; note: string }) {
+  return <div className={styles.compactEmpty}><Icon aria-hidden="true" /><div><strong>{title}</strong><p>{note}</p></div></div>;
+}
+
+function courseInitials(name: string) {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((word) => word[0]?.toUpperCase()).join('') || 'C';
+}
+
+function personInitials(name: string | null) {
+  return name?.split(/\s+/).filter(Boolean).slice(0, 2).map((word) => word[0]?.toUpperCase()).join('') || 'P';
+}
+
+function shortDate(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }

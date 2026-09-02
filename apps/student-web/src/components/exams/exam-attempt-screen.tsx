@@ -239,6 +239,7 @@ export function ExamAttemptScreen({ scheduleId }: { scheduleId: string }) {
                 className={styles.startButton}
                 type="button"
                 disabled={!agreement || !paper.canStart || starting}
+                aria-busy={starting}
                 onClick={async () => {
                   setStarting(true);
                   setActionError(null);
@@ -377,7 +378,7 @@ export function ExamAttemptScreen({ scheduleId }: { scheduleId: string }) {
             <div className={styles.modalStats}><div><span className={styles.summaryLabel}>Answered</span><strong className={styles.summaryValue}>{answeredCount}</strong></div><div><span className={styles.summaryLabel}>Unanswered</span><strong className={styles.summaryValue}>{unansweredCount}</strong></div></div>
             {unansweredCount > 0 ? <p className={styles.errorText}>{unansweredCount} {unansweredCount === 1 ? 'question is' : 'questions are'} still unanswered.</p> : null}
             {actionError ? <p className={styles.errorText}>{actionError}</p> : null}
-            <div className={styles.modalActions}><button className={styles.secondaryButton} type="button" disabled={submitting} onClick={() => setShowSubmit(false)}>Continue exam</button><button className={styles.nextButton} type="button" disabled={submitting || saveState === 'error'} onClick={() => void finish()}><ShieldCheck aria-hidden="true" size={16} />{submitting ? 'Submitting…' : 'Submit final'}</button></div>
+            <div className={styles.modalActions}><button className={styles.secondaryButton} type="button" disabled={submitting} onClick={() => setShowSubmit(false)}>Continue exam</button><button className={styles.nextButton} type="button" disabled={submitting || saveState === 'error'} aria-busy={submitting} onClick={() => void finish()}><ShieldCheck aria-hidden="true" size={16} />{submitting ? 'Submitting…' : 'Submit final'}</button></div>
           </section>
         </div>
       ) : null}

@@ -26,6 +26,9 @@ export default function Page() {
   const q = useStudentList<Transport>('transport', '/student/surfaces/transport');
   if (q.isLoading) return <LoadingBlock />;
   if (q.error instanceof StudentApiError && q.error.status === 401) return <UnauthorizedState />;
+  if (q.error instanceof StudentApiError && q.error.status === 403) {
+    return <ErrorState title="Transport isn’t available" description="Your institution has not enabled transport services in the portal." retryable={false} />;
+  }
   if (q.error) {
     return <ErrorState description={formatApiError(q.error)} onRetry={() => void q.refetch()} />;
   }

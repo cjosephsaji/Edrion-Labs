@@ -69,6 +69,10 @@ export const PETROS_ROUTE_RULES: readonly RouteRule[] = [
   { prefix: '/assignments', support: 'supported', surface: 'assignments', label: 'Assignments' },
   { prefix: '/homework', support: 'supported', surface: 'homework', label: 'Homework' },
   { prefix: '/materials', support: 'supported', surface: 'materials', label: 'Study materials' },
+  // Notes report as the `materials` surface: their candidates are class-scoped teaching
+  // content resolved the same way, so no new surface adapter is needed (same reasoning as /learn).
+  { prefix: '/notes', support: 'supported', surface: 'materials', label: 'Notes' },
+  { prefix: '/flashcards', support: 'supported', surface: 'petros_artifacts', label: 'Flashcards' },
   // The Learn hub aggregates the learning-path, reflection, materials and artifact surfaces.
   // It reports as `learning_path` because that is the surface its candidates come from; the
   // API needs no new adapter for it.
@@ -136,7 +140,10 @@ export const PETROS_ROUTE_RULES: readonly RouteRule[] = [
     label: 'Petros',
     reason: 'You are already in my workspace. Use the session tools on this page.',
   },
-  { prefix: '/petros/session', support: 'hidden', surface: 'unknown', label: 'Petros session' },
+  // The embodied character stays beside the current teaching block and narrates it. The
+  // session registers only its student-facing block summary, so the existing learning-path
+  // context boundary remains authoritative.
+  { prefix: '/petros/session', support: 'supported', surface: 'learning_path', label: 'Learning session' },
   { prefix: '/design-system', support: 'hidden', surface: 'unknown', label: 'Design system' },
 ];
 
@@ -171,6 +178,7 @@ export const PETROS_ENTITY_TYPES = [
   'result',
   'report_card',
   'material',
+  'note',
   'document',
   'announcement',
   'notification',
@@ -319,6 +327,9 @@ export const petrosCompanionBlockSchema = z.discriminatedUnion('type', [
     .object({
       type: z.literal('session_offer'),
       intentPreviewRef: z.string().trim().min(1).max(240),
+      door: z.enum(['assistant_handoff', 'uploaded_document']),
+      question: z.string().trim().min(2).max(600),
+      route: portalPath,
       title: shortText,
       minutes: z.number().int().min(5).max(45),
     })
@@ -472,6 +483,9 @@ export const petrosBriefingItemSchema = z
     title: shortText,
     detail: z.string().trim().max(400),
     href: portalPath.nullable(),
+    deadlineAt: z.string().datetime().nullable().optional(),
+    subject: z.string().nullable().optional(),
+    academicWeight: z.number().nullable().optional(),
     /** Deterministic score; lower sorts first. Never model-assigned. */
     priority: z.number().int().min(0).max(1_000),
     entityType: z.enum(PETROS_ENTITY_TYPES).nullable(),

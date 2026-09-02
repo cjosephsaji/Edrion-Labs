@@ -51,7 +51,15 @@ export class StudentRateLimitGuard implements CanActivate {
     const max = override?.max ?? DEFAULT_MAX;
     const subject = studentRateSubject(principal);
     const bucket = Math.floor(Date.now() / 1000 / windowSeconds);
-    const key = `rl:student:${subject}:${bucket}`;
+    /*
+     * A limit declared on one student feature must not spend another feature's budget.
+     * The companion, reflection and input-mode controllers deliberately have different
+     * caps, but the old principal-only key pooled all of their traffic. Background
+     * companion reads could therefore make the stricter reflection controller return
+     * 429 before the learner even opened Learning Progress.
+     */
+    const policyScope = ctx.getClass()?.name || 'StudentFeature';
+    const key = `rl:student:${subject}:${policyScope}:${bucket}`;
 
     const count = await this.redis.incrementWindow(key, windowSeconds);
     if (count === null) return true;

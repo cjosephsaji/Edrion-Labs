@@ -229,13 +229,15 @@ export default function PayFeesPage() {
                   <ActionButton
                     disabled={!selected.length || busy || pay.isPending}
                     disabledReason={!selected.length ? 'Select at least one invoice to continue.' : busy || pay.isPending ? 'Your payment request is being prepared.' : undefined}
+                    loading={busy || pay.isPending}
+                    loadingLabel="Processing…"
                     onClick={() => {
                       setError(null);
                       setBusy(true);
                       pay.mutate();
                     }}
                   >
-                    {busy || pay.isPending ? 'Processing…' : 'Continue to payment'}
+                    Continue to payment
                   </ActionButton>
                 </div>
                 <p className="mt-5 text-sm leading-6 opacity-70">Checkout opens only after you confirm this selection. No amount is charged from this screen.</p>

@@ -30,6 +30,11 @@ loadWorkspacePublicEnv();
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // `next dev` and `next build` cannot safely share one output directory. A build that ran
+  // beside the local portal replaced the development manifests while its HTML still linked
+  // to the old CSS chunks, leaving the browser with a fully unstyled page. Keep their
+  // generated assets isolated so validation builds never break an active study session.
+  distDir: process.env.NODE_ENV === 'development' ? '.next-dev' : '.next',
   transpilePackages: [
     '@edrion/ui',
     '@edrion/schemas',

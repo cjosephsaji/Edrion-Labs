@@ -167,9 +167,7 @@ export function PetrosArtifactCuration({
       <div className={styles.heading}>
         <span><FilePenLine aria-hidden="true" /></span>
         <div>
-          <p>SESSION RESIDUE</p>
-          <h2 id="artifact-curation-title">Review what becomes yours</h2>
-          <small>Proposals do not enter your deck, notes, canvas, search, counts, or export until you explicitly save.</small>
+          <h2 id="artifact-curation-title">Review saved study work</h2>
         </div>
       </div>
 

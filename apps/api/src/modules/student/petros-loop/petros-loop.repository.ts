@@ -701,6 +701,9 @@ export class PetrosLoopRepository {
     expectedSessionVersion: number;
     observation: typeof schema.petrosObservations.$inferInsert;
     question: string;
+    answer: string;
+    routeChange: string;
+    returnPlan: string;
   }) {
     return this.db.transaction(async (tx) => {
       const [session] = await tx
@@ -731,9 +734,31 @@ export class PetrosLoopRepository {
         institutionId: values.scope.institutionId,
         studentId: values.scope.studentId,
         question: values.question,
+        status: 'active',
+        action: 'answer_now',
+        acknowledgement: values.answer,
+        routeChange: values.routeChange,
+        returnPlan: values.returnPlan,
       });
       return session;
     });
+  }
+
+  async rejoinDetour(scope: PetrosOwnerScope, sessionId: string, detourId: string) {
+    const [detour] = await this.db
+      .update(schema.petrosSessionDetours)
+      .set({ status: 'rejoined', rejoinedAt: new Date(), updatedAt: new Date() })
+      .where(
+        and(
+          eq(schema.petrosSessionDetours.id, detourId),
+          eq(schema.petrosSessionDetours.sessionId, sessionId),
+          eq(schema.petrosSessionDetours.institutionId, scope.institutionId),
+          eq(schema.petrosSessionDetours.studentId, scope.studentId),
+          eq(schema.petrosSessionDetours.status, 'active'),
+        ),
+      )
+      .returning();
+    return detour;
   }
 
   activateDetours(

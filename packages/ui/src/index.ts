@@ -31,6 +31,7 @@ export { Dialog, ConfirmDialog } from './dialog';
 export { Tabs, type TabItem } from './tabs';
 export { useFocusTrap } from './use-focus-trap';
 export { Select, type SelectOption, type SelectProps } from './select';
+export { remarkUnderline } from './markdown';
 
 // ── Standardized location & contact selectors ──────────────────────────────────
 export { Combobox, type ComboboxOption, type ComboboxProps } from './combobox';

@@ -12,6 +12,7 @@ import {
   applyRepetitionGuard,
   deterministicPlan,
   deterministicRender,
+  requiresDeterministicPolicyEnvelope,
   terminalReason,
 } from './petros-loop.policy';
 import { stage4ProfileFixture } from './petros-stage4.fixture';
@@ -75,10 +76,10 @@ describe('Petros Stage 4 loop policy', () => {
       sequence('programming loops'),
     ];
     expect(new Set(sequences.map((moves) => moves.join(' → ')))).toHaveLength(4);
-    expect(sequences[0]?.[0]).toBe('prerequisite_check');
+    expect(sequences.every((moves) => moves[0] === 'layered_explanation')).toBe(true);
     expect(sequences[1]).toContain('misconception_demolition');
     expect(sequences[2]).toContain('story');
-    expect(sequences[3]?.[0]).toBe('prerequisite_check');
+    expect(sequences[3]).toContain('prerequisite_check');
   });
 
   it('overrides and logs a third consecutive identical move', () => {
@@ -301,7 +302,7 @@ describe('Petros Stage 4 loop policy', () => {
   });
 
   it('carries exact document page references into deterministic teaching blocks', () => {
-    const document = stateForMove('layered_explanation');
+    const document = state('photosynthesis', 0);
     document.sourceContext = {
       door: 'uploaded_document',
       referenceId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
@@ -315,7 +316,7 @@ describe('Petros Stage 4 loop policy', () => {
   });
 
   it('opens document and assistant doors with directly grounded explanations', () => {
-    const document = stateForMove('goal_frame');
+    const document = state('linear equations', 0);
     document.sourceContext = {
       door: 'uploaded_document',
       emotionalRegister: 'curious_grounded',
@@ -326,7 +327,7 @@ describe('Petros Stage 4 loop policy', () => {
       studentSafeReason: expect.stringContaining('document page'),
     });
 
-    const assistant = stateForMove('goal_frame');
+    const assistant = state('linear equations', 0);
     assistant.sessionType = 'doubt';
     assistant.sourceContext = {
       door: 'assistant_handoff',
@@ -369,7 +370,7 @@ describe('Petros Stage 4 loop policy', () => {
   });
 
   it('enforces the exact four-move and five-minute promise with no automatic expansion', () => {
-    const expected: PetrosMoveType[] = ['predict_then_reveal', 'layered_explanation', 'recall_check', 'artifact_commit'];
+    const expected: PetrosMoveType[] = ['layered_explanation', 'diagram', 'recall_check', 'artifact_commit'];
     const actual = expected.map((_, used) => {
       const current = state('photosynthesis', used);
       current.sessionType = 'learn';
@@ -382,7 +383,7 @@ describe('Petros Stage 4 loop policy', () => {
   });
 
   it('changes an active-homework session toward questions and never selects a worked answer', () => {
-    const current = stateForMove('worked_example');
+    const current = state('photosynthesis', 0);
     current.sourceContext = {
       door: 'active_homework',
       institutionalDecision: {
@@ -392,9 +393,35 @@ describe('Petros Stage 4 loop policy', () => {
     };
     const decision = deterministicPlan(current);
     expect(decision.selectedMoveType).not.toBe('worked_example');
-    expect(['socratic_probe', 'prerequisite_check']).toContain(decision.selectedMoveType);
+    expect(decision.selectedMoveType).toBe('layered_explanation');
     expect(decision.studentSafeReason).toMatch(/final answer|active related assignment/i);
     expect(decision.selectionPolicy.exclusions).toContainEqual(expect.objectContaining({ move: 'worked_example' }));
+  });
+
+  it('teaches an uploaded document before checking, then turns it into a diagram', () => {
+    const opening = state('machine learning from examples', 0);
+    opening.sessionType = 'learn';
+    opening.sourceContext = { door: 'uploaded_document', label: 'Machine Learning — Module 5' };
+    const first = deterministicPlan(opening);
+    expect(first.selectedMoveType).toBe('layered_explanation');
+    expect(first.guessFirst.status).toBe('not_applicable');
+
+    const visual = state('machine learning from examples', 1);
+    visual.sessionType = 'learn';
+    visual.sourceContext = opening.sourceContext;
+    visual.priorMoves = [{
+      decisionId: '44444444-4444-4444-8444-444444444444',
+      sequence: 1,
+      decision: first,
+      renderedBlockReference: null,
+      status: 'completed',
+      observedOutcome: { completed: true },
+    }];
+    const second = deterministicPlan(visual);
+    expect(second.selectedMoveType).toBe('diagram');
+    expect(second.guessFirst.status).toBe('not_applicable');
+    expect(requiresDeterministicPolicyEnvelope(opening)).toBe(true);
+    expect(requiresDeterministicPolicyEnvelope(visual)).toBe(true);
   });
 
   it('renders a nonempty legitimate syllabus path for an outside-bound request', () => {
@@ -436,7 +463,8 @@ function sequence(topic: string) {
 
 function stateForMove(move: PetrosMoveType) {
   const closing = ['synthesis', 'artifact_commit', 'forward_link'].includes(move);
-  const current = state('photosynthesis', closing ? 3 : 0);
+  // Exercise the whole move vocabulary after the mandatory teach-first opening.
+  const current = state('photosynthesis', closing ? 3 : 1);
   current.sessionType = 'learn';
   current.sourceContext = null;
   current.resolvedTopicProfile.profile.dimensions.moves.weights = Object.fromEntries(

@@ -28,6 +28,7 @@ export interface PetrosAiExecuteRequest {
   metadata?: Record<string, unknown>;
   /** Sensitive raw media and transient voice outputs must never enter the shared response cache. */
   disableCache?: boolean;
+  speech?: { voice?: 'cedar' | 'marin'; speed?: number };
 }
 
 export interface PetrosAiExecuteResult extends PetrosAiNormalizedResponse {
@@ -177,6 +178,8 @@ export class PetrosAiGatewayService {
             reasoningLevel: settings.reasoningLevel,
             timeoutMs: Number(settings.timeoutMs),
             stream: Boolean(settings.streaming),
+            language: context.language,
+            speech: raw.speech,
           });
           const content = response.kind === 'json' ? parseStructuredResponse(response.content) : response.content;
           const estimatedCostMicros = response.actualCostMicros

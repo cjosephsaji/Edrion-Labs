@@ -21,6 +21,8 @@ export interface PetrosAiNormalizedRequest {
   reasoningLevel?: string;
   timeoutMs: number;
   stream: boolean;
+  language?: string;
+  speech?: { voice?: 'cedar' | 'marin'; speed?: number };
 }
 
 export interface PetrosAiNormalizedResponse {
@@ -203,7 +205,18 @@ class OpenAiCompatibleAdapter extends HttpAdapter implements PetrosProviderAdapt
       const bytes = Buffer.from(audio.dataBase64, 'base64');
       form.append('file', new Blob([bytes], { type: audio.mediaType ?? 'audio/webm' }), `turn.${audioExtension(audio.mediaType)}`);
       form.append('model', model.modelKey);
-      form.append('response_format', 'verbose_json');
+      form.append('response_format', /whisper/i.test(model.modelKey) ? 'verbose_json' : 'json');
+      if (request.language && request.language !== 'auto') {
+        form.append(model.modelKey === 'gpt-transcribe' ? 'languages[]' : 'language', request.language);
+      }
+      if (model.modelKey === 'gpt-transcribe') {
+        form.append('prompt', 'A student in the Edrion learning portal.');
+        form.append('keywords[]', 'Petros');
+        form.append('keywords[]', 'Edrion');
+      } else if (!model.modelKey.includes('diarize')) {
+        // Vocabulary hints, not instructions: Whisper treats prompts as transcript context.
+        form.append('prompt', 'Petros, Edrion.');
+      }
       const response = await fetch(`${base.replace(/\/$/, '')}/audio/transcriptions`, {
         method: 'POST',
         headers: { authorization: `Bearer ${this.key(provider)}` },
@@ -261,14 +274,26 @@ class OpenAiCompatibleAdapter extends HttpAdapter implements PetrosProviderAdapt
     const response = await this.postBinary(
       `${base.replace(/\/$/, '')}/audio/speech`,
       { authorization: `Bearer ${this.key(provider)}` },
-      { model: model.modelKey, voice: 'alloy', format: 'mp3', input: billableText },
+      {
+        model: model.modelKey,
+        voice: /gpt-4o.*tts/i.test(model.modelKey) ? request.speech?.voice ?? 'cedar' : 'onyx',
+        speed: request.speech?.speed ?? 1,
+        response_format: 'wav',
+        input: billableText,
+        ...(/gpt-4o.*tts/i.test(model.modelKey)
+          ? {
+              instructions:
+                'Speak naturally and clearly, like a calm helpful tutor in a one-to-one conversation. Use a relaxed, grounded tone and normal pitch. No cartoon character, exaggerated enthusiasm, theatrical delivery, or announcer voice. Read only the supplied text, in its language. Use short natural pauses.',
+            }
+          : {}),
+      },
       request.timeoutMs,
     );
     return {
       kind: 'audio',
       content: {
         dataBase64: response.body.toString('base64'),
-        mimeType: response.headers.get('content-type')?.split(';')[0] ?? 'audio/mpeg',
+        mimeType: response.headers.get('content-type')?.split(';')[0] ?? 'audio/wav',
         transcript: billableText,
       },
       inputTokens: Math.ceil(billableText.length / 4),

@@ -69,7 +69,7 @@ export default function Page() {
             <PageHeader
               eyebrow="School noticeboard"
               title="Announcements"
-              description="Updates, notices, and important information from Greenwood Academy."
+              description="Updates, notices, and important information from your institution."
             />
 
             {!featured ? (

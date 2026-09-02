@@ -97,7 +97,8 @@ unless they originate from a verified intent. Authorized operational APIs are
 - Student surfaces: `apps/student-web/src/app/(app)/results/page.tsx`,
   `exams/page.tsx`, `calendar/page.tsx`, `materials/page.tsx`, and `learning-path/page.tsx`
 - Doors dashboard: `apps/super-admin-web/src/app/(app)/ai/petros-doors/page.tsx`
-- Development fixtures: `scripts/dev/seed/student-portal-demo.ts`, `scripts/dev/seed/operations.ts`
+- Development fixtures: `scripts/dev/seed/operations.ts` (the student-portal demo-content seed
+  was removed — content is now authored through the portal; see `docs/CLASS-CONTENT-AUTHORING.md`)
 - Zero-cost, local-only registered gateway acceptance adapter:
   `apps/api/scripts/petros-stage8-mock-provider.ts`
 

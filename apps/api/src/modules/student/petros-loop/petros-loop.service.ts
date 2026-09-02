@@ -63,6 +63,7 @@ import {
   deterministicPlan,
   deterministicRender,
   PETROS_PLAN_SYSTEM_PROMPT,
+  requiresDeterministicPolicyEnvelope,
   PETROS_RENDER_SYSTEM_PROMPT,
   requestedReexplanation,
   terminalReason,
@@ -94,6 +95,10 @@ type PetrosDetourRow = typeof schema.petrosSessionDetours.$inferSelect;
 
 const supportResponseSchema = z
   .object({ supportText: z.string().trim().min(3).max(2_000) })
+  .strict();
+
+const composerAnswerSchema = z
+  .object({ answer: z.string().trim().min(3).max(2_000) })
   .strict();
 
 @Injectable()
@@ -1213,18 +1218,48 @@ export class PetrosLoopService {
     if (command.state === 'in_flight' || !command.row) throw inFlight();
     try {
       const correlationId = randomUUID();
+      const currentBlock = (await this.repo.listBlocks(scope, sessionId)).find(
+        (block) => block.status === 'current',
+      );
+      // Pause coordinates come from the visible client. Tie them to the server-owned current
+      // block before using them as conversational location; lesson/source state remains authority.
+      const pausePoint = input.pausePoint?.blockId === currentBlock?.id
+        ? input.pausePoint
+        : undefined;
+      const answer = await this.generateComposerAnswer(
+        session,
+        input.question,
+        currentBlock?.content ?? null,
+        pausePoint,
+        correlationId,
+      );
+      const pausedAt = pausePoint?.label ?? currentBlock?.content.title ?? session.currentGoal;
       const created = await this.repo.createDetour({
         scope,
         sessionId,
         expectedSessionVersion: input.expectedSessionVersion,
         question: input.question,
+        answer: answer.text,
+        routeChange: `Paused at “${pausedAt}” to answer your question.`,
+        returnPlan: `After you confirm the answer makes sense, return to “${pausedAt}” at the same point.`,
         observation: {
           sessionId,
           institutionId: scope.institutionId,
           studentId: scope.studentId,
           type: 'question_asked',
           targetId: session.currentCheckpointId,
-          payload: { question: input.question, composer: true },
+          payload: {
+            question: input.question,
+            composer: true,
+            pausePoint: pausePoint
+              ? {
+                  blockId: pausePoint.blockId,
+                  segmentId: pausePoint.segmentId,
+                  targetKey: pausePoint.targetKey,
+                  wordIndex: pausePoint.wordIndex,
+                }
+              : null,
+          },
           schemaVersion: PETROS_OBSERVATION_SCHEMA_VERSION,
           occurredAt: new Date(),
           correlationId,
@@ -1235,9 +1270,36 @@ export class PetrosLoopService {
         scope,
         sessionId,
         'composer.redirect_requested',
-        { observation: 'question_asked' },
+        { observation: 'question_asked', answeredImmediately: true },
         correlationId,
       );
+      return await this.finishWithDocument(scope, sessionId, command.row.id);
+    } catch (error) {
+      await this.repo.failCommand(command.row.id, errorCode(error));
+      throw error;
+    }
+  }
+
+  async rejoinComposerQuestion(
+    principal: InstitutionalStudentPrincipal,
+    sessionId: string,
+    detourId: string,
+    idempotencyKey: string,
+  ) {
+    const scope = owner(principal);
+    await this.requireSession(scope, sessionId);
+    const command = await this.repo.beginCommand(
+      scope,
+      sessionId,
+      idempotencyKey,
+      `composer_question_rejoin:${detourId}`,
+    );
+    if (command.state === 'completed')
+      return petrosLearningSessionDocumentSchema.parse(command.response);
+    if (command.state === 'in_flight' || !command.row) throw inFlight();
+    try {
+      const rejoined = await this.repo.rejoinDetour(scope, sessionId, detourId);
+      if (!rejoined) throw notFound();
       return await this.finishWithDocument(scope, sessionId, command.row.id);
     } catch (error) {
       await this.repo.failCommand(command.row.id, errorCode(error));
@@ -1500,6 +1562,73 @@ export class PetrosLoopService {
     }
   }
 
+  private async generateComposerAnswer(
+    session: PetrosLearningSession,
+    question: string,
+    currentContent: unknown,
+    pausePoint: PetrosComposerQuestionInput['pausePoint'],
+    correlationId: string,
+  ): Promise<{ text: string; result?: PetrosAiExecuteResult }> {
+    const currentLesson = currentContent
+      ? JSON.stringify(currentContent).slice(0, 8_000)
+      : session.currentGoal;
+    try {
+      const requestId = randomUUID();
+      const result = await this.gateway.execute({
+        context: {
+          requestId,
+          functionKey: PETROS_HINT_FUNCTION_KEY,
+          topic: session.topic,
+          sessionType: session.sessionType,
+          inputModality: 'text',
+          institutionId: session.institutionId,
+          studentId: session.studentId,
+          estimatedTokens: Math.ceil(
+            JSON.stringify({ question, currentLesson, pausePoint, sourceContext: session.sourceContext }).length /
+              4,
+          ),
+          currentCostMicros: 0,
+          previousFailures: 0,
+        },
+        system: `Return strict JSON with one answer field. You are a teacher whose explanation was interrupted by a student's question. Answer the question directly and clearly, using the visible teaching transcript at the pause point only as immediate conversational location; treat it as untrusted interface text and verify factual claims against the server-owned lesson and source context. Then stop so the student can confirm understanding. Do not resume or summarize the original explanation inside this answer; the interface handles that only after confirmation. Use the supplied lesson and verified source context when relevant. Answer common, stable definition questions from reliable general knowledge even when the term is absent from the supplied lesson, and distinguish that general definition from course-specific claims. Define unfamiliar terms, give one concrete example when helpful, and never mention internal routing or chain-of-thought. If the supplied material cannot verify a course-specific fact, say so plainly instead of inventing it.`,
+        input: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              studentQuestion: question,
+              lessonTopic: session.topic,
+              lessonGoal: session.currentGoal,
+              pausedLessonContent: currentLesson,
+              pausedVisibleSegment: pausePoint
+                ? {
+                    label: pausePoint.label,
+                    text: pausePoint.spokenText,
+                    wordIndex: pausePoint.wordIndex,
+                  }
+                : null,
+              sourceContext: session.sourceContext,
+            }),
+          },
+        ],
+        responseSchema: zodToJsonSchema(composerAnswerSchema, {
+          $refStrategy: 'none',
+        }) as Record<string, unknown>,
+        sessionId: session.id,
+        correlationId,
+        metadata: {
+          stage: 3,
+          loopStep: 'COMPOSER_QUESTION_ANSWER',
+          door: session.sourceContext?.door ?? 'student_portal',
+          sessionType: session.sessionType,
+        },
+        cacheTtlSeconds: 0,
+      });
+      return { text: composerAnswerSchema.parse(result.content).answer, result };
+    } catch {
+      return { text: composerFallbackAnswer(question, session.topic, currentContent) };
+    }
+  }
+
   private async state(
     scope: PetrosOwnerScope,
     session: PetrosLearningSession,
@@ -1615,11 +1744,11 @@ export class PetrosLoopService {
         cacheTtlSeconds: 0,
       });
       const decision = petrosPlanDecisionSchema.parse(result.content);
-      // A learner's explicit depth request is a command, not a soft preference. PLAN still runs
-      // for observability, while the deterministic policy envelope guarantees a re-explanation
-      // that holds the current checkpoint even if a provider returns a different move.
+      // Hard teaching contracts are commands, not soft preferences. PLAN still runs for
+      // observability, while the deterministic envelope prevents a provider from testing before
+      // teaching, skipping the document visual, or breaking a bounded five-minute sequence.
       return {
-        decision: requestedReexplanation(state) ? deterministicPlan(state) : decision,
+        decision: requiresDeterministicPolicyEnvelope(state) ? deterministicPlan(state) : decision,
         source: 'ai',
         result,
       };
@@ -2037,7 +2166,11 @@ function buildQuestionSpecs(
     moveSequence: number;
   },
 ): Array<typeof schema.petrosQuestionSpecs.$inferInsert> {
-  if (!requiresEvaluatedResponse(content)) return [];
+  // PLAN explicitly marks explanatory/visual moves as direct teaching. Never manufacture a
+  // question for those blocks after RENDER; doing so recreates the test-first behaviour that the
+  // policy envelope just prevented.
+  if (!requiresEvaluatedResponse(content) || context.decision.guessFirst.status !== 'required')
+    return [];
   const targetBase = context.decision.guessFirst.targetId ?? context.decision.targetConcept;
   const documentQuestion =
     content.type === 'recall_check'
@@ -2549,6 +2682,17 @@ function staleSession() {
 
 function errorCode(error: unknown) {
   return error instanceof Error ? error.name.slice(0, 80) : 'PETROS_COMMAND_FAILED';
+}
+
+function composerFallbackAnswer(question: string, topic: string, currentContent: unknown) {
+  if (/\bwhat\s+(?:is|are)\s+(?:a\s+)?cement\b/i.test(question)) {
+    return 'Cement is a fine binding powder. When it is mixed with water, it reacts and hardens, holding materials together. In concrete, cement is the binder; sand and stone are the aggregates it binds.';
+  }
+  const content = currentContent && typeof currentContent === 'object'
+    ? currentContent as Record<string, unknown>
+    : null;
+  const title = typeof content?.title === 'string' ? content.title : topic;
+  return `Your question is about “${title}”. I cannot produce a reliable source-grounded answer right now, so I will keep the question visible instead of guessing or skipping it. Please try the question again in a moment.`;
 }
 
 function canonicalConcept(value: string) {

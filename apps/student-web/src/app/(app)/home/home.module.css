@@ -69,8 +69,8 @@
 
 .card[data-priority='critical']:not([data-prominence='featured']) { --card-accent: var(--s-danger); }
 .card[data-priority='high']:not([data-prominence='featured']) { --card-accent: var(--s-amber); }
-.card[data-kind='learning']:not([data-prominence='featured']) { --card-accent: #3972a4; }
-.card[data-kind='notification']:not([data-prominence='featured']) { --card-accent: #71649a; }
+.card[data-kind='learning']:not([data-prominence='featured']) { --card-accent: #2b9b6b; }
+.card[data-kind='notification']:not([data-prominence='featured']) { --card-accent: #4f8b3d; }
 
 .cardTop,
 .cardFoot {

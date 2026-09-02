@@ -240,7 +240,7 @@ export default function ClassDetailPage() {
                           {post.requiresAck ? post.acked ? (
                             <span className={styles.acknowledged}><Check aria-hidden="true" /> Seen by your teacher</span>
                           ) : (
-                            <button type="button" className={styles.acknowledge} disabled={ack.isPending} onClick={() => ack.mutate(post.id)}>
+                            <button type="button" className={styles.acknowledge} disabled={ack.isPending} aria-busy={ack.isPending} onClick={() => ack.mutate(post.id)}>
                               {ack.isPending ? 'Saving...' : 'Mark as seen'}
                             </button>
                           ) : null}

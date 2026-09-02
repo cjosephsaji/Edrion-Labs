@@ -78,7 +78,9 @@ describe('PetrosAiGatewayService validation fallback', () => {
       context: {
         functionKey: fn.key,
         inputModality: 'text', estimatedTokens: 10, currentCostMicros: 0, previousFailures: 0,
+        language: 'en',
       },
+      speech: { voice: 'cedar', speed: 1 },
       input: [{ type: 'text', text: 'explicit state' }],
       responseSchema: {
         type: 'object', required: ['ok'], additionalProperties: false,
@@ -89,6 +91,7 @@ describe('PetrosAiGatewayService validation fallback', () => {
 
     expect(primaryExecute).toHaveBeenCalledTimes(2);
     expect(fallbackExecute).toHaveBeenCalledTimes(1);
+    expect(fallbackExecute).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.objectContaining({ language: 'en', speech: { voice: 'cedar', speed: 1 } }));
     expect(usage.map((row) => [row.status, row.errorCode, row.fallbackTier])).toEqual([
       ['failure', 'RESPONSE_VALIDATION_FAILED', 0],
       ['failure', 'RESPONSE_VALIDATION_FAILED', 0],

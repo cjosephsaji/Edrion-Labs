@@ -17,21 +17,21 @@ const themeCards: Array<{
 }> = [
   {
     id: 'standard',
-    name: 'Editorial',
-    description: 'Forest ink on warm paper',
-    palette: { page: '#F5F2E9', card: '#FBFAF5', border: '#DDD9CD', ink: '#17372F', muted: '#8B958F', accent: '#1D674F' },
+    name: 'Mint',
+    description: 'Forest ink on fresh mint paper',
+    palette: { page: '#F1F7F2', card: '#FBFEFB', border: '#C7DDCF', ink: '#10291F', muted: '#71877B', accent: '#1D7A51' },
   },
   {
     id: 'dim',
     name: 'Dim',
-    description: 'Softer light for evening',
-    palette: { page: '#221E18', card: '#302A23', border: '#443D33', ink: '#ECE7DC', muted: '#938C80', accent: '#48B78C' },
+    description: 'Deep forest for evening',
+    palette: { page: '#102018', card: '#182C21', border: '#31513D', ink: '#EDF7F0', muted: '#86A18E', accent: '#55C486' },
   },
   {
     id: 'dark',
-    name: 'Ink',
-    description: 'True dark, easy on the eyes',
-    palette: { page: '#14110D', card: '#221D17', border: '#332C22', ink: '#EDE7DB', muted: '#8B8478', accent: '#5FCB9E' },
+    name: 'Forest night',
+    description: 'Near-black green, easy on the eyes',
+    palette: { page: '#0B1711', card: '#12231A', border: '#294B38', ink: '#EEF8F2', muted: '#7F9F8B', accent: '#5BD18D' },
   },
 ];
 
@@ -58,7 +58,7 @@ function Segmented<T extends string>({ values, value, onChange, label }: { value
           key={item}
           type="button"
           onClick={() => onChange(item)}
-          className={`px-4 py-1.5 text-[10px] font-semibold transition-colors ${value === item ? 'bg-[#0C3F31] text-[#F6F3E9]' : 'text-[var(--s-inkSoft)]'}`}
+          className={`px-4 py-1.5 text-[10px] font-semibold transition-colors ${value === item ? 'bg-[var(--s-accentDeep)] text-white' : 'text-[var(--s-inkSoft)]'}`}
         >
           {item}
         </button>
@@ -166,7 +166,7 @@ export default function SettingsPage() {
           {section === 'profile' ? (
             <Card>
               <div className="flex items-center gap-3.5">
-                <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[#0C3F31] font-display text-[21px] font-semibold text-[#F2EFE3]">{me?.fullName?.slice(0, 1).toUpperCase() || 'S'}</div>
+                <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[var(--s-accentDeep)] font-display text-[21px] font-semibold text-white">{me?.fullName?.slice(0, 1).toUpperCase() || 'S'}</div>
                 <div>
                   <h2 className="font-display text-base font-semibold text-[var(--s-ink)]">{me?.fullName || 'Student'}</h2>
                   <p className="mt-0.5 text-xs text-[var(--s-faint)]">{[me?.className, me?.sectionName, me?.termName].filter(Boolean).join(' · ') || me?.email}</p>

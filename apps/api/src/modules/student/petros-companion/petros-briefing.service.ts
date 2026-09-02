@@ -12,6 +12,7 @@ import type { InstitutionalStudentPrincipal } from '../student.types';
 import { PetrosActionRegistryService } from './petros-action-registry.service';
 import { PetrosCompanionRepository } from './petros-companion.repository';
 import { PetrosStudentContextService } from './petros-student-context.service';
+import { localDateTime, localDateKey } from './petros-mentor.engine';
 
 /**
  * Priority bands. Lower sorts first. These are fixed constants, not model output:
@@ -31,6 +32,13 @@ const PRIORITY = {
 } as const;
 
 const DAY_MS = 86_400_000;
+
+export type PetrosPlanningPriority = {
+  key: string;
+  kind: 'assignment' | 'homework' | 'exam' | 'existing_block';
+  title: string;
+  detail: string;
+};
 
 @Injectable()
 export class PetrosBriefingService {
@@ -80,10 +88,28 @@ export class PetrosBriefingService {
       (await this.repo.listSuppressedNudges(scope)).map((row) => row.nudgeKey),
     );
 
+    const items = (await this.collect(principal, now)).filter((item) => !suppressed.has(`${item.kind}:${item.entityId ?? item.title}`));
+
+    items.sort((a, b) => a.priority - b.priority || a.title.localeCompare(b.title));
+    const top = items.slice(0, 6);
+
+    return petrosBriefingSchema.parse({
+      schemaVersion: PETROS_COMPANION_SCHEMA_VERSION,
+      generatedAt: now.toISOString(),
+      headline: top.length ? headlineFor(top[0]!) : 'Nothing urgent right now.',
+      items: top,
+      // "Nothing urgent" is calm availability, never invented work.
+      quiet: top.length === 0,
+      mutedBy: null,
+    });
+  }
+
+  /** Shared workload, before proactive preferences and dismissal filtering. */
+  async collect(principal: InstitutionalStudentPrincipal, now = new Date()): Promise<PetrosBriefingItem[]> {
+    const { timeZone } = await this.context.clock(principal, now);
     const items: PetrosBriefingItem[] = [];
     const push = (item: PetrosBriefingItem) => {
-      const key = `${item.kind}:${item.entityId ?? item.title}`;
-      if (!suppressed.has(key)) items.push(item);
+      items.push(item);
     };
 
     const session = await this.actions.activeSession(principal);
@@ -101,11 +127,14 @@ export class PetrosBriefingService {
 
     if (this.has(principal, 'student.assignments.view')) {
       for (const row of await this.dueAssignments(principal)) {
-        const due = row.dueDate ? new Date(`${row.dueDate}T23:59:59`) : null;
+        const due = row.dueDate ? localDateTime(row.dueDate, '23:59:59', timeZone) : null;
         push({
           kind: 'due_work',
           title: row.title,
           detail: describeDue(due, now, row.subject),
+          deadlineAt: due?.toISOString() ?? null,
+          subject: row.subject,
+          academicWeight: row.maxPoints,
           href: `/assignments/${row.id}`,
           priority: bandForDue(due, now, PRIORITY),
           entityType: 'assignment',
@@ -120,6 +149,8 @@ export class PetrosBriefingService {
           kind: 'due_work',
           title: row.title,
           detail: describeDue(row.dueAt, now, row.subject),
+          deadlineAt: row.dueAt?.toISOString() ?? null,
+          subject: row.subject,
           href: `/homework/${row.id}`,
           priority: bandForDue(row.dueAt, now, PRIORITY),
           entityType: 'homework',
@@ -132,8 +163,8 @@ export class PetrosBriefingService {
       this.has(principal, 'student.exams.view') &&
       (await this.surfaceGate.isSurfaceEnabled(principal, 'exams'))
     ) {
-      for (const row of await this.upcomingExams(principal)) {
-        const date = row.examDate ? new Date(`${row.examDate}T${row.startTime ?? '09:00'}`) : null;
+      for (const row of await this.upcomingExams(principal, localDateKey(now, timeZone))) {
+        const date = row.examDate ? localDateTime(row.examDate, row.startTime ?? '09:00', timeZone) : null;
         const days = date ? Math.floor((date.getTime() - now.getTime()) / DAY_MS) : 99;
         push({
           kind: 'exam',
@@ -142,6 +173,8 @@ export class PetrosBriefingService {
             ? `${describeWhen(date, now)} · covers ${row.syllabus.slice(0, 120)}`
             : describeWhen(date, now),
           href: '/exams',
+          deadlineAt: date?.toISOString() ?? null,
+          subject: row.subject,
           priority: days <= 0 ? PRIORITY.examToday : PRIORITY.examThisWeek,
           entityType: 'exam_schedule',
           entityId: row.id,
@@ -194,18 +227,63 @@ export class PetrosBriefingService {
       }
     }
 
-    items.sort((a, b) => a.priority - b.priority || a.title.localeCompare(b.title));
-    const top = items.slice(0, 6);
+    return items;
+  }
 
-    return petrosBriefingSchema.parse({
-      schemaVersion: PETROS_COMPANION_SCHEMA_VERSION,
-      generatedAt: now.toISOString(),
-      headline: top.length ? headlineFor(top[0]!) : 'Nothing urgent right now.',
-      items: top,
-      // "Nothing urgent" is calm availability, never invented work.
-      quiet: top.length === 0,
-      mutedBy: null,
-    });
+  /**
+   * The complete, authorized workload used when the student asks for a broad plan. Unlike the
+   * proactive briefing this ignores nudge dismissals and quiet mode: asking directly must not
+   * hide work merely because the student dismissed a banner earlier.
+   */
+  async planningPriorities(
+    principal: InstitutionalStudentPrincipal,
+    now = new Date(),
+  ): Promise<PetrosPlanningPriority[]> {
+    const canSeeExams =
+      this.has(principal, 'student.exams.view') &&
+      (await this.surfaceGate.isSurfaceEnabled(principal, 'exams'));
+    const [assignments, homework, exams, planned] = await Promise.all([
+      this.has(principal, 'student.assignments.view')
+        ? this.dueAssignments(principal)
+        : Promise.resolve([]),
+      this.has(principal, 'student.homework.view')
+        ? this.dueHomework(principal)
+        : Promise.resolve([]),
+      canSeeExams ? this.upcomingExams(principal) : Promise.resolve([]),
+      this.plannerToday(principal, now),
+    ]);
+
+    return [
+      ...assignments.map((row) => {
+        const due = row.dueDate ? new Date(`${row.dueDate}T23:59:59`) : null;
+        return {
+          key: `assignment:${row.id}`,
+          kind: 'assignment' as const,
+          title: row.title,
+          detail: describeDue(due, now, row.subject),
+        };
+      }),
+      ...homework.map((row) => ({
+        key: `homework:${row.id}`,
+        kind: 'homework' as const,
+        title: row.title,
+        detail: describeDue(row.dueAt, now, row.subject),
+      })),
+      ...exams.map((row) => ({
+        key: `exam:${row.id}`,
+        kind: 'exam' as const,
+        title: `${row.subject ?? 'Exam'} — ${row.examName}`,
+        detail: [row.examDate, row.startTime, row.syllabus ? `covers ${row.syllabus.slice(0, 120)}` : null]
+          .filter(Boolean)
+          .join(' · '),
+      })),
+      ...planned.map((row) => ({
+        key: `existing_block:${row.id}`,
+        kind: 'existing_block' as const,
+        title: row.title,
+        detail: `already planned for ${row.dueAt.toISOString()}`,
+      })),
+    ].slice(0, 16);
   }
 
   async dismiss(principal: InstitutionalStudentPrincipal, nudgeKey: string) {
@@ -231,6 +309,7 @@ export class PetrosBriefingService {
         title: schema.assignments.title,
         subject: schema.subjects.name,
         dueDate: schema.assignments.dueDate,
+        maxPoints: schema.assignments.maxPoints,
       })
       .from(schema.assignments)
       .leftJoin(schema.subjects, eq(schema.subjects.id, schema.assignments.subjectId))
@@ -246,11 +325,11 @@ export class PetrosBriefingService {
           eq(schema.assignments.institutionId, principal.institutionId),
           eq(schema.assignments.status, 'published'),
           visibility,
-          sql`coalesce(${schema.assignmentSubmissions.status}, 'assigned') in ('assigned','in_progress','missing','late')`,
+          // A "late" assignment is already submitted, not unfinished work.
+          sql`coalesce(${schema.assignmentSubmissions.status}, 'assigned') in ('assigned','in_progress','missing')`,
         ),
       )
-      .orderBy(asc(schema.assignments.dueDate))
-      .limit(5);
+      .orderBy(asc(schema.assignments.dueDate));
   }
 
   private dueHomework(principal: InstitutionalStudentPrincipal) {
@@ -272,11 +351,10 @@ export class PetrosBriefingService {
           sql`${schema.homeworkSubmissions.status} in ('assigned','in_progress','missing','late')`,
         ),
       )
-      .orderBy(asc(schema.homework.dueAt))
-      .limit(5);
+      .orderBy(asc(schema.homework.dueAt));
   }
 
-  private async upcomingExams(principal: InstitutionalStudentPrincipal) {
+  private async upcomingExams(principal: InstitutionalStudentPrincipal, today = new Date().toISOString().slice(0, 10)) {
     const [student] = await this.db
       .select({ classId: schema.students.classId })
       .from(schema.students)
@@ -305,11 +383,11 @@ export class PetrosBriefingService {
           eq(schema.examSchedules.institutionId, principal.institutionId),
           eq(schema.examSchedules.classId, student.classId),
           eq(schema.examSchedules.published, true),
-          gte(schema.examSchedules.examDate, new Date().toISOString().slice(0, 10)),
+          gte(schema.examSchedules.examDate, today),
         ),
       )
       .orderBy(asc(schema.examSchedules.examDate))
-      .limit(3);
+      .limit(10);
   }
 
   private plannerToday(principal: InstitutionalStudentPrincipal, now: Date) {
@@ -331,7 +409,7 @@ export class PetrosBriefingService {
         ),
       )
       .orderBy(asc(schema.userObligations.dueAt))
-      .limit(3);
+      .limit(10);
   }
 
   private attendanceWarning(principal: InstitutionalStudentPrincipal) {

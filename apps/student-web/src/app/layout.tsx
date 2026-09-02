@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Newsreader, Source_Sans_3 } from 'next/font/google';
+import { Newsreader, Source_Sans_3, Space_Grotesk } from 'next/font/google';
 import { Providers } from './providers';
 import './globals.css';
 
@@ -28,6 +28,16 @@ const sourceSans = Source_Sans_3({
   adjustFontFallback: true,
 });
 
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  weight: 'variable',
+  variable: '--font-petros-display-face',
+  display: 'swap',
+  preload: true,
+  fallback: ['Arial', 'sans-serif'],
+  adjustFontFallback: true,
+});
+
 export const metadata: Metadata = {
   title: 'Student Portal · Edrion',
   description: 'Your academic life — timetable, assignments, fees, and results.',
@@ -37,7 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${newsreader.variable} ${sourceSans.variable}`}
+      className={`${newsreader.variable} ${sourceSans.variable} ${spaceGrotesk.variable}`}
       data-student-theme="standard"
       suppressHydrationWarning
     >

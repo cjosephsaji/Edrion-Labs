@@ -83,6 +83,7 @@ export function PetrosBriefingStrip({ firstName }: { firstName: string }) {
           className={styles.dismiss}
           onClick={() => dismiss.mutate(`${lead.kind}:${lead.entityId ?? lead.title}`)}
           disabled={dismiss.isPending}
+          aria-busy={dismiss.isPending}
           aria-label={`Dismiss ${lead.title}`}
         >
           <X aria-hidden="true" />

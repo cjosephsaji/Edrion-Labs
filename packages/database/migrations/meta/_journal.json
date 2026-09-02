@@ -855,6 +855,48 @@
       "when": 1789800000000,
       "tag": "0201_petros_companion",
       "breakpoints": true
+    },
+    {
+      "idx": 122,
+      "version": "7",
+      "when": 1789800100000,
+      "tag": "0202_class_notes",
+      "breakpoints": true
+    },
+    {
+      "idx": 123,
+      "version": "7",
+      "when": 1789800200000,
+      "tag": "0203_teaching_subject_scope",
+      "breakpoints": true
+    },
+    {
+      "idx": 124,
+      "version": "7",
+      "when": 1789800300000,
+      "tag": "0204_course_subject_link",
+      "breakpoints": true
+    },
+    {
+      "idx": 125,
+      "version": "7",
+      "when": 1789800400000,
+      "tag": "0205_petros_mentor_state",
+      "breakpoints": true
+    },
+    {
+      "idx": 126,
+      "version": "7",
+      "when": 1789800500000,
+      "tag": "0206_petros_session_intent_doors",
+      "breakpoints": true
+    },
+    {
+      "idx": 127,
+      "version": "7",
+      "when": 1789800600000,
+      "tag": "0207_petros_document_lesson_outlines",
+      "breakpoints": true
     }
   ]
 }

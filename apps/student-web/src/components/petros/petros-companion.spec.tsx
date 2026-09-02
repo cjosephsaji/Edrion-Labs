@@ -1,5 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PetrosAskButton } from './petros-ask-button';
 import { PetrosCompanionProvider, usePetrosPage } from './petros-companion-context';
@@ -73,12 +74,21 @@ function Screen({ candidates = CANDIDATES }: { candidates?: typeof CANDIDATES })
   );
 }
 
+function TestProviders({ children }: { children: React.ReactNode }) {
+  const [queryClient] = React.useState(
+    () => new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+  );
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
+
 function mount(ui: React.ReactNode = <Screen />) {
   return render(
-    <PetrosCompanionProvider>
-      {ui}
-      <PetrosCompanionPanel studentName="Aarav Sharma" />
-    </PetrosCompanionProvider>,
+    <TestProviders>
+      <PetrosCompanionProvider>
+        {ui}
+        <PetrosCompanionPanel studentName="Aarav Sharma" />
+      </PetrosCompanionProvider>
+    </TestProviders>,
   );
 }
 
@@ -149,6 +159,30 @@ describe('Petros companion', () => {
     expect(screen.getByLabelText('Message Petros')).toHaveValue('Plan my week');
   });
 
+  it('turns a teaching offer into a planning action instead of dead-end text', async () => {
+    mocks.post.mockResolvedValueOnce(reply([
+      { type: 'text', text: 'Let’s shape the lesson first.' },
+      {
+        type: 'session_offer',
+        intentPreviewRef: 'knowledge-source-1',
+        door: 'uploaded_document',
+        question: 'Teach me this material',
+        route: '/materials',
+        title: 'Cloud revision lesson',
+        minutes: 15,
+      },
+    ]));
+    mocks.pathname = '/materials';
+    mount();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Petros' }));
+    fireEvent.change(screen.getByLabelText('Message Petros'), { target: { value: 'Teach me this material' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send to Petros' }));
+
+    expect(await screen.findByRole('button', { name: 'Plan this lesson' })).toBeInTheDocument();
+    expect(screen.getByText('About 15 minutes')).toBeInTheDocument();
+  });
+
   it('keeps one thread across turns and route changes', async () => {
     mocks.post
       .mockResolvedValueOnce(reply([{ type: 'text', text: 'First answer.' }]))
@@ -162,9 +196,11 @@ describe('Petros companion', () => {
 
     mocks.pathname = '/calendar';
     view.rerender(
-      <PetrosCompanionProvider>
-        <PetrosCompanionPanel studentName="Aarav Sharma" />
-      </PetrosCompanionProvider>,
+      <TestProviders>
+        <PetrosCompanionProvider>
+          <PetrosCompanionPanel studentName="Aarav Sharma" />
+        </PetrosCompanionProvider>
+      </TestProviders>,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Petros' }));
@@ -184,10 +220,12 @@ describe('Petros companion', () => {
 
     // A filter change removes the selected card from the list.
     view.rerender(
-      <PetrosCompanionProvider>
-        <Screen candidates={CANDIDATES.slice(0, 2)} />
-        <PetrosCompanionPanel studentName="Aarav Sharma" />
-      </PetrosCompanionProvider>,
+      <TestProviders>
+        <PetrosCompanionProvider>
+          <Screen candidates={CANDIDATES.slice(0, 2)} />
+          <PetrosCompanionPanel studentName="Aarav Sharma" />
+        </PetrosCompanionProvider>
+      </TestProviders>,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Petros' }));

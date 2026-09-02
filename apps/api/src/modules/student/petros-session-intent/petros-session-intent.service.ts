@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -17,6 +18,8 @@ import {
   type PetrosSessionIntent,
   type ResolvePetrosSessionIntentInput,
   type StartPetrosSessionIntentInput,
+  type PetrosTeachingPlanning,
+  type PetrosTeachingPlanSelection,
 } from '@edrion/schemas';
 import { API_ENV, AUDIT_WRITER } from '../../../common/tokens';
 import { baseAudit, type ActionContext } from '../../../common/action-context';
@@ -26,6 +29,11 @@ import { documentStudyQuestions } from '../petros-document-grounding';
 import { PetrosLoopService } from '../petros-loop/petros-loop.service';
 import type { PetrosOwnerScope } from '../petros-loop/petros-loop.repository';
 import { PetrosSessionIntentRepository } from './petros-session-intent.repository';
+import {
+  buildDocumentLessonOutline,
+  isDocumentLessonOutline,
+  type DocumentLessonOutline,
+} from './petros-document-outline';
 
 type IntentRow = Awaited<ReturnType<PetrosSessionIntentRepository['findIntent']>> extends infer T
   ? NonNullable<T>
@@ -51,6 +59,7 @@ export class PetrosSessionIntentService {
     const started = Date.now();
     try {
       const base = await this.resolveSource(principal, input);
+      const planning = await this.teachingPlanning(principal, input, base);
       const id = randomUUID();
       const correlationId = randomUUID();
       const now = new Date();
@@ -94,6 +103,7 @@ export class PetrosSessionIntentService {
           resumeToken: randomUUID(),
         },
         policyDisclosures: base.policyDisclosures,
+        planning,
         homeworkContext: base.homeworkContext ?? null,
         sourceFingerprint: base.sourceFingerprint,
         idempotencyKey: input.idempotencyKey,
@@ -187,31 +197,53 @@ export class PetrosSessionIntentService {
       throw staleIntent('The source changed after this preview. Review the updated context before starting.');
     }
     const referenceId = intent.sourceEntityIds[0]!;
-    const pageCitation = intent.citations.find((citation) => citation.page != null);
+    const selection = this.planSelection(intent, input.plan);
+    const selectedTopic = intent.planning?.topics.find((topic) => topic.id === selection.topicId)
+      ?? intent.planning?.topics[0]
+      ?? null;
+    const selectedCitations = selectedTopic?.pageStart != null && selectedTopic.pageEnd != null
+      ? intent.citations.filter((citation) => citation.page != null && citation.page >= selectedTopic.pageStart! && citation.page <= selectedTopic.pageEnd!)
+      : intent.citations;
+    const scopedCitations = selectedCitations.length ? selectedCitations : intent.citations;
+    const pageCitation = scopedCitations.find((citation) => citation.page != null);
     const handoffRouting = await this.handoffRouting(scope, intent);
     const session = await this.loop.create(principal, {
       clientRequestId: intent.id,
       sessionType: intent.sessionType,
-      topic: intent.targetConcepts.join(', ').slice(0, 240),
-      goal: intent.goal,
-      timeBudgetSeconds: intent.time.budgetSeconds,
-      maxMoves: intent.time.budgetSeconds <= 600 ? 3 : 5,
+      topic: (selectedTopic?.title ?? intent.targetConcepts.join(', ')).slice(0, 240),
+      goal: plannedGoal(intent, selection, selectedTopic?.title),
+      timeBudgetSeconds: selection.timeBudgetSeconds,
+      maxMoves: selection.timeBudgetSeconds <= 600 ? 3 : 5,
       learnerContext: {
         emotionalRegister: intent.emotionalRegister,
         registerFactors: intent.registerFactors,
         language: intent.language,
         accessibility: intent.accessibility,
+        teachingPriority: selection.priority,
+        existingDoubt: selection.existingDoubt,
         ...(intent.door === 'assistant_handoff'
           ? { handoffQuestion: intent.scope.knownFailureDetails[0] }
           : {}),
       },
       topicContext: {
-        targetConcepts: intent.targetConcepts,
+        targetConcepts: selectedTopic ? [selectedTopic.title] : intent.targetConcepts,
         curriculum: intent.scope.curriculum,
         scopeBoundaries: intent.scope.boundaries,
-        knownFailureDetails: intent.scope.knownFailureDetails,
+        knownFailureDetails: [
+          ...intent.scope.knownFailureDetails,
+          ...(selection.existingDoubt ? [`Student's starting doubt: ${selection.existingDoubt}`] : []),
+        ],
         learningPathPosition: intent.scope.learningPathPosition,
         door: intent.door,
+        lessonPlan: selectedTopic ? {
+          topicId: selectedTopic.id,
+          title: selectedTopic.title,
+          summary: selectedTopic.summary,
+          keyTerms: selectedTopic.keyTerms,
+          likelyDoubts: selectedTopic.likelyDoubts,
+          estimatedMinutes: selectedTopic.estimatedMinutes,
+          priority: selection.priority,
+        } : null,
       },
       sourceContext: {
         door: intent.door,
@@ -220,7 +252,7 @@ export class PetrosSessionIntentService {
         label: intent.scope.summary,
         emotionalRegister: intent.emotionalRegister,
         registerFactors: intent.registerFactors,
-        citations: intent.citations,
+        citations: scopedCitations,
         policyDisclosures: intent.policyDisclosures,
         returnHref: intent.returnDestination.href,
         returnLabel: intent.returnDestination.label,
@@ -272,6 +304,34 @@ export class PetrosSessionIntentService {
       });
     }
     return { intent: this.dto(refreshed ?? row), session };
+  }
+
+  private planSelection(
+    intent: PetrosSessionIntent,
+    requested?: PetrosTeachingPlanSelection,
+  ): PetrosTeachingPlanSelection {
+    const planning = intent.planning;
+    if (!planning) {
+      return requested ?? {
+        topicId: 'default',
+        priority: intent.time.examDate ? 'exam_prep' : 'understand',
+        timeBudgetSeconds: intent.time.budgetSeconds,
+        existingDoubt: null,
+      };
+    }
+    const selection = requested ?? {
+      topicId: planning.suggestedTopicId,
+      priority: planning.suggestedPriority,
+      timeBudgetSeconds: Math.min(intent.time.budgetSeconds, 1_500),
+      existingDoubt: null,
+    };
+    if (!planning.topics.some((topic) => topic.id === selection.topicId)) {
+      throw new BadRequestException({
+        code: 'PETROS_PLAN_TOPIC_INVALID',
+        message: 'That lesson topic is no longer in this source. Reopen the teaching preview.',
+      });
+    }
+    return selection;
   }
 
   private recordStartFailure(
@@ -710,19 +770,27 @@ export class PetrosSessionIntentService {
         });
       }
       if (!document.pages.length) throw intentNotFound();
-      const selectedPages = document.pages.slice(0, 8);
+      const allPages = document.allPages ?? document.pages;
+      const { outline, status: outlineStatus } = await this.documentOutline(scope, document.item, allPages);
+      const selectedTopics = input.page
+        ? outline.topics.filter((topic) => input.page! >= topic.pageStart && input.page! <= topic.pageEnd)
+        : outline.topics;
+      const lessonTopics = selectedTopics.length ? selectedTopics : outline.topics.slice(0, 1);
+      const selectedPages = allPages.filter((page) => lessonTopics.some(
+        (topic) => page.pageIndex + 1 >= topic.pageStart && page.pageIndex + 1 <= topic.pageEnd,
+      ));
       const studyQuestions = documentStudyQuestions(selectedPages.map((page) => page.text));
       return {
         sessionType: 'learn' as const,
         goal: `Understand the selected part of ${document.item.title} and explain it using the document's own evidence.`,
-        targetConcepts: [document.item.title],
+        targetConcepts: lessonTopics.map((topic) => topic.title).slice(0, 12),
         scope: {
           summary: `${document.item.title}${input.page ? ` · page ${input.page}` : ' · selected pages'}`,
           boundaries: [
             'Ground every document claim in extracted pages the student can access.',
             'Cite exact page numbers and do not reconstruct missing or unextracted content.',
           ],
-          curriculum: studyQuestions,
+          curriculum: (studyQuestions.length ? studyQuestions : lessonTopics.map((topic) => topic.title)).slice(0, 12),
           knownFailureDetails: [],
           learningPathPosition: null,
         },
@@ -733,15 +801,15 @@ export class PetrosSessionIntentService {
           'The student explicitly asked to be taught from their own uploaded pages.',
           'Keep source grounding visible and separate explanation from quotation.',
         ],
-        sourceEntityIds: [document.item.id, ...selectedPages.map((page) => page.id)],
-        citations: selectedPages.map((page) => ({
+        sourceEntityIds: [document.item.id, ...selectedPages.map((page) => page.id)].slice(0, 12),
+        citations: lessonTopics.map((topic) => ({
           sourceType: 'document' as const,
           sourceId: document.item.id,
-          version: `${document.item.version}:${page.updatedAt.toISOString()}`,
-          label: `${document.item.title} (p. ${page.pageIndex + 1})`,
-          page: page.pageIndex + 1,
-          section: input.section ?? null,
-          excerpt: page.text.trim().slice(0, 1_200) || null,
+          version: `${document.item.version}:${outline.sourceFingerprint.slice(0, 16)}`,
+          label: `${document.item.title} (p. ${topic.pageStart}${topic.pageEnd > topic.pageStart ? `–${topic.pageEnd}` : ''})`,
+          page: topic.pageStart,
+          section: input.section ?? topic.title,
+          excerpt: topic.excerpt || null,
         })),
         returnHref: '/materials',
         returnLabel: 'Study materials',
@@ -755,9 +823,10 @@ export class PetrosSessionIntentService {
           status: document.item.status,
           extraction: document.item.extractedTextReady,
           index: document.item.indexReady,
-          pages: selectedPages.map((page) => ({ id: page.id, updatedAt: page.updatedAt })),
+          pages: allPages.map((page) => ({ id: page.id, updatedAt: page.updatedAt })),
         }),
         sourceExpiryMs: Date.now() + 30 * 60_000,
+        documentPlanning: { outline, outlineStatus, item: document.item },
       };
     }
     if (input.door === 'learning_path') {
@@ -921,6 +990,129 @@ export class PetrosSessionIntentService {
     };
   }
 
+  private async teachingPlanning(
+    principal: InstitutionalStudentPrincipal,
+    input: ResolvePetrosSessionIntentInput,
+    base: {
+      targetConcepts: string[];
+      scope: { summary: string; curriculum: string[] };
+      deadline: string | null;
+      examDate: string | null;
+      documentPlanning?: {
+        outline: DocumentLessonOutline;
+        outlineStatus: 'cached' | 'generated';
+        item: { id: string; title: string; version: number; origin: Record<string, unknown> };
+      };
+    },
+  ): Promise<PetrosTeachingPlanning> {
+    const scope = owner(principal);
+    if (input.door === 'uploaded_document') {
+      const prepared = base.documentPlanning;
+      if (!prepared) throw intentNotFound();
+      const { outline, outlineStatus: status } = prepared;
+      const scopedTopics = input.page
+        ? outline.topics.filter((topic) => input.page! >= topic.pageStart && input.page! <= topic.pageEnd)
+        : outline.topics;
+      const topics = (scopedTopics.length ? scopedTopics : outline.topics.slice(0, 1)).map((topic) => ({
+        id: topic.id,
+        title: topic.title,
+        summary: topic.summary,
+        pageStart: topic.pageStart,
+        pageEnd: topic.pageEnd,
+        estimatedMinutes: topic.estimatedMinutes,
+        keyTerms: topic.keyTerms,
+        likelyDoubts: topic.likelyDoubts,
+      }));
+      const schedule = await this.repo.documentSchedule(scope, prepared.item);
+      return {
+        topics,
+        suggestedTopicId: topics[0]!.id,
+        suggestedPriority: schedule?.kind === 'exam' ? 'exam_prep' : 'understand',
+        deadline: schedule ? {
+          kind: schedule.kind,
+          title: schedule.title,
+          at: schedule.at,
+          source: 'teacher_schedule',
+        } : null,
+        outlineCacheKey: `${prepared.item.id}:${prepared.item.version}:${outline.sourceFingerprint.slice(0, 20)}`,
+        outlineStatus: status,
+        estimatedTotalMinutes: Math.max(5, topics.reduce((sum, topic) => sum + topic.estimatedMinutes, 0)),
+      };
+    }
+
+    const labels = [...new Set([...base.targetConcepts, ...base.scope.curriculum])]
+      .map((label) => label.trim())
+      .filter(Boolean)
+      .slice(0, 12);
+    const topicLabels = labels.length ? labels : [base.scope.summary];
+    const topics = topicLabels.map((title, index) => ({
+      id: `topic-${index + 1}`,
+      title: title.slice(0, 600),
+      summary: base.scope.summary.slice(0, 600),
+      pageStart: null,
+      pageEnd: null,
+      estimatedMinutes: input.door === 'upcoming_exam' ? 15 : 10,
+      keyTerms: [],
+      likelyDoubts: [],
+    }));
+    const deadlineAt = base.examDate ?? base.deadline;
+    return {
+      topics,
+      suggestedTopicId: topics[0]!.id,
+      suggestedPriority: input.door === 'upcoming_exam'
+        ? 'exam_prep'
+        : input.door === 'result_repair' || input.door === 'reflection_action'
+          ? 'revisit_weak_topic'
+          : 'understand',
+      deadline: deadlineAt ? {
+        kind: input.door === 'upcoming_exam' ? 'exam' : input.door === 'active_homework' ? 'assignment' : 'teacher_schedule',
+        title: base.scope.summary,
+        at: deadlineAt,
+        source: 'teacher_schedule',
+      } : null,
+      outlineCacheKey: null,
+      outlineStatus: 'not_applicable',
+      estimatedTotalMinutes: Math.max(5, topics.reduce((sum, topic) => sum + topic.estimatedMinutes, 0)),
+    };
+  }
+
+  private async documentOutline(
+    scope: PetrosOwnerScope,
+    item: { id: string; title: string; version: number },
+    pages: Array<{ id: string; pageIndex: number; text: string; updatedAt: Date }>,
+  ): Promise<{ outline: DocumentLessonOutline; status: 'cached' | 'generated' }> {
+    const sourceFingerprint = fingerprint({
+      documentId: item.id,
+      documentVersion: item.version,
+      pages: pages.map((page) => ({
+        id: page.id,
+        pageIndex: page.pageIndex,
+        updatedAt: page.updatedAt,
+        textLength: page.text.length,
+      })),
+    });
+    const cached = await this.repo.findDocumentOutline(scope, item.id, item.version, sourceFingerprint);
+    if (cached && isDocumentLessonOutline(cached.outline)) {
+      return { outline: cached.outline, status: 'cached' };
+    }
+    const outline = buildDocumentLessonOutline({
+      documentId: item.id,
+      documentVersion: item.version,
+      sourceFingerprint,
+      title: item.title,
+      pages,
+    });
+    await this.repo.saveDocumentOutline({
+      institutionId: scope.institutionId,
+      studentId: scope.studentId,
+      knowledgeItemId: item.id,
+      documentVersion: item.version,
+      sourceFingerprint,
+      outline: outline as unknown as Record<string, unknown>,
+    });
+    return { outline, status: 'generated' };
+  }
+
   private async currentFingerprint(scope: PetrosOwnerScope, intent: PetrosSessionIntent) {
     const sourceId = intent.sourceEntityIds[0]!;
     if (intent.door === 'result_repair') {
@@ -963,16 +1155,16 @@ export class PetrosSessionIntentService {
       });
     }
     if (intent.door === 'uploaded_document') {
-      const selectedPage = intent.citations.find((citation) => citation.page)?.page;
-      const document = await this.repo.documentSource(scope, sourceId, selectedPage ?? undefined);
+      const document = await this.repo.documentSource(scope, sourceId);
       if (!document) throw intentNotFound();
+      const allPages = document.allPages ?? document.pages;
       return fingerprint({
         id: document.item.id,
         version: document.item.version,
         status: document.item.status,
         extraction: document.item.extractedTextReady,
         index: document.item.indexReady,
-        pages: document.pages.slice(0, 8).map((page) => ({ id: page.id, updatedAt: page.updatedAt })),
+        pages: allPages.map((page) => ({ id: page.id, updatedAt: page.updatedAt })),
       });
     }
     if (intent.door === 'learning_path') {
@@ -1250,6 +1442,23 @@ function formatDemoDate(value: string | Date) {
 
 function owner(principal: InstitutionalStudentPrincipal): PetrosOwnerScope {
   return { institutionId: principal.institutionId, studentId: principal.studentId };
+}
+
+function plannedGoal(
+  intent: PetrosSessionIntent,
+  selection: PetrosTeachingPlanSelection,
+  topic?: string,
+) {
+  const focus = topic ?? intent.targetConcepts[0] ?? intent.goal;
+  const purpose = {
+    exam_prep: `Prepare ${focus} for the teacher-scheduled assessment using recall and exam-style checks.`,
+    understand: `Build a clear working understanding of ${focus}, then check it with one explanation or example.`,
+    revisit_weak_topic: `Revisit ${focus}, repair the specific gap, and confirm the corrected idea.`,
+    quick_review: `Review the essential ideas in ${focus} within the available time and finish with a short recall check.`,
+  }[selection.priority];
+  return selection.existingDoubt
+    ? `${purpose} Begin with the student's question: ${selection.existingDoubt}`.slice(0, 600)
+    : purpose.slice(0, 600);
 }
 
 function fingerprint(value: unknown) {

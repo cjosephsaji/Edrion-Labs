@@ -64,6 +64,7 @@ export function PetrosSettingsSection() {
       setError('');
       window.setTimeout(() => setSaved(false), 2200);
       void queryClient.invalidateQueries({ queryKey: ['student', 'petros', 'companion-preferences'] });
+      void queryClient.invalidateQueries({ queryKey: ['student', 'petros', 'mentor'] });
     },
     onError: (caught) => setError(formatApiError(caught)),
   });
@@ -118,13 +119,13 @@ export function PetrosSettingsSection() {
         </div>
         <Switch
           label="Let Petros suggest what to do next"
-          hint="One suggestion a day at most, and dismissing it is remembered."
+          hint="Suggestions follow your guidance level and deadline urgency. Use the character’s settings for Full, Normal, Minimal, a temporary pause, or the portal tour."
           checked={draft.proactiveCheckIns}
           onChange={(proactiveCheckIns) => update({ proactiveCheckIns })}
         />
         <Switch
           label="Quiet mode"
-          hint="Petros waits to be asked. Nothing is suggested."
+          hint="Petros stays collapsed until you ask. Ordinary academic notifications keep working."
           checked={draft.quietMode}
           onChange={(quietMode) => update({ quietMode })}
         />
@@ -134,8 +135,9 @@ export function PetrosSettingsSection() {
         <div className={styles.blockHead}>
           <h2>What Petros remembers</h2>
           <p>
-            Only your conversations. He does not keep notes about you as a person, and your marks and
-            evidence stay in your academic record, not in his memory.
+            Your conversations, available study time, guidance settings, and the last 80 suggestions you
+            started, skipped or postponed. Petros rechecks actual submissions and learning evidence;
+            opening a task never counts as completing it. No personality profile is kept.
           </p>
         </div>
         {threads.isLoading ? (
@@ -154,6 +156,7 @@ export function PetrosSettingsSection() {
                   type="button"
                   onClick={() => forget.mutate(thread.id)}
                   disabled={forget.isPending}
+                  aria-busy={forget.isPending && forget.variables === thread.id}
                   aria-label={`Forget ${thread.title ?? 'this conversation'}`}
                 >
                   <Trash2 aria-hidden="true" /> Forget

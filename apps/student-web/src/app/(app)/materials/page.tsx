@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import {
   BookOpen,
@@ -37,6 +38,7 @@ type Material = {
   kindLabel: string;
   weekNo: number | null;
   className: string | null;
+  subjectName: string | null;
   filename: string | null;
   mimeType: string;
   publishedAt: string;
@@ -237,7 +239,7 @@ export default function Page() {
             entityType: 'material' as const,
             entityId: item.id,
             title: item.title,
-            summary: [item.kindLabel, item.className, item.weekNo ? `week ${item.weekNo}` : null]
+            summary: [item.kindLabel, item.subjectName ?? item.className, item.weekNo ? `week ${item.weekNo}` : null]
               .filter(Boolean)
               .join(' · '),
             href: '/materials',
@@ -277,7 +279,8 @@ export default function Page() {
         });
         type Row = (typeof rows)[number];
 
-        const collections = [...new Set(rows.map((row) => row.item.className ?? 'General'))];
+        const bucketOf = (m: Material) => m.subjectName ?? m.className ?? 'General';
+        const collections = [...new Set(rows.map((row) => bucketOf(row.item)))];
         const queryText = search.trim().toLowerCase();
         const matchesQuery = (row: Row) =>
           !queryText ||
@@ -285,6 +288,7 @@ export default function Page() {
             row.item.title,
             row.item.description,
             row.item.kindLabel,
+            row.item.subjectName,
             row.item.className,
             row.item.weekNo ? `week ${row.item.weekNo}` : null,
           ]
@@ -297,7 +301,7 @@ export default function Page() {
 
         const visible = rows.filter(
           (row) =>
-            (context === 'all' || (row.item.className ?? 'General') === context) &&
+            (context === 'all' || bucketOf(row.item) === context) &&
             matchesQuery(row) &&
             matchesState(row),
         );
@@ -355,7 +359,7 @@ export default function Page() {
                   <ul className={styles.meta}>
                     <li>
                       <FolderOpen aria-hidden="true" />
-                      {item.className ?? 'General'}
+                      {item.subjectName ?? item.className ?? 'General'}
                     </li>
                     {published ? (
                       <li>
@@ -431,9 +435,9 @@ export default function Page() {
 
         return (
           <div className={styles.page}>
-            <PageHeader eyebrow="Learning library" title={pageTitle} description={pageDescription} />
+            <PageHeader eyebrow="Learning library" title={pageTitle} description={pageDescription} actions={<Link data-petros-target="library:saved" href="/petros/artifacts" className="inline-flex min-h-11 items-center gap-2 border border-[var(--s-bd1)] bg-[var(--s-card)] px-4 text-sm text-[var(--s-accentDeep)]"><NotebookText className="h-4 w-4" />Saved notes &amp; study work</Link>} />
 
-            {items.length === 0 ? (
+            {items.length === 0 && !petrosSources.isLoading && !petrosSources.error && uploads.length === 0 ? (
               <EmptyState
                 icon={FolderOpen}
                 title="No materials available"
@@ -470,7 +474,7 @@ export default function Page() {
                   </div>
                 </section>
 
-                <section className={styles.section} aria-labelledby="materials-published">
+                <section className={styles.section} aria-labelledby="materials-published" data-petros-target="library:published">
                   <div className={styles.sectionHead}>
                     <h2 className={styles.sectionTitle} id="materials-published">
                       Published by your teachers
@@ -482,7 +486,7 @@ export default function Page() {
                     </span>
                   </div>
 
-                  <div className={styles.toolbar}>
+                  <div className={styles.toolbar} data-petros-target="library:search">
                     <div className={styles.chips} role="group" aria-label="Filter by collection">
                       <button
                         className={styles.chip}
@@ -552,15 +556,23 @@ export default function Page() {
 
                   {visible.length === 0 ? (
                     <div className={styles.noResults}>
-                      <h3 className={styles.noResultsTitle}>Nothing here matches</h3>
+                      <h3 className={styles.noResultsTitle}>
+                        {items.length === 0 && !filtersActive ? 'No teacher materials yet' : 'Nothing here matches'}
+                      </h3>
                       <p className={styles.noResultsText}>
-                        {queryText ? <>No material matches “{search.trim()}”</> : 'No material matches these filters'}
-                        {context === 'all' ? '' : ` in ${context}`}
-                        {onlyPetrosReady ? ', among the ones Petros can teach from' : ''}
-                        {onlyUnopened ? ', among the ones you have not opened' : ''}.
-                        {context !== 'all' && matchesAnywhere > 0
-                          ? ` ${plural(matchesAnywhere, 'material')} elsewhere in your library ${matchesAnywhere === 1 ? 'matches' : 'match'}.`
-                          : ''}
+                        {items.length === 0 && !filtersActive ? (
+                          'Your own Petros-ready documents are still available below.'
+                        ) : (
+                          <>
+                            {queryText ? <>No material matches “{search.trim()}”</> : 'No material matches these filters'}
+                            {context === 'all' ? '' : ` in ${context}`}
+                            {onlyPetrosReady ? ', among the ones Petros can teach from' : ''}
+                            {onlyUnopened ? ', among the ones you have not opened' : ''}.
+                            {context !== 'all' && matchesAnywhere > 0
+                              ? ` ${plural(matchesAnywhere, 'material')} elsewhere in your library ${matchesAnywhere === 1 ? 'matches' : 'match'}.`
+                              : ''}
+                          </>
+                        )}
                       </p>
                       <div className={styles.noResultsActions}>
                         {context !== 'all' && matchesAnywhere > 0 ? (
@@ -614,12 +626,6 @@ export default function Page() {
                         : plural(uploads.length, 'upload')}
                     </span>
                   </div>
-                  <p className={styles.sectionNote}>
-                    Documents you added to Petros yourself. They stay private to you and there is no
-                    class copy to open — Petros teaches from them once their pages have been
-                    extracted.
-                  </p>
-
                   {petrosSources.error ? (
                     <p className={styles.inlineError} role="alert">
                       Could not load your documents: {formatApiError(petrosSources.error)}
@@ -627,10 +633,7 @@ export default function Page() {
                   ) : petrosSources.isLoading ? (
                     <p className={styles.quietState}>Checking your uploads…</p>
                   ) : uploads.length === 0 ? (
-                    <p className={styles.quietState}>
-                      You have not added any documents of your own yet. Anything you upload to Petros
-                      shows up here with its extraction progress.
-                    </p>
+                    <p className={styles.quietState}>No documents added yet.</p>
                   ) : (
                     <ul className={styles.uploads}>
                       {uploads.map((source) => {
@@ -686,11 +689,6 @@ export default function Page() {
                   )}
                 </section>
 
-                <p className={styles.footnote}>
-                  Reading estimates come from the number of extracted pages, so they only appear for
-                  documents Petros has read. “Not opened” is remembered by this browser, not by your
-                  institution.
-                </p>
               </>
             )}
           </div>
@@ -701,6 +699,7 @@ export default function Page() {
         <DocumentViewer
           material={activeMaterial}
           previewUrl={api.fileUrl(`/student/materials/${activeMaterial.id}/view`)}
+          documentPreviewUrl={api.fileUrl(`/student/materials/${activeMaterial.id}/preview`)}
           downloadUrl={api.fileUrl(`/student/materials/${activeMaterial.id}/file`)}
           onClose={() => setActiveMaterial(null)}
         />

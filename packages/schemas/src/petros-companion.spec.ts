@@ -26,6 +26,8 @@ const PORTAL_ROUTES = [
   '/homework',
   '/homework/abc',
   '/materials',
+  '/notes',
+  '/flashcards',
   '/learn',
   '/learning-path',
   '/progress',
@@ -70,7 +72,8 @@ describe('Petros route support registry', () => {
     expect(resolvePetrosRoute('/fees/pay').support).toBe('hidden');
     expect(resolvePetrosRoute('/fees').support).toBe('unavailable');
     expect(resolvePetrosRoute('/petros/artifacts').support).toBe('supported');
-    expect(resolvePetrosRoute('/petros/session').support).toBe('hidden');
+    expect(resolvePetrosRoute('/petros/session').support).toBe('supported');
+    expect(resolvePetrosRoute('/petros/session').surface).toBe('learning_path');
     expect(resolvePetrosRoute('/petros').support).toBe('unavailable');
   });
 
@@ -144,5 +147,24 @@ describe('Petros companion contracts', () => {
     });
     expect(parsed.success).toBe(true);
     expect(parsed.success && parsed.data.candidates[0]?.availableActions).toEqual([]);
+  });
+
+  it('makes a teaching offer actionable through the planning door', () => {
+    const parsed = petrosCompanionBlockSchema.safeParse({
+      type: 'session_offer',
+      intentPreviewRef: 'knowledge-source-1',
+      door: 'uploaded_document',
+      question: 'Teach me this document',
+      route: '/materials',
+      title: 'Cloud revision lesson',
+      minutes: 15,
+    });
+    expect(parsed.success).toBe(true);
+    expect(petrosCompanionBlockSchema.safeParse({
+      type: 'session_offer',
+      intentPreviewRef: 'knowledge-source-1',
+      title: 'Dead-end offer',
+      minutes: 15,
+    }).success).toBe(false);
   });
 });

@@ -10,7 +10,6 @@ import { PetrosDoorButton } from '@/components/petros/petros-door-button';
 import { QueryPage } from '@/components/query-page';
 import { EmptyState } from '@/components/ui/states';
 import { useStudentList } from '@/lib/hooks';
-import { LearnCrossLinks } from '../learn/learn-links';
 
 type Path = {
   id: string;
@@ -64,12 +63,12 @@ export default function LearningPathPage() {
         <div className="mx-auto w-full max-w-[820px]">
           <PageHeader eyebrow="Adaptive learning" title={path?.title ?? 'Learning path'} description={path?.metaLine ?? 'Each active topic opens the same adaptive Petros teaching engine.'} />
           {nextReflection ? (
-            <aside className="mt-5 border border-[#aacbbf] bg-[#f4faf7] p-4" aria-labelledby="reflection-next-heading">
-              <p className="text-[10px] font-bold uppercase tracking-[.1em] text-[#557167]">Evidence-ranked next step</p>
+            <aside className="mt-5 border border-[var(--s-accentBd)] bg-[var(--s-accentSoft)] p-4" aria-labelledby="reflection-next-heading">
+              <p className="text-[10px] font-bold uppercase tracking-[.1em] text-[var(--s-muted)]">Evidence-ranked next step</p>
               <h2 id="reflection-next-heading" className="mt-1 text-lg font-semibold">{nextReflection.title}</h2>
               <p className="mt-1 text-sm text-[var(--s-muted)]">{nextReflection.whyThis}</p>
               <p className="mt-2 text-xs text-[var(--s-faint)]">Rank score {nextReflection.score} · {nextReflection.sessionType} · one of at most four suggestions</p>
-              <Link className="mt-3 inline-flex min-h-10 items-center border border-[#1f604a] px-3 py-2 text-xs font-bold text-[#1f604a]" href="/progress">
+              <Link className="mt-3 inline-flex min-h-10 items-center border border-[var(--s-accent)] px-3 py-2 text-xs font-bold text-[var(--s-accentDeep)]" href="/progress">
                 Review evidence and action preview
               </Link>
             </aside>
@@ -84,9 +83,9 @@ export default function LearningPathPage() {
                 return (
                   <li
                     key={item.id}
-                    className={`grid grid-cols-[44px_1fr] gap-3 border p-4 ${current ? 'border-[#1f604a] bg-[#eef6f2]' : 'border-[var(--s-bd1)] bg-[var(--s-card)]'}`}
+                    className={`grid grid-cols-[44px_1fr] gap-3 border p-4 ${current ? 'border-[var(--s-accent)] bg-[var(--s-accentSoft)]' : 'border-[var(--s-bd1)] bg-[var(--s-card)]'}`}
                   >
-                    <span className={`grid h-10 w-10 place-items-center ${complete ? 'bg-[#1f604a] text-white' : current ? 'border-2 border-[#1f604a] text-[#1f604a]' : 'border border-dashed border-[var(--s-bd2)] text-[var(--s-faint)]'}`}>
+                    <span className={`grid h-10 w-10 place-items-center ${complete ? 'bg-[var(--s-accent)] text-white' : current ? 'border-2 border-[var(--s-accent)] text-[var(--s-accentDeep)]' : 'border border-dashed border-[var(--s-bd2)] text-[var(--s-faint)]'}`}>
                       {complete ? <Check aria-hidden="true" /> : current ? <Route aria-hidden="true" /> : <Circle aria-hidden="true" />}
                     </span>
                     <div>
@@ -97,14 +96,13 @@ export default function LearningPathPage() {
                         {current ? <PetrosDoorButton door="learning_path" sourceId={item.id} label="Start this adaptive topic" /> : null}
                         <PetrosAskButton candidateRef={item.id} label={item.title} />
                       </div>
-                      {complete ? <p className="mt-2 text-xs font-semibold text-[#1f604a]">Completed from demonstrated evidence</p> : null}
+                      {complete ? <p className="mt-2 text-xs font-semibold text-[var(--s-success)]">Completed from demonstrated evidence</p> : null}
                     </div>
                   </li>
                 );
               })}
             </ol>
           )}
-          <LearnCrossLinks />
         </div>
       )}
     </QueryPage>

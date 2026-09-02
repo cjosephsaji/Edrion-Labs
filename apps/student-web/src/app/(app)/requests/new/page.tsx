@@ -957,13 +957,14 @@ export default function NewRequestPage() {
             {error ? <p className="text-sm text-[var(--s-danger)]">{error}</p> : null}
 
             <Button
-              disabled={submit.isPending}
+              loading={submit.isPending}
+              loadingLabel="Submitting…"
               onClick={() => {
                 setError(null);
                 submit.mutate();
               }}
             >
-              {submit.isPending ? 'Submitting…' : 'Submit request'}
+              Submit request
             </Button>
           </SurfaceCard>
         </div>

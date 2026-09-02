@@ -118,10 +118,10 @@ export function useStudentLogout() {
   });
 }
 
-export function useStudentList<T>(key: string, path: string, enabled = true) {
+export function useStudentList<T>(key: string | readonly unknown[], path: string, enabled = true) {
   const api = useStudentApi();
   return useQuery({
-    queryKey: ['student', key],
+    queryKey: ['student', ...(typeof key === 'string' ? [key] : key)],
     queryFn: () => api.get<T>(path),
     enabled,
     retry: false,

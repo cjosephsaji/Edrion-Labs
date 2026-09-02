@@ -18,6 +18,10 @@ import {
   type PetrosPageCandidate,
   type PetrosSurface,
 } from '@edrion/schemas';
+import type {
+  PetrosLessonNarrationSegment,
+  PetrosLessonPausePoint,
+} from './petros-lesson-narration';
 
 /** What a page tells Petros about one thing on screen. */
 export type PetrosCandidateInput = {
@@ -32,7 +36,23 @@ export type PetrosCandidateInput = {
 export type PetrosPageRegistration = {
   title: string;
   summary?: string;
+  /** Visible, target-aware teaching beats. Petros narrates these in order. */
+  narration?: PetrosLessonNarrationSegment[];
   candidates: PetrosCandidateInput[];
+  /** Route a teaching question through the active session, not the portal concierge. */
+  onAsk?: (
+    question: string,
+    pausePoint?: PetrosLessonPausePoint,
+  ) => Promise<PetrosLessonInterruption>;
+  /** Confirm understanding and return to the exact teaching block that was paused. */
+  onResumeQuestion?: (detourId: string) => Promise<void>;
+};
+
+export type PetrosLessonInterruption = {
+  detourId: string;
+  question: string;
+  answer: string;
+  returnPlan: string;
 };
 
 type CompanionState = {
@@ -50,6 +70,9 @@ type CompanionState = {
 };
 
 type CompanionApi = CompanionState & {
+  guideRequest: { href: string } | null;
+  requestGuide: (href: string) => void;
+  clearGuideRequest: () => void;
   candidates: PetrosPageCandidate[];
   focus: PetrosCandidateInput | null;
   registerPage: (registration: PetrosPageRegistration | null) => void;
@@ -79,6 +102,9 @@ export function PetrosCompanionProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const rule = useMemo(() => resolvePetrosRoute(pathname), [pathname]);
   const [open, setOpen] = useState(false);
+  const [guideRequest, setGuideRequest] = useState<{ href: string } | null>(null);
+  const requestGuide = useCallback((href: string) => { if (href.startsWith('/') && !href.startsWith('//') && !href.includes('\\')) { setGuideRequest({ href }); setOpen(false); } }, []);
+  const clearGuideRequest = useCallback(() => setGuideRequest(null), []);
   const [page, setPage] = useState<PetrosPageRegistration | null>(null);
   const [focusRef, setFocusRef] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -169,6 +195,7 @@ export function PetrosCompanionProvider({ children }: { children: ReactNode }) {
       messages,
       pendingQuestion,
       candidates,
+      guideRequest, requestGuide, clearGuideRequest,
       focus,
       registerPage,
       setOpen,
@@ -183,6 +210,7 @@ export function PetrosCompanionProvider({ children }: { children: ReactNode }) {
       appendMessages,
       askAbout,
       candidates,
+      guideRequest, requestGuide, clearGuideRequest,
       consumePendingQuestion,
       focus,
       focusRef,
@@ -220,16 +248,34 @@ export function usePetrosCompanionOptional() {
 export function usePetrosPage(registration: PetrosPageRegistration | null) {
   const companion = usePetrosCompanionOptional();
   const register = companion?.registerPage;
+  const askRef = useRef(registration?.onAsk);
+  askRef.current = registration?.onAsk;
+  const resumeRef = useRef(registration?.onResumeQuestion);
+  resumeRef.current = registration?.onResumeQuestion;
+  const onAsk = useCallback(async (question: string, pausePoint?: PetrosLessonPausePoint) => {
+    const result = pausePoint
+      ? await askRef.current?.(question, pausePoint)
+      : await askRef.current?.(question);
+    if (!result) throw new Error('This lesson cannot answer a question right now.');
+    return result;
+  }, []);
+  const onResumeQuestion = useCallback(async (detourId: string) => {
+    await resumeRef.current?.(detourId);
+  }, []);
   // Registrations are value objects; comparing serialized form keeps a page that rebuilds
   // its array every render from looping.
   const signature = registration
-    ? JSON.stringify([registration.title, registration.summary, registration.candidates])
+    ? JSON.stringify([registration.title, registration.summary, registration.narration, registration.candidates, Boolean(registration.onAsk), Boolean(registration.onResumeQuestion)])
     : '';
 
   useEffect(() => {
     if (!register) return;
-    register(registration);
+    register(registration ? {
+      ...registration,
+      ...(registration.onAsk ? { onAsk } : {}),
+      ...(registration.onResumeQuestion ? { onResumeQuestion } : {}),
+    } : null);
     return () => register(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [register, signature]);
+  }, [register, signature, onAsk, onResumeQuestion]);
 }

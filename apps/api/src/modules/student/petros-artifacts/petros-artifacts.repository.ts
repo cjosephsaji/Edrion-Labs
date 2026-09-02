@@ -15,12 +15,13 @@ import {
   getDatabase,
   type Database,
 } from '@edrion/database';
-import type {
-  PetrosArtifactContent,
-  PetrosArtifactQuery,
-  PetrosArtifactSource,
-  PetrosScheduleResult,
-  PetrosSubmitArtifactReviewInput,
+import {
+  PETROS_ARTIFACT_SCHEMA_VERSION,
+  type PetrosArtifactContent,
+  type PetrosArtifactQuery,
+  type PetrosArtifactSource,
+  type PetrosScheduleResult,
+  type PetrosSubmitArtifactReviewInput,
 } from '@edrion/schemas';
 import { DATABASE } from '../../../common/tokens';
 import type { PetrosOwnerScope } from '../petros-loop/petros-loop.repository';
@@ -346,6 +347,85 @@ export class PetrosArtifactsRepository {
         institutionId: input.scope.institutionId, studentId: input.scope.studentId,
         sessionId: artifact!.sessionId, bundleId: input.bundleId, proposalId: proposal.id, artifactId: artifact!.id,
         type: 'artifact.saved', payload: { kind: proposal.kind, productType: product.type, schedulerVersion: input.firstReview?.schedulerVersion ?? null },
+      });
+      return { state: 'saved' as const, artifact: artifact! };
+    });
+  }
+
+  async saveBlockArtifact(input: {
+    scope: PetrosOwnerScope;
+    sessionId: string;
+    blockId: string;
+    idempotencyKey: string;
+    topic: string;
+    content: PetrosArtifactContent;
+    sources: PetrosArtifactSource[];
+    firstReview: PetrosScheduleResult | null;
+    examDate: string | null;
+  }) {
+    return this.db.transaction(async (tx) => {
+      const [existing] = await tx.select().from(schema.petrosSavedArtifacts).where(and(
+        eq(schema.petrosSavedArtifacts.portableId, input.idempotencyKey),
+        eq(schema.petrosSavedArtifacts.institutionId, input.scope.institutionId),
+        eq(schema.petrosSavedArtifacts.studentId, input.scope.studentId),
+      )).limit(1);
+      if (existing) return { state: 'already_saved' as const, artifact: existing };
+
+      const product = await this.createProduct(
+        tx,
+        input.scope,
+        input.topic,
+        input.content,
+        input.sources,
+        input.firstReview,
+      );
+      const [artifact] = await tx.insert(schema.petrosSavedArtifacts).values({
+        // Portable ids already have a global unique index and are not tied to proposal rows.
+        // Reusing the command UUID here gives a retried click exactly-once behavior.
+        portableId: input.idempotencyKey,
+        institutionId: input.scope.institutionId,
+        studentId: input.scope.studentId,
+        sessionId: input.sessionId,
+        bundleId: null,
+        sourceProposalId: null,
+        kind: input.content.kind,
+        content: input.content,
+        sources: input.sources,
+        productType: product.type,
+        productTargetId: product.id,
+        contentVersion: 'student-created.v1',
+        promptVersion: 'block-action.v1',
+        schemaVersion: PETROS_ARTIFACT_SCHEMA_VERSION,
+        dueAt: input.firstReview?.dueAt ?? null,
+        intervalMinutes: input.firstReview
+          ? Math.max(10, Math.round(input.firstReview.intervalDays * 1_440))
+          : null,
+        easeBasisPoints: input.firstReview ? Math.round(input.firstReview.ease * 10_000) : null,
+        schedulerVersion: input.firstReview?.schedulerVersion ?? null,
+        examDate: input.examDate,
+        examAware: input.firstReview?.examAware ?? false,
+      }).returning();
+      await tx.insert(schema.petrosArtifactRevisions).values({
+        artifactId: artifact!.id,
+        institutionId: input.scope.institutionId,
+        studentId: input.scope.studentId,
+        revision: 1,
+        content: input.content,
+        sources: input.sources,
+        reason: 'explicit_block_save',
+      });
+      await tx.insert(schema.petrosArtifactEvents).values({
+        institutionId: input.scope.institutionId,
+        studentId: input.scope.studentId,
+        sessionId: input.sessionId,
+        artifactId: artifact!.id,
+        type: 'artifact.saved',
+        payload: {
+          kind: input.content.kind,
+          productType: product.type,
+          sourceBlockId: input.blockId,
+          schedulerVersion: input.firstReview?.schedulerVersion ?? null,
+        },
       });
       return { state: 'saved' as const, artifact: artifact! };
     });

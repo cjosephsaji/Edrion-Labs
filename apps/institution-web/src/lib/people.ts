@@ -3,7 +3,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { usePortalClient } from './portal-client';
 import { useScope } from './scope';
 import type { ListParams } from './academics';
-import { useAcademicScopedParams, useAcademicContextKey } from './academic-context';
+import { useAcademicScopedParams } from './academic-context';
 import type {
   ClassRosterEntry,
   GuardianRow,
@@ -113,21 +113,13 @@ const OPTION_PARAMS: ListParams = { page: 1, pageSize: 100, sortDir: 'asc' };
 export function useTeachingStaffOptions() {
   const client = usePortalClient();
   const { scope } = useScope();
-  const academicKey = useAcademicContextKey();
-  const scoped = useAcademicScopedParams(
-    { page: 1, pageSize: 100, sortDir: 'asc' as const, filters: {} },
-    'year',
-  );
-  const filters = (scoped.filters ?? {}) as { academicYearId?: string; termId?: string };
-  const qs = new URLSearchParams();
-  if (filters.academicYearId) qs.set('academicYearId', filters.academicYearId);
-  if (filters.termId) qs.set('termId', filters.termId);
-  const q = qs.toString();
   return useQuery({
-    queryKey: ['people', 'staff', 'teaching-options', scopeKey(scope), academicKey],
+    // A teacher picker is used to create the first assignment in an academic year. Filtering
+    // candidates to staff who already have an assignment creates a circular empty state.
+    queryKey: ['people', 'staff', 'teaching-options', scopeKey(scope)],
     queryFn: async () => {
       const res = await client.get<{ items: TeachingStaffOption[]; total: number }>(
-        `/portal/people/staff/teaching-options${q ? `?${q}` : ''}`,
+        '/portal/people/staff/teaching-options',
         scope,
       );
       return res.items ?? [];

@@ -1,7 +1,10 @@
 'use client';
 
+import Image from 'next/image';
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { ArrowRight, BookOpen, CreditCard, Sparkles } from 'lucide-react';
 import type {
   PetrosHandwritingEvaluation,
   PetrosHandwritingRecognition,
@@ -13,6 +16,7 @@ import type {
 import { newIdempotencyKey, useStudentApi, formatApiError } from '@/lib/api-client';
 import styles from './petros-input-modes.module.css';
 import { PetrosTeachBack } from './petros-teach-back';
+import { PageHeader } from '@/components/design-system';
 
 type Mode = 'snap' | 'handwriting' | 'voice' | 'five-minute' | 'teach-back';
 type ProcessView = {
@@ -58,25 +62,36 @@ export function PetrosInputModes() {
   const [mode, setMode] = useState<Mode>(
     MODES.some((item) => item.id === initial) ? (initial as Mode) : 'snap',
   );
+  const activeMode = MODES.find((item) => item.id === mode) ?? MODES[0]!;
 
   return (
-    <main className={styles.page}>
-      <header className={styles.hero}>
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[.14em] text-[var(--s-accent)]">
-            Petros input modes
-          </p>
-          <h1>Bring the real work.</h1>
-        </div>
-        <p>
-          Bring a question photo, paper working, a short voice turn, a finite five-minute session,
-          or teach a topic back to a confused junior. Every route enters the same learning system;
-          none is a generic answer chat.
-        </p>
-      </header>
+    <div className={styles.page}>
+      <PageHeader
+        eyebrow="Petros · AI tutor"
+        title="Learn with Petros"
+        description="Bring a real question or piece of work. Petros will teach it with you, one visible step at a time."
+        actions={<div className={styles.headerLinks}><Link href="/notes"><BookOpen aria-hidden="true" />Notes</Link><Link href="/flashcards"><CreditCard aria-hidden="true" />Flashcards</Link></div>}
+      />
 
-      <div className={styles.tabs} role="tablist" aria-label="Choose a Petros input mode">
-        {MODES.map((item) => (
+      <section className={styles.teacherStage} aria-label="Petros teaching invitation" data-petros-target="petros:start">
+        <div className={styles.avatarStage}>
+          <Image src="/petros/states/petros-point-right.png" alt="Petros points toward the lesson choices" width={384} height={512} priority unoptimized />
+        </div>
+        <div className={styles.thoughtCloud}>
+          <span><Sparkles aria-hidden="true" /> Petros is ready</span>
+          <h2>{activeMode.title}</h2>
+          <p>{activeMode.promise}</p>
+          <small>Choose a starting point below. The full teaching window opens when your material is ready.</small>
+          <button type="button" onClick={() => document.getElementById(`mode-${mode}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+            Open this teaching window <ArrowRight aria-hidden="true" />
+          </button>
+        </div>
+      </section>
+
+      <section className={styles.modeChooser} aria-labelledby="choose-mode-title">
+        <div className={styles.modeHeading}><span>Start a lesson</span><h2 id="choose-mode-title">How do you want to show Petros?</h2></div>
+        <div className={styles.tabs} role="tablist" aria-label="Choose a Petros input mode">
+        {MODES.map((item, index) => (
           <button
             key={item.id}
             id={`mode-tab-${item.id}`}
@@ -87,18 +102,20 @@ export function PetrosInputModes() {
             className={styles.tab}
             onClick={() => setMode(item.id)}
           >
+            <small>{String(index + 1).padStart(2, '0')}</small>
             <strong>{item.title}</strong>
             <span>{item.promise}</span>
           </button>
         ))}
-      </div>
+        </div>
 
       {mode === 'snap' && <ImageMode key="snap" mode="snap" />}
       {mode === 'handwriting' && <ImageMode key="handwriting" mode="handwriting" />}
       {mode === 'voice' && <VoiceMode />}
       {mode === 'five-minute' && <FiveMinuteMode />}
       {mode === 'teach-back' && <PetrosTeachBack />}
-    </main>
+      </section>
+    </div>
   );
 }
 
@@ -458,6 +475,7 @@ function ImageMode({ mode }: { mode: 'snap' | 'handwriting' }) {
                 type="button"
                 className={styles.button}
                 disabled={busy}
+                aria-busy={busy}
                 onClick={uploadAndRead}
               >
                 {busy ? 'Working…' : mode === 'snap' ? 'Read this question' : 'Recognize this page'}
@@ -476,6 +494,7 @@ function ImageMode({ mode }: { mode: 'snap' | 'handwriting' }) {
                 type="button"
                 className={styles.secondary}
                 disabled={busy}
+                aria-busy={busy}
                 onClick={retryProcessing}
               >
                 {busy ? 'Retrying…' : 'Retry processing'}
@@ -1146,15 +1165,9 @@ function FiveMinuteMode() {
       aria-labelledby="mode-tab-five-minute"
     >
       <h2>Five-minute mode</h2>
-      <p>
-        This is a finite promise, not an engagement loop. It uses one guess, one targeted teaching
-        move, one check, and one student-curated card. Continuing requires a separate explicit
-        choice.
-      </p>
+      <p>One guess, one teaching move, and one check.</p>
       <div className={styles.finite}>
         <b>4 moves · about 5 minutes</b>
-        <br />
-        Learning evidence and any card you choose to save persist exactly like a longer session.
       </div>
       <div className={styles.field}>
         <label htmlFor="five-concept">One concept</label>
@@ -1178,6 +1191,7 @@ function FiveMinuteMode() {
         type="button"
         className={styles.button}
         disabled={busy || concept.trim().length < 2}
+        aria-busy={busy}
         onClick={start}
       >
         {busy ? 'Starting…' : 'Start the five-minute session'}

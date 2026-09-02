@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import { Card, PageHeader } from '@/components/design-system';
 import { PetrosAskButton } from '@/components/petros/petros-ask-button';
-import { PetrosBriefingStrip } from '@/components/petros/petros-briefing-strip';
 import { usePetrosPage, type PetrosCandidateInput } from '@/components/petros/petros-companion-context';
 import { ErrorState, LoadingBlock, UnauthorizedState } from '@/components/ui/states';
 import { StudentApiError, formatApiError } from '@/lib/api-client';
@@ -137,7 +136,6 @@ export default function HomePage() {
     <div className="mx-auto w-full max-w-[1120px]">
       <PageHeader title={`Hi ${firstName}.`} />
 
-      <PetrosBriefingStrip firstName={firstName} />
 
       <div className={styles.sectionHead}>
         <div>

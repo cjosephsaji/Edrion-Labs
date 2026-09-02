@@ -6,6 +6,7 @@ import {
   petrosArtifactLifecycleSchema,
   petrosArtifactQuerySchema,
   petrosCommitArtifactBundleSchema,
+  petrosSaveBlockArtifactSchema,
   petrosSubmitArtifactReviewSchema,
   petrosUpdateArtifactProposalSchema,
   petrosUpdateSavedArtifactSchema,
@@ -13,6 +14,7 @@ import {
   type PetrosArtifactLifecycleInput,
   type PetrosArtifactQuery,
   type PetrosCommitArtifactBundleInput,
+  type PetrosSaveBlockArtifactInput,
   type PetrosSubmitArtifactReviewInput,
   type PetrosUpdateArtifactProposalInput,
   type PetrosUpdateSavedArtifactInput,
@@ -52,6 +54,16 @@ export class StudentPetrosArtifactsController {
   @Get('sessions/:sessionId/bundle')
   bundle(@CurrentStudent() raw: StudentPrincipal, @Param('sessionId') sessionId: string) {
     return this.service.bundle(this.principal(raw), sessionId);
+  }
+
+  @Post('sessions/:sessionId/blocks/:blockId')
+  saveBlockArtifact(
+    @CurrentStudent() raw: StudentPrincipal,
+    @Param('sessionId') sessionId: string,
+    @Param('blockId') blockId: string,
+    @Body(zodBody(petrosSaveBlockArtifactSchema)) body: PetrosSaveBlockArtifactInput,
+  ) {
+    return this.service.saveBlockArtifact(this.principal(raw), sessionId, blockId, body);
   }
 
   @Put('proposals/:proposalId')

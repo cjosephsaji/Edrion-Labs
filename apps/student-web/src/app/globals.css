@@ -229,10 +229,15 @@
     min-width: 0;
     align-items: stretch;
     gap: 1px;
+  }
+  .portal-quick-tabs {
+    display: flex;
+    min-width: 0;
+    align-items: stretch;
     overflow-x: auto;
     scrollbar-width: none;
   }
-  .portal-tabs::-webkit-scrollbar { display: none; }
+  .portal-quick-tabs::-webkit-scrollbar { display: none; }
   .portal-tab {
     position: relative;
     display: inline-flex;
@@ -326,7 +331,19 @@
     backdrop-filter: blur(12px);
   }
   .portal-mobile-nav .portal-tab { min-width: 0; flex: 1 1 0; flex-direction: column; gap: 1px; padding-top: 5px; font-size: 8.5px; }
+  .portal-mobile-nav .portal-quick-tabs { flex: 1; }
+  .portal-mobile-nav .portal-quick-tabs .portal-tab { flex: 1 0 auto; min-width: 76px; padding-inline: 12px; font-size: 11px; }
+  .portal-mobile-nav > .portal-tab { flex: 0 0 72px; border-left: 1px solid var(--s-bd1); color: var(--s-accentDeep); font-size: 10px; }
   .portal-directory-layer { position: fixed; inset: 0; z-index: 50; }
+  .portal-mentor-guide-host:empty { display: none; }
+  .portal-petros-perch:empty { display: none; }
+  .portal-petros-perch { margin-left: auto; margin-right: 20px; }
+  .portal-menu:has(.portal-mentor-guide-host:not(:empty)) { display: flex; flex-direction: column; overflow: hidden; }
+  .portal-menu:has(.portal-mentor-guide-host:not(:empty)) .portal-mentor-guide-host { flex: none; }
+  .portal-menu:has(.portal-mentor-guide-host:not(:empty)) .portal-menu-head { position: relative; flex: none; padding: 12px 20px; align-items: center; }
+  .portal-menu:has(.portal-mentor-guide-host:not(:empty)) .portal-menu-title { font-size: 22px; }
+  .portal-menu:has(.portal-mentor-guide-host:not(:empty)) :is(.portal-menu-description, .portal-menu-kicker, .portal-menu-foot) { display: none; }
+  .portal-menu:has(.portal-mentor-guide-host:not(:empty)) .portal-menu-groups { min-height: 0; overflow: auto; overscroll-behavior: contain; }
   .portal-directory-backdrop {
     position: absolute;
     inset: 0;
@@ -404,8 +421,8 @@
   .portal-directory-current { color: var(--s-accentDeep); font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
   .portal-favorite-button {
     display: inline-grid;
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
     flex: none;
     place-items: center;
     border: 0;
@@ -499,7 +516,36 @@
     margin-right: auto;
     margin-left: auto;
   }
-  .portal-main { view-transition-name: portal-content; }
+  .portal-main {
+    view-transition-name: portal-content;
+    background-color: var(--s-page);
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--s-accent) 5%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--s-accent) 5%, transparent) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  a[data-route-pending='true'] {
+    cursor: progress !important;
+    opacity: .68;
+  }
+
+  :where(button, [role='button'])[aria-busy='true'] {
+    position: relative;
+    cursor: progress !important;
+    pointer-events: none;
+  }
+
+  button[aria-busy='true']:not([data-loading-indicator='true'])::before {
+    width: 15px;
+    height: 15px;
+    flex: none;
+    border: 2px solid color-mix(in srgb, currentColor 28%, transparent);
+    border-top-color: currentColor;
+    border-radius: 50%;
+    content: '';
+    animation: portal-button-spin 720ms linear infinite;
+  }
 
   ::view-transition-old(portal-content) {
     animation: 120ms ease both portal-content-out;
@@ -512,6 +558,9 @@
   }
   @keyframes portal-content-in {
     from { opacity: 0; transform: translateY(6px); }
+  }
+  @keyframes portal-button-spin {
+    to { transform: rotate(360deg); }
   }
 
   .student-shell main :where(section, article) {
@@ -603,7 +652,24 @@
   }
 }
 
-.student-shell main [data-petros-active='true'] {
+.student-shell { --petros-panel-width: clamp(360px, 32vw, 460px); }
+.student-shell:has([data-conversation='open'][data-size='wide']) { --petros-panel-width: min(640px, 48vw); }
+
+@media (min-width: 1200px) {
+  .student-shell:has([data-conversation='open']:not([data-guide='true'])) .portal-main {
+    padding-right: calc(var(--petros-panel-width) + 48px);
+  }
+}
+
+@media (min-width: 921px) and (max-width: 1199px) {
+  .student-shell { --petros-panel-width: clamp(300px, 38vw, 380px); }
+  .student-shell:has([data-conversation='open'][data-size='wide']) { --petros-panel-width: min(440px, 46vw); }
+  .student-shell:has([data-conversation='open']:not([data-guide='true'])) .portal-main {
+    padding-right: calc(var(--petros-panel-width) + 32px);
+  }
+}
+
+.student-shell [data-petros-active='true'] {
   outline: 2px solid rgb(189 145 46 / 48%);
   outline-offset: 4px;
   box-shadow: 0 16px 42px rgb(9 61 49 / 12%);
@@ -619,7 +685,7 @@
 @media (prefers-reduced-motion: reduce) {
   .page-enter,
   .animate-block-in,
-  .student-shell main [data-petros-active='true'] {
+  .student-shell [data-petros-active='true'] {
     animation: none !important;
   }
   .portal-masthead,

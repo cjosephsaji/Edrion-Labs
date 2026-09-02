@@ -2,14 +2,14 @@
 
 import { MessageCircleQuestion } from 'lucide-react';
 import { usePetrosCompanionOptional } from './petros-companion-context';
+import { petrosEntityTarget } from './petros-spatial';
 import styles from './petros-ask-button.module.css';
 
 /**
  * The explicit way a student points Petros at something.
  *
- * This replaces `data-petros-target`, where the first matching node in the document won
- * and the student had no say. Every card that Petros can talk about renders one of these,
- * so selection is always a deliberate act.
+ * Selecting an item for conversation remains deliberate. The declared entity anchor also
+ * lets the mentor point at this exact card without changing conversational selection.
  */
 export function PetrosAskButton({
   candidateRef,
@@ -40,6 +40,8 @@ export function PetrosAskButton({
   return (
     <button
       type="button"
+      data-petros-target={petrosEntityTarget(candidate.entityType, candidate.entityId)}
+      data-petros-entity="true"
       className={styles.button}
       data-variant={variant}
       data-active={active || undefined}

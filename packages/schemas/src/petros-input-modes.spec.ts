@@ -4,12 +4,20 @@ import {
   petrosHandwritingEvaluationSchema,
   petrosHandwritingRecognitionSchema,
   petrosQuestionExtractionSchema,
+  processPetrosMediaSchema,
   submitPetrosVoiceTurnSchema,
 } from './petros-input-modes';
 
 const region = { x: 0.1, y: 0.2, width: 0.7, height: 0.2 };
 
 describe('Petros input-mode schemas', () => {
+  it('accepts an optional supported transcription language without changing existing media clients', () => {
+    const base = { idempotencyKey: '11111111-1111-4111-8111-111111111111' };
+    expect(processPetrosMediaSchema.safeParse(base).success).toBe(true);
+    expect(processPetrosMediaSchema.parse({ ...base, language: 'en' }).language).toBe('en');
+    expect(processPetrosMediaSchema.parse({ ...base, language: 'auto' }).language).toBe('auto');
+    expect(processPetrosMediaSchema.safeParse({ ...base, language: 'unsupported' }).success).toBe(false);
+  });
   it('rejects undeclared upload fields and invalid media dimensions', () => {
     const base = {
       kind: 'question_photo',

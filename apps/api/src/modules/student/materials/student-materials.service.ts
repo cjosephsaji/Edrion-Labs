@@ -1,7 +1,8 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { and, eq, schema, type Database } from '@edrion/database';
+import { and, asc, desc, eq, schema, sql, type Database } from '@edrion/database';
 import { DATABASE } from '../../../common/tokens';
 import type { InstitutionalStudentPrincipal } from '../student.types';
+import { canonicalMaterialMimeType } from './material-file-types';
 
 @Injectable()
 export class StudentMaterialsService {
@@ -39,10 +40,12 @@ export class StudentMaterialsService {
       className: string | null;
       filename: string | null;
       mimeType: string;
+      subjectName: string | null;
       publishedAt: string;
     }> = [];
 
     for (const ctx of contexts) {
+      // Left join: a material filed before subjects existed still belongs to the class.
       const rows = await this.db
         .select({
           id: schema.classMaterials.id,
@@ -53,9 +56,11 @@ export class StudentMaterialsService {
           filename: schema.storageObjects.filename,
           mimeType: schema.storageObjects.mimeType,
           createdAt: schema.classMaterials.createdAt,
+          subjectName: schema.subjects.name,
         })
         .from(schema.classMaterials)
         .innerJoin(schema.storageObjects, eq(schema.storageObjects.id, schema.classMaterials.objectId))
+        .leftJoin(schema.subjects, eq(schema.subjects.id, schema.classMaterials.subjectId))
         .where(
           and(
             eq(schema.classMaterials.institutionId, principal.institutionId),
@@ -71,8 +76,9 @@ export class StudentMaterialsService {
           kindLabel: m.kindLabel,
           weekNo: m.weekNo,
           className: ctx.name,
+          subjectName: m.subjectName,
           filename: m.filename,
-          mimeType: m.mimeType,
+          mimeType: canonicalMaterialMimeType(m.filename, m.mimeType),
           publishedAt: m.createdAt.toISOString(),
         });
       }
@@ -90,9 +96,11 @@ export class StudentMaterialsService {
 
     const [file] = await this.db
       .select({
+        objectId: schema.storageObjects.id,
         storageKey: schema.storageObjects.storageKey,
         filename: schema.storageObjects.filename,
         mimeType: schema.storageObjects.mimeType,
+        derived: schema.storageObjects.derived,
       })
       .from(schema.classMaterials)
       .innerJoin(schema.storageObjects, eq(schema.storageObjects.id, schema.classMaterials.objectId))
@@ -107,6 +115,35 @@ export class StudentMaterialsService {
     if (!file) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Study material file not found' });
     }
-    return file;
+    return {
+      ...file,
+      mimeType: canonicalMaterialMimeType(file.filename, file.mimeType),
+    };
+  }
+
+  /** Reuse the student's already-extracted Petros pages before parsing the source again. */
+  async previewPages(principal: InstitutionalStudentPrincipal, materialId: string) {
+    const [source] = await this.db
+      .select({ id: schema.knowledgeItems.id })
+      .from(schema.knowledgeItems)
+      .where(
+        and(
+          eq(schema.knowledgeItems.institutionId, principal.institutionId),
+          eq(schema.knowledgeItems.studentId, principal.studentId),
+          sql`${schema.knowledgeItems.origin}->>'classMaterialId' = ${materialId}`,
+        ),
+      )
+      .orderBy(desc(schema.knowledgeItems.updatedAt))
+      .limit(1);
+
+    if (!source) return [];
+    return this.db
+      .select({
+        pageIndex: schema.knowledgeItemPages.pageIndex,
+        text: schema.knowledgeItemPages.text,
+      })
+      .from(schema.knowledgeItemPages)
+      .where(eq(schema.knowledgeItemPages.itemId, source.id))
+      .orderBy(asc(schema.knowledgeItemPages.pageIndex));
   }
 }

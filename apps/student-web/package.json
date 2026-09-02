@@ -13,7 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
-    "clean": "rm -rf .next .turbo"
+    "clean": "rm -rf .next .next-dev .turbo"
   },
   "dependencies": {
     "@edrion/permissions": "workspace:*",
@@ -26,6 +26,8 @@
     "next": "14.2.13",
     "react": "18.3.1",
     "react-dom": "18.3.1",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {

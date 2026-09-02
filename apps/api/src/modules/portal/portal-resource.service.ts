@@ -1,4 +1,10 @@
-import { PortalCrudEngine, type CrudConfig, type CrudListQuery, type RefSpec } from './portal-crud.engine';
+import {
+  PortalCrudEngine,
+  type CrudConfig,
+  type CrudFilters,
+  type CrudListQuery,
+  type RefSpec,
+} from './portal-crud.engine';
 import type { PortalActionContext } from './portal-action-context';
 
 /**
@@ -62,6 +68,12 @@ export function resourceConfig(
     enrich?: (rows: any[], ctx: PortalActionContext) => Promise<any[]>;
     /** Institution-wide resources have no campus column or active-scope narrowing. */
     scope?: 'campus' | 'institution';
+    /** Extra filterable columns for content filed against a class/course and a subject. */
+    context?: { contextType: any; contextId: any };
+    /** Extra equality filters and an optional date-range column (see CrudConfig.filters). */
+    filters?: CrudFilters;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    subjectId?: any;
   },
 ): CrudConfig {
   return {
@@ -74,6 +86,9 @@ export function resourceConfig(
       createdAt: table.createdAt,
       status: table.status,
       kind: table.kind,
+      contextType: opts.context?.contextType,
+      contextId: opts.context?.contextId,
+      subjectId: opts.subjectId,
     },
     scope: opts.scope,
     module: opts.module,
@@ -84,6 +99,7 @@ export function resourceConfig(
     snapshot: opts.snapshot,
     auditReads: opts.auditReads,
     refs: opts.refs,
+    filters: opts.filters,
     enrich: opts.enrich,
   };
 }

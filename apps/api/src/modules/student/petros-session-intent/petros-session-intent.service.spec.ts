@@ -19,6 +19,7 @@ const principal: InstitutionalStudentPrincipal = {
 
 function harness(overrides: Record<string, unknown> = {}) {
   let savedRow: any;
+  let savedOutline: any;
   const repo: any = {
     findIntentByKey: vi.fn(async (_scope: unknown, key: string) =>
       savedRow?.idempotencyKey === key ? savedRow : undefined),
@@ -41,6 +42,12 @@ function harness(overrides: Record<string, unknown> = {}) {
     }),
     invalidate: vi.fn(),
     resultSource: vi.fn(), examSource: vi.fn(), assignmentSource: vi.fn(), documentSource: vi.fn(), pathSource: vi.fn(), reflectionSource: vi.fn(),
+    findDocumentOutline: vi.fn(async () => savedOutline),
+    saveDocumentOutline: vi.fn(async (value: any) => {
+      savedOutline = { ...value, id: crypto.randomUUID() };
+      return savedOutline;
+    }),
+    documentSchedule: vi.fn().mockResolvedValue(null),
     listUploadedDocuments: vi.fn().mockResolvedValue([]), currentPath: vi.fn().mockResolvedValue(null),
     dashboard: vi.fn(),
     markReflectionRecommendationStarted: vi.fn(),
@@ -158,6 +165,58 @@ describe('Petros Stage 8 session intent resolver', () => {
       'Why is grid computing considered the predecessor of cloud computing?',
       'How does IaaS divide responsibility?',
     ]);
+  });
+
+  it('caches a versioned document outline, surfaces the teacher schedule, and starts only the selected topic', async () => {
+    const pages = [
+      { id: PAGE_ID, itemId: SOURCE_ID, pageIndex: 0, text: 'MODULE I CLOUD BASICS\nCloud computing pools shared resources.', updatedAt: new Date('2026-08-12T06:00:00.000Z') },
+      { id: PATH_ID, itemId: SOURCE_ID, pageIndex: 1, text: 'MODULE II SERVICE MODELS\nIaaS changes the responsibility boundary.', updatedAt: new Date('2026-08-12T06:10:00.000Z') },
+    ];
+    const ready = {
+      item: { id: SOURCE_ID, title: 'Cloud revision', kind: 'pdf', pageCount: 2, extractedTextReady: true, indexReady: true, status: 'ready', pagesDone: 2, version: 4, origin: { classMaterialId: TOPIC_ID } },
+      pages,
+      allPages: pages,
+    };
+    const documentSource = vi.fn().mockResolvedValue(ready);
+    const { service, repo, loop } = harness({
+      documentSource,
+      documentSchedule: vi.fn().mockResolvedValue({ kind: 'exam', title: 'Cloud final', at: '2099-09-20T09:30:00.000Z', subjectName: 'Cloud Computing' }),
+    });
+
+    const first = await service.resolve(principal, input('uploaded_document'));
+    expect(first.planning).toMatchObject({
+      outlineStatus: 'generated',
+      suggestedPriority: 'exam_prep',
+      deadline: { title: 'Cloud final', source: 'teacher_schedule' },
+    });
+    expect(first.planning?.topics).toHaveLength(2);
+    expect(repo.saveDocumentOutline).toHaveBeenCalledTimes(1);
+
+    const second = await service.resolve(principal, input('uploaded_document'));
+    expect(second.planning?.outlineStatus).toBe('cached');
+    expect(repo.saveDocumentOutline).toHaveBeenCalledTimes(1);
+
+    const selected = first.planning!.topics[1]!;
+    await service.start(principal, first.id, {
+      idempotencyKey: crypto.randomUUID(),
+      plan: {
+        topicId: selected.id,
+        priority: 'quick_review',
+        timeBudgetSeconds: 600,
+        existingDoubt: 'Why does responsibility shift?',
+      },
+    });
+    expect(loop.create).toHaveBeenCalledWith(principal, expect.objectContaining({
+      topic: selected.title,
+      timeBudgetSeconds: 600,
+      learnerContext: expect.objectContaining({
+        teachingPriority: 'quick_review',
+        existingDoubt: 'Why does responsibility shift?',
+      }),
+      sourceContext: expect.objectContaining({
+        citations: [expect.objectContaining({ section: selected.title })],
+      }),
+    }));
   });
 
   it('resolves only the next evidence-gated path item and does not complete it on preview', async () => {

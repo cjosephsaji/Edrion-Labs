@@ -6,7 +6,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { Camera, Check, FileText, LockKeyhole, Upload, X } from 'lucide-react';
 import { QueryPage } from '@/components/query-page';
+import { usePetrosPage } from '@/components/petros/petros-companion-context';
 import { formatApiError, useStudentApi } from '@/lib/api-client';
+import { useStudentMe } from '@/lib/hooks';
 
 type Question = { id: string; sequence: number; promptText: string; maxMarks: number | null };
 type Answer = {
@@ -33,7 +35,6 @@ type Detail = {
   submittedAt: string | null;
 };
 type Draft = { mode: 'type' | 'photo' | 'file'; text: string; objectId: string | null; fileName?: string };
-const homeworkLabel = 'HOMEWORK';
 
 function GovernancePill({ policy }: { policy?: string }) {
   const off = policy === 'off';
@@ -49,6 +50,7 @@ export default function HomeworkDetailPage() {
   const { id } = useParams<{ id: string }>();
   const api = useStudentApi();
   const qc = useQueryClient();
+  const { data: me } = useStudentMe();
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [saveState, setSaveState] = useState<'saved' | 'saving' | 'error'>('saved');
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +63,9 @@ export default function HomeworkDetailPage() {
     queryFn: () => api.get<Detail>(`/student/homework/${id}`),
     enabled: Boolean(id),
   });
+  const backHref = me?.programmeName ? '/assignments' : '/homework';
+  const backLabel = me?.programmeName ? 'All assignments' : 'All homework';
+  usePetrosPage(query.data ? { title: query.data.title, candidates: [{ ref: id, entityType: 'homework', entityId: id, title: query.data.title, href: `/homework/${id}` }] } : null);
 
   useEffect(() => {
     if (!query.data) return;
@@ -138,6 +143,7 @@ export default function HomeworkDetailPage() {
       setReviewOpen(false);
       setError(null);
       await qc.invalidateQueries({ queryKey: ['student', 'homework'] });
+      await qc.invalidateQueries({ queryKey: ['student', 'petros', 'mentor'] });
       await query.refetch();
     },
     onError: (err) => setError(formatApiError(err)),
@@ -161,14 +167,14 @@ export default function HomeworkDetailPage() {
         return (
           <div className="mx-auto max-w-[760px] py-0">
             <div className="flex flex-wrap items-center gap-3">
-              <Link href="/homework" className="text-[12.5px] font-semibold text-[var(--s-faint)] hover:text-[var(--s-accentDeep)]">← All homework · saved automatically</Link>
+              <Link href={backHref} className="text-[12.5px] font-semibold text-[var(--s-faint)] hover:text-[var(--s-accentDeep)]">← {backLabel}</Link>
               <span className={`ml-auto font-mono-ui text-[10.5px] ${saveState === 'error' ? 'text-[var(--s-danger)]' : 'text-[var(--s-faint2)]'}`}>
                 {saveState === 'saving' ? 'Saving…' : saveState === 'error' ? 'Couldn’t save' : 'Saved just now'}
               </span>
             </div>
 
-            <header className="mt-4">
-              <div className="flex flex-wrap items-center gap-2.5"><p className="eyebrow">{homeworkLabel}</p><GovernancePill policy={data.aiPolicy} /></div>
+            <header className="mt-4" data-petros-target={`entity:homework:${id}`}>
+              <GovernancePill policy={data.aiPolicy} />
               <h1 className="mt-2 font-display text-[26px] font-semibold tracking-[-.01em] text-[var(--s-ink)]">{data.title}</h1>
               <p className="mt-1 text-[12.5px] text-[var(--s-faint)]">{[data.subjectName, `Due ${new Date(data.dueAt).toLocaleString()}`, `${answeredCount} of ${questions.length} answered`].filter(Boolean).join(' · ')}</p>
               {data.instructions ? <p className="mt-3 max-w-2xl text-[13px] leading-6 text-[var(--s-inkSoft)]">{data.instructions}</p> : null}
@@ -176,7 +182,7 @@ export default function HomeworkDetailPage() {
 
             {data.totalMarks != null || data.teacherNote ? (
               <section className="mt-5 rounded-[15px] border border-[var(--s-accentBd)] bg-[var(--s-accentSoft)] p-[18px_22px]">
-                <p className="eyebrow !text-[var(--s-success)]">RETURNED BY YOUR TEACHER</p>
+                <h2 className="font-display text-[16px] font-semibold text-[var(--s-success)]">Returned by your teacher</h2>
                 {data.totalMarks != null ? <p className="mt-2 font-display text-2xl font-semibold text-[var(--s-ink)]">{data.totalMarks}{data.totalMax != null ? ` / ${data.totalMax}` : ''}</p> : null}
                 {data.teacherNote ? <p className="mt-2 text-[13px] leading-6 text-[var(--s-inkSoft)]">{data.teacherNote}</p> : null}
               </section>
@@ -189,7 +195,7 @@ export default function HomeworkDetailPage() {
                 const answered = Boolean(draft.text.trim() || draft.objectId);
                 const active = !locked && (firstUnanswered === index || (firstUnanswered < 0 && index === questions.length - 1));
                 return (
-                  <section key={question.id} className={`rounded-[15px] border bg-[var(--s-card)] p-[18px_22px] ${active ? 'border-[1.5px] border-[var(--s-accentBd)] shadow-[0_12px_30px_-24px_rgba(12,63,49,.55)]' : 'border-[var(--s-bd1)]'}`}>
+                  <section data-petros-target={active || (locked && index === 0) ? 'homework:questions' : undefined} key={question.id} className={`rounded-[15px] border bg-[var(--s-card)] p-[18px_22px] ${active ? 'border-[1.5px] border-[var(--s-accentBd)] shadow-[0_12px_30px_-24px_rgba(12,63,49,.55)]' : 'border-[var(--s-bd1)]'}`}>
                     <div className="flex items-center gap-2">
                       <p className={`font-mono-ui text-[10px] font-semibold ${answered ? 'text-[var(--s-success)]' : active ? 'text-[var(--s-accentDeep)]' : 'text-[var(--s-faint)]'}`}>Q{index + 1} · {answered ? 'ANSWERED' : active ? 'UP NEXT' : 'NOT ANSWERED'}</p>
                       {answered ? <Check className="ml-auto h-4 w-4 text-[var(--s-accent)]" /> : null}
@@ -215,7 +221,7 @@ export default function HomeworkDetailPage() {
                             <input type="file" accept={draft.mode === 'photo' ? 'image/*' : '.pdf,image/*,.doc,.docx'} capture={draft.mode === 'photo' ? 'environment' : undefined} className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadAnswer(question.id, file, draft.mode as 'photo' | 'file'); }} />
                             {draft.mode === 'photo' ? <Camera className="mx-auto h-5 w-5 text-[var(--s-faint)]" /> : <Upload className="mx-auto h-5 w-5 text-[var(--s-faint)]" />}
                             <span className="mt-2 block text-[12.5px] font-semibold text-[var(--s-inkSoft)]">{uploading === question.id ? 'Uploading…' : draft.fileName || (draft.mode === 'photo' ? 'Snap your notebook page' : 'Choose a PDF or image')}</span>
-                            <span className="mt-1 block text-[10.5px] text-[var(--s-faint)]">{draft.objectId ? 'Attached and saved' : 'Your original work stays attached to this answer'}</span>
+                            {draft.objectId ? <span className="mt-1 block text-[10.5px] text-[var(--s-faint)]">Attached</span> : null}
                           </label>
                         )}
                       </>
@@ -239,18 +245,17 @@ export default function HomeworkDetailPage() {
             {error ? <p className="mt-3 text-xs text-[var(--s-danger)]">{error}</p> : null}
             {!locked ? (
               <div className="mt-4 flex flex-wrap items-center gap-3">
-                <button type="button" onClick={() => setReviewOpen(true)} disabled={answeredCount === 0} className="rounded-[11px] bg-[#0C3F31] px-[18px] py-[11px] text-[13px] font-semibold text-[#F6F3E9] disabled:opacity-45">Submit to your teacher</button>
-                <p className="text-[11.5px] text-[var(--s-faint)]">Nothing sends until you say so.</p>
+                <button type="button" onClick={() => setReviewOpen(true)} disabled={answeredCount === 0} className="rounded-[11px] bg-[var(--s-accentDeep)] px-[18px] py-[11px] text-[13px] font-semibold text-white disabled:opacity-45">Submit to your teacher</button>
               </div>
             ) : (
-              <section className="mt-4 rounded-[14px] border border-[var(--s-bd1)] bg-[var(--s-sidebar)] p-4 text-[12.5px] text-[var(--s-faint)]">Submitted{data.submittedAt ? ` on ${new Date(data.submittedAt).toLocaleString()}` : ''}. Your original answers are preserved.</section>
+              <section className="mt-4 rounded-[14px] border border-[var(--s-bd1)] bg-[var(--s-sidebar)] p-4 text-[12.5px] text-[var(--s-faint)]">Submitted{data.submittedAt ? ` on ${new Date(data.submittedAt).toLocaleString()}` : ''}.</section>
             )}
 
             {reviewOpen ? (
               <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/35 backdrop-blur-[2px] sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label="Review homework">
                 <div className="w-full max-w-md rounded-t-[20px] border border-[var(--s-bd1)] bg-[var(--s-card)] p-5 shadow-2xl sm:rounded-[18px]">
                   <div className="flex items-start gap-3">
-                    <div><p className="eyebrow">REVIEW</p><h2 className="mt-1 font-display text-xl font-semibold text-[var(--s-ink)]">Check before you submit</h2></div>
+                    <h2 className="font-display text-xl font-semibold text-[var(--s-ink)]">Check before you submit</h2>
                     <button type="button" onClick={() => setReviewOpen(false)} className="ml-auto rounded-full p-2 text-[var(--s-faint)]"><X className="h-5 w-5" /></button>
                   </div>
                   <div className="mt-4 divide-y divide-[var(--s-divider)] rounded-xl bg-[var(--s-surface2)] px-3.5">
@@ -263,7 +268,7 @@ export default function HomeworkDetailPage() {
                   {answeredCount < questions.length ? <p className="mt-3 rounded-xl bg-[var(--s-amberSoft)] p-3 text-[11.5px] leading-5 text-[var(--s-amberInk)]">{questions.length - answeredCount} {questions.length - answeredCount === 1 ? 'answer is' : 'answers are'} empty. You can still submit if that is intentional.</p> : null}
                   <div className="mt-4 flex gap-2.5">
                     <button type="button" onClick={() => setReviewOpen(false)} className="flex-1 rounded-[11px] border border-[var(--s-bd2)] px-4 py-2.5 text-[13px] font-semibold text-[var(--s-inkSoft)]">Keep working</button>
-                    <button type="button" onClick={() => submit.mutate()} disabled={submit.isPending} className="flex-1 rounded-[11px] bg-[#0C3F31] px-4 py-2.5 text-[13px] font-semibold text-[#F6F3E9] disabled:opacity-50">{submit.isPending ? 'Submitting…' : 'Submit now'}</button>
+                    <button type="button" onClick={() => submit.mutate()} disabled={submit.isPending} aria-busy={submit.isPending} className="flex-1 rounded-[11px] bg-[var(--s-accentDeep)] px-4 py-2.5 text-[13px] font-semibold text-white disabled:opacity-50">{submit.isPending ? 'Submitting…' : 'Submit now'}</button>
                   </div>
                 </div>
               </div>

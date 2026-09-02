@@ -247,7 +247,90 @@ export class PetrosSessionIntentRepository {
       .where(eq(schema.knowledgeItemPages.itemId, item.id))
       .orderBy(asc(schema.knowledgeItemPages.pageIndex));
     const selected = page == null ? pages : pages.filter((candidate) => candidate.pageIndex === page - 1);
-    return { item, pages: selected };
+    return { item, pages: selected, allPages: pages };
+  }
+
+  findDocumentOutline(
+    scope: PetrosOwnerScope,
+    knowledgeItemId: string,
+    documentVersion: number,
+    sourceFingerprint: string,
+  ) {
+    return this.db.select().from(schema.petrosDocumentLessonOutlines).where(and(
+      eq(schema.petrosDocumentLessonOutlines.institutionId, scope.institutionId),
+      eq(schema.petrosDocumentLessonOutlines.studentId, scope.studentId),
+      eq(schema.petrosDocumentLessonOutlines.knowledgeItemId, knowledgeItemId),
+      eq(schema.petrosDocumentLessonOutlines.documentVersion, documentVersion),
+      eq(schema.petrosDocumentLessonOutlines.sourceFingerprint, sourceFingerprint),
+    )).limit(1).then((rows) => rows[0]);
+  }
+
+  saveDocumentOutline(values: typeof schema.petrosDocumentLessonOutlines.$inferInsert) {
+    const table = schema.petrosDocumentLessonOutlines;
+    return this.db.insert(table).values(values).onConflictDoUpdate({
+      target: [
+        table.institutionId,
+        table.studentId,
+        table.knowledgeItemId,
+        table.documentVersion,
+        table.sourceFingerprint,
+      ],
+      set: { outline: values.outline, updatedAt: new Date() },
+    }).returning().then((rows) => rows[0]);
+  }
+
+  /** Finds the nearest teacher-authored date for a document's published subject. */
+  async documentSchedule(scope: PetrosOwnerScope, item: { origin: Record<string, unknown> }, now = new Date()) {
+    const classMaterialId = typeof item.origin?.classMaterialId === 'string'
+      ? item.origin.classMaterialId
+      : null;
+    if (!classMaterialId) return null;
+    const [student, material] = await Promise.all([
+      this.db.select({ classId: schema.students.classId }).from(schema.students).where(and(
+        eq(schema.students.id, scope.studentId),
+        eq(schema.students.institutionId, scope.institutionId),
+      )).limit(1).then((rows) => rows[0]),
+      this.db.select({ subjectId: schema.classMaterials.subjectId, subjectName: schema.subjects.name })
+        .from(schema.classMaterials)
+        .leftJoin(schema.subjects, eq(schema.subjects.id, schema.classMaterials.subjectId))
+        .where(and(
+          eq(schema.classMaterials.id, classMaterialId),
+          eq(schema.classMaterials.institutionId, scope.institutionId),
+        )).limit(1).then((rows) => rows[0]),
+    ]);
+    if (!student?.classId || !material?.subjectId) return null;
+    const today = now.toISOString().slice(0, 10);
+    const [exam, assignment] = await Promise.all([
+      this.db.select({
+        title: schema.exams.name,
+        date: schema.examSchedules.examDate,
+        startTime: schema.examSchedules.startTime,
+      }).from(schema.examSchedules)
+        .innerJoin(schema.exams, eq(schema.exams.id, schema.examSchedules.examId))
+        .where(and(
+          eq(schema.examSchedules.institutionId, scope.institutionId),
+          eq(schema.examSchedules.classId, student.classId),
+          eq(schema.examSchedules.subjectId, material.subjectId),
+          eq(schema.examSchedules.published, true),
+          gte(schema.examSchedules.examDate, today),
+        )).orderBy(asc(schema.examSchedules.examDate)).limit(1).then((rows) => rows[0]),
+      this.db.select({ title: schema.assignments.title, date: schema.assignments.dueDate })
+        .from(schema.assignments)
+        .where(and(
+          eq(schema.assignments.institutionId, scope.institutionId),
+          eq(schema.assignments.classId, student.classId),
+          eq(schema.assignments.subjectId, material.subjectId),
+          eq(schema.assignments.status, 'published'),
+          gte(schema.assignments.dueDate, today),
+        )).orderBy(asc(schema.assignments.dueDate)).limit(1).then((rows) => rows[0]),
+    ]);
+    const dates = [
+      exam?.date ? { kind: 'exam' as const, title: exam.title, at: teacherDateIso(exam.date, exam.startTime) } : null,
+      assignment?.date ? { kind: 'assignment' as const, title: assignment.title, at: teacherDateIso(assignment.date) } : null,
+    ].filter((value): value is NonNullable<typeof value> => Boolean(value));
+    return dates.sort((a, b) => a.at.localeCompare(b.at))[0]
+      ? { ...dates.sort((a, b) => a.at.localeCompare(b.at))[0]!, subjectName: material.subjectName ?? null }
+      : null;
   }
 
   async pathSource(scope: PetrosOwnerScope, sourceId: string) {
@@ -755,4 +838,10 @@ export class PetrosSessionIntentRepository {
       );
     return { events, failures, latency, cost, factors, initialMoves };
   }
+}
+
+function teacherDateIso(date: string, time?: string | null) {
+  const normalizedTime = /^\d{2}:\d{2}(?::\d{2})?$/.test(time ?? '') ? time! : '00:00:00';
+  const withSeconds = normalizedTime.length === 5 ? `${normalizedTime}:00` : normalizedTime;
+  return new Date(`${date}T${withSeconds}.000Z`).toISOString();
 }

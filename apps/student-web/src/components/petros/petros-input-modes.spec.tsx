@@ -55,7 +55,7 @@ describe('Petros input modes', () => {
     render(<PetrosInputModes />);
     fireEvent.click(screen.getByRole('tab', { name: /Five-minute mode/ }));
     expect(screen.getByText(/4 moves · about 5 minutes/i)).toBeInTheDocument();
-    expect(screen.getByText(/Continuing requires a separate explicit choice/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Continuing requires a separate explicit choice/i)).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('One concept'), {
       target: { value: 'chain rule' },
     });

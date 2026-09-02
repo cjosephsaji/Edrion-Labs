@@ -216,6 +216,15 @@ export function useStudentApi(): StudentApiClient {
 export function formatApiError(err: unknown): string {
   if (err instanceof StudentApiError) return err.message;
   if (err instanceof Error) return err.message;
+  if (
+    err &&
+    typeof err === 'object' &&
+    'message' in err &&
+    typeof err.message === 'string' &&
+    err.message.trim()
+  ) {
+    return err.message;
+  }
   return 'Something went wrong.';
 }
 

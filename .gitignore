@@ -9,6 +9,7 @@ apps/api/var/
 # builds
 dist/
 .next/
+.next-dev/
 out/
 build/
 *.tsbuildinfo
@@ -41,4 +42,3 @@ test-results/
 
 # cookies
 cookies.txt
-

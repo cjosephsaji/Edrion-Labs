@@ -56,6 +56,7 @@ const ENTITY_GATES: Record<
   result: { permission: 'student.surface.results.view', surface: 'results' },
   report_card: { permission: 'student.report_cards.view' },
   material: { permission: 'student.classes.view' },
+  note: { permission: 'student.classes.view' },
   document: { permission: 'student.surface.documents.view', surface: 'documents' },
   announcement: {},
   notification: {},
@@ -396,6 +397,46 @@ export class PetrosStudentContextService {
               kind: row.kindLabel,
               weekNo: row.weekNo ?? null,
               description: row.description ?? null,
+            },
+          });
+        }
+        return out;
+      }
+
+      case 'note': {
+        const contexts = await this.noteContexts(principal);
+        if (!contexts.length) return out;
+        const rows = await this.db
+          .select({
+            id: schema.classNotes.id,
+            title: schema.classNotes.title,
+            summary: schema.classNotes.summary,
+            body: schema.classNotes.body,
+            weekNo: schema.classNotes.weekNo,
+            topicKey: schema.classNotes.topicKey,
+            contextType: schema.classNotes.contextType,
+            contextId: schema.classNotes.contextId,
+          })
+          .from(schema.classNotes)
+          .where(
+            and(
+              eq(schema.classNotes.institutionId, institutionId),
+              eq(schema.classNotes.status, 'published'),
+              inArray(schema.classNotes.id, ids),
+            ),
+          );
+        const allowed = new Set(contexts.map((ctx) => `${ctx.type}:${ctx.id}`));
+        for (const row of rows) {
+          if (!allowed.has(`${row.contextType}:${row.contextId}`)) continue;
+          out.set(row.id, {
+            title: row.title,
+            summary: row.summary ?? (row.weekNo ? `week ${row.weekNo}` : 'lesson note'),
+            href: `/notes/${row.id}`,
+            facts: {
+              weekNo: row.weekNo ?? null,
+              topicKey: row.topicKey ?? null,
+              // The note text is the point of grounding on a note at all.
+              body: row.body,
             },
           });
         }
@@ -803,6 +844,19 @@ export class PetrosStudentContextService {
     const contexts: Array<{ type: string; id: string }> = [];
     if (classId) contexts.push({ type: 'class', id: classId });
     for (const course of courses) contexts.push({ type: 'course', id: course.courseId });
+    return contexts;
+  }
+
+  /** Notes can also be published against a subject, which materials cannot. */
+  private async noteContexts(principal: InstitutionalStudentPrincipal) {
+    const contexts = await this.materialContexts(principal);
+    const classId = contexts.find((c) => c.type === 'class')?.id;
+    if (!classId) return contexts;
+    const subjects = await this.db
+      .selectDistinct({ id: schema.classSubjectTeachers.subjectId })
+      .from(schema.classSubjectTeachers)
+      .where(eq(schema.classSubjectTeachers.classId, classId));
+    for (const s of subjects) contexts.push({ type: 'subject', id: s.id });
     return contexts;
   }
 }
