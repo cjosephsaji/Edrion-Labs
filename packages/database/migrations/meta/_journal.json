@@ -897,6 +897,20 @@
       "when": 1789800600000,
       "tag": "0207_petros_document_lesson_outlines",
       "breakpoints": true
+    },
+    {
+      "idx": 128,
+      "version": "7",
+      "when": 1789800700000,
+      "tag": "0208_petros_document_teaching_plans",
+      "breakpoints": true
+    },
+    {
+      "idx": 129,
+      "version": "7",
+      "when": 1789800800000,
+      "tag": "0209_petros_document_learning_path",
+      "breakpoints": true
     }
   ]
 }

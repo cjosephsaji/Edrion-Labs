@@ -326,19 +326,39 @@ export function PetrosMentor(props: {
     setLessonSegmentIndex(index);
     setLessonSegmentId(segment.id);
     setTargetKey(segment.targetKey);
-    setExpanded(true);
     setView('buddy');
-    companion.setOpen(true);
     void voice.speak(spoken, {
       onEnded: () => {
         if (playback !== lessonPlaybackRef.current || lessonDetourIdsRef.current.length) return;
         const nextIndex = index + 1;
         if (!lessonNarrationRef.current[nextIndex]) return;
-        window.setTimeout(() => lessonPlayerRef.current(nextIndex, 0), 120);
+        window.setTimeout(() => {
+          if (playback === lessonPlaybackRef.current && !lessonDetourIdsRef.current.length) lessonPlayerRef.current(nextIndex, 0);
+        }, 120);
       },
     });
-  }, [companion, voice]);
+  }, [voice]);
   lessonPlayerRef.current = playLessonSegment;
+
+  useEffect(() => {
+    const play = () => {
+      if (!inLearningSession || lessonDetourIdsRef.current.length) return;
+      setExpanded(false);
+      companion.setOpen(false);
+      lessonPlayerRef.current(0);
+    };
+    const stop = () => {
+      lessonPlaybackRef.current += 1;
+      voice.stopSpeaking();
+      window.dispatchEvent(new CustomEvent('petros:diagram-stop'));
+    };
+    window.addEventListener('petros:lesson-play', play);
+    window.addEventListener('petros:lesson-stop', stop);
+    return () => {
+      window.removeEventListener('petros:lesson-play', play);
+      window.removeEventListener('petros:lesson-stop', stop);
+    };
+  }, [companion, inLearningSession, voice]);
 
   useEffect(() => {
     try {
@@ -706,7 +726,7 @@ export function PetrosMentor(props: {
   const activeSpeechTarget = voice.speaking && voice.activeLineIndex >= 0
     ? `speech-line:${voice.activeLineIndex}`
     : null;
-  const lessonTeachingTarget = inLearningSession && activeLessonSegment && !lessonInterruption && voice.speaking
+  const lessonTeachingTarget = inLearningSession && activeLessonSegment && !lessonInterruption
     ? activeLessonSegment.targetKey
     : null;
   const spatialKey = step?.key
@@ -790,7 +810,6 @@ export function PetrosMentor(props: {
     if (!inLearningSession || !lessonNarration.length) return;
     const key = lessonNarration[0]!.blockId || `${companion.page?.title}:${lessonNarration[0]!.id}`;
     if (spokenLessonRef.current === key) return;
-    const firstLesson = !spokenLessonRef.current;
     spokenLessonRef.current = key;
     lessonPlaybackRef.current += 1;
     lessonPauseRef.current = null;
@@ -800,7 +819,6 @@ export function PetrosMentor(props: {
     setLessonSegmentId(lessonNarration[0]!.id);
     setLocalReply(null);
     setTargetKey(lessonNarration[0]!.targetKey);
-    if (firstLesson || voiceSettings.autoRead) setExpanded(true);
     if (voiceSettings.autoRead) window.setTimeout(() => lessonPlayerRef.current(0, 0), 0);
   }, [companion.page?.title, inLearningSession, lessonNarration, voiceSettings.autoRead]);
 
@@ -842,11 +860,12 @@ export function PetrosMentor(props: {
       if (lessonDetourIdsRef.current.length) return;
       setDiagramNarration(detail);
       setLessonInterruption(null);
-      setExpanded(true);
+      setExpanded(false);
       setView('buddy');
-      companion.setOpen(true);
+      companion.setOpen(false);
       setTargetKey(detail.targetKey);
       voice.stopSpeaking();
+      if (event.type === 'petros:diagram-focus') return;
       void voice.speak(detail.text, {
         onEnded: () => window.dispatchEvent(new CustomEvent('petros:diagram-advance', {
           detail: { diagramId: detail.diagramId, step: detail.step },
@@ -864,9 +883,11 @@ export function PetrosMentor(props: {
       setDiagramNarration(null);
     };
     window.addEventListener('petros:diagram-step', onDiagramStep);
+    window.addEventListener('petros:diagram-focus', onDiagramStep);
     window.addEventListener('petros:diagram-stop', onDiagramStop);
     return () => {
       window.removeEventListener('petros:diagram-step', onDiagramStep);
+      window.removeEventListener('petros:diagram-focus', onDiagramStep);
       window.removeEventListener('petros:diagram-stop', onDiagramStop);
     };
   }, [companion, diagramNarration, voice]);
@@ -975,9 +996,7 @@ export function PetrosMentor(props: {
             <div className={styles.identity}><strong>Petros</strong><span>{inLearningSession ? 'Here for this lesson' : 'Your learning companion'}</span></div>
             {inLearningSession && sessionPulse ? (
               <div className={styles.sessionPulse} aria-label="Current session momentum">
-                <span><strong>{sessionPulse.mastered}/{sessionPulse.total}</strong> mastered</span>
-                <span><strong>{sessionPulse.xp}</strong> XP</span>
-                <span><strong>{sessionPulse.streak}</strong> streak · <strong>{sessionPulse.flashcards}</strong> cards</span>
+                <span><strong>{sessionPulse.mastered}</strong> independent checks</span>
                 <span><strong>{sessionPulse.elapsedLabel}</strong> {sessionPulse.paceLabel}</span>
               </div>
             ) : null}

@@ -4,11 +4,13 @@ import {
   petrosAssistantQuestionSchema,
   petrosDoorsDashboardQuerySchema,
   petrosIntentMetricInputSchema,
+  preparePetrosDocumentSchema,
   resolvePetrosSessionIntentSchema,
   startPetrosSessionIntentSchema,
   type PetrosAssistantQuestionInput,
   type PetrosDoorsDashboardQuery,
   type PetrosIntentMetricInput,
+  type PreparePetrosDocumentInput,
   type ResolvePetrosSessionIntentInput,
   type StartPetrosSessionIntentInput,
 } from '@edrion/schemas';
@@ -61,6 +63,31 @@ export class StudentPetrosSessionIntentController {
   @Get('intents/:intentId')
   read(@CurrentStudent() raw: StudentPrincipal, @Param('intentId') intentId: string) {
     return this.service.read(this.principal(raw), intentId);
+  }
+
+  @Get('document-preparations/:preparationId')
+  preparation(
+    @CurrentStudent() raw: StudentPrincipal,
+    @Param('preparationId') preparationId: string,
+  ) {
+    return this.service.preparation(this.principal(raw), preparationId);
+  }
+
+  @Post('documents/:sourceId/prepare')
+  prepareDocument(
+    @CurrentStudent() raw: StudentPrincipal,
+    @Param('sourceId') sourceId: string,
+    @Body(zodBody(preparePetrosDocumentSchema)) body: PreparePetrosDocumentInput,
+  ) {
+    return this.service.prepareDocument(this.principal(raw), sourceId, body);
+  }
+
+  @Get('documents/:sourceId/path')
+  documentPath(
+    @CurrentStudent() raw: StudentPrincipal,
+    @Param('sourceId') sourceId: string,
+  ) {
+    return this.service.documentPath(this.principal(raw), sourceId);
   }
 
   @Post('intents/:intentId/start')

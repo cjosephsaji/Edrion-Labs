@@ -174,6 +174,8 @@ export const apiEnvSchema = z.object({
   OPENAI_API_KEY: z.string().optional(),
   /** Global Petros execution switch. Demo mode never contacts a model provider. */
   PETROS_AI_MODE: z.enum(['demo', 'live']).default('demo'),
+  /** Document teaching stage rollout. Keep enabled in local environments while the generic stage is evaluated. */
+  PETROS_DOCUMENT_TEACHING_ENABLED: bool.default(true),
   /** Interactive agent loop: chat turns, tool orchestration, everyday drafting. */
   OPENAI_MODEL: z.string().default('gpt-5.2'),
   /** Cheap classifier-style calls: topicality, titles, permission suggestions, summaries. */

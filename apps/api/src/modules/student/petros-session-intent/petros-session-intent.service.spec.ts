@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { describe, expect, it, vi } from 'vitest';
 import type { InstitutionalStudentPrincipal } from '../student.types';
 import { PetrosSessionIntentService } from './petros-session-intent.service';
+import { fallbackDocumentTeachingPlan, publicDocumentTeachingPlan } from './petros-document-teaching';
 
 const INSTITUTION_ID = '11111111-1111-4111-8111-111111111111';
 const STUDENT_ID = '22222222-2222-4222-8222-222222222222';
@@ -73,8 +74,24 @@ function harness(overrides: Record<string, unknown> = {}) {
       };
     }),
   };
+  const preparation: any = {
+    prepare: vi.fn(async (_principal: unknown, source: any, sourceFingerprint: string, topic: any) => {
+      const generated = fallbackDocumentTeachingPlan({
+        documentId: source.item.id,
+        documentVersion: source.item.version,
+        sourceFingerprint,
+        topicId: topic.id,
+        title: topic.title,
+        summary: topic.summary,
+        prerequisites: topic.prerequisites ?? [],
+        pages: (source.allPages ?? source.pages).filter((page: any) => page.pageIndex + 1 >= (topic.pageStart ?? 1) && page.pageIndex + 1 <= (topic.pageEnd ?? Number.MAX_SAFE_INTEGER)).map((page: any) => ({ page: page.pageIndex + 1, text: page.text })),
+      });
+      return { preparation: { id: crypto.randomUUID() }, lesson: { publicPlan: publicDocumentTeachingPlan(generated), internalPlan: generated } };
+    }),
+    read: vi.fn(),
+  };
   return {
-    service: new PetrosSessionIntentService(repo, loop, gateway, { PETROS_AI_MODE: 'live' } as never, audit),
+    service: new PetrosSessionIntentService(repo, loop, gateway, preparation, { PETROS_AI_MODE: 'live' } as never, audit),
     repo,
     loop,
     gateway,
@@ -215,7 +232,25 @@ describe('Petros Stage 8 session intent resolver', () => {
       }),
       sourceContext: expect.objectContaining({
         citations: [expect.objectContaining({ section: selected.title })],
+        conceptSource: { pages: [{ page: 2, text: pages[1]!.text }], complete: true },
       }),
+    }));
+  });
+
+  it('keeps document preview source-grounded without waiting for live concept extraction', async () => {
+    const sourcePage = { id: PAGE_ID, itemId: SOURCE_ID, pageIndex: 0, text: 'DEMAND-PULL INFLATION\nDemand increases.\nCOST-PUSH INFLATION\nInput costs increase.', updatedAt: new Date() };
+    const { service, gateway, loop } = harness({ documentSource: vi.fn().mockResolvedValue({
+      item: { id: SOURCE_ID, title: 'Inflation', version: 1, status: 'ready', extractedTextReady: true, indexReady: true, pageCount: 1, pagesDone: 1 },
+      pages: [sourcePage], allPages: [sourcePage],
+    }) });
+    const intent = await service.resolve(principal, input('uploaded_document', { section: 'User source locator' }));
+    expect(gateway.execute).not.toHaveBeenCalled();
+    expect(intent.planning?.organization).toBe('headings');
+    const topic = intent.planning!.topics[1]!;
+    await service.start(principal, intent.id, { idempotencyKey: crypto.randomUUID(), plan: { topicId: topic.id, priority: 'understand', timeBudgetSeconds: 900, existingDoubt: null } });
+    expect(loop.create).toHaveBeenCalledWith(principal, expect.objectContaining({
+      topic: 'COST-PUSH INFLATION',
+      sourceContext: expect.objectContaining({ citations: [expect.objectContaining({ topicId: topic.id, section: 'User source locator' })] }),
     }));
   });
 
@@ -297,6 +332,7 @@ describe('Petros Stage 8 session intent resolver', () => {
       base.repo,
       base.loop,
       base.gateway,
+      { prepare: vi.fn(), read: vi.fn() } as never,
       { PETROS_AI_MODE: 'demo' } as never,
       { logAudit: vi.fn() } as never,
     );

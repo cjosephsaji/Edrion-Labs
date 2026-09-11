@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { upsertPetrosProviderSchema } from './petros-ai-routing';
+import { PETROS_FUNCTION_CATALOG, upsertPetrosProviderSchema } from './petros-ai-routing';
 
 const provider = {
   displayName: 'GroqCloud',
@@ -28,4 +28,14 @@ describe('upsertPetrosProviderSchema', () => {
       }
     },
   );
+});
+
+describe('PETROS_FUNCTION_CATALOG', () => {
+  it('registers the generic document lesson generator with a routed JSON contract', () => {
+    expect(PETROS_FUNCTION_CATALOG).toContainEqual(expect.objectContaining({
+      key: 'document.teaching.plan',
+      responseFormat: 'json',
+      routeTemplateKey: 'assistant.context.answer',
+    }));
+  });
 });

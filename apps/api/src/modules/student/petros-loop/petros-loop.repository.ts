@@ -27,6 +27,31 @@ export interface PetrosOwnerScope {
 export class PetrosLoopRepository {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
 
+  async recordDocumentPathProgress(
+    scope: PetrosOwnerScope,
+    pathId: string,
+    conceptId: string,
+    status: 'in_progress' | 'complete' | 'review',
+    evidence: 'none' | 'supported' | 'independent' | 'needs_review',
+  ) {
+    const [path] = await this.db.select().from(schema.petrosDocumentLearnerPaths).where(and(
+      eq(schema.petrosDocumentLearnerPaths.id, pathId),
+      eq(schema.petrosDocumentLearnerPaths.institutionId, scope.institutionId),
+      eq(schema.petrosDocumentLearnerPaths.studentId, scope.studentId),
+    )).limit(1);
+    if (!path) return null;
+    const progress = path.progress as Record<string, unknown>;
+    return this.db.update(schema.petrosDocumentLearnerPaths).set({
+      currentConceptId: conceptId,
+      progress: { ...progress, [conceptId]: { status, evidence, updatedAt: new Date().toISOString() } },
+      updatedAt: new Date(),
+    }).where(and(
+      eq(schema.petrosDocumentLearnerPaths.id, pathId),
+      eq(schema.petrosDocumentLearnerPaths.institutionId, scope.institutionId),
+      eq(schema.petrosDocumentLearnerPaths.studentId, scope.studentId),
+    )).returning().then((rows) => rows[0] ?? null);
+  }
+
   createSession(values: typeof schema.petrosLearningSessions.$inferInsert) {
     return this.db
       .insert(schema.petrosLearningSessions)
@@ -72,6 +97,7 @@ export class PetrosLoopRepository {
       .select({
         id: schema.petrosLearningSessions.id,
         topic: schema.petrosLearningSessions.topic,
+        learnerContext: schema.petrosLearningSessions.learnerContext,
         sessionType: schema.petrosLearningSessions.sessionType,
         status: schema.petrosLearningSessions.status,
         elapsedSeconds: schema.petrosLearningSessions.elapsedSeconds,
@@ -424,6 +450,47 @@ export class PetrosLoopRepository {
       )
       .returning()
       .then((rows) => rows[0]);
+  }
+
+  updateSessionLearnerContextAtVersion(
+    scope: PetrosOwnerScope,
+    sessionId: string,
+    expectedVersion: number,
+    learnerContext: Record<string, unknown>,
+  ) {
+    return this.db
+      .update(schema.petrosLearningSessions)
+      .set({
+        learnerContext,
+        version: sql`${schema.petrosLearningSessions.version} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(schema.petrosLearningSessions.id, sessionId),
+          eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
+          eq(schema.petrosLearningSessions.studentId, scope.studentId),
+          eq(schema.petrosLearningSessions.version, expectedVersion),
+        ),
+      )
+      .returning()
+      .then((rows) => rows[0]);
+  }
+
+  /** One compare-and-swap commits the authored stage and its evidence together. */
+  commitPilot(
+    scope: PetrosOwnerScope, sessionId: string, expectedVersion: number,
+    values: Pick<typeof schema.petrosLearningSessions.$inferInsert,
+      'learnerContext' | 'checkpoints' | 'currentCheckpointId' | 'status' | 'closeReason' | 'closedAt' | 'elapsedSeconds' | 'activeSince'>,
+  ) {
+    return this.db.update(schema.petrosLearningSessions)
+      .set({ ...values, version: sql`${schema.petrosLearningSessions.version} + 1`, updatedAt: new Date() })
+      .where(and(eq(schema.petrosLearningSessions.id, sessionId),
+        eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
+        eq(schema.petrosLearningSessions.studentId, scope.studentId),
+        eq(schema.petrosLearningSessions.status, 'active'),
+        eq(schema.petrosLearningSessions.version, expectedVersion)))
+      .returning().then(rows => rows[0]);
   }
 
   updateSessionSourceContext(
@@ -918,15 +985,17 @@ export class PetrosLoopRepository {
       closeReason?: string | null;
       closedAt?: Date | null;
     },
+    expectedVersion?: number,
   ) {
     return this.db
       .update(schema.petrosLearningSessions)
-      .set({ ...patch, planningStartedAt: null, updatedAt: new Date() })
+      .set({ ...patch, ...(expectedVersion === undefined ? {} : { version: sql`${schema.petrosLearningSessions.version} + 1` }), planningStartedAt: null, updatedAt: new Date() })
       .where(
         and(
           eq(schema.petrosLearningSessions.id, sessionId),
           eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
           eq(schema.petrosLearningSessions.studentId, scope.studentId),
+          expectedVersion === undefined ? undefined : eq(schema.petrosLearningSessions.version, expectedVersion),
         ),
       )
       .returning()

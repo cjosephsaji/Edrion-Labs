@@ -29,6 +29,16 @@ export interface PetrosAiExecuteRequest {
   /** Sensitive raw media and transient voice outputs must never enter the shared response cache. */
   disableCache?: boolean;
   speech?: { voice?: 'cedar' | 'marin'; speed?: number };
+  /** Long structured plans may need more room than the shared function default. */
+  maxOutputTokens?: number;
+  /** Feature-specific latency guard. Cannot extend the configured function timeout. */
+  timeoutMs?: number;
+  /** Feature-specific retry guard. Cannot exceed the configured function retry count. */
+  maxRetries?: number;
+  /** Bound fallback route fan-out for latency-sensitive preparation stages. */
+  maxRouteAttempts?: number;
+  /** The caller owns a stricter domain validator and must not cache unvalidated output. */
+  deferResponseValidation?: boolean;
 }
 
 export interface PetrosAiExecuteResult extends PetrosAiNormalizedResponse {
@@ -114,7 +124,7 @@ export class PetrosAiGatewayService {
       throw new BadGatewayException({ code: quotaError, message: 'This Petros function reached a configured usage or cost limit.' });
     }
     const cacheKey = this.cacheKey(context.functionKey, system, raw.input, fn.activePromptVersion, fn.activeSchemaVersion);
-    if (plan.cacheAllowed && settings.caching && !raw.disableCache) {
+    if (plan.cacheAllowed && settings.caching && !raw.disableCache && !raw.deferResponseValidation) {
       const cached = await this.redis.get(cacheKey);
       if (cached) {
         const parsed = JSON.parse(cached) as PetrosAiExecuteResult;
@@ -157,13 +167,15 @@ export class PetrosAiGatewayService {
     }
 
     const errors: string[] = [];
-    for (const candidate of plan.attempts) {
+    const maxOutputTokens = raw.maxOutputTokens ?? Number(settings.maxOutputTokens);
+    const routeAttempts = plan.attempts.slice(0, raw.maxRouteAttempts ?? plan.attempts.length);
+    for (const candidate of routeAttempts) {
       const [provider, model] = await Promise.all([
         this.repo.findProvider(candidate.providerId),
         this.repo.findModel(candidate.modelId),
       ]);
       if (!provider || !model) continue;
-      const maxRetries = Math.max(0, Number(settings.maxRetries ?? 0));
+      const maxRetries = Math.max(0, Math.min(Number(settings.maxRetries ?? 0), raw.maxRetries ?? Number(settings.maxRetries ?? 0)));
       for (let retry = 0; retry <= maxRetries; retry += 1) {
         const started = Date.now();
         try {
@@ -173,10 +185,10 @@ export class PetrosAiGatewayService {
             input: raw.input,
             responseFormat: fn.responseFormat,
             responseSchema,
-            maxOutputTokens: Number(settings.maxOutputTokens),
+            maxOutputTokens,
             temperature: Number(settings.temperature),
             reasoningLevel: settings.reasoningLevel,
-            timeoutMs: Number(settings.timeoutMs),
+            timeoutMs: Math.min(Number(settings.timeoutMs), raw.timeoutMs ?? Number(settings.timeoutMs)),
             stream: Boolean(settings.streaming),
             language: context.language,
             speech: raw.speech,
@@ -184,7 +196,9 @@ export class PetrosAiGatewayService {
           const content = response.kind === 'json' ? parseStructuredResponse(response.content) : response.content;
           const estimatedCostMicros = response.actualCostMicros
             ?? estimateCost(model.pricing, response.inputTokens, response.outputTokens, response.cachedTokens);
-          const validationErrors = responseSchema ? validatePetrosResponse(content, responseSchema) : [];
+          const validationErrors = responseSchema && !raw.deferResponseValidation
+            ? validatePetrosResponse(content, responseSchema)
+            : [];
           if (validationErrors.length) {
             throw new ProviderCallError(
               'RESPONSE_VALIDATION_FAILED',
@@ -237,7 +251,7 @@ export class PetrosAiGatewayService {
             responseTimeMs: Date.now() - started,
             retryCount: retry,
           };
-          if (plan.cacheAllowed && settings.caching && !raw.disableCache) await this.redis.set(cacheKey, JSON.stringify(result), raw.cacheTtlSeconds ?? 3_600);
+          if (plan.cacheAllowed && settings.caching && !raw.disableCache && !raw.deferResponseValidation) await this.redis.set(cacheKey, JSON.stringify(result), raw.cacheTtlSeconds ?? 3_600);
           return result;
         } catch (error) {
           const typed = error instanceof ProviderCallError ? error : new ProviderCallError('PROVIDER_ERROR', error instanceof Error ? error.message : 'Provider error.', false);

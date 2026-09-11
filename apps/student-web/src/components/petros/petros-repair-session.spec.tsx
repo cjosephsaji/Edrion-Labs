@@ -1031,7 +1031,7 @@ describe('Petros Stage 4 typed move UI', () => {
     }>).detail;
     expect(document.querySelector('[data-petros-target$="node:light"]')).toHaveAttribute('data-active', 'true');
     fireEvent(window, new CustomEvent('petros:diagram-advance', { detail: firstStep }));
-    expect(await screen.findByText(/follow the connection from light to glucose/i)).toBeVisible();
+    expect(await screen.findByText(/light is stored through the process glucose/i)).toBeVisible();
     expect(document.querySelector('[data-petros-target$="edge:0"]')).toHaveAttribute('data-active', 'true');
     await waitFor(() => expect(narrated).toHaveBeenCalledTimes(2));
     const pausedStep = (narrated.mock.calls[1]![0] as CustomEvent<{
@@ -1067,7 +1067,7 @@ describe('Petros Stage 4 typed move UI', () => {
     );
   });
 
-  it('makes the student build a concept map before replay and completion unlock', async () => {
+  it('lets students explore connections in any order and save reasoning without a guessing gate', async () => {
     memory.document = storedDocument();
     memory.document.blocks[0]!.content = {
       schemaVersion: PETROS_RENDER_SCHEMA_VERSION,
@@ -1098,16 +1098,23 @@ describe('Petros Stage 4 typed move UI', () => {
       <PetrosRepairSession topic="photosynthesis" source="result" sessionId={memory.document.id} />,
     );
 
-    expect(await screen.findByText('Your turn: build the map')).toBeVisible();
-    expect(screen.getByRole('button', { name: /build every connection/i })).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: /glucose.*light/i }));
-    expect(screen.getByText(/close — start at light/i)).toBeVisible();
+    expect(await screen.findByText('Explore the connections')).toBeVisible();
+    expect(screen.getByRole('button', { name: /save map reflections and continue/i })).toBeEnabled();
+    expect(screen.queryByText('Which relationship belongs next?')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Compare with the lesson' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: /glucose.*growth/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Help me understand this connection' }));
+    expect(screen.getByText('Glucose can support Growth')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Revisit this connection' }));
+    expect(await screen.findByText('1 / 2 reflected on · self-review')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: /light.*glucose/i }));
-    fireEvent.click(await screen.findByRole('button', { name: /glucose.*growth/i }));
-
-    expect(await screen.findByText('Map built · replay unlocked')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Explain diagram' })).toBeVisible();
-    expect(screen.getByRole('button', { name: /keep this edited diagram/i })).toBeEnabled();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Your explanation of this connection' }), { target: { value: 'Light energy is stored in glucose during photosynthesis.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Compare with the lesson' }));
+    fireEvent.click(screen.getByRole('button', { name: 'I can explain the link' }));
+    expect(await screen.findByText('2 / 2 reflected on · self-review')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: /glucose.*growth/i }));
+    expect(screen.getByRole('button', { name: 'Revisit this connection' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Walk me through the map' })).toBeVisible();
   });
 
   it('persists an explicit learner-owned artifact choice', async () => {
@@ -1220,7 +1227,7 @@ describe('Petros five-part session progression', () => {
       expect(await screen.findByText(/grounded in/i)).toBeVisible();
       fireEvent.click(screen.getByRole('button', { name: 'Got it' }));
     }
-    expect(await screen.findByText('You earned this one.')).toBeVisible();
+    expect(await screen.findByText('Here’s what to build on.')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Copy my win' })).toBeVisible();
     expect(api.post.mock.calls.filter(([path]) => String(path).endsWith('/complete'))).toHaveLength(5);
     expect(api.post.mock.calls.filter(([path]) => String(path).endsWith('/continue'))).toHaveLength(4);

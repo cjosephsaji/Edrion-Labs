@@ -29,6 +29,7 @@ import { PortalPtmController } from "./portal-ptm.controller";
 import { PortalPlacementsService } from "./portal-placements.service";
 import { PortalPtmService } from "./portal-ptm.service";
 import { PetrosLearnerModelModule } from "../petros-learner-model/petros-learner-model.module";
+import { PetrosAiRoutingModule } from "../petros-ai-routing/petros-ai-routing.module";
 import { IntegrationsModule } from "../integrations/integrations.module";
 import { FederationModule } from "../federation/federation.module";
 import { CampusMirrorsModule } from "../student/campus-mirrors/campus-mirrors.module";
@@ -242,6 +243,7 @@ import { CalendarEventsService } from "./calendar-events/calendar-events.service
     IntegrationsModule,
     CampusMirrorsModule,
     PetrosLearnerModelModule,
+    PetrosAiRoutingModule,
     forwardRef(() => FederationModule),
   ],
   controllers: [

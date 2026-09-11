@@ -11,6 +11,10 @@ import { PetrosCompanionProvider } from '@/components/petros/petros-companion-co
 import { PetrosMentor } from '@/components/petros/petros-mentor';
 import { NavigationFeedback } from './navigation-feedback';
 import { activeSectionNavigation, SectionNavigation } from './section-navigation';
+import {
+  isLearningWorkspaceRoute,
+  LearningWorkspaceFrame,
+} from '@/features/learning-studio/learning-workspace-frame';
 
 function canSee(me: StudentMe | undefined, permission?: string, surface?: string): boolean {
   if (!me) return !permission && !surface;
@@ -258,6 +262,17 @@ export function AppShell({ children }: { children: ReactNode }) {
     setMenuPhase('open');
   };
 
+  if (isLearningWorkspaceRoute(pathname)) {
+    return (
+      <PetrosCompanionProvider>
+        <div className="student-shell min-h-screen bg-[var(--s-page)] text-[var(--s-ink)]">
+          <NavigationFeedback />
+          <LearningWorkspaceFrame>{children}</LearningWorkspaceFrame>
+        </div>
+      </PetrosCompanionProvider>
+    );
+  }
+
   if (isFocusRoute(pathname)) {
     return (
       <div className="student-shell min-h-screen bg-[var(--s-page)] text-[var(--s-ink)]">
@@ -306,7 +321,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      {me?.kind === 'institutional' && me.studentId && canSee(me, 'student.learn.use') ? <PetrosMentor
+      {pathname !== '/petros/pilot' && pathname !== '/petros/document' && me?.kind === 'institutional' && me.studentId && canSee(me, 'student.learn.use') ? <PetrosMentor
         studentId={me.studentId}
         navigation={allItems}
         guideHost={menuOpen ? mentorGuideHost : null}

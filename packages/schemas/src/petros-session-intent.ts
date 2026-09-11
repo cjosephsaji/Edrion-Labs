@@ -42,6 +42,7 @@ export const petrosSourceCitationSchema = z
   .object({
     sourceType: z.enum(['result', 'exam', 'document', 'learning_path', 'portal_screen', 'reflection', 'assignment']),
     sourceId: referenceId,
+    topicId: z.string().trim().min(1).max(160).optional(),
     version: z.string().trim().min(1).max(120),
     label: shortText,
     page: z.number().int().positive().nullable(),
@@ -76,10 +77,13 @@ export const petrosLessonTopicSchema = z.object({
   estimatedMinutes: z.number().int().min(5).max(120),
   keyTerms: z.array(z.string().trim().min(1).max(80)).max(12),
   likelyDoubts: z.array(shortText).max(5),
+  prerequisites: z.array(shortText).max(6).optional(),
+  difficulty: z.enum(['foundation', 'intermediate', 'advanced']).optional(),
 }).strict();
 
 export const petrosTeachingPlanningSchema = z.object({
-  topics: z.array(petrosLessonTopicSchema).min(1).max(12),
+  organization: z.enum(['concepts', 'headings']).optional(),
+  topics: z.array(petrosLessonTopicSchema).min(1).max(80),
   suggestedTopicId: z.string().trim().min(1).max(160),
   suggestedPriority: petrosTeachingPrioritySchema,
   deadline: z.object({
@@ -90,7 +94,7 @@ export const petrosTeachingPlanningSchema = z.object({
   }).strict().nullable(),
   outlineCacheKey: z.string().trim().min(1).max(240).nullable(),
   outlineStatus: z.enum(['cached', 'generated', 'not_applicable']),
-  estimatedTotalMinutes: z.number().int().min(5).max(1_440),
+  estimatedTotalMinutes: z.number().int().min(5).max(10_800),
 }).strict();
 export type PetrosTeachingPlanning = z.infer<typeof petrosTeachingPlanningSchema>;
 
@@ -141,7 +145,10 @@ export const petrosSessionIntentSchema = z
     emotionalRegister: petrosEmotionalRegisterSchema,
     registerFactors: z.array(shortText).min(1).max(8),
     sourceEntityIds: z.array(referenceId).min(1).max(12),
-    citations: z.array(petrosSourceCitationSchema).max(24),
+    // A persistent document map can expose up to 80 bounded concepts. Keeping
+    // the old 24-citation cap made valid 16-page guides fail while resolving
+    // the preview, before preparation could even begin.
+    citations: z.array(petrosSourceCitationSchema).max(80),
     language: z.string().trim().min(2).max(40),
     accessibility: z.array(z.string().trim().min(1).max(120)).max(12),
     returnDestination: petrosReturnDestinationSchema,

@@ -1,5 +1,14 @@
 import { z } from 'zod';
 import {
+  petrosPlaybackCheckpointSchema,
+  petrosTeachingPresentationSchema,
+} from './petros-presentation';
+import { PETROS_INFLATION_PILOT, petrosPilotStateSchema } from './petros-pilot';
+import {
+  PETROS_DOCUMENT_TEACHING_EXPERIENCE,
+  petrosDocumentTeachingStateSchema,
+} from './petros-document-teaching';
+import {
   PETROS_MOVE_TYPES,
   petrosMoveTypeSchema,
   petrosResolvedTopicProfileSchema,
@@ -309,6 +318,7 @@ const sourceGroundingSchema = z
 const renderCommon = {
   schemaVersion: z.literal(PETROS_RENDER_SCHEMA_VERSION),
   title: z.string().trim().min(3).max(180),
+  presentation: petrosTeachingPresentationSchema.optional(),
 };
 
 export const petrosTeachingBlockContentSchema = z.discriminatedUnion('type', [
@@ -800,6 +810,7 @@ export type PetrosSessionState = z.infer<typeof petrosSessionStateSchema>;
 
 export const petrosCreateLearningSessionSchema = z
   .object({
+    experience: z.enum([PETROS_INFLATION_PILOT, PETROS_DOCUMENT_TEACHING_EXPERIENCE]).optional(),
     clientRequestId: z.string().uuid(),
     sessionType: z.enum(PETROS_SESSION_TYPES).default('repair'),
     topic: z.string().trim().min(1).max(240),
@@ -832,6 +843,10 @@ export const petrosCreateLearningSessionSchema = z
         emotionalRegister: z.string().trim().min(1).max(80).optional(),
         registerFactors: z.array(z.string().trim().min(1).max(600)).max(8).optional(),
         citations: z.array(z.record(z.unknown())).max(24).optional(),
+        conceptSource: z.object({
+          pages: z.array(z.object({ page: z.number().int().positive(), text: z.string() })),
+          complete: z.boolean(),
+        }).optional(),
         policyDisclosures: z.array(z.string().trim().min(1).max(600)).max(12).optional(),
         returnHref: z.string().trim().startsWith('/').max(500).optional(),
         returnLabel: z.string().trim().min(1).max(120).optional(),
@@ -987,6 +1002,10 @@ export type PetrosSessionBlock = z.infer<typeof petrosSessionBlockSchema>;
 
 export const petrosLearningSessionDocumentSchema = z
   .object({
+    presentationCheckpoint: petrosPlaybackCheckpointSchema.nullable().optional(),
+    experience: z.enum([PETROS_INFLATION_PILOT, PETROS_DOCUMENT_TEACHING_EXPERIENCE]).optional(),
+    pilot: petrosPilotStateSchema.optional(),
+    documentTeaching: petrosDocumentTeachingStateSchema.optional(),
     stateVersion: z.literal(PETROS_SESSION_STATE_VERSION),
     id: z.string().uuid(),
     version: z.number().int().nonnegative(),

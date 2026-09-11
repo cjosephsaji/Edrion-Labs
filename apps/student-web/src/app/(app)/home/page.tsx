@@ -4,6 +4,7 @@ import Link from 'next/link';
 import {
   Activity,
   ArrowUpRight,
+  BookOpen,
   Bell,
   BookOpenCheck,
   CheckCircle2,
@@ -20,7 +21,7 @@ import { PetrosAskButton } from '@/components/petros/petros-ask-button';
 import { usePetrosPage, type PetrosCandidateInput } from '@/components/petros/petros-companion-context';
 import { ErrorState, LoadingBlock, UnauthorizedState } from '@/components/ui/states';
 import { StudentApiError, formatApiError } from '@/lib/api-client';
-import { useDashboard, type StudentHomeCard, type StudentHomeCardKind } from '@/lib/hooks';
+import { useDashboard, useStudentList, type StudentHomeCard, type StudentHomeCardKind } from '@/lib/hooks';
 import styles from './home.module.css';
 
 /**
@@ -42,6 +43,18 @@ function cardEntity(card: StudentHomeCard): Pick<PetrosCandidateInput, 'entityTy
   if (parts[0] === 'continuity' && parts[2]) return { entityType: 'petros_session', entityId: parts[2] };
   return { entityType: 'screen' };
 }
+
+type HomeMaterial = {
+  id: string;
+  title: string;
+  description: string | null;
+  kindLabel: string;
+  weekNo: number | null;
+  className: string | null;
+  publishedAt: string;
+};
+
+type HomeMaterialsResponse = { items: HomeMaterial[] };
 
 const CARD_ICONS: Record<StudentHomeCardKind, LucideIcon> = {
   exam: BookOpenCheck,
@@ -93,19 +106,35 @@ function PriorityCard({ card, index }: { card: StudentHomeCard; index: number })
 
 export default function HomePage() {
   const dash = useDashboard();
+  const materials = useStudentList<HomeMaterialsResponse>(
+    'home-materials',
+    '/student/materials',
+    dash.data?.me.kind === 'institutional',
+  );
+  const featuredMaterial = materials.data?.items?.[0] ?? null;
 
   usePetrosPage(
     dash.data
       ? {
           title: 'Your priorities',
-          summary: `${dash.data.priorityCards.length} ranked items`,
-          candidates: dash.data.priorityCards.map((card) => ({
-            ref: card.id,
-            title: card.title,
-            summary: card.description,
-            href: card.href,
-            ...cardEntity(card),
-          })),
+          summary: `${dash.data.priorityCards.length} ranked items${featuredMaterial ? ' · teacher material available' : ''}`,
+          candidates: [
+            ...dash.data.priorityCards.map((card) => ({
+              ref: card.id,
+              title: card.title,
+              summary: card.description,
+              href: card.href,
+              ...cardEntity(card),
+            })),
+            ...(materials.data?.items ?? []).slice(0, 5).map((material) => ({
+              ref: `material:${material.id}`,
+              entityType: 'material' as const,
+              entityId: material.id,
+              title: material.title,
+              summary: [material.kindLabel, material.className].filter(Boolean).join(' · '),
+              href: '/materials',
+            })),
+          ],
         }
       : null,
   );
@@ -161,6 +190,32 @@ export default function HomePage() {
       )}
 
       <p className={styles.recordNote}>Priorities use records published to your student account by your institution.</p>
+
+      {featuredMaterial ? (
+        <section className={styles.materialSection} aria-labelledby="home-material-heading">
+          <div className={styles.materialSectionHead}>
+            <div>
+              <p>From your teachers</p>
+              <h2 id="home-material-heading">A new place to learn from</h2>
+            </div>
+            <Link href="/materials" className={styles.materialBrowse}>
+              All study materials <ArrowUpRight aria-hidden="true" />
+            </Link>
+          </div>
+          <article className={styles.materialFeature}>
+            <div className={styles.materialIcon} aria-hidden="true"><BookOpen /></div>
+            <div className={styles.materialCopy}>
+              <span className={styles.materialLabel}>{featuredMaterial.kindLabel} · {featuredMaterial.className ?? 'General'}</span>
+              <h3>{featuredMaterial.title}</h3>
+              <p>{featuredMaterial.description ?? 'A study resource shared by your teacher.'}</p>
+            </div>
+            <div className={styles.materialActions}>
+              <PetrosAskButton candidateRef={`material:${featuredMaterial.id}`} label={featuredMaterial.title} />
+              <Link href="/materials" className={styles.materialOpen}>Open in learning <ArrowUpRight aria-hidden="true" /></Link>
+            </div>
+          </article>
+        </section>
+      ) : null}
     </div>
   );
 }

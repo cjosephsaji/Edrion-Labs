@@ -279,6 +279,47 @@ export class PetrosSessionIntentRepository {
     }).returning().then((rows) => rows[0]);
   }
 
+  findDocumentLessonPlan(
+    scope: PetrosOwnerScope,
+    knowledgeItemId: string,
+    documentVersion: number,
+    sourceFingerprint: string,
+  ) {
+    return this.db.select({ lessonPlan: schema.petrosDocumentLessonOutlines.lessonPlan }).from(schema.petrosDocumentLessonOutlines).where(and(
+      eq(schema.petrosDocumentLessonOutlines.institutionId, scope.institutionId),
+      eq(schema.petrosDocumentLessonOutlines.studentId, scope.studentId),
+      eq(schema.petrosDocumentLessonOutlines.knowledgeItemId, knowledgeItemId),
+      eq(schema.petrosDocumentLessonOutlines.documentVersion, documentVersion),
+      eq(schema.petrosDocumentLessonOutlines.sourceFingerprint, sourceFingerprint),
+    )).limit(1).then((rows) => rows[0]?.lessonPlan ?? null);
+  }
+
+  saveDocumentLessonPlan(
+    scope: PetrosOwnerScope,
+    knowledgeItemId: string,
+    documentVersion: number,
+    sourceFingerprint: string,
+    topicId: string,
+    lessonPlan: Record<string, unknown>,
+  ) {
+    const table = schema.petrosDocumentLessonOutlines;
+    return this.db.select({ id: table.id, lessonPlan: table.lessonPlan }).from(table).where(and(
+      eq(table.institutionId, scope.institutionId),
+      eq(table.studentId, scope.studentId),
+      eq(table.knowledgeItemId, knowledgeItemId),
+      eq(table.documentVersion, documentVersion),
+      eq(table.sourceFingerprint, sourceFingerprint),
+    )).limit(1).then(async (rows) => {
+      const row = rows[0];
+      if (!row) return undefined;
+      const existing = row.lessonPlan && typeof row.lessonPlan === 'object' && !Array.isArray(row.lessonPlan)
+        && !('schemaVersion' in row.lessonPlan)
+        ? row.lessonPlan
+        : {};
+      return this.db.update(table).set({ lessonPlan: { ...existing, [topicId]: lessonPlan }, updatedAt: new Date() }).where(eq(table.id, row.id)).returning().then((updated) => updated[0]);
+    });
+  }
+
   /** Finds the nearest teacher-authored date for a document's published subject. */
   async documentSchedule(scope: PetrosOwnerScope, item: { origin: Record<string, unknown> }, now = new Date()) {
     const classMaterialId = typeof item.origin?.classMaterialId === 'string'

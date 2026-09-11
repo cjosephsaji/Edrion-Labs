@@ -46,6 +46,24 @@ describe('Petros provider modality pricing', () => {
     });
     expect(JSON.stringify(prepared)).not.toMatch(/minItems|maxItems|format/);
   });
+
+  it('compacts only the deep activity union for document teaching', () => {
+    const prepared = prepareGeminiJsonSchema({
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        scenes: { type: 'array', items: { type: 'object', properties: {
+          activitySpec: { anyOf: Array.from({ length: 13 }, (_, index) => ({ type: 'object', properties: { kind: { const: `kind-${index}` }, value: { type: 'string' } } })) },
+        } } },
+      },
+    }, {
+      functionKey: 'document.teaching.plan', input: [], responseFormat: 'json',
+      maxOutputTokens: 6_000, temperature: 0, timeoutMs: 25_000, stream: false,
+    }) as { properties: { title: unknown; scenes: { items: { properties: { activitySpec: Record<string, unknown> } } } } };
+    expect(prepared.properties.title).toEqual({ type: 'string' });
+    expect(prepared.properties.scenes.items.properties.activitySpec).toMatchObject({ type: 'object', additionalProperties: true });
+    expect(JSON.stringify(prepared.properties.scenes.items.properties.activitySpec)).not.toContain('anyOf');
+  });
 });
 
 describe('Petros speech provider requests', () => {

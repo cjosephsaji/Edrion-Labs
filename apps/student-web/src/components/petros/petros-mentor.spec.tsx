@@ -239,6 +239,8 @@ describe('embodied Petros portal agent', () => {
   it('shows the active lesson silently and reads it only when requested', async () => {
     mocks.pathname = '/petros/session';
     mount(<LessonRegistration />);
+    expect(characterButton().parentElement).not.toHaveAttribute('data-docked');
+    fireEvent.click(characterButton());
     expect(await screen.findByText('Compare grid computing with cloud computing, then commit your own answer.')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Take me there' })).not.toBeInTheDocument();
     expect(mocks.post).not.toHaveBeenCalled();
@@ -250,9 +252,48 @@ describe('embodied Petros portal agent', () => {
     await waitFor(() => expect(screen.getByLabelText('Petros, your portal learning buddy')).toHaveAttribute('data-mouth', 'rest'));
   });
 
+  it('narrates beside the lesson in listen-first mode and stops without opening chat', async () => {
+    mocks.pathname = '/petros/session';
+    mount(<TargetedLessonRegistration />);
+    expect(characterButton().parentElement).not.toHaveAttribute('data-docked');
+    act(() => window.dispatchEvent(new CustomEvent('petros:lesson-play')));
+    await waitFor(() => expect(mocks.post).toHaveBeenCalledWith(
+      '/student/petros/companion/speech',
+      expect.objectContaining({ text: 'Alpha beta gamma delta epsilon zeta eta theta.' }),
+      undefined, expect.any(AbortSignal),
+    ));
+    expect(screen.getByLabelText('Petros, your portal learning buddy')).toHaveAttribute('data-conversation', 'closed');
+    expect(characterButton().parentElement).not.toHaveAttribute('data-docked');
+    act(() => window.dispatchEvent(new CustomEvent('petros:lesson-stop')));
+    await waitFor(() => expect(screen.getByLabelText('Petros, your portal learning buddy')).toHaveAttribute('data-mouth', 'rest'));
+  });
+
+  it('moves the undocked character between declared map targets without requesting audio', async () => {
+    mocks.pathname = '/petros/session';
+    mount(<><TargetedLessonRegistration /><svg><g data-testid="map-a" data-petros-target="map:a" /><g data-testid="map-b" data-petros-target="map:b" /></svg></>);
+    const first = screen.getByTestId('map-a');
+    const second = screen.getByTestId('map-b');
+    for (const [element, left, top] of [[first, 250, 200], [second, 650, 400]] as const) {
+      const rect = { left, top, right: left + 100, bottom: top + 60, width: 100, height: 60, x: left, y: top, toJSON: () => ({}) };
+      element.getBoundingClientRect = () => rect;
+      element.getClientRects = () => [rect] as unknown as DOMRectList;
+    }
+    act(() => window.dispatchEvent(new CustomEvent('petros:diagram-focus', { detail: { diagramId: 'map', step: 0, targetKey: 'map:a', text: 'Look at the first idea.' } })));
+    await waitFor(() => expect(first).toHaveAttribute('data-petros-active', 'true'));
+    const firstPosition = characterButton().parentElement!.getAttribute('style');
+    expect(characterButton().parentElement).not.toHaveAttribute('data-docked');
+    act(() => window.dispatchEvent(new CustomEvent('petros:diagram-focus', { detail: { diagramId: 'map', step: 1, targetKey: 'map:b', text: 'Now connect the second idea.' } })));
+    await waitFor(() => expect(second).toHaveAttribute('data-petros-active', 'true'));
+    expect(first).not.toHaveAttribute('data-petros-active');
+    expect(characterButton().parentElement!.getAttribute('style')).not.toBe(firstPosition);
+    expect(screen.getByLabelText('Petros, your portal learning buddy').getAttribute('data-pose')).toMatch(/^point-/);
+    expect(mocks.post).not.toHaveBeenCalled();
+  });
+
   it('sends lesson questions to the active teaching session, not the portal planner', async () => {
     mocks.pathname = '/petros/session';
     mount(<LessonRegistration />);
+    fireEvent.click(characterButton());
     fireEvent.change(await screen.findByRole('textbox', { name: 'Talk to Petros' }), { target: { value: 'Explain grid computing more simply' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send to Petros' }));
     await waitFor(() => expect(mocks.askLesson).toHaveBeenCalledWith('Explain grid computing more simply'));
@@ -281,6 +322,7 @@ describe('embodied Petros portal agent', () => {
       });
     mount(<TargetedLessonRegistration />);
 
+    fireEvent.click(characterButton());
     fireEvent.click(await screen.findByRole('button', { name: 'Read aloud' }));
     expect(characterButton().parentElement).toHaveAttribute('data-docked', 'true');
     await waitFor(() => expect(mocks.post).toHaveBeenCalledWith(

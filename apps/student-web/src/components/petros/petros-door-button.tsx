@@ -4,11 +4,35 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Clock3, FileText, LoaderCircle, ShieldCheck, Sparkles, X } from 'lucide-react';
-import type { PetrosLearningSessionDocument, PetrosSessionIntent, PetrosTeachingPriority } from '@edrion/schemas';
+import type { PetrosDocumentPreparation, PetrosLearningSessionDocument, PetrosSessionIntent, PetrosTeachingPriority } from '@edrion/schemas';
 import { formatApiError, newIdempotencyKey, useStudentApi } from '@/lib/api-client';
 import styles from './petros-door-button.module.css';
 
 type Door = PetrosSessionIntent['door'];
+
+function isExpiredIntent(intent: PetrosSessionIntent) {
+  const expiresAt = Date.parse(intent.expiresAt);
+  return Number.isFinite(expiresAt) && expiresAt <= Date.now();
+}
+
+function isStaleIntentError(error: unknown) {
+  return Boolean(
+    error
+    && typeof error === 'object'
+    && 'code' in error
+    && error.code === 'PETROS_INTENT_STALE',
+  );
+}
+
+function preparationLabel(stage: PetrosDocumentPreparation['stage']) {
+  if (stage === 'queued' || stage === 'checking_source') return 'Reading your material';
+  if (stage === 'mapping_document' || stage === 'selecting_start') return 'Organizing the ideas';
+  if (stage === 'generating_lesson' || stage === 'repairing_lesson' || stage === 'validating_lesson') return 'Preparing your first activity';
+  if (stage === 'first_lesson_ready' || stage === 'preparing_next') return 'Your first activity is ready';
+  if (stage === 'complete') return 'Your learning path is ready';
+  if (stage === 'cancelled') return 'Preparation stopped';
+  return 'This source needs attention';
+}
 
 export function PetrosDoorButton({
   door,
@@ -38,6 +62,7 @@ export function PetrosDoorButton({
   const [intent, setIntent] = useState<PetrosSessionIntent | null>(null);
   const [loading, setLoading] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [preparation, setPreparation] = useState<PetrosDocumentPreparation | null>(null);
   const [error, setError] = useState('');
   const [topicId, setTopicId] = useState('');
   const [priority, setPriority] = useState<PetrosTeachingPriority>('understand');
@@ -46,10 +71,13 @@ export function PetrosDoorButton({
   const dialogRef = useRef<HTMLElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const keySuffix = `${door}:${sourceId}:${page ?? 'all'}:${section ?? ''}`;
+  const preparationId = preparation?.id;
+  const preparationStatus = preparation?.status;
 
   const close = useCallback(() => {
     if (starting) return;
     setIntent(null);
+    setPreparation(null);
     setError('');
     window.requestAnimationFrame(() => triggerRef.current?.focus());
   }, [starting]);
@@ -69,18 +97,56 @@ export function PetrosDoorButton({
     };
   }, [close, intent, starting]);
 
-  async function preview() {
+  useEffect(() => {
+    if (!preparationId || !intent || !preparationStatus || ['ready', 'needs_attention', 'cancelled'].includes(preparationStatus)) return;
+    let active = true;
+    let timer: number | undefined;
+    const controller = new AbortController();
+    const poll = async () => {
+      try {
+        const next = await api.get<PetrosDocumentPreparation>(
+          `/student/petros/document-preparations/${preparationId}`,
+          controller.signal,
+        );
+        if (!active) return;
+        setPreparation(next);
+        if (!['ready', 'needs_attention', 'cancelled'].includes(next.status)) {
+          timer = window.setTimeout(() => void poll(), 1_500);
+        }
+      } catch (caught) {
+        if (!active || controller.signal.aborted) return;
+        setError(formatApiError(caught));
+        timer = window.setTimeout(() => void poll(), 3_000);
+      }
+    };
+    void poll();
+    return () => {
+      active = false;
+      controller.abort();
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [api, intent, preparationId, preparationStatus]);
+
+  useEffect(() => {
+    if (preparation?.status !== 'ready' || starting) return;
+    setPreparation(null);
+    void start();
+    // The ready transition is the trigger; start reads current selections.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preparation?.status]);
+
+  async function preview(options?: { preserveSelections?: boolean; refreshed?: boolean }) {
     if (loading || disabled) return;
     setLoading(true);
     setError('');
+    const storageKey = `petros:intent:${keySuffix}`;
     try {
-      const storageKey = `petros:intent:${keySuffix}`;
-      const idempotencyKey = sessionStorage.getItem(storageKey) ?? newIdempotencyKey();
+      let idempotencyKey = sessionStorage.getItem(storageKey) ?? newIdempotencyKey();
       sessionStorage.setItem(storageKey, idempotencyKey);
-      const resolved = await api.post<PetrosSessionIntent>('/student/petros/intents/resolve', {
+      const resolve = (key: string) => api.post<PetrosSessionIntent>('/student/petros/intents/resolve', {
         door,
         sourceId,
-        idempotencyKey,
+        idempotencyKey: key,
         timeBudgetSeconds,
         ...(page ? { page } : {}),
         ...(section ? { section } : {}),
@@ -89,11 +155,29 @@ export function PetrosDoorButton({
         language: 'en',
         accessibility: [],
       });
+      let resolved = await resolve(idempotencyKey);
+      // A persisted idempotency key can outlive the short-lived preview. Do
+      // not remount an expired intent; issue a fresh resolve instead.
+      if (isExpiredIntent(resolved)) {
+        sessionStorage.removeItem(storageKey);
+        idempotencyKey = newIdempotencyKey();
+        sessionStorage.setItem(storageKey, idempotencyKey);
+        resolved = await resolve(idempotencyKey);
+      }
       setIntent(resolved);
-      setTopicId(resolved.planning?.suggestedTopicId ?? '');
-      setPriority(resolved.planning?.suggestedPriority ?? (resolved.time.examDate ? 'exam_prep' : 'understand'));
-      setSessionMinutes(Math.ceil(resolved.time.budgetSeconds / 60));
-      setExistingDoubt('');
+      setPreparation(null);
+      const selectedTopicStillExists = resolved.planning?.topics.some((topic) => topic.id === topicId) ?? false;
+      if (!options?.preserveSelections || !selectedTopicStillExists) {
+        setTopicId(resolved.planning?.suggestedTopicId ?? '');
+      }
+      if (!options?.preserveSelections) {
+        setPriority(resolved.planning?.suggestedPriority ?? (resolved.time.examDate ? 'exam_prep' : 'understand'));
+        setSessionMinutes(Math.ceil(resolved.time.budgetSeconds / 60));
+        setExistingDoubt('');
+      }
+      if (options?.refreshed) {
+        setError('The source preview was refreshed. Please confirm the current lesson scope before starting.');
+      }
     } catch (caught) {
       setError(formatApiError(caught));
     } finally {
@@ -105,13 +189,14 @@ export function PetrosDoorButton({
     if (!intent || starting) return;
     setStarting(true);
     setError('');
+    const storageKey = `petros:intent-start:${intent.id}`;
     try {
-      const storageKey = `petros:intent-start:${intent.id}`;
       const idempotencyKey = sessionStorage.getItem(storageKey) ?? newIdempotencyKey();
       sessionStorage.setItem(storageKey, idempotencyKey);
       const response = await api.post<{
         intent: PetrosSessionIntent;
-        session: PetrosLearningSessionDocument;
+        session: PetrosLearningSessionDocument | null;
+        preparation?: PetrosDocumentPreparation;
       }>(`/student/petros/intents/${intent.id}/start`, {
         idempotencyKey,
         ...(intent.planning ? {
@@ -123,10 +208,24 @@ export function PetrosDoorButton({
           },
         } : {}),
       });
+      if (!response.session && response.preparation) {
+        setPreparation(response.preparation);
+        setStarting(false);
+        return;
+      }
+      if (!response.session) throw new Error('Petros did not return a lesson or a preparation status.');
       sessionStorage.removeItem(storageKey);
       sessionStorage.removeItem(`petros:intent:${keySuffix}`);
-      router.push(`/petros/session?session=${response.session.id}`);
+      router.push(`${response.session.documentTeaching ? '/petros/document' : '/petros/session'}?session=${response.session.id}`);
     } catch (caught) {
+      if (isStaleIntentError(caught)) {
+        sessionStorage.removeItem(storageKey);
+        sessionStorage.removeItem(`petros:intent:${keySuffix}`);
+        setIntent(null);
+        setStarting(false);
+        void preview({ preserveSelections: true, refreshed: true });
+        return;
+      }
       setError(formatApiError(caught));
       setStarting(false);
     }
@@ -162,7 +261,7 @@ export function PetrosDoorButton({
               <span><Sparkles aria-hidden="true" /></span>
               <div>
                 <p>{doorLabel(intent.door)} · {intent.sessionType}</p>
-                <h2 id={`petros-intent-${intent.id}`}>Preview this Petros session</h2>
+                <h2 id={`petros-intent-${intent.id}`}>What shall we figure out?</h2>
               </div>
               <button type="button" onClick={close} disabled={starting} aria-label="Close preview"><X aria-hidden="true" /></button>
             </header>
@@ -175,11 +274,12 @@ export function PetrosDoorButton({
                 <section className={styles.planning} aria-labelledby={`petros-plan-${intent.id}`}>
                   <div className={styles.planningHead}>
                     <div>
-                      <p>Before I teach</p>
-                      <h3 id={`petros-plan-${intent.id}`}>Let’s shape a useful lesson</h3>
+                      <p>Your learning plan</p>
+                      <h3 id={`petros-plan-${intent.id}`}>Start with an idea that matters to you</h3>
                     </div>
-                    <span>{intent.planning.outlineStatus === 'cached' ? 'Outline reused' : intent.planning.outlineStatus === 'generated' ? 'Outline prepared once' : 'Context ready'}</span>
+                    <span>{intent.planning.topics.length} learning topics</span>
                   </div>
+                  {intent.planning.organization === 'headings' ? <p className={styles.scheduleNote}>This plan follows the document’s headings. Add a specific idea or question below to focus your session.</p> : null}
                   {intent.planning.deadline ? (
                     <p className={styles.scheduleNote}>
                       I found <strong>{intent.planning.deadline.title}</strong> on your teacher’s schedule for {formatPlanningDate(intent.planning.deadline.at)}. I’ve used that to suggest what to prioritize.
@@ -191,7 +291,9 @@ export function PetrosDoorButton({
                       {intent.planning.topics.map((topic) => (
                         <button key={topic.id} type="button" aria-pressed={topicId === topic.id} onClick={() => setTopicId(topic.id)}>
                           <strong>{topic.title}</strong>
-                          <span>{topic.pageStart ? `p. ${topic.pageStart}${topic.pageEnd && topic.pageEnd !== topic.pageStart ? `–${topic.pageEnd}` : ''} · ` : ''}{topic.estimatedMinutes} min</span>
+                          <span>{topic.summary}</span>
+                          <small>About {topic.estimatedMinutes} min{topic.difficulty ? ` · ${topic.difficulty}` : ''}</small>
+                          {topic.prerequisites?.length ? <small>Builds on {topic.prerequisites.join(', ')}</small> : null}
                         </button>
                       ))}
                     </div>
@@ -245,12 +347,22 @@ export function PetrosDoorButton({
                 </div>
               </section>
               {error ? <p className={styles.error} role="alert">{error}</p> : null}
+              {preparation ? (
+                <section className={styles.preparation} aria-live="polite" aria-busy={preparation.status === 'preparing' || preparation.status === 'queued'}>
+                  <div><Sparkles aria-hidden="true" /><strong>{preparation.message}</strong></div>
+                  <progress max={100} value={preparation.progress}>{preparation.progress}%</progress>
+                  <p>{preparationLabel(preparation.stage)} · {preparation.progress}%</p>
+                  {preparation.status === 'needs_attention' && preparation.retryable ? (
+                    <button type="button" onClick={() => { setPreparation(null); void start(); }}>Retry preparation</button>
+                  ) : null}
+                </section>
+              ) : null}
             </div>
             <footer className={styles.foot}>
               <button type="button" onClick={close} disabled={starting}>Not now</button>
-              <button type="button" onClick={() => void start()} disabled={starting} aria-busy={starting} data-loading-indicator={starting || undefined}>
-                {starting ? <LoaderCircle aria-hidden="true" className={styles.spin} /> : <ArrowRight aria-hidden="true" />}
-                {starting ? 'Starting your lesson…' : intent.planning ? 'Start planned lesson' : 'Start this session'}
+              <button type="button" onClick={() => void start()} disabled={starting || Boolean(preparation && preparation.status !== 'needs_attention')} aria-busy={starting || preparation?.status === 'preparing'} data-loading-indicator={starting || preparation?.status === 'preparing' || undefined}>
+                {starting || (preparation && preparation.status !== 'needs_attention') ? <LoaderCircle aria-hidden="true" className={styles.spin} /> : <ArrowRight aria-hidden="true" />}
+                {starting ? 'Checking for a ready activity…' : preparation?.status === 'needs_attention' ? 'Retry preparation' : preparation ? 'Preparing your first activity…' : intent.planning ? 'Start learning' : 'Start this session'}
               </button>
             </footer>
           </section>
@@ -276,10 +388,10 @@ export function PetrosDocumentDoor({
   const [scope, setScope] = useState<'document' | 'page'>('document');
   return (
     <div className={styles.documentDoor}>
-      <label>Teach
+      <label>Explore
         <select value={scope} disabled={!ready} onChange={(event) => setScope(event.target.value as 'document' | 'page')}>
-          <option value="document">Whole document</option>
-          <option value="page">One page</option>
+          <option value="document">Concepts in this document</option>
+          <option value="page">Concept around a source page</option>
         </select>
       </label>
       {scope === 'page' ? <label>Page
@@ -297,7 +409,7 @@ export function PetrosDocumentDoor({
         door="uploaded_document"
         sourceId={sourceId}
         page={scope === 'page' ? page : undefined}
-        label={ready ? `Plan a lesson from ${title}` : 'Extraction in progress'}
+        label={ready ? `Start learning from ${title}` : 'Reading this material…'}
         disabled={!ready}
       />
     </div>

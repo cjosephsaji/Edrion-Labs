@@ -2,6 +2,10 @@ import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nest
 import { ApiTags } from '@nestjs/swagger';
 import {
   petrosCloseSessionSchema,
+  petrosPilotActionSchema,
+  petrosDocumentTeachingActionSchema,
+  type PetrosPilotAction,
+  type PetrosDocumentTeachingAction,
   petrosComposerQuestionSchema,
   petrosCompleteBlockSchema,
   petrosContinueSessionSchema,
@@ -11,6 +15,7 @@ import {
   petrosReexplainBlockSchema,
   petrosSubmitAnswerSchema,
   petrosUpdateBlockInteractionSchema,
+  petrosSavePresentationCheckpointSchema,
   type PetrosCloseSessionInput,
   type PetrosComposerQuestionInput,
   type PetrosCompleteBlockInput,
@@ -21,6 +26,7 @@ import {
   type PetrosReexplainBlockInput,
   type PetrosSubmitAnswerInput,
   type PetrosUpdateBlockInteractionInput,
+  type PetrosSavePresentationCheckpointInput,
 } from '@edrion/schemas';
 import type { PrincipalContext } from '@edrion/auth';
 import { Public } from '../../../common/guards/auth.guard';
@@ -85,6 +91,32 @@ export class StudentPetrosLoopController {
   ) {
     requireInstitutional(raw);
     return this.service.continue(raw, sessionId, body.idempotencyKey);
+  }
+
+  @Post(':sessionId/presentation')
+  presentation(
+    @CurrentStudent() raw: StudentPrincipal,
+    @Param('sessionId') sessionId: string,
+    @Body(zodBody(petrosSavePresentationCheckpointSchema)) body: PetrosSavePresentationCheckpointInput,
+  ) {
+    requireInstitutional(raw);
+    return this.service.savePresentationCheckpoint(raw, sessionId, body);
+  }
+
+  @Post(':sessionId/pilot')
+  @StudentRateLimit(120, 60)
+  pilot(@CurrentStudent() raw: StudentPrincipal, @Param('sessionId') sessionId: string,
+    @Body(zodBody(petrosPilotActionSchema)) body: PetrosPilotAction) {
+    requireInstitutional(raw);
+    return this.service.pilotAction(raw, sessionId, body);
+  }
+
+  @Post(':sessionId/document-teaching')
+  @StudentRateLimit(120, 60)
+  documentTeaching(@CurrentStudent() raw: StudentPrincipal, @Param('sessionId') sessionId: string,
+    @Body(zodBody(petrosDocumentTeachingActionSchema)) body: PetrosDocumentTeachingAction) {
+    requireInstitutional(raw);
+    return this.service.documentTeachingAction(raw, sessionId, body);
   }
 
   @Put(':sessionId/blocks/:blockId/interaction')

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Newsreader, Source_Sans_3, Space_Grotesk } from 'next/font/google';
 import { Providers } from './providers';
+import 'katex/dist/katex.min.css';
 import './globals.css';
 
 const newsreader = Newsreader({

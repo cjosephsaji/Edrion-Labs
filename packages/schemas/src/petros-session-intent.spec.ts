@@ -3,6 +3,7 @@ import {
   PETROS_SESSION_INTENT_SCHEMA_VERSION,
   petrosAssistantQuestionSchema,
   petrosSessionIntentSchema,
+  petrosTeachingPlanningSchema,
   resolvePetrosSessionIntentSchema,
   startPetrosSessionIntentSchema,
 } from './petros-session-intent';
@@ -10,6 +11,37 @@ import {
 const id = (prefix: string) => `${prefix.repeat(8)}-${prefix.repeat(4)}-4${prefix.repeat(3)}-8${prefix.repeat(3)}-${prefix.repeat(12)}`;
 
 describe('Petros Stage 8 intent contract', () => {
+  it('allows a persistent document plan to expose more than twelve concepts', () => {
+    const topics = Array.from({ length: 20 }, (_, index) => ({
+      id: `concept-${index + 1}`,
+      title: `Concept ${index + 1}`,
+      summary: `A substantive source-grounded concept numbered ${index + 1}.`,
+      pageStart: index + 1,
+      pageEnd: index + 1,
+      estimatedMinutes: 10,
+      keyTerms: [],
+      likelyDoubts: [],
+    }));
+    expect(petrosTeachingPlanningSchema.parse({
+      organization: 'concepts', topics, suggestedTopicId: 'concept-1',
+      suggestedPriority: 'understand', deadline: null, outlineCacheKey: null,
+      outlineStatus: 'generated', estimatedTotalMinutes: 200,
+    }).topics).toHaveLength(20);
+  });
+
+  it('keeps citations aligned with a document map larger than the legacy lesson cap', () => {
+    const citations = Array.from({ length: 32 }, (_, index) => ({
+      sourceType: 'document' as const,
+      sourceId: id('4'),
+      version: '1:fixture',
+      label: 'Class 12 integrals guide',
+      page: index + 1,
+      section: `Concept ${index + 1}`,
+      excerpt: `Source-grounded concept ${index + 1}`,
+    }));
+    expect(petrosSessionIntentSchema.shape.citations.parse(citations)).toHaveLength(32);
+  });
+
   it.each(['result_repair', 'upcoming_exam', 'uploaded_document', 'learning_path', 'assistant_handoff'] as const)(
     'validates a complete %s intent',
     (door) => {

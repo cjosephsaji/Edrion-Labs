@@ -15,7 +15,6 @@ import {
   CreditCard,
   FilePenLine,
   Flag,
-  Flame,
   Gauge,
   HardHat,
   Layers3,
@@ -60,6 +59,7 @@ import {
 import { PetrosNarratedText } from './petros-narrated-text';
 import { buildPetrosSpeechTimeline } from './use-petros-voice';
 import styles from './petros-session.module.css';
+import { learningEvidence } from './petros-learning-evidence';
 
 interface SessionProps {
   topic: string;
@@ -246,6 +246,17 @@ type DiagramStage =
   | { kind: 'node'; key: string; nodeId: string }
   | { kind: 'edge'; key: string; edgeIndex: number };
 
+function diagramLabelLines(label: string) {
+  const lines: string[] = [];
+  for (const word of label.split(/\s+/).flatMap((word) => word.match(/.{1,22}/g) ?? [])) {
+    const last = lines.at(-1);
+    if (last && last.length + word.length < 22) lines[lines.length - 1] = `${last} ${word}`;
+    else lines.push(word);
+  }
+  if (lines.length > 3) lines[2] = `${lines[2]!.slice(0, 20)}…`;
+  return lines.slice(0, 3);
+}
+
 function diagramPoints(type: DiagramContent['diagramType'], count: number): DiagramPoint[] {
   const safeCount = Math.max(1, count);
   if (type === 'timeline') {
@@ -261,6 +272,10 @@ function diagramPoints(type: DiagramContent['diagramType'], count: number): Diag
     }));
   }
   if (type === 'concept_map') {
+    if (count > 5) return Array.from({ length: count }, (_, index) => ({
+      x: index % 2 === 0 ? 200 : 560,
+      y: 85 + Math.floor(index / 2) * 150,
+    }));
     return Array.from({ length: count }, (_, index) => {
       if (index === 0) return { x: 380, y: 190 };
       const angle = ((index - 1) / Math.max(1, safeCount - 1)) * Math.PI * 2 - Math.PI / 2;
@@ -327,7 +342,8 @@ function AnimatedDiagram({
   const totalSteps = stages.length;
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const [challengeFeedback, setChallengeFeedback] = useState('');
+  const [connectionIndex, setConnectionIndex] = useState(0);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
   const markerId = React.useId().replace(/:/g, '');
   const diagramId = `diagram-${markerId}`;
   const points = diagramPoints(content.diagramType, content.nodes.length);
@@ -335,7 +351,9 @@ function AnimatedDiagram({
     ? Math.max(360, content.nodes.length * 100 + 45)
     : content.diagramType === 'comparison'
       ? Math.max(360, Math.ceil(content.nodes.length / 2) * 120 + 70)
-      : 380;
+      : content.diagramType === 'concept_map' && content.nodes.length > 5
+        ? Math.ceil(content.nodes.length / 2) * 150 + 40
+        : 380;
 
   useEffect(() => {
     if (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -346,11 +364,11 @@ function AnimatedDiagram({
 
   const nodeLabel = (node: DiagramContent['nodes'][number]) =>
     typeof labels[node.id] === 'string' ? String(labels[node.id]) : node.label;
-  const storedBuildCount = Number(interactionState.diagramBuildEdgeCount ?? 0);
-  const buildEdgeCount = Math.max(0, Math.min(content.edges.length, Number.isFinite(storedBuildCount) ? storedBuildCount : 0));
-  const builtOnce = completed || interactionState.diagramBuilt === true || content.edges.length === 0;
-  const buildMode = content.diagramType === 'concept_map' && !builtOnce;
-  const buildEdge = buildMode ? content.edges[buildEdgeCount] : undefined;
+  const connectionNotes = (interactionState.diagramConnectionNotes ?? {}) as Record<string, { response?: string; reflection?: string; supported?: boolean }>;
+  const buildEdgeCount = content.edges.filter((_edge, index) => connectionNotes[String(index)]?.reflection).length;
+  const buildMode = content.diagramType === 'concept_map' && content.edges.length > 0;
+  const buildEdge = buildMode ? content.edges[connectionIndex] : undefined;
+  const connectionNote = connectionNotes[String(connectionIndex)] ?? {};
   const buildFrom = buildEdge ? content.nodes.find((node) => node.id === buildEdge.from) : undefined;
   const buildTo = buildEdge ? content.nodes.find((node) => node.id === buildEdge.to) : undefined;
   const activeStage = stages[Math.min(step, totalSteps - 1)]!;
@@ -367,14 +385,13 @@ function AnimatedDiagram({
   const narration = activeNode
     ? `${nodeLabel(activeNode)}. ${activeNode.description}`
     : activeEdge && activeEdgeFrom && activeEdgeTo
-      ? `Follow the connection from ${nodeLabel(activeEdgeFrom)} to ${nodeLabel(activeEdgeTo)}. ${activeEdge.label ? `“${activeEdge.label}” explains how those two ideas are related.` : 'The arrow shows the direction of the process.'}`
+      ? `${nodeLabel(activeEdgeFrom)} ${activeEdge.label || 'connects to'} ${nodeLabel(activeEdgeTo)}. ${activeEdgeFrom.description} ${activeEdgeTo.description}`
       : content.altText;
   const targetKey = `${diagramId}:${activeStage.key}`;
   const visibleStages = stages.slice(0, Math.min(step + 1, totalSteps));
   const visibleNodeIds = buildMode
     ? new Set([
-        content.nodes[0]?.id ?? '',
-        ...content.edges.slice(0, buildEdgeCount).flatMap((edge) => [edge.from, edge.to]),
+        ...content.nodes.map((node) => node.id),
       ])
     : new Set(
         visibleStages.flatMap((stage) => {
@@ -384,29 +401,37 @@ function AnimatedDiagram({
         }),
       );
   const visibleEdgeIndexes = buildMode
-    ? new Set(content.edges.slice(0, buildEdgeCount).map((_edge, index) => index))
+    ? new Set(content.edges.map((_edge, index) => index))
     : new Set(visibleStages.flatMap((stage) => stage.kind === 'edge' ? [stage.edgeIndex] : []));
 
-  const chooseConnection = (correct: boolean) => {
+  const saveConnection = (reflection: string) => {
     if (!buildEdge) return;
-    if (!correct) {
-      setChallengeFeedback(`Close — start at ${buildFrom ? nodeLabel(buildFrom) : 'the first idea'} and follow what causes the next idea.`);
-      signalPetros('retry', 'Almost — follow the cause before the effect.', 2_800);
-      return;
-    }
-    const nextCount = Math.min(content.edges.length, buildEdgeCount + 1);
-    const finished = nextCount >= content.edges.length;
-    setChallengeFeedback(finished ? 'Map built. Nice — you can replay Petros’s walkthrough now.' : 'Connection locked. One more piece of the map is ready.');
-    signalPetros(
-      finished ? 'checkpoint' : 'correct',
-      finished ? 'Map built — every connection is carrying weight.' : 'That connection snaps into place.',
-      3_000,
-    );
     onInteraction({
-      diagramBuildEdgeCount: nextCount,
-      diagramBuilt: finished,
+      diagramConnectionNotes: {
+        ...connectionNotes,
+        [String(connectionIndex)]: { ...connectionNote, reflection },
+      },
     }, true);
   };
+
+  const focusConnection = (index: number) => {
+    const edge = content.edges[index];
+    if (!edge) return;
+    setPlaying(false);
+    setConnectionIndex(index);
+    setComparisonOpen(false);
+    window.dispatchEvent(new CustomEvent('petros:diagram-stop', { detail: { diagramId } }));
+    const from = content.nodes.find((node) => node.id === edge.from);
+    const to = content.nodes.find((node) => node.id === edge.to);
+    window.dispatchEvent(new CustomEvent('petros:diagram-focus', { detail: {
+      diagramId, step: index, targetKey: `${diagramId}:node:${edge.to}`,
+      text: `${from?.label ?? ''} ${edge.label || 'connects to'} ${to?.label ?? ''}. Explain what links these ideas, then compare with the lesson.`,
+    } }));
+  };
+
+  useEffect(() => () => {
+    window.dispatchEvent(new CustomEvent('petros:diagram-stop', { detail: { diagramId } }));
+  }, [diagramId]);
 
   useEffect(() => {
     const advance = (event: Event) => {
@@ -465,13 +490,19 @@ function AnimatedDiagram({
     <div
       className={styles.diagram}
       data-expanded={expanded}
+      data-concept-map={buildMode || undefined}
       data-petros-target={petrosLessonTarget(blockId, 'diagram')}
     >
       <div className={styles.diagramToolbar} aria-label={buildMode ? 'Concept map build progress' : 'Diagram playback controls'}>
         {buildMode ? (
           <>
-            <span className={styles.buildBadge}><Target aria-hidden="true" /> Your turn: build the map</span>
-            <span>{buildEdgeCount} / {content.edges.length} connections</span>
+            <span className={styles.buildBadge}><Target aria-hidden="true" /> Explore the connections</span>
+            <span>{buildEdgeCount} / {content.edges.length} reflected on · self-review</span>
+            <button type="button" onClick={() => {
+              if (playing) window.dispatchEvent(new CustomEvent('petros:diagram-stop', { detail: { diagramId } }));
+              else setStep(0);
+              setPlaying((value) => !value);
+            }}>{playing ? 'Pause walkthrough' : 'Walk me through the map'}</button>
           </>
         ) : (
           <>
@@ -506,11 +537,7 @@ function AnimatedDiagram({
         )}
       </div>
 
-      {!buildMode && interactionState.diagramBuilt === true && !completed ? (
-        <div className={styles.diagramBuiltNotice} role="status">
-          <Check aria-hidden="true" /> Map built · replay unlocked
-        </div>
-      ) : null}
+      {buildMode ? <p className={styles.mapPurpose}>Use this map to connect the ideas you have learned. Choose a link below to explain it, or listen to the walkthrough first. You can continue whenever you are ready.</p> : null}
 
       <svg
         className={styles.diagramCanvas}
@@ -519,7 +546,7 @@ function AnimatedDiagram({
         aria-label={content.altText}
       >
         <defs>
-          <marker id={markerId} markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+          <marker id={markerId} markerWidth="8" markerHeight="8" refX="8" refY="3" orient="auto" markerUnits="userSpaceOnUse">
             <path d="M0,0 L0,6 L9,3 z" />
           </marker>
         </defs>
@@ -530,25 +557,29 @@ function AnimatedDiagram({
           const from = points[fromIndex]!;
           const to = points[toIndex]!;
           const visible = visibleEdgeIndexes.has(index);
-          const active = buildMode
-            ? index === buildEdgeCount
+          const active = buildMode && !playing
+            ? index === connectionIndex
             : activeStage.kind === 'edge' && activeStage.edgeIndex === index;
           const midX = (from.x + to.x) / 2;
           const midY = (from.y + to.y) / 2;
+          const dx = to.x - from.x;
+          const dy = to.y - from.y;
+          const boundary = Math.min(90 / Math.max(Math.abs(dx), 1), 34 / Math.max(Math.abs(dy), 1));
           return (
             <g key={`${edge.from}-${edge.to}-${index}`} className={styles.diagramEdge} data-visible={visible} data-active={active || undefined} data-petros-target={`${diagramId}:edge:${index}`}>
-              <path d={`M ${from.x} ${from.y} L ${to.x} ${to.y}`} markerEnd={`url(#${markerId})`} />
-              {edge.label && <text x={midX} y={midY - 8}>{edge.label}</text>}
+              <path d={`M ${from.x + dx * boundary} ${from.y + dy * boundary} L ${to.x - dx * boundary} ${to.y - dy * boundary}`} markerEnd={`url(#${markerId})`} />
+              {buildMode ? <g className={styles.connectionMarker}><circle cx={midX} cy={midY} r="12" /><text x={midX} y={midY + 4} textAnchor="middle">{index + 1}</text></g> : edge.label && <text x={midX} y={midY - 8}>{edge.label}</text>}
             </g>
           );
         })}
         {content.nodes.map((node, index) => {
           const point = points[index]!;
           const visible = visibleNodeIds.has(node.id);
-          const active = buildMode
-            ? buildEdge?.to === node.id
+          const active = buildMode && !playing
+            ? buildEdge?.to === node.id || buildEdge?.from === node.id
             : activeStage.kind === 'node' && activeStage.nodeId === node.id;
           const label = nodeLabel(node);
+          const labelLines = diagramLabelLines(label);
           return (
             <g
               key={node.id}
@@ -561,56 +592,80 @@ function AnimatedDiagram({
               tabIndex={visible ? 0 : -1}
               aria-label={`${label}. ${node.description}`}
               onClick={() => {
-                if (buildMode) return;
+                if (buildMode) {
+                  const linked = content.edges.findIndex((edge) => edge.from === node.id || edge.to === node.id);
+                  if (linked >= 0) focusConnection(linked);
+                  return;
+                }
                 const index = stages.findIndex((stage) => stage.kind === 'node' && stage.nodeId === node.id);
                 if (index >= 0) setStep(index);
                 setPlaying(true);
               }}
               onKeyDown={(event) => {
-                if (!buildMode && (event.key === 'Enter' || event.key === ' ')) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  if (buildMode) {
+                    const linked = content.edges.findIndex((edge) => edge.from === node.id || edge.to === node.id);
+                    if (linked >= 0) focusConnection(linked);
+                    return;
+                  }
                   const index = stages.findIndex((stage) => stage.kind === 'node' && stage.nodeId === node.id);
                   if (index >= 0) setStep(index);
                   setPlaying(true);
                 }
               }}
             >
+              <title>{label}: {node.description}</title>
               <rect width="180" height="68" rx="16" />
-              <text x="90" y="31" textAnchor="middle">{label.slice(0, 28)}</text>
-              {label.length > 28 && <text x="90" y="49" textAnchor="middle">{label.slice(28, 52)}</text>}
+              {labelLines.map((line, lineIndex) => <text key={lineIndex} x="90" y={39 - (labelLines.length - 1) * 9 + lineIndex * 18} textAnchor="middle">{line}</text>)}
             </g>
           );
         })}
       </svg>
 
+      {buildMode && buildFrom && buildTo ? <div className={styles.mapConnectionCaption} aria-live="polite"><span>Connection {connectionIndex + 1}</span><strong>{nodeLabel(buildFrom)} <span>{buildEdge?.label || 'connects to'}</span> {nodeLabel(buildTo)}</strong></div> : null}
+
       {buildMode && buildEdge && buildFrom && buildTo ? (
-        <div className={styles.diagramChallenge} aria-live="polite">
+        <div className={styles.diagramChallenge}>
           <div>
-            <span>Connection {buildEdgeCount + 1}</span>
-            <strong>Which relationship belongs next?</strong>
-            <p>Pick a direction. Petros will animate it into place only after you commit.</p>
+            <span>Make sense of the map</span>
+            <strong>Explain the connection</strong>
+            <p>Choose any connection. Explain what links the ideas, then compare with the lesson. The arrows show relationships, not the order you must learn them.</p>
           </div>
-          <div role="group" aria-label="Candidate concept-map connections">
-            {buildEdgeCount % 2 === 0 ? (
-              <>
-                <button type="button" onClick={() => chooseConnection(true)}>
-                  {nodeLabel(buildFrom)} <ArrowRight aria-hidden="true" /> {nodeLabel(buildTo)}
-                </button>
-                <button type="button" onClick={() => chooseConnection(false)}>
-                  {nodeLabel(buildTo)} <ArrowRight aria-hidden="true" /> {nodeLabel(buildFrom)}
-                </button>
-              </>
-            ) : (
-              <>
-                <button type="button" onClick={() => chooseConnection(false)}>
-                  {nodeLabel(buildTo)} <ArrowRight aria-hidden="true" /> {nodeLabel(buildFrom)}
-                </button>
-                <button type="button" onClick={() => chooseConnection(true)}>
-                  {nodeLabel(buildFrom)} <ArrowRight aria-hidden="true" /> {nodeLabel(buildTo)}
-                </button>
-              </>
-            )}
+          <div role="group" aria-label="Choose a connection to explore">
+            {content.edges.map((edge, index) => (
+              <button key={index} type="button" aria-pressed={connectionIndex === index} onClick={() => focusConnection(index)}>
+                <span className={styles.connectionNumber}>{index + 1}</span> {content.nodes.find((node) => node.id === edge.from)?.label} <ArrowRight aria-hidden="true" /> {content.nodes.find((node) => node.id === edge.to)?.label}
+                {connectionNotes[String(index)]?.reflection === 'revisit' ? ' · Revisit' : connectionNotes[String(index)]?.reflection ? ' · Reviewed' : ''}
+              </button>
+            ))}
           </div>
-          {challengeFeedback ? <p className={styles.challengeFeedback}>{challengeFeedback}</p> : null}
+          <label className={styles.connectionResponse}>
+            <strong>How does {nodeLabel(buildFrom)} connect to {nodeLabel(buildTo)}?</strong>
+            <p>Explain the relationship in your own words. Add an example if it helps.</p>
+            <textarea aria-label="Your explanation of this connection" placeholder="These ideas connect because…" value={connectionNote.response ?? ''} disabled={completed} onChange={(event) => onInteraction({ diagramConnectionNotes: { ...connectionNotes, [String(connectionIndex)]: { ...connectionNote, response: event.target.value } } })} />
+          </label>
+          <div role="group" aria-label="Compare your reasoning">
+            <button type="button" disabled={!connectionNote.response?.trim()} onClick={() => setComparisonOpen(true)}>Compare with the lesson</button>
+            <button type="button" onClick={() => {
+              setComparisonOpen(true);
+              if (!completed) onInteraction({ diagramConnectionNotes: { ...connectionNotes, [String(connectionIndex)]: { ...connectionNote, supported: true } } }, true);
+            }}>Help me understand this connection</button>
+          </div>
+          {comparisonOpen || connectionNote.reflection ? (
+            <div className={styles.connectionComparison}>
+              <strong>The lesson’s connection</strong>
+              <p>{nodeLabel(buildFrom)} {buildEdge.label || '→'} {nodeLabel(buildTo)}</p>
+              <p><b>{nodeLabel(buildFrom)}:</b> {buildFrom.description}</p>
+              <p><b>{nodeLabel(buildTo)}:</b> {buildTo.description}</p>
+              <p>Check your explanation against this relationship. Did you explain the link, or just define the two ideas?</p>
+              <div role="group" aria-label="Reflect on this connection">
+                <button type="button" disabled={completed} aria-pressed={connectionNote.reflection === 'explained'} onClick={() => saveConnection('explained')}>I can explain the link</button>
+                <button type="button" disabled={completed} aria-pressed={connectionNote.reflection === 'revisit'} onClick={() => saveConnection('revisit')}>Revisit this connection</button>
+              </div>
+              <p role="status">{connectionNote.reflection ? 'Reflection saved. ' : ''}This is self-review; independent understanding is checked in the lesson questions.</p>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -674,6 +729,7 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
   const [expanding, setExpanding] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
   const [visibleElapsed, setVisibleElapsed] = useState(0);
+  const elapsedAnchor = useRef({ seconds: 0, since: 0 });
   const [pacePreference, setPacePreference] = useState<'full' | 'quick'>('full');
   const clockSessionId = useRef<string | null>(null);
   const expansionOfferedFor = useRef<string | null>(null);
@@ -750,6 +806,7 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
 
   useEffect(() => {
     let cancelled = false;
+    const timers = interactionTimers.current;
     const controller = new AbortController();
     requestAbort.current = controller;
     setOnline(navigator.onLine);
@@ -783,7 +840,8 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
       cancelled = true;
       controller.abort();
       requestAbort.current?.abort();
-      interactionTimers.current.forEach(clearTimeout);
+      timers.forEach(clearTimeout);
+      window.dispatchEvent(new CustomEvent('petros:lesson-stop'));
       window.removeEventListener('online', onlineListener);
       window.removeEventListener('offline', offlineListener);
     };
@@ -811,10 +869,18 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
   }, [document?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!document || document.status !== 'active' || !sessionReady) return undefined;
-    const timer = window.setInterval(() => setVisibleElapsed((seconds) => seconds + 1), 1_000);
+    if (!document) return;
+    elapsedAnchor.current = { seconds: document.elapsedSeconds, since: Date.now() };
+    setVisibleElapsed(document.elapsedSeconds);
+  }, [document?.id, document?.elapsedSeconds, document?.status]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!document || document.status !== 'active') return undefined;
+    // Both reading and listening count as session time, never as mastery evidence.
+    // The server snapshot anchors the clock; background throttling cannot lose time.
+    const timer = window.setInterval(() => setVisibleElapsed(elapsedAnchor.current.seconds + Math.floor((Date.now() - elapsedAnchor.current.since) / 1_000)), 1_000);
     return () => window.clearInterval(timer);
-  }, [document?.status, sessionReady]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [document?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const confirmSessionStart = useCallback((pace: 'full' | 'quick') => {
     if (!document) return;
@@ -1204,6 +1270,7 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
   const lifecycle = useCallback(
     async (action: 'pause' | 'resume' | 'close') => {
       if (!document || lifecyclePending) return;
+      if (action !== 'resume') window.dispatchEvent(new CustomEvent('petros:lesson-stop'));
       requestAbort.current?.abort();
       setLifecyclePending(action);
       setError('');
@@ -1277,7 +1344,9 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
     document?.blocks.at(-1) ??
     null;
   const totalCheckpoints = document?.checkpoints.length ?? 0;
+  const studyMode = [...(document?.blocks ?? [])].reverse().find((block) => block.interactionState.studyMode)?.interactionState.studyMode ?? 'active';
   const attemptStats = sessionAttemptStats(document);
+  const evidence = learningEvidence(document);
   const flashcardCount = document?.blocks.filter(
     (block) => typeof block.interactionState.flashcardArtifactId === 'string',
   ).length ?? 0;
@@ -1295,14 +1364,14 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
           ? 'ahead'
           : 'steady';
   const paceLabel = paceTone === 'complete'
-    ? 'Run complete'
+    ? 'Session saved'
     : paceTone === 'paused'
       ? 'Clock paused'
       : paceTone === 'gentle'
         ? 'Take the time you need'
         : paceTone === 'ahead'
           ? 'Ahead of pace'
-          : 'Right on pace';
+          : 'Session time';
   const momentumMessage = paceTone === 'gentle'
     ? 'We’re a little beyond the plan for this step. No stress — ask me for the short version, or keep the full depth.'
     : paceTone === 'ahead'
@@ -1331,8 +1400,8 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
     if (!document) return;
     window.dispatchEvent(new CustomEvent('petros:session-pulse', {
       detail: {
-        mastered: completedCount,
-        total: totalCheckpoints,
+        mastered: evidence.independent,
+        total: evidence.checked,
         xp: sessionXp,
         streak: attemptStats.streak,
         flashcards: flashcardCount,
@@ -1340,7 +1409,7 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
         paceLabel,
       },
     }));
-  }, [attemptStats.streak, completedCount, document, flashcardCount, paceLabel, sessionXp, totalCheckpoints, visibleElapsed]);
+  }, [attemptStats.streak, evidence.independent, evidence.checked, document, flashcardCount, paceLabel, sessionXp, visibleElapsed]);
   const isFiveMinute = document?.sourceContext?.door === 'five_minute';
   useEffect(() => {
     if (!document || !closed || !isFiveMinute || expansionOfferedFor.current === document.id) return;
@@ -1469,10 +1538,7 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
             </p>
           </div>
           <div className={styles.sessionScoreboard} aria-label="Session momentum">
-            <span title="Concepts checked off"><Target aria-hidden="true" /><strong>{completedCount}/{totalCheckpoints || 1}</strong> mastered</span>
-            <span title="Session points"><Trophy aria-hidden="true" /><strong>{sessionXp}</strong> XP</span>
-            <span title="Correct-answer streak"><Flame aria-hidden="true" /><strong>{attemptStats.streak}</strong> streak</span>
-            <Link href="/flashcards" title="Open session flashcards"><CreditCard aria-hidden="true" /><strong>{flashcardCount}</strong> cards</Link>
+            <span title="Correct on a first attempt without hints; this is session evidence, not long-term mastery"><Target aria-hidden="true" /><strong>{evidence.independent}</strong> independent checks</span>
             <span data-pace={paceTone}><Gauge aria-hidden="true" /><strong>{formatSessionTime(visibleElapsed)}</strong> {paceLabel}</span>
           </div>
         </div>
@@ -1493,6 +1559,25 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
               </span>
             </div>
           </section>
+
+          <section className={styles.learningDesk} aria-label="Learning together">
+            <div><span className={styles.deskEyebrow}>A little understanding, then a little practice</span>
+              <p>{evidence.checked ? `${evidence.independent} independent · ${evidence.supported} with support · ${evidence.revisit} to revisit` : 'We’ll check what makes sense with examples and questions as we go.'}</p>
+            </div>
+            <button type="button" disabled={!currentLesson || !companion} onClick={() => companion?.openWith('Walk me through the current idea, one part at a time. Help me see how the pieces connect.')}><Sparkles aria-hidden="true" /> Work through it with Petros</button>
+          </section>
+          {currentLesson && !closed ? <div className={styles.studyModes} role="group" aria-label="How to learn this idea">
+            <button type="button" aria-pressed={studyMode === 'active'} disabled={document?.status !== 'active'} onClick={() => {
+              updateInteraction(currentLesson.id, { studyMode: 'active' }, true);
+              window.dispatchEvent(new CustomEvent('petros:lesson-stop'));
+            }}><FilePenLine aria-hidden="true" /> Think it through</button>
+            <button type="button" aria-pressed={studyMode === 'listen_first'} disabled={document?.status !== 'active'} onClick={() => {
+              updateInteraction(currentLesson.id, { studyMode: 'listen_first' }, true);
+              window.dispatchEvent(new CustomEvent('petros:lesson-play'));
+            }}><Play aria-hidden="true" /> Listen first</button>
+            <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('petros:lesson-stop'))}><Pause aria-hidden="true" /> Pause explanation</button>
+            <span>Both paths include a check. Listening alone doesn’t establish understanding.</span>
+          </div> : null}
 
           {!sessionReady && document && !closed ? (
             <SessionStartHuddle
@@ -1579,6 +1664,7 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
               icon={Square}
               tone="warning"
               title="Close this session?"
+              body={`Your place and answers will be saved. ${evidence.independent} independent checks so far; finishing does not mark the topic mastered. ${evidence.revisit + evidence.supported > 0 ? 'The ideas that needed support are worth revisiting.' : 'A later recall check will help establish what stuck.'}`}
               action={
                 <>
                   <button onClick={() => void lifecycle('close')}>Close session</button>
@@ -1595,6 +1681,7 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
           ))}
 
           {document?.blocks.map((block, index) => (
+            <LessonHistory key={block.id} title={block.content.title} collapsed={block.status === 'completed' && index < document.blocks.length - 1}>
             <TeachingBlock
               key={block.id}
               block={block}
@@ -1624,6 +1711,7 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
                 )}
               />
             </TeachingBlock>
+            </LessonHistory>
           ))}
 
           {document && artifactCommitReady && (
@@ -1694,6 +1782,11 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
   );
 }
 
+function LessonHistory({ title, collapsed, children }: { title: string; collapsed: boolean; children: ReactNode }) {
+  if (!collapsed) return <>{children}</>;
+  return <details className={styles.lessonHistory}><summary>{title}<small>Revisit idea</small></summary>{children}</details>;
+}
+
 function SessionStartHuddle({
   minutes,
   checkpoints,
@@ -1710,8 +1803,8 @@ function SessionStartHuddle({
         <span>30-second huddle</span>
         <h2 id="session-huddle-title">What does “done” look like today?</h2>
         <p>
-          Build and check {checkpoints} ideas, then finish with a 75-second recall lap. I’ll keep
-          the pace gentle and your place safe if you stop to ask something.
+          Explore this idea in {checkpoints} short steps, with examples and practice along the way.
+          We can slow down, try another explanation, or pause whenever you need.
         </p>
         <div className={styles.huddleRules}>
           <span><Clock3 aria-hidden="true" /> {minutes} min target</span>
@@ -1770,8 +1863,8 @@ function SessionFinale({
   const copyRecap = async () => {
     const summary = [
       `Petros session: ${document.topic}`,
-      `${document.checkpoints.filter((checkpoint) => checkpoint.status === 'complete').length}/${document.checkpoints.length} concepts checked`,
-      `${remembered}/${items.length || 1} recalled without notes`,
+      `${document.checkpoints.filter((checkpoint) => checkpoint.status === 'complete').length}/${document.checkpoints.length} learning steps completed`,
+      `${learningEvidence(document).independent} independent checks; ${remembered}/${items.length} self-rated recall prompts`,
       `${finalXp} XP · ${formatSessionTime(elapsedSeconds)} · ${flashcards} flashcards`,
     ].join('\n');
     try {
@@ -1827,14 +1920,14 @@ function SessionFinale({
       <div className={styles.finaleTitle}>
         <span><PartyPopper aria-hidden="true" /></span>
         <div>
-          <small>Run complete</small>
-          <strong>You earned this one.</strong>
-          <p>{remembered}/{items.length || 1} ideas recalled without notes</p>
+          <small>Session saved</small>
+          <strong>Here’s what to build on.</strong>
+          <p>{learningEvidence(document).independent} independent checks · {remembered}/{items.length} self-rated recall prompts. Try recalling the idea again later to see what stuck.</p>
         </div>
       </div>
       <div className={styles.recapStats}>
         <span><Trophy aria-hidden="true" /><strong>{finalXp}</strong> XP</span>
-        <span><Target aria-hidden="true" /><strong>{document.checkpoints.length}</strong> concepts</span>
+        <span><Target aria-hidden="true" /><strong>{document.checkpoints.filter((checkpoint) => checkpoint.status === 'complete').length}</strong> steps explored</span>
         <span><Clock3 aria-hidden="true" /><strong>{formatSessionTime(elapsedSeconds)}</strong> time</span>
         <span><CreditCard aria-hidden="true" /><strong>{flashcards}</strong> cards</span>
       </div>
@@ -2109,7 +2202,7 @@ function BlockContent({
             <div className={styles.keyIdea} data-petros-target={petrosLessonTarget(block.id, 'key-idea')} data-checkpoint="true">
               <Lightbulb aria-hidden="true" />
               <div>
-                <strong>{completed ? 'Checkpoint cleared · +20 XP' : 'Checkpoint · make it stick'}</strong>
+                <strong>{completed ? 'Idea explored · ready to practise' : 'Make it yours'}</strong>
                 <p>
                   <PetrosNarratedText
                     text={content.keyIdea}
@@ -2530,10 +2623,9 @@ function BlockContent({
             {!completed && (
               <CompleteButton
                 onClick={onComplete}
-                disabled={content.diagramType === 'concept_map' && block.interactionState.diagramBuilt !== true}
               >
-                {content.diagramType === 'concept_map' && block.interactionState.diagramBuilt !== true
-                  ? 'Build every connection to continue'
+                {content.diagramType === 'concept_map'
+                  ? 'Save map reflections and continue'
                   : 'Keep this edited diagram in the session'}
               </CompleteButton>
             )}
@@ -2949,7 +3041,7 @@ function QuestionCard({
         )}
       </summary>
       <div className={styles.questionCardBody}>
-        <span className={styles.questionLabel}>{label}<em>{question.purpose === 'guess_first' ? '+10 XP if it lands' : 'Retrieval checkpoint'}</em></span>
+        <span className={styles.questionLabel}>{label}<em>{question.purpose === 'guess_first' ? 'Try an idea — mistakes help us learn' : 'Check your understanding'}</em></span>
         <p className={styles.questionPrompt}>{question.prompt}</p>
         <div className={styles.responseField}>
           {question.responseType === 'single_choice' ? (

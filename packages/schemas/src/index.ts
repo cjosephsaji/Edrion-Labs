@@ -65,6 +65,7 @@ export * from './support-cases';
 export * from './ai-governance';
 export * from './petros-ai-routing';
 export * from './petros-learning';
+export * from './petros-presentation';
 export * from './petros-session-intent';
 export * from './petros-input-modes';
 export * from './petros-teach-back';
@@ -83,6 +84,9 @@ export * from './registration';
 // Parent Portal (/v1/parent/*) request + response contracts.
 export * from './parent-portal';
 export * from './petros';
+export * from './petros-pilot';
+export * from './petros-document-teaching';
+export * from './petros-document-learning';
 export * from './doc-gen';
 export * from './documents';
 export * from './grading';

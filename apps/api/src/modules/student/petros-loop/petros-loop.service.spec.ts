@@ -10,6 +10,7 @@ import {
   PETROS_SESSION_STATE_VERSION,
   PETROS_LEARNER_MODEL_ALGORITHM_VERSION,
   PETROS_LEARNER_SNAPSHOT_SCHEMA_VERSION,
+  PETROS_TEACHING_PRESENTATION_VERSION,
   type PetrosLearningSessionDocument,
   type PetrosSessionState,
 } from '@edrion/schemas';
@@ -229,6 +230,11 @@ function makeHarness(
       return block;
     }),
     updateSessionLearnerContext: vi.fn(async (_scope, _sessionId, learnerContext) => {
+      Object.assign(session, { learnerContext, version: session.version + 1, updatedAt: now });
+      return session;
+    }),
+    updateSessionLearnerContextAtVersion: vi.fn(async (_scope, _sessionId, expectedVersion, learnerContext) => {
+      if (session.version !== expectedVersion) return undefined;
       Object.assign(session, { learnerContext, version: session.version + 1, updatedAt: now });
       return session;
     }),
@@ -889,5 +895,28 @@ describe('PetrosLoopService coordination', () => {
         payload: expect.objectContaining({ requested: 'simpler', reexplanationQueued: true }),
       }),
     );
+  });
+
+  it('stores playback position without changing progression or evidence', async () => {
+    const harness = makeHarness();
+    const checkpointsBefore = structuredClone(harness.session.checkpoints);
+    const result = await harness.service.savePresentationCheckpoint(principal, SESSION_ID, {
+      expectedVersion: 0,
+      idempotencyKey: '97979797-9797-4797-8797-979797979797',
+      checkpoint: {
+        presentationVersion: PETROS_TEACHING_PRESENTATION_VERSION,
+        unitId: 'photosynthesis-core',
+        beatId: 'chlorophyll',
+        mode: 'quiet',
+      },
+    });
+
+    expect(result.presentationCheckpoint).toEqual(expect.objectContaining({
+      beatId: 'chlorophyll',
+      mode: 'quiet',
+    }));
+    expect(harness.session.checkpoints).toEqual(checkpointsBefore);
+    expect(harness.repo.completeBlock).not.toHaveBeenCalled();
+    expect(harness.repo.recordObservation).not.toHaveBeenCalled();
   });
 });

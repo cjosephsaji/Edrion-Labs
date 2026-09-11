@@ -118,6 +118,14 @@ export async function runInIndependentStudentTenant<T>(
   });
 }
 
+/**
+ * Detach durable/in-process background work from a request tenant transaction.
+ * The work must perform its own explicit institution/owner checks.
+ */
+export function runOutsideTenant<T>(fn: () => T): T {
+  return tenantStore.exit(fn);
+}
+
 /** The institution id the active tenant transaction is bound to, if any (for diagnostics/tests). */
 export async function currentTenantInstitutionId(db: Database): Promise<string | null> {
   const [row] = await db.execute<{ v: string | null }>(

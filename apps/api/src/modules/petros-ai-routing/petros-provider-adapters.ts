@@ -558,9 +558,32 @@ export function prepareGeminiJsonSchema(
   request: PetrosAiNormalizedRequest,
 ): unknown {
   const normalized = normalizeGeminiJsonSchema(selectGeminiResponseVariant(schema, request));
+  if (request.functionKey === 'document.teaching.plan') {
+    return compactGeminiDocumentTeachingSchema(relaxGeminiCompilerHints(normalized));
+  }
   return request.functionKey === 'teach_back.explanation.analyse'
     ? relaxGeminiCompilerHints(normalized)
     : normalized;
+}
+
+/**
+ * Gemini rejects the complete document-activity discriminated union as too
+ * deeply nested. Keep the exact outer lesson contract, but replace only that
+ * union with a declarative object hint. The API still applies the full Zod and
+ * semantic validators before an artifact can be published.
+ */
+function compactGeminiDocumentTeachingSchema(value: unknown): unknown {
+  if (!isSchemaRecord(value)) return value;
+  const copy = structuredClone(value);
+  if (!isSchemaRecord(copy.properties)) return copy;
+  const scenes = copy.properties.scenes;
+  if (!isSchemaRecord(scenes) || !isSchemaRecord(scenes.items) || !isSchemaRecord(scenes.items.properties)) return copy;
+  scenes.items.properties.activitySpec = {
+    type: 'object',
+    additionalProperties: true,
+    description: 'Typed visual specification whose kind exactly equals activity. Use only the fields for that kind: code_trace={kind,language,code:string[],frames:[{id,line,variables,output?}],predictionPrompt,accessibleSummary}; coordinate_graph={kind,xAxis:{label,min,max,unit},yAxis:{label,min,max,unit},functions:[{coefficients,label,color}],area?,annotations,accessibleSummary}; equation_steps={kind,lines:[{id,expression,explanation,highlight:string[],support}],correspondence,accessibleSummary}; process_diagram={kind,orientation,nodes:[{id,label,detail?,group?}],edges:[{from,to,label?}],revealOrder,relationship,accessibleSummary}; timeline_evidence={kind,events:[{id,label,dateLabel,evidence}],question,accessibleSummary}; scenario={kind,setting,evidence:string[],focus}; sequence={kind,steps:[{id,label,detail?}]}; worked_steps={kind,steps:[{label,detail}]}; comparison={kind,columns:string[],rows:[{label,values:string[]}]}; annotated_text={kind,passage,annotations:[{phrase,note}]}; classification={kind,categories:[{id,label}],items:[{id,label,categoryId}]}; concept_map={kind,layout,nodes,edges,annotations}; numeric_exploration={kind,variable:{label,min,max,step,initial,unit},outputs:[{label,unit,initial,steps:[{operation:add|subtract|multiply|divide,operand:{source:input}|{source:constant,value:number}}]}]}. Never encode numeric steps or highlights as booleans or strings.',
+  };
+  return copy;
 }
 
 function relaxGeminiCompilerHints(value: unknown): unknown {

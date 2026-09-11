@@ -27,6 +27,7 @@ export const petrosDocumentLessonOutlines = pgTable(
     documentVersion: integer('document_version').notNull(),
     sourceFingerprint: text('source_fingerprint').notNull(),
     outline: jsonb('outline').$type<Record<string, unknown>>().notNull(),
+    lessonPlan: jsonb('lesson_plan').$type<Record<string, unknown>>(),
     ...timestamps,
   },
   (t) => ({

@@ -4,14 +4,14 @@
   color: var(--s-ink);
 }
 .stickyHeader {
-  position: sticky;
+  position: relative;
   z-index: 30;
-  top: 112px;
+  top: 0;
   border-bottom: 1px solid var(--s-bd1);
   background: var(--s-card);
 }
 @media (max-width: 920px) {
-  .stickyHeader { top: 54px; }
+  .stickyHeader { top: 0; }
 }
 .headerRow {
   display: grid;
@@ -2010,7 +2010,7 @@
   flex-direction: column;
   gap: 12px;
   overflow: auto;
-  max-height: 34rem;
+  max-height: none;
   margin: 12px 0;
   border: 1px solid var(--s-bd1);
   border-radius: 0;
@@ -2023,6 +2023,7 @@
 .diagram[data-expanded='true'] {
   max-height: 70vh;
 }
+.diagram[data-expanded='true'] .diagramCanvas { min-width: 1060px; }
 .diagramToolbar {
   display: flex;
   flex-wrap: wrap;
@@ -2052,9 +2053,11 @@
   font-variant-numeric: tabular-nums;
 }
 .diagramCanvas {
+  flex: none;
   width: 100%;
   min-width: 600px;
-  max-height: 38rem;
+  height: auto;
+  max-height: none;
   border: 1px solid color-mix(in srgb, var(--s-accent) 16%, var(--s-bd1));
   border-radius: 0;
   background: color-mix(in srgb, var(--s-card) 97%, var(--s-accentSoft));
@@ -2075,7 +2078,7 @@
 }
 .diagramEdge text {
   fill: var(--s-muted);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 650;
 }
 .diagramEdge[data-active='true'] path {
@@ -2421,7 +2424,7 @@
 }
 .predictionCompare > div { padding: 14px; }
 .predictionCompare > div + div { border-left: 1px solid var(--s-divider); background: color-mix(in srgb, var(--s-card) 76%, var(--s-accentSoft)); }
-.predictionCompare span { color: var(--s-muted); font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.predictionCompare > div > span { color: var(--s-muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .predictionCompare p { margin: 6px 0 0; color: var(--s-inkSoft); font-size: 12px; line-height: 1.55; }
 .keyIdea[data-checkpoint='true'] { border: 1px solid var(--s-accentBd); border-left: 5px solid var(--s-accent); border-radius: 12px; }
 .keyIdeaResponse { display: grid; gap: 6px; margin-top: 10px; color: var(--s-accentDeep); font-size: 10px; font-weight: 750; }
@@ -2442,6 +2445,29 @@
 .diagramChallenge > div[role='group'] { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .diagramChallenge > div[role='group'] button { min-height: 50px; border-color: var(--s-accentBd); color: var(--s-accentDeep); }
 .diagramChallenge > div[role='group'] button:hover { border-color: var(--s-accent); background: var(--s-accentDeep); color: #fff; transform: translateY(-1px); }
+.diagramChallenge button[aria-pressed='true'] { background: var(--s-accentDeep); color: #fff; border-color: var(--s-accentDeep); }
+.diagramChallenge button:focus-visible, .connectionResponse textarea:focus-visible { outline: 3px solid var(--s-accent); outline-offset: 3px; }
+.diagramChallenge p, .mapPurpose { font-size: 14px; line-height: 1.65; }
+.mapPurpose { margin: 0; color: var(--s-muted); }
+.diagramToolbar .buildBadge { display: inline-flex; align-items: center; gap: 8px; margin-left: 0; font-size: 15px; }
+.diagram[data-concept-map] { padding: 20px; gap: 16px; background: var(--s-card); border-radius: 12px; }
+.diagram[data-concept-map] .diagramCanvas { border-radius: 10px; background: var(--s-card); }
+.diagram[data-concept-map] .diagramEdge path { stroke-width: 1.5; stroke-dasharray: none; animation: none; opacity: .45; }
+.diagram[data-concept-map] .diagramEdge[data-active='true'] path { stroke-width: 2.5; opacity: 1; filter: none; }
+.connectionMarker circle { fill: var(--s-card); stroke: var(--s-accentBd); stroke-width: 1; }
+.connectionMarker text { font-size: 11px; }
+.mapConnectionCaption { display: grid; gap: 6px; padding: 14px 18px; border-left: 3px solid var(--s-accent); background: var(--s-accentSoft); color: var(--s-ink); font-size: 16px; line-height: 1.6; }
+.mapConnectionCaption > span { font-size: 12px; color: var(--s-muted); }
+.mapConnectionCaption strong span { font-weight: 400; }
+.connectionNumber { flex: 0 0 24px; border: 1px solid currentColor; border-radius: 50%; height: 24px; display: inline-grid; place-items: center; }
+.diagramChallenge { padding: 22px; background: var(--s-card); gap: 18px; }
+.diagramChallenge > div[role='group'] button { padding: 12px; text-align: left; line-height: 1.5; font-size: 13px; }
+@media (max-width: 700px) { .diagram[data-concept-map] { padding: 10px; } .diagramChallenge { padding: 14px; } }
+.connectionResponse { display: grid; gap: 8px; }
+.connectionResponse textarea { width: 100%; min-height: 110px; resize: vertical; border: 1px solid var(--s-accentBd); border-radius: 8px; padding: 14px; background: var(--s-card); color: var(--s-ink); font: inherit; font-size: 15px; line-height: 1.6; }
+.connectionComparison { display: grid; gap: 10px; border-left: 3px solid var(--s-accent); padding: 16px; background: var(--s-card); }
+.connectionComparison > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.connectionComparison button { min-height: 44px; padding: 10px 14px; border: 1px solid var(--s-accentBd); background: var(--s-card); color: var(--s-ink); }
 .challengeFeedback { border-left: 3px solid var(--s-amber); padding-left: 9px; color: var(--s-amberInk) !important; font-weight: 700; }
 .diagramBuiltNotice {
   display: inline-flex;
@@ -3131,3 +3157,61 @@
 :global(html[data-reduced-motion='true']) .preparingPetros > span,
 :global(html[data-reduced-motion='true']) .preparingPetros > i,
 :global(html[data-reduced-motion='true']) .recapStats span { animation: none !important; }
+
+/* A quiet study desk: the current idea gets the space, controls stay secondary. */
+.shell { background-image: none; }
+.headerRow, .progressRow, .layout { max-width: 1040px; }
+.headerRow { min-height: 66px; }
+.progressRow { gap: 8px; }
+.sessionScoreboard > span { border: 0; background: transparent; padding: 2px 0; margin-right: 18px; }
+.sessionScoreboard > span svg, .trailNode { animation: none !important; }
+.trailLabel { font-size: 11px; line-height: 1.4; }
+.layout { padding-top: 28px; }
+.opening { margin: 0; padding: 0 0 24px; border: 0; }
+.opening::before { content: 'LEARN WITH PETROS'; letter-spacing: .13em; }
+.opening h1 { max-width: 32ch; font-family: var(--font-display); font-size: clamp(28px, 3vw, 40px); font-weight: 450; letter-spacing: -.03em; line-height: 1.14; }
+.opening > p { font-size: 15px; }
+.goal { border: 0; background: transparent; padding: 0; font-size: 12px; }
+.learningDesk { display: flex; align-items: center; justify-content: space-between; gap: 22px; border-block: 1px solid var(--s-divider); padding: 18px 0; margin-bottom: 20px; }
+.deskEyebrow { font-size: 13px; color: var(--s-accentDeep); font-weight: 700; }
+.learningDesk p { margin: 5px 0 0; color: var(--s-muted); font-size: 13px; line-height: 1.5; }
+.learningDesk button { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; border: 1px solid var(--s-accentBd); border-radius: 8px; background: var(--s-card); color: var(--s-accentDeep); padding: 11px 14px; font-size: 12px; font-weight: 650; cursor: pointer; }
+.learningDesk svg { width: 17px; height: 17px; }
+.learningDesk button:disabled { opacity: .5; cursor: default; }
+.block { border-left-width: 1px; border-radius: 12px; margin-top: 24px; }
+.blockHead { min-height: 0; padding: 22px 26px; }
+.blockHead h2 { font-size: clamp(22px, 2.3vw, 29px); line-height: 1.24; letter-spacing: -.025em; }
+.blockBody { padding: 26px; }
+.explanation, .prompt, .predictionCompare p { font-size: 16px; line-height: 1.75; font-weight: 400; }
+.predictionCompare p span { font: inherit; letter-spacing: normal; text-transform: none; color: inherit; }
+.predictionCompare { grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); }
+.predictionCompare > div { padding: 20px; }
+.ideaBlueprint strong { font-size: 12px; line-height: 1.4; }
+.questionCard { border: 1px solid var(--s-accentBd); border-radius: 12px; background: var(--s-card); }
+.questionPrompt { max-width: 52ch; font-size: clamp(20px, 2vw, 25px); line-height: 1.4; letter-spacing: -.02em; }
+.diagram { overflow-x: auto; }
+.diagramNode text { font-size: 14px; }
+.diagramCanvas { display: block; min-width: 720px; }
+.diagramToolbar { flex-wrap: wrap; }
+.close { border-radius: 12px; }
+.shell button:focus-visible, .shell summary:focus-visible { outline: 3px solid var(--s-accent); outline-offset: 4px; }
+.lessonHistory { margin-top: 14px; border: 1px solid var(--s-divider); border-radius: 10px; background: var(--s-card); }
+.lessonHistory > summary { display: flex; align-items: center; gap: 12px; padding: 15px 18px; cursor: pointer; color: var(--s-inkSoft); font-size: 14px; list-style: none; }
+.lessonHistory > summary::before { content: '+'; color: var(--s-accent); font-size: 19px; }
+.lessonHistory[open] > summary::before { content: '−'; }
+.lessonHistory > summary small { margin-left: auto; color: var(--s-muted); font-size: 11px; }
+.lessonHistory .block { margin: 0; border: 0; }
+@media (max-width: 700px) {
+  .learningDesk { align-items: stretch; flex-direction: column; gap: 12px; }
+  .learningDesk button { justify-content: center; }
+  .predictionCompare { grid-template-columns: 1fr; }
+  .predictionCompare > div + div { border-left: 0; border-top: 1px solid var(--s-divider); }
+  .blockHead, .blockBody { padding: 18px; }
+  .opening h1 { font-size: 30px; }
+  .goal { margin-top: 10px; }
+}
+.studyModes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.studyModes button { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; border: 1px solid var(--s-bd1); border-radius: 7px; padding: 8px 12px; background: var(--s-card); font-size: 12px; color: var(--s-inkSoft); cursor: pointer; }
+.studyModes button[aria-pressed='true'] { background: var(--s-accentSoft); border-color: var(--s-accent); color: var(--s-accentDeep); }
+.studyModes svg { width: 15px; height: 15px; }
+.studyModes > span { flex-basis: 100%; color: var(--s-muted); font-size: 12px; line-height: 1.5; }

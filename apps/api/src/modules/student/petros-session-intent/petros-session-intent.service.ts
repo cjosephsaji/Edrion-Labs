@@ -20,6 +20,7 @@ import {
   type StartPetrosSessionIntentInput,
   type PetrosTeachingPlanning,
   type PetrosTeachingPlanSelection,
+  type PreparePetrosDocumentInput,
 } from '@edrion/schemas';
 import { API_ENV, AUDIT_WRITER } from '../../../common/tokens';
 import { baseAudit, type ActionContext } from '../../../common/action-context';
@@ -29,11 +30,16 @@ import { documentStudyQuestions } from '../petros-document-grounding';
 import { PetrosLoopService } from '../petros-loop/petros-loop.service';
 import type { PetrosOwnerScope } from '../petros-loop/petros-loop.repository';
 import { PetrosSessionIntentRepository } from './petros-session-intent.repository';
+import { PetrosDocumentPreparationService } from './petros-document-preparation.service';
 import {
   buildDocumentLessonOutline,
   isDocumentLessonOutline,
   type DocumentLessonOutline,
 } from './petros-document-outline';
+import {
+  publicDocumentTeachingPlan,
+  type DocumentTeachingGeneration,
+} from './petros-document-teaching';
 
 type IntentRow = Awaited<ReturnType<PetrosSessionIntentRepository['findIntent']>> extends infer T
   ? NonNullable<T>
@@ -45,6 +51,7 @@ export class PetrosSessionIntentService {
     private readonly repo: PetrosSessionIntentRepository,
     private readonly loop: PetrosLoopService,
     private readonly gateway: PetrosAiGatewayService,
+    private readonly documentPreparation: PetrosDocumentPreparationService,
     @Inject(API_ENV) private readonly env: ApiEnv,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
   ) {}
@@ -166,6 +173,50 @@ export class PetrosSessionIntentService {
     return this.dto(row);
   }
 
+  async preparation(principal: InstitutionalStudentPrincipal, preparationId: string) {
+    const value = await this.documentPreparation.read(owner(principal), preparationId);
+    if (!value) throw intentNotFound();
+    return value;
+  }
+
+  async prepareDocument(
+    principal: InstitutionalStudentPrincipal,
+    sourceId: string,
+    input: PreparePetrosDocumentInput,
+  ) {
+    const scope = owner(principal);
+    const source = await this.repo.documentSource(scope, sourceId);
+    if (!source) throw intentNotFound();
+    if (!source.item.extractedTextReady || source.item.status !== 'ready') {
+      throw new ConflictException({ code: 'PETROS_DOCUMENT_EXTRACTION_PENDING', message: 'The source is still being extracted.' });
+    }
+    const pages = source.allPages ?? source.pages;
+    const fingerprintValue = fingerprint({
+      id: source.item.id, version: source.item.version, status: source.item.status,
+      extraction: source.item.extractedTextReady, index: source.item.indexReady,
+      pages: pages.map((page) => ({ id: page.id, updatedAt: page.updatedAt })),
+    });
+    const { outline } = await this.documentOutline(scope, source.item, pages);
+      const topic = outline.topics.find((candidate) => candidate.id === input.topicId)
+        ?? outline.topics.find((candidate) => candidate.title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+          !== outline.title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim())
+        ?? outline.topics[0];
+    if (!topic) throw new ConflictException({ code: 'PETROS_DOCUMENT_NO_CONCEPTS', message: 'No teachable source concept is available yet.' });
+    const prepared = await this.documentPreparation.prepare(principal, source, fingerprintValue, {
+      ...topic,
+      documentTopics: outline.topics,
+    });
+    return { preparation: prepared.preparation };
+  }
+
+  async documentPath(principal: InstitutionalStudentPrincipal, sourceId: string) {
+    const scope = owner(principal);
+    if (!(await this.repo.documentSource(scope, sourceId))) throw intentNotFound();
+    const path = await this.documentPreparation.path(scope, sourceId);
+    if (!path) throw new NotFoundException({ code: 'PETROS_DOCUMENT_PATH_NOT_READY', message: 'Start preparing this document to create its learning path.' });
+    return path;
+  }
+
   async start(
     principal: InstitutionalStudentPrincipal,
     intentId: string,
@@ -202,11 +253,42 @@ export class PetrosSessionIntentService {
       ?? intent.planning?.topics[0]
       ?? null;
     const selectedCitations = selectedTopic?.pageStart != null && selectedTopic.pageEnd != null
-      ? intent.citations.filter((citation) => citation.page != null && citation.page >= selectedTopic.pageStart! && citation.page <= selectedTopic.pageEnd!)
+      ? intent.citations.filter((citation) => citation.topicId === selectedTopic.id || (!citation.topicId && citation.section === selectedTopic.title))
       : intent.citations;
     const scopedCitations = selectedCitations.length ? selectedCitations : intent.citations;
     const pageCitation = scopedCitations.find((citation) => citation.page != null);
     const handoffRouting = await this.handoffRouting(scope, intent);
+    // Re-read authorized source at start. Preview excerpts are not sufficient to
+    // teach a concept that spans several pages.
+    let conceptSource: { pages: Array<{ page: number; text: string }>; complete: boolean } | undefined;
+    let documentTeaching: { publicPlan: ReturnType<typeof publicDocumentTeachingPlan>; internalPlan: DocumentTeachingGeneration } | undefined;
+    let documentPathId: string | null = null;
+    if (intent.door === 'uploaded_document' && selectedTopic && this.env.PETROS_DOCUMENT_TEACHING_ENABLED !== false) {
+      const source = await this.repo.documentSource(scope, referenceId);
+      if (!source) throw intentNotFound();
+      const pages = (source.allPages ?? source.pages).filter((page) =>
+        selectedTopic.pageStart != null && selectedTopic.pageEnd != null
+        && page.pageIndex + 1 >= selectedTopic.pageStart && page.pageIndex + 1 <= selectedTopic.pageEnd);
+      let remaining = 120_000;
+      conceptSource = { pages: [], complete: true };
+      for (const page of pages) {
+        const text = page.text.slice(0, remaining);
+        if (text.length < page.text.length) conceptSource.complete = false;
+        if (text) conceptSource.pages.push({ page: page.pageIndex + 1, text });
+        remaining -= text.length;
+      }
+      const prepared = await this.documentPreparation.prepare(
+        principal,
+        source,
+        intent.sourceFingerprint,
+        { ...selectedTopic, documentTopics: intent.planning?.topics ?? [] },
+      );
+      if (!prepared.lesson) {
+        return { intent, preparation: prepared.preparation, session: null };
+      }
+      documentTeaching = prepared.lesson;
+      documentPathId = prepared.preparation.pathId;
+    }
     const session = await this.loop.create(principal, {
       clientRequestId: intent.id,
       sessionType: intent.sessionType,
@@ -224,6 +306,12 @@ export class PetrosSessionIntentService {
         ...(intent.door === 'assistant_handoff'
           ? { handoffQuestion: intent.scope.knownFailureDetails[0] }
           : {}),
+        ...(documentTeaching ? {
+          documentTeachingPlan: documentTeaching.publicPlan,
+          documentTeachingInternalPlan: documentTeaching.internalPlan,
+          documentPathId,
+          documentConceptId: documentTeaching.internalPlan.topicId,
+        } : {}),
       },
       topicContext: {
         targetConcepts: selectedTopic ? [selectedTopic.title] : intent.targetConcepts,
@@ -241,6 +329,8 @@ export class PetrosSessionIntentService {
           summary: selectedTopic.summary,
           keyTerms: selectedTopic.keyTerms,
           likelyDoubts: selectedTopic.likelyDoubts,
+          prerequisites: selectedTopic.prerequisites ?? [],
+          difficulty: selectedTopic.difficulty ?? null,
           estimatedMinutes: selectedTopic.estimatedMinutes,
           priority: selection.priority,
         } : null,
@@ -253,6 +343,7 @@ export class PetrosSessionIntentService {
         emotionalRegister: intent.emotionalRegister,
         registerFactors: intent.registerFactors,
         citations: scopedCitations,
+        ...(conceptSource ? { conceptSource } : {}),
         policyDisclosures: intent.policyDisclosures,
         returnHref: intent.returnDestination.href,
         returnLabel: intent.returnDestination.label,
@@ -782,10 +873,11 @@ export class PetrosSessionIntentService {
       const studyQuestions = documentStudyQuestions(selectedPages.map((page) => page.text));
       return {
         sessionType: 'learn' as const,
-        goal: `Understand the selected part of ${document.item.title} and explain it using the document's own evidence.`,
+        goal: `Explore the ideas in ${document.item.title}, connect how they work, and practise applying them.`,
+        // The intent summary stays compact; planning.topics carries the complete path.
         targetConcepts: lessonTopics.map((topic) => topic.title).slice(0, 12),
         scope: {
-          summary: `${document.item.title}${input.page ? ` · page ${input.page}` : ' · selected pages'}`,
+          summary: `${document.item.title} · concept-led learning`,
           boundaries: [
             'Ground every document claim in extracted pages the student can access.',
             'Cite exact page numbers and do not reconstruct missing or unextracted content.',
@@ -803,6 +895,7 @@ export class PetrosSessionIntentService {
         ],
         sourceEntityIds: [document.item.id, ...selectedPages.map((page) => page.id)].slice(0, 12),
         citations: lessonTopics.map((topic) => ({
+          topicId: topic.id,
           sourceType: 'document' as const,
           sourceId: document.item.id,
           version: `${document.item.version}:${outline.sourceFingerprint.slice(0, 16)}`,
@@ -1021,12 +1114,16 @@ export class PetrosSessionIntentService {
         pageEnd: topic.pageEnd,
         estimatedMinutes: topic.estimatedMinutes,
         keyTerms: topic.keyTerms,
+        prerequisites: topic.prerequisites,
+        difficulty: topic.difficulty,
         likelyDoubts: topic.likelyDoubts,
       }));
       const schedule = await this.repo.documentSchedule(scope, prepared.item);
+      const suggestedTopic = topics.find((topic) => !isLikelyReferenceTopic(topic.title, prepared.item.title)) ?? topics[0]!;
       return {
+        organization: outline.organization,
         topics,
-        suggestedTopicId: topics[0]!.id,
+        suggestedTopicId: suggestedTopic.id,
         suggestedPriority: schedule?.kind === 'exam' ? 'exam_prep' : 'understand',
         deadline: schedule ? {
           kind: schedule.kind,
@@ -1082,6 +1179,7 @@ export class PetrosSessionIntentService {
     pages: Array<{ id: string; pageIndex: number; text: string; updatedAt: Date }>,
   ): Promise<{ outline: DocumentLessonOutline; status: 'cached' | 'generated' }> {
     const sourceFingerprint = fingerprint({
+      outlineVersion: 'concepts-v6-complete-legacy-headings',
       documentId: item.id,
       documentVersion: item.version,
       pages: pages.map((page) => ({
@@ -1089,19 +1187,25 @@ export class PetrosSessionIntentService {
         pageIndex: page.pageIndex,
         updatedAt: page.updatedAt,
         textLength: page.text.length,
+        textHash: fingerprint(page.text),
       })),
     });
     const cached = await this.repo.findDocumentOutline(scope, item.id, item.version, sourceFingerprint);
-    if (cached && isDocumentLessonOutline(cached.outline)) {
+    if (cached && isDocumentLessonOutline(cached.outline)
+      && (cached.outline.organization === 'concepts' || this.env.PETROS_AI_MODE !== 'live'
+        || Date.now() - Date.parse(cached.outline.generatedAt) < 5 * 60_000)) {
       return { outline: cached.outline, status: 'cached' };
     }
-    const outline = buildDocumentLessonOutline({
+    let outline = buildDocumentLessonOutline({
       documentId: item.id,
       documentVersion: item.version,
       sourceFingerprint,
       title: item.title,
       pages,
     });
+    // Keep document preview interactive even when the live model is slow or
+    // unavailable. The heading map is an honest source-grounded outline; any
+    // richer concept extraction must happen outside this request boundary.
     await this.repo.saveDocumentOutline({
       institutionId: scope.institutionId,
       studentId: scope.studentId,
@@ -1320,6 +1424,13 @@ export class PetrosSessionIntentService {
       createdAt: row.createdAt.toISOString(),
     });
   }
+}
+
+function isLikelyReferenceTopic(topicTitle: string, documentTitle: string) {
+  const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const topic = normalize(topicTitle);
+  return topic === normalize(documentTitle)
+    || /^(?:table of contents|contents|bibliography|references|acknowledgements?)$/.test(topic);
 }
 
 const assistantResponseJsonSchema = {

@@ -41,6 +41,12 @@
 .details ul { margin:7px 0 0; padding-left:18px; }
 .policy { display:flex; gap:10px; padding:14px; background:var(--s-amberSoft); }
 .policy>svg { flex:0 0 auto; width:19px; color:var(--s-amberInk); }
+.preparation { display:grid; gap:10px; border:1px solid var(--s-accentBd); padding:14px; background:linear-gradient(135deg,var(--s-accentSoft),var(--s-card)); }
+.preparation>div { display:flex; align-items:center; gap:9px; color:var(--s-accentDeep); }
+.preparation svg { width:18px; }
+.preparation progress { width:100%; height:8px; accent-color:var(--s-accent); }
+.preparation p { margin:0; color:var(--s-muted); font-size:11px; text-transform:capitalize; }
+.preparation button { justify-self:start; min-height:38px; border:1px solid var(--s-accent); background:var(--s-card); color:var(--s-accentDeep); padding:7px 11px; font-weight:750; }
 .foot { display:flex; justify-content:flex-end; gap:8px; padding:16px 20px; border-top:1px solid var(--s-bd1,#ddd); background:var(--s-card,#fff); box-shadow:0 -10px 24px rgba(16,43,34,.05); }
 .foot button { min-height:44px; border:1px solid var(--s-bd2,#bbb); background:transparent; padding:9px 15px; font-weight:700; }
 .foot button:last-child { display:inline-flex; align-items:center; gap:7px; color:#fff; border-color:var(--s-accent); background:var(--s-accent); }
@@ -52,3 +58,16 @@
 @keyframes spin { to { transform:rotate(360deg); } }
 @media (max-width:600px) { .layer { align-items:end; padding:0; } .dialog { width:100%; max-height:94dvh; border-radius:20px 20px 0 0; } .head { padding:16px; } .body { padding:16px; } .planning { padding:13px; } .planningHead { display:grid; } .planningHead>span { justify-self:start; } .choices { grid-template-columns:1fr; } .foot { padding:14px 16px; } .foot button { flex:1; } }
 @media (prefers-reduced-motion:reduce) { .spin { animation:none; } }
+
+.choices button { padding: 15px; gap: 7px; border-radius: 8px; align-content: start; }
+.choices button strong { white-space: normal; font-size: 14px; line-height: 1.35; }
+.choices button span { font-size: 12px; line-height: 1.5; }
+.choices button small { font-size: 11px; color: var(--s-muted); line-height: 1.4; }
+.planning { padding: 0; background: transparent; border: 0; gap: 22px; }
+.planningHead h3 { font-size: 20px; line-height: 1.3; }
+.planningHead > span { border-radius: 20px; }
+.head { padding: 22px 24px; }
+.head h2 { font-size: 25px; }
+.body { padding: 24px; gap: 22px; }
+.compactChoices button, .foot button { border-radius: 7px; }
+.dialog button:focus-visible { outline: 3px solid var(--s-accent); outline-offset: 3px; }

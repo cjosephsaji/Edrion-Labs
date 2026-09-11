@@ -11,6 +11,7 @@ import {
 } from './petros-session-intent.controller';
 import { PetrosSessionIntentRepository } from './petros-session-intent.repository';
 import { PetrosSessionIntentService } from './petros-session-intent.service';
+import { PetrosDocumentPreparationService } from './petros-document-preparation.service';
 
 @Module({
   imports: [FeatureControlsModule, PetrosAiRoutingModule, PetrosLoopModule],
@@ -18,6 +19,7 @@ import { PetrosSessionIntentService } from './petros-session-intent.service';
   providers: [
     PetrosSessionIntentRepository,
     PetrosSessionIntentService,
+    PetrosDocumentPreparationService,
     StudentPortalGuard,
     StudentRateLimitGuard,
     SurfacesService,
