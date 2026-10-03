@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-09-25T17:18:50.431037+00:00",
+  "result": "PASS",
+  "before": "final-freeze-r4/identity.json",
+  "after": "final-post-verification/identity.json",
+  "comparedFields": [
+    "head",
+    "branch",
+    "trackedDiffSha256",
+    "sourceManifestSha256",
+    "sourceManifestFileCount",
+    "relevantUntrackedSha256",
+    "relevantUntrackedFileCount",
+    "protectedHashes"
+  ],
+  "sourceManifestSha256": "1e3445ce6469fee308f715a307785582329db4e840fbc3b7a25a6f94cb501160",
+  "protectedHashesUnchanged": true
+}

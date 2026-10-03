@@ -1,0 +1,9 @@
+{
+  "status": "BLOCKED_UNAVAILABLE_DEPENDENCY",
+  "source": "collaboration.list_agents",
+  "observedDateUTC": "2026-09-25",
+  "agents": ["/root/final_security_regressions", "/root/finish_browser", "/root/finish_integrated_journey"],
+  "agentStatus": "errored",
+  "reportedReason": "usage limit; try again at Sep 26th, 2026 1:01 AM",
+  "credit": "No completed final independent review is claimed. Primary agent inspected, repaired and reran incomplete agent changes. Earlier bounded audits are historical evidence only."
+}

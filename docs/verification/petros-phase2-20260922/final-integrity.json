@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-09-26T15:06:36.956028+00:00",
+  "result": "PASS",
+  "before": "r5-before-retry/identity.json",
+  "after": "final-post-verification-r6/identity.json",
+  "comparedFields": [
+    "head",
+    "branch",
+    "trackedDiffSha256",
+    "sourceManifestSha256",
+    "sourceManifestFileCount",
+    "relevantUntrackedSha256",
+    "relevantUntrackedFileCount",
+    "protectedHashes"
+  ],
+  "sourceManifestSha256": "415b7eb28f5d962eb96058ec969db81a0f167a1c1ca52484a2264fb04c92ec4b",
+  "protectedHashesUnchanged": true
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ExecutionContext } from '@nestjs/common';
+import type { ExecutionContext, Type } from '@nestjs/common';
 import type { Reflector } from '@nestjs/core';
 import type { ApiEnv } from '@edrion/config';
 import type { RedisService } from '../../../common/redis/redis.service';
@@ -14,7 +14,7 @@ function reflector(limit = { max: 30, windowSeconds: 60 }): Reflector {
   } as unknown as Reflector;
 }
 
-function context(controller: Function): ExecutionContext {
+function context(controller: Type<unknown>): ExecutionContext {
   const req = {
     studentContext: {
       principal: { kind: 'institutional', studentId: 'student-1' },

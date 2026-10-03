@@ -1,0 +1,33 @@
+{
+  "command": [
+    "pnpm",
+    "exec",
+    "eslint",
+    "apps/api/src/modules/student/petros-continuity",
+    "apps/api/src/modules/petros-ai-routing/petros-ai-gateway.service.ts",
+    "apps/api/src/modules/student/petros-companion/petros-companion.service.ts",
+    "apps/api/src/modules/portal/course-content",
+    "apps/api/src/modules/petros-institutional",
+    "apps/api/src/modules/integrations/petros-phase4-browser-server.ts",
+    "apps/api/src/modules/integrations/petros-phase4-cohort.integration.spec.ts",
+    "apps/api/src/modules/integrations/petros-phase4-continuity.integration.spec.ts",
+    "apps/api/src/modules/integrations/petros-phase4-institutional.integration.spec.ts",
+    "apps/api/src/modules/integrations/petros-phase4-journey.integration.spec.ts",
+    "apps/student-web/src/components/petros/petros-continuity.tsx",
+    "apps/student-web/src/components/petros/petros-teaching-block-renderer.tsx",
+    "apps/institution-web/src/components/teaching/petros-phase4-teacher-tools.tsx",
+    "packages/schemas/src/petros-context.ts",
+    "packages/schemas/src/petros-context.spec.ts",
+    "packages/schemas/src/petros-continuity.ts",
+    "packages/schemas/src/petros-phase4-institutional.ts",
+    "packages/database/src/schema/petros-continuity.ts",
+    "packages/database/src/schema/petros-phase4-institutional.ts",
+    "--max-warnings=0"
+  ],
+  "start": "2026-10-02T11:01:31.470745+00:00",
+  "end": "2026-10-02T11:01:32.485923+00:00",
+  "exitCode": 1,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

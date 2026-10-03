@@ -1,0 +1,56 @@
+{
+  "reviewedAt": "2026-10-03T08:55:52.502536+00:00",
+  "source": "55f11e10edaca878b246fa62061029822cb74728569ca5581c96148d1f4dc8de",
+  "reviewer": "primary engineering agent, visual image inspection",
+  "screenshots": {
+    "chromium": [
+      {
+        "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-super-admin-operations-desktop.png",
+        "sha256": "d605637957856c5d6bd4969503a8e043a212ea98fa47dbe7c5bd6bb135329d31"
+      },
+      {
+        "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-super-admin-operations-mobile.png",
+        "sha256": "3d72205f663c616f0fc7076d4236cbb28f015eba1b5828365ba1e284223404b7"
+      },
+      {
+        "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-text-enlargement.png",
+        "sha256": "ba04c5fc16508c087b648b10e2180f6be18ea4b65de057f51428ea12c70ce9b7"
+      },
+      {
+        "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-continuity-memory-mobile.png",
+        "sha256": "1a821b40dec2900fb1c18975f6c2281eb5be9b676d2cc39812251374bbea09eb"
+      }
+    ],
+    "webkit": [
+      {
+        "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-super-admin-operations-mobile.png",
+        "sha256": "12fb00751b1d63a10c93e682ac47f92f84ceefb03d079d8b50e2c4b0e4e1b503"
+      },
+      {
+        "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-held-out-combined-viewport.png",
+        "sha256": "609a88e12f4746992d661f4f81e4779edcbbc8b6a5f31ea358f12d21fa864edf"
+      },
+      {
+        "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-teacher-correction-reviewed.png",
+        "sha256": "582ab8f880d3deeb899633dd42353524af0d75a171b7059e5e018b7aa518489a"
+      },
+      {
+        "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-continuity-offline-sync.png",
+        "sha256": "b879721852a16d5b4b414476558855b24f1d336d261d1e12bbc613255506d9ad"
+      }
+    ]
+  },
+  "observations": [
+    "Styled student, teacher and operator surfaces are present.",
+    "Reviewed operator mobile/desktop pages show aggregate counts, unconfigured release and disabled admissions without private learner text or identifiers.",
+    "Reviewed mobile memory page retains labelled correction/forgetting controls, privacy boundary notice and connectivity settings.",
+    "Reviewed recovered note is visible with a reconciliation receipt; model state has text/unit alternatives.",
+    "Reviewed enlarged-text and held-out composition pages preserve readable controls and scene labels. Automated keyboard/focus and overflow assertions are in each browser report."
+  ],
+  "limits": [
+    "Software screenshots and assertions only; not a qualified human accessibility review.",
+    "Controlled root-font enlargement is distinct from native browser-chrome zoom.",
+    "Physical devices, actual screen readers/assistive technologies and real voice acceptance pending.",
+    "Firefox151 build1532 cannot launch on this host; P5-E9/E10 full browser matrix remains blocked."
+  ]
+}

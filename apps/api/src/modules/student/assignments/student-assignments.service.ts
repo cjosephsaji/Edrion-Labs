@@ -58,7 +58,7 @@ export class StudentAssignmentsService {
           eq(schema.assignmentSubmissions.studentId, principal.studentId),
         ),
       )
-      .where(and(eq(t.status, 'published'), visibility))
+      .where(and(eq(t.institutionId,principal.institutionId),eq(t.status, 'published'), visibility,sql`edrion_petros_assignment_active(${t.id})`))
       .orderBy(t.dueDate);
 
     return {
@@ -185,6 +185,9 @@ export class StudentAssignmentsService {
   }
 
   private async loadVisibleAssignment(principal: InstitutionalStudentPrincipal, assignmentId: string) {
+    const [admission]=await this.db.execute<{active:boolean}>(sql`select edrion_petros_assignment_active(${assignmentId}::uuid) as active`);
+    if(!admission?.active)throw new NotFoundException('Assignment unavailable');
+
     const [row] = await this.db
       .select({ assignment: schema.assignments })
       .from(schema.assignments)

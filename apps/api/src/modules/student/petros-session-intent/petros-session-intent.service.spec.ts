@@ -7,6 +7,7 @@ import { fallbackDocumentTeachingPlan, publicDocumentTeachingPlan } from './petr
 const INSTITUTION_ID = '11111111-1111-4111-8111-111111111111';
 const STUDENT_ID = '22222222-2222-4222-8222-222222222222';
 const SOURCE_ID = '33333333-3333-4333-8333-333333333333';
+const OBJECT_ID = '99999999-9999-4999-8999-999999999999';
 const PAGE_ID = '44444444-4444-4444-8444-444444444444';
 const PATH_ID = '55555555-5555-4555-8555-555555555555';
 const TOPIC_ID = '66666666-6666-4666-8666-666666666666';
@@ -153,8 +154,8 @@ describe('Petros Stage 8 session intent resolver', () => {
 
   it('requires completed extraction and produces exact authorized page citations', async () => {
     const ready = {
-      item: { id: SOURCE_ID, title: 'Biology notes', kind: 'pdf', pageCount: 8, extractedTextReady: true, indexReady: true, status: 'ready', pagesDone: 8, version: 5 },
-      pages: [{ id: PAGE_ID, itemId: SOURCE_ID, pageIndex: 6, text: 'Chlorophyll absorbs light energy for the light-dependent reactions.', updatedAt: new Date('2026-08-12T06:00:00.000Z') }],
+      item: { objectIds: [OBJECT_ID], origin: {}, id: SOURCE_ID, title: 'Biology notes', kind: 'pdf', pageCount: 8, extractedTextReady: true, indexReady: true, status: 'ready', pagesDone: 8, version: 5 },
+      pages: [{ id: PAGE_ID, itemId: SOURCE_ID, objectId: OBJECT_ID, needsConfirm: false, ocrConfidence: null, confirmedAt: null, pageIndex: 6, text: 'Chlorophyll absorbs light energy for the light-dependent reactions.', updatedAt: new Date('2026-08-12T06:00:00.000Z') }],
     };
     const { service } = harness({ documentSource: vi.fn().mockResolvedValue(ready) });
     const intent = await service.resolve(principal, input('uploaded_document', { page: 7, section: 'Light reactions' }));
@@ -171,8 +172,8 @@ describe('Petros Stage 8 session intent resolver', () => {
 
   it('uses explicit revision questions from an uploaded document as the teaching curriculum', async () => {
     const ready = {
-      item: { id: SOURCE_ID, title: 'Module 1 revision', kind: 'docx', pageCount: 1, extractedTextReady: true, indexReady: true, status: 'ready', pagesDone: 1, version: 1 },
-      pages: [{ id: PAGE_ID, itemId: SOURCE_ID, pageIndex: 0, text: 'MODULE 1 REVISION QUESTIONS\n1. Why is grid computing considered the predecessor of cloud computing? Explain.\n2. How does IaaS divide responsibility?', updatedAt: new Date('2026-08-12T06:00:00.000Z') }],
+      item: { objectIds: [OBJECT_ID], origin: {}, id: SOURCE_ID, title: 'Module 1 revision', kind: 'pdf', pageCount: 1, extractedTextReady: true, indexReady: true, status: 'ready', pagesDone: 1, version: 1 },
+      pages: [{ id: PAGE_ID, itemId: SOURCE_ID, objectId: OBJECT_ID, needsConfirm: false, ocrConfidence: null, confirmedAt: null, pageIndex: 0, text: 'MODULE 1 REVISION QUESTIONS\n1. Why is grid computing considered the predecessor of cloud computing? Explain.\n2. How does IaaS divide responsibility?', updatedAt: new Date('2026-08-12T06:00:00.000Z') }],
     };
     const { service } = harness({ documentSource: vi.fn().mockResolvedValue(ready) });
 
@@ -186,11 +187,11 @@ describe('Petros Stage 8 session intent resolver', () => {
 
   it('caches a versioned document outline, surfaces the teacher schedule, and starts only the selected topic', async () => {
     const pages = [
-      { id: PAGE_ID, itemId: SOURCE_ID, pageIndex: 0, text: 'MODULE I CLOUD BASICS\nCloud computing pools shared resources.', updatedAt: new Date('2026-08-12T06:00:00.000Z') },
-      { id: PATH_ID, itemId: SOURCE_ID, pageIndex: 1, text: 'MODULE II SERVICE MODELS\nIaaS changes the responsibility boundary.', updatedAt: new Date('2026-08-12T06:10:00.000Z') },
+      { id: PAGE_ID, itemId: SOURCE_ID, objectId: OBJECT_ID, needsConfirm: false, ocrConfidence: null, confirmedAt: null, pageIndex: 0, text: 'MODULE I CLOUD BASICS\nCloud computing pools shared resources.', updatedAt: new Date('2026-08-12T06:00:00.000Z') },
+      { id: PATH_ID, itemId: SOURCE_ID, objectId: OBJECT_ID, needsConfirm: false, ocrConfidence: null, confirmedAt: null, pageIndex: 1, text: 'MODULE II SERVICE MODELS\nIaaS changes the responsibility boundary.', updatedAt: new Date('2026-08-12T06:10:00.000Z') },
     ];
     const ready = {
-      item: { id: SOURCE_ID, title: 'Cloud revision', kind: 'pdf', pageCount: 2, extractedTextReady: true, indexReady: true, status: 'ready', pagesDone: 2, version: 4, origin: { classMaterialId: TOPIC_ID } },
+      item: { objectIds: [OBJECT_ID], id: SOURCE_ID, title: 'Cloud revision', kind: 'pdf', pageCount: 2, extractedTextReady: true, indexReady: true, status: 'ready', pagesDone: 2, version: 4, origin: { classMaterialId: TOPIC_ID } },
       pages,
       allPages: pages,
     };
@@ -238,9 +239,9 @@ describe('Petros Stage 8 session intent resolver', () => {
   });
 
   it('keeps document preview source-grounded without waiting for live concept extraction', async () => {
-    const sourcePage = { id: PAGE_ID, itemId: SOURCE_ID, pageIndex: 0, text: 'DEMAND-PULL INFLATION\nDemand increases.\nCOST-PUSH INFLATION\nInput costs increase.', updatedAt: new Date() };
+    const sourcePage = { id: PAGE_ID, itemId: SOURCE_ID, objectId: OBJECT_ID, needsConfirm: false, ocrConfidence: null, confirmedAt: null, pageIndex: 0, text: 'DEMAND-PULL INFLATION\nDemand increases.\nCOST-PUSH INFLATION\nInput costs increase.', updatedAt: new Date() };
     const { service, gateway, loop } = harness({ documentSource: vi.fn().mockResolvedValue({
-      item: { id: SOURCE_ID, title: 'Inflation', version: 1, status: 'ready', extractedTextReady: true, indexReady: true, pageCount: 1, pagesDone: 1 },
+      item: { id: SOURCE_ID, objectIds: [OBJECT_ID], origin: {}, kind: 'pdf', title: 'Inflation', version: 1, status: 'ready', extractedTextReady: true, indexReady: true, pageCount: 1, pagesDone: 1 },
       pages: [sourcePage], allPages: [sourcePage],
     }) });
     const intent = await service.resolve(principal, input('uploaded_document', { section: 'User source locator' }));

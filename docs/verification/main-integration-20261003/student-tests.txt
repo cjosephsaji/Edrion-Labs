@@ -1,0 +1,73 @@
+The CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.
+
+ RUN  v2.1.9 /Volumes/Chris/Edrion Labs/apps/student-web
+
+(node:84861) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/components/petros/petros-repair-session.spec.tsx (27 tests) 2978ms
+   ✓ Petros Stage 4 typed move UI > preserves editable diagram labels, expanded state, and the nonvisual description 678ms
+   ✓ Petros five-part session progression > provides a working completion action for every checkpoint and closes only after step five 539ms
+(node:85053) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/components/petros/petros-mentor.spec.tsx (18 tests) 5736ms
+   ✓ embodied Petros portal agent > walks through Explore and then opens the requested portal page 2041ms
+   ✓ embodied Petros portal agent > takes the student to the item they explicitly selected instead of the global priority 2040ms
+   ✓ embodied Petros portal agent > sends natural language directly from the character and follows navigation replies 681ms
+ ✓ src/components/petros/petros-program-workspace.spec.tsx (9 tests) 2045ms
+   ✓ shared Petros program workspace > preserves the same acknowledged scene across lesson and companion and retries a lost reply with the exact command 359ms
+   ✓ shared Petros program workspace > shows intervention switches at displayed time and replays their history when seeking 684ms
+   ✓ shared Petros program workspace > resumes narration from the last confirmed character across the expanded view and returns the unsaved draft 306ms
+ ✓ src/components/petros/petros-reflection.spec.tsx (9 tests) 1038ms
+ ✓ src/components/petros/petros-companion.spec.tsx (10 tests) 536ms
+ ✓ src/components/petros/petros-context-entry.spec.tsx (6 tests) 471ms
+ ✓ src/components/petros/petros-inflation-pilot.spec.tsx (8 tests) 732ms
+ ✓ src/components/petros/petros-projectile-explorer.spec.tsx (4 tests) 438ms
+ ✓ src/components/petros/petros-document-door.spec.tsx (4 tests) 542ms
+ ✓ src/components/petros/petros-compatibility-surfaces.spec.tsx (6 tests) 406ms
+ ✓ src/components/petros/petros-artifact-curation.spec.tsx (3 tests) 379ms
+   ✓ Petros explicit artifact curation > does not preselect a proposal and saves the student-edited version only after explicit selection 327ms
+ ✓ src/components/app-shell/app-shell.spec.tsx (5 tests) 808ms
+   ✓ Explore quick navigation > adds favourites beyond the five defaults and preserves them after remounting 664ms
+ ✓ src/components/petros/petros-teach-back.spec.tsx (3 tests) 90ms
+ ✓ src/components/petros/petros-visual-explorer.spec.tsx (4 tests) 153ms
+(node:85414) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/app/(app)/materials/page.spec.tsx (3 tests) 121ms
+ ✓ src/components/petros/use-document-question.spec.tsx (4 tests) 57ms
+ ✓ src/components/petros/petros-document-teaching.spec.tsx (3 tests) 213ms
+ ✓ src/components/petros/use-petros-voice.spec.tsx (6 tests) 66ms
+ ✓ src/components/petros/petros-reviewed-objective-picker.spec.tsx (7 tests) 89ms
+ ✓ src/components/petros/petros-workspace-note-save.spec.tsx (3 tests) 58ms
+ ✓ src/components/petros/material-preparation-status.spec.tsx (7 tests) 95ms
+ ✓ src/app/(app)/courses/[id]/page.spec.tsx (2 tests) 93ms
+ ✓ src/components/materials/document-viewer.spec.tsx (14 tests) 68ms
+ ✓ src/components/petros/petros-continuity.spec.tsx (2 tests) 173ms
+ ✓ src/components/petros/petros-spatial.spec.ts (8 tests) 10ms
+ ✓ src/components/petros/petros-document-study.spec.tsx (2 tests) 90ms
+ ✓ src/components/petros/petros-teaching-block-renderer.spec.tsx (3 tests) 61ms
+ ✓ src/lib/petros-offline-notes.spec.ts (5 tests) 4ms
+ ✓ src/components/assignment-list-screen.ui.spec.tsx (1 test) 66ms
+ ✓ src/components/petros/petros-learning-resume.spec.tsx (4 tests) 54ms
+ ✓ src/components/petros/petros-input-modes.spec.tsx (2 tests) 85ms
+ ✓ src/app/(auth)/login/page.spec.tsx (4 tests) 72ms
+ ✓ src/components/app-shell/navigation-feedback.spec.tsx (2 tests) 41ms
+ ✓ src/components/petros/petros-lesson-narration.spec.ts (2 tests) 2ms
+stderr | src/features/learning-studio/integrals-teaching-studio.spec.tsx > integrals teaching studio > requires an explicit mode choice before teaching starts
+You have Reduced Motion enabled on your device. Animations may not appear as expected.
+
+ ✓ src/features/learning-studio/integrals-teaching-studio.spec.tsx (3 tests) 64ms
+ ✓ src/components/module-page.spec.tsx (2 tests) 39ms
+ ✓ src/components/petros/petros-artifact-library.spec.tsx (1 test) 83ms
+ ✓ src/components/petros/petros-learning-evidence.spec.ts (4 tests) 6ms
+ ✓ src/components/petros/petros-narrated-text.spec.tsx (2 tests) 15ms
+ ✓ src/features/learning-studio/presentation-adapter.spec.ts (2 tests) 1ms
+ ✓ src/components/assignment-list-screen.spec.ts (3 tests) 1ms
+ ✓ src/components/petros/petros-math.spec.tsx (3 tests) 22ms
+ ✓ src/app/(app)/learn/learn-links.spec.tsx (6 tests) 54ms
+ ✓ src/components/design-system/action-button.spec.tsx (1 test) 32ms
+
+ Test Files  44 passed (44)
+      Tests  227 passed (227)
+   Start at  23:13:08
+   Duration  30.33s (transform 3.87s, setup 3.00s, collect 21.38s, tests 18.19s, environment 9.17s, prepare 1.61s)
+

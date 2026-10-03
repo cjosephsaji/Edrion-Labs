@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-26T15:05:37.853940+00:00",
+  "finishedAt": "2026-09-26T15:05:59.174871+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/institution-web",
+    "build"
+  ],
+  "exitCode": 0,
+  "log": "final-r6-institution-web-build-20260926.log"
+}

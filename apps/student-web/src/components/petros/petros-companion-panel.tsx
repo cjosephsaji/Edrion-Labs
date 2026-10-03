@@ -25,6 +25,8 @@ import type {
 } from '@edrion/schemas';
 import { formatApiError, newIdempotencyKey, useStudentApi } from '@/lib/api-client';
 import { usePetrosCompanion } from './petros-companion-context';
+import { PetrosProgramWorkspaceCompanion } from './petros-program-workspace';
+import { PetrosTeachingReference } from './petros-teaching-block-renderer';
 import { PetrosDoorButton } from './petros-door-button';
 import styles from './petros-companion-panel.module.css';
 
@@ -262,6 +264,7 @@ export function PetrosCompanionPanel({ studentName, showLauncher = true }: { stu
           <p className={styles.unavailable}>{reason ?? 'I cannot read this screen.'}</p>
         )}
 
+        <PetrosProgramWorkspaceCompanion />
         <div className={styles.log} ref={logRef} aria-live="polite" aria-atomic="false">
           {messages.length === 0 ? (
             <div className={styles.opening}>
@@ -398,6 +401,9 @@ function Block({
 }) {
   const companion = usePetrosCompanion();
   switch (block.type) {
+    case 'teaching_reference':
+      return <PetrosTeachingReference reference={block} />;
+
     case 'text':
       return <p className={styles.text}>{block.text}</p>;
 

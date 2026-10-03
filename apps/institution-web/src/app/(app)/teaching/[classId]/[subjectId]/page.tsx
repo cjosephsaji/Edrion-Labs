@@ -1,4 +1,5 @@
 'use client';
+import { MaterialPreparationStatus } from '@/components/materials/material-preparation-status';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useMemo, useRef, useState } from 'react';
@@ -17,6 +18,8 @@ import {
 } from '@/lib/course-content';
 import { useAssignment, usePublishMaterial } from '@/lib/teaching';
 import { formatPortalError } from '@/lib/portal-client';
+import { PetrosMaterialCorrectionReview, PetrosTeacherInterventionPanel } from '@/components/teaching/petros-phase4-teacher-tools';
+import { PetrosPhase6LessonAuthor } from '@/components/teaching/petros-phase6-lesson-author';
 
 const TEXTAREA =
   'w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-text-primary shadow-xs ' +
@@ -64,8 +67,15 @@ export default function TeachingWorkspacePage() {
         label: 'Class updates',
         content: <UpdatesTab classId={classId} subjectId={subjectId} contextIds={contextIds} />,
       },
+      {
+        key: 'petros-lesson',
+        label: 'Petros lesson',
+        content: assignment
+          ? <PetrosPhase6LessonAuthor assignment={assignment} classId={classId} subjectId={subjectId} />
+          : <p className="p-4 text-sm text-text-muted">Load the current class and subject authority before authoring a lesson.</p>,
+      },
     ],
-    [classId, subjectId, contextIds],
+    [assignment, classId, subjectId, contextIds],
   );
 
   return (
@@ -296,7 +306,7 @@ function FilesTab({ classId, subjectId, contextIds }: TabProps) {
       <section className="rounded-lg border border-border bg-surface p-4">
         <h2 className="text-sm font-semibold text-text-primary">Share a file</h2>
         <p className="mt-0.5 text-xs text-text-muted">
-          Choosing a file publishes it to this class straight away. PDF, Word, slides, or images, up to 50 MB.
+          Choosing a file publishes it to this class straight away. PDF, Word, slides, or images, up to 20 MiB. PDF text preparation continues after sharing.
         </p>
 
         <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
@@ -345,6 +355,8 @@ function FilesTab({ classId, subjectId, contextIds }: TabProps) {
                     {m.kindLabel} · shared {new Date(m.createdAt).toLocaleDateString()}
                     {!m.subjectId && ' · not filed under a subject'}
                   </p>
+                  <MaterialPreparationStatus materialId={m.id} />
+                  <PetrosMaterialCorrectionReview materialId={m.id} materialVersion={m.version} materialTitle={m.title} />
                 </div>
               </div>
               <Button
@@ -361,6 +373,7 @@ function FilesTab({ classId, subjectId, contextIds }: TabProps) {
           ))}
         </ul>
       )}
+      <PetrosTeacherInterventionPanel classId={classId} subjectId={subjectId} />
     </div>
   );
 }

@@ -1,0 +1,2941 @@
+{
+  "schemaVersion": "petros.phase5.artifact-index.v1",
+  "generatedAt": "2026-10-03T09:00:45.954321+00:00",
+  "files": 586,
+  "artifacts": [
+    {
+      "path": "docs/verification/petros-phase5-20261003/api-integration-preliminary.json",
+      "bytes": 1272,
+      "sha256": "1a741e867164bf2bd35fa92f1cce28f56b91d0dfae5647efc2539c03f6894aca"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/api-integration-preliminary.log",
+      "bytes": 27463,
+      "sha256": "fbc67c2abc6a9ca40a83024b6d8656d4d2be4d61420905e7138225b35785cea0"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/api-typecheck-preliminary-r3.json",
+      "bytes": 317,
+      "sha256": "5ed54207026b0b88b7182a8679efb4a368853657a3747264abdbd5a1fa268c20"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/api-typecheck-preliminary-r3.log",
+      "bytes": 290,
+      "sha256": "437184550fd4eb02f71e04626d748b87bb4c75b465f94a34aff7bfe9d7f16065"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-circuits-dc-series-viewport.png",
+      "bytes": 199752,
+      "sha256": "d78ef2d71fa700a821a39e0be6fa742955624cb9777f8efc11ee9e88a09e6be6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-circuits-dc-series.png",
+      "bytes": 668788,
+      "sha256": "53ae82b89f434fdd1738fe2baff9be3b47770c0844437724a46f808136738063"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-circuits-rc-series-viewport.png",
+      "bytes": 196730,
+      "sha256": "35654325177c9bfea22289f716d84ce48515c8e0892314dfdcc350bc83cc6085"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-circuits-rc-series.png",
+      "bytes": 702663,
+      "sha256": "29dd4223bb2db0438b6129f1189985becf6bb3431cc4c39febf6eacd3c724496"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-continuity-home.png",
+      "bytes": 149453,
+      "sha256": "19f61ea97003aa49357f27110db9e5ea86a123b9a1bd55f3c34b5c72418ceda2"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-continuity-memory-mobile.png",
+      "bytes": 218550,
+      "sha256": "1a821b40dec2900fb1c18975f6c2281eb5be9b676d2cc39812251374bbea09eb"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-continuity-memory.png",
+      "bytes": 209615,
+      "sha256": "f3121e0e83c9446a241660e805a1458c95b09a53be5e652c713c02f85fdabb5d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-continuity-next-day-mobile.png",
+      "bytes": 149343,
+      "sha256": "eb30ad7abe627ce21cf2c62049fd25be97df525f85c08dc2b2b79b8cba05f527"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-continuity-offline-sync.png",
+      "bytes": 603859,
+      "sha256": "d00614d0e0290ec6ebdcce69c187c4ef5a54ccf0943226185a5756211ddde814"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-held-out-combined-viewport.png",
+      "bytes": 177841,
+      "sha256": "b0108c0c6b37125fee98c919082b5c5aeb7366bb7193851b24e800c8bf210c80"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-held-out-combined.png",
+      "bytes": 516840,
+      "sha256": "1e28af8ab86ef5954f10d0bb5b3eee98502b71afa4ece8defb69ad50433fbc1c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-journey.json",
+      "bytes": 20376,
+      "sha256": "5f73d981cea056d951aaf61a8f13b57dc5c73920b0bfbe9022670e7722b043f7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-low-bandwidth-optional-visual.png",
+      "bytes": 450577,
+      "sha256": "b148c0ed5746f8b62b5a69f8c1b70717dce509df3c45f560754031d93b8abc05"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-mobile.png",
+      "bytes": 67519,
+      "sha256": "ee45dcc69c0f2ff9ac68e192d6597d05212bd119366d46609fb73ee7b0db573f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-notebook-review-flow.png",
+      "bytes": 106931,
+      "sha256": "d6ed3df9527afe4da1f53fb0e95309121534ebc654ac400fec5eec4947be1f71"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-physics-pendulum-ideal-viewport.png",
+      "bytes": 194850,
+      "sha256": "5d7e7588fc4d54aa938f36345235e76e7515132a3525b2e618932fe9bb814312"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-physics-pendulum-ideal.png",
+      "bytes": 649743,
+      "sha256": "24fdbdd20934d6e20a67273d80a6a43924c87060d65455133e41051733e799a6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-render-spatial-viewport.png",
+      "bytes": 153072,
+      "sha256": "9b3cc36239acf91326a859308d66e6a6fad46a4c2d404994df278dd93c4a7044"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-render-spatial.png",
+      "bytes": 527140,
+      "sha256": "dc3e3751f2510b3add10a28e82e3cd4b72f5528d7fa1d4be933efd4e0b0d5fed"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-super-admin-operations-desktop.png",
+      "bytes": 183498,
+      "sha256": "d605637957856c5d6bd4969503a8e043a212ea98fa47dbe7c5bd6bb135329d31"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-super-admin-operations-mobile.png",
+      "bytes": 96008,
+      "sha256": "3d72205f663c616f0fc7076d4236cbb28f015eba1b5828365ba1e284223404b7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-teacher-correction-previews.png",
+      "bytes": 207296,
+      "sha256": "5a70622acf6d121e0eff9e7f9c78c573b8ca3e7c089a2f1ad739bcd2e022d4cc"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-teacher-correction-reviewed.png",
+      "bytes": 222448,
+      "sha256": "1b634554505d2f8e34d7c32e0074bfe720b86105763d2a0b87080523832d7d84"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-teacher-intervention-preview.png",
+      "bytes": 170539,
+      "sha256": "ab9bfc9651f2cda39cde372195a752cb8a125918c30f1060b41c11e277ed1c6b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-teacher-intervention-reviewed-cancelled.png",
+      "bytes": 199864,
+      "sha256": "0bd98829aa8af810b4642689a505aff3721c20275a6d0498a8feab0807d32746"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-text-enlargement.png",
+      "bytes": 527225,
+      "sha256": "ba04c5fc16508c087b648b10e2180f6be18ea4b65de057f51428ea12c70ce9b7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/petros-phase5-institution-web.log",
+      "bytes": 1095,
+      "sha256": "ed1e2c7989ecc9fe5be326220760537ed6bd76768dfa3d2dbe10e856099bf372"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/petros-phase5-server-summary.json",
+      "bytes": 29476,
+      "sha256": "0b6c1a2f169f2da1f6ed324d0a7d42f2c5e49ed1387c5b29d8e880c527c30db2"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/chromium/petros-phase5-super-admin-web.log",
+      "bytes": 588,
+      "sha256": "b2436cac7646643a3ead0f12159dd5568d30c7e5ec9e2c23d76dd12fb43af349"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-circuits-dc-series-viewport.png",
+      "bytes": 245804,
+      "sha256": "b5a9c05402012ef31d54fad5f7f868690ce102c28f45d001c60d0d424e6ae271"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-circuits-dc-series.png",
+      "bytes": 947183,
+      "sha256": "ed1e6bbd8b2f7b5abc3bb2292c4bf37d1f9742cb35e17b789b82fa54b2a544d3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-circuits-rc-series-viewport.png",
+      "bytes": 247577,
+      "sha256": "8b742f0161bbb6515caf8c7e5d0a74c638973a07d786bec8af3fea49c05e9fc1"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-circuits-rc-series.png",
+      "bytes": 995838,
+      "sha256": "da2b10386992fd06cc0c8011aac747ae67cf2ce56b12d0320cb3defa417d897a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-continuity-home.png",
+      "bytes": 180611,
+      "sha256": "3d26128d7f4f59c2f93dbf4f1a518274676a317eb16b1195e53e345b81decf13"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-continuity-memory-mobile.png",
+      "bytes": 264030,
+      "sha256": "cb1698f02b6e7125ed0f38faa3062a10d0998a01b822d02d3df3f379bab91779"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-continuity-memory.png",
+      "bytes": 257245,
+      "sha256": "0ab84c5054ff7e4555d7b0a1b200d01844e2cd68bc0516e56efd6eeb02af229c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-continuity-next-day-mobile.png",
+      "bytes": 180481,
+      "sha256": "db9842fd55c15c98d2fec743fa26108aec591a5812da2f71d5ff7cd6936b6b97"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-continuity-offline-sync.png",
+      "bytes": 897803,
+      "sha256": "b879721852a16d5b4b414476558855b24f1d336d261d1e12bbc613255506d9ad"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-held-out-combined-viewport.png",
+      "bytes": 259190,
+      "sha256": "609a88e12f4746992d661f4f81e4779edcbbc8b6a5f31ea358f12d21fa864edf"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-held-out-combined.png",
+      "bytes": 669557,
+      "sha256": "1ccafc7891cdcba4d4694336c3b96f30eba0052b19ba921971f380f55080354c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-journey.json",
+      "bytes": 20338,
+      "sha256": "1cc95b660be4d606864dc4440aa791c47e2b31c68c930024770d3e267ba0f64d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-low-bandwidth-optional-visual.png",
+      "bytes": 596804,
+      "sha256": "1b9b0a031e6d6e8d6053a0478b9c1dccd64931d2d140e26ff4a15eb713d8a756"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-mobile.png",
+      "bytes": 88939,
+      "sha256": "9c224846056728d2fc9a37ab9ec8a8a95d1a281078b8cb5481f13103e56ec07c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-notebook-review-flow.png",
+      "bytes": 137190,
+      "sha256": "13d0c2f25095d1c623a1a79ef7f32dd69c8a29d6065c4ab8890b6b5f15d9019c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-physics-pendulum-ideal-viewport.png",
+      "bytes": 268947,
+      "sha256": "33d8710d977e6ed501442378118082501413afd2dfbfbbe9a537063706c79d21"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-physics-pendulum-ideal.png",
+      "bytes": 886919,
+      "sha256": "f6fc78392ce38a4be357a761a807612260c75ca4d014401c622e40088ccde90f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-render-spatial-viewport.png",
+      "bytes": 196881,
+      "sha256": "d69c3d1379d8d95c05c7729d3ca26a1c44ae74e2a2733936d0221815e911ed54"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-render-spatial.png",
+      "bytes": 761574,
+      "sha256": "53ea05211877ab3c2e4361ffcd5cbb06afcbddcf23fd45402455b03f126879ba"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-super-admin-operations-desktop.png",
+      "bytes": 333850,
+      "sha256": "221217a7f316cb7184bad9f0bf4f7d1077e2e204bc39703f7d2cfa56b9fa0b8c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-super-admin-operations-mobile.png",
+      "bytes": 159383,
+      "sha256": "12fb00751b1d63a10c93e682ac47f92f84ceefb03d079d8b50e2c4b0e4e1b503"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-teacher-correction-previews.png",
+      "bytes": 279919,
+      "sha256": "f9fdedbfbdc8d1228ac563e67b4d0dafbdec510514955af2af7a5e149bad2e5f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-teacher-correction-reviewed.png",
+      "bytes": 318734,
+      "sha256": "582ab8f880d3deeb899633dd42353524af0d75a171b7059e5e018b7aa518489a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-teacher-intervention-preview.png",
+      "bytes": 285836,
+      "sha256": "373cf0c43df84a5aad6d0e4aebb18ba3f76ca4402e890280fa52efb83ab0adfa"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-teacher-intervention-reviewed-cancelled.png",
+      "bytes": 334434,
+      "sha256": "5bf72e1ee236abee7bb4ae78532440bb84449ade0c73f8efdfa95ccd1a4daf2a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-text-enlargement.png",
+      "bytes": 666339,
+      "sha256": "7a3f0861f4d07d67785986193d3c327bbb006b9fa01b720277823013d3bdf9f8"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/petros-phase5-institution-web.log",
+      "bytes": 949,
+      "sha256": "da6b09af72f3a1cd216d9abbbfc8edf25be3fe7d532c33bb320eb6d47efc5717"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/petros-phase5-server-summary.json",
+      "bytes": 29476,
+      "sha256": "1b4737045e35cc18bd4454c86607e88c8ce044f5f0a4630a2053f341b1c3534d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser/webkit/petros-phase5-super-admin-web.log",
+      "bytes": 494,
+      "sha256": "cd7be9af3b15b499657d3c1898eaa5eb6ba6e1386b7cd59fe5b5cb8927439564"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-apfs-runtime-copy.json",
+      "bytes": 546,
+      "sha256": "db04dd820812c68925d17c6fc92d1cbdc495ccccec5772a0535f7b03af0cfc39"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-apfs-runtime-copy.log",
+      "bytes": 562,
+      "sha256": "57da9fa6bfc1c350e5c37a7ff056c47cfc6ae3bc84e6e321023ea2114621e5cf"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-apfs-smoke.json",
+      "bytes": 1116,
+      "sha256": "012ad683471b3ec681b854f8a6b61e8e71298be3f7623aeeeceb253db1a36dbc"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-apfs-smoke.log",
+      "bytes": 4829,
+      "sha256": "139da7f3ff34578468824047b8d41e2cf67615a97a8f6560f6f0023ee346e4ee"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r5-nav-failed/browser-circuits-dc-series-viewport.png",
+      "bytes": 246490,
+      "sha256": "c0124120ee13b7b0d96db4a391798dae03a07d36ccba60eaa601ee54b1ffbeeb"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r5-nav-failed/browser-circuits-dc-series.png",
+      "bytes": 948459,
+      "sha256": "145df18a0d1fba8dd5ecd0703b3481b7d4da464e2b1e63e7ffbe94a6f7207b4d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r5-nav-failed/browser-circuits-rc-series-viewport.png",
+      "bytes": 254682,
+      "sha256": "c3c2c05272d73e84b3b27a5f192d5a085b386af45bf42ac8a36bd064dab8b62b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r5-nav-failed/browser-circuits-rc-series.png",
+      "bytes": 984794,
+      "sha256": "59cdf399c5edd6714d3d217f59d1900860321e7c8b45cfdc3a7f19d8bcdbcee9"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r5-nav-failed/browser-continuity-memory.png",
+      "bytes": 257245,
+      "sha256": "0ab84c5054ff7e4555d7b0a1b200d01844e2cd68bc0516e56efd6eeb02af229c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r5-nav-failed/browser-continuity-offline-sync.png",
+      "bytes": 942950,
+      "sha256": "783b2ea2e76a1402192afe14797814384ba0a7d964a4343bd530ecdeaafa801d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r5-nav-failed/browser-failure.png",
+      "bytes": 35283,
+      "sha256": "1c816f25c4eca16a8ab0fd1d923cc6cab25720a979fe24dab2de918c2a51894f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r5-nav-failed/browser-failure.txt",
+      "bytes": 1950,
+      "sha256": "0f8d5623754e9cb8852bb8fddf1d9b45a9a283d1fc967edc0756702e02022819"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r5-nav-failed/browser-held-out-combined-viewport.png",
+      "bytes": 231827,
+      "sha256": "ae3d3abed3e3a9b7f9d4f529c0c98c4826f5aa0539ee2edd2fc82e79ec9ed3a3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r5-nav-failed/browser-held-out-combined.png",
+      "bytes": 754586,
+      "sha256": "9513eedd5b2466935dda7e5b8d8f7001911f4d11aadb30c43b2480227a05ad00"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r5-nav-failed/browser-mobile.png",
+      "bytes": 88939,
+      "sha256": "9c224846056728d2fc9a37ab9ec8a8a95d1a281078b8cb5481f13103e56ec07c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r5-nav-failed/browser-physics-pendulum-ideal-viewport.png",
+      "bytes": 269365,
+      "sha256": "0769ca530464a5a8bb0779fc863cff89a5c4ccaa15833b0b1933425c96cf0d37"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r5-nav-failed/browser-physics-pendulum-ideal.png",
+      "bytes": 887658,
+      "sha256": "94036127a2173fcc679d369480ad0526dde17e8e79524d9b3cd93c7f8772839f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r5-nav-failed/browser-render-spatial-viewport.png",
+      "bytes": 196798,
+      "sha256": "f9e74e11c64b4fb2f968fb6472ccf5f7fbfacf24f4244001360898a0aaece834"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r5-nav-failed/browser-render-spatial.png",
+      "bytes": 761488,
+      "sha256": "083cb107708e1292e6147551a753462691622da32a3381d9b11d61a511b13a6e"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r5-nav-failed/browser-text-enlargement.png",
+      "bytes": 665943,
+      "sha256": "7898f18994daf29f39a6a180b79600426ced6c8269fee57ff8becacd642ad4b4"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-circuits-dc-series-viewport.png",
+      "bytes": 246453,
+      "sha256": "dfb8816cc84996e711173b8d58391655964e0b062be89b926accdfa811659e2f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-circuits-dc-series.png",
+      "bytes": 948457,
+      "sha256": "d3900bca6f88f0659ab4e1f88359283060d70c410f04768f81bbea5bad42b6d5"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-circuits-rc-series-viewport.png",
+      "bytes": 249585,
+      "sha256": "04aae3a6c7bd0f0b8963f585963329b013b980115460e1ab5b8505e324ea2776"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-circuits-rc-series.png",
+      "bytes": 997638,
+      "sha256": "2657a66daf414d5088c0c5cc8ab231de6aacfeed5e29cea2f7884be2355ea200"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-continuity-home.png",
+      "bytes": 180450,
+      "sha256": "c496bc50fcc0dc69ee2fd6767ef958f386faefe9afd27764859c7441edf304c3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-continuity-memory-mobile.png",
+      "bytes": 264030,
+      "sha256": "cb1698f02b6e7125ed0f38faa3062a10d0998a01b822d02d3df3f379bab91779"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-continuity-memory.png",
+      "bytes": 257245,
+      "sha256": "0ab84c5054ff7e4555d7b0a1b200d01844e2cd68bc0516e56efd6eeb02af229c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-continuity-next-day-mobile.png",
+      "bytes": 180335,
+      "sha256": "8aafd1ea1c33c5000981e2fea8c192c5b394a1669fd768bfc4a3df2e549c4cef"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-continuity-offline-sync.png",
+      "bytes": 938940,
+      "sha256": "201eb107d9f681db3508028be9d50e98d882321552bc7232c5af6504992d2925"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-failure-super-admin.png",
+      "bytes": 508960,
+      "sha256": "3f26d1f88b639d89296120187bb2dc99f9e55b899fc4ced2282347eb48683975"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-failure-super-admin.txt",
+      "bytes": 2890,
+      "sha256": "0003562680cae9364c2549aaca96cf5cd68b852118f083ba1859f1b92c708957"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-failure-teacher-errors.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-failure-teacher.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-failure.png",
+      "bytes": 172655,
+      "sha256": "5376b504757ed31ae1a12b4a400dc3d0bb4cee05ed5b58ad549c842a853273b6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-failure.txt",
+      "bytes": 1091,
+      "sha256": "f3f6d8ae9469cac781e68f52cf920d8a7c5491d48b45eaa59dd7d1f28368eabc"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-held-out-combined-viewport.png",
+      "bytes": 258856,
+      "sha256": "beea18b85ec4b67540c3e025be78d2ed82bb305d1d2e4c800892328e0f46c848"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-held-out-combined.png",
+      "bytes": 669096,
+      "sha256": "4f5a987097eb6f04fabf6aac0755321675e9f2ded028401382b8d96c9420e39b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-low-bandwidth-optional-visual.png",
+      "bytes": 597043,
+      "sha256": "a557e2bb36571beb6adeadd6c8bdfaf7e342113cdf30aa5b96a6950c6ed06fdb"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-mobile.png",
+      "bytes": 88939,
+      "sha256": "9c224846056728d2fc9a37ab9ec8a8a95d1a281078b8cb5481f13103e56ec07c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-notebook-review-flow.png",
+      "bytes": 129277,
+      "sha256": "2a9f49abe069d8ca8a31e96e1108a7fa95d82e6f0cec3dc8591f7372129e8cf3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-physics-pendulum-ideal-viewport.png",
+      "bytes": 269477,
+      "sha256": "316fb417dda13b9e2be0ddbfe752ce9ac4881e4e15175cb2e3049ca6d2d006fb"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-physics-pendulum-ideal.png",
+      "bytes": 887971,
+      "sha256": "9938733f13246c95be66838f226cc66d4eb8bcb3bfbd5845c10f403da2940bc9"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-render-spatial-viewport.png",
+      "bytes": 196848,
+      "sha256": "aa6fa6b45549447f95c346d654e69c7265f14af6f84da4226ccae96e4db490fc"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-render-spatial.png",
+      "bytes": 761524,
+      "sha256": "925f9e0c4f9fcb866bbd20b3692910f77a65094e4ffee42d97652eb1e74a53c4"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-teacher-correction-previews.png",
+      "bytes": 280699,
+      "sha256": "ba13ccffa3e17893b6bd6da5eeacd786f8f65850fafd01c02a2dc5e52f45f8cb"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-teacher-correction-reviewed.png",
+      "bytes": 318921,
+      "sha256": "e8eabb566547f478cee64c3d6cc3a41bd2196b4e7c77f3797cd9d11916e9359e"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-teacher-intervention-preview.png",
+      "bytes": 285699,
+      "sha256": "335fb7fbc4d1c8f49158ed736b8053280520a9de3bba71896add572570154cf9"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-teacher-intervention-reviewed-cancelled.png",
+      "bytes": 333794,
+      "sha256": "687b6e2e800c5e48498c9e0ed0a4fdc920825ffbf81c7211a1ad3d6807aeee71"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-r6-landmark-failed/browser-text-enlargement.png",
+      "bytes": 666191,
+      "sha256": "6b99dab8e72f0b908d518f70eed79c1d8edc48dbad54bf58873394617b7a5687"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-webkit-focus-failure/browser-failure.png",
+      "bytes": 939816,
+      "sha256": "160817213185074641cf24407b449c5dc21e1b503e837a4a8b89ce7132228073"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-candidate-webkit-focus-failure/browser-failure.txt",
+      "bytes": 6530,
+      "sha256": "e51ce12e6a0ffbde1b38bb1a0ebf51d02c45f73657a7d3660e190d428ee56005"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-circuits-dc-series-viewport.png",
+      "bytes": 199870,
+      "sha256": "cc71f95dc24bbb87d08558afaaaaba978739130ea3115665bd0f0271ed80bb56"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-circuits-dc-series.png",
+      "bytes": 668897,
+      "sha256": "4dc73d2da74612004ddf70fd7b6a729e1c79e7377d3989451b8a908ed24cf36b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-circuits-rc-series-viewport.png",
+      "bytes": 197004,
+      "sha256": "704319bd02c5de0989324de3459ba6023315980b99df6e35071003110ec183c1"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-circuits-rc-series.png",
+      "bytes": 702954,
+      "sha256": "e8347d89e47c19429bafdfefab7d8c51088bcc617c3d61bd7ba09444c34fa024"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-compatibility-smoke.json",
+      "bytes": 1313,
+      "sha256": "9c6d16c566e3edb5e070b50b1381fd071632587ac5d26cc0a4170be04f4ec0a7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-compatibility-smoke.log",
+      "bytes": 5194,
+      "sha256": "b114a3627e117e308baafd179b30609c9483f6d92c034acbaa21463639249df9"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-continuity-home.png",
+      "bytes": 148254,
+      "sha256": "0d8c904a082f3fde2b370547900962b03e6bb8dffd8a55523baf8541ca4979b4"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-continuity-memory-mobile.png",
+      "bytes": 218575,
+      "sha256": "62d5daa83362e116f463fe0d89ec06c0f07208032c6b2c9c61bccfa80b26dbcb"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-continuity-memory.png",
+      "bytes": 209642,
+      "sha256": "c1602bd37618b263e9aa1494b9dde2b2d8d97f8de38daeeef0d9177186a2f883"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-continuity-next-day-mobile.png",
+      "bytes": 148141,
+      "sha256": "2cba8085d6e1959bcdc03d997ee5afaf4d09801ccc3a53312d01aa674417bf24"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-continuity-offline-sync.png",
+      "bytes": 673572,
+      "sha256": "3ca6ddd923ae479b9744e5e4a1c948bfca60ddf31051b2c8a0ba9fa345705380"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-failure.png",
+      "bytes": 138243,
+      "sha256": "28554b766835639ad0032d141c13c47d0cb2de2a967b615ef2fd92cba0c45977"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-failure.txt",
+      "bytes": 1091,
+      "sha256": "f3f6d8ae9469cac781e68f52cf920d8a7c5491d48b45eaa59dd7d1f28368eabc"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-firefox-headed-smoke.json",
+      "bytes": 827,
+      "sha256": "5f65c234479f2fed95a04196dfcf72a953d84266838587d5d26fc7d4536cb4c9"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-firefox-headed-smoke.log",
+      "bytes": 5788,
+      "sha256": "9bc546248429b8de3865f6e69078580b50264e9e6ac2f7c2d1cc9b1490b5b3f4"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-held-out-combined-viewport.png",
+      "bytes": 176376,
+      "sha256": "3fe80182f3018e664f079ba71870c3c05040e226d01237381587eab4a2efb02a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-held-out-combined.png",
+      "bytes": 515177,
+      "sha256": "5339dcc70b63d648fdbcacf854e09bc69d31163d0a59e79dd042e952423a220c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r10.json",
+      "bytes": 390,
+      "sha256": "ac5fa4fb1792c7912407b8bf14c65e9d814a35ea414c55f742bc1f3cbe41985f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r10.log",
+      "bytes": 1453,
+      "sha256": "71d66d303d8472ec2ec4d528834099d74ea5520f2a69698f8b0d3e7f2c9237a7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r11.json",
+      "bytes": 481,
+      "sha256": "82ef78e101a06f606a6701e392956aa880457c75b49e87711589316b51beb847"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r11.log",
+      "bytes": 1090,
+      "sha256": "b37559c749976d610b1cef07b64aecbc23bfd187e633d547a824d830384575b7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r12.json",
+      "bytes": 481,
+      "sha256": "79e75f541ecc7942dab502789bad1cf048f1fc4bc0ba83925e9f01892215e9ef"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r12.log",
+      "bytes": 987,
+      "sha256": "cdaca0a6f5551db41f3d3959d7cb6f8d567766c0c347811317fc7ce41ec2a927"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r13.json",
+      "bytes": 481,
+      "sha256": "7c7baf743f56bde21333f0bc56fecda71c386c7f22df55e0c17cbd1769383553"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r13.log",
+      "bytes": 15367,
+      "sha256": "0052daa9fe96bcd161dc733ad6809aa5a35a93b754a010a86bd733026b8f73a3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r2.json",
+      "bytes": 390,
+      "sha256": "12b8bbefc322998da582f5d7a4aeb18472bf0ad599d3882a52b73a2962d39d62"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r2.log",
+      "bytes": 914,
+      "sha256": "675b01ad5826e7b6851036c4a9ddc8673b96d9e54fb45b7d2b90c0cfff74fa2a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r3.json",
+      "bytes": 390,
+      "sha256": "af21bc8d798be4a5b542edfadbe9baddcb712b4c1fae78f580822abc66bf976f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r3.log",
+      "bytes": 776,
+      "sha256": "fd0db07d5ea6af0a68fadc6ef2c9daf9bbd026c66c9a851c9d4881d2f21b2d3d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r4.json",
+      "bytes": 390,
+      "sha256": "27f78c33b643b9afe5cf8e7beda0bcb47abb3edea7822d6c4b807d1ed9d3169d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r4.log",
+      "bytes": 989,
+      "sha256": "9908245916d8685a8e0d19deb8473560511aa8046ed66d4de61fe8c92bd40d8c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r5.json",
+      "bytes": 390,
+      "sha256": "f1e47a5937939b7c9e99a0e93315538b01dc10ce707eea392b55ef1b7c41351d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r5.log",
+      "bytes": 1098,
+      "sha256": "4503e4ab3d892eab485f0aef9d6a7ff7119cc93906f46db87bc0a813f45df69f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r6.json",
+      "bytes": 390,
+      "sha256": "2529f69f19f07fe46565336b4dd11b5481c4c32319fbcf1329d5e1208672379a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r6.log",
+      "bytes": 891,
+      "sha256": "3b2ecd3bc71a5f0158c818f46a2092e55d2b3cef2b5d140d9c6aa581b4c6f499"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r7.json",
+      "bytes": 390,
+      "sha256": "b0bfbccc56796ba9cf4a2c157e7181ca15eaff1a67119edaf5d950d68034443b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r7.log",
+      "bytes": 1028,
+      "sha256": "16a100856b921c533368bc93e478f65d87431bb605a858158f84772b9d9e7a76"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r8.json",
+      "bytes": 390,
+      "sha256": "90cd666a21a137cae436be8816db4d894aba95c4bc3543dcb85a41e37905f580"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r8.log",
+      "bytes": 970,
+      "sha256": "1ba43659a580be77936b3563c6742222635e6664b5a0b4d03671732db825976c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r9.json",
+      "bytes": 390,
+      "sha256": "6dde9616a84923d99fa611413ecbbeda53e8edce06245dcadfdac70b298794e1"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary-r9.log",
+      "bytes": 4528,
+      "sha256": "5b87e4e157ef8591e09b96b174304db5e35cbdc5e442f56d7d77b43859e6eeed"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary.json",
+      "bytes": 390,
+      "sha256": "9f06427124e81ad1c2e1c0fd8b5cca7b51c2aee1308692222387f50b73db11a4"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-journey-preliminary.log",
+      "bytes": 2414,
+      "sha256": "105d4b8bc14337f883d6887b969c2cce7b72f098a38f39e3856e243a2b93fb51"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-low-bandwidth-optional-visual.png",
+      "bytes": 455846,
+      "sha256": "3f3644afb7b1986ac07aae0087748bc1deff305bfaceacbb70e8f4899166f38e"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-mobile.png",
+      "bytes": 67884,
+      "sha256": "bb470721ae7728ea80d2941259305bb6cf88c71bd360e368b16791b2d3a53a85"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-notebook-review-flow.png",
+      "bytes": 101761,
+      "sha256": "98116986ae5c167640101848404fa77e8d6cb4b2c403d4fc2ab06e312e6e98f4"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-physics-pendulum-ideal-viewport.png",
+      "bytes": 195132,
+      "sha256": "7c8fda1686ef8eb8b73c39311e753e1493cf22dcb796a183c399a2bc4043e697"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-physics-pendulum-ideal.png",
+      "bytes": 650058,
+      "sha256": "f014ff16da0e913f00046387ec4b1b7b6aee1f83c56e692ff4eb8860c8639ff5"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-circuits-dc-series-viewport.png",
+      "bytes": 200260,
+      "sha256": "962a9d04f86648e68c45e65067afb1f30da97ceb8539a396951cb62648119507"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-circuits-dc-series.png",
+      "bytes": 669379,
+      "sha256": "904fa80c74383fc795146d434dc6b76fe66b82fb2ae89e49c50a31705666eb3a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-circuits-rc-series-viewport.png",
+      "bytes": 198155,
+      "sha256": "3d17fba57f068b484b2197f56459f2ba0160aa5e8876d3e145b0d3fa462efd00"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-circuits-rc-series.png",
+      "bytes": 704170,
+      "sha256": "15b5a4ae63e605ba71e95a555d5c66e26a388847d31d5c721016855e48177ac5"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-continuity-home.png",
+      "bytes": 147091,
+      "sha256": "09f24fd8189c25188821a782be1cb46c79ef09853ce3ac67bc2c8082c8c89c4a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-continuity-memory-mobile.png",
+      "bytes": 159481,
+      "sha256": "06d0e2006a24df87c4ff7b0f39f7ba0dffc2e438f89ede92b6e04bdb38370af3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-continuity-memory.png",
+      "bytes": 209642,
+      "sha256": "c1602bd37618b263e9aa1494b9dde2b2d8d97f8de38daeeef0d9177186a2f883"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-continuity-next-day-mobile.png",
+      "bytes": 146981,
+      "sha256": "6fa7dc48f8097dcc3fa05a89a81fc2b008be71052fef66c98435ff156cfc083b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-continuity-offline-sync.png",
+      "bytes": 603898,
+      "sha256": "a43c44c71aca108ad8b1b419d82cc2afb13093a1ed7fe976cb9f0b60c9021a2a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-held-out-combined-viewport.png",
+      "bytes": 177091,
+      "sha256": "43b3304b93feb0aed4ab62fa3e1bc14aaa74cc88993446d20e6a772bff562a2c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-held-out-combined.png",
+      "bytes": 515992,
+      "sha256": "7b7783ea588a30bdfd83536069de36925d8faf77cd756782c0d812cfb2ccbcf0"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-journey.json",
+      "bytes": 20390,
+      "sha256": "e1de20a9f25c3172ce6dffd3cf1f648ff7e132f57648ee7f7735495077dfc0b6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-low-bandwidth-optional-visual.png",
+      "bytes": 449660,
+      "sha256": "ac67ee3ace9e5f4144e11aacc4b20868f8c810c489f778eae33a25f9ad142beb"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-mobile.png",
+      "bytes": 67865,
+      "sha256": "558803e89bd44224ffdd72b6044fa850c396a5665bdae30491ea6fa93640f126"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-notebook-review-flow.png",
+      "bytes": 101761,
+      "sha256": "98116986ae5c167640101848404fa77e8d6cb4b2c403d4fc2ab06e312e6e98f4"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-physics-pendulum-ideal-viewport.png",
+      "bytes": 194723,
+      "sha256": "e8b9fc7e7a0f0fcf7d033cd7859840debac28335c472980d420a5ae28539f07b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-physics-pendulum-ideal.png",
+      "bytes": 649530,
+      "sha256": "e3d9faf9654e915ba1b933e08a297bacf8a28d232227c48eb584832625d28f47"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-render-spatial-viewport.png",
+      "bytes": 153581,
+      "sha256": "c7713e9babba0117c44a39dd281381c4c7a66cf227694d515293faf250761bdf"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-render-spatial.png",
+      "bytes": 527695,
+      "sha256": "9b44c24ac745913d7eb56eb324f3d66c28c3cd542aafa6379148b3feb74f7ec9"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-super-admin-operations-desktop.png",
+      "bytes": 263805,
+      "sha256": "728ba2e6ff8c24d357346381dc9d96ace4c927903413463f5a51f143b3140cc7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-super-admin-operations-mobile.png",
+      "bytes": 154568,
+      "sha256": "e85ce91f303cb9a386fe1da26294db45c35d83b3df8d55a7ba896a2f9847b655"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-teacher-correction-previews.png",
+      "bytes": 206393,
+      "sha256": "d480fc263e3d27a6b8ebf9a289107e89281715d414657409e467f59bc0402aef"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-teacher-correction-reviewed.png",
+      "bytes": 221181,
+      "sha256": "e8f4c3eaed34d63be0e14b53346b3f1cca6026dfefc27229ceaa34d56df3e2b6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-teacher-intervention-preview.png",
+      "bytes": 170859,
+      "sha256": "28d2cfa6e13fe3d7de48b0b6cdc98d179b10c3e55a6b47c5b61b77c212f3a8a5"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-teacher-intervention-reviewed-cancelled.png",
+      "bytes": 200196,
+      "sha256": "ee2c70f9fe09f78ac591dda766b8f7e6c8e3395c6c03c441d9a5679c70f28880"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/browser-text-enlargement.png",
+      "bytes": 527926,
+      "sha256": "9b736eb313b0e23335113d5ae96a8518e9c9000e3c8bc6a351d91cfbb9711332"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/petros-phase5-institution-web.log",
+      "bytes": 1095,
+      "sha256": "f6d451f20420af839a3378a6e2d9be114c58b271753444502b082ec60b3688eb"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/petros-phase5-server-summary.json",
+      "bytes": 29476,
+      "sha256": "9584370546f9aacccbe4c7bc715941c412060bcd56c1f5b371a20966d64379b7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-chromium/petros-phase5-super-admin-web.log",
+      "bytes": 575,
+      "sha256": "33064cd6d6621697ab6b57be068f3249512f4a66224f62207de59ba5f1e497fc"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-webkit/browser-continuity-offline-sync.png",
+      "bytes": 941095,
+      "sha256": "46e5e9b60a9c3b6c494573a70328e3c5517e0012e08b8c7300c0a314cfa0952c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-webkit/browser-failure.png",
+      "bytes": 952628,
+      "sha256": "f8206127efd6be41ce2fe61655a4f29e0b4ce9a12aa0d483319cbbeb579acde5"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-pre-final-r4-webkit/browser-failure.txt",
+      "bytes": 6642,
+      "sha256": "ca0c6b251b9a49c1df22aaf2a242a2c1b18c689e13ce8da68874e5920c5cadd3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-preliminary-r12-failure/browser-failure.png",
+      "bytes": 672596,
+      "sha256": "1d0dadf940b7d378f10683e2fc7c6e029d4db1c391a366a2e226edd5f1568518"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-preliminary-r12-failure/browser-failure.txt",
+      "bytes": 6644,
+      "sha256": "fe5b64f7ebdba18bf98668f38ab57e9275360452069b5364c67320b119e99f22"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-preliminary-r3-artifacts/browser-continuity-offline-sync.png",
+      "bytes": 670738,
+      "sha256": "d9047967f396f128162b94fff729a3bf4739777dfbf7dfa1e5c59a4bfaf3acd5"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-preliminary-r3-artifacts/browser-failure.png",
+      "bytes": 748754,
+      "sha256": "43190d6860f9ccea60f16f2e2b4d19e9fb7fffab3612cc037ee644a264bb4078"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-preliminary-r3-artifacts/browser-failure.txt",
+      "bytes": 5994,
+      "sha256": "40e23e87e5dcd2b9fad0befedfc628e2e2ba51bd676b3581d7be0b9517d9af67"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-preliminary-r4-artifacts/browser-circuits-dc-series-viewport.png",
+      "bytes": 200600,
+      "sha256": "dab3b377487ab82c1554e7a454e7e3c75a4ac72eaef19fa052e1db378b3f7471"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-preliminary-r4-artifacts/browser-circuits-dc-series.png",
+      "bytes": 669596,
+      "sha256": "27bae435b669d49d7099f1b18684252416ef67653b1ce98ad7b1394405d87fa0"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-preliminary-r4-artifacts/browser-circuits-rc-series-viewport.png",
+      "bytes": 198045,
+      "sha256": "bbf5a25413cf9f2f428ecd5e9e04d12084e0fa8fd43f92406b630481221ee8f6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-preliminary-r4-artifacts/browser-circuits-rc-series.png",
+      "bytes": 704050,
+      "sha256": "a924496d06912eaa1416b57490580a8c99c0d9b85724bba61145f35a1d5e939b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-preliminary-r4-artifacts/browser-continuity-offline-sync.png",
+      "bytes": 645510,
+      "sha256": "baf3db7f9fa5c89d2e82bed1d6c344b4bb77754ca5c40a33d714c48937c91c54"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-preliminary-r4-artifacts/browser-failure.png",
+      "bytes": 535538,
+      "sha256": "1f382657a5bb1302f3ac1d74f4bf683f50f9fc67cfb9bc98181e723fc6b0c682"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-preliminary-r4-artifacts/browser-failure.txt",
+      "bytes": 4239,
+      "sha256": "51c14643de3869a87566c12d6e606f139e7ecc2177b36856adf5a250e0d2129e"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-preliminary-r4-artifacts/browser-held-out-combined-viewport.png",
+      "bytes": 176606,
+      "sha256": "c6c7e54432cd30563703648cb3d03b304d56b60d45fe162d296d05771b718f0d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-preliminary-r4-artifacts/browser-held-out-combined.png",
+      "bytes": 515422,
+      "sha256": "298c8fa2d37257b29a058166d45c9f46aa2030aa07efc7cbbafd979dc286ab64"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-preliminary-r4-artifacts/browser-physics-pendulum-ideal-viewport.png",
+      "bytes": 194633,
+      "sha256": "2e47eb65bfe51b7bfd440a7194cc8d8067ab0ab0ad1974d089801aa56f0b0c08"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-preliminary-r4-artifacts/browser-physics-pendulum-ideal.png",
+      "bytes": 649519,
+      "sha256": "03742f11cf43e7d992f3907e912d7791a0b483ab7a493048f00786703fa5af25"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-preliminary-r4-artifacts/browser-render-spatial-viewport.png",
+      "bytes": 153165,
+      "sha256": "b982df1e5b7e4926764a7eff341af046e7fc4bf7f05cc65e8a86d3fa2e897f5d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-preliminary-r4-artifacts/browser-render-spatial.png",
+      "bytes": 527241,
+      "sha256": "5f7079bca897cdf54675383a20a986b3bb6d2085354a81e6c9fd4926e215370c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r4-webkit-failed/browser-circuits-dc-series-viewport.png",
+      "bytes": 246508,
+      "sha256": "9dc30f352b9a702edfb63ecd2eda06106b759e93cf8ec176ff04d8d8010e9dcf"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r4-webkit-failed/browser-circuits-dc-series.png",
+      "bytes": 948505,
+      "sha256": "975e5557667fdc97332f85fdc8d9bea95b2083856fbd054658aac05b9c0a3d90"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r4-webkit-failed/browser-circuits-rc-series-viewport.png",
+      "bytes": 248741,
+      "sha256": "ae4c267f08b4543b49c2035476f8aecdbd6ca25bb8132c397d3b37a302c79238"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r4-webkit-failed/browser-circuits-rc-series.png",
+      "bytes": 996929,
+      "sha256": "870fb8b9eb1f7d6eb00a8716d6557be075e33f819561f4c9a18ed77ebdce1495"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r4-webkit-failed/browser-continuity-offline-sync.png",
+      "bytes": 944664,
+      "sha256": "b1aa40f8addeddb49b867c4ead71b9bd19c5a54292480f3cfcab80164157f6cc"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r4-webkit-failed/browser-failure.png",
+      "bytes": 35437,
+      "sha256": "a2c9a3c2ffab1e2f43e0aef19e611a9738964362c0cb85cc6e357ca52ee69904"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r4-webkit-failed/browser-failure.txt",
+      "bytes": 51,
+      "sha256": "4df8e9308b434348e823bdc336eb26686c05abb91108402802ef0db8ea280ded"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r4-webkit-failed/browser-held-out-combined-viewport.png",
+      "bytes": 258802,
+      "sha256": "c0f3498dc8e9556a314d70e6a3e7bbd768d7aaaae2c47e7882a1105db59e335a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r4-webkit-failed/browser-held-out-combined.png",
+      "bytes": 668650,
+      "sha256": "419e1a646ab1a52bd656411061d428b137e85b0a3a74b0aee465275b5b25c2a1"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r4-webkit-failed/browser-mobile.png",
+      "bytes": 88939,
+      "sha256": "9c224846056728d2fc9a37ab9ec8a8a95d1a281078b8cb5481f13103e56ec07c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r4-webkit-failed/browser-physics-pendulum-ideal-viewport.png",
+      "bytes": 269411,
+      "sha256": "ed4d4daa8e44f07affcefc8ab9d82a1e1d278418c629b570880895aa32eb79c6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r4-webkit-failed/browser-physics-pendulum-ideal.png",
+      "bytes": 888235,
+      "sha256": "f8194cc93373777c890b5319fd9a127a5a5ef8b51ff6b637144c0320e79db911"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r4-webkit-failed/browser-render-spatial-viewport.png",
+      "bytes": 196850,
+      "sha256": "fb36e0cb61dfd846299d814feeedef998c31c6a193601975f3b37a26abf924e3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r4-webkit-failed/browser-render-spatial.png",
+      "bytes": 761531,
+      "sha256": "63b8ea72979c6701006aca5a603031c6d2c42d241fe9aa8b7ddd2ae3b3604bed"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r4-webkit-failed/browser-text-enlargement.png",
+      "bytes": 666444,
+      "sha256": "1475d6c1d5de770a4dcbc1a7c00628604f29430b19534ac14ef8d8a0dd7a9bfe"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-circuits-dc-series-viewport.png",
+      "bytes": 255099,
+      "sha256": "abebe974b3d32eb4a22cbe5bee41566f950f966367147affd5ded4df8c3fa8cd"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-circuits-dc-series.png",
+      "bytes": 949242,
+      "sha256": "6204234a196a31aeef91d5b2273d1d6ee564ff2f6317856bafe2923cc80fc6ab"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-circuits-rc-series-viewport.png",
+      "bytes": 255133,
+      "sha256": "3c29e8620d95730db162e893a1082a2d1f728a5c493a1e80b187627979205480"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-circuits-rc-series.png",
+      "bytes": 985188,
+      "sha256": "13237026338c4488beb05697446fd483fbe5e94640b3cc01a0e6a93868c5c815"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-continuity-home.png",
+      "bytes": 180664,
+      "sha256": "b3d5349b72523bcaccaff2caa764e64ce04d987b0d05cceb46b952b964dea870"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-continuity-memory-mobile.png",
+      "bytes": 264030,
+      "sha256": "cb1698f02b6e7125ed0f38faa3062a10d0998a01b822d02d3df3f379bab91779"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-continuity-memory.png",
+      "bytes": 257245,
+      "sha256": "0ab84c5054ff7e4555d7b0a1b200d01844e2cd68bc0516e56efd6eeb02af229c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-continuity-next-day-mobile.png",
+      "bytes": 180543,
+      "sha256": "df9a0e4ba33215cee5985efb94b5516be45f1a52216bdd20660af78507d2da3d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-continuity-offline-sync.png",
+      "bytes": 937887,
+      "sha256": "5c2a5cd95a602c6d2e9eea4c2f2f1987320e76398dfe7c48310a10ce9159855d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-failure-super-admin.png",
+      "bytes": 508960,
+      "sha256": "3f26d1f88b639d89296120187bb2dc99f9e55b899fc4ced2282347eb48683975"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-failure-super-admin.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-failure-teacher-errors.json",
+      "bytes": 362,
+      "sha256": "4034e1ed49fb5fbcc1d292d346e9910e2107d1cff23c6f0757d4cbce97e1c8e6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-failure-teacher.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-failure.png",
+      "bytes": 172655,
+      "sha256": "5376b504757ed31ae1a12b4a400dc3d0bb4cee05ed5b58ad549c842a853273b6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-failure.txt",
+      "bytes": 1091,
+      "sha256": "f3f6d8ae9469cac781e68f52cf920d8a7c5491d48b45eaa59dd7d1f28368eabc"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-held-out-combined-viewport.png",
+      "bytes": 258644,
+      "sha256": "d2bd90bc5a422dba9bf840ebc4461337c0a2da57a577eda1dd64783033cf184a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-held-out-combined.png",
+      "bytes": 668183,
+      "sha256": "b4cb3e78fb6ac0fd0ecf4a8a705eaf776df10f9a983bd7f1833577d0feab3f45"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-low-bandwidth-optional-visual.png",
+      "bytes": 596201,
+      "sha256": "4531c069faa3b4ecd74af8b218c7326374faacfc1eeece2a442df7537513903f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-mobile.png",
+      "bytes": 88941,
+      "sha256": "32d11ffa5caea553b46233ea5e9dd62bfbb7b5bf92f6eabe043acb34031b1d24"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-notebook-review-flow.png",
+      "bytes": 129277,
+      "sha256": "2a9f49abe069d8ca8a31e96e1108a7fa95d82e6f0cec3dc8591f7372129e8cf3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-physics-pendulum-ideal-viewport.png",
+      "bytes": 269230,
+      "sha256": "5d01af0f1522767c942b5a90747d981627d0502c6bcac986b8d1dee07c6a80bd"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-physics-pendulum-ideal.png",
+      "bytes": 887510,
+      "sha256": "3a9e5fa48e48263fc3af67d6edaa9f7a2cb0366594371f483ad0527c503433c3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-render-spatial-viewport.png",
+      "bytes": 196646,
+      "sha256": "2e821eb235437485d57824848479f5e54ad31e257f4dffcdf7d08238201bcffd"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-render-spatial.png",
+      "bytes": 761243,
+      "sha256": "a9f8dae05892d6a3b57eea809b05c07067e962825f7ebb69cfbd8ab718d0b4c7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-super-admin-operations-desktop.png",
+      "bytes": 334078,
+      "sha256": "37433c875ac75cf480ae8874aa6fa23d4b690123a6e10a73869c9f8c9ce75c0c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-super-admin-operations-mobile.png",
+      "bytes": 112881,
+      "sha256": "25053f318f0d06fa78ad8ced1060ee7a66a85db645a947fe00f969f9bd8c10b5"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-teacher-correction-previews.png",
+      "bytes": 279445,
+      "sha256": "c22be606114519d689adf32ba49c059b8865aeae88a7d51d930a7750c379882d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-teacher-correction-reviewed.png",
+      "bytes": 318373,
+      "sha256": "25ac2a95bf076dcf767cfd8a75d9f79ed8f3cfd68c1072efa7c5e8910cb17def"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-teacher-intervention-preview.png",
+      "bytes": 285597,
+      "sha256": "5fdc40fe4645155d3d1c3cb86efca69e71fdd991d16d50641cd81107922adf7f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-teacher-intervention-reviewed-cancelled.png",
+      "bytes": 334600,
+      "sha256": "9881e7e881d3c17be38be8e6a855c00314881128b3a6fe795d9cf31574b19954"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-r5-webkit-development-errors/browser-text-enlargement.png",
+      "bytes": 665909,
+      "sha256": "7124fff11d84e7030caf7fa077e5f7a707aeb5b987a7c82b9f1eaf0d208f6e2d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-render-spatial-viewport.png",
+      "bytes": 153389,
+      "sha256": "0f00f7e904cfc7ef9ce01906c0172cb89837df1acd6d1f8c33f794ef19292d2b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-render-spatial.png",
+      "bytes": 527496,
+      "sha256": "0b6618d403ba42e537014a1d0cb57e30050fb0bf1d5a77846c7d4447e7eac2ae"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-runtime-identities.json",
+      "bytes": 877,
+      "sha256": "59bb1541a92d09818d1c51eff429bf6d941c51a434735fd93dcaff9484d6749b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-runtime-identities.log",
+      "bytes": 1387,
+      "sha256": "c036bc43eba43a1cab4bfa60e6f9bc997d5bf0aa5db5e27880e473d6ae4af11a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r10.json",
+      "bytes": 391,
+      "sha256": "a7a527e953af8abcb0e68bda8e09371dc4233cfbd1388d65ebf91a2dc9b6202a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r10.log",
+      "bytes": 3725,
+      "sha256": "1516007516e405c3a5e5f2f61b5c732c87e4a6390342d1f340eb8d164bb14d5f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r11.json",
+      "bytes": 391,
+      "sha256": "6e547823d0a31fd7212e4446164c9042bb547a0033facd568726c0e0c83ab162"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r11.log",
+      "bytes": 2036,
+      "sha256": "457a9b9a18a72db40f42ae2e208db5a8eee36e9165f7681d618b1c6dc9d9f265"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r12.json",
+      "bytes": 391,
+      "sha256": "70a468a90174c2491a85a10b0ab76ee139ac1f1d8e02cd71134e4a6789e2f2d0"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r12.log",
+      "bytes": 1245,
+      "sha256": "c48b415526ad1b6d0b81bfb2cd8b020c62d96f8364107f85d3039c6475812509"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r13.json",
+      "bytes": 391,
+      "sha256": "648aeba130ffd64dc57464713ba0700532d835841db7d5390c22fb8693b7f7b2"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r13.log",
+      "bytes": 4516,
+      "sha256": "9d090cf4192771e29b6fdf7443ff97f9b3a5153635770044119406fe2746850e"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r3.json",
+      "bytes": 391,
+      "sha256": "13e0835529b1efc6ca6cff777809290b42e9bced520ccb20bb9fb68c1c27ce89"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r3.log",
+      "bytes": 1368,
+      "sha256": "8a396db0c51ec9bd9c95fa81ee1f440debd18b13423f4e30ae208fa63d6762f0"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r4.json",
+      "bytes": 391,
+      "sha256": "ed5af50db4744f8420e0b5cb2fcd9127e70111016056b6a27ec53311961bf3e9"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r4.log",
+      "bytes": 2477,
+      "sha256": "1724d91b4f4f6565bb2a8335736121b12f7ccb6178f13aa278361c2a0f771c96"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r5.json",
+      "bytes": 391,
+      "sha256": "0dc0d3fd96269eb96e62614d45dab27f193a76f4ced6769a0ac9b999d369cff3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r5.log",
+      "bytes": 2477,
+      "sha256": "348f31c22eb6bc5976b8ad8d5d31f0daa6d768c677228e7e3f8b7bfa7d1af214"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r6.json",
+      "bytes": 391,
+      "sha256": "a0825fbcb4d0d74946058e32f82ca6e809ebc9aaaa2c93cede7a0e3307a3a173"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r6.log",
+      "bytes": 2477,
+      "sha256": "66d7a78545bf007937b440f0f79c3c7435ec273a47a917fe36a4af96045f36f6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r7.json",
+      "bytes": 391,
+      "sha256": "6862dccbe3e6898016f4b172032673500e82216ccc8fe56631f171776ad179ee"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r7.log",
+      "bytes": 2477,
+      "sha256": "7994626e2d993aa7d8f7957d8d26b13bd96819c8fa80feaf029a4316899f304b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r8.json",
+      "bytes": 391,
+      "sha256": "2fb1a1818772491ef2b1f3cb70aea7f9474ff7fd675dc93c40c4300567af2de1"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r8.log",
+      "bytes": 2477,
+      "sha256": "c763a8622a9e9ceaaab6ae6f33e53116142a230e5338a45d1eefbfaec548e3b5"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r9.json",
+      "bytes": 391,
+      "sha256": "b53df2d5c9a4ae0a5d7f7cf0a6e16827a31ab6885818acc400c9017e00e9fa9a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary-r9.log",
+      "bytes": 2788,
+      "sha256": "131ceabe816842b316d34ddc236aa11985e80fcf0c6b55c5756d3269d9b5b7b7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary.json",
+      "bytes": 391,
+      "sha256": "38ef3b65184c6ebe570a5d698175ed469605d49ff85e2ba989d7abd5cb9d1b0f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-server-preliminary.log",
+      "bytes": 616,
+      "sha256": "b714624e937d08f14282bceb810fb3cf19cfe03551daca5ef37e21d5d9e91be1"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-student-preliminary.json",
+      "bytes": 344,
+      "sha256": "73d5f14ca376e9ac62fe808bada11f71765771e8773f32d0ce23d268c1cd4e48"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-student-preliminary.log",
+      "bytes": 7297,
+      "sha256": "33e9a3ffb7ba4edc6120dd655441ae580bb4066df4f3fc74d68f1dbbbf117027"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-super-admin-operations-desktop.png",
+      "bytes": 264146,
+      "sha256": "0e729371dd986915bcf4d7338295950ac41683f4fc8b47745bcee3c3a5212109"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-super-admin-operations-mobile.png",
+      "bytes": 136408,
+      "sha256": "aeaa6c74d5f899e56114adb641bbeb331f496a767ef92bd478fe43e3381a9c54"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-teacher-correction-previews.png",
+      "bytes": 206339,
+      "sha256": "155031b37a000230067340c086ceac1ff7437c3e04faa4278519eb3ac895916e"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-teacher-correction-reviewed.png",
+      "bytes": 220944,
+      "sha256": "07680245848417a0867077ab2c4d8b79ee25c3fde28a19f32d43bcf83b82dcf7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-teacher-intervention-preview.png",
+      "bytes": 170802,
+      "sha256": "730286a7191c445a723ef8b5e87188efc71ade095c5e965e316fdfbfda3ee5f2"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-teacher-intervention-reviewed-cancelled.png",
+      "bytes": 199882,
+      "sha256": "8b1bd69214c55c92938ce79c683311c6fad22b1375346b705169bf8fd876e56f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-text-enlargement.png",
+      "bytes": 525210,
+      "sha256": "24db7899ae64ad81b856528d2616d33c68aa9dc661b052a2eed8949133f4560a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/browser-visual-review.json",
+      "bytes": 3088,
+      "sha256": "9a05d353f65035b09ad2cb2d6cea6e5dd909eab78adde653bfec0866654e2b15"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/build-artifact-index.py",
+      "bytes": 1300,
+      "sha256": "5d940d7c53aa380f385dee78c2ae9060c7ac22cbd1d93f6d969b7aefa08be14c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/build-evidence-bundle.py",
+      "bytes": 4355,
+      "sha256": "788f15ea94643cdb92e4725b8fc29f6d81db654d5f72c338558c23d70c6b408c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/build-isolated-web.py",
+      "bytes": 2078,
+      "sha256": "55f6d47f8f38e3599e0927f73da952e901880b8f21c147ce0ce4da08822257da"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/build-review-indexes.py",
+      "bytes": 6328,
+      "sha256": "95941ae6d43cda6051e77df4af38622939099bdcf7d6220bf468ac5550496f42"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/candidate-student-build.json",
+      "bytes": 357,
+      "sha256": "07b226e5447349b23991be83423a7511f80cab0d6aa2f17ee3a5bab86d9d89e5"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/candidate-student-build.log",
+      "bytes": 4387,
+      "sha256": "1c1c0a942a5f2d7237a5dd59a1d9152dbd8d57725528def985ecbf20a64d1725"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/candidate-webkit-r5-server.json",
+      "bytes": 391,
+      "sha256": "ce52ea1261751d991d906e84f95f29ecf5eff7d1ceaed08c75d4d234d306c923"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/candidate-webkit-r5-server.log",
+      "bytes": 2788,
+      "sha256": "c4f7fb3a3d53f321c70fe149c2a57de41e2b28cc1db27bd72413e1183943e720"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/candidate-webkit-r5.json",
+      "bytes": 530,
+      "sha256": "fdf0152f7acee8b1a1f2c04cf895d721793b41f8fbb1eb1b958722a90fecc29e"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/candidate-webkit-r5.log",
+      "bytes": 1167,
+      "sha256": "6c8122eed9f04787f7fbb4e25c5a51784580ff72c4d1bcf2dd631fae58441efa"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/candidate-webkit-r6-server.json",
+      "bytes": 391,
+      "sha256": "af44fc3d60e289f336dbe3e5d5077492aa321bc3eedd09a3d96b2e2acec16b83"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/candidate-webkit-r6-server.log",
+      "bytes": 3776,
+      "sha256": "7c8965b4b1e7458b1e2df9cf6c7ab6e86ee82dac6b1d4bcef8d8b987b602ab08"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/candidate-webkit-r6.json",
+      "bytes": 530,
+      "sha256": "f6ba6db0f80d1910d5f5dcd6ed9fddad219a5c52bf3d476954c2d33f36f7801e"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/candidate-webkit-r6.log",
+      "bytes": 1471,
+      "sha256": "3cc88b99e978e6fdfe20bd579e072613cb8c49240cc3e5936c107679f32478c6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/candidate-webkit-server.json",
+      "bytes": 391,
+      "sha256": "054449990c9e62f5fe710ca72f37f9492b2ecff9ca5fcb37dd000312514c4ca7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/candidate-webkit-server.log",
+      "bytes": 1666,
+      "sha256": "b8e3f74b353835b8289471033fef9bff980d336799087828de20fcb708645284"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/candidate-webkit.json",
+      "bytes": 530,
+      "sha256": "e5ce8db62e10471bd06ba173bcd935a36391bf0de5b0eba326ccf7a001fe7232"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/candidate-webkit.log",
+      "bytes": 851,
+      "sha256": "132992afcbc12383099178c726e41a939fa4fcdcc2111eea5f2b75143afd85cf"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/capture-identity.py",
+      "bytes": 2897,
+      "sha256": "fa4852668a60d982b5ea4f105a5edd9c52ad2ccdd825766611203eb3b3b0e4be"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/chaos-recovery-rehearsal-index.json",
+      "bytes": 72470,
+      "sha256": "bda809623007eb70330ddf04eec7d6e9dbe3de211213298348200ba4657de3d1"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/check-preliminary-r4.json",
+      "bytes": 571,
+      "sha256": "299d8e8d2504d3bf6950870be8e46c4e2fb77d43c36ec20bce4905765966d34b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/check-preliminary-r4.log",
+      "bytes": 1033,
+      "sha256": "d9f10cf9121f644e6322840016f76b96dac1a953521fc90ba2cc43223b0f302c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/cleanup-record.json",
+      "bytes": 3436,
+      "sha256": "3e73cfa9b82e6346ee9396920ae3297bd7e96ed407599d8da795f999b54e414d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/cleanup-task-runtime.py",
+      "bytes": 3715,
+      "sha256": "0cf75ae0cdaa7a73985b9b69d49fce17833838fd61cb14a6c9ec33f8c2dc56f4"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/closing-final-r5/identity.json",
+      "bytes": 1901,
+      "sha256": "12324ca037f09eb81012da60d75871b6448e7237b9c3636795307252f9c02c81"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/closing-final-r5/source-sha256.txt",
+      "bytes": 316276,
+      "sha256": "55f11e10edaca878b246fa62061029822cb74728569ca5581c96148d1f4dc8de"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/closing-final-r5/status.txt",
+      "bytes": 24040,
+      "sha256": "0eeb1f64bbe07c427e8af98482f7565faf84db64e0b3f1441a184bffd427bca6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/closing-final-r5/tracked-diff.patch",
+      "bytes": 14807723,
+      "sha256": "df3a2fe67b6264fcb3d9c3f54fda9383b60309cfff6b2566940d1cca69f770d3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/closing-final-r5/untracked-sha256.txt",
+      "bytes": 33509,
+      "sha256": "652c66efa4d8e884cd28d955a9f9b355f132c71b7880096b5995c25c172d5464"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/closing-verification.json",
+      "bytes": 9589,
+      "sha256": "133fa6b19b4f898ee89eca78d14ea9148893bc5732f24b06e8ab4d4ede4cf73b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/engineering-release-bundle.json",
+      "bytes": 111617,
+      "sha256": "a6cd127cc66c70e7144ccf4d530a6e6a8f010f2f80b80248051300234c41d247"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/entry/identity.json",
+      "bytes": 1458,
+      "sha256": "b2e07c137eac3384fe29ff6ad8fe457c10ba1f05eeb7691518ecde9f057fb3f3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/entry/source-sha256.txt",
+      "bytes": 312767,
+      "sha256": "2ae29edfafa19c3e4712aa2eb2419c883ff9afdd99a92b07d1e8dbcbcd205e40"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/entry/status.txt",
+      "bytes": 21958,
+      "sha256": "8447be2074bf8e128bf626834b3b27771f9e639f671839860a989f851c354394"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/eval-preliminary.json",
+      "bytes": 320,
+      "sha256": "4380f8a9c4186213dc1c2180e7e2a97a8b07f9ca62fc91373419db331cf7c204"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/eval-preliminary.log",
+      "bytes": 791,
+      "sha256": "5a5121d0bc707f78648f168270cea230365f90ee351661742880a93da096e640"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-browser-chromium-server.json",
+      "bytes": 391,
+      "sha256": "c719b2edcb2a41042b573d26519da514b7afbf27d72796f3e9bd53572f4a21f7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-browser-chromium-server.log",
+      "bytes": 4516,
+      "sha256": "56d9b8ad02da3f2372784383a928f7ee9525110f96386d34ffc9a19b20ebd5b4"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-browser-chromium.json",
+      "bytes": 526,
+      "sha256": "2babbec28c6c9e7d8cf69d41642e1300f8816affaede5c362081928ae1766b3b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-browser-chromium.log",
+      "bytes": 15409,
+      "sha256": "0619865ffde99ba451c8bc8f7da6eb61c7f0d6a0ee6274712dcf99891e7cf7a8"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-browser-firefox-server.json",
+      "bytes": 391,
+      "sha256": "adf1c277833f128c1474dd7c08b3141f0945c1e0bfb5bcb15f406457c7f75cec"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-browser-firefox-server.log",
+      "bytes": 616,
+      "sha256": "6e9738ec91ec2109bae222574c8b3140a6380317b8b4e691acf251e27a4b320d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-browser-firefox.json",
+      "bytes": 525,
+      "sha256": "a62ac9ae75e618481f547a2c5cc1a1f65ec846fb131e98767f0519220277a5d6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-browser-firefox.log",
+      "bytes": 4504,
+      "sha256": "fa00ef2552c6d2120c1bc471e5d93b0d1bb4bfedc4db465f8946e842d010fb85"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-browser-student-server.json",
+      "bytes": 344,
+      "sha256": "a245ce90920a9211ec1fd9683123a1d6aceb0a06cfd3932a42f7f2cfb6180b4a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-browser-student-server.log",
+      "bytes": 2138,
+      "sha256": "f15adb98a7adeabe9be6707824b8ad96881912f33a0e0790fff31abdfaae03ab"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-closure.py",
+      "bytes": 3521,
+      "sha256": "1b35949feb74a1d483de4dbf75b91cf490f101157c20628a0ce286554e6dd933"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-api-build.json",
+      "bytes": 313,
+      "sha256": "a8617f0b124dddaa2e24b57cc04fd8ece92024a612346bf574daf6672627613d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-api-build.log",
+      "bytes": 462,
+      "sha256": "d669971229c0789aef9358021f95055f19c4f0683ce06ca03dbeb7787e8003e7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-api.json",
+      "bytes": 1431,
+      "sha256": "bb7571386e1cb461aed3477a0c2587f7116d229ff63a8a6d83d3fe28333cc404"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-api.log",
+      "bytes": 25125,
+      "sha256": "0e0daead309545565339cf4056d4262e74090e74a2ecd1ce2ee4a40b11438fbd"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-browser-firefox.json",
+      "bytes": 531,
+      "sha256": "62339fb10f53f6001f8a767ccb6c70bf557d3db8c761fb8c6bd9501eba02130a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-browser-firefox.log",
+      "bytes": 2591,
+      "sha256": "f2239e1b4e2db00212c221a49b1c95cf5238c2b823c8e66927f55d32f0ca894c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-browser-student-server.json",
+      "bytes": 344,
+      "sha256": "c463c530f13cae9e393985bbc7adb2ff6f08e7c43992d0300121149472789df6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-browser-student-server.log",
+      "bytes": 1028,
+      "sha256": "a0bd68b774f9ca260a90bf522e51902f3d3d746dcc12fd89fe160ec03d2da7ce"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-browser-webkit-server.json",
+      "bytes": 391,
+      "sha256": "447e68ad3eefca13dff28ea5c627cf92cc30604f8d7c89d77ac25288389eb1c0"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-browser-webkit-server.log",
+      "bytes": 927,
+      "sha256": "8621e24835b49bab8db0936e1be71f0f534f498f78c97275aa0bed2db5a84c0f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-browser-webkit.json",
+      "bytes": 530,
+      "sha256": "6db98a532469e257eed9385bf79a89636ce049179edf649899afd60a2d276670"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-browser-webkit.log",
+      "bytes": 1918,
+      "sha256": "50760e9878ccf497cabe47ce3669e38738fac51ed23872253aa255fcad19fcf5"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-diff-check.json",
+      "bytes": 291,
+      "sha256": "1d4cf15ad4b6372ff55afcae878a0feecf6f7a8679af4458cafece84639f16cb"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-diff-check.log",
+      "bytes": 253,
+      "sha256": "e96de9c9875ac7ab386ed74cc44efcd7b6ab53d050039afd98a2bb604040ab1d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-environment.json",
+      "bytes": 685,
+      "sha256": "4ea04ce6356a3cab306da1dd31a15adfb82759dc5ae50dfc09365fe5e31215d2"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-environment.log",
+      "bytes": 1055,
+      "sha256": "d2716394642f1b795fe221f6fe4167b132341fb5a751ed0e12b0429a7379fc50"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-eval-corpus.json",
+      "bytes": 462,
+      "sha256": "e7a7fad06c2b4e0b6d58440714c2752dde2e4fe3fdd9e069067928dfabaf1894"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-eval-corpus.log",
+      "bytes": 13763,
+      "sha256": "12c81c764b1f87bf6df1454e2e74530239ea9960094cf0fd19a778382b2300ce"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-eval-fixtures.json",
+      "bytes": 330,
+      "sha256": "84d7590bc2fab5febdf08e88c3f78b218dac61b31398d895dba768fbf0a50498"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-eval-fixtures.log",
+      "bytes": 469,
+      "sha256": "61323f63d0e6ee787c15702db82bf37f49cb37ff152b65dc2e5f13593583a272"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-eval-tests.json",
+      "bytes": 320,
+      "sha256": "257e0ef82c74db665739ccfe7268755fde251ffc7c7810d017b28090171cad0f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-eval-tests.log",
+      "bytes": 792,
+      "sha256": "120edd8d71652f2d17cb3c933743e800b57bde290da005f9b04db751f6b090c4"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-institution-web-build.json",
+      "bytes": 388,
+      "sha256": "8aa01604d3c733c2e6f25c10cc9b7a5e3322ba19b0dd8d62e6ea4e6f3ba5fe1d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-institution-web-build.log",
+      "bytes": 10553,
+      "sha256": "a491e2f1aa9c26b6d98c2b043cf4b428efeecdf6b4df54066ea0309c76a1df91"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-lint.json",
+      "bytes": 566,
+      "sha256": "2364ca4f0b39ebfdf837157f8c3ac8d6eafe090a1c274415fa525c1fb1be96a6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-lint.log",
+      "bytes": 176072,
+      "sha256": "8a7634940bd23be8fe132508425d393a437a0b38328da8227870fd3deaf8b3c1"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-schema-student-tests.json",
+      "bytes": 359,
+      "sha256": "d1431d4e8b7bd015361e351ca816c8934e1a102914604069beaa658f4bfed89e"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-schema-student-tests.log",
+      "bytes": 11409,
+      "sha256": "239abb6f523f887a9f9f8ff1c5578b435597f3d31d7c5ef1f6df8859c22cfa74"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-student-web-build.json",
+      "bytes": 384,
+      "sha256": "6f99053e68fb47e1e6e7528ce202b5fdc9e4ff4c0b715f9d949efd88ea84c749"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-student-web-build.log",
+      "bytes": 4414,
+      "sha256": "3aeed99565e7468a57904fa02220251882ce47a238e1f6c3b19b4d83b791599c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-super-admin-web-build.json",
+      "bytes": 388,
+      "sha256": "24be56871e74846492879f8bb78634d6ae837fbb9892f8b5566dc60cf51d08c5"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-super-admin-web-build.log",
+      "bytes": 4308,
+      "sha256": "8759d42c37268d9c04105023ddb3f77c69a25bbcf9f605a06b6d9be05ff8efdf"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-typechecks.json",
+      "bytes": 614,
+      "sha256": "d7bdf194a04d0191f626f6cb0d2c2b16507202e6325ae4bb2692d9ee10a161a7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r3-typechecks.log",
+      "bytes": 1150,
+      "sha256": "9cf6d4ff4cbf215def48ae54124e5fc94590bea11f208cc63319489060713662"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r4-browser-student-server.json",
+      "bytes": 344,
+      "sha256": "14884ad279b6ca99802889eb551046259c3294810d6dc6cd795ad2956d38d6da"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r4-browser-student-server.log",
+      "bytes": 3860,
+      "sha256": "13018ccd0633301068f161242f080727c0c42959c9963bfefd0a80e9acd8b9e4"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r4-browser-webkit-server.json",
+      "bytes": 391,
+      "sha256": "00179fb5eabee45ea3edec204eed48cb50bd947208d77893a4cfc3ad9a6eb620"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r4-browser-webkit-server.log",
+      "bytes": 2788,
+      "sha256": "68132f24f4ff87de41e7b08f1c320fdc90615d6ebc79ffb195f98413c4298c16"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r4-browser-webkit.json",
+      "bytes": 530,
+      "sha256": "2b5c8beb1f02ed0a3a15e949bd0aeb56bf566c64b82510503e60b1cbc644e680"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r4-browser-webkit.log",
+      "bytes": 1258,
+      "sha256": "3818635b4800d1a2d433be87c1ffbf892dfebf09dd0e04d0ce2e1a2f38025c3d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-api-build.json",
+      "bytes": 313,
+      "sha256": "65b384ff8461c85c21fd125e04dc572eb1b65b0fe81623de85ad6fe6dde2e2ee"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-api-build.log",
+      "bytes": 462,
+      "sha256": "0995121ac4db3e97c96aa0ecf2c11035f4a033907caea604e0028e12c685a5fb"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-api.json",
+      "bytes": 1431,
+      "sha256": "2e6bc893ed632e1a099b0dabba0c4a4b3ed296961bf33c1d4504d974c1a4a2d9"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-api.log",
+      "bytes": 24789,
+      "sha256": "72ce3599a8422f8ff7d08d93858a6150b0759704d9e846a4dcbef4b6c7ba21be"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-browser-chromium-production.json",
+      "bytes": 532,
+      "sha256": "44f6b290ea5d572d244a57fd4a3a8b4b2a82d93c91dea725b33d51644e34b87b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-browser-chromium-production.log",
+      "bytes": 15401,
+      "sha256": "a2510eae3a69558df93ae1ba24e58088d7ed5cde078ae0f7107eb935fcd9fb73"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-browser-firefox.json",
+      "bytes": 531,
+      "sha256": "6f7eec2b5a7243e3204664631c5fad37def8c7eabc73956d21b480477730e088"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-browser-firefox.log",
+      "bytes": 2593,
+      "sha256": "996f8991d82050e4175586a731dd68f5477aca20c54b4a15459359ef93bb1728"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-browser-student-server.json",
+      "bytes": 344,
+      "sha256": "03e6b68d323f1f17f2ad2a079e807c18979d6eb9f06aa5cbb6e720d3f208a1a9"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-browser-student-server.log",
+      "bytes": 2365,
+      "sha256": "f4409854cbf50e04479dd2b39e39c2dd7180a8bfaf4f796e58e325176b7c1095"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-browser-webkit-production.json",
+      "bytes": 530,
+      "sha256": "3666346c6f351a568d2fb603459f9825133330cce75101a632e7653e68aa1c51"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-browser-webkit-production.log",
+      "bytes": 15361,
+      "sha256": "ca24d261fdb5d253ec4f6b0dd7dfae72e9b0cdc96ce0b2001acc916a5e09757c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-browser-webkit-server.json",
+      "bytes": 391,
+      "sha256": "7ff5aa3f156767ace76064f4c2cb91bcfe29b25aecc92b8028ffa8606282621c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-browser-webkit-server.log",
+      "bytes": 3776,
+      "sha256": "8abb1f9f1004aa0748995502b1abfbb9336789cef7d1d12f04fa644509e5895f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-browser-webkit.json",
+      "bytes": 530,
+      "sha256": "287c0b6a77c703123f015201bacc2af02e2a42e58ce698351d18ee7bc6c7a06a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-browser-webkit.log",
+      "bytes": 1605,
+      "sha256": "6afd0642102306776ebad806d8a339b40380338088091d01e00448c9bb0fd8f6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-chromium-production-server.json",
+      "bytes": 391,
+      "sha256": "19d9b67de96c6cb58d6515d77944c89e53b16bb207d85f641c98eea25846d0b1"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-chromium-production-server.log",
+      "bytes": 3776,
+      "sha256": "414e7d02e7e6c77bfb0727d930c7add1fffa75af2818fd8c52df91448cf2183b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-cleanup.json",
+      "bytes": 340,
+      "sha256": "d8e5708761518650c3e82b9d13f77f4428ad5311aff052bba5bd5cdb88253f56"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-cleanup.log",
+      "bytes": 645,
+      "sha256": "349222aaaea4874b32f0d4fc51e94f1d77e1e7dd80f197411101dad3a885718a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-close-identity.json",
+      "bytes": 360,
+      "sha256": "7849041990ddaf9f4dcde0af316954f853b31d88750c183fa973b0fd571a22c8"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-close-identity.log",
+      "bytes": 2223,
+      "sha256": "b3e5eda7d5cfd04e5cd35e4c32bf6fe3e334c761304b9f8f6d9c3393eeb999a7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-closing-diff-check.json",
+      "bytes": 291,
+      "sha256": "c4773c83dbc097cc774901c2c2ebfd9fa8b0572885df6cb2bef82de80f942a0f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-closing-diff-check.log",
+      "bytes": 253,
+      "sha256": "83400737b33284174e25a18679ebba4b27752989b1d0c86601afc23c49414c83"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-closing-verification.json",
+      "bytes": 341,
+      "sha256": "15e4a3c46c38ffb5165e6b225dbe3ba9a82bab627b91a678c611e5fee7f47be7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-closing-verification.log",
+      "bytes": 1039,
+      "sha256": "e751c29446c40f397c07be7a030185462fae383a7204e2b29d770f58908daf85"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-diff-check.json",
+      "bytes": 291,
+      "sha256": "c2c84c0f0340ad14a70594f6957579e595aa58ed047611137822dcd98928443d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-diff-check.log",
+      "bytes": 253,
+      "sha256": "43be06ea24f91908127ee56bda74784782234b3cc1a1599c58229c7282bda11b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-documentation.json",
+      "bytes": 336,
+      "sha256": "e9551e6de677bb956037c1141061d03bb14ea13f41105242ce331c58cb57240a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-documentation.log",
+      "bytes": 601,
+      "sha256": "028e5ce5bf5d6c912f5d6de5c6fc57ff9110b80012b3521ae1e68a7b2412dd08"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-environment.json",
+      "bytes": 685,
+      "sha256": "a6bdc4e51719871073e71610e70b1f181a156bb54a2b8993bdcf419509ff52db"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-environment.log",
+      "bytes": 1055,
+      "sha256": "29949cefcd70d2e60a9e06e00d6a1980f82e5599362dd3b1fc807177a743c871"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-eval-corpus.json",
+      "bytes": 465,
+      "sha256": "5da384fd31d3f79dd0191bd746b520550b86e207d7e7f72521b64986528d5650"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-eval-corpus.log",
+      "bytes": 13775,
+      "sha256": "c06cceaae37178378a63199f41bb44a394ef2723ad5a98c9e327066be16a5956"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-eval-fixtures.json",
+      "bytes": 330,
+      "sha256": "4b46a5fd7efb7c7439e6891c1d94584e25a351adb9fb0c5f440a1a5c8444f91b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-eval-fixtures.log",
+      "bytes": 469,
+      "sha256": "940ffd39572364d03e8ddc6f1d7e60b1252fb61e77d2db4baeb12ef7ef981716"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-eval-tests.json",
+      "bytes": 320,
+      "sha256": "2a4222aadbe4a70cde9c940802a3897cb2587d8168446ca00c2c46a455be4db2"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-eval-tests.log",
+      "bytes": 792,
+      "sha256": "a6b9e0c6ea009cdf40e14425d3d6ab01c07c4172b2b49056f29f07ca4a1d88d9"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-evidence-bundle.json",
+      "bytes": 341,
+      "sha256": "a9255eb5b66a2abe05d2c75d87480dcead0c94f7863c7ac62dca03ac2afc22d9"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-evidence-bundle.log",
+      "bytes": 2502,
+      "sha256": "da59275eea95d6dc5bbc3b4a763f980b0e30b29fedd95c8d2e6bb711398018e7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-institution-web-build.json",
+      "bytes": 388,
+      "sha256": "6fb81edcacab19a223595b88425849a6576f2c3aaef5ecaa657a5e85690fe32d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-institution-web-build.log",
+      "bytes": 10553,
+      "sha256": "916b764aa74444d4f1370e58721d2f5778ab2a667f98474235a670e12d05e550"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-lint.json",
+      "bytes": 566,
+      "sha256": "2328818a3ef3aa71d0fb130f6ce4276779d2c752c021ce965f9267c48854f8c1"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-lint.log",
+      "bytes": 176212,
+      "sha256": "129e1f31bdee859b83d2ad9c805afbb58ae986d61c0bfd657c02689e0225fb28"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-relocate-corpus.json",
+      "bytes": 1001,
+      "sha256": "a3232e0be5092b85cd2fa389441dcd7f816e1730b4bb5046536cb5adb8d5dd14"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-relocate-corpus.log",
+      "bytes": 1055,
+      "sha256": "6a591170a43d0163cf9e56acc862fd4a12dd769c3925af46afbf1829813af4bf"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-review-indexes-r2.json",
+      "bytes": 340,
+      "sha256": "749d9f9e5410a3ce23f0a50d312378f535259957c2f45d56b075f310150d749a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-review-indexes-r2.log",
+      "bytes": 384,
+      "sha256": "0a2c0a7ab101a6a38c719741856b5b693cee285f285287f3a841d7731a67991f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-review-indexes.json",
+      "bytes": 340,
+      "sha256": "8e3f009aded926cc20e4ea4812b5a2af43a5227fac8bc6d137f625cf0843121c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-review-indexes.log",
+      "bytes": 384,
+      "sha256": "25307aa860e837bfa948710e11cf23bcd5f8b18bf4c631132d26f833fb01a9cc"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-schema-student-tests.json",
+      "bytes": 359,
+      "sha256": "7c1f159f9d4bb22c5287565233bcb185279bef1c65c1dd7729cfae3737223558"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-schema-student-tests.log",
+      "bytes": 11306,
+      "sha256": "570972abe520a681095f72c4657b94f3b73055e1b3e44e051d3bd90a2f304073"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-student-production-server.json",
+      "bytes": 344,
+      "sha256": "913fab493df60a7c4c503bf29380277a8331144e491cd222ce8e073572acc1f4"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-student-production-server.log",
+      "bytes": 4999,
+      "sha256": "25d0c4c3d470cc3932a36b80f152303f5d1e53ba8a55d723b85e548cf0bfd457"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-student-web-build.json",
+      "bytes": 384,
+      "sha256": "4ea1e57c8326779c566fc80bd0ad1ffa593004924fc7420f0af1d5abcaaa7fb7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-student-web-build.log",
+      "bytes": 4414,
+      "sha256": "80fefbbf7a04bd963ad88804e2f8c098536ced5cfa88b521866fd8c28439d501"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-super-admin-web-build.json",
+      "bytes": 388,
+      "sha256": "689fa66a00c50cc92dd95b1a4e671c8998865dc80d58e13c00bdbf72e57e8c0b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-super-admin-web-build.log",
+      "bytes": 4308,
+      "sha256": "f13e7f183f031668d4cab6c75c130d435bf3c93b5b8f76b63854368170c27f0c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-typechecks.json",
+      "bytes": 614,
+      "sha256": "4e99382765721288c87c968fdc33da69a934bb071d4dd822490011a5eccafaa5"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-typechecks.log",
+      "bytes": 1150,
+      "sha256": "0b59f27376c7a8d2fff52ba6f128163ddc06d889f8d41b6d95c75bfd804c549f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-verify-identity.json",
+      "bytes": 361,
+      "sha256": "7396c9bac515d99ba739a6c4fceaea606dc3429af0a507dfb45f3003650c3297"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-verify-identity.log",
+      "bytes": 2224,
+      "sha256": "f5c38333be0f4fd411c0aded850b57c2a7c97c7088ad7ca038d057391b334937"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-webkit-production-server.json",
+      "bytes": 391,
+      "sha256": "07829fb2101e90e3080514211478bdd992e946781188270fcae9963814e3d64f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/final-r5-webkit-production-server.log",
+      "bytes": 3776,
+      "sha256": "8bf6a679dc7e3012a4b76e75af1600f3018b66951246934d9c04d7234fe4a85a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/finalize-results.py",
+      "bytes": 24595,
+      "sha256": "8233f7e17c53c1a5aaea9c5e112e848c0433a8b56b1e70acb09fbf382fa897b4"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-candidate-r1/identity.json",
+      "bytes": 1901,
+      "sha256": "675c543699984619ece92d9d5bfaf74cb0e4f68e90d1ad4feb8edf26671b447f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-candidate-r1/source-sha256.txt",
+      "bytes": 316160,
+      "sha256": "ea2dedf11351fdc2f2ab90a62b95a7ea0a4710d678d864c2738fd5eaada035fc"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-candidate-r1/status.txt",
+      "bytes": 23935,
+      "sha256": "cb2d4ccde316df1f4e32acd58efcbcf62be29c214004b784ac3d121790baae17"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-candidate-r1/tracked-diff.patch",
+      "bytes": 14802225,
+      "sha256": "f99f3176c0b5df759016f1231fea3ee05a4125c46060e0141a9b0bc1f5343ef5"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-candidate-r1/untracked-sha256.txt",
+      "bytes": 33393,
+      "sha256": "1f990bf7dc6e150e52e22990084230d47c34feb160a17c5a0ef51837b75409f1"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r2/identity.json",
+      "bytes": 1901,
+      "sha256": "f156639ca659101bfa0abef78a2b5713dc3f0b2de27b4a621e4f577db03837ed"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r2/source-sha256.txt",
+      "bytes": 316276,
+      "sha256": "7cc09dd179f2d8d413ab1e9d2ff8e578dcb43fb4d94b86d6e0249dfc61f82e0e"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r2/status.txt",
+      "bytes": 24040,
+      "sha256": "0eeb1f64bbe07c427e8af98482f7565faf84db64e0b3f1441a184bffd427bca6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r2/tracked-diff.patch",
+      "bytes": 14803517,
+      "sha256": "3092c9a155b99d7ac2e5c731196b3214b88eb7c1c512fc65f6e9d78a151169eb"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r2/untracked-sha256.txt",
+      "bytes": 33509,
+      "sha256": "08e69e26dec363a13f11d633f2e69c03289a047e26d850c01fbbd137181836c6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r3/identity.json",
+      "bytes": 1901,
+      "sha256": "bed82e1cc0ae99f4bbf533c2ca7fa0679a5ea692db916554170e4b5756d3ee4a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r3/source-sha256.txt",
+      "bytes": 316276,
+      "sha256": "f9b9b08fcffc26875725af81e52fd539f44b9e2eee85faaaafcfcac036cb9d4f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r3/status.txt",
+      "bytes": 24040,
+      "sha256": "0eeb1f64bbe07c427e8af98482f7565faf84db64e0b3f1441a184bffd427bca6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r3/tracked-diff.patch",
+      "bytes": 14807000,
+      "sha256": "9e4871679494876ec70c07ed475558f7f5397a48634dc0afdd115da9150e137c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r3/untracked-sha256.txt",
+      "bytes": 33509,
+      "sha256": "16fbac5b767b1a6083ae55c7dc6d9e97f1e03a42068af5255f46969cb34098ac"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r4/identity.json",
+      "bytes": 1901,
+      "sha256": "7d45e1a9c6b38759b8faf58053a18d99d6f60832a6eb236ce71f5dd158630bd1"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r4/source-sha256.txt",
+      "bytes": 316276,
+      "sha256": "0fdafd5459eaae6a98b2f13e56d172c90afb5b362ae59ca8944b72ad5b10ddb9"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r4/status.txt",
+      "bytes": 24040,
+      "sha256": "0eeb1f64bbe07c427e8af98482f7565faf84db64e0b3f1441a184bffd427bca6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r4/tracked-diff.patch",
+      "bytes": 14807000,
+      "sha256": "9e4871679494876ec70c07ed475558f7f5397a48634dc0afdd115da9150e137c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r4/untracked-sha256.txt",
+      "bytes": 33509,
+      "sha256": "606d88899475b5505140fdbd2ca85cfda4a6037efbf9bef55de0aed1ab6ad541"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r5/identity.json",
+      "bytes": 1901,
+      "sha256": "cc726a15fcef79f7e93f7ada05bc6c1d2136cc21aa3f9d4c80f002f1abe741f4"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r5/source-sha256.txt",
+      "bytes": 316276,
+      "sha256": "55f11e10edaca878b246fa62061029822cb74728569ca5581c96148d1f4dc8de"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r5/status.txt",
+      "bytes": 24040,
+      "sha256": "0eeb1f64bbe07c427e8af98482f7565faf84db64e0b3f1441a184bffd427bca6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r5/tracked-diff.patch",
+      "bytes": 14807723,
+      "sha256": "df3a2fe67b6264fcb3d9c3f54fda9383b60309cfff6b2566940d1cca69f770d3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r5/untracked-sha256.txt",
+      "bytes": 33509,
+      "sha256": "652c66efa4d8e884cd28d955a9f9b355f132c71b7880096b5995c25c172d5464"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-r1-api-build.json",
+      "bytes": 313,
+      "sha256": "8489ebba3527d8a8847bf5ac7b6165e887668f7a8d19f4199966e05efd6eeec6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-r1-api-build.log",
+      "bytes": 462,
+      "sha256": "6b87a23a242e909fa94aa252684a1625b157115648a5729a155800e4b9f47248"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-r1-api.json",
+      "bytes": 1423,
+      "sha256": "51d8fb3697c26aa438ef4c6f4078027ef569cb34810c049095260a2e2fe68eef"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-r1-api.log",
+      "bytes": 36758,
+      "sha256": "fea3c78dc808f17a7f1bb30b1111290baee516db51dc425a31e21705c8f5e7b5"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-r1-lint.json",
+      "bytes": 566,
+      "sha256": "4aa0321814dff59a6ef1cbce1a69298e1a0d99d5730bd87eb1b1597bd5bab2a3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-r1-lint.log",
+      "bytes": 176332,
+      "sha256": "feb621df72f208293917c2853281f48c7b2778f4816e16b9d1c0c1dc8c672a04"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-r1-production-quality.json",
+      "bytes": 4390,
+      "sha256": "60ae4b7a667840949bec771c4e0487c9671c97a2bb8d3a9aaeed887c1fbc8398"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-r1-schema-web.json",
+      "bytes": 359,
+      "sha256": "687ca1890eec9376a27c2afe76faece032e8db34bcac6d2a77a89bafa8349642"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-r1-schema-web.log",
+      "bytes": 12406,
+      "sha256": "369ea826f7a54da8b5fbde87c6aba32f1ff2af98c2a007078c5c10fcf011a3f2"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-r1-typechecks.json",
+      "bytes": 571,
+      "sha256": "cd8663f2ce7555725c0705a67aa04fcd05bf213578f1bfc9810caab05075a18e"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/frozen-r1-typechecks.log",
+      "bytes": 1033,
+      "sha256": "1e9d9e22130c903e6342935950359739343722166262d2caf603536a53ff930d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/gateway-focused-r1.json",
+      "bytes": 411,
+      "sha256": "d0b34c56c030d3483cf59d18bb62968fed4e31b9f07b02acdd8d47cebadc3daa"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/gateway-focused-r1.log",
+      "bytes": 2230,
+      "sha256": "9858cd1fc2a4cfa5374314692d3d4edc9fd775dd247b54bd9c95a4e57ef83d76"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/gateway-focused-r2.json",
+      "bytes": 411,
+      "sha256": "c70996450c774e2c8bb96b01806872a19faae38b42eafe1b1d9f1334db56262a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/gateway-focused-r2.log",
+      "bytes": 2743,
+      "sha256": "c5471b57570469132a9f645fd94186cdca22af0df906ecfe1a7fb48b3630074e"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/gateway-focused-r3.json",
+      "bytes": 411,
+      "sha256": "eaa8b5ce39b09eb3da9444b0906c444fcf5fe68c2f29affdb898767dae925959"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/gateway-focused-r3.log",
+      "bytes": 2178,
+      "sha256": "4012a5226c44f1cae79f5d78a5cd521e84e480e313e9cfefa553d770d7b73afa"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/gateway-focused-r4.json",
+      "bytes": 411,
+      "sha256": "50eab4268171a6047a0cdf19df1e69adf8575a3965472444694e8050f402cda3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/gateway-focused-r4.log",
+      "bytes": 832,
+      "sha256": "b3921005de1447f18eafecc9eb564df4a121da51556cd7c5b239c8f25bf8fe06"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/gateway-typecheck-r1.json",
+      "bytes": 317,
+      "sha256": "1e7db8a1d07b912d791f7340d2a8201d2743a9cbda091519bfac11226af1ff5b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/gateway-typecheck-r1.log",
+      "bytes": 290,
+      "sha256": "acaba6fa02e29d578bb06f742693e3a4080d8b5632e54c9de81185475ea8eda3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/implementation-change-manifest.json",
+      "bytes": 12246,
+      "sha256": "5261ff7487f3254037c8e82f0606b083ff6e117da904e42302210019d53b0581"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/implementation-typecheck.json",
+      "bytes": 317,
+      "sha256": "28e09ffac628c57aaa6f4701d7eb746f1027f37d1e02ae248f604ecccb266ad1"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/implementation-typecheck.log",
+      "bytes": 2981,
+      "sha256": "9b24c537e9b35e97765da17635d6f43e2abd418ca6ad47ac40fbf908006d31f9"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/legacy-quality-corpus/phase5-20261003-frozen.csv",
+      "bytes": 22361,
+      "sha256": "14e419cf13cfb3711db37d3d9b77baf6e14febd31c04966d3b5d21d56f9be82d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/legacy-quality-corpus/phase5-20261003-frozen.json",
+      "bytes": 4840378,
+      "sha256": "d80bbb1069de651ff50cfa8da0089b6317362ff9c2502f81dd444cfddc911cca"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/legacy-quality-corpus/phase5-20261003-frozen.md",
+      "bytes": 87861,
+      "sha256": "204702286942b3cd3050b9e73983d0f1d492ec11b8c831e99465b8506e865cc8"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/legacy-quality-corpus/phase5-20261003-frozen.state.json",
+      "bytes": 4836727,
+      "sha256": "cb01ce51f49827f94d9e9d36a26c9e325c240008143a0fca451c6267a573bd8f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/legacy-quality-corpus-r5/phase5-20261003-frozen-r5.csv",
+      "bytes": 23081,
+      "sha256": "f9205798082251d1ad41cb68b22e5cd12704067c3da9cde0be29111c48b1d324"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/legacy-quality-corpus-r5/phase5-20261003-frozen-r5.json",
+      "bytes": 4841104,
+      "sha256": "8454a97520c0ce155b109f497ec1430219dfa145d187d8231b18658b3f0be10f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/legacy-quality-corpus-r5/phase5-20261003-frozen-r5.md",
+      "bytes": 87864,
+      "sha256": "53b125a4fae1d071a4355bb0ec372675fc6bb6ac67971731d619c0cebe9e9fcb"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/legacy-quality-corpus-r5/phase5-20261003-frozen-r5.state.json",
+      "bytes": 4837450,
+      "sha256": "bc57de4976cfc9bf2d3acf8b93c62400a295b892434dec0a546796b472ab11e1"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/lint-preliminary-r2.json",
+      "bytes": 566,
+      "sha256": "aa169f54f7179be09d27c2fec30cfb56a08d71bf7792ae2b33858de2542231c2"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/lint-preliminary-r2.log",
+      "bytes": 175769,
+      "sha256": "e38359639c545d06eb5c6d5abd857e531d2eb89e904083568941fab095097571"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/lint-preliminary.json",
+      "bytes": 566,
+      "sha256": "f76aebc75592d984d2cc1708fed39a83f43b94f482a9997e59db6c4bab445565"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/lint-preliminary.log",
+      "bytes": 176013,
+      "sha256": "c2183ee35d14ef0545d0bf1c049189dcbf64edf28092de511775930806493864"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/operations/aggregate-integration.txt",
+      "bytes": 478,
+      "sha256": "bfee6a1ba9adfda3ed0b1ec3d4f8222452089efd6987972b9224712ef5b86bc1"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/operator-typecheck-preliminary.json",
+      "bytes": 329,
+      "sha256": "f04a6a3c74188322bd890f0fdae898a4b2940dbedc316f30a4fb25630c0ef2cc"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/operator-typecheck-preliminary.log",
+      "bytes": 302,
+      "sha256": "7ba07c2a61d68623283321007afe304befc9de0db81c20b6909fcad9f8645277"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/phase5-focused-preliminary-r5.json",
+      "bytes": 557,
+      "sha256": "cce528bf837cd5a00fdd44baec10836498b589f25f766c241a6346f80832319d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/phase5-focused-preliminary-r5.log",
+      "bytes": 2025,
+      "sha256": "e3827a87d7af6d9bdfa232d28cd9cc6f37e00c2205eab643e87b98a8b26efc90"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/pilot-focused-r1.json",
+      "bytes": 472,
+      "sha256": "5ebbf31b9d83802f068c5862f35d282fcbc1d5756286a100343f50b8e15e9040"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/pilot-focused-r1.log",
+      "bytes": 884,
+      "sha256": "65647fec8211b9a25e49119e757868e0a202421d399d7b974097b65acfa1bfb0"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/post-closure-checkpoint/identity.json",
+      "bytes": 1901,
+      "sha256": "2642ccbf3d3cad3a513620ad2fd728e4c19639f9ed9cf5bf834675df0ea75532"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/post-closure-checkpoint/source-sha256.txt",
+      "bytes": 316839,
+      "sha256": "7eae4a6796fe2b9f7657e7fde714d2790f27a6b99f6f241f226f03a3ff02684a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/post-closure-checkpoint/status.txt",
+      "bytes": 24351,
+      "sha256": "77c83e2e5db511bf9b7ce1f3954361444f2093700ef49e3ec3489f7bd50daf55"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/post-closure-checkpoint/tracked-diff.patch",
+      "bytes": 14807000,
+      "sha256": "9e4871679494876ec70c07ed475558f7f5397a48634dc0afdd115da9150e137c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/post-closure-checkpoint/untracked-sha256.txt",
+      "bytes": 34072,
+      "sha256": "6fd0932101f7405b66e56778d9f4476e9f0e21ecbadf9d6cbe4c080b56a8aea5"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-focused-final-r2.log",
+      "bytes": 674,
+      "sha256": "24c5ec05b0198e516217c01cae7eb31f9a424db906932ccfd9a0e344939606be"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-focused-final-r3.log",
+      "bytes": 2244,
+      "sha256": "cfdd3469ce918432599517e0cc59050f94354a25db26ff6066eb13255d8c4ae6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-focused-final-r4.log",
+      "bytes": 2835,
+      "sha256": "f75c905a7a135611551131fe5214d4268e9b38797ddf1475512e7ab630541b8f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-focused-final-r5.log",
+      "bytes": 1760,
+      "sha256": "d9ce448736f57fe377834469c1b28e9e81f5b16812adb0bbea3897711a4e50cc"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-focused-final-r6.log",
+      "bytes": 1760,
+      "sha256": "a1666fc972944d6dd85e4ef50b9c636e7881c8ea75ca4627a0fb75e40a171ef6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-focused-final-r7.log",
+      "bytes": 674,
+      "sha256": "9586c2adf45c8fc8bebdfc2a392cb58b652513d89fb6938fcdade9007f899b1e"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-focused-final-r8.log",
+      "bytes": 674,
+      "sha256": "72473b73f99ab8c756b9892350247242a32782b8155283e390670c4d54eb8db3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-focused-final.log",
+      "bytes": 2504,
+      "sha256": "808e87f388dcdc0b4d5f149901da9b61f7a2d078bd86c06332a8c88d3e9fa64a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-focused-r2.log",
+      "bytes": 2290,
+      "sha256": "74fceb158ea2d0febbe36df7a10b1d010cfaf04ab7a4a60264bf790254f31da7"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-focused-r3.log",
+      "bytes": 1999,
+      "sha256": "b7ee137667d7e69818c43a54778f2f53bf3e1c146ddf7729d13eafdb7b2b2bf1"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-focused-r4.log",
+      "bytes": 1864,
+      "sha256": "98f635bf9b03841c22816a70c9e5c0ff03631342fb175fb0b174f4c7de8ca0e2"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-focused-r5.log",
+      "bytes": 2183,
+      "sha256": "03c5d2f38161731beea3867f8c23933c621c18e4a95f25f77998524ac5d93213"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-focused-r6.log",
+      "bytes": 674,
+      "sha256": "b3b594902b1d525b14106aec61a743697af9ebfed8d3d0a4b16e8b287d1d6c67"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-focused.log",
+      "bytes": 1884,
+      "sha256": "1dcd3af5a53b06b932f8dd51e519e72235df91825d056990149d10b1ce2b79ee"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-performance-final.json",
+      "bytes": 4384,
+      "sha256": "84051c2596862171f8e636ad75f87c1a25b83c755f495c6154a2254a91a5caa3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-performance-preliminary.json",
+      "bytes": 3897,
+      "sha256": "839f979383f86cb39c1de329bfdda555820fcd3b34193d1ba929fb4468af5410"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-performance-r3.json",
+      "bytes": 4388,
+      "sha256": "7291749a1b9c2ac7737146d25e63614cba49ac6e2be04f0ae53dfe9e6c7a957d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-report-final.json",
+      "bytes": 2540,
+      "sha256": "2a35de9c2b478ed64736d66bb39dd51db7099b99a657819e6022973844907c7a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-report-reviewed.json",
+      "bytes": 2981,
+      "sha256": "8989cd830c0363f4e76d3c1292cd61a7451eadbbff6fb0bc2437fb6997b7ec75"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-report.json",
+      "bytes": 2501,
+      "sha256": "4f4d10042a6b684da3f21d842a1568a80d00045328cef4cedddd87551c743d76"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/production-quality-reviewed.log",
+      "bytes": 674,
+      "sha256": "57c78eb81f402e186298f821414667b08a7471a1017f2839517acdd322959407"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/quality-performance-preliminary.json",
+      "bytes": 740,
+      "sha256": "19fb80a2faacf2cbdc9c10478c420c94c3dd7979a231a513f805d45f677a43bb"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/quality-performance-preliminary.log",
+      "bytes": 1425,
+      "sha256": "40770fe23f87b4804186b0d6f3b679a4e4ef41cc39d360c9f442065fffda48f6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/recovery-preliminary-r2.json",
+      "bytes": 502,
+      "sha256": "be60770b5a2504a169dac5e130b985d8dd25aa98806b8dd344515d09ffb3c603"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/recovery-preliminary-r2.log",
+      "bytes": 3444,
+      "sha256": "3a08a27a055aead91e74c3311be9b84bc04ba6404112793fbd5c5295e789a3c8"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/recovery-preliminary-r3.json",
+      "bytes": 576,
+      "sha256": "6388ffed7dde717014bdeb344476ad9116b6ad68f1594084e0a84b56a84f5b4d"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/recovery-preliminary-r3.log",
+      "bytes": 3515,
+      "sha256": "2f849e90e89122c6f748c9065b8291dbaeccbd43ebce89e30f2baf6b0acbd028"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/recovery-preliminary-r4.json",
+      "bytes": 502,
+      "sha256": "260228ba2d8832a32eab71b68581513f7c891ec6bf1e20c6a79b623ad6502bf2"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/recovery-preliminary-r4.log",
+      "bytes": 2355,
+      "sha256": "34ab2caebf1d0a41a5c5f47832a12eb9311f92c4a49fb617938daf2bfa468151"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/recovery-preliminary.json",
+      "bytes": 502,
+      "sha256": "31ae89da0d49a398a6360e6050751cd0083d071d1713806cbd29d4148a8c729b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/recovery-preliminary.log",
+      "bytes": 2115,
+      "sha256": "bdad0b9109824701111fca6256a134771ecd87c074101d43b86fcccc810409e0"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/release-focused-r1.json",
+      "bytes": 411,
+      "sha256": "e62139357cf299913ab8da98b829a7892f1d94a5b24183002c4e72b442cc08cd"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/release-focused-r1.log",
+      "bytes": 834,
+      "sha256": "67f9b47a463e07a2f760ae4b60177ddad3080bc7815ba14c8cc047dad131b378"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/release-schema-preliminary.json",
+      "bytes": 346,
+      "sha256": "c77988fd1282eee43c26a701aee367f116ddb6b8739fb5321b7a15a23067ba80"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/release-schema-preliminary.log",
+      "bytes": 620,
+      "sha256": "e3608420f0381846b99febe1fcd581176a92ac0b5987c70c78f8ebd1af945890"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/release-typecheck-r2.json",
+      "bytes": 317,
+      "sha256": "70dc897ab28c03c13ae4007150fd28b433e3088b2e55b204da3017cce6fb441b"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/release-typecheck-r2.log",
+      "bytes": 3434,
+      "sha256": "611ac5637311488674c3b2743e55198f4d3f56c98b82e0fd93a2f2e7e8167ce1"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/release-typecheck-r3.json",
+      "bytes": 317,
+      "sha256": "e1afe06db8d60c4e2fde800306e095779d0b0b66c44e7da5856a9c3d981df563"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/release-typecheck-r3.log",
+      "bytes": 290,
+      "sha256": "c2315b9fe04c364542daa4289f1425390347612466e30c4bcb6d5e09b797f8b6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/relocate-task-evaluation-artifacts.json",
+      "bytes": 891,
+      "sha256": "fd3fd63c60a56de8ea8788c6db6413a170a3465bcec349bba59b20eb78276015"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/relocate-task-evaluation-artifacts.log",
+      "bytes": 1412,
+      "sha256": "3a51951f962243c573a786d40f73f8fcd878b6ba3d1f1f8fccb79cd3fb57afa8"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/run-command.py",
+      "bytes": 1149,
+      "sha256": "ba606ea25fdba59790bb507d735d589e44e44fa1c3bf7cfac1d05d9e55719398"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/run-isolated-student-web.py",
+      "bytes": 2359,
+      "sha256": "37a136ec8f5d3ed4ae596df0e7a1c740b1739e0ed5438970c1b9f96ef5c20c6e"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/schema-web-preliminary.json",
+      "bytes": 359,
+      "sha256": "e09442e42766ad730a359e30693942c043fb13619809a59663a5631f49423a74"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/schema-web-preliminary.log",
+      "bytes": 12048,
+      "sha256": "485e0466f05a6252c41a56aceec9eadd0a88d9ee486c064c20f3b37eeea41f8f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/task-browser-runtime-install.json",
+      "bytes": 538,
+      "sha256": "f8548b0a61e118d61576b1ad5829e809484c00d18d7ad1e77759dce47c493aa9"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/task-browser-runtime-install.log",
+      "bytes": 7159,
+      "sha256": "42e976124eb222f07eff0eb436f00d1948e0d608d75ca1e78716c4b70f09787a"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/telemetry-recovery-preliminary.json",
+      "bytes": 551,
+      "sha256": "8e297996e1920562706b89f7296abe5e56259e8e010d80d1c4e7696cdd6419ac"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/telemetry-recovery-preliminary.log",
+      "bytes": 1219,
+      "sha256": "a87a7721504ba0c0df24df56cd448e9922df7d4e1faefc962d8958747dfd628c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/typecheck-preliminary-r5.json",
+      "bytes": 571,
+      "sha256": "77e8593b62b8eb3c9c677469b5524f1eca98b592ffc84a102cc9c964fac6d2af"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/typecheck-preliminary-r5.log",
+      "bytes": 1033,
+      "sha256": "3e2ac1168e30a819344f98cef19a551f0cb64b0182640f62daacc8504b86b9a9"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/verified-final-r3/identity.json",
+      "bytes": 1901,
+      "sha256": "6de6644e5d2ca632a45e9a79e04bb602c3072e75bf2c7a2833776eb4629415eb"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/verified-final-r3/source-sha256.txt",
+      "bytes": 316276,
+      "sha256": "f9b9b08fcffc26875725af81e52fd539f44b9e2eee85faaaafcfcac036cb9d4f"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/verified-final-r3/status.txt",
+      "bytes": 24040,
+      "sha256": "0eeb1f64bbe07c427e8af98482f7565faf84db64e0b3f1441a184bffd427bca6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/verified-final-r3/tracked-diff.patch",
+      "bytes": 14807000,
+      "sha256": "9e4871679494876ec70c07ed475558f7f5397a48634dc0afdd115da9150e137c"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/verified-final-r3/untracked-sha256.txt",
+      "bytes": 33509,
+      "sha256": "16fbac5b767b1a6083ae55c7dc6d9e97f1e03a42068af5255f46969cb34098ac"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/verified-final-r5/identity.json",
+      "bytes": 1901,
+      "sha256": "fcb6a8f199f21ee89a5b77509dedde0c518bac4d83c755226cde4d468b1220cf"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/verified-final-r5/source-sha256.txt",
+      "bytes": 316276,
+      "sha256": "55f11e10edaca878b246fa62061029822cb74728569ca5581c96148d1f4dc8de"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/verified-final-r5/status.txt",
+      "bytes": 24040,
+      "sha256": "0eeb1f64bbe07c427e8af98482f7565faf84db64e0b3f1441a184bffd427bca6"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/verified-final-r5/tracked-diff.patch",
+      "bytes": 14807723,
+      "sha256": "df3a2fe67b6264fcb3d9c3f54fda9383b60309cfff6b2566940d1cca69f770d3"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/verified-final-r5/untracked-sha256.txt",
+      "bytes": 33509,
+      "sha256": "652c66efa4d8e884cd28d955a9f9b355f132c71b7880096b5995c25c172d5464"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/verify-closing-record.py",
+      "bytes": 2604,
+      "sha256": "c2fc82160f65b92a2ed991d6b2867aaa25b1e713be09959c3382957041a813aa"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/workspace-focus-unit-r1.json",
+      "bytes": 408,
+      "sha256": "8c4392e2c93f189196fe5c931536bc007c0a5db6a62bf41cf1cf2bc999eb69a5"
+    },
+    {
+      "path": "docs/verification/petros-phase5-20261003/workspace-focus-unit-r1.log",
+      "bytes": 980,
+      "sha256": "501a52d3423a6e45aa9bf4592b9c58f0f3827f248cadf0d593f840b85479fc34"
+    },
+    {
+      "path": "docs/PETROS-PHASE-5-VERIFICATION-RESULTS.md",
+      "bytes": 22331,
+      "sha256": "09a2f4b0d5d17262f5cec61a12707eb2a11270ceb8518ba14e01056e2cea67c8",
+      "sourceManifestExcluded": true
+    },
+    {
+      "path": "docs/PETROS-LEARNING-HARNESS-PLAN.md",
+      "bytes": 364737,
+      "sha256": "13eab4df3a92b126101d58c67d25829473f9a734e7a758f55ec316cd5df46a9a",
+      "sourceManifestExcluded": true
+    }
+  ],
+  "identity": "frozen-final-r5; reconfirmed verified/closing-final-r5",
+  "note": "Candidate failures and earlier identities are retained as historical attempts, not final gate passes. R1 Firefox launch is unavailable and does not count as a passed journey."
+}

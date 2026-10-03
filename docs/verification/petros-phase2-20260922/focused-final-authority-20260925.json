@@ -1,0 +1,17 @@
+{
+  "startedAt": "2026-09-25T15:11:21.459296+00:00",
+  "finishedAt": "2026-09-25T15:11:27.619664+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/integrations/petros-pack-authority.integration.spec.ts",
+    "src/modules/integrations/petros-phase2-http.integration.spec.ts",
+    "src/modules/integrations/petros-phase2-migration.integration.spec.ts"
+  ],
+  "exitCode": 0,
+  "log": "focused-final-authority-20260925.log"
+}

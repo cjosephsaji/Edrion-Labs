@@ -1,0 +1,14 @@
+{
+  "startedAt": "2026-09-26T15:04:52.172234+00:00",
+  "finishedAt": "2026-09-26T15:04:55.409075+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/schemas",
+    "exec",
+    "vitest",
+    "run"
+  ],
+  "exitCode": 0,
+  "log": "final-r6-schemas-tests-20260926.log"
+}

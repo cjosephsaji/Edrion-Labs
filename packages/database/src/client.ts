@@ -56,6 +56,11 @@ export async function withInstitutionScope<T>(
  */
 const tenantStore = new AsyncLocalStorage<{ db: Database }>();
 
+/** Atomic domain effect + injected AuditWriter. Preserve any existing RLS scope. */
+export async function runInDatabaseTransaction<T>(db: Database, fn: () => Promise<T>): Promise<T> {
+  return db.transaction(tx => tenantStore.run({ db: tx as unknown as Database }, fn));
+}
+
 /**
  * Wrap a base database in a Proxy that, on every access, routes to the active tenant transaction
  * (when one is open in this async context) or falls back to the base pool. Functions are bound to

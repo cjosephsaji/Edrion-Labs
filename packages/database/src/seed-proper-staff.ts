@@ -86,7 +86,7 @@ async function seedInstitutionStaff(
     const email = st.email.toLowerCase();
 
     // 1. Find or create institution user
-    let [portalUser] = await db
+    const [portalUser] = await db
       .select({ id: s.institutionUsers.id })
       .from(s.institutionUsers)
       .where(
@@ -152,7 +152,7 @@ async function seedInstitutionStaff(
     }
 
     // 5. Find or create staff record
-    let [existingStaff] = await db
+    const [existingStaff] = await db
       .select({ id: s.staff.id })
       .from(s.staff)
       .where(

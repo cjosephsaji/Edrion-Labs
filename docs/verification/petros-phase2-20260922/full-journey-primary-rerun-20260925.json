@@ -1,0 +1,15 @@
+{
+  "startedAt": "2026-09-25T16:05:51.171176+00:00",
+  "finishedAt": "2026-09-25T16:06:13.810607+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/integrations/petros-phase2-full-journey.integration.spec.ts"
+  ],
+  "exitCode": 0,
+  "log": "full-journey-primary-rerun-20260925.log"
+}

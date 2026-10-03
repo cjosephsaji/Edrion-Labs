@@ -1,0 +1,17 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/integrations/petros-phase4-institutional.integration.spec.ts"
+  ],
+  "start": "2026-10-02T10:48:47.788915+00:00",
+  "end": "2026-10-02T10:48:51.967476+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

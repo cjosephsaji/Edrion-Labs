@@ -1,0 +1,16 @@
+{
+  "startedAt": "2026-09-25T03:13:14.649552+00:00",
+  "finishedAt": "2026-09-25T03:13:22.191212+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/integrations/petros-learning-artifacts.integration.spec.ts",
+    "src/modules/integrations/petros-pack-authority.integration.spec.ts"
+  ],
+  "exitCode": 0,
+  "log": "qualitative-inspection-rerun-20260925.log"
+}

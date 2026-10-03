@@ -110,6 +110,7 @@ describe('PetrosArtifactsService ownership boundary', () => {
 
   it('returns an idempotent completed commit without another product write', async () => {
     const repo = repository();
+    repo.findSession.mockResolvedValue(session());
     repo.findBundleById.mockResolvedValue(bundle());
     repo.beginCommit.mockResolvedValue({ state: 'completed', response: commitResponse() });
     const service = new PetrosArtifactsService(repo as never, learnerModels() as never);
@@ -122,6 +123,17 @@ describe('PetrosArtifactsService ownership boundary', () => {
 
     expect(result.results[0]).toMatchObject({ proposalId, status: 'saved', artifactId });
     expect(repo.saveProposal).not.toHaveBeenCalled();
+  });
+
+  it('revalidates source access before returning a completed save response',async()=>{
+    const repo=repository();
+    repo.findBundleById.mockResolvedValue(bundle());
+    repo.findSession.mockRejectedValue(new Error('source revoked'));
+    repo.beginCommit.mockResolvedValue({state:'completed',response:commitResponse()});
+    const service=new PetrosArtifactsService(repo as never,learnerModels() as never);
+    await expect(service.commit(principal,bundleId,{idempotencyKey:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      expectedBundleVersion:0,proposalIds:[proposalId]})).rejects.toThrow('source revoked');
+    expect(repo.beginCommit).not.toHaveBeenCalled();
   });
 
   it('preserves a successful item during partial failure and gives the failed item a retry path', async () => {

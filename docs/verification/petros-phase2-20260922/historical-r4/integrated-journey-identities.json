@@ -1,0 +1,66 @@
+{
+  "sourceLog": "final-r4-api-closure-20260925.log",
+  "synthetic": true,
+  "runs": [
+    {
+      "institutionId": "089fa549-ac3f-4675-9b7a-38985099beff",
+      "studentId": "c7d82c71-2c70-4f59-9056-68cd659da2df",
+      "courseId": "b44bfcac-0322-4b1d-b26c-2f08319f7951",
+      "sessionId": "a7330154-1949-408e-84f1-944454677618",
+      "sourceId": "32341fc3-9a4e-431b-a0df-f0e2881c9df2",
+      "sourceVersion": "f9d0d29977c7339434bdec05ed8a4567a9b3d725e1c98767d285fd48584012f1",
+      "objective": {
+        "id": "ad95633b-5711-46af-93d1-14fd01e8bee1",
+        "version": 1
+      },
+      "pack": {
+        "id": "24dfa862-f066-4198-af0b-ad5ff51e74c1",
+        "version": 1
+      },
+      "rubricVersion": "1",
+      "packCandidateId": "79556a6d-f307-4e89-8d5c-d6f8178cc0fa",
+      "qualificationId": "30097025-375a-45b1-ad6e-04c5e4f284d0",
+      "simulationOperationIds": [
+        "321fd57d-c28c-4c2b-a84c-71707c395984",
+        "a9a90370-fe7f-437c-bb4c-f24cc69a570b",
+        "58d8b052-dd40-4112-8d08-62b131cb47fb"
+      ],
+      "evidenceEventIds": [
+        "c2f3c99d-314e-4b3f-96de-d2931d1fe0a8",
+        "ef60b2c3-55c3-4283-a53f-04e6055a5d9d",
+        "b25b22e4-3e3c-4db7-961b-740715925533"
+      ],
+      "savedArtifactIds": [
+        "3ff54f38-4c38-4f93-b8dd-687fbe5a7c61",
+        "8eec995f-3829-48e4-b5ec-233675f492bc"
+      ],
+      "scheduledAt": "2026-09-26T03:30:00.000Z",
+      "simulatedReviewAt": "2026-09-26T03:30:01.000Z",
+      "submissionId": "5ed6ce10-18b3-4994-a5b2-6d7e4f830a01",
+      "draftFeedbackId": "f19d1bf1-44ba-4df6-8553-eeb50845b303",
+      "auditIds": [
+        "c0ab3c67-2ed1-460f-a0f9-de2e94599bf3",
+        "be22962a-a346-4880-83b9-b4db73200d93",
+        "ab23923d-781d-467b-81f0-428751ee4f2d",
+        "937470e4-8bc9-4e00-8bf1-6dafbe57e2b7",
+        "180291f2-ddeb-43e4-8fba-e8f6f8386252",
+        "7c9491d5-3cf4-478b-8026-3e6b80d3dd65",
+        "ea9b0e3c-7052-4f06-a217-9a4e683ba88f",
+        "be296c2d-b916-43ce-919b-7b1b894d9d8f",
+        "9789af75-b42d-47d7-8550-badbddc6ff52",
+        "650f59bf-cceb-4366-ac99-554c3982ac5a",
+        "6b01b957-2414-4496-8954-c24a7164435f",
+        "1749e98f-7804-407b-83fb-ee2711a43f63",
+        "5d3b4001-1e56-47e9-aa6e-ac77f7230a66",
+        "97cfc43d-feeb-43a2-af15-9518104fadc3",
+        "6e1901ee-22fb-4e53-8a94-0b96c59a2d38",
+        "97b6869e-c6d7-492a-830b-4f6fa3f10076",
+        "26e88722-f504-46aa-84fa-817e20f32e8f",
+        "8820fbab-305a-4d51-a0b7-3ae74fe81937",
+        "71da119b-3f7c-45f8-8a95-0117f1aa28fe",
+        "7cfe687a-ad28-4c59-89ad-e64a59cb47d0"
+      ],
+      "providerCalls": 0
+    }
+  ]
+}

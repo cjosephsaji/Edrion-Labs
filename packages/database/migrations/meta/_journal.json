@@ -911,6 +911,167 @@
       "when": 1789800800000,
       "tag": "0209_petros_document_learning_path",
       "breakpoints": true
+    },
+    {
+      "idx": 130,
+      "version": "7",
+      "when": 1789800800001,
+      "tag": "0208_knowledge_extraction_versions",
+      "breakpoints": true
+    },
+    {
+      "idx": 131,
+      "version": "7",
+      "when": 1789800800002,
+      "tag": "0209_knowledge_preparations",
+      "breakpoints": true
+    },
+    {
+      "idx": 132,
+      "version": "7",
+      "when": 1789800900000,
+      "tag": "0210_petros_question_execution",
+      "breakpoints": true
+    },
+    {
+      "idx": 133,
+      "version": "7",
+      "when": 1789801000000,
+      "tag": "0211_petros_ai_attempt_reservations",
+      "breakpoints": true
+    },
+    {
+      "idx": 134,
+      "version": "7",
+      "when": 1789801100000,
+      "tag": "0212_petros_visual_snapshot",
+      "breakpoints": true
+    },
+    {
+      "idx": 135,
+      "version": "7",
+      "when": 1789801200000,
+      "tag": "0213_petros_assessment_contract",
+      "breakpoints": true
+    },
+    {
+      "idx": 136,
+      "version": "7",
+      "when": 1789801300000,
+      "tag": "0214_petros_question_knowledge_policy",
+      "breakpoints": true
+    },
+    {
+      "idx": 137,
+      "version": "7",
+      "when": 1789801400000,
+      "tag": "0215_petros_compatibility_contracts",
+      "breakpoints": true
+    },
+    {
+      "idx": 138,
+      "version": "7",
+      "when": 1789801500000,
+      "tag": "0216_v10_rls_immutability",
+      "breakpoints": true
+    },
+    {
+      "idx": 139,
+      "version": "7",
+      "when": 1789801600000,
+      "tag": "0217_petros_runtime_closure",
+      "breakpoints": true
+    },
+    {
+      "idx": 140,
+      "version": "7",
+      "when": 1789801700000,
+      "tag": "0218_petros_teaching_packs",
+      "breakpoints": true
+    },
+    {
+      "idx": 141,
+      "version": "7",
+      "when": 1789801800000,
+      "tag": "0219_petros_objective_evidence",
+      "breakpoints": true
+    },
+    {
+      "idx": 142,
+      "version": "7",
+      "when": 1789801900000,
+      "tag": "0220_petros_projectile_commands",
+      "breakpoints": true
+    },
+    {
+      "idx": 143,
+      "version": "7",
+      "when": 1789802000000,
+      "tag": "0221_petros_adaptive_bindings",
+      "breakpoints": true
+    },
+    {
+      "idx": 144,
+      "version": "7",
+      "when": 1789802100000,
+      "tag": "0222_petros_assignment_learning",
+      "breakpoints": true
+    },
+    {
+      "idx": 145,
+      "version": "7",
+      "when": 1789802200000,
+      "tag": "0223_petros_learning_artifacts",
+      "breakpoints": true
+    },
+    {
+      "idx": 146,
+      "version": "7",
+      "when": 1789802201000,
+      "tag": "0224_petros_adaptive_observations",
+      "breakpoints": true
+    },
+    {
+      "idx": 147,
+      "version": "7",
+      "when": 1789802202000,
+      "tag": "0225_petros_qualitative_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 148,
+      "version": "7",
+      "when": 1789802203000,
+      "tag": "0226_petros_phase2_owner_links",
+      "breakpoints": true
+    },
+    {
+      "idx": 149,
+      "version": "7",
+      "when": 1789900000000,
+      "tag": "0227_petros_workspace",
+      "breakpoints": true
+    },
+    {
+      "idx": 150,
+      "version": "7",
+      "when": 1789900000001,
+      "tag": "0228_petros_continuity",
+      "breakpoints": true
+    },
+    {
+      "idx": 151,
+      "version": "7",
+      "when": 1789900000002,
+      "tag": "0229_petros_phase4_institutional",
+      "breakpoints": true
+    },
+    {
+      "idx": 152,
+      "version": "7",
+      "when": 1790985600000,
+      "tag": "0230_petros_phase5_release",
+      "breakpoints": true
     }
   ]
 }

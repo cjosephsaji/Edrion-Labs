@@ -1,4 +1,6 @@
+import { petrosKnowledgeModeSchema } from './petros-knowledge-policy';
 import { z } from 'zod';
+import { petrosDocumentReadinessSchema } from './petros-document-source';
 import {
   petrosPlaybackCheckpointSchema,
   petrosTeachingPresentationSchema,
@@ -847,6 +849,7 @@ export const petrosCreateLearningSessionSchema = z
           pages: z.array(z.object({ page: z.number().int().positive(), text: z.string() })),
           complete: z.boolean(),
         }).optional(),
+        documentReadiness: petrosDocumentReadinessSchema.optional(),
         policyDisclosures: z.array(z.string().trim().min(1).max(600)).max(12).optional(),
         returnHref: z.string().trim().startsWith('/').max(500).optional(),
         returnLabel: z.string().trim().min(1).max(120).optional(),
@@ -961,6 +964,7 @@ export type PetrosRequestHintInput = z.infer<typeof petrosRequestHintSchema>;
 
 export const petrosComposerQuestionSchema = z
   .object({
+    knowledgeMode: petrosKnowledgeModeSchema.optional(),
     idempotencyKey: z.string().uuid(),
     question: z.string().trim().min(2).max(2_000),
     expectedSessionVersion: z.number().int().nonnegative(),
@@ -991,6 +995,7 @@ export const petrosSessionBlockSchema = z
     interactionState: z.record(z.unknown()),
     observedOutcome: z.record(z.unknown()).nullable(),
     questions: z.array(petrosStudentQuestionStateSchema),
+    responseMode: z.literal('adaptive_observation').optional(),
     whyThis: z.string(),
     correlationId: z.string().uuid(),
     delivery: z.enum(['ai', 'deterministic_fallback']),

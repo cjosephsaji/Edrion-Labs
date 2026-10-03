@@ -1,0 +1,187 @@
+$ vitest run --passWithNoTests
+The CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.
+
+ RUN  v2.1.9 /Volumes/Chris/Edrion Labs/apps/api
+
+ ↓ src/modules/integrations/petros-provider-mapping-closure.integration.spec.ts (10 tests | 10 skipped)
+ ↓ src/modules/integrations/petros-curriculum-closure.integration.spec.ts (12 tests | 12 skipped)
+ ↓ src/modules/integrations/petros-phase3-journey.integration.spec.ts (5 tests | 5 skipped)
+ ↓ src/modules/integrations/petros-compatibility.integration.spec.ts (10 tests | 10 skipped)
+ ✓ src/modules/petros-ai-routing/petros-ai-gateway.service.spec.ts (38 tests) 56ms
+ ↓ src/modules/integrations/petros-phase2-full-journey.integration.spec.ts (1 test | 1 skipped)
+ ✓ src/modules/student/petros-loop/petros-loop.service.spec.ts (22 tests) 149ms
+ ✓ src/modules/student/petros-teach-back/petros-teach-back.service.spec.ts (11 tests) 41ms
+ ↓ src/modules/student/petros-session-intent/petros-document-source.integration.spec.ts (100 tests | 100 skipped)
+ ↓ src/modules/integrations/petros-phase1-final-journey.integration.spec.ts (1 test | 1 skipped)
+ ✓ src/modules/student/petros-loop/petros-loop.policy.spec.ts (21 tests) 27ms
+ ✓ src/modules/student/petros-session-intent/petros-session-intent.service.spec.ts (15 tests) 88ms
+ ↓ src/modules/integrations/petros-phase5-release.integration.spec.ts (7 tests | 7 skipped)
+ ↓ src/modules/integrations/petros-workspace.integration.spec.ts (12 tests | 12 skipped)
+ ↓ src/modules/integrations/petros-learning-artifacts.integration.spec.ts (8 tests | 8 skipped)
+[Nest] 85040  - 10/03/2026, 11:13:16 PM   DEBUG [PetrosAgentService] tool students_search → ~3 tokens
+[Nest] 85040  - 10/03/2026, 11:13:16 PM   DEBUG [PetrosAgentService] tool students_search → ~13 tokens
+[Nest] 85040  - 10/03/2026, 11:13:16 PM   DEBUG [PetrosAgentService] tool students_search → ~3 tokens
+ ✓ src/modules/portal/petros/petros-agent.service.spec.ts (13 tests) 20ms
+ ✓ src/modules/student/petros-artifacts/petros-artifacts.service.spec.ts (12 tests) 26ms
+stdout | src/modules/portal/petros/context/cost-audit.spec.ts > Petros input-token cost > reports the saving
+
+  Petros input cost — gpt-5.4-mini
+  turn: "Show me the students in Grade 5A and how their attendance has been this month."
+  → 3 model calls: look up students, look up attendance, answer
+  ────────────────────────────────────────────────────────────────
+  component (tokens)             before      after      saved
+  ────────────────────────────────────────────────────────────────
+  instructions (owner)             1654        773        53%
+  students list (10 rows)          1816        496        73%
+  attendance list (10 rows)        1405        382        73%
+  academics structure              8350       2433        71%
+  tool schemas (unchanged)         2688       2688         0%
+  ────────────────────────────────────────────────────────────────
+  input sent, no cache            18243      11937        35%
+    → cost of the turn        $0.004561  $0.002984        35%
+  ────────────────────────────────────────────────────────────────
+  input sent, warm cache          18243      11937
+    → at full price                7663       4439        42%
+    → at cache price              10580       7498
+    → cost of the turn        $0.002180  $0.001297        41%
+    → per 10k turns          $21.802500 $12.972000
+  ────────────────────────────────────────────────────────────────
+  Steady state is the warm-cache block. The prompt prefix is byte-identical on
+  every iteration and the input only grows at the tail, so what you pay FULL
+  price for, over and over, IS the tail — the tool results. Which is exactly
+  what the compactor cuts.
+
+  Tool schemas are the biggest thing left, and are deliberately untouched: a tool
+  the model cannot see is a tool it cannot call, so subsetting them is the one
+  lever here that can genuinely make Petros worse. Caching already discounts them.
+
+  Input only. Reasoning/output (effort=low, verbosity=low) saves on top of this,
+  and is measured live per turn via petros_messages.cost_micro_usd.
+
+
+ ✓ src/modules/portal/petros/context/cost-audit.spec.ts (1 test) 5ms
+ ↓ src/modules/integrations/petros-phase5-gateway.integration.spec.ts (1 test | 1 skipped)
+ ↓ src/modules/integrations/petros-assignment-authority.integration.spec.ts (7 tests | 7 skipped)
+ ↓ src/modules/integrations/petros-phase2-http.integration.spec.ts (1 test | 1 skipped)
+ ↓ src/modules/integrations/petros-phase4-journey.integration.spec.ts (4 tests | 4 skipped)
+ ✓ src/modules/student/petros-companion/petros-companion.spec.ts (33 tests) 14ms
+ ↓ src/modules/integrations/petros-phase4-cohort.integration.spec.ts (1 test | 1 skipped)
+ ↓ src/modules/integrations/petros-phase6-source-authoring.integration.spec.ts (2 tests | 2 skipped)
+ ✓ src/modules/student/petros-input-modes/petros-input-modes.service.spec.ts (8 tests) 16ms
+ ✓ src/modules/petros-learner-model/petros-learner-model.service.spec.ts (16 tests) 26ms
+ ✓ src/modules/petros-learner-model/petros-learner-model.engine.spec.ts (8 tests) 9ms
+ ↓ src/modules/integrations/petros-phase6-cooling.integration.spec.ts (2 tests | 2 skipped)
+ ↓ src/modules/integrations/petros-projectile-commands.integration.spec.ts (6 tests | 6 skipped)
+ ↓ src/modules/integrations/petros-phase4-continuity.integration.spec.ts (8 tests | 8 skipped)
+ ✓ src/modules/petros-topic-profiles/petros-topic-profiles.service.spec.ts (5 tests) 73ms
+ ↓ src/modules/integrations/petros-assignment-learning.integration.spec.ts (4 tests | 4 skipped)
+ ↓ src/modules/integrations/petros-objective-evidence.integration.spec.ts (4 tests | 4 skipped)
+ ✓ src/modules/copilot/copilot.service.spec.ts (10 tests) 39ms
+ ✓ src/modules/petros-institutional/petros-institutional.service.spec.ts (6 tests) 54ms
+ ↓ src/modules/integrations/petros-adaptive-journey.integration.spec.ts (2 tests | 2 skipped)
+ ✓ src/modules/integrations/provider-mappings.service.spec.ts (12 tests) 11ms
+ ✓ src/modules/institution-users/institution-users.service.spec.ts (12 tests) 9ms
+ ↓ src/modules/integrations/petros-phase5-operations.integration.spec.ts (1 test | 1 skipped)
+ ✓ src/modules/student/petros-reflection/petros-reflection.engine.spec.ts (7 tests) 16ms
+ ✓ src/modules/plans/plans.service.spec.ts (10 tests) 5ms
+ ✓ src/modules/student/petros-session-intent/petros-document-teaching.spec.ts (19 tests) 42ms
+ ↓ src/modules/integrations/petros-phase5-quality.integration.spec.ts (1 test | 1 skipped)
+ ✓ src/modules/portal/dashboard/widget-registry.spec.ts (16 tests) 4ms
+ ↓ src/modules/integrations/petros-phase4-institutional.integration.spec.ts (4 tests | 4 skipped)
+ ✓ src/modules/petros-quality/petros-quality.service.spec.ts (8 tests) 80ms
+ ✓ src/modules/student/petros-reflection/petros-reflection.service.spec.ts (5 tests) 13ms
+ ✓ src/modules/petros-ai-routing/petros-provider-adapters.spec.ts (15 tests) 37ms
+ ↓ src/modules/integrations/petros-phase2-owner-links.integration.spec.ts (1 test | 1 skipped)
+ ✓ src/modules/student/materials/material-document-preview.service.spec.ts (8 tests) 72ms
+ ✓ src/modules/registration/registration.service.spec.ts (8 tests) 12ms
+ ✓ src/modules/subscriptions/subscriptions.service.spec.ts (11 tests) 7ms
+ ✓ src/modules/petros-ai-routing/petros-routing-engine.spec.ts (7 tests) 9ms
+ ✓ src/modules/petros-institutional/petros-institutional.engine.spec.ts (6 tests) 10ms
+ ✓ src/modules/portal/petros/context/compact.spec.ts (17 tests) 4ms
+[Nest] 85125  - 10/03/2026, 11:13:22 PM    WARN [PetrosLearningSourceIngestionService] Learner evidence delivery failed after exam-attempt commit for 88ab5c8e-c136-4b2d-9a08-46f7d5f74668: model unavailable
+ ✓ src/modules/petros-learner-model/petros-learning-source-ingestion.service.spec.ts (4 tests) 12ms
+ ✓ src/modules/petros-quality/petros-operations.service.spec.ts (3 tests) 7ms
+ ✓ src/modules/support-access/support-access.service.spec.ts (7 tests) 5ms
+ ✓ src/modules/student/petros-session-intent/petros-document-outline.spec.ts (7 tests) 17ms
+ ✓ src/modules/student/petros-companion/petros-mentor.engine.spec.ts (13 tests) 5ms
+ ✓ src/modules/student/knowledge/knowledge-document-retrieval.spec.ts (7 tests) 282ms
+ ✓ src/modules/student/petros-loop/petros-pilot.policy.spec.ts (11 tests) 12ms
+ ↓ src/modules/integrations/petros-phase5-recovery.integration.spec.ts (1 test | 1 skipped)
+ ↓ src/modules/integrations/petros-phase5-pilot.integration.spec.ts (3 tests | 3 skipped)
+ ↓ src/modules/integrations/petros-pack-authority.integration.spec.ts (6 tests | 6 skipped)
+ ✓ src/modules/portal/dashboard/dashboard-prefs.service.spec.ts (10 tests) 3ms
+ ✓ src/modules/ai-governance/ai-governance.service.spec.ts (6 tests) 9ms
+ ✓ src/modules/student/petros-loop/petros-adaptive.renderer.spec.ts (10 tests) 10ms
+ ✓ src/modules/student/petros-companion/petros-mentor.service.spec.ts (8 tests) 21ms
+ ✓ src/modules/billing/billing.service.spec.ts (4 tests) 8ms
+ ✓ src/modules/registration/otp.service.spec.ts (9 tests) 7ms
+ ↓ src/modules/integrations/petros-phase4-migration.integration.spec.ts (1 test | 1 skipped)
+ ✓ src/modules/student/materials/student-materials.controller.spec.ts (5 tests) 15ms
+ ✓ src/modules/authentication/auth-login.service.spec.ts (5 tests) 8ms
+ ✓ src/modules/student/petros-session-intent/petros-document-source.spec.ts (12 tests) 42ms
+ ✓ src/common/guards/permissions.guard.spec.ts (10 tests) 5ms
+ ✓ src/common/guards/auth.guard.spec.ts (5 tests) 13ms
+ ✓ src/common/guards/rate-limit.guard.spec.ts (7 tests) 8ms
+ ✓ src/modules/student/petros-loop/petros-pilot.service.spec.ts (5 tests) 14ms
+ ✓ src/modules/copilot/ai-usage-limiter.service.spec.ts (7 tests) 6ms
+ ✓ src/modules/parent-portal/parent-portal.spec.ts (12 tests) 6ms
+ ✓ src/common/all-exceptions.filter.spec.ts (6 tests) 6ms
+ ✓ src/modules/portal/programme-list-filters.spec.ts (7 tests) 14ms
+ ✓ src/modules/student/petros-loop/petros-observation.policy.spec.ts (10 tests) 5ms
+ ✓ src/modules/petros-institutional/petros-knowledge-policy.spec.ts (4 tests) 8ms
+ ✓ src/modules/student/petros-input-modes/petros-media-safety.spec.ts (5 tests) 7ms
+ ✓ src/modules/student/petros-loop/petros-document-teaching.policy.spec.ts (7 tests) 14ms
+ ✓ src/modules/portal/tenant-scope.spec.ts (3 tests) 10ms
+ ✓ src/modules/petros-institutional/petros-institutional.jobs.spec.ts (2 tests) 7ms
+ ✓ src/modules/authentication/session.service.spec.ts (6 tests) 6ms
+ ✓ src/modules/integrations/petros-v10-migration.spec.ts (3 tests) 6ms
+ ✓ src/modules/petros-topic-profiles/petros-topic-profiles.repository.spec.ts (2 tests) 3ms
+ ✓ src/modules/portal/courses/course-curriculum.spec.ts (4 tests) 5ms
+ ✓ src/modules/federation/federation.service.spec.ts (3 tests) 4ms
+ ✓ src/common/idempotency.service.spec.ts (3 tests) 3ms
+ ✓ src/modules/student/petros-loop/petros-math-evaluator.spec.ts (6 tests) 75ms
+ ✓ src/modules/portal/institution-clock.spec.ts (6 tests) 27ms
+ ✓ src/modules/student/petros-session-intent/petros-document-preparation.normalization.spec.ts (3 tests) 3ms
+ ✓ src/modules/petros-learner-model/petros-learner-model.permissions.spec.ts (2 tests) 4ms
+ ✓ src/modules/portal/email.service.spec.ts (3 tests) 5ms
+ ✓ src/modules/petros-learner-model/petros-objective-evidence.service.spec.ts (2 tests) 4ms
+ ✓ src/modules/petros-ai-routing/petros-response-validator.spec.ts (4 tests) 2ms
+ ✓ src/common/jwt.spec.ts (6 tests) 5ms
+ ✓ src/modules/student/attendance/attendance-zone.spec.ts (4 tests) 5ms
+ ↓ src/modules/integrations/petros-phase2-migration.integration.spec.ts (1 test | 1 skipped)
+ ✓ src/modules/integrations/petros-phase6-admissions.spec.ts (2 tests) 6ms
+ ✓ src/modules/student/petros-document-grounding.spec.ts (3 tests) 5ms
+ ✓ src/modules/portal/course-content/petros-document-extraction.spec.ts (2 tests) 4ms
+ ✓ src/modules/requests/attendance-requests.spec.ts (3 tests) 1ms
+ ✓ src/modules/portal/programme-schedule.spec.ts (2 tests) 2ms
+ ✓ src/modules/student/core/student-rate-limit.guard.spec.ts (1 test) 4ms
+ ✓ src/modules/student/knowledge/knowledge-pdf-process.spec.ts (6 tests) 3291ms
+   ✓ restricted PDF process (real OS sandbox) > kills a stalled process at the wall deadline 507ms
+   ✓ restricted PDF process (real OS sandbox) > enforces the OS CPU budget independently of the wall deadline 2002ms
+   ✓ restricted PDF process (real OS sandbox) > cancels an executing process 305ms
+ ✓ src/modules/student/results/student-results.spec.ts (3 tests) 3ms
+ ✓ src/modules/federation/saml-sp.service.spec.ts (1 test) 2ms
+ ✓ src/modules/portal/mark-release-guard.spec.ts (3 tests) 3ms
+ ✓ src/modules/requests/request-state.spec.ts (10 tests) 37ms
+ ✓ src/modules/portal/timetable-conflicts.spec.ts (2 tests) 1ms
+stdout | src/modules/portal/person-search.spec.ts > personSearchCondition > studentSearchCondition matches personSearch wiring
+student where SQL: ("students"."institution_id" = $1 and ("students"."first_name" ilike $2 or "students"."last_name" ilike $3 or trim(concat_ws(' ', "students"."first_name", nullif(trim("students"."middle_name"), ''), "students"."last_name")) ilike $4 or "students"."middle_name" ilike $5 or "students"."admission_no" ilike $6 or "students"."roll_no" ilike $7 or "students"."email" ilike $8 or "students"."phone" ilike $9))
+
+ ✓ src/modules/portal/person-search.spec.ts (3 tests) 4ms
+ ✓ src/modules/requests/request-utils.spec.ts (4 tests) 2ms
+ ✓ src/common/petros-runtime-metrics.spec.ts (1 test) 5ms
+ ✓ src/modules/student/materials/material-file-types.spec.ts (2 tests) 1ms
+ ✓ src/modules/portal/fee-ledger.helpers.spec.ts (3 tests) 4ms
+ ✓ src/modules/student/home/student-home-ranking.spec.ts (3 tests) 1ms
+ ✓ src/modules/portal/term-recompute.spec.ts (2 tests) 1ms
+ ✓ src/modules/requests/revaluation-refund.spec.ts (1 test) 3ms
+ ✓ src/modules/federation/oneroster-csv.spec.ts (2 tests) 3ms
+ ✓ src/modules/portal/objective-grader.spec.ts (3 tests) 3ms
+ ✓ src/modules/petros-institutional/petros-institutional.permissions.spec.ts (2 tests) 2ms
+ ✓ src/modules/student/petros-reflection/petros-reflection.permissions.spec.ts (1 test) 1ms
+
+ Test Files  99 passed | 31 skipped (130)
+      Tests  713 passed | 227 skipped (940)
+   Start at  23:13:08
+   Duration  22.23s (transform 9.22s, setup 666ms, collect 153.10s, tests 5.11s, environment 16ms, prepare 8.76s)
+

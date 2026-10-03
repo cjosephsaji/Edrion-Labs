@@ -1,0 +1,206 @@
+edrion
+STUDENT PORTAL
+Saturday
+03
+OCT
+2026
+
+YOUR WORKSPACE
+
+Home
+Learn
+Petros
+Materials
+Notebook & review
+Portal
+Overview
+Courses
+Assignments
+Timetable
+Explore
+S
+Synthetic learner
+PHASE 6 CURRENT PHYSICS · A
+Petros
+Here for this lesson
+0/1 mastered
+0 XP
+0 streak · 1 cards
+00:00 Right on pace
+Learning scene: Projectile motion
+Branch e077ffde · 4.00 s · state 19
+Scene values (text alternative)
+Vectors and forces
+
+Each numeric readout includes its unit. Plots are sampled, not extra model predictions. All model limitations remain visible.
+
+Velocity (m/s) and acceleration (m/s²); separate scales
+13.00 m/s
+-20.00 m/s
+Vectors
+velocity: 3 pixels per m/s
+acceleration: 4 pixels per m/s^2
+Horizontal velocity: 13.00 m/s
+Vertical velocity: -20.00 m/s
+Open expanded scene
+
+VELOCITY AT THE APEX
+
+Let’s focus on Velocity at the apex.
+Read aloud
+AI-generated voice · Only when you ask
+Talk to Petros
+Enter to send · Shift + Enter for a new line
+My time
+Settings
+Show me around
+Portal
+Petros
+Focus lab · Document session · Synthetic projectile
+Sources & tools
+Save and pause
+Finish
+1
+Compare components
+
+Step 1 of 1 · Compare components
+
+0/1
+steps
+1
+cards
+00:00
+session time
+Synthetic projectile
+
+Predict horizontal and vertical projectile motion under constant gravity.
+
+10 minute session · 8 steps
+30-SECOND HUDDLE
+What does “done” look like today?
+
+Build and check 1 ideas, then finish with a 75-second recall lap. I’ll keep the pace gentle and your place safe if you stop to ask something.
+
+10 min target
+Every claim stays cited
+Detours return here
+I’m in — start the run
+Keep it to the essentials
+Starting acknowledges the privacy and learning rules shown with this session.
+Source checked
+Synthetic source (PDF p. 1) · p. 1 · Source
+Privacy and learning rules
+
+Material approved by your institution only · hints for active homework · Voice is optional.
+
+Got it
+Who can see information from this session?
+
+VISUAL EXPLANATION
+
+Velocity at the apex
+Why this step?
+Projectile motion
+
+Projectile motion
+
+Expand
+
+reviewed source · Point mass in stationary SI Cartesian coordinates: x right, y up. · Uniform downward gravity; no air resistance, wind or other forces. · Launch and landing are at the same level (y = 0); stop at first ground contact.
+
+Scene action saved.
+
+Explanation 2 of 3: At the apex, vertical velocity is zero; horizontal velocity remains unchanged.
+
+Narration position: 4.0 s · character 40 of 78 · Speaking
+
+Speak
+Interrupt and freeze
+Interrupt; let simulation continue
+Previous beat
+Next beat
+Make a prediction
+
+Petros will ask about the acknowledged model state before showing the outcome. Your response is an observation, not mastery evidence.
+
+Model 
+physics.projectile.no-drag
+Request prediction prompt
+Play
+Allow continuous simulation motion
+Step
+Start
+Time (s) 
+Speed 
+0.25×
+0.5×
+1×
+2×
+4×
+Branch e077ffde · state 19
+vx
+restart · m/s
+vy
+restart · m/s
+gravity
+restart · m/s^2
+Motion
+Vectors and forces
+m over time
+Equations and model data
+Show linked views
+Vectors and forces
+
+Each numeric readout includes its unit. Plots are sampled, not extra model predictions. All model limitations remain visible.
+
+Velocity (m/s) and acceleration (m/s²); separate scales
+13.00 m/s
+-20.00 m/s
+Vectors
+velocity: 3 pixels per m/s
+acceleration: 4 pixels per m/s^2
+Horizontal velocity: 13.00 m/s
+Vertical velocity: -20.00 m/s
+Scene data and description
+Compare experiment branches
+Selected: Projectile
+
+Point mass launched above level ground.
+
+Isolate
+Highlight
+Restore view
+Question about this element Ask Petros
+My notes 
+Save notes
+
+Saving to the learning workspace…
+
+Model limits and provenance
+
+The simulation could not be checked. The original diagram remains available.
+
+Check simulation
+Play review
+Next step
+Replay
+3 / 3
+Different velocity components
+Horizontal velocity remains
+Vertical velocity becomes ze
+ro
+Petros is teaching: Vertical velocity becomes zero
+
+Vertical velocity becomes zero. Gravity still accelerates the body at the apex.
+
+No horizontal force in the trusted no-drag model.
+Gravity still accelerates the body at the apex.
+Open diagram larger
+Nonvisual description
+Keep this edited diagram in the session
+Keep this
+Saved to notes
+Flashcard added
+Change the explanation
+Explain simpler
+Explain deeper

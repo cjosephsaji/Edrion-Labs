@@ -1,0 +1,2796 @@
+{
+  "schemaVersion": "petros.phase5.evidence-bundle.v1",
+  "generatedAt": "2026-10-03T08:54:36.050500+00:00",
+  "purpose": "reviewable synthetic engineering evidence; not an activatable production release manifest",
+  "head": "89c1ca29c117b2f9926e97e12a2738fa110cd2ca",
+  "branch": "new-student-UI",
+  "applicationSource": {
+    "sha256": "55f11e10edaca878b246fa62061029822cb74728569ca5581c96148d1f4dc8de",
+    "files": 2640,
+    "manifest": {
+      "path": "docs/verification/petros-phase5-20261003/frozen-final-r5/source-sha256.txt",
+      "sha256": "55f11e10edaca878b246fa62061029822cb74728569ca5581c96148d1f4dc8de"
+    }
+  },
+  "migrations": {
+    "sha256": "47a6304fc2934f8a0be426c9abb3bc323a34cd979b2202b189676eb7da994bbb",
+    "files": 266,
+    "manifest": [
+      [
+        "packages/database/migrations/0000_damp_baron_zemo.sql",
+        "83358ade26d7bf90c536cd4baa6ce5bc9d8a49c4c46da253ebdd2d5f04e7a30c"
+      ],
+      [
+        "packages/database/migrations/0001_smiling_imperial_guard.sql",
+        "1a3b04e2ee285deda49ba6888e986f7faf178aaf859277a158bb3498439a345d"
+      ],
+      [
+        "packages/database/migrations/0002_right_maelstrom.sql",
+        "97f38e5aece56c27e4f7ad9182a90a9005357b8a125cca886e0257ffead39368"
+      ],
+      [
+        "packages/database/migrations/0003_nosy_oracle.sql",
+        "1e06ba24726bc20c6c34b0d208199f7d9551b349a7d52e498e97f38b27c3ae1d"
+      ],
+      [
+        "packages/database/migrations/0004_cultured_agent_brand.sql",
+        "b4c29b973cf9e981471b6a2f71698ef24189504f4b7d691c81c68444a0ee3804"
+      ],
+      [
+        "packages/database/migrations/0005_violet_smiling_tiger.sql",
+        "8bfe3442a690d325d4e1718e34d73c2e85b1c5574a2f3f1b66f79366b1b2a6ff"
+      ],
+      [
+        "packages/database/migrations/0006_parched_morlun.sql",
+        "c8c2fe5c2f9f24b53b954d0c489bf6605a3c7cc2f2add6f2cc04319c874d35eb"
+      ],
+      [
+        "packages/database/migrations/0007_purple_garia.sql",
+        "ef969524fbc18fac3b8439c2fa0b24d9f95f31abcf1429c09135686da9c81ea9"
+      ],
+      [
+        "packages/database/migrations/0008_chemical_black_bolt.sql",
+        "348a131d085ebf9bb614628db2a592ddca4358e013d103848a4d418d6e73a571"
+      ],
+      [
+        "packages/database/migrations/0009_even_kronos.sql",
+        "de84469153eeadcf5a9480bad5078afb41ca793bc9d9184a6603845c04ff0429"
+      ],
+      [
+        "packages/database/migrations/0010_amusing_newton_destine.sql",
+        "93aae0db7f1aec1bbf5b822a0e86611eb492ada0562855d0b8c42c2a56d53cd1"
+      ],
+      [
+        "packages/database/migrations/0011_perfect_amphibian.sql",
+        "e20bb1e5323e984a5b908f9d990c9e7061b9c6e4d9a3a2150fa6d91aaa7a0032"
+      ],
+      [
+        "packages/database/migrations/0012_hesitant_black_bolt.sql",
+        "96d46e190e8370f979bc43c640453052e9aab574e8a531533070fbf6680e8f52"
+      ],
+      [
+        "packages/database/migrations/0013_complete_lethal_legion.sql",
+        "0e5aef6aa35f5773e60dc756bc6856942f37c758e2ddb294db59c9b3b467fcbc"
+      ],
+      [
+        "packages/database/migrations/0014_chubby_harry_osborn.sql",
+        "691bb666fba705d21a31b753858fb96dee48ed8165ba81559ff20ba0edd65706"
+      ],
+      [
+        "packages/database/migrations/0015_perpetual_frog_thor.sql",
+        "a7f5757798798fd1abecb7f712c9058cfb0afe5482766c2c0bfe1586da1e8689"
+      ],
+      [
+        "packages/database/migrations/0016_far_speed_demon.sql",
+        "c4616722fd5aaf87461010eef432c15bd2d456e635653b4289a163d55f8f1a69"
+      ],
+      [
+        "packages/database/migrations/0017_demonic_jack_power.sql",
+        "575f48c433e55081c9a94c60afcabadfaa4108a7a618ff887621bf4be22ca562"
+      ],
+      [
+        "packages/database/migrations/0018_high_pride.sql",
+        "ddd176e95ab2dba92ab8d3ddc8f8d15f4489989ab0345e8a289e37816e3b80a5"
+      ],
+      [
+        "packages/database/migrations/0019_reflective_ezekiel_stane.sql",
+        "e954c4f278e650756015f3999f3ff91c58a1bca9f1fc2e4d8889eba7a0f3d0a1"
+      ],
+      [
+        "packages/database/migrations/0020_dusty_taskmaster.sql",
+        "2370e95968bdd1e61f0e430ffdab9e5fa81480569e8b84cd421a4e88dcf5eaf3"
+      ],
+      [
+        "packages/database/migrations/0021_mighty_katie_power.sql",
+        "bf43060bbacafa6d9a2670c317a5d584a2df58d772f9ed8b355420decefa5318"
+      ],
+      [
+        "packages/database/migrations/0022_closed_lyja.sql",
+        "9a44cb7ed31d648371687f624c56fdce5e5bc77bb2b60d792d1fe761defeebb7"
+      ],
+      [
+        "packages/database/migrations/0023_deep_tattoo.sql",
+        "a10d8e73d4941258dce4a75dca74535f5e18ae6a37e651b0e2f9cc9a2ec422ce"
+      ],
+      [
+        "packages/database/migrations/0024_demonic_shadowcat.sql",
+        "23109f8ab963d05fabd6661fde6d149be965f3b278aa98cd68b34da91a10eb22"
+      ],
+      [
+        "packages/database/migrations/0025_certain_darkhawk.sql",
+        "5584339c16e06f764c671ed0d76b942df1af2f4ce60ec7f2735843db650ad49f"
+      ],
+      [
+        "packages/database/migrations/0026_careless_frightful_four.sql",
+        "e913434833e6d4f81830fe0959ad2d8d10cea939eed75f47f3c7683b759c8be7"
+      ],
+      [
+        "packages/database/migrations/0027_free_silk_fever.sql",
+        "54de3a989cea79b7043363548b6e5ffc98728c51d03664b7d13512a08cf687c9"
+      ],
+      [
+        "packages/database/migrations/0028_clean_lord_tyger.sql",
+        "7442189cadf68581f9b36d6f2d6d2f3af666ddb911483342ba0498d1a2aa01ad"
+      ],
+      [
+        "packages/database/migrations/0029_thankful_killmonger.sql",
+        "a59fa121843cfe79be654ccf91a36e780ceb5d36898dad5013862af8a1bd35d1"
+      ],
+      [
+        "packages/database/migrations/0030_school_expenses.sql",
+        "4d9e4363271f0eb38c46bd12adcd7242dcba3f6117cdda027e8d25e4a43078bb"
+      ],
+      [
+        "packages/database/migrations/0031_parent_admissions.sql",
+        "0f78a53b595a384b801c233af02e389a46140e77e1c5c0e3146a5b90a92dafcf"
+      ],
+      [
+        "packages/database/migrations/0032_parent_admission_otps.sql",
+        "57eb19d9adfc5cfd8ddbf864fcbcd6a004553a286e8ec0808c5d26142b052c85"
+      ],
+      [
+        "packages/database/migrations/0033_institution_documents.sql",
+        "b60c980cbeb76ad8e7a238b8321e1d90a1f6b9c849fa08a76be9798d2624b4bc"
+      ],
+      [
+        "packages/database/migrations/0034_admission_additional_info.sql",
+        "26db3529967082bc6d58cb48633c283014d58e9743ddbf324ee93b982a301899"
+      ],
+      [
+        "packages/database/migrations/0035_student_incidents.sql",
+        "caeafc69ef49b2a1752063acea50aae48c50be2f171d6b09319a1c126e359898"
+      ],
+      [
+        "packages/database/migrations/0036_admission_info_requests.sql",
+        "b9540a1248f6136b3a2090bdafae02e1fda3611f27617934d83da5aea93911a5"
+      ],
+      [
+        "packages/database/migrations/0037_parent_portal.sql",
+        "dfb2330c0173a8ac21e9cc75e977f26d9b68df21fe3dc9144bef802ad4e7097a"
+      ],
+      [
+        "packages/database/migrations/0038_grade_published.sql",
+        "33c9363611aa17a9ff20b10b740c763fa2aa9f8eaad49630972925b7d8eb3e43"
+      ],
+      [
+        "packages/database/migrations/0039_rbac_consolidation.sql",
+        "99e0eeec4ace4db2d4bc554cdfd5b6ad9a45c3ee098feef477bdabd6b8c7d002"
+      ],
+      [
+        "packages/database/migrations/0040_petros_core.sql",
+        "f348b88094552e832f209d6db32a63a65e45499fd46855eeef7e5943b5fe2590"
+      ],
+      [
+        "packages/database/migrations/0041_document_generation.sql",
+        "43e9175df463e010c1d29ccbf3df3ab013b8e28583cc966d27b014f52cece1b5"
+      ],
+      [
+        "packages/database/migrations/0042_petros_topicality.sql",
+        "232c42836d25e4654b743561d1feeb12412e9920e2b0938682c26d22d76322ee"
+      ],
+      [
+        "packages/database/migrations/0043_academic_terms.sql",
+        "d7cd2a0852a5499c883997d533a2cbf0a4145acab6d96a6b69acb10148381e5b"
+      ],
+      [
+        "packages/database/migrations/0043_petros_pending_turns_payload_rename.sql",
+        "5500b31e08c3403da3157ebfb1d6142c503a7050f9d935687c821ee104a8147a"
+      ],
+      [
+        "packages/database/migrations/0044_programme_levels.sql",
+        "1bde6cc49004c27aa207f882ebf9b4323d61c734b934df2ad2aa99a757dbdc02"
+      ],
+      [
+        "packages/database/migrations/0045_merge_teachers_into_staff.sql",
+        "4669652d2654d35755b936786654a8324016d5aa3d42bbbcbe5c6cfc05905b97"
+      ],
+      [
+        "packages/database/migrations/0046_student_identity.sql",
+        "acf077ae01d4054ea8e04b6b4a18727817211fbae0a11817e376869d6f3a3809"
+      ],
+      [
+        "packages/database/migrations/0047_learning_events.sql",
+        "a7a77c7ec7710d580320072811a291842b47f38c20e6a6e1085a669a8c613187"
+      ],
+      [
+        "packages/database/migrations/0048_storage_objects.sql",
+        "4f2cf1409e8fefab3543a44f2c47bf4da449701ba2b1b52cf925fa4466cb117e"
+      ],
+      [
+        "packages/database/migrations/0049_student_preferences.sql",
+        "44f7005f9a1ce7b75de3480d6b58005c047e1c267a3b0274ada3dfa9538c2fb2"
+      ],
+      [
+        "packages/database/migrations/0050_learn_core.sql",
+        "c8c30900bb708ae579fa3bb1236c92621bef24ce43cd46fb153d76d9a6ed78ca"
+      ],
+      [
+        "packages/database/migrations/0051_learn_revision.sql",
+        "9c5a8c6fb9b4429d6249d7ac18aa77731732d6e102ec7b189771c87f4291419d"
+      ],
+      [
+        "packages/database/migrations/0052_homework.sql",
+        "d2fee51e16dae39be7bca10d0b15ef3bef888d0e04073999846d0789df0ec56a"
+      ],
+      [
+        "packages/database/migrations/0053_class_course_content.sql",
+        "e825588012b4fb2427575a9c611df5d38b784fa34545018775fc1fb520d747fd"
+      ],
+      [
+        "packages/database/migrations/0054_calendar_planner.sql",
+        "3a0fe753e08703792584ba900352c0e0e1c34871332170950d9721e9b96bc9d5"
+      ],
+      [
+        "packages/database/migrations/0055_report_cards.sql",
+        "b7dbcf9d7b0869ed3c5bae8d24f4ab51bc62c7d80f4f63cfbb5a7dd5a7166a19"
+      ],
+      [
+        "packages/database/migrations/0056_institutional_seeds.sql",
+        "8defdfe77719296e7d550c0e32db59e30387e246dcb060501df2211c4fb932bb"
+      ],
+      [
+        "packages/database/migrations/0057_knowledge_base.sql",
+        "19162f8dfe2a29fe9b484bc10b706263db18a5a8694718e39e4908abe7dac99a"
+      ],
+      [
+        "packages/database/migrations/0058_mock_exams.sql",
+        "8f3da8aa66d72b6de020dd0f115fbaceedc1a6853cd73eab988e1cace8e9f3ca"
+      ],
+      [
+        "packages/database/migrations/0059_debate_achievements.sql",
+        "7c742bd687a2dda648ef6fbe3c648cd0fba0a22720f7a026037ee37c3d3cbff5"
+      ],
+      [
+        "packages/database/migrations/0060_library_ingestion.sql",
+        "a001fee8d36886a1de7e1b5014f71d6971b351df9f16362d6430dba8b49c5bd3"
+      ],
+      [
+        "packages/database/migrations/0061_library_ingest_runs.sql",
+        "436406f6b48a7cbb902e02c052cdd756e1b6ba1e79921d94881343f5650f7c2e"
+      ],
+      [
+        "packages/database/migrations/0062_exam_assignment_questions.sql",
+        "cc151e23ca72e16e4e00390fc9efc9c686f4afeaa5917b5d421742d9218a85e0"
+      ],
+      [
+        "packages/database/migrations/0063_visual_studio.sql",
+        "05bce14275546bdea2ec5cf1c6fd70a1b0c983d6c6729907a9eee405f835a10d"
+      ],
+      [
+        "packages/database/migrations/0064_exam_engine.sql",
+        "00177d11cb04af32969ca22eca7523890191649c01091e052d2bdf0f708aeff8"
+      ],
+      [
+        "packages/database/migrations/0065_programme_subjects.sql",
+        "4540ddc97ad578f7e2116ac419081d1ad7683957eb26e95b55325b44b7e00553"
+      ],
+      [
+        "packages/database/migrations/0066_petros_context.sql",
+        "5c1be23389488b4a8624300c85063c01fa8c5fac641a67f7d691e90ce02f6d88"
+      ],
+      [
+        "packages/database/migrations/0067_person_middle_names.sql",
+        "e6e723b0e6355df5eaa32dcf130a143f2d6a719845e938aad3d3048394f0f214"
+      ],
+      [
+        "packages/database/migrations/0068_dashboard_prefs.sql",
+        "eb9f90d6c4f83c0a6a82a990dd103b3ba34297dfcc3b031af68b94871d70738c"
+      ],
+      [
+        "packages/database/migrations/0069_fee_structure_slot.sql",
+        "335cbbf043da6122e27057de83d56c3d530db25b257307a2bbf24586ea91f924"
+      ],
+      [
+        "packages/database/migrations/0070_programme_structure.sql",
+        "1210ddf1b40cfcc25640cce49216fd30704025235ab65948971ef536b67bdce3"
+      ],
+      [
+        "packages/database/migrations/0071_academic_term_active_default.sql",
+        "625064d9a6650b2a09c006d8f07e485442335f6b4e5841440634fe6d57542c9f"
+      ],
+      [
+        "packages/database/migrations/0072_programme_subjects_slot_backfill.sql",
+        "e24d7c04895d4213741c3426d8dfe47e1781dc228af5bf79697252b5a702f649"
+      ],
+      [
+        "packages/database/migrations/0073_parents_middle_name.sql",
+        "ca441a880993c72f1739f771f4d7cb02b0f99d2f2c30441962f1a1237487cb6d"
+      ],
+      [
+        "packages/database/migrations/0074_question_config_answer_json.sql",
+        "2c605929d8f1d0f89f3e660690ec5c23cc4c4abbba9e65ff95406c5fb1f62d9c"
+      ],
+      [
+        "packages/database/migrations/0075_student_feature_flags.sql",
+        "4ee04536d9f44c3a0b273022f012a565181adbb990dbd6bed82189188729ae07"
+      ],
+      [
+        "packages/database/migrations/0076_academic_scope_tables.sql",
+        "7ad39afe172f3ce524c93b98bdbfd6914c79009c75564e95ee58f1cde54525ab"
+      ],
+      [
+        "packages/database/migrations/0077_academic_scope_backfill.sql",
+        "08dd0a45ff888afd3c17c119ca6229032851568f9b156d38c2d8098aa308f27b"
+      ],
+      [
+        "packages/database/migrations/0078_bell_schedules.sql",
+        "27f713b54c51ba8931c5cd49c2297d8337db04bf6b76a32d961423a4b9d8fff3"
+      ],
+      [
+        "packages/database/migrations/0079_bell_schedule_backfill.sql",
+        "09c26f06fb9e5acc8b24010543833c742e4c564d29a728f3336cfbc4027f8f87"
+      ],
+      [
+        "packages/database/migrations/0080_calendar_unify.sql",
+        "37e5827f258a0924568c6d0939fac3f96ccddac111dbdc830bafdbb52db369f3"
+      ],
+      [
+        "packages/database/migrations/0081_calendar_types_backfill.sql",
+        "1e5b3858d4ade5f5fc732f1b142e6d0b6f71f8a1712fcd7a503b7bad8a892f87"
+      ],
+      [
+        "packages/database/migrations/0083_strip_bell_schedules.sql",
+        "b334eba9d926dc3ce9ea28ec6137e580c140cdb21575af6212bc4dfad31e439c"
+      ],
+      [
+        "packages/database/migrations/0084_lab_subject_timetable_sync.sql",
+        "b3f01b68189c9c326001c7b0d0046776eed39d88ae8117ec6e1b679cecadb9c5"
+      ],
+      [
+        "packages/database/migrations/0085_request_engine.sql",
+        "a7cb44ebe86520bf71cd4574ebf5ffd83d3fb3f4abf0d491bedc264fa877508c"
+      ],
+      [
+        "packages/database/migrations/0086_module_visibility.sql",
+        "69459b4bb3fc75e51409579bce651a2154589cfddce70e2d866999acf27e3884"
+      ],
+      [
+        "packages/database/migrations/0087_fees_engine.sql",
+        "991bf0429a3583782bc2ef76d7652f84687080cd56b5381c976d10352e328e49"
+      ],
+      [
+        "packages/database/migrations/0088_today_feed.sql",
+        "c6680443dd701e0fff2f66ee1683c8158dddef6b0977b21aae7127b6c5910e53"
+      ],
+      [
+        "packages/database/migrations/0089_timetable_exceptions.sql",
+        "96cf077e09d761431819dc458dbbe39f44015f48ddeef9a3ad8b6a49edc722a2"
+      ],
+      [
+        "packages/database/migrations/0090_attendance_forecaster.sql",
+        "624f4224927b150b1194059a574c822b8ba13b741a6b72fbdc1a6bfd600e7673"
+      ],
+      [
+        "packages/database/migrations/0091_attendance_day_view.sql",
+        "d041e8732ab2679421bb170785f90bad696a2c254a72c44cd4578e004b45b516"
+      ],
+      [
+        "packages/database/migrations/0092_marks_results.sql",
+        "8e2d1639c2b9490c84436a062fa042fa6c2419b87a047991c76304de91035cf9"
+      ],
+      [
+        "packages/database/migrations/0093_term_recompute_feed.sql",
+        "b31959a1b457dc34d46326584c733ee60693521a4c15fa29a01c91ab9f7bda8a"
+      ],
+      [
+        "packages/database/migrations/0094_library_fsrs.sql",
+        "9eb88b2881a139ed08a355153de1b1afaaba2a47d9913bffd9115709bf6e244f"
+      ],
+      [
+        "packages/database/migrations/0095_graph_pipeline.sql",
+        "8c410097eb5d7c84e0b9548224dad66519b0c846ca0aa7bd3727a8d364a6a774"
+      ],
+      [
+        "packages/database/migrations/0096_edrion_learn_orchestrator.sql",
+        "0746416f16468e328505f40c313a56b8205fd258bb39d280a70bd2903789e2d1"
+      ],
+      [
+        "packages/database/migrations/0096_lab_canvas_flags.sql",
+        "807472f15debb3160ae15c3692396cdd09e90564a51d89861dfc8895c54c20fe"
+      ],
+      [
+        "packages/database/migrations/0097_edrion_learn_orchestrator.sql",
+        "8c6576f0455c15ffe56f54712130a57d24ce28cdb830c2b8698b24d701ed4d80"
+      ],
+      [
+        "packages/database/migrations/0097_student_tutor_policy_domain.sql",
+        "56ac03fed846e2538a0eb7d7a98e2a371721272f22fbdf2864c26061e08101d0"
+      ],
+      [
+        "packages/database/migrations/0098_documents_issuance.sql",
+        "9d9f00759914f9f968be46c760044fa1958255cb905dff67169df6eaef35bbd9"
+      ],
+      [
+        "packages/database/migrations/0099_mark_release_batches.sql",
+        "c51bf35825204e3e5ab93428c6638da53174852565c4c6729294816ce6c6945e"
+      ],
+      [
+        "packages/database/migrations/0099_mock_exam_extensions.sql",
+        "ba66f90a08c630cf95fe27715c207c555342b4b4233d35904a9453ff5c2eda98"
+      ],
+      [
+        "packages/database/migrations/0100_learn_student_tutor_policy.sql",
+        "5907c661ceaa1c4e02abadad663fba8fefcd561c16491a16019addf087818c79"
+      ],
+      [
+        "packages/database/migrations/0100_mock_exam_extensions.sql",
+        "485ad8f607f6d66eddde11e937a41ed09dd86c92ccfed431511e93e0c327be8d"
+      ],
+      [
+        "packages/database/migrations/0101_mock_exams_visibility.sql",
+        "32b9ca4872f3613b9cae5c726cc918a3f33c3fd0e8b6a8e41641e70616dd3b19"
+      ],
+      [
+        "packages/database/migrations/0101_mock_system_paper_pack.sql",
+        "1f8bfeb67ee5b3cadc48046508bef26873bce8a8f4dc6ddc8f577551196a9e8c"
+      ],
+      [
+        "packages/database/migrations/0108_learn_teardown.sql",
+        "775543d3d385eaf7dfe9266061566fd74c7f1402b3fc77dcac51965c930f01f2"
+      ],
+      [
+        "packages/database/migrations/0109_learn_engine.sql",
+        "3c176ef75ececccda54d06ea79e6e502308d9e046667a4f7387a3c12888498dd"
+      ],
+      [
+        "packages/database/migrations/0110_ai_capability_values.sql",
+        "7f44a124527a53cbdb74197f0b38b75acb94ad33a2b63959d04a8f7eb8f0eae6"
+      ],
+      [
+        "packages/database/migrations/0110_debate_core.sql",
+        "4814b0f58d3415878fd8d51d22874d5fa7411451a5a7423da179116dd2dc6bb1"
+      ],
+      [
+        "packages/database/migrations/0111_debate_flags.sql",
+        "b44aee1cb75382fa16b69f1be296695dd5fa2c96f3ecbce0385e3c0adc4399e1"
+      ],
+      [
+        "packages/database/migrations/0112_debate_format_seeds.sql",
+        "d8f660ec616d0c324eb0be23bf4182310fa5ec9a2f36d98eaf96c8a3caeb8b13"
+      ],
+      [
+        "packages/database/migrations/0113_debate_capture_states.sql",
+        "a7f0d5319fb419def7b82bc4c0dcd674c8ca706bcfd3340ab8da84c1b8bd3dfe"
+      ],
+      [
+        "packages/database/migrations/0114_debate_transcript_index.sql",
+        "988ba072c5132610ab285001f48437002f2b3ebe49386876c0dad536bb7e8c19"
+      ],
+      [
+        "packages/database/migrations/0115_debate_adjudication_primary.sql",
+        "63d64ea6ab9907f025ada54bfb7081cf9f2a107571b5350b6a0c2a85ee08d0f1"
+      ],
+      [
+        "packages/database/migrations/0116_debate_report_share.sql",
+        "2b651d220f73d8edef037f1d41f87972c1fc968c8b2fc063a895976bff198d9f"
+      ],
+      [
+        "packages/database/migrations/0117_debate_prep_notes.sql",
+        "f55ed167abab5ae5093a6a02bfddf9f6cc8d52c3da4b1ba66100786592d533a6"
+      ],
+      [
+        "packages/database/migrations/0118_debate_spar_invite.sql",
+        "fedae7400d05ddbd47f1c85d2a91eceb5520e8c501e19e780bb84b9d4787e78f"
+      ],
+      [
+        "packages/database/migrations/0119_debate_retention_marker.sql",
+        "105a90530ef9d973f974657c3b0a3babcbfb9bf12e11bc5d9cdefd816f6af358"
+      ],
+      [
+        "packages/database/migrations/0120_campus_bundle_a_core.sql",
+        "14b6a5a09d32fd8317a07e885fb212457585cac009327b54530bb3e165d13382"
+      ],
+      [
+        "packages/database/migrations/0121_campus_bundle_a_flags.sql",
+        "bab5421a124ed414fdaa9798e2cac35e90c32e31110d6dab361f1b815cc5daf2"
+      ],
+      [
+        "packages/database/migrations/0122_campus_bundle_a_library_policy.sql",
+        "54a191b824e33389d5e2370b72e5949002a753ae8214e8914a9c5a1e09d77996"
+      ],
+      [
+        "packages/database/migrations/0123_campus_library.sql",
+        "a5d32446293e9edfa65f00302c72364e91b3ae8307c8420d929d235e24abcd32"
+      ],
+      [
+        "packages/database/migrations/0124_campus_transport.sql",
+        "37a56682f6b0ec71333a503ca85f0753fa584302827ba80652fcf62159be486e"
+      ],
+      [
+        "packages/database/migrations/0125_campus_digital_id.sql",
+        "e4a04f3e74b1fd67420faa3d253451c9cd804199a21b333cc09c8daf45d9a0cc"
+      ],
+      [
+        "packages/database/migrations/0126_campus_identity_verify.sql",
+        "41ff9abcf7242760cbf37f320ebdf463748c50d7893d177ee0d2baad9d349d99"
+      ],
+      [
+        "packages/database/migrations/0127_campus_outpass.sql",
+        "0ab4555a2f74522030e18c3771c91a49ff9682db0f671ef213b52565874a7c8d"
+      ],
+      [
+        "packages/database/migrations/0128_campus_access_scan.sql",
+        "6ccb7b9e261b517a3d6076401add792766b752b2ec949eacc366b280a294a0c5"
+      ],
+      [
+        "packages/database/migrations/0129_campus_hostel_mess.sql",
+        "0744790cc6e830e6038cc11b3ba2af1d62b20b1b7cc653804d1432f3712049b9"
+      ],
+      [
+        "packages/database/migrations/0130_prep_core.sql",
+        "001a5fecff80bf43a70c65fa116b20a7517e2a54bc20322861b71c603c24426d"
+      ],
+      [
+        "packages/database/migrations/0131_prep_mock_fk.sql",
+        "522060431e251e7b1ea1855760e3cf64fc4b03bf62469bf0a53979476e674bc1"
+      ],
+      [
+        "packages/database/migrations/0132_prep_flags.sql",
+        "ff7164ecf3c5c9d6c456a04488224c80014abfa1b81da23246f0b328777def74"
+      ],
+      [
+        "packages/database/migrations/0133_prep_enrollment.sql",
+        "b4e576faf49d6f9f782944817cec22d616834d06b06f1abac827d3a03b37cda5"
+      ],
+      [
+        "packages/database/migrations/0134_prep_plan_blocks.sql",
+        "bb43701a77c8ced958e1449e800f78d59e52c9d5c8cf804d94d84aab42c8455e"
+      ],
+      [
+        "packages/database/migrations/0135_prep_error_notebook.sql",
+        "49643f32ac20f40902dcbbb5437032614f44cacf2bc4d484fd6c9eca521cb158"
+      ],
+      [
+        "packages/database/migrations/0136_prep_diagnostic.sql",
+        "548e6f2e829fa5b9d68eaca94cd2ce64b3f501a50df8356f2287783769cff1b6"
+      ],
+      [
+        "packages/database/migrations/0137_prep_mock_adaptive.sql",
+        "8ddc263e65d36db3ee6fa0902b5aa1c582089c46b4082907aa830bf4e98e0c29"
+      ],
+      [
+        "packages/database/migrations/0138_prep_cohort.sql",
+        "d9bc0ad49ca2f4f32d41e96c547b695353cbe0ec1d1f72149c8dbc1de75d7e7e"
+      ],
+      [
+        "packages/database/migrations/0139_prep_exam_day.sql",
+        "9d4f2844c154b742e2b2d37b9b9a03ec3fcd7081e840b3b707eb308248746793"
+      ],
+      [
+        "packages/database/migrations/0140_campus_bundle_b_placements.sql",
+        "534841bd92dfae6c008af0e99f5a4f4b2b19e18342ee47a65f5439bf650a85bf"
+      ],
+      [
+        "packages/database/migrations/0141_campus_bundle_b_events.sql",
+        "95e78e2138d660b0eb8feb57df3be3027c80e1b176e44bd3df9e8c85424ffe80"
+      ],
+      [
+        "packages/database/migrations/0142_placement_interviews.sql",
+        "095e404e82ae2a442aed55e4a6d536a7d9e61eb40a3b15a7205485022109ae1f"
+      ],
+      [
+        "packages/database/migrations/0143_placement_eligibility.sql",
+        "38eaf074aca47c4df6fbb1718018783f8e3d65ff9c2d4e96499a748b24a421ab"
+      ],
+      [
+        "packages/database/migrations/0144_bundle_b_flags.sql",
+        "259fbfe52175791bc720fb1c675da6fcf759a9effdddda400d51f0a673e3c161"
+      ],
+      [
+        "packages/database/migrations/0145_placement_offers_idx.sql",
+        "5147cbc8f49a7d169c1e2df222303ee081d076cb5a7619f6ce81bc20facf3024"
+      ],
+      [
+        "packages/database/migrations/0146_placement_events.sql",
+        "8d1f875d3ebbba032e079583655c9d2a8316caa1230fc448da81d41eab3e405b"
+      ],
+      [
+        "packages/database/migrations/0147_placement_profiles.sql",
+        "bb2b12283a83f81ff936c417396c076b9d72ec47c659ce4ee8fe92fda1b159e5"
+      ],
+      [
+        "packages/database/migrations/0148_placement_resumes.sql",
+        "e029fc0b2ece67da61bdadb4fdd7a9092f7e339fbd807f1a46a33514516455c8"
+      ],
+      [
+        "packages/database/migrations/0149_clubs_events_flags.sql",
+        "e5bea7b53fc9419d07082d9f032622795256818fd7513a1d0786adbe82edc847"
+      ],
+      [
+        "packages/database/migrations/0150_event_seats.sql",
+        "57926b1f25ec47bbbb49cee9fc4acef44953a514e9b3dcfe30cae9eb2ee82b88"
+      ],
+      [
+        "packages/database/migrations/0151_ptm_slots.sql",
+        "67e93d24a8841ddfeeea0bbd6cb944d8bcce8937d4d0cc7a1705390147746c22"
+      ],
+      [
+        "packages/database/migrations/0152_campus_diary.sql",
+        "0e03bc9c514e7334e82b9630533a807717a69874676f72ea2767b1b95eb670c8"
+      ],
+      [
+        "packages/database/migrations/0153_health_mirror.sql",
+        "5fab11f87b2742b78ebdc87b6418e65af99fcc5d3c827cb6854c5d07898df012"
+      ],
+      [
+        "packages/database/migrations/0154_grievance.sql",
+        "5991fc6298087d0705ae420c42132051fbad2ab835ae5351c3d9dc4e6aa8a94f"
+      ],
+      [
+        "packages/database/migrations/0155_sensitive_report_seal.sql",
+        "a4819fc3957811d7cd0232ee93e351ac969e1d59ffa979e42fbce6556e97bb25"
+      ],
+      [
+        "packages/database/migrations/0156_sensitive_audit.sql",
+        "0d939487fa157e49145624878b6452bb77c8e446fb642195142353d2c966bbc8"
+      ],
+      [
+        "packages/database/migrations/0157_sensitive_unseal.sql",
+        "2e9abe1960105ae9f243c3f2ce772ffe46a22d51c8d74a0d6feccd443a9481fa"
+      ],
+      [
+        "packages/database/migrations/0158_sensitive_grants.sql",
+        "a9f7feefc1cdd9ee9dc1a2ce1b22a4acc60703cdeb29b0de8eb8f47dd5281231"
+      ],
+      [
+        "packages/database/migrations/0159_sensitive_hardening.sql",
+        "cb75254eefd54e527aab0a6f5f1baa4b17027966561a489c92c82ed7b3415b54"
+      ],
+      [
+        "packages/database/migrations/0160_webhook_envelope.sql",
+        "356ef40b3a597a8c73d0ca9174be1559c3db933382ffb6aaa3d50c51008c0f0e"
+      ],
+      [
+        "packages/database/migrations/0161_webhook_rotation_overlap.sql",
+        "c63064b5143614b628f947dd9be99f4ec5a97aa1dab526f01ab7f7f7942e0ef4"
+      ],
+      [
+        "packages/database/migrations/0162_webhook_delivery_retries.sql",
+        "34d452fd384a2c04a2f46d4bbb1bae87a5b6fcc99929ce96806c9d350448f05a"
+      ],
+      [
+        "packages/database/migrations/0163_webhook_ui.sql",
+        "af7ba30d74924a93167265fca708f6067eaf16112a59cd4f4343cf0e8bea7478"
+      ],
+      [
+        "packages/database/migrations/0164_webhook_replay.sql",
+        "4e1f3bf48e48dc9ed92f8d5f4b2ca41a14cd2edb0f48f7742e829a03034aa607"
+      ],
+      [
+        "packages/database/migrations/0165_webhook_ops.sql",
+        "809efc4975a75f73501f2c1409aca5121ce9b82236428a623d27d6d52a755286"
+      ],
+      [
+        "packages/database/migrations/0166_mfa_factors.sql",
+        "5bd6f46c7a9f3cd7c872247cb0e160845503695201b4893e5ff138f074445ea7"
+      ],
+      [
+        "packages/database/migrations/0167_mfa_recovery.sql",
+        "a08bda23ff60620dd0bbb140114f86ec8d9ec4f4dfd59b6de08cee3846561654"
+      ],
+      [
+        "packages/database/migrations/0168_mfa_challenge.sql",
+        "9ff1f3b1613ef0719e8141cb49d78eaf0066d9a5f700e0c00e4ba13e62c09a1e"
+      ],
+      [
+        "packages/database/migrations/0169_mfa_aal2.sql",
+        "bb4bc988fa912d078a7bf4ac9e754fd92db4e50517d9cc5869a4301948814a2b"
+      ],
+      [
+        "packages/database/migrations/0170_mfa_catalogue.sql",
+        "f7c2902495bc3eb8bd16905d537e111edf894d114cd935fc50ff79c1118b1894"
+      ],
+      [
+        "packages/database/migrations/0171_support_session_sweep.sql",
+        "b79688e1c7646d1d035cced7ef3d89cdda8d5bf4f9a7a9d85fe398675ad3a5d7"
+      ],
+      [
+        "packages/database/migrations/0172_principal_metrics.sql",
+        "ee59920597100b332158326742b92280888c86f67e84e1ec9b2413c98029b5f6"
+      ],
+      [
+        "packages/database/migrations/0173_principal_rollups_daily.sql",
+        "9ab2069b41e6da6301c99f997c04152a3e281fa7e33af068da9acc1239f23f50"
+      ],
+      [
+        "packages/database/migrations/0174_principal_rollups_weekly.sql",
+        "af539494a8c1c9d452f57e27923f7eb8a018926da6fc0c93da82d06a117f709e"
+      ],
+      [
+        "packages/database/migrations/0175_principal_dashboard.sql",
+        "7fef888d672c3320f099904bfa7609d7d50af2acf2ad080dfc53180e0905b92c"
+      ],
+      [
+        "packages/database/migrations/0176_principal_dashboard_ui.sql",
+        "c782f840def0a15b89075c4ce2359e29b3a64035d29b9b43f1469a2f998b1e14"
+      ],
+      [
+        "packages/database/migrations/0177_compliance_evidence.sql",
+        "374c3b0c63da68cf61baf1db34c9a1af1a380366e1b1305a75b955536ebd37a8"
+      ],
+      [
+        "packages/database/migrations/0178_compliance_posture.sql",
+        "f61133a70e62fcacbd63b1d915b7365fb123fcc7c844e67dfa873374d5f7627e"
+      ],
+      [
+        "packages/database/migrations/0179_platform_audit_debt.sql",
+        "ad14846a40f617a03f26d8cd7659f314ed47cbd19728064a8f135be177dbc9d1"
+      ],
+      [
+        "packages/database/migrations/0180_debate_motion_seeds.sql",
+        "4b880e36761db75cce7176e624f0cfebde544f02081fa7b2e4b52d80287800fe"
+      ],
+      [
+        "packages/database/migrations/0181_tier3_completion.sql",
+        "6833c502ebe05051dfb6a8570831fd62cce1ab6a2d4b9e954f9803c914f91972"
+      ],
+      [
+        "packages/database/migrations/0182_prep_sat_dev_corpus.sql",
+        "7a9af693a41c2a236ddfde9d54bbf9e282b59ff72f61ec65a2fea88292733896"
+      ],
+      [
+        "packages/database/migrations/0183_prep_sat_cr1_active.sql",
+        "b3babb9ecd5badf45916ad2bcc6fdc3230ff92aecfb484a47932b5549f0d70cd"
+      ],
+      [
+        "packages/database/migrations/0184_federation_us_integrations.sql",
+        "4037eb570f58e9822cd0b0c4dcb9fea4f1c87b6542369137b96dffb6fc7283bb"
+      ],
+      [
+        "packages/database/migrations/0185_federation_classlink_saml.sql",
+        "5119a4164cb73716bf053ba31fa7ceb1a092d4ed6ec0a0eec09ebc1cf10469e0"
+      ],
+      [
+        "packages/database/migrations/0186_petros_ai_routing.sql",
+        "63678eecffca519d7c2826368f4cac8b36a32abff61e81775ed08b1a2c8c2d06"
+      ],
+      [
+        "packages/database/migrations/0187_petros_learning_loop.sql",
+        "980e077997bc7d9a1ef6f44d39912c17eba3bda431fde2d6be65b04c80a87d7d"
+      ],
+      [
+        "packages/database/migrations/0188_petros_observation_loop.sql",
+        "c0eae49cf299ce5e0c18756d3aaf058b40225348075c6d7b95eaad7b886868c5"
+      ],
+      [
+        "packages/database/migrations/0189_petros_topic_profiles.sql",
+        "409dfaac35827541d33b80fcf4786b34dad5ea5673f5e71dd46c7e778109ae4a"
+      ],
+      [
+        "packages/database/migrations/0190_petros_quality_harness.sql",
+        "4f69d60f1bf5e8d8cfc2c73d4f6206c994283967e767a7a257b6b480ea4417be"
+      ],
+      [
+        "packages/database/migrations/0191_petros_quality_seed_bigint.sql",
+        "656edbb099feeaa2f1b2bdf509edef85705edb1b7e367942dc8b2a2dbea8bf38"
+      ],
+      [
+        "packages/database/migrations/0192_petros_learner_model.sql",
+        "5f8991da8a0d2b82b919e384dff7f16470c855af5c23a3c9fc473e933066f444"
+      ],
+      [
+        "packages/database/migrations/0193_petros_artifacts.sql",
+        "dff7b74c527f288278971abee2f73ccef86511e9815d561479f972613c4ec66b"
+      ],
+      [
+        "packages/database/migrations/0194_petros_visual_canvas_compat.sql",
+        "0236956b022ce25a8a2c202e2e24e025e22a88fce2519ed0c9121a9aa41d1253"
+      ],
+      [
+        "packages/database/migrations/0195_petros_session_intents.sql",
+        "45458b79d6cf3bbb260addb1e6bec960b9333e7ea97601cb50aae100b6630219"
+      ],
+      [
+        "packages/database/migrations/0196_petros_input_modes.sql",
+        "3d970f6a22ae934a010aefd11613bd56a2a9cb5340159aaceb1a612b766cb0e2"
+      ],
+      [
+        "packages/database/migrations/0197_petros_teach_back.sql",
+        "69b1d0e554b3fa69355c921d7d5cb301cf630a49f60f828b5fbdfef223cdd4a3"
+      ],
+      [
+        "packages/database/migrations/0198_petros_reflection.sql",
+        "7b33f7238226356b4c3aa460354717bd5291568c8884b93bee5cfdaad3d3e703"
+      ],
+      [
+        "packages/database/migrations/0199_petros_institutional.sql",
+        "cbafcb2c45fef1ad420b289bd6a45e07fe6a1e8a4c16115ac12f88eb7cde6a87"
+      ],
+      [
+        "packages/database/migrations/0200_petros_failure_fixes.sql",
+        "18247a6eaaa34847768411d2aacd85b906c66a0fc7c4fb11e56a5c57e596baee"
+      ],
+      [
+        "packages/database/migrations/0201_petros_companion.sql",
+        "01f6d4633195f3e437572360c0a13f781cbb016d10e8f640cd9d7cb22d0ff872"
+      ],
+      [
+        "packages/database/migrations/0202_class_notes.sql",
+        "fd06de30ddd7bcf5e3616b34faaa83bb5b5ac405a9dc5307b68a74c34f3aaa1b"
+      ],
+      [
+        "packages/database/migrations/0203_teaching_subject_scope.sql",
+        "8709218ed12bf048d7be1cb9736de6ec727e3cf5d31f1f0097325d5c4d7aeb43"
+      ],
+      [
+        "packages/database/migrations/0204_course_subject_link.sql",
+        "3631702371d99facda82794daca9d2b41359c0f25e69395892be916e99c5005a"
+      ],
+      [
+        "packages/database/migrations/0205_petros_mentor_state.sql",
+        "1a0e4053a401636de8725efc7eb86824c61616c48f28513c9243d83f34dbae0d"
+      ],
+      [
+        "packages/database/migrations/0206_petros_session_intent_doors.sql",
+        "17b6040fbfc1c93b68aea2daebc4ccc87047b93a6ce85c3fd47852cb18000526"
+      ],
+      [
+        "packages/database/migrations/0207_petros_document_lesson_outlines.sql",
+        "683278ad0e74e214d59765b82a4b65208ea83319a0cfe042f12ffe6a7eb87848"
+      ],
+      [
+        "packages/database/migrations/0208_knowledge_extraction_versions.sql",
+        "6cd89a2a82a6026aff2bba72b96f76d6d17c7c7d3af59e2e35b80c2023cec956"
+      ],
+      [
+        "packages/database/migrations/0209_knowledge_preparations.sql",
+        "90801ed129f61909f963b0269230eebe416b558e2440a87157a32008677d2f70"
+      ],
+      [
+        "packages/database/migrations/0210_petros_question_execution.sql",
+        "28df5356c29d19daff2b4a118d9bdd3d488108956d08fb4d01dfeb11c31a4447"
+      ],
+      [
+        "packages/database/migrations/0211_petros_ai_attempt_reservations.sql",
+        "75f24ad4cb53ab4f8a797232c812e8e65413bf5b7bd61431ebb73da0626b4bc5"
+      ],
+      [
+        "packages/database/migrations/0212_petros_visual_snapshot.sql",
+        "1a3da1ee014476411c4331010805f466118aa37d71ebc6c365b1c5cc4fe9359f"
+      ],
+      [
+        "packages/database/migrations/0213_petros_assessment_contract.sql",
+        "0089edf3250525413a91fdb0076839859e9e0e095244e440b40ee8a21766775e"
+      ],
+      [
+        "packages/database/migrations/0214_petros_question_knowledge_policy.sql",
+        "84aa3ee19aee999f535ab844e03cbfee0b8671c1000839876ac2b682bb48fb1e"
+      ],
+      [
+        "packages/database/migrations/0215_petros_compatibility_contracts.sql",
+        "2a1464ff44efa222a92a37a83f5923d4817bfd0bb4a836e668f03a9f68232159"
+      ],
+      [
+        "packages/database/migrations/0216_v10_rls_immutability.sql",
+        "57b4c8ac3bcac350792c8f01a0c60361c9dc24a4edca13e2149501ad5a12ce17"
+      ],
+      [
+        "packages/database/migrations/0217_petros_runtime_closure.sql",
+        "11d4a145613bd616eadb25454809c104de591aec50956cc0dbec3481d83313f9"
+      ],
+      [
+        "packages/database/migrations/0218_petros_teaching_packs.sql",
+        "a317cbe7f83b979b6bd5f55b2318a4691c425aaba3bdd8181042cf5a40c612f8"
+      ],
+      [
+        "packages/database/migrations/0219_petros_objective_evidence.sql",
+        "287aa932acb1ac9365312eb0de0bc93e43543cfe50eeab6b9853437b565e5332"
+      ],
+      [
+        "packages/database/migrations/0220_petros_projectile_commands.sql",
+        "0cb5ff31822661845bf25fe921db2f76444a29c17b49c105125acf04d71a1bdc"
+      ],
+      [
+        "packages/database/migrations/0221_petros_adaptive_bindings.sql",
+        "557bc65b2bc71334a9d5c9409820b81032aea9011be36025b4444e711a4ff90a"
+      ],
+      [
+        "packages/database/migrations/0222_petros_assignment_learning.sql",
+        "7a76d1cdf729f45018cf4ecdc425821d60f1d50844522c7791604d19d103d6c6"
+      ],
+      [
+        "packages/database/migrations/0223_petros_learning_artifacts.sql",
+        "311fdd2a7c420fdff725b2bff7564690e098703e2a56e3d2aec80d272d96267a"
+      ],
+      [
+        "packages/database/migrations/0224_petros_adaptive_observations.sql",
+        "7b030eb38a0e2e92d31ebf52748d919f74154cfbc2c646bac17bb73b989c83e8"
+      ],
+      [
+        "packages/database/migrations/0225_petros_qualitative_lifecycle.sql",
+        "9fc980fa8c12d1e949ba6a1bee7d3114b78b1e14cf2ff3ca15bd8c8b5825a8ae"
+      ],
+      [
+        "packages/database/migrations/0226_petros_phase2_owner_links.sql",
+        "a425a10f4d1a5f70e1cee5a23afaa083ae7e00205b39091ab1da2c94cf0c6dbc"
+      ],
+      [
+        "packages/database/migrations/0227_petros_workspace.sql",
+        "97e0cf891aafd614eb089a9f21673470a9088bd2eb010a7b2cc654e14545fd24"
+      ],
+      [
+        "packages/database/migrations/0228_petros_continuity.sql",
+        "a1566455fcbe29b2d27b53280f1410f53ca4c694a966c47fb9b73e386340be74"
+      ],
+      [
+        "packages/database/migrations/0229_petros_phase4_institutional.sql",
+        "04517424ea6ed05d3694a603dcd9931de2a9c09d223ca2c458d62e16135bc2be"
+      ],
+      [
+        "packages/database/migrations/0230_petros_phase5_release.sql",
+        "585bf1d22a8e39fc6fbac3c80857e4a80be730aa10d00346b4e33f97d0601c7a"
+      ],
+      [
+        "packages/database/migrations/meta/0000_snapshot.json",
+        "8cb3f68c992417331620d260a5bc20fa6b7331c42cbe664b69a7bf73fb42fa39"
+      ],
+      [
+        "packages/database/migrations/meta/0001_snapshot.json",
+        "e133920e43efb500e307699d76d9112a2f388af81dac3db2bcdea28908feb5d2"
+      ],
+      [
+        "packages/database/migrations/meta/0002_snapshot.json",
+        "4b5513682bed5ed9f77baaed5351fe71e8ce93b6b85297274565d06d19440e33"
+      ],
+      [
+        "packages/database/migrations/meta/0003_snapshot.json",
+        "c652d4034ccdd4a9fdc4a24f0a7c2f9607390262aba635c8ae581defe6900ac4"
+      ],
+      [
+        "packages/database/migrations/meta/0004_snapshot.json",
+        "9e6b701ad06ee44d445fd19f05a0ff6912d46ab50e7c84d024a9e53f76e6c54b"
+      ],
+      [
+        "packages/database/migrations/meta/0005_snapshot.json",
+        "ff273466cc6cdcd4a00af2c0919e6b7b9eb9e2e1f5c78cf6b0d20eae6bc891ff"
+      ],
+      [
+        "packages/database/migrations/meta/0006_snapshot.json",
+        "84a74a611495ee2968c267d564a4d6218d496b58ee033e07a502cb590c919942"
+      ],
+      [
+        "packages/database/migrations/meta/0007_snapshot.json",
+        "2220f3168e38694d74662c26f21722bb2e408be483eebda4e0736c932db6451f"
+      ],
+      [
+        "packages/database/migrations/meta/0008_snapshot.json",
+        "4036d7bff2376ba2dd8219964f94f6cac2d84d08a90b77499bf8487f4093741d"
+      ],
+      [
+        "packages/database/migrations/meta/0009_snapshot.json",
+        "70dfad498d79b73d70fef5303679a2522e1f9d8d9b52d3e4c90c11444b40b9f6"
+      ],
+      [
+        "packages/database/migrations/meta/0010_snapshot.json",
+        "458090238a637741f0908e3b085f16da92fddc75b26e699f561ecfb8ddb521d4"
+      ],
+      [
+        "packages/database/migrations/meta/0011_snapshot.json",
+        "df5d4257b67c391bb401ca60b3dd04b652989f605b51db49fa98335442062218"
+      ],
+      [
+        "packages/database/migrations/meta/0012_snapshot.json",
+        "bc7b68b25b0c41b3afa427125d3ef64349df1bcb482d81806d428874dd204214"
+      ],
+      [
+        "packages/database/migrations/meta/0013_snapshot.json",
+        "d5aee90eb9057681ce4316183d062bcf2029f5e64ad59431d0c8996bcbe58494"
+      ],
+      [
+        "packages/database/migrations/meta/0014_snapshot.json",
+        "ec294e78890be6cb2ff348b58f20bdde855380ccc609258443bd5cecfad2ee93"
+      ],
+      [
+        "packages/database/migrations/meta/0015_snapshot.json",
+        "621fe81e349400a316b3193d66c47cf271c97bde0846ebb9a85c4ed04ca6eefa"
+      ],
+      [
+        "packages/database/migrations/meta/0016_snapshot.json",
+        "89162ce59442cfe92318ebee569302c2a2fc863a796aa0d11a3f0f58519b95f3"
+      ],
+      [
+        "packages/database/migrations/meta/0017_snapshot.json",
+        "9e17effccd853a0f261c368c3e30a6ccac4e023f1e1891e7b2e2e012e6a5f637"
+      ],
+      [
+        "packages/database/migrations/meta/0018_snapshot.json",
+        "62af28ec9f29c6ce6b0ce7dce99f0f9baaf458faa2734aa115e6a84643f8c3c8"
+      ],
+      [
+        "packages/database/migrations/meta/0019_snapshot.json",
+        "9bdf7b0b6d7d224e35893009b49c7c754400fc39862b9acc117d7c10f32d1c87"
+      ],
+      [
+        "packages/database/migrations/meta/0020_snapshot.json",
+        "80921d1c140cadda1bf4c6eff030e86dcd50eb208517d46971f2ba7ad40359dd"
+      ],
+      [
+        "packages/database/migrations/meta/0021_snapshot.json",
+        "2107f6ebdfc6a6735615d8200e0291e68f43794203f6268b2d3d31be09b714bf"
+      ],
+      [
+        "packages/database/migrations/meta/0022_snapshot.json",
+        "6298df1fb08218ca58f9de3c885dd1128e59da33de00a1179876f6fb6a4f0748"
+      ],
+      [
+        "packages/database/migrations/meta/0023_snapshot.json",
+        "7f214c80e162943133fe5c32906bc49ff5031989ab3a80b876dce08bf29f3379"
+      ],
+      [
+        "packages/database/migrations/meta/0024_snapshot.json",
+        "99e2cc0579b9b8b83e6aaae192ee79d60392e036f3732acd7471f5143d245bb5"
+      ],
+      [
+        "packages/database/migrations/meta/0025_snapshot.json",
+        "b12857c2ff2f459748da9e9d6ec4c3a008ebc87f7ca41725d72a974b6bda3c58"
+      ],
+      [
+        "packages/database/migrations/meta/0026_snapshot.json",
+        "eab9cb34346e2b4034247eeff654b55412131daba83f5d48d872b1689f3298f7"
+      ],
+      [
+        "packages/database/migrations/meta/0027_snapshot.json",
+        "f4e35dda1e9122fbddb1108a507381a2aafa10779946bbf539b8edda8597a738"
+      ],
+      [
+        "packages/database/migrations/meta/0028_snapshot.json",
+        "324141dc1a44a1bab7b33d6cd1669f866fbd73f5993e2e5f562c065855f597e4"
+      ],
+      [
+        "packages/database/migrations/meta/0029_snapshot.json",
+        "05ef0ba465c91feba7f9e674faf7326b8a979890934548e838a057e0e88c86f5"
+      ],
+      [
+        "packages/database/migrations/meta/_journal.json",
+        "e287ac538abc41c76c64f962c4bd6f64a775eb956bcbe5679e1b69ea7dcfe756"
+      ],
+      [
+        "packages/database/migrations/sql/zzz_grants.sql",
+        "37839164d277f0bbb2e3022a5017171777e67e5b3f0403599a34e30452d160e0"
+      ],
+      [
+        "packages/database/migrations/sql/zzz_rls.sql",
+        "8c349a03aed3ed3a663f631d38308bad0f84239cdfcff1c27e306bdc6b8437a8"
+      ],
+      [
+        "packages/database/migrations/superseded/0082_timetable_period_backfill.sql",
+        "8d60b512be5fd517a7e3929ea3f6591edd2f807dd39baf383c5b9dafbc8a5889"
+      ],
+      [
+        "packages/database/migrations/superseded/README.md",
+        "9fd97a77d81adc0ab041521e901baf91e8a31be379abdb17ed5bf95f95d82cc7"
+      ]
+    ]
+  },
+  "promptSchema": {
+    "sha256": "5b786bdfc568ba1723713d8accb2e55a170031bb947307314d79b222256508f7",
+    "files": 116,
+    "manifest": [
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-ai-credentials.service.ts",
+        "4ccf1187fe39f35d5013273ff367413b149bad36cca0c3eb3963366f7cf4347c"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-ai-gateway.service.spec.ts",
+        "90998c00256d3654e408e0c0872ebb58c87c0daeaf177ffdd8a7675fc39b3eb3"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-ai-gateway.service.ts",
+        "f9be6b071df0da016148080f57fba41da818cecdc0addb0a3225ea50e39c3c88"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-ai-routing.controller.ts",
+        "9bbdcd9d2423e5e8185e7549e5a285a6f8b377448da8a399346320f715596416"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-ai-routing.module.ts",
+        "0183baaff384bb8db57294f9baa751b3bef74411758ccdf427ba1cba64eb9841"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-ai-routing.repository.ts",
+        "04307d3be225f63793ebecca0858b11a1f65c98f37d9e3848662988f2e3047c7"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-ai-routing.service.ts",
+        "ac10d2e30022b510687ea2da3fc12aaabeb34b56824e2ca659803f34cafde630"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-provider-adapters.spec.ts",
+        "555e7d7f24e371fa942c89d9048ef00ea5a6d6c8aab7df7e143f287d4147daf3"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-provider-adapters.ts",
+        "9919e75a96855afeae51fe0ac36e35262fcedfa6aa477dcff80b9a98d919f307"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-provider-connectivity.service.ts",
+        "a824d1f2a8c888e1c9539eed87f1eea40470becf72c51a56cab07b8a300c86ce"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-response-validator.spec.ts",
+        "827f4a901f8af3b18c638cbe3e1da7456184ff287cebd55a9a39fb717868795d"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-response-validator.ts",
+        "e59becaa88676e3c8725d5d95b9dc3182b890c23c7325e2d11ff4a30894b6b59"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-routing-engine.spec.ts",
+        "c46f6d4a0a741e90d5dffb70c0d295a0f687c859f709460d03a26ff21c23fa62"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-routing-engine.ts",
+        "f81e72080995d77732f1a52bb14d53046ab2092c364c611663915318d71e6787"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-adaptive.controller.ts",
+        "3393a651b0a91fbab3f9ee9b96a0ce57f280ada87e1f3b173572c1a00fa45fe9"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-adaptive.renderer.spec.ts",
+        "0ecdce079488f4cc14317c9385dcee7f0a1ebe5659d4666b92d6877099be7de3"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-adaptive.renderer.ts",
+        "7e9bd1e3aa86d4fdb346df674d7392d6c39fdadf7b73403774e7fe7a7140488d"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-adaptive.service.ts",
+        "dbeef354aad878144ac1c42db6aa3d98c6c259aeee5eba4f5ad4adba7fd72b5c"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-assessment.adapter.ts",
+        "f90ec929bf2b0e789161e1bb750ee31391a50ee49814050fa2d448f0246b4cd0"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-knowledge-answer.ts",
+        "f18d27c6464763a9622ce509f1dcee6559c0499cf7782fc1359b029bbc16500d"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-loop.controller.ts",
+        "8f367baf5d2d9b425c105c8f554c58ef2a9a50c2ce485e65068b5af30e56dea4"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-loop.module.ts",
+        "0054722082631f822889f08aed646dd19a9569b49ade214c43e84ff8275c55ea"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-loop.policy.spec.ts",
+        "a47c7244d8d5d526bde9110a1a3173d98339f57ad656b95f2bbadbfb65f6ca21"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-loop.policy.ts",
+        "09cfb6e3a147be4f1ae03fa06d0dbb49bbe4d32f74319c8e67f2b07fb73ee2df"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-loop.repository.ts",
+        "37beba3e0a54befb1bef3f04b727310f73b91a7bc10f59890f82414c2450834e"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-loop.service.spec.ts",
+        "b27b0ba7485584696b7398b899994f4dcd4612cd61793ddaa6262a1fe41c8335"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-loop.service.ts",
+        "cc5d26f0cdeadc4c90989f9f7383b3b4dabe4dab2e179e7d292b0c0420e9c03d"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-observation.policy.spec.ts",
+        "717dd7f5003f24183303e99474c3794ca55b601a201c81d80e235d18077f1bd3"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-observation.policy.ts",
+        "b7d31d73f9f849ce5ffb570d89b8e8856145d86fb88ac0c245f5dc8de46c0f73"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-projectile.controller.ts",
+        "b31a1f2033da4dab792e1f7ed88aa151a1e47e1303f0cf4158ee830f500a5f2a"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-projectile.repository.ts",
+        "29adeedcd5c6048b61cf042c851ee8c627a0e023c60c7a8b54273916de9e6e33"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-projectile.service.ts",
+        "758d891ce084c4b1588a207e7eb65920b1c2cf12cee1a9e30334d82ea77cd2ca"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-question-execution.controller.ts",
+        "fad5c2d907b54f7e9520d4c9c61537601cdd5f8dce38e6d36b59c3f0bfa04aca"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-question-execution.repository.ts",
+        "64d1020e78911d28c53ec44750d0fe7cf979f12464e31095293c6a753cd76174"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-question-execution.service.ts",
+        "6fbe50b924885eaa9ac3aefc3ab6b9f81fb2474ea584b9933787af2fccd0ec83"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-reconciliation.controller.ts",
+        "742eded55311486e7c075b643caeca66078ed9876807118f9b13f4cc62f6e421"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-stage4.fixture.ts",
+        "d10f005ababc9ea2971a8b337da71bb60d3713f917100b599487499df1dd837f"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-workspace.controller.ts",
+        "1ecb1cc2f29febe4914b7f1e2fc44f1a4679c3133c50d2094a3078bde99eabe5"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-workspace.repository.ts",
+        "58e4fd4399b0414c8186e7bedc7461e11732130c92336c816cb8e4dc4cfd05a6"
+      ],
+      [
+        "apps/api/src/modules/student/petros-loop/petros-workspace.service.ts",
+        "eb5c6ff5ffe418ea25ec357b214f0d84f0e0324916049df149869473421e958f"
+      ],
+      [
+        "packages/schemas/src/petros-adaptive-policy.spec.ts",
+        "f17d0a669e13886e7bee0e3ac6ec6fd959f02fcdcfd6c2da13c8fdabd808c422"
+      ],
+      [
+        "packages/schemas/src/petros-adaptive-policy.ts",
+        "070731c391769d62026b56341f7c3af9aa9d743a0903d61fa46c3fdaf8879e17"
+      ],
+      [
+        "packages/schemas/src/petros-ai-routing.spec.ts",
+        "9d89a158ee8a9365f1ef85584602d31507da136aaabb667e554c19cee4853f9b"
+      ],
+      [
+        "packages/schemas/src/petros-ai-routing.ts",
+        "f57904fdaff3bd5e8c82ad046adc7e594e69ebbd3f79e4fbeb7c87ca2e57ae0a"
+      ],
+      [
+        "packages/schemas/src/petros-artifacts.spec.ts",
+        "4c3d1253b7f829da49d580dfcc7727fa9dbb5c929f849bc15c3b5d15a4881558"
+      ],
+      [
+        "packages/schemas/src/petros-artifacts.ts",
+        "272785298ed4735b93af8f46726e8b9c665e0371c5dcd6cd8ab80ae965600ef6"
+      ],
+      [
+        "packages/schemas/src/petros-assessment.spec.ts",
+        "f6e1a231de751db7ceb14eb0a5c9df2ef44824f503b85555f053ba0a0168db3f"
+      ],
+      [
+        "packages/schemas/src/petros-assessment.ts",
+        "015bce63222c4442b6f330888feccbbc90b8080cc4b5fe32dc6053aa337aef94"
+      ],
+      [
+        "packages/schemas/src/petros-assignment-learning-release.ts",
+        "c59247347fbe7080e3ecfe7062f160089c7052761475ba90764a8a784e6acedd"
+      ],
+      [
+        "packages/schemas/src/petros-companion.spec.ts",
+        "a631ee40e8e17358578c315ecb6d0eb826da64fe9e92b7390bf681688dcef902"
+      ],
+      [
+        "packages/schemas/src/petros-companion.ts",
+        "36234824fb99e4d58d275d93b4a4bb2d839f255205c99cbfadb5f981125a4f28"
+      ],
+      [
+        "packages/schemas/src/petros-compatibility.spec.ts",
+        "7961c9ced10b513214bac787d5694dbf0b4ca0ca83f47eee777011da456e3b5d"
+      ],
+      [
+        "packages/schemas/src/petros-compatibility.ts",
+        "8b21216598b5d555855166bc0d8688d7cfc35915ca82669e4237f9f7448c8b81"
+      ],
+      [
+        "packages/schemas/src/petros-concept-pack-review.ts",
+        "546f9133c91570f0c872de414e673c77008a0757fbd2462af967b3e31e93bb9a"
+      ],
+      [
+        "packages/schemas/src/petros-concept-pack.ts",
+        "8643c7a1e99b481477706400e222202de2f9900a750191e166944cb2db69a50a"
+      ],
+      [
+        "packages/schemas/src/petros-context.spec.ts",
+        "f73eb2a215a1a4f773082064495556b52dbbbff7a9602ed0f4c1d086ada39414"
+      ],
+      [
+        "packages/schemas/src/petros-context.ts",
+        "2502dca4d31916ccac0dfc39ab75c0d5f297599778475efc691b912759db26ae"
+      ],
+      [
+        "packages/schemas/src/petros-continuity.ts",
+        "4457486646e2fdecce315c87008e5dcba12c51386500634e3cebe2c8ac227b5b"
+      ],
+      [
+        "packages/schemas/src/petros-document-preparation.spec.ts",
+        "b7117356b101e46b0375ac1671717290daa56336cde5be22107adb3ce63e1a88"
+      ],
+      [
+        "packages/schemas/src/petros-document-preparation.ts",
+        "d63b3ae30c39f7948cfa9218dd1374965a67b86075a5cc428da721379f531f6f"
+      ],
+      [
+        "packages/schemas/src/petros-document-retrieval.spec.ts",
+        "945ed3aef62b2009b35cd9352e13749e44930274bb0eb28005d796f453610b8a"
+      ],
+      [
+        "packages/schemas/src/petros-document-retrieval.ts",
+        "54b2e14b64bba9e91c452276d473af5c8d8afae87c7d0e300b56951ac0784d0e"
+      ],
+      [
+        "packages/schemas/src/petros-document-source.spec.ts",
+        "305a0f8ec674eda3e9f526f2258be8d95da2aea13c369e4ffe51fee13c48a2a4"
+      ],
+      [
+        "packages/schemas/src/petros-document-source.ts",
+        "d3075ec5ae2d78e9bdc59344f844b31ba56335d1ed92ce18bd5fbf880e86e4f9"
+      ],
+      [
+        "packages/schemas/src/petros-engine-bindings.ts",
+        "5aabbf5ebfb8f6d0c132c9129593c295a41899b1fab45188141c4a97291cc22a"
+      ],
+      [
+        "packages/schemas/src/petros-engine-compiler.ts",
+        "a053d36d29c5cdc1b7c37ea53a9ba7b229d79e3e7c7602a296aec8e2bf5a7de6"
+      ],
+      [
+        "packages/schemas/src/petros-engine-contract.ts",
+        "0a79b745946f1525d9661f5877472c23faac17cc513ee2a13490cd5a964ac473"
+      ],
+      [
+        "packages/schemas/src/petros-engine-controller.ts",
+        "0939f5ef3c8bd69e431496c1858a572db00daad1049fa0dbd476cc71feca6d63"
+      ],
+      [
+        "packages/schemas/src/petros-engine-interpreter.ts",
+        "f04a48699b05165c6f53bda413039d7369b4a2d1ab075a0f63b41699bd7915ad"
+      ],
+      [
+        "packages/schemas/src/petros-engine-models.spec.ts",
+        "fd2b2ce33b43495349b056989db14e370663864f1c4e956d102fc29278337134"
+      ],
+      [
+        "packages/schemas/src/petros-engine-models.ts",
+        "9d824046564213a8447801ffcb773f2153820e00f8f0cc58dd77b9dbb7eb0521"
+      ],
+      [
+        "packages/schemas/src/petros-engine-presets.ts",
+        "3e468e5a5b4c00eb90506102a1990da30c99932e05e4ff9f2c2c4439219e2572"
+      ],
+      [
+        "packages/schemas/src/petros-engine-registry.ts",
+        "f10dd873a98df550902633239885166154b18118c44e5f7e43c8e492ef34c1d9"
+      ],
+      [
+        "packages/schemas/src/petros-engine-spatial.ts",
+        "8dc9fc281a30f8679c047aa53f998c251d0a0448643de678b83d2e94896c793e"
+      ],
+      [
+        "packages/schemas/src/petros-engine-units.ts",
+        "602fb4f448c5d6a95e145f62c2eebd9f44acc54e974883ea0d71a4c8b3e1d61e"
+      ],
+      [
+        "packages/schemas/src/petros-engine.spec.ts",
+        "b60652a78fc3d213c626fac85bf950a3f0fa74eb52c42b80ce75d8e5f55cd5ec"
+      ],
+      [
+        "packages/schemas/src/petros-input-modes.spec.ts",
+        "9788be3a439d17768c17751e23a45a6a0c56d8ef1559c03f9a56ab4f69dbbc52"
+      ],
+      [
+        "packages/schemas/src/petros-input-modes.ts",
+        "1bda634f0a7b740284a48f8aa927ddcb9756c0f023024429a921d772b7992623"
+      ],
+      [
+        "packages/schemas/src/petros-institutional.spec.ts",
+        "324085085d586bd62f0ca74a6f91dc25dd208bfff7f9390a27571aab453e85ef"
+      ],
+      [
+        "packages/schemas/src/petros-institutional.ts",
+        "46a79d79306ecba64c0aa878bddd9f85147b7b7007486abafffa4c8b550b6118"
+      ],
+      [
+        "packages/schemas/src/petros-knowledge-policy.spec.ts",
+        "f912f8059ba3cd211bd7a3892fd6f15efd8577f9feae24d088beb3cb953e3c34"
+      ],
+      [
+        "packages/schemas/src/petros-knowledge-policy.ts",
+        "7a1121bd4fd3869d41744c29e47dc1eea7a665c9a9f7e34b8e42581b17eed23d"
+      ],
+      [
+        "packages/schemas/src/petros-learner-model.ts",
+        "0f502f2542db407cfc419018e71feaf6b5d960bb9ce79319d072b6bd7082ead9"
+      ],
+      [
+        "packages/schemas/src/petros-learning-artifact-binding.ts",
+        "e36d111398918f905d2c4dd0dc2194ae6f92728de972021e5c865f8dfa1ea00c"
+      ],
+      [
+        "packages/schemas/src/petros-learning.spec.ts",
+        "49c1e5d12630b35b60826a31edce467c96edb00555fb7847ae7a961350eafcb8"
+      ],
+      [
+        "packages/schemas/src/petros-learning.ts",
+        "1e775e68563792885c1aff76a6975b0ada5e4c70d6d9afc8d353933f864df595"
+      ],
+      [
+        "packages/schemas/src/petros-mentor.ts",
+        "be4861818c57a9e31fe759bf12eff0f0bf1e0db77060ce4844252a5e8e409568"
+      ],
+      [
+        "packages/schemas/src/petros-objective-evidence.spec.ts",
+        "b53175d4d2992075375cfcb3da5f8cded44717c2dcf3856838577f288eae5684"
+      ],
+      [
+        "packages/schemas/src/petros-objective-evidence.ts",
+        "024693dcdd54426aa853f39daedd37d311826d13e293d4fd89b2d5a0a0c8b88a"
+      ],
+      [
+        "packages/schemas/src/petros-phase2-pack.spec.ts",
+        "64e0a3a78540165ab5047f44185b52f0262cc261ccfa35f6374619525cec3d41"
+      ],
+      [
+        "packages/schemas/src/petros-phase4-institutional.ts",
+        "c0742b6121c434dbc75e9f043d5c93235db1b1e40843e18d70f2f4a11e6c3b6b"
+      ],
+      [
+        "packages/schemas/src/petros-projectile-binding.spec.ts",
+        "6c56bd8177232e30483c227069d0d742ad6e99ce9ec48f9caf5bdbc5dac7a1bf"
+      ],
+      [
+        "packages/schemas/src/petros-projectile-binding.ts",
+        "348f1ed26ccdbe2be72a3f445b9111a5b5b0ef61d48729e6a44a4eb378a4e6ca"
+      ],
+      [
+        "packages/schemas/src/petros-projectile-command.ts",
+        "952ef451cd0e27fe3592ac86e9128edf8396e3e0cb574a26a488b33c28836b81"
+      ],
+      [
+        "packages/schemas/src/petros-projectile-model.spec.ts",
+        "76051af5ae49c9c338bd4bf4f5af31cf4e5f7df2ea6c88feec11f2f73b88a79b"
+      ],
+      [
+        "packages/schemas/src/petros-projectile-model.ts",
+        "58fe2b39146d41a1e52922ff3931efef87cb7f110782a7d5887423ff81d2bbc2"
+      ],
+      [
+        "packages/schemas/src/petros-qualitative-review.spec.ts",
+        "dae98fbd710fab8ee3ffc06f1ef2353783261710925560817a004f3aa56b4657"
+      ],
+      [
+        "packages/schemas/src/petros-qualitative-review.ts",
+        "bde4929884d5ae45a28493e3314dfa7e965c15930937800ab98f91bf6760d3ad"
+      ],
+      [
+        "packages/schemas/src/petros-quality.spec.ts",
+        "fb0047f57ec3228dbde913e68506277a48374d53550b0b49a456324aae02b284"
+      ],
+      [
+        "packages/schemas/src/petros-quality.ts",
+        "11bf032ce7e101bb9ccf3e030c67b086e4d0fc052241c7a31bbaf9f5e8535b29"
+      ],
+      [
+        "packages/schemas/src/petros-question-execution.spec.ts",
+        "a0a8801375b39812e8682ca11c67c98aace15f1a41237ffd69c8801b01c47d8d"
+      ],
+      [
+        "packages/schemas/src/petros-question-execution.ts",
+        "6f0492c1c1730842256567b91f1b9f39816294423512e2a044efba912051682d"
+      ],
+      [
+        "packages/schemas/src/petros-reflection.spec.ts",
+        "8f0505f2b48b670adf0e546ba2e83aa97763cdc22cae3bab8b097030201e805a"
+      ],
+      [
+        "packages/schemas/src/petros-reflection.ts",
+        "a128bebaf0934863f1cad9df35675ab7a322fb89ffe7f4934e2c8e7da614dcb5"
+      ],
+      [
+        "packages/schemas/src/petros-release.spec.ts",
+        "0d09f55c5c508414fbe3cd2964b47f48dcbe4178cd07b2add2308395268dc1aa"
+      ],
+      [
+        "packages/schemas/src/petros-release.ts",
+        "36278e353c31e09792bb9e2ea92386745323a11d9915e451412dee7766e21432"
+      ],
+      [
+        "packages/schemas/src/petros-review-scheduler.ts",
+        "09a068e16cc60be08773dbcba91696d42f497f2f3a7b3b422d996291e1b71746"
+      ],
+      [
+        "packages/schemas/src/petros-session-intent.spec.ts",
+        "225ac7063de6df6ecb049d39ef0c1845f2f4c66b7f524eaedc7ada7eca8e9a51"
+      ],
+      [
+        "packages/schemas/src/petros-session-intent.ts",
+        "606bfd847a0497a94a0a378ed004b21ef4bd509cb3f8482dbae5cbfe2d5ca984"
+      ],
+      [
+        "packages/schemas/src/petros-teach-back.spec.ts",
+        "8ec63e7c3987be5e9486d100d5549ec8a5b1248a09a25a252095c0858345ee78"
+      ],
+      [
+        "packages/schemas/src/petros-teach-back.ts",
+        "46667b5243c4d71e3e2e76ace75f6322df61188a3afabc383ad55a6b6149eaba"
+      ],
+      [
+        "packages/schemas/src/petros-topic-profiles.spec.ts",
+        "98e776c013aec738c3ac2548d606c1a6c62c9bae29b34a5466df6a85cfd4811f"
+      ],
+      [
+        "packages/schemas/src/petros-topic-profiles.ts",
+        "02e66247a60effec0a23353e32a905c6b22cc26b16b378c0d05d0b8c27a2f65f"
+      ],
+      [
+        "packages/schemas/src/petros-visual-adapter.ts",
+        "09916bdc2b3e4d31666651c6ffbc7034ecd114a7caef682163e611b2dad0e1a8"
+      ],
+      [
+        "packages/schemas/src/petros-visual-program.spec.ts",
+        "7734654b69947701beb84c6b7dd6d097a490183fb34614e3a203a3a907ad8653"
+      ],
+      [
+        "packages/schemas/src/petros-visual-program.ts",
+        "1b77b45a9bc2fc9bb0073200c0eafc9a1d6a9f8dfd0d6c834ff9fc9fd4ce818d"
+      ]
+    ]
+  },
+  "policyImplementation": {
+    "sha256": "af168d76896e683b8ca064e013c0e68fb6f2c708b428f1175c73fdb876c24763",
+    "files": 28,
+    "manifest": [
+      [
+        "apps/api/src/modules/petros-institutional/petros-admission.ts",
+        "ef0a03537bae8677837f9d7ed91fbf3b04f3e42f5ae87952ff9a367134d18eeb"
+      ],
+      [
+        "apps/api/src/modules/petros-institutional/petros-cohort-evidence-authority.ts",
+        "9286c692d8d0196005f7580bea64bdabe34ab33d749234cbb0ce35d0c96dba4a"
+      ],
+      [
+        "apps/api/src/modules/petros-institutional/petros-institutional.controller.ts",
+        "6a8c1c8f12b07514fa66d52674801ca953a5baaf8ee13022e392c11880afe7f7"
+      ],
+      [
+        "apps/api/src/modules/petros-institutional/petros-institutional.engine.spec.ts",
+        "9a5b15ff82dceb2503bbcd1eef144f879793366640cfbcf25e6c09b8c5829fbe"
+      ],
+      [
+        "apps/api/src/modules/petros-institutional/petros-institutional.engine.ts",
+        "73e39908944a9ea756adc68ea42f7361098baf66519959f1c497142355ef2fe4"
+      ],
+      [
+        "apps/api/src/modules/petros-institutional/petros-institutional.jobs.spec.ts",
+        "c599212e10894946013b1680095421668546380fc09f6e7284af91409d042776"
+      ],
+      [
+        "apps/api/src/modules/petros-institutional/petros-institutional.jobs.ts",
+        "370066b42032507e9e0b0e547dfd4bb8ccaec610a092d1b018db86cce1f0bc22"
+      ],
+      [
+        "apps/api/src/modules/petros-institutional/petros-institutional.module.ts",
+        "8e9f9853158187744a0b1a3447651b1d75137eb909e0b452a6e706a3879bcc03"
+      ],
+      [
+        "apps/api/src/modules/petros-institutional/petros-institutional.permissions.spec.ts",
+        "3efde91137460148a4163d114ce4959475bc9a046277324ab10d0cc8d736208c"
+      ],
+      [
+        "apps/api/src/modules/petros-institutional/petros-institutional.repository.ts",
+        "c30eb5b109dc4fbba9fa827c9b63b9a721ff1b4a90e08c7753243f51ff717f2b"
+      ],
+      [
+        "apps/api/src/modules/petros-institutional/petros-institutional.service.spec.ts",
+        "0612c20b620bccb043baf708b50ef3cb4e290f10ba49a0f614d9d3867e9f768e"
+      ],
+      [
+        "apps/api/src/modules/petros-institutional/petros-institutional.service.ts",
+        "be4b0626981f5034dd826544fa38e8aff363ea1b7d12303102946e4fca3fba44"
+      ],
+      [
+        "apps/api/src/modules/petros-institutional/petros-knowledge-policy.spec.ts",
+        "b737ee47748092d420f8bb306f897972f5d0eba1afc55c8459baede2a61fabb6"
+      ],
+      [
+        "apps/api/src/modules/student/knowledge/knowledge-document-retrieval.spec.ts",
+        "ef985d8a8ad7ec653e15a8e7b053e480f4ddfee5bdfdd50df995b0a14ca4c9ba"
+      ],
+      [
+        "apps/api/src/modules/student/knowledge/knowledge-document-retrieval.ts",
+        "0cc30dfa8796c5ffb518241f2fe9cc27a9df840075237d81f70b8b640256b319"
+      ],
+      [
+        "apps/api/src/modules/student/knowledge/knowledge-document.module.ts",
+        "a04109379a0e5f44eed65473d43eeaea5bc1e748c73c1c543c6813e45dc89bdf"
+      ],
+      [
+        "apps/api/src/modules/student/knowledge/knowledge-document.service.ts",
+        "9d4d228396a66e05621b9a87f8c19f7835795cc1b03d886ff8c15c4445e8078d"
+      ],
+      [
+        "apps/api/src/modules/student/knowledge/knowledge-pdf-process.spec.ts",
+        "9b0eb9dbb3903e0fbebf1f16524c791590ac00bdb1af0d4e35b1274124090d33"
+      ],
+      [
+        "apps/api/src/modules/student/knowledge/knowledge-pdf-process.ts",
+        "d2124088dd789e0fffca251b40f6ddc59c0d6781d7b9f1843cb7087924f80583"
+      ],
+      [
+        "apps/api/src/modules/student/knowledge/knowledge-preparation.repository.ts",
+        "39f9eccb45163feda40d517118e0dec28c6042237d36f0a0a93c30b3c7334d5b"
+      ],
+      [
+        "apps/api/src/modules/student/knowledge/pdf-extract.cjs",
+        "3753292fcefaf873a678cec8819ed8dbf460ca5f7844ba93ce69f5fdb143ad51"
+      ],
+      [
+        "apps/api/src/modules/student/knowledge/petros-teaching-pack.controller.ts",
+        "59446a7a9470397cb45e49dc35b8c7463b0ee7addf15c8ce6986eec2e3f2378c"
+      ],
+      [
+        "apps/api/src/modules/student/knowledge/petros-teaching-pack.module.ts",
+        "871b0793c11fb5eb044045e2fb6705b9734146d17b35f4345d4bea6bf18c35a0"
+      ],
+      [
+        "apps/api/src/modules/student/knowledge/petros-teaching-pack.repository.ts",
+        "8e51fea7ed646af3dfdcffe08ecbc87c0fd7c2e32a3e82e9ae441fb620e8fe83"
+      ],
+      [
+        "apps/api/src/modules/student/knowledge/petros-teaching-pack.service.ts",
+        "9a9778049dde4c3efba61b361d92d6fc37190736a77b95b0b98f1501077fa706"
+      ],
+      [
+        "packages/config/package.json",
+        "defce4de690a56e391d994a8376cbdeb965ae275defc7da6ce222aa5fd6cfaa3"
+      ],
+      [
+        "packages/config/src/index.ts",
+        "814548175ac47b9629a2048d2018d6caf380d2bc533affcef00b512597f4a13d"
+      ],
+      [
+        "packages/config/tsconfig.json",
+        "a888b24dfa0a594aafe18a0152280391973e3b7708ee534e9893e1565c5299e4"
+      ]
+    ]
+  },
+  "routingImplementation": {
+    "sha256": "86ce67447add5576e1a53d3e5ecf35ef7e01058d8a4e06763e659101f0e5e1bd",
+    "files": 14,
+    "manifest": [
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-ai-credentials.service.ts",
+        "4ccf1187fe39f35d5013273ff367413b149bad36cca0c3eb3963366f7cf4347c"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-ai-gateway.service.spec.ts",
+        "90998c00256d3654e408e0c0872ebb58c87c0daeaf177ffdd8a7675fc39b3eb3"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-ai-gateway.service.ts",
+        "f9be6b071df0da016148080f57fba41da818cecdc0addb0a3225ea50e39c3c88"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-ai-routing.controller.ts",
+        "9bbdcd9d2423e5e8185e7549e5a285a6f8b377448da8a399346320f715596416"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-ai-routing.module.ts",
+        "0183baaff384bb8db57294f9baa751b3bef74411758ccdf427ba1cba64eb9841"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-ai-routing.repository.ts",
+        "04307d3be225f63793ebecca0858b11a1f65c98f37d9e3848662988f2e3047c7"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-ai-routing.service.ts",
+        "ac10d2e30022b510687ea2da3fc12aaabeb34b56824e2ca659803f34cafde630"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-provider-adapters.spec.ts",
+        "555e7d7f24e371fa942c89d9048ef00ea5a6d6c8aab7df7e143f287d4147daf3"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-provider-adapters.ts",
+        "9919e75a96855afeae51fe0ac36e35262fcedfa6aa477dcff80b9a98d919f307"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-provider-connectivity.service.ts",
+        "a824d1f2a8c888e1c9539eed87f1eea40470becf72c51a56cab07b8a300c86ce"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-response-validator.spec.ts",
+        "827f4a901f8af3b18c638cbe3e1da7456184ff287cebd55a9a39fb717868795d"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-response-validator.ts",
+        "e59becaa88676e3c8725d5d95b9dc3182b890c23c7325e2d11ff4a30894b6b59"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-routing-engine.spec.ts",
+        "c46f6d4a0a741e90d5dffb70c0d295a0f687c859f709460d03a26ff21c23fa62"
+      ],
+      [
+        "apps/api/src/modules/petros-ai-routing/petros-routing-engine.ts",
+        "f81e72080995d77732f1a52bb14d53046ab2092c364c611663915318d71e6787"
+      ]
+    ]
+  },
+  "fixtureEvaluatorImplementation": {
+    "sha256": "dd08effb37c18cc2e47cd2b2e952e1131ec384b2440e450248b38ffaecd86335",
+    "files": 121,
+    "manifest": [
+      [
+        "apps/api/src/modules/integrations/petros-phase5-browser-journey.mjs",
+        "43eca709669174d9bc16d86c2b91a6c52dbf13bcf69786bb9f7b7551db784b82"
+      ],
+      [
+        "apps/api/src/modules/integrations/petros-phase5-browser-server.ts",
+        "4ffafec13f2a2f91f9c2431f4904a3eeb038f29067e62c1a9b7a246ac0822ee4"
+      ],
+      [
+        "apps/api/src/modules/integrations/petros-phase5-gateway.integration.spec.ts",
+        "0752b402ff8b1d95d8c33ce9cc791760cc2dbd63440b003342f28bdc7c3f9ca9"
+      ],
+      [
+        "apps/api/src/modules/integrations/petros-phase5-operations.integration.spec.ts",
+        "b5894a37ac4e9c4ad098bfa6c27bea22c7758a25b421bd1cc18bafc45660c780"
+      ],
+      [
+        "apps/api/src/modules/integrations/petros-phase5-pilot.integration.spec.ts",
+        "0078800adcb29616ccc23becd9da3e176e97468436d67b72a963938edb4617c1"
+      ],
+      [
+        "apps/api/src/modules/integrations/petros-phase5-quality-fixture.ts",
+        "519e13efa7f12e20444a284fc7adee38276f611869b94dc566599a72e052b1b1"
+      ],
+      [
+        "apps/api/src/modules/integrations/petros-phase5-quality.integration.spec.ts",
+        "403f2268f151bc1e03376ca78feb206fbb558acb9edcb55a3dc2a41c1c7223ad"
+      ],
+      [
+        "apps/api/src/modules/integrations/petros-phase5-recovery.integration.spec.ts",
+        "6de86ddfd854f9d86eb5251fc179d990fe39248c167dc8b588a318525859910e"
+      ],
+      [
+        "apps/api/src/modules/integrations/petros-phase5-release.integration.spec.ts",
+        "bfee6c15f2c4a19f13e000ae6e73f5e38dadc9b163a8628871372cde6dabf3e8"
+      ],
+      [
+        "packages/learn-evals/baseline/core-baseline.json",
+        "fe020c6e8dc8bacf6acca44a95762af4dadbdd3246be1a5efcdb8de6930d7f33"
+      ],
+      [
+        "packages/learn-evals/baseline/petros-stage5-smoke.json",
+        "a4edbf250f79d749e41cd155b5f5b1960fdd96e2efebc891286c9df38f8caea8"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-full-fixture-42-1786640093660.csv",
+        "70a339ee2924d28730225129128642da658994ceb5af51beefd12152cca7f26c"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-full-fixture-42-1786640093660.json",
+        "e11b14a4d89cb12c0394196ae4ac601228efc25bc52389240f0c00a077ee5659"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-full-fixture-42-1786640093660.md",
+        "88e10b9a08211764f371c29464f811e4daab35a98972ca95f0ff67b9e6e96689"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-full-fixture-42-1786640093660.state.json",
+        "dc5ca2455cddcbc75d4b5929f9095926e388fe56951b87651f30299e52b35f51"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-full-fixture-42-1786644656476.csv",
+        "bb2fb7fea6409af482dcba153566bcc94668054712b1ec7a3f1dcdbe52465c0d"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-full-fixture-42-1786644656476.json",
+        "c1444eed075330bf55d64866cb37db807820ee987fc647d8a7de3cc38468b216"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-full-fixture-42-1786644656476.md",
+        "2a563795aae82a6fe9d7fd711e3b8300965e6fc48af38b8b1d6dc24cdc7f0750"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-full-fixture-42-1786644656476.state.json",
+        "39e7e201bc72901daeb0d58199af0f35e6329985e049370d66360213930cd031"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786332678177.csv",
+        "308a89504babb86f2520d116edbaca4081afd07e562e60e9e93af6d3d17ed386"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786332678177.json",
+        "33df3438a4281e351467b01982dc1af8f9c21dbc4b641b92aaad0aa788a558c3"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786332678177.md",
+        "f8c340351b70500bfb6467d0b8c46a3bfd93293cf55ffe051f2874c3ece7b630"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786332678177.state.json",
+        "3fe31f3280dab048794b9fde75fdedfc6c629002743e3d4ced7b847d355be1c8"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786332683667.csv",
+        "d3e9bca68651553610a160882c01c4a2c7e9d21a722bff75ffed3675db9da8ff"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786332683667.json",
+        "8951c5f26c16516b5f09a5f189f422a3c61b91e78ae042eabaf945f7a9c2d2a3"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786332683667.md",
+        "b917303d56a166051fa9eb5cfcad3af54596ddb2955492a5ac389c6ff1f59632"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786332683667.state.json",
+        "4b24f41830ee0fdff3ad61e86b53d2e128e5a296144a2349af4f080575911e7d"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786334642173.csv",
+        "dd090672c41634985e3f576f1537e8e466e13bc87517505d31a0260155ef9b0d"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786334642173.json",
+        "d2fe5cb6c016f25ad5ee8d5c22dedd48117999b071045e89b6fd28d66216299b"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786334642173.md",
+        "494dd76f0f6f7d0cfcca66440859fbfaa935945ba5b5d50ab37712b34ccc2b8e"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786334642173.state.json",
+        "d99d3fc5fe1bda9a2ea7d293560f50d79f41811cae70a20e568714aba0e2b0bb"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786334642180.csv",
+        "3abe4ce1546b4795db1fed614865aaf57f3c94308a093116451fb61d7aa6f428"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786334642180.json",
+        "2141701741d8ae41f20e40f907a1f47aa5e2e2c99fb3d870cdcacc3dcd7129ae"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786334642180.md",
+        "7dbc77bf805548e58a7021e6652f37c918219bc294310b6982ff5354ffad8fe9"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786334642180.state.json",
+        "503ce948435a8b6591a21a6fd3ecc6d11151ec2b14d2f24c37fb497a478f6da2"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786337835376.csv",
+        "64b20546f526f76f94906d43d6bb2af05b30123d33fb23c19ef088631d3f2895"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786337835376.json",
+        "b6ebba38e73c64c3eca4f3fd746182706042cd9f351169742cf66c14336e0506"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786337835376.md",
+        "c32595cb6de4f5259020615009b590cc3e6d0c765ac0d562d38816cf5726a427"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786337835376.state.json",
+        "e914810e0f247b64cade3063fa9de81c076bf84951e9fca112db659a4876f5e7"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786337840321.csv",
+        "15ba8b765ef25ad80db43f1a04e2311e783df0f9d0904b4e1bff3a29feafaad7"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786337840321.json",
+        "3ce7b6a3cbbbb8e4e1a6f61a9c2f3ca4246852ac9508289fa3785ea197b52e68"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786337840321.md",
+        "db1ddba020747eecfe3647411661b086242696fc535f13015a486c2b1f222779"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786337840321.state.json",
+        "050338cb1151d8ce64e124dc6f880a30544980fa1b9159bc9d09692a8d8dd9a0"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786347809351.csv",
+        "abe75c33e5468759fb21118223a041d9eade907b18577bc578f71188e5346340"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786347809351.json",
+        "ae70ca9da96ba48a5f4af8bf4b5a7b2f90282e942910160914c34189cd06ce40"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786347809351.md",
+        "322ff0f5022157f597f0997a1087509660e174bbc91adfde0522bf00bde997f5"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786347809351.state.json",
+        "e49bc7f7c273ba6cf662cb1b1b0f41d76079c4a53a474115838611cc83c60524"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786350928152.csv",
+        "c1c6e4d42675427154e8de5bf6712f066b6a0086973389e1913a6142d69cbddb"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786350928152.json",
+        "46b7c8da56998d61266623108748f4d589f054a31cf66aafd6b6d13956d3b7ae"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786350928152.md",
+        "11fdbb1f9f288e280989d0b3b67236ca54c8ea60e5675965974c63067225ec30"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-quality-smoke-fixture-42-1786350928152.state.json",
+        "f9614a7d5f8731003b9c83e39ca3cd23444dc0bc9a5fbc669a59e72af5a8ed36"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-full-fixture-v2.csv",
+        "963763c1f1923f46aa296ebae4a3a6b734cf8812e0353f63728812a7101a8ada"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-full-fixture-v2.json",
+        "9c6483257f0b5ed459b5b370d1de71e27687b4568153ba8fc98b98b8c65f5dd1"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-full-fixture-v2.md",
+        "b9a9ea3afbb107604268a5607f432981be47e3f87e9a731962ef978f78d1ec6b"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-full-fixture-v2.state.json",
+        "02194e2f77c15b6bd2b86582ea2a7835025c7b700e0225805cfbad29ad362a7b"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-full-fixture.csv",
+        "097e423acc20a747bb7538365198e987ecd616cd14e910e34027f2d3bb069850"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-full-fixture.json",
+        "25ce9facc464fed1176fa68446320992139ee51d383a916abd042abf6a7fba7e"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-full-fixture.md",
+        "c64e17ff43f68c378481f7911b06a6711c572348fc95cf4f22872f6dcc364e48"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-full-fixture.state.json",
+        "020ab42535d0de9001c50807fa7872ef9a176c2ddea432d54d7d86f26c36851b"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-live-preflight-v7.csv",
+        "133defb478a6777dbad02a60e78aef947627a47c432ea06950080c0bed55f4b3"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-live-preflight-v7.json",
+        "dbac6e8756c0e34d871444e91e38bb295256b03583af1b8b87310a309b3be1fa"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-live-preflight-v7.md",
+        "fdd1f0ffea462bfe6546b7887cdbfb3d714d54ad4c50bcdff31ac32db83a4b35"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-live-preflight-v7.state.json",
+        "0a12573c6f3077745ebd622cea87eedaa0c5c1b3292e3a4d47397aba456e59b0"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-live-smoke-v1.csv",
+        "5fe82bc95ba362f2bb40eec111ff2fb6876b767b3bb618bf5df3ebddacd8f86e"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-live-smoke-v1.json",
+        "9e6146fb06ef1ad4594e12cc0c0c42e21f04543026791b8ce94e51ca2048d374"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-live-smoke-v1.md",
+        "e1e7658c2f30c053e5a3d13f921ae7258e0259fdf3d3dd29120623180d1c68b0"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-live-smoke-v1.state.json",
+        "e9847d77b32fabef2852bdccecd7159028b5daad7d7da368247c4da472e39e07"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-postfix-fixture-v1.csv",
+        "dbae8312bbfacf1f78bd87295c85ffd16f1ab989e6c1bc6f92168a8744d82184"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-postfix-fixture-v1.json",
+        "bb3ab3a417569591b49f15782db4d129b0f25ed9fd5f3948c77d4cacd3ea4aea"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-postfix-fixture-v1.md",
+        "5bc94fec86e717c029b5b521ed8ecda5c3a23f85c5a94c1aa3a9e44b932164ca"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-postfix-fixture-v1.state.json",
+        "bc5fc7f0e5f06fa3f49f3a20ab5093274cecf5fe1a5574c4a3ec7d75ab2a9105"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-postfix-live-focus-v1.csv",
+        "d66d00150f68d4f7b7e4cc400fe08033ac16b54ee98707fd89787c59041b8afb"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-postfix-live-focus-v1.json",
+        "8f5988d3cb123c749820a4afbabf4f1aaf44076c5690cbc93cfe2f6e2c123814"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-postfix-live-focus-v1.md",
+        "b7cd4c15bcbe471fea6a958de330c15f15b68627ce43514a8b21cababe6b6b71"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-postfix-live-focus-v1.state.json",
+        "79754c0738a51e8fca092786e5b30772b86253923a179cc9ca261ebbaa200c9f"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-repetition-regression.csv",
+        "7074bf31998eeb828f3d0055fc40286fdf95e545f246971b4a4ca3f177441625"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-repetition-regression.json",
+        "a8ddfaaa11ac9024f3d95c121df9c465d8328184645ffd695d28f5a3cc187d6b"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-repetition-regression.md",
+        "769ff1dcf620401b519ecbfa1049632d4dd5e57dda759e0f128c91c70919c7a6"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-repetition-regression.state.json",
+        "9ec233cd6a759e5d0cdcaf04be5ceebfc3ed5caf5ed0e8914c9474c54a2cb7b6"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-resume-smoke.csv",
+        "2257f7a5fe51ba24939da86de86ce9872913cb449fda1be7766b20ef280d04d5"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-resume-smoke.json",
+        "1dd0e96dfc4e6a715338183548b1ab8c1d61360ae09e349666e345c2e29c40e9"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-resume-smoke.md",
+        "975b3bae394a46cdc7213f8f8f41c7db94b5529ab29d67177e92e2b8aafc309e"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-resume-smoke.state.json",
+        "d569d634e2d8327940f7ef4785984737f51a1a398f5641b319d3a89493e4f819"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-smoke-baseline.csv",
+        "09272b59ed056400e73f96ed37173e603895ab84df2a0f171d41822f665899d8"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-smoke-baseline.json",
+        "5245873341327cc9ab506d2f271bee950b75e44b0e5eaa0c7195a6760458ac79"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-smoke-baseline.md",
+        "ebae9e64ec3060986aa35da9f95930ca28612a33ba44a6aaa4dfd0046985bba1"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage5-smoke-baseline.state.json",
+        "7d7e798df9fb75eb926edfea5764a9c2c7eb9690eb781ab481c01b8056cf5e27"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage8-contextual-doors-v1.csv",
+        "a8a2ed7d76d2d1a17ed11770eb596b0f308cdf5219356be8164474655a6bdc03"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage8-contextual-doors-v1.json",
+        "dc1e25baf0add6dbcd7c3f5bed6c4c664a7ed7b06bb44cf6b6c09e46785a9622"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage8-contextual-doors-v1.md",
+        "1242765037dc0cd93a673542689a873017d9b4506068083c00b08bf0d3955ba4"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage8-contextual-doors-v1.state.json",
+        "c33f23294aa70c23efafc8c452c1fe991a045109c63d943fd2b3ce0e1ee67831"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage8-contextual-doors-v2.csv",
+        "5cb63911f20ea15cabc96dbadaf3d7f1c8d70af33827bfd867ccc18e7045041b"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage8-contextual-doors-v2.json",
+        "0e4cc46559642e70ce7bb0bf77ad3ff85887693fd7b2120cd0155f1643594782"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage8-contextual-doors-v2.md",
+        "9487e71bd03ea29d72f36eee04043e470048ad9caeb5f4262c3f9b0873772dce"
+      ],
+      [
+        "packages/learn-evals/eval-runs/petros-quality/petros-stage8-contextual-doors-v2.state.json",
+        "2c1c185a37fe48e7d7b54bd82d6f1c96923de4d0e4e3b48e9c8d873502cb8d7c"
+      ],
+      [
+        "packages/learn-evals/package.json",
+        "dc0a38e4093460b81494b887da91b2fd8d97c81199612cb2abe5cc67b0adc884"
+      ],
+      [
+        "packages/learn-evals/reports/learn-evals-core-2026-07-25T05-43-59-916Z.json",
+        "00da1c0da46bf462334ad17716780f91a95a6255a2e133ea8e081034fbb4c71b"
+      ],
+      [
+        "packages/learn-evals/reports/learn-evals-core-2026-07-25T05-43-59-916Z.md",
+        "94b0c970e5da50dff444ca0a8db0a12a06e0b2577ccf44b6b0420b5ea8468646"
+      ],
+      [
+        "packages/learn-evals/reports/learn-evals-full-2026-07-25T05-48-26-238Z.json",
+        "71b7c13c7387b721ae8220d12ff8f8791d809d4dae540f79f014dae725310670"
+      ],
+      [
+        "packages/learn-evals/src/api-auth.ts",
+        "0c33b6e063b16a0cf9314385bd6832bf6c07a603cfac1c9830705a1de416889a"
+      ],
+      [
+        "packages/learn-evals/src/cli.ts",
+        "f085bfc22801bdf7d03adb611ecd6b512c193f4a63681aa5e65f81ae8c009cdc"
+      ],
+      [
+        "packages/learn-evals/src/contracts.ts",
+        "1d14741d9457f1de8f8aabccf56ae0d3406e9e7fb06ac185844f5af5971e1b85"
+      ],
+      [
+        "packages/learn-evals/src/fixtures/institutional.ts",
+        "7af04beb0bf42f5e6b21772a266705275f179b1cd4ae64c8852256a50d762839"
+      ],
+      [
+        "packages/learn-evals/src/fixtures/manifest.ts",
+        "ee8fe9613fd0bd9bbec9c114f720f8f93f7cfc2a240a806cfca1a0ad9e1ffb0e"
+      ],
+      [
+        "packages/learn-evals/src/fixtures/multimodal.ts",
+        "6b3681ebf6fc19334ed9548e8982fa3d838ed806963eff36520823534391939c"
+      ],
+      [
+        "packages/learn-evals/src/fixtures/reflection.ts",
+        "b3e7277659a81678ec6b67bcbacb3d4fd2559b5d7c7d90926eb1ef3fde599b29"
+      ],
+      [
+        "packages/learn-evals/src/fixtures/teach-back.ts",
+        "eb91de5582fabfa624471494439692a916cd46c8901e435233c6b0236706c02d"
+      ],
+      [
+        "packages/learn-evals/src/fixtures/topics.ts",
+        "1342518b2906738f06f4d09e4f160e068280075ae2e9f15a7c033d49334574bc"
+      ],
+      [
+        "packages/learn-evals/src/institutional-quality.spec.ts",
+        "4b2839446d8d49f2b793d1926c04b4252c3d6b9865dd6cee44150b7a07e7cccd"
+      ],
+      [
+        "packages/learn-evals/src/multimodal-quality.spec.ts",
+        "2f6193629bac39edd0988c965f91423ebe34e0b485ca55be259021a7bf794cba"
+      ],
+      [
+        "packages/learn-evals/src/personas.ts",
+        "0adaf03fbeed39094c6ddefbec63a4561a22dc41c1f53caf38c84a287bb71410"
+      ],
+      [
+        "packages/learn-evals/src/quality-harness.spec.ts",
+        "f2ddbc783b98ea54bb2d8d10f3a7f7cc693c697e734fd18d372cf9a543b61c4d"
+      ],
+      [
+        "packages/learn-evals/src/reflection-quality.spec.ts",
+        "c154a834c88e0d7f0659eeacb8d4915b8b7347cdf8dd40559bc5e556606d1a3f"
+      ],
+      [
+        "packages/learn-evals/src/report.ts",
+        "4a8b14ae12a23b7a7177cde257ecd6303e84ee98684b845783364b9f17ed0d21"
+      ],
+      [
+        "packages/learn-evals/src/rubrics/judge.ts",
+        "1c199009fe02c856b356f46e0b39cd8b9d22204c6611f4b73ff6ba25701af9b1"
+      ],
+      [
+        "packages/learn-evals/src/rubrics/structural.ts",
+        "cd5e74f6a91777a91e125c5d32f44260f7d303d10ba414e0c737a67922f741b1"
+      ],
+      [
+        "packages/learn-evals/src/runner/fixture-driver.ts",
+        "c0b8451e4490b4b8a00bc03d1f4f2da1b570977336c9faaa6d1ac988618e829a"
+      ],
+      [
+        "packages/learn-evals/src/runner/live-driver.ts",
+        "f112b394358f43377d2f4c465eef983e20889349ccb7253a99d0e443299c4eaf"
+      ],
+      [
+        "packages/learn-evals/src/teach-back-quality.spec.ts",
+        "84fda263f143159483201d7977a2445773aa16f407ea4eb0841328996ca069bf"
+      ],
+      [
+        "packages/learn-evals/tsconfig.json",
+        "63078f3e0ac35e4ef2bf9141075ad07628b55cefddc98c3b213ef21ff2f681c3"
+      ],
+      [
+        "packages/learn-evals/vitest.config.ts",
+        "586695b977620058cd4d88495990ebc31afea788c43182e398aca52c7aa69737"
+      ]
+    ]
+  },
+  "actualSyntheticOwnerIdentities": {
+    "fixture": "phase2-authority-fixture.v1",
+    "sourceVersions": [
+      "ca7b880fdedd75bad221301a6ea58394044e73dd283477638242893384a404a1",
+      "bb26e14dba0f0f041bff98cc7148be797057c56b5896da3b1cd71d770ad57da2"
+    ],
+    "teachingPackVersions": [
+      1,
+      1
+    ],
+    "policy": "institutional-policy/current-owner-read",
+    "policyIdentities": [
+      {
+        "schemaVersion": "petros.knowledge-policy.v1",
+        "authorityHash": "79ace98541ddd605a54a4a49624c00ae261841bb26c6234623d5e5074d7dc428",
+        "versionIds": [
+          "6f363f01-b8cf-4362-8f31-df008fcfed68"
+        ]
+      },
+      {
+        "schemaVersion": "petros.knowledge-policy.v1",
+        "authorityHash": "3735a34dbfdbd866c8d071509f1c0641f2c7f56e02709e07e51b130d568cee14",
+        "versionIds": [
+          "8fe2419f-3949-4814-b0e5-5609504de2d4"
+        ]
+      }
+    ],
+    "promptVersions": [
+      "stage4-plan-v1",
+      "stage4-plan-v1"
+    ],
+    "outputSchemaVersions": [
+      "petros.plan.v3",
+      "petros.plan.v3"
+    ],
+    "controlledModel": "malformed-output-fixture.v1",
+    "evaluator": "deterministic-owner-assertions.v1"
+  },
+  "qualityPerformanceReport": {
+    "path": "docs/verification/petros-phase5-20261003/production-quality-performance-final.json",
+    "sha256": "84051c2596862171f8e636ad75f87c1a25b83c755f495c6154a2254a91a5caa3"
+  },
+  "commands": [
+    {
+      "name": "final-r5-api",
+      "command": [
+        "env",
+        "PETROS_PHASE5_QUALITY_ARTIFACT=/Volumes/Chris/Edrion Labs/docs/verification/petros-phase5-20261003/production-quality-performance-final.json",
+        "pnpm",
+        "--filter",
+        "@edrion/api",
+        "exec",
+        "vitest",
+        "run",
+        "src/modules/student/petros-session-intent",
+        "src/modules/student/materials",
+        "src/modules/student/knowledge",
+        "src/modules/student/petros-loop",
+        "src/modules/student/petros-input-modes",
+        "src/modules/student/petros-companion",
+        "src/modules/student/petros-artifacts",
+        "src/modules/student/petros-reflection",
+        "src/modules/petros-ai-routing",
+        "src/modules/petros-learner-model",
+        "src/modules/petros-institutional",
+        "src/modules/petros-topic-profiles",
+        "src/modules/integrations",
+        "src/modules/federation",
+        "src/modules/portal/courses",
+        "src/modules/student/courses",
+        "src/common",
+        "src/modules/student/petros-continuity",
+        "src/modules/student/assignments",
+        "src/modules/portal/course-content",
+        "src/modules/portal/assignments",
+        "src/modules/petros-quality",
+        "--pool=forks",
+        "--poolOptions.forks.singleFork=true",
+        "--testTimeout=30000"
+      ],
+      "start": "2026-10-03T08:47:33.843227+00:00",
+      "end": "2026-10-03T08:50:22.552394+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+      },
+      "commandRecord": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-api.json",
+        "sha256": "2e6bc893ed632e1a099b0dabba0c4a4b3ed296961bf33c1d4504d974c1a4a2d9"
+      },
+      "rawLog": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-api.log",
+        "sha256": "72ce3599a8422f8ff7d08d93858a6150b0759704d9e846a4dcbef4b6c7ba21be"
+      }
+    },
+    {
+      "name": "final-r5-schema-student-tests",
+      "command": [
+        "pnpm",
+        "--filter",
+        "@edrion/schemas",
+        "--filter",
+        "@edrion/student-web",
+        "test"
+      ],
+      "start": "2026-10-03T08:50:22.599387+00:00",
+      "end": "2026-10-03T08:50:41.132892+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+      },
+      "commandRecord": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-schema-student-tests.json",
+        "sha256": "7c1f159f9d4bb22c5287565233bcb185279bef1c65c1dd7729cfae3737223558"
+      },
+      "rawLog": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-schema-student-tests.log",
+        "sha256": "570972abe520a681095f72c4657b94f3b73055e1b3e44e051d3bd90a2f304073"
+      }
+    },
+    {
+      "name": "final-r5-typechecks",
+      "command": [
+        "pnpm",
+        "--filter",
+        "@edrion/schemas",
+        "--filter",
+        "@edrion/config",
+        "--filter",
+        "@edrion/database",
+        "--filter",
+        "@edrion/api",
+        "--filter",
+        "@edrion/student-web",
+        "--filter",
+        "@edrion/institution-web",
+        "--filter",
+        "@edrion/super-admin-web",
+        "--filter",
+        "@edrion/learn-evals",
+        "typecheck"
+      ],
+      "start": "2026-10-03T08:50:41.195957+00:00",
+      "end": "2026-10-03T08:51:24.376210+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+      },
+      "commandRecord": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-typechecks.json",
+        "sha256": "4e99382765721288c87c968fdc33da69a934bb071d4dd822490011a5eccafaa5"
+      },
+      "rawLog": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-typechecks.log",
+        "sha256": "0b59f27376c7a8d2fff52ba6f128163ddc06d889f8d41b6d95c75bfd804c549f"
+      }
+    },
+    {
+      "name": "final-r5-lint",
+      "command": [
+        "pnpm",
+        "--filter",
+        "@edrion/schemas",
+        "--filter",
+        "@edrion/config",
+        "--filter",
+        "@edrion/database",
+        "--filter",
+        "@edrion/api",
+        "--filter",
+        "@edrion/student-web",
+        "--filter",
+        "@edrion/institution-web",
+        "--filter",
+        "@edrion/super-admin-web",
+        "lint"
+      ],
+      "start": "2026-10-03T08:51:24.425053+00:00",
+      "end": "2026-10-03T08:51:37.457562+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+      },
+      "commandRecord": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-lint.json",
+        "sha256": "2328818a3ef3aa71d0fb130f6ce4276779d2c752c021ce965f9267c48854f8c1"
+      },
+      "rawLog": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-lint.log",
+        "sha256": "129e1f31bdee859b83d2ad9c805afbb58ae986d61c0bfd657c02689e0225fb28"
+      }
+    },
+    {
+      "name": "final-r5-eval-fixtures",
+      "command": [
+        "pnpm",
+        "--filter",
+        "@edrion/learn-evals",
+        "check-fixtures"
+      ],
+      "start": "2026-10-03T08:51:37.500517+00:00",
+      "end": "2026-10-03T08:51:38.236092+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+      },
+      "commandRecord": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-eval-fixtures.json",
+        "sha256": "4b46a5fd7efb7c7439e6891c1d94584e25a351adb9fb0c5f440a1a5c8444f91b"
+      },
+      "rawLog": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-eval-fixtures.log",
+        "sha256": "940ffd39572364d03e8ddc6f1d7e60b1252fb61e77d2db4baeb12ef7ef981716"
+      }
+    },
+    {
+      "name": "final-r5-eval-tests",
+      "command": [
+        "pnpm",
+        "--filter",
+        "@edrion/learn-evals",
+        "test"
+      ],
+      "start": "2026-10-03T08:51:38.270727+00:00",
+      "end": "2026-10-03T08:51:40.722310+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+      },
+      "commandRecord": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-eval-tests.json",
+        "sha256": "2a4222aadbe4a70cde9c940802a3897cb2587d8168446ca00c2c46a455be4db2"
+      },
+      "rawLog": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-eval-tests.log",
+        "sha256": "a6b9e0c6ea009cdf40e14425d3d6ab01c07c4172b2b49056f29f07ca4a1d88d9"
+      }
+    },
+    {
+      "name": "final-r5-eval-corpus",
+      "command": [
+        "pnpm",
+        "--filter",
+        "@edrion/learn-evals",
+        "exec",
+        "tsx",
+        "src/cli.ts",
+        "run",
+        "--suite",
+        "full",
+        "--mode",
+        "fixture",
+        "--run-id",
+        "phase5-20261003-frozen-r5"
+      ],
+      "start": "2026-10-03T08:51:40.765861+00:00",
+      "end": "2026-10-03T08:51:43.294351+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+      },
+      "commandRecord": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-eval-corpus.json",
+        "sha256": "5da384fd31d3f79dd0191bd746b520550b86e207d7e7f72521b64986528d5650"
+      },
+      "rawLog": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-eval-corpus.log",
+        "sha256": "c06cceaae37178378a63199f41bb44a394ef2723ad5a98c9e327066be16a5956"
+      }
+    },
+    {
+      "name": "final-r5-api-build",
+      "command": [
+        "pnpm",
+        "--filter",
+        "@edrion/api",
+        "build"
+      ],
+      "start": "2026-10-03T08:51:43.448867+00:00",
+      "end": "2026-10-03T08:52:14.474789+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+      },
+      "commandRecord": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-api-build.json",
+        "sha256": "65b384ff8461c85c21fd125e04dc572eb1b65b0fe81623de85ad6fe6dde2e2ee"
+      },
+      "rawLog": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-api-build.log",
+        "sha256": "0995121ac4db3e97c96aa0ecf2c11035f4a033907caea604e0028e12c685a5fb"
+      }
+    },
+    {
+      "name": "final-r5-student-web-build",
+      "command": [
+        "python3",
+        "/Volumes/Chris/Edrion Labs/docs/verification/petros-phase5-20261003/build-isolated-web.py",
+        "student-web"
+      ],
+      "start": "2026-10-03T08:52:14.515019+00:00",
+      "end": "2026-10-03T08:52:46.725635+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+      },
+      "commandRecord": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-student-web-build.json",
+        "sha256": "4ea1e57c8326779c566fc80bd0ad1ffa593004924fc7420f0af1d5abcaaa7fb7"
+      },
+      "rawLog": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-student-web-build.log",
+        "sha256": "80fefbbf7a04bd963ad88804e2f8c098536ced5cfa88b521866fd8c28439d501"
+      }
+    },
+    {
+      "name": "final-r5-institution-web-build",
+      "command": [
+        "python3",
+        "/Volumes/Chris/Edrion Labs/docs/verification/petros-phase5-20261003/build-isolated-web.py",
+        "institution-web"
+      ],
+      "start": "2026-10-03T08:52:46.766655+00:00",
+      "end": "2026-10-03T08:53:25.571484+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+      },
+      "commandRecord": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-institution-web-build.json",
+        "sha256": "6fb81edcacab19a223595b88425849a6576f2c3aaef5ecaa657a5e85690fe32d"
+      },
+      "rawLog": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-institution-web-build.log",
+        "sha256": "916b764aa74444d4f1370e58721d2f5778ab2a667f98474235a670e12d05e550"
+      }
+    },
+    {
+      "name": "final-r5-super-admin-web-build",
+      "command": [
+        "python3",
+        "/Volumes/Chris/Edrion Labs/docs/verification/petros-phase5-20261003/build-isolated-web.py",
+        "super-admin-web"
+      ],
+      "start": "2026-10-03T08:53:25.603227+00:00",
+      "end": "2026-10-03T08:53:51.296490+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+      },
+      "commandRecord": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-super-admin-web-build.json",
+        "sha256": "689fa66a00c50cc92dd95b1a4e671c8998865dc80d58e13c00bdbf72e57e8c0b"
+      },
+      "rawLog": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-super-admin-web-build.log",
+        "sha256": "f13e7f183f031668d4cab6c75c130d435bf3c93b5b8f76b63854368170c27f0c"
+      }
+    },
+    {
+      "name": "final-r5-diff-check",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "start": "2026-10-03T08:53:51.341181+00:00",
+      "end": "2026-10-03T08:53:51.434403+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+      },
+      "commandRecord": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-diff-check.json",
+        "sha256": "c2c84c0f0340ad14a70594f6957579e595aa58ed047611137822dcd98928443d"
+      },
+      "rawLog": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-diff-check.log",
+        "sha256": "43be06ea24f91908127ee56bda74784782234b3cc1a1599c58229c7282bda11b"
+      }
+    },
+    {
+      "name": "final-r5-browser-chromium-production",
+      "command": [
+        "env",
+        "PLAYWRIGHT_BROWSERS_PATH=/private/tmp/petros-phase5-browsers-20261003-01a0fb94",
+        "PETROS_PHASE5_BROWSER_ENGINE=chromium",
+        "pnpm",
+        "--filter",
+        "@edrion/api",
+        "exec",
+        "node",
+        "src/modules/integrations/petros-phase5-browser-journey.mjs"
+      ],
+      "start": "2026-10-03T08:44:59.602126+00:00",
+      "end": "2026-10-03T08:46:03.490245+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+      },
+      "commandRecord": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-browser-chromium-production.json",
+        "sha256": "44f6b290ea5d572d244a57fd4a3a8b4b2a82d93c91dea725b33d51644e34b87b"
+      },
+      "rawLog": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-browser-chromium-production.log",
+        "sha256": "a2510eae3a69558df93ae1ba24e58088d7ed5cde078ae0f7107eb935fcd9fb73"
+      }
+    },
+    {
+      "name": "final-r5-browser-webkit-production",
+      "command": [
+        "env",
+        "PLAYWRIGHT_BROWSERS_PATH=/private/tmp/petros-phase5-browsers-20261003-01a0fb94",
+        "PETROS_PHASE5_BROWSER_ENGINE=webkit",
+        "pnpm",
+        "--filter",
+        "@edrion/api",
+        "exec",
+        "node",
+        "src/modules/integrations/petros-phase5-browser-journey.mjs"
+      ],
+      "start": "2026-10-03T08:41:20.952902+00:00",
+      "end": "2026-10-03T08:42:27.661126+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+      },
+      "commandRecord": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-browser-webkit-production.json",
+        "sha256": "3666346c6f351a568d2fb603459f9825133330cce75101a632e7653e68aa1c51"
+      },
+      "rawLog": {
+        "path": "docs/verification/petros-phase5-20261003/final-r5-browser-webkit-production.log",
+        "sha256": "ca24d261fdb5d253ec4f6b0dd7dfae72e9b0cdc96ce0b2001acc916a5e09757c"
+      }
+    }
+  ],
+  "browsers": {
+    "chromium": {
+      "report": {
+        "path": "docs/verification/petros-phase5-20261003/browser/chromium/browser-journey.json",
+        "sha256": "5f73d981cea056d951aaf61a8f13b57dc5c73920b0bfbe9022670e7722b043f7"
+      },
+      "environment": {
+        "platform": "darwin",
+        "release": "27.0.0",
+        "architecture": "arm64",
+        "node": "v25.6.0",
+        "playwright": "1.61.1",
+        "browserEngine": "chromium",
+        "browserVersion": "154.0.8037.95",
+        "engines": {
+          "chromium": {
+            "installed": true,
+            "binarySource": "system_google_chrome"
+          },
+          "firefox": {
+            "installed": true,
+            "binarySource": "task_owned_playwright_runtime"
+          },
+          "webkit": {
+            "installed": true,
+            "binarySource": "task_owned_playwright_runtime"
+          }
+        }
+      },
+      "checkpoints": 61,
+      "pageErrors": 0
+    },
+    "webkit": {
+      "report": {
+        "path": "docs/verification/petros-phase5-20261003/browser/webkit/browser-journey.json",
+        "sha256": "1cc95b660be4d606864dc4440aa791c47e2b31c68c930024770d3e267ba0f64d"
+      },
+      "environment": {
+        "platform": "darwin",
+        "release": "27.0.0",
+        "architecture": "arm64",
+        "node": "v25.6.0",
+        "playwright": "1.61.1",
+        "browserEngine": "webkit",
+        "browserVersion": "26.5",
+        "engines": {
+          "chromium": {
+            "installed": true,
+            "binarySource": "system_google_chrome"
+          },
+          "firefox": {
+            "installed": true,
+            "binarySource": "task_owned_playwright_runtime"
+          },
+          "webkit": {
+            "installed": true,
+            "binarySource": "task_owned_playwright_runtime"
+          }
+        }
+      },
+      "checkpoints": 61,
+      "pageErrors": 0
+    }
+  },
+  "engineeringGates": {
+    "P5-E1": "pass",
+    "P5-E2": "pass",
+    "P5-E3": "pass",
+    "P5-E4": "pass",
+    "P5-E5": "pass",
+    "P5-E6": "pass",
+    "P5-E7": "pass",
+    "P5-E8": "pass",
+    "P5-E9": "blocked_firefox_runtime; chromium_webkit_software_pass",
+    "P5-E10": "executed_closure_pass; firefox_runtime_journey_blocked"
+  },
+  "externalAcceptance": {
+    "educator": "pending",
+    "canonicalCurriculum": "pending",
+    "consentPrivacyRetention": "pending",
+    "physicalDevicesAssistiveTechnologyHumanAccessibility": "pending",
+    "realPilotOutcomes": "pending",
+    "selectedConditionalCertification": "disabled_pending",
+    "executableIsolation": "disabled_pending"
+  },
+  "admissions": "disabled",
+  "instrumentation": "disabled except controlled disposable test fixture",
+  "productionReleaseConfiguration": "unconfigured; do not install fixture identities into a live environment",
+  "unavailableDependencies": {
+    "R1": {
+      "runtime": "Firefox151.0 Playwright1532 on Darwin27",
+      "status": "launch_timeout_before_page_creation",
+      "evidence": [
+        {
+          "path": "docs/verification/petros-phase5-20261003/browser-apfs-smoke.log",
+          "sha256": "139da7f3ff34578468824047b8d41e2cf67615a97a8f6560f6f0023ee346e4ee"
+        },
+        {
+          "path": "docs/verification/petros-phase5-20261003/browser-compatibility-smoke.log",
+          "sha256": "b114a3627e117e308baafd179b30609c9483f6d92c034acbaa21463639249df9"
+        },
+        {
+          "path": "docs/verification/petros-phase5-20261003/browser-firefox-headed-smoke.log",
+          "sha256": "9bc546248429b8de3865f6e69078580b50264e9e6ac2f7c2d1cc9b1490b5b3f4"
+        },
+        {
+          "path": "docs/verification/petros-phase5-20261003/final-r5-browser-firefox.log",
+          "sha256": "996f8991d82050e4175586a731dd68f5477aca20c54b4a15459359ef93bb1728"
+        }
+      ]
+    }
+  },
+  "deployment": "not_authorized",
+  "protectedHashes": {
+    "pnpm-lock.yaml": "803ebf8798958d62a0a7e5ef905a97240c98e97b0d7dadcbff45027123378808",
+    "edrion_database_dump.sql": "6a3d616e8f215a071a25c7ed717f6b03a2aee514ecce87ef2b7dbb5a512f4b4d",
+    "edrion_database_dump.sql.gz": "a281acd5986dac80e4b0326b7f2c9a09249f73411ffd4951c59c01ddc5eb918b",
+    "docs/PETROS-PHASE-1-VERIFICATION-RESULTS.md": "4ded55f3a32a0df70da581551596e27c045658c606989da6ddaed780df0b47d8"
+  }
+}

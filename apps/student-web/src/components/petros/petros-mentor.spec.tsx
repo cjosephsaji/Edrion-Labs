@@ -240,6 +240,7 @@ describe('embodied Petros portal agent', () => {
     mocks.pathname = '/petros/session';
     mount(<LessonRegistration />);
     expect(characterButton().parentElement).not.toHaveAttribute('data-docked');
+    expect(screen.queryByRole('textbox', {name: 'Talk to Petros'})).not.toBeInTheDocument();
     fireEvent.click(characterButton());
     expect(await screen.findByText('Compare grid computing with cloud computing, then commit your own answer.')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Take me there' })).not.toBeInTheDocument();
@@ -293,6 +294,7 @@ describe('embodied Petros portal agent', () => {
   it('sends lesson questions to the active teaching session, not the portal planner', async () => {
     mocks.pathname = '/petros/session';
     mount(<LessonRegistration />);
+    expect(screen.queryByRole('textbox', {name: 'Talk to Petros'})).not.toBeInTheDocument();
     fireEvent.click(characterButton());
     fireEvent.change(await screen.findByRole('textbox', { name: 'Talk to Petros' }), { target: { value: 'Explain grid computing more simply' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send to Petros' }));
@@ -321,7 +323,6 @@ describe('embodied Petros portal agent', () => {
         returnPlan: 'Return to the first explanation.',
       });
     mount(<TargetedLessonRegistration />);
-
     fireEvent.click(characterButton());
     fireEvent.click(await screen.findByRole('button', { name: 'Read aloud' }));
     expect(characterButton().parentElement).toHaveAttribute('data-docked', 'true');
@@ -402,6 +403,21 @@ describe('embodied Petros portal agent', () => {
     expect(screen.getByLabelText('Speaking voice')).toHaveValue('marin');
     expect(JSON.parse(localStorage.getItem('petros:voice:student1')!)).toEqual({ voice: 'marin', language: 'ml', autoRead: false });
     expect(mocks.post).not.toHaveBeenCalled();
+  });
+
+  it('pauses automatic companion speech in low-bandwidth mode while leaving manual voice available', async () => {
+    const saved = new Map<string, string>([
+      ['petros:connectivity-mode', 'low_bandwidth'],
+      ['petros:voice:student1', JSON.stringify({ voice: 'cedar', language: 'en', autoRead: true })],
+    ]);
+    vi.stubGlobal('localStorage', { getItem: (key: string) => saved.get(key) ?? null, setItem: (key: string, value: string) => saved.set(key, value) });
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'Settings' }));
+    const autoRead = await screen.findByLabelText('Read replies aloud automatically');
+    await waitFor(() => expect(autoRead).toBeDisabled());
+    expect(autoRead).toBeChecked();
+    expect(screen.getByText(/Automatic speech is paused in low-bandwidth mode/i)).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Preview voice' })).toBeEnabled();
   });
 
   it('uses the learner’s stated time instead of inventing a completion promise', async () => {

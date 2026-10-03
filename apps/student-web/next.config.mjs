@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 /** Load workspace-root `NEXT_PUBLIC_*` vars (API URL, dev impersonation headers). */
 function loadWorkspacePublicEnv() {
+  if (process.env.PETROS_ISOLATED_VERIFICATION === '1') return;
   const rootEnv = join(dirname(fileURLToPath(import.meta.url)), '../../.env');
   if (!existsSync(rootEnv)) return;
   for (const line of readFileSync(rootEnv, 'utf8').split('\n')) {
@@ -34,7 +35,9 @@ const nextConfig = {
   // beside the local portal replaced the development manifests while its HTML still linked
   // to the old CSS chunks, leaving the browser with a fully unstyled page. Keep their
   // generated assets isolated so validation builds never break an active study session.
-  distDir: process.env.NODE_ENV === 'development' ? '.next-dev' : '.next',
+  distDir: process.env.PETROS_ISOLATED_VERIFICATION === '1'
+    ? (process.env.NODE_ENV === 'development' ? '.next-petros-verification-dev' : '.next-petros-verification')
+    : (process.env.NODE_ENV === 'development' ? '.next-dev' : '.next'),
   transpilePackages: [
     '@edrion/ui',
     '@edrion/schemas',

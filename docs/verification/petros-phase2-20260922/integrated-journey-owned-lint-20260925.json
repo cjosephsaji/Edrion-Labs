@@ -1,0 +1,15 @@
+{
+  "startedAt": "2026-09-25T15:15:26.863236+00:00",
+  "finishedAt": "2026-09-25T15:15:28.360246+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "eslint",
+    "src/modules/integrations/petros-phase2-full-journey.integration.spec.ts",
+    "src/modules/integrations/petros-phase2-authority-fixture.ts"
+  ],
+  "exitCode": 0,
+  "log": "integrated-journey-owned-lint-20260925.log"
+}

@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Header, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { z } from 'zod';
 import {
@@ -52,11 +52,13 @@ export class StudentPetrosArtifactsController {
   }
 
   @Get('sessions/:sessionId/bundle')
+  @Header('Cache-Control', 'private, no-store')
   bundle(@CurrentStudent() raw: StudentPrincipal, @Param('sessionId') sessionId: string) {
     return this.service.bundle(this.principal(raw), sessionId);
   }
 
   @Post('sessions/:sessionId/blocks/:blockId')
+  @Header('Cache-Control', 'private, no-store')
   saveBlockArtifact(
     @CurrentStudent() raw: StudentPrincipal,
     @Param('sessionId') sessionId: string,
@@ -67,41 +69,49 @@ export class StudentPetrosArtifactsController {
   }
 
   @Put('proposals/:proposalId')
+  @Header('Cache-Control', 'private, no-store')
   updateProposal(@CurrentStudent() raw: StudentPrincipal, @Param('proposalId') proposalId: string, @Body(zodBody(petrosUpdateArtifactProposalSchema)) body: PetrosUpdateArtifactProposalInput) {
     return this.service.updateProposal(this.principal(raw), proposalId, body);
   }
 
   @Post('bundles/:bundleId/commit')
+  @Header('Cache-Control', 'private, no-store')
   commit(@CurrentStudent() raw: StudentPrincipal, @Param('bundleId') bundleId: string, @Body(zodBody(petrosCommitArtifactBundleSchema)) body: PetrosCommitArtifactBundleInput) {
     return this.service.commit(this.principal(raw), bundleId, body);
   }
 
   @Post('bundles/:bundleId/discard')
+  @Header('Cache-Control', 'private, no-store')
   discard(@CurrentStudent() raw: StudentPrincipal, @Param('bundleId') bundleId: string, @Body(zodBody(versionSchema)) body: z.infer<typeof versionSchema>) {
     return this.service.discard(this.principal(raw), bundleId, body.expectedVersion);
   }
 
   @Get('review/due')
+  @Header('Cache-Control', 'private, no-store')
   due(@CurrentStudent() raw: StudentPrincipal, @Query('limit') rawLimit?: string) {
     return this.service.due(this.principal(raw), Number(rawLimit ?? 30));
   }
 
   @Post(':artifactId/reviews')
+  @Header('Cache-Control', 'private, no-store')
   review(@CurrentStudent() raw: StudentPrincipal, @Param('artifactId') artifactId: string, @Body(zodBody(petrosSubmitArtifactReviewSchema)) body: PetrosSubmitArtifactReviewInput) {
     return this.service.review(this.principal(raw), artifactId, body);
   }
 
   @Post('review/rebuild')
+  @Header('Cache-Control', 'private, no-store')
   rebuild(@CurrentStudent() raw: StudentPrincipal) {
     return this.service.rebuildSchedule(this.principal(raw));
   }
 
   @Get('export')
+  @Header('Cache-Control', 'private, no-store')
   export(@CurrentStudent() raw: StudentPrincipal, @Query('forTransfer') forTransfer?: string) {
     return this.service.export(this.principal(raw), forTransfer === 'true');
   }
 
   @Get(':artifactId/sources/:sourceIndex')
+  @Header('Cache-Control', 'private, no-store')
   source(@CurrentStudent() raw: StudentPrincipal, @Param('artifactId') artifactId: string, @Param('sourceIndex') rawIndex: string) {
     const sourceIndex = Number(rawIndex);
     if (!Number.isInteger(sourceIndex) || sourceIndex < 0 || sourceIndex > 100) throw new BadRequestException({ code: 'PETROS_SOURCE_INDEX_INVALID', message: 'Invalid source index.' });
@@ -109,21 +119,25 @@ export class StudentPetrosArtifactsController {
   }
 
   @Get()
+  @Header('Cache-Control', 'private, no-store')
   list(@CurrentStudent() raw: StudentPrincipal, @Query(zodBody(petrosArtifactQuerySchema)) query: PetrosArtifactQuery) {
     return this.service.list(this.principal(raw), query);
   }
 
   @Put(':artifactId')
+  @Header('Cache-Control', 'private, no-store')
   updateSaved(@CurrentStudent() raw: StudentPrincipal, @Param('artifactId') artifactId: string, @Body(zodBody(petrosUpdateSavedArtifactSchema)) body: PetrosUpdateSavedArtifactInput) {
     return this.service.updateSaved(this.principal(raw), artifactId, body);
   }
 
   @Post(':artifactId/lifecycle')
+  @Header('Cache-Control', 'private, no-store')
   lifecycle(@CurrentStudent() raw: StudentPrincipal, @Param('artifactId') artifactId: string, @Body(zodBody(petrosArtifactLifecycleSchema)) body: PetrosArtifactLifecycleInput) {
     return this.service.lifecycle(this.principal(raw), artifactId, body);
   }
 
   @Delete(':artifactId')
+  @Header('Cache-Control', 'private, no-store')
   deleteSaved(@CurrentStudent() raw: StudentPrincipal, @Param('artifactId') artifactId: string) {
     return this.service.deleteSaved(this.principal(raw), artifactId);
   }

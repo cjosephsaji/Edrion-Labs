@@ -22,7 +22,12 @@ import type {
   PetrosFunctionSettingsInput,
   PetrosUsageQuery,
 } from '@edrion/schemas';
+import { PETROS_QUESTION_EXECUTION_VERSION } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
+
+export class PetrosBudgetError extends Error {
+  constructor(readonly code: string) { super(code); }
+}
 
 @Injectable()
 export class PetrosAiRoutingRepository {
@@ -336,6 +341,197 @@ export class PetrosAiRoutingRepository {
 
   recordUsage(values: NewPetrosAiUsageEvent) {
     return this.db.insert(schema.petrosAiUsageEvents).values(values).returning().then((rows) => rows[0]!);
+  }
+
+  /** Serialize durable paid attempts against every other durable attempt, across workers/tenants. */
+  async reserveDocumentAttempt(input: {
+    commandId: string; fence: number; attemptKey: string; requestId: string;
+    institutionId: string; studentId: string; functionId: string; providerId: string;
+    modelId: string; reserveMicros: number;
+  }) {
+    if (input.requestId !== input.commandId ||
+      !input.attemptKey.startsWith(`${input.commandId}:${input.fence}:`))
+      throw new PetrosBudgetError('PETROS_BUDGET_SCOPE_INVALID');
+    if (!Number.isSafeInteger(input.reserveMicros) || input.reserveMicros <= 0)
+      throw new PetrosBudgetError('PETROS_BUDGET_PRICE_UNAVAILABLE');
+    const [command] = await this.db.select({ id: schema.petrosSessionCommands.id,
+      sessionId: schema.petrosSessionCommands.sessionId })
+      .from(schema.petrosSessionCommands)
+      .where(and(
+        eq(schema.petrosSessionCommands.id, input.commandId),
+        eq(schema.petrosSessionCommands.institutionId, input.institutionId),
+        eq(schema.petrosSessionCommands.studentId, input.studentId),
+        eq(schema.petrosSessionCommands.executionState, 'running'),
+        eq(schema.petrosSessionCommands.executionFence, input.fence),
+        eq(schema.petrosSessionCommands.executionVersion, PETROS_QUESTION_EXECUTION_VERSION),
+        eq(schema.petrosSessionCommands.command, 'document_question.v1'),
+      )).limit(1).for('share');
+    if (!command) throw new PetrosBudgetError('PETROS_BUDGET_SCOPE_INVALID');
+    // Cancellation/failure owns the command row before reconciling budget. Keep the
+    // same command -> global-budget lock order here or the two paths can deadlock.
+    await this.db.execute(sql`select pg_advisory_xact_lock(hashtextextended('petros-ai-durable-budget', 0))`);
+    const reservations = schema.petrosAiAttemptReservations;
+    const [existing] = await this.db.select().from(reservations)
+      .where(eq(reservations.attemptKey, input.attemptKey)).limit(1);
+    if (existing) {
+      if (existing.commandId !== input.commandId || existing.executionFence !== input.fence ||
+          existing.requestId !== input.requestId || existing.functionId !== input.functionId ||
+          existing.providerId !== input.providerId || existing.modelId !== input.modelId ||
+          existing.reservedMicros !== input.reserveMicros || existing.state !== 'reserved')
+        throw new PetrosBudgetError('PETROS_BUDGET_ATTEMPT_CONFLICT');
+      return existing;
+    }
+    // A crashed earlier fence may have reached the provider. Charge its full hold
+    // before admitting a replacement; a later known result cannot be double-posted.
+    await this.reconcileDocumentCommand(input.commandId, input.fence);
+
+    const [policy, provider, model, fn, routes] = await Promise.all([
+      this.db.select().from(schema.petrosAiBudgetPolicies).where(and(
+        eq(schema.petrosAiBudgetPolicies.scope, 'global'), sql`${schema.petrosAiBudgetPolicies.scopeId} is null`,
+      )).limit(1).for('share').then(rows => rows[0]),
+      this.db.select().from(schema.petrosAiProviders).where(eq(schema.petrosAiProviders.id, input.providerId))
+        .limit(1).for('share').then(rows => rows[0]),
+      this.findModel(input.modelId),
+      this.db.select().from(schema.petrosAiFunctions).where(eq(schema.petrosAiFunctions.id, input.functionId)).limit(1).then(rows => rows[0]),
+      this.db.select({ id: schema.petrosAiFunctionRoutes.id }).from(schema.petrosAiFunctionRoutes).where(and(
+        eq(schema.petrosAiFunctionRoutes.functionId, input.functionId),
+        eq(schema.petrosAiFunctionRoutes.providerId, input.providerId),
+        eq(schema.petrosAiFunctionRoutes.modelId, input.modelId),
+        eq(schema.petrosAiFunctionRoutes.enabled, true),
+      )).limit(1),
+    ]);
+    if (!policy?.enabled || (policy.dailyBudgetMicros == null && policy.monthlyBudgetMicros == null))
+      throw new PetrosBudgetError('PETROS_BUDGET_UNCONFIGURED');
+    if (!provider?.enabled || provider.paused || !model?.enabled ||
+      model.providerId !== provider.id || !fn?.enabled || fn.key !== 'hint.generate' || !routes.length)
+      throw new PetrosBudgetError('PETROS_BUDGET_ROUTE_CHANGED');
+    const minimumHold = Math.max(Number(fn.settings.maxCostPerRequestMicros ?? 0), Math.ceil((
+      Number(fn.settings.maxInputTokens) * Number(model.pricing.inputPerMillionMicros ?? 0) +
+      Number(fn.settings.maxOutputTokens) * Number(model.pricing.outputPerMillionMicros ?? 0)
+    ) / 1_000_000));
+    if (!Number.isSafeInteger(minimumHold) || minimumHold <= 0 || input.reserveMicros < minimumHold)
+      throw new PetrosBudgetError('PETROS_BUDGET_PRICE_UNAVAILABLE');
+    const [totals] = await this.db.execute<{
+      global_daily: number; global_monthly: number; provider_daily: number;
+      provider_monthly: number; student_monthly: number; function_daily_requests: number;
+      function_monthly_requests: number; institution_monthly_requests: number;
+    }>(sql`select * from edrion_petros_ai_budget_snapshot(
+      ${input.commandId}::uuid, ${input.fence}::integer, ${input.functionId}::uuid, ${input.providerId}::uuid
+    )`);
+    if (!totals) throw new PetrosBudgetError('PETROS_BUDGET_SNAPSHOT_UNAVAILABLE');
+    const exceeds = (spent: number, cap: number | null | undefined) =>
+      cap != null && Number(spent) + input.reserveMicros > cap;
+    if (exceeds(totals.global_daily, policy.dailyBudgetMicros) ||
+        exceeds(totals.global_monthly, policy.monthlyBudgetMicros))
+      throw new PetrosBudgetError('PETROS_GLOBAL_BUDGET_EXCEEDED');
+    if (exceeds(totals.provider_daily, provider.dailyBudgetMicros) ||
+        exceeds(totals.provider_monthly, provider.monthlyBudgetMicros))
+      throw new PetrosBudgetError('PETROS_PROVIDER_BUDGET_EXCEEDED');
+    if (exceeds(totals.student_monthly, fn.settings.maxCostPerStudentMicros))
+      throw new PetrosBudgetError('PETROS_STUDENT_BUDGET_EXCEEDED');
+    const [seenUsage, seenReservation] = await Promise.all([
+      this.db.select({ id: schema.petrosAiUsageEvents.id }).from(schema.petrosAiUsageEvents)
+        .where(and(eq(schema.petrosAiUsageEvents.requestId, input.requestId), eq(schema.petrosAiUsageEvents.functionId, input.functionId))).limit(1),
+      this.db.select({ id: reservations.id }).from(reservations)
+        .where(and(eq(reservations.requestId, input.requestId), eq(reservations.functionId, input.functionId))).limit(1),
+    ]);
+    if (!seenUsage.length && !seenReservation.length && (
+      (fn.settings.dailyRequestLimit != null && Number(totals.function_daily_requests) >= fn.settings.dailyRequestLimit) ||
+      (fn.settings.monthlyRequestLimit != null && Number(totals.function_monthly_requests) >= fn.settings.monthlyRequestLimit) ||
+      (fn.settings.maxInstitutionUsage != null && Number(totals.institution_monthly_requests) >= fn.settings.maxInstitutionUsage)
+    )) throw new PetrosBudgetError('PETROS_FUNCTION_QUOTA_EXCEEDED');
+    const [row] = await this.db.insert(reservations).values({
+      commandId: input.commandId, sessionId: command.sessionId,
+      executionFence: input.fence, attemptKey: input.attemptKey,
+      requestId: input.requestId, institutionId: input.institutionId, studentId: input.studentId,
+      functionId: input.functionId, providerId: input.providerId, modelId: input.modelId,
+      reservedMicros: input.reserveMicros,
+    }).returning();
+    return row!;
+  }
+
+  /** Preserve a full worst-case charge for an attempt whose provider outcome is unknowable. */
+  async reconcileDocumentCommand(commandId: string, beforeFence?: number) {
+    await this.db.execute(sql`select pg_advisory_xact_lock(hashtextextended('petros-ai-durable-budget', 0))`);
+    const reservations = schema.petrosAiAttemptReservations;
+    const abandoned = await this.db.select().from(reservations).where(and(
+      eq(reservations.commandId, commandId), eq(reservations.state, 'reserved'),
+      beforeFence == null ? undefined : sql`${reservations.executionFence} < ${beforeFence}`,
+    )).for('update');
+    for (const row of abandoned) {
+      if (!row.providerDispatchedAt) {
+        await this.releaseDocumentAttempt(row.id);
+        continue;
+      }
+      await this.settleDocumentAttempt(row.id, {
+        requestId: row.requestId, sessionId: row.sessionId, studentId: row.studentId,
+        institutionId: row.institutionId, functionId: row.functionId,
+        providerId: row.providerId, modelId: row.modelId,
+        estimatedCostMicros: row.reservedMicros, responseTimeMs: 0,
+        status: 'failure', errorCode: 'PROVIDER_OUTCOME_UNKNOWN',
+        metadata: { commandId: row.commandId, executionFence: row.executionFence, reconciliation: 'conservative' },
+      }, 'ambiguous');
+    }
+    return abandoned.length;
+  }
+
+  /** Commit proof that provider transport may begin; recovery treats only marked holds as ambiguous. */
+  async markDocumentAttemptDispatched(id: string) {
+    const reservations = schema.petrosAiAttemptReservations;
+    const [row] = await this.db.update(reservations).set({ providerDispatchedAt: new Date() })
+      .where(and(
+        eq(reservations.id, id),
+        eq(reservations.state, 'reserved'),
+        sql`${reservations.providerDispatchedAt} is null`,
+      )).returning();
+    if (!row) throw new PetrosBudgetError('PETROS_BUDGET_DISPATCH_CONFLICT');
+    return row;
+  }
+
+  /** The usage event and released hold are one savepoint inside the caller's tenant transaction. */
+  async settleDocumentAttempt(
+    id: string, values: NewPetrosAiUsageEvent, disposition: 'settled' | 'ambiguous' = 'settled',
+  ) {
+    return this.db.transaction(async tx => {
+      const reservations = schema.petrosAiAttemptReservations;
+      const [row] = await tx.select().from(reservations).where(eq(reservations.id, id)).limit(1).for('update');
+      if (!row || row.state !== 'reserved' || !row.providerDispatchedAt || row.requestId !== values.requestId ||
+          row.functionId !== values.functionId || row.providerId !== values.providerId ||
+          row.modelId !== values.modelId || row.studentId !== values.studentId ||
+          row.institutionId !== values.institutionId)
+        throw new PetrosBudgetError('PETROS_BUDGET_SETTLEMENT_CONFLICT');
+      const cost = values.actualCostMicros ?? values.estimatedCostMicros ?? 0;
+      if (!Number.isSafeInteger(cost) || cost < 0)
+        throw new PetrosBudgetError('PETROS_BUDGET_COST_INVALID');
+      const [usage] = await tx.insert(schema.petrosAiUsageEvents)
+        .values({ ...values, sessionId: row.sessionId, budgetReservationId: id }).returning();
+      await tx.update(reservations).set({
+        state: disposition, settledMicros: cost, settledAt: new Date(),
+      }).where(eq(reservations.id, id));
+      return usage!;
+    });
+  }
+
+  /** Only call before invoking a provider; a cancelled local attempt has no possible charge. */
+  async releaseDocumentAttempt(id: string) {
+    const reservations = schema.petrosAiAttemptReservations;
+    const [row] = await this.db.update(reservations).set({
+      state: 'released', settledMicros: 0, settledAt: new Date(),
+    }).where(and(
+      eq(reservations.id, id),
+      eq(reservations.state, 'reserved'),
+      sql`${reservations.providerDispatchedAt} is null`,
+    )).returning();
+    if (!row) throw new PetrosBudgetError('PETROS_BUDGET_RELEASE_CONFLICT');
+  }
+
+  /** Trusted adapter preflight proved that transport was never attempted. */
+  async releaseKnownUndispatchedDocumentAttempt(id: string) {
+    const reservations = schema.petrosAiAttemptReservations;
+    const [row] = await this.db.update(reservations).set({
+      state: 'released', settledMicros: 0, settledAt: new Date(),
+    }).where(and(eq(reservations.id, id), eq(reservations.state, 'reserved'))).returning();
+    if (!row) throw new PetrosBudgetError('PETROS_BUDGET_RELEASE_CONFLICT');
   }
 
   async usageSummary(query: PetrosUsageQuery) {

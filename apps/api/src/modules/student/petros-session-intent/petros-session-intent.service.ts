@@ -10,8 +10,10 @@ import type { AuditWriter } from '@edrion/audit';
 import type { ApiEnv } from '@edrion/config';
 import {
   PETROS_SESSION_INTENT_SCHEMA_VERSION,
+  PETROS_DOCUMENT_MAX_PAGES,
   petrosAssistantAnswerSchema,
   petrosSessionIntentSchema,
+  petrosSessionIntentV1,
   type PetrosAssistantQuestionInput,
   type PetrosDoorsDashboardQuery,
   type PetrosIntentMetricInput,
@@ -31,6 +33,7 @@ import { PetrosLoopService } from '../petros-loop/petros-loop.service';
 import type { PetrosOwnerScope } from '../petros-loop/petros-loop.repository';
 import { PetrosSessionIntentRepository } from './petros-session-intent.repository';
 import { PetrosDocumentPreparationService } from './petros-document-preparation.service';
+import { documentReadiness, documentSourceVersion, documentPageCitation, requireDocumentReady, documentScopeDisclosure } from './petros-document-source';
 import {
   buildDocumentLessonOutline,
   isDocumentLessonOutline,
@@ -62,7 +65,9 @@ export class PetrosSessionIntentService {
   ): Promise<PetrosSessionIntent> {
     const scope = owner(principal);
     const existing = await this.repo.findIntentByKey(scope, input.idempotencyKey);
-    if (existing) return this.dto(existing);
+    if (existing) {
+      return this.revalidateDocumentIntent(scope, this.dto(existing));
+    }
     const started = Date.now();
     try {
       const base = await this.resolveSource(principal, input);
@@ -102,6 +107,7 @@ export class PetrosSessionIntentService {
         registerFactors: base.registerFactors,
         sourceEntityIds: base.sourceEntityIds,
         citations: base.citations,
+        documentReadiness: base.documentReadiness,
         language: input.language || preferences?.language || 'en',
         accessibility,
         returnDestination: {
@@ -131,7 +137,7 @@ export class PetrosSessionIntentService {
         sourceFingerprint: intent.sourceFingerprint,
         idempotencyKey: input.idempotencyKey,
         correlationId,
-        resolvedIntent: intent as unknown as Record<string, unknown>,
+        resolvedIntent: petrosSessionIntentV1(intent) as unknown as Record<string, unknown>,
         status: 'resolved',
         expiresAt,
       });
@@ -149,7 +155,7 @@ export class PetrosSessionIntentService {
         durationMs: Date.now() - started,
         payload: { schemaVersion: intent.schemaVersion },
       });
-      return this.dto(persisted);
+      return await this.revalidateDocumentIntent(scope, this.dto(persisted));
     } catch (error) {
       await this.repo.recordFailureEvent({
         institutionId: scope.institutionId,
@@ -170,7 +176,7 @@ export class PetrosSessionIntentService {
   async read(principal: InstitutionalStudentPrincipal, intentId: string) {
     const row = await this.repo.findIntent(owner(principal), intentId);
     if (!row) throw intentNotFound();
-    return this.dto(row);
+    return this.revalidateDocumentIntent(owner(principal), this.dto(row));
   }
 
   async preparation(principal: InstitutionalStudentPrincipal, preparationId: string) {
@@ -196,7 +202,7 @@ export class PetrosSessionIntentService {
       extraction: source.item.extractedTextReady, index: source.item.indexReady,
       pages: pages.map((page) => ({ id: page.id, updatedAt: page.updatedAt })),
     });
-    const { outline } = await this.documentOutline(scope, source.item, pages);
+    const { outline } = await this.documentOutline(scope, source.item, pages, documentSourceVersion(source.item, pages));
       const topic = outline.topics.find((candidate) => candidate.id === input.topicId)
         ?? outline.topics.find((candidate) => candidate.title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
           !== outline.title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim())
@@ -223,12 +229,14 @@ export class PetrosSessionIntentService {
     input: StartPetrosSessionIntentInput,
   ) {
     const scope = owner(principal);
-    const row = await this.repo.findIntent(scope, intentId);
+    // The student tenant transaction holds this lock through session creation and markStarted.
+    const row = await this.repo.findIntent(scope, intentId, true);
     if (!row) throw intentNotFound();
     if (row.sessionId) {
-      return { intent: this.dto(row), session: await this.loop.document(principal, row.sessionId) };
+      const intent = await this.revalidateDocumentIntent(scope, this.dto(row));
+      return { intent, session: await this.loop.document(principal, row.sessionId) };
     }
-    const intent = this.dto(row);
+    let intent = this.dto(row);
     if (row.status !== 'resolved') throw staleIntent('This contextual preview is no longer active.');
     if (row.expiresAt.getTime() <= Date.now()) {
       await this.repo.invalidate(scope, row.id, 'expired');
@@ -238,6 +246,9 @@ export class PetrosSessionIntentService {
     let currentFingerprint: string;
     try {
       currentFingerprint = await this.currentFingerprint(scope, intent);
+      if (currentFingerprint === intent.sourceFingerprint) {
+        intent = await this.revalidateDocumentIntent(scope, intent);
+      }
     } catch (error) {
       await this.recordStartFailure(scope, intent, input.idempotencyKey, intentErrorCode(error));
       throw error;
@@ -256,6 +267,17 @@ export class PetrosSessionIntentService {
       ? intent.citations.filter((citation) => citation.topicId === selectedTopic.id || (!citation.topicId && citation.section === selectedTopic.title))
       : intent.citations;
     const scopedCitations = selectedCitations.length ? selectedCitations : intent.citations;
+    // Disclose the actual text passed to the loop, including pages omitted by topic selection.
+    const citedPages = [...new Set(scopedCitations.flatMap((citation) => citation.page == null ? [] : [citation.page]))];
+    let selectedReadiness = intent.documentReadiness ? {
+      ...intent.documentReadiness,
+      selectedPages: citedPages,
+      omittedPageCount: intent.documentReadiness.omittedPageCount + intent.documentReadiness.selectedPages.length
+        - citedPages.length,
+    } : undefined;
+    let policyDisclosures = intent.policyDisclosures.map((disclosure) =>
+      intent.documentReadiness && disclosure === documentScopeDisclosure(intent.documentReadiness) && selectedReadiness
+        ? documentScopeDisclosure(selectedReadiness) : disclosure);
     const pageCitation = scopedCitations.find((citation) => citation.page != null);
     const handoffRouting = await this.handoffRouting(scope, intent);
     // Re-read authorized source at start. Preview excerpts are not sufficient to
@@ -276,6 +298,16 @@ export class PetrosSessionIntentService {
         if (text.length < page.text.length) conceptSource.complete = false;
         if (text) conceptSource.pages.push({ page: page.pageIndex + 1, text });
         remaining -= text.length;
+      }
+      if (intent.documentReadiness) {
+        const suppliedPages = conceptSource.pages.map((page) => page.page);
+        selectedReadiness = { ...intent.documentReadiness, selectedPages: suppliedPages,
+          omittedPageCount: intent.documentReadiness.omittedPageCount
+            + intent.documentReadiness.selectedPages.length - suppliedPages.length,
+        };
+        policyDisclosures = intent.policyDisclosures.map((disclosure) =>
+          disclosure === documentScopeDisclosure(intent.documentReadiness!)
+            ? documentScopeDisclosure(selectedReadiness!) : disclosure);
       }
       const prepared = await this.documentPreparation.prepare(
         principal,
@@ -344,7 +376,8 @@ export class PetrosSessionIntentService {
         registerFactors: intent.registerFactors,
         citations: scopedCitations,
         ...(conceptSource ? { conceptSource } : {}),
-        policyDisclosures: intent.policyDisclosures,
+        documentReadiness: selectedReadiness,
+        policyDisclosures,
         returnHref: intent.returnDestination.href,
         returnLabel: intent.returnDestination.label,
         resumeToken: intent.returnDestination.resumeToken,
@@ -394,7 +427,7 @@ export class PetrosSessionIntentService {
         payload: {},
       });
     }
-    return { intent: this.dto(refreshed ?? row), session };
+    return { intent: { ...intent, status: (refreshed ?? row).status as PetrosSessionIntent['status'] }, session };
   }
 
   private planSelection(
@@ -847,29 +880,13 @@ export class PetrosSessionIntentService {
     if (input.door === 'uploaded_document') {
       const document = await this.repo.documentSource(scope, input.sourceId, input.page);
       if (!document) throw intentNotFound();
-      if (
-        document.item.status !== 'ready' ||
-        !document.item.extractedTextReady ||
-        !document.item.indexReady
-      ) {
-        throw new ConflictException({
-          code: 'PETROS_DOCUMENT_EXTRACTION_PENDING',
-          message:
-            document.item.status === 'error'
-              ? 'This document could not be extracted. Review the file and retry ingestion.'
-              : `This document is still being read (${document.item.pagesDone}/${document.item.pageCount ?? '?'} pages). Try again when extraction is complete.`,
-        });
-      }
-      if (!document.pages.length) throw intentNotFound();
       const allPages = document.allPages ?? document.pages;
-      const { outline, status: outlineStatus } = await this.documentOutline(scope, document.item, allPages);
-      const selectedTopics = input.page
-        ? outline.topics.filter((topic) => input.page! >= topic.pageStart && input.page! <= topic.pageEnd)
-        : outline.topics;
-      const lessonTopics = selectedTopics.length ? selectedTopics : outline.topics.slice(0, 1);
-      const selectedPages = allPages.filter((page) => lessonTopics.some(
-        (topic) => page.pageIndex + 1 >= topic.pageStart && page.pageIndex + 1 <= topic.pageEnd,
-      ));
+      const readiness = documentReadiness(document.item, allPages, input.page);
+      requireDocumentReady(readiness);
+      const scopePages = input.page == null ? allPages : allPages.filter((page) => page.pageIndex === input.page! - 1);
+      const { outline, status: outlineStatus } = await this.documentOutline(scope, document.item, scopePages, readiness.sourceVersion);
+      const lessonTopics = outline.topics;
+      const selectedPages = scopePages;
       const studyQuestions = documentStudyQuestions(selectedPages.map((page) => page.text));
       return {
         sessionType: 'learn' as const,
@@ -894,30 +911,22 @@ export class PetrosSessionIntentService {
           'Keep source grounding visible and separate explanation from quotation.',
         ],
         sourceEntityIds: [document.item.id, ...selectedPages.map((page) => page.id)].slice(0, 12),
-        citations: lessonTopics.map((topic) => ({
-          topicId: topic.id,
-          sourceType: 'document' as const,
-          sourceId: document.item.id,
-          version: `${document.item.version}:${outline.sourceFingerprint.slice(0, 16)}`,
-          label: `${document.item.title} (p. ${topic.pageStart}${topic.pageEnd > topic.pageStart ? `–${topic.pageEnd}` : ''})`,
-          page: topic.pageStart,
-          section: input.section ?? topic.title,
-          excerpt: topic.excerpt || null,
-        })),
+        citations: lessonTopics.map((topic) => ({ ...documentPageCitation(
+          document.item,
+          selectedPages.find((page) => page.pageIndex === topic.pageStart - 1)!,
+          readiness.sourceVersion,
+          input.section ?? topic.title,
+        ), topicId: topic.id })),
+        documentReadiness: readiness,
         returnHref: '/materials',
         returnLabel: 'Study materials',
         policyDisclosures: [
           'Petros uses only extracted pages available to this student and cites their page numbers.',
-          'Document teaching is for explanation and limited quotation; the original file remains the source.',
+          'Only extracted PDF text is available; figures, formulas and objective coverage have not been verified.',
+          documentScopeDisclosure(readiness),
+          'The outline is a navigation aid, not a validated concept model or teaching pack.',
         ],
-        sourceFingerprint: fingerprint({
-          id: document.item.id,
-          version: document.item.version,
-          status: document.item.status,
-          extraction: document.item.extractedTextReady,
-          index: document.item.indexReady,
-          pages: allPages.map((page) => ({ id: page.id, updatedAt: page.updatedAt })),
-        }),
+        sourceFingerprint: readiness.sourceVersion,
         sourceExpiryMs: Date.now() + 30 * 60_000,
         documentPlanning: { outline, outlineStatus, item: document.item },
       };
@@ -1091,6 +1100,7 @@ export class PetrosSessionIntentService {
       scope: { summary: string; curriculum: string[] };
       deadline: string | null;
       examDate: string | null;
+      documentReadiness?: PetrosSessionIntent['documentReadiness'];
       documentPlanning?: {
         outline: DocumentLessonOutline;
         outlineStatus: 'cached' | 'generated';
@@ -1177,26 +1187,14 @@ export class PetrosSessionIntentService {
     scope: PetrosOwnerScope,
     item: { id: string; title: string; version: number },
     pages: Array<{ id: string; pageIndex: number; text: string; updatedAt: Date }>,
+    sourceVersion: string,
   ): Promise<{ outline: DocumentLessonOutline; status: 'cached' | 'generated' }> {
-    const sourceFingerprint = fingerprint({
-      outlineVersion: 'concepts-v6-complete-legacy-headings',
-      documentId: item.id,
-      documentVersion: item.version,
-      pages: pages.map((page) => ({
-        id: page.id,
-        pageIndex: page.pageIndex,
-        updatedAt: page.updatedAt,
-        textLength: page.text.length,
-        textHash: fingerprint(page.text),
-      })),
-    });
+    const sourceFingerprint = fingerprint({ sourceVersion, pageIds: pages.map((page) => page.id) });
     const cached = await this.repo.findDocumentOutline(scope, item.id, item.version, sourceFingerprint);
-    if (cached && isDocumentLessonOutline(cached.outline)
-      && (cached.outline.organization === 'concepts' || this.env.PETROS_AI_MODE !== 'live'
-        || Date.now() - Date.parse(cached.outline.generatedAt) < 5 * 60_000)) {
+    if (cached && isDocumentLessonOutline(cached.outline) && cached.outline.sourceFingerprint === sourceFingerprint) {
       return { outline: cached.outline, status: 'cached' };
     }
-    let outline = buildDocumentLessonOutline({
+    const outline = buildDocumentLessonOutline({
       documentId: item.id,
       documentVersion: item.version,
       sourceFingerprint,
@@ -1215,6 +1213,93 @@ export class PetrosSessionIntentService {
       outline: outline as unknown as Record<string, unknown>,
     });
     return { outline, status: 'generated' };
+  }
+
+  documentLocator(principal: InstitutionalStudentPrincipal, sourceId: string, locator: Parameters<PetrosSessionIntentRepository['documentLocator']>[2]) {
+    return this.repo.documentLocator(owner(principal), sourceId, locator);
+  }
+
+  searchDocument(principal: InstitutionalStudentPrincipal, sourceId: string, input: Parameters<PetrosSessionIntentRepository['searchDocument']>[2], signal?: AbortSignal) {
+    return this.repo.searchDocument(owner(principal), sourceId, input, signal);
+  }
+
+  compareDocuments(principal: InstitutionalStudentPrincipal, input: Parameters<PetrosSessionIntentRepository['compareDocuments']>[1], signal?: AbortSignal) {
+    return this.repo.compareDocuments(owner(principal), input, signal);
+  }
+  selectedDocumentScope(principal: InstitutionalStudentPrincipal, sourceId: string) {
+    return this.repo.selectedDocumentScope(owner(principal), sourceId);
+  }
+
+  /** Discovery and execution share canonical entitlement and extraction admission. */
+  async documentAdmission(scope: PetrosOwnerScope, sourceId: string) {
+    const document = await this.repo.documentSource(scope, sourceId);
+    if (!document) throw intentNotFound();
+    const readiness = documentReadiness(document.item, document.allPages ?? document.pages);
+    requireDocumentReady(readiness);
+    return { id: document.item.id, pageCount: readiness.selectedPages.length };
+  }
+
+  private async revalidateDocumentIntent(
+    scope: PetrosOwnerScope,
+    intent: PetrosSessionIntent,
+  ): Promise<PetrosSessionIntent> {
+    if (intent.door !== 'uploaded_document') return intent;
+    const document = await this.repo.documentSource(scope, intent.sourceEntityIds[0]!, undefined, intent.sourceFingerprint);
+    if (!document) throw intentNotFound();
+    const pages = document.allPages ?? document.pages;
+    if (documentSourceVersion(document.item, pages) !== intent.sourceFingerprint) {
+      throw staleIntent('The source changed. Open a new preview using current source text.');
+    }
+    // The stored strict v1 planning ranges retain the selected scope without new JSON keys.
+    let selectedPages = intent.planning?.topics.flatMap((topic) =>
+      topic.pageStart && topic.pageEnd && topic.pageEnd >= topic.pageStart && topic.pageEnd <= PETROS_DOCUMENT_MAX_PAGES
+        ? Array.from({ length: topic.pageEnd - topic.pageStart + 1 }, (_, i) => topic.pageStart! + i)
+        : []);
+    if (!selectedPages?.length) throw staleIntent('Open a new preview to verify this document scope.');
+    // The old strict reader can display only twelve topics. The cache key pins
+    // the complete authorized outline so current clients can restore its map.
+    const completeOutlineKey = `${document.item.id}:${document.item.version}:${fingerprint({
+      sourceVersion: intent.sourceFingerprint, pageIds: pages.map((page) => page.id),
+    }).slice(0, 20)}`;
+    if (intent.planning?.outlineCacheKey === completeOutlineKey) {
+      selectedPages = pages.map((page) => page.pageIndex + 1);
+    }
+    const readiness = documentReadiness(document.item, pages, selectedPages);
+    requireDocumentReady(readiness);
+    let citations = intent.citations.map((citation, index) => {
+      const page = pages.find((page) => page.pageIndex + 1 === citation.page);
+      if (!page) throw staleIntent('Open a new preview to verify this page.');
+      const current = documentPageCitation(document.item, page, readiness.sourceVersion, citation.section ?? 'Source');
+      if (current.excerpt !== citation.excerpt || citation.version !== current.version) {
+        throw staleIntent('Open a new preview to verify this source excerpt.');
+      }
+      const topic = intent.planning?.topics[index];
+      return { ...citation, locator: current.locator,
+        ...(topic && topic.pageStart === citation.page ? { topicId: topic.id } : {}),
+      };
+    });
+    let planning = intent.planning;
+    if (planning) {
+      const scopePages = pages.filter((page) => selectedPages!.includes(page.pageIndex + 1));
+      const { outline } = await this.documentOutline(scope, document.item, scopePages, readiness.sourceVersion);
+      const outlineKey = `${document.item.id}:${document.item.version}:${outline.sourceFingerprint.slice(0, 20)}`;
+      if (planning.outlineCacheKey === outlineKey) {
+        planning = { ...planning, organization: outline.organization,
+          topics: outline.topics.map(({ excerpt: _excerpt, ...topic }) => topic),
+          estimatedTotalMinutes: outline.totalEstimatedMinutes,
+        };
+        citations = outline.topics.map((topic, index) => ({
+          ...documentPageCitation(document.item, scopePages.find((page) => page.pageIndex + 1 === topic.pageStart)!,
+            readiness.sourceVersion, intent.citations[index]?.section ?? topic.title),
+          topicId: topic.id,
+        }));
+      }
+    }
+    const supersededDisclosure = document.version && document.version.ordinal < document.currentVersion
+      ? `This lesson is pinned to extraction ${document.version.ordinal}. A newer material preparation exists; the original pinned source is still authorized.` : null;
+    return petrosSessionIntentSchema.parse({ ...intent, planning, citations, documentReadiness: readiness,
+      policyDisclosures: [...new Set([...intent.policyDisclosures, ...(supersededDisclosure ? [supersededDisclosure] : [])])],
+    });
   }
 
   private async currentFingerprint(scope: PetrosOwnerScope, intent: PetrosSessionIntent) {
@@ -1259,17 +1344,10 @@ export class PetrosSessionIntentService {
       });
     }
     if (intent.door === 'uploaded_document') {
-      const document = await this.repo.documentSource(scope, sourceId);
+      const document = await this.repo.documentSource(scope, sourceId, undefined, intent.sourceFingerprint);
       if (!document) throw intentNotFound();
       const allPages = document.allPages ?? document.pages;
-      return fingerprint({
-        id: document.item.id,
-        version: document.item.version,
-        status: document.item.status,
-        extraction: document.item.extractedTextReady,
-        index: document.item.indexReady,
-        pages: allPages.map((page) => ({ id: page.id, updatedAt: page.updatedAt })),
-      });
+      return documentSourceVersion(document.item, allPages);
     }
     if (intent.door === 'learning_path') {
       const path = await this.repo.pathSource(scope, sourceId);
@@ -1389,24 +1467,18 @@ export class PetrosSessionIntentService {
     }
     if (safeRoute.startsWith('/materials') && sourceId) {
       const document = await this.repo.documentSource(scope, sourceId);
-      if (document)
+      if (document) {
+        const readiness = documentReadiness(document.item, document.allPages ?? document.pages);
         return {
-          label: 'Study material',
-          topic: document.item.title,
-          citationLabel: document.item.title,
-          sourceVersion: fingerprint({
-            version: document.item.version,
-            status: document.item.status,
-            pagesDone: document.item.pagesDone,
-            pageCount: document.item.pageCount,
-            extractedTextReady: document.item.extractedTextReady,
-            indexReady: document.item.indexReady,
-          }).slice(0, 16),
-          quickAnswer: document.item.extractedTextReady
-            ? `${document.item.title} is ready, with ${document.item.pageCount ?? document.pages.length} pages available.`
-            : `${document.item.title} is still being extracted (${document.item.pagesDone}/${document.item.pageCount ?? '?'} pages).`,
+          label: 'Study material', topic: document.item.title, citationLabel: document.item.title,
+          sourceVersion: readiness.sourceVersion,
+          quickAnswer: readiness.scopeReady
+            ? `${document.item.title} has readable extracted PDF text. Figures and teaching coverage have not been verified.`
+            : `${document.item.title} can be viewed as an original file, but its selected teaching source needs preparation or confirmation.`,
         };
+      }
     }
+
     return {
       label: contextLabel(safeRoute),
       topic: contextLabel(safeRoute),

@@ -1,0 +1,1170 @@
+Scope: 2 of 26 workspace projects
+apps/student-web lint$ eslint .
+apps/api lint$ eslint .
+apps/student-web lint: /Volumes/Chris/Edrion Labs/apps/student-web/src/components/exams/exam-attempt-screen.tsx
+apps/student-web lint:   179:9  warning  The 'questions' logical expression could make the dependencies of useMemo Hook (at line 181) change on every render. To fix this, wrap the initialization of 'questions' in its own useMemo() Hook  react-hooks/exhaustive-deps
+apps/student-web lint:   179:9  warning  The 'questions' logical expression could make the dependencies of useMemo Hook (at line 182) change on every render. To fix this, wrap the initialization of 'questions' in its own useMemo() Hook  react-hooks/exhaustive-deps
+apps/student-web lint: /Volumes/Chris/Edrion Labs/apps/student-web/src/components/petros/petros-input-modes.tsx
+apps/student-web lint:   433:16  warning  Unused eslint-disable directive (no problems were reported from '@next/next/no-img-element')
+apps/student-web lint: ✖ 3 problems (0 errors, 3 warnings)
+apps/student-web lint:   0 errors and 1 warning potentially fixable with the `--fix` option.
+apps/student-web lint: Done
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/scripts/petros-stage8-mock-provider.ts
+apps/api lint:   74:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/common/guards/auth.guard.spec.ts
+apps/api lint:   15:107  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   16:14   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/common/guards/auth.guard.ts
+apps/api lint:    1:1  warning  Imports "CanActivate" are only used as type                               @typescript-eslint/consistent-type-imports
+apps/api lint:    9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/common/guards/permissions.guard.ts
+apps/api lint:   1:1  warning  Imports "CanActivate" are only used as type                               @typescript-eslint/consistent-type-imports
+apps/api lint:   8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/common/guards/rate-limit.guard.ts
+apps/api lint:    1:1  warning  Imports "CanActivate" are only used as type                               @typescript-eslint/consistent-type-imports
+apps/api lint:    9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/common/idempotency.service.ts
+apps/api lint:   4:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/common/queue/queue.worker.ts
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/main.ts
+apps/api lint:   53:3  warning  Unused eslint-disable directive (no problems were reported from 'no-console')
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/admissions-public/admissions-public.controller.ts
+apps/api lint:   26:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/admissions-public/admissions-public.repository.ts
+apps/api lint:   39:17  warning  `import()` type annotations are forbidden  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/admissions-public/admissions-public.service.ts
+apps/api lint:   29:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   31:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   32:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   33:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   34:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/ai-governance/ai-governance.controller.ts
+apps/api lint:   31:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/ai-governance/ai-governance.service.ts
+apps/api lint:   32:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/analytics/analytics.controller.ts
+apps/api lint:   4:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/analytics/analytics.service.ts
+apps/api lint:   3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/audit/audit.controller.ts
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/audit/audit.service.ts
+apps/api lint:   7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/authentication/auth-login.service.ts
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/authentication/auth.controller.ts
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   21:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   22:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/authentication/credential.service.ts
+apps/api lint:    9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/authentication/mfa.controller.ts
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/billing/billing.controller.ts
+apps/api lint:   39:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/billing/billing.service.ts
+apps/api lint:   23:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   24:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/campuses/campuses.controller.ts
+apps/api lint:   17:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/campuses/campuses.service.ts
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/copilot/ai-usage-limiter.service.ts
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/copilot/copilot.controller.ts
+apps/api lint:   25:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/copilot/copilot.service.ts
+apps/api lint:   29:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   31:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   35:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   36:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   37:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/copilot/tool-registry.ts
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/documents/document-batch-jobs.service.ts
+apps/api lint:   3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   4:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/documents/document-batch.controller.ts
+apps/api lint:   19:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/documents/document-batch.service.ts
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/documents/document-render.processor.ts
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   9:1  warning  Imports "DocumentsGenService" are only used as type                       @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/documents/documents-gen.controller.ts
+apps/api lint:   28:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   29:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   30:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   31:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/documents/documents-gen.service.ts
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/documents/documents-issuance.controller.ts
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/documents/report-card-issuance.controller.ts
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/documents/report-card-issuance.service.ts
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   24:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/employees/employees.controller.ts
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/employees/employees.service.ts
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/entitlements/entitlements.controller.ts
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/entitlements/entitlements.service.ts
+apps/api lint:   2:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/feature-controls/feature-controls.controller.ts
+apps/api lint:   35:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/feature-controls/feature-controls.service.ts
+apps/api lint:   43:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/federation/federation.service.ts
+apps/api lint:   9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/federation/portal-auth-oidc.controller.ts
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/federation/portal-auth-saml.controller.ts
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/federation/portal-federation.controller.ts
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   21:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   22:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/fees-internal.controller.ts
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/health/health.controller.ts
+apps/api lint:   7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/independent-users/independent-users.controller.ts
+apps/api lint:   16:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/independent-users/independent-users.service.ts
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/institution-users/institution-users.controller.ts
+apps/api lint:   35:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/institution-users/institution-users.service.ts
+apps/api lint:   26:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/institutions/institutions.controller.ts
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/institutions/institutions.service.ts
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/integrations-deliveries.controller.ts
+apps/api lint:   4:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/integrations.controller.ts
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/integrations.service.ts
+apps/api lint:   24:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   25:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   26:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   27:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/petros-phase2-full-journey.integration.spec.ts
+apps/api lint:   614:7  warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/petros-phase3-browser-journey.mjs
+apps/api lint:    39:8   warning  'start' is assigned a value but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+apps/api lint:    90:83  warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+apps/api lint:   184:88  warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/petros-phase3-browser-server.ts
+apps/api lint:   28:11  warning  `import()` type annotations are forbidden                                          @typescript-eslint/consistent-type-imports
+apps/api lint:   78:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/petros-phase4-browser-journey.mjs
+apps/api lint:    83:8   warning  'start' is assigned a value but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+apps/api lint:   192:83  warning  Unexpected console statement. Only these console methods are allowed: warn, error              no-console
+apps/api lint:   295:8   warning  'enabledMemoryState' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+apps/api lint:   503:88  warning  Unexpected console statement. Only these console methods are allowed: warn, error              no-console
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/petros-phase4-browser-server.ts
+apps/api lint:    28:11  warning  `import()` type annotations are forbidden                                          @typescript-eslint/consistent-type-imports
+apps/api lint:   138:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/petros-phase4-evidence-fixture.ts
+apps/api lint:   3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/petros-phase4-institutional-fixture.ts
+apps/api lint:   21:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/petros-phase5-browser-journey.mjs
+apps/api lint:     1:59  warning  'devicePixelRatio' is defined but never used                                                   @typescript-eslint/no-unused-vars
+apps/api lint:    99:8   warning  Unexpected console statement. Only these console methods are allowed: warn, error              no-console
+apps/api lint:   275:83  warning  Unexpected console statement. Only these console methods are allowed: warn, error              no-console
+apps/api lint:   427:8   warning  'enabledMemoryState' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+apps/api lint:   645:63  warning  Unexpected console statement. Only these console methods are allowed: warn, error              no-console
+apps/api lint:   678:88  warning  Unexpected console statement. Only these console methods are allowed: warn, error              no-console
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/petros-phase5-browser-server.ts
+apps/api lint:    49:11  warning  `import()` type annotations are forbidden                                          @typescript-eslint/consistent-type-imports
+apps/api lint:   171:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/petros-phase5-gateway.integration.spec.ts
+apps/api lint:   4:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/petros-phase5-release.integration.spec.ts
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/petros-phase6-browser-journey.mjs
+apps/api lint:     1:64  warning  'devicePixelRatio' is defined but never used                                                   @typescript-eslint/no-unused-vars
+apps/api lint:   102:8   warning  Unexpected console statement. Only these console methods are allowed: warn, error              no-console
+apps/api lint:   281:83  warning  Unexpected console statement. Only these console methods are allowed: warn, error              no-console
+apps/api lint:   433:8   warning  'enabledMemoryState' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+apps/api lint:   659:63  warning  Unexpected console statement. Only these console methods are allowed: warn, error              no-console
+apps/api lint:   692:88  warning  Unexpected console statement. Only these console methods are allowed: warn, error              no-console
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/petros-phase6-browser-server.ts
+apps/api lint:    68:11  warning  `import()` type annotations are forbidden                                          @typescript-eslint/consistent-type-imports
+apps/api lint:   252:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/petros-phase6-capability-journey.mjs
+apps/api lint:   123:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/petros-projectile-commands.integration.spec.ts
+apps/api lint:   140:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/integrations/provider-mappings.service.ts
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/maintenance/maintenance.service.ts
+apps/api lint:    6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/observability/principal-metrics.controller.ts
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/parent-portal/guardian-scope.guard.ts
+apps/api lint:   1:1  warning  Imports "CanActivate" are only used as type  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/parent-portal/notification-channels.ts
+apps/api lint:   3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/parent-portal/parent-academics.service.ts
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/parent-portal/parent-dashboard.service.ts
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/parent-portal/parent-digest.service.ts
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/parent-portal/parent-emergency.service.ts
+apps/api lint:   7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/parent-portal/parent-fanout.service.ts
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/parent-portal/parent-fees.service.ts
+apps/api lint:   16:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   17:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/parent-portal/parent-me.service.ts
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/parent-portal/parent-staff.controller.ts
+apps/api lint:   30:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   31:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/parent-portal/parent-staff.service.ts
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/parent-portal/parent-webhook.controller.ts
+apps/api lint:   7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/parent-portal/parent.controller.ts
+apps/api lint:   53:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   54:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   55:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   56:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   57:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   58:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   59:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   60:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   61:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   62:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/parent-portal/payment-provider.registry.ts
+apps/api lint:   4:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-ai-routing/petros-ai-gateway.service.spec.ts
+apps/api lint:   392:273  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   393:254  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-ai-routing/petros-ai-gateway.service.ts
+apps/api lint:    5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    8:1  warning  Imports "PetrosAiRoutingRepository" are only used as type                 @typescript-eslint/consistent-type-imports
+apps/api lint:    9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   10:1  warning  Imports "PetrosProviderAdapterRegistry" are only used as type             @typescript-eslint/consistent-type-imports
+apps/api lint:   18:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-ai-routing/petros-ai-routing.controller.ts
+apps/api lint:   27:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-ai-routing/petros-ai-routing.service.ts
+apps/api lint:    1:1  warning  Imports "OnModuleInit" are only used as type                              @typescript-eslint/consistent-type-imports
+apps/api lint:   25:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   26:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   27:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   28:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-ai-routing/petros-provider-adapters.ts
+apps/api lint:   3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-ai-routing/petros-provider-connectivity.service.ts
+apps/api lint:   3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-institutional/petros-cohort-evidence-authority.ts
+apps/api lint:   4:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-institutional/petros-institutional.controller.ts
+apps/api lint:   51:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-institutional/petros-institutional.jobs.ts
+apps/api lint:    9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-institutional/petros-institutional.repository.ts
+apps/api lint:   638:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-institutional/petros-institutional.service.spec.ts
+apps/api lint:   49:17   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   50:16   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   51:15   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   52:15   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   57:48   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   65:40   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   71:100  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   77:39   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   83:93   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   89:18   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   90:16   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-institutional/petros-institutional.service.ts
+apps/api lint:     44:1   warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:     61:1   warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:     63:1   warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:     64:1   warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   1054:31  warning  Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+apps/api lint:   1073:27  warning  Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+apps/api lint:   1081:29  warning  Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+apps/api lint:   1085:35  warning  Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+apps/api lint:   1089:24  warning  Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-learner-model/petros-learner-model.controller.ts
+apps/api lint:   35:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   36:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-learner-model/petros-learner-model.engine.ts
+apps/api lint:   1:1  warning  Imports "PETROS_ERROR_CATEGORIES" are only used as type  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-learner-model/petros-learner-model.service.ts
+apps/api lint:   30:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-learner-model/petros-learning-source-ingestion.service.ts
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-learner-model/petros-objective-evidence.controller.ts
+apps/api lint:   22:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-learner-model/petros-objective-evidence.service.ts
+apps/api lint:   26:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   27:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   28:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   29:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   31:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-quality/petros-operations.service.ts
+apps/api lint:   10:7  warning  'ADMISSION_CATEGORIES' is assigned a value but only used as a type. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-quality/petros-quality.controller.ts
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-quality/petros-quality.service.ts
+apps/api lint:   21:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   25:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-quality/petros-release.service.ts
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-topic-profiles/petros-topic-profiles.controller.ts
+apps/api lint:   28:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/petros-topic-profiles/petros-topic-profiles.service.ts
+apps/api lint:   31:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   35:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/plans/plans.controller.ts
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/plans/plans.service.ts
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/platform-roles/platform-roles.controller.ts
+apps/api lint:   4:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/platform-roles/platform-roles.service.ts
+apps/api lint:   3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/academics.controller.ts
+apps/api lint:   71:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   72:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/academics.service.ts
+apps/api lint:   35:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   36:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/admission-info.controller.ts
+apps/api lint:   18:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   19:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/admissions.controller.ts
+apps/api lint:   29:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/admissions.service.ts
+apps/api lint:   22:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   23:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   24:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/announcements.controller.ts
+apps/api lint:   29:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/announcements.service.ts
+apps/api lint:   16:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   17:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   19:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/assignments.controller.ts
+apps/api lint:   40:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   41:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/assignments.service.ts
+apps/api lint:   30:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   38:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   39:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/attendance-policy.controller.ts
+apps/api lint:   17:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/attendance-policy.service.ts
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/attendance.controller.ts
+apps/api lint:   31:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/attendance.service.ts
+apps/api lint:   23:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   27:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/attention.controller.ts
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/billing.controller.ts
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/calendar-events/calendar-events.controller.ts
+apps/api lint:   21:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/calendar-events/calendar-events.service.ts
+apps/api lint:   4:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/calendar.controller.ts
+apps/api lint:   39:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/conduct.controller.ts
+apps/api lint:   21:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/conversations.controller.ts
+apps/api lint:   47:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   48:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   49:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/counseling.controller.ts
+apps/api lint:   23:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/counseling.service.ts
+apps/api lint:   3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/course-content/portal-course-content.controller.ts
+apps/api lint:    1:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   55:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/course-content/portal-course-content.service.ts
+apps/api lint:    3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   25:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   26:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   28:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/course-content/portal-material-preparation.jobs.ts
+apps/api lint:   19:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   21:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   25:1  warning  Imports "KnowledgePdfProcess" are only used as type                       @typescript-eslint/consistent-type-imports
+apps/api lint:   30:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   32:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/courses/portal-courses.controller.ts
+apps/api lint:   23:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/courses/portal-courses.service.ts
+apps/api lint:   8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/documents.controller.ts
+apps/api lint:   21:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/exams.controller.ts
+apps/api lint:   40:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   41:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/exams.service.ts
+apps/api lint:   29:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   34:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   35:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/expenses.controller.ts
+apps/api lint:   18:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/expenses.service.ts
+apps/api lint:   3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/facilities.controller.ts
+apps/api lint:   29:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/facilities.service.ts
+apps/api lint:   3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/fee-jobs.service.ts
+apps/api lint:    6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   10:1  warning  Imports "FeeLedgerService" are only used as type                          @typescript-eslint/consistent-type-imports
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/fee-ledger.service.ts
+apps/api lint:   35:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   36:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   38:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   43:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/fees-engine.controller.ts
+apps/api lint:   29:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   30:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/fees.controller.ts
+apps/api lint:   33:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/fees.service.ts
+apps/api lint:   24:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/front-desk.controller.ts
+apps/api lint:   21:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/front-desk.service.ts
+apps/api lint:   3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/gradebook.controller.ts
+apps/api lint:   25:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/gradebook.service.ts
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/grading-portal.controller.ts
+apps/api lint:   17:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   18:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   19:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/health.controller.ts
+apps/api lint:   24:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/health.service.ts
+apps/api lint:   3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/homework/portal-homework.controller.ts
+apps/api lint:   22:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/homework/portal-homework.service.ts
+apps/api lint:   25:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/hostel.controller.ts
+apps/api lint:   33:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/hostel.service.ts
+apps/api lint:   18:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/inventory.controller.ts
+apps/api lint:   23:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/inventory.service.ts
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/it.controller.ts
+apps/api lint:   21:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/it.service.ts
+apps/api lint:   3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/labs.controller.ts
+apps/api lint:   24:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/labs.service.ts
+apps/api lint:   3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/library.controller.ts
+apps/api lint:   25:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/library.service.ts
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/mark-release.controller.ts
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   24:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/mark-release.service.ts
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/messaging.controller.ts
+apps/api lint:   25:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/messaging.service.ts
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/mock-exams/portal-mock-banks.service.ts
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/mock-exams/portal-mock-exams.controller.ts
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   16:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/onboarding.controller.ts
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/onboarding.service.ts
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/payroll.controller.ts
+apps/api lint:   29:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/payroll.service.ts
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/people.controller.ts
+apps/api lint:   35:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/people.service.ts
+apps/api lint:   33:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   34:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   36:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   37:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/petros-assignment-learning.controller.ts
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/petros-assignment-learning.service.ts
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   16:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   17:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/petros/context/history.ts
+apps/api lint:   3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   4:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/petros/petros-agent.service.ts
+apps/api lint:    7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    8:1  warning  Imports "PetrosOpenAiService" are only used as type                       @typescript-eslint/consistent-type-imports
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   16:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   17:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   18:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   19:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/petros/petros-attachment.service.ts
+apps/api lint:   4:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/petros/petros-conversations.service.ts
+apps/api lint:   8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/petros/petros-topicality.service.ts
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/petros/petros.controller.ts
+apps/api lint:   33:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   34:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   35:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   36:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   37:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   38:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   39:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   40:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/petros/tools/registry.ts
+apps/api lint:    3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    4:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   16:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   17:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   18:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   21:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   22:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   23:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   24:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   25:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   26:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-audience.service.ts
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-audit.controller.ts
+apps/api lint:   18:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-audit.service.ts
+apps/api lint:   7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-auth-login.service.ts
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-auth.controller.ts
+apps/api lint:   42:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   43:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   44:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-auth.guard.ts
+apps/api lint:    1:1   warning  Imports "CanActivate" are only used as type                               @typescript-eslint/consistent-type-imports
+apps/api lint:   18:1   warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   19:1   warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   20:1   warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   80:26  warning  `import()` type annotations are forbidden                                 @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-auth.service.ts
+apps/api lint:    41:18  warning  `import()` type annotations are forbidden  @typescript-eslint/consistent-type-imports
+apps/api lint:   119:18  warning  `import()` type annotations are forbidden  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-campuses.controller.ts
+apps/api lint:   21:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-copilot.controller.ts
+apps/api lint:   21:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-copilot.service.ts
+apps/api lint:   26:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   27:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   28:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-copilot.tools.ts
+apps/api lint:   4:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-credential.service.ts
+apps/api lint:   21:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   23:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   24:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-crud.engine.ts
+apps/api lint:   23:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-dashboard.service.ts
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-integrations.controller.ts
+apps/api lint:   19:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-invite.service.ts
+apps/api lint:   8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-permissions.guard.ts
+apps/api lint:   1:1  warning  Imports "CanActivate" are only used as type                               @typescript-eslint/consistent-type-imports
+apps/api lint:   8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-placements.controller.ts
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-ptm.controller.ts
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-rate-limit.ts
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-resource.service.ts
+apps/api lint:    1:1   warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   72:30  warning  Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+apps/api lint:   72:46  warning  Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal-search.service.ts
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/portal.controller.ts
+apps/api lint:   19:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   21:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   22:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   23:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/programme-structure.service.ts
+apps/api lint:   16:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/recipient-resolver.service.ts
+apps/api lint:   4:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/recipients.controller.ts
+apps/api lint:   41:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/report-cards/portal-report-cards.controller.ts
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/report-cards/portal-report-cards.service.ts
+apps/api lint:   9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/reports.controller.ts
+apps/api lint:   23:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   24:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/reports.service.ts
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/results-jobs.service.ts
+apps/api lint:    5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/results-settings.controller.ts
+apps/api lint:   17:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/roles.controller.ts
+apps/api lint:   24:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/roles.service.ts
+apps/api lint:   16:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/security.controller.ts
+apps/api lint:   27:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   28:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/security.service.ts
+apps/api lint:   3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/settings.controller.ts
+apps/api lint:   29:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/settings.service.ts
+apps/api lint:   28:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/student-portal-config.controller.ts
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/student-portal-config.service.ts
+apps/api lint:   31:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/student-portal.controller.ts
+apps/api lint:   17:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   18:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/student-portal.service.ts
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   19:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/student-profile.controller.ts
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/subject-weight-maps.service.ts
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/teaching/portal-teaching.controller.ts
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/term-recompute.service.ts
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/timetable-exceptions.service.ts
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/timetable-fanout.processor.ts
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/timetable.controller.ts
+apps/api lint:   31:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   32:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/timetable.service.ts
+apps/api lint:   18:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   19:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/transport.controller.ts
+apps/api lint:   31:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/transport.service.ts
+apps/api lint:   17:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/users.controller.ts
+apps/api lint:   25:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/portal/users.service.ts
+apps/api lint:   23:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   24:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   25:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   26:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   27:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/registration/public-registration.controller.ts
+apps/api lint:   23:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/registration/registration-approval.service.ts
+apps/api lint:   24:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   25:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/registration/registration-email.service.ts
+apps/api lint:   8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/registration/registration-requests.controller.ts
+apps/api lint:   22:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   23:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/registration/registration.service.ts
+apps/api lint:   38:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   40:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   41:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   42:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/requests/document-request-policy.service.ts
+apps/api lint:   3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/requests/document-verification.controller.ts
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/requests/portal-requests.controller.ts
+apps/api lint:   43:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   44:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/requests/portal-sensitive-reports.controller.ts
+apps/api lint:   17:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/requests/request-config.controller.ts
+apps/api lint:   22:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/requests/request-config.service.ts
+apps/api lint:    9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/requests/request-document.service.ts
+apps/api lint:   25:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   26:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   31:1  warning  Imports "DocumentsGenService" are only used as type                       @typescript-eslint/consistent-type-imports
+apps/api lint:   32:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   33:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   34:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/requests/request-engine.service.ts
+apps/api lint:   51:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   52:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   53:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   54:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   58:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   59:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   61:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   62:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   64:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   65:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   66:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/requests/request-jobs.service.ts
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   15:1  warning  Imports "RequestDocumentService" are only used as type                    @typescript-eslint/consistent-type-imports
+apps/api lint:   16:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   17:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/requests/request-notify.service.ts
+apps/api lint:    5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/requests/student-requests.controller.ts
+apps/api lint:   30:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   36:1  warning  Imports "SurfaceGateService" are only used as type                        @typescript-eslint/consistent-type-imports
+apps/api lint:   37:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   38:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   39:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   40:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/assignments/student-assignments.controller.ts
+apps/api lint:   18:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/attendance/attendance-jobs.service.ts
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/attendance/attendance-rollup.service.ts
+apps/api lint:   27:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   28:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/attendance/student-attendance.controller.ts
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/attendance/student-attendance.service.ts
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/auth/independent-signup.service.ts
+apps/api lint:   19:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/auth/student-auth.controller.ts
+apps/api lint:   32:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   35:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/auth/student-auth.service.ts
+apps/api lint:   25:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   27:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   33:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/calendar/student-calendar.controller.ts
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/campus-mirrors/library-fines.service.ts
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/classes/student-classes.controller.ts
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/comms/student-comms.controller.ts
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/core/student-auth.guard.ts
+apps/api lint:    1:1  warning  Imports "CanActivate" are only used as type                               @typescript-eslint/consistent-type-imports
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/core/student-permissions.guard.ts
+apps/api lint:   1:1  warning  Imports "CanActivate" are only used as type                               @typescript-eslint/consistent-type-imports
+apps/api lint:   7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/core/student-portal.guard.ts
+apps/api lint:   1:1  warning  Imports "CanActivate" are only used as type                               @typescript-eslint/consistent-type-imports
+apps/api lint:   8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/core/student-rate-limit.guard.ts
+apps/api lint:    1:1  warning  Imports "CanActivate" are only used as type                               @typescript-eslint/consistent-type-imports
+apps/api lint:    9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/courses/student-courses.controller.ts
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/documents/student-documents.controller.ts
+apps/api lint:   10:1  warning  Imports "SurfaceGateService" are only used as type                        @typescript-eslint/consistent-type-imports
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/exams/student-exams.controller.ts
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/exams/student-exams.service.ts
+apps/api lint:   21:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   22:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   23:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/fees/student-fees.controller.ts
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   20:1  warning  Imports "SurfaceGateService" are only used as type                        @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/home/student-home.controller.ts
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/home/student-home.service.ts
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/homework/homework.controller.ts
+apps/api lint:   18:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/homework/homework.service.ts
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/knowledge/knowledge-document.service.ts
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/knowledge/petros-teaching-pack.controller.ts
+apps/api lint:   31:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/knowledge/petros-teaching-pack.service.ts
+apps/api lint:   37:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   40:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   41:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/ledger/learning-events.writer.ts
+apps/api lint:   8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/me/student-me.controller.ts
+apps/api lint:   9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/me/student-me.service.ts
+apps/api lint:   7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/notes/student-notes.controller.ts
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-artifacts/petros-artifacts-dashboard.service.ts
+apps/api lint:   6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-artifacts/petros-artifacts.controller.ts
+apps/api lint:   34:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   35:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-artifacts/petros-artifacts.repository.ts
+apps/api lint:   1:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-artifacts/petros-artifacts.service.ts
+apps/api lint:   38:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   41:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   42:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-artifacts/petros-learning-artifacts.controller.ts
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-artifacts/petros-learning-artifacts.service.ts
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-artifacts/petros-qualitative-review.controller.ts
+apps/api lint:   33:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-artifacts/petros-qualitative-review.service.ts
+apps/api lint:   32:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   33:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   34:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   35:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   37:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-companion/petros-action-registry.service.ts
+apps/api lint:    1:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-companion/petros-briefing.service.ts
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-companion/petros-companion.controller.ts
+apps/api lint:   24:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   25:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   26:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-companion/petros-companion.service.ts
+apps/api lint:    1:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   27:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   29:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   30:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   32:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   45:1  warning  Imports "PetrosCompanionRepository" are only used as type                 @typescript-eslint/consistent-type-imports
+apps/api lint:   46:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-companion/petros-mentor.service.ts
+apps/api lint:    6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-companion/petros-student-context.service.ts
+apps/api lint:    1:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-continuity/petros-continuity.controller.ts
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-continuity/petros-continuity.service.ts
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   18:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-continuity/petros-pilot.service.ts
+apps/api lint:   9:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-input-modes/petros-input-modes.controller.ts
+apps/api lint:   62:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-input-modes/petros-input-modes.service.ts
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   36:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   41:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   43:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   44:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-loop/petros-adaptive.controller.ts
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-loop/petros-adaptive.service.ts
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   16:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   17:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-loop/petros-loop.controller.ts
+apps/api lint:   54:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   55:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-loop/petros-loop.repository.ts
+apps/api lint:   1:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-loop/petros-loop.service.spec.ts
+apps/api lint:   116:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   117:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   118:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-loop/petros-loop.service.ts
+apps/api lint:    12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    71:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    75:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    76:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    79:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   102:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   109:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   110:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-loop/petros-projectile.controller.ts
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-loop/petros-projectile.service.ts
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   16:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   17:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   18:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   19:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-loop/petros-question-execution.controller.ts
+apps/api lint:   31:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-loop/petros-question-execution.service.ts
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   21:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   22:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   23:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   24:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   26:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   27:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   29:1  warning  Imports "PetrosQuestionExecutionRepository" are only used as type         @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-loop/petros-reconciliation.controller.ts
+apps/api lint:   12:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-loop/petros-workspace.controller.ts
+apps/api lint:   13:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-loop/petros-workspace.service.ts
+apps/api lint:   19:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   21:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   22:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   23:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   24:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-reflection/petros-reflection.controller.ts
+apps/api lint:   53:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-reflection/petros-reflection.service.spec.ts
+apps/api lint:    25:15   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    34:18   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    35:18   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    36:16   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    54:56   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    69:43   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    73:39   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    92:17   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   128:122  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   129:22   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-reflection/petros-reflection.service.ts
+apps/api lint:   29:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   35:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   44:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-session-intent/petros-document-preparation.normalization.spec.ts
+apps/api lint:   23:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   50:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   79:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-session-intent/petros-document-preparation.service.ts
+apps/api lint:   18:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   19:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-session-intent/petros-session-intent.controller.ts
+apps/api lint:   47:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-session-intent/petros-session-intent.repository.ts
+apps/api lint:   17:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-session-intent/petros-session-intent.service.spec.ts
+apps/api lint:    23:17   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    24:21   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    25:15   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    29:40   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    48:46   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    58:15   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    62:16   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    63:18   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    64:36   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    78:22   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    79:56   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    79:95   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    88:64   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    88:197  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   104:149  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   392:57   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-session-intent/petros-session-intent.service.ts
+apps/api lint:   29:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   32:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   34:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   35:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   42:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-teach-back/petros-teach-back.controller.ts
+apps/api lint:   38:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-teach-back/petros-teach-back.service.spec.ts
+apps/api lint:    97:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    98:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:    99:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   132:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint:   179:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/petros-teach-back/petros-teach-back.service.ts
+apps/api lint:     30:1  warning  All imports in the declaration are only used as types. Use `import type`                              @typescript-eslint/consistent-type-imports
+apps/api lint:     34:1  warning  All imports in the declaration are only used as types. Use `import type`                              @typescript-eslint/consistent-type-imports
+apps/api lint:     36:1  warning  All imports in the declaration are only used as types. Use `import type`                              @typescript-eslint/consistent-type-imports
+apps/api lint:     38:1  warning  All imports in the declaration are only used as types. Use `import type`                              @typescript-eslint/consistent-type-imports
+apps/api lint:     39:1  warning  All imports in the declaration are only used as types. Use `import type`                              @typescript-eslint/consistent-type-imports
+apps/api lint:   1088:7  warning  'schemaEventPatch' is assigned a value but only used as a type. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/report-cards/student-report-cards.controller.ts
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/results/student-results.controller.ts
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/results/student-results.service.ts
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/storage/student-storage.controller.ts
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/surfaces/student-portal-config.controller.ts
+apps/api lint:   5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/surfaces/student-surfaces.controller.ts
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/surfaces/surface-gate.service.ts
+apps/api lint:   3:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/surfaces/surfaces.service.ts
+apps/api lint:   2:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/timetable/ics.controller.ts
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/timetable/ics.service.ts
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/timetable/student-timetable.controller.ts
+apps/api lint:   11:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/timetable/timetable-resolver.service.ts
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   15:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   16:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/student/today/today-notify.service.ts
+apps/api lint:    5:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    6:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    7:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:    8:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint:   10:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/subscriptions/subscriptions.controller.ts
+apps/api lint:   45:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/subscriptions/subscriptions.service.ts
+apps/api lint:   28:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/support-access/support-access.controller.ts
+apps/api lint:   18:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/support-access/support-access.service.ts
+apps/api lint:   24:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/support-cases/support-cases.controller.ts
+apps/api lint:   20:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: /Volumes/Chris/Edrion Labs/apps/api/src/modules/support-cases/support-cases.service.ts
+apps/api lint:   14:1  warning  All imports in the declaration are only used as types. Use `import type`  @typescript-eslint/consistent-type-imports
+apps/api lint: ✖ 793 problems (0 errors, 793 warnings)
+apps/api lint:   0 errors and 696 warnings potentially fixable with the `--fix` option.
+apps/api lint: Done

@@ -46,6 +46,8 @@ type ProfileRow = Awaited<ReturnType<PetrosTopicProfilesRepository['findProfile'
 
 @Injectable()
 export class PetrosTopicProfilesService {
+  private readonly sessionProfileLoads = new Map<string, Promise<NonNullable<ProfileRow>>>();
+
   constructor(
     private readonly repo: PetrosTopicProfilesRepository,
     private readonly gateway: PetrosAiGatewayService,
@@ -68,20 +70,23 @@ export class PetrosTopicProfilesService {
     profileContext?: Record<string, unknown>;
   }): Promise<PetrosResolvedTopicProfile> {
     const generatedInput = profileInputFromSession(input.topic, input.profileContext ?? {});
-    let profile = await this.repo.findByIdentity(
+    const identity = [
       generatedInput.topicKey,
       generatedInput.curriculumKey,
       generatedInput.gradeBand,
-    );
-    if (!profile) {
-      const created = await this.generateInternal(generatedInput, 'system:session-bootstrap', true);
-      profile = await this.requireProfile(created.id);
-    } else {
-      profile = await this.generateInternal(
-        generatedInput,
-        'system:session-cache-check',
-        false,
-      );
+    ].join(':');
+    let profileLoad = this.sessionProfileLoads.get(identity);
+    if (!profileLoad) {
+      profileLoad = this.loadSessionProfile(generatedInput);
+      this.sessionProfileLoads.set(identity, profileLoad);
+    }
+    let profile: NonNullable<ProfileRow>;
+    try {
+      profile = await profileLoad;
+    } finally {
+      if (this.sessionProfileLoads.get(identity) === profileLoad) {
+        this.sessionProfileLoads.delete(identity);
+      }
     }
     const published = await this.repo.findPublishedVersion(profile.id);
     if (!published) {
@@ -105,6 +110,21 @@ export class PetrosTopicProfilesService {
       profile: resolvedProfile,
       resolvedAt: new Date().toISOString(),
     });
+  }
+
+  private async loadSessionProfile(
+    generatedInput: PetrosGenerateTopicProfileInput,
+  ): Promise<NonNullable<ProfileRow>> {
+    const existing = await this.repo.findByIdentity(
+      generatedInput.topicKey,
+      generatedInput.curriculumKey,
+      generatedInput.gradeBand,
+    );
+    if (!existing) {
+      const created = await this.generateInternal(generatedInput, 'system:session-bootstrap', true);
+      return this.requireProfile(created.id);
+    }
+    return this.generateInternal(generatedInput, 'system:session-cache-check', false);
   }
 
   async resolve(profileId: string, institutionId: string) {
@@ -285,7 +305,7 @@ export class PetrosTopicProfilesService {
     }
     const learnTopic = await this.repo.findOrCreateLearnTopic(input);
     if (!profileRow) {
-      profileRow = await this.repo.createProfile({
+      const creation = await this.repo.createProfile({
         learnTopicId: learnTopic.id,
         topicKey: input.topicKey,
         canonicalTitle: input.canonicalTitle,
@@ -298,6 +318,8 @@ export class PetrosTopicProfilesService {
         cacheKey: trusted.cacheKey,
         invalidationInputs: trusted.invalidationInputs,
       });
+      profileRow = creation.profile;
+      if (!creation.created) return this.waitForInitialPublication(profileRow.id);
     }
     const generated = await this.generateProfile(input, trusted);
     const versions = await this.repo.listVersions(profileRow.id);
@@ -319,6 +341,19 @@ export class PetrosTopicProfilesService {
       await this.repo.publish(profileRow.id, nextVersion, refreshed.version, actor);
     }
     return this.requireProfile(profileRow.id);
+  }
+
+  private async waitForInitialPublication(profileId: string): Promise<NonNullable<ProfileRow>> {
+    const deadline = Date.now() + 30_000;
+    while (Date.now() < deadline) {
+      const profile = await this.requireProfile(profileId);
+      if (profile.publishedVersionId) return profile;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    throw new ConflictException({
+      code: 'PETROS_PROFILE_BOOTSTRAP_IN_PROGRESS',
+      message: 'The topic profile is still being initialized. Retry shortly.',
+    });
   }
 
   private async generateProfile(

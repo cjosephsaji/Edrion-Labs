@@ -1,0 +1,14 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "build"
+  ],
+  "start": "2026-10-02T11:18:50.435635+00:00",
+  "end": "2026-10-02T11:19:16.753020+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "mainParent": "284da48f4a28ef83b0ae06de2f2703a2f798d5b1",
+  "featureParent": "812577893374fd7790b9c2d24d2ecbdac84e0ffa",
+  "migrationCount": 153,
+  "publishedMainJournalUnchanged": true,
+  "migrationTagUnionPreserved": true,
+  "uniqueTagsAndContinuousIndices": true,
+  "appendedTimestampsStrictlyIncreasing": true,
+  "appendedSqlUnchangedFromParent": true,
+  "journalSha256": "f49febde6797b77090540fed76b1ef29dbd5af629402674c3aff3ebaf3d97cec"
+}

@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
  * when running `pnpm dev` from the monorepo root.
  */
 function loadWorkspacePublicEnv() {
+  if (process.env.PETROS_ISOLATED_VERIFICATION === '1') return;
   const rootEnv = join(dirname(fileURLToPath(import.meta.url)), '../../.env');
   if (!existsSync(rootEnv)) return;
   for (const line of readFileSync(rootEnv, 'utf8').split('\n')) {
@@ -34,6 +35,9 @@ loadWorkspacePublicEnv();
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  distDir: process.env.PETROS_ISOLATED_VERIFICATION === '1'
+    ? (process.env.NODE_ENV === 'development' ? '.next-petros-verification-dev' : '.next-petros-verification')
+    : '.next',
   // Workspace packages ship TS source; let Next transpile them.
   transpilePackages: [
     '@edrion/ui',

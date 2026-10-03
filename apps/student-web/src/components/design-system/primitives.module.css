@@ -1,4 +1,5 @@
 .card {
+  border-radius: var(--s-radius-card);
   position: relative;
   min-width: 0;
   border: 1px solid var(--s-bd1);
@@ -77,6 +78,7 @@
 }
 
 .pill {
+  border-radius: var(--s-radius-pill);
   display: inline-flex;
   min-height: 28px;
   align-items: center;
@@ -100,6 +102,7 @@
 .pill[data-tone='critical'] { border-color: color-mix(in srgb, var(--s-danger) 45%, var(--s-bd1)); background: var(--s-dangerSoft); color: var(--s-danger); }
 
 .statTile {
+  border-radius: var(--s-radius-card);
   display: flex;
   min-height: 132px;
   flex-direction: column;
@@ -150,6 +153,7 @@
 
 .emptyState,
 .systemState {
+  border-radius: var(--s-radius-card);
   display: grid;
   min-height: 240px;
   place-items: center;
@@ -160,6 +164,7 @@
 }
 .stateInner { max-width: 440px; }
 .stateIcon {
+  border-radius: var(--s-radius-control);
   display: inline-grid;
   width: 48px;
   height: 48px;
@@ -189,6 +194,7 @@
 
 .actionWrap { display: inline-grid; justify-items: start; gap: var(--space-2); }
 .action {
+  border-radius: var(--s-radius-control);
   display: inline-flex;
   min-height: 44px;
   align-items: center;
@@ -215,6 +221,7 @@
 .disabledReason { max-width: 34ch; color: var(--s-muted); font-size: var(--type-caption); line-height: 1.4; }
 
 .skeleton {
+  border-radius: var(--s-radius-panel);
   display: block;
   min-height: 16px;
   background: linear-gradient(90deg, var(--s-surface2) 20%, color-mix(in srgb, var(--s-bd1) 65%, white) 45%, var(--s-surface2) 70%);
@@ -222,6 +229,7 @@
   animation: skeletonShift 1.2s ease-in-out infinite;
 }
 .skeletonCard {
+  border-radius: var(--s-radius-card);
   display: grid;
   gap: var(--space-4);
   border: 1px solid var(--s-bd1);

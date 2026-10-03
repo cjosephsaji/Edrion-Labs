@@ -1,0 +1,2 @@
+$ tsc -p tsconfig.build.json && node scripts/copy-build-assets.mjs
+copy-build-assets: modules/student/knowledge/pdf-extract.cjs -> dist/apps/api/src/modules/student/knowledge/pdf-extract.cjs

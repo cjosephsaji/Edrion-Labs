@@ -52,7 +52,7 @@ export class QueueWorkers implements OnModuleInit, OnModuleDestroy {
           const handler = this.handlers.get(job.name);
           if (!handler) {
             this.logger.warn(`No handler for job ${job.name} on queue ${name}`);
-            return { ok: false, reason: 'no_handler' };
+            throw new Error(`No registered handler for ${job.name}`);
           }
           return handler(job);
         },

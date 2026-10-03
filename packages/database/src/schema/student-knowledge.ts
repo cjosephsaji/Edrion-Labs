@@ -19,6 +19,35 @@ import { independentUsers } from './users';
 import { storageObjects } from './student';
 import { learnSessions } from './learn';
 
+/** Durable preparation and dispatch outbox; source content remains in knowledge versions. */
+export const knowledgePreparations = pgTable('knowledge_preparations', {
+  id: primaryId(),
+  institutionId: uuid('institution_id').notNull().references(() => institutions.id, { onDelete: 'cascade' }),
+  materialId: uuid('material_id').notNull(), // Content-free receipt survives material deletion for admission accounting.
+  materialVersion: integer('material_version').notNull(),
+  objectId: uuid('object_id').notNull(),
+  requestedBy: uuid('requested_by').notNull(),
+  scope: jsonb('scope').$type<{ mode: 'institution' } | { mode: 'campus'; campusId: string }>().notNull(),
+  extractorVersion: text('extractor_version').notNull(),
+  state: text('state').notNull().default('queued'),
+  version: integer('version').notNull().default(1),
+  attempts: integer('attempts').notNull().default(0),
+  totalAttempts: integer('total_attempts').notNull().default(0),
+  fence: integer('fence').notNull().default(0),
+  leaseUntil: timestamp('lease_until', { withTimezone: true }),
+  nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true }).notNull().defaultNow(),
+  nextDispatchAt: timestamp('next_dispatch_at', { withTimezone: true }).notNull().defaultNow(),
+  dispatchSequence: integer('dispatch_sequence').notNull().default(0),
+  pagesDone: integer('pages_done').notNull().default(0),
+  errorCode: text('error_code'),
+  retryable: boolean('retryable').notNull().default(false),
+  ...timestamps,
+}, (t) => ({
+  publicationUq: uniqueIndex('knowledge_preparations_publication_uq').on(t.materialId, t.materialVersion, t.objectId, t.extractorVersion),
+  dueIdx: index('knowledge_preparations_due_idx').on(t.state, t.nextDispatchAt),
+  institutionIdx: index('knowledge_preparations_institution_idx').on(t.institutionId, t.createdAt),
+}));
+
 export type LibraryQuizPatterns = {
   per_question: Array<{
     question_id: string;
@@ -81,6 +110,7 @@ export const knowledgeItems = pgTable(
     ingestAttempts: integer('ingest_attempts').notNull().default(0),
     ingestErrorDetail: text('ingest_error_detail'),
     indexReady: boolean('index_ready').notNull().default(false),
+    sourceRevokedAt: timestamp('source_revoked_at', { withTimezone: true }),
     embeddingModel: text('embedding_model'),
     embeddingDimension: integer('embedding_dimension'),
     version: integer('version').notNull().default(1),
@@ -114,6 +144,52 @@ export const knowledgeItemPages = pgTable(
   (t) => ({
     itemPageUq: uniqueIndex('knowledge_item_pages_item_page_uq').on(t.itemId, t.pageIndex),
     itemIdx: index('knowledge_item_pages_item_idx').on(t.itemId),
+  }),
+);
+
+/** Content-free deletion receipt: publication retries must not recreate a removed owner. */
+export const knowledgeItemTombstones = pgTable('knowledge_item_tombstones', {
+  itemId: uuid('item_id').primaryKey(),
+  institutionId: uuid('institution_id').notNull(),
+  studentId: uuid('student_id').notNull(),
+  materialId: text('material_id').notNull(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({ ownerMaterialIdx: index('knowledge_item_tombstones_owner_material_idx').on(t.institutionId, t.studentId, t.materialId) }));
+
+/** Immutable extraction history owned by the existing knowledge item. No legacy backfill. */
+export const knowledgeItemVersions = pgTable(
+  'knowledge_item_versions',
+  {
+    id: primaryId(),
+    itemId: uuid('item_id').notNull().references(() => knowledgeItems.id, { onDelete: 'cascade' }),
+    fingerprint: text('fingerprint').notNull(),
+    ordinal: integer('ordinal').notNull(),
+    objectId: uuid('object_id').notNull(), // Retained on original deletion; reads require the live object.
+    snapshot: jsonb('snapshot').$type<Record<string, unknown>>().notNull(),
+    pageCount: integer('page_count').notNull(),
+    admissible: boolean('admissible').notNull(),
+    state: text('state').notNull().default('building'),
+    invalidatedAt: timestamp('invalidated_at', { withTimezone: true }),
+    invalidationReason: text('invalidation_reason'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    fingerprintUq: uniqueIndex('knowledge_item_versions_fingerprint_uq').on(t.itemId, t.fingerprint),
+    itemIdx: index('knowledge_item_versions_item_idx').on(t.itemId, t.createdAt),
+  }),
+);
+
+export const knowledgeItemVersionPages = pgTable(
+  'knowledge_item_version_pages',
+  {
+    id: primaryId(),
+    versionId: uuid('version_id').notNull().references(() => knowledgeItemVersions.id, { onDelete: 'cascade' }),
+    pageIndex: integer('page_index').notNull(),
+    text: text('text').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    pageUq: uniqueIndex('knowledge_item_version_pages_page_uq').on(t.versionId, t.pageIndex),
   }),
 );
 

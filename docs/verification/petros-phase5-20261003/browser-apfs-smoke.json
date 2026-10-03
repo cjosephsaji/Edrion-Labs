@@ -1,0 +1,22 @@
+{
+  "command": [
+    "env",
+    "PLAYWRIGHT_BROWSERS_PATH=/private/tmp/petros-phase5-browsers-20261003-01a0fb94",
+    "DEBUG=pw:browser",
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "node",
+    "--input-type=module",
+    "-e",
+    "import {firefox,webkit} from \"playwright-core\"; const stop=setTimeout(()=>{console.error(\"smoke deadline\");process.exit(1)},45000); for(const [name,engine] of Object.entries({firefox,webkit})){console.log(\"launch\",name);const browser=await engine.launch({headless:true,timeout:15000});console.log(\"launched\",name,browser.version());const context=await browser.newContext();console.log(\"context\",name);const page=await context.newPage();console.log(\"page\",name);await page.setContent(\"<button>Ready</button>\");console.log(name,await page.locator(\"button\").innerText());await browser.close();}clearTimeout(stop);"
+  ],
+  "start": "2026-10-03T04:21:22.830809+00:00",
+  "end": "2026-10-03T04:21:38.398886+00:00",
+  "exitCode": 1,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+  }
+}

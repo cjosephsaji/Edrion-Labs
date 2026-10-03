@@ -54,7 +54,7 @@
   align-items: center;
   gap: 9px;
   border: 1px solid var(--s-accentBd);
-  border-radius: 4px 14px 4px 4px;
+  border-radius: var(--s-radius-panel);
   background: color-mix(in srgb, var(--s-card) 94%, transparent);
   box-shadow: 0 16px 36px -24px rgb(11 74 52 / 62%);
   padding: 8px 13px;

@@ -316,6 +316,7 @@ export const courses = pgTable(
   },
   (t) => ({
     codeTermUq: uniqueIndex('courses_inst_code_term_uq').on(t.institutionId, t.code, t.termId),
+    tenantIdentity: uniqueIndex('course_identity_tenant_uq').on(t.id, t.institutionId),
   }),
 );
 

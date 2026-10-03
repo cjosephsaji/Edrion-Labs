@@ -1,0 +1,19 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "eslint",
+    "src/modules/integrations/petros-phase4-browser-journey.mjs",
+    "src/modules/student/petros-continuity/petros-continuity.service.ts",
+    "src/modules/student/petros-companion/petros-companion.service.ts"
+  ],
+  "start": "2026-10-02T16:11:09.709524+00:00",
+  "end": "2026-10-02T16:11:11.611959+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+  }
+}

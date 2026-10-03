@@ -1,3 +1,5 @@
+import { PetrosContinuityModule } from '../petros-continuity/petros-continuity.module';
+import { KnowledgeDocumentModule } from '../knowledge/knowledge-document.module';
 import { PetrosMentorService } from './petros-mentor.service';
 import { StudentMaterialsService } from '../materials/student-materials.service';
 import { PetrosReflectionModule } from '../petros-reflection/petros-reflection.module';
@@ -17,7 +19,7 @@ import { PetrosCompanionService } from './petros-companion.service';
 import { PetrosStudentContextService } from './petros-student-context.service';
 
 @Module({
-  imports: [PetrosReflectionModule, FeatureControlsModule, PetrosAiRoutingModule, PetrosSessionIntentModule],
+  imports: [PetrosContinuityModule, KnowledgeDocumentModule,PetrosReflectionModule, FeatureControlsModule, PetrosAiRoutingModule, PetrosSessionIntentModule],
   controllers: [StudentPetrosCompanionController],
   providers: [
     PetrosCompanionRepository,

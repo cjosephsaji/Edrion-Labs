@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Check, Download, LockKeyhole, Trash2 } from 'lucide-react';
 import { ActionButton, Card, PageHeader } from '@/components/design-system';
 import { PetrosSettingsSection } from '@/components/petros/petros-settings-section';
+import { LowBandwidthControl, PetrosMemoryControls } from '@/components/petros/petros-continuity';
 import { useStudentMe } from '@/lib/hooks';
 import { useStudentPreferences, type StudentTheme, type TextSize } from '@/lib/preferences';
 
@@ -52,7 +53,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (che
 
 function Segmented<T extends string>({ values, value, onChange, label }: { values: T[]; value: T; onChange: (value: T) => void; label: string }) {
   return (
-    <div className="inline-flex border border-[var(--s-bd1)] bg-[var(--s-surface2)] p-[2px]" aria-label={label}>
+    <div className="inline-flex rounded-[var(--s-radius-panel)] border border-[var(--s-bd1)] bg-[var(--s-surface2)] p-[2px]" aria-label={label}>
       {values.map((item) => (
         <button
           key={item}
@@ -77,6 +78,9 @@ export default function SettingsPage() {
   const college = Boolean(me?.programmeName);
   const institutionLabel = college ? 'College' : 'School';
   const institutionName = me?.programmeName || me?.className || `Your ${institutionLabel.toLowerCase()}`;
+  useEffect(() => {
+    if (window.location.hash === '#petros-memory') setSection('petros');
+  }, []);
   const sections: Array<{ id: Section; label: string }> = [
     { id: 'appearance', label: 'Appearance' },
     ...(me?.kind === 'institutional' ? [{ id: 'petros' as const, label: 'Petros' }] : []),
@@ -106,7 +110,7 @@ export default function SettingsPage() {
         </nav>
 
         <div className="min-w-0 flex-1">
-          {section === 'petros' ? <PetrosSettingsSection /> : null}
+          {section === 'petros' ? <><PetrosSettingsSection /><PetrosMemoryControls /></> : null}
           {section === 'appearance' ? (
             <Card>
               <h2 className="font-display text-[15px] font-semibold text-[var(--s-ink)]">Theme</h2>
@@ -119,12 +123,12 @@ export default function SettingsPage() {
                       key={item.id}
                       type="button"
                       onClick={() => preferences.setTheme(item.id)}
-                      className="overflow-hidden text-left"
+                      className="overflow-hidden rounded-[var(--s-radius-panel)] text-left"
                       style={{ border: `${active ? 2.5 : 1.5}px solid ${active ? item.palette.accent : item.palette.border}` }}
                       aria-pressed={active}
                     >
                       <span className="block p-3" style={{ background: item.palette.page }}>
-                        <span className="block p-2.5" style={{ background: item.palette.card, border: `1px solid ${item.palette.border}` }}>
+                        <span className="block rounded-[var(--s-radius-control)] p-2.5" style={{ background: item.palette.card, border: `1px solid ${item.palette.border}` }}>
                           <span className="block h-[7px] w-3/5 rounded-full" style={{ background: item.palette.ink }} />
                           <span className="mt-1.5 block h-[5px] w-4/5 rounded-full" style={{ background: item.palette.muted }} />
                           <span className="mt-2 inline-block rounded-full px-2 py-1 font-mono-ui text-[7px] font-bold" style={{ background: item.palette.accent, color: item.palette.page }}>EDRION</span>
@@ -239,6 +243,7 @@ export default function SettingsPage() {
           ) : null}
         </div>
       </div>
+      <LowBandwidthControl />
     </div>
   );
 }

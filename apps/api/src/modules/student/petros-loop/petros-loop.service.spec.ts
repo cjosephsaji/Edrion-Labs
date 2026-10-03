@@ -45,6 +45,9 @@ function makeHarness(
     commandState?: 'started' | 'completed' | 'in_flight';
     answerable?: boolean;
     documentAnswerable?: boolean;
+    documentSource?: boolean;
+    questionExecutionEnabled?: boolean;
+    knowledgePolicyEnabled?: boolean;
   } = {},
 ) {
   const now = new Date('2026-08-08T08:00:00.000Z');
@@ -90,7 +93,7 @@ function makeHarness(
     topicProfileId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     topicProfileVersionId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
     resolvedTopicProfile: publishedProfile,
-    sourceContext: null,
+    sourceContext: options.documentSource ? { door: 'uploaded_document' } : null,
     topicProfile: {
       profileId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       canonicalVersionId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
@@ -165,6 +168,7 @@ function makeHarness(
     listStretches: vi.fn(async () => []),
     listDetours: vi.fn(async () => []),
     findCurrentBlock: vi.fn(async () => blocks.find((block) => block.status === 'current')),
+    assertNoPendingQuestionExecution: vi.fn(async () => undefined),
     beginCommand: vi.fn(async () =>
       options.commandState === 'completed'
         ? { state: 'completed', row: { id: 'command' }, response: completedDocument }
@@ -387,6 +391,11 @@ function makeHarness(
     topicProfiles as never,
     learnerModels as never,
     audit as never,
+    undefined,
+    {
+      PETROS_DOCUMENT_QUESTION_EXECUTION_ENABLED: options.questionExecutionEnabled ?? false,
+      PETROS_DOCUMENT_KNOWLEDGE_POLICY_ENABLED: options.knowledgePolicyEnabled ?? false,
+    } as never,
   );
   return {
     service,
@@ -403,6 +412,32 @@ function makeHarness(
 }
 
 describe('PetrosLoopService coordination', () => {
+  it('V11-01 gates document composer calls before profile or command mutation', async () => {
+    const durable = makeHarness({ documentSource: true, questionExecutionEnabled: true });
+    await expect(durable.service.assertComposerQuestionAllowed(principal, SESSION_ID)).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'PETROS_QUESTION_EXECUTION_REQUIRED' }),
+    });
+    expect(durable.repo.assertNoPendingQuestionExecution).not.toHaveBeenCalled();
+    expect(durable.topicProfiles.resolveForSession).not.toHaveBeenCalled();
+    expect(durable.repo.beginCommand).not.toHaveBeenCalled();
+
+    const policy = makeHarness({ documentSource: true, knowledgePolicyEnabled: true });
+    await expect(policy.service.assertComposerQuestionAllowed(principal, SESSION_ID)).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'PETROS_KNOWLEDGE_DURABLE_EXECUTION_REQUIRED' }),
+    });
+    expect(policy.topicProfiles.resolveForSession).not.toHaveBeenCalled();
+    expect(policy.repo.beginCommand).not.toHaveBeenCalled();
+  });
+
+  it('V11-01 keeps non-document sessions eligible even when both document gates are enabled', async () => {
+    const compatible = makeHarness({ documentSource: false, questionExecutionEnabled: true, knowledgePolicyEnabled: true });
+    await expect(compatible.service.assertComposerQuestionAllowed(principal, SESSION_ID))
+      .resolves.toMatchObject({ id: SESSION_ID });
+    expect(compatible.repo.assertNoPendingQuestionExecution).toHaveBeenCalledOnce();
+    expect(compatible.topicProfiles.resolveForSession).not.toHaveBeenCalled();
+    expect(compatible.repo.beginCommand).not.toHaveBeenCalled();
+  });
+
   it('calls PLAN and RENDER separately and creates one traceable block', async () => {
     const harness = makeHarness();
     const result = await harness.service.continue(

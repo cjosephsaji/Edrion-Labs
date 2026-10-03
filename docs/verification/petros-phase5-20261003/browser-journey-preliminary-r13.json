@@ -1,0 +1,19 @@
+{
+  "command": [
+    "env",
+    "PLAYWRIGHT_BROWSERS_PATH=/Volumes/Chris/.petros-phase5-browsers-20261003",
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "node",
+    "src/modules/integrations/petros-phase5-browser-journey.mjs"
+  ],
+  "start": "2026-10-03T04:14:32.637813+00:00",
+  "end": "2026-10-03T04:15:38.328260+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+  }
+}

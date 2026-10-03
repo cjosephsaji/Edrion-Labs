@@ -1,0 +1,21 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/integrations/petros-phase5-recovery.integration.spec.ts",
+    "--pool=forks",
+    "--poolOptions.forks.singleFork=true",
+    "--testTimeout=30000"
+  ],
+  "start": "2026-10-03T03:31:30.080124+00:00",
+  "end": "2026-10-03T03:31:34.055937+00:00",
+  "exitCode": 1,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+  }
+}

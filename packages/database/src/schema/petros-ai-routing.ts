@@ -244,10 +244,12 @@ export const petrosAiUsageEvents = pgTable(
     cacheStatus: text('cache_status').notNull().default('miss'),
     experimentKey: text('experiment_key'),
     metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
+    budgetReservationId: uuid('budget_reservation_id'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
     requestIdx: index('petros_ai_usage_events_request_idx').on(t.requestId),
+    reservationUniq: uniqueIndex('petros_ai_usage_events_reservation_uniq').on(t.budgetReservationId),
     createdIdx: index('petros_ai_usage_events_created_idx').on(t.createdAt),
     functionCreatedIdx: index('petros_ai_usage_events_function_created_idx').on(
       t.functionId,
@@ -265,6 +267,36 @@ export const petrosAiUsageEvents = pgTable(
       t.studentId,
       t.createdAt,
     ),
+  }),
+);
+
+/** One durable document-question provider attempt. The usage event settles this hold atomically. */
+export const petrosAiAttemptReservations = pgTable(
+  'petros_ai_attempt_reservations',
+  {
+    id: primaryId(),
+    commandId: uuid('command_id').notNull(),
+    sessionId: uuid('session_id').notNull(),
+    executionFence: integer('execution_fence').notNull(),
+    attemptKey: text('attempt_key').notNull(),
+    requestId: uuid('request_id').notNull(),
+    institutionId: uuid('institution_id').notNull(),
+    studentId: uuid('student_id').notNull(),
+    functionId: uuid('function_id').notNull().references(() => petrosAiFunctions.id, { onDelete: 'restrict' }),
+    providerId: uuid('provider_id').notNull().references(() => petrosAiProviders.id, { onDelete: 'restrict' }),
+    modelId: uuid('model_id').notNull().references(() => petrosAiModels.id, { onDelete: 'restrict' }),
+    reservedMicros: bigint('reserved_micros', { mode: 'number' }).notNull(),
+    state: text('state').notNull().default('reserved'),
+    settledMicros: bigint('settled_micros', { mode: 'number' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    providerDispatchedAt: timestamp('provider_dispatched_at', { withTimezone: true }),
+    settledAt: timestamp('settled_at', { withTimezone: true }),
+  },
+  (t) => ({
+    attemptUniq: uniqueIndex('petros_ai_attempt_reservations_key_uniq').on(t.attemptKey),
+    ownerIdx: index('petros_ai_attempt_reservations_owner_idx').on(t.institutionId, t.studentId, t.createdAt),
+    providerIdx: index('petros_ai_attempt_reservations_provider_idx').on(t.providerId, t.createdAt),
+    commandIdx: index('petros_ai_attempt_reservations_command_idx').on(t.commandId),
   }),
 );
 
@@ -300,4 +332,5 @@ export type NewPetrosAiRoutingRule = typeof petrosAiRoutingRules.$inferInsert;
 export type PetrosAiFunctionVersion = typeof petrosAiFunctionVersions.$inferSelect;
 export type PetrosAiUsageEvent = typeof petrosAiUsageEvents.$inferSelect;
 export type NewPetrosAiUsageEvent = typeof petrosAiUsageEvents.$inferInsert;
+export type PetrosAiAttemptReservation = typeof petrosAiAttemptReservations.$inferSelect;
 export type PetrosAiBudgetPolicy = typeof petrosAiBudgetPolicies.$inferSelect;

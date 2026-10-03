@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-10-03T13:28:19.297047+00:00",
+  "path": "/private/tmp/petros-phase6-browsers-20261003-01a10162",
+  "purpose": "Task-owned browser test runtime only",
+  "executables": [
+    {
+      "path": "firefox-1532/firefox/Nightly.app/Contents/MacOS/firefox",
+      "sha256": "cc46f4ac861dbeef56bf718d9e3a54c3c5f9e7365270b19a771db20132d0cb1b"
+    },
+    {
+      "path": "webkit-2311/pw_run.sh",
+      "sha256": "a85baad3d8c07173ac387a59b41500c382b21ed692afe0964d29aac247ccc63b"
+    }
+  ],
+  "activeRuntimeProcesses": false,
+  "removed": true
+}

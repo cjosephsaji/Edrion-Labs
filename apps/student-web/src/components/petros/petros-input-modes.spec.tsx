@@ -21,6 +21,9 @@ vi.mock('@/lib/api-client', () => ({
   formatApiError: (error: unknown) => (error instanceof Error ? error.message : 'Request failed'),
 }));
 
+vi.mock('./petros-continuity', () => ({PetrosContinuityOverview: () => null}));
+vi.mock('./petros-document-study', () => ({PetrosDocumentStudy: () => <section aria-label="Source preparation">Current sources</section>}));
+
 describe('Petros input modes', () => {
   beforeEach(() => {
     mocks.post.mockReset();
@@ -29,13 +32,15 @@ describe('Petros input modes', () => {
     mocks.id = 0;
   });
 
-  it('exposes five native-feeling, keyboard-selectable modes and a camera/file fallback', () => {
+  it('starts with source preparation and retains keyboard-selectable capture modes', () => {
     const { container } = render(<PetrosInputModes />);
-    expect(screen.getAllByRole('tab')).toHaveLength(5);
-    expect(screen.getByRole('tab', { name: /Snap a question/ })).toHaveAttribute(
+    expect(screen.getAllByRole('tab')).toHaveLength(6);
+    expect(screen.getByRole('tab', { name: /Study your sources/ })).toHaveAttribute(
       'aria-selected',
       'true',
     );
+    fireEvent.keyDown(screen.getByRole('tab', {name: /Study your sources/}), {key: 'ArrowRight'});
+    expect(screen.getByRole('tab', {name: /Snap a question/})).toHaveFocus();
     const file = container.querySelector('input[type="file"]');
     expect(file).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp');
     expect(file).toHaveAttribute('capture', 'environment');

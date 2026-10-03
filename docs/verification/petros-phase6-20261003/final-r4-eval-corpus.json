@@ -1,0 +1,24 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/learn-evals",
+    "exec",
+    "tsx",
+    "src/cli.ts",
+    "run",
+    "--suite",
+    "full",
+    "--mode",
+    "fixture",
+    "--run-id",
+    "phase6-20261003-frozen-r4"
+  ],
+  "start": "2026-10-03T12:51:28.878398+00:00",
+  "end": "2026-10-03T12:51:31.846134+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+  }
+}

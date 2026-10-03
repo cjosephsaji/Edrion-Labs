@@ -1,6 +1,26 @@
-import { boolean, index, integer, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, foreignKey, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { actorColumns, deliveryStatusEnum, primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
+import { institutionIdentityProviders } from './federation';
+
+/** Immutable, reviewed mapping revisions under an EXISTING connection. No sync or auth grants. */
+export const integrationProviderMappings = pgTable('integration_provider_mappings', {
+  id: primaryId(),
+  institutionId: uuid('institution_id').notNull().references(() => institutions.id),
+  connectionId: uuid('connection_id').notNull(),
+  namespace: text('namespace').notNull(),
+  entityKind: text('entity_kind').notNull(),
+  externalId: text('external_id').notNull(),
+  version: integer('version').notNull(),
+  commandId: uuid('command_id').notNull(),
+  requestHash: text('request_hash').notNull(),
+  record: jsonb('record').$type<Record<string, unknown>>().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  connectionTenant: foreignKey({ columns: [t.connectionId, t.institutionId], foreignColumns: [institutionIdentityProviders.id, institutionIdentityProviders.institutionId] }),
+  identity: uniqueIndex('integration_provider_mapping_uq').on(t.connectionId, t.namespace, t.entityKind, t.externalId, t.version),
+  command: uniqueIndex('integration_provider_mapping_command_uq').on(t.connectionId, t.commandId),
+}));
 
 /**
  * Outbound webhook endpoints (Phase 10f-4). Platform- or institution-scoped HTTP targets that

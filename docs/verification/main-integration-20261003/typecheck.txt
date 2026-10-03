@@ -1,0 +1,7 @@
+Scope: 3 of 26 workspace projects
+packages/schemas typecheck$ tsc --noEmit
+packages/schemas typecheck: Done
+apps/api typecheck$ tsc --noEmit
+apps/student-web typecheck$ tsc --noEmit
+apps/student-web typecheck: Done
+apps/api typecheck: Done

@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-25T16:23:56.275124+00:00",
+  "finishedAt": "2026-09-25T16:23:58.320594+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/institution-web",
+    "typecheck"
+  ],
+  "exitCode": 0,
+  "log": "final-r3-institution-web-typecheck-20260925.log"
+}

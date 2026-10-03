@@ -1,0 +1,19 @@
+{
+  "command": [
+    "env",
+    "PETROS_PHASE6_TEACHER_ONLY=1",
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "node",
+    "src/modules/integrations/petros-phase6-capability-journey.mjs"
+  ],
+  "start": "2026-10-03T12:08:37.616814+00:00",
+  "end": "2026-10-03T12:09:24.767594+00:00",
+  "exitCode": 1,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+  }
+}

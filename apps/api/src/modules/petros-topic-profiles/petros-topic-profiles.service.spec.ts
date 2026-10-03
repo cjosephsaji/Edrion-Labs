@@ -14,6 +14,40 @@ const INSTITUTION_B = '44444444-4444-4444-8444-444444444444';
 const EMPLOYEE_ID = '55555555-5555-4555-8555-555555555555';
 
 describe('PetrosTopicProfilesService', () => {
+  it('coalesces concurrent session bootstraps for the same topic identity', async () => {
+    const canonical = stage4ProfileFixture('photosynthesis', INSTITUTION_A).profile;
+    const profile = profileRow();
+    const published = versionRow(3, 'published', 'human_edit', canonical);
+    let releaseGeneration!: (value: typeof profile) => void;
+    const generation = new Promise<typeof profile>((resolve) => {
+      releaseGeneration = resolve;
+    });
+    const repo = {
+      findByIdentity: vi.fn(async () => undefined),
+      findProfile: vi.fn(async () => profile),
+      findPublishedVersion: vi.fn(async () => published),
+      findPublishedOverride: vi.fn(async () => undefined),
+      touchCacheHit: vi.fn(async () => undefined),
+    };
+    const service = makeService(repo);
+    const generateInternal = vi
+      .spyOn(service as never, 'generateInternal')
+      .mockReturnValue(generation as never);
+
+    const request = {
+      institutionId: INSTITUTION_A,
+      topic: 'Photosynthesis',
+      profileContext: {},
+    };
+    const first = service.resolveForSession(request);
+    const second = service.resolveForSession(request);
+    await vi.waitFor(() => expect(generateInternal).toHaveBeenCalledTimes(1));
+    releaseGeneration(profile);
+
+    await expect(Promise.all([first, second])).resolves.toHaveLength(2);
+    expect(repo.findByIdentity).toHaveBeenCalledTimes(1);
+  });
+
   it('applies a published override only to its institution', async () => {
     const canonical = stage4ProfileFixture('photosynthesis', INSTITUTION_A).profile;
     const profile = profileRow();

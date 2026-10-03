@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { rosterMappingContextSchema } from './provider-mapping';
 
 export const upsertOidcProviderSchema = z.object({
   kind: z.literal('oidc'),
@@ -49,8 +50,9 @@ export const oidcCallbackSchema = z.object({
 export type OidcCallbackInput = z.infer<typeof oidcCallbackSchema>;
 
 export const onerosterCsvImportSchema = z.object({
-  csv: z.string().min(1),
-});
+  csv: z.string().min(1).max(2_000_000),
+  mappingContext: rosterMappingContextSchema.optional(),
+}).strict();
 
 export type OnerosterCsvImportInput = z.infer<typeof onerosterCsvImportSchema>;
 

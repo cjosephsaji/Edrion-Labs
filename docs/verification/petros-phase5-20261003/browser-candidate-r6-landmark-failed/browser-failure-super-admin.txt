@@ -1,0 +1,148 @@
+Edrion
+Super Admin
+AI ADMINISTRATION
+AI Control Centre
+Petros AI Routing
+Petros Quality
+Learner Models
+Petros Artifacts
+Petros Doors
+Petros Modalities
+Teach-it-back
+Petros Reflection
+Institutional Loop
+AI Audit
+SP
+Synthetic Phase 5 Operations Reviewer
+phase5-operations@example.test
+Sign out
+Petros Quality
+
+
+Synthetic evaluation only · no student data
+Operations visibility
+
+Queue recovery and AI attempt health · aggregate-only · last 24 hours
+
+Refresh
+
+Only bounded counts, safe categories, latency summaries and cost totals are shown. Learner identifiers, source text, answers, memories and drafts are excluded.
+
+Release gate status
+
+Admissions disabled · pilot acceptance pending
+
+No evaluated release is registered. New prompt activation is blocked.
+
+Retrieval and teaching latency
+
+Recent completed owner calls in this API process; restarts clear samples. Concurrent replicas must be aggregated by the operational telemetry sink.
+
+retrieval_search: 1 recent samples · p50 0.8 ms · p95 0.8 ms · failures 1
+
+source_resolve: 512 recent samples · p50 1.6 ms · p95 6.7 ms · failures 1
+
+teaching_continue: 0 recent samples · p50 unavailable · p95 unavailable · failures 0
+
+Provider attempts
+
+2
+
+0 retries · 0 failures
+
+Cancelled commands
+
+0
+
+0 reservations outstanding · all ages
+
+Accounted cost
+
+$0.00
+
+Estimated $0.00 · actual $0.00
+
+Response latency
+
+1 / 1 ms
+
+p50 / p95 · n=2
+
+Durable work and recovery
+Queue available
+Question execution
+Queued
+0
+Running
+0
+Expired leases
+0
+Pending dispatch
+0
+Source preparation
+Queued
+1
+Running
+0
+Expired leases
+0
+Pending dispatch
+1
+
+Reservations in 24h: 0 created · 0 settled · 0 ambiguous. 0 outstanding holds and $0.00 held cost include all ages so old unreconciled reservations remain visible.
+
+Background queue aggregate counts
+Queue	Waiting	Active	Delayed	Failed
+imports	0	0	0	0
+exports	0	0	0	0
+reports	0	0	0	0
+notifications	0	0	1	0
+billing-sync	0	0	0	0
+ai	0	0	0	0
+maintenance	0	0	4	0
+Failure categories
+
+No categorized events in this window.
+
+Denied admission categories
+
+No categorized events in this window.
+
+Sampled 3/10/2026, 2:03:04 PM. Latency includes completed provider attempts only and does not represent end-to-end lesson latency or a production SLO. Completed provider-attempt rows only; this is not end-to-end learner latency or a production SLO.
+
+Configured source: missing · release: missing
+
+TEACHING QUALITY HARNESS
+
+Catch regressions before learners feel them.
+
+Compare immutable baselines across topics, learner policies, prompt/schema/profile versions, correctness, variety, recovery, artifacts, cost and latency.
+
+Isolation
+
+evaluation source
+
+Corpus
+
+30 frozen cases
+
+Spend
+
+—
+
+Gate
+
+—
+
+Runs
+0
+GateAll gates
+pass
+warn
+fail
+ModeAll modes
+fixture
+live
+VersionAll versions
+
+No quality evaluations have been recorded. Release activation remains blocked until current engineering evidence is registered.

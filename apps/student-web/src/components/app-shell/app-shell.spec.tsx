@@ -2,19 +2,24 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { StudentPreferencesProvider } from '@/lib/preferences';
+import { StudentApiProvider } from '@/lib/api-client';
 import { AppShell } from './app-shell';
 
-const mocks = vi.hoisted(() => ({ permissions: ['*'], pathname: '/progress' }));
+const mocks = vi.hoisted(() => ({ permissions: ['*'], pathname: '/progress', institutionId: 'institution-a', studentId: 'student-a' }));
 vi.mock('next/navigation', () => ({ usePathname: () => mocks.pathname, useRouter: () => ({ push: vi.fn() }) }));
 vi.mock('@/lib/hooks', () => ({
-  useStudentMe: () => ({ data: { kind: 'institutional', programmeName: 'Computer Science', fullName: 'Test Student', permissions: mocks.permissions, surfaces: {} } }),
+  useStudentMe: () => ({ data: { kind: 'institutional', institutionId: mocks.institutionId, studentId: mocks.studentId, programmeName: 'Computer Science', fullName: 'Test Student', permissions: mocks.permissions, surfaces: {} } }),
   useStudentLogout: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 vi.mock('@/components/petros/petros-companion-context', () => ({ PetrosCompanionProvider: ({ children }: { children: React.ReactNode }) => children }));
 vi.mock('@/components/petros/petros-companion-panel', () => ({ PetrosCompanionPanel: () => null }));
+vi.mock('@/components/petros/petros-program-workspace', () => ({ PetrosProgramWorkspaceProvider: ({ children }: { children: React.ReactNode }) => children }));
+vi.mock('@/components/petros/petros-mentor', () => ({ PetrosMentor: () => null }));
+const offlineNotes = vi.hoisted(() => ({ clearQueuedNotesForOwner: vi.fn(async () => undefined) }));
+vi.mock('@/lib/petros-offline-notes', () => offlineNotes);
 
 function Portal() {
-  return <StudentPreferencesProvider><AppShell><h1>Progress</h1></AppShell></StudentPreferencesProvider>;
+  return <StudentApiProvider baseUrl="http://localhost:3017"><StudentPreferencesProvider><AppShell><h1>Progress</h1></AppShell></StudentPreferencesProvider></StudentApiProvider>;
 }
 function directory() {
   fireEvent.click(within(screen.getByRole('navigation', { name: 'Student portal' })).getByRole('button', { name: 'Explore' }));
@@ -30,6 +35,9 @@ describe('Explore quick navigation', () => {
     });
     mocks.permissions = ['*'];
     mocks.pathname = '/progress';
+    mocks.institutionId = 'institution-a';
+    mocks.studentId = 'student-a';
+    offlineNotes.clearQueuedNotesForOwner.mockClear();
     vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
   });
 
@@ -41,7 +49,7 @@ describe('Explore quick navigation', () => {
     fireEvent.click(within(menu).getByRole('button', { name: 'Add Progress to quick navigation' }));
     expect(within(menu).getByRole('button', { name: 'Remove Progress from quick navigation' })).toHaveAttribute('aria-pressed', 'true');
     expect(within(menu).getByText('Quick navigation · 7 starred')).toBeVisible();
-    for (const name of ['Student portal', 'Quick navigation']) {
+    for (const name of ['Student portal']) {
       expect(within(screen.getByRole('navigation', { name })).getByRole('link', { name: 'Progress' })).toHaveAttribute('href', '/progress');
     }
     first.unmount();
@@ -83,5 +91,13 @@ describe('Explore quick navigation', () => {
 
     const nav = screen.getByRole('navigation', { name: 'Learn navigation' });
     expect(within(nav).getByRole('link', { name: 'Notes' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('clears the prior owner queue when the signed-in student changes', async () => {
+    const view = render(<Portal />);
+    await waitFor(() => expect(offlineNotes.clearQueuedNotesForOwner).not.toHaveBeenCalled());
+    mocks.studentId = 'student-b';
+    view.rerender(<Portal />);
+    await waitFor(() => expect(offlineNotes.clearQueuedNotesForOwner).toHaveBeenCalledWith({ institutionId: 'institution-a', studentId: 'student-a' }));
   });
 });

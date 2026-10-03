@@ -1,0 +1,16 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "node",
+    "src/modules/integrations/petros-phase3-browser-journey.cjs"
+  ],
+  "start": "2026-10-02T05:45:20.293650+00:00",
+  "end": "2026-10-02T05:46:06.735813+00:00",
+  "exitCode": 1,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

@@ -1,3 +1,4 @@
+import { PortalMaterialPreparationJobs } from './portal-material-preparation.jobs';
 import {
   BadRequestException,
   Body,
@@ -5,6 +6,8 @@ import {
   Delete,
   Get,
   HttpCode,
+  Header,
+  ParseUUIDPipe,
   Param,
   Patch,
   Post,
@@ -16,6 +19,10 @@ import type { Request } from 'express';
 import { ApiTags } from '@nestjs/swagger';
 import {
   createClassMaterialSchema,
+  republishClassMaterialSchema,
+  petrosPreparationCommandSchema,
+  type PetrosPreparationCommand,
+  type RepublishClassMaterialInput,
   createClassNoteSchema,
   createStreamPostSchema,
   noteListQuerySchema,
@@ -29,6 +36,10 @@ import {
   type PublishClassNoteInput,
   type UpdateClassNoteInput,
   type VersionedDeleteInput,
+  petrosMaterialCorrectionPreviewSchema,
+  petrosMaterialCorrectionReviewSchema,
+  type PetrosMaterialCorrectionPreviewInput,
+  type PetrosMaterialCorrectionReviewInput,
 } from '@edrion/schemas';
 import type { InstitutionPrincipal, InstitutionScope } from '@edrion/auth';
 import { Public } from '../../../common/guards/auth.guard';
@@ -70,7 +81,7 @@ function readRawBody(req: Request, max: number): Promise<Buffer> {
 @SkipRateLimit()
 @UseGuards(InstitutionAuthGuard, InstitutionPermissionsGuard)
 export class PortalCourseContentController {
-  constructor(private readonly svc: PortalCourseContentService) {}
+  constructor(private readonly svc: PortalCourseContentService, private readonly preparation: PortalMaterialPreparationJobs) {}
 
   private ctx(p: InstitutionPrincipal, s: InstitutionScope, r: EdrionRequestContext): PortalActionContext {
     return { principal: p, scope: s, request: r };
@@ -133,6 +144,29 @@ export class PortalCourseContentController {
     return this.svc.list('materials', this.ctx(p, s, r), q);
   }
 
+  @Get('materials/:id/corrections')
+  @RequireInstitutionPermissions('class_content.manage')
+  corrections(@Param('id', ParseUUIDPipe) id: string, @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope, @ReqContext() r: EdrionRequestContext) {
+    return this.svc.listMaterialCorrections(this.ctx(p, s, r), id);
+  }
+
+  @Post('materials/:id/correction-preview')
+  @RequireInstitutionPermissions('class_content.manage')
+  correctionPreview(@Param('id', ParseUUIDPipe) id: string, @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope, @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(petrosMaterialCorrectionPreviewSchema)) body: PetrosMaterialCorrectionPreviewInput) {
+    return this.svc.previewMaterialCorrection(this.ctx(p, s, r), id, body);
+  }
+
+  @Post('materials/:id/corrections/:correctionId/review')
+  @RequireInstitutionPermissions('class_content.manage')
+  correctionReview(@Param('id', ParseUUIDPipe) id: string, @Param('correctionId', ParseUUIDPipe) correctionId: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal, @CurrentScope() s: InstitutionScope, @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(petrosMaterialCorrectionReviewSchema)) body: PetrosMaterialCorrectionReviewInput) {
+    return this.svc.reviewMaterialCorrection(this.ctx(p, s, r), id, correctionId, body);
+  }
+
   @Post('materials/upload')
   @RequireInstitutionPermissions('class_content.manage')
   async uploadMaterial(
@@ -178,6 +212,45 @@ export class PortalCourseContentController {
       mimeType,
       buffer,
     );
+  }
+
+  @Post('materials/:id/publish')
+  @RequireInstitutionPermissions('class_content.manage')
+  republishMaterial(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(republishClassMaterialSchema)) body: RepublishClassMaterialInput,
+  ) {
+    return this.svc.republishMaterial(this.ctx(p, s, r), id, body);
+  }
+
+  @Get('materials/:id/preparation')
+  @Header('Cache-Control', 'private, no-store')
+  @RequireInstitutionPermissions('class_content.manage')
+  preparationStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+  ) { return this.preparation.status(this.ctx(p, s, r), id); }
+
+  @Post('materials/:id/preparation/:preparationId/:action')
+  @HttpCode(200)
+  @Header('Cache-Control', 'private, no-store')
+  @RequireInstitutionPermissions('class_content.manage')
+  preparationCommand(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('preparationId', ParseUUIDPipe) preparationId: string,
+    @Param('action') action: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(petrosPreparationCommandSchema)) body: PetrosPreparationCommand,
+  ) {
+    if (action !== 'cancel' && action !== 'retry') throw new BadRequestException('Unsupported preparation command');
+    return this.preparation.command(this.ctx(p, s, r), id, preparationId, body.version, action);
   }
 
   @Post('materials')

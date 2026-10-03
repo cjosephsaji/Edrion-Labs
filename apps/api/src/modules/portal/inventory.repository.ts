@@ -22,7 +22,7 @@ import type { CampusFilter, Page } from './academics.repository';
 export interface InventoryItemRow extends InventoryItem {
   belowReorder: boolean;
 }
-export interface InventoryMovementRow extends InventoryMovement {}
+export type InventoryMovementRow = InventoryMovement;
 
 /**
  * Typed SQL for the institution-portal inventory tables (items + movements). Same contract as the

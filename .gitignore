@@ -42,3 +42,7 @@ test-results/
 
 # cookies
 cookies.txt
+
+# Disposable Petros full-app verification output
+.next-petros-verification/
+.next-petros-verification-dev/

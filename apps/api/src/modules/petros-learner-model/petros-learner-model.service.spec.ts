@@ -5,6 +5,7 @@ import {
   type PetrosNormalizedLearningEvidence,
 } from '@edrion/schemas';
 import { PetrosLearnerModelService } from './petros-learner-model.service';
+import { assessmentEvidenceFixture, criterionResultFixture } from '../../../../../packages/schemas/src/__fixtures__/petros-assessment';
 
 const scope = {
   institutionId: '33333333-3333-4333-8333-333333333333',
@@ -12,6 +13,38 @@ const scope = {
 };
 
 describe('PetrosLearnerModelService ingestion safety', () => {
+  it('normalizes new objective evidence into the existing projection while retaining its typed assessment', async () => {
+    const repo = repository();
+    repo.insertEvidence.mockResolvedValue({ inserted: true, row: { id: 'new-event' } });
+    const service = new PetrosLearnerModelService(repo as never, { logAudit: vi.fn() } as never);
+    const input = assessmentEvidenceFixture();
+    await expect(service.ingest(scope, input)).resolves.toMatchObject({ accepted: true });
+    expect(repo.insertEvidence).toHaveBeenCalledWith(expect.objectContaining({
+      schemaVersion: 'petros.learner-evidence.v1', outcome: 'correct', creditBasisPoints: 10000, assessment: input.assessment,
+    }));
+  });
+
+  it.each(['criterion_profile', 'mixed', 'unavailable', 'review', 'hinted', 'exposed', 'repeated', 'external'])(
+    'explicitly declines %s before any learner or projection write', async kind => {
+      const repo = repository();
+      const service = new PetrosLearnerModelService(repo as never, { logAudit: vi.fn() } as never);
+      const input = assessmentEvidenceFixture(); const a = input.assessment;
+      if (a.result.kind !== 'objective') throw new Error('fixture');
+      const objective = a.result;
+      const observed = { basis: 'system_observed' as const, actor: { kind: 'system' as const, id: 'petros' }, method: 'history', recordedAt: input.occurredAt };
+      if (kind === 'criterion_profile') a.result = criterionResultFixture();
+      if (kind === 'mixed') a.result = { kind: 'mixed', objective, criteria: criterionResultFixture() };
+      if (kind === 'unavailable' && a.result.kind === 'objective') a.result.judgment = { status: 'not_evaluated', reason: 'evaluator_unavailable' };
+      if (kind === 'review' && a.result.kind === 'objective') a.result.provenance.review = 'required';
+      if (kind === 'hinted') a.conditions.petrosAssistance = [{ ...observed, value: { hintCount: 1, suppliedAnswer: false } }];
+      if (kind === 'exposed') a.conditions.answerExposure = [{ ...observed, value: 'exposed' }];
+      if (kind === 'repeated') a.conditions.attempt = [{ ...observed, value: 'repeat_equivalent' }];
+      if (kind === 'external') a.conditions.externalAssistance = [{ ...observed, value: 'declared', basis: 'self_reported', actor: { kind: 'learner', id: 'synthetic' } }];
+      await expect(service.ingest(scope, input)).resolves.toMatchObject({ accepted: false, reason:
+        ['criterion_profile', 'mixed'].includes(kind) ? 'qualitative_assessment_disabled' : kind === 'unavailable' ? 'assessment_not_evaluated' : kind === 'review' ? 'assessment_review_required' : kind === 'repeated' ? 'repeated_assessment' : 'assisted_assessment' });
+      expect(repo.insertEvidence).not.toHaveBeenCalled(); expect(repo.replaceDerived).not.toHaveBeenCalled();
+    });
+
   it('is idempotent and recomputes only for a newly inserted source event', async () => {
     const row = { id: '11111111-1111-4111-8111-111111111111' };
     const repo = repository();
@@ -29,6 +62,20 @@ describe('PetrosLearnerModelService ingestion safety', () => {
       duplicate: true,
     });
     expect(repo.replaceDerived).toHaveBeenCalledTimes(1);
+  });
+
+  it('validates the whole batch before writing and rejects corrupt projection data during rebuild', async () => {
+    const repo = repository();
+    const service = new PetrosLearnerModelService(repo as never, { logAudit: vi.fn() } as never);
+    const input = assessmentEvidenceFixture();
+    await expect(service.ingestMany(scope, [input, { ...input, assessment: { script: 'unsafe' } } as never])).rejects.toThrow();
+    expect(repo.insertEvidence).not.toHaveBeenCalled();
+    const row = { ...evidence(), id: 'persisted', classificationStatus: 'ready', occurredAt: new Date(input.occurredAt),
+      outcome: 'wrong', creditBasisPoints: 0, assessment: input.assessment };
+    repo.listEvidence.mockResolvedValue([row] as never);
+    repo.insertEvidence.mockResolvedValue({ inserted: true, row });
+    await expect(service.ingest(scope, input)).rejects.toMatchObject({ response: { code: 'PETROS_ASSESSMENT_PROJECTION_MISMATCH' } });
+    expect(repo.replaceDerived).not.toHaveBeenCalled();
   });
 
   it('rejects synthetic evaluation evidence before any student-scoped write', async () => {

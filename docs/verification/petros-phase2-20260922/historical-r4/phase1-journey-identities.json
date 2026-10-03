@@ -1,0 +1,16 @@
+{
+  "sourceLog": "final-r4-api-closure-20260925.log",
+  "synthetic": true,
+  "runs": [
+    {
+      "institutionId": "e1da7453-dca0-4e0b-aca6-6fe2a42d2d73",
+      "studentId": "46ce4542-d9bb-40bc-92ae-2e16fcd6e76d",
+      "courseId": "c440fb55-bbe9-436d-99c9-714b37926ad4",
+      "providerId": "3adac414-395c-4465-ae19-1493b614f06b",
+      "sourceId": "ec4e0073-0cb2-4682-b494-432769c8cd23",
+      "intentId": "1b2744e0-7bec-443f-85e3-a32fcd54ad15",
+      "sessionId": "c6a83c74-58e2-426c-b68a-fcc84bc8fd37",
+      "durableQuestionKey": "7b8dcdc0-5096-4c3a-af53-0907b73a5717"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+# Petros Phase 5 decisions
+
+3 October 2026. Engineering only; real pilot acceptance remains pending.
+
+- Entry SHA matches Phase 4 `2ae29edfafa19c3e4712aa2eb2419c883ff9afdd99a92b07d1e8dbcbcd205e40`. This permits a recorded entry comparison, not inheritance after new edits.
+- Extend existing quality/routing/audit/usage/queue owners. Existing synthetic PLAN/RENDER driver remains labelled legacy supporting evidence; release-quality evidence must exercise persisted production owners.
+- Keep deterministic assertions, controlled-model outputs and qualified human judgments distinct. Synthetic pack qualification/review is fixture authority only; no real educator, learning efficacy or fairness acceptance is inferred.
+- Release manifests contain references, versions and digests, never transcripts, raw source text, private memories or unsubmitted drafts. Reports are engineering evidence only. A passing bundle cannot authorize a pilot.
+- Activation requires a matching current implementation/configuration, passing production-path evaluation, bounded cost and an exact compatible rollback target. Disablement closes admissions without destroying evidence or historical citations. Database downgrade is a separate destructive action and is not an operational rollback.
+- Stable cohort assignment uses canonical institution/learner identifiers and a versioned salt/experiment. Real eligibility and consent remain external; real admissions and collection stay default-off. Synthetic instrumentation is opt-in inside disposable fixtures and uses allowlisted content-free events.
+- Retain the Phase 2 candidate scope: introductory projectile motion, adults 18+/English, conservative source/assistance/sharing defaults. These are candidate decisions, not real enrollment or curriculum authority.
+- Native institutional scope needs no partner adapter. New guardian sharing, partner delivery/grades, independent accounts, full offline and generated executable extensions remain disabled and tested. No Phase 6 capability is introduced.
+- Browser viewport/keyboard checks are software evidence. Physical devices, screen readers, assistive technology, real speech and human educational/accessibility judgment require actual equipment and people; prepare protocols and leave them pending.
+
+## Reviewed integration repairs
+
+Release configuration hashes include model cost/provider options, provider capabilities/priority, route overrides, function/global rules and budget policies. The exact recorded rollback prompt is usable after candidate disable only while current identities, candidate/rollback hashes, configuration, report quality and both expiries remain valid; otherwise keep capability/admissions disabled and prepare a fresh evaluated bundle. Disable never deletes evidence.
+
+Operational aggregates use a narrow fixed-output SECURITY DEFINER function, because raw preparation/command/reservation RLS correctly hides other owners. Both narrow Phase5 projections require a migration owner with BYPASSRLS or superuser authority and fail explicitly otherwise. PUBLIC execute stays revoked during grant replay. Restricted app role remains NOBYPASSRLS. Runtime latency telemetry stores only bounded process-local numeric samples (512 per operation); restarts clear samples and no production SLO is accepted.
+
+The legacy quality evaluator and fixture/live CI remain supporting previews. A separate secret-free production-owner CI job now runs disposable Phase5 source/quality/recovery/release/privacy/operations fixtures. CI has not been run remotely in this task. No externally certified evaluator or real educator judgment exists.
+
+The styled operations journey exposed an app-shell notification request for an `ai.view`-only employee to a `platform.dashboard.view` endpoint. Notifications now mount only with current permission (or platform-owner authority); the fixture keeps its narrow role. The missing automatic favicon request has an explicit empty response. These are observed operator usability repairs, not a student redesign. Offline page departure may park an active lesson; the journey now exercises actual durable pause, Resume and Refresh controls before reconciliation instead of assuming a keepalive request was lost.
+
+Proposed operator investigation thresholds are conservative engineering triggers only: any expired work lease, outstanding ambiguous reservation, failed release gate, unavailable queue, or unreconciled attempt opens a review; queue visibility has a 1.5-second bounded wait and latency keeps 512 samples. They do not establish production SLOs, pilot stopping rules or a production cost budget. Release maximum cost and validity windows must come from an authorized versioned report/configuration; actual pilot owners must assign their own thresholds in the acceptance packet.
+
+The WebKit software journey found that pointer activation need not focus the Expand button. Workspace actions now capture the exact triggering element before expansion and restore it after close and the busy-state commit; the regression begins with focus on My notes. This preserves owner-authoritative commands and pending-action controls. The primary reviews and reruns the actual styled journey independently.
+
+Existing Phase 4 built-in prompt versions retain their bounded compatibility path when no release record exists. Every new administrative activation requires a current bundle. Versions recorded in a bundle, including its rollback target, recheck release authority at dispatch/cache/reservation/settlement boundaries. This compatibility exception cannot enable new learner admissions or pilot instrumentation; their independent defaults remain off.
+
+The authenticated operations accessibility check found a nested main landmark in the quality page inside the app-shell main. The quality content now uses a named section; the browser gate asserts one main landmark. Styled development-app navigation waits for readiness and retries only WebKit's observed read-only navigation-interruption error, at most three attempts; final memory, authority, URL-surface and page-error checks still have to pass. These runner recoveries are recorded, not model/provider retries or physical accessibility acceptance.

@@ -1,0 +1,14 @@
+{
+  "command": [
+    "python3",
+    "docs/verification/petros-phase6-20261003/run-isolated-portal-web.py",
+    "institution-web"
+  ],
+  "start": "2026-10-03T12:27:36.191760+00:00",
+  "end": "2026-10-03T12:32:21.773692+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+  }
+}

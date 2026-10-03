@@ -3,8 +3,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Topbar } from '@/components/app-shell/topbar';
-import { usePortalClient } from '@/lib/portal-client';
+import { formatPortalError, usePortalClient } from '@/lib/portal-client';
 import { useScope } from '@/lib/scope';
+import { PROVIDER_MAPPING_VERSION, rosterMappingContextSchema } from '@edrion/schemas';
 
 type Provider = {
   id: string;
@@ -26,8 +27,9 @@ export default function FederationSettingsPage() {
   const [ssoUrl, setSsoUrl] = useState('');
   const [idpCertificate, setIdpCertificate] = useState('');
   const [csv, setCsv] = useState('');
-  const [onerosterUrl, setOnerosterUrl] = useState('');
-  const [onerosterToken, setOnerosterToken] = useState('');
+  const [mappingConnectionId, setMappingConnectionId] = useState('');
+  const [mappingNamespace, setMappingNamespace] = useState('');
+  const [upstreamRevision, setUpstreamRevision] = useState('');
 
   const providers = useQuery({
     queryKey: ['portal', 'federation', 'idp'],
@@ -68,34 +70,28 @@ export default function FederationSettingsPage() {
   });
 
   const importCsv = useMutation({
-    mutationFn: () => client.post('/portal/federation/roster/oneroster/import', scope, { csv }),
-  });
-
-  const onerosterRest = useMutation({
-    mutationFn: () =>
-      client.post('/portal/federation/roster/oneroster/sync', scope, {
-        baseUrl: onerosterUrl,
-        token: onerosterToken,
-      }),
-  });
-
-  const cleverSync = useMutation({
-    mutationFn: () => client.post('/portal/federation/roster/clever/sync', scope, {}),
-  });
-
-  const classlinkSync = useMutation({
-    mutationFn: () => client.post('/portal/federation/roster/classlink/sync', scope, {}),
+    mutationFn: () => {
+      const mappingContext = mappingConnectionId ? rosterMappingContextSchema.parse({
+        schemaVersion: PROVIDER_MAPPING_VERSION, connectionId: mappingConnectionId,
+        namespace: mappingNamespace, upstreamRevision,
+      }) : undefined;
+      return client.request('/portal/federation/roster/oneroster/import', scope, { method: 'POST',
+        headers: { 'x-petros-provider-mapping': PROVIDER_MAPPING_VERSION }, body: JSON.stringify({ csv, mappingContext }) });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['portal', 'federation', 'jobs'] }),
   });
 
   const jobs = useQuery({
     queryKey: ['portal', 'federation', 'jobs'],
-    queryFn: () => client.get<unknown[]>('/portal/federation/roster/jobs', scope),
+    queryFn: () => client.request<unknown[]>('/portal/federation/roster/jobs', scope, { method: 'GET',
+      headers: { 'x-petros-provider-mapping': PROVIDER_MAPPING_VERSION } }),
   });
 
   return (
     <>
       <Topbar title="SSO & roster" />
       <div className="flex flex-1 flex-col gap-4 p-5 lg:p-6">
+        <p className="text-sm text-text-secondary">Federated sign-in is unavailable until its authentication review is complete. Connection configuration and mapping review do not enable sign-in.</p>
         <div className="rounded-xl border border-border bg-surface p-4">
           <div className="flex gap-2">
             <button type="button" className={`rounded-full px-3 py-1 text-xs ${idpKind === 'oidc' ? 'bg-primary text-primary-foreground' : 'bg-surface-elevated'}`} onClick={() => setIdpKind('oidc')}>OIDC</button>
@@ -130,29 +126,36 @@ export default function FederationSettingsPage() {
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-xl border border-border bg-surface p-4">
             <p className="text-sm font-medium text-text-primary">OneRoster CSV</p>
-            <textarea className="mt-2 h-20 w-full rounded-md border border-border bg-background p-2 text-xs font-mono" value={csv} onChange={(e) => setCsv(e.target.value)} />
-            <button type="button" className="mt-2 rounded-md border border-border px-3 py-1.5 text-xs" onClick={() => importCsv.mutate()}>Import</button>
+            <p className="text-xs text-text-secondary">Preview only. No people, roles or enrollments are changed. Mapping preview requires enabled compatibility support and institution-wide owner permissions.</p>
+            <label className="mt-2 block text-xs">Existing connection for mapping preview (optional)
+              <select className="block w-full rounded-md border border-border bg-background p-2" value={mappingConnectionId} onChange={(e) => setMappingConnectionId(e.target.value)}>
+                <option value="">Counts only · unmapped</option>
+                {(providers.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </label>
+            {mappingConnectionId ? <>
+              <label className="mt-2 block text-xs">Publisher namespace<input className="block w-full rounded-md border border-border bg-background p-2" value={mappingNamespace} onChange={(e) => setMappingNamespace(e.target.value)} /></label>
+              <label className="mt-2 block text-xs">Upstream revision<input className="block w-full rounded-md border border-border bg-background p-2" value={upstreamRevision} onChange={(e) => setUpstreamRevision(e.target.value)} /></label>
+            </> : null}
+            <textarea aria-label="OneRoster users CSV" className="mt-2 h-20 w-full rounded-md border border-border bg-background p-2 text-xs font-mono" value={csv} onChange={(e) => setCsv(e.target.value)} />
+            <button type="button" className="mt-2 rounded-md border border-border px-3 py-1.5 text-xs" disabled={importCsv.isPending} onClick={() => importCsv.mutate()}>Preview</button>
+            {importCsv.error ? <p role="alert">{formatPortalError(importCsv.error, 'Could not preview the mappings.')}</p> : null}
             {importCsv.data != null ? <pre className="mt-2 text-xs">{JSON.stringify(importCsv.data, null, 2)}</pre> : null}
           </div>
           <div className="rounded-xl border border-border bg-surface p-4">
             <p className="text-sm font-medium text-text-primary">OneRoster REST</p>
-            <input className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="Base URL (…/ims/oneroster/v1p1)" value={onerosterUrl} onChange={(e) => setOnerosterUrl(e.target.value)} />
-            <input className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-xs" placeholder="Bearer token" type="password" value={onerosterToken} onChange={(e) => setOnerosterToken(e.target.value)} />
-            <button type="button" className="mt-2 rounded-md border border-border px-3 py-1.5 text-xs" onClick={() => onerosterRest.mutate()}>Sync</button>
-            {onerosterRest.data != null ? <pre className="mt-2 text-xs">{JSON.stringify(onerosterRest.data, null, 2)}</pre> : null}
+            <p className="mt-2 text-xs text-text-secondary">Unavailable. External roster synchronization is disabled. Use OneRoster CSV to preview roster records.</p>
           </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-xl border border-border bg-surface p-4">
             <p className="text-sm font-medium text-text-primary">Clever</p>
-            <button type="button" className="mt-2 rounded-md border border-border px-3 py-1.5 text-xs" onClick={() => cleverSync.mutate()}>Run sync</button>
-            {cleverSync.data != null ? <pre className="mt-2 text-xs">{JSON.stringify(cleverSync.data, null, 2)}</pre> : null}
+            <p className="mt-2 text-xs text-text-secondary">Unavailable. External roster synchronization is disabled.</p>
           </div>
           <div className="rounded-xl border border-border bg-surface p-4">
             <p className="text-sm font-medium text-text-primary">ClassLink</p>
-            <button type="button" className="mt-2 rounded-md border border-border px-3 py-1.5 text-xs" onClick={() => classlinkSync.mutate()}>Run sync</button>
-            {classlinkSync.data != null ? <pre className="mt-2 text-xs">{JSON.stringify(classlinkSync.data, null, 2)}</pre> : null}
+            <p className="mt-2 text-xs text-text-secondary">Unavailable. External roster synchronization is disabled.</p>
           </div>
         </div>
 

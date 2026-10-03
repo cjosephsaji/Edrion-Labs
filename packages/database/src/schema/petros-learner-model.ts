@@ -51,6 +51,7 @@ export const petrosLearnerEvidenceEvents = pgTable(
     environment: text('environment').notNull().default('production'),
     synthetic: boolean('synthetic').notNull().default(false),
     metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
+    assessment: jsonb('assessment').$type<Record<string, unknown> | null>(),
     occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
     ingestedAt: timestamp('ingested_at', { withTimezone: true }).notNull().defaultNow(),
   },

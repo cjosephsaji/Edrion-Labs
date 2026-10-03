@@ -12,6 +12,7 @@ import type { ApiEnv } from '@edrion/config';
 import { API_ENV } from '../../../common/tokens';
 import { RedisService } from '../../../common/redis/redis.service';
 import { STUDENT_RATE_LIMIT_KEY } from './student.decorators';
+import { questionDenial } from '../../petros-institutional/petros-admission';
 import type { StudentPrincipal } from '../student.types';
 
 interface StudentRateLimitOverride {
@@ -69,7 +70,8 @@ export class StudentRateLimitGuard implements CanActivate {
       const retryAfter = (await this.redis.ttl(key)) || windowSeconds;
       res.setHeader('Retry-After', String(retryAfter));
       throw new HttpException(
-        { code: 'RATE_LIMITED', message: 'Too many requests. Slow down and retry.' },
+        { code: 'RATE_LIMITED', message: 'Too many requests. Slow down and retry.',
+          ...(policyScope === 'StudentPetrosQuestionExecutionController' ? { meta: { admission: questionDenial('RATE_LIMITED') } } : {}) },
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }

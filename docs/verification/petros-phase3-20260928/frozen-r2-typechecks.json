@@ -1,0 +1,22 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/schemas",
+    "--filter",
+    "@edrion/config",
+    "--filter",
+    "@edrion/database",
+    "--filter",
+    "@edrion/api",
+    "--filter",
+    "@edrion/student-web",
+    "typecheck"
+  ],
+  "start": "2026-10-02T06:10:55.616017+00:00",
+  "end": "2026-10-02T06:11:27.601534+00:00",
+  "exitCode": 2,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

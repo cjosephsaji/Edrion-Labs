@@ -17,8 +17,9 @@ import { newIdempotencyKey, useStudentApi, formatApiError } from '@/lib/api-clie
 import styles from './petros-input-modes.module.css';
 import { PetrosTeachBack } from './petros-teach-back';
 import { PageHeader } from '@/components/design-system';
+import { PetrosDocumentStudy } from './petros-document-study';
 
-type Mode = 'snap' | 'handwriting' | 'voice' | 'five-minute' | 'teach-back';
+type Mode = 'documents' | 'snap' | 'handwriting' | 'voice' | 'five-minute' | 'teach-back';
 type ProcessView = {
   media: PetrosMediaObject;
   imageUnderstanding: unknown | null;
@@ -29,6 +30,7 @@ type ProcessView = {
 };
 
 const MODES: Array<{ id: Mode; title: string; promise: string }> = [
+  {id: 'documents', title: 'Study your sources', promise: 'Select a document or compare passages from several sources.'},
   {
     id: 'snap',
     title: 'Snap a question',
@@ -60,7 +62,7 @@ export function PetrosInputModes() {
   const search = useSearchParams();
   const initial = search.get('mode');
   const [mode, setMode] = useState<Mode>(
-    MODES.some((item) => item.id === initial) ? (initial as Mode) : 'snap',
+    MODES.some((item) => item.id === initial) ? (initial as Mode) : 'documents',
   );
   const activeMode = MODES.find((item) => item.id === mode) ?? MODES[0]!;
 
@@ -69,7 +71,7 @@ export function PetrosInputModes() {
       <PageHeader
         eyebrow="Petros · AI tutor"
         title="Learn with Petros"
-        description="Bring a real question or piece of work. Petros will teach it with you, one visible step at a time."
+        description="Choose your starting point. Check the source, set a goal and learn one idea at a time."
         actions={<div className={styles.headerLinks}><Link href="/notes"><BookOpen aria-hidden="true" />Notes</Link><Link href="/flashcards"><CreditCard aria-hidden="true" />Flashcards</Link></div>}
       />
 
@@ -81,15 +83,15 @@ export function PetrosInputModes() {
           <span><Sparkles aria-hidden="true" /> Petros is ready</span>
           <h2>{activeMode.title}</h2>
           <p>{activeMode.promise}</p>
-          <small>Choose a starting point below. The full teaching window opens when your material is ready.</small>
-          <button type="button" onClick={() => document.getElementById(`mode-${mode}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+          <small>Your lesson keeps its source references and a place to return to.</small>
+          <button type="button" onClick={() => { const panel = document.getElementById(`mode-${mode}`); panel?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); panel?.querySelector<HTMLElement>('button, input, textarea, a')?.focus({preventScroll:true}); }}>
             Open this teaching window <ArrowRight aria-hidden="true" />
           </button>
         </div>
       </section>
 
       <section className={styles.modeChooser} aria-labelledby="choose-mode-title">
-        <div className={styles.modeHeading}><span>Start a lesson</span><h2 id="choose-mode-title">How do you want to show Petros?</h2></div>
+        <div className={styles.modeHeading}><span>Start a lesson</span><h2 id="choose-mode-title">Choose your starting point</h2></div>
         <div className={styles.tabs} role="tablist" aria-label="Choose a Petros input mode">
         {MODES.map((item, index) => (
           <button
@@ -99,8 +101,16 @@ export function PetrosInputModes() {
             role="tab"
             aria-selected={mode === item.id}
             aria-controls={`mode-${item.id}`}
+            tabIndex={mode === item.id ? 0 : -1}
             className={styles.tab}
             onClick={() => setMode(item.id)}
+            onKeyDown={event => {
+              if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+              event.preventDefault();
+              const next = event.key === 'Home' ? 0 : event.key === 'End' ? MODES.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + MODES.length) % MODES.length;
+              setMode(MODES[next]!.id);
+              document.getElementById(`mode-tab-${MODES[next]!.id}`)?.focus();
+            }}
           >
             <small>{String(index + 1).padStart(2, '0')}</small>
             <strong>{item.title}</strong>
@@ -109,6 +119,7 @@ export function PetrosInputModes() {
         ))}
         </div>
 
+      {mode === 'documents' && <PetrosDocumentStudy />}
       {mode === 'snap' && <ImageMode key="snap" mode="snap" />}
       {mode === 'handwriting' && <ImageMode key="handwriting" mode="handwriting" />}
       {mode === 'voice' && <VoiceMode />}

@@ -1,0 +1,17 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/student-web",
+    "exec",
+    "vitest",
+    "run",
+    "src/lib/petros-offline-notes.spec.ts"
+  ],
+  "start": "2026-10-02T11:24:54.239369+00:00",
+  "end": "2026-10-02T11:24:56.212534+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

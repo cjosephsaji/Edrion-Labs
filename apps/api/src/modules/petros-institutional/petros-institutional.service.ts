@@ -5,15 +5,16 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type { AuditWriter } from '@edrion/audit';
+import type { ApiEnv } from '@edrion/config';
 import type { InstitutionPrincipal } from '@edrion/auth';
 import {
   PETROS_INSTITUTIONAL_FUNCTIONS,
   PETROS_INSTITUTIONAL_POLICY_SCHEMA_VERSION,
   petrosInstitutionalReleaseGateSchema,
-  petrosParentDigestCommandSchema,
   petrosPolicyVersionSchema,
   petrosTeacherHandoffDraftSchema,
   type PetrosHomeworkMatchInput,
@@ -29,15 +30,20 @@ import {
   type PetrosResolvedPolicy,
   type PetrosTeacherHandoffCreateInput,
   type PetrosTeacherHandoffUpdateInput,
+  type PetrosInterventionPreviewInput,
+  type PetrosInterventionActionInput,
+  petrosKnowledgePolicySchema,
+  createAssignmentSchema,
+  type PetrosKnowledgeMode,
+  type PetrosKnowledgePolicy,
 } from '@edrion/schemas';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { AUDIT_WRITER } from '../../common/tokens';
+import { API_ENV, AUDIT_WRITER } from '../../common/tokens';
 import { baseAudit, type ActionContext } from '../../common/action-context';
 import { PetrosAiGatewayService, type PetrosAiExecuteResult } from '../petros-ai-routing/petros-ai-gateway.service';
 import { basePortalAudit, type PortalActionContext } from '../portal/portal-action-context';
 import type { GuardianContext } from '../parent-portal/guardian-context';
-import { assertWard } from '../parent-portal/guardian-scope.guard';
 import type { InstitutionalStudentPrincipal } from '../student/student.types';
 import {
   buildClassSignal,
@@ -45,15 +51,21 @@ import {
   decideSyllabus,
   defaultInstitutionPolicy,
   resolveInstitutionPolicy,
-  sanitizeParentDigest,
   sanitizeTeacherSummary,
   stablePolicyHash,
+  knowledgePolicyHash,
+  narrowKnowledgeMode,
+  syllabusKnowledgeMode,
   type PolicyVersionRecord,
 } from './petros-institutional.engine';
 import { PetrosInstitutionalRepository } from './petros-institutional.repository';
+import { knowledgeDenied } from './petros-admission';
+import { AssignmentsService } from '../portal/assignments.service';
+import { PetrosCohortEvidenceAuthority } from './petros-cohort-evidence-authority';
 
 const SYSTEM_ACTOR = '00000000-0000-4000-8000-000000000000';
-const CLASS_SIGNAL_ALGORITHM = 'petros.institutional.class-signals.v1';
+const CLASS_SIGNAL_ALGORITHM = 'petros.institutional.class-signals.v2';
+
 
 const parentDigestContentSchema = z.object({
   sourcePeriod: z.object({ start: z.string().datetime(), end: z.string().datetime() }).strict(),
@@ -69,6 +81,9 @@ export class PetrosInstitutionalService {
     private readonly repo: PetrosInstitutionalRepository,
     private readonly gateway: PetrosAiGatewayService,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
+    @Optional() @Inject(API_ENV) private readonly env?: ApiEnv,
+    @Optional() private readonly assignments?: AssignmentsService,
+    @Optional() private readonly cohortEvidence?: PetrosCohortEvidenceAuthority,
   ) {}
 
   async policyDashboard(ctx: PortalActionContext) {
@@ -178,6 +193,7 @@ export class PetrosInstitutionalService {
   }
 
   async publishPolicy(ctx: PortalActionContext, id: string, input: PetrosPolicyPublishInput) {
+    await this.repo.lockKnowledgeAuthority(ctx.principal.institutionId);
     const existing = await this.repo.findPolicy(ctx.principal.institutionId, id);
     if (!existing) throw notFound('PETROS_POLICY_NOT_FOUND');
     this.assertPolicyScope(ctx.principal, policyScope(existing));
@@ -190,6 +206,7 @@ export class PetrosInstitutionalService {
   }
 
   async rollbackPolicy(ctx: PortalActionContext, input: PetrosPolicyRollbackInput) {
+    await this.repo.lockKnowledgeAuthority(ctx.principal.institutionId);
     const target = await this.repo.findPolicy(ctx.principal.institutionId, input.targetVersionId);
     if (!target) throw notFound('PETROS_POLICY_NOT_FOUND');
     this.assertPolicyScope(ctx.principal, policyScope(target));
@@ -236,6 +253,74 @@ export class PetrosInstitutionalService {
     return { snapshotId: snapshot.id, ...resolved, midSessionPolicyChangesDeferred: true };
   }
 
+  /** Document commands revalidate current binding rules; the older teaching disclosure stays historical. */
+  async documentKnowledgePolicy(scope: { institutionId: string; studentId: string }, sessionId: string, requestedMode?: PetrosKnowledgeMode): Promise<PetrosKnowledgePolicy> {
+    await this.repo.lockKnowledgeAuthority(scope.institutionId);
+    const context = await this.repo.documentKnowledgeContext(scope, sessionId);
+    if (!context || context.missingBinding) throw knowledgeDenied('PETROS_KNOWLEDGE_AUTHORITY_UNAVAILABLE');
+    if (context.learning) {
+      if (!this.env?.PETROS_ASSIGNMENT_LEARNING_ENABLED) throw knowledgeDenied('PETROS_ASSIGNMENT_LEARNING_DISABLED');
+      if (requestedMode && requestedMode !== context.learning.policy.resourceMode)
+        throw knowledgeDenied('PETROS_ASSIGNMENT_RESOURCE_RESTRICTED');
+      requestedMode = context.learning.policy.resourceMode;
+    }
+    const [versions, student, historical] = await Promise.all([
+      this.ensurePolicy(scope.institutionId, SYSTEM_ACTOR), this.repo.studentPolicyFixture(scope.institutionId, scope.studentId),
+      this.repo.findSessionSnapshot(scope.institutionId, scope.studentId, sessionId),
+    ]);
+    if (!student) throw knowledgeDenied('PETROS_KNOWLEDGE_AUTHORITY_UNAVAILABLE');
+    let policy: PetrosResolvedPolicy | null = null;
+    if (versions.length) {
+      try { policy = resolveInstitutionPolicy({ institutionId: scope.institutionId, versions: versions as PolicyVersionRecord[], restrictKnowledge: true, fixture: {
+        ...student, subjectId: context.subjectId, studentId: scope.studentId, language: 'en', accessibility: [],
+      } }); } catch { throw knowledgeDenied('PETROS_KNOWLEDGE_AUTHORITY_UNAVAILABLE'); }
+    }
+    const config = policy?.config ?? defaultInstitutionPolicy();
+    const historicalMode = historical ? syllabusKnowledgeMode(historical.resolvedPolicy.config.syllabus) : syllabusKnowledgeMode(config.syllabus);
+    const ceiling = narrowKnowledgeMode([syllabusKnowledgeMode(config.syllabus), ...(historicalMode ? [historicalMode] : [])]);
+    if (requestedMode && narrowKnowledgeMode([ceiling, requestedMode]) !== requestedMode)
+      throw knowledgeDenied('PETROS_KNOWLEDGE_MODE_DENIED');
+    // No generated answer can safely guarantee hints-only disclosure in this bounded increment.
+    if (context.answerRestricted || context.restrictions.some(row => row.aiPolicy !== 'full')) throw knowledgeDenied('PETROS_ASSIGNMENT_ANSWER_RESTRICTED');
+    const source = context.session.sourceContext!;
+    const historicalSyllabus = historical?.resolvedPolicy.config.syllabus;
+    if (config.syllabus.maxDepth === 0 || historicalSyllabus?.maxDepth === 0) throw knowledgeDenied('PETROS_KNOWLEDGE_DEPTH_RESTRICTED');
+    if (historicalSyllabus?.approvedSourceIds.length && !historicalSyllabus.approvedSourceIds.includes(context.sourceId))
+      throw knowledgeDenied('PETROS_KNOWLEDGE_SOURCE_RESTRICTED');
+    const approved = config.syllabus.approvedSourceIds;
+    if (approved.length && !approved.includes(context.sourceId)) throw knowledgeDenied('PETROS_KNOWLEDGE_SOURCE_RESTRICTED');
+    const topicKey = (context.session.topicContext as { topicKey?: string } | null)?.topicKey;
+    if ([config.syllabus.topicKeys, historicalSyllabus?.topicKeys ?? []].some(keys => keys.length && (!topicKey || !keys.includes(topicKey))))
+      throw knowledgeDenied('PETROS_KNOWLEDGE_TOPIC_RESTRICTED');
+    const mode = requestedMode ?? ceiling;
+    const explanation = mode === 'source_bound'
+      ? 'Source-bound: exact passages from the selected material only. Missing evidence does not permit outside knowledge.'
+      : mode === 'source_primary'
+        ? 'Source-primary: material passages are labelled separately from general knowledge, analogy and inference. Outside content is not verified by your document.'
+        : 'General learning: outside knowledge is permitted and labelled; it is not verified by your document. No external search is enabled.';
+    const result = petrosKnowledgePolicySchema.parse({ schemaVersion: 'petros.knowledge-policy.v1', mode, requestedMode: requestedMode ?? null,
+      policyVersionIds: policy?.policyVersionIds ?? [],
+      authorityHash: knowledgePolicyHash({ versions: policy?.policyVersionIds ?? [], syllabus: config.syllabus, homework: config.homework,
+        historicalMode, restrictions: context.restrictions, subjectId: context.subjectId }),
+      sourceId: context.sourceId, sourceFingerprint: source.sourceFingerprint,
+      pages: [...new Set((source.citations as Array<{ page: number }>).map(citation => citation.page))].sort((a, b) => a - b),
+      maximumDepth: Math.min(config.syllabus.maxDepth, historicalSyllabus?.maxDepth ?? config.syllabus.maxDepth),
+      subjectId: context.subjectId, assignmentRestrictions: context.restrictions,
+      retrieval: { designatedSource: true, external: false }, authority: 'designated_material_with_institution_restrictions', explanation });
+    if (context.learning && knowledgePolicyHash(result) !== knowledgePolicyHash(context.learning.institutionalPolicySnapshot))
+      throw knowledgeDenied('PETROS_ASSIGNMENT_POLICY_CHANGED');
+    return result;
+  }
+
+  async assertDocumentKnowledgePolicy(scope: { institutionId: string; studentId: string }, sessionId: string, raw: unknown) {
+    const parsed = petrosKnowledgePolicySchema.safeParse(raw);
+    if (!parsed.success) throw knowledgeDenied('PETROS_KNOWLEDGE_POLICY_INVALID');
+    const pinned = parsed.data;
+    const current = await this.documentKnowledgePolicy(scope, sessionId, pinned.requestedMode ?? undefined);
+    if (knowledgePolicyHash(current) !== knowledgePolicyHash(pinned)) throw knowledgeDenied('PETROS_KNOWLEDGE_POLICY_CHANGED');
+    return pinned;
+  }
+
   async acknowledgeDisclosure(principal: InstitutionalStudentPrincipal, sessionId: string) {
     const policy = await this.resolveForStudentSession(principal, sessionId);
     const receipt = await this.repo.acknowledgeDisclosure(principal.institutionId, principal.studentId, policy.snapshotId);
@@ -265,6 +350,7 @@ export class PetrosInstitutionalService {
   }
 
   async correctHomeworkMatch(principal: InstitutionalStudentPrincipal, sessionId: string, input: PetrosHomeworkCorrectionInput) {
+    await this.repo.lockKnowledgeAuthority(principal.institutionId);
     const policy = await this.resolveForStudentSession(principal, sessionId);
     if (!policy.config.homework.studentCorrectionAllowed) {
       throw new ForbiddenException({ code: 'PETROS_HOMEWORK_CORRECTION_DISABLED', message: 'False-match correction is unavailable under the disclosed policy.' });
@@ -408,28 +494,79 @@ export class PetrosInstitutionalService {
   }
 
   async teacherSignals(ctx: PortalActionContext) {
+    this.requirePhase4Enabled();
+    await this.repo.lockKnowledgeAuthority(ctx.principal.institutionId);
     const teacherId = await this.requireTeacher(ctx.principal);
     const rows = await this.repo.listTeacherSignals(ctx.principal.institutionId, teacherId);
+    const seen = new Set<string>();
+    const latestRows = rows.filter((row) => {
+      const key = `${row.classId}:${row.subjectId}:${row.conceptKey}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
     const versions = await this.ensurePolicy(ctx.principal.institutionId, SYSTEM_ACTOR);
     const visible = [];
-    for (const row of rows) {
+    const liveByScope = new Map<string, { events: Array<{ eventId: string; conceptId: string; studentId: string; outcome: string; occurredAt: Date }>;
+      eligibleCount: number; unavailable: boolean }>();
+    for (const row of latestRows) {
       const fixture = await this.repo.classPolicyFixture(ctx.principal.institutionId, row.classId);
       if (!fixture) continue;
       const policy = resolveInstitutionPolicy({ institutionId: ctx.principal.institutionId, versions, fixture: { ...fixture, subjectId: row.subjectId, studentId: null, language: 'en', accessibility: [] } });
-      if (policy.config.classSignals.enabled) visible.push(row);
+      if (!policy.config.classSignals.enabled) continue;
+      const key = `${row.classId}:${row.subjectId}`;
+      let live = liveByScope.get(key);
+      if (!live) {
+        const windowStart = new Date(Date.now() - policy.config.classSignals.freshnessDays * 86_400_000);
+        const authority = this.cohortEvidence ? await this.cohortEvidence.current(ctx.principal.institutionId, row.classId, row.subjectId, windowStart,
+          (scope, sessionId) => this.documentKnowledgePolicy(scope, sessionId)) : null;
+        live = { events: authority?.events ?? [], eligibleCount: await this.repo.classSubjectEligibleCount(ctx.principal.institutionId, row.classId, row.subjectId),
+          unavailable: !authority?.authorityAvailable || Boolean(authority?.truncated) };
+        liveByScope.set(key, live);
+      }
+      const conceptRows = live.events.filter((event) => event.conceptId === row.conceptKey);
+      const currentAffected = conceptRows.filter((event) => event.outcome !== 'correct');
+      const affectedLearners = new Set(currentAffected.map((event) => event.studentId)).size;
+      const coveredLearners = new Set(conceptRows.map((event) => event.studentId)).size;
+      const freshestCurrent = currentAffected.length ? Math.max(...currentAffected.map((event) => event.occurredAt.getTime())) : 0;
+      const currentWindowStart = Date.now() - policy.config.classSignals.freshnessDays * 86_400_000;
+      const currentSuppressed = live.unavailable || live.eligibleCount < policy.config.classSignals.minimumCohortSize ||
+        affectedLearners < policy.config.classSignals.minimumCohortSize || currentAffected.length < policy.config.classSignals.minimumIndependentEvidence ||
+        freshestCurrent < currentWindowStart || row.suppressed;
+      visible.push({ ...row, currentSuppressed, currentThreshold: policy.config.classSignals.minimumCohortSize,
+        currentEligibleCount: live.eligibleCount, currentEvidenceCoveredCount: coveredLearners,
+        currentAffectedLearnerCount: affectedLearners, currentAttemptCount: conceptRows.length,
+        currentSuccessCount: conceptRows.filter((event) => event.outcome === 'correct').length,
+        currentFreshestAt: freshestCurrent ? new Date(freshestCurrent) : row.freshestAt });
     }
-    await this.portalAudit(ctx, 'petros.class_signals.view', teacherId, { signalCount: visible.length, hiddenByPolicy: rows.length - visible.length, learnerContentInspected: false });
+    const complementarySuppression = new Set(visible.filter((row) => row.currentSuppressed)
+      .map((row) => `${row.classId}:${row.subjectId}`));
+    for (const row of visible) if (complementarySuppression.has(`${row.classId}:${row.subjectId}`)) row.currentSuppressed = true;
+    await this.portalAudit(ctx, 'petros.class_signals.view', teacherId, { signalCount: visible.length, hiddenByPolicy: latestRows.length - visible.length, learnerContentInspected: false });
     return visible.map((row) => ({
       id: row.id,
-      concept: row.suppressed ? 'Suppressed until cohort threshold' : row.conceptKey,
+      classId: row.classId,
+      subjectId: row.subjectId,
+      concept: row.currentSuppressed || row.suppressed ? 'Suppressed until cohort threshold' : row.conceptKey,
       curriculumArea: row.curriculumArea,
-      cohortSize: row.cohortSize,
-      threshold: row.threshold,
-      evidenceCount: row.evidenceCount,
-      uncertaintyBasisPoints: row.uncertaintyBasisPoints,
-      freshness: row.freshestAt.toISOString(),
-      suppressed: row.suppressed,
-      suggestedNextStep: row.suggestedNextStep,
+      cohortSize: row.currentSuppressed || row.suppressed ? null : row.currentAffectedLearnerCount,
+      affectedLearnerCount: row.currentSuppressed || row.suppressed ? null : row.currentAffectedLearnerCount,
+      successfulAttemptCount: row.currentSuppressed || row.suppressed ? null : row.currentSuccessCount,
+      eligibleCount: row.currentSuppressed || row.suppressed ? null : row.currentEligibleCount,
+      evidenceCoveredCount: row.currentSuppressed || row.suppressed ? null : row.currentEvidenceCoveredCount,
+      independentAttemptCount: row.currentSuppressed || row.suppressed ? null : row.currentAttemptCount,
+      threshold: row.currentThreshold,
+      evidenceCount: row.currentSuppressed || row.suppressed ? 0 : row.currentAttemptCount,
+      uncertaintyBasisPoints: row.currentSuppressed || row.suppressed ? 10_000 : Math.max(1_000,10_000-Math.floor(row.currentEvidenceCoveredCount/Math.max(1,row.currentEligibleCount)*5_000)),
+      freshness: row.currentSuppressed || row.suppressed
+        ? (row.windowEnd ?? row.membershipAsOf ?? row.currentFreshestAt).toISOString()
+        : row.currentFreshestAt.toISOString(),
+      membershipAsOf: row.membershipAsOf?.toISOString() ?? null,
+      evidenceWindow: row.windowStart && row.windowEnd ? { start: row.windowStart.toISOString(), end: row.windowEnd.toISOString() } : null,
+      evidenceVersions: row.currentSuppressed || row.suppressed ? null : row.evidenceVersions,
+      exclusions: row.currentSuppressed || row.suppressed ? null : row.exclusionCounts,
+      suppressed: row.currentSuppressed || row.suppressed,
+      suggestedNextStep: row.currentSuppressed || row.suppressed ? 'Current policy or roster requires suppression. Refresh after reviewing eligible membership and evidence coverage.' : row.suggestedNextStep,
       rankingIncluded: false,
       rawAnswersIncluded: false,
       learnerIdentifiersIncluded: false,
@@ -437,6 +574,8 @@ export class PetrosInstitutionalService {
   }
 
   async refreshSignals(ctx: PortalActionContext, classId: string, subjectId: string) {
+    this.requirePhase4Enabled();
+    await this.repo.lockKnowledgeAuthority(ctx.principal.institutionId);
     const teacherId = await this.requireTeacher(ctx.principal);
     const assigned = await this.repo.teacherFor(ctx.principal.institutionId, classId, subjectId);
     if (assigned !== teacherId) throw new ForbiddenException({ code: 'PETROS_CLASS_OUT_OF_SCOPE', message: 'This class and subject are not assigned to you.' });
@@ -449,19 +588,48 @@ export class PetrosInstitutionalService {
       return [];
     }
     const since = new Date(Date.now() - policy.config.classSignals.freshnessDays * 86_400_000);
-    const evidence = await this.repo.classEvidence(ctx.principal.institutionId, classId, subjectId, since);
-    const groups = new Map<string, typeof evidence>();
-    for (const row of evidence.filter((item) => item.outcome !== 'correct')) groups.set(row.conceptId, [...(groups.get(row.conceptId) ?? []), row]);
+    if (!this.cohortEvidence) {
+      await this.portalAudit(ctx, 'petros.class_signals.refresh', classId, { subjectId, signals: 0, authorityUnavailable: true, learnerContentInspected: false });
+      return [];
+    }
+    const authority = await this.cohortEvidence.current(ctx.principal.institutionId, classId, subjectId, since,
+      (scope, sessionId) => this.documentKnowledgePolicy(scope, sessionId));
+    if (!authority.authorityAvailable || authority.truncated) {
+      await this.portalAudit(ctx, 'petros.class_signals.refresh', classId, { subjectId, signals: 0,
+        authorityUnavailable: !authority.authorityAvailable, evidenceWindowTruncated: authority.truncated, learnerContentInspected: false });
+      return [];
+    }
+    const eligibleCount = await this.repo.classSubjectEligibleCount(ctx.principal.institutionId, classId, subjectId);
+    const groups = new Map<string, typeof authority.events>();
+    for (const row of authority.events) groups.set(row.conceptId, [...(groups.get(row.conceptId) ?? []), row]);
     const output = [];
-    for (const [concept, rows] of groups) {
+    for (const [concept, rawRows] of groups) {
+      // One learner/objective/pack attempt contributes at most once to a concept.
+      const distinct = new Map<string, (typeof rawRows)[number]>();
+      for (const row of rawRows) distinct.set(row.eventId, row);
+      const rows = [...distinct.values()];
+      if (!rows.length) continue;
+      const covered = new Set(rows.map((row) => row.studentId)).size;
+      const affectedRows = rows.filter((row) => row.outcome !== 'correct');
+      if (!affectedRows.length) continue;
+      const affectedLearnerCount = new Set(affectedRows.map((row) => row.studentId)).size;
+      const successfulAttemptCount = rows.filter((row) => row.outcome === 'correct').length;
+      const evidenceVersions = {
+        evaluator: [...new Set(rows.map((row) => row.evaluatorVersion))].sort(),
+        rubric: [...new Set(rows.map((row) => row.rubricVersion))].sort(),
+        source: [...new Set(rows.map((row) => row.sourceVersion))].sort(),
+        policy: [...new Set(rows.map((row) => row.policyVersion))].sort(),
+        objective: [...new Set(rows.map((row) => `${row.objectiveId}@${row.objectiveVersion}`))].sort(),
+        pack: [...new Set(rows.map((row) => `${row.packId}@${row.packVersion}`))].sort(),
+      };
       const signal = buildClassSignal({
         concept,
         curriculumArea: subjectId,
-        learnerHashes: rows.map((row) => stablePolicyHash(`${ctx.principal.institutionId}:${row.studentId}`)),
-        evidenceCount: rows.length,
-        uncertaintyBasisPoints: Math.max(1_000, 10_000 - rows.length * 500),
-        freshestAt: new Date(Math.max(...rows.map((row) => row.occurredAt.getTime()))).toISOString(),
-        suggestedNextStep: `Revisit ${concept} with one worked contrast and a short check before moving on.`,
+        learnerHashes: affectedRows.map((row) => stablePolicyHash(`${ctx.principal.institutionId}:${row.studentId}`)),
+        evidenceCount: affectedRows.length,
+        uncertaintyBasisPoints: Math.max(1_000, Math.min(10_000, 10_000 - Math.floor(covered / Math.max(1, eligibleCount) * 5_000))),
+        freshestAt: new Date(Math.max(...affectedRows.map((row) => row.occurredAt.getTime()))).toISOString(),
+        suggestedNextStep: `Review question wording, source material and accessibility for ${concept}; these task-difficulty signals do not establish a specific misconception. Then consider one worked contrast and a short independent check.`,
         policy,
       });
       const stored = await this.repo.upsertClassSignal({
@@ -471,115 +639,190 @@ export class PetrosInstitutionalService {
         subjectId,
         conceptKey: concept,
         curriculumArea: subjectId,
-        sourceHash: stablePolicyHash(rows.map((row) => [row.studentId, row.occurredAt.toISOString(), row.outcome])),
+        sourceHash: stablePolicyHash(rows.map((row) => [row.studentId, row.objectiveId, row.objectiveVersion, row.packId, row.packVersion, row.occurredAt.toISOString(), row.outcome, evidenceVersions, eligibleCount])),
         cohortSize: signal.cohortSize,
         threshold: signal.threshold,
         evidenceCount: signal.evidenceCount,
+        eligibleCount,
+        evidenceCoveredCount: covered,
+        independentAttemptCount: rows.length,
+        affectedLearnerCount,
+        successfulAttemptCount,
+        exclusionCounts: authority.exclusionCounts,
+        membershipAsOf: new Date(),
+        windowStart: since,
+        windowEnd: new Date(),
+        evidenceVersions,
         uncertaintyBasisPoints: signal.uncertaintyBasisPoints,
         freshestAt: new Date(signal.freshness),
         suppressed: signal.suppressed,
         suggestedNextStep: signal.suggestedNextStep,
         algorithmVersion: CLASS_SIGNAL_ALGORITHM,
       });
-      output.push({ id: stored?.id ?? null, ...signal });
+      output.push({ id: stored?.id ?? null, classId, subjectId, ...signal });
     }
     await this.portalAudit(ctx, 'petros.class_signals.refresh', classId, { subjectId, signals: output.length, suppressed: output.filter((row) => row.suppressed).length, learnerContentInspected: false });
     return output;
   }
 
+  async phase4TeacherCapabilities(ctx: PortalActionContext) {
+    await this.requireTeacher(ctx.principal);
+    return { enabled: this.env?.PETROS_CONTINUITY_ENABLED === true };
+  }
+
+  async listInterventions(ctx: PortalActionContext, classId: string, subjectId: string) {
+    this.requirePhase4Enabled();
+    await this.repo.lockKnowledgeAuthority(ctx.principal.institutionId);
+    const teacherId = await this.requireTeacher(ctx.principal);
+    if (await this.repo.teacherFor(ctx.principal.institutionId, classId, subjectId) !== teacherId) {
+      throw new ForbiddenException({ code: 'PETROS_CLASS_OUT_OF_SCOPE' });
+    }
+    const items = [];
+    for (const row of await this.repo.listInterventions(ctx.principal.institutionId, classId, subjectId)) {
+      if (['preview', 'approved'].includes(row.status) && row.expiresAt <= new Date()) {
+        items.push(await this.reviewIntervention(ctx, row.id, { expectedVersion: row.version, reason: 'Expired at the current server time.' }, 'cancel'));
+      } else items.push(row);
+    }
+    return { items };
+  }
+
+  async previewIntervention(ctx: PortalActionContext, input: PetrosInterventionPreviewInput) {
+    this.requirePhase4Enabled();
+    await this.repo.lockKnowledgeAuthority(ctx.principal.institutionId);
+    const teacherId = await this.requireTeacher(ctx.principal);
+    if (await this.repo.teacherFor(ctx.principal.institutionId, input.classId, input.subjectId) !== teacherId) {
+      throw new ForbiddenException({ code: 'PETROS_CLASS_OUT_OF_SCOPE' });
+    }
+    const fixture = await this.repo.classPolicyFixture(ctx.principal.institutionId, input.classId);
+    if (!fixture) throw notFound('PETROS_CLASS_NOT_FOUND');
+    const versions = await this.ensurePolicy(ctx.principal.institutionId, SYSTEM_ACTOR);
+    const policy = resolveInstitutionPolicy({ institutionId: ctx.principal.institutionId, versions,
+      fixture: { ...fixture, subjectId: input.subjectId, studentId: null, language: 'en', accessibility: [] } });
+    if (!policy.config.classSignals.enabled) throw new ForbiddenException({ code: 'PETROS_INTERVENTION_DISABLED_BY_POLICY' });
+    const requestHash = createHash('sha256').update(JSON.stringify(input)).digest('hex');
+    const prior = await this.repo.interventionByCommand(ctx.principal.institutionId, input.commandId);
+    if (prior) {
+      if (prior.requestHash !== requestHash) throw new ConflictException({ code: 'PETROS_INTERVENTION_COMMAND_REUSED' });
+      return prior;
+    }
+    if (!this.assignments) throw new Error('AssignmentsService is unavailable for intervention preview.');
+    const targets=await this.interventionTargets(ctx,input.classId,input.subjectId,versions);
+    const audience = await this.assignments.previewAudience(ctx, { targets });
+    const id = randomUUID();
+    const audiencePreview = { classId: input.classId, subjectId: input.subjectId, candidateCount: audience.studentCount,
+      suppressed: audience.studentCount < policy.config.classSignals.minimumCohortSize,
+      membershipBasis: 'current_enrolled_roster_at_preview', learnerIdsIncluded: false,
+      delivery: 'preview_only', recipientOwner: 'portal_assignments_and_audience' };
+    const result=await this.repo.createIntervention({ id, institutionId: ctx.principal.institutionId, classId: input.classId,
+      subjectId: input.subjectId, createdBy: ctx.principal.institutionUserId, title: input.title, description: input.description,
+      conceptKey: input.conceptKey, expiresAt: new Date(input.expiresAt), commandId: input.commandId,
+      audiencePreview, requestHash, status: 'preview', deliveryStatus: 'preview', version: 1 });
+    await this.portalAudit(ctx,'petros.intervention.preview',id,{candidateCount:audience.studentCount,version:1,externalDelivery:false});return result;
+  }
+
+  async reviewIntervention(ctx: PortalActionContext, id: string, input: PetrosInterventionActionInput, action: 'approve' | 'cancel') {
+    this.requirePhase4Enabled();
+    await this.repo.lockKnowledgeAuthority(ctx.principal.institutionId);
+    const teacherId = await this.requireTeacher(ctx.principal);
+    const row = await this.repo.intervention(ctx.principal.institutionId, id);
+    if (!row) throw notFound('PETROS_INTERVENTION_NOT_FOUND');
+    if(await this.repo.teacherFor(row.institutionId,row.classId,row.subjectId)!==teacherId)throw new ForbiddenException({code:'PETROS_CLASS_OUT_OF_SCOPE'});
+    const terminalReplay = (action === 'approve' && row.status === 'approved') || (action === 'cancel' && row.status === 'cancelled');
+    if (!terminalReplay && row.version !== input.expectedVersion) throw new ConflictException({ code: 'PETROS_INTERVENTION_VERSION_CONFLICT' });
+    if (row.status === 'expired') return row;
+    if (row.expiresAt <= new Date()) {
+      if (row.assignmentId && this.assignments) {
+        const assignment = await this.assignments.getFull(ctx, row.assignmentId);
+        if (assignment.status === 'published') await this.assignments.update(ctx, assignment.id, { version: assignment.version, status: 'closed' });
+      }
+      const result=await this.repo.updateIntervention(row.institutionId, row.id, row.version, { status: 'expired', deliveryStatus: 'expired' });
+      await this.portalAudit(ctx,'petros.intervention.expire',row.id,{version:result!.version,externalDelivery:false});return result;
+    }
+    if ((action === 'approve' && row.status === 'approved') || (action === 'cancel' && row.status === 'cancelled')) {if(row.reason!==input.reason)throw new ConflictException({code:'PETROS_INTERVENTION_REPLAY_CONFLICT'});if(row.assignmentId&&this.assignments)await this.assignments.getFull(ctx,row.assignmentId);return row;}
+    if (action === 'cancel') {
+      if (!['preview', 'approved'].includes(row.status)) throw new ConflictException({ code: 'PETROS_INTERVENTION_NOT_CANCELLABLE' });
+      if (row.assignmentId && this.assignments) {
+        const assignment = await this.assignments.getFull(ctx, row.assignmentId);
+        if (assignment.status === 'published') await this.assignments.update(ctx, assignment.id, { version: assignment.version, status: 'closed' });
+      }
+      const result=await this.repo.updateIntervention(row.institutionId, row.id, row.version, { status: 'cancelled', deliveryStatus: 'cancelled', reason: input.reason, cancelledAt: new Date() });
+      await this.portalAudit(ctx,'petros.intervention.cancel',row.id,{version:result!.version,externalDelivery:false});return result;
+    }
+    if (row.status !== 'preview') throw new ConflictException({ code: 'PETROS_INTERVENTION_NOT_REVIEWABLE' });
+    if (row.createdBy === ctx.principal.institutionUserId) throw new ForbiddenException({ code: 'PETROS_INTERVENTION_AUTHOR_CANNOT_APPROVE' });
+    if (await this.repo.teacherFor(row.institutionId, row.classId, row.subjectId) !== teacherId) throw new ForbiddenException({ code: 'PETROS_CLASS_OUT_OF_SCOPE' });
+    const fixture = await this.repo.classPolicyFixture(row.institutionId, row.classId);
+    if (!fixture) throw notFound('PETROS_CLASS_NOT_FOUND');
+    const versions = await this.ensurePolicy(row.institutionId, SYSTEM_ACTOR);
+    const policy = resolveInstitutionPolicy({ institutionId: row.institutionId, versions,
+      fixture: { ...fixture, subjectId: row.subjectId, studentId: null, language: 'en', accessibility: [] } });
+    if (!policy.config.classSignals.enabled) throw new ForbiddenException({ code: 'PETROS_INTERVENTION_DISABLED_BY_POLICY' });
+    if (!this.assignments) throw new Error('AssignmentsService is unavailable for intervention approval.');
+    const targets=await this.interventionTargets(ctx,row.classId,row.subjectId,versions);
+    const currentAudience = await this.assignments.previewAudience(ctx, { targets });
+    if (currentAudience.studentCount < policy.config.classSignals.minimumCohortSize) {
+      throw new ConflictException({ code: 'PETROS_INTERVENTION_AUDIENCE_SUPPRESSED' });
+    }
+    const draft = await this.assignments.create(ctx, createAssignmentSchema.parse({
+      title: row.title, classId: row.classId, subjectId: row.subjectId, instructions: row.description,
+      dueDate: row.expiresAt.toISOString().slice(0, 10), maxPoints: 1, status: 'draft',
+      audience: targets, deliveryMode: 'file',
+    }));
+    const assignment = await this.assignments.update(ctx, draft.id, { version: draft.version, status: 'published' });
+    const receiptCount = await this.repo.assignmentRecipientCount(ctx.principal.institutionId, assignment.id);
+    const result=await this.repo.updateIntervention(row.institutionId, row.id, row.version, { status: 'approved', approvedBy: ctx.principal.institutionUserId,
+      approvedAt: new Date(), reason: input.reason, assignmentId: assignment.id, deliveryStatus: 'published',
+      audiencePreview: { classId: row.classId, subjectId: row.subjectId, candidateCount: currentAudience.studentCount,
+        suppressed: false, membershipBasis: 'assignment_audience_rechecked_at_approval', learnerIdsIncluded: false,
+        assignmentId: assignment.id, assignmentVersion: assignment.version, assigneeReceiptCount: receiptCount, externalDelivery: false, accommodations:'current student policy and canonical assignment rules' } });
+    await this.portalAudit(ctx,'petros.intervention.approve',row.id,{version:result!.version,assignmentId:assignment.id,recipientCount:receiptCount,externalDelivery:false});return result;
+  }
+
+  private async interventionTargets(ctx:PortalActionContext,classId:string,subjectId:string,versions:PolicyVersionRecord[]){
+    const targets: {kind:'student';refId:string}[]=[];
+    for(const learner of await this.repo.currentClassLearnerIds(ctx.principal.institutionId,classId)){
+      const fixture=await this.repo.studentPolicyFixture(ctx.principal.institutionId,learner.id);if(!fixture)continue;
+      const policy=resolveInstitutionPolicy({institutionId:ctx.principal.institutionId,versions,fixture:{campusId:fixture.campusId??null,gradeId:fixture.gradeId??null,programmeId:fixture.programmeId??null,subjectId,studentId:learner.id,language:'en',accessibility:[]}});
+      if(policy.config.classSignals.enabled)targets.push({kind:'student',refId:learner.id});
+    }return targets;
+  }
+  private requirePhase4Enabled() {
+    if (this.env?.PETROS_CONTINUITY_ENABLED !== true) {
+      throw new ForbiddenException({ code: 'PETROS_PHASE4_DISABLED', message: 'Institutional continuity actions are disabled.' });
+    }
+  }
+
+  private assertPetrosGuardianOutputDisabled(): never {
+    throw new ForbiddenException({ code: 'PETROS_GUARDIAN_OUTPUT_DISABLED',
+      message: 'Petros guardian summaries are unavailable until guardian relationship and current-policy authority are verified.' });
+  }
+
   async parentPreferences(guardian: GuardianContext, input: PetrosParentDigestPreferenceInput) {
-    assertWard(guardian, input.studentId, 'petros_digest');
-    const row = await this.repo.upsertPreference(guardian.institutionId, guardian.guardianUserId, input);
-    await this.event(guardian.institutionId, guardian.guardianUserId, 'parent', 'digest_preference', row!.id, input.optedOut ? 'parent_digest_opted_out' : 'parent_digest_preference_updated', { language: input.language, channels: input.deliveryChannels });
-    return row;
+    void guardian; void input;
+    this.assertPetrosGuardianOutputDisabled();
   }
 
   async parentPreference(guardian: GuardianContext, studentId: string) {
-    assertWard(guardian, studentId, 'petros_digest');
-    const row = await this.repo.preference(guardian.institutionId, guardian.guardianUserId, studentId);
-    await this.event(guardian.institutionId, guardian.guardianUserId, 'parent', 'digest_preference', row?.id ?? studentId, 'privileged_digest_preference_access', { purpose: 'Manage own linked child digest settings' });
-    return row ?? { studentId, optedOut: false, language: 'en', deliveryChannels: ['portal'] };
+    void guardian; void studentId;
+    this.assertPetrosGuardianOutputDisabled();
   }
 
   async parentDigestHistory(guardian: GuardianContext, studentId: string) {
-    assertWard(guardian, studentId, 'petros_digest');
-    const rows = await this.repo.listDigests(guardian.institutionId, guardian.guardianUserId, studentId);
-    for (const row of rows) await this.event(guardian.institutionId, guardian.guardianUserId, 'parent', 'digest', row.id, 'privileged_digest_access', { purpose: 'View own linked child learning digest', rawContentInEvent: false });
-    return rows.map(publicDigest);
+    void guardian; void studentId;
+    this.assertPetrosGuardianOutputDisabled();
   }
 
   async parentDigestCommand(guardian: GuardianContext, raw: PetrosParentDigestCommandInput) {
-    const input = petrosParentDigestCommandSchema.parse(raw);
-    assertWard(guardian, input.studentId, 'petros_digest');
-    const preference = await this.repo.preference(guardian.institutionId, guardian.guardianUserId, input.studentId);
-    if (preference?.optedOut && ['preview', 'send'].includes(input.action)) {
-      return { status: 'opted_out', message: 'Parent digests are turned off for this child.' };
-    }
-    if (input.action === 'retry' || input.action === 'cancel') {
-      if (!input.digestId) throw new BadRequestException({ code: 'PETROS_DIGEST_ID_REQUIRED', message: 'Choose a digest first.' });
-      const row = await this.repo.findDigest(guardian.institutionId, guardian.guardianUserId, input.digestId);
-      if (!row || row.studentId !== input.studentId) throw notFound('PETROS_DIGEST_NOT_FOUND');
-      if (input.action === 'cancel') {
-        if (!['preview', 'queued', 'failed'].includes(row.status)) throw invalidTransition();
-        const cancelled = await this.repo.updateDigest(guardian.institutionId, guardian.guardianUserId, row.id, { status: 'cancelled', cancelledAt: new Date() });
-        return publicDigest(cancelled!);
-      }
-      if (row.status !== 'failed') throw invalidTransition();
-      if (row.attemptCount > row.maxRetryCount) throw new ConflictException({ code: 'PETROS_DIGEST_RETRIES_EXHAUSTED', message: 'This delivery has exhausted its configured retries. Preview a new digest after correcting the delivery setup.' });
-      const retried = await this.repo.updateDigest(guardian.institutionId, guardian.guardianUserId, row.id, { status: 'queued', errorCode: null, nextRetryAt: null });
-      return publicDigest(retried!);
-    }
-    const [versions, student, evidence] = await Promise.all([
-      this.ensurePolicy(guardian.institutionId, SYSTEM_ACTOR),
-      this.repo.studentPolicyFixture(guardian.institutionId, input.studentId),
-      this.repo.digestEvidence(guardian.institutionId, input.studentId, new Date(input.periodStart), new Date(input.periodEnd)),
-    ]);
-    if (!student) throw notFound('PETROS_STUDENT_NOT_FOUND');
-    const policy = resolveInstitutionPolicy({ institutionId: guardian.institutionId, versions, fixture: { ...student, subjectId: null, studentId: input.studentId, language: input.language, accessibility: [] } });
-    if (!policy.config.digest.enabled) throw new BadRequestException({ code: 'PETROS_DIGEST_DISABLED', message: 'Parent digests are not enabled by the disclosed institution policy.' });
-    if (!policy.config.visibility.parent.categories.includes('concept_and_goal')) {
-      throw new ForbiddenException({ code: 'PETROS_DIGEST_VISIBILITY_DISABLED', message: 'The disclosed policy does not permit concept-level parent digest content.' });
-    }
-    if (input.action === 'send') {
-      const history = await this.repo.listDigests(guardian.institutionId, guardian.guardianUserId, input.studentId);
-      const latest = history.find((row) => ['queued', 'delivered'].includes(row.status));
-      const minimumGapDays = policy.config.digest.cadence === 'weekly' ? 7 : policy.config.digest.cadence === 'fortnightly' ? 14 : 28;
-      if (latest && new Date(input.periodEnd).getTime() - latest.periodEnd.getTime() < minimumGapDays * 86_400_000) {
-        throw new ConflictException({ code: 'PETROS_DIGEST_CADENCE_NOT_DUE', message: `The ${policy.config.digest.cadence} digest cadence is not due yet.` });
-      }
-    }
-    const deterministic = deterministicDigest(input, evidence, policy);
-    const enhanced = await this.generateParentDigest(guardian, input.studentId, deterministic);
-    const id = input.digestId ?? randomUUID();
-    const row = await this.repo.createDigest({
-      id,
-      institutionId: guardian.institutionId,
-      guardianUserId: guardian.guardianUserId,
-      studentId: input.studentId,
-      policyVersionIds: policy.policyVersionIds,
-      periodStart: new Date(input.periodStart),
-      periodEnd: new Date(input.periodEnd),
-      language: input.language,
-      content: enhanced.value,
-      status: input.action === 'send' ? 'queued' : 'preview',
-      deliveryChannels: preference?.deliveryChannels ?? policy.config.digest.deliveryChannels,
-      maxRetryCount: policy.config.digest.maxRetries,
-      idempotencyKey: input.idempotencyKey,
-      functionKey: PETROS_INSTITUTIONAL_FUNCTIONS.parentDigest,
-      validationPassed: enhanced.validationPassed,
-    });
-    const resolved = row ?? (await this.repo.listDigests(guardian.institutionId, guardian.guardianUserId, input.studentId)).find((item) => item.idempotencyKey === input.idempotencyKey);
-    if (!resolved) throw new Error('Parent digest could not be created.');
-    await this.functionEvent(guardian.institutionId, input.studentId, 'digest', resolved.id, input.action === 'send' ? 'parent_digest_queued' : 'parent_digest_previewed', input.idempotencyKey, enhanced);
-    return publicDigest(resolved);
+    void guardian; void raw;
+    this.assertPetrosGuardianOutputDisabled();
   }
 
   async processJobs(now = new Date()) {
-    const [handoffs, digests] = await Promise.all([this.repo.queuedHandoffs(), this.repo.queuedDigests()]);
+    const handoffs = await this.repo.queuedHandoffs();
     let handoffsDelivered = 0;
-    let digestsDelivered = 0;
-    let digestsFailed = 0;
-    let digestsExhausted = 0;
+    const digestsDelivered = 0;
+    const digestsFailed = 0;
+    const digestsExhausted = 0;
     for (const { handoff, snapshot } of handoffs) {
       const delay = snapshot.resolvedPolicy.config.escalation.cancellationMinutes * 60_000;
       if (handoff.updatedAt.getTime() + delay > now.getTime()) continue;
@@ -587,26 +830,8 @@ export class PetrosInstitutionalService {
       await this.event(handoff.institutionId, SYSTEM_ACTOR, 'job', 'handoff', handoff.id, 'teacher_handoff_delivered', { attempt: handoff.retryCount + 1 });
       handoffsDelivered += 1;
     }
-    for (const digest of digests) {
-      const attempt = digest.attemptCount + 1;
-      if (digest.deliveryChannels.some((channel) => channel !== 'portal')) {
-        const exhausted = attempt > digest.maxRetryCount;
-        const retryDelayMinutes = Math.min(1_440, 5 * 2 ** Math.max(0, attempt - 1));
-        await this.repo.updateDigest(digest.institutionId, digest.guardianUserId, digest.id, {
-          status: 'failed',
-          attemptCount: attempt,
-          errorCode: 'PETROS_DIGEST_EMAIL_DELIVERY_UNCONFIGURED',
-          nextRetryAt: exhausted ? null : new Date(now.getTime() + retryDelayMinutes * 60_000),
-        });
-        await this.event(digest.institutionId, SYSTEM_ACTOR, 'job', 'digest', digest.id, exhausted ? 'parent_digest_delivery_exhausted' : 'parent_digest_delivery_failed', { attempt, retryScheduled: !exhausted, providerDetailsIncluded: false });
-        digestsFailed += 1;
-        if (exhausted) digestsExhausted += 1;
-        continue;
-      }
-      await this.repo.updateDigest(digest.institutionId, digest.guardianUserId, digest.id, { status: 'delivered', deliveredAt: now, attemptCount: attempt, nextRetryAt: null, errorCode: null });
-      await this.event(digest.institutionId, SYSTEM_ACTOR, 'job', 'digest', digest.id, 'parent_digest_delivered', { attempt, channel: 'portal' });
-      digestsDelivered += 1;
-    }
+    // Existing Petros digest rows are retained for historical review, but this Phase4 owner does
+    // not deliver or retry any guardian output until relationship authority is closed.
     return { handoffsDelivered, digestsDelivered, digestsFailed, digestsExhausted, idempotent: true };
   }
 
@@ -756,28 +981,11 @@ export class PetrosInstitutionalService {
     }
   }
 
-  private async generateParentDigest(guardian: GuardianContext, studentId: string, deterministic: z.infer<typeof parentDigestContentSchema>) {
-    const fallback = sanitizeParentDigest(parentDigestContentSchema.parse(deterministic));
-    const started = Date.now();
-    try {
-      const result = await this.gateway.execute({
-        context: { functionKey: PETROS_INSTITUTIONAL_FUNCTIONS.parentDigest, topic: 'bounded parent learning digest', sessionType: 'learn', inputModality: 'text', language: deterministic.language, institutionId: guardian.institutionId, studentId, estimatedTokens: 800, currentCostMicros: 0, previousFailures: 0, requiredReasoningQuality: 0.5 },
-        system: 'Rewrite only the bounded aggregate sections supplied. Preserve source period, language and uncertainty. Never expose raw sessions, private questions, calibration, ability labels, teacher-only notes, answers, provider/model details, voice or images.',
-        input: [{ type: 'text', text: JSON.stringify(fallback) }],
-        responseSchema: zodToJsonSchema(parentDigestContentSchema, { $refStrategy: 'none' }) as Record<string, unknown>,
-        metadata: { parentDigest: true, rawStudentContentIncluded: false },
-      });
-      return { value: sanitizeParentDigest(parentDigestContentSchema.parse(result.content)), result, validationPassed: true, durationMs: Date.now() - started };
-    } catch (error) {
-      return { value: fallback, result: null, validationPassed: !isValidationError(error), durationMs: Date.now() - started, errorCode: providerNeutral(error) };
-    }
-  }
-
   private async portalAudit(ctx: PortalActionContext, action: string, id: string, state: Record<string, unknown>) {
     await this.audit.logAudit({ ...basePortalAudit(ctx), action, module: 'petros', entityType: 'petros_institutional', entityId: id, newState: state } as Parameters<AuditWriter['logAudit']>[0]);
   }
 
-  private persistHomeworkDecision(
+  private async persistHomeworkDecision(
     principal: InstitutionalStudentPrincipal,
     sessionId: string,
     snapshotId: string,
@@ -785,6 +993,7 @@ export class PetrosInstitutionalService {
     relationBasisPoints: number,
     decision: ReturnType<typeof decideHomework>,
   ) {
+    await this.repo.lockKnowledgeAuthority(principal.institutionId);
     return this.repo.upsertHomeworkMatch({
       institutionId: principal.institutionId,
       studentId: principal.studentId,
@@ -807,7 +1016,7 @@ export class PetrosInstitutionalService {
   }
 }
 
-function deterministicDigest(input: PetrosParentDigestCommandInput, evidence: Array<{ conceptId: string; outcome: string; errorCategory: string; occurredAt: Date }>, policy: PetrosResolvedPolicy) {
+export function deterministicDigest(input: PetrosParentDigestCommandInput, evidence: Array<{ conceptId: string; outcome: string; errorCategory: string; occurredAt: Date }>, policy: PetrosResolvedPolicy) {
   const concepts = [...new Set(evidence.map((row) => row.conceptId))].slice(0, 6);
   const completed = evidence.filter((row) => row.outcome === 'correct').length;
   const hindi = input.language.toLowerCase().startsWith('hi');
@@ -873,7 +1082,7 @@ function publicHandoff(row: any) {
   return { id: row.id, sessionId: row.sessionId, classId: row.classId, subjectId: row.subjectId, summary: row.summary, status: row.status, consentedAt: row.consentedAt?.toISOString() ?? null, deliveredAt: row.deliveredAt?.toISOString() ?? null, readAt: row.readAt?.toISOString() ?? null, cancelledAt: row.cancelledAt?.toISOString() ?? null, createdAt: row.createdAt.toISOString(), providerDetailsExcluded: true, privateContentExcluded: true };
 }
 
-function publicDigest(row: any) {
+export function publicDigest(row: any) {
   return { id: row.id, studentId: row.studentId, sourcePeriod: { start: row.periodStart.toISOString(), end: row.periodEnd.toISOString() }, language: row.language, content: row.content, status: row.status, deliveryChannels: row.deliveryChannels, attemptCount: row.attemptCount, maxRetryCount: row.maxRetryCount, nextRetryAt: row.nextRetryAt?.toISOString() ?? null, deliveredAt: row.deliveredAt?.toISOString() ?? null, errorCode: row.errorCode, createdAt: row.createdAt.toISOString(), rawContentExcluded: true };
 }
 

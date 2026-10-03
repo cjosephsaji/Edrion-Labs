@@ -1,0 +1,85 @@
+The CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.
+
+ RUN  v2.1.9 /Volumes/Chris/Edrion Labs/apps/api
+
+[Nest] 86966  - 10/03/2026, 11:18:57 PM   ERROR [QueueWorkers] Job synthetic.missing.handler on imports failed: No registered handler for synthetic.missing.handler
+stderr | src/modules/student/petros-session-intent/petros-document-source.integration.spec.ts > document source production services / disposable Postgres > redelivers durable question IDs through real BullMQ after Redis loss
+Error: connect ENOENT /var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-source-test-Dxpa97/question-redis.sock
+    at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'connect',
+  address: '/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-source-test-Dxpa97/question-redis.sock'
+}
+Error: connect ENOENT /var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-source-test-Dxpa97/question-redis.sock
+    at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'connect',
+  address: '/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-source-test-Dxpa97/question-redis.sock'
+}
+Error: connect ENOENT /var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-source-test-Dxpa97/question-redis.sock
+    at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'connect',
+  address: '/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-source-test-Dxpa97/question-redis.sock'
+}
+Error: connect ENOENT /var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-source-test-Dxpa97/question-redis.sock
+    at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'connect',
+  address: '/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-source-test-Dxpa97/question-redis.sock'
+}
+Error: connect ENOENT /var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-source-test-Dxpa97/question-redis.sock
+    at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'connect',
+  address: '/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-source-test-Dxpa97/question-redis.sock'
+}
+Error: connect ENOENT /var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-source-test-Dxpa97/question-redis.sock
+    at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'connect',
+  address: '/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-source-test-Dxpa97/question-redis.sock'
+}
+Error: connect ENOENT /var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-source-test-Dxpa97/question-redis.sock
+    at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'connect',
+  address: '/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-source-test-Dxpa97/question-redis.sock'
+}
+
+ ✓ src/modules/student/petros-session-intent/petros-document-source.integration.spec.ts (100 tests) 29851ms
+   ✓ document source production services / disposable Postgres > cancellation interrupts an executing parser and fences a result even when its adapter ignores abort 1178ms
+   ✓ document source production services / disposable Postgres > recovers lost dispatch through real BullMQ and a disposable Unix-socket Redis, with missing handlers failing visibly 477ms
+   ✓ document source production services / disposable Postgres > cancels a running provider request, fences its result, and replays lost cancel responses 1191ms
+   ✓ document source production services / disposable Postgres > denies a generated answer after membership revocation and leaves no committed effects 427ms
+   ✓ document source production services / disposable Postgres > fences an adapter that ignores cancellation and permits new work after its old promise settles 1279ms
+   ✓ document source production services / disposable Postgres > enforces a bounded model deadline without committing an abandoned response 1167ms
+   ✓ document source production services / disposable Postgres > grounds a real lesson question in pinned retrieved spans, commits its trace once and rechecks access on replay 308ms
+   ✓ document source production services / disposable Postgres > pins intents, outlines, sessions and exact historical locators while new starts use the new extraction 367ms
+   ✓ document source production services / disposable Postgres > S9 treats instructions in a document or question as data and never a mode grant 341ms
+   ✓ document source production services / disposable Postgres > deduplicates identical publication and concurrent first extraction under the production tenant transaction 714ms
+   ✓ document source production services / disposable Postgres > enforces immutable complete page sets in PostgreSQL and retries failed publication safely 918ms
+   ✓ document source production services / disposable Postgres > denies cached historical content, sessions and artifacts after material_deleted 470ms
+   ✓ document source production services / disposable Postgres > denies cached historical content, sessions and artifacts after source_revoked 439ms
+   ✓ document source production services / disposable Postgres > denies cached historical content, sessions and artifacts after owner_deleted 447ms
+   ✓ document source production services / disposable Postgres > denies cached historical content, sessions and artifacts after membership_revoked 370ms
+   ✓ document source production services / disposable Postgres > denies cached historical content, sessions and artifacts after original_deleted 492ms
+   ✓ document source production services / disposable Postgres > denies cached historical content, sessions and artifacts after original_revoked 506ms
+   ✓ document source production services / disposable Postgres > denies cached historical content, sessions and artifacts after original_missing 520ms
+   ✓ document source production services / disposable Postgres > Phase 1 integrated source, durable gateway, recovery, visual, assessment and revocation journey 986ms
+PETROS_PHASE1_SYNTHETIC_IDS {"institutionId":"8495787e-fb34-4664-bec7-441b63bcfad2","studentId":"fc7f0de1-4802-4b9f-a090-0d5cd8470772","courseId":"a022b9f6-fe10-4a31-84b0-d897af3b503f","providerId":"b26c10e4-b61a-4a6e-bde0-a92bedd55a2b","sourceId":"35c774fc-2b14-46d4-b672-68a8e7508484","intentId":"291d8371-444d-41b3-8458-a7a01ecc46c1","sessionId":"8dd9bf12-4c67-45b0-a6fa-5ce9406b357e","durableQuestionKey":"773b3b82-57f5-450c-bc66-60de5aefcf3e"}
+ ✓ src/modules/integrations/petros-phase1-final-journey.integration.spec.ts (1 test) 2488ms
+   ✓ Petros Phase 1 literal S1-S11 journey / disposable Postgres > combines the literal S1-S11 source, durable gateway, recovery, visual, assessment, roster, syllabus, SSO, instructor, student and voice paths 822ms
+
+ Test Files  2 passed (2)
+      Tests  101 passed (101)
+   Start at  23:18:50
+   Duration  35.68s (transform 1.58s, setup 7ms, collect 3.13s, tests 32.34s, environment 0ms, prepare 33ms)
+

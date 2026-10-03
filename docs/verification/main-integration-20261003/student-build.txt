@@ -1,0 +1,72 @@
+{"copiedSourceFiles": 229, "copyManifestSha256": "3bd0695efb2c1851ee4a5e357b2c5d3b6359c7c4c5c9fc25d85ebad6f6cdd0d3", "rootOrAppEnvLoaded": false, "isolatedOutput": true}
+✓ tokens.css written (/Volumes/Chris/.petros-phase6-tmp-01a10162/petros-phase6-build-td9rnj8z/apps/student-web/src/styles/tokens.css)
+  ▲ Next.js 14.2.13
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/40) ...
+   Generating static pages (10/40) 
+   Generating static pages (20/40) 
+   Generating static pages (30/40) 
+ ✓ Generating static pages (40/40)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    142 B          88.1 kB
+├ ○ /_not-found                          675 B          88.6 kB
+├ ○ /activate                            2.52 kB        97.3 kB
+├ ○ /announcements                       6.24 kB         508 kB
+├ ○ /assignments                         307 B           507 kB
+├ ƒ /assignments/[id]                    8.17 kB         511 kB
+├ ○ /attendance                          4.96 kB         507 kB
+├ ○ /calendar                            7.97 kB         515 kB
+├ ○ /classes                             1.18 kB         117 kB
+├ ƒ /classes/[id]                        4.22 kB         120 kB
+├ ○ /courses                             871 B           507 kB
+├ ƒ /courses/[id]                        4.85 kB         514 kB
+├ ○ /design-system                       5.73 kB         101 kB
+├ ○ /documents                           6.65 kB         508 kB
+├ ○ /exams                               7.48 kB         514 kB
+├ ƒ /exams/[scheduleId]/attempt          9.44 kB         118 kB
+├ ○ /fees                                2.95 kB         111 kB
+├ ○ /fees/pay                            5.65 kB         114 kB
+├ ○ /flashcards                          144 B           103 kB
+├ ○ /home                                6.93 kB         514 kB
+├ ○ /homework                            303 B           507 kB
+├ ƒ /homework/[id]                       10.4 kB         508 kB
+├ ○ /hostel                              5.62 kB         114 kB
+├ ○ /learn                               10.6 kB         519 kB
+├ ○ /learning-path                       5.67 kB         513 kB
+├ ○ /login                               8.05 kB         112 kB
+├ ○ /materials                           7.71 kB         522 kB
+├ ○ /notes                               8.86 kB         506 kB
+├ ƒ /notes/[id]                          46.9 kB         564 kB
+├ ○ /notifications                       6.46 kB         115 kB
+├ ○ /petros                              21.2 kB         546 kB
+├ ○ /petros/artifacts                    145 B           103 kB
+├ ƒ /petros/document                     92.3 kB         191 kB
+├ ƒ /petros/pilot                        13.7 kB         516 kB
+├ ƒ /petros/session                      38 kB           573 kB
+├ ○ /profile                             8.37 kB         117 kB
+├ ○ /progress                            10.9 kB         499 kB
+├ ○ /report-cards                        902 B           507 kB
+├ ƒ /report-cards/[id]                   1.9 kB          110 kB
+├ ○ /requests                            2.1 kB          110 kB
+├ ƒ /requests/[id]                       4.06 kB         112 kB
+├ ○ /requests/new                        7.6 kB          116 kB
+├ ○ /results                             7.27 kB         514 kB
+├ ○ /settings                            13.8 kB         513 kB
+├ ○ /timetable                           5.11 kB         507 kB
+└ ○ /transport                           5.75 kB         114 kB
++ First Load JS shared by all            88 kB
+  ├ chunks/1091-8397a94ad95c72f1.js      31.8 kB
+  ├ chunks/2db38c5a-142db84e87c204f0.js  53.7 kB
+  └ other shared chunks (total)          2.56 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

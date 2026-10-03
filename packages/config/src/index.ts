@@ -37,6 +37,33 @@ export const apiEnvSchema = z.object({
   // ── Background queues (Phase 10b / 10e) ────────────────────────────────────
   /** Run BullMQ workers in this process. Off for web-only / migration containers. */
   QUEUE_WORKERS_ENABLED: bool.default(true),
+  /** Enable restricted PDF preparation delivery. Never falls back to in-process parsing. */
+  PETROS_PDF_PREPARATION_ENABLED: bool.default(false),
+  /** Declarative lesson visual bindings only; generated behavior remains unsupported. */
+  PETROS_VISUAL_PROGRAM_ENABLED: bool.default(false),
+  PETROS_ASSESSMENT_CONTRACT_ENABLED: bool.default(false),
+  /** Phase 2 admissions require explicit reviewed content and current owner authority. */
+  PETROS_ADAPTIVE_TEACHING_ENABLED: bool.default(false),
+  PETROS_PROJECTILE_ENABLED: bool.default(false),
+  PETROS_CONTINUITY_ENABLED: bool.default(false),
+  PETROS_WORKSPACE_ENABLED: bool.default(false),
+  PETROS_OBJECTIVE_EVIDENCE_ENABLED: bool.default(false),
+  PETROS_QUALITATIVE_REVIEW_ENABLED: bool.default(false),
+  PETROS_ASSIGNMENT_LEARNING_ENABLED: bool.default(false),
+  PETROS_PROVIDER_MAPPING_ENABLED: bool.default(false),
+  PETROS_CURRICULUM_ALIGNMENT_ENABLED: bool.default(false),
+  /** Bounded source retrieval for document lookup and lesson questions; no external index. */
+  PETROS_DOCUMENT_RETRIEVAL_ENABLED: bool.default(false),
+  PETROS_MULTI_SOURCE_ENABLED: bool.default(false),
+  PETROS_TEACHER_AUTHORING_ENABLED: bool.default(false),
+  PETROS_ADVANCED_MODELS_ENABLED: bool.default(false),
+  PETROS_DOCUMENT_KNOWLEDGE_POLICY_ENABLED: bool.default(false),
+  PETROS_DOCUMENT_QUESTION_EXECUTION_ENABLED: bool.default(false),
+  PETROS_DOCUMENT_QUESTION_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(45_000).default(45_000),
+  /** Trusted release identities supplied by the release operator; missing means activation denied. */
+  PETROS_RELEASE_IDENTITIES_JSON: z.string().max(4096).optional(),
+  /** Never authorizes a real pilot. Valid only with NODE_ENV=test and disposable fixture authority. */
+  PETROS_PILOT_SYNTHETIC_INSTRUMENTATION_ENABLED: bool.default(false),
 
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_ANON_KEY: z.string().optional(),

@@ -1,0 +1,246 @@
+edrion
+STUDENT PORTAL
+Saturday
+03
+OCT
+2026
+Portal
+Overview
+Courses
+Assignments
+Timetable
+Explore
+S
+Synthetic learner
+PHASE 5 CURRENT PHYSICS · A
+Petros
+Here for this lesson
+0/1 mastered
+0 XP
+0 streak · 1 cards
+00:00 Right on pace
+Learning scene: Projectile motion
+Branch 5532d57b · 0.00 s · state 23
+Scene values (text alternative)
+Vectors and forces
+
+Each numeric readout includes its unit. Plots are sampled, not extra model predictions. All model limitations remain visible.
+
+Velocity (m/s) and acceleration (m/s²); separate scales
+12.00 m/s
+20.00 m/s
+Vectors
+velocity: 3 pixels per m/s
+acceleration: 4 pixels per m/s^2
+Horizontal velocity: 12.00 m/s
+Vertical velocity: 20.00 m/s
+Open expanded scene
+
+VELOCITY AT THE APEX
+
+Let’s focus on Velocity at the apex.
+Read aloud
+AI-generated voice · Only when you ask
+Talk to Petros
+Enter to send · Shift + Enter for a new line
+My time
+Settings
+Show me around
+Portal
+Petros
+Focus lab · Document session · Synthetic projectile
+Save and pause
+Finish
+1
+Compare components
+
+Step 1 of 1 · Compare components
+
+0/1
+mastered
+0
+XP
+0
+streak
+1
+cards
+00:00
+Right on pace
+Synthetic projectile
+
+Predict horizontal and vertical projectile motion under constant gravity.
+
+10 minute session · 8 steps
+30-SECOND HUDDLE
+What does “done” look like today?
+
+Build and check 1 ideas, then finish with a 75-second recall lap. I’ll keep the pace gentle and your place safe if you stop to ask something.
+
+10 min target
+Every claim stays cited
+Detours return here
+I’m in — start the run
+Keep it to the essentials
+Starting acknowledges the privacy and learning rules shown with this session.
+Source checked
+Synthetic source (PDF p. 1) · p. 1 · Source
+Privacy and learning rules
+
+Material approved by your institution only · hints for active homework · Voice is optional.
+
+Got it
+Who can see information from this session?
+
+VISUAL EXPLANATION
+
+Velocity at the apex
+Why this step?
+Projectile motion
+
+Projectile motion
+
+Expand
+
+reviewed source · Point mass in stationary SI Cartesian coordinates: x right, y up. · Uniform downward gravity; no air resistance, wind or other forces. · Launch and landing are at the same level (y = 0); stop at first ground contact.
+
+Scene action saved.
+
+Explanation 2 of 3: At the apex, vertical velocity is zero; horizontal velocity remains unchanged.
+
+Narration position: 4.0 s · character 40 of 78 · Speaking
+
+Speak
+Interrupt and freeze
+Interrupt; let simulation continue
+Previous beat
+Next beat
+Make a prediction
+
+Petros will ask about the acknowledged model state before showing the outcome. Your response is an observation, not mastery evidence.
+
+Your prediction was outside the model tolerance.
+
+Prediction: 2 m. Model value: 8.75 m. Tolerance: ±0.4375 m.
+
+Help: unknown. Outside help remains unknown. No mastery was admitted.
+
+Clear result
+
+Prediction checked. This is an observation; it does not establish mastery.
+
+Advance one step
+Allow continuous simulation motion
+Step
+Start
+Time (s) 
+Speed 
+0.25×
+0.5×
+1×
+2×
+4×
+Branch 5532d57b · state 23
+vx
+restart · m/s
+vy
+restart · m/s
+gravity
+restart · m/s^2
+Motion
+Vectors and forces
+m over time
+Equations and model data
+Show linked views
+Vectors and forces
+
+Each numeric readout includes its unit. Plots are sampled, not extra model predictions. All model limitations remain visible.
+
+Velocity (m/s) and acceleration (m/s²); separate scales
+12.00 m/s
+20.00 m/s
+Vectors
+velocity: 3 pixels per m/s
+acceleration: 4 pixels per m/s^2
+Horizontal velocity: 12.00 m/s
+Vertical velocity: 20.00 m/s
+Earlier comparison branch a4e5459b
+
+Time 0.10 s. Model assumptions remain Point mass in stationary SI Cartesian coordinates: x right, y up.; Uniform downward gravity; no air resistance, wind or other forces.; Launch and landing are at the same level (y = 0); stop at first ground contact..
+
+Vectors and forces
+
+Each numeric readout includes its unit. Plots are sampled, not extra model predictions. All model limitations remain visible.
+
+Velocity (m/s) and acceleration (m/s²); separate scales
+13.00 m/s
+19.00 m/s
+Vectors
+velocity: 3 pixels per m/s
+acceleration: 4 pixels per m/s^2
+Horizontal velocity: 13.00 m/s
+Vertical velocity: 19.00 m/s
+Scene data and description
+Compare experiment branches
+Compare with state 22, branch a4e5459b
+Compare with state 21, branch a4e5459b
+Compare with state 20, branch a4e5459b
+Compare with state 19, branch a4e5459b
+Compare with state 18, branch a4e5459b
+Compare with state 17, branch a4e5459b
+Compare with state 16, branch a4e5459b
+Compare with state 15, branch a4e5459b
+Compare with state 14, branch a4e5459b
+Compare with state 13, branch a4e5459b
+Compare with state 12, branch a4e5459b
+Compare with state 11, branch a4e5459b
+Compare with state 10, branch a4e5459b
+Compare with state 9, branch a4e5459b
+Compare with state 8, branch a4e5459b
+Compare with state 7, branch a4e5459b
+Compare with state 6, branch a4e5459b
+Compare with state 5, branch a4e5459b
+Compare with state 4, branch a4e5459b
+Compare with state 3, branch a4e5459b
+Compare with state 2, branch a4e5459b
+Compare with state 1, branch a4e5459b
+Selected: Projectile
+
+Point mass launched above level ground.
+
+Isolate
+Highlight
+Restore view
+Question about this element Ask Petros
+My notes 
+Save notes
+
+Saving to the learning workspace…
+
+Model limits and provenance
+
+A reviewed projectile model is ready for this diagram. Starting it uses the saved SI initial conditions supplied by the server.
+
+Start simulationRefresh simulation
+Play review
+Next step
+Replay
+3 / 3
+Different velocity components
+Horizontal velocity remains
+Vertical velocity becomes ze
+ro
+Petros is teaching: Vertical velocity becomes zero
+
+Vertical velocity becomes zero. Gravity still accelerates the body at the apex.
+
+No horizontal force in the trusted no-drag model.
+Gravity still accelerates the body at the apex.
+Open diagram larger
+Nonvisual description
+Keep this edited diagram in the session
+Keep this
+Saved to notes
+Flashcard added
+Change the explanation
+Explain simpler
+Explain deeper

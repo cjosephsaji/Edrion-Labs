@@ -1,3 +1,4 @@
+import { KnowledgeDocumentModule } from '../knowledge/knowledge-document.module';
 import { Module } from '@nestjs/common';
 import { FeatureControlsModule } from '../../feature-controls/feature-controls.module';
 import { PetrosAiRoutingModule } from '../../petros-ai-routing/petros-ai-routing.module';
@@ -14,7 +15,7 @@ import { PetrosSessionIntentService } from './petros-session-intent.service';
 import { PetrosDocumentPreparationService } from './petros-document-preparation.service';
 
 @Module({
-  imports: [FeatureControlsModule, PetrosAiRoutingModule, PetrosLoopModule],
+  imports: [KnowledgeDocumentModule,FeatureControlsModule, PetrosAiRoutingModule, PetrosLoopModule],
   controllers: [StudentPetrosSessionIntentController, PetrosDoorsDashboardController],
   providers: [
     PetrosSessionIntentRepository,

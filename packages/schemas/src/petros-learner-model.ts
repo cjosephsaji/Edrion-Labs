@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { petrosMoveTypeSchema } from "./petros-topic-profiles";
+import { petrosAssessmentSchema, unknownAssessmentConditions } from './petros-assessment';
 
 export const PETROS_LEARNER_EVIDENCE_SCHEMA_VERSION =
   "petros.learner-evidence.v1";
@@ -126,6 +127,33 @@ export const petrosNormalizedLearningEvidenceSchema = z
 export type PetrosNormalizedLearningEvidence = z.infer<
   typeof petrosNormalizedLearningEvidenceSchema
 >;
+
+/** V1 stays strict and unchanged; non-objective results never need a synthetic score. */
+export const petrosAssessmentEvidenceSchema = petrosNormalizedLearningEvidenceSchema.omit({
+  outcome: true, creditBasisPoints: true, preEvidenceBasisPoints: true, postEvidenceBasisPoints: true,
+}).extend({
+  schemaVersion: z.literal('petros.learner-evidence.v2'),
+  assessment: petrosAssessmentSchema,
+}).strict();
+export type PetrosAssessmentEvidence = z.infer<typeof petrosAssessmentEvidenceSchema>;
+export const petrosLearningEvidenceInputSchema = z.union([
+  petrosNormalizedLearningEvidenceSchema, petrosAssessmentEvidenceSchema,
+]);
+export type PetrosLearningEvidenceInput = z.infer<typeof petrosLearningEvidenceInputSchema>;
+
+export function adaptLegacyLearningEvidence(raw: PetrosNormalizedLearningEvidence): PetrosAssessmentEvidence {
+  const input = petrosNormalizedLearningEvidenceSchema.parse(raw);
+  const { outcome, creditBasisPoints, preEvidenceBasisPoints: _pre, postEvidenceBasisPoints: _post, ...common } = input;
+  return petrosAssessmentEvidenceSchema.parse({ ...common, schemaVersion: 'petros.learner-evidence.v2',
+    assessment: { schemaVersion: 'petros.assessment.v1', origin: 'legacy_adapter',
+      conditions: unknownAssessmentConditions(input.occurredAt),
+      result: { kind: 'objective', judgment: outcome === 'invalid' || outcome === 'skipped'
+        ? { status: 'not_evaluated', reason: outcome === 'invalid' ? 'invalid_response' : 'skipped' }
+        : { status: 'evaluated', outcome, creditBasisPoints },
+        feedback: 'Imported objective result; historical assessment conditions are unknown.', evidence: [],
+        provenance: { evaluator: 'legacy', evaluatorVersion: input.evaluatorVersion ?? input.schemaVersion,
+          evaluatedAt: input.occurredAt, uncertainty: 'unknown', review: 'not_required' } } } });
+}
 
 const uncertaintyFields = {
   evidenceCount: z.number().int().nonnegative(),
@@ -284,7 +312,7 @@ export const petrosLearnerModelImportSchema = z
   .object({
     institutionId: z.string().uuid(),
     studentId: z.string().uuid(),
-    evidence: z.array(petrosNormalizedLearningEvidenceSchema).min(1).max(500),
+    evidence: z.array(petrosLearningEvidenceInputSchema).min(1).max(500),
     reason: z.string().trim().min(8).max(500),
   })
   .strict();

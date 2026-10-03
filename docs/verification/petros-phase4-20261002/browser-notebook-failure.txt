@@ -1,0 +1,287 @@
+edrion
+STUDENT PORTAL
+Friday
+02
+OCT
+2026
+Portal
+Overview
+Courses
+Assignments
+Timetable
+Explore
+S
+Synthetic learner
+PHASE 4 CURRENT PHYSICS · A
+Petros
+Here for this lesson
+0/1 mastered
+0 XP
+0 streak · 0 cards
+00:00 Right on pace
+Learning scene: Projectile motion
+Branch cbfd7525 · 0.00 s · state 1
+Scene values (text alternative)
+Motion
+
+Each numeric readout includes its unit. Plots are sampled, not extra model predictions. All model limitations remain visible.
+
+Projectile motion
+Projectile motion
+Current model position
+Level ground y=0 m
+Trajectory in the same state; normalized axes keep the whole flight visible
+Data for normalX and normalY (33 samples)
+Vectors and forces
+
+Each numeric readout includes its unit. Plots are sampled, not extra model predictions. All model limitations remain visible.
+
+Velocity (m/s) and acceleration (m/s²); separate scales
+12.00 m/s
+20.00 m/s
+Vectors
+velocity: 3 pixels per m/s
+acceleration: 4 pixels per m/s^2
+Horizontal velocity: 12.00 m/s
+Vertical velocity: 20.00 m/s
+m over time
+
+Each numeric readout includes its unit. Plots are sampled, not extra model predictions. All model limitations remain visible.
+
+Time (s) →; m ↑. Sample values below are the nonvisual equivalent.
+0.000 s
+Time in s, vertical quantity in m
+Linked m samples
+Current time: 0.000 s
+Data for time and model.y (25 samples)
+Equations and model data
+
+Each numeric readout includes its unit. Plots are sampled, not extra model predictions. All model limitations remain visible.
+
+x = vx₀ t; y = vy₀ t − g t²/2; vy = vy₀ − g t
+0.000 s
+0.000 m
+0.000 m
+12.00 m/s
+20.00 m/s
+0.000 m/s^2
+-10.00 m/s^2
+48.00 m
+20.00 m
+2.000 s
+4.000 s
+Model equation
+time: 0.000 s
+x: 0.000 m
+y: 0.000 m
+vx: 12.00 m/s
+vy: 20.00 m/s
+ax: 0.000 m/s^2
+ay: -10.00 m/s^2
+range: 48.00 m
+apexHeight: 20.00 m
+apexTime: 2.000 s
+duration: 4.000 s
+Open expanded scene
+
+VELOCITY AT THE APEX
+
+Let’s focus on Velocity at the apex.
+Read aloud
+AI-generated voice · Only when you ask
+Talk to Petros
+Enter to send · Shift + Enter for a new line
+My time
+Settings
+Show me around
+Portal
+Petros
+Focus lab · Document session · Synthetic projectile
+Save and pause
+Finish
+1
+Compare components
+
+Step 1 of 1 · Compare components
+
+0/1
+mastered
+0
+XP
+0
+streak
+0
+cards
+00:00
+Right on pace
+Synthetic projectile
+
+Predict horizontal and vertical projectile motion under constant gravity.
+
+10 minute session · 8 steps
+30-SECOND HUDDLE
+What does “done” look like today?
+
+Build and check 1 ideas, then finish with a 75-second recall lap. I’ll keep the pace gentle and your place safe if you stop to ask something.
+
+10 min target
+Every claim stays cited
+Detours return here
+I’m in — start the run
+Keep it to the essentials
+Starting acknowledges the privacy and learning rules shown with this session.
+Source checked
+Synthetic source (PDF p. 1) · p. 1 · Source
+Privacy and learning rules
+
+Material approved by your institution only · hints for active homework · Voice is optional.
+
+Got it
+Who can see information from this session?
+
+VISUAL EXPLANATION
+
+Velocity at the apex
+Why this step?
+Projectile motion
+
+Projectile motion
+
+Expand
+
+reviewed source · Point mass in stationary SI Cartesian coordinates: x right, y up. · Uniform downward gravity; no air resistance, wind or other forces. · Launch and landing are at the same level (y = 0); stop at first ground contact.
+
+Scene action saved.
+
+Explanation 1 of 3: Explore projectile motion under its declared ideal assumptions.
+
+Narration position: 0.0 s · character 0 of 63 · Ready
+
+Speak
+Interrupt and freeze
+Interrupt; let simulation continue
+Previous beat
+Next beat
+Make a prediction
+
+Petros will ask about the acknowledged model state before showing the outcome. Your response is an observation, not mastery evidence.
+
+Model 
+physics.projectile.no-drag
+Request prediction prompt
+Advance one step
+Allow continuous simulation motion
+Step
+Start
+Time (s) 
+Speed 
+0.25×
+0.5×
+1×
+2×
+4×
+Branch cbfd7525 · state 1
+vx
+restart · m/s
+vy
+restart · m/s
+gravity
+restart · m/s^2
+Motion
+Vectors and forces
+m over time
+Equations and model data
+Show linked views
+Motion
+
+Each numeric readout includes its unit. Plots are sampled, not extra model predictions. All model limitations remain visible.
+
+Projectile motion
+Projectile motion
+Current model position
+Level ground y=0 m
+Trajectory in the same state; normalized axes keep the whole flight visible
+Data for normalX and normalY (33 samples)
+Vectors and forces
+
+Each numeric readout includes its unit. Plots are sampled, not extra model predictions. All model limitations remain visible.
+
+Velocity (m/s) and acceleration (m/s²); separate scales
+12.00 m/s
+20.00 m/s
+Vectors
+velocity: 3 pixels per m/s
+acceleration: 4 pixels per m/s^2
+Horizontal velocity: 12.00 m/s
+Vertical velocity: 20.00 m/s
+m over time
+
+Each numeric readout includes its unit. Plots are sampled, not extra model predictions. All model limitations remain visible.
+
+Time (s) →; m ↑. Sample values below are the nonvisual equivalent.
+0.000 s
+Time in s, vertical quantity in m
+Linked m samples
+Current time: 0.000 s
+Data for time and model.y (25 samples)
+Equations and model data
+
+Each numeric readout includes its unit. Plots are sampled, not extra model predictions. All model limitations remain visible.
+
+x = vx₀ t; y = vy₀ t − g t²/2; vy = vy₀ − g t
+0.000 s
+0.000 m
+0.000 m
+12.00 m/s
+20.00 m/s
+0.000 m/s^2
+-10.00 m/s^2
+48.00 m
+20.00 m
+2.000 s
+4.000 s
+Model equation
+time: 0.000 s
+x: 0.000 m
+y: 0.000 m
+vx: 12.00 m/s
+vy: 20.00 m/s
+ax: 0.000 m/s^2
+ay: -10.00 m/s^2
+range: 48.00 m
+apexHeight: 20.00 m
+apexTime: 2.000 s
+duration: 4.000 s
+Scene data and description
+My notes 
+Save notes
+Model limits and provenance
+
+A reviewed projectile model is ready for this diagram. Starting it uses the saved SI initial conditions supplied by the server.
+
+Start simulationRefresh simulation
+Play review
+Next step
+Replay
+3 / 3
+Different velocity components
+Horizontal velocity remains
+Vertical velocity becomes ze
+ro
+Petros is teaching: Vertical velocity becomes zero
+
+Vertical velocity becomes zero. Gravity still accelerates the body at the apex.
+
+No horizontal force in the trusted no-drag model.
+Gravity still accelerates the body at the apex.
+Open diagram larger
+Nonvisual description
+Keep this edited diagram in the session
+Keep this
+Saved to notes
+Make a flashcard
+Change the explanation
+Explain simpler
+Explain deeper
+
+Saved to NotesOpen it now

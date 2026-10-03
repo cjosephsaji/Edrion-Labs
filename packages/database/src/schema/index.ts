@@ -108,3 +108,17 @@ export * from './campus-life';
 export * from './exam-prep';
 export * from './federation';
 export * from './today';
+export * from './curriculum-alignment';
+
+export * from './petros-visual-operations';
+export * from './petros-adaptive';
+export * from './petros-learning-artifacts';
+export * from './petros-assignment-learning';
+export * from './petros-teaching-packs';
+export * from './petros-objective-evidence';
+export * from './petros-workspace';
+
+export * from './petros-continuity';
+
+export * from './petros-phase4-institutional';
+export * from './petros-release';

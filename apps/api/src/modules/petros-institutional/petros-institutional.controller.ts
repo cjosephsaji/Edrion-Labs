@@ -13,6 +13,8 @@ import {
   petrosPolicyRollbackInputSchema,
   petrosTeacherHandoffCreateSchema,
   petrosTeacherHandoffUpdateSchema,
+  petrosInterventionPreviewSchema,
+  petrosInterventionActionSchema,
   type PetrosHomeworkCorrectionInput,
   type PetrosInstitutionalDashboardQuery,
   type PetrosParentDigestCommandInput,
@@ -24,6 +26,8 @@ import {
   type PetrosPolicyRollbackInput,
   type PetrosTeacherHandoffCreateInput,
   type PetrosTeacherHandoffUpdateInput,
+  type PetrosInterventionPreviewInput,
+  type PetrosInterventionActionInput,
 } from '@edrion/schemas';
 import { z } from 'zod';
 import { Public } from '../../common/guards/auth.guard';
@@ -126,6 +130,41 @@ export class PortalPetrosInstitutionalController {
   @RequireInstitutionPermissions('petros.teacher_support.view')
   refresh(@CurrentInstitutionPrincipal() p: InstitutionPrincipal, @CurrentScope() s: InstitutionScope, @ReqContext() r: EdrionRequestContext, @Body(zodBody(signalRefreshSchema)) body: z.infer<typeof signalRefreshSchema>) {
     return this.service.refreshSignals(this.ctx(p, s, r), body.classId, body.subjectId);
+  }
+
+  @Get('teacher/phase4-capabilities')
+  @RequireInstitutionPermissions('class_content.manage')
+  phase4Capabilities(@CurrentInstitutionPrincipal() p: InstitutionPrincipal, @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext) {
+    return this.service.phase4TeacherCapabilities(this.ctx(p, s, r));
+  }
+
+  @Get('teacher/interventions')
+  @RequireInstitutionPermissions('class_content.manage')
+  interventions(@CurrentInstitutionPrincipal() p: InstitutionPrincipal, @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext, @Query(zodBody(signalRefreshSchema)) query: z.infer<typeof signalRefreshSchema>) {
+    return this.service.listInterventions(this.ctx(p, s, r), query.classId, query.subjectId);
+  }
+
+  @Post('teacher/interventions/preview')
+  @RequireInstitutionPermissions('class_content.manage')
+  interventionPreview(@CurrentInstitutionPrincipal() p: InstitutionPrincipal, @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext, @Body(zodBody(petrosInterventionPreviewSchema)) body: PetrosInterventionPreviewInput) {
+    return this.service.previewIntervention(this.ctx(p, s, r), body);
+  }
+
+  @Post('teacher/interventions/:id/approve')
+  @RequireInstitutionPermissions('class_content.manage')
+  interventionApprove(@CurrentInstitutionPrincipal() p: InstitutionPrincipal, @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext, @Param('id') id: string, @Body(zodBody(petrosInterventionActionSchema)) body: PetrosInterventionActionInput) {
+    return this.service.reviewIntervention(this.ctx(p, s, r), id, body, 'approve');
+  }
+
+  @Post('teacher/interventions/:id/cancel')
+  @RequireInstitutionPermissions('class_content.manage')
+  interventionCancel(@CurrentInstitutionPrincipal() p: InstitutionPrincipal, @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext, @Param('id') id: string, @Body(zodBody(petrosInterventionActionSchema)) body: PetrosInterventionActionInput) {
+    return this.service.reviewIntervention(this.ctx(p, s, r), id, body, 'cancel');
   }
 }
 

@@ -8,6 +8,7 @@ import {
   type PetrosInstitutionPolicyConfig,
   type PetrosPolicyFixture,
   type PetrosResolvedPolicy,
+  type PetrosKnowledgeMode,
 } from '@edrion/schemas';
 
 export interface PolicyVersionRecord {
@@ -50,6 +51,7 @@ export function resolveInstitutionPolicy(input: {
   versions: PolicyVersionRecord[];
   fixture: PetrosPolicyFixture;
   now?: Date;
+  restrictKnowledge?: boolean;
 }): PetrosResolvedPolicy {
   const now = input.now ?? new Date(input.fixture.at ?? Date.now());
   const active = input.versions
@@ -63,6 +65,19 @@ export function resolveInstitutionPolicy(input: {
 
   let config = defaultInstitutionPolicy();
   for (const row of active) config = mergeConfig(config, row.config);
+  // Knowledge authority is restrictive across applicable scopes. A subject override cannot
+  // turn an institution's source-only boundary into a general-knowledge grant.
+  if (input.restrictKnowledge) {
+    config.syllabus.knowledgeMode = narrowKnowledgeMode(active.map(row => syllabusKnowledgeMode(row.config.syllabus)));
+    for (const field of ['approvedSourceIds', 'topicKeys'] as const) {
+      const bounds = active.map(row => row.config.syllabus[field]).filter(list => list.length);
+      if (bounds.length) {
+        const intersection = bounds[0]!.filter(id => bounds.every(list => list.includes(id)));
+        config.syllabus[field] = intersection.length ? intersection : ['__no_permitted_scope__'];
+      }
+    }
+    config.syllabus.maxDepth = Math.min(...active.map(row => row.config.syllabus.maxDepth));
+  }
   config.visibility.teacher.categories = withoutUnsaved(config.visibility.teacher.categories);
   config.visibility.parent.categories = withoutUnsaved(config.visibility.parent.categories);
 
@@ -225,6 +240,24 @@ export function sanitizeParentDigest<T extends Record<string, unknown>>(digest: 
 
 export function stablePolicyHash(value: unknown): string {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+}
+
+export function knowledgePolicyHash(value: unknown): string {
+  return createHash('sha256').update(JSON.stringify(canonicalPolicy(value))).digest('hex');
+}
+
+function canonicalPolicy(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalPolicy);
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, child]) => [key, canonicalPolicy(child)]));
+  return value;
+}
+
+export function syllabusKnowledgeMode(syllabus: PetrosInstitutionPolicyConfig['syllabus']): PetrosKnowledgeMode {
+  return syllabus.allowExternalSources ? syllabus.knowledgeMode ?? 'source_primary' : 'source_bound';
+}
+export function narrowKnowledgeMode(modes: PetrosKnowledgeMode[]): PetrosKnowledgeMode {
+  const order: PetrosKnowledgeMode[] = ['source_bound', 'source_primary', 'general_learning'];
+  return order[Math.min(...modes.map(mode => order.indexOf(mode)))] ?? 'source_bound';
 }
 
 function scopeMatches(row: PolicyVersionRecord, fixture: PetrosPolicyFixture): boolean {

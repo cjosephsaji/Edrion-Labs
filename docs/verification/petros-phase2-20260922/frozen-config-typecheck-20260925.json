@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-25T16:16:25.950920+00:00",
+  "finishedAt": "2026-09-25T16:16:26.611146+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/config",
+    "typecheck"
+  ],
+  "exitCode": 0,
+  "log": "frozen-config-typecheck-20260925.log"
+}

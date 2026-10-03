@@ -1,0 +1,10 @@
+{
+  "startedAt": "2026-09-25T16:08:36.319437+00:00",
+  "finishedAt": "2026-09-25T16:08:38.223313+00:00",
+  "command": [
+    "node",
+    "apps/student-web/scripts/petros-phase2-browser-check.mjs"
+  ],
+  "exitCode": 0,
+  "log": "phase2-browser-resume-primary-20260925.log"
+}

@@ -1,0 +1,91 @@
+{
+  "before": "final-freeze-r4/identity.json",
+  "after": "final-freeze-r5/identity.json",
+  "changes": [
+    {
+      "path": "apps/api/src/modules/integrations/petros-adaptive-journey.integration.spec.ts",
+      "before": "9ff9639e38f7c367a24bb175bcaa81263bb3e59d1e11c81b4bd589c1aeb13f73",
+      "after": "af9ee5121a10cef226e7a07d6de353f55815fd85fac1d7370de181830950516c"
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-assignment-authority.integration.spec.ts",
+      "before": "ac40843456435595efadce09f93e11da4c3f80d2fe98395c90d32b488ccca6ce",
+      "after": "37afd5c787f2fa5bb8646cc2087708d7a49451f52f5dbb2b99d418d08cfdc5c2"
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-pack-authority.integration.spec.ts",
+      "before": "ee8cc19e5bc0eb6feb99dc30831deb1a86a586b9332044ee1152286ec182f63b",
+      "after": "b478a7b0914a82e6cad6acdaa5922702a1e3693bbf22931e4a1153409d7ae956"
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase2-owner-links.integration.spec.ts",
+      "before": null,
+      "after": "5b42402ea87156452f17569a3010cb1cd8023253557ee5fcf8d9f279c270206e"
+    },
+    {
+      "path": "apps/api/src/modules/petros-learner-model/petros-objective-evidence.repository.ts",
+      "before": "5e132efe8f82b1e640bcdb1ac18bdcf8e766184185c7c1a302293df943b68a15",
+      "after": "26793a52188bd4eac82f967fa7faab2877722772628309f1dfe8d09198553040"
+    },
+    {
+      "path": "apps/api/src/modules/portal/petros-assignment-learning.service.ts",
+      "before": "b61012e0de9a96b1f9bd37bcd5fe791a7bd5e93641e97b9bd1f8c8cd08afa924",
+      "after": "723361ec1841cc8a2b52cdd70e92caa2e9b5d16e0f5336183cb5eaa2e9edde7b"
+    },
+    {
+      "path": "apps/api/src/modules/student/knowledge/petros-teaching-pack.service.ts",
+      "before": "7ee0a71b3d7a25937519ad21ee5c82aa807b7d53b3fe3176ec264a5d2e08dbd6",
+      "after": "9a9778049dde4c3efba61b361d92d6fc37190736a77b95b0b98f1501077fa706"
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-loop/petros-adaptive.renderer.spec.ts",
+      "before": null,
+      "after": "f07908081810111ddcc347b2496fcca457a907779cf56e1c565a5d256cdb3403"
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-loop/petros-adaptive.renderer.ts",
+      "before": "533e6aa163b195ff9a29be5085bc80fc5653de788e91d6ea6dabd16e08e43bc8",
+      "after": "7e9bd1e3aa86d4fdb346df674d7392d6c39fdadf7b73403774e7fe7a7140488d"
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-loop/petros-adaptive.service.ts",
+      "before": "a32e696c83065052226e1feec3125dd9696c6e95a802f14021632a6001ea25f5",
+      "after": "dbeef354aad878144ac1c42db6aa3d98c6c259aeee5eba4f5ad4adba7fd72b5c"
+    },
+    {
+      "path": "docs/PETROS-PHASE-2-PRODUCT-DECISIONS.md",
+      "before": null,
+      "after": "511c4dc8b969b5c5aa1bb214b7b13d02899d28678b5a35226fb3f4a422f69066"
+    },
+    {
+      "path": "docs/petros-phase2-source/educator-review-packet-v1.md",
+      "before": null,
+      "after": "d48dea591cbf83b7d5888839c13530ae5714ce3d9470fdca86b2f233d2f490b9"
+    },
+    {
+      "path": "docs/petros-phase2-source/projectile-source-v1.md",
+      "before": null,
+      "after": "301a1ce685b379cf0a3fb60dc8dfe733518b5cd65f94c3f8d9baddda9a9b23a9"
+    },
+    {
+      "path": "docs/petros-phase2-source/source-manifest.json",
+      "before": null,
+      "after": "7097e0b04ef4e92c050c6a9772b4410bacf541e8f8a2448330cc647fd8ac6904"
+    },
+    {
+      "path": "output/pdf/petros-projectile-source-v1.pdf",
+      "before": null,
+      "after": "830a0de10eea9467c313c874c4cb4257afce2b184a67d1323aca079c22544ecd"
+    },
+    {
+      "path": "packages/database/migrations/0226_petros_phase2_owner_links.sql",
+      "before": null,
+      "after": "a425a10f4d1a5f70e1cee5a23afaa083ae7e00205b39091ab1da2c94cf0c6dbc"
+    },
+    {
+      "path": "packages/database/migrations/meta/_journal.json",
+      "before": "48c912e75f37e24738d104abb7d253fafdeeb1c3de6a48fe83517ff3fd5fb472",
+      "after": "5a7380d2af1cca1fd21921ead37f09c2eec42992ead24fbc693701d19034357d"
+    }
+  ]
+}

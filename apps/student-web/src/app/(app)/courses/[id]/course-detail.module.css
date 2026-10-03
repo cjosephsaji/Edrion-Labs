@@ -24,6 +24,7 @@
 .projectRow:focus-visible { outline: 2px solid var(--s-accent); outline-offset: 3px; }
 
 .hero {
+  border-radius: var(--s-radius-card);
   position: relative;
   display: grid;
   min-height: 290px;
@@ -54,6 +55,7 @@
 .heroCopy { position: relative; z-index: 1; min-width: 0; }
 .badges { display: flex; flex-wrap: wrap; gap: 8px; }
 .badges span {
+  border-radius: var(--s-radius-pill);
   border: 1px solid rgba(255,255,255,.24);
   background: rgba(255,255,255,.08);
   padding: 5px 9px;
@@ -77,6 +79,7 @@
 .heroCopy > p { margin: 14px 0 0; color: rgba(255,255,255,.7); font-size: 15px; }
 .heroActions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 28px; }
 .heroActions > a {
+  border-radius: var(--s-radius-control);
   display: inline-flex;
   min-height: 40px;
   align-items: center;
@@ -92,6 +95,7 @@
 .heroActions svg { width: 15px; height: 15px; }
 
 .courseMark {
+  border-radius: var(--s-radius-control);
   position: relative;
   z-index: 1;
   display: grid;
@@ -108,6 +112,7 @@
 .systemState { margin-top: 18px; }
 
 .summary {
+  border-radius: var(--s-radius-card);
   position: relative;
   z-index: 2;
   display: grid;
@@ -136,7 +141,7 @@
 .primary,
 .sidebar { display: grid; gap: 18px; }
 .panel,
-.sidePanel { border: 1px solid var(--s-bd1); background: var(--s-card); }
+.sidePanel { border-radius: var(--s-radius-card); border: 1px solid var(--s-bd1); background: var(--s-card); }
 .panel { padding: clamp(18px, 3vw, 28px); }
 .panel:first-child { border-top: 3px solid var(--s-accentDeep); }
 
@@ -155,6 +160,7 @@
 .materialList,
 .projectList { display: grid; gap: 10px; margin-top: 22px; }
 .materialCard {
+  border-radius: var(--s-radius-card);
   display: grid;
   width: 100%;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -170,7 +176,7 @@
   transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
 }
 .materialCard:hover { border-color: var(--s-accent); background: var(--s-accentSoft); transform: translateY(-1px); }
-.fileType { display: grid; width: 50px; height: 58px; place-items: center; border: 1px solid var(--s-accentBd); background: var(--s-card); color: var(--s-accentDeep); font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; box-shadow: 4px 4px 0 var(--s-accentSoft); }
+.fileType { border-radius: var(--s-radius-control); display: grid; width: 50px; height: 58px; place-items: center; border: 1px solid var(--s-accentBd); background: var(--s-card); color: var(--s-accentDeep); font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; box-shadow: 4px 4px 0 var(--s-accentSoft); }
 .materialCopy { display: block; min-width: 0; }
 .latest { display: inline-block; margin-bottom: 5px; color: var(--s-accentDeep); font-size: 9.5px; font-weight: 800; text-transform: uppercase; }
 .materialCopy > strong { display: block; color: var(--s-ink); font-size: 14px; line-height: 1.35; }
@@ -185,7 +191,7 @@
 .projectRow small { display: block; margin-top: 4px; color: var(--s-muted); font-size: 11px; }
 .projectRow > svg { width: 16px; color: var(--s-accentDeep); }
 
-.compactEmpty { display: flex; align-items: center; gap: 13px; margin-top: 20px; border: 1px dashed var(--s-bd2); background: var(--s-cardAlt); padding: 18px; }
+.compactEmpty { border-radius: var(--s-radius-card); display: flex; align-items: center; gap: 13px; margin-top: 20px; border: 1px dashed var(--s-bd2); background: var(--s-cardAlt); padding: 18px; }
 .compactEmpty > svg { width: 20px; height: 20px; flex: none; color: var(--s-faint); }
 .compactEmpty strong { color: var(--s-inkSoft); font-size: 12.5px; }
 .compactEmpty p { margin: 3px 0 0; color: var(--s-muted); font-size: 11px; }
@@ -194,7 +200,7 @@
 .moduleList li { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 13px; padding-bottom: 20px; }
 .moduleList li:last-child { padding-bottom: 0; }
 .moduleList li:not(:last-child)::after { position: absolute; top: 34px; bottom: 0; left: 16px; width: 1px; background: var(--s-bd1); content: ''; }
-.weekNumber { position: relative; z-index: 1; display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--s-bd2); background: var(--s-card); color: var(--s-muted); font-size: 11px; font-weight: 800; }
+.weekNumber { border-radius: var(--s-radius-control); position: relative; z-index: 1; display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--s-bd2); background: var(--s-card); color: var(--s-muted); font-size: 11px; font-weight: 800; }
 .weekNumber svg { width: 15px; height: 15px; }
 .moduleList li[data-state='covered'] .weekNumber { border-color: var(--s-accentDeep); background: var(--s-accentDeep); color: #fff; }
 .moduleList li[data-state='current'] .weekNumber { border-color: var(--s-accent); box-shadow: 0 0 0 4px var(--s-accentSoft); color: var(--s-accentDeep); }

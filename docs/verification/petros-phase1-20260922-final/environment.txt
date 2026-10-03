@@ -1,0 +1,6 @@
+Darwin Macbooks-MacBook-Air-2.local 27.0.0 Darwin Kernel Version 27.0.0: Tue Aug 11 21:02:57 PDT 2026; root:xnu-13432.1.9~1/RELEASE_ARM64_T8132 arm64
+v25.6.0
+11.1.2
+postgres (PostgreSQL) 15.15 (Homebrew)
+Redis server v=8.4.0 sha=00000000:1 malloc=libc bits=64 build=971513cac427afef
+Google Chrome 153.0.8010.52 

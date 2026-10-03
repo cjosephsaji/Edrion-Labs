@@ -5,6 +5,11 @@ import reactHooks from 'eslint-plugin-react-hooks';
 export default [
   ...base,
   {
+    files: ['packages/ui/**/*.{js,jsx,ts,tsx}'],
+    plugins: {'react-hooks': reactHooks},
+    rules: {...reactHooks.configs.recommended.rules},
+  },
+  {
     files: ['apps/*-web/**/*.{js,jsx,ts,tsx}'],
     plugins: {
       '@next/next': nextPlugin,

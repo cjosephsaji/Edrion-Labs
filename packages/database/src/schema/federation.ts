@@ -1,4 +1,4 @@
-import { boolean, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 
@@ -18,7 +18,7 @@ export const institutionIdentityProviders = pgTable('institution_identity_provid
   jitProvision: boolean('jit_provision').notNull().default(true),
   metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
   ...timestamps,
-});
+}, (t) => ({ tenantIdentity: uniqueIndex('institution_identity_provider_tenant_uq').on(t.id, t.institutionId) }));
 
 export const rosterSyncJobs = pgTable('roster_sync_jobs', {
   id: primaryId(),
@@ -28,6 +28,7 @@ export const rosterSyncJobs = pgTable('roster_sync_jobs', {
   provider: text('provider').notNull(),
   status: text('status').notNull().default('queued'),
   stats: jsonb('stats').$type<Record<string, unknown>>().notNull().default({}),
+  compatibility: jsonb('compatibility').$type<Record<string, unknown> | null>(),
   errorMessage: text('error_message'),
   startedAt: timestamp('started_at', { withTimezone: true }),
   finishedAt: timestamp('finished_at', { withTimezone: true }),

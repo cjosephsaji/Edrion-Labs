@@ -23,15 +23,9 @@ const learningNavigation = [
 ] as const;
 
 export function isLearningWorkspaceRoute(pathname: string) {
-  return (
-    pathname === '/learn' ||
-    pathname === '/learning-path' ||
-    pathname === '/materials' ||
-    pathname.startsWith('/notes') ||
-    pathname === '/flashcards' ||
-    pathname === '/progress' ||
-    pathname.startsWith('/petros')
-  );
+  // Dedicated studios supply their own navigation. Keep the portal's
+  // permissions and saved quick links on the other student pages.
+  return pathname === '/petros/document' || pathname === '/petros/pilot';
 }
 
 function isStudyRoute(pathname: string) {

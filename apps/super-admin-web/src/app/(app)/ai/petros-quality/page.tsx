@@ -6,6 +6,7 @@ import { Card, ErrorState, Skeleton, cn } from '@edrion/ui';
 import { usePetrosQualityRun, usePetrosQualityRuns, usePromotePetrosQualityBaseline, useRequestPetrosQualityRerun } from '@edrion/api-client';
 import { Topbar } from '@/components/app-shell/topbar';
 import { webEnv } from '@/lib/env';
+import { PetrosOperationsPanel } from '@/components/petros-quality/petros-operations-panel';
 
 const DIMENSION_LABELS: Record<string, string> = {
   correctness: 'Correctness', structural_variety: 'Variety', move_appropriateness: 'Move fit', prerequisite_handling: 'Prerequisites',
@@ -62,7 +63,8 @@ export default function PetrosQualityPage() {
   return (
     <>
       <Topbar title="Petros Quality" actions={<span className="hidden text-xs text-text-muted md:inline">Synthetic evaluation only · no student data</span>} />
-      <main className="page-enter space-y-5 p-4 md:p-6">
+      <section aria-label="Petros quality evaluations" className="page-enter space-y-5 p-4 md:p-6">
+        <PetrosOperationsPanel />
         <section className="rounded-2xl border border-violet-400/20 bg-[linear-gradient(125deg,#211633,#362052_58%,#482768)] p-5 text-white shadow-md md:p-7">
           <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
             <div className="max-w-3xl"><p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-violet-200"><FlaskConical className="h-4 w-4" /> Teaching quality harness</p><h1 className="mt-3 text-2xl font-semibold md:text-3xl">Catch regressions before learners feel them.</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-white/70">Compare immutable baselines across topics, learner policies, prompt/schema/profile versions, correctness, variety, recovery, artifacts, cost and latency.</p></div>
@@ -77,7 +79,7 @@ export default function PetrosQualityPage() {
             {runs.isLoading ? <Skeleton className="mt-3 h-52" /> : runs.isError ? <ErrorState description="Quality runs require migration 0190 and the Petros Quality API." /> : <div className="mt-3 space-y-2">{visibleRuns.map((run) => <button key={run.id} onClick={() => { setSelectedId(run.id); setOpenSessionId(''); }} className={cn('w-full rounded-xl border p-3 text-left transition', (selectedId || visibleRuns[0]?.id) === run.id ? 'border-primary bg-primary/5' : 'border-border hover:bg-surface')}><div className="flex items-start justify-between gap-2"><span className="text-sm font-semibold">{run.label}</span><Gate value={run.gate} /></div><div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-text-muted"><span>{run.mode}</span><span>{Number(run.totals.sessions ?? 0)} sessions</span><span>{run.promptVersion}</span><span>{new Date(run.createdAt).toLocaleDateString()}</span></div></button>)}</div>}
           </Card>
 
-          {!selected ? <Card className="p-8"><ErrorState description="Select a quality run to inspect its evidence." /></Card> : <div className="min-w-0 space-y-4">
+          {!selected ? <Card className="p-8"><p className="text-sm text-text-secondary">{visibleRuns.length ? "Select a quality run to inspect its evidence." : "No quality evaluations have been recorded. Release activation remains blocked until current engineering evidence is registered."}</p></Card> : <div className="min-w-0 space-y-4">
             <Card className="p-4 md:p-5"><div className="flex flex-col justify-between gap-4 md:flex-row md:items-start"><div><div className="flex items-center gap-2"><h2 className="text-lg font-semibold">{selected.label}</h2><Gate value={selected.gate} />{selected.baseline?.selected && <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">Selected baseline</span>}</div><p className="mt-1 text-xs text-text-muted">Corpus {selected.corpusVersion} · Rubric {selected.rubricVersion} · Prompt {selected.promptVersion} · Schema {selected.schemaVersion}</p></div><div className="flex flex-wrap gap-2"><a href={`${webEnv.apiBaseUrl}/v1/petros-quality/runs/${selected.id}/export.json`} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs font-semibold"><Download className="h-3.5 w-3.5" /> JSON</a><a href={`${webEnv.apiBaseUrl}/v1/petros-quality/runs/${selected.id}/export.csv`} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs font-semibold"><Download className="h-3.5 w-3.5" /> CSV</a><button onClick={requestRerun} disabled={rerun.isPending} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs font-semibold"><Play className="h-3.5 w-3.5" /> Rerun failures</button><button onClick={promoteBaseline} disabled={promote.isPending || selected.gate === 'fail'} className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-40">Promote baseline</button></div></div></Card>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Metric label="Mean score" value={`${Number(selected.totals.score ?? 0).toFixed(2)} / 5`} /><Metric label="Sessions" value={`${selected.totals.completed ?? 0}/${selected.totals.sessions ?? 0}`} /><Metric label="Cost" value={usd(selected.costMicros)} /><Metric label="Latency" value={`${selected.latencyMs.toLocaleString()} ms`} /></div>
@@ -93,7 +95,7 @@ export default function PetrosQualityPage() {
             {(selected.blockingFailures.length > 0 || selected.warnings.length > 0) && <Card className="p-4 md:p-5"><h2 className="font-semibold">Diagnostics</h2><div className="mt-3 space-y-2 text-sm">{selected.blockingFailures.map((item) => <p key={item} className="rounded-lg bg-danger/10 p-3 text-danger">Blocking · {item}</p>)}{selected.warnings.map((item) => <p key={item} className="rounded-lg bg-warning/10 p-3">Warning · {item}</p>)}</div></Card>}
           </div>}
         </div>
-      </main>
+      </section>
     </>
   );
 }

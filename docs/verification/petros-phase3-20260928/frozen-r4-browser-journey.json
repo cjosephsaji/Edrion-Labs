@@ -1,0 +1,232 @@
+{
+  "date": "2026-10-02T06:42:17.147Z",
+  "browser": "154.0.8037.58",
+  "viewport": [
+    1440,
+    1000
+  ],
+  "mobile": [
+    390,
+    844
+  ],
+  "reducedMotion": true,
+  "realAppModule": true,
+  "disposablePostgresRedis": true,
+  "controlledProvider": true,
+  "speech": "controlled boundary adapter; physical speech validation remains open",
+  "record": [
+    {
+      "label": "keyboard semantic selection",
+      "version": 2,
+      "branch": "a758e4c8-3777-4746-8d51-a66760d25bf6",
+      "time": 0
+    },
+    {
+      "label": "isolate",
+      "version": 3,
+      "branch": "a758e4c8-3777-4746-8d51-a66760d25bf6",
+      "time": 0
+    },
+    {
+      "label": "linked representation",
+      "version": 4,
+      "branch": "a758e4c8-3777-4746-8d51-a66760d25bf6",
+      "time": 0
+    },
+    {
+      "label": "restore wider lesson",
+      "version": 5,
+      "branch": "a758e4c8-3777-4746-8d51-a66760d25bf6",
+      "time": 0
+    },
+    {
+      "label": "apex model event",
+      "version": 6,
+      "branch": "a758e4c8-3777-4746-8d51-a66760d25bf6",
+      "time": 2
+    },
+    {
+      "label": "save draft",
+      "version": 7,
+      "branch": "a758e4c8-3777-4746-8d51-a66760d25bf6",
+      "time": 2
+    },
+    {
+      "label": "interrupt confirmed narration boundary",
+      "version": 8,
+      "branch": "a758e4c8-3777-4746-8d51-a66760d25bf6",
+      "time": 2
+    },
+    {
+      "label": "expand shared workspace",
+      "version": 9,
+      "branch": "a758e4c8-3777-4746-8d51-a66760d25bf6",
+      "time": 2
+    },
+    {
+      "label": "resume same return point",
+      "version": 10,
+      "branch": "a758e4c8-3777-4746-8d51-a66760d25bf6",
+      "time": 2
+    },
+    {
+      "label": "return to original lesson",
+      "version": 11,
+      "branch": "a758e4c8-3777-4746-8d51-a66760d25bf6",
+      "time": 2
+    },
+    {
+      "label": "projectile parameter",
+      "version": 12,
+      "branch": "a758e4c8-3777-4746-8d51-a66760d25bf6",
+      "time": 0
+    },
+    {
+      "label": "explicit continuous-motion opt-in",
+      "version": 13,
+      "branch": "a758e4c8-3777-4746-8d51-a66760d25bf6",
+      "time": 0
+    },
+    {
+      "label": "representation preserves live observed time",
+      "version": 16,
+      "branch": "a758e4c8-3777-4746-8d51-a66760d25bf6",
+      "time": 0.25110000000149013
+    },
+    {
+      "label": "pause acknowledges observed time",
+      "version": 18,
+      "branch": "a758e4c8-3777-4746-8d51-a66760d25bf6",
+      "time": 0.5017000000029803
+    },
+    {
+      "label": "analytic return to initial time",
+      "version": 19,
+      "branch": "a758e4c8-3777-4746-8d51-a66760d25bf6",
+      "time": 0
+    },
+    {
+      "label": "lost response and exact retry",
+      "version": 20,
+      "operationId": "c60ef960-5e4c-4b21-b391-82c4ece218b7"
+    },
+    {
+      "label": "stale-version denial",
+      "status": 409
+    },
+    {
+      "label": "real HTTP invalid-unit denial without write",
+      "status": 400
+    },
+    {
+      "label": "branch from owner checkpoint",
+      "version": 21,
+      "branch": "4eefaa5e-36a2-4d98-ad8b-1d584d6e0525",
+      "time": 0
+    },
+    {
+      "label": "prediction before server outcome",
+      "eligibility": "observation_only",
+      "mastery": false
+    },
+    {
+      "label": "pendulum step",
+      "version": 2,
+      "branch": "d09cb3dd-dc05-4c7f-bd35-2a70283bde35",
+      "time": 0.1
+    },
+    {
+      "label": "pendulum mass restart",
+      "version": 3,
+      "branch": "d09cb3dd-dc05-4c7f-bd35-2a70283bde35",
+      "time": 0
+    },
+    {
+      "label": "circuits.dc.series step",
+      "version": 2,
+      "branch": "7169001d-745b-44f8-9d57-a6a43eddc58f",
+      "time": 0.1
+    },
+    {
+      "label": "circuits.dc.series switching",
+      "version": 3,
+      "branch": "7169001d-745b-44f8-9d57-a6a43eddc58f",
+      "time": 0.1
+    },
+    {
+      "label": "circuits.dc.series advance open",
+      "version": 4,
+      "branch": "7169001d-745b-44f8-9d57-a6a43eddc58f",
+      "time": 0.2
+    },
+    {
+      "label": "circuits.dc.series reclose",
+      "version": 5,
+      "branch": "7169001d-745b-44f8-9d57-a6a43eddc58f",
+      "time": 0.2
+    },
+    {
+      "label": "circuits.dc.series rewind through switch history",
+      "version": 6,
+      "branch": "7169001d-745b-44f8-9d57-a6a43eddc58f",
+      "time": 0.15
+    },
+    {
+      "label": "circuits.rc.series step",
+      "version": 2,
+      "branch": "cb2f8e41-f610-4ffe-b968-27cec68f3477",
+      "time": 0.1
+    },
+    {
+      "label": "circuits.rc.series switching",
+      "version": 3,
+      "branch": "cb2f8e41-f610-4ffe-b968-27cec68f3477",
+      "time": 0.1
+    },
+    {
+      "label": "circuits.rc.series advance open",
+      "version": 4,
+      "branch": "cb2f8e41-f610-4ffe-b968-27cec68f3477",
+      "time": 0.2
+    },
+    {
+      "label": "circuits.rc.series reclose",
+      "version": 5,
+      "branch": "cb2f8e41-f610-4ffe-b968-27cec68f3477",
+      "time": 0.2
+    },
+    {
+      "label": "circuits.rc.series rewind through switch history",
+      "version": 6,
+      "branch": "cb2f8e41-f610-4ffe-b968-27cec68f3477",
+      "time": 0.15
+    },
+    {
+      "label": "spatial keyboard alternative",
+      "version": 2,
+      "branch": "461fdd23-e54d-4919-9813-db00f3b73ec5",
+      "time": 0
+    },
+    {
+      "label": "unfamiliar combined program",
+      "version": 2,
+      "branch": "a6da8b9e-e6d8-4101-ad3b-4cd0b52808f4",
+      "time": 0.1
+    },
+    {
+      "label": "lesson-owner resume after navigation",
+      "draftRetained": true
+    },
+    {
+      "label": "mobile expanded scene",
+      "version": 22,
+      "branch": "4eefaa5e-36a2-4d98-ad8b-1d584d6e0525",
+      "time": 0
+    }
+  ],
+  "errors": [],
+  "dimensions": {
+    "viewport": 390,
+    "page": 390
+  }
+}

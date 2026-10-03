@@ -35,6 +35,7 @@
 .slots { display: grid; gap: 6px; }
 
 .slot {
+  border-radius: var(--s-radius-panel);
   display: grid;
   grid-template-columns: 62px minmax(0, 1fr) auto;
   align-items: center;

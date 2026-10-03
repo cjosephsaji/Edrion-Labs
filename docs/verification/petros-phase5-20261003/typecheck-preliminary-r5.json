@@ -1,0 +1,27 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/schemas",
+    "--filter",
+    "@edrion/config",
+    "--filter",
+    "@edrion/database",
+    "--filter",
+    "@edrion/api",
+    "--filter",
+    "@edrion/student-web",
+    "--filter",
+    "@edrion/institution-web",
+    "--filter",
+    "@edrion/super-admin-web",
+    "typecheck"
+  ],
+  "start": "2026-10-03T03:46:58.430899+00:00",
+  "end": "2026-10-03T03:47:35.968478+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+  }
+}

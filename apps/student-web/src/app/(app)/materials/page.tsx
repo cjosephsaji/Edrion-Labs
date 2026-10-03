@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import {
   BookOpen,
+  BookOpenCheck,
   CalendarDays,
   CircleAlert,
   ClipboardCheck,
-  Clock3,
   Eye,
   FileText,
   FolderOpen,
@@ -29,6 +29,7 @@ import { QueryPage } from '@/components/query-page';
 import { EmptyState } from '@/components/ui/states';
 import { formatApiError, useStudentApi } from '@/lib/api-client';
 import { useStudentList } from '@/lib/hooks';
+import { petrosDocumentExtractionSchema } from '@edrion/schemas';
 import styles from './materials.module.css';
 
 type Material = {
@@ -64,10 +65,6 @@ const pageDescription = 'Notes, worksheets, and resources shared by your teacher
 /** Which materials the student has opened is not something the API records, so the
  *  answer is kept per device. The copy says so rather than implying it follows them. */
 const OPENED_STORAGE_KEY = 'edrion.student.materials.opened.v1';
-/** Only ever used where a real extracted page count exists. Never guessed for a file
- *  whose length nobody has measured. */
-const MINUTES_PER_PAGE = 2;
-
 const FORMAT_LABELS = new Set([
   'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'csv', 'txt', 'rtf', 'md',
   'mp3', 'mp4', 'png', 'jpg', 'jpeg', 'zip',
@@ -128,13 +125,30 @@ function petrosStateOf(source: PetrosSource): PetrosState {
       pages: null,
     };
   }
+  const extraction = petrosDocumentExtractionSchema.safeParse(source.origin?.petrosExtraction);
+  if (source.kind !== 'pdf' || (extraction.success && extraction.data.representation !== 'pdf_text')) {
+    return {
+      tone: 'blocked', ready: false, headline: 'Preview available; teaching needs preparation',
+      note: 'Reliable teaching locators are not available for this format yet. You can open the original.',
+      progress: null, pages: null,
+    };
+  }
+  if ((status === 'needs_ocr_confirm' && !source.extractionReady)
+    || (source.origin?.petrosExtraction != null && !extraction.success)
+    || (extraction.success && (extraction.data.truncated || !extraction.data.readable))) {
+    return {
+      tone: 'blocked', ready: false, headline: 'Source text needs attention',
+      note: 'The extraction is incomplete or unreadable. Open the original or correct the file before teaching.',
+      progress: null, pages: pageCount,
+    };
+  }
   if (source.extractionReady) {
     const pages = pageCount ?? (pagesDone || null);
     return {
       tone: 'ready',
       ready: true,
-      headline: 'Petros can teach from this',
-      note: pages ? `${plural(pages, 'page')} extracted` : 'Pages extracted and verified',
+      headline: status === 'needs_ocr_confirm' ? 'Select a readable page' : 'Text available for source check',
+      note: 'Petros checks the selected PDF text before starting. Figures and teaching coverage are not yet verified.',
       progress: null,
       pages,
     };
@@ -159,11 +173,6 @@ function petrosStateOf(source: PetrosSource): PetrosState {
     progress: pageCount ? Math.min(100, Math.round((pagesDone / pageCount) * 100)) : null,
     pages: pageCount,
   };
-}
-
-function readingMinutes(pages: number | null) {
-  if (!pages || pages <= 0) return null;
-  return Math.max(1, Math.round(pages * MINUTES_PER_PAGE));
 }
 
 function publishedOn(iso: string) {
@@ -339,7 +348,6 @@ export default function Page() {
         const renderCard = (row: Row) => {
           const { item, source, petros, openedAt } = row;
           const Icon = kindIcon(item.kindLabel);
-          const minutes = readingMinutes(petros?.pages ?? null);
           const published = publishedOn(item.publishedAt);
           return (
             <li className={styles.card} key={item.id} data-petros={petros?.tone ?? 'none'}>
@@ -365,11 +373,6 @@ export default function Page() {
                       <li>
                         <CalendarDays aria-hidden="true" />
                         Shared {published}
-                      </li>
-                    ) : null}
-                    {minutes ? (
-                      <li title={`Estimated from ${plural(petros?.pages ?? 0, 'extracted page')}`}>
-                        <Clock3 aria-hidden="true" />≈ {minutes} min read
                       </li>
                     ) : null}
                     {openedLoaded && openedAt ? (
@@ -435,7 +438,23 @@ export default function Page() {
 
         return (
           <div className={styles.page}>
-            <PageHeader eyebrow="Learning library" title={pageTitle} description={pageDescription} actions={<Link data-petros-target="library:saved" href="/petros/artifacts" className="inline-flex min-h-11 items-center gap-2 border border-[var(--s-bd1)] bg-[var(--s-card)] px-4 text-sm text-[var(--s-accentDeep)]"><NotebookText className="h-4 w-4" />Saved notes &amp; study work</Link>} />
+            <PageHeader
+              eyebrow="Learning library"
+              title={pageTitle}
+              description={pageDescription}
+              actions={(
+                <div className={styles.headerActions}>
+                  <Link data-petros-target="library:petros" href="/petros?mode=documents" className={styles.petrosAction}>
+                    <BookOpenCheck aria-hidden="true" />
+                    Teach from a document
+                  </Link>
+                  <Link data-petros-target="library:saved" href="/petros/artifacts" className={styles.savedAction}>
+                    <NotebookText aria-hidden="true" />
+                    Saved study work
+                  </Link>
+                </div>
+              )}
+            />
 
             {items.length === 0 && !petrosSources.isLoading && !petrosSources.error && uploads.length === 0 ? (
               <EmptyState
@@ -454,14 +473,16 @@ export default function Page() {
                     </span>
                   </div>
                   <div className={styles.stat} data-tone="accent">
-                    <span className={styles.statLabel}>Petros can teach</span>
+                    <span className={styles.statLabel}>Ready for source check</span>
                     <strong className={styles.statValue}>
-                      {petrosSources.error ? '—' : petrosReadyMaterials + petrosReadyUploads}
+                      {petrosSources.error || petrosSources.isLoading ? '—' : petrosReadyMaterials + petrosReadyUploads}
                     </strong>
                     <span className={styles.statNote}>
                       {petrosSources.error
-                        ? 'Extraction status is unavailable right now'
-                        : 'Documents with extracted pages, class and your own'}
+                        ? 'Source status is unavailable right now'
+                        : petrosSources.isLoading
+                          ? 'Checking current source status'
+                          : 'PDF documents to check before teaching'}
                     </span>
                   </div>
                   <div className={styles.stat}>
@@ -507,7 +528,7 @@ export default function Page() {
                         >
                           {name}
                           <span className={styles.chipCount}>
-                            {rows.filter((row) => (row.item.className ?? 'General') === name).length}
+                            {rows.filter((row) => bucketOf(row.item) === name).length}
                           </span>
                         </button>
                       ))}
@@ -524,6 +545,14 @@ export default function Page() {
                     </label>
                   </div>
 
+                  {petrosSources.error ? (
+                    <p className={styles.sourceUnavailable} role="status">
+                      Source preparation status is unavailable. You can still open each original document; teaching stays subject to a current source check.
+                    </p>
+                  ) : petrosSources.isLoading ? (
+                    <p className={styles.sourceChecking} role="status">Checking current source status…</p>
+                  ) : null}
+
                   {petrosReadyMaterials || (openedLoaded && unopenedCount) ? (
                     <div className={styles.stateRow}>
                       <span className={styles.stateRowLabel}>Show only</span>
@@ -535,7 +564,7 @@ export default function Page() {
                           onClick={() => setOnlyPetrosReady((value) => !value)}
                         >
                           <Sparkles aria-hidden="true" />
-                          Petros can teach
+                          Text ready
                           <span className={styles.chipCount}>{petrosReadyMaterials}</span>
                         </button>
                       ) : null}
@@ -566,7 +595,7 @@ export default function Page() {
                           <>
                             {queryText ? <>No material matches “{search.trim()}”</> : 'No material matches these filters'}
                             {context === 'all' ? '' : ` in ${context}`}
-                            {onlyPetrosReady ? ', among the ones Petros can teach from' : ''}
+                            {onlyPetrosReady ? ', among the sources with readable text' : ''}
                             {onlyUnopened ? ', among the ones you have not opened' : ''}.
                             {context !== 'all' && matchesAnywhere > 0
                               ? ` ${plural(matchesAnywhere, 'material')} elsewhere in your library ${matchesAnywhere === 1 ? 'matches' : 'match'}.`
@@ -639,7 +668,6 @@ export default function Page() {
                       {uploads.map((source) => {
                         const state = petrosStateOf(source);
                         const Icon = kindIcon(source.kind);
-                        const minutes = readingMinutes(state.pages);
                         return (
                           <li className={styles.upload} key={source.id} data-tone={state.tone}>
                             <span className={styles.kind}>
@@ -661,7 +689,6 @@ export default function Page() {
                               </div>
                               <p className={styles.uploadNote}>
                                 {state.note ?? state.headline}
-                                {minutes ? ` · ≈ ${minutes} min read` : ''}
                               </p>
                               {state.progress === null ? null : (
                                 <div

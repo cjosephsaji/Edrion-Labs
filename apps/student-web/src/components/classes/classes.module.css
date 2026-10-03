@@ -83,6 +83,7 @@
 }
 
 .classCard {
+  border-radius: var(--s-radius-card);
   display: flex;
   min-height: 174px;
   align-items: flex-start;
@@ -123,6 +124,7 @@
 .classCardAction svg { width: 15px; height: 15px; }
 
 .todayBadge {
+  border-radius: var(--s-radius-pill);
   display: inline-flex;
   min-height: 26px;
   align-items: center;
@@ -135,6 +137,7 @@
 }
 
 .hero {
+  border-radius: var(--s-radius-card);
   position: relative;
   display: grid;
   min-height: 210px;
@@ -190,6 +193,7 @@
 }
 
 .stat {
+  border-radius: var(--s-radius-card);
   display: grid;
   min-height: 128px;
   grid-template-columns: 42px minmax(0, 1fr);
@@ -230,6 +234,7 @@
 
 .tabs::-webkit-scrollbar { display: none; }
 .tab {
+  border-radius: var(--s-radius-control);
   position: relative;
   min-height: 48px;
   flex: none;
@@ -257,6 +262,7 @@
 
 .panel,
 .sidePanel {
+  border-radius: var(--s-radius-card);
   border: 1px solid var(--s-bd1);
   background: var(--s-card);
 }
@@ -272,6 +278,7 @@
 .sectionLink { flex: none; color: var(--s-accentDeep); font-size: 13px; font-weight: 600; }
 
 .welcome {
+  border-radius: var(--s-radius-card);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -300,7 +307,7 @@
 .updateTitle { margin: 0; color: var(--s-ink); font-size: 15px; font-weight: 600; }
 .updateBody { margin: 3px 0 0; color: var(--s-muted); font-size: 13px; line-height: 1.5; }
 .updateTime { color: var(--s-faint); font-size: 11px; white-space: nowrap; }
-.acknowledge { grid-column: 2 / -1; justify-self: start; border: 1px solid var(--s-bd2); background: var(--s-cardAlt); padding: 7px 10px; color: var(--s-accentDeep); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.acknowledge { border-radius: var(--s-radius-control); grid-column: 2 / -1; justify-self: start; border: 1px solid var(--s-bd2); background: var(--s-cardAlt); padding: 7px 10px; color: var(--s-accentDeep); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
 .acknowledged { grid-column: 2 / -1; display: inline-flex; align-items: center; gap: 5px; color: var(--s-success); font-size: 12px; font-weight: 600; }
 .acknowledged svg { width: 14px; height: 14px; }
 

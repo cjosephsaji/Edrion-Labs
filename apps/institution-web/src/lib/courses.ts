@@ -6,6 +6,7 @@ import type { InstitutionScope } from './types';
 import type { ListParams } from './academics';
 import { useAcademicScopedParams } from './academic-context';
 import type { CourseRow, Paged, SyllabusModuleRow } from './courses-types';
+import { CURRICULUM_ALIGNMENT_VERSION, readCurriculumCompatibility } from '@edrion/schemas';
 
 function scopeKey(scope: InstitutionScope): string {
   return scope.mode === 'campus' ? `campus:${scope.campusId}` : 'institution';
@@ -62,7 +63,13 @@ export function useCourseSyllabus(courseId: string | null) {
   const { scope } = useScope();
   return useQuery({
     queryKey: ['courses', courseId, 'syllabus', scopeKey(scope)],
-    queryFn: () => client.get<SyllabusModuleRow[]>(`/portal/courses/${courseId}/syllabus`, scope),
+    queryFn: async () => {
+      const response = await client.request<SyllabusModuleRow[] | { modules: SyllabusModuleRow[]; curriculum?: unknown;
+        history?: Array<{ revision: number; reason: string; recordedAt: string }> }>(
+        `/portal/courses/${courseId}/syllabus`, scope, { method: 'GET', headers: { 'x-petros-curriculum-alignment': CURRICULUM_ALIGNMENT_VERSION } });
+      return Array.isArray(response) ? { modules: response, curriculum: null, history: [] } :
+        { modules: response.modules, curriculum: readCurriculumCompatibility(response.curriculum), history: response.history ?? [] };
+    },
     enabled: !!courseId,
   });
 }

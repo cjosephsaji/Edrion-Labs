@@ -1,0 +1,133 @@
+{
+  "schemaVersion": "petros.phase5.quality-report.v1",
+  "generatedAt": "2026-10-03T12:42:02.480Z",
+  "environment": {
+    "postgresVersion": "15.15 (Homebrew)",
+    "concurrency": "sequential per owner, two owners/two tenants; closure may execute independent schema/typecheck/browser workloads concurrently",
+    "os": "darwin",
+    "osRelease": "27.0.0",
+    "architecture": "arm64",
+    "node": "v25.6.0",
+    "cpuCount": 10,
+    "memoryBytes": 17179869184,
+    "databaseRole": "edrion_app/NOBYPASSRLS",
+    "providerTransport": "controlled_no_network",
+    "paidProviderCalls": 0
+  },
+  "evidenceClass": "synthetic_engineering_only",
+  "externalEducatorJudgment": "not_performed",
+  "learningEfficacy": "not_measured",
+  "identities": {
+    "fixture": "phase2-authority-fixture.v1",
+    "sourceVersions": [
+      "0a5047c1fd53736cc88e7fb8d5b74f3001d5980175d356f28d29870feb46c049",
+      "6946ed2addc31cf6f41c40e581cf0f1e4c70d5bd92553beaa0f82cdc71bc0bc7"
+    ],
+    "teachingPackVersions": [
+      1,
+      1
+    ],
+    "policy": "institutional-policy/current-owner-read",
+    "policyIdentities": [
+      {
+        "schemaVersion": "petros.knowledge-policy.v1",
+        "authorityHash": "0b771c18b7a7c6c41166002cf10cd8a13225db5ed8212936bfaff89304638045",
+        "versionIds": [
+          "c03a6465-d8fb-4bd4-8622-6567908a077f"
+        ]
+      },
+      {
+        "schemaVersion": "petros.knowledge-policy.v1",
+        "authorityHash": "f38af811d63394a6c1daa6421c04a7146e4c0230f466f73b2dc318293297eb43",
+        "versionIds": [
+          "c3b0f19a-9140-4d1c-af0e-4b0fda503d26"
+        ]
+      }
+    ],
+    "promptVersions": [
+      "stage4-plan-v1",
+      "stage4-plan-v1"
+    ],
+    "outputSchemaVersions": [
+      "petros.plan.v3",
+      "petros.plan.v3"
+    ],
+    "controlledModel": "malformed-output-fixture.v1",
+    "evaluator": "deterministic-owner-assertions.v1"
+  },
+  "population": {
+    "owners": 2,
+    "tenants": 2
+  },
+  "counters": {
+    "sourceReady": 2,
+    "citationsResolved": 2,
+    "productionMoves": 2,
+    "controlledOutputsRejected": 2,
+    "foreignOwnerDenied": 2
+  },
+  "timingMethod": {
+    "cold": "first service read/continuation for each newly created owner fixture; server and OS caches were not flushed",
+    "warm": "repeated reads against the same owner/source or persisted session after its first read",
+    "thresholds": "none; samples are descriptive engineering observations, not SLOs"
+  },
+  "timingMs": {
+    "sourceResolveCold": {
+      "samples": 2,
+      "minMs": 2.5353330000070855,
+      "p50Ms": 2.5353330000070855,
+      "p95Ms": 2.8446659999899566,
+      "maxMs": 2.8446659999899566
+    },
+    "sourceResolveWarm": {
+      "samples": 40,
+      "minMs": 1.8746249999967404,
+      "p50Ms": 2.2370409999857657,
+      "p95Ms": 2.947042000014335,
+      "maxMs": 3.706125000026077
+    },
+    "retrievalCold": {
+      "samples": 2,
+      "minMs": 2.6918339999974705,
+      "p50Ms": 2.6918339999974705,
+      "p95Ms": 3.5344169999589212,
+      "maxMs": 3.5344169999589212
+    },
+    "retrievalWarm": {
+      "samples": 40,
+      "minMs": 2.016583000018727,
+      "p50Ms": 2.3533339999848977,
+      "p95Ms": 3.0899159999680705,
+      "maxMs": 4.49837500002468
+    },
+    "teachingStartCold": {
+      "samples": 2,
+      "minMs": 1025.237792,
+      "p50Ms": 1025.237792,
+      "p95Ms": 1100.7932909999508,
+      "maxMs": 1100.7932909999508
+    },
+    "teachingDocumentWarm": {
+      "samples": 40,
+      "minMs": 142.75862500001676,
+      "p50Ms": 147.5956250000163,
+      "p95Ms": 178.9619160000002,
+      "maxMs": 184.2134579999838
+    }
+  },
+  "contentDigests": [
+    "eab5732feae9b72979e7d02b2f385b9c160b56672b55eb23e0eb3b9939d2f447",
+    "eab5732feae9b72979e7d02b2f385b9c160b56672b55eb23e0eb3b9939d2f447"
+  ],
+  "controlledModelLayer": {
+    "result": "invalid topic-profile output rejected; profile owner used deterministic seed; production loop rendered the approved pack",
+    "calls": 2,
+    "paidCalls": 0
+  },
+  "limitations": [
+    "Synthetic records and qualification receipts grant engineering fixture authority only.",
+    "Malformed controlled output verifies rejection and fallback; no model quality or human judgment is assessed.",
+    "Latency samples are local disposable-database measurements, not production SLOs.",
+    "No learner, pilot, privacy, curriculum, accessibility or fairness acceptance is implied."
+  ]
+}

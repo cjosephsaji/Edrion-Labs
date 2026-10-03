@@ -73,7 +73,7 @@ export class AttendanceService {
     }
 
     const staffId = await resolveCurrentStaffId(this.db, ctx.principal);
-    let scope: 'mine' | 'all' = q.scope ?? (staffId ? 'mine' : 'all');
+    const scope: 'mine' | 'all' = q.scope ?? (staffId ? 'mine' : 'all');
     if (scope === 'mine' && !staffId) {
       return {
         date,

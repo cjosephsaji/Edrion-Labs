@@ -1,0 +1,21 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/integrations/petros-phase4-continuity.integration.spec.ts",
+    "src/modules/integrations/petros-phase4-journey.integration.spec.ts",
+    "src/modules/petros-ai-routing/petros-ai-gateway.service.spec.ts",
+    "--pool=forks",
+    "--poolOptions.forks.singleFork=true"
+  ],
+  "start": "2026-10-02T11:13:27.919351+00:00",
+  "end": "2026-10-02T11:13:50.005344+00:00",
+  "exitCode": 1,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

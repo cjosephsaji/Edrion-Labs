@@ -1,0 +1,142 @@
+[
+  {
+    "path": "apps/student-web/src/app/(app)/attendance/attendance.module.css",
+    "beforeSha256": "8cbcf6c443a19222f5986c76ccc67bcfd0e6bed1893a036d96991fc5cc2beb68",
+    "afterSha256": "dba2a8573cb1339d418e2a4fd141c2daa14ccb1598bb14bf92199190abb243d8"
+  },
+  {
+    "path": "apps/student-web/src/app/(app)/calendar/calendar.module.css",
+    "beforeSha256": "2097a465879770526e2249c74a85711ff8324526b4897d873acfcf3cded9d07b",
+    "afterSha256": "2772c1b19598a2ca48f6f0699757ea76c223784ae5cdc36fd9b4007cdade569f"
+  },
+  {
+    "path": "apps/student-web/src/app/(app)/courses/[id]/course-detail.module.css",
+    "beforeSha256": "ccfe05825dd1de0269ab4a77196d8bbcdfed6d76fc06936388f04894dd4268dd",
+    "afterSha256": "5778b197681ab04976c01ceb947afdff2849eb1abb4daf8174a29d42494b57fc"
+  },
+  {
+    "path": "apps/student-web/src/app/(app)/home/home.module.css",
+    "beforeSha256": "50abfff4260c15fa9e2150bfd45adcd6fa7e437c12374652caed3b9111b69a06",
+    "afterSha256": "c888a60c282172243e021679fdfe0e94eb1b708c71008bdc58a206eb21260700"
+  },
+  {
+    "path": "apps/student-web/src/app/(app)/learn/learn.module.css",
+    "beforeSha256": "f8cebfe01272c69e947165276abf4f05e6b22f54318434391b095213ee319e99",
+    "afterSha256": "c02f3c0a3b00a52489e587e2b159271c6627721a8532e7a56ca4c1e75f798a0b"
+  },
+  {
+    "path": "apps/student-web/src/app/(app)/materials/materials.module.css",
+    "beforeSha256": "72b5cb8a2da4c46a742fd28d083d56fc02acbc054c9de3fa7d6a0d0da403e4ec",
+    "afterSha256": "3c6ce3bceddf338d19b2845f2c9767856cc83d6c318483c313e87f489e22afbe"
+  },
+  {
+    "path": "apps/student-web/src/app/(app)/timetable/timetable.module.css",
+    "beforeSha256": "7951444e5dc1f32ccea16023b7d186d97109ed75b5cf7d6650f6e4723370a61c",
+    "afterSha256": "6c201ed50080a7002e6e966cc18fff48f12d1d9ffc360dc7cad604a1290ef81c"
+  },
+  {
+    "path": "apps/student-web/src/app/(auth)/login/login.module.css",
+    "beforeSha256": "15941d774b7276e91256e11310e3c80cffe96abdab7f07788664b21266c6eb57",
+    "afterSha256": "5a13f871fbb4d421c4d86cb2f2f955eef8735125bf3e4062788b4bc25f2bbee2"
+  },
+  {
+    "path": "apps/student-web/src/app/globals.css",
+    "beforeSha256": "47593bc4aced20fc0c5374383fee1e7c6e2a9476a1ba6d80e73b41e1c36d39e9",
+    "afterSha256": "047008d367a0a5c6091122c11abb34a7f42dbcfa863d579e41a82e7473c04a9b"
+  },
+  {
+    "path": "apps/student-web/src/components/app-shell/navigation-feedback.module.css",
+    "beforeSha256": "0281a496f1728464ef17e4e7acbd4f8bfd52896e6d07d34861501f062d718808",
+    "afterSha256": "e5971e4fdad6c849d308033b1fb3a855a9ee3791e6c6986060b0d065ac7c5b4f"
+  },
+  {
+    "path": "apps/student-web/src/components/classes/classes.module.css",
+    "beforeSha256": "5a23f2b523adb3d6b289690230d006c3b36bacbe8ed0801a54afa6aac8861e53",
+    "afterSha256": "c20df7f6158de418c3884983e46a43fdbec44ef640a44e462e50505fea861974"
+  },
+  {
+    "path": "apps/student-web/src/components/design-system/primitives.module.css",
+    "beforeSha256": "53fdf1ad6c2e13af2cedb7927351b98c1ecb233e0ed574e882177e2c6387f4a9",
+    "afterSha256": "ecd1135f5817a82fdbae277b1b5c56ff940ee676b17dc2911e246df67b9c8143"
+  },
+  {
+    "path": "apps/student-web/src/components/exams/exams.module.css",
+    "beforeSha256": "e36f76fb1e3532d0ce9258762c936ebe3fa44ac01ffef5ff66385585f7f65060",
+    "afterSha256": "ce31d6e3622ffd06994ea77188a69c183063aaf443dee85fa5af1c4b1e2a9d2c"
+  },
+  {
+    "path": "apps/student-web/src/components/materials/document-viewer.module.css",
+    "beforeSha256": "813511a8ad77b087e13d708c3d4a3378c5a4d89ff721ac95be391a6c88451414",
+    "afterSha256": "0cfe471977c9ffff5a9a432447b54fbf88ed51a53b7317b181d86e4fe72db691"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-artifact-curation.module.css",
+    "beforeSha256": "ac585b722d78085dc8d59e7239408715563bc086cbfa86ed2cc4affd8a42cc73",
+    "afterSha256": "584e8bd1f822946ff42f36a5a5d44ecf64b1d44a712ab90047424f85f4966963"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-artifact-library.module.css",
+    "beforeSha256": "1c368e74d8ff0a9b2a0b281dd60f1e03d126ade5ae8eee5325e9886e0d6410de",
+    "afterSha256": "90156246edf78b3e11b287249fff2d0193e9f0071c1d5eceb3a3e5720a9732cd"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-briefing-strip.module.css",
+    "beforeSha256": "75f7fce8e749044c5d5470919994495af3077669b04de9cd6ebed60edde9eeb4",
+    "afterSha256": "73d853b9e9781cec86f5bde8227b9b664b3619e6eb2fb4b74ed5e20a60a7b350"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-companion-panel.module.css",
+    "beforeSha256": "19920eb961270fc642ea4528270b8ea8965732177590d3d923fcdde97520d76e",
+    "afterSha256": "f5fc87f7acd2c7c4db2923d716e69a0d57139a0d93a5c8fa45e130d9dbe9dfc2"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-continuity.module.css",
+    "beforeSha256": "e3e844459346e10dd4e8c3f72a99c5f018f8ef7b6bb50917ad740092d87015a0",
+    "afterSha256": "fa7e6a5be7542df2689891c276fa1e7bb1230e6fea8b767c8fa7409003c93ccd"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-door-button.module.css",
+    "beforeSha256": "28998aba71d8fa466c8698f86553ca5ecd51efa46e02da3aa2fe9b0f67676079",
+    "afterSha256": "42a7b2e4812eab88d0b95a508d394c3d373fafc3a397ce34a309fb67fd78a0d5"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-input-modes.module.css",
+    "beforeSha256": "79d36b9c383937125a5d69d80fc99cc78336fee8a24b00daa703d24377afc436",
+    "afterSha256": "7c863dde1e59c970334736b0b7159ba608f01cd7b212976b8d86abc08e154c8b"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-mentor.module.css",
+    "beforeSha256": "e67a33761f02ff9e3539d245e59d94bbeff18ec943617de4b343fb8ff27a6b17",
+    "afterSha256": "0765f55f0ab34671502e2469b0b4a84179e9bf6f1a37888acc0b10d220f5bb16"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-program-workspace.module.css",
+    "beforeSha256": "adb3b1cab6449422b6a2249137e81881b1bf4458412b36e2ef18f91ecb099041",
+    "afterSha256": "17c9e7b3f325271d501de0dd5a2447543c0934513fc7c04bf8f88f2abd71386a"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-reflection.module.css",
+    "beforeSha256": "fb18118b1fb1921c28e4ce2fbb2dbff3d680ec450964475384ffd44ff1d69a29",
+    "afterSha256": "f9f60ab4e9b5f6e9500403a495885636a96ec06592f1d1ef054eb156e5687c27"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-session.module.css",
+    "beforeSha256": "6716151cf379615e4837aaf36031f43b4e3cd8eaa5fd2ab113c6620662682b84",
+    "afterSha256": "c9851a3dfa297a6998d07e9617c578027f62b2cbcf2b26fc42a7e9dd89d338da"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-settings-section.module.css",
+    "beforeSha256": "79ed69e99b628adffbaacae88d11b538683c7e4da432edd1e344a80cb89e3b42",
+    "afterSha256": "49150e0ca8cfaece81a0957873fb4bca8246df1468b34b2d4e5a045f9dedb8a6"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-teach-back.module.css",
+    "beforeSha256": "2a5271ab4fb9a820dd9d2c9552a04a34a6d642ab20d66e5b5ed0336763a95dbf",
+    "afterSha256": "5033341e45fe1ff085a956e86b83089036e28928a8d464b79208406356953a3a"
+  },
+  {
+    "path": "apps/student-web/src/components/student-content.module.css",
+    "beforeSha256": "833ea572660f51843344182cd17f8ec751f0256786640dfe7891d8cb818a62ae",
+    "afterSha256": "ad35df3c67856f78eb5b9c802cc2a94ff83b01e189cf5cb15541c5ffb762df4a"
+  }
+]

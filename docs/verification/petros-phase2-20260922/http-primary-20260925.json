@@ -1,0 +1,15 @@
+{
+  "startedAt": "2026-09-25T06:40:42.764490+00:00",
+  "finishedAt": "2026-09-25T06:40:50.797418+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/integrations/petros-phase2-http.integration.spec.ts"
+  ],
+  "exitCode": 0,
+  "log": "http-primary-20260925.log"
+}

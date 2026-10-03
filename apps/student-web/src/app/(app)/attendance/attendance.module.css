@@ -1,4 +1,5 @@
 .summary {
+  border-radius: var(--s-radius-card);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -44,6 +45,7 @@
 .list { display: grid; gap: 10px; margin-top: 14px; }
 
 .row {
+  border-radius: var(--s-radius-panel);
   border: 1px solid var(--s-bd1);
   background: var(--s-card);
   padding: 15px 18px;
@@ -70,7 +72,7 @@
   height: 8px;
   margin-top: 12px;
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: var(--s-radius-card);
   background: var(--s-surface2);
 }
 

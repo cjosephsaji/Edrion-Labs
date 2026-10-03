@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { petrosKnowledgeModeSchema } from './petros-knowledge-policy';
 
 export const PETROS_INSTITUTIONAL_POLICY_SCHEMA_VERSION = 'petros.institutional.policy.v1';
 export const PETROS_INSTITUTIONAL_RESOLUTION_VERSION = 'petros.institutional.resolve.v1';
@@ -43,6 +44,7 @@ export const petrosSyllabusPolicySchema = z.object({
   topicKeys: z.array(z.string().min(1).max(160)).max(2_000).default([]),
   maxDepth: z.number().int().min(0).max(10).default(3),
   allowExternalSources: z.boolean().default(false),
+  knowledgeMode: petrosKnowledgeModeSchema.optional(),
   outsidePathLabel: z.string().trim().min(8).max(300).default('Ask your teacher for an approved source, or choose a related syllabus topic.'),
 }).strict();
 

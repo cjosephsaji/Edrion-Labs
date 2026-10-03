@@ -1,0 +1,17 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/schemas",
+    "exec",
+    "vitest",
+    "run",
+    "src/petros-engine.spec.ts"
+  ],
+  "start": "2026-10-01T06:19:59.199849+00:00",
+  "end": "2026-10-01T06:20:00.189231+00:00",
+  "exitCode": 1,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

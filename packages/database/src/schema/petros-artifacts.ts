@@ -139,6 +139,7 @@ export const petrosArtifactCommitCommands = pgTable(
     institutionId: uuid('institution_id').notNull().references(() => institutions.id, { onDelete: 'cascade' }),
     studentId: uuid('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
     idempotencyKey: uuid('idempotency_key').notNull(),
+    requestHash: text('request_hash'),
     status: text('status').notNull().default('in_progress'),
     response: jsonb('response').$type<Record<string, unknown> | null>(),
     errorCode: text('error_code'),

@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, Headers, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import {
   courseEnrollmentSchema,
+  CURRICULUM_ALIGNMENT_VERSION,
   createCourseSchema,
   updateCourseSchema,
   upsertSyllabusSchema,
@@ -68,17 +69,22 @@ export class PortalCoursesController {
   }
 
   @Get(':id/syllabus')
-  @RequireInstitutionPermissions('courses.manage', 'syllabus.manage')
+  @Header('Cache-Control', 'private, no-store')
+  @Header('Vary', 'x-petros-curriculum-alignment')
+  @RequireInstitutionPermissions('syllabus.manage')
   getSyllabus(
     @Param('id') id: string,
     @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
     @CurrentScope() s: InstitutionScope,
     @ReqContext() r: EdrionRequestContext,
+    @Headers('x-petros-curriculum-alignment') contract?: string,
   ) {
-    return this.svc.getSyllabus(this.ctx(p, s, r), id);
+    return this.svc.getSyllabus(this.ctx(p, s, r), id, contract === CURRICULUM_ALIGNMENT_VERSION);
   }
 
   @Post(':id/syllabus')
+  @Header('Cache-Control', 'private, no-store')
+  @Header('Vary', 'x-petros-curriculum-alignment')
   @RequireInstitutionPermissions('syllabus.manage')
   syllabus(
     @Param('id') id: string,
@@ -86,8 +92,9 @@ export class PortalCoursesController {
     @CurrentScope() s: InstitutionScope,
     @ReqContext() r: EdrionRequestContext,
     @Body(zodBody(upsertSyllabusSchema)) body: UpsertSyllabusInput,
+    @Headers('x-petros-curriculum-alignment') contract?: string,
   ) {
-    return this.svc.upsertSyllabus(this.ctx(p, s, r), id, body);
+    return this.svc.upsertSyllabus(this.ctx(p, s, r), id, body, contract === CURRICULUM_ALIGNMENT_VERSION);
   }
 
   @Post(':id/enrollments')
@@ -100,5 +107,20 @@ export class PortalCoursesController {
     @Body(zodBody(courseEnrollmentSchema)) body: { studentIds: string[] },
   ) {
     return this.svc.enroll(this.ctx(p, s, r), id, body.studentIds);
+  }
+
+  @Post(':id/syllabus/review')
+  @Header('Cache-Control', 'private, no-store')
+  @Header('Vary', 'x-petros-curriculum-alignment')
+  @RequireInstitutionPermissions('syllabus.manage', 'academics.alignments.approve')
+  reviewSyllabus(
+    @Param('id') id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() s: InstitutionScope,
+    @ReqContext() r: EdrionRequestContext,
+    @Body(zodBody(upsertSyllabusSchema)) body: UpsertSyllabusInput,
+    @Headers('x-petros-curriculum-alignment') contract?: string,
+  ) {
+    return this.svc.upsertSyllabus(this.ctx(p, s, r), id, body, contract === CURRICULUM_ALIGNMENT_VERSION, true);
   }
 }

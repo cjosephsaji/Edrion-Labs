@@ -13,7 +13,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { Button, cn } from '@edrion/ui';
-import { usePendingActions, type PendingActionItemDto } from '@edrion/api-client';
+import { useCurrentEmployee, usePendingActions, type PendingActionItemDto } from '@edrion/api-client';
 import { GlobalSearch } from './global-search';
 
 /** Top navigation. Title is page-supplied; global search + copilot + help + notifications
@@ -101,6 +101,13 @@ const PRIORITY_DOT: Record<PendingActionItemDto['priority'], string> = {
 };
 
 function NotificationsMenu() {
+  const { data: employee } = useCurrentEmployee();
+  if (!employee || (!employee.roleKeys.includes('platform_owner') &&
+      !employee.permissions.includes('platform.dashboard.view'))) return null;
+  return <AuthorizedNotificationsMenu />;
+}
+
+function AuthorizedNotificationsMenu() {
   const { data } = usePendingActions();
   const items = data ? Object.values(data.groups).flat() : [];
   const top = items.slice(0, 6);

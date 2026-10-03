@@ -1,4 +1,5 @@
 .strip {
+  border-radius: var(--s-radius-card);
   position: relative;
   display: flex;
   align-items: center;
@@ -49,6 +50,7 @@
 
 .open,
 .plan {
+  border-radius: var(--s-radius-control);
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -67,6 +69,7 @@
 .plan:focus-visible { outline: 2px solid var(--s-accent); outline-offset: 2px; }
 
 .dismiss {
+  border-radius: var(--s-radius-control);
   position: absolute;
   top: 9px;
   right: 9px;

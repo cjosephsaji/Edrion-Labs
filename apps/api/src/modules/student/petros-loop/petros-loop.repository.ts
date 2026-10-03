@@ -1,4 +1,5 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { KnowledgeDocumentService } from '../knowledge/knowledge-document.service';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import {
   and,
@@ -15,8 +16,9 @@ import {
   sql,
   type Database,
 } from '@edrion/database';
-import type { PetrosDecisionDiagnosticQuery, PetrosMoveType } from '@edrion/schemas';
+import { petrosAssessmentSchema, petrosVisualSnapshotSchema, type PetrosDecisionDiagnosticQuery, type PetrosMoveType } from '@edrion/schemas';
 import { DATABASE } from '../../../common/tokens';
+import { executionConflict } from './petros-question-execution.repository';
 
 export interface PetrosOwnerScope {
   institutionId: string;
@@ -25,7 +27,7 @@ export interface PetrosOwnerScope {
 
 @Injectable()
 export class PetrosLoopRepository {
-  constructor(@Inject(DATABASE) private readonly db: Database) {}
+  constructor(@Inject(DATABASE) private readonly db: Database, private readonly documents: KnowledgeDocumentService) {}
 
   async recordDocumentPathProgress(
     scope: PetrosOwnerScope,
@@ -52,7 +54,12 @@ export class PetrosLoopRepository {
     )).returning().then((rows) => rows[0] ?? null);
   }
 
-  createSession(values: typeof schema.petrosLearningSessions.$inferInsert) {
+  searchDocumentContext(scope: PetrosOwnerScope, context: Record<string, unknown> | null, query: string) {
+    return this.documents.searchContext(scope, context, query);
+  }
+
+  async createSession(values: typeof schema.petrosLearningSessions.$inferInsert) {
+    await this.documents.assertContext({ institutionId: values.institutionId, studentId: values.studentId }, values.sourceContext);
     return this.db
       .insert(schema.petrosLearningSessions)
       .values(values)
@@ -98,6 +105,7 @@ export class PetrosLoopRepository {
         id: schema.petrosLearningSessions.id,
         topic: schema.petrosLearningSessions.topic,
         learnerContext: schema.petrosLearningSessions.learnerContext,
+        sourceContext: schema.petrosLearningSessions.sourceContext,
         sessionType: schema.petrosLearningSessions.sessionType,
         status: schema.petrosLearningSessions.status,
         elapsedSeconds: schema.petrosLearningSessions.elapsedSeconds,
@@ -114,7 +122,10 @@ export class PetrosLoopRepository {
         ),
       )
       .orderBy(desc(schema.petrosLearningSessions.updatedAt))
-      .limit(limit);
+      .limit(limit).then(async (rows) => {
+        const allowed = await Promise.all(rows.map((row) => this.documents.canReadContext(scope, row.sourceContext)));
+        return rows.filter((_, index) => allowed[index]);
+      });
   }
 
   /**
@@ -164,7 +175,10 @@ export class PetrosLoopRepository {
         ),
       )
       .limit(1)
-      .then((rows) => rows[0]);
+      .then(async (rows) => {
+        if (rows[0]) await this.documents.assertContext(scope, rows[0].sourceContext);
+        return rows[0];
+      });
   }
 
   findSession(scope: PetrosOwnerScope, sessionId: string) {
@@ -179,7 +193,10 @@ export class PetrosLoopRepository {
         ),
       )
       .limit(1)
-      .then((rows) => rows[0]);
+      .then(async (rows) => {
+        if (rows[0]) await this.documents.assertContext(scope, rows[0].sourceContext);
+        return rows[0];
+      });
   }
 
   listDecisions(scope: PetrosOwnerScope, sessionId: string) {
@@ -278,6 +295,10 @@ export class PetrosLoopRepository {
     },
     questions: Array<typeof schema.petrosQuestionSpecs.$inferInsert> = [],
   ) {
+    if (values.visualSnapshot) {
+      values.visualSnapshot = petrosVisualSnapshotSchema.parse(values.visualSnapshot);
+      if ((values.visualSnapshot.program as { programId: string }).programId !== values.id) throw new Error('PETROS_VISUAL_SCOPE');
+    }
     return this.db.transaction(async (tx) => {
       const [block] = await tx.insert(schema.petrosTeachingBlocks).values(values).returning();
       if (questions.length) await tx.insert(schema.petrosQuestionSpecs).values(questions);
@@ -334,7 +355,21 @@ export class PetrosLoopRepository {
     sessionId: string,
     idempotencyKey: string,
     command: string,
+    inputSha256?: string,
   ) {
+    if (command === 'composer_question') {
+      // Enabled execution is gated by the service. With both flags disabled, no new
+      // durable admission/retry is allowed; existing pending work must still block callers.
+      const [pending] = await this.db.select({ id: schema.petrosSessionCommands.id })
+        .from(schema.petrosSessionCommands)
+        .where(and(
+          eq(schema.petrosSessionCommands.institutionId, scope.institutionId),
+          eq(schema.petrosSessionCommands.studentId, scope.studentId),
+          eq(schema.petrosSessionCommands.sessionId, sessionId),
+          inArray(schema.petrosSessionCommands.executionState, ['queued', 'running']),
+        )).limit(1);
+      if (pending) throw executionConflict('PETROS_QUESTION_EXECUTION_REQUIRED');
+    }
     const inserted = await this.db
       .insert(schema.petrosSessionCommands)
       .values({
@@ -343,6 +378,7 @@ export class PetrosLoopRepository {
         studentId: scope.studentId,
         idempotencyKey,
         command,
+        inputSha256,
       })
       .onConflictDoNothing()
       .returning();
@@ -359,6 +395,16 @@ export class PetrosLoopRepository {
         ),
       )
       .limit(1);
+    // A concurrent durable insert can win the database-enforced active-command index
+    // after the optimistic pending read but before this legacy insert. Preserve the
+    // typed rollback boundary instead of returning an unowned generic in-flight state.
+    if (command === 'composer_question' && !existing && !inserted[0])
+      throw executionConflict('PETROS_QUESTION_EXECUTION_REQUIRED');
+    if (existing?.executionVersion) throw executionConflict('PETROS_QUESTION_EXECUTION_REQUIRED');
+    if (existing && existing.command !== command)
+      throw executionConflict('PETROS_COMMAND_REPLAY_CONFLICT');
+    if (inputSha256 && existing && existing.inputSha256 !== inputSha256)
+      throw executionConflict('PETROS_COMMAND_REPLAY_CONFLICT');
     if (existing?.status === 'completed' && existing.response) {
       return { state: 'completed' as const, row: existing, response: existing.response };
     }
@@ -384,6 +430,18 @@ export class PetrosLoopRepository {
     return { state: 'in_flight' as const, row: existing };
   }
 
+  async assertNoPendingQuestionExecution(scope: PetrosOwnerScope, sessionId: string) {
+    const [pending] = await this.db.select({ id: schema.petrosSessionCommands.id })
+      .from(schema.petrosSessionCommands)
+      .where(and(
+        eq(schema.petrosSessionCommands.institutionId, scope.institutionId),
+        eq(schema.petrosSessionCommands.studentId, scope.studentId),
+        eq(schema.petrosSessionCommands.sessionId, sessionId),
+        inArray(schema.petrosSessionCommands.executionState, ['queued', 'running']),
+      )).limit(1);
+    if (pending) throw executionConflict('PETROS_QUESTION_EXECUTION_REQUIRED');
+  }
+
   finishCommand(commandId: string, response: Record<string, unknown>) {
     return this.db
       .update(schema.petrosSessionCommands)
@@ -406,6 +464,22 @@ export class PetrosLoopRepository {
         updatedAt: new Date(),
       })
       .where(eq(schema.petrosSessionCommands.id, commandId));
+  }
+
+  lockVisualBlock(scope: PetrosOwnerScope, sessionId: string, blockId: string) {
+    return this.db.select().from(schema.petrosTeachingBlocks).where(and(
+      eq(schema.petrosTeachingBlocks.id, blockId), eq(schema.petrosTeachingBlocks.sessionId, sessionId),
+      eq(schema.petrosTeachingBlocks.institutionId, scope.institutionId), eq(schema.petrosTeachingBlocks.studentId, scope.studentId),
+    )).for('update').then(rows => rows[0]);
+  }
+
+  saveVisualSnapshot(scope: PetrosOwnerScope, sessionId: string, blockId: string, snapshot: Record<string, unknown>) {
+    const validated = petrosVisualSnapshotSchema.parse(snapshot);
+    if (validated.program.programId !== blockId) throw new Error('PETROS_VISUAL_SCOPE');
+    return this.db.update(schema.petrosTeachingBlocks).set({ visualSnapshot: validated, updatedAt: new Date() }).where(and(
+      eq(schema.petrosTeachingBlocks.id, blockId), eq(schema.petrosTeachingBlocks.sessionId, sessionId),
+      eq(schema.petrosTeachingBlocks.institutionId, scope.institutionId), eq(schema.petrosTeachingBlocks.studentId, scope.studentId),
+    ));
   }
 
   updateBlockInteraction(
@@ -567,6 +641,19 @@ export class PetrosLoopRepository {
       .orderBy(asc(schema.petrosObservations.occurredAt));
   }
 
+  assessmentHistory(scope: PetrosOwnerScope, sessionId: string, equivalenceKey: string, acrossSessions=false) {
+    return this.db.select({ type: schema.petrosObservations.type, payload: schema.petrosObservations.payload })
+      .from(schema.petrosObservations).innerJoin(schema.petrosQuestionSpecs,
+        eq(schema.petrosObservations.questionId, schema.petrosQuestionSpecs.id))
+      .where(and(acrossSessions ? undefined : eq(schema.petrosObservations.sessionId, sessionId),
+        eq(schema.petrosObservations.institutionId, scope.institutionId), eq(schema.petrosObservations.studentId, scope.studentId),
+        eq(schema.petrosQuestionSpecs.equivalenceKey, equivalenceKey)))
+      .limit(1001).then(rows => {
+        if (rows.length > 1000) throw new ConflictException({ code: 'PETROS_ASSESSMENT_HISTORY_LIMIT' });
+        return rows;
+      });
+  }
+
   listEvaluations(scope: PetrosOwnerScope, sessionId: string) {
     return this.db
       .select()
@@ -626,6 +713,15 @@ export class PetrosLoopRepository {
     };
     rewordedQuestion?: typeof schema.petrosQuestionSpecs.$inferInsert;
   }) {
+    if (values.evaluation.assessment) {
+      const assessment = petrosAssessmentSchema.parse(values.evaluation.assessment);
+      if (assessment.result.kind !== 'objective') throw new ConflictException({ code: 'PETROS_QUALITATIVE_ASSESSMENT_DISABLED' });
+      const judgment = assessment.result.judgment;
+      if (judgment.status === 'evaluated' && (judgment.creditBasisPoints !== values.evaluation.creditBasisPoints ||
+        judgment.outcome !== (values.evaluation.correctness === 'incorrect' ? 'wrong' : values.evaluation.correctness)))
+        throw new ConflictException({ code: 'PETROS_ASSESSMENT_PROJECTION_MISMATCH' });
+      values.evaluation.assessment = assessment;
+    }
     return this.db.transaction(async (tx) => {
       const [alreadyAnswered] = await tx
         .select({ id: schema.petrosObservations.id })
@@ -667,9 +763,9 @@ export class PetrosLoopRepository {
           values.confidenceObservation,
           ...(values.responseTimeObservation ? [values.responseTimeObservation] : []),
         ]);
-      await tx
+      const [evaluation] = await tx
         .insert(schema.petrosAnswerEvaluations)
-        .values({ ...values.evaluation, observationId: observation!.id });
+        .values({ ...values.evaluation, observationId: observation!.id }).returning();
       await tx
         .update(schema.petrosQuestionSpecs)
         .set({ active: false, updatedAt: new Date() })
@@ -728,7 +824,7 @@ export class PetrosLoopRepository {
             eq(schema.petrosLearningSessions.studentId, values.scope.studentId),
           ),
         );
-      return { state: 'committed' as const, observation: observation!, block: block! };
+      return { state: 'committed' as const, observation: observation!, evaluation:evaluation!, block: block! };
     });
   }
 

@@ -1,0 +1,74 @@
+$ vitest run
+
+ RUN  v2.1.9 /Volumes/Chris/Edrion Labs/packages/schemas
+
+ ✓ src/timetable/resolver.spec.ts (10 tests) 18ms
+ ✓ src/petros-assessment.spec.ts (13 tests) 8ms
+ ✓ src/petros-visual-program.spec.ts (21 tests) 31ms
+ ✓ src/attendance/forecaster.spec.ts (20 tests) 30ms
+ ✓ src/student/visual-graph-contract.spec.ts (17 tests) 11ms
+ ✓ src/geo/geo.spec.ts (18 tests) 12ms
+ ✓ src/petros-session-intent.spec.ts (10 tests) 6ms
+ ✓ src/petros-learning.spec.ts (10 tests) 5ms
+ ✓ src/petros-adaptive-policy.spec.ts (5 tests) 14ms
+ ✓ src/petros-projectile-model.spec.ts (5 tests) 5ms
+ ✓ src/petros-engine-models.spec.ts (15 tests) 154ms
+ ✓ src/student/exam-questions.spec.ts (17 tests) 7ms
+ ✓ src/petros-engine.spec.ts (11 tests) 378ms
+ ✓ src/petros-context.spec.ts (6 tests) 4ms
+ ✓ src/petros-teach-back.spec.ts (5 tests) 7ms
+ ✓ src/curriculum-alignment.spec.ts (5 tests) 99ms
+ ✓ src/grading/compute.spec.ts (52 tests) 5ms
+ ✓ src/petros-companion.spec.ts (12 tests) 4ms
+ ✓ src/petros-input-modes.spec.ts (5 tests) 4ms
+ ✓ src/student/visuals.spec.ts (9 tests) 8ms
+ ✓ src/student/learn/edrion-learn.spec.ts (13 tests) 7ms
+ ✓ src/provider-mapping.spec.ts (5 tests) 4ms
+ ✓ src/pricing.spec.ts (12 tests) 5ms
+ ✓ src/petros-reflection.spec.ts (6 tests) 7ms
+ ✓ src/petros-topic-profiles.spec.ts (4 tests) 5ms
+ ✓ src/institution-users.spec.ts (16 tests) 6ms
+ ✓ src/student/canvas-migrations/runner.spec.ts (8 tests) 5ms
+ ✓ src/petros-document-source.spec.ts (5 tests) 8ms
+ ✓ src/petros-projectile-binding.spec.ts (2 tests) 9ms
+ ✓ src/petros-compatibility.spec.ts (5 tests) 6ms
+ ✓ src/petros-institutional.spec.ts (4 tests) 7ms
+ ✓ src/petros-release.spec.ts (4 tests) 5ms
+ ✓ src/petros-knowledge-policy.spec.ts (4 tests) 4ms
+ ✓ src/student/visual-ai-edge-label.spec.ts (3 tests) 3ms
+ ✓ src/plans.spec.ts (8 tests) 11ms
+ ✓ src/petros-phase2-pack.spec.ts (8 tests) 11ms
+ ✓ src/ai-governance.spec.ts (7 tests) 4ms
+ ✓ src/student/edrion-learn/edrion-learn-contract.spec.ts (7 tests) 4ms
+ ✓ src/student/visual-graph-rules.spec.ts (5 tests) 2ms
+ ✓ src/support-access.spec.ts (6 tests) 9ms
+ ✓ src/petros-engine-phase6-cooling.spec.ts (1 test) 23ms
+ ✓ src/copilot.spec.ts (9 tests) 3ms
+ ✓ src/petros-qualitative-review.spec.ts (3 tests) 8ms
+ ✓ src/employees.spec.ts (6 tests) 3ms
+ ✓ src/request-types/request-types.spec.ts (4 tests) 7ms
+ ✓ src/petros-objective-evidence.spec.ts (4 tests) 5ms
+ ✓ src/library-fsrs/scheduler/fsrs.spec.ts (4 tests) 3ms
+ ✓ src/obligations.spec.ts (6 tests) 29ms
+ ✓ src/billing.spec.ts (6 tests) 6ms
+ ✓ src/petros-presentation.spec.ts (3 tests) 3ms
+ ✓ src/petros-question-execution.spec.ts (2 tests) 7ms
+ ✓ src/petros-document-preparation.spec.ts (2 tests) 5ms
+ ✓ src/petros-ai-routing.spec.ts (6 tests) 12ms
+ ✓ src/institutions.spec.ts (4 tests) 2ms
+ ✓ src/student/mock/skin-resolver.spec.ts (5 tests) 2ms
+ ✓ src/integrations.spec.ts (5 tests) 3ms
+ ✓ src/support-cases.spec.ts (5 tests) 4ms
+ ✓ src/petros-quality.spec.ts (2 tests) 2ms
+ ✓ src/portal-config.spec.ts (2 tests) 5ms
+ ✓ src/petros-document-retrieval.spec.ts (1 test) 2ms
+ ✓ src/grading/term-aggregate.spec.ts (2 tests) 1ms
+ ✓ src/security/step-up-actions.spec.ts (3 tests) 1ms
+ ✓ src/independent-users.spec.ts (4 tests) 3ms
+ ✓ src/petros-artifacts.spec.ts (7 tests) 7ms
+
+ Test Files  64 passed (64)
+      Tests  494 passed (494)
+   Start at  23:13:08
+   Duration  4.25s (transform 4.04s, setup 0ms, collect 11.33s, tests 1.08s, environment 11ms, prepare 5.06s)
+

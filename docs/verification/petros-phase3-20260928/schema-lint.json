@@ -1,0 +1,17 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/schemas",
+    "exec",
+    "eslint",
+    "src/petros-engine-models.ts",
+    "src/petros-engine-models.spec.ts"
+  ],
+  "start": "2026-09-29T22:20:45.673009+00:00",
+  "end": "2026-09-29T22:20:47.797643+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

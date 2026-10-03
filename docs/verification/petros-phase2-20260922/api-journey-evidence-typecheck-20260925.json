@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-25T16:18:42.508856+00:00",
+  "finishedAt": "2026-09-25T16:18:57.008456+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "typecheck"
+  ],
+  "exitCode": 2,
+  "log": "api-journey-evidence-typecheck-20260925.log"
+}

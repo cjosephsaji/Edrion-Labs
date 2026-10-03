@@ -1,0 +1,18 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/integrations/petros-phase4-continuity.integration.spec.ts",
+    "src/modules/student/petros-companion/petros-companion.spec.ts"
+  ],
+  "start": "2026-10-02T08:23:44.648287+00:00",
+  "end": "2026-10-02T08:23:49.351007+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

@@ -8,7 +8,7 @@ import { canonicalMaterialMimeType } from './material-file-types';
 export class StudentMaterialsService {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
 
-  async list(principal: InstitutionalStudentPrincipal) {
+  async list(principal: Pick<InstitutionalStudentPrincipal, 'institutionId' | 'studentId'>) {
     const [student] = await this.db
       .select({ classId: schema.students.classId, className: schema.classes.name })
       .from(schema.students)
@@ -88,7 +88,7 @@ export class StudentMaterialsService {
     return { items };
   }
 
-  async file(principal: InstitutionalStudentPrincipal, materialId: string) {
+  async file(principal: Pick<InstitutionalStudentPrincipal, 'institutionId' | 'studentId'>, materialId: string) {
     const visibleMaterials = await this.list(principal);
     if (!visibleMaterials.items.some((material) => material.id === materialId)) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Study material not found' });

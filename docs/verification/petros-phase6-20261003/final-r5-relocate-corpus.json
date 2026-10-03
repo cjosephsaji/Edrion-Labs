@@ -1,0 +1,14 @@
+{
+  "command": [
+    "python3",
+    "-c",
+    "import pathlib,shutil; source=pathlib.Path('packages/learn-evals/eval-runs/petros-quality'); target=pathlib.Path('docs/verification/petros-phase6-20261003/baseline-quality-corpus-r5');target.mkdir(exist_ok=True); paths=list(source.glob('phase6-20261003-frozen-r5*'));assert len(paths)==4;manifest=pathlib.Path('docs/verification/petros-phase6-20261003/frozen-final-r5/source-sha256.txt').read_text();assert all(str(p) not in manifest for p in paths);[(shutil.copyfile(p,target/p.name),None if (target/p.name).read_bytes()==p.read_bytes() else (_ for _ in ()).throw(AssertionError(str(p))),p.unlink()) for p in paths];print('Four task-owned corpus outputs preserved in dated evidence; implementation files unchanged.')"
+  ],
+  "start": "2026-10-03T12:58:57.469946+00:00",
+  "end": "2026-10-03T12:58:57.566650+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+  }
+}

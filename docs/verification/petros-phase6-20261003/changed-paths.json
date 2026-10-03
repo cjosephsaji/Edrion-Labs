@@ -1,0 +1,297 @@
+[
+  {
+    "path": "apps/api/src/modules/integrations/petros-phase6-admissions.spec.ts",
+    "entrySha256": null,
+    "finalSha256": "a5d485583ee7ef53c836df8435ad94fb4d8ba9a77a93ad2a19e24f1535993fed"
+  },
+  {
+    "path": "apps/api/src/modules/integrations/petros-phase6-browser-journey.mjs",
+    "entrySha256": null,
+    "finalSha256": "d264f41405f341bbcb62adb4b01ee4024d8ad6e7ce63c47db39db81666b6f951"
+  },
+  {
+    "path": "apps/api/src/modules/integrations/petros-phase6-browser-server.ts",
+    "entrySha256": null,
+    "finalSha256": "a457a4e73093a9d68fc0966267a12ee313ef440ccf7bf2f486fb6f3b1ee5f11f"
+  },
+  {
+    "path": "apps/api/src/modules/integrations/petros-phase6-capability-journey.mjs",
+    "entrySha256": null,
+    "finalSha256": "4bc3313aff6a20a66faf8ee69f7e1eb59391d79ccd65a4db9a9e31e94ff51236"
+  },
+  {
+    "path": "apps/api/src/modules/integrations/petros-phase6-cooling.integration.spec.ts",
+    "entrySha256": null,
+    "finalSha256": "8490305b316370bd855ea629883b976b3824ebb28cc456224caa08ce0349c927"
+  },
+  {
+    "path": "apps/api/src/modules/integrations/petros-phase6-source-authoring.integration.spec.ts",
+    "entrySha256": null,
+    "finalSha256": "d26a0342ee276a5207fcdb85ed05979c318196425fe8dab451efd9490e5ba01c"
+  },
+  {
+    "path": "apps/api/src/modules/petros-quality/petros-release.repository.ts",
+    "entrySha256": "0260b7b1a461739eeab2f5d53ab594aae38b0a8104fbd4aff79d7fc308a66e42",
+    "finalSha256": "885e3a61a04acc5f25bf9981e0446a52c1c9a88155148b5444ea5926c80a29cb"
+  },
+  {
+    "path": "apps/api/src/modules/student/knowledge/knowledge-document.service.ts",
+    "entrySha256": "9d4d228396a66e05621b9a87f8c19f7835795cc1b03d886ff8c15c4445e8078d",
+    "finalSha256": "dfd3ea99e66c706aff6e92be3d4a089cff981f3bea82ce0d798288ccc36a6e13"
+  },
+  {
+    "path": "apps/api/src/modules/student/knowledge/petros-teaching-pack.controller.ts",
+    "entrySha256": "59446a7a9470397cb45e49dc35b8c7463b0ee7addf15c8ce6986eec2e3f2378c",
+    "finalSha256": "46c3559b7db83dc321451a847c74d6299d1f0724f644803a386fefd0751e5957"
+  },
+  {
+    "path": "apps/api/src/modules/student/knowledge/petros-teaching-pack.repository.ts",
+    "entrySha256": "8e51fea7ed646af3dfdcffe08ecbc87c0fd7c2e32a3e82e9ae441fb620e8fe83",
+    "finalSha256": "853c333dcb876e5115510f410c6d3d6761f195893547807d97f41e7b190db571"
+  },
+  {
+    "path": "apps/api/src/modules/student/knowledge/petros-teaching-pack.service.ts",
+    "entrySha256": "9a9778049dde4c3efba61b361d92d6fc37190736a77b95b0b98f1501077fa706",
+    "finalSha256": "75e95feeb065152316a1d01a3c44f3ef84702eef1dbc2e7a0afffb87b44c63ee"
+  },
+  {
+    "path": "apps/api/src/modules/student/petros-loop/petros-adaptive.renderer.ts",
+    "entrySha256": "7e9bd1e3aa86d4fdb346df674d7392d6c39fdadf7b73403774e7fe7a7140488d",
+    "finalSha256": "f8ec52f384cf5f31a49bc70db24d7fa3e5d5e07524b4da43e0f3efa46a96b803"
+  },
+  {
+    "path": "apps/api/src/modules/student/petros-loop/petros-workspace.service.ts",
+    "entrySha256": "eb5c6ff5ffe418ea25ec357b214f0d84f0e0324916049df149869473421e958f",
+    "finalSha256": "f2406622d52241f136c2c663e6dbf5f8a78bd0df7dd464815bb793f1b2afee12"
+  },
+  {
+    "path": "apps/api/src/modules/student/petros-session-intent/petros-session-intent.controller.ts",
+    "entrySha256": "1b98190d07a59797fb51389df180461c601b7ce1263a0db47c16b63d125b94c6",
+    "finalSha256": "8c9e91f4ca393fa31797c99b33036a7733ec8d72f77771b7dda4a6db0b16cde3"
+  },
+  {
+    "path": "apps/api/src/modules/student/petros-session-intent/petros-session-intent.repository.ts",
+    "entrySha256": "1c369885e95bc45f13261d16f99e5467b7fa913029ac13de21b8fd9c1e12a5be",
+    "finalSha256": "1337c9f63d17f20c4274319bd799d8a6eaf5595bbdabaf6e1925a0011816996a"
+  },
+  {
+    "path": "apps/api/src/modules/student/petros-session-intent/petros-session-intent.service.ts",
+    "entrySha256": "42bd5ee325af3c7b0ae0c745bbe967e7ea04e3b1e7bd7ee91d56e9fafc30cfaf",
+    "finalSha256": "35b6ab04510c1a8715427ab3605816c19a1fb9f226548d2fa13d7273af1f2ac8"
+  },
+  {
+    "path": "apps/institution-web/src/app/(app)/teaching/[classId]/[subjectId]/page.tsx",
+    "entrySha256": "2f6bf3608991468d7f341e40960b58de91d767fb9f06a75fc948b49d632e38f0",
+    "finalSha256": "3ce53f1fa0f89568711bea3f6f7e8a6d20a30386e51c3a3348919f2736fc4fd2"
+  },
+  {
+    "path": "apps/institution-web/src/components/teaching/petros-lesson-publication.tsx",
+    "entrySha256": null,
+    "finalSha256": "ba6c1b9f2225c74ab76e19c19c4f61fae2dc8a81d28179e34d306f38f9ae15e1"
+  },
+  {
+    "path": "apps/institution-web/src/components/teaching/petros-phase6-lesson-author.tsx",
+    "entrySha256": null,
+    "finalSha256": "61736a35a418c7c2eee6373d90ab2178b04f53cdec8fe5535f2969139251f8fb"
+  },
+  {
+    "path": "apps/student-web/src/app/(app)/home/home.module.css",
+    "entrySha256": "a90b37f6edc760edd2bf90811af9990df949a6b08f42d00a221472abe60258d4",
+    "finalSha256": "50abfff4260c15fa9e2150bfd45adcd6fa7e437c12374652caed3b9111b69a06"
+  },
+  {
+    "path": "apps/student-web/src/app/(app)/home/page.tsx",
+    "entrySha256": "e8aff635bd9f09cf64ad11fbab27eea9f8d65b78d9e0da3f357d53d41cf4c6b1",
+    "finalSha256": "e18d17f3cc3f8febc80b5eff0fddc88a129f8cc01de379d2cf4e13d064cd2b49"
+  },
+  {
+    "path": "apps/student-web/src/app/(app)/materials/materials.module.css",
+    "entrySha256": "2d153b36473b16423699ae4e8e5291f85429bdffbca2b45418d717ac1c84a3b6",
+    "finalSha256": "72b5cb8a2da4c46a742fd28d083d56fc02acbc054c9de3fa7d6a0d0da403e4ec"
+  },
+  {
+    "path": "apps/student-web/src/app/(app)/materials/page.tsx",
+    "entrySha256": "2a1e09e0e347702bd63f205a5887dce5c497f0eab3eac59b8e9e3e1d5ab7a25c",
+    "finalSha256": "f8074ed6c92d4c1101fe122772b170b3b617f86695eab5c3f72bc6066121c6e7"
+  },
+  {
+    "path": "apps/student-web/src/app/globals.css",
+    "entrySha256": "4c726d6822f1743a757a729703082729eb357efe595ccaaa4616dc772b11bcb6",
+    "finalSha256": "47593bc4aced20fc0c5374383fee1e7c6e2a9476a1ba6d80e73b41e1c36d39e9"
+  },
+  {
+    "path": "apps/student-web/src/components/app-shell/app-shell.spec.tsx",
+    "entrySha256": "ecc24ca9d5df8827dc8f2cd6385cee03d496565674d1f11848e1d26bbc57b0fe",
+    "finalSha256": "5df82477985e2a697cd50b5b05f2d4a054290846cf6562bf9f1a73380ec53d1a"
+  },
+  {
+    "path": "apps/student-web/src/components/app-shell/app-shell.tsx",
+    "entrySha256": "b86ebf53e152e6df1d690e1d2c22ef34acaa1f78b6d37fc9d4cd6fb46e111bae",
+    "finalSha256": "2cd73e34eeb9d89a048500fa5fbfc1c2254c0409030a546b8316509c8d63eacc"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-artifact-library.module.css",
+    "entrySha256": "73fb0002485644fa20599cf5bc98af9663d735e0d873ae0a03a2d46304527ffb",
+    "finalSha256": "1c368e74d8ff0a9b2a0b281dd60f1e03d126ade5ae8eee5325e9886e0d6410de"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-artifact-library.tsx",
+    "entrySha256": "8f2f2bb894c6eed9de1e978e56a83cbbf673b4bef64a3df72cbb8b6c3f789f45",
+    "finalSha256": "74abcf0c38448ab139e05b53ff37c25f63807c0b1b81884f086098b81f646531"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-continuity.module.css",
+    "entrySha256": null,
+    "finalSha256": "e3e844459346e10dd4e8c3f72a99c5f018f8ef7b6bb50917ad740092d87015a0"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-continuity.tsx",
+    "entrySha256": "e048058a4129a8583d8d7a1322e5e7aaa64f0186e407af13b79782819b2871a4",
+    "finalSha256": "a0f28d814076600edaae8debfbbcd7a37a2d4ac3765481fac01cbe4e877d1294"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-document-study.spec.tsx",
+    "entrySha256": null,
+    "finalSha256": "f7baa6241d4be50cbd3c84435df4da94fd1d9e4319632caa659c2d9cf6ef19fe"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-document-study.tsx",
+    "entrySha256": null,
+    "finalSha256": "ed2392992cbf617734f371c6b4175383348c5453f8f6aeab6f14ad90dff8c6b5"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-input-modes.module.css",
+    "entrySha256": "51be2ff56090a3beca232bc6f577f0a0cc2d7af3543bda4b842c8caa3afba182",
+    "finalSha256": "79d36b9c383937125a5d69d80fc99cc78336fee8a24b00daa703d24377afc436"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-input-modes.spec.tsx",
+    "entrySha256": "dd0beaf94851ab6174e03a41d6d0fc104b5d9bc71f5cc9490ebd8d5ebfb20b88",
+    "finalSha256": "5814c8aed120ad62afa323e4452f59dbc701701175b700f80893b9aae22030d3"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-input-modes.tsx",
+    "entrySha256": "5da0cf9dd0fc03a6a8f0c2afc40b240f33f55e81cfd70c3d9cb888af587e7298",
+    "finalSha256": "c833dbb19f265894a10cb23948623d34c058eb6f54b17eee4d5959ecdb4f8e7d"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-lesson-narration.ts",
+    "entrySha256": "bcc68bd20c85a67bbd6560d16355f5673c2fa145dd0c634643c3cecec2562f61",
+    "finalSha256": "422b42c78156add69f3a4cf17e6a0a671acfb4f2672f01c35d368d8775ffab31"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-mentor.spec.tsx",
+    "entrySha256": "bade7cbdc77faa36943054a00c166703338dd096a2b712af83a5110265a40109",
+    "finalSha256": "f0c24870872250b778f27c5cf54ce9d40750f34a732b484dda969a2e2e1d1fa8"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-mentor.tsx",
+    "entrySha256": "63f2aa9025ba3f38da1b7a335ef3e5b71bec0f4af3a11c59ded8679b7dd2c1aa",
+    "finalSha256": "928c58bf2f6dbf97737806cdd04fe1d41c4b69ace853577842a41ae2389bc79e"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-repair-session.tsx",
+    "entrySha256": "0d47ae46adad89e6e402b9b383f45b2ce87c3d5d8b95555ae9a667256287c494",
+    "finalSha256": "dbbc877c7ba63c32197bcf9e98a282d6c7716a1b9edf38f672f7e6cdabd3fdcb"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-session.module.css",
+    "entrySha256": "1dedf01985a99fcdade2f1b0247402e90cab2038280079364d9743e7034999ee",
+    "finalSha256": "6716151cf379615e4837aaf36031f43b4e3cd8eaa5fd2ab113c6620662682b84"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-teaching-block-preview.tsx",
+    "entrySha256": null,
+    "finalSha256": "8078d3aeec1d1511ea244ef5c01a561e2447b3ddeb8700588f053d481020f3ce"
+  },
+  {
+    "path": "apps/student-web/src/components/petros/petros-teaching-block-renderer.tsx",
+    "entrySha256": "d7490e8ce1e70772fb92e1c75f1f6635a80a1a19f9809c7aa69b44e62ac5f82c",
+    "finalSha256": "b0ac41f0f5c1c745f69fbad72e019469eb6acb6765c85b21bd23c76282fa2baa"
+  },
+  {
+    "path": "docs/PETROS-PHASE-6-DECISIONS.md",
+    "entrySha256": null,
+    "finalSha256": "d2b91aa70be2436313910075a6835e10eca4f5e51636fa379bc9e1b925ce95dc"
+  },
+  {
+    "path": "docs/PETROS-PHASE-6-OPERATOR-RUNBOOK.md",
+    "entrySha256": null,
+    "finalSha256": "d99bef5611dac06c94d38a85908d5bf6dfd27350f16135ef0a847d89bc60c9ab"
+  },
+  {
+    "path": "docs/PETROS-PHASE-6-OWNER-MATRIX.md",
+    "entrySha256": null,
+    "finalSha256": "73e861dfaab7b1a2090a5ab71af4ee629a7096fcb18727d5a38b129d77ef6b3a"
+  },
+  {
+    "path": "docs/PETROS-PHASE-6-VERIFICATION-PLAN.md",
+    "entrySha256": null,
+    "finalSha256": "9b0cd3b23e4751e1a3412b1ae5b4e3d29384694ca425fbba372573860af8a488"
+  },
+  {
+    "path": "eslint.config.mjs",
+    "entrySha256": "a618cb78ed7f37a076988558d548855360903630d51451df2152aa2c1d58ee52",
+    "finalSha256": "b36e8da2211a91a5aaee6307a13d917058402749ac15c6b991fb294b0339698d"
+  },
+  {
+    "path": "packages/config/src/index.ts",
+    "entrySha256": "814548175ac47b9629a2048d2018d6caf380d2bc533affcef00b512597f4a13d",
+    "finalSha256": "19dba8c1dfbd3db9cfa355bca275cab4dc1ee478d16ef3d7e5ce1669e31fde86"
+  },
+  {
+    "path": "packages/schemas/src/index.ts",
+    "entrySha256": "0be46d75c70123212b182dd96e47633a4e220617d266cd217721c1a263a6802a",
+    "finalSha256": "2c5e5f8fa9f5ac5415862050bd9bdbbd42f280693f908bbf11362b7db9175eb8"
+  },
+  {
+    "path": "packages/schemas/src/petros-engine-contract.ts",
+    "entrySha256": "0a79b745946f1525d9661f5877472c23faac17cc513ee2a13490cd5a964ac473",
+    "finalSha256": "57b3cb1b86b10d07a73841f2fb9ce558063e189a3242b7bcf617eca3d612c209"
+  },
+  {
+    "path": "packages/schemas/src/petros-engine-models.spec.ts",
+    "entrySha256": "fd2b2ce33b43495349b056989db14e370663864f1c4e956d102fc29278337134",
+    "finalSha256": "4902d8630bfce1e160f9e2cba994f9fabafe6e97e0dae9ae6c7deed80d497655"
+  },
+  {
+    "path": "packages/schemas/src/petros-engine-models.ts",
+    "entrySha256": "9d824046564213a8447801ffcb773f2153820e00f8f0cc58dd77b9dbb7eb0521",
+    "finalSha256": "ab5b10b0b7c53bf03246d29de3eacc4a0b30a7106099be1ca9c22a7e527b0df8"
+  },
+  {
+    "path": "packages/schemas/src/petros-engine-phase6-cooling.spec.ts",
+    "entrySha256": null,
+    "finalSha256": "a662c838d21e99b44afc5137afb503c1447ce5dc4517dab5c672f77004627c2e"
+  },
+  {
+    "path": "packages/schemas/src/petros-engine-presets.ts",
+    "entrySha256": "3e468e5a5b4c00eb90506102a1990da30c99932e05e4ff9f2c2c4439219e2572",
+    "finalSha256": "231b42ca6f87d4c7572c9b15304f2bd0c72006b0f0bddb0a9e3794b052deea73"
+  },
+  {
+    "path": "packages/schemas/src/petros-engine-units.ts",
+    "entrySha256": "602fb4f448c5d6a95e145f62c2eebd9f44acc54e974883ea0d71a4c8b3e1d61e",
+    "finalSha256": "1de995f0fcc6c57161deb5aa15a54178b23acbe2bf775dea0a9e74fc69361006"
+  },
+  {
+    "path": "packages/schemas/src/petros-source-comparison.ts",
+    "entrySha256": null,
+    "finalSha256": "de3fe04afd7f45860f1512c0aac5279c2fc233ea522289f8f346f2ab76b327a6"
+  },
+  {
+    "path": "packages/ui/src/index.ts",
+    "entrySha256": "8e79958edcfca69646bb52184bc5189f91f3dda11fe5a62783b322fefaa84d31",
+    "finalSha256": "5c40649c915f39e557393c26864c1e2989a3af48062a813b227ac5602d5443d3"
+  },
+  {
+    "path": "packages/ui/src/petros-lesson-narration.ts",
+    "entrySha256": null,
+    "finalSha256": "bcc68bd20c85a67bbd6560d16355f5673c2fa145dd0c634643c3cecec2562f61"
+  },
+  {
+    "path": "packages/ui/src/petros-teaching-block-preview.tsx",
+    "entrySha256": null,
+    "finalSha256": "62bcd24a61fbbf2ffe1cdc81aaf81b453bd65f885d228f3d9988032357420a2d"
+  }
+]

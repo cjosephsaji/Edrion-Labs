@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-26T15:04:34.576534+00:00",
+  "finishedAt": "2026-09-26T15:04:35.768569+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/config",
+    "lint"
+  ],
+  "exitCode": 0,
+  "log": "final-r6-config-lint-20260926.log"
+}

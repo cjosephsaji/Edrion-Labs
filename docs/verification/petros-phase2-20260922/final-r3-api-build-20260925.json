@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-25T16:24:03.835186+00:00",
+  "finishedAt": "2026-09-25T16:24:30.500304+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "build"
+  ],
+  "exitCode": 0,
+  "log": "final-r3-api-build-20260925.log"
+}

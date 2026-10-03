@@ -1,0 +1,15 @@
+{
+  "startedAt": "2026-09-24T21:12:26.485117+00:00",
+  "finishedAt": "2026-09-24T21:12:33.196268+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/integrations/petros-learning-artifacts.integration.spec.ts"
+  ],
+  "exitCode": 1,
+  "log": "qualitative-inspection-20260924.log"
+}

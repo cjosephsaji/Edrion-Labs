@@ -1,0 +1,17 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "ts-node",
+    "src/modules/integrations/petros-phase4-browser-server.ts"
+  ],
+  "start": "2026-10-02T16:19:11.199433+00:00",
+  "end": "2026-10-02T16:21:15.700094+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/Volumes/PetrosPhase4Verification/tmp"
+  }
+}

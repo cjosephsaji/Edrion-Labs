@@ -1,0 +1,3399 @@
+{
+  "date": "2026-10-03T14:08:38.007Z",
+  "fixture": "disposable synthetic",
+  "browser": "installed Chrome",
+  "records": [
+    {
+      "size": "desktop",
+      "route": "home",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Make room for understanding.",
+      "surfaces": [
+        {
+          "tag": "DETAILS",
+          "label": "A useful next step · evidence and reviewNot assessedSynthetic projecti",
+          "class": "petros-continuity_recommendations___qNgq",
+          "radius": "12px"
+        },
+        {
+          "tag": "A",
+          "label": "Prepare a lessonOne goal, a source and a clear next step",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "A",
+          "label": "Study materialsFind the source you want to understand",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "A",
+          "label": "Notebook & reviewReturn to work you chose to keep",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "You’re all caught upThere is nothing requiring attention right now.Ope",
+          "class": "home_clearState__pX5Zv",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "learn",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Learn",
+      "surfaces": [
+        {
+          "tag": "DETAILS",
+          "label": "A useful next step · evidence and reviewNot assessedSynthetic projecti",
+          "class": "petros-continuity_recommendations___qNgq",
+          "radius": "12px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Continue learningContinue Synthetic projectileYour active session is s",
+          "class": "learn_focus__2kUKM",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Resume",
+          "class": "learn_primaryAction__iUjqP",
+          "radius": "8px"
+        },
+        {
+          "tag": "A",
+          "label": "Use class materialOpen notes, files, and uploads",
+          "class": "learn_startCard__m4X3D",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Ask about a topicType, photograph, or upload a question",
+          "class": "learn_startCard__m4X3D",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Review what needs workSee weak topics and your next step",
+          "class": "learn_startCard__m4X3D",
+          "radius": "16px"
+        },
+        {
+          "tag": "LI",
+          "label": "Due workSynthetic authored lesson releaseSynthetic physics · no due da",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "DIV",
+          "label": "0Solid0Needs practice0Not started",
+          "class": "learn_progressStats__FL_R0",
+          "radius": "16px"
+        },
+        {
+          "tag": "LI",
+          "label": "Synthetic projectileReady to continueResume",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "A",
+          "label": "Resume",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "LI",
+          "label": "Synthetic projectileReady to continueResume",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "A",
+          "label": "Resume",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "LI",
+          "label": "Synthetic thermal.newton-cooling.lumpedReady to continueResume",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "A",
+          "label": "Resume",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "LI",
+          "label": "Synthetic alternate sourceSynthetic physics · Oct 3Open",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "LI",
+          "label": "Synthetic sourceSynthetic physics · Oct 3Open",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Saved learning work",
+          "class": "learn_savedStrip__esAME",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "petros",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Learn with Petros",
+      "surfaces": [
+        {
+          "tag": "A",
+          "label": "Notes",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "A",
+          "label": "Flashcards",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Petros teaching invitation",
+          "class": "petros-input-modes_teacherStage__CVGxy",
+          "radius": "12px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "01Study your sourcesSelect a document or compare passages from several",
+          "class": "petros-input-modes_tab__yb4yv",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "02Snap a questionConfirm it, name the stuck point, then learn.",
+          "class": "petros-input-modes_tab__yb4yv",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "03Show your workCorrect recognition before line-linked critique.",
+          "class": "petros-input-modes_tab__yb4yv",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "04Voice sessionTurn-based recording, captions, interruption, text fall",
+          "class": "petros-input-modes_tab__yb4yv",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "05Five-minute modeOne guess, one teaching move, one check, one card.",
+          "class": "petros-input-modes_tab__yb4yv",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "06Teach it backYou explain; a confused junior asks one grounded questi",
+          "class": "petros-input-modes_tab__yb4yv",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Start with your sourcesChoose a document, check its readable pages and",
+          "class": "petros-input-modes_panel__9xQ98",
+          "radius": "12px"
+        },
+        {
+          "tag": "LI",
+          "label": "Synthetic alternate sourcePDF · 1 pages · Text available; check before",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SELECT",
+          "label": "Whole documentOne page",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Plan a lesson from Synthetic alternate source",
+          "class": "petros-door-button_trigger___QrDU",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Select for comparison",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "LI",
+          "label": "Synthetic sourcePDF · 1 pages · Text available; check before teachingT",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SELECT",
+          "label": "Whole documentOne page",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Plan a lesson from Synthetic source",
+          "class": "petros-door-button_trigger___QrDU",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Select for comparison",
+          "class": "",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "materials",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Study materials",
+      "surfaces": [
+        {
+          "tag": "A",
+          "label": "Teach from a document",
+          "class": "materials_petrosAction__Gt_YJ",
+          "radius": "999px"
+        },
+        {
+          "tag": "A",
+          "label": "Saved study work",
+          "class": "materials_savedAction__m1aLl",
+          "radius": "999px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Materials2Published across 1 collection",
+          "class": "materials_stat__GnPBz",
+          "radius": "16px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Ready for source check2PDF documents to check before teaching",
+          "class": "materials_stat__GnPBz",
+          "radius": "16px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Not opened2 / 2Counted on this device only",
+          "class": "materials_stat__GnPBz",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Synthetic physics2",
+          "class": "materials_chip__rRMx_",
+          "radius": "999px"
+        },
+        {
+          "tag": "INPUT",
+          "label": "",
+          "class": "materials_searchInput__mzh9B",
+          "radius": "12px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Text ready2",
+          "class": "materials_stateChip__Wsq7E",
+          "radius": "999px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Not opened2",
+          "class": "materials_stateChip__Wsq7E",
+          "radius": "999px"
+        },
+        {
+          "tag": "LI",
+          "label": "PDFSynthetic alternate sourceNot openedSynthetic physicsShared 3 OctOp",
+          "class": "materials_card__9lTsz",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "View Synthetic alternate source in Edrion",
+          "class": "materials_open__XtQK2",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Ask Petros about Synthetic alternate source",
+          "class": "petros-ask-button_button__TEjvy",
+          "radius": "8px"
+        },
+        {
+          "tag": "SELECT",
+          "label": "Whole documentOne page",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Plan a lesson from Synthetic alternate source",
+          "class": "petros-door-button_trigger___QrDU",
+          "radius": "8px"
+        },
+        {
+          "tag": "LI",
+          "label": "PDFSynthetic sourceNot openedSynthetic physicsShared 3 OctOpen documen",
+          "class": "materials_card__9lTsz",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "View Synthetic source in Edrion",
+          "class": "materials_open__XtQK2",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Ask Petros about Synthetic source",
+          "class": "petros-ask-button_button__TEjvy",
+          "radius": "8px"
+        },
+        {
+          "tag": "SELECT",
+          "label": "Whole documentOne page",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Plan a lesson from Synthetic source",
+          "class": "petros-door-button_trigger___QrDU",
+          "radius": "8px"
+        },
+        {
+          "tag": "P",
+          "label": "No documents added yet.",
+          "class": "materials_quietState__KBlJB",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "petros/artifacts",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Saved study work",
+      "surfaces": [
+        {
+          "tag": "A",
+          "label": "Petros",
+          "class": "",
+          "radius": "999px"
+        },
+        {
+          "tag": "P",
+          "label": "Nothing is due right now. There is no artificial urgency.",
+          "class": "petros-artifact-library_empty___lVex",
+          "radius": "16px"
+        },
+        {
+          "tag": "P",
+          "label": "No saved study work yet.",
+          "class": "petros-artifact-library_empty___lVex",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "notes",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Notes",
+      "surfaces": [
+        {
+          "tag": "DIV",
+          "label": "Save an explanation during a Petros lesson and it will appear here imm",
+          "class": "student-content_panel__mBt7v",
+          "radius": "16px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "No notes yetWhen a teacher publishes a note for your class, it appears",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Back to portal",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "flashcards",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Your flashcards",
+      "surfaces": [
+        {
+          "tag": "A",
+          "label": "Learn",
+          "class": "",
+          "radius": "999px"
+        },
+        {
+          "tag": "P",
+          "label": "Nothing is due right now. There is no artificial urgency.",
+          "class": "petros-artifact-library_empty___lVex",
+          "radius": "16px"
+        },
+        {
+          "tag": "P",
+          "label": "No flashcards yet. Use “Make a flashcard” in any Petros lesson and it ",
+          "class": "petros-artifact-library_empty___lVex",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "progress",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Progress",
+      "surfaces": [
+        {
+          "tag": "BUTTON",
+          "label": "Refresh progress",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "DIV",
+          "label": "There’s newer learning activity. Refresh your progress to update these",
+          "class": "petros-reflection_stale__cvI0w",
+          "radius": "16px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Topic progress summary",
+          "class": "petros-reflection_summary__L_ws_",
+          "radius": "16px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Your next step starts with a little practiceTry a topic with Petros. Y",
+          "class": "petros-reflection_emptyPanel__T8Y_H",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Start learning",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Topic view",
+          "class": "",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Your progress starts hereTopics will appear as you learn with Petros o",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Recent learningFinish a session with Petros to see what you tried, wha",
+          "class": "petros-reflection_recapSection__mGxMv",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "learning-path",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Learning path",
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "No active learning pathYour institution or a future planning flow can ",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Back to portal",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "courses",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Courses",
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "Synthetic physics693b1c54-5f80-4c2b-a9ff-3ab65973a78d · Synthetic Educ",
+          "class": "primitives_card__4viZj  transition hover:-translate-y-0.5 hover:border-[var(--s-accentBd)] hover:shadow-[0_14px_34px_rgb(24_55_45_/_9%)]",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "assignments",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Assignments",
+      "surfaces": [
+        {
+          "tag": "BUTTON",
+          "label": "In progress",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Submitted",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Returned",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Synthetic authored lesson releaseAssignedSynthetic physics · Published",
+          "class": "primitives_card__4viZj primitives_interactive__PHEuQ flex min-h-[148px] flex-col justify-between",
+          "radius": "16px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Assigned",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "homework",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Homework",
+      "surfaces": [
+        {
+          "tag": "BUTTON",
+          "label": "In progress",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Submitted",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Returned",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "No homework yetPublished homework will appear here.Back to portal",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Back to portal",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "timetable",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Timetable",
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "No timetable publishedYour institution has not published a schedule fo",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Back to portal",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "calendar",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "October 2026",
+      "surfaces": [
+        {
+          "tag": "BUTTON",
+          "label": "month",
+          "class": "primitives_action__CNraL capitalize",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "agenda",
+          "class": "primitives_action__CNraL capitalize",
+          "radius": "8px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Exams",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Due work",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Events",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Holidays",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "My plan",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "DIV",
+          "label": "MONTUEWEDTHUFRISATSUN2829301234567891011121314151617181920212223242526",
+          "class": "grid grid-cols-7 gap-px border border-[var(--s-bd1)] bg-[var(--s-bd1)]",
+          "radius": "0px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "classes",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Your classes",
+      "surfaces": [
+        {
+          "tag": "A",
+          "label": "Synthetic physicsSynthetic Teacher A · Schedule available in Timetable",
+          "class": "classes_classCard__HcLvg animate-block-in focus-ring",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "exams",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": null,
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "You don’t have accessThis module isn’t enabled for your account. Ask y",
+          "class": "primitives_systemState__erOdb",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "results",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Results",
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "No published resultsResults will appear after your institution release",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Back to portal",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "attendance",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Attendance",
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "No attendance recorded yetSessions appear here once your teachers mark",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Back to portal",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "report-cards",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Report cards",
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "No report cards yetReport cards appear after your institution publishe",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Back to portal",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "profile",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Profile",
+      "surfaces": [
+        {
+          "tag": "A",
+          "label": "Settings",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "SLSynthetic learner74972de9-d52c-449d-8d00-772a91986ab2@example.testSy",
+          "class": "student-content_profileHero__Igrvp",
+          "radius": "16px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Institution student",
+          "class": "student-content_profileBadge__Yq4YS",
+          "radius": "9999px"
+        },
+        {
+          "tag": "DL",
+          "label": "ProgrammeSynthetic current gradeClassPhase 6 current physicsSectionACu",
+          "class": "student-content_detailGrid__kOdMv",
+          "radius": "16px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Student accessStatusActivePortalStudentTerm—",
+          "class": "student-content_panel__mBt7v",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "settings",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Make Edrion yours",
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "ThemeWarm paper, forest ink and quiet rules. Dusk and Ink retain the s",
+          "class": "primitives_card__4viZj  ",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "EDRIONMintForest ink on fresh mint paper",
+          "class": "overflow-hidden text-left",
+          "radius": "8px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "EDRION",
+          "class": "block p-2.5",
+          "radius": "0px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "EDRIONDimDeep forest for evening",
+          "class": "overflow-hidden text-left",
+          "radius": "8px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "EDRION",
+          "class": "block p-2.5",
+          "radius": "0px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "EDRIONForest nightNear-black green, easy on the eyes",
+          "class": "overflow-hidden text-left",
+          "radius": "8px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "EDRION",
+          "class": "block p-2.5",
+          "radius": "0px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Text size",
+          "class": "inline-flex border border-[var(--s-bd1)] bg-[var(--s-surface2)] p-[2px]",
+          "radius": "0px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Connectivity preference",
+          "class": "mt-5 rounded-xl border border-[var(--s-bd1)] bg-[var(--s-card)] p-4",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "notifications",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Notifications",
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "You’re caught upNew school and class updates will appear here.Back to ",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Back to portal",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "fees",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": null,
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "You don’t have accessThis module isn’t enabled for your account. Ask y",
+          "class": "primitives_systemState__erOdb",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "requests",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": null,
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "You don’t have accessThis module isn’t enabled for your account. Ask y",
+          "class": "primitives_systemState__erOdb",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "transport",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": null,
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "Transport isn’t availableYour institution has not enabled transport se",
+          "class": "primitives_systemState__erOdb",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "hostel",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": null,
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "Hostel isn’t availableYour institution has not enabled hostel services",
+          "class": "primitives_systemState__erOdb",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "announcements",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Announcements",
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "No announcementsInstitution notices will appear here when published.Ba",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Back to portal",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "documents",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": null,
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "You don’t have accessThis module isn’t enabled for your account. Ask y",
+          "class": "primitives_systemState__erOdb",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "design-system",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "A clearer academic workspace",
+      "surfaces": [
+        {
+          "tag": "BUTTON",
+          "label": "Test action",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Study with clarity.Your timetable, deadlines, balances, and feedback s",
+          "class": "primitives_card__4viZj  ",
+          "radius": "16px"
+        },
+        {
+          "tag": "ARTICLE",
+          "label": "Payment overdue₹12,500Due 3 days ago · Late fee begins tomorrow",
+          "class": "primitives_statTile__ls7QO",
+          "radius": "16px"
+        },
+        {
+          "tag": "ARTICLE",
+          "label": "Homework2 dueNext deadline today at 17:00",
+          "class": "primitives_statTile__ls7QO",
+          "radius": "16px"
+        },
+        {
+          "tag": "ARTICLE",
+          "label": "Attendance93%Comfortably above the requirement",
+          "class": "primitives_statTile__ls7QO",
+          "radius": "16px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Submitted",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Due today",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Overdue",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Draft",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "New feedback",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Next class · 09:00MathematicsQuadratic equations · Room 9A · Tina Teac",
+          "class": "primitives_card__4viZj  preview_wide__83j5l",
+          "radius": "16px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "All clearNo missed workNothing needs your attention right now.",
+          "class": "primitives_card__4viZj  preview_narrow__6W5Qt",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Save changes",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Review later",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Pay selected",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "No study materials yetYour teacher has not published anything for this",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "View class schedule",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Loading assignment details",
+          "class": "primitives_skeletonCard___XE09",
+          "radius": "16px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "We couldn’t load this sectionYour information is safe. Try the request",
+          "class": "primitives_systemState__erOdb",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Try again",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "You’re offlineReconnect to update this page. Previously loaded informa",
+          "class": "primitives_systemState__erOdb",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Check connection",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Amount selected₹24,800Two invoices · fees included Review payment",
+          "class": "primitives_card__4viZj  ",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Review payment",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "home",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Make room for understanding.",
+      "surfaces": [
+        {
+          "tag": "DETAILS",
+          "label": "A useful next step · evidence and reviewNot assessedSynthetic projecti",
+          "class": "petros-continuity_recommendations___qNgq",
+          "radius": "12px"
+        },
+        {
+          "tag": "A",
+          "label": "Prepare a lessonOne goal, a source and a clear next step",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "A",
+          "label": "Study materialsFind the source you want to understand",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "A",
+          "label": "Notebook & reviewReturn to work you chose to keep",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "You’re all caught upThere is nothing requiring attention right now.Ope",
+          "class": "home_clearState__pX5Zv",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "learn",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Learn",
+      "surfaces": [
+        {
+          "tag": "DETAILS",
+          "label": "A useful next step · evidence and reviewNot assessedSynthetic projecti",
+          "class": "petros-continuity_recommendations___qNgq",
+          "radius": "12px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Continue learningContinue Synthetic projectileYour active session is s",
+          "class": "learn_focus__2kUKM",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Resume",
+          "class": "learn_primaryAction__iUjqP",
+          "radius": "8px"
+        },
+        {
+          "tag": "A",
+          "label": "Use class materialOpen notes, files, and uploads",
+          "class": "learn_startCard__m4X3D",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Ask about a topicType, photograph, or upload a question",
+          "class": "learn_startCard__m4X3D",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Review what needs workSee weak topics and your next step",
+          "class": "learn_startCard__m4X3D",
+          "radius": "16px"
+        },
+        {
+          "tag": "LI",
+          "label": "Due workSynthetic authored lesson releaseSynthetic physics · no due da",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "DIV",
+          "label": "0Solid0Needs practice0Not started",
+          "class": "learn_progressStats__FL_R0",
+          "radius": "16px"
+        },
+        {
+          "tag": "LI",
+          "label": "Synthetic projectileReady to continueResume",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "A",
+          "label": "Resume",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "LI",
+          "label": "Synthetic projectileReady to continueResume",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "A",
+          "label": "Resume",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "LI",
+          "label": "Synthetic thermal.newton-cooling.lumpedReady to continueResume",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "A",
+          "label": "Resume",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "LI",
+          "label": "Synthetic alternate sourceSynthetic physics · Oct 3Open",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "LI",
+          "label": "Synthetic sourceSynthetic physics · Oct 3Open",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Saved learning work",
+          "class": "learn_savedStrip__esAME",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "petros",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Learn with Petros",
+      "surfaces": [
+        {
+          "tag": "A",
+          "label": "Notes",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "A",
+          "label": "Flashcards",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Petros teaching invitation",
+          "class": "petros-input-modes_teacherStage__CVGxy",
+          "radius": "12px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "01Study your sourcesSelect a document or compare passages from several",
+          "class": "petros-input-modes_tab__yb4yv",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "02Snap a questionConfirm it, name the stuck point, then learn.",
+          "class": "petros-input-modes_tab__yb4yv",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "03Show your workCorrect recognition before line-linked critique.",
+          "class": "petros-input-modes_tab__yb4yv",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "04Voice sessionTurn-based recording, captions, interruption, text fall",
+          "class": "petros-input-modes_tab__yb4yv",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "05Five-minute modeOne guess, one teaching move, one check, one card.",
+          "class": "petros-input-modes_tab__yb4yv",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "06Teach it backYou explain; a confused junior asks one grounded questi",
+          "class": "petros-input-modes_tab__yb4yv",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Start with your sourcesChoose a document, check its readable pages and",
+          "class": "petros-input-modes_panel__9xQ98",
+          "radius": "12px"
+        },
+        {
+          "tag": "LI",
+          "label": "Synthetic alternate sourcePDF · 1 pages · Text available; check before",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SELECT",
+          "label": "Whole documentOne page",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Plan a lesson from Synthetic alternate source",
+          "class": "petros-door-button_trigger___QrDU",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Select for comparison",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "LI",
+          "label": "Synthetic sourcePDF · 1 pages · Text available; check before teachingT",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SELECT",
+          "label": "Whole documentOne page",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Plan a lesson from Synthetic source",
+          "class": "petros-door-button_trigger___QrDU",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Select for comparison",
+          "class": "",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "materials",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Study materials",
+      "surfaces": [
+        {
+          "tag": "A",
+          "label": "Teach from a document",
+          "class": "materials_petrosAction__Gt_YJ",
+          "radius": "999px"
+        },
+        {
+          "tag": "A",
+          "label": "Saved study work",
+          "class": "materials_savedAction__m1aLl",
+          "radius": "999px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Materials2Published across 1 collection",
+          "class": "materials_stat__GnPBz",
+          "radius": "16px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Ready for source check2PDF documents to check before teaching",
+          "class": "materials_stat__GnPBz",
+          "radius": "16px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Not opened2 / 2Counted on this device only",
+          "class": "materials_stat__GnPBz",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Synthetic physics2",
+          "class": "materials_chip__rRMx_",
+          "radius": "999px"
+        },
+        {
+          "tag": "INPUT",
+          "label": "",
+          "class": "materials_searchInput__mzh9B",
+          "radius": "12px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Text ready2",
+          "class": "materials_stateChip__Wsq7E",
+          "radius": "999px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Not opened2",
+          "class": "materials_stateChip__Wsq7E",
+          "radius": "999px"
+        },
+        {
+          "tag": "LI",
+          "label": "PDFSynthetic alternate sourceNot openedSynthetic physicsShared 3 OctOp",
+          "class": "materials_card__9lTsz",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "View Synthetic alternate source in Edrion",
+          "class": "materials_open__XtQK2",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Ask Petros about Synthetic alternate source",
+          "class": "petros-ask-button_button__TEjvy",
+          "radius": "8px"
+        },
+        {
+          "tag": "SELECT",
+          "label": "Whole documentOne page",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Plan a lesson from Synthetic alternate source",
+          "class": "petros-door-button_trigger___QrDU",
+          "radius": "8px"
+        },
+        {
+          "tag": "LI",
+          "label": "PDFSynthetic sourceNot openedSynthetic physicsShared 3 OctOpen documen",
+          "class": "materials_card__9lTsz",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "View Synthetic source in Edrion",
+          "class": "materials_open__XtQK2",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Ask Petros about Synthetic source",
+          "class": "petros-ask-button_button__TEjvy",
+          "radius": "8px"
+        },
+        {
+          "tag": "SELECT",
+          "label": "Whole documentOne page",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Plan a lesson from Synthetic source",
+          "class": "petros-door-button_trigger___QrDU",
+          "radius": "8px"
+        },
+        {
+          "tag": "P",
+          "label": "No documents added yet.",
+          "class": "materials_quietState__KBlJB",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "petros/artifacts",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Saved study work",
+      "surfaces": [
+        {
+          "tag": "A",
+          "label": "Petros",
+          "class": "",
+          "radius": "999px"
+        },
+        {
+          "tag": "P",
+          "label": "Nothing is due right now. There is no artificial urgency.",
+          "class": "petros-artifact-library_empty___lVex",
+          "radius": "16px"
+        },
+        {
+          "tag": "P",
+          "label": "No saved study work yet.",
+          "class": "petros-artifact-library_empty___lVex",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "notes",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Notes",
+      "surfaces": [
+        {
+          "tag": "DIV",
+          "label": "Save an explanation during a Petros lesson and it will appear here imm",
+          "class": "student-content_panel__mBt7v",
+          "radius": "16px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "No notes yetWhen a teacher publishes a note for your class, it appears",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Back to portal",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "flashcards",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Your flashcards",
+      "surfaces": [
+        {
+          "tag": "A",
+          "label": "Learn",
+          "class": "",
+          "radius": "999px"
+        },
+        {
+          "tag": "P",
+          "label": "Nothing is due right now. There is no artificial urgency.",
+          "class": "petros-artifact-library_empty___lVex",
+          "radius": "16px"
+        },
+        {
+          "tag": "P",
+          "label": "No flashcards yet. Use “Make a flashcard” in any Petros lesson and it ",
+          "class": "petros-artifact-library_empty___lVex",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "progress",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Progress",
+      "surfaces": [
+        {
+          "tag": "BUTTON",
+          "label": "Refresh progress",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "DIV",
+          "label": "There’s newer learning activity. Refresh your progress to update these",
+          "class": "petros-reflection_stale__cvI0w",
+          "radius": "16px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Topic progress summary",
+          "class": "petros-reflection_summary__L_ws_",
+          "radius": "16px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Your next step starts with a little practiceTry a topic with Petros. Y",
+          "class": "petros-reflection_emptyPanel__T8Y_H",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Start learning",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Topic view",
+          "class": "",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Your progress starts hereTopics will appear as you learn with Petros o",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Recent learningFinish a session with Petros to see what you tried, wha",
+          "class": "petros-reflection_recapSection__mGxMv",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "learning-path",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Learning path",
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "No active learning pathYour institution or a future planning flow can ",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Back to portal",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "courses",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Courses",
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "Synthetic physics693b1c54-5f80-4c2b-a9ff-3ab65973a78d · Synthetic Educ",
+          "class": "primitives_card__4viZj  transition hover:-translate-y-0.5 hover:border-[var(--s-accentBd)] hover:shadow-[0_14px_34px_rgb(24_55_45_/_9%)]",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "assignments",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Assignments",
+      "surfaces": [
+        {
+          "tag": "BUTTON",
+          "label": "In progress",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Submitted",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Returned",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Synthetic authored lesson releaseAssignedSynthetic physics · Published",
+          "class": "primitives_card__4viZj primitives_interactive__PHEuQ flex min-h-[148px] flex-col justify-between",
+          "radius": "16px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Assigned",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "homework",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Homework",
+      "surfaces": [
+        {
+          "tag": "BUTTON",
+          "label": "In progress",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Submitted",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Returned",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "No homework yetPublished homework will appear here.Back to portal",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Back to portal",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "timetable",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Timetable",
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "No timetable publishedYour institution has not published a schedule fo",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Back to portal",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "calendar",
+      "viewport": 390,
+      "width": 390,
+      "heading": "October 2026",
+      "surfaces": [
+        {
+          "tag": "BUTTON",
+          "label": "month",
+          "class": "primitives_action__CNraL capitalize",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "agenda",
+          "class": "primitives_action__CNraL capitalize",
+          "radius": "8px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Exams",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Due work",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Events",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Holidays",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "My plan",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "DIV",
+          "label": "MONTUEWEDTHUFRISATSUN2829301234567891011121314151617181920212223242526",
+          "class": "grid grid-cols-7 gap-px border border-[var(--s-bd1)] bg-[var(--s-bd1)]",
+          "radius": "0px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "classes",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Your classes",
+      "surfaces": [
+        {
+          "tag": "A",
+          "label": "Synthetic physicsSynthetic Teacher A · Schedule available in Timetable",
+          "class": "classes_classCard__HcLvg animate-block-in focus-ring",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "exams",
+      "viewport": 390,
+      "width": 390,
+      "heading": null,
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "You don’t have accessThis module isn’t enabled for your account. Ask y",
+          "class": "primitives_systemState__erOdb",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "results",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Results",
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "No published resultsResults will appear after your institution release",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Back to portal",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "attendance",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Attendance",
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "No attendance recorded yetSessions appear here once your teachers mark",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Back to portal",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "report-cards",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Report cards",
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "No report cards yetReport cards appear after your institution publishe",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Back to portal",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "profile",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Profile",
+      "surfaces": [
+        {
+          "tag": "A",
+          "label": "Settings",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "SLSynthetic learner74972de9-d52c-449d-8d00-772a91986ab2@example.testSy",
+          "class": "student-content_profileHero__Igrvp",
+          "radius": "16px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Institution student",
+          "class": "student-content_profileBadge__Yq4YS",
+          "radius": "9999px"
+        },
+        {
+          "tag": "DL",
+          "label": "ProgrammeSynthetic current gradeClassPhase 6 current physicsSectionACu",
+          "class": "student-content_detailGrid__kOdMv",
+          "radius": "16px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Student accessStatusActivePortalStudentTerm—",
+          "class": "student-content_panel__mBt7v",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "settings",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Make Edrion yours",
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "ThemeWarm paper, forest ink and quiet rules. Dusk and Ink retain the s",
+          "class": "primitives_card__4viZj  ",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "EDRIONMintForest ink on fresh mint paper",
+          "class": "overflow-hidden text-left",
+          "radius": "8px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "EDRION",
+          "class": "block p-2.5",
+          "radius": "0px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "EDRIONDimDeep forest for evening",
+          "class": "overflow-hidden text-left",
+          "radius": "8px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "EDRION",
+          "class": "block p-2.5",
+          "radius": "0px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "EDRIONForest nightNear-black green, easy on the eyes",
+          "class": "overflow-hidden text-left",
+          "radius": "8px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "EDRION",
+          "class": "block p-2.5",
+          "radius": "0px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Text size",
+          "class": "inline-flex border border-[var(--s-bd1)] bg-[var(--s-surface2)] p-[2px]",
+          "radius": "0px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Connectivity preference",
+          "class": "mt-5 rounded-xl border border-[var(--s-bd1)] bg-[var(--s-card)] p-4",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "notifications",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Notifications",
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "You’re caught upNew school and class updates will appear here.Back to ",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Back to portal",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "fees",
+      "viewport": 390,
+      "width": 390,
+      "heading": null,
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "You don’t have accessThis module isn’t enabled for your account. Ask y",
+          "class": "primitives_systemState__erOdb",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "requests",
+      "viewport": 390,
+      "width": 390,
+      "heading": null,
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "You don’t have accessThis module isn’t enabled for your account. Ask y",
+          "class": "primitives_systemState__erOdb",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "transport",
+      "viewport": 390,
+      "width": 390,
+      "heading": null,
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "Transport isn’t availableYour institution has not enabled transport se",
+          "class": "primitives_systemState__erOdb",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "hostel",
+      "viewport": 390,
+      "width": 390,
+      "heading": null,
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "Hostel isn’t availableYour institution has not enabled hostel services",
+          "class": "primitives_systemState__erOdb",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "announcements",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Announcements",
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "No announcementsInstitution notices will appear here when published.Ba",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "A",
+          "label": "Back to portal",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "documents",
+      "viewport": 390,
+      "width": 390,
+      "heading": null,
+      "surfaces": [
+        {
+          "tag": "SECTION",
+          "label": "You don’t have accessThis module isn’t enabled for your account. Ask y",
+          "class": "primitives_systemState__erOdb",
+          "radius": "16px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "design-system",
+      "viewport": 390,
+      "width": 390,
+      "heading": "A clearer academic workspace",
+      "surfaces": [
+        {
+          "tag": "BUTTON",
+          "label": "Test action",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Study with clarity.Your timetable, deadlines, balances, and feedback s",
+          "class": "primitives_card__4viZj  ",
+          "radius": "16px"
+        },
+        {
+          "tag": "ARTICLE",
+          "label": "Payment overdue₹12,500Due 3 days ago · Late fee begins tomorrow",
+          "class": "primitives_statTile__ls7QO",
+          "radius": "16px"
+        },
+        {
+          "tag": "ARTICLE",
+          "label": "Homework2 dueNext deadline today at 17:00",
+          "class": "primitives_statTile__ls7QO",
+          "radius": "16px"
+        },
+        {
+          "tag": "ARTICLE",
+          "label": "Attendance93%Comfortably above the requirement",
+          "class": "primitives_statTile__ls7QO",
+          "radius": "16px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Submitted",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Due today",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Overdue",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "Draft",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "New feedback",
+          "class": "primitives_pill__Yo0e4",
+          "radius": "9999px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Next class · 09:00MathematicsQuadratic equations · Room 9A · Tina Teac",
+          "class": "primitives_card__4viZj  preview_wide__83j5l",
+          "radius": "16px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "All clearNo missed workNothing needs your attention right now.",
+          "class": "primitives_card__4viZj  preview_narrow__6W5Qt",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Save changes",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Review later",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Pay selected",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "No study materials yetYour teacher has not published anything for this",
+          "class": "primitives_emptyState__CnYcO",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "View class schedule",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Loading assignment details",
+          "class": "primitives_skeletonCard___XE09",
+          "radius": "16px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "We couldn’t load this sectionYour information is safe. Try the request",
+          "class": "primitives_systemState__erOdb",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Try again",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "You’re offlineReconnect to update this page. Previously loaded informa",
+          "class": "primitives_systemState__erOdb",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Check connection",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Amount selected₹24,800Two invoices · fees included Review payment",
+          "class": "primitives_card__4viZj  ",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Review payment",
+          "class": "primitives_action__CNraL ",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "desktop",
+      "route": "petros/session",
+      "viewport": 1440,
+      "width": 1440,
+      "heading": "Synthetic projectile",
+      "surfaces": [
+        {
+          "tag": "HEADER",
+          "label": "PortalPetrosFocus lab · Document session · Synthetic projectileSources",
+          "class": "petros-session_stickyHeader__xka1K",
+          "radius": "12px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Sources & tools",
+          "class": "petros-session_pause__cCGCL petros-session_sourcesToggle__55tkm",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Save and pause",
+          "class": "petros-session_pause__cCGCL",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Close session",
+          "class": "petros-session_closeButton__5sn_I",
+          "radius": "16px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "1/1 steps",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "A",
+          "label": "0 cards",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "38:42 session time",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Synthetic projectilePredict horizontal and vertical projectile motion ",
+          "class": "petros-session_opening__o35CM",
+          "radius": "12px"
+        },
+        {
+          "tag": "DIV",
+          "label": "10 minute session · 8 steps",
+          "class": "petros-session_goal__DKC3I",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Keep the full depth",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Use the short version",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Petros institution policy disclosure",
+          "class": "petros-session_policyDisclosure__mOUpY",
+          "radius": "16px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "This teaching action did not finishSomething went wrongTry again",
+          "class": "petros-session_statusBanner__JEYX6",
+          "radius": "12px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Try again",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Visual explanationVelocity at the apex +20 XPWhy this step?Projectile ",
+          "class": "petros-session_block__6zNm_",
+          "radius": "2px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Petros program workspace",
+          "class": "petros-program-workspace_workspace__jg4Z3",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Expand",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Explanation 1 of 3: Explore projectile motion under its declared ideal",
+          "class": "petros-program-workspace_beat__53ip1",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Speak",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Interrupt and freeze",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Interrupt; let simulation continue",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Previous beat",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Next beat",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Prediction check",
+          "class": "petros-program-workspace_beat__53ip1",
+          "radius": "8px"
+        },
+        {
+          "tag": "SELECT",
+          "label": "Prediction model",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Request prediction prompt",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Advance one step",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "INPUT",
+          "label": "",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SELECT",
+          "label": "0.25×0.5×1×2×4×",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "INPUT",
+          "label": "",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "INPUT",
+          "label": "",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "INPUT",
+          "label": "",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Motion",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Vectors and forces",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "m over time",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Equations and model data",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Show linked views",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "FIGURE",
+          "label": "MotionEach numeric readout includes its unit. Plots are sampled, not e",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Projectile motion",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Current model position",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Level ground y=0 m",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Trajectory in the same state; normalized axes keep the whole flight vi",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "FIGURE",
+          "label": "Vectors and forcesEach numeric readout includes its unit. Plots are sa",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Vectors",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "velocity: 3 pixels per m/s",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "acceleration: 4 pixels per m/s^2",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Horizontal velocity: 12.00 m/s",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Vertical velocity: 20.00 m/s",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "FIGURE",
+          "label": "m over timeEach numeric readout includes its unit. Plots are sampled, ",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Time in s, vertical quantity in m",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Linked m samples",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Current time: 0.000 s",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "FIGURE",
+          "label": "Equations and model dataEach numeric readout includes its unit. Plots ",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Model equation",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "time: 0.000 s",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "x: 0.000 m",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "y: 0.000 m",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "vx: 12.00 m/s",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "vy: 20.00 m/s",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "ax: 0.000 m/s^2",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "ay: -10.00 m/s^2",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "range: 48.00 m",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "apexHeight: 20.00 m",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "apexTime: 2.000 s",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "duration: 4.000 s",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "TEXTAREA",
+          "label": "",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Save notes",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Projectile simulation",
+          "class": "petros-visual-explorer_explorer__JRDsH",
+          "radius": "12px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Start simulation",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Refresh simulation",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Play reviewNext step  Replay3 / 3Different velocity componentsHorizont",
+          "class": "petros-session_diagram__dDIpu",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Explain diagram",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Next step",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Replay",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "svg",
+          "label": "At the apex only the vertical velocity is zero; horizontal motion cont",
+          "class": {},
+          "radius": "12px"
+        },
+        {
+          "tag": "LABEL",
+          "label": "No horizontal force in the trusted no-drag model.",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "LABEL",
+          "label": "Gravity still accelerates the body at the apex.",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Keep thisSave to notesMake a flashcard",
+          "class": "petros-session_actionCluster__ldfA8",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Save to notes",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Make a flashcard",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Change the explanationExplain simplerExplain deeper",
+          "class": "petros-session_actionCluster__ldfA8",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Explain simpler",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Explain deeper",
+          "class": "",
+          "radius": "8px"
+        }
+      ]
+    },
+    {
+      "size": "mobile",
+      "route": "petros/session",
+      "viewport": 390,
+      "width": 390,
+      "heading": "Synthetic projectile",
+      "surfaces": [
+        {
+          "tag": "HEADER",
+          "label": "PortalPetrosFocus lab · Document session · Synthetic projectileSources",
+          "class": "petros-session_stickyHeader__xka1K",
+          "radius": "12px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Sources & tools",
+          "class": "petros-session_pause__cCGCL petros-session_sourcesToggle__55tkm",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Save and pause",
+          "class": "petros-session_pause__cCGCL",
+          "radius": "16px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "1/1 steps",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "A",
+          "label": "0 cards",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SPAN",
+          "label": "38:43 session time",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Synthetic projectilePredict horizontal and vertical projectile motion ",
+          "class": "petros-session_opening__o35CM",
+          "radius": "12px"
+        },
+        {
+          "tag": "DIV",
+          "label": "10 minute session · 8 steps",
+          "class": "petros-session_goal__DKC3I",
+          "radius": "16px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Petros institution policy disclosure",
+          "class": "petros-session_policyDisclosure__mOUpY",
+          "radius": "16px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "This teaching action did not finishSomething went wrongTry again",
+          "class": "petros-session_statusBanner__JEYX6",
+          "radius": "12px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Try again",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Visual explanationVelocity at the apex +20 XPWhy this step?Projectile ",
+          "class": "petros-session_block__6zNm_",
+          "radius": "2px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Petros program workspace",
+          "class": "petros-program-workspace_workspace__jg4Z3",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Expand",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Explanation 1 of 3: Explore projectile motion under its declared ideal",
+          "class": "petros-program-workspace_beat__53ip1",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Speak",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Interrupt and freeze",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Interrupt; let simulation continue",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Previous beat",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Next beat",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Prediction check",
+          "class": "petros-program-workspace_beat__53ip1",
+          "radius": "8px"
+        },
+        {
+          "tag": "SELECT",
+          "label": "Prediction model",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Request prediction prompt",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Advance one step",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Step",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Start",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "INPUT",
+          "label": "",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SELECT",
+          "label": "0.25×0.5×1×2×4×",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "INPUT",
+          "label": "",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "INPUT",
+          "label": "",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "INPUT",
+          "label": "",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Motion",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Vectors and forces",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "m over time",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Equations and model data",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Show linked views",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "FIGURE",
+          "label": "MotionEach numeric readout includes its unit. Plots are sampled, not e",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Projectile motion",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Current model position",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Level ground y=0 m",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Trajectory in the same state; normalized axes keep the whole flight vi",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "FIGURE",
+          "label": "Vectors and forcesEach numeric readout includes its unit. Plots are sa",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Vectors",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "velocity: 3 pixels per m/s",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "acceleration: 4 pixels per m/s^2",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Horizontal velocity: 12.00 m/s",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Vertical velocity: 20.00 m/s",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "FIGURE",
+          "label": "m over timeEach numeric readout includes its unit. Plots are sampled, ",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Time in s, vertical quantity in m",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Linked m samples",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Current time: 0.000 s",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "FIGURE",
+          "label": "Equations and model dataEach numeric readout includes its unit. Plots ",
+          "class": "",
+          "radius": "12px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Model equation",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "time: 0.000 s",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "x: 0.000 m",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "y: 0.000 m",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "vx: 12.00 m/s",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "vy: 20.00 m/s",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "ax: 0.000 m/s^2",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "ay: -10.00 m/s^2",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "range: 48.00 m",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "apexHeight: 20.00 m",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "apexTime: 2.000 s",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "duration: 4.000 s",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "TEXTAREA",
+          "label": "",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Save notes",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "SECTION",
+          "label": "Projectile simulation",
+          "class": "petros-visual-explorer_explorer__JRDsH",
+          "radius": "12px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Start simulation",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Refresh simulation",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Play reviewNext step  Replay3 / 3Different velocity componentsHorizont",
+          "class": "petros-session_diagram__dDIpu",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Explain diagram",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Next step",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Replay",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "svg",
+          "label": "At the apex only the vertical velocity is zero; horizontal motion cont",
+          "class": {},
+          "radius": "12px"
+        },
+        {
+          "tag": "LABEL",
+          "label": "No horizontal force in the trusted no-drag model.",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "LABEL",
+          "label": "Gravity still accelerates the body at the apex.",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Keep thisSave to notesMake a flashcard",
+          "class": "petros-session_actionCluster__ldfA8",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Save to notes",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Make a flashcard",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "DIV",
+          "label": "Change the explanationExplain simplerExplain deeper",
+          "class": "petros-session_actionCluster__ldfA8",
+          "radius": "16px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Explain simpler",
+          "class": "",
+          "radius": "8px"
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Explain deeper",
+          "class": "",
+          "radius": "8px"
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "overflowFailures": []
+}

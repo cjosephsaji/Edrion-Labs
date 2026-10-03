@@ -193,7 +193,7 @@ describe('Petros contextual entry points', () => {
     fireEvent.change(screen.getByLabelText(/Any doubt already in mind/), {
       target: { value: 'Why does responsibility shift?' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Start learning' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start planned lesson' }));
 
     await waitFor(() => expect(mocks.post).toHaveBeenCalledTimes(2));
     expect(mocks.post.mock.calls[1]?.[1]).toMatchObject({
@@ -274,7 +274,7 @@ describe('Petros contextual entry points', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Teach this document' }));
     await screen.findByRole('dialog', { name: 'What shall we figure out?' });
-    fireEvent.click(screen.getByRole('button', { name: 'Start learning' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start planned lesson' }));
 
     expect(await screen.findByText(/Building the first mathematics lesson/)).toBeInTheDocument();
     await waitFor(() => expect(mocks.get).toHaveBeenCalled(), {

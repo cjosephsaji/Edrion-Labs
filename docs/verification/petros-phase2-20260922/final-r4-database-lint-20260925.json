@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-25T17:15:53.845541+00:00",
+  "finishedAt": "2026-09-25T17:15:55.896876+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/database",
+    "lint"
+  ],
+  "exitCode": 0,
+  "log": "final-r4-database-lint-20260925.log"
+}

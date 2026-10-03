@@ -326,7 +326,7 @@ describe('block contract, adversarially', () => {
       resolve: vi.fn(async () => ({ id: 'intent-1' })),
       start: vi.fn(async () => ({ session: { id: 'session-1' } })),
     };
-    const registry = new PetrosActionRegistryService({} as never, intents as never);
+    const registry = new PetrosActionRegistryService({} as never, intents as never, {} as never);
     const argumentsAfterResolution = {
       sourceId: 'knowledge-source-1',
       question: 'Teach me this material',

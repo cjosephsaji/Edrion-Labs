@@ -5,6 +5,8 @@ import { GuardianScopeGuard } from '../parent-portal/guardian-scope.guard';
 import { PetrosAiRoutingModule } from '../petros-ai-routing/petros-ai-routing.module';
 import { PortalModule } from '../portal/portal.module';
 import { StudentAuthModule } from '../student/auth/student-auth.module';
+import { KnowledgeDocumentModule } from '../student/knowledge/knowledge-document.module';
+import { PetrosTeachingPackModule } from '../student/knowledge/petros-teaching-pack.module';
 import { StudentPortalGuard } from '../student/core/student-portal.guard';
 import { StudentRateLimitGuard } from '../student/core/student-rate-limit.guard';
 import { SurfacesService } from '../student/surfaces/surfaces.service';
@@ -17,11 +19,12 @@ import {
 import { PetrosInstitutionalRepository } from './petros-institutional.repository';
 import { PetrosInstitutionalService } from './petros-institutional.service';
 import { PetrosInstitutionalJobs } from './petros-institutional.jobs';
+import { PetrosCohortEvidenceAuthority } from './petros-cohort-evidence-authority';
 
 @Module({
-  imports: [FeatureControlsModule, PortalModule, ParentPortalModule, StudentAuthModule, PetrosAiRoutingModule],
+  imports: [FeatureControlsModule, PortalModule, ParentPortalModule, StudentAuthModule, PetrosAiRoutingModule, KnowledgeDocumentModule, PetrosTeachingPackModule],
   controllers: [PortalPetrosInstitutionalController, StudentPetrosInstitutionalController, ParentPetrosInstitutionalController, PetrosInstitutionalOperationsController],
-  providers: [PetrosInstitutionalRepository, PetrosInstitutionalService, PetrosInstitutionalJobs, GuardianScopeGuard, StudentPortalGuard, StudentRateLimitGuard, SurfacesService],
+  providers: [PetrosInstitutionalRepository, PetrosInstitutionalService, PetrosInstitutionalJobs, PetrosCohortEvidenceAuthority, GuardianScopeGuard, StudentPortalGuard, StudentRateLimitGuard, SurfacesService],
   exports: [PetrosInstitutionalService],
 })
 export class PetrosInstitutionalModule {}
