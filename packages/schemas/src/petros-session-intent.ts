@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PETROS_SESSION_TYPES } from './petros-learning';
+import { petrosDocumentLocatorSchema, petrosDocumentReadinessSchema } from './petros-document-source';
 
 export const PETROS_SESSION_INTENT_SCHEMA_VERSION = 'petros.session-intent.v1';
 export const PETROS_SESSION_INTENT_DOORS = [
@@ -47,8 +48,15 @@ export const petrosSourceCitationSchema = z
     page: z.number().int().positive().nullable(),
     section: z.string().trim().min(1).max(300).nullable(),
     excerpt: z.string().trim().min(1).max(1_200).nullable(),
+    locator: petrosDocumentLocatorSchema.optional(),
   })
-  .strict();
+  .strict()
+  .refine((value) => !value.locator || (
+    value.sourceType === 'document'
+    && value.page === value.locator.page
+    && value.version === value.locator.sourceVersion
+    && value.excerpt?.length === value.locator.end - value.locator.start
+  ), 'Citation must match its versioned source locator');
 
 export const petrosReturnDestinationSchema = z
   .object({
@@ -142,6 +150,7 @@ export const petrosSessionIntentSchema = z
     registerFactors: z.array(shortText).min(1).max(8),
     sourceEntityIds: z.array(referenceId).min(1).max(12),
     citations: z.array(petrosSourceCitationSchema).max(24),
+    documentReadiness: petrosDocumentReadinessSchema.optional(),
     language: z.string().trim().min(2).max(40),
     accessibility: z.array(z.string().trim().min(1).max(120)).max(12),
     returnDestination: petrosReturnDestinationSchema,
@@ -172,6 +181,18 @@ export const petrosSessionIntentSchema = z
   })
   .strict();
 export type PetrosSessionIntent = z.infer<typeof petrosSessionIntentSchema>;
+
+/** Persist and send the original strict v1 shape to readers that have not opted in.
+ * Document extensions are reconstructed against the validated source, never guessed on rollback.
+ */
+export function petrosSessionIntentV1(intent: PetrosSessionIntent) {
+  const { documentReadiness: _readiness, ...v1 } = intent;
+  return {
+    ...v1,
+    citations: v1.citations.map(({ locator: _locator, ...citation }) => citation),
+  };
+}
+
 
 export const resolvePetrosSessionIntentSchema = z
   .object({

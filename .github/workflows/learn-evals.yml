@@ -9,6 +9,13 @@ on:
       - 'apps/api/src/modules/petros-quality/**'
       - 'packages/schemas/src/petros-*.ts'
       - 'packages/learn-evals/**'
+      - 'apps/api/src/modules/integrations/petros-phase5-*'
+      - 'apps/api/src/modules/student/knowledge/**'
+      - 'apps/api/src/modules/student/petros-continuity/**'
+      - 'apps/api/src/common/petros-runtime-metrics*'
+      - 'packages/database/**'
+      - 'packages/config/**'
+      - 'apps/super-admin-web/src/components/petros-quality/**'
       - '.github/workflows/learn-evals.yml'
   workflow_dispatch:
     inputs:
@@ -43,6 +50,35 @@ jobs:
         with:
           name: petros-quality-report
           path: packages/learn-evals/eval-runs/petros-quality/
+          if-no-files-found: error
+
+  production-owner-engineering-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Synthetic/private clusters and controlled adapters; no provider or application secrets.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 11 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: Disposable database and queue binaries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql redis-server
+          pg_config --bindir >> "$GITHUB_PATH"
+          df -h /tmp
+      - name: Actual owner quality, recovery, release, privacy and operations
+        env:
+          PETROS_LOCAL_DB_TESTS: '1'
+          PETROS_PHASE5_QUALITY_ARTIFACT: '${{ github.workspace }}/phase5-production-quality.json'
+        run: pnpm --filter @edrion/api exec vitest run src/modules/integrations/petros-phase5- src/modules/petros-quality/petros-operations.service.spec.ts src/common/petros-runtime-metrics.spec.ts --pool=forks --poolOptions.forks.singleFork=true --testTimeout=30000
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: petros-production-owner-engineering-evidence
+          path: phase5-production-quality.json
           if-no-files-found: error
 
   live-quality-preview:

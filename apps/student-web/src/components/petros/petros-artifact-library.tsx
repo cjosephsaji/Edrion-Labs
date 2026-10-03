@@ -4,14 +4,16 @@ import React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, BookOpen, Check, Clock3, FileText, Layers3, LoaderCircle, Pencil, RotateCcw, Save, Trash2, X } from 'lucide-react';
+import { ArrowLeft, BookOpen, Check, Clock3, FileText, Layers3, Link2, LoaderCircle, Pencil, RotateCcw, Save, Trash2, X } from 'lucide-react';
 import type {
   PetrosReviewQueue,
   PetrosArtifactSource,
   PetrosSavedArtifact,
+  PetrosSubmitArtifactReviewInput,
 } from '@edrion/schemas';
 import { formatApiError, newIdempotencyKey, useStudentApi } from '@/lib/api-client';
 import styles from './petros-artifact-library.module.css';
+import { PetrosLearningResume } from './petros-learning-resume';
 
 type Confidence = 'sure' | 'think_so' | 'guessing';
 
@@ -25,6 +27,7 @@ export function PetrosArtifactLibrary({ view = 'all' }: { view?: 'all' | 'flashc
   const [confidence, setConfidence] = useState<Record<string, Confidence>>({});
   const [pending, setPending] = useState<string[]>([]);
   const [notice, setNotice] = useState('');
+  const [unconfirmedReviews, setUnconfirmedReviews] = useState<Record<string, PetrosSubmitArtifactReviewInput>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -53,21 +56,29 @@ export function PetrosArtifactLibrary({ view = 'all' }: { view?: 'all' | 'flashc
     : queue?.cards ?? [];
 
   const review = async (artifactId: string, grade: 'again' | 'hard' | 'good' | 'easy') => {
-    const selectedConfidence = confidence[artifactId];
+    const previous = unconfirmedReviews[artifactId];
+    const selectedConfidence = previous?.confidence ?? confidence[artifactId];
     if (!selectedConfidence) {
       setError('Choose how confident the answer felt before recording the result.');
       return;
     }
     setPending((current) => [...current, artifactId]);
     setError('');
+    const command = previous ?? {
+      clientReviewId: newIdempotencyKey(),
+      grade,
+      confidence: selectedConfidence,
+      reviewedAt: new Date().toISOString(),
+      elapsedMs: null,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+    };
+    setUnconfirmedReviews((current) => ({ ...current, [artifactId]: command }));
     try {
-      const result = await api.post<{ nextDueAt: string; scheduleExplanation: string }>(`/student/petros/artifacts/${artifactId}/reviews`, {
-        clientReviewId: newIdempotencyKey(),
-        grade,
-        confidence: selectedConfidence,
-        reviewedAt: new Date().toISOString(),
-        elapsedMs: null,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+      const result = await api.post<{ nextDueAt: string; scheduleExplanation: string }>(`/student/petros/artifacts/${artifactId}/reviews`, command);
+      setUnconfirmedReviews((current) => {
+        const next = { ...current };
+        delete next[artifactId];
+        return next;
       });
       setNotice(`${result.scheduleExplanation} Next due ${formatDue(result.nextDueAt)}.`);
       await load();
@@ -98,9 +109,9 @@ export function PetrosArtifactLibrary({ view = 'all' }: { view?: 'all' | 'flashc
     <main className={styles.page}>
       <header>
         <Link href={view === 'flashcards' ? '/learn' : '/petros'}><ArrowLeft aria-hidden="true" /> {view === 'flashcards' ? 'Learn' : 'Petros'}</Link>
-        <p>LEARNER-OWNED</p>
-        <h1>{view === 'flashcards' ? 'Your flashcards' : 'Your artifacts and review deck'}</h1>
-        <span>{view === 'flashcards' ? 'Every card you make with Petros appears here immediately.' : 'Only explicitly saved, student-curated items appear here.'}</span>
+        <p>YOUR STUDY LIBRARY</p>
+        <h1>{view === 'flashcards' ? 'Your flashcards' : 'Saved study work'}</h1>
+        <span>{view === 'flashcards' ? 'Cards made with Petros stay together here.' : 'Notes, diagrams and cards you chose to keep, with their lesson and source trail.'}</span>
       </header>
 
       {error && <div className={styles.error} role="alert">{error}<button onClick={() => void load()}><RotateCcw aria-hidden="true" /> Retry</button></div>}
@@ -111,7 +122,11 @@ export function PetrosArtifactLibrary({ view = 'all' }: { view?: 'all' | 'flashc
           <Clock3 aria-hidden="true" />
           <div><h2 id="review-title">Due for review</h2><p>{queue?.mixingExplanation}</p></div>
         </div>
-        {!visibleReviewCards.length && <p className={styles.empty}>Nothing is due right now. There is no artificial urgency.</p>}
+        {!visibleReviewCards.length && (
+          <p className={styles.empty}>
+            {error ? 'The review queue is unavailable until it can be checked again.' : 'Nothing is due right now. There is no artificial urgency.'}
+          </p>
+        )}
         {visibleReviewCards.map(({ artifact, topic, dueAt, scheduleExplanation, examDate }) => {
           const content = artifact.content;
           if (content.kind !== 'flashcard' && content.kind !== 'rule_card') return null;
@@ -123,19 +138,26 @@ export function PetrosArtifactLibrary({ view = 'all' }: { view?: 'all' | 'flashc
               {open ? <div className={styles.answer}><p>{content.back}</p>{content.hint && <small>Hint: {content.hint}</small>}</div> : <button className={styles.reveal} onClick={() => setRevealed((current) => [...current, artifact.id])}>Reveal answer</button>}
               {open && (
                 <>
-                  <fieldset className={styles.confidence}>
+                  <fieldset className={styles.confidence} disabled={!!unconfirmedReviews[artifact.id]}>
                     <legend>How confident did it feel?</legend>
                     {(['sure', 'think_so', 'guessing'] as const).map((value) => <label key={value}><input type="radio" name={`confidence-${artifact.id}`} checked={confidence[artifact.id] === value} onChange={() => setConfidence((current) => ({ ...current, [artifact.id]: value }))} /> {value.replace('_', ' ')}</label>)}
                   </fieldset>
                   <div className={styles.grades} aria-label="Record review result">
-                    <button disabled={pending.includes(artifact.id)} onClick={() => void review(artifact.id, 'again')}>Again</button>
-                    <button disabled={pending.includes(artifact.id)} onClick={() => void review(artifact.id, 'hard')}>Hard</button>
-                    <button disabled={pending.includes(artifact.id)} onClick={() => void review(artifact.id, 'good')}>Good</button>
-                    <button disabled={pending.includes(artifact.id)} onClick={() => void review(artifact.id, 'easy')}>Easy</button>
+                    {(['again', 'hard', 'good', 'easy'] as const).map((grade) => (
+                      <button
+                        key={grade}
+                        disabled={pending.includes(artifact.id) || (!!unconfirmedReviews[artifact.id] && unconfirmedReviews[artifact.id]!.grade !== grade)}
+                        onClick={() => void review(artifact.id, grade)}
+                      >
+                        {unconfirmedReviews[artifact.id]?.grade === grade ? 'Retry ' : ''}
+                        {grade[0]!.toUpperCase() + grade.slice(1)}
+                      </button>
+                    ))}
                   </div>
                 </>
               )}
               <small className={styles.explanation}>{scheduleExplanation}</small>
+              <PetrosLearningResume artifactId={artifact.id} revision={artifact.revision} />
             </article>
           );
         })}
@@ -146,7 +168,15 @@ export function PetrosArtifactLibrary({ view = 'all' }: { view?: 'all' | 'flashc
           <BookOpen aria-hidden="true" />
           <div><h2 id="library-title">{view === 'flashcards' ? 'All flashcards' : 'Saved artifacts'}</h2><p>{visibleArtifacts.length} saved {visibleArtifacts.length === 1 ? 'item' : 'items'}</p></div>
         </div>
-        {!visibleArtifacts.length && <p className={styles.empty}>{view === 'flashcards' ? 'No flashcards yet. Use “Make a flashcard” in any Petros lesson and it will appear here.' : 'No saved artifacts yet.'}</p>}
+        {!visibleArtifacts.length && (
+          <p className={styles.empty}>
+            {error
+              ? 'Saved study work is unavailable until it can be loaded again.'
+              : view === 'flashcards'
+                ? 'No flashcards yet. Use “Make a flashcard” in any Petros lesson and it will appear here.'
+                : 'No saved study work yet.'}
+          </p>
+        )}
         <div className={styles.grid}>
           {visibleArtifacts.map((artifact) => (
             <SavedArtifactCard
@@ -195,17 +225,31 @@ function SavedArtifactCard({
           <DiagramCanvasEditor artifact={artifact} busy={busy} onUpdated={onUpdated} onError={onError} />
         </>
       )}
-      <div className={styles.sourceList}>
-        {artifact.sources.map((source, index) => (
-          <ArtifactSourceLink
-            key={`${source.kind}-${index}`}
-            artifactId={artifact.id}
-            source={source}
-            sourceIndex={index}
-          />
-        ))}
-      </div>
+      <section className={styles.provenance} aria-labelledby={`artifact-sources-${artifact.id}`}>
+        <div className={styles.provenanceHead}>
+          <Link2 aria-hidden="true" />
+          <h4 id={`artifact-sources-${artifact.id}`}>Lesson and source trail</h4>
+          {artifact.sources.length > 0 ? <span>{artifact.sources.length} {artifact.sources.length === 1 ? 'reference' : 'references'}</span> : null}
+        </div>
+        {artifact.sources.length > 0 ? (
+          <ol className={styles.sourceList}>
+            {artifact.sources.map((source, index) => (
+              <li key={`${source.kind}-${index}`} className={styles.sourceItem}>
+                <span className={styles.sourceKind}>{sourceKindLabel(source.kind)}</span>
+                <ArtifactSourceLink
+                  artifactId={artifact.id}
+                  source={source}
+                  sourceIndex={index}
+                />
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className={styles.sourceEmpty}>No lesson or source reference was saved with this item.</p>
+        )}
+      </section>
       {artifact.dueAt && <small>Next review: {formatDue(artifact.dueAt)}{artifact.examAware ? ' · tightened for exam' : ''}</small>}
+      <PetrosLearningResume artifactId={artifact.id} revision={artifact.revision} />
       <button className={styles.delete} disabled={busy} onClick={onDelete}><Trash2 aria-hidden="true" /> Delete permanently</button>
     </article>
   );
@@ -320,6 +364,12 @@ function ArtifactSourceLink({ artifactId, source, sourceIndex }: { artifactId: s
       {reason && <small role="status">{reason}</small>}
     </span>
   );
+}
+
+function sourceKindLabel(kind: PetrosArtifactSource['kind']) {
+  if (kind === 'document_page') return 'Document page';
+  if (kind === 'assessment') return 'Assessment';
+  return 'Lesson segment';
 }
 
 function formatDue(value: string) {

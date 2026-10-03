@@ -38,6 +38,7 @@
 }
 
 .card {
+  border-radius: var(--s-radius-card);
   --card-accent: var(--s-accentDeep);
   display: flex;
   grid-column: span 4;
@@ -81,6 +82,7 @@
 }
 
 .icon {
+  border-radius: var(--s-radius-control);
   display: grid;
   width: 42px;
   height: 42px;
@@ -186,6 +188,7 @@
 .action:hover { text-decoration: underline; text-underline-offset: 4px; }
 
 .clearState {
+  border-radius: var(--s-radius-card);
   display: flex;
   min-height: 170px;
   align-items: center;
@@ -230,3 +233,14 @@
   .action { min-height: 44px; align-items: center; }
   .cardActions { gap: 6px; }
 }
+
+/* Learning first: a clear start, then institution priorities. */
+.learningRoutes { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin: 28px 0 40px; }
+.learningRoutes a { display: grid; grid-template-columns: 24px minmax(0,1fr) 18px; align-items: start; gap: 14px; padding: 22px 18px; min-height: 116px; border: 1px solid var(--s-bd1); border-radius: var(--s-radius-panel); background: var(--s-card); }
+.learningRoutes svg { width: 21px; height: 21px; color: var(--s-accent); }
+.learningRoutes strong { display: block; font-size: 1rem; line-height: 1.3; }
+.learningRoutes small { display: block; margin-top: 8px; color: var(--s-muted); font-size: .875rem; line-height: 1.4; }
+.learningRoutes a:hover { border-color: var(--s-accent); background: var(--s-accentSoft); }
+.morePriorities { margin-top: 20px; border-top: 1px solid var(--s-bd1); }
+.morePriorities summary { cursor: pointer; padding: 20px 0; font-size: .95rem; color: var(--s-inkSoft); }
+@media(max-width: 760px) { .learningRoutes { grid-template-columns: 1fr; gap: 8px; margin: 24px 0 32px; } .learningRoutes a { min-height: 88px; padding: 18px; } }

@@ -1,0 +1,16 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "ts-node",
+    "src/modules/integrations/petros-phase3-browser-server.ts"
+  ],
+  "start": "2026-10-02T06:28:44.330067+00:00",
+  "end": "2026-10-02T06:31:16.949385+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

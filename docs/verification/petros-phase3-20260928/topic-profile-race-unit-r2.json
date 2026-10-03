@@ -1,0 +1,18 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/petros-topic-profiles/petros-topic-profiles.service.spec.ts",
+    "src/modules/petros-topic-profiles/petros-topic-profiles.repository.spec.ts"
+  ],
+  "start": "2026-10-02T06:03:35.801766+00:00",
+  "end": "2026-10-02T06:03:37.618087+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

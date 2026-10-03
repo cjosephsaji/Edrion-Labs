@@ -25,6 +25,7 @@ import { baseAudit, type ActionContext } from '../../common/action-context';
 import { PetrosAiCredentialsService } from './petros-ai-credentials.service';
 import { PetrosAiRoutingRepository } from './petros-ai-routing.repository';
 import { PetrosProviderConnectivityService } from './petros-provider-connectivity.service';
+import { PetrosReleaseService } from '../petros-quality/petros-release.service';
 import {
   planPetrosRoute,
   type BudgetState,
@@ -43,6 +44,7 @@ export class PetrosAiRoutingService implements OnModuleInit {
     private readonly credentials: PetrosAiCredentialsService,
     private readonly connectivity: PetrosProviderConnectivityService,
     @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
+    private readonly release?: PetrosReleaseService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -292,10 +294,14 @@ export class PetrosAiRoutingService implements OnModuleInit {
   }
 
   async activateFunctionVersion(functionId: string, versionId: string, reason: string, ctx: ActionContext) {
-    const row = await this.repo.activateFunctionVersion(functionId, versionId, ctx.principalContext.principal.employeeId);
-    if (!row) throw this.notFound('Prompt/schema version not found.');
-    await this.write(ctx, 'petros.function_version.activate', 'petros_ai_function_version', versionId, reason, undefined, row);
-    return row;
+    if (!this.release) throw new ConflictException({ code: 'PETROS_RELEASE_REQUIRED' });
+    return this.release.activation(functionId, versionId, async () => {
+      const row = await this.repo.activateFunctionVersion(functionId, versionId, ctx.principalContext.principal.employeeId);
+      if (!row) throw this.notFound('Prompt/schema version not found.');
+      await this.write(ctx, 'petros.function_version.activate', 'petros_ai_function_version', versionId, reason,
+        undefined, { id: row.id, promptVersion: row.promptVersion, schemaVersion: row.schemaVersion, status: row.status });
+      return row;
+    });
   }
 
   usage(query: PetrosUsageQuery) {
@@ -323,14 +329,17 @@ export class PetrosAiRoutingService implements OnModuleInit {
     return row;
   }
 
-  async previewRoute(context: PetrosRouteContext) {
+  async previewRoute(context: PetrosRouteContext, options?: { calendarMonth?: boolean }) {
+    const monthStart = new Date();
+    monthStart.setUTCDate(1);
+    monthStart.setUTCHours(0, 0, 0, 0);
     const [functions, providers, models, rawRules, budget, usage] = await Promise.all([
       this.functions(),
       this.repo.listProviders(),
       this.repo.listModels(),
       this.repo.listRules(),
       this.budget(),
-      this.repo.usageSummary({ groupBy: 'day' }),
+      this.repo.usageSummary({ groupBy: 'day', ...(options?.calendarMonth ? { from: monthStart.toISOString() } : {}) }),
     ]);
     const fn = functions.find((candidate) => candidate.key === context.functionKey);
     if (!fn) throw this.notFound('Petros function not found.');

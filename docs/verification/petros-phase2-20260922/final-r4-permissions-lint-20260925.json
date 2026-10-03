@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-25T17:15:58.233520+00:00",
+  "finishedAt": "2026-09-25T17:15:58.972186+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/permissions",
+    "lint"
+  ],
+  "exitCode": 0,
+  "log": "final-r4-permissions-lint-20260925.log"
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "name": "final-r6-chromium-journey",
+    "engine": "chromium",
+    "kind": "baseline",
+    "exitCode": 0
+  },
+  {
+    "name": "final-r6-chromium-capabilities",
+    "engine": "chromium",
+    "kind": "capabilities",
+    "exitCode": 0
+  },
+  {
+    "name": "final-r6-webkit-journey",
+    "engine": "webkit",
+    "kind": "baseline",
+    "exitCode": 0
+  },
+  {
+    "name": "final-r6-webkit-capabilities",
+    "engine": "webkit",
+    "kind": "capabilities",
+    "exitCode": 0
+  },
+  {
+    "name": "final-r6-firefox-journey",
+    "engine": "firefox",
+    "kind": "baseline",
+    "exitCode": 1
+  }
+]

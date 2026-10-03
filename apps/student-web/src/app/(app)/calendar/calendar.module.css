@@ -8,6 +8,7 @@
 }
 
 .backdrop {
+  border-radius: 0;
   position: absolute;
   inset: 0;
   border: 0;
@@ -16,6 +17,7 @@
 }
 
 .dialog {
+  border-radius: var(--s-radius-card);
   position: relative;
   width: min(540px, 100%);
   max-height: min(680px, calc(100dvh - 40px));

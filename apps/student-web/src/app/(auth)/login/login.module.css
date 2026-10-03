@@ -220,7 +220,7 @@
   width: 100%;
   height: 46px;
   border: 1px solid var(--s-bd2);
-  border-radius: 2px;
+  border-radius: var(--s-radius-control);
   background: var(--s-cardAlt);
   padding: 0 13px;
   color: var(--s-ink);
@@ -245,7 +245,7 @@
 .passwordField {
   display: grid;
   border: 1px solid var(--s-bd2);
-  border-radius: 2px;
+  border-radius: var(--s-radius-control);
   background: var(--s-cardAlt);
   grid-template-columns: minmax(0, 1fr) 44px;
   transition: border-color var(--motion-ui) ease, box-shadow var(--motion-ui) ease, background-color var(--motion-ui) ease;
@@ -288,7 +288,7 @@
   justify-content: space-between;
   margin-top: 24px;
   border: 1px solid var(--s-accentDeep);
-  border-radius: 2px;
+  border-radius: var(--s-radius-control);
   background: var(--s-accentDeep);
   padding: 0 17px;
   color: var(--s-card);

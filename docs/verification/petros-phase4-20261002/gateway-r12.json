@@ -1,0 +1,17 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/petros-ai-routing/petros-ai-gateway.service.spec.ts"
+  ],
+  "start": "2026-10-02T11:14:08.129325+00:00",
+  "end": "2026-10-02T11:14:10.603798+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

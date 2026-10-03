@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, Headers, Param, ParseUUIDPipe, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import type { InstitutionPrincipal } from '@edrion/auth';
+import type { InstitutionPrincipal, InstitutionScope } from '@edrion/auth';
 import {
   onerosterCsvImportSchema,
   onerosterRestSyncSchema,
@@ -8,13 +8,18 @@ import {
   type OnerosterCsvImportInput,
   type OnerosterRestSyncInput,
   type UpsertIdentityProviderInput,
+  providerMappingInputSchema, providerMappingKeySchema, PROVIDER_MAPPING_VERSION,
+  type ProviderMappingInput,
 } from '@edrion/schemas';
-import { Public, SkipRateLimit } from '../../common/decorators';
+import { Public, ReqContext, SkipRateLimit } from '../../common/decorators';
+import type { EdrionRequestContext } from '../../common/request-context';
 import { zodBody } from '../../common/zod-validation.pipe';
 import { InstitutionAuthGuard } from '../portal/portal-auth.guard';
 import { InstitutionPermissionsGuard } from '../portal/portal-permissions.guard';
-import { CurrentInstitutionPrincipal, RequireInstitutionPermissions } from '../portal/portal.decorators';
+import { CurrentInstitutionPrincipal, CurrentScope, RequireInstitutionPermissions } from '../portal/portal.decorators';
 import { FederationService } from './federation.service';
+import { ProviderMappingsService } from '../integrations/provider-mappings.service';
+import { z } from 'zod';
 
 @ApiTags('portal-federation')
 @Controller('portal/federation')
@@ -22,7 +27,33 @@ import { FederationService } from './federation.service';
 @SkipRateLimit()
 @UseGuards(InstitutionAuthGuard, InstitutionPermissionsGuard)
 export class PortalFederationController {
-  constructor(private readonly federation: FederationService) {}
+  constructor(private readonly federation: FederationService, private readonly mappings: ProviderMappingsService) {}
+
+  @Put('identity-providers/:id/mappings')
+  @Header('Cache-Control', 'private, no-store')
+  @RequireInstitutionPermissions('integrations.mappings.manage')
+  writeMapping(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() scope: InstitutionScope,
+    @ReqContext() request: EdrionRequestContext,
+    @Body(zodBody(providerMappingInputSchema)) body: ProviderMappingInput,
+  ) {
+    return this.mappings.write({ principal: p, scope, request }, id, body);
+  }
+
+  @Post('identity-providers/:id/mappings/resolve')
+  @Header('Cache-Control', 'private, no-store')
+  @RequireInstitutionPermissions('integrations.view')
+  readMapping(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() scope: InstitutionScope,
+    @ReqContext() request: EdrionRequestContext,
+    @Body(zodBody(providerMappingKeySchema)) body: z.infer<typeof providerMappingKeySchema>,
+  ) {
+    return this.mappings.read({ principal: p, scope, request }, id, body);
+  }
 
   @Get('identity-providers')
   @RequireInstitutionPermissions('institution_settings.view')
@@ -40,18 +71,25 @@ export class PortalFederationController {
   }
 
   @Get('roster/jobs')
+  @Header('Cache-Control', 'private, no-store')
+  @Header('Vary', 'x-petros-provider-mapping')
   @RequireInstitutionPermissions('integrations.view')
-  rosterJobs(@CurrentInstitutionPrincipal() p: InstitutionPrincipal) {
-    return this.federation.listRosterJobs(p.institutionId);
+  rosterJobs(@CurrentInstitutionPrincipal() p: InstitutionPrincipal, @Headers('x-petros-provider-mapping') version?: string) {
+    return this.federation.listRosterJobs(p.institutionId, version === PROVIDER_MAPPING_VERSION);
   }
 
   @Post('roster/oneroster/import')
+  @Header('Cache-Control', 'private, no-store')
+  @Header('Vary', 'x-petros-provider-mapping')
   @RequireInstitutionPermissions('integrations.view')
   importOneroster(
     @CurrentInstitutionPrincipal() p: InstitutionPrincipal,
+    @CurrentScope() scope: InstitutionScope,
+    @ReqContext() request: EdrionRequestContext,
     @Body(zodBody(onerosterCsvImportSchema)) body: OnerosterCsvImportInput,
+    @Headers('x-petros-provider-mapping') version?: string,
   ) {
-    return this.federation.importOnerosterCsv(p.institutionId, body.csv);
+    return this.federation.importOnerosterCsv(p.institutionId, body.csv, { principal: p, scope, request }, body.mappingContext, version === PROVIDER_MAPPING_VERSION);
   }
 
   @Post('roster/clever/sync')

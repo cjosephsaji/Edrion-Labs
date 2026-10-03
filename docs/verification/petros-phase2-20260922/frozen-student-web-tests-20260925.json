@@ -1,0 +1,14 @@
+{
+  "startedAt": "2026-09-25T16:16:06.546172+00:00",
+  "finishedAt": "2026-09-25T16:16:17.210410+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/student-web",
+    "exec",
+    "vitest",
+    "run"
+  ],
+  "exitCode": 0,
+  "log": "frozen-student-web-tests-20260925.log"
+}

@@ -1,4 +1,5 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Header, Headers, Param, UseGuards } from '@nestjs/common';
+import { CURRICULUM_ALIGNMENT_VERSION } from '@edrion/schemas';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '../../../common/guards/auth.guard';
 import { SkipRateLimit } from '../../../common/decorators';
@@ -32,10 +33,13 @@ export class StudentCoursesController {
   }
 
   @Get(':id/syllabus')
+  @Header('Cache-Control', 'private, no-store')
+  @Header('Vary', 'x-petros-curriculum-alignment')
   @RequireStudentPermissions('student.courses.view')
-  syllabus(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string) {
+  syllabus(@CurrentStudent() principal: StudentPrincipal, @Param('id') id: string,
+    @Headers('x-petros-curriculum-alignment') contract?: string) {
     requireInstitutional(principal);
-    return this.service.syllabus(principal, id);
+    return this.service.syllabus(principal, id, contract === CURRICULUM_ALIGNMENT_VERSION);
   }
 
   @Get(':id/materials')

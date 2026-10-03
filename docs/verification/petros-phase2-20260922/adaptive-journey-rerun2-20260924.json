@@ -1,0 +1,15 @@
+{
+  "startedAt": "2026-09-24T21:03:40.674051+00:00",
+  "finishedAt": "2026-09-24T21:03:51.437871+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/integrations/petros-adaptive-journey.integration.spec.ts"
+  ],
+  "exitCode": 0,
+  "log": "adaptive-journey-rerun2-20260924.log"
+}

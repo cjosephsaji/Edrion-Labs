@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useStudentApi } from './api-client';
+import { clearQueuedNotes } from './petros-offline-notes';
 
 export type StudentMe = {
   kind: 'institutional' | 'independent';
@@ -111,6 +112,9 @@ export function useStudentLogout() {
   const router = useRouter();
   return useMutation({
     mutationFn: () => api.post<{ loggedOut: true }>('/student/auth/logout'),
+    onMutate: async () => {
+      await clearQueuedNotes().catch(() => undefined);
+    },
     onSuccess: () => {
       qc.clear();
       router.replace('/login');

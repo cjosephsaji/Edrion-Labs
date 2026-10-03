@@ -1,0 +1,19 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/integrations/petros-phase4-journey.integration.spec.ts",
+    "--pool=forks",
+    "--poolOptions.forks.singleFork=true"
+  ],
+  "start": "2026-10-02T11:11:04.639003+00:00",
+  "end": "2026-10-02T11:11:27.467841+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

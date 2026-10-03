@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-25T06:49:50.899097+00:00",
+  "finishedAt": "2026-09-25T06:49:59.596235+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/database",
+    "typecheck"
+  ],
+  "exitCode": 0,
+  "log": "closure-database-typecheck-20260925.log"
+}

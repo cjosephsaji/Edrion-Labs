@@ -1,3 +1,6 @@
+import { KnowledgePreparationRepository } from '../student/knowledge/knowledge-preparation.repository';
+import { KnowledgePdfProcess } from '../student/knowledge/knowledge-pdf-process';
+import { PortalMaterialPreparationJobs } from './course-content/portal-material-preparation.jobs';
 import "./portal.types";
 import { Module, forwardRef } from "@nestjs/common";
 import { APP_INTERCEPTOR } from "@nestjs/core";
@@ -446,6 +449,9 @@ import { CalendarEventsService } from "./calendar-events/calendar-events.service
     AdmissionInfoService,
     PortalHomeworkService,
     PortalCourseContentService,
+    KnowledgePreparationRepository,
+    KnowledgePdfProcess,
+    PortalMaterialPreparationJobs,
     MaterialDocumentPreviewService,
     MaterialVisualPreviewService,
     PortalTeachingService,
@@ -460,6 +466,8 @@ import { CalendarEventsService } from "./calendar-events/calendar-events.service
   // InstitutionAuthGuard (+ its session/rate-limit deps) is reused by the Parent Portal module,
   // which layers GuardianScopeGuard on top. Export the guard's transitive deps so it resolves there.
   exports: [
+    AssignmentsService,
+    PortalAudienceService,
     PortalAuthService,
     InstitutionAuthGuard,
     InstitutionPermissionsGuard,

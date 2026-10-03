@@ -14,7 +14,9 @@ const emptyModule = (): SyllabusModuleRow => ({
 });
 
 export function CourseSyllabusPanel({ course }: { course: CourseRow }) {
-  const { data: existing, isLoading } = useCourseSyllabus(course.id);
+  const { data: syllabus, isLoading } = useCourseSyllabus(course.id);
+  const existing = syllabus?.modules;
+  const curriculum = syllabus?.curriculum;
   const upsert = useUpsertSyllabus(course.id);
   const [modules, setModules] = useState<SyllabusModuleRow[]>([emptyModule()]);
   const [topicsText, setTopicsText] = useState<Record<number, string>>({});
@@ -116,6 +118,30 @@ export function CourseSyllabusPanel({ course }: { course: CourseRow }) {
         </Button>
       </div>
       {saved && <p className="text-xs text-success">Syllabus saved.</p>}
+      {curriculum ? <details className="rounded-lg border border-border p-3 text-sm">
+        <summary>Standard alignment · revision {curriculum.revision}</summary>
+        <p>These mappings describe the course plan. They do not show what a learner has demonstrated.</p>
+        {curriculum.status !== 'ready' ? <p>{curriculum.status === 'unmapped' ? 'No objective-to-standard mappings have been published.' :
+          curriculum.status === 'stale' ? 'The syllabus or subject changed. Review and republish the mappings before using them.' : 'This mapping version cannot be read. Existing syllabus topics remain available.'}</p> : <>
+          {curriculum.data.alignments.map((alignment) => {
+            const objective = curriculum.data.objectives.find((o) => o.id === alignment.objective.id);
+            const standard = curriculum.data.items.find((i) => i.id === alignment.standard.id);
+            return <div key={alignment.id} className="mt-3">
+              <strong>{objective?.descriptor}</strong>
+              <p>{standard?.externalId}: {standard?.descriptor}</p>
+              <p>{alignment.state.replace(/_/g, ' ')} · {alignment.relation.replace(/_/g, ' ')} · confidence {alignment.confidence ?? 'unknown'}</p>
+              <p>{alignment.rationale}</p>
+              {alignment.gaps.length ? <p>Gaps: {alignment.gaps.join('; ')}</p> : null}
+              {alignment.overrideReason ? <p>Override: {alignment.overrideReason}</p> : null}
+              <p>Source: {standard?.provenance.sourceRef}</p>
+            </div>;
+          })}
+          <p>{curriculum.data.unmappedObjectives.length} objectives have no current approved alignment.</p>
+        </>}
+        {syllabus?.history.length ? <details><summary>Recent mapping revisions</summary><ol>
+          {syllabus.history.map((entry) => <li key={entry.revision}>Revision {entry.revision}: {entry.reason} · {entry.recordedAt}</li>)}
+        </ol></details> : null}
+      </details> : null}
       {error && <p className="text-xs text-danger">{error}</p>}
     </div>
   );

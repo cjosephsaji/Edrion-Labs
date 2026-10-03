@@ -1,3 +1,4 @@
+import type { PetrosKnowledgePolicy, PetrosAdmissionDenial } from '@edrion/schemas';
 import {
   boolean,
   index,
@@ -9,6 +10,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { primaryId, timestamps } from './_helpers';
 import { institutions } from './institutions';
 import { students } from './people';
@@ -113,6 +115,7 @@ export const petrosPlanningDecisions = pgTable(
     promptVersion: text('prompt_version').notNull(),
     schemaVersion: text('schema_version').notNull(),
     routeReference: jsonb('route_reference').$type<Record<string, unknown> | null>(),
+    adaptiveSnapshot: jsonb('adaptive_snapshot').$type<Record<string, unknown> | null>(),
     planRequestId: uuid('plan_request_id'),
     renderRequestId: uuid('render_request_id'),
     correlationId: uuid('correlation_id').notNull(),
@@ -156,6 +159,10 @@ export const petrosTeachingBlocks = pgTable(
     status: text('status').notNull().default('current'),
     version: integer('version').notNull().default(0),
     content: jsonb('content').$type<Record<string, unknown>>().notNull(),
+    // Program and acknowledged execution/presentation checkpoint; never learner evidence.
+    visualSnapshot: jsonb('visual_snapshot').$type<Record<string, unknown> | null>(),
+    projectileSnapshot: jsonb('projectile_snapshot').$type<Record<string, unknown> | null>(),
+    projectileBinding: jsonb('projectile_binding').$type<Record<string, unknown> | null>(),
     interactionState: jsonb('interaction_state')
       .$type<Record<string, unknown>>()
       .notNull()
@@ -241,6 +248,7 @@ export const petrosQuestionSpecs = pgTable(
     parentQuestionId: uuid('parent_question_id'),
     targetId: text('target_id').notNull(),
     equivalenceKey: text('equivalence_key').notNull(),
+    learningTask: jsonb('learning_task').$type<Record<string, unknown> | null>(),
     prompt: text('prompt').notNull(),
     responseType: text('response_type').notNull(),
     choices: jsonb('choices').$type<Array<{ id: string; label: string }> | null>(),
@@ -332,6 +340,7 @@ export const petrosAnswerEvaluations = pgTable(
       .notNull()
       .references(() => petrosQuestionSpecs.id, { onDelete: 'cascade' }),
     correctness: text('correctness').notNull(),
+    assessment: jsonb('assessment').$type<Record<string, unknown> | null>(),
     creditBasisPoints: integer('credit_basis_points').notNull(),
     evidence: jsonb('evidence').$type<string[]>().notNull().default([]),
     errorClass: text('error_class').notNull(),
@@ -463,6 +472,20 @@ export const petrosSessionCommands = pgTable(
     response: jsonb('response').$type<Record<string, unknown> | null>(),
     errorCode: text('error_code'),
     completedAt: timestamp('completed_at', { withTimezone: true }),
+    executionVersion: text('execution_version'),
+    executionState: text('execution_state'),
+    executionInput: jsonb('execution_input').$type<Record<string, unknown>>(),
+    knowledgePolicy: jsonb('knowledge_policy').$type<PetrosKnowledgePolicy | null>(),
+    admissionDenial: jsonb('admission_denial').$type<PetrosAdmissionDenial | null>(),
+    inputSha256: text('input_sha256'),
+    requestedBy: uuid('requested_by'),
+    sourceFingerprint: text('source_fingerprint'),
+    executionRevision: integer('execution_revision').notNull().default(1),
+    executionAttempts: integer('execution_attempts').notNull().default(0),
+    executionFence: integer('execution_fence').notNull().default(0),
+    executionLeaseUntil: timestamp('execution_lease_until', { withTimezone: true }),
+    nextDispatchAt: timestamp('next_dispatch_at', { withTimezone: true }),
+    dispatchSequence: integer('dispatch_sequence').notNull().default(0),
     ...timestamps,
   },
   (t) => ({
@@ -480,6 +503,16 @@ export const petrosSessionCommands = pgTable(
       t.status,
       t.createdAt,
     ),
+    activeQuestionUniq: uniqueIndex('petros_question_active_student_uq')
+      .on(t.institutionId, t.studentId)
+      .where(sql`(
+        ${t.executionVersion} is not null and ${t.executionState} in ('queued','running')
+      ) or (
+        ${t.executionVersion} is null and ${t.command} = 'composer_question' and ${t.status} = 'in_progress'
+      )`),
+    questionDueIdx: index('petros_question_due_idx')
+      .on(t.nextDispatchAt)
+      .where(sql`${t.executionVersion} is not null and ${t.executionState} in ('queued','running')`),
   }),
 );
 

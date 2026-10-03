@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { petrosSessionIntentSchema as previousReader } from './__fixtures__/petros-session-intent-89c1ca2';
 import {
   PETROS_SESSION_INTENT_SCHEMA_VERSION,
   petrosAssistantQuestionSchema,
   petrosSessionIntentSchema,
+  petrosSessionIntentV1,
   resolvePetrosSessionIntentSchema,
   startPetrosSessionIntentSchema,
 } from './petros-session-intent';
@@ -42,6 +44,22 @@ describe('Petros Stage 8 intent contract', () => {
         createdAt: '2026-08-12T00:00:00.000Z',
       });
       expect(intent.door).toBe(door);
+      expect(previousReader.parse(petrosSessionIntentV1(intent))).toEqual(intent);
+      if (door === 'uploaded_document') {
+        const enriched = petrosSessionIntentSchema.parse({ ...intent,
+          documentReadiness: { schemaVersion: 'petros.document-source.v1', sourceVersion: 'a'.repeat(64), status: 'ready',
+            extraction: 'digital_text', indexing: 'not_built', selectedPages: [1], unavailablePages: [], omittedPageCount: 0,
+            scopeReady: true, coverage: 'extracted_text_only', teaching: 'not_assessed', reasons: [] },
+          citations: [{ sourceType: 'document', sourceId: id('4'), version: 'a'.repeat(64), label: 'Physical page 1', page: 1, section: null, excerpt: 'Text',
+            locator: { schemaVersion: 'petros.document-source.v1', kind: 'pdf_page_text', sourceVersion: 'a'.repeat(64),
+              objectId: id('4'), unitId: id('5'), page: 1, textSha256: 'b'.repeat(64), start: 0, end: 4, offsetEncoding: 'utf16' } }],
+        });
+        expect(previousReader.safeParse(enriched).success).toBe(false);
+        const previous = previousReader.parse(petrosSessionIntentV1(enriched));
+        expect(previous).not.toHaveProperty('documentReadiness');
+        expect(previous.citations[0]).not.toHaveProperty('locator');
+        expect(petrosSessionIntentSchema.parse(previous)).toEqual(previous);
+      }
     },
   );
 

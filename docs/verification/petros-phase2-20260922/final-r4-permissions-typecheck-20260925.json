@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-25T17:15:57.452448+00:00",
+  "finishedAt": "2026-09-25T17:15:58.199640+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/permissions",
+    "typecheck"
+  ],
+  "exitCode": 0,
+  "log": "final-r4-permissions-typecheck-20260925.log"
+}

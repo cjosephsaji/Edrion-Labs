@@ -1,5 +1,6 @@
 .panel,
 .session {
+  border-radius: var(--s-radius-card);
   margin-top: 22px;
   border: 1px solid var(--s-bd1);
   background: var(--s-card);
@@ -42,6 +43,7 @@
   font: inherit;
 }
 .formGrid fieldset {
+  border-radius: var(--s-radius-panel);
   display: flex;
   gap: 16px;
   border: 1px solid var(--s-bd1);
@@ -119,6 +121,7 @@
   font-size: 11px;
 }
 .coverage {
+  border-radius: var(--s-radius-card);
   margin: 20px 0;
   border: 1px solid var(--s-bd1);
   background: var(--s-cardAlt);
@@ -166,6 +169,7 @@
 .segment,
 .follow,
 .help {
+  border-radius: var(--s-radius-panel);
   border: 1px solid var(--s-bd1);
   background: var(--s-cardAlt);
   padding: 16px;
@@ -216,6 +220,7 @@
   line-height: 1.5;
 }
 .composer {
+  border-radius: var(--s-radius-panel);
   position: sticky;
   bottom: 12px;
   z-index: 3;
@@ -241,6 +246,7 @@
   margin-top: 10px;
 }
 .recording {
+  border-radius: var(--s-radius-panel);
   border: 2px solid #b42318 !important;
   background: #b42318 !important;
   color: white !important;
@@ -250,6 +256,7 @@
   font-size: 11px;
 }
 .verdict {
+  border-radius: var(--s-radius-card);
   margin-top: 24px;
   border: 2px solid var(--s-accentDeep);
   background: var(--s-cardAlt);
@@ -265,6 +272,7 @@
   gap: 12px;
 }
 .verdictGrid > div {
+  border-radius: var(--s-radius-panel);
   border: 1px solid var(--s-bd1);
   background: var(--s-card);
   padding: 14px;

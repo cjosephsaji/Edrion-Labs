@@ -1,0 +1,34 @@
+{
+  "timestamp": "2026-10-02T11:51:08.412653+00:00",
+  "head": "89c1ca29c117b2f9926e97e12a2738fa110cd2ca",
+  "branch": "new-student-UI",
+  "trackedDiffSha256": "31fb2fa1e45b93bfc5ef2a42fe67301dc1922253e6ae5e5b10fadc7651195317",
+  "sourceManifestSha256": "4c966034b5ea50e141890575e18b9d65f0daef3fac71c5a40b1553a1ec3989b0",
+  "sourceManifestFileCount": 2612,
+  "relevantUntrackedSha256": "11703f20c0584f2b7872ced32fd0ddec29b46f64beb09c4ccdc59c179f7fa586",
+  "relevantUntrackedFileCount": 231,
+  "protectedHashes": {
+    "pnpm-lock.yaml": "803ebf8798958d62a0a7e5ef905a97240c98e97b0d7dadcbff45027123378808",
+    "edrion_database_dump.sql": "6a3d616e8f215a071a25c7ed717f6b03a2aee514ecce87ef2b7dbb5a512f4b4d",
+    "edrion_database_dump.sql.gz": "a281acd5986dac80e4b0326b7f2c9a09249f73411ffd4951c59c01ddc5eb918b",
+    "docs/PETROS-PHASE-1-VERIFICATION-RESULTS.md": "4ded55f3a32a0df70da581551596e27c045658c606989da6ddaed780df0b47d8"
+  },
+  "exclusions": {
+    "prefixes": [
+      "docs/verification/"
+    ],
+    "paths": [
+      "docs/PETROS-LEARNING-HARNESS-PLAN.md",
+      "docs/PETROS-PHASE-2-DEFERRED-VERIFICATION-PLAN.md",
+      "docs/PETROS-PHASE-2-OWNER-MATRIX.md",
+      "docs/PETROS-PHASE-2-VERIFICATION-RESULTS.md",
+      "docs/PETROS-PHASE-3-DECISIONS.md",
+      "docs/PETROS-PHASE-3-OWNER-MATRIX.md",
+      "docs/PETROS-PHASE-3-VERIFICATION-PLAN.md",
+      "docs/PETROS-PHASE-3-VERIFICATION-RESULTS.md",
+      "docs/PETROS-PHASE-4-VERIFICATION-RESULTS.md"
+    ],
+    "ignored": "Git-ignored build output, dependencies and runtime files are not selected by git ls-files --cached --others --exclude-standard."
+  },
+  "manifestFormat": "SHA-256 of file bytes, two spaces, repository-relative path, newline; paths sorted lexicographically. Includes tracked and nonignored untracked files. Tracked diff uses git diff --binary --no-ext-diff HEAD."
+}

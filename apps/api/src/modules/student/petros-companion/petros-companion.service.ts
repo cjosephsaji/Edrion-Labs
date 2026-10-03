@@ -1,8 +1,11 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { PetrosContinuityService } from '../petros-continuity/petros-continuity.service';
+import { Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import type { ApiEnv } from '@edrion/config';
 import {
+  assemblePetrosDynamicContext,
+  type PetrosDynamicContext,
   PETROS_ACTION_KEYS,
   PETROS_COMPANION_SCHEMA_VERSION,
   PETROS_DEFAULT_COMPANION_PREFERENCES,
@@ -143,6 +146,7 @@ function wholePlanDraftNeedsRepair(
 }
 
 type MessageRow = {
+  seq:number;
   id: string;
   threadId: string;
   role: string;
@@ -163,6 +167,7 @@ export class PetrosCompanionService {
     private readonly gateway: PetrosAiGatewayService,
     @Inject(API_ENV) private readonly env: ApiEnv,
     private readonly mentor: PetrosMentorService,
+    @Optional() private readonly continuity?: PetrosContinuityService,
   ) {}
 
   private scope(principal: InstitutionalStudentPrincipal) {
@@ -397,11 +402,16 @@ export class PetrosCompanionService {
         campusId: principal.campusId,
       }));
 
-    const [history, preferences] = await Promise.all([
+    const [storedHistory, preferences] = await Promise.all([
       this.repo.listMessages(scope, thread.id) as Promise<MessageRow[]>,
       this.preferences(principal),
     ]);
-    const compacted = await this.compact(principal, thread, history);
+    const sessionId=context.focus?.entityType==='petros_session'?context.focus.entityId??undefined:undefined;
+    let continuity=this.env.PETROS_CONTINUITY_ENABLED&&this.continuity?await this.continuity.context(principal,sessionId):null;
+    const memoryCutoffSeq=continuity?.memoryCutoffSeq??0;
+    const history=continuity?storedHistory.filter(row=>row.seq>memoryCutoffSeq):storedHistory;
+    // Optional memory edits purge summaries; their old text must never enter another prompt.
+    const compacted=continuity?null:await this.compact(principal,thread,history);
 
     const studentMessage =
       replayedStudent ??
@@ -421,6 +431,11 @@ export class PetrosCompanionService {
 
     if (!studentMessage) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Not found' });
 
+    if (sessionId && continuity && this.continuity) {
+      await this.continuity.linkCompanionQuestion(principal,sessionId,studentMessage.id);
+      continuity = await this.continuity.context(principal,sessionId);
+    }
+
     const blocks = await this.generate({
       principal,
       thread: { id: thread.id, summary: compacted },
@@ -429,9 +444,11 @@ export class PetrosCompanionService {
       preferences,
       input,
       messageId: studentMessage.id,
+      continuity,
     });
 
-    const reply =
+    if(continuity?.journey&&this.continuity){const reference=await this.continuity.teachingReference(principal,continuity.journey.returnPoint.sessionId);if(reference)blocks.push(reference);}
+    const persistReply = async () =>
       (await this.repo.insertMessage({
         institutionId: principal.institutionId,
         studentId: principal.studentId,
@@ -446,6 +463,7 @@ export class PetrosCompanionService {
         schemaVersion: PETROS_COMPANION_SCHEMA_VERSION,
       })) ?? (await this.repo.findMessageByKey(scope, input.idempotencyKey, 'petros'));
 
+    const reply=continuity&&this.continuity?await this.continuity.fenceContext(principal,continuity,persistReply):await persistReply();
     if (!reply) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Not found' });
 
     await this.repo.touchThread(scope, thread.id, {
@@ -541,6 +559,7 @@ export class PetrosCompanionService {
     preferences: PetrosCompanionPreferences;
     input: PetrosCompanionTurnInput;
     messageId: string;
+    continuity: Awaited<ReturnType<PetrosContinuityService['context']>>|null;
   }): Promise<PetrosCompanionBlock[]> {
     const { principal, context, preferences, input } = args;
 
@@ -582,6 +601,7 @@ export class PetrosCompanionService {
     // Resolved with the page context; querying the institution's timezone twice per turn
     // added a round trip to every message for no new information.
     const system = buildCompanionSystemPrompt({
+      dynamicData:Boolean(args.continuity),
       clock: context.clock,
       preferences,
       context,
@@ -604,6 +624,19 @@ export class PetrosCompanionService {
       return this.offlineReply(context, mentorDecision, input.message);
     }
 
+    let dynamicContext:PetrosDynamicContext|undefined;
+    if(args.continuity){
+      const versions=await this.gateway.contextVersions('companion.turn');const c=args.continuity;
+      dynamicContext=assemblePetrosDynamicContext({cacheDimensions:{institutionId:principal.institutionId,studentId:principal.studentId,
+        entitlementVersion:c.entitlementVersion,sourceVersion:typeof c.policy?.sourceFingerprint==='string'?c.policy.sourceFingerprint:undefined,
+        learnerWatermark:c.evidence.projection?.eventSetHash,memoryRevision:c.memoryRevision,policyVersion:c.policy?.authorityHash,
+        ...versions,language:preferences.language},
+        values:{request:{studentMessage:input.message,page:context,mentorDecision,planningPriorities,history:this.recentTurns(args.history)},
+          objective:{reference:c.objective,statement:c.objectiveStatement},unresolved:c.journey?.returnPoint.unresolvedRequest??null,
+          sources:c.sources,policy:c.policy,evidence:c.evidence,workspace:c.workspace,memories:c.memories,preferences},
+        budgets:{request:5000,objective:400,unresolved:600,sources:2000,policy:1000,evidence:1600,workspace:400,memories:1200,preferences:400},
+        unavailable:!c.optionalMemoryEnabled?{memories:'disabled'}:{}});
+    }
     const requestReply = async (planningRepair?: Record<string, unknown>) => {
       const result = await this.gateway.execute({
         context: {
@@ -620,14 +653,16 @@ export class PetrosCompanionService {
           requiredReasoningQuality: distressed ? 0.6 : 0.5,
         },
         system,
+        dynamicContext,
+        authorizeAttempt:args.continuity&&this.continuity?()=>this.continuity!.fenceContext(principal,args.continuity!,async()=>undefined):undefined,
         input: [
           {
             type: 'text',
             text: JSON.stringify({
-              conversationSummary: args.thread.summary,
-              recentTurns: this.recentTurns(args.history),
+              conversationSummary: dynamicContext?null:args.thread.summary,
+              recentTurns: dynamicContext?[]:this.recentTurns(args.history),
               studentMessage: input.message,
-              ...(wholePlanRequested ? { planningPriorities } : {}),
+              ...(wholePlanRequested&&!dynamicContext ? { planningPriorities } : {}),
               ...(wholePlanRequested
                 ? {
                     planningContract: {
@@ -646,7 +681,7 @@ export class PetrosCompanionService {
         responseSchema: COMPANION_RESPONSE_JSON_SCHEMA,
         correlationId: input.idempotencyKey,
         metadata: { surface: 'student_companion', route: context.route },
-        disableCache: Boolean(planningRepair),
+        disableCache: Boolean(planningRepair)||Boolean(dynamicContext),
       });
       return modelReplySchema.parse(result.content);
     };

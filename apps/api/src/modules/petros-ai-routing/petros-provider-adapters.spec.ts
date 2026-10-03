@@ -1,6 +1,29 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { estimateModalityCostMicros, PetrosProviderAdapterRegistry, prepareGeminiJsonSchema } from './petros-provider-adapters';
 
+describe('Petros document execution cancellation', () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it.each(['openai_compatible', 'anthropic', 'gemini'])('propagates cancellation to the actual %s HTTP transport', async (adapterType) => {
+    const abort = new AbortController();
+    let entered!: () => void;
+    const started = new Promise<void>(resolve => { entered = resolve; });
+    let transport: AbortSignal | undefined;
+    vi.stubGlobal('fetch', vi.fn((_url, init: RequestInit) => new Promise((_resolve, reject) => {
+      transport = init.signal as AbortSignal;
+      transport.addEventListener('abort', () => reject(new DOMException('Cancelled', 'AbortError')), { once: true });
+      entered();
+    })));
+    const provider = { adapterType, credentialEnvelope: 'synthetic-only' };
+    const adapter = new PetrosProviderAdapterRegistry({ decrypt: () => 'synthetic-key' } as never).adapter(provider as never);
+    const result = adapter.execute(provider as never, { modelKey: 'synthetic', providerOptions: {} } as never,
+      { functionKey: 'hint.generate', input: [{ type: 'text', text: 'Synthetic source' }], responseFormat: 'json',
+        maxOutputTokens: 100, temperature: 0, timeoutMs: 5000, stream: false, signal: abort.signal });
+    const rejected = expect(result).rejects.toMatchObject({ code: 'TIMEOUT' });
+    await started; abort.abort(); await rejected;
+    expect(transport?.aborted).toBe(true);
+  });
+});
+
 describe('Petros provider modality pricing', () => {
   it('meters Groq transcription by audio duration', () => {
     expect(estimateModalityCostMicros(

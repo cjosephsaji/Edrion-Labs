@@ -55,6 +55,7 @@
 }
 
 .focus {
+  border-radius: var(--s-radius-card);
   display: grid;
   grid-template-columns: minmax(0, 1fr) 270px;
   border: 1px solid var(--s-accentBd);
@@ -87,6 +88,7 @@
 .focusActions { margin-top: 18px; }
 
 .primaryAction {
+  border-radius: var(--s-radius-control);
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -131,6 +133,7 @@
 
 .startGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
 .startCard {
+  border-radius: var(--s-radius-card);
   display: grid;
   grid-template-columns: 22px minmax(0, 1fr) 16px;
   align-items: center;
@@ -156,6 +159,7 @@
 .compactList { list-style: none; display: grid; gap: 8px; margin: 12px 0 0; padding: 0; }
 .list li,
 .compactList li {
+  border-radius: var(--s-radius-panel);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -172,6 +176,7 @@
 
 .rowAction,
 .compactList a {
+  border-radius: var(--s-radius-control);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -186,7 +191,7 @@
   text-decoration: none;
 }
 
-.progressStats { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--s-bd1); margin-top: 12px; }
+.progressStats { border-radius: var(--s-radius-card); display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--s-bd1); margin-top: 12px; }
 .progressStats div { display: grid; gap: 4px; border-left: 1px solid var(--s-bd1); padding: 15px; }
 .progressStats div:first-child { border-left: 0; }
 .progressStats strong { color: var(--s-ink); font-family: var(--font-display); font-size: 25px; font-weight: 400; }
@@ -197,10 +202,11 @@
 .compactList li > svg { width: 16px; height: 16px; color: var(--s-accent); }
 .compactList li > div { display: grid; gap: 2px; min-width: 0; }
 
-.emptyCompact { margin: 12px 0 0; border: 1px dashed var(--s-bd2); background: var(--s-cardAlt); padding: 16px; color: var(--s-muted); font-size: 12.5px; line-height: 1.5; }
+.emptyCompact { border-radius: var(--s-radius-card); margin: 12px 0 0; border: 1px dashed var(--s-bd2); background: var(--s-cardAlt); padding: 16px; color: var(--s-muted); font-size: 12.5px; line-height: 1.5; }
 .loading { margin-top: 12px; }
 
 .savedStrip {
+  border-radius: var(--s-radius-card);
   display: flex;
   align-items: center;
   justify-content: space-between;

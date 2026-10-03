@@ -256,6 +256,8 @@ export const INSTITUTION_PERMISSIONS: readonly PermissionDef[] = [
   def('class_content.manage', 'Class content', 'Manage class/course stream posts and materials.'),
   def('courses.manage', 'Courses', 'Create and manage college courses.'),
   def('syllabus.manage', 'Courses', 'Manage course syllabus modules.'),
+  def('academics.alignments.approve', 'Courses', 'Approve or override explicit objective-to-standard mappings.', true),
+  def('integrations.mappings.manage', 'IT', 'Review external mappings without granting authentication or sync authority.', true),
   def('report_cards.manage', 'Report cards', 'Create and edit report cards.'),
   def('report_cards.publish', 'Report cards', 'Publish report cards to students.', true),
   def('report_cards.view', 'Report cards', 'View report cards.'),

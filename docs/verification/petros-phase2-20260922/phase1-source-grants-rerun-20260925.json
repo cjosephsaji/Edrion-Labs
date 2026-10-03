@@ -1,0 +1,15 @@
+{
+  "startedAt": "2026-09-25T06:51:00.263623+00:00",
+  "finishedAt": "2026-09-25T06:51:33.926057+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/student/petros-session-intent/petros-document-source.integration.spec.ts"
+  ],
+  "exitCode": 1,
+  "log": "phase1-source-grants-rerun-20260925.log"
+}

@@ -134,7 +134,7 @@
   max-width: calc(100vw - 32px);
   overflow: hidden;
   border: 1px solid var(--s-accentBd);
-  border-radius: 16px;
+  border-radius: var(--s-radius-card);
   background: var(--s-card);
   box-shadow: 0 12px 40px -20px rgb(7 42 31 / 30%);
   color: var(--s-ink);
@@ -275,7 +275,7 @@
   justify-content: center;
   gap: 6px;
   border: 1px solid var(--s-bd1);
-  border-radius: 9px;
+  border-radius: var(--s-radius-control);
   background: var(--s-card);
   padding: 9px 12px;
   color: var(--s-inkSoft);
@@ -299,7 +299,7 @@
 .composer {
   overflow: hidden;
   border: 1px solid var(--s-bd2);
-  border-radius: 12px;
+  border-radius: var(--s-radius-panel);
   background: var(--s-cardAlt);
 }
 .composer:focus-within { border-color: var(--s-accent); box-shadow: 0 0 0 2px var(--s-accentSoft); }
@@ -378,7 +378,7 @@
 .sessionOffer > button { min-height: 38px; border-radius: 999px; padding: 7px 12px; font-size: 11px; }
 .replyPlan { display: grid; width: 100%; gap: 5px; margin: 0; padding: 0 0 0 18px; color: var(--s-inkSoft); font-size: 11px; }
 .replyPlan small { display: block; color: var(--s-muted); }
-.proposal { width: 100%; border: 1px solid var(--s-bd1); border-radius: 12px; padding: 10px; background: var(--s-cardAlt); }
+.proposal { width: 100%; border: 1px solid var(--s-bd1); border-radius: var(--s-radius-panel); padding: 10px; background: var(--s-cardAlt); }
 .proposal > strong { font-size: 12px; }
 .proposal ul { margin: 7px 0 0; padding-left: 18px; color: var(--s-muted); font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
 .proposal p { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; color: var(--s-accentDeep); font-size: 11px; }
@@ -393,7 +393,7 @@
   width: 100%;
   height: 38px;
   border: 1px solid var(--s-bd2);
-  border-radius: 9px;
+  border-radius: var(--s-radius-control);
   background: var(--s-cardAlt);
   padding: 0 10px;
   color: var(--s-ink);
@@ -401,7 +401,7 @@
   text-transform: none;
 }
 .planner ol { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.planner li { display: flex; align-items: center; gap: 8px; border: 1px solid var(--s-divider); border-radius: 10px; padding: 8px; }
+.planner li { display: flex; align-items: center; gap: 8px; border: 1px solid var(--s-divider); border-radius: var(--s-radius-control); padding: 8px; }
 .planner li > span { color: var(--s-accentDeep); }
 .planner li > div { flex: 1; min-width: 0; }
 .planner li strong,
@@ -413,7 +413,7 @@
 .settings button[aria-pressed='true'] { border-color: var(--s-accentBd); background: var(--s-accentSoft); color: var(--s-accentDeep); }
 .settings label { display: flex; align-items: center; gap: 8px; color: var(--s-inkSoft); font-size: 13px; line-height: 1.5; }
 .settings .selectLabel { display: grid; gap: 6px; margin-top: 8px; }
-.settings select { width: 100%; min-height: 44px; border: 1px solid var(--s-bd2); border-radius: 8px; background: var(--s-cardAlt); color: var(--s-ink); padding: 8px 10px; font-size: 14px; }
+.settings select { width: 100%; min-height: 44px; border: 1px solid var(--s-bd2); border-radius: var(--s-radius-control); background: var(--s-cardAlt); color: var(--s-ink); padding: 8px 10px; font-size: 14px; }
 .settings input { width: 17px; height: 17px; accent-color: var(--s-accent); }
 .voiceDisclosure { margin: 6px 0 16px; color: var(--s-muted); font-size: 12px; line-height: 1.6; }
 .error { margin: 0 0 10px; border-left: 2px solid #b64436; padding-left: 8px; color: #9e382d; font-size: 12px; line-height: 1.45; max-height: 80px; overflow: auto; }
@@ -544,7 +544,7 @@ html[data-reduced-motion='true'] .thoughts { animation: none !important; transit
   width: max-content;
   max-width: 230px;
   border: 1px solid var(--s-accentBd);
-  border-radius: 3px 12px 3px 12px;
+  border-radius: var(--s-radius-panel);
   background: var(--s-card);
   box-shadow: 0 14px 30px -22px rgb(11 74 52 / 70%);
   padding: 8px 10px;
@@ -626,7 +626,7 @@ html[data-reduced-motion='true'] .thoughts { animation: none !important; transit
     overflow: hidden;
     border: 1px solid var(--s-accentBd);
     border-top: 3px solid var(--petros-secondary);
-    border-radius: 4px 16px 4px 4px;
+    border-radius: var(--s-radius-card);
     background: color-mix(in srgb, var(--s-card) 94%, transparent);
     box-shadow: 0 16px 36px -22px rgb(11 39 27 / 62%);
     padding: 0 9px 0 3px;

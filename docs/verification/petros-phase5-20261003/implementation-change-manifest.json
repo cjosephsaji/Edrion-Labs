@@ -1,0 +1,264 @@
+{
+  "generatedAt": "2026-10-03T08:55:52.502536+00:00",
+  "entrySource": "2ae29edfafa19c3e4712aa2eb2419c883ff9afdd99a92b07d1e8dbcbcd205e40",
+  "finalSource": "55f11e10edaca878b246fa62061029822cb74728569ca5581c96148d1f4dc8de",
+  "changedFiles": 51,
+  "changes": [
+    {
+      "path": ".github/workflows/learn-evals.yml",
+      "entrySha256": "32024cfef0a33ffef7b3c4c3e2be368834218c512892a76f862d837b4f8e934c",
+      "finalSha256": "ab364b600722f7f4aadf5987a9c95f76733951a629344c4ae09c6f1f44cb989f"
+    },
+    {
+      "path": "apps/api/src/common/petros-runtime-metrics.spec.ts",
+      "entrySha256": null,
+      "finalSha256": "c450d9b218a74f2c80a6b45eb2274a2fcbde8aa79018c3b4714bf41ffbb36f42"
+    },
+    {
+      "path": "apps/api/src/common/petros-runtime-metrics.ts",
+      "entrySha256": null,
+      "finalSha256": "65307c863b98d3e6a6519c82e8bed9ecac68d8749a817e8a026ded645c8b833d"
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase2-test-database.ts",
+      "entrySha256": "443559b7dad18dd0dc6fe36ce2909078c43f0d526b6b2dd9fc65955d008227f8",
+      "finalSha256": "23a2613ee4bd321683fd96098892709fa57d3ee72a8fbf2eba85bef96bc21447"
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase4-journey.integration.spec.ts",
+      "entrySha256": "38780933413f19c6e7afd62cbb8c437bbb70e60a3d71f9163858cb2619d03054",
+      "finalSha256": "548fcae911a8a57523efc99ade677878d669543b326b5940ec92627be03e56a7"
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase4-migration.integration.spec.ts",
+      "entrySha256": "99659cc7ed0bd0febf5a958a93ee9484287f1d53751719ce2a4e2b8f3ecfa233",
+      "finalSha256": "6a5f256d4f922699b516158f15becc0ee1f93003e00944a380264f5d7891fec4"
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase5-browser-journey.mjs",
+      "entrySha256": null,
+      "finalSha256": "43eca709669174d9bc16d86c2b91a6c52dbf13bcf69786bb9f7b7551db784b82"
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase5-browser-server.ts",
+      "entrySha256": null,
+      "finalSha256": "4ffafec13f2a2f91f9c2431f4904a3eeb038f29067e62c1a9b7a246ac0822ee4"
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase5-gateway.integration.spec.ts",
+      "entrySha256": null,
+      "finalSha256": "0752b402ff8b1d95d8c33ce9cc791760cc2dbd63440b003342f28bdc7c3f9ca9"
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase5-operations.integration.spec.ts",
+      "entrySha256": null,
+      "finalSha256": "b5894a37ac4e9c4ad098bfa6c27bea22c7758a25b421bd1cc18bafc45660c780"
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase5-pilot.integration.spec.ts",
+      "entrySha256": null,
+      "finalSha256": "0078800adcb29616ccc23becd9da3e176e97468436d67b72a963938edb4617c1"
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase5-quality-fixture.ts",
+      "entrySha256": null,
+      "finalSha256": "519e13efa7f12e20444a284fc7adee38276f611869b94dc566599a72e052b1b1"
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase5-quality.integration.spec.ts",
+      "entrySha256": null,
+      "finalSha256": "403f2268f151bc1e03376ca78feb206fbb558acb9edcb55a3dc2a41c1c7223ad"
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase5-recovery.integration.spec.ts",
+      "entrySha256": null,
+      "finalSha256": "6de86ddfd854f9d86eb5251fc179d990fe39248c167dc8b588a318525859910e"
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase5-release.integration.spec.ts",
+      "entrySha256": null,
+      "finalSha256": "bfee6c15f2c4a19f13e000ae6e73f5e38dadc9b163a8628871372cde6dabf3e8"
+    },
+    {
+      "path": "apps/api/src/modules/petros-ai-routing/petros-ai-gateway.service.ts",
+      "entrySha256": "9accd1d407e1730f9bb015c5f4867670a8805a0f6d202b7679849e71085981c1",
+      "finalSha256": "f9be6b071df0da016148080f57fba41da818cecdc0addb0a3225ea50e39c3c88"
+    },
+    {
+      "path": "apps/api/src/modules/petros-ai-routing/petros-ai-routing.module.ts",
+      "entrySha256": "3830f76d55ca76206cae90f63f0f48ebde19b1e2909ce7b46c239ac01519e200",
+      "finalSha256": "0183baaff384bb8db57294f9baa751b3bef74411758ccdf427ba1cba64eb9841"
+    },
+    {
+      "path": "apps/api/src/modules/petros-ai-routing/petros-ai-routing.service.ts",
+      "entrySha256": "33db0bc4b3d927ce8723506700c74bdcac16a5d617d19cb7783053760852a039",
+      "finalSha256": "ac10d2e30022b510687ea2da3fc12aaabeb34b56824e2ca659803f34cafde630"
+    },
+    {
+      "path": "apps/api/src/modules/petros-quality/petros-operations.service.spec.ts",
+      "entrySha256": null,
+      "finalSha256": "2703c3112048f42d0a7b1c9e65eb1d320619a600fa9cfd1fc5590d2365d2a6a0"
+    },
+    {
+      "path": "apps/api/src/modules/petros-quality/petros-operations.service.ts",
+      "entrySha256": null,
+      "finalSha256": "94d2307f0a176ff73f26628a71dc95a9578bc6c38d777ddcaa53d2378613efe6"
+    },
+    {
+      "path": "apps/api/src/modules/petros-quality/petros-quality.controller.ts",
+      "entrySha256": "241e0990cdbde5e6d888cc1a5f1aa25e00f435a29243ab9983773a189af2f583",
+      "finalSha256": "8dc8439bf5f1c7cf84f31ac3d06506896571dac514693090f27b066a1e1fa7bb"
+    },
+    {
+      "path": "apps/api/src/modules/petros-quality/petros-quality.module.ts",
+      "entrySha256": "0091516f870c141b6f0828c70cf34fdf8c11fc4900ef745a25560cc32e7cb8fe",
+      "finalSha256": "7b432e110fb3f7a3135b747e3ce4a38f35946172b5cec7802aa928effcbd2243"
+    },
+    {
+      "path": "apps/api/src/modules/petros-quality/petros-release.module.ts",
+      "entrySha256": null,
+      "finalSha256": "9cd48cf350a4da197ff46c7c74ceb75901fecdb2947a56b3b668c708e073ff08"
+    },
+    {
+      "path": "apps/api/src/modules/petros-quality/petros-release.repository.ts",
+      "entrySha256": null,
+      "finalSha256": "0260b7b1a461739eeab2f5d53ab594aae38b0a8104fbd4aff79d7fc308a66e42"
+    },
+    {
+      "path": "apps/api/src/modules/petros-quality/petros-release.service.ts",
+      "entrySha256": null,
+      "finalSha256": "92939d185f9b51dc4182b0061dbc1f32e2c8945341f5c5f8b6c055ad7ccd913a"
+    },
+    {
+      "path": "apps/api/src/modules/student/knowledge/knowledge-document.service.ts",
+      "entrySha256": "76cfa79aefbc72336745b49fa6e2c0fe144efbc06d4e8c9dfaa9f8878e63f251",
+      "finalSha256": "9d4d228396a66e05621b9a87f8c19f7835795cc1b03d886ff8c15c4445e8078d"
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-continuity/petros-continuity.controller.ts",
+      "entrySha256": "02f9b9e94ed6cba6269976d5a818f0522b0f97ee56e216b8b2ed18ae847705fc",
+      "finalSha256": "d7bd1544dc7a97f283738cfb9d88be4eb401059f946ff172adbe5161b10eba39"
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-continuity/petros-continuity.module.ts",
+      "entrySha256": "aac231635fb5f11a4e08c31468177f0da7d7e659a2cfa586c404b839f6767516",
+      "finalSha256": "ec9f24bc3651857118a4ce769d460e48286d8a84f758aa8c94fbfc633d6f0dc5"
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-continuity/petros-pilot.service.ts",
+      "entrySha256": null,
+      "finalSha256": "74341627e329e4b888129d83b9075103564cd817297fca3b42145e879c3d49d4"
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-loop/petros-loop.service.ts",
+      "entrySha256": "a7d1474d3114a939fa3b3d797098cc159fa73d96a0c1ef4954fcffe91d342890",
+      "finalSha256": "cc5d26f0cdeadc4c90989f9f7383b3b4dabe4dab2e179e7d292b0c0420e9c03d"
+    },
+    {
+      "path": "apps/student-web/src/components/petros/petros-program-workspace.spec.tsx",
+      "entrySha256": "c8acbcf9279f6f8f3aa15e2ec1759254110702e2eaca4dab6dce4678773f05ed",
+      "finalSha256": "8939b7d78bc04b01bde1a56aa0adc5d9c58d597e0e9fbad606c84905af5a074c"
+    },
+    {
+      "path": "apps/student-web/src/components/petros/petros-program-workspace.tsx",
+      "entrySha256": "c41df1b4ac2d0842e618434073a41d27e0f0406651a638d138b42eb795d61af6",
+      "finalSha256": "1b20cf16494e7c673e041b0b7c7ebf3b0fef39c03aeb35db785fde0312509c95"
+    },
+    {
+      "path": "apps/super-admin-web/src/app/(app)/ai/petros-quality/page.tsx",
+      "entrySha256": "585eb237143fab7a620c429123ed768ae984bd42263fc9f69015a6648f9a9957",
+      "finalSha256": "39e18b32283964cc99d2ab96ab3fc9c59ea8088d07db894e8cb669ec6e8441a1"
+    },
+    {
+      "path": "apps/super-admin-web/src/app/favicon.ico/route.ts",
+      "entrySha256": null,
+      "finalSha256": "df486a2dd940b217ca3015da184a76817f6e5f80c033b5357812549b4c6d7208"
+    },
+    {
+      "path": "apps/super-admin-web/src/components/app-shell/topbar.tsx",
+      "entrySha256": "91549644a6ba297f185d510086fd677b3a4fceb3dba63fe5f8098d29fe94fefc",
+      "finalSha256": "6a3fe49ff752f556cad135c46533e5b48aa5ea0bd72d6c5ae7fe02fbdf1dfe16"
+    },
+    {
+      "path": "apps/super-admin-web/src/components/petros-quality/petros-operations-panel.tsx",
+      "entrySha256": null,
+      "finalSha256": "c2821c996eca53cbbb703ecc6e9ef3605c430f238b220e580521f23a62f514da"
+    },
+    {
+      "path": "docs/PETROS-PHASE-5-ACCEPTANCE-PACKETS.md",
+      "entrySha256": null,
+      "finalSha256": "7241b52dc6ee210b61492eaad44f5667051c68fe872c032110b4d303d19ab469"
+    },
+    {
+      "path": "docs/PETROS-PHASE-5-DECISIONS.md",
+      "entrySha256": null,
+      "finalSha256": "09b2d89c117d1b665760ce81ae8477d23ea9c10eefaef962b78a279b326f8e97"
+    },
+    {
+      "path": "docs/PETROS-PHASE-5-OPERATOR-RUNBOOK.md",
+      "entrySha256": null,
+      "finalSha256": "9959cf829b6e59ad81d5c1f794e61478ea6bd88e68664d03940b0b3406f8895b"
+    },
+    {
+      "path": "docs/PETROS-PHASE-5-OWNER-MATRIX.md",
+      "entrySha256": null,
+      "finalSha256": "15a9fe3726c751413ed07ef60d755926a1cbb2be8fc75db71c31697370716bbd"
+    },
+    {
+      "path": "docs/PETROS-PHASE-5-VERIFICATION-PLAN.md",
+      "entrySha256": null,
+      "finalSha256": "19895cc2c04c811de91d5fe105380243c0a6ce17690399807cf5be81e127043d"
+    },
+    {
+      "path": "packages/config/src/index.ts",
+      "entrySha256": "743d1c8d71137821ac04c39e62bcb8c80301e9ead75071446339c66eb24b9cd9",
+      "finalSha256": "814548175ac47b9629a2048d2018d6caf380d2bc533affcef00b512597f4a13d"
+    },
+    {
+      "path": "packages/database/migrations/0230_petros_phase5_release.sql",
+      "entrySha256": null,
+      "finalSha256": "585bf1d22a8e39fc6fbac3c80857e4a80be730aa10d00346b4e33f97d0601c7a"
+    },
+    {
+      "path": "packages/database/migrations/meta/_journal.json",
+      "entrySha256": "7eb89c58c1f815cabf4ab1229fc0be0e08751cec93d19e16a4d2d503c0ad571c",
+      "finalSha256": "e287ac538abc41c76c64f962c4bd6f64a775eb956bcbe5679e1b69ea7dcfe756"
+    },
+    {
+      "path": "packages/database/migrations/sql/zzz_grants.sql",
+      "entrySha256": "a21c966608f67bdb384dab4f97238309daf71f97c5d4559547131d40c8d6cfef",
+      "finalSha256": "37839164d277f0bbb2e3022a5017171777e67e5b3f0403599a34e30452d160e0"
+    },
+    {
+      "path": "packages/database/src/client.ts",
+      "entrySha256": "fad37b421e956d3fd49ba725ed3af1e390b88301ec22c301eef74914d1ff3efd",
+      "finalSha256": "6789d1e381c358ba9c5d83f731d3b22c7fca732cecb8ca96728d7b0e8e3d2a9c"
+    },
+    {
+      "path": "packages/database/src/schema/index.ts",
+      "entrySha256": "a6915520907df10cbf4afa3d368e105fe832750955e82473dcf0617ecbb06e3f",
+      "finalSha256": "ccb4deb097b89f1572303f5f117f55b8d175db2d3e56bcca50d24c84d33ffc23"
+    },
+    {
+      "path": "packages/database/src/schema/petros-release.ts",
+      "entrySha256": null,
+      "finalSha256": "f3f9c590cbe8bc9b4399bb9c9f2f8e3148ed62305f9645558092891713bdab76"
+    },
+    {
+      "path": "packages/schemas/src/index.ts",
+      "entrySha256": "49a997031b06938137487575308f774a099136052c4348f0d28a23da34d6fa25",
+      "finalSha256": "0be46d75c70123212b182dd96e47633a4e220617d266cd217721c1a263a6802a"
+    },
+    {
+      "path": "packages/schemas/src/petros-release.spec.ts",
+      "entrySha256": null,
+      "finalSha256": "0d09f55c5c508414fbe3cd2964b47f48dcbe4178cd07b2add2308395268dc1aa"
+    },
+    {
+      "path": "packages/schemas/src/petros-release.ts",
+      "entrySha256": null,
+      "finalSha256": "36278e353c31e09792bb9e2ea92386745323a11d9915e451412dee7766e21432"
+    }
+  ],
+  "note": "Byte comparison against the preserved dirty Phase4 entry. Existing unchanged dirty work is retained; this is not a Git HEAD diff."
+}

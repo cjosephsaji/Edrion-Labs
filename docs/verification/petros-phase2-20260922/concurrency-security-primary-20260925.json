@@ -1,0 +1,16 @@
+{
+  "startedAt": "2026-09-25T16:08:00.835094+00:00",
+  "finishedAt": "2026-09-25T16:08:10.443641+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/integrations/petros-learning-artifacts.integration.spec.ts",
+    "src/modules/integrations/petros-projectile-commands.integration.spec.ts"
+  ],
+  "exitCode": 1,
+  "log": "concurrency-security-primary-20260925.log"
+}

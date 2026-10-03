@@ -638,6 +638,9 @@ export class PetrosInputModesService {
     if (media.kind !== 'voice_turn' || !media.storageObjectId || !media.detectedMimeType || media.state !== 'needs_confirmation') {
       throw invalidState('Review the transcript before submitting this voice turn.');
     }
+    // Gate uploaded-document questions before document hydration can resolve/generate a legacy
+    // topic profile or expose any block content. Non-document voice sessions remain compatible.
+    await this.loop.assertComposerQuestionAllowed(principal, input.sessionId);
     let document = await this.loop.document(principal, input.sessionId);
     const transcription = petrosSpeechTranscriptionSchema.parse(media.structuredResult.transcription);
     const transcript = input.transcriptCorrection?.trim() || transcription.text;
@@ -806,6 +809,10 @@ export class PetrosInputModesService {
         recordingMustStop: true,
       };
     } catch (error) {
+      // A document question must use its durable owner. Preserve the typed denial and
+      // confirmed transcript instead of disguising this boundary as a retryable voice fault.
+      if (['PETROS_QUESTION_EXECUTION_REQUIRED', 'PETROS_KNOWLEDGE_DURABLE_EXECUTION_REQUIRED'].includes(errorCode(error)))
+        throw error;
       await this.repo.updateMedia(scope, media.id, { state: 'retryable_failure', failureCode: 'PETROS_VOICE_TURN_UNAVAILABLE' });
       await this.event(media, 'processing_failed', derivedUuid(input.idempotencyKey, 'voice_failed'), { sessionId: input.sessionId, stage: 'loop_observation', durationMs: Date.now() - started, errorCode: errorCode(error) });
       throw new ServiceUnavailableException({ code: 'PETROS_VOICE_TURN_UNAVAILABLE', message: 'Petros could not apply this confirmed turn. Your transcript is still available; retry or continue in text.' });

@@ -1,0 +1,27 @@
+# Petros Phase 6 verification results
+
+Phase6 implements the major student UI milestone plus a bounded source-comparison/synthesis path, structured teacher lesson authoring, and one additional trusted cooling model. New admissions remain default-off. This is synthetic engineering evidence; Firefox completeness and all external acceptance remain separate gates.
+
+## Identity and preservation
+
+Entry matches Phase5 final-r6 exactly: HEAD `89c1ca29c117b2f9926e97e12a2738fa110cd2ca`, branch `new-student-UI`, manifest `55f11e10edaca878b246fa62061029822cb74728569ca5581c96148d1f4dc8de` (2,640 files). Closing candidate `frozen-final-r6` has 2,660 files and manifest `c5b3bc34ba865e237de41fbd2fc89242514aabbafbc24aa011b5172ff8e06f7a`. Exactly 59 selected paths differ from entry. The source/protected-hash reconfirmation and all final commands are still pending completion before this draft can replace the results record.
+
+No reset, discard, commit, push, PR, publication/deployment to a real environment, real learner enrollment/contact or paid provider call. Dirty entry and historical Phase1–5 evidence are preserved. No root .env was loaded. App-role disposable PostgreSQL uses APFS; fixture Redis is task-owned. Three lightweight gpt-6-luna workers completed bounded work and were stopped; no heavy worker was used. Existing idle user chats were preserved.
+
+## Selected behavior
+
+The student portal now has a stable learning rail/mobile destinations, a prominent genuine saved return point, compact source-first Petros entry, wider lesson area with optional conversation/source tools, responsive materials, and saved-work provenance. Existing theme, accessibility, navigation favorites, continuity and permissions remain in use. Actual steps/cards/time describe session coverage; no XP/streak/false mastery values were introduced. Source tools support exact current passage inspection and Escape focus return.
+
+Two or three deliberately selected sources retain immutable versions, page scopes and exact independent citations. Every source is checked before and after retrieval; stale/foreign/revoked/unavailable scope fails the whole comparison. Conflicting text and missing support remain visible, with no automated correctness adjudication or false canonical concept merge. A shared exploratory synthesis instruction block uses the real student read renderer; private synthesis stays in local view state and clears with the comparison. Individual teaching still uses per-source reviewed packs/objectives/sessions. Combined persistent multi-document teaching and graded synthesis are excluded. Displayed comparison clears on backgrounding and polls current scope every15 seconds while visible; that is bounded clearing, not instantaneous revocation.
+
+Teacher composition imports/exports the strict current draft contract, edits structured content while retaining immutable source/objective/curriculum anchors, compiles new versions, and previews through the same shared renderer as students. Current source, course, qualification and review authority are rechecked. Dedicated flag-gated Phase6 save/review/revocation routes delegate to the existing teaching-pack owner; its legacy routes retain prior behavior. New authoring cannot self-approve. Explicit singleton assignment preview/commit uses the existing release owner, with stable command identity on an uncertain reply. Corrections/revocations retain history. Local preview and exploratory/assisted work record no independent mastery evidence.
+
+Newton cooling uses the existing declarative engine/units/solver/representations and checkpoints: dT/dt=-k(T-Ta), T(t)=Ta+(T0-Ta)exp(-kt). Kelvin, kelvin/second and seconds are explicit. It is a lumped constant-ambient/effective-rate model, with declared ranges and compute/time limits; no gradient/radiation/phase-change/coupled-body claim. Independent analytic references, exact replay, restart/branch/resume, disabled reads/commands, cross-owner denial and held-out composition are tested. The synthetic cooling fixture is an engineering model exercise, not an externally approved cooling curriculum lesson.
+
+Collaboration and calibrated tracing are deferred. Transparent baseline/evidence separation is preserved; the operator extension defines a consented held-out outcome/calibration protocol without claiming efficacy or fairness. Guardian sharing, partners/grade reconciliation, independent accounts, full offline and generated executable extensions remain disabled or separately gated. Private drafts are not shared by default. Phase5 release configuration digests now bind the three new admission flags.
+
+## Closure and limitations
+
+Use final-r6 exact commands/raw logs for claims. Earlier candidate/repair attempts remain evidence but do not pass the closing identity. All final API/schema/student/evaluation/typecheck/lint/build and browser statuses will be inserted after completion. Firefox R1 requires an actual successful supported-runtime journey; launch failure and installed binary do not count.
+
+External X1 educator, X2 curriculum, X3 consent/privacy/retention, X4 physical-device/native zoom/screen-reader/AT, X5 learner pilot/outcomes, X6 partners/guardian/grades/offline and X7 executable isolation remain pending or disabled. Software browser emulation, CSS enlargement, controlled speech and synthetic scoring cannot pass these gates. No unqualified rollout/readiness, scientific certification, learning benefit or pilot-completion claim is made.

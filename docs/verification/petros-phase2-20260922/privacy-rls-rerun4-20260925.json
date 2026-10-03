@@ -1,0 +1,17 @@
+{
+  "startedAt": "2026-09-25T16:11:38.493469+00:00",
+  "finishedAt": "2026-09-25T16:12:00.851150+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/integrations/petros-learning-artifacts.integration.spec.ts",
+    "src/modules/integrations/petros-objective-evidence.integration.spec.ts",
+    "src/modules/integrations/petros-phase2-full-journey.integration.spec.ts"
+  ],
+  "exitCode": 0,
+  "log": "privacy-rls-rerun4-20260925.log"
+}

@@ -935,12 +935,7 @@ export class RequestEngineService {
     assignedUserId: string | null,
     sideEffect: () => Promise<Record<string, unknown> | void>,
   ) {
-    let fulfillmentData: Record<string, unknown> | undefined;
-    try {
-      fulfillmentData = (await sideEffect()) ?? undefined;
-    } catch (error) {
-      throw error;
-    }
+    const fulfillmentData = (await sideEffect()) ?? undefined;
     const approved = await this.updateDecisionVersioned(row, input.version, {
       status: 'approved',
       assignedUserId,

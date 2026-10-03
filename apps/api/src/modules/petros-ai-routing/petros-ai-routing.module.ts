@@ -6,8 +6,10 @@ import { PetrosAiRoutingService } from './petros-ai-routing.service';
 import { PetrosProviderConnectivityService } from './petros-provider-connectivity.service';
 import { PetrosProviderAdapterRegistry } from './petros-provider-adapters';
 import { PetrosAiGatewayService } from './petros-ai-gateway.service';
+import { PetrosReleaseModule } from '../petros-quality/petros-release.module';
 
 @Module({
+  imports: [PetrosReleaseModule],
   controllers: [PetrosAiRoutingController],
   providers: [
     PetrosAiCredentialsService,

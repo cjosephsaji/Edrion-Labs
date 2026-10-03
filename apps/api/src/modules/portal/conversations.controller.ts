@@ -77,7 +77,10 @@ function readRawBody(req: ExpressRequest, max: number): Promise<Buffer> {
 /** Strip any path components / control chars from a client-supplied file name. */
 function sanitizeFileName(name: string): string {
   const base = name.split(/[/\\]/).pop() ?? 'attachment';
-  const clean = base.replace(/[-"]/g, '').trim();
+  const clean = [...base]
+    .filter((character) => character !== '-' && character !== '"' && character.charCodeAt(0) !== 31)
+    .join('')
+    .trim();
   return (clean || 'attachment').slice(0, 255);
 }
 
@@ -130,7 +133,7 @@ export class ConversationsService {
       const s = ilike(c.title, `%${q.search}%`);
       if (s) conds.push(s);
     }
-    let convos = await this.db.select().from(c).where(and(...conds)).orderBy(desc(c.lastMessageAt));
+    const convos = await this.db.select().from(c).where(and(...conds)).orderBy(desc(c.lastMessageAt));
 
     // Enrich each: participants (resolved), unread count, last message preview.
     const enriched = await Promise.all(convos.map((conv) => this.toSummary(ctx, conv, myMap.get(conv.id)?.lastReadAt ?? null, myMap.get(conv.id)?.muted ?? false)));

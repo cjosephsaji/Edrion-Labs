@@ -1,0 +1,14 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/student-web",
+    "typecheck"
+  ],
+  "start": "2026-10-02T11:26:07.066607+00:00",
+  "end": "2026-10-02T11:26:09.982741+00:00",
+  "exitCode": 2,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

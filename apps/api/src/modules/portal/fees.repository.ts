@@ -43,7 +43,7 @@ export interface FeeInvoiceRow extends FeeInvoice {
   admissionNo: string | null;
   feeStructureName: string | null;
 }
-export interface FeePaymentRow extends FeePayment {}
+export type FeePaymentRow = FeePayment;
 
 /** Which referenceable table an FK points at (for friendly-400 pre-checks). */
 export type FeeRefTable =

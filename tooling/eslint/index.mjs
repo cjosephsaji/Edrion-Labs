@@ -28,9 +28,15 @@ export const base = [
   {
     ignores: [
       'dist/**',
+      '**/dist/**',
       '.next/**',
       '**/.next/**',
+      '.next-dev/**',
+      '**/.next-dev/**',
+      '**/.next-petros-verification/**',
+      '**/.next-petros-verification-dev/**',
       'coverage/**',
+      '**/coverage/**',
       'node_modules/**',
       '**/*.config.*',
       '**/._*',

@@ -1,0 +1,1179 @@
+{
+  "generatedAt": "2026-10-03T08:55:52.502536+00:00",
+  "source": "55f11e10edaca878b246fa62061029822cb74728569ca5581c96148d1f4dc8de",
+  "evidenceClass": "synthetic actual-service/repository assertions; controlled providers/transports",
+  "execution": {
+    "command": [
+      "env",
+      "PETROS_PHASE5_QUALITY_ARTIFACT=/Volumes/Chris/Edrion Labs/docs/verification/petros-phase5-20261003/production-quality-performance-final.json",
+      "pnpm",
+      "--filter",
+      "@edrion/api",
+      "exec",
+      "vitest",
+      "run",
+      "src/modules/student/petros-session-intent",
+      "src/modules/student/materials",
+      "src/modules/student/knowledge",
+      "src/modules/student/petros-loop",
+      "src/modules/student/petros-input-modes",
+      "src/modules/student/petros-companion",
+      "src/modules/student/petros-artifacts",
+      "src/modules/student/petros-reflection",
+      "src/modules/petros-ai-routing",
+      "src/modules/petros-learner-model",
+      "src/modules/petros-institutional",
+      "src/modules/petros-topic-profiles",
+      "src/modules/integrations",
+      "src/modules/federation",
+      "src/modules/portal/courses",
+      "src/modules/student/courses",
+      "src/common",
+      "src/modules/student/petros-continuity",
+      "src/modules/student/assignments",
+      "src/modules/portal/course-content",
+      "src/modules/portal/assignments",
+      "src/modules/petros-quality",
+      "--pool=forks",
+      "--poolOptions.forks.singleFork=true",
+      "--testTimeout=30000"
+    ],
+    "start": "2026-10-03T08:47:33.843227+00:00",
+    "end": "2026-10-03T08:50:22.552394+00:00",
+    "exitCode": 0,
+    "overrides": {
+      "PETROS_LOCAL_DB_TESTS": "1",
+      "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+    }
+  },
+  "rawLog": {
+    "path": "docs/verification/petros-phase5-20261003/final-r5-api.log",
+    "sha256": "72ce3599a8422f8ff7d08d93858a6150b0759704d9e846a4dcbef4b6c7ba21be"
+  },
+  "executedFiles": [
+    {
+      "path": "apps/api/src/common/all-exceptions.filter.spec.ts",
+      "sha256": "e852927c09ef8a90fb4fc99729c72940335ea03b167c32c3f8f155d7b7640cd6",
+      "passedTests": 6,
+      "declaredCaseNames": [
+        "passes through an HttpException envelope (code + message)",
+        "passes through activeSessionId on conflict responses",
+        "maps an express payload-too-large error to 413 PAYLOAD_TOO_LARGE",
+        "maps a malformed-body parse error to 400 BAD_REQUEST",
+        "falls back to 500 INTERNAL_ERROR for an unknown error without leaking detail",
+        "does NOT capture client errors (4xx) to the error sink"
+      ]
+    },
+    {
+      "path": "apps/api/src/common/guards/auth.guard.spec.ts",
+      "sha256": "bc5d0a9a017e2423716fe80fca2d004a5703e6af1f940e92adcc1f8147c362e8",
+      "passedTests": 5,
+      "declaredCaseNames": [
+        "lets a public route through without auth",
+        "rejects a request with no cookie and dev header disabled (401)",
+        "resolves via the session cookie by default",
+        "uses the dev header only when AUTH_DEV_HEADER is enabled",
+        "falls back to the cookie when dev header is enabled but no header is sent"
+      ]
+    },
+    {
+      "path": "apps/api/src/common/guards/permissions.guard.spec.ts",
+      "sha256": "532f6a86e1bb27dd50b34793b35c47b39d2c91d42a8527143c9c76630b563b2e",
+      "passedTests": 10,
+      "declaredCaseNames": [
+        "allows a handler with no required permissions (even unauthenticated)",
+        "rejects when there is no resolved principal but a permission is required",
+        "rejects when the principal is missing a required permission",
+        "allows when the principal holds a non-sensitive required permission",
+        "honours the wildcard permission",
+        "allows a sensitive action with recent auth",
+        "rejects a sensitive action with stale auth",
+        "rejects a sensitive action when the principal has never re-authed",
+        "skips the recent-auth gate entirely when RECENT_AUTH_ENABLED is false",
+        "enforces recent auth when a handler opts in explicitly on a non-sensitive permission"
+      ]
+    },
+    {
+      "path": "apps/api/src/common/guards/rate-limit.guard.spec.ts",
+      "sha256": "9c4bc7d10c26c80e30b83590ee0b7fe7f26ae16a3211d4757a1a2836ae650bff",
+      "passedTests": 7,
+      "declaredCaseNames": [
+        "allows when under the limit",
+        "throws 429 when over the per-principal limit",
+        "applies the tighter unauth cap when there is no principal",
+        "fails open when Redis returns null (unavailable)",
+        "respects @SkipRateLimit",
+        "honours a per-handler @RateLimit override",
+        "is disabled when RATE_LIMIT_ENABLED is false"
+      ]
+    },
+    {
+      "path": "apps/api/src/common/idempotency.service.spec.ts",
+      "sha256": "4c66b8f95eed4bb463b2257b03179d8af30af08b5a9c69895dbe5aa378e2dfde",
+      "passedTests": 3,
+      "declaredCaseNames": [
+        "replays from the Redis cache without touching the database",
+        "runs the operation on first use and caches the result in Redis",
+        "runs without replay protection when no key is supplied"
+      ]
+    },
+    {
+      "path": "apps/api/src/common/jwt.spec.ts",
+      "sha256": "c3eede3857650301d3b9dde52c642bc8880711d4099f01873a4bd243876e6b04",
+      "passedTests": 6,
+      "declaredCaseNames": [
+        "round-trips a payload",
+        "rejects a token signed with a different secret",
+        "rejects a tampered payload",
+        "rejects an alg:none / algorithm-confusion token",
+        "rejects an expired token (beyond clock skew)",
+        "rejects a malformed token"
+      ]
+    },
+    {
+      "path": "apps/api/src/common/petros-runtime-metrics.spec.ts",
+      "sha256": "c450d9b218a74f2c80a6b45eb2274a2fcbde8aa79018c3b4714bf41ffbb36f42",
+      "passedTests": 1,
+      "declaredCaseNames": [
+        "retains a bounded distribution and counts failures without retaining arguments"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/federation/federation.service.spec.ts",
+      "sha256": "47550bd406914f873a9087d1f4642280c1cafc0a111d4538f250fa50003483d1",
+      "passedTests": 3,
+      "declaredCaseNames": [
+        "V11-05 disables OIDC and SAML start/callback before provider, network, or session effects"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/federation/oneroster-csv.spec.ts",
+      "sha256": "6ad6e3e90294ea392153cdfe63bc7d30c1d24a95608c1dda45bf1773a6c381ed",
+      "passedTests": 2,
+      "declaredCaseNames": [
+        "parses a minimal users file",
+        "returns empty when header missing sourcedId"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/federation/saml-sp.service.spec.ts",
+      "sha256": "f0213f2368ff421d8788a33a8a7297fabbe2ac0a0533dec77cb5fff292719110",
+      "passedTests": 1,
+      "declaredCaseNames": [
+        "builds a SAML client"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-adaptive-journey.integration.spec.ts",
+      "sha256": "af9ee5121a10cef226e7a07d6de353f55815fd85fac1d7370de181830950516c",
+      "passedTests": 2,
+      "declaredCaseNames": [
+        "explains, records a confident error, changes explanation, evaluates an unseen application once and advances to synthesis",
+        "retains displayed but unanswered transfer exposure across reviewed pack versions"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-assignment-authority.integration.spec.ts",
+      "sha256": "37afd5c787f2fa5bb8646cc2087708d7a49451f52f5dbb2b99d418d08cfdc5c2",
+      "passedTests": 7,
+      "declaredCaseNames": [
+        "previews and publishes one exact objective through every current authority owner",
+        "supports the bounded document target and denies an unowned journey target",
+        "rejects partial locator publication and accepts only the complete reviewed pack scope",
+        "fails closed on a previously stored partial or mismatched assignment target",
+        "rejects a commit candidate whose target was rebound to a different session",
+        "rejects revoked live permission, membership, source, and reviewer authority",
+        "rejects publication after current S9 policy changes from the reviewed preview"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-assignment-learning.integration.spec.ts",
+      "sha256": "087a01f519de365a53be660a4c9fb712c5099c8698f2eca7630ede18644cb87d",
+      "passedTests": 4,
+      "declaredCaseNames": [
+        "atomically publishes target, recipient, receipt, outbox and audit; replays simultaneous lost replies",
+        "rolls back every publication write if audit fails and allows exact retry",
+        "rejects stale preview and current permission, source and assignment restrictions before writes",
+        "keeps full publication payloads teacher-only and immutable, with only the owner binding readable by a student"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-compatibility.integration.spec.ts",
+      "sha256": "30575aaf6b733078b1731959b8878e8dd2f7982316fba33c4279f0dae482aa6e",
+      "passedTests": 10,
+      "declaredCaseNames": [
+        "confines identity-provider secrets to the current institution for edrion_app",
+        "keeps roster preview history immutable for application and migration roles",
+        "executes every whitelisted canonical owner query using the application role",
+        "uses signed live sessions and production permission checks at the HTTP boundary",
+        "proposes, approves, retries and resolves provider mappings through authenticated HTTP",
+        "keeps external synchronization and both SSO protocols disabled without issuing sessions or calling providers",
+        "preserves legacy roster responses while negotiated CSV preview stays read-only",
+        "strictly bounds negotiated CSV and rejects padding, quoting and duplicate identities",
+        "writes reviewed curriculum via HTTP and exposes only approved records in the raw student response",
+        "keeps instructor and student legacy syllabus shapes and denies unrelated course reads"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-curriculum-closure.integration.spec.ts",
+      "sha256": "89ac31fc2ac254de3d187326f1f8678decbaccb5620d52830fd205d252eb3592",
+      "passedTests": 12,
+      "declaredCaseNames": [
+        "projects the complete approved reference closure and every alignment state through raw student HTTP",
+        "fails closed for withdrawn and foreign students without curriculum disclosure",
+        "denies inactive, reassigned and campus-excluded instructors at the real guard/service boundary",
+        "does not let course management or an instructor assignment substitute for direct syllabus access",
+        "enforces route-specific recent-auth and MFA before an alignment review",
+        "rejects direct approval without a prior proposal without writing a record, revision or audit",
+        "preserves curriculum identity when a syllabus update changes coverage only",
+        "marks an approved superseded release stale until it is explicitly proposed and reviewed against the replacement",
+        "retains immutable record/history rows after explicit rejection and manifest removal",
+        "returns content-free unmapped, stale and unsupported student states",
+        "rolls back records, manifest, syllabus and audit on each downstream write failure",
+        "serializes overlapping HTTP writers so exactly one revision commits"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-learning-artifacts.integration.spec.ts",
+      "sha256": "217116a124263917db23ff0165f32892b295cfe8e70d33703fb35ded64f06dd8",
+      "passedTests": 8,
+      "declaredCaseNames": [
+        "saves once with exact provenance, records delayed self-review once, and rejects stale resume without mastery writes",
+        "serializes resume behind review without holding a conflicting artifact row lock",
+        "rolls back the product, selected-save and provenance receipt if binding audit fails",
+        "shares a draft, records qualified feedback, revises and explicitly reviews; changed work invalidates approval",
+        "retains an explicit educator denial without treating the revision as approved evidence",
+        "rejects a changed current rubric independently of unchanged pack and objective identifiers",
+        "invalidates stored feedback and approval when homework.grade is revoked without changing staff or qualification",
+        "shares only decisions and evidence recorded by submission time through both inspection and teacher RLS"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-objective-evidence.integration.spec.ts",
+      "sha256": "a1407e679f73c88b9d00759dc21e7a566bbb59cdb043ad6eab99b6c2421fedb2",
+      "passedTests": 4,
+      "declaredCaseNames": [
+        "appends exactly once with outbox and projection, rebuilds and consumes duplicate deliveries idempotently",
+        "rejects corrections of different responses and distinguishes hinted/repeated work without projecting mastery",
+        "adds a help disclosure correction to the same response, retains its judgment and rebuilds honestly",
+        "rolls back evidence, receipt, outbox and projection on audit failure; denies replay after source revocation"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-pack-authority.integration.spec.ts",
+      "sha256": "b478a7b0914a82e6cad6acdaa5922702a1e3693bbf22931e4a1153409d7ae956",
+      "passedTests": 6,
+      "declaredCaseNames": [
+        "resolves exact source and curriculum; refuses unreviewed/unqualified, then consumes explicit qualified approval",
+        "fails after reviewer qualification revocation and hides stale payloads at the student RLS boundary",
+        "rejects source revocation, membership loss, changed payload and unsupported compiler",
+        "rejects a structurally valid candidate when any selectable task cannot render",
+        "rejects a legacy stored candidate that cannot render before review or current-pack admission",
+        "does not silently rebind an approved session to a newer pack or curriculum revision"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase1-final-journey.integration.spec.ts",
+      "sha256": "eb8027ba8a798759afaf59e49837d0191ac621af8099b281b562274c88698816",
+      "passedTests": 1,
+      "declaredCaseNames": [
+        "combines the literal S1-S11 source, durable gateway, recovery, visual, assessment, roster, syllabus, SSO, instructor, student and voice paths"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase2-full-journey.integration.spec.ts",
+      "sha256": "6fff85e7980714647c8158364924d718e90e3024b318f7d7e9a352327267384a",
+      "passedTests": 1,
+      "declaredCaseNames": [
+        "teaches, adapts, simulates, records bounded evidence, reviews a revision and resumes honestly"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase2-http.integration.spec.ts",
+      "sha256": "1f55a7c9a1b3ec8614d3929e15823fb76ca10a0554238487be6fadfe7dd2b691",
+      "passedTests": 1,
+      "declaredCaseNames": [
+        "enforces cookies, permissions, tenant scope and default-off gates across the Phase 2 HTTP journey"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase2-migration.integration.spec.ts",
+      "sha256": "8887be1f134501e57eac09bef3c6c93cfe15b9c40a2dfa5d2ac4a2615ee6616a",
+      "passedTests": 1,
+      "declaredCaseNames": [
+        "applies the checked-in migration journal and enforces tenant scope through edrion_app"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase2-owner-links.integration.spec.ts",
+      "sha256": "5b42402ea87156452f17569a3010cb1cd8023253557ee5fcf8d9f279c270206e",
+      "passedTests": 1,
+      "declaredCaseNames": [
+        "rejects forged sharing rows and references to another learner or tenant"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase3-journey.integration.spec.ts",
+      "sha256": "00beaa54671e5da76c65377c23488582e2d6b7567d1d8b1435b7dcb5d3bb56d4",
+      "passedTests": 5,
+      "declaredCaseNames": [
+        "keeps an approved misconception-bound projectile lesson resumable, replay-safe and explicitly branchable",
+        "runs pendulum, DC and RC models plus a held-out replacement under source-primary authority",
+        "denies a changed assignment answer restriction, portal revocation and permission revocation",
+        "resolves concurrent canonical-profile identity creation across separate app-role transactions",
+        "checks migration 0227 grants/RLS, removes its objects transactionally and reapplies it"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase4-cohort.integration.spec.ts",
+      "sha256": "047d3dd308c3374c38bf9613196435c013a468f0b64b697845bd20da1e56365c",
+      "passedTests": 1,
+      "declaredCaseNames": [
+        "counts accepted current attempts and successes, then suppresses on tighter live policy and roster removal"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase4-continuity.integration.spec.ts",
+      "sha256": "164bc821379ffff455086a881afacfbaa371715e5affa8f270ca140b6972bad1",
+      "passedTests": 8,
+      "declaredCaseNames": [
+        "preserves existing session identity and serializes journey conflicts/receipts",
+        "corrects and forgets explicit source memory without retry or raw SQL resurrection",
+        "links a persisted companion question atomically, preserves current workspace references, and prevents delayed resurrection",
+        "denies sensitive/unsupported memory and hypotheses without validated references",
+        "resets populated topic memory atomically and exact retries cannot resurrect it",
+        "rolls back record, revision and receipt when audit fails, then safely retries",
+        "rechecks source revocation on resume/context/recommendations and allows forgetting",
+        "excludes expiry using a controlled clock, preserves evidence notice and default-off capability"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase4-institutional.integration.spec.ts",
+      "sha256": "ed4e3866f8b2873572ecc2300fde70c88747e7026239111e3babf409dafa87aa",
+      "passedTests": 4,
+      "declaredCaseNames": [
+        "previews/reviews/publishes correction through current material owner and preserves superseded extraction history",
+        "approves once using current canonical audience and denies revoked/expired/cancelled student delivery",
+        "rolls back a reviewed correction on publication audit failure and retries its exact command",
+        "rolls back correction and assignment effects on audit failure, and tests default-off/guardian/private-tenant denial"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase4-journey.integration.spec.ts",
+      "sha256": "548fcae911a8a57523efc99ade677878d669543b326b5940ec92627be03e56a7",
+      "passedTests": 4,
+      "declaredCaseNames": [
+        "completes one owner journey from reviewed source through workspace/notebook/memory/next-day review/cohort/intervention/correction/revocation",
+        "reconciles only canonical private notes once, lost replies duplicate and stale state remains for review",
+        "atomically rolls back normal workspace effect and queue receipt when audit fails",
+        "rejects delayed context after forget and exposes typed source/scene refs only to current owner"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase4-migration.integration.spec.ts",
+      "sha256": "6a5f256d4f922699b516158f15becc0ee1f93003e00944a380264f5d7891fec4",
+      "passedTests": 1,
+      "declaredCaseNames": [
+        "reapplies both Phase4 migrations and preserves FORCE RLS and immutable app-role grants"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase5-gateway.integration.spec.ts",
+      "sha256": "0752b402ff8b1d95d8c33ce9cc791760cc2dbd63440b003342f28bdc7c3f9ca9",
+      "passedTests": 1,
+      "declaredCaseNames": [
+        "rechecks release on each real dispatch, settles cost once across disable race, and allows only exact rollback"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase5-operations.integration.spec.ts",
+      "sha256": "b5894a37ac4e9c4ad098bfa6c27bea22c7758a25b421bd1cc18bafc45660c780",
+      "passedTests": 1,
+      "declaredCaseNames": [
+        "aggregates provider attempts and all-age holds across owners without exposing content or IDs"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase5-pilot.integration.spec.ts",
+      "sha256": "0078800adcb29616ccc23becd9da3e176e97468436d67b72a963938edb4617c1",
+      "passedTests": 3,
+      "declaredCaseNames": [
+        "never admits a real pilot; collector is disabled, test-only, minimal and stable across mutable preferences",
+        "uses atomic audit-backed receipts under concurrent devices and rejects both foreign owners/tenants and revoked source",
+        "cannot collect if the test bootstrap authority is absent even when configuration says test"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase5-quality.integration.spec.ts",
+      "sha256": "403f2268f151bc1e03376ca78feb206fbb558acb9edcb55a3dc2a41c1c7223ad",
+      "passedTests": 1,
+      "declaredCaseNames": [
+        "evaluates current source and teaching owners for two learners in two tenants and emits content-free latency evidence"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase5-recovery.integration.spec.ts",
+      "sha256": "6de86ddfd854f9d86eb5251fc179d990fe39248c167dc8b588a318525859910e",
+      "passedTests": 1,
+      "declaredCaseNames": [
+        "replays concurrent admissions, cancels late replies, rolls back receipt failure and fences expired claims under current authority"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-phase5-release.integration.spec.ts",
+      "sha256": "bfee6c15f2c4a19f13e000ae6e73f5e38dadc9b163a8628871372cde6dabf3e8",
+      "passedTests": 7,
+      "declaredCaseNames": [
+        "imports and registers matching immutable identities, activates through the routing owner, and exposes only content-free status",
+        "rejects missing, invalid, failing, over-budget, expired, mismatched, stale-prompt, and unknown-rollback evidence",
+        "fails closed on identity, provider options, route, routing rule, budget, and function configuration drift",
+        "binds provider options, route overrides, routing rules, and budget policies through their routing owners",
+        "rolls back report insertion when the real audit write fails, then allows retry",
+        "disablement blocks candidate reactivation/runtime while allowing only the exact evaluated rollback",
+        "replays migration 0230 with identical FORCE RLS, app-role grants, immutability, and no PUBLIC function grant"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-projectile-commands.integration.spec.ts",
+      "sha256": "cd86ec5bc7e263d55fbf42af30bf978dcbe3888dd4ef9df8222cb944e7231294",
+      "passedTests": 6,
+      "declaredCaseNames": [
+        "commits checkpoint/event/audit/receipt together and replays lost replies without writes",
+        "waits for policy before locking the session while the loop acquires its planning lease",
+        "rolls back all four writes when audit fails, and permits exact retry",
+        "records cancellation tombstone and never executes a cancelled or aborted command",
+        "rechecks changed authority on retry and rejects foreign student plus invalid solver/units without writes",
+        "keeps receipts and source bindings immutable for application and administrative writes"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-provider-mapping-closure.integration.spec.ts",
+      "sha256": "2e8c0bfc87ec560b5bc6f7d4712cb5d487157a04d48c96816417548e9f256aac",
+      "passedTests": 10,
+      "declaredCaseNames": [
+        "uses a signed session and restricted RLS path for rejected, tombstoned, and effective-window states",
+        "denies campus scope, unrelated authority, student, independent, and foreign tenants without mutations",
+        "rejects a changed same-command replay without a second mapping or audit event",
+        "uses exact namespace identity and never auto-merges a canonical email or name",
+        "fails closed after a connection is disabled or reconfigured without appending",
+        "fails closed for missing and changed canonical owners",
+        "reports unsupported stored records and blocks appending over them",
+        "serializes a true concurrent revision race through the restricted connection",
+        "rolls the mapping append back when the real database audit insert fails",
+        "leaves identity, provider, role, student, and enrollment state byte-for-byte unchanged"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-v10-migration.spec.ts",
+      "sha256": "9f7161e32ed3e7bc6bd0d5eb427f02ff0ed6a9eacf635e9cbd945b91fa4ca69c",
+      "passedTests": 3,
+      "declaredCaseNames": [
+        "journals the additive repair after the compatibility contracts",
+        "forces tenant RLS on identity-provider secrets and denies student/independent contexts",
+        "blocks roster-history deletion in both trigger and final grant reapplication"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/petros-workspace.integration.spec.ts",
+      "sha256": "82a39985bd0e0c593ba8dae710d73dc0658e0e7bea803fd450ed69b461d080b0",
+      "passedTests": 12,
+      "declaredCaseNames": [
+        "registers no-store POST issue/answer routes behind the existing student owner boundary",
+        "uses real source, pack, policy and auth owners; commits atomic immutable receipts and replays a lost reply",
+        "rolls back checkpoint, receipt, event and audit on failure; cancellation tombstone wins",
+        "branches only from a loaded owner checkpoint and rejects stale or changed commands",
+        "maps malformed versions, unsupported units and forged capabilities to 400 without committing",
+        "rechecks portal and real reviewer authority even for stored read and exact retry",
+        "admits a registry-validated pendulum comparison only under current source-primary policy",
+        "issues an idempotent hidden prediction criterion and records an uncertain observation without mastery",
+        "rejects an answer pinned to a checkpoint made stale by later exploration",
+        "rechecks the current workspace after waiting for the locked teaching block",
+        "rolls back challenge/response, observation and audit together on audit failure",
+        "rechecks current review authority and denies foreign-owner issue/answer reads"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/integrations/provider-mappings.service.spec.ts",
+      "sha256": "892ecea0ff4db9aa14508f9b9280cb1730b8f9f318da85babcedd0316916231a",
+      "passedTests": 12,
+      "declaredCaseNames": [
+        "allows an institution-wide reviewer only with integration and canonical-owner permissions",
+        "does not disclose a foreign-tenant connection",
+        "requires the same current proposal before approval",
+        "handles exact replay, changed replay, version conflict, and stale replay",
+        "refuses approval after the connection is disabled",
+        "keeps preview bounded and read-only with applied zero",
+        "propagates audit rejection so the enclosing tenant transaction rolls back the append"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/petros-ai-routing/petros-ai-gateway.service.spec.ts",
+      "sha256": "90998c00256d3654e408e0c0872ebb58c87c0daeaf177ffdd8a7675fc39b3eb3",
+      "passedTests": 38,
+      "declaredCaseNames": [
+        "preserves authority denial when zero-release fails and never marks or dispatches the hold",
+        "reserves before the provider and charges an ambiguous transport failure to the full hold",
+        "does not invoke a provider when atomic budget admission is denied",
+        "releases a hold when cancellation wins after reservation but before provider dispatch",
+        "classifies a missing eligible route as an infrastructure gateway failure",
+        "retries an invalid structured response and then uses the configured fallback route",
+        "preserves the application citation contract through an activated prompt and disables cache reads and writes",
+        "preserves trusted prompt guidance while passing dynamic context as untrusted provider data and keys cache by owner revisions"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/petros-ai-routing/petros-provider-adapters.spec.ts",
+      "sha256": "555e7d7f24e371fa942c89d9048ef00ea5a6d6c8aab7df7e143f287d4147daf3",
+      "passedTests": 14,
+      "declaredCaseNames": [
+        "meters Groq transcription by audio duration",
+        "meters OpenAI speech synthesis by submitted characters",
+        "does not invent a price when modality pricing is absent",
+        "selects the exact schema branch for specific teaching render functions",
+        "removes Gemini compiler-heavy array bounds from teach-back analysis guidance",
+        "keeps legacy TTS requests compatible with their supported voices"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/petros-ai-routing/petros-response-validator.spec.ts",
+      "sha256": "827f4a901f8af3b18c638cbe3e1da7456184ff287cebd55a9a39fb717868795d",
+      "passedTests": 4,
+      "declaredCaseNames": [
+        "parses fenced JSON without accepting malformed output",
+        "reports missing and invalid fields",
+        "validates dynamic record values through additionalProperties schemas",
+        "validates UUID and date-time formats used by Petros contracts"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/petros-ai-routing/petros-routing-engine.spec.ts",
+      "sha256": "c46f6d4a0a741e90d5dffb70c0d295a0f687c859f709460d03a26ff21c23fa62",
+      "passedTests": 7,
+      "declaredCaseNames": [
+        "orders the chosen route, same-tier experiment alternate, then fallback",
+        "uses cost preference after the configured budget threshold",
+        "routes difficult, repeatedly failed work to the explicit quality model",
+        "removes paused, unhealthy, over-budget, and incapable candidates",
+        "requires modality-specific OCR capability and preserves a compatible fallback",
+        "reserves the configured per-request maximum before dispatch",
+        "preserves essential functions while stopping non-essential work at 100%"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/petros-institutional/petros-institutional.engine.spec.ts",
+      "sha256": "9a5b15ff82dceb2503bbcd1eef144f879793366640cfbcf25e6c09b8c5829fbe",
+      "passedTests": 6,
+      "declaredCaseNames": [
+        "applies effective platform/institution/campus/subject precedence and leaves future schedules inactive",
+        "keeps a superseded version effective until its scheduled cutoff",
+        "enforces in-bound, depth-limited and out-of-bound syllabus paths without an empty refusal",
+        "changes teaching shape only for a related covered assignment in its authoritative window",
+        "suppresses small cohorts without a concept, identifiers, evidence or rankings",
+        "scrubs forbidden keys and values from handoffs and parent digests"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/petros-institutional/petros-institutional.jobs.spec.ts",
+      "sha256": "c599212e10894946013b1680095421668546380fc09f6e7284af91409d042776",
+      "passedTests": 2,
+      "declaredCaseNames": [
+        "registers and tracks an idempotent repeatable queue sweep",
+        "uses and tears down an in-process sweep when queues are disabled"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/petros-institutional/petros-institutional.permissions.spec.ts",
+      "sha256": "3efde91137460148a4163d114ce4959475bc9a046277324ab10d0cc8d736208c",
+      "passedTests": 2,
+      "declaredCaseNames": [
+        "separates policy viewing, policy mutation, and teacher-support permissions",
+        "gates aggregate operations and requires recent authentication for job mutation"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/petros-institutional/petros-institutional.service.spec.ts",
+      "sha256": "0612c20b620bccb043baf708b50ef3cb4e290f10ba49a0f614d9d3867e9f768e",
+      "passedTests": 6,
+      "declaredCaseNames": [
+        "creates one owner-scoped snapshot and keeps it stable after policy data changes",
+        "refuses cross-owner snapshot creation before reading or persisting policy",
+        "offers an evidence-bounded, correctly routed handoff only after the struggle threshold",
+        "hard-disables new Petros guardian outputs even when older digest policy is enabled",
+        "does not deliver queued Petros guardian digests from the worker",
+        "keeps guardian delivery disabled regardless of stored digest channel"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/petros-institutional/petros-knowledge-policy.spec.ts",
+      "sha256": "b737ee47748092d420f8bb306f897972f5d0eba1afc55c8459baede2a61fabb6",
+      "passedTests": 4,
+      "declaredCaseNames": [
+        "adapts legacy booleans conservatively and requires explicit general permission",
+        "never broadens institution restrictions through a subject override, inactive or foreign policy",
+        "intersects binding source and topic scopes instead of clearing an empty intersection",
+        "hashes stored JSON consistently and keeps allowance, safety, abuse and academic denials distinct"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/petros-learner-model/petros-learner-model.engine.spec.ts",
+      "sha256": "9f96c375f1fdfe1403193a071e060051983b71f0932762b15fe15cdbd2fdb146",
+      "passedTests": 8,
+      "declaredCaseNames": [
+        "updates mastery with recency, separate recall/application, uncertainty, and reproducible output",
+        "requires minimum evidence before durable pace/depth or move personalization",
+        "keeps move outcomes distinct by topic/profile context and gives different error remedies",
+        "records all sure/think-so/guessing \u00d7 correct/partial/wrong calibration buckets",
+        "cannot contaminate production summaries with synthetic/evaluation evidence",
+        "normalizes quiz, mock, exam, assignment, and homework source records",
+        "gives two seeded learners measurably different same-topic PLAN moves with traceable reasons",
+        "lets a current-session concise override beat an inferred deep preference"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/petros-learner-model/petros-learner-model.permissions.spec.ts",
+      "sha256": "485a34be760f54893a133527fb45a48d7c9be0c86c649a85317b65781e15c1f9",
+      "passedTests": 2,
+      "declaredCaseNames": [
+        "marks identifiable reads ai.view and every mutation ai.configure",
+        "denies a support principal without ai.view before controller execution"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/petros-learner-model/petros-learner-model.service.spec.ts",
+      "sha256": "c0593fa6b71a200dd691a918aecc7f783f84dffd347aa52b5a657fff6cc55a1e",
+      "passedTests": 16,
+      "declaredCaseNames": [
+        "normalizes new objective evidence into the existing projection while retaining its typed assessment",
+        "is idempotent and recomputes only for a newly inserted source event",
+        "validates the whole batch before writing and rejects corrupt projection data during rebuild",
+        "rejects synthetic evaluation evidence before any student-scoped write",
+        "rejects a student and institution mismatch before reading or writing model data",
+        "quarantines a classifier failure without rebuilding or corrupting summaries",
+        "runs a replayable rebuild, supports explicit algorithm rollback, and retries failed jobs",
+        "provides audited export and irreversible deletion hooks"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/petros-learner-model/petros-learning-source-ingestion.service.spec.ts",
+      "sha256": "62751a06ced4a40245176c51c5383842318bcefcf09578d0a6a4435978c54f2a",
+      "passedTests": 4,
+      "declaredCaseNames": [
+        "publishes a completed exam answer once with exact durable linkage",
+        "publishes graded assignment and homework records from their authoritative rows",
+        "syncs persisted library quiz and mock exam results and audits the operation",
+        "never invalidates an assessment commit when learner delivery fails"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/petros-learner-model/petros-objective-evidence.service.spec.ts",
+      "sha256": "99971b5c5794e56a943ec144df8c5454bb34677c1e7e4f3efac0a84153829bcf",
+      "passedTests": 2,
+      "declaredCaseNames": [
+        "removes a superseded event and admits only active eligible events",
+        "produces the same hash on a repeated rebuild and does not expose mastery"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/petros-quality/petros-operations.service.spec.ts",
+      "sha256": "2703c3112048f42d0a7b1c9e65eb1d320619a600fa9cfd1fc5590d2365d2a6a0",
+      "passedTests": 3,
+      "declaredCaseNames": [
+        "returns bounded aggregates and omits raw identifiers, messages, payloads and unknown categories",
+        "bounds Redis outage waits and reuses the one pending queue-count request",
+        "reports queue service disabled without attempting Redis calls"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/petros-quality/petros-quality.service.spec.ts",
+      "sha256": "370ce9a97e709aed0edcd622601243076c307250c52b96bb11261a6613467fd8",
+      "passedTests": 8,
+      "declaredCaseNames": [
+        "imports only isolated evaluation reports and writes an audit-backed immutable run",
+        "rejects synthetic reports that claim production writes",
+        "never silently overwrites an existing run",
+        "blocks promotion of a failing candidate",
+        "records safe rerun intent without creating a learner job",
+        "feeds persona observations back into PLAN and completes the production struggle ladder",
+        "makes a relevant detour causally visible to the next PLAN call",
+        "enforces the per-session live evaluation cost cap"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/petros-topic-profiles/petros-topic-profiles.repository.spec.ts",
+      "sha256": "1e98c89cfa47a10f5d303accc44410be300c9961f6ee77bafa4c104924160e8a",
+      "passedTests": 2,
+      "declaredCaseNames": [
+        "reads the winning identity after a concurrent create wins the unique constraint",
+        "rejects a cache-key collision when no row has the requested identity"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/petros-topic-profiles/petros-topic-profiles.service.spec.ts",
+      "sha256": "ca48f37b397bdb8623893a1bc2f2a8dfa9bf466a8029592e2a757767f50a6f71",
+      "passedTests": 5,
+      "declaredCaseNames": [
+        "coalesces concurrent session bootstraps for the same topic identity",
+        "applies a published override only to its institution",
+        "regenerates once after invalidation, then hard-hits the cache without replacing human publication",
+        "rejects a stale reviewer version before writing",
+        "restores a prior version as a new auditable version and publishes it optimistically"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/portal/courses/course-curriculum.spec.ts",
+      "sha256": "8dd58be2197086da6248d8cc4ad77c07fe5148202718563e0bbd427ed251ed95",
+      "passedTests": 4,
+      "declaredCaseNames": [
+        "is stable across module order and coverage-only changes",
+        "becomes stale when curriculum-bearing syllabus identity changes",
+        "requires an explicit reason when rejecting a proposal",
+        "retains the reason requirement when replacing an approved decision"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/knowledge/knowledge-document-retrieval.spec.ts",
+      "sha256": "ef985d8a8ad7ec653e15a8e7b053e480f4ddfee5bdfdd50df995b0a14ca4c9ba",
+      "passedTests": 7,
+      "declaredCaseNames": [
+        "finds evidence beyond the preview prefix and preserves exact UTF-16 locators and stable span identity",
+        "ranks relevant evidence, excludes unselected/unavailable pages and reports all omitted coverage",
+        "returns absence explicitly rather than selecting an unrelated passage, including stopword-only queries",
+        "bounds long sentences and results, reports clipped boundaries and omitted matches, and never cuts a surrogate pair",
+        "treats embedded instructions as source text and bounds query expansion",
+        "observes cancellation before work and between pages",
+        "searches the admitted 500-page/two-million-character boundary with bounded results"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/knowledge/knowledge-pdf-process.spec.ts",
+      "sha256": "9b0eb9dbb3903e0fbebf1f16524c791590ac00bdb1af0d4e35b1274124090d33",
+      "passedTests": 6,
+      "declaredCaseNames": [
+        "denies credentials, foreign file reads, writes, subprocesses and network access",
+        "kills a stalled process at the wall deadline",
+        "kills excessive output and resident memory",
+        "enforces the OS CPU budget independently of the wall deadline",
+        "cancels an executing process",
+        "rejects malformed PDF input without exposing parser details"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/materials/material-document-preview.service.spec.ts",
+      "sha256": "78ccd7230b73c290f42af57bd43ac07d1bb7c82116abafccb7b7ad442dc3594f",
+      "passedTests": 8,
+      "declaredCaseNames": [
+        "uses verified extracted pages for any Office generation",
+        "extracts readable text from DOCX files",
+        "turns PPTX slides into separate preview pages",
+        "renders XLSX sheets and quoted CSV as tables",
+        "extracts readable strings from legacy Word, PowerPoint, and Excel binaries",
+        "renders Markdown and plain text without treating their contents as HTML",
+        "marks empty fallback prose as unreadable and reports character truncation",
+        "reports XLSX column truncation without overwriting the last visible column"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/materials/material-file-types.spec.ts",
+      "sha256": "1e191a73c98ed6285999fc336f9037a0f4cdb586a50fb7666a0f9f4ac89f38d5",
+      "passedTests": 2,
+      "declaredCaseNames": [
+        "recovers browser-renderable types when raw uploads use application/octet-stream",
+        "recognizes presentations from either filename or media type"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/materials/student-materials.controller.spec.ts",
+      "sha256": "d1b25435a230d913efeb24729f3d809629da4bce113f56d81a78dffb3ba12bd2",
+      "passedTests": 5,
+      "declaredCaseNames": [
+        "serves authenticated previews inline and allows only configured Edrion frames",
+        "keeps the explicit download route as an attachment",
+        "serves a rendered PDF for a presentation preview while preserving the original download",
+        "serves metadata and rendered page images for the built-in document reader",
+        "builds private document previews from the stored file and extracted pages"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-artifacts/petros-artifacts.service.spec.ts",
+      "sha256": "8e346896955db0408ca02547c6d9bd99aa9001c7474306927c914c34015c7c9f",
+      "passedTests": 12,
+      "declaredCaseNames": [
+        "returns proposals separately while owned search remains empty before explicit save",
+        "saves an explicitly reviewed block note into the owned notes product",
+        "rejects executable markup without silently changing the student edit",
+        "requires an explicit editable-bundle selection before commit",
+        "discards the proposal bundle without creating an owned product",
+        "returns an idempotent completed commit without another product write",
+        "revalidates source access before returning a completed save response",
+        "preserves a successful item during partial failure and gives the failed item a retry path",
+        "delivers one learner-evidence event for an idempotent review outcome",
+        "saves a student-edited structured diagram as a new accessible canvas revision",
+        "degrades a missing restricted source honestly and records content-free health evidence",
+        "removes restricted provenance during an approved portable transfer"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-companion/petros-companion.spec.ts",
+      "sha256": "146b57949ec9beb40dea1fa8745d8bf3db0c64eac0784df468a735a4d1991a60",
+      "passedTests": 33,
+      "declaredCaseNames": [
+        "honours humour off absolutely",
+        "suppresses humour on money, marks and attendance whatever the setting",
+        "suppresses humour after a low mark even on an ordinary screen",
+        "suppresses humour when the student sounds under pressure",
+        "allows a light aside during ordinary study",
+        "does not read ordinary study words as distress",
+        "detects a claim that something already happened",
+        "leaves an honest offer alone",
+        "rewrites a claim into an offer when a proposal exists",
+        "retracts the claim entirely when nothing was proposed",
+        "gives the model the clock rather than letting it guess a date",
+        "states plainly that it cannot read an unsupported screen",
+        "refuses to guess which item the student means when nothing is selected",
+        "marks unverified on-screen items as unquotable",
+        "treats record text as data, never as instructions",
+        "forbids the four things Petros must never do",
+        "never lets the model claim an action succeeded",
+        "does not greet twice in one conversation",
+        "starts flat and practical when the student is under pressure",
+        "offers only the actions the caller allows",
+        "says so plainly when no action is available",
+        "uses the student-chosen name and depth",
+        "treats a whole-day request as one complete multi-block plan",
+        "keeps requests to teach the student\u2019s own material out of revision",
+        "requires more than one block when several verified priorities exist",
+        "rejects an action the registry does not define",
+        "rejects a forged off-origin destination",
+        "keeps every state-changing proposal behind a confirmation flag it cannot forge away",
+        "revalidates and starts a selected material as a document lesson",
+        "never rewrites an unsupported route to home",
+        "hides Petros where he must not appear at all",
+        "keeps the embodied tutor beside a live learning session",
+        "routes transient TTS through the governed gateway without caching audio"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-companion/petros-mentor.engine.spec.ts",
+      "sha256": "bca401dff37c91ab3a623acb9a960301992fbf631dc312f0b993a9181b10c04a",
+      "passedTests": 13,
+      "declaredCaseNames": [
+        "puts tomorrow\u2019s exam ahead of a new assignment due next week and an open session",
+        "a submission closing in 47 minutes beats an exam tomorrow, even if skipped",
+        "respects postponement, then returns the task with continuity",
+        "expires skip-for-today at the institution\u2019s midnight, not after 24 hours",
+        "does not reoffer completed work or preparation for past exams",
+        "uses practice evidence and prerequisite value to distinguish equal deadlines",
+        "never calls incomplete records an all-clear",
+        "budgets breaks within the hour and never creates a block below five minutes",
+        "keeps low-energy blocks at fifteen minutes and honours each day independently",
+        "uses local exam dates when placing final preparation blocks",
+        "rejects duplicate dates instead of doubling the available time",
+        "converts published deadlines without relying on the server timezone",
+        "does not mistake an abandoned open session for days of studying"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-companion/petros-mentor.service.spec.ts",
+      "sha256": "a6b7516e2cb9ec49ae289d1949e5b192d42835e0c54e1e71c6e0f9ad48dc5c77",
+      "passedTests": 8,
+      "declaredCaseNames": [
+        "retains deadlines when progress fails and reports the missing evidence",
+        "does not report an empty workload when all remaining suggestions were postponed",
+        "rechecks actual work so submitted tasks drop from the next plan",
+        "keeps quiet-mode preferences while still answering an explicit request",
+        "does not schedule an old weak-topic suggestion after newer learning activity",
+        "does not treat a suggested default budget as availability confirmed by the student",
+        "rejects feedback for a recommendation absent from the student\u2019s authorised records",
+        "rejects study availability in the past without changing saved data"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-input-modes/petros-input-modes.service.spec.ts",
+      "sha256": "36e47bf3cce085f115ca53d19668912eabde4518dce1652e1e5476529d048839",
+      "passedTests": 8,
+      "declaredCaseNames": [
+        "V11-01 checks the durable boundary before hydrating a confirmed voice document",
+        "V11-01 preserves a confirmed non-document voice turn after the document-only gate allows it",
+        "speaks the active prompt without leaking render schema metadata",
+        "makes the student-corrected snapped question the source of truth and starts a bounded Doubt session",
+        "uses a typed question as the source of truth when photo processing has no capable route",
+        "routes voice transcription through the independent speech function and bypasses cache",
+        "creates an exact finite five-minute session and records the explicit expansion guard",
+        "uses the caller tenant and student in every media lookup"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-input-modes/petros-media-safety.spec.ts",
+      "sha256": "73773b752dfe021e998ae56b8acd7f86d4312698f842ac0d3360a11e104db3f0",
+      "passedTests": 5,
+      "declaredCaseNames": [
+        "sniffs MIME, strips location metadata, retains dimensions, and hashes sanitised bytes",
+        "rejects declared MIME mismatches and unsupported content",
+        "quarantines the licensed EICAR test signature in the deterministic test scanner",
+        "fails closed in production when no external scanner is configured",
+        "uses student-bound short-lived signatures and rejects expiry or tampering"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-loop/petros-adaptive.renderer.spec.ts",
+      "sha256": "0ecdce079488f4cc14317c9385dcee7f0a1ebe5659d4666b92d6877099be7de3",
+      "passedTests": 10,
+      "declaredCaseNames": [
+        "preflights and renders every supported adaptive move",
+        "preserves a 2,001-character explanation without a short deeper layer",
+        "maps an empty legacy render field to the bounded admission error"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-loop/petros-loop.policy.spec.ts",
+      "sha256": "a47c7244d8d5d526bde9110a1a3173d98339f57ad656b95f2bbadbfb65f6ca21",
+      "passedTests": 21,
+      "declaredCaseNames": [
+        "produces four structurally different profile-driven sequences",
+        "overrides and logs a third consecutive identical move",
+        "renders a provider-neutral valid fallback block for every planned move",
+        "renders the complete move vocabulary as exact typed blocks",
+        "enforces derivation depth, the two-probe cap, and capability fallback",
+        "keeps every deterministic recall question objectively gradable during an outage",
+        "caps on time and moves and reports pause/close without drifting",
+        "uses a composer observation causally and produces a visible return plan",
+        "schedules an earlier recall after a correct but uncertain observation",
+        "does not misclassify an incorrect answer as correct because the word contains correct",
+        "logs resolved door factors, suppresses the bad-mark hook, and weights exam revision",
+        "carries exact document page references into deterministic teaching blocks",
+        "opens document and assistant doors with directly grounded explanations",
+        "opens a snapped question at the confirmed stuck point without dumping a solution",
+        "teaches the first confirmed handwriting break and preserves a reattempt",
+        "enforces the exact four-move and five-minute promise with no automatic expansion",
+        "changes an active-homework session toward questions and never selects a worked answer",
+        "teaches an uploaded document before checking, then turns it into a diagram",
+        "renders a nonempty legitimate syllabus path for an outside-bound request"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-loop/petros-loop.service.spec.ts",
+      "sha256": "b27b0ba7485584696b7398b899994f4dcd4612cd61793ddaa6262a1fe41c8335",
+      "passedTests": 21,
+      "declaredCaseNames": [
+        "V11-01 gates document composer calls before profile or command mutation",
+        "V11-01 keeps non-document sessions eligible even when both document gates are enabled",
+        "calls PLAN and RENDER separately and creates one traceable block",
+        "does not manufacture a test question for a direct explanation",
+        "budgets the visible plan by checkpoint progress instead of held re-explanations",
+        "uses a provider-neutral deterministic block when every AI route is unavailable",
+        "returns a completed idempotent response without another AI call",
+        "rejects duplicate in-flight planning without revealing internal state",
+        "enforces student/institution ownership and reloads persisted state in a fresh service instance",
+        "lazily upgrades a persisted Stage 2/3 session with a real published profile",
+        "pauses, resumes, and deliberately closes a persisted session",
+        "declares the student.learn.use permission at the controller boundary",
+        "submits answer and confidence atomically while objective evaluation avoids an AI call",
+        "returns an answer command idempotently without evaluating or advancing twice",
+        "rejects a stale concurrent answer before evaluation can advance the ladder",
+        "falls back safely on malformed evaluator output without counting a conceptual failure",
+        "asks an uploaded document question directly and retries it without duplicated ladder wording",
+        "rejoins an active composer detour only after its changed block is completed",
+        "answers a composer interruption immediately and records the exact return point",
+        "rejoins only the confirmed interruption before resuming the lesson",
+        "queues a real re-explanation while holding the current checkpoint"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-loop/petros-observation.policy.spec.ts",
+      "sha256": "717dd7f5003f24183303e99474c3794ca55b601a201c81d80e235d18077f1bd3",
+      "passedTests": 10,
+      "declaredCaseNames": [
+        "moves through hint, missing step, worked solution, and a linked reworded chance exactly once",
+        "closes a reworded stretch on earned success and never reports the earlier failure as the ending",
+        "offers a real pause or teacher path if the post-solution attempt remains stuck",
+        "scores registered choices without AI and treats malformed input as invalid"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-reflection/petros-reflection.engine.spec.ts",
+      "sha256": "9b90c5c12572d6774636236044b0ca2a2c2d8ce395d4f051947e63d1935f5bc2",
+      "passedTests": 7,
+      "declaredCaseNames": [
+        "distinguishes solid, shaky, untouched, and insufficient evidence with freshness",
+        "deduplicates concepts when syllabus and learner evidence provide the same topic",
+        "ranks prerequisite gaps ahead of fragile, due, goal, and first-attempt actions transparently",
+        "hides calibration below eight pairs and derives gentle direction/trend without false precision",
+        "creates one deduplicated uncertainty-labelled alarm only for independent cross-topic evidence",
+        "recaps observed facts, labels inference, notices recovery, and never claims a durable preference",
+        "marks a derivation stale when learner evidence or the published graph advances"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-reflection/petros-reflection.permissions.spec.ts",
+      "sha256": "875d77801ac489a52acb85194ca3f81be2074628e87e7dee215cfb783d63d3ae",
+      "passedTests": 1,
+      "declaredCaseNames": [
+        "gates the aggregate dashboard and requires recent auth for identifiable evidence"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-reflection/petros-reflection.service.spec.ts",
+      "sha256": "1c6d7728e8d83e5e4936c759413bed083df5fa372222f6c3a99e786d778d16e1",
+      "passedTests": 5,
+      "declaredCaseNames": [
+        "scopes learner-controlled recommendation, calibration, recap, and alarm lifecycle writes to both owners",
+        "uses deterministic fallback on provider failure and records invalid structured output as a validation failure",
+        "reuses an existing source hash instead of persisting a duplicate derivation",
+        "exports only the owner-scoped derived view and deletes it without deleting source learner evidence",
+        "keeps operations aggregate-only, audited, and release-gated false even when source rows contain private copy"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-session-intent/petros-document-outline.spec.ts",
+      "sha256": "20143a3f4f3a27fbc44f62438ec0995a61b877dea2c14ac6c6ed0e5ad0ee7ce8",
+      "passedTests": 2,
+      "declaredCaseNames": [
+        "structures pages once into bounded teaching topics with source ranges",
+        "caps large documents at twelve outline topics"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-session-intent/petros-document-source.integration.spec.ts",
+      "sha256": "d0ce5d37478e03c6f23ff923010d0231ecde3738630d0561e2e3c233427b7e39",
+      "passedTests": 99,
+      "declaredCaseNames": [
+        "migrates existing owner/page rows without rewriting them or inventing extraction history",
+        "commits authenticated PDF publication as durable queued work before any parser runs; status/cancel/retry are permissioned",
+        "fences an expired claim, retries a crashed worker and rejects stale publication under real RLS",
+        "bounds concurrent claims across independent workers under the institution transaction",
+        "cancellation interrupts an executing parser and fences a result even when its adapter ignores abort",
+        "bounds poison-file retries, manual recovery and concurrent new-key admission without Redis",
+        "recovers lost dispatch through real BullMQ and a disposable Unix-socket Redis, with missing handlers failing visibly",
+        "preserves S2 snapshots across migration and retains immutable preparation receipts after material deletion",
+        "records malformed and oversized PDF extraction as terminal failure without publishing partial source text",
+        "preserves pre-S5 command rows and enforces durable identity, constraints and old-reader safety",
+        "admits authenticated document work once, rejects mismatched keys and blocks the legacy bypass when enabled",
+        "V11-02 enforces one active legacy-or-durable composer across rollback boundaries",
+        "V11-02 serializes a concurrent rollback legacy command against durable admission without deadlock",
+        "V11-02 blocks direct and authenticated legacy calls behind an unsupported pending execution version",
+        "runs overlapping workers outside tenant transactions and commits one compatible pinned answer and trace",
+        "runs the production gateway, routing, usage and audit repositories under worker RLS without a provider transaction",
+        "atomically admits one of two concurrent attempts at a provider cap, under tenant RLS",
+        "releases known local non-dispatch and reconciles measured failure cost before another attempt",
+        "charges an abandoned fence conservatively before recovery and fails closed without an approved budget",
+        "reconciles an in-flight reservation when the authenticated learner cancels the command",
+        "V11-04 serializes cancellation against reservation without a command-budget lock inversion",
+        "V11-03 releases a failed known-undispatched hold at zero while marked transport remains conservative",
+        "V11-04 reconciles an older dispatched fence exactly once before a no-provider result",
+        "V11-04 rolls back a failed reconciliation before generation and recovers on the next lease",
+        "recovers an expired claim with a higher fence and refuses stale worker completion",
+        "cancels a running provider request, fences its result, and replays lost cancel responses",
+        "denies a generated answer after membership revocation and leaves no committed effects",
+        "fences an adapter that ignores cancellation and permits new work after its old promise settles",
+        "rolls back a post-answer receipt failure and retries once with the same identity",
+        "recovers a graceful worker shutdown from the durable lease without a duplicate answer",
+        "enforces a bounded model deadline without committing an abandoned response",
+        "redelivers durable question IDs through real BullMQ after Redis loss",
+        "retains status and cancellation when execution is disabled and bounds abandoned attempts",
+        "retrieves exact spans beyond preview excerpts through authenticated HTTP with partial coverage and no caller-granted scope",
+        "keeps retrieval pinned across republication and rejects unknown, invalidated, foreign-owner and foreign-tenant versions",
+        "denies retrieved content after membership revocation and keeps legacy/disabled retrieval conservative",
+        "grounds a real lesson question in pinned retrieved spans, commits its trace once and rechecks access on replay",
+        "does not widen a selected-page lesson or call a provider when matching evidence is absent",
+        "deduplicates overlapping question commands under tenant transactions without a second retrieval or answer",
+        "rechecks current entitlement after generation and commits no trace or answer after revocation",
+        "rolls back the answer and retrieval trace together and safely retries the same question key",
+        "pins intents, outlines, sessions and exact historical locators while new starts use the new extraction",
+        "S7 persists actual teaching producer output, validates controls, restores checkpoints and keeps legacy payloads",
+        "S7 persists a novel multi-view composition through the same validator and control service",
+        "S7 serializes duplicate and competing writes; audit failure rolls back and retry recovers",
+        "S7 adapts legacy rows at read time, gates rollback and retains the last validated checkpoint on corruption",
+        "S7 denies unauthenticated, other-owner, other-tenant and revoked-source reads and writes",
+        "S7 rejects malformed generated diagrams through the real render boundary and recovers with the existing fallback",
+        "S9 persists immutable source-bound authority, exact provenance and compatible legacy results",
+        "S9 denies unsupported, unauthorized and client-invented mode authority before work",
+        "S9 missing evidence cannot widen source-bound mode, while permitted curiosity uses labelled general knowledge",
+        "S9 source-primary separates mixed provenance and recovers from a fabricated source unit",
+        "S9 treats instructions in a document or question as data and never a mode grant",
+        "S9 policy changes stop generation commit and deny queued retries without relaxing the pin",
+        "S9 revalidates committed replay, normal session reads and flag-off readers against current policy",
+        "S9 resolves the material subject and denies broader subject overrides and established assignment bypasses",
+        "S9 retains historical topic and established guidance restrictions after current policy or student correction changes",
+        "S9 retains categorized quota denials and fences policy changes before provider retry",
+        "S9 preserves revocation, commit rollback, retry identity and categorized failure recovery",
+        "S8 carries the real objective evaluator through typed persistence into the learner projection and keeps legacy wire compatibility",
+        "S8 retains an unverified fallback assessment without adding a numeric learner observation",
+        "S8 observes hints and equivalent attempts before feedback and excludes assisted/repeated evidence",
+        "S8 rolls back answer, evidence and projection on audit failure and recovers with the same request",
+        "S8 denies client-supplied assessment assertions, revoked sources and unauthenticated writes; default-off retains old evaluation rows",
+        "S8 gates non-objective imports, deduplicates typed evidence, rejects changed replay and enforces storage bounds",
+        "continues a pinned lesson through real planning, rendering and persistence after republication",
+        "deduplicates identical publication and concurrent first extraction under the production tenant transaction",
+        "uses portal scope/version checks and rejects foreign or unavailable republish objects",
+        "enforces immutable complete page sets in PostgreSQL and retries failed publication safely",
+        "invalidates separately from deletion and refuses content replay without reactivating a version",
+        "rechecks course enrollment and isolates historical version/page rows by tenant and owner under RLS",
+        "authenticates HTTP, carries readiness failures, and admits only the selected readable page",
+        "resolves and starts concurrently over authenticated tenant HTTP, persisting the selected topic coverage once",
+        "round-trips new writes through the actual previous strict reader and safely rejects stale rollback previews",
+        "discovers a newly published companion material and executes its confirmed lesson over HTTP",
+        "publishes real PDF text, persists versioned exact citations, reloads, and starts idempotently",
+        "refuses blank/scanned and truncated preview sources while retaining the original file",
+        "allows a bounded readable page and recovers only after missing text is corrected",
+        "invalidates same-length content changes and rejects cached reads after owner/membership loss",
+        "rolls back an existing source version and pages together under the portal tenant transaction",
+        "rolls back the source row when page persistence fails",
+        "Phase 1 integrated source, durable gateway, recovery, visual, assessment and revocation journey",
+        "rejects over-limit files before storage and preserves untrusted text as data"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-session-intent/petros-document-source.spec.ts",
+      "sha256": "7d6f7898e4f7b9f43b4dd6a579066db707f517e3adc5d4b60bd04a96b24058bf",
+      "passedTests": 12,
+      "declaredCaseNames": [
+        "separates legacy text availability from index and teaching readiness",
+        "permits only the selected readable physical page beside unavailable content",
+        "rejects missing/duplicate pages, oversized sources and invalid metadata",
+        "rejects Office previews and known truncation instead of inventing original page locators",
+        "hashes text, file identity, positions and confirmation, irrespective of timestamps/length",
+        "round-trips an exact citation against its persisted text without merging pages"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/student/petros-session-intent/petros-session-intent.service.spec.ts",
+      "sha256": "52f9c24810dcb3f32eb1f402ed5dcf9c4d8d66719522c1da6ec0cbe24f61232a",
+      "passedTests": 14,
+      "declaredCaseNames": [
+        "resolves an authorized published result into a flat practical Repair intent without inventing question evidence",
+        "resolves a current exam date and syllabus into a calm Revise intent",
+        "resolves only an authoritative assigned assignment into guided-homework context",
+        "requires completed extraction and produces exact authorized page citations",
+        "uses explicit revision questions from an uploaded document as the teaching curriculum",
+        "caches a versioned document outline, surfaces the teacher schedule, and starts only the selected topic",
+        "resolves only the next evidence-gated path item and does not complete it on preview",
+        "resolves an owner-scoped reflection recommendation through the shared Stage 8 intent contract",
+        "keeps a small assistant question inline and makes a deep handoff an explicit offer",
+        "uses grounded deterministic demo text without contacting an AI provider",
+        "transfers the authorized visible subject and version into an assistant handoff",
+        "returns the same not-found boundary for missing or unauthorized source records",
+        "reuses an idempotent preview and creates only one shared-engine session on repeated starts",
+        "invalidates a preview when its authorized source changes before start"
+      ]
+    }
+  ],
+  "criticalRepeatedPaths": {
+    "quality": "petros-phase5-quality: two owners/two tenants, current source/citation/pack/loop authority",
+    "durableRecovery": "petros-phase5-recovery: concurrent admission, ignored cancellation, receipt failure, expired claims and revoked portal authority repeated for both owners/tenants",
+    "gatewayAccounting": "petros-phase5-gateway: zero dispatch after drift, settled-but-denied disabled reply, exact rollback and concurrent two-tenant reservations; four controlled dispatches, 28 synthetic cost micros",
+    "privacy": "petros-phase5-pilot/operations: foreign owner/tenant and revocation denials; minimal immutable events and aggregate-only privileged projection"
+  },
+  "releaseRollback": {
+    "ownerTest": "apps/api/src/modules/integrations/petros-phase5-release.integration.spec.ts",
+    "evidence": "Seven passed cases: import/register/activation; negative gates; configuration drift; routing-owner changes; audit rollback; immutable disable and exact evaluated rollback; migration replay.",
+    "migrationRehearsal": "On disposable PostgreSQL only: drop explicit task-owned 0230 functions/tables without CASCADE, reapply 0230 and zzz_grants, compare FORCE RLS/policies/SELECT+INSERT-only grants/no PUBLIC execution. Full checked-in journal and prior Phase migration closure also executed.",
+    "operationalRollback": "Actual routing activation of the exact recorded evaluated rollback; disabled candidate denied; report, bundle and historical evidence preserved. Current config/identity/expiry remains required.",
+    "destructiveRollback": "Disposable DDL replay is not a production data downgrade, backup restore rehearsal or deployment authorization."
+  },
+  "limits": [
+    "No paid provider/network or real message delivery.",
+    "No production incident, production restore, partner certification or educator approval.",
+    "Lease crash/restart cases use actual persisted claims, expiry injection and a higher execution fence; no host-clock alteration or physical host restart.",
+    "Browser storage/connectivity checks are separate final reports; Firefox journey remains blocked."
+  ]
+}

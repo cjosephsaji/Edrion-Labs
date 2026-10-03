@@ -4,6 +4,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Phase 6: stable learning destinations with the student's own quick links below. */
+.portal-learning-rail { display: grid; gap: 4px; padding: 20px 12px 16px; border-bottom: 1px solid var(--s-bd1); }
+.portal-learning-rail p { padding: 0 12px 10px; color: var(--s-muted); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; }
+.portal-learning-rail a { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 10px 12px; color: var(--s-inkSoft); border-radius: 8px; font-size: .95rem; }
+.portal-learning-rail a svg { width: 19px; height: 19px; flex: none; }
+.portal-learning-rail a[aria-current='page'] { background: var(--s-accentDeep); color: var(--s-page); }
+.portal-learning-rail a:hover { box-shadow: inset 0 0 0 1px var(--s-accentBd); }
+@media (min-width: 921px) {
+  .student-shell .portal-masthead { height: 76px; padding: 0 28px; }
+  .student-shell .portal-header.is-compact .portal-masthead { height: 76px; }
+  .student-shell .portal-nav-row { position: fixed; top: 76px; bottom: 0; left: 0; width: 224px; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; padding: 0; border-right: 1px solid var(--s-bd1); background: var(--s-card); overflow-y: auto; }
+  .student-shell .portal-tabs { display: flex; flex-direction: column; align-items: stretch; padding: 12px; gap: 4px; overflow: visible; }
+  .student-shell .portal-quick-tabs { display: flex; flex-direction: column; gap: 2px; overflow: visible; }
+  .student-shell .portal-tab { justify-content: flex-start; min-height: 42px; padding: 8px 12px; border: 0; border-radius: 8px; font-size: .85rem; }
+  .student-shell .portal-tab-active { background: var(--s-accentSoft); }
+  .student-shell .portal-identity { margin-top: auto; border-top: 1px solid var(--s-bd1); padding: 20px 16px; }
+  .student-shell .portal-main { margin-left: 224px; padding: 32px 36px 64px; }
+  .student-shell .portal-date { margin-left: auto; }
+}
+@media (max-width: 920px) {
+  .portal-learning-rail { display: none; }
+  .student-shell .portal-main { padding-top: 24px; }
+}
+
 @layer base {
   html {
     --s-page: var(--st-page);
@@ -32,6 +56,10 @@
     --s-success: var(--st-success);
     --s-sidebar: var(--st-sidebar);
     --s-selection: var(--st-selection);
+    --s-radius-control: var(--radius-md);
+    --s-radius-panel: var(--radius-lg);
+    --s-radius-card: var(--radius-xl);
+    --s-radius-pill: var(--radius-full);
     --space-1: 4px;
     --space-2: 8px;
     --space-3: 12px;
@@ -61,6 +89,10 @@
   }
   * {
     border-color: var(--s-bd1, var(--border));
+  }
+  /* Defaults stay easy to override for switches, icon buttons and joined controls. */
+  :where(button, input:not([type='checkbox']):not([type='radio']):not([type='range']), textarea, select) {
+    border-radius: var(--s-radius-control);
   }
   body {
     background: var(--s-page, var(--background));
@@ -345,6 +377,7 @@
   .portal-menu:has(.portal-mentor-guide-host:not(:empty)) :is(.portal-menu-description, .portal-menu-kicker, .portal-menu-foot) { display: none; }
   .portal-menu:has(.portal-mentor-guide-host:not(:empty)) .portal-menu-groups { min-height: 0; overflow: auto; overscroll-behavior: contain; }
   .portal-directory-backdrop {
+    border-radius: 0;
     position: absolute;
     inset: 0;
     border: 0;
@@ -352,6 +385,7 @@
     cursor: default;
   }
   .portal-menu {
+    border-radius: var(--s-radius-card);
     position: absolute;
     top: 126px;
     right: 28px;
@@ -563,24 +597,8 @@
     to { transform: rotate(360deg); }
   }
 
-  .student-shell main :where(section, article) {
-    border-radius: 0 !important;
-    box-shadow: none !important;
-  }
-  .student-shell main [class*='rounded-']:not([role='switch']) {
-    border-radius: 0 !important;
-  }
+  .student-shell main :where(section, article) { box-shadow: none !important; }
   .student-shell main [class*='shadow'] { box-shadow: none !important; }
-  .student-shell main :where(button, input, textarea, select):not([role='switch']) {
-    border-radius: 0 !important;
-  }
-  .student-shell main [role='switch'],
-  .student-shell main [role='switch'] > span,
-  .student-shell main .animate-spin,
-  .student-shell main [class*='h-1.5'][class*='w-1.5'],
-  .student-shell main [class*='h-2'][class*='w-2'] {
-    border-radius: 999px !important;
-  }
   .student-shell main :where(h1, h2, h3).font-display {
     letter-spacing: -.018em;
   }
@@ -616,6 +634,7 @@
     .portal-directory-backdrop { background: color-mix(in srgb, #071f18 48%, transparent); }
     .portal-menu,
     .student-shell:has(.portal-header.is-compact) .portal-menu {
+      border-radius: var(--s-radius-card) var(--s-radius-card) 0 0;
       top: auto;
       right: 0;
       bottom: 0;
@@ -722,4 +741,14 @@
   [role='tablist'] button,
   [aria-label='Text size'] button,
   [aria-label='Density'] button { min-height: 44px; }
+}
+
+.portal-learning-mobile { display: flex; flex: 1; min-width: 0; }
+.portal-mobile-nav .portal-learning-mobile .portal-tab { min-height: 58px; font-size: 11px; gap: 5px; padding: 8px 2px; }
+.portal-learning-mobile svg { width: 19px; height: 19px; }
+.portal-learning-mobile [aria-current="page"] { color: var(--s-accentDeep); background: var(--s-accentLight); border-radius: 12px; }
+@media (max-width: 920px) {
+  .portal-mobile-nav { padding: 5px 8px calc(5px + env(safe-area-inset-bottom)); min-height: 68px; }
+  .portal-mobile-nav > .portal-tab { min-height: 58px; font-size: 11px; flex-basis: 64px; }
+  .portal-main { padding-bottom: 100px; }
 }

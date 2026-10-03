@@ -1,0 +1,254 @@
+{
+  "sourceManifestSha256": "2ae29edfafa19c3e4712aa2eb2419c883ff9afdd99a92b07d1e8dbcbcd205e40",
+  "head": "89c1ca29c117b2f9926e97e12a2738fa110cd2ca",
+  "branch": "new-student-UI",
+  "commands": [
+    {
+      "command": [
+        "pnpm",
+        "--filter",
+        "@edrion/api",
+        "exec",
+        "vitest",
+        "run",
+        "src/modules/student/petros-session-intent",
+        "src/modules/student/materials",
+        "src/modules/student/knowledge",
+        "src/modules/student/petros-loop",
+        "src/modules/student/petros-input-modes",
+        "src/modules/student/petros-companion",
+        "src/modules/student/petros-artifacts",
+        "src/modules/student/petros-reflection",
+        "src/modules/petros-ai-routing",
+        "src/modules/petros-learner-model",
+        "src/modules/petros-institutional",
+        "src/modules/petros-topic-profiles",
+        "src/modules/integrations",
+        "src/modules/federation",
+        "src/modules/portal/courses",
+        "src/modules/student/courses",
+        "src/common",
+        "src/modules/student/petros-continuity",
+        "src/modules/student/assignments",
+        "src/modules/portal/course-content",
+        "src/modules/portal/assignments",
+        "--pool=forks",
+        "--poolOptions.forks.singleFork=true",
+        "--testTimeout=30000"
+      ],
+      "start": "2026-10-02T16:18:54.863479+00:00",
+      "end": "2026-10-02T16:22:20.574741+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/Volumes/PetrosPhase4Verification/tmp"
+      },
+      "name": "frozen-r2-api-apfs",
+      "log": "frozen-r2-api-apfs.log",
+      "logSha256": "4957d91e695f5639609c5eb84b865c2fc54402898ae4c0f18e83e21217b78f3a"
+    },
+    {
+      "command": [
+        "pnpm",
+        "--filter",
+        "@edrion/schemas",
+        "--filter",
+        "@edrion/student-web",
+        "test"
+      ],
+      "start": "2026-10-02T16:18:55.964322+00:00",
+      "end": "2026-10-02T16:19:11.143552+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/Volumes/PetrosPhase4Verification/tmp"
+      },
+      "name": "frozen-r2-schema-web-apfs",
+      "log": "frozen-r2-schema-web-apfs.log",
+      "logSha256": "a7b59a69ed62542bb977900cc42e95a9899f016a1c0e11a08d2c29cc631c2436"
+    },
+    {
+      "command": [
+        "pnpm",
+        "--filter",
+        "@edrion/schemas",
+        "--filter",
+        "@edrion/config",
+        "--filter",
+        "@edrion/database",
+        "--filter",
+        "@edrion/api",
+        "--filter",
+        "@edrion/student-web",
+        "--filter",
+        "@edrion/institution-web",
+        "typecheck"
+      ],
+      "start": "2026-10-02T16:14:24.652982+00:00",
+      "end": "2026-10-02T16:15:48.590638+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+      },
+      "name": "frozen-r2-typecheck",
+      "log": "frozen-r2-typecheck.log",
+      "logSha256": "4d87ee260af03ba1132d1356176785321edce848dfb5f84501e8b69a1fd32066"
+    },
+    {
+      "command": [
+        "pnpm",
+        "--filter",
+        "@edrion/schemas",
+        "--filter",
+        "@edrion/config",
+        "--filter",
+        "@edrion/database",
+        "--filter",
+        "@edrion/api",
+        "--filter",
+        "@edrion/student-web",
+        "--filter",
+        "@edrion/institution-web",
+        "lint"
+      ],
+      "start": "2026-10-02T16:14:24.649438+00:00",
+      "end": "2026-10-02T16:15:20.678730+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+      },
+      "name": "frozen-r2-lint",
+      "log": "frozen-r2-lint.log",
+      "logSha256": "e944e90c5efbdc719892dad23ad514ee12e8f65394b12692e7ca94a4609be695"
+    },
+    {
+      "command": [
+        "pnpm",
+        "--filter",
+        "@edrion/api",
+        "build"
+      ],
+      "start": "2026-10-02T16:18:57.177402+00:00",
+      "end": "2026-10-02T16:19:34.244330+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/Volumes/PetrosPhase4Verification/tmp"
+      },
+      "name": "frozen-r2-api-build",
+      "log": "frozen-r2-api-build.log",
+      "logSha256": "e28c665aba4d5eae5d880e0063f25caabee2ee0034b84ece54db343e8cf079ee"
+    },
+    {
+      "command": [
+        "python3",
+        "docs/verification/petros-phase4-20261002/build-isolated-web.py",
+        "student-web"
+      ],
+      "start": "2026-10-02T16:19:34.286959+00:00",
+      "end": "2026-10-02T16:20:04.836653+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/Volumes/PetrosPhase4Verification/tmp"
+      },
+      "name": "frozen-r2-student-build",
+      "log": "frozen-r2-student-build.log",
+      "logSha256": "42b1916f926197207d7f15bd367a5e3c20d114c013db28bcaa99026a2b552daf"
+    },
+    {
+      "command": [
+        "python3",
+        "docs/verification/petros-phase4-20261002/build-isolated-web.py",
+        "institution-web"
+      ],
+      "start": "2026-10-02T16:20:04.882331+00:00",
+      "end": "2026-10-02T16:20:53.195559+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/Volumes/PetrosPhase4Verification/tmp"
+      },
+      "name": "frozen-r2-institution-build",
+      "log": "frozen-r2-institution-build.log",
+      "logSha256": "87ca7e79e9d2e0367f4a738fbd9bdc93e128ca6154ed69ea8f2ac2062c2f1e1c"
+    },
+    {
+      "command": [
+        "pnpm",
+        "--filter",
+        "@edrion/api",
+        "exec",
+        "ts-node",
+        "src/modules/integrations/petros-phase4-browser-server.ts"
+      ],
+      "start": "2026-10-02T16:19:11.199433+00:00",
+      "end": "2026-10-02T16:21:15.700094+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/Volumes/PetrosPhase4Verification/tmp"
+      },
+      "name": "frozen-r2-server",
+      "log": "frozen-r2-server.log",
+      "logSha256": "df34126f9ab6cfe6a454477f677e765a49fb6fee7c1642d84f91c4e3f2928535"
+    },
+    {
+      "command": [
+        "pnpm",
+        "--filter",
+        "@edrion/api",
+        "exec",
+        "node",
+        "src/modules/integrations/petros-phase4-browser-journey.mjs"
+      ],
+      "start": "2026-10-02T16:19:41.908420+00:00",
+      "end": "2026-10-02T16:20:57.987901+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/Volumes/PetrosPhase4Verification/tmp"
+      },
+      "name": "frozen-r2-browser",
+      "log": "frozen-r2-browser.log",
+      "logSha256": "df92e6ea15e3b5b41c0fcd793944a11feb8f3065e361e16bb48ee5ec1dfcbb1f"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "start": "2026-10-02T16:21:46.162460+00:00",
+      "end": "2026-10-02T16:21:46.226527+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/Volumes/PetrosPhase4Verification/tmp"
+      },
+      "name": "frozen-r2-diff-check",
+      "log": "frozen-r2-diff-check.log",
+      "logSha256": "f0d79359d6aa2ff21aa69e5bfda9c6a5b394f75016edd3f1475db7c2b29d5828"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "start": "2026-10-02T16:26:25.262112+00:00",
+      "end": "2026-10-02T16:26:25.316097+00:00",
+      "exitCode": 0,
+      "overrides": {
+        "PETROS_LOCAL_DB_TESTS": "1",
+        "TMPDIR": "/Volumes/PetrosPhase4Verification/tmp"
+      },
+      "name": "closing-r2-diff-check",
+      "log": "closing-r2-diff-check.log",
+      "logSha256": "f6a5b2a4c8df9836e41ba03bee91a66af190a49fa8668ffb105f7533913d3dfc"
+    }
+  ],
+  "scope": "Frozen Phase 4 engineering closure; earlier failed or candidate runs are retained separately and are not closure evidence."
+}

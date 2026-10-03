@@ -1,0 +1,345 @@
+{
+  "date": "2026-10-02T16:20:57.878Z",
+  "browser": "154.0.8037.58",
+  "viewport": [
+    1440,
+    1000
+  ],
+  "mobile": [
+    390,
+    844
+  ],
+  "reducedMotion": true,
+  "realAppModule": true,
+  "disposablePostgresRedis": true,
+  "controlledProvider": true,
+  "speech": "controlled boundary adapter; physical speech validation remains open",
+  "record": [
+    {
+      "label": "begin with companion question linked to approved source journey",
+      "threadLinked": true,
+      "questionPreserved": true,
+      "journeyId": "eb051313-eaf5-401d-a94b-d05f5309016e"
+    },
+    {
+      "label": "explicit selected takeaway saved as owned note and review flashcard through lesson UI"
+    },
+    {
+      "label": "keyboard semantic selection",
+      "version": 2,
+      "branch": "50039b51-8e40-43e3-ba61-abd0666e9a86",
+      "time": 0
+    },
+    {
+      "label": "isolate",
+      "version": 3,
+      "branch": "50039b51-8e40-43e3-ba61-abd0666e9a86",
+      "time": 0
+    },
+    {
+      "label": "linked representation",
+      "version": 4,
+      "branch": "50039b51-8e40-43e3-ba61-abd0666e9a86",
+      "time": 0
+    },
+    {
+      "label": "restore wider lesson",
+      "version": 5,
+      "branch": "50039b51-8e40-43e3-ba61-abd0666e9a86",
+      "time": 0
+    },
+    {
+      "label": "apex model event",
+      "version": 6,
+      "branch": "50039b51-8e40-43e3-ba61-abd0666e9a86",
+      "time": 2
+    },
+    {
+      "label": "save draft",
+      "version": 7,
+      "branch": "50039b51-8e40-43e3-ba61-abd0666e9a86",
+      "time": 2
+    },
+    {
+      "label": "offline note persisted in actual IndexedDB before closing page",
+      "database": "edrion-student-private-work-v1",
+      "store": "queued-notes",
+      "rows": 1,
+      "ownerBound": true
+    },
+    {
+      "label": "durable IndexedDB note reconciled once after page close and online reopen",
+      "commandId": "c85240d0-9d50-4106-8a4b-6e5010a38ae1",
+      "results": [
+        "applied"
+      ],
+      "reconciliationRequests": 1,
+      "queueEmptyAfterSettlement": true
+    },
+    {
+      "label": "restore note after offline synchronization",
+      "version": 9,
+      "branch": "50039b51-8e40-43e3-ba61-abd0666e9a86",
+      "time": 2
+    },
+    {
+      "label": "interrupt confirmed narration boundary",
+      "version": 10,
+      "branch": "50039b51-8e40-43e3-ba61-abd0666e9a86",
+      "time": 2
+    },
+    {
+      "label": "expand shared workspace",
+      "version": 11,
+      "branch": "50039b51-8e40-43e3-ba61-abd0666e9a86",
+      "time": 2
+    },
+    {
+      "label": "resume same return point",
+      "version": 12,
+      "branch": "50039b51-8e40-43e3-ba61-abd0666e9a86",
+      "time": 2
+    },
+    {
+      "label": "return to original lesson",
+      "version": 13,
+      "branch": "50039b51-8e40-43e3-ba61-abd0666e9a86",
+      "time": 2
+    },
+    {
+      "label": "projectile parameter",
+      "version": 14,
+      "branch": "50039b51-8e40-43e3-ba61-abd0666e9a86",
+      "time": 0
+    },
+    {
+      "label": "explicit continuous-motion opt-in",
+      "version": 15,
+      "branch": "50039b51-8e40-43e3-ba61-abd0666e9a86",
+      "time": 0
+    },
+    {
+      "label": "representation preserves live observed time",
+      "version": 18,
+      "branch": "50039b51-8e40-43e3-ba61-abd0666e9a86",
+      "time": 0.2515
+    },
+    {
+      "label": "pause acknowledges observed time",
+      "version": 20,
+      "branch": "50039b51-8e40-43e3-ba61-abd0666e9a86",
+      "time": 0.5032000000029802
+    },
+    {
+      "label": "analytic return to initial time",
+      "version": 21,
+      "branch": "50039b51-8e40-43e3-ba61-abd0666e9a86",
+      "time": 0
+    },
+    {
+      "label": "lost response and exact retry",
+      "version": 22,
+      "operationId": "573b55bc-7ae9-4448-bac5-55214859a108"
+    },
+    {
+      "label": "stale-version denial",
+      "status": 409
+    },
+    {
+      "label": "real HTTP invalid-unit denial without write",
+      "status": 400
+    },
+    {
+      "label": "branch from owner checkpoint",
+      "version": 23,
+      "branch": "8f39f10f-a452-4717-aec1-f946c6254bb6",
+      "time": 0
+    },
+    {
+      "label": "prediction before server outcome",
+      "eligibility": "observation_only",
+      "mastery": false
+    },
+    {
+      "label": "pendulum step",
+      "version": 2,
+      "branch": "9bf09b84-0e4e-4aab-8007-c3f99b3b03f2",
+      "time": 0.1
+    },
+    {
+      "label": "pendulum mass restart",
+      "version": 3,
+      "branch": "9bf09b84-0e4e-4aab-8007-c3f99b3b03f2",
+      "time": 0
+    },
+    {
+      "label": "circuits.dc.series step",
+      "version": 2,
+      "branch": "caceb12e-3c66-41eb-b69b-a5085eca9b84",
+      "time": 0.1
+    },
+    {
+      "label": "circuits.dc.series switching",
+      "version": 3,
+      "branch": "caceb12e-3c66-41eb-b69b-a5085eca9b84",
+      "time": 0.1
+    },
+    {
+      "label": "circuits.dc.series advance open",
+      "version": 4,
+      "branch": "caceb12e-3c66-41eb-b69b-a5085eca9b84",
+      "time": 0.2
+    },
+    {
+      "label": "circuits.dc.series reclose",
+      "version": 5,
+      "branch": "caceb12e-3c66-41eb-b69b-a5085eca9b84",
+      "time": 0.2
+    },
+    {
+      "label": "circuits.dc.series rewind through switch history",
+      "version": 6,
+      "branch": "caceb12e-3c66-41eb-b69b-a5085eca9b84",
+      "time": 0.15
+    },
+    {
+      "label": "circuits.rc.series step",
+      "version": 2,
+      "branch": "e47a7db8-a763-4d7b-a2a4-7e5d9d5bf2e7",
+      "time": 0.1
+    },
+    {
+      "label": "circuits.rc.series switching",
+      "version": 3,
+      "branch": "e47a7db8-a763-4d7b-a2a4-7e5d9d5bf2e7",
+      "time": 0.1
+    },
+    {
+      "label": "circuits.rc.series advance open",
+      "version": 4,
+      "branch": "e47a7db8-a763-4d7b-a2a4-7e5d9d5bf2e7",
+      "time": 0.2
+    },
+    {
+      "label": "circuits.rc.series reclose",
+      "version": 5,
+      "branch": "e47a7db8-a763-4d7b-a2a4-7e5d9d5bf2e7",
+      "time": 0.2
+    },
+    {
+      "label": "circuits.rc.series rewind through switch history",
+      "version": 6,
+      "branch": "e47a7db8-a763-4d7b-a2a4-7e5d9d5bf2e7",
+      "time": 0.15
+    },
+    {
+      "label": "spatial keyboard alternative",
+      "version": 2,
+      "branch": "c3ee3d75-235e-48db-8054-525251d01e0f",
+      "time": 0
+    },
+    {
+      "label": "unfamiliar combined program",
+      "version": 2,
+      "branch": "bf17deba-4958-4875-ad01-faaac0da9a92",
+      "time": 0.1
+    },
+    {
+      "label": "lesson-owner resume after navigation",
+      "draftRetained": true
+    },
+    {
+      "label": "mobile expanded scene",
+      "version": 24,
+      "branch": "8f39f10f-a452-4717-aec1-f946c6254bb6",
+      "time": 0
+    },
+    {
+      "label": "live companion controlled capture",
+      "provider": "synthetic adapter",
+      "dynamicContextInInput": true,
+      "untrustedMemoryOutsideSystem": true,
+      "typedSchema": true
+    },
+    {
+      "label": "memory preferences, remember, correct, forget via styled settings and owner APIs",
+      "revision": 4,
+      "forgotten": true
+    },
+    {
+      "label": "actual home notebook/review link preserves explicitly saved flashcard",
+      "route": "/petros/artifacts",
+      "delayedIndependentTask": "Synthetic service clock verifies review due; browser does not claim real delayed retention."
+    },
+    {
+      "label": "new browser next-day controlled JS clock",
+      "clock": "+24 hours",
+      "journeyRestored": true,
+      "dimensions": {
+        "viewport": 390,
+        "page": 390
+      },
+      "memoryDimensions": {
+        "viewport": 390,
+        "page": 390
+      }
+    },
+    {
+      "label": "low-bandwidth setting and text-first lesson through styled UI",
+      "preparedTextVisible": true,
+      "controlsAndAssetsDeferred": true,
+      "optionalVisualOpened": true,
+      "workspaceGetsBeforeOptIn": 0,
+      "mutationsBeforeOptIn": 0,
+      "automaticSpeechBeforeOptIn": 0
+    },
+    {
+      "label": "low-bandwidth preference restored online before subsequent browser journey checks"
+    },
+    {
+      "label": "teacher A preview UI POST response",
+      "status": 201,
+      "body": "{\"id\":\"84808c3f-7c1b-4598-b496-87e68d4f2c94\",\"institutionId\":\"bf5aa0a7-11d1-4892-b677-c27a5048badb\",\"classId\":\"369303dc-70fd-41fb-8095-a172119e318a\",\"subjectId\":\"fba19a85-e096-4911-bc17-12691de9ba55\",\"createdBy\":\"3fdd87b9-76c5-45db-be40-26d74aa2fa26\",\"approvedBy\":null,\"title\":\"Synthetic phase-four reviewed intervention\",\"description\":\"Compare the horizontal and vertical components using the approved source.\",\"conceptKey\":\"component_motion\",\"assignmentId\":null,\"deliveryStatus\":\"preview\",\"requestH"
+    },
+    {
+      "label": "teacher A previews intervention in current class scope",
+      "candidateCount": 5,
+      "delivery": "preview only"
+    },
+    {
+      "label": "teacher A uploads replacement through existing Files uploader and creates two correction previews",
+      "materialId": "76d51d6e-bc63-470d-85ea-8cf9e91362a0"
+    },
+    {
+      "label": "teacher B independently reviews first intervention and cancels second in current class scope",
+      "approvedAndPublished": true,
+      "cancelled": true,
+      "cohort": 5
+    },
+    {
+      "label": "teacher B rejects one correction and approves the other in the same class/material scope",
+      "rejected": true,
+      "published": true,
+      "materialId": "76d51d6e-bc63-470d-85ea-8cf9e91362a0"
+    },
+    {
+      "label": "old student source denied after approved material correction",
+      "status": 409,
+      "sourceId": "92d6fc8c-c584-400a-b23e-00025348f151",
+      "sourceVersion": "3d40ffe854ba18d7463dd61c1c960ceb75bc4001ce5861a8e4389979ffe458ab"
+    }
+  ],
+  "errors": [],
+  "dimensions": {
+    "viewport": 390,
+    "page": 390
+  },
+  "nextDayDimensions": {
+    "viewport": 390,
+    "page": 390
+  },
+  "memoryMobileDimensions": {
+    "viewport": 390,
+    "page": 390
+  }
+}

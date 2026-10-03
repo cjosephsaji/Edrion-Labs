@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   and,
   asc,
@@ -14,10 +14,14 @@ import {
 } from '@edrion/database';
 import { DATABASE } from '../../../common/tokens';
 import type { PetrosOwnerScope } from '../petros-loop/petros-loop.repository';
+import { KnowledgeDocumentService } from '../knowledge/knowledge-document.service';
 
 @Injectable()
 export class PetrosSessionIntentRepository {
-  constructor(@Inject(DATABASE) private readonly db: Database) {}
+  constructor(
+    @Inject(DATABASE) private readonly db: Database,
+    private readonly documents: KnowledgeDocumentService,
+  ) {}
 
   findIntentByKey(scope: PetrosOwnerScope, idempotencyKey: string) {
     return this.db
@@ -34,8 +38,8 @@ export class PetrosSessionIntentRepository {
       .then((rows) => rows[0]);
   }
 
-  findIntent(scope: PetrosOwnerScope, intentId: string) {
-    return this.db
+  findIntent(scope: PetrosOwnerScope, intentId: string, lock = false) {
+    const query = this.db
       .select()
       .from(schema.petrosSessionIntents)
       .where(
@@ -45,8 +49,9 @@ export class PetrosSessionIntentRepository {
           eq(schema.petrosSessionIntents.studentId, scope.studentId),
         ),
       )
-      .limit(1)
-      .then((rows) => rows[0]);
+      .limit(1);
+    // Serialize starts without blocking the failure-telemetry connection's FK key-share lock.
+    return (lock ? query.for('no key update') : query).then((rows) => rows[0]);
   }
 
   studentClassId(scope: PetrosOwnerScope) {
@@ -228,26 +233,23 @@ export class PetrosSessionIntentRepository {
     return { assignment, submission, subjectName: subject?.name ?? null };
   }
 
-  async documentSource(scope: PetrosOwnerScope, sourceId: string, page?: number) {
-    const [item] = await this.db
-      .select()
-      .from(schema.knowledgeItems)
-      .where(
-        and(
-          eq(schema.knowledgeItems.id, sourceId),
-          eq(schema.knowledgeItems.institutionId, scope.institutionId),
-          eq(schema.knowledgeItems.studentId, scope.studentId),
-        ),
-      )
-      .limit(1);
-    if (!item) return undefined;
-    const pages = await this.db
-      .select()
-      .from(schema.knowledgeItemPages)
-      .where(eq(schema.knowledgeItemPages.itemId, item.id))
-      .orderBy(asc(schema.knowledgeItemPages.pageIndex));
-    const selected = page == null ? pages : pages.filter((candidate) => candidate.pageIndex === page - 1);
-    return { item, pages: selected, allPages: pages };
+  documentSource(scope: PetrosOwnerScope, sourceId: string, page?: number, fingerprint?: string) {
+    return this.documents.resolve(scope, sourceId, page, fingerprint);
+  }
+
+  documentLocator(scope: PetrosOwnerScope, sourceId: string, locator: Parameters<KnowledgeDocumentService['locator']>[2]) {
+    return this.documents.locator(scope, sourceId, locator);
+  }
+
+  searchDocument(scope: PetrosOwnerScope, sourceId: string, input: Parameters<KnowledgeDocumentService['search']>[2], signal?: AbortSignal) {
+    return this.documents.search(scope, sourceId, input, signal);
+  }
+
+  compareDocuments(scope: PetrosOwnerScope, input: Parameters<KnowledgeDocumentService['compare']>[1], signal?: AbortSignal) {
+    return this.documents.compare(scope, input, signal);
+  }
+  selectedDocumentScope(scope: PetrosOwnerScope, sourceId: string) {
+    return this.documents.selectedScope(scope, sourceId);
   }
 
   findDocumentOutline(
@@ -660,28 +662,24 @@ export class PetrosSessionIntentRepository {
     };
   }
 
-  listUploadedDocuments(scope: PetrosOwnerScope) {
-    return this.db
-      .select({
-        id: schema.knowledgeItems.id,
-        title: schema.knowledgeItems.title,
-        kind: schema.knowledgeItems.kind,
-        pageCount: schema.knowledgeItems.pageCount,
-        status: schema.knowledgeItems.status,
-        extractionReady: schema.knowledgeItems.extractedTextReady,
-        pagesDone: schema.knowledgeItems.pagesDone,
-        origin: schema.knowledgeItems.origin,
-        version: schema.knowledgeItems.version,
-        updatedAt: schema.knowledgeItems.updatedAt,
-      })
-      .from(schema.knowledgeItems)
-      .where(
-        and(
-          eq(schema.knowledgeItems.institutionId, scope.institutionId),
-          eq(schema.knowledgeItems.studentId, scope.studentId),
-        ),
-      )
-      .orderBy(desc(schema.knowledgeItems.updatedAt));
+  async listUploadedDocuments(scope: PetrosOwnerScope) {
+    const rows = await this.db.select({ id: schema.knowledgeItems.id }).from(schema.knowledgeItems).where(and(
+      eq(schema.knowledgeItems.institutionId, scope.institutionId), eq(schema.knowledgeItems.studentId, scope.studentId),
+    )).orderBy(desc(schema.knowledgeItems.updatedAt));
+    const visible = await Promise.all(rows.map(async (row) => {
+      try {
+        const { item } = await this.documents.resolve(scope, row.id);
+        return {
+          id: item.id, title: item.title, kind: item.kind, pageCount: item.pageCount,
+          status: item.status, extractionReady: item.extractedTextReady, pagesDone: item.pagesDone,
+          origin: item.origin, version: item.version, updatedAt: item.updatedAt,
+        };
+      } catch (error) {
+        if (error instanceof NotFoundException || error instanceof ConflictException) return null;
+        throw error;
+      }
+    }));
+    return visible.filter((row): row is NonNullable<typeof row> => row !== null);
   }
 
   async currentPath(scope: PetrosOwnerScope) {

@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-25T16:23:30.392080+00:00",
+  "finishedAt": "2026-09-25T16:23:31.107247+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/config",
+    "typecheck"
+  ],
+  "exitCode": 0,
+  "log": "final-r3-config-typecheck-20260925.log"
+}

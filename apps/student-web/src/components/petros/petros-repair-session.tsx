@@ -1,4 +1,10 @@
 'use client';
+
+import { PetrosProgramWorkspace } from './petros-program-workspace';
+import { PetrosVisualExplorer } from './petros-visual-explorer';
+import { PetrosReviewedObjectivePicker } from './petros-reviewed-objective-picker';
+import { useDocumentQuestion } from './use-document-question';
+import { usePetrosConnectivityMode } from './use-petros-connectivity-mode';
 import React from 'react';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
@@ -15,7 +21,6 @@ import {
   CreditCard,
   FilePenLine,
   Flag,
-  Flame,
   Gauge,
   HardHat,
   Layers3,
@@ -57,6 +62,7 @@ import {
   type PetrosLessonNarrationSegment,
   type PetrosLessonPausePoint,
 } from './petros-lesson-narration';
+import { PetrosPreparedVisual, PetrosTeachingBlockRenderer } from './petros-teaching-block-renderer';
 import { PetrosNarratedText } from './petros-narrated-text';
 import { buildPetrosSpeechTimeline } from './use-petros-voice';
 import styles from './petros-session.module.css';
@@ -323,6 +329,8 @@ function AnimatedDiagram({
   onEdit: (nodeId: string, label: string) => void;
   onInteraction: (patch: Record<string, unknown>, immediate?: boolean) => void;
 }) {
+  const { mode: connectivityMode, ready: connectivityReady } = usePetrosConnectivityMode();
+  const textFirst = !connectivityReady || connectivityMode === 'low_bandwidth';
   const stages = React.useMemo(() => buildDiagramStages(content), [content]);
   const totalSteps = stages.length;
   const [step, setStep] = useState(0);
@@ -343,6 +351,13 @@ function AnimatedDiagram({
       setPlaying(false);
     }
   }, [totalSteps]);
+
+  useEffect(() => {
+    if (textFirst && playing) {
+      setPlaying(false);
+      window.dispatchEvent(new CustomEvent('petros:diagram-stop', { detail: { diagramId } }));
+    }
+  }, [diagramId, playing, textFirst]);
 
   const nodeLabel = (node: DiagramContent['nodes'][number]) =>
     typeof labels[node.id] === 'string' ? String(labels[node.id]) : node.label;
@@ -475,7 +490,7 @@ function AnimatedDiagram({
           </>
         ) : (
           <>
-        <button type="button" onClick={() => {
+        <button type="button" disabled={textFirst} aria-describedby={textFirst ? `${diagramId}-text-first` : undefined} onClick={() => {
           if (playing) window.dispatchEvent(new CustomEvent('petros:diagram-stop', { detail: { diagramId } }));
           setPlaying((value) => !value);
         }} aria-label={playing ? 'Pause diagram explanation' : 'Explain diagram'}>
@@ -484,6 +499,7 @@ function AnimatedDiagram({
         </button>
         <button
           type="button"
+          disabled={textFirst}
           onClick={() => {
             setPlaying(false);
             window.dispatchEvent(new CustomEvent('petros:diagram-stop', { detail: { diagramId } }));
@@ -502,6 +518,7 @@ function AnimatedDiagram({
           <RotateCcw aria-hidden="true" /> Replay
         </button>
         <span>{Math.min(step + 1, totalSteps)} / {totalSteps}</span>
+        {textFirst && <span id={`${diagramId}-text-first`}>Auto-play is paused in low-bandwidth mode. Use Next step to move through the diagram.</span>}
           </>
         )}
       </div>
@@ -675,6 +692,19 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
   const [sessionReady, setSessionReady] = useState(false);
   const [visibleElapsed, setVisibleElapsed] = useState(0);
   const [pacePreference, setPacePreference] = useState<'full' | 'quick'>('full');
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const toolsPanel = useRef<HTMLElement | null>(null);
+  useEffect(() => {if (toolsOpen) window.requestAnimationFrame(() => toolsPanel.current?.focus());}, [toolsOpen]);
+  const [sourceInspection, setSourceInspection] = useState<{text: string; page: number} | null>(null);
+  const [sourceInspectionError, setSourceInspectionError] = useState('');
+  useEffect(() => {
+    const clear = () => setSourceInspection(null);
+    window.addEventListener('blur', clear);
+    return () => window.removeEventListener('blur', clear);
+  }, []);
+  useEffect(() => {setSourceInspection(null);setSourceInspectionError('');}, [document?.id, toolsOpen]);
+  const [inspectingSource, setInspectingSource] = useState(false);
+  const toolsTrigger = useRef<HTMLButtonElement | null>(null);
   const clockSessionId = useRef<string | null>(null);
   const expansionOfferedFor = useRef<string | null>(null);
   const requestAbort = useRef<AbortController | null>(null);
@@ -684,6 +714,24 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
   const pendingInteractions = useRef(new Map<string, Record<string, unknown>>());
   const questionRepairAttempted = useRef(new Set<string>());
   const subject = sessionSubject(document?.topic ?? topic, source);
+  const continuitySessionId = document?.id;
+  const activeBlockId = document?.blocks.find((block) => block.status === 'current')?.id ?? null;
+
+  useEffect(() => {
+    if (!continuitySessionId || !activeBlockId || !navigator.onLine) return;
+    let cancelled = false;
+    const path = `/student/petros/continuity/sessions/${encodeURIComponent(continuitySessionId)}/journey`;
+    void api.get<{ id: string; version: number; returnPoint: { sessionId: string; blockId: string | null; [key: string]: unknown } }>(path)
+      .then(async (journey) => {
+        if (cancelled || journey.returnPoint.blockId === activeBlockId) return;
+        const returnPoint = { ...journey.returnPoint, sessionId: continuitySessionId, blockId: activeBlockId, returnTarget: 'lesson' as const };
+        await api.post('/student/petros/continuity/journeys', {
+          commandId: newIdempotencyKey(), journeyId: journey.id, expectedVersion: journey.version, returnPoint,
+        });
+      })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [api, activeBlockId, continuitySessionId]);
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -770,7 +818,12 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
         }
         if (cancelled) return;
         setDocument(current);
-        if (needsNextBlock(current)) void requestNext(current.id);
+        if (needsNextBlock(current)) {
+          const availability = current.blocks.length===0
+            ? await api.get<{status:string;packs?:unknown[]}>(`/student/petros/sessions/${current.id}/adaptive`,controller.signal)
+              .catch(() => null) : null;
+          if (!cancelled && !(availability?.status==='available' && availability.packs?.length)) void requestNext(current.id);
+        }
       } catch (caught) {
         if (!(caught instanceof DOMException && caught.name === 'AbortError'))
           setError(formatApiError(caught));
@@ -1151,6 +1204,9 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
     [api, document, hintingQuestionId, online],
   );
 
+  const { ask: askDocumentQuestion, status: documentQuestionStatus } = useDocumentQuestion(api, document?.sourceContext?.door === 'uploaded_document' ? document.id : null,
+    (result) => setDocument(current => !current || result.version >= current.version ? result : current));
+
   const askLessonQuestion = useCallback(async (
     question: string,
     pausePoint?: PetrosLessonPausePoint,
@@ -1161,16 +1217,14 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
     setSubmittingComposer(true);
     setError('');
     try {
-      const next = await api.post<PetrosLearningSessionDocument>(
-        `/student/petros/sessions/${document.id}/questions`,
-        {
-          idempotencyKey: newIdempotencyKey(),
-          question: question.trim(),
-          expectedSessionVersion: document.version,
-          ...(pausePoint ? { pausePoint } : {}),
-        },
+      const input = {
+        idempotencyKey: newIdempotencyKey(), question: question.trim(), expectedSessionVersion: document.version,
+        ...(pausePoint ? { pausePoint } : {}),
+      };
+      const next = await askDocumentQuestion(input) ?? await api.post<PetrosLearningSessionDocument>(
+        `/student/petros/sessions/${document.id}/questions`, input,
       );
-      setDocument(next);
+      setDocument(current => !current || next.version >= current.version ? next : current);
       const detour = [...next.detours]
         .reverse()
         .find((candidate) => candidate.question === question.trim() && candidate.action === 'answer_now');
@@ -1189,7 +1243,7 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
     } finally {
       setSubmittingComposer(false);
     }
-  }, [api, document, online, submittingComposer]);
+  }, [api, document, online, submittingComposer, askDocumentQuestion]);
 
   const resumeLessonQuestion = useCallback(async (detourId: string) => {
     if (!document || !online) throw new Error('Reconnect before returning to the lesson.');
@@ -1387,6 +1441,8 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
             </div>
           </div>
           <div className={styles.sessionControls}>
+            <button type="button" className={`${styles.pause} ${styles.sourcesToggle}`} aria-expanded={toolsOpen} aria-controls="lesson-tools"
+              onClick={event => {toolsTrigger.current = event.currentTarget; setToolsOpen(value => !value);}}>Sources &amp; tools</button>
             {document?.status === 'closed' ? (
               <button
                 className={styles.pause}
@@ -1469,16 +1525,41 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
             </p>
           </div>
           <div className={styles.sessionScoreboard} aria-label="Session momentum">
-            <span title="Concepts checked off"><Target aria-hidden="true" /><strong>{completedCount}/{totalCheckpoints || 1}</strong> mastered</span>
-            <span title="Session points"><Trophy aria-hidden="true" /><strong>{sessionXp}</strong> XP</span>
-            <span title="Correct-answer streak"><Flame aria-hidden="true" /><strong>{attemptStats.streak}</strong> streak</span>
+            <span title="Teaching steps completed; independent evidence is separate"><Target aria-hidden="true" /><strong>{completedCount}/{totalCheckpoints || 1}</strong> steps</span>
             <Link href="/flashcards" title="Open session flashcards"><CreditCard aria-hidden="true" /><strong>{flashcardCount}</strong> cards</Link>
-            <span data-pace={paceTone}><Gauge aria-hidden="true" /><strong>{formatSessionTime(visibleElapsed)}</strong> {paceLabel}</span>
+            <span data-pace={paceTone}><Gauge aria-hidden="true" /><strong>{formatSessionTime(visibleElapsed)}</strong> session time</span>
           </div>
         </div>
       </header>
 
-      <div className={styles.layout}>
+      <div className={styles.layout} data-tools-open={toolsOpen}>
+        {toolsOpen && <aside ref={toolsPanel} tabIndex={-1} id="lesson-tools" className={styles.lessonTools} aria-label="Lesson sources and saved work"
+          onKeyDown={event => {if (event.key === 'Escape') {setToolsOpen(false);toolsTrigger.current?.focus();}}}>
+          <header><h2>Your learning desk</h2><button type="button" onClick={() => {setToolsOpen(false);toolsTrigger.current?.focus();}}>Close tools</button></header>
+          <section><p className={styles.toolKicker}>Supporting sources</p><h3>{sourceView.contextLine || 'This lesson’s sources'}</h3>
+            {sourceView.citations.length ? <ul>{sourceView.citations.map((citation, index) => <li key={`${citation.label}:${index}`}>
+              <strong>{citation.label}</strong><p>{citation.page ? `Page ${citation.page}` : citation.section ?? 'Source reference'}</p>
+              <button type="button" disabled={inspectingSource || !online} onClick={async () => {
+                setSourceInspection(null); setSourceInspectionError(''); setInspectingSource(true);
+                try {
+                  const raw = Array.isArray(document?.sourceContext?.citations) ? document.sourceContext.citations[index] : null;
+                  if (!isRecord(raw) || !isRecord(raw.locator) || typeof document?.sourceContext?.referenceId !== 'string')
+                    throw new Error('An exact inspectable locator is unavailable for this reference. Open the original source.');
+                  const checked = await api.post<{text: string; locator: {page: number}}>(`/student/petros/documents/${document.sourceContext.referenceId}/resolve-locator`, raw.locator);
+                  setSourceInspection({text: checked.text, page: checked.locator.page});
+                } catch (cause) {setSourceInspectionError(formatApiError(cause));}
+                finally {setInspectingSource(false);}
+              }}>{inspectingSource ? 'Checking current access…' : 'Inspect supporting passage'}</button>
+            </li>)}</ul> : <p>No exact source passage is attached to this lesson.</p>}
+            {sourceInspection && <blockquote><strong>Page {sourceInspection.page}</strong><p>{sourceInspection.text}</p></blockquote>}
+            {sourceInspectionError && <p role="alert">{sourceInspectionError}</p>}
+            <Link href="/materials">Open the source library</Link>
+          </section>
+          <section><p className={styles.toolKicker}>Keep what helps</p><h3>Notes &amp; review</h3><p>Save a note or flashcard from the teaching step. Unsaved work stays private.</p>
+            <Link href="/notes">Open notes</Link><Link href="/petros/artifacts">Notebook &amp; review deck</Link><Link href="/progress">Inspect learning evidence</Link>
+          </section>
+          {companion && <section><p className={styles.toolKicker}>A question along the way</p><p>Ask about this step and return to the lesson at the same point.</p><button type="button" onClick={() => companion.openWith('I have a question about this teaching step.')}>Open lesson conversation</button></section>}
+        </aside>}
         <article className={styles.document} aria-live="polite">
           <section className={styles.opening}>
             <h1>{document?.topic ?? topic}</h1>
@@ -1503,7 +1584,8 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
           ) : null}
 
           {sessionReady && document && !closed ? (
-            <section className={styles.momentum} data-pace={paceTone} aria-live="polite">
+            <details className={styles.momentum} data-pace={paceTone}>
+              <summary>Session pace and explanation choices</summary>
               <span><Sparkles aria-hidden="true" /></span>
               <div>
                 <strong>{pacePreference === 'quick' ? 'Quick-pass mode' : 'Petros pace check'}</strong>
@@ -1515,7 +1597,7 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
                   <button type="button" onClick={() => companion?.openWith('Give me the short version of this step, then quiz me once.')}>Use the short version</button>
                 </div>
               ) : null}
-            </section>
+            </details>
           ) : null}
 
           {/*
@@ -1561,6 +1643,7 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
               body="Everything already shown remains readable. Reconnect to complete or prepare another block."
             />
           )}
+          {documentQuestionStatus}
           {error && (
             <StatusBanner
               icon={CircleHelp}
@@ -1640,6 +1723,10 @@ export function PetrosRepairSession({ topic, score, source, resultId, sessionId 
                 ? `${sourceView.citations[0].label}${sourceView.citations[0].page ? ` · page ${sourceView.citations[0].page}` : ''}`
                 : sourceView.heading}
             />
+          )}
+          {!loading && document && !continuing && (
+            <PetrosReviewedObjectivePicker key={`${document.id}:${document.blocks.length===0}`} sessionId={document.id}
+              beforeLesson={document.blocks.length===0} onBound={() => void requestNext(document.id)} />
           )}
           {!loading && document && document.blocks.length === 0 && !continuing && !error && (
             <StatusBanner
@@ -1890,7 +1977,7 @@ function TeachingBlock({
           <p>
             {labelFor(block.content.type)}
           </p>
-          <h2 data-petros-target={petrosLessonTarget(block.id, 'title')}>{block.content.title}</h2>
+          <PetrosTeachingBlockRenderer block={block} variant="lesson-title" />
         </div>
         <div className={styles.blockHeadActions}>
           {block.status === 'completed' ? <span><Check aria-hidden="true" /> +20 XP</span> : null}
@@ -1955,6 +2042,8 @@ function BlockContent({
   const completed = block.status === 'completed';
   const recovered =
     block.questions.length === 0 ||
+    (block.responseMode === 'adaptive_observation' &&
+      block.questions.every(question => !question.active && question.attempts.length > 0)) ||
     [...new Set(block.questions.map((question) => question.equivalenceKey))].every((key) =>
       block.questions.some(
         (question) =>
@@ -2497,6 +2586,9 @@ function BlockContent({
         {questions}
         {recovered ? (
           <>
+            <PetrosPreparedVisual text={content.fallbackText ?? content.altText}>
+            <PetrosProgramWorkspace sessionId={block.sessionId} blockId={block.id} />
+            <PetrosVisualExplorer sessionId={block.sessionId} blockId={block.id} />
             <AnimatedDiagram
               blockId={block.id}
               content={content}
@@ -2514,6 +2606,7 @@ function BlockContent({
                 })
               }
             />
+            </PetrosPreparedVisual>
             <button
               className={styles.reveal}
               aria-pressed={expanded}

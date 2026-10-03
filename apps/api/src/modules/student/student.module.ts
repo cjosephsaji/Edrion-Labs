@@ -1,4 +1,5 @@
 import "./student.types";
+import { PetrosContinuityModule } from "./petros-continuity/petros-continuity.module";
 import { Module } from "@nestjs/common";
 import { APP_INTERCEPTOR } from "@nestjs/core";
 import { FeatureControlsModule } from "../feature-controls/feature-controls.module";
@@ -80,6 +81,7 @@ import { PetrosLearnerModelModule } from "../petros-learner-model/petros-learner
  */
 @Module({
   imports: [
+    PetrosContinuityModule,
     FeatureControlsModule,
     PortalModule,
     StudentAuthModule,

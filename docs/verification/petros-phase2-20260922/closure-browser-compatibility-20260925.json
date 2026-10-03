@@ -1,0 +1,10 @@
+{
+  "startedAt": "2026-09-25T06:52:20.054642+00:00",
+  "finishedAt": "2026-09-25T06:52:23.795817+00:00",
+  "command": [
+    "node",
+    "apps/student-web/scripts/petros-compatibility-browser-check.mjs"
+  ],
+  "exitCode": 0,
+  "log": "closure-browser-compatibility-20260925.log"
+}

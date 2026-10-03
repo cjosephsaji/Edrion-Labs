@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-25T16:16:10.333830+00:00",
+  "finishedAt": "2026-09-25T16:16:15.137006+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/schemas",
+    "lint"
+  ],
+  "exitCode": 0,
+  "log": "frozen-schemas-lint-20260925.log"
+}

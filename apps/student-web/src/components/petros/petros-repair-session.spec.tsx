@@ -2,18 +2,20 @@ import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  adaptPetrosDiagram,
   PETROS_RENDER_SCHEMA_VERSION,
   PETROS_SESSION_STATE_VERSION,
   type PetrosLearningSessionDocument,
   type PetrosTeachingBlockContent,
 } from '@edrion/schemas';
 import { PetrosRepairSession } from './petros-repair-session';
+import { visualDiagramFixture } from '../../../../../packages/schemas/src/__fixtures__/petros-visual';
 
 const memory = vi.hoisted(() => ({
   document: null as PetrosLearningSessionDocument | null,
 }));
 const api = vi.hoisted(() => ({
-  get: vi.fn(async () => memory.document),
+  get: vi.fn(async (path: string): Promise<unknown> => path.endsWith('/visual') ? { status: 'disabled', reason: 'Disabled' } : path.includes('/document-questions') ? null : memory.document),
   post: vi.fn(async (_path: string, ..._args: unknown[]) => memory.document),
   put: vi.fn(async (path: string, body: { interactionState: Record<string, unknown> }) => {
     const blockId = path.split('/').at(-2)!;
@@ -29,7 +31,8 @@ const api = vi.hoisted(() => ({
   }),
 }));
 
-vi.mock('@/lib/api-client', () => ({
+vi.mock('@/lib/api-client', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/lib/api-client')>(),
   useStudentApi: () => api,
   formatApiError: (error: unknown) =>
     error instanceof Error ? error.message : 'Something went wrong.',
@@ -348,6 +351,8 @@ function fiveStageDocument(
 afterEach(() => {
   vi.useRealTimers();
   vi.clearAllMocks();
+  api.get.mockImplementation(async (path: string) => path.endsWith('/visual') ? { status: 'disabled', reason: 'Disabled' } : path.includes('/document-questions') ? null : memory.document);
+  api.post.mockImplementation(async () => memory.document);
   sessionStorage.clear();
   Object.defineProperty(window.navigator, 'onLine', {
     configurable: true,
@@ -951,6 +956,24 @@ describe('Petros Stage 3 observation UI', () => {
     expect(screen.getByText(/confident miss is worth slowing down/i)).toBeVisible();
   });
 
+  it('renders document citation and missing-evidence disclosures in the existing lesson detour', async () => {
+    memory.document = storedDocument();
+    const answer = "I could not find a matching passage in this lesson's selected source pages. Searched physical PDF pages 2; 1 other pages were not searched. Text matches do not establish complete coverage.";
+    memory.document.detours = [{
+      id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+      observationId: 'ffffffff-ffff-4fff-8fff-ffffffffffff',
+      question: 'What is elasticity?', status: 'active', action: 'answer_now',
+      acknowledgement: answer, routeChange: 'Paused at the current explanation.',
+      returnPlan: 'Return to the same point after confirmation.', changedDecisionId: null,
+      createdAt: '2026-09-17T00:00:00.000Z', rejoinedAt: null,
+    }];
+    render(<PetrosRepairSession topic="cloud" source="document" sessionId={memory.document.id} />);
+    expect(await screen.findByText(answer)).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Petros paused to answer you' })).toBeVisible();
+    expect(screen.getByText(/Return to the same point after confirmation/)).toBeVisible();
+    expect(screen.getByText(answer).closest('section')).toHaveAttribute('aria-live', 'polite');
+  });
+
   it('renders structured detours without a duplicate lesson composer', async () => {
     memory.document = storedDocument();
     memory.document = {
@@ -987,6 +1010,23 @@ describe('Petros Stage 3 observation UI', () => {
 });
 
 describe('Petros Stage 4 typed move UI', () => {
+  it('consumes the enabled validated adapter beside the existing teaching diagram', async () => {
+    memory.document = storedDocument();
+    const block = memory.document.blocks[0]!;
+    block.content = visualDiagramFixture();
+    block.questions = [];
+    const snapshot = adaptPetrosDiagram(block.content, block.id);
+    api.get.mockImplementation(async path => path.endsWith('/visual')
+      ? { status: 'available', snapshot }
+      : path.includes('/document-questions') ? null : memory.document);
+    render(<PetrosRepairSession topic="synthetic" source="result" sessionId={memory.document.id} />);
+    fireEvent.click(await screen.findByText('Explore the original representation'));
+    expect(screen.getByRole('checkbox', { name: 'Show relationships' })).toBeVisible();
+    expect(screen.getByRole('img', { name: 'Structure' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Explain diagram' })).toBeVisible();
+    expect(api.get).toHaveBeenCalledWith(`/student/petros/sessions/${memory.document.id}/blocks/${block.id}/visual`, expect.any(AbortSignal));
+  });
+
   it('preserves editable diagram labels, expanded state, and the nonvisual description', async () => {
     memory.document = storedDocument();
     memory.document.blocks[0]!.content = {
@@ -1224,5 +1264,70 @@ describe('Petros five-part session progression', () => {
     expect(screen.getByRole('button', { name: 'Copy my win' })).toBeVisible();
     expect(api.post.mock.calls.filter(([path]) => String(path).endsWith('/complete'))).toHaveLength(5);
     expect(api.post.mock.calls.filter(([path]) => String(path).endsWith('/continue'))).toHaveLength(4);
+  });
+});
+
+
+describe('durable document-question recovery in the real session component', () => {
+  const executionId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  const key = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+  const pending = () => ({ schemaVersion: 'petros.document-question-execution.v1', id: executionId,
+    sessionId: memory.document!.id, idempotencyKey: key, state: 'queued', version: 1, attempts: 0,
+    processingEnabled: true, retryable: false, errorCode: null, result: null });
+
+  it('ignores a late older status response after a newer execution revision is displayed', async () => {
+    memory.document = { ...storedDocument(), sourceContext: { door: 'uploaded_document', label: 'Synthetic PDF' } };
+    api.get.mockImplementation(async path => path.includes('/document-questions') ? pending() : memory.document);
+    render(<PetrosRepairSession topic="photosynthesis" source="document" sessionId={memory.document.id} />);
+    await screen.findByText('Your question is queued.');
+    let older!: (value: unknown) => void;
+    let newer!: (value: unknown) => void;
+    api.get.mockImplementationOnce(() => new Promise(resolve => { older = resolve; }));
+    api.get.mockImplementationOnce(() => new Promise(resolve => { newer = resolve; }));
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh question status' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh question status' }));
+    await act(async () => newer({ ...pending(), state: 'running', version: 2, attempts: 1 }));
+    await screen.findByText('Preparing your answer from the selected source pages.');
+    await act(async () => older(pending()));
+    expect(screen.queryByText('Your question is queued.')).not.toBeInTheDocument();
+    expect(screen.getByText('Preparing your answer from the selected source pages.')).toBeVisible();
+  });
+
+  it('recovers queued work after reload and retains keyboard focus after cancellation', async () => {
+    memory.document = { ...storedDocument(), sourceContext: { door: 'uploaded_document', label: 'Synthetic PDF' } };
+    let row = pending();
+    sessionStorage.setItem(`petros-document-question:${memory.document.id}`, key);
+    api.get.mockImplementation(async path => path.includes('/document-questions') ? row : memory.document);
+    api.post.mockImplementation(async (_path, body) => {
+      expect(body).toEqual({ version: 1, action: 'cancel' });
+      row = { ...row, state: 'cancelled', version: 2 };
+      return row as never;
+    });
+    render(<PetrosRepairSession topic="photosynthesis" source="document" sessionId={memory.document.id} />);
+    const cancel = await screen.findByRole('button', { name: 'Cancel question' });
+    expect(api.get).toHaveBeenCalledWith(`/student/petros/sessions/${memory.document.id}/document-questions/${key}`, undefined, {
+      'x-petros-knowledge-policy': 'petros.knowledge-policy.v1',
+    });
+    cancel.focus(); fireEvent.click(cancel);
+    expect(await screen.findByText('Question cancelled.')).toBeVisible();
+    await waitFor(() => expect(screen.getByRole('region', { name: 'Document question status' })).toHaveFocus());
+    expect(sessionStorage.getItem(`petros-document-question:${memory.document.id}`)).toBeNull();
+  });
+
+  it('reconciles an uncertain retry response and exposes disabled processing', async () => {
+    memory.document = { ...storedDocument(), sourceContext: { door: 'uploaded_document', label: 'Synthetic PDF' } };
+    let row = { ...pending(), state: 'failed', version: 4, attempts: 1, retryable: true };
+    api.get.mockImplementation(async path => path.includes('/document-questions') ? row : memory.document);
+    api.post.mockImplementation(async (_path, body) => {
+      expect(body).toEqual({ version: 4, action: 'retry' });
+      row = { ...row, state: 'queued', version: 5, retryable: false, processingEnabled: false };
+      throw new Error('Synthetic lost retry response');
+    });
+    render(<PetrosRepairSession topic="photosynthesis" source="document" sessionId={memory.document.id} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Retry question' }));
+    expect(await screen.findByText('Question processing is currently disabled. You can cancel queued work.')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Cancel question' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Retry question' })).not.toBeInTheDocument();
+    expect(api.post).toHaveBeenCalledTimes(1);
   });
 });

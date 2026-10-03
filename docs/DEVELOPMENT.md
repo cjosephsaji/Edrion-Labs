@@ -95,3 +95,27 @@ handler with `@RequirePermissions(...)`; write an audit event for every mutation
 injected `AuditWriter`; never write to `audit_events`/`security_events` directly. Share
 validation by importing the Zod schema from `@edrion/schemas` (the same schema the frontend
 form uses).
+
+## Petros visual workspace verification
+
+`PETROS_WORKSPACE_ENABLED` defaults to false. The v2 declarative engine uses registered
+trusted models; generated executable extensions remain disabled. Workspace forecasts are
+exploratory receipts, while independently reviewed assessments retain the existing evidence
+owner. See `docs/PETROS-PHASE-3-VERIFICATION-RESULTS.md` for the exact acceptance boundary.
+
+The synthetic browser server starts private PostgreSQL and Redis, applies the migration
+journal and app-role grants, and boots the real AppModule with controlled providers. It
+clears inherited application credentials and does not load the root `.env`. Its fixtures
+are engineering authority only. Requires local PostgreSQL binaries, Redis and Chrome:
+
+```bash
+pnpm --filter @edrion/api exec ts-node src/modules/integrations/petros-phase3-browser-server.ts
+env PETROS_ISOLATED_VERIFICATION=1 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:3407 NEXT_PUBLIC_DEV_STUDENT_EMAIL= NEXT_PUBLIC_DEV_STUDENT_USER= pnpm --filter @edrion/student-web exec next dev -p 3411 -H 127.0.0.1
+pnpm --filter @edrion/api exec node src/modules/integrations/petros-phase3-browser-journey.mjs
+```
+
+Run the journey against a fresh server fixture. The temporary cookie metadata is private
+and must not be copied into reports. SIGTERM closes that server and removes its disposable
+services. Verification Next output has separate ignored build/dev directories, so it does
+not overwrite an existing portal's development manifests. Database tests use
+`PETROS_LOCAL_DB_TESTS=1`; never point these fixtures at a shared database or protected dump.

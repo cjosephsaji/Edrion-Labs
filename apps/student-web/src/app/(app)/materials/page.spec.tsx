@@ -36,7 +36,7 @@ vi.mock('@/components/design-system', () => ({
 }));
 
 vi.mock('@/components/petros/petros-door-button', () => ({
-  PetrosDocumentDoor: ({ title }: { title: string }) => <button type="button">Teach me this page from {title}</button>,
+  PetrosDocumentDoor: ({ title, ready }: { title: string; ready: boolean }) => <button type="button" disabled={!ready}>Teach me this page from {title}</button>,
 }));
 
 describe('Study materials', () => {
@@ -57,7 +57,7 @@ describe('Study materials', () => {
     listFixtures.sources = [{
       id: 'source-1',
       title: 'CST 423 Cloud Computing — Module 1 Revision Questions',
-      kind: 'docx',
+      kind: 'pdf',
       pageCount: 1,
       status: 'ready',
       extractionReady: true,
@@ -104,7 +104,7 @@ describe('Study materials', () => {
     listFixtures.sources = [{
       id: 'personal-source-1',
       title: 'Mathematics Method Notes',
-      kind: 'notes',
+      kind: 'pdf',
       pageCount: 3,
       status: 'ready',
       extractionReady: true,
@@ -120,5 +120,31 @@ describe('Study materials', () => {
     expect(screen.getByText('No teacher materials yet')).toBeInTheDocument();
     expect(screen.getByText('Mathematics Method Notes')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Teach me this page from Mathematics Method Notes/ })).toBeEnabled();
+  });
+
+  it('keeps the original accessible while withholding teaching for previews and unreadable extraction', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ pageCount: 1 }) }));
+    listFixtures.sources[0]!.kind = 'document';
+    const { unmount } = render(<Page />);
+    expect(screen.getByText('Preview available; teaching needs preparation')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Teach me this page/ })).toBeDisabled();
+    const open = screen.getByRole('button', { name: /View .* in Edrion/ });
+    open.focus();
+    expect(open).toHaveFocus();
+    fireEvent.click(open);
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Download CST/ })).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    unmount();
+    listFixtures.sources[0]!.kind = 'pdf';
+    listFixtures.sources[0]!.origin = { classMaterialId: 'material-1', petrosExtraction: {
+      schemaVersion: 'petros.document-source.v1', fileSha256: 'a'.repeat(64), extractorVersion: 'test',
+      representation: 'pdf_text', truncated: false, readable: false, indexing: 'not_built',
+    } };
+    render(<Page />);
+    expect(screen.getByText('Source text needs attention')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Teach me this page/ })).toBeDisabled();
+    expect(screen.queryByText('Petros can teach from this')).not.toBeInTheDocument();
   });
 });

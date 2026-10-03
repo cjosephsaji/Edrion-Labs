@@ -1,5 +1,6 @@
+import { KnowledgeDocumentService } from '../knowledge/knowledge-document.service';
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, inArray, or, schema, type Database } from '@edrion/database';
+import { and, eq, inArray, isNull, or, schema, type Database } from '@edrion/database';
 import type { StudentSurfaceKey } from '@edrion/shared-types';
 import {
   resolvePetrosRoute,
@@ -78,6 +79,7 @@ export class PetrosStudentContextService {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     private readonly surfaceGate: SurfaceGateService,
+    private readonly documents: KnowledgeDocumentService,
   ) {}
 
   private has(principal: InstitutionalStudentPrincipal, permission?: string) {
@@ -492,6 +494,7 @@ export class PetrosStudentContextService {
             ),
           );
         for (const row of rows) {
+          if (!await this.documents.canReadSession({ institutionId, studentId }, row.id)) continue;
           out.set(row.id, {
             title: row.topic,
             summary: `${row.sessionType} session \u00b7 ${row.status}`,
@@ -545,6 +548,8 @@ export class PetrosStudentContextService {
         const rows = await this.db
           .select({
             id: schema.petrosSavedArtifacts.id,
+            sessionId: schema.petrosSavedArtifacts.sessionId,
+            sources: schema.petrosSavedArtifacts.sources,
             content: schema.petrosSavedArtifacts.content,
             kind: schema.petrosSavedArtifacts.kind,
             dueAt: schema.petrosSavedArtifacts.dueAt,
@@ -555,9 +560,11 @@ export class PetrosStudentContextService {
               eq(schema.petrosSavedArtifacts.studentId, studentId),
               eq(schema.petrosSavedArtifacts.institutionId, institutionId),
               inArray(schema.petrosSavedArtifacts.id, ids),
+              isNull(schema.petrosSavedArtifacts.deletedAt),
             ),
           );
         for (const row of rows) {
+          if (!await this.documents.canReadArtifact({ institutionId, studentId }, row)) continue;
           out.set(row.id, {
             title: row.content.title,
             summary: [row.kind, row.dueAt ? `review due ${humanDate(row.dueAt, timeZone)}` : null]

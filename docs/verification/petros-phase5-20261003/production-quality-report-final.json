@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "petros.phase5.quality-report.v1",
+  "generatedAt": "2026-10-03T03:15:09.312Z",
+  "evidenceClass": "synthetic_engineering_only",
+  "externalEducatorJudgment": "not_performed",
+  "learningEfficacy": "not_measured",
+  "identities": {
+    "fixture": "phase2-authority-fixture.v1",
+    "source": "93f21dd4a60c78cf1e2f07958208c397caff29ede5315f74ab70c59c3a8873e5,d5d5dfc4e607eb9c258373baebf01af4a7c8bd93f8b75f03901e75f7a057ae70",
+    "teachingPack": "1",
+    "policy": "institutional-policy/current-owner-read",
+    "prompt": "stage4-plan-v1,stage4-plan-v1",
+    "outputSchema": "petros.plan.v3,petros.plan.v3",
+    "controlledModel": "malformed-output-fixture.v1",
+    "evaluator": "deterministic-owner-assertions.v1"
+  },
+  "population": {
+    "owners": 2,
+    "tenants": 2
+  },
+  "counters": {
+    "sourceReady": 2,
+    "citationsResolved": 2,
+    "productionMoves": 2,
+    "controlledOutputsRejected": 2,
+    "foreignOwnerDenied": 1
+  },
+  "timingMs": {
+    "sourceResolveCold": {
+      "samples": 2,
+      "minMs": 1.4359999999996944,
+      "p50Ms": 1.4359999999996944,
+      "p95Ms": 1.8585000000002765,
+      "maxMs": 1.8585000000002765
+    },
+    "sourceResolveWarm": {
+      "samples": 40,
+      "minMs": 1.306124999999156,
+      "p50Ms": 1.4234999999998763,
+      "p95Ms": 1.8162499999998545,
+      "maxMs": 4.220041999999921
+    },
+    "teachingStartCold": {
+      "samples": 2,
+      "minMs": 643.4692919999998,
+      "p50Ms": 643.4692919999998,
+      "p95Ms": 667.4290000000001,
+      "maxMs": 667.4290000000001
+    },
+    "teachingDocumentWarm": {
+      "samples": 40,
+      "minMs": 92.47891699999946,
+      "p50Ms": 93.61841600000025,
+      "p95Ms": 97.49354099999982,
+      "maxMs": 102.57633299999998
+    }
+  },
+  "contentDigests": [
+    "eab5732feae9b72979e7d02b2f385b9c160b56672b55eb23e0eb3b9939d2f447",
+    "eab5732feae9b72979e7d02b2f385b9c160b56672b55eb23e0eb3b9939d2f447"
+  ],
+  "controlledModelLayer": {
+    "result": "invalid topic-profile output rejected; profile owner used deterministic seed; production loop rendered the approved pack",
+    "calls": 2,
+    "paidCalls": 0
+  },
+  "limitations": [
+    "Synthetic records and qualification receipts grant engineering fixture authority only.",
+    "Malformed controlled output verifies rejection and fallback; no model quality or human judgment is assessed.",
+    "Latency samples are local disposable-database measurements, not production SLOs.",
+    "No learner, pilot, privacy, curriculum, accessibility or fairness acceptance is implied."
+  ]
+}

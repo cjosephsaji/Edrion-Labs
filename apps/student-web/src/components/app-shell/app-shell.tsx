@@ -3,12 +3,14 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
-import { Bell, ChevronRight, LayoutGrid, LogOut, RotateCcw, Settings, Star, UserRound, X } from 'lucide-react';
+import { Bell, BookOpen, ChevronRight, House, LayoutGrid, LogOut, NotebookPen, RotateCcw, Settings, Sparkles, Star, UserRound, X } from 'lucide-react';
 import { STUDENT_NAV, type NavItem } from '@/lib/nav';
 import { useStudentLogout, useStudentMe, type StudentMe } from '@/lib/hooks';
 import { useStudentPreferences } from '@/lib/preferences';
 import { PetrosCompanionProvider } from '@/components/petros/petros-companion-context';
+import { PetrosProgramWorkspaceProvider } from '@/components/petros/petros-program-workspace';
 import { PetrosMentor } from '@/components/petros/petros-mentor';
+import { clearQueuedNotesForOwner } from '@/lib/petros-offline-notes';
 import { NavigationFeedback } from './navigation-feedback';
 import { activeSectionNavigation, SectionNavigation } from './section-navigation';
 
@@ -125,6 +127,16 @@ function DirectoryLink({
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { data: me } = useStudentMe();
+  const priorOwner = useRef<{ institutionId: string; studentId: string } | null>(null);
+  useEffect(() => {
+    const nextOwner = me?.kind === 'institutional' && me.institutionId && me.studentId
+      ? { institutionId: me.institutionId, studentId: me.studentId } : null;
+    const previous = priorOwner.current;
+    if (previous && (!nextOwner || previous.institutionId !== nextOwner.institutionId || previous.studentId !== nextOwner.studentId)) {
+      void clearQueuedNotesForOwner(previous).catch(() => undefined);
+    }
+    priorOwner.current = nextOwner;
+  }, [me?.institutionId, me?.kind, me?.studentId]);
   const logout = useStudentLogout();
   const preferences = useStudentPreferences();
   const [menuPhase, setMenuPhase] = useState<'closed' | 'open' | 'closing'>('closed');
@@ -269,6 +281,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <PetrosCompanionProvider>
+    <PetrosProgramWorkspaceProvider key={me?.studentId ?? 'unavailable'}>
     <div className="student-shell min-h-screen bg-[var(--s-page)] text-[var(--s-ink)]">
       <NavigationFeedback />
       <header className={`portal-header sticky top-0 z-40 ${headerCompact ? 'is-compact' : ''}`}>
@@ -290,6 +303,19 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <div className="portal-nav-row">
+          <nav className="portal-learning-rail" aria-label="Learning workspace">
+            <p>Your workspace</p>
+            {[
+              { href: '/home', label: 'Home', icon: House },
+              { href: '/learn', label: 'Learn', icon: BookOpen, permission: 'student.learn.use' },
+              { href: '/petros', label: 'Petros', icon: Sparkles, permission: 'student.learn.use' },
+              { href: '/materials', label: 'Materials', icon: BookOpen, permission: 'student.classes.view' },
+              { href: '/petros/artifacts', label: 'Notebook & review', icon: NotebookPen, permission: 'student.learn.use' },
+            ].filter(item => canSee(me, item.permission)).map(item => <Link key={item.href} href={item.href}
+              aria-current={isActive(pathname, item.href) && !(item.href === '/petros' && pathname.startsWith('/petros/artifacts')) ? 'page' : undefined}>
+              <item.icon aria-hidden="true" /><span>{item.label}</span>
+            </Link>)}
+          </nav>
           <nav className="portal-tabs" aria-label="Student portal">
             <div className="portal-quick-tabs">
               {primaryTabs.map((item) => <PortalTab key={item.href} item={item} pathname={pathname} />)}
@@ -321,8 +347,16 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
 
       <nav className="portal-mobile-nav min-[921px]:hidden" aria-label="Quick navigation">
-        <div className="portal-quick-tabs">
-          {primaryTabs.map((item) => <PortalTab key={item.href} item={item} pathname={pathname} />)}
+        <div className="portal-learning-mobile">
+          {[
+            {href: '/home', label: 'Home', icon: House},
+            {href: '/petros', label: 'Petros', icon: Sparkles, permission: 'student.learn.use'},
+            {href: '/materials', label: 'Materials', icon: BookOpen, permission: 'student.classes.view'},
+            {href: '/petros/artifacts', label: 'Notebook', icon: NotebookPen, permission: 'student.learn.use'},
+          ].filter(item => canSee(me, item.permission)).map(item => <Link key={item.href} href={item.href} className="portal-tab"
+            aria-current={isActive(pathname, item.href) && !(item.href === '/petros' && pathname.startsWith('/petros/artifacts')) ? 'page' : undefined}>
+            <item.icon aria-hidden="true" /><span>{item.label}</span>
+          </Link>)}
         </div>
         <button type="button" onClick={openMenu} data-petros-target="nav:explore" className="portal-tab" aria-expanded={menuOpen} aria-controls="portal-directory"><LayoutGrid className="h-4 w-4" aria-hidden="true" />Explore</button>
       </nav>
@@ -380,6 +414,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       ) : null}
     </div>
+    </PetrosProgramWorkspaceProvider>
     </PetrosCompanionProvider>
   );
 }

@@ -8,6 +8,39 @@ export type ApiErrorBody = {
   message?: string;
   correlationId?: string;
   details?: unknown;
+  meta?: Record<string, unknown>;
+};
+
+export type PetrosPredictionAssistance = 'none_observed' | 'petros_help' | 'external_declared' | 'unknown';
+
+export type PetrosPredictionChallenge = {
+  challengeId: string;
+  checkpointId: string;
+  programRevision: number;
+  experimentVersion: number;
+  modelId: string;
+  capabilityId: string;
+  targetTime: number;
+  outputPort: string;
+  unit: string;
+  prompt: string;
+  priorExploration: boolean;
+  assistanceStatus: 'external_help_unknown';
+  evidenceEligibility: 'observation_only';
+  replayed: boolean;
+};
+
+export type PetrosPredictionEvaluation = {
+  status: 'evaluated';
+  challenge: Omit<PetrosPredictionChallenge, 'replayed'>;
+  result: 'within_tolerance' | 'outside_tolerance';
+  referenceValue: number;
+  tolerance: number;
+  predictedValue: number;
+  assistance: PetrosPredictionAssistance;
+  externalHelp: 'unknown';
+  masteryAdmitted: false;
+  replayed: boolean;
 };
 
 export class StudentApiError extends Error {
@@ -17,6 +50,7 @@ export class StudentApiError extends Error {
     message: string,
     readonly correlationId?: string,
     readonly details?: unknown,
+    readonly meta?: Record<string, unknown>,
   ) {
     super(message);
     this.name = 'StudentApiError';
@@ -76,13 +110,14 @@ export class StudentApiClient {
         body?.message ?? res.statusText,
         body?.correlationId,
         body?.details,
+        body?.meta,
       );
     }
     return body as T;
   }
 
-  get<T>(path: string, signal?: AbortSignal): Promise<T> {
-    return this.request<T>(path, { method: 'GET', signal });
+  get<T>(path: string, signal?: AbortSignal, headers?: Record<string, string>): Promise<T> {
+    return this.request<T>(path, { method: 'GET', signal, headers });
   }
 
   post<T>(path: string, body?: unknown, headers?: Record<string, string>, signal?: AbortSignal): Promise<T> {
@@ -92,6 +127,28 @@ export class StudentApiClient {
       headers,
       signal,
     });
+  }
+
+  issuePetrosWorkspacePrediction(
+    sessionId: string,
+    blockId: string,
+    request: { requestId: string; modelId: string },
+  ): Promise<{ status: 'challenge' } & PetrosPredictionChallenge> {
+    return this.post(
+      `/student/petros/sessions/${encodeURIComponent(sessionId)}/blocks/${encodeURIComponent(blockId)}/workspace/predictions`,
+      request,
+    );
+  }
+
+  answerPetrosWorkspacePrediction(
+    sessionId: string,
+    blockId: string,
+    answer: { requestId: string; challengeId: string; predictedValue: number; assistance: PetrosPredictionAssistance },
+  ): Promise<PetrosPredictionEvaluation> {
+    return this.post(
+      `/student/petros/sessions/${encodeURIComponent(sessionId)}/blocks/${encodeURIComponent(blockId)}/workspace/predictions/answer`,
+      answer,
+    );
   }
 
   put<T>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {

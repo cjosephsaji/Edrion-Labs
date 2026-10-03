@@ -1,6 +1,8 @@
-import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Header, Controller, Get, Param, Post, Put, Query, UseGuards, Optional } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import {
+  petrosVisualCommandSchema,
+  type PetrosVisualCommand,
   petrosCloseSessionSchema,
   petrosComposerQuestionSchema,
   petrosCompleteBlockSchema,
@@ -44,6 +46,7 @@ import {
 import type { StudentPrincipal } from '../student.types';
 import { requireInstitutional } from '../surfaces/surface-gate.service';
 import { PetrosLoopService } from './petros-loop.service';
+import { PetrosQuestionExecutionService } from './petros-question-execution.service';
 
 @ApiTags('student-petros-learning')
 @Controller('student/petros/sessions')
@@ -53,9 +56,10 @@ import { PetrosLoopService } from './petros-loop.service';
 @RequireStudentPermissions('student.learn.use')
 @StudentRateLimit(30, 60)
 export class StudentPetrosLoopController {
-  constructor(private readonly service: PetrosLoopService) {}
+  constructor(private readonly service: PetrosLoopService, @Optional() private readonly questions?: PetrosQuestionExecutionService) {}
 
   @Post()
+  @Header('Cache-Control', 'private, no-store')
   create(
     @CurrentStudent() raw: StudentPrincipal,
     @Body(zodBody(petrosCreateLearningSessionSchema)) body: PetrosCreateLearningSessionInput,
@@ -66,18 +70,21 @@ export class StudentPetrosLoopController {
 
   /** Must be declared before `:sessionId` or Nest matches "history" as an id. */
   @Get('history')
+  @Header('Cache-Control', 'private, no-store')
   history(@CurrentStudent() raw: StudentPrincipal) {
     requireInstitutional(raw);
     return this.service.history(raw);
   }
 
   @Get(':sessionId')
+  @Header('Cache-Control', 'private, no-store')
   read(@CurrentStudent() raw: StudentPrincipal, @Param('sessionId') sessionId: string) {
     requireInstitutional(raw);
     return this.service.document(raw, sessionId);
   }
 
   @Post(':sessionId/continue')
+  @Header('Cache-Control', 'private, no-store')
   continueSession(
     @CurrentStudent() raw: StudentPrincipal,
     @Param('sessionId') sessionId: string,
@@ -87,7 +94,23 @@ export class StudentPetrosLoopController {
     return this.service.continue(raw, sessionId, body.idempotencyKey);
   }
 
+  @Get(':sessionId/blocks/:blockId/visual')
+  @Header('Cache-Control', 'private, no-store')
+  visual(@CurrentStudent() raw: StudentPrincipal, @Param('sessionId') sessionId: string, @Param('blockId') blockId: string) {
+    requireInstitutional(raw);
+    return this.service.visual(raw, sessionId, blockId);
+  }
+
+  @Put(':sessionId/blocks/:blockId/visual')
+  @Header('Cache-Control', 'private, no-store')
+  visualCommand(@CurrentStudent() raw: StudentPrincipal, @Param('sessionId') sessionId: string, @Param('blockId') blockId: string,
+    @Body(zodBody(petrosVisualCommandSchema)) body: PetrosVisualCommand) {
+    requireInstitutional(raw);
+    return this.service.visualCommand(raw, sessionId, blockId, body);
+  }
+
   @Put(':sessionId/blocks/:blockId/interaction')
+  @Header('Cache-Control', 'private, no-store')
   interaction(
     @CurrentStudent() raw: StudentPrincipal,
     @Param('sessionId') sessionId: string,
@@ -99,6 +122,7 @@ export class StudentPetrosLoopController {
   }
 
   @Post(':sessionId/blocks/:blockId/question')
+  @Header('Cache-Control', 'private, no-store')
   ensureQuestion(
     @CurrentStudent() raw: StudentPrincipal,
     @Param('sessionId') sessionId: string,
@@ -110,6 +134,7 @@ export class StudentPetrosLoopController {
   }
 
   @Post(':sessionId/blocks/:blockId/reexplain')
+  @Header('Cache-Control', 'private, no-store')
   @StudentRateLimit(12, 60)
   reexplain(
     @CurrentStudent() raw: StudentPrincipal,
@@ -122,6 +147,7 @@ export class StudentPetrosLoopController {
   }
 
   @Post(':sessionId/blocks/:blockId/complete')
+  @Header('Cache-Control', 'private, no-store')
   complete(
     @CurrentStudent() raw: StudentPrincipal,
     @Param('sessionId') sessionId: string,
@@ -133,6 +159,7 @@ export class StudentPetrosLoopController {
   }
 
   @Post(':sessionId/blocks/:blockId/answers')
+  @Header('Cache-Control', 'private, no-store')
   @StudentRateLimit(20, 60)
   answer(
     @CurrentStudent() raw: StudentPrincipal,
@@ -145,6 +172,7 @@ export class StudentPetrosLoopController {
   }
 
   @Post(':sessionId/blocks/:blockId/hint')
+  @Header('Cache-Control', 'private, no-store')
   @StudentRateLimit(12, 60)
   hint(
     @CurrentStudent() raw: StudentPrincipal,
@@ -157,17 +185,20 @@ export class StudentPetrosLoopController {
   }
 
   @Post(':sessionId/questions')
+  @Header('Cache-Control', 'private, no-store')
   @StudentRateLimit(10, 60)
-  composer(
+  async composer(
     @CurrentStudent() raw: StudentPrincipal,
     @Param('sessionId') sessionId: string,
     @Body(zodBody(petrosComposerQuestionSchema)) body: PetrosComposerQuestionInput,
   ) {
     requireInstitutional(raw);
+    await this.questions?.assertLegacyAllowed(raw, sessionId);
     return this.service.composerQuestion(raw, sessionId, body);
   }
 
   @Post(':sessionId/questions/:detourId/understood')
+  @Header('Cache-Control', 'private, no-store')
   rejoinQuestion(
     @CurrentStudent() raw: StudentPrincipal,
     @Param('sessionId') sessionId: string,
@@ -179,6 +210,7 @@ export class StudentPetrosLoopController {
   }
 
   @Post(':sessionId/pause')
+  @Header('Cache-Control', 'private, no-store')
   pause(
     @CurrentStudent() raw: StudentPrincipal,
     @Param('sessionId') sessionId: string,
@@ -189,6 +221,7 @@ export class StudentPetrosLoopController {
   }
 
   @Post(':sessionId/resume')
+  @Header('Cache-Control', 'private, no-store')
   resume(
     @CurrentStudent() raw: StudentPrincipal,
     @Param('sessionId') sessionId: string,
@@ -199,6 +232,7 @@ export class StudentPetrosLoopController {
   }
 
   @Post(':sessionId/close')
+  @Header('Cache-Control', 'private, no-store')
   close(
     @CurrentStudent() raw: StudentPrincipal,
     @Param('sessionId') sessionId: string,
@@ -209,6 +243,7 @@ export class StudentPetrosLoopController {
   }
 
   @Get(':sessionId/blocks/:blockId/reason')
+  @Header('Cache-Control', 'private, no-store')
   reason(
     @CurrentStudent() raw: StudentPrincipal,
     @Param('sessionId') sessionId: string,

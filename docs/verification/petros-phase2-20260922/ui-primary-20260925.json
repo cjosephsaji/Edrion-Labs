@@ -1,0 +1,17 @@
+{
+  "startedAt": "2026-09-25T06:40:42.763248+00:00",
+  "finishedAt": "2026-09-25T06:40:49.404360+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/student-web",
+    "exec",
+    "vitest",
+    "run",
+    "src/components/petros/petros-projectile-explorer.spec.tsx",
+    "src/components/petros/petros-visual-explorer.spec.tsx",
+    "src/components/petros/petros-repair-session.spec.tsx"
+  ],
+  "exitCode": 0,
+  "log": "ui-primary-20260925.log"
+}

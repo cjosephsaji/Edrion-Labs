@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Clock3, FileText, LoaderCircle, ShieldCheck, Sparkles, X } from 'lucide-react';
+import { PETROS_DOCUMENT_SOURCE_VERSION, petrosDocumentReadinessSchema, type PetrosDocumentReadiness } from '@edrion/schemas';
 import type { PetrosLearningSessionDocument, PetrosSessionIntent, PetrosTeachingPriority } from '@edrion/schemas';
 import { formatApiError, newIdempotencyKey, useStudentApi } from '@/lib/api-client';
 import styles from './petros-door-button.module.css';
@@ -39,6 +40,7 @@ export function PetrosDoorButton({
   const [loading, setLoading] = useState(false);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
+  const [readinessError, setReadinessError] = useState<PetrosDocumentReadiness | null>(null);
   const [topicId, setTopicId] = useState('');
   const [priority, setPriority] = useState<PetrosTeachingPriority>('understand');
   const [sessionMinutes, setSessionMinutes] = useState(Math.ceil(timeBudgetSeconds / 60));
@@ -51,6 +53,7 @@ export function PetrosDoorButton({
     if (starting) return;
     setIntent(null);
     setError('');
+    setReadinessError(null);
     window.requestAnimationFrame(() => triggerRef.current?.focus());
   }, [starting]);
 
@@ -73,22 +76,34 @@ export function PetrosDoorButton({
     if (loading || disabled) return;
     setLoading(true);
     setError('');
+    setReadinessError(null);
     try {
       const storageKey = `petros:intent:${keySuffix}`;
-      const idempotencyKey = sessionStorage.getItem(storageKey) ?? newIdempotencyKey();
-      sessionStorage.setItem(storageKey, idempotencyKey);
-      const resolved = await api.post<PetrosSessionIntent>('/student/petros/intents/resolve', {
-        door,
-        sourceId,
-        idempotencyKey,
-        timeBudgetSeconds,
-        ...(page ? { page } : {}),
-        ...(section ? { section } : {}),
-        ...(question ? { question } : {}),
-        ...(route ? { route } : {}),
-        language: 'en',
-        accessibility: [],
-      });
+      const resolve = async () => {
+        const idempotencyKey = sessionStorage.getItem(storageKey) ?? newIdempotencyKey();
+        sessionStorage.setItem(storageKey, idempotencyKey);
+        return api.post<PetrosSessionIntent>('/student/petros/intents/resolve', {
+          door,
+          sourceId,
+          idempotencyKey,
+          timeBudgetSeconds,
+          ...(page ? { page } : {}),
+          ...(section ? { section } : {}),
+          ...(question ? { question } : {}),
+          ...(route ? { route } : {}),
+          language: 'en',
+          accessibility: [],
+        }, { 'x-petros-document-source': PETROS_DOCUMENT_SOURCE_VERSION });
+      };
+      // A stale result is definitive. A lost response is not: retain its key for retries.
+      let resolved: PetrosSessionIntent;
+      try {
+        resolved = await resolve();
+      } catch (caught) {
+        if (apiErrorCode(caught) !== 'PETROS_INTENT_STALE') throw caught;
+        sessionStorage.removeItem(storageKey);
+        resolved = await resolve();
+      }
       setIntent(resolved);
       setTopicId(resolved.planning?.suggestedTopicId ?? '');
       setPriority(resolved.planning?.suggestedPriority ?? (resolved.time.examDate ? 'exam_prep' : 'understand'));
@@ -96,6 +111,10 @@ export function PetrosDoorButton({
       setExistingDoubt('');
     } catch (caught) {
       setError(formatApiError(caught));
+      setReadinessError(sourceReadinessError(caught));
+      if (apiErrorCode(caught) === 'PETROS_INTENT_STALE') {
+        sessionStorage.removeItem(`petros:intent:${keySuffix}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -105,6 +124,7 @@ export function PetrosDoorButton({
     if (!intent || starting) return;
     setStarting(true);
     setError('');
+    setReadinessError(null);
     try {
       const storageKey = `petros:intent-start:${intent.id}`;
       const idempotencyKey = sessionStorage.getItem(storageKey) ?? newIdempotencyKey();
@@ -122,12 +142,19 @@ export function PetrosDoorButton({
             existingDoubt: existingDoubt.trim() || null,
           },
         } : {}),
-      });
+      }, { 'x-petros-document-source': PETROS_DOCUMENT_SOURCE_VERSION });
       sessionStorage.removeItem(storageKey);
       sessionStorage.removeItem(`petros:intent:${keySuffix}`);
       router.push(`/petros/session?session=${response.session.id}`);
     } catch (caught) {
       setError(formatApiError(caught));
+      setReadinessError(sourceReadinessError(caught));
+      if (apiErrorCode(caught) === 'PETROS_INTENT_STALE') {
+        sessionStorage.removeItem(`petros:intent:${keySuffix}`);
+        sessionStorage.removeItem(`petros:intent-start:${intent.id}`);
+        setIntent(null);
+        triggerRef.current?.focus();
+      }
       setStarting(false);
     }
   }
@@ -146,7 +173,7 @@ export function PetrosDoorButton({
         {loading ? <LoaderCircle aria-hidden="true" className={styles.spin} /> : <Sparkles aria-hidden="true" />}
         {loading ? 'Checking context…' : label}
       </button>
-      {error && !intent ? <p className={styles.inlineError} role="alert">{error}</p> : null}
+      {error && !intent ? <div className={styles.inlineError} role="alert">{error}<ReadinessDetails readiness={readinessError} /></div> : null}
       {intent && typeof document !== 'undefined' ? createPortal(
         <div className={styles.layer} data-petros-preview-layer="true">
           <button type="button" className={styles.backdrop} onClick={close} aria-label="Close Petros preview" />
@@ -244,7 +271,7 @@ export function PetrosDoorButton({
                   {intent.policyDisclosures.map((disclosure) => <p key={disclosure}>{disclosure}</p>)}
                 </div>
               </section>
-              {error ? <p className={styles.error} role="alert">{error}</p> : null}
+              {error ? <div className={styles.error} role="alert">{error}<ReadinessDetails readiness={readinessError} /></div> : null}
             </div>
             <footer className={styles.foot}>
               <button type="button" onClick={close} disabled={starting}>Not now</button>
@@ -297,7 +324,7 @@ export function PetrosDocumentDoor({
         door="uploaded_document"
         sourceId={sourceId}
         page={scope === 'page' ? page : undefined}
-        label={ready ? `Plan a lesson from ${title}` : 'Extraction in progress'}
+        label={ready ? `Plan a lesson from ${title}` : 'Teaching source unavailable'}
         disabled={!ready}
       />
     </div>
@@ -320,4 +347,35 @@ function doorLabel(door: Door) {
     reflection_action: 'Reflection next action',
     active_homework: 'Active assignment',
   }[door];
+}
+
+function apiErrorCode(error: unknown) {
+  return error && typeof error === 'object' && 'code' in error ? error.code : undefined;
+}
+
+function sourceReadinessError(error: unknown): PetrosDocumentReadiness | null {
+  const meta = error && typeof error === 'object' && 'meta' in error ? error.meta : null;
+  const result = petrosDocumentReadinessSchema.safeParse(meta && typeof meta === 'object' && 'readiness' in meta ? meta.readiness : null);
+  return result.success ? result.data : null;
+}
+
+const readinessReasons: Record<PetrosDocumentReadiness['reasons'][number], string> = {
+  pending: 'Text preparation is still pending. Retry after preparation finishes.',
+  extraction_failed: 'Text extraction failed. Correct the file and retry preparation.',
+  preview_only: 'This format has a preview only. Provide a readable PDF for teaching.',
+  truncated: 'The extracted text was truncated. Provide a smaller, complete source.',
+  missing_pages: 'Some selected pages have no extracted text. Select an available page.',
+  unreadable_text: 'Some selected text is unreadable. Check the original and correct the file.',
+  confirmation_required: 'Extracted text needs confirmation before teaching.',
+  invalid_locator: 'The selected page cannot be located reliably in the original.',
+  resource_limit: 'The source exceeds the preparation limits. Provide a smaller file.',
+  invalid_metadata: 'Preparation information is invalid. Retry preparation after correcting the file.',
+};
+
+function ReadinessDetails({ readiness }: { readiness: PetrosDocumentReadiness | null }) {
+  if (!readiness) return null;
+  return <div>
+    {readiness.unavailablePages.length ? <p>Unavailable or unconfirmed pages: {readiness.unavailablePages.join(', ')}.</p> : null}
+    <ul>{readiness.reasons.map((reason) => <li key={reason}>{readinessReasons[reason]}</li>)}</ul>
+  </div>;
 }

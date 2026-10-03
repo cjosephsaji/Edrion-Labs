@@ -98,3 +98,6 @@ export {
   type ResolvedNomenclature,
   type NomenclatureOverrides,
 } from '@edrion/shared-types';
+
+export * from './petros-lesson-narration';
+export { PetrosTeachingBlockPreview } from './petros-teaching-block-preview';

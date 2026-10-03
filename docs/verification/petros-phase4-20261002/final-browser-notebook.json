@@ -1,0 +1,17 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "node",
+    "../../docs/verification/petros-phase4-20261002/browser-notebook-journey.mjs"
+  ],
+  "start": "2026-10-02T12:00:21.070455+00:00",
+  "end": "2026-10-02T12:01:07.018664+00:00",
+  "exitCode": 1,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+  }
+}

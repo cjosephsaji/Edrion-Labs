@@ -1,0 +1,16 @@
+{
+  "startedAt": "2026-09-25T06:48:05.677047+00:00",
+  "finishedAt": "2026-09-25T06:48:11.083864+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/student-web",
+    "exec",
+    "vitest",
+    "run",
+    "src/components/petros/petros-reviewed-objective-picker.spec.tsx",
+    "src/components/petros/petros-repair-session.spec.tsx"
+  ],
+  "exitCode": 0,
+  "log": "ui-check-picker-integration-20260925.log"
+}

@@ -185,7 +185,7 @@ export default function CalendarPage() {
 
       {view === 'month' ? (
         <section className="mt-[18px]">
-          <div className="grid grid-cols-7 gap-px border border-[var(--s-bd1)] bg-[var(--s-bd1)]">
+          <div className="grid grid-cols-7 gap-px overflow-hidden rounded-[var(--s-radius-card)] border border-[var(--s-bd1)] bg-[var(--s-bd1)]">
             {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((day) => <div key={day} className="bg-[var(--s-page)] p-1.5 text-center font-mono-ui text-[8px] font-medium tracking-[.08em] text-[var(--s-faint2)]">{day}</div>)}
             {grid.map((cell) => {
               const events = eventMap.get(cell.key) ?? [];

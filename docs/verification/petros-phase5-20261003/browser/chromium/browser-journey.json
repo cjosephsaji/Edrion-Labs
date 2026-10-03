@@ -1,0 +1,783 @@
+{
+  "date": "2026-10-03T08:46:03.407Z",
+  "phase": "P5 synthetic engineering",
+  "fixture": "petros-phase5-synthetic-projectile-and-operations-v1",
+  "environment": {
+    "platform": "darwin",
+    "release": "27.0.0",
+    "architecture": "arm64",
+    "node": "v25.6.0",
+    "playwright": "1.61.1",
+    "browserEngine": "chromium",
+    "browserVersion": "154.0.8037.95",
+    "engines": {
+      "chromium": {
+        "installed": true,
+        "binarySource": "system_google_chrome"
+      },
+      "firefox": {
+        "installed": true,
+        "binarySource": "task_owned_playwright_runtime"
+      },
+      "webkit": {
+        "installed": true,
+        "binarySource": "task_owned_playwright_runtime"
+      }
+    }
+  },
+  "viewport": [
+    1440,
+    1000
+  ],
+  "mobile": [
+    390,
+    844
+  ],
+  "reducedMotion": true,
+  "realAppModule": true,
+  "disposablePostgresRedis": true,
+  "controlledProvider": true,
+  "speech": "controlled boundary adapter; physical speech validation remains open",
+  "executableBoundary": {
+    "enabled": false,
+    "operationBudget": 0,
+    "limitation": "Disabled: no validated executable isolation, network/import denial or CPU/memory containment. A Web Worker is not this boundary."
+  },
+  "assertionCheckpoints": [
+    {
+      "index": 1,
+      "label": "begin with companion question linked to approved source journey",
+      "passed": true
+    },
+    {
+      "index": 2,
+      "label": "actual authenticated pilot admission and collector remain disabled",
+      "passed": true
+    },
+    {
+      "index": 3,
+      "label": "visual text alternatives and nonvisual view names",
+      "passed": true
+    },
+    {
+      "index": 4,
+      "label": "explicit selected takeaway saved as owned note and review flashcard through lesson UI",
+      "passed": true
+    },
+    {
+      "index": 5,
+      "label": "keyboard semantic selection",
+      "passed": true
+    },
+    {
+      "index": 6,
+      "label": "isolate",
+      "passed": true
+    },
+    {
+      "index": 7,
+      "label": "linked representation",
+      "passed": true
+    },
+    {
+      "index": 8,
+      "label": "restore wider lesson",
+      "passed": true
+    },
+    {
+      "index": 9,
+      "label": "apex model event",
+      "passed": true
+    },
+    {
+      "index": 10,
+      "label": "save draft",
+      "passed": true
+    },
+    {
+      "index": 11,
+      "label": "offline note persisted in actual IndexedDB before closing page",
+      "passed": true
+    },
+    {
+      "index": 12,
+      "label": "parked lesson resumed through actual lifecycle and scene recovery controls after page departure",
+      "passed": true
+    },
+    {
+      "index": 13,
+      "label": "durable IndexedDB note reconciled once after page close and online reopen",
+      "passed": true
+    },
+    {
+      "index": 14,
+      "label": "restore note after offline synchronization",
+      "passed": true
+    },
+    {
+      "index": 15,
+      "label": "interrupt confirmed narration boundary",
+      "passed": true
+    },
+    {
+      "index": 16,
+      "label": "expand shared workspace",
+      "passed": true
+    },
+    {
+      "index": 17,
+      "label": "resume same return point",
+      "passed": true
+    },
+    {
+      "index": 18,
+      "label": "return to original lesson",
+      "passed": true
+    },
+    {
+      "index": 19,
+      "label": "projectile parameter",
+      "passed": true
+    },
+    {
+      "index": 20,
+      "label": "numeric parameter and bound model state stay synchronized",
+      "passed": true
+    },
+    {
+      "index": 21,
+      "label": "explicit continuous-motion opt-in",
+      "passed": true
+    },
+    {
+      "index": 22,
+      "label": "representation preserves live observed time",
+      "passed": true
+    },
+    {
+      "index": 23,
+      "label": "pause acknowledges observed time",
+      "passed": true
+    },
+    {
+      "index": 24,
+      "label": "analytic return to initial time",
+      "passed": true
+    },
+    {
+      "index": 25,
+      "label": "lost response and exact retry",
+      "passed": true
+    },
+    {
+      "index": 26,
+      "label": "stale-version denial",
+      "passed": true
+    },
+    {
+      "index": 27,
+      "label": "real HTTP invalid-unit denial without write",
+      "passed": true
+    },
+    {
+      "index": 28,
+      "label": "branch from owner checkpoint",
+      "passed": true
+    },
+    {
+      "index": 29,
+      "label": "prediction before server outcome",
+      "passed": true
+    },
+    {
+      "index": 30,
+      "label": "pendulum step",
+      "passed": true
+    },
+    {
+      "index": 31,
+      "label": "pendulum mass restart",
+      "passed": true
+    },
+    {
+      "index": 32,
+      "label": "circuits.dc.series step",
+      "passed": true
+    },
+    {
+      "index": 33,
+      "label": "circuits.dc.series switching",
+      "passed": true
+    },
+    {
+      "index": 34,
+      "label": "circuits.dc.series advance open",
+      "passed": true
+    },
+    {
+      "index": 35,
+      "label": "circuits.dc.series reclose",
+      "passed": true
+    },
+    {
+      "index": 36,
+      "label": "circuits.dc.series rewind through switch history",
+      "passed": true
+    },
+    {
+      "index": 37,
+      "label": "circuits.rc.series step",
+      "passed": true
+    },
+    {
+      "index": 38,
+      "label": "circuits.rc.series switching",
+      "passed": true
+    },
+    {
+      "index": 39,
+      "label": "circuits.rc.series advance open",
+      "passed": true
+    },
+    {
+      "index": 40,
+      "label": "circuits.rc.series reclose",
+      "passed": true
+    },
+    {
+      "index": 41,
+      "label": "circuits.rc.series rewind through switch history",
+      "passed": true
+    },
+    {
+      "index": 42,
+      "label": "spatial keyboard alternative",
+      "passed": true
+    },
+    {
+      "index": 43,
+      "label": "unfamiliar combined program",
+      "passed": true
+    },
+    {
+      "index": 44,
+      "label": "lesson-owner resume after navigation",
+      "passed": true
+    },
+    {
+      "index": 45,
+      "label": "controlled 200% text enlargement and keyboard focus",
+      "passed": true
+    },
+    {
+      "index": 46,
+      "label": "mobile expanded scene",
+      "passed": true
+    },
+    {
+      "index": 47,
+      "label": "fresh desktop/mobile context numeric replay and unit parity",
+      "passed": true
+    },
+    {
+      "index": 48,
+      "label": "fresh mobile keyboard scene expansion",
+      "passed": true
+    },
+    {
+      "index": 49,
+      "label": "live companion controlled capture",
+      "passed": true
+    },
+    {
+      "index": 50,
+      "label": "memory preferences, remember, correct, forget via styled settings and owner APIs",
+      "passed": true
+    },
+    {
+      "index": 51,
+      "label": "actual home notebook/review link preserves explicitly saved flashcard",
+      "passed": true
+    },
+    {
+      "index": 52,
+      "label": "new browser next-day controlled JS clock",
+      "passed": true
+    },
+    {
+      "index": 53,
+      "label": "low-bandwidth setting and text-first lesson through styled UI",
+      "passed": true
+    },
+    {
+      "index": 54,
+      "label": "low-bandwidth preference restored online before subsequent browser journey checks",
+      "passed": true
+    },
+    {
+      "index": 55,
+      "label": "teacher A preview UI POST response",
+      "passed": true
+    },
+    {
+      "index": 56,
+      "label": "teacher A previews intervention in current class scope",
+      "passed": true
+    },
+    {
+      "index": 57,
+      "label": "teacher A uploads replacement through existing Files uploader and creates two correction previews",
+      "passed": true
+    },
+    {
+      "index": 58,
+      "label": "teacher B independently reviews first intervention and cancels second in current class scope",
+      "passed": true
+    },
+    {
+      "index": 59,
+      "label": "teacher B rejects one correction and approves the other in the same class/material scope",
+      "passed": true
+    },
+    {
+      "index": 60,
+      "label": "old student source denied after approved material correction",
+      "passed": true
+    },
+    {
+      "index": 61,
+      "label": "styled super-admin operations dashboard with actual ai.view API session",
+      "passed": true
+    }
+  ],
+  "record": [
+    {
+      "label": "begin with companion question linked to approved source journey",
+      "threadLinked": true,
+      "questionPreserved": true,
+      "journeyId": "3b5f9ae9-f63c-4dc5-be51-8b1b98469008"
+    },
+    {
+      "label": "actual authenticated pilot admission and collector remain disabled",
+      "admitted": false,
+      "instrumentation": false,
+      "eventStatus": 409
+    },
+    {
+      "label": "visual text alternatives and nonvisual view names",
+      "views": 4,
+      "descriptionPresent": true
+    },
+    {
+      "label": "explicit selected takeaway saved as owned note and review flashcard through lesson UI"
+    },
+    {
+      "label": "keyboard semantic selection",
+      "version": 2,
+      "branch": "b123a7e0-9822-44d3-94df-4a2cad089c72",
+      "time": 0
+    },
+    {
+      "label": "isolate",
+      "version": 3,
+      "branch": "b123a7e0-9822-44d3-94df-4a2cad089c72",
+      "time": 0
+    },
+    {
+      "label": "linked representation",
+      "version": 4,
+      "branch": "b123a7e0-9822-44d3-94df-4a2cad089c72",
+      "time": 0
+    },
+    {
+      "label": "restore wider lesson",
+      "version": 5,
+      "branch": "b123a7e0-9822-44d3-94df-4a2cad089c72",
+      "time": 0
+    },
+    {
+      "label": "apex model event",
+      "version": 6,
+      "branch": "b123a7e0-9822-44d3-94df-4a2cad089c72",
+      "time": 2
+    },
+    {
+      "label": "save draft",
+      "version": 7,
+      "branch": "b123a7e0-9822-44d3-94df-4a2cad089c72",
+      "time": 2
+    },
+    {
+      "label": "offline note persisted in actual IndexedDB before closing page",
+      "database": "edrion-student-private-work-v1",
+      "store": "queued-notes",
+      "rows": 1,
+      "ownerBound": true
+    },
+    {
+      "label": "parked lesson resumed through actual lifecycle and scene recovery controls after page departure"
+    },
+    {
+      "label": "durable IndexedDB note reconciled once after page close and online reopen",
+      "commandId": "9d62ed2e-b0bd-46cd-9f1d-58e4851c1d20",
+      "results": [
+        "applied"
+      ],
+      "reconciliationRequests": 1,
+      "queueEmptyAfterSettlement": true
+    },
+    {
+      "label": "restore note after offline synchronization",
+      "version": 9,
+      "branch": "b123a7e0-9822-44d3-94df-4a2cad089c72",
+      "time": 2
+    },
+    {
+      "label": "interrupt confirmed narration boundary",
+      "version": 10,
+      "branch": "b123a7e0-9822-44d3-94df-4a2cad089c72",
+      "time": 2
+    },
+    {
+      "label": "expand shared workspace",
+      "version": 11,
+      "branch": "b123a7e0-9822-44d3-94df-4a2cad089c72",
+      "time": 2
+    },
+    {
+      "label": "resume same return point",
+      "version": 12,
+      "branch": "b123a7e0-9822-44d3-94df-4a2cad089c72",
+      "time": 2
+    },
+    {
+      "label": "return to original lesson",
+      "version": 13,
+      "branch": "b123a7e0-9822-44d3-94df-4a2cad089c72",
+      "time": 2
+    },
+    {
+      "label": "projectile parameter",
+      "version": 14,
+      "branch": "b123a7e0-9822-44d3-94df-4a2cad089c72",
+      "time": 0
+    },
+    {
+      "label": "numeric parameter and bound model state stay synchronized",
+      "unit": "m/s",
+      "parameter": 13,
+      "boundValue": 13,
+      "tolerance": 1e-10
+    },
+    {
+      "label": "explicit continuous-motion opt-in",
+      "version": 15,
+      "branch": "b123a7e0-9822-44d3-94df-4a2cad089c72",
+      "time": 0
+    },
+    {
+      "label": "representation preserves live observed time",
+      "version": 18,
+      "branch": "b123a7e0-9822-44d3-94df-4a2cad089c72",
+      "time": 0.25060000000149013
+    },
+    {
+      "label": "pause acknowledges observed time",
+      "version": 20,
+      "branch": "b123a7e0-9822-44d3-94df-4a2cad089c72",
+      "time": 0.5024000000022352
+    },
+    {
+      "label": "analytic return to initial time",
+      "version": 21,
+      "branch": "b123a7e0-9822-44d3-94df-4a2cad089c72",
+      "time": 0
+    },
+    {
+      "label": "lost response and exact retry",
+      "version": 22,
+      "operationId": "8a56bbb1-8b00-4db5-8084-4abbb28d9af9"
+    },
+    {
+      "label": "stale-version denial",
+      "status": 409
+    },
+    {
+      "label": "real HTTP invalid-unit denial without write",
+      "status": 400
+    },
+    {
+      "label": "branch from owner checkpoint",
+      "version": 23,
+      "branch": "a2f6e5a8-af8b-4f52-9990-c5c20fb30448",
+      "time": 0
+    },
+    {
+      "label": "prediction before server outcome",
+      "eligibility": "observation_only",
+      "mastery": false
+    },
+    {
+      "label": "pendulum step",
+      "version": 2,
+      "branch": "0c1290c9-5bce-4b28-baab-38734a490eaa",
+      "time": 0.1
+    },
+    {
+      "label": "pendulum mass restart",
+      "version": 3,
+      "branch": "0c1290c9-5bce-4b28-baab-38734a490eaa",
+      "time": 0
+    },
+    {
+      "label": "circuits.dc.series step",
+      "version": 2,
+      "branch": "024f3755-223e-4cb4-8b76-5b2f6847d94c",
+      "time": 0.1
+    },
+    {
+      "label": "circuits.dc.series switching",
+      "version": 3,
+      "branch": "024f3755-223e-4cb4-8b76-5b2f6847d94c",
+      "time": 0.1
+    },
+    {
+      "label": "circuits.dc.series advance open",
+      "version": 4,
+      "branch": "024f3755-223e-4cb4-8b76-5b2f6847d94c",
+      "time": 0.2
+    },
+    {
+      "label": "circuits.dc.series reclose",
+      "version": 5,
+      "branch": "024f3755-223e-4cb4-8b76-5b2f6847d94c",
+      "time": 0.2
+    },
+    {
+      "label": "circuits.dc.series rewind through switch history",
+      "version": 6,
+      "branch": "024f3755-223e-4cb4-8b76-5b2f6847d94c",
+      "time": 0.15
+    },
+    {
+      "label": "circuits.rc.series step",
+      "version": 2,
+      "branch": "f320e269-94d1-42fa-8b7d-4693ae4ea440",
+      "time": 0.1
+    },
+    {
+      "label": "circuits.rc.series switching",
+      "version": 3,
+      "branch": "f320e269-94d1-42fa-8b7d-4693ae4ea440",
+      "time": 0.1
+    },
+    {
+      "label": "circuits.rc.series advance open",
+      "version": 4,
+      "branch": "f320e269-94d1-42fa-8b7d-4693ae4ea440",
+      "time": 0.2
+    },
+    {
+      "label": "circuits.rc.series reclose",
+      "version": 5,
+      "branch": "f320e269-94d1-42fa-8b7d-4693ae4ea440",
+      "time": 0.2
+    },
+    {
+      "label": "circuits.rc.series rewind through switch history",
+      "version": 6,
+      "branch": "f320e269-94d1-42fa-8b7d-4693ae4ea440",
+      "time": 0.15
+    },
+    {
+      "label": "spatial keyboard alternative",
+      "version": 2,
+      "branch": "c50f8255-759c-4693-9d49-ea47f18d5567",
+      "time": 0
+    },
+    {
+      "label": "unfamiliar combined program",
+      "version": 2,
+      "branch": "e56479b0-3d8b-4063-a241-feb040b649fb",
+      "time": 0.1
+    },
+    {
+      "label": "lesson-owner resume after navigation",
+      "draftRetained": true
+    },
+    {
+      "label": "controlled 200% text enlargement and keyboard focus",
+      "baseline": {
+        "fontSize": "16px",
+        "focused": "Expand"
+      },
+      "zoomed": {
+        "fontSize": "32px",
+        "focused": "Expand",
+        "width": 1440,
+        "scrollWidth": 1440
+      },
+      "focusRetained": true,
+      "nativeBrowserZoom": "not_exercised_pending_human_protocol"
+    },
+    {
+      "label": "mobile expanded scene",
+      "version": 24,
+      "branch": "a2f6e5a8-af8b-4f52-9990-c5c20fb30448",
+      "time": 0
+    },
+    {
+      "label": "fresh desktop/mobile context numeric replay and unit parity",
+      "comparisons": [
+        {
+          "key": "model.x",
+          "desktop": 0,
+          "mobile": 0,
+          "absoluteDelta": 0,
+          "tolerance": 1e-8
+        },
+        {
+          "key": "model.y",
+          "desktop": 0,
+          "mobile": 0,
+          "absoluteDelta": 0,
+          "tolerance": 1e-8
+        },
+        {
+          "key": "model.vx",
+          "desktop": 12,
+          "mobile": 12,
+          "absoluteDelta": 0,
+          "tolerance": 1e-8
+        },
+        {
+          "key": "model.vy",
+          "desktop": 20,
+          "mobile": 20,
+          "absoluteDelta": 0,
+          "tolerance": 1e-8
+        },
+        {
+          "key": "model.apexTime",
+          "desktop": 2,
+          "mobile": 2,
+          "absoluteDelta": 0,
+          "tolerance": 1e-8
+        }
+      ]
+    },
+    {
+      "label": "fresh mobile keyboard scene expansion",
+      "keyboardActivation": true,
+      "dialogPresent": true
+    },
+    {
+      "label": "live companion controlled capture",
+      "provider": "synthetic adapter",
+      "dynamicContextInInput": true,
+      "untrustedMemoryOutsideSystem": true,
+      "typedSchema": true
+    },
+    {
+      "label": "memory preferences, remember, correct, forget via styled settings and owner APIs",
+      "revision": 4,
+      "forgotten": true
+    },
+    {
+      "label": "actual home notebook/review link preserves explicitly saved flashcard",
+      "route": "/petros/artifacts",
+      "delayedIndependentTask": "Synthetic service clock verifies review due; browser does not claim real delayed retention."
+    },
+    {
+      "label": "new browser next-day controlled JS clock",
+      "clock": "+24 hours",
+      "journeyRestored": true,
+      "dimensions": {
+        "viewport": 390,
+        "page": 390
+      },
+      "memoryDimensions": {
+        "viewport": 390,
+        "page": 390
+      }
+    },
+    {
+      "label": "low-bandwidth setting and text-first lesson through styled UI",
+      "preparedTextVisible": true,
+      "controlsAndAssetsDeferred": true,
+      "optionalVisualOpened": true,
+      "workspaceGetsBeforeOptIn": 0,
+      "mutationsBeforeOptIn": 0,
+      "automaticSpeechBeforeOptIn": 0
+    },
+    {
+      "label": "low-bandwidth preference restored online before subsequent browser journey checks"
+    },
+    {
+      "label": "teacher A preview UI POST response",
+      "status": 201,
+      "body": "{\"id\":\"503b5e22-7af5-4169-b71c-4a7620ed1b70\",\"institutionId\":\"8f04e463-9669-4f08-a83d-f606d5482502\",\"classId\":\"99fff68c-476b-4aec-9dcf-671e6a8f2893\",\"subjectId\":\"4326340b-bd4d-4c4d-bd0d-af9cc83d9abb\",\"createdBy\":\"81a23834-b0f3-4271-8130-c0896c942773\",\"approvedBy\":null,\"title\":\"Synthetic phase-five reviewed intervention\",\"description\":\"Compare the horizontal and vertical components using the approved source.\",\"conceptKey\":\"component_motion\",\"assignmentId\":null,\"deliveryStatus\":\"preview\",\"requestH"
+    },
+    {
+      "label": "teacher A previews intervention in current class scope",
+      "candidateCount": 5,
+      "delivery": "preview only"
+    },
+    {
+      "label": "teacher A uploads replacement through existing Files uploader and creates two correction previews",
+      "materialId": "24b5b7c2-dda8-425a-ad1a-ee8349529e3b"
+    },
+    {
+      "label": "teacher B independently reviews first intervention and cancels second in current class scope",
+      "approvedAndPublished": true,
+      "cancelled": true,
+      "cohort": 5
+    },
+    {
+      "label": "teacher B rejects one correction and approves the other in the same class/material scope",
+      "rejected": true,
+      "published": true,
+      "materialId": "24b5b7c2-dda8-425a-ad1a-ee8349529e3b"
+    },
+    {
+      "label": "old student source denied after approved material correction",
+      "status": 409,
+      "sourceId": "a27af824-c6ae-4df0-b372-aec3fb3045d8",
+      "sourceVersion": "6b08d85ef8a8a23aae6768e0671e8576272352d93af287fe5f8359811cf08ea3"
+    },
+    {
+      "label": "styled super-admin operations dashboard with actual ai.view API session",
+      "queueStatus": "available",
+      "releaseIdentity": "missing",
+      "admissions": "disabled",
+      "pilotAcceptance": "pending",
+      "privacy": {
+        "scope": "aggregate_only",
+        "contentExposed": false
+      },
+      "screenReaderTreePresent": true,
+      "keyboardFocus": {
+        "tag": "SELECT",
+        "hasVisibleFocus": true
+      },
+      "mobile": {
+        "width": 390,
+        "scrollWidth": 390
+      },
+      "secretAndLearnerIdentifierLeak": false
+    }
+  ],
+  "errors": [],
+  "dimensions": {
+    "viewport": 390,
+    "page": 390
+  },
+  "nextDayDimensions": {
+    "viewport": 390,
+    "page": 390
+  },
+  "memoryMobileDimensions": {
+    "viewport": 390,
+    "page": 390
+  }
+}

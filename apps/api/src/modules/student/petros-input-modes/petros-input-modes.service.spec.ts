@@ -79,6 +79,7 @@ function harness(initial = media()) {
     create: vi.fn(),
     continue: vi.fn(),
     document: vi.fn(),
+    assertComposerQuestionAllowed: vi.fn(async () => undefined),
   };
   const env = {
     NODE_ENV: 'test',
@@ -98,6 +99,65 @@ function harness(initial = media()) {
 }
 
 describe('Petros input-mode service', () => {
+  it('V11-01 checks the durable boundary before hydrating a confirmed voice document', async () => {
+    const denied = Object.assign(new Error('durable required'), {
+      status: 409,
+      response: { code: 'PETROS_QUESTION_EXECUTION_REQUIRED' },
+    });
+    const h = harness(media({
+      kind: 'voice_turn',
+      mode: 'voice',
+      state: 'needs_confirmation',
+      filename: 'turn.webm',
+      declaredMimeType: 'audio/webm',
+      detectedMimeType: 'audio/webm',
+      durationMs: 1_000,
+      width: null,
+      height: null,
+      structuredResult: { transcription: { text: 'Explain the source.', language: 'en', confidence: 1, uncertainSegments: [] } },
+    }));
+    h.loop.assertComposerQuestionAllowed.mockRejectedValue(denied);
+    await expect(h.service.voiceTurn(principal, {
+      sessionId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      mediaId: media().id,
+      idempotencyKey: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+      language: 'en',
+      confidence: 'sure',
+      mixedLanguage: false,
+      interruptPrevious: false,
+    })).rejects.toBe(denied);
+    expect(h.loop.assertComposerQuestionAllowed).toHaveBeenCalledOnce();
+    expect(h.loop.document).not.toHaveBeenCalled();
+    expect(h.repo.recordEvent).not.toHaveBeenCalled();
+    expect(h.repo.updateMedia).not.toHaveBeenCalled();
+  });
+
+  it('V11-01 preserves a confirmed non-document voice turn after the document-only gate allows it', async () => {
+    const sessionId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const h = harness(media({
+      kind: 'voice_turn', mode: 'voice', state: 'needs_confirmation', sessionId,
+      filename: 'turn.webm', declaredMimeType: 'audio/webm', detectedMimeType: 'audio/webm',
+      durationMs: 1_000, width: null, height: null,
+      structuredResult: { transcription: { text: 'Continue the lesson.', language: 'en', confidence: 1, uncertainSegments: [] } },
+    }));
+    h.loop.document.mockResolvedValue({ id: sessionId, topic: 'Algebra', sessionType: 'doubt',
+      status: 'completed', blocks: [], maxMoves: 3 });
+    h.gateway.execute.mockResolvedValue({ content: { dataBase64: 'c3ludGhldGlj', mimeType: 'audio/mpeg' },
+      functionKey: 'interaction.spoken', responseTimeMs: 1, estimatedCostMicros: 0,
+      actualCostMicros: 0, retryCount: 0, fallbackTier: 'none', providerKey: 'synthetic',
+      modelKey: 'synthetic', cached: false });
+    const result = await h.service.voiceTurn(principal, {
+      sessionId, mediaId: media().id, idempotencyKey: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+      language: 'en', confidence: 'sure', mixedLanguage: false, interruptPrevious: false,
+    });
+    expect(h.loop.assertComposerQuestionAllowed).toHaveBeenCalledOnce();
+    expect(h.loop.document).toHaveBeenCalledOnce();
+    expect(result.media.state).toBe('ready');
+    expect(result.transcript.text).toBe('Continue the lesson.');
+    expect(result.spoken.audio).toEqual({ dataBase64: 'c3ludGhldGlj', mimeType: 'audio/mpeg' });
+    expect(h.repo.recordEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'voice_turn_completed' }));
+  });
+
   it('speaks the active prompt without leaking render schema metadata', () => {
     const result = conciseSpokenText({
       topic: 'photosynthesis',

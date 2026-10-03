@@ -1,0 +1,14 @@
+{
+  "command": [
+    "python3",
+    "-c",
+    "import hashlib,json,pathlib,plistlib; b=pathlib.Path('/private/tmp/petros-phase5-browsers-20261003-01a0fb94'); rows=[]; exe=[b/'firefox-1532/firefox/Nightly.app/Contents/MacOS/firefox',b/'webkit-2311/pw_run.sh']; print(json.dumps([{'path':str(p),'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size} for p in exe if p.exists()],indent=2)); p=b/'firefox-1532/firefox/Nightly.app/Contents/Info.plist'; info=plistlib.loads(p.read_bytes()); print(json.dumps({k:v for k,v in info.items() if k in ['CFBundleVersion','CFBundleShortVersionString','LSMinimumSystemVersion']}))"
+  ],
+  "start": "2026-10-03T04:26:52.422899+00:00",
+  "end": "2026-10-03T04:26:52.452984+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-03T14:20:10.553957+00:00",
+  "services": [
+    {
+      "port": 3417,
+      "pid": 74982,
+      "command": "node ./node_modules/.bin/../ts-node/dist/bin.js src/modules/integrations/petros-phase6-browser-server.ts"
+    },
+    {
+      "port": 3421,
+      "pid": 77217,
+      "command": "next-server (v14.2.13)"
+    },
+    {
+      "port": 3422,
+      "pid": 69668,
+      "command": "/opt/homebrew/Cellar/python@3.14/3.14.0/Frameworks/Python.framework/Versions/3.14/Resources/Python.app/Contents/MacOS/Python docs/verification/petros-phase6-20261003/review-gateway.py"
+    },
+    {
+      "port": 3423,
+      "pid": 61376,
+      "command": "next-server (v14.2.13)"
+    }
+  ],
+  "review": "http://127.0.0.1:3422/student",
+  "studentBuildLog": "student-preview-final-r3.log",
+  "stopCommand": "python3 docs/verification/petros-phase6-20261003/stop-review.py"
+}

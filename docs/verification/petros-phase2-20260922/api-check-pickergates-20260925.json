@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-25T06:48:04.529236+00:00",
+  "finishedAt": "2026-09-25T06:48:24.732604+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "typecheck"
+  ],
+  "exitCode": 0,
+  "log": "api-check-pickergates-20260925.log"
+}

@@ -19,6 +19,8 @@ export type MaterialDocumentPreview = {
   sections: MaterialPreviewSection[];
   truncated: boolean;
   note: string | null;
+  /** UI fallback prose is not extracted source content. */
+  readable: boolean;
 };
 
 type PreviewInput = {
@@ -51,6 +53,7 @@ export class MaterialDocumentPreviewService {
         })),
         truncated: budget.truncated,
         note: officeNote(format),
+        readable: true,
       };
     }
 
@@ -80,7 +83,8 @@ export class MaterialDocumentPreviewService {
       sections = textSections(extractBinaryStrings(input.buffer), budget);
     }
 
-    if (!sections.length || sections.every((section) => !section.text && !section.rows?.length)) {
+    const readable = sections.some((section) => Boolean(section.text?.trim()) || section.rows?.some((row) => row.some((cell) => cell.trim())));
+    if (!readable) {
       sections = [{
         title: null,
         text: 'No readable text was found in this file. Download it to see the original layout.',
@@ -93,6 +97,7 @@ export class MaterialDocumentPreviewService {
       sections,
       truncated: budget.truncated,
       note: officeNote(format),
+      readable,
     };
   }
 }
@@ -184,7 +189,11 @@ async function spreadsheetSections(buffer: Buffer, budget: PreviewBudget): Promi
         const attributes = cell[1] ?? '';
         const content = cell[2] ?? '';
         const ref = /\br="([A-Z]+)\d+"/i.exec(attributes)?.[1] ?? '';
-        const column = Math.min(columnIndex(ref), MAX_SPREADSHEET_COLUMNS - 1);
+        const column = columnIndex(ref);
+        if (column >= MAX_SPREADSHEET_COLUMNS) {
+          budget.truncated = true;
+          continue;
+        }
         const type = /\bt="([^"]+)"/i.exec(attributes)?.[1] ?? '';
         const raw = /<v\b[^>]*>([\s\S]*?)<\/v>/i.exec(content)?.[1];
         const inline = xmlMatches(content, /<t\b[^>]*>([\s\S]*?)<\/t>/gi).map(decodeXml).join('');

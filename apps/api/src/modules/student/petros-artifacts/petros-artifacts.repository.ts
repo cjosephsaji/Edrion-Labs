@@ -1,4 +1,5 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { KnowledgeDocumentService } from '../knowledge/knowledge-document.service';
+import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import {
   and,
@@ -17,6 +18,7 @@ import {
 } from '@edrion/database';
 import {
   PETROS_ARTIFACT_SCHEMA_VERSION,
+  compatibilityCanonicalJson,
   type PetrosArtifactContent,
   type PetrosArtifactQuery,
   type PetrosArtifactSource,
@@ -37,14 +39,17 @@ type ProposalSeed = {
 
 @Injectable()
 export class PetrosArtifactsRepository {
-  constructor(@Inject(DATABASE) private readonly db: Database) {}
+  constructor(@Inject(DATABASE) private readonly db: Database, private readonly documents: KnowledgeDocumentService) {}
 
   findSession(scope: PetrosOwnerScope, sessionId: string) {
     return this.db.select().from(schema.petrosLearningSessions).where(and(
       eq(schema.petrosLearningSessions.id, sessionId),
       eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
       eq(schema.petrosLearningSessions.studentId, scope.studentId),
-    )).limit(1).then((rows) => rows[0]);
+    )).limit(1).then(async (rows) => {
+      if (rows[0]) await this.documents.assertContext(scope, rows[0].sourceContext);
+      return rows[0];
+    });
   }
 
   listSessionBlocks(scope: PetrosOwnerScope, sessionId: string) {
@@ -73,7 +78,10 @@ export class PetrosArtifactsRepository {
       eq(schema.petrosArtifactBundles.sessionId, sessionId),
       eq(schema.petrosArtifactBundles.institutionId, scope.institutionId),
       eq(schema.petrosArtifactBundles.studentId, scope.studentId),
-    )).limit(1).then((rows) => rows[0]);
+    )).limit(1).then(async (rows) => {
+      if (rows[0]) await this.findSession(scope, rows[0].sessionId);
+      return rows[0];
+    });
   }
 
   findBundleById(scope: PetrosOwnerScope, bundleId: string) {
@@ -81,7 +89,10 @@ export class PetrosArtifactsRepository {
       eq(schema.petrosArtifactBundles.id, bundleId),
       eq(schema.petrosArtifactBundles.institutionId, scope.institutionId),
       eq(schema.petrosArtifactBundles.studentId, scope.studentId),
-    )).limit(1).then((rows) => rows[0]);
+    )).limit(1).then(async (rows) => {
+      if (rows[0]) await this.findSession(scope, rows[0].sessionId);
+      return rows[0];
+    });
   }
 
   listProposals(scope: PetrosOwnerScope, bundleId: string) {
@@ -129,7 +140,11 @@ export class PetrosArtifactsRepository {
     });
   }
 
-  updateProposal(scope: PetrosOwnerScope, proposalId: string, expectedVersion: number, selected: boolean, content: PetrosArtifactContent) {
+  async updateProposal(scope: PetrosOwnerScope, proposalId: string, expectedVersion: number, selected: boolean, content: PetrosArtifactContent) {
+    const [current] = await this.db.select().from(schema.petrosArtifactProposals).where(and(
+      eq(schema.petrosArtifactProposals.id, proposalId), eq(schema.petrosArtifactProposals.institutionId, scope.institutionId), eq(schema.petrosArtifactProposals.studentId, scope.studentId),
+    )).limit(1);
+    if (current) await this.findBundleById(scope, current.bundleId);
     return this.db.transaction(async (tx) => {
       const [proposal] = await tx.update(schema.petrosArtifactProposals).set({
         content,
@@ -164,6 +179,7 @@ export class PetrosArtifactsRepository {
   }
 
   async discardBundle(scope: PetrosOwnerScope, bundleId: string, expectedVersion: number) {
+    await this.findBundleById(scope, bundleId);
     return this.db.transaction(async (tx) => {
       const [bundle] = await tx.update(schema.petrosArtifactBundles).set({
         state: 'discarded', discardedAt: new Date(), version: sql`${schema.petrosArtifactBundles.version} + 1`, updatedAt: new Date(),
@@ -187,9 +203,9 @@ export class PetrosArtifactsRepository {
     });
   }
 
-  async beginCommit(scope: PetrosOwnerScope, bundleId: string, idempotencyKey: string) {
+  async beginCommit(scope: PetrosOwnerScope, bundleId: string, idempotencyKey: string, requestHash?: string) {
     const [created] = await this.db.insert(schema.petrosArtifactCommitCommands).values({
-      bundleId, institutionId: scope.institutionId, studentId: scope.studentId, idempotencyKey,
+      bundleId, institutionId: scope.institutionId, studentId: scope.studentId, idempotencyKey, requestHash,
     }).onConflictDoNothing().returning();
     if (created) return { state: 'started' as const, command: created };
     const [existing] = await this.db.select().from(schema.petrosArtifactCommitCommands).where(and(
@@ -197,6 +213,8 @@ export class PetrosArtifactsRepository {
       eq(schema.petrosArtifactCommitCommands.studentId, scope.studentId),
       eq(schema.petrosArtifactCommitCommands.idempotencyKey, idempotencyKey),
     )).limit(1);
+    if (existing && (existing.bundleId !== bundleId || (existing.requestHash && existing.requestHash !== requestHash)))
+      throw new ConflictException({ code:'PETROS_ARTIFACT_COMMIT_REPLAY_CONFLICT' });
     if (existing?.status === 'completed' && existing.response) return { state: 'completed' as const, command: existing, response: existing.response };
     return { state: 'in_flight' as const, command: existing };
   }
@@ -364,12 +382,19 @@ export class PetrosArtifactsRepository {
     examDate: string | null;
   }) {
     return this.db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`petros-block-save:${input.scope.institutionId}:${input.scope.studentId}:${input.idempotencyKey}`},0))`);
       const [existing] = await tx.select().from(schema.petrosSavedArtifacts).where(and(
         eq(schema.petrosSavedArtifacts.portableId, input.idempotencyKey),
         eq(schema.petrosSavedArtifacts.institutionId, input.scope.institutionId),
         eq(schema.petrosSavedArtifacts.studentId, input.scope.studentId),
       )).limit(1);
-      if (existing) return { state: 'already_saved' as const, artifact: existing };
+      if (existing) {
+        if (existing.sessionId !== input.sessionId || existing.sourceProposalId || existing.revision !== 1 ||
+          compatibilityCanonicalJson(existing.content) !== compatibilityCanonicalJson(input.content) ||
+          compatibilityCanonicalJson(existing.sources) !== compatibilityCanonicalJson(input.sources))
+          throw new ConflictException({code:'PETROS_BLOCK_SAVE_REPLAY_CONFLICT'});
+        return { state: 'already_saved' as const, artifact: existing };
+      }
 
       const product = await this.createProduct(
         tx,
@@ -470,7 +495,13 @@ export class PetrosArtifactsRepository {
     ];
     if (query.kind) conditions.push(eq(schema.petrosSavedArtifacts.kind, query.kind));
     if (query.q) conditions.push(ilike(sql`${schema.petrosSavedArtifacts.content}::text`, `%${query.q.replace(/[%_]/g, '\\$&')}%`));
-    return this.db.select().from(schema.petrosSavedArtifacts).where(and(...conditions)).orderBy(desc(schema.petrosSavedArtifacts.updatedAt)).limit(query.limit);
+    return this.db.select().from(schema.petrosSavedArtifacts).where(and(...conditions)).orderBy(desc(schema.petrosSavedArtifacts.updatedAt)).limit(query.limit).then(async (rows) => {
+      const visible = await Promise.all(rows.map(async (row) => {
+        try { await this.assertArtifact(scope, row); return true; }
+        catch (error) { if (error instanceof NotFoundException || error instanceof ConflictException) return false; throw error; }
+      }));
+      return rows.filter((_, index) => visible[index]);
+    });
   }
 
   findSaved(scope: PetrosOwnerScope, artifactId: string) {
@@ -479,25 +510,31 @@ export class PetrosArtifactsRepository {
       eq(schema.petrosSavedArtifacts.institutionId, scope.institutionId),
       eq(schema.petrosSavedArtifacts.studentId, scope.studentId),
       isNull(schema.petrosSavedArtifacts.deletedAt),
-    )).limit(1).then((rows) => rows[0]);
+    )).limit(1).then(async (rows) => {
+      if (rows[0]) await this.assertArtifact(scope, rows[0]);
+      return rows[0];
+    });
   }
 
-  resolveKnowledgeSource(scope: PetrosOwnerScope, itemId: string, pageIndex: number) {
-    return this.db.select({
-      itemId: schema.knowledgeItems.id,
-      title: schema.knowledgeItems.title,
-      status: schema.knowledgeItems.status,
-      pageId: schema.knowledgeItemPages.id,
-    }).from(schema.knowledgeItems)
-      .leftJoin(schema.knowledgeItemPages, and(
-        eq(schema.knowledgeItemPages.itemId, schema.knowledgeItems.id),
-        eq(schema.knowledgeItemPages.pageIndex, pageIndex),
-      ))
-      .where(and(
-        eq(schema.knowledgeItems.id, itemId),
-        eq(schema.knowledgeItems.institutionId, scope.institutionId),
-        eq(schema.knowledgeItems.studentId, scope.studentId),
-      )).limit(1).then((rows) => rows[0]);
+  async resolveKnowledgeSource(scope: PetrosOwnerScope, itemId: string, pageIndex: number, sessionId: string) {
+    const session = await this.findSession(scope, sessionId);
+    const context = session?.sourceContext;
+    if (!context || context.referenceId !== itemId || typeof context.sourceFingerprint !== 'string') return undefined;
+    const document = await this.documents.resolve(scope, itemId, pageIndex + 1, context.sourceFingerprint);
+    const citations = context.citations as Array<{ page?: number; locator?: Parameters<KnowledgeDocumentService['locator']>[2] }>;
+    const citation = citations.find((row) => row.page === pageIndex + 1);
+    if (!document.version || !citation?.locator) return undefined;
+    const resolved = await this.documents.locator(scope, itemId, citation.locator);
+    return { pageId: citation.locator.unitId, status: document.item.status, ...resolved };
+  }
+
+  private async assertArtifact(scope: PetrosOwnerScope, artifact: typeof schema.petrosSavedArtifacts.$inferSelect) {
+    const sources = artifact.sources as Array<{ kind?: string; sessionId?: string }>;
+    const sessionId = artifact.sessionId ?? sources.find((source) => source.sessionId)?.sessionId;
+    if (sessionId) {
+      const session = await this.findSession(scope, sessionId);
+      if (!session && sources.some((source) => source.kind === 'document_page')) throw new NotFoundException('Source session unavailable');
+    } else if (sources.some((source) => source.kind === 'document_page')) throw new NotFoundException('Source session unavailable');
   }
 
   resolveSessionBlock(scope: PetrosOwnerScope, sessionId: string, blockId: string | null) {
@@ -523,7 +560,13 @@ export class PetrosArtifactsRepository {
       isNull(schema.petrosSavedArtifacts.archivedAt),
       isNull(schema.petrosSavedArtifacts.deletedAt),
       lte(schema.petrosSavedArtifacts.dueAt, now),
-    )).orderBy(asc(schema.petrosSavedArtifacts.dueAt)).limit(limit);
+    )).orderBy(asc(schema.petrosSavedArtifacts.dueAt)).limit(limit).then(async (rows) => {
+      const visible = await Promise.all(rows.map(async (row) => {
+        try { await this.assertArtifact(scope, row); return true; }
+        catch (error) { if (error instanceof NotFoundException || error instanceof ConflictException) return false; throw error; }
+      }));
+      return rows.filter((_, index) => visible[index]);
+    });
   }
 
   findReviewByClient(scope: PetrosOwnerScope, clientReviewId: string) {
@@ -546,7 +589,13 @@ export class PetrosArtifactsRepository {
         eq(schema.petrosArtifactReviewOutcomes.studentId, input.scope.studentId),
         eq(schema.petrosArtifactReviewOutcomes.clientReviewId, input.review.clientReviewId),
       )).limit(1);
-      if (existing) return { state: 'duplicate' as const, outcome: existing };
+      if (existing) {
+        if (existing.artifactId !== input.artifact.id || existing.grade !== input.review.grade ||
+          existing.confidence !== input.review.confidence || existing.elapsedMs !== input.review.elapsedMs ||
+          existing.reviewedAt.getTime() !== Date.parse(input.review.reviewedAt))
+          throw new ConflictException({code:'PETROS_ARTIFACT_REVIEW_REPLAY_CONFLICT'});
+        return { state: 'duplicate' as const, outcome: existing };
+      }
       const before = reviewState(input.artifact);
       const after = {
         dueAt: input.scheduled.dueAt.toISOString(), intervalDays: input.scheduled.intervalDays,
@@ -613,6 +662,7 @@ export class PetrosArtifactsRepository {
   }
 
   async updateSaved(scope: PetrosOwnerScope, artifactId: string, expectedRevision: number, content: PetrosArtifactContent) {
+    await this.findSaved(scope, artifactId);
     return this.db.transaction(async (tx) => {
       const [artifact] = await tx.update(schema.petrosSavedArtifacts).set({
         content, kind: content.kind, revision: sql`${schema.petrosSavedArtifacts.revision} + 1`, updatedAt: new Date(),
@@ -645,10 +695,21 @@ export class PetrosArtifactsRepository {
         eq(schema.petrosSavedArtifacts.studentId, scope.studentId),
       )).limit(1);
       if (!artifact) return undefined;
+      if (artifact.deletedAt) return {id:artifact.id,portableId:artifact.portableId};
       if (artifact.productType === 'flashcard') await tx.delete(schema.flashcards).where(eq(schema.flashcards.id, artifact.productTargetId));
       if (artifact.productType === 'note') await tx.delete(schema.libraryNotes).where(eq(schema.libraryNotes.id, artifact.productTargetId));
       if (artifact.productType === 'canvas') await tx.delete(schema.visualCanvases).where(eq(schema.visualCanvases.id, artifact.productTargetId));
-      await tx.delete(schema.petrosSavedArtifacts).where(eq(schema.petrosSavedArtifacts.id, artifact.id));
+      const [binding] = await tx.select({id:schema.petrosLearningArtifactReceipts.id}).from(schema.petrosLearningArtifactReceipts)
+        .where(eq(schema.petrosLearningArtifactReceipts.artifactId,artifact.id)).limit(1);
+      const [submission] = await tx.select({id:schema.petrosQualitativeSubmissions.id}).from(schema.petrosQualitativeSubmissions)
+        .where(eq(schema.petrosQualitativeSubmissions.artifactId,artifact.id)).limit(1);
+      const [qualitativeEvent] = await tx.select({id:schema.petrosQualitativeEvents.id}).from(schema.petrosQualitativeEvents)
+        .where(eq(schema.petrosQualitativeEvents.artifactId,artifact.id)).limit(1);
+      if (binding || submission || qualitativeEvent) {
+        // Keep the referenced history; remove the artifact from every active library/review reader.
+        await tx.update(schema.petrosSavedArtifacts).set({lifecycle:'deleted',deletedAt:new Date(),pausedAt:new Date(),dueAt:null})
+          .where(eq(schema.petrosSavedArtifacts.id,artifact.id));
+      } else await tx.delete(schema.petrosSavedArtifacts).where(eq(schema.petrosSavedArtifacts.id, artifact.id));
       await tx.insert(schema.petrosArtifactEvents).values({
         institutionId: scope.institutionId, studentId: scope.studentId, sessionId: artifact.sessionId,
         type: 'artifact.deleted', payload: { kind: artifact.kind, portableId: artifact.portableId },
@@ -658,6 +719,7 @@ export class PetrosArtifactsRepository {
   }
 
   async setLifecycle(scope: PetrosOwnerScope, artifactId: string, action: 'pause_reviews' | 'resume_reviews' | 'archive' | 'restore') {
+    if (!await this.findSaved(scope, artifactId)) throw new NotFoundException();
     return this.db.transaction(async (tx) => {
       const now = new Date();
       const patch = action === 'pause_reviews'

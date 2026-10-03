@@ -1,7 +1,9 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, asc, desc, eq, schema, sql, type Database } from '@edrion/database';
+import { curriculumReadSchema, studentCurriculumReadView } from '@edrion/schemas';
 import { DATABASE } from '../../../common/tokens';
 import type { InstitutionalStudentPrincipal } from '../student.types';
+import { readCourseCurriculum } from '../../portal/courses/course-curriculum.repository';
 
 const profName = sql<string>`concat_ws(' ', ${schema.staff.firstName}, ${schema.staff.lastName})`;
 
@@ -30,15 +32,24 @@ export class StudentCoursesService {
     return this.streamPosts(courseId);
   }
 
-  async syllabus(principal: InstitutionalStudentPrincipal, courseId: string) {
-    await this.requireEnrollment(principal.studentId, courseId);
+  async syllabus(principal: InstitutionalStudentPrincipal, courseId: string, negotiated = false) {
+    const [course] = await this.db.select().from(schema.courses).where(and(eq(schema.courses.id, courseId),
+      eq(schema.courses.institutionId, principal.institutionId), eq(schema.courses.status, 'active'))).for('share');
+    if (!course) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Course not found' });
+    // Pin the existing enrollment and active student for the negotiated read transaction.
+    const [enrollment] = await this.db.select({ id: schema.courseEnrollments.id }).from(schema.courseEnrollments)
+      .innerJoin(schema.students, and(eq(schema.students.id, schema.courseEnrollments.studentId),
+        eq(schema.students.institutionId, schema.courseEnrollments.institutionId)))
+      .where(and(eq(schema.courseEnrollments.studentId, principal.studentId), eq(schema.courseEnrollments.courseId, courseId),
+        eq(schema.courseEnrollments.institutionId, principal.institutionId), eq(schema.students.status, 'enrolled'))).for('share');
+    if (!enrollment) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Course not found' });
     const modules = await this.db
       .select()
       .from(schema.courseSyllabusModules)
       .where(eq(schema.courseSyllabusModules.courseId, courseId))
       .orderBy(asc(schema.courseSyllabusModules.weekNo));
     const currentWeek = new Date().getMonth() < 6 ? 1 : 2; // simplified
-    return {
+    const legacy = {
       modules: modules.map((m) => ({
         weekNo: m.weekNo,
         title: m.title,
@@ -47,6 +58,9 @@ export class StudentCoursesService {
         isCurrentWeek: m.weekNo === currentWeek,
       })),
     };
+    if (!negotiated) return legacy;
+    const curriculum = curriculumReadSchema.parse(await readCourseCurriculum(this.db, course, modules));
+    return { ...legacy, curriculum: studentCurriculumReadView(curriculum, Date.now()) };
   }
 
   async materials(principal: InstitutionalStudentPrincipal, courseId: string) {

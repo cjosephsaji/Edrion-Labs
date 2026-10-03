@@ -1,0 +1,24 @@
+{
+  "kind": "controlled-localhost-chromium",
+  "components": [
+    "PetrosReviewedObjectivePicker",
+    "PetrosProjectileExplorer",
+    "PetrosLearningResume"
+  ],
+  "assertions": [
+    "explicit-reviewed-pack-choice",
+    "same-command-lost-response-retry",
+    "bound-objective-language",
+    "SI-zero-parameter",
+    "linked-svg-and-nonvisual-view",
+    "stale-binding-original-diagram-recovery",
+    "keyboard-focus",
+    "mobile-width",
+    "no-external-resources",
+    "resume-evidence-distinctions",
+    "stale-resume-clears-context"
+  ],
+  "adaptiveCommandCount": 2,
+  "projectileCommandCount": 2,
+  "screenshot": "petros-phase2-browser-20260925.png"
+}

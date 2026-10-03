@@ -66,6 +66,13 @@ export class StudentAuthService {
     return this.buildInstitutional(user, session.lastAuthAt);
   }
 
+  /** Worker identity is reconstructed from a persisted initiating user, never a copied principal. */
+  async resolveInstitutionalWorker(userId: string): Promise<InstitutionalStudentPrincipal> {
+    const user = await this.requireInstitutionStudentUser(userId);
+    if (user.status !== AccountStatus.Active) throw new UnauthorizedException('Student account is inactive');
+    return this.buildInstitutional(user, null);
+  }
+
   async resolveByEmail(email: string): Promise<StudentPrincipal> {
     const normalized = email.toLowerCase();
     const institutional = await this.loadInstitutionalByEmail(normalized);

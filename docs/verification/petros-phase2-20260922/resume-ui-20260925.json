@@ -1,0 +1,15 @@
+{
+  "startedAt": "2026-09-25T15:14:10.158850+00:00",
+  "finishedAt": "2026-09-25T15:14:12.887785+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/student-web",
+    "exec",
+    "vitest",
+    "run",
+    "src/components/petros/petros-learning-resume.spec.tsx"
+  ],
+  "exitCode": 0,
+  "log": "resume-ui-20260925.log"
+}

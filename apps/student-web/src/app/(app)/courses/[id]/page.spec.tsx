@@ -80,4 +80,30 @@ describe('Course detail page', () => {
       '/assignments/assignment-1',
     );
   });
+
+  it('negotiates the curriculum contract while retaining a legacy modules-only response', async () => {
+    mocks.get.mockImplementation((path: string) => {
+      if (path.endsWith('/announcements')) return Promise.resolve({ items: [] });
+      if (path.endsWith('/syllabus')) return Promise.resolve({
+        modules: [{ weekNo: 2, title: 'Legacy queues', topics: ['Scheduling'], covered: false, isCurrentWeek: true }],
+      });
+      if (path.endsWith('/materials') || path.endsWith('/projects')) return Promise.resolve({ items: [] });
+      if (path.endsWith('/about')) return Promise.resolve({ officeHours: null, gradingScheme: [], attendance: { present: 0, total: 0, requiredPct: 75, belowThreshold: false, warningLine: null } });
+      return Promise.reject(new Error(`Unexpected path: ${path}`));
+    });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <PetrosCompanionProvider><CourseDetailPage /></PetrosCompanionProvider>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText('Legacy queues')).toBeVisible();
+    expect(screen.queryByText('Course objectives and standards')).not.toBeInTheDocument();
+    expect(mocks.get).toHaveBeenCalledWith(
+      '/student/courses/cloud-course/syllabus',
+      undefined,
+      { 'x-petros-curriculum-alignment': 'petros.curriculum-alignment.v1' },
+    );
+  });
 });

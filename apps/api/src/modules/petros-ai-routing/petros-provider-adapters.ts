@@ -20,6 +20,7 @@ export interface PetrosAiNormalizedRequest {
   temperature: number;
   reasoningLevel?: string;
   timeoutMs: number;
+  signal?: AbortSignal;
   stream: boolean;
   language?: string;
   speech?: { voice?: 'cedar' | 'marin'; speed?: number };
@@ -63,6 +64,7 @@ abstract class HttpAdapter {
     headers: Record<string, string>,
     body: unknown,
     timeoutMs: number,
+    signal?: AbortSignal,
   ): Promise<{ body: Record<string, unknown>; headers: Headers }> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -71,7 +73,7 @@ abstract class HttpAdapter {
         method: 'POST',
         headers: { 'content-type': 'application/json', ...headers },
         body: JSON.stringify(body),
-        signal: controller.signal,
+        signal: signal ? AbortSignal.any([signal, controller.signal]) : controller.signal,
       });
       const parsed = await response.json().catch(() => ({})) as Record<string, unknown>;
       if (!response.ok) {
@@ -93,6 +95,7 @@ abstract class HttpAdapter {
     headers: Record<string, string>,
     body: unknown,
     timeoutMs: number,
+    signal?: AbortSignal,
   ): Promise<{ body: Buffer; headers: Headers }> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -101,7 +104,7 @@ abstract class HttpAdapter {
         method: 'POST',
         headers: { 'content-type': 'application/json', ...headers },
         body: JSON.stringify(body),
-        signal: controller.signal,
+        signal: signal ? AbortSignal.any([signal, controller.signal]) : controller.signal,
       });
       if (!response.ok) {
         const parsed = (await response.json().catch(() => ({}))) as Record<string, unknown>;
@@ -172,6 +175,7 @@ class OpenAiCompatibleAdapter extends HttpAdapter implements PetrosProviderAdapt
         ...(request.reasoningLevel && request.reasoningLevel !== 'none' ? { reasoning_effort: request.reasoningLevel } : {}),
       },
       request.timeoutMs,
+      request.signal,
     );
     const choices = body.choices as Array<Record<string, unknown>> | undefined;
     const message = choices?.[0]?.message as Record<string, unknown> | undefined;
@@ -221,7 +225,7 @@ class OpenAiCompatibleAdapter extends HttpAdapter implements PetrosProviderAdapt
         method: 'POST',
         headers: { authorization: `Bearer ${this.key(provider)}` },
         body: form,
-        signal: controller.signal,
+        signal: request.signal ? AbortSignal.any([request.signal, controller.signal]) : controller.signal,
       });
       const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
       if (!response.ok) {
@@ -288,6 +292,7 @@ class OpenAiCompatibleAdapter extends HttpAdapter implements PetrosProviderAdapt
           : {}),
       },
       request.timeoutMs,
+      request.signal,
     );
     return {
       kind: 'audio',
@@ -329,6 +334,7 @@ class OpenAiCompatibleAdapter extends HttpAdapter implements PetrosProviderAdapt
         max_tokens: request.maxOutputTokens,
       },
       request.timeoutMs,
+      request.signal,
     );
     const message = ((body.choices as Array<Record<string, unknown>> | undefined)?.[0]?.message ?? {}) as Record<string, unknown>;
     const audio = (message.audio ?? {}) as Record<string, unknown>;
@@ -411,6 +417,7 @@ class AnthropicAdapter extends HttpAdapter implements PetrosProviderAdapter {
         temperature: request.temperature,
       },
       request.timeoutMs,
+      request.signal,
     );
     const blocks = body.content as Array<Record<string, unknown>> | undefined;
     const usage = (body.usage ?? {}) as Record<string, unknown>;
@@ -455,6 +462,7 @@ class GeminiAdapter extends HttpAdapter implements PetrosProviderAdapter {
         },
       },
       request.timeoutMs,
+      request.signal,
     );
     const candidates = body.candidates as Array<Record<string, unknown>> | undefined;
     const content = candidates?.[0]?.content as Record<string, unknown> | undefined;

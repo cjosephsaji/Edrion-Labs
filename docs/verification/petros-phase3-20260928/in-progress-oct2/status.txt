@@ -1,0 +1,286 @@
+ M apps/api/scripts/copy-build-assets.mjs
+ M apps/api/src/app.module.ts
+ M apps/api/src/common/queue/queue.worker.ts
+ M apps/api/src/modules/federation/federation.module.ts
+ M apps/api/src/modules/federation/federation.service.ts
+ M apps/api/src/modules/federation/portal-federation.controller.ts
+ M apps/api/src/modules/integrations/integrations.module.ts
+ M apps/api/src/modules/petros-ai-routing/petros-ai-gateway.service.spec.ts
+ M apps/api/src/modules/petros-ai-routing/petros-ai-gateway.service.ts
+ M apps/api/src/modules/petros-ai-routing/petros-ai-routing.repository.ts
+ M apps/api/src/modules/petros-ai-routing/petros-ai-routing.service.ts
+ M apps/api/src/modules/petros-ai-routing/petros-provider-adapters.spec.ts
+ M apps/api/src/modules/petros-ai-routing/petros-provider-adapters.ts
+ M apps/api/src/modules/petros-institutional/petros-institutional.engine.ts
+ M apps/api/src/modules/petros-institutional/petros-institutional.repository.ts
+ M apps/api/src/modules/petros-institutional/petros-institutional.service.ts
+ M apps/api/src/modules/petros-learner-model/petros-learner-model.repository.ts
+ M apps/api/src/modules/petros-learner-model/petros-learner-model.service.spec.ts
+ M apps/api/src/modules/petros-learner-model/petros-learner-model.service.ts
+ M apps/api/src/modules/portal/academics.service.ts
+ M apps/api/src/modules/portal/attendance.service.ts
+ M apps/api/src/modules/portal/conversations.controller.ts
+ M apps/api/src/modules/portal/course-content/portal-course-content.controller.ts
+ M apps/api/src/modules/portal/course-content/portal-course-content.service.ts
+ M apps/api/src/modules/portal/courses/portal-courses.controller.ts
+ M apps/api/src/modules/portal/courses/portal-courses.service.ts
+ M apps/api/src/modules/portal/fees.repository.ts
+ M apps/api/src/modules/portal/inventory.repository.ts
+ M apps/api/src/modules/portal/portal.module.ts
+ M apps/api/src/modules/requests/request-engine.service.ts
+ M apps/api/src/modules/student/auth/student-auth.service.ts
+ M apps/api/src/modules/student/core/student-rate-limit.guard.spec.ts
+ M apps/api/src/modules/student/core/student-rate-limit.guard.ts
+ M apps/api/src/modules/student/core/student-tenant.interceptor.ts
+ M apps/api/src/modules/student/courses/student-courses.controller.ts
+ M apps/api/src/modules/student/courses/student-courses.service.ts
+ M apps/api/src/modules/student/materials/material-document-preview.service.spec.ts
+ M apps/api/src/modules/student/materials/material-document-preview.service.ts
+ M apps/api/src/modules/student/materials/student-materials.service.ts
+ M apps/api/src/modules/student/petros-artifacts/petros-artifacts.controller.ts
+ M apps/api/src/modules/student/petros-artifacts/petros-artifacts.module.ts
+ M apps/api/src/modules/student/petros-artifacts/petros-artifacts.repository.ts
+ M apps/api/src/modules/student/petros-artifacts/petros-artifacts.service.spec.ts
+ M apps/api/src/modules/student/petros-artifacts/petros-artifacts.service.ts
+ M apps/api/src/modules/student/petros-companion/petros-action-registry.service.ts
+ M apps/api/src/modules/student/petros-companion/petros-companion.module.ts
+ M apps/api/src/modules/student/petros-companion/petros-companion.spec.ts
+ M apps/api/src/modules/student/petros-companion/petros-student-context.service.ts
+ M apps/api/src/modules/student/petros-input-modes/petros-input-modes.service.spec.ts
+ M apps/api/src/modules/student/petros-input-modes/petros-input-modes.service.ts
+ M apps/api/src/modules/student/petros-loop/petros-loop.controller.ts
+ M apps/api/src/modules/student/petros-loop/petros-loop.module.ts
+ M apps/api/src/modules/student/petros-loop/petros-loop.repository.ts
+ M apps/api/src/modules/student/petros-loop/petros-loop.service.spec.ts
+ M apps/api/src/modules/student/petros-loop/petros-loop.service.ts
+ M apps/api/src/modules/student/petros-loop/petros-observation.policy.ts
+ M apps/api/src/modules/student/petros-session-intent/petros-session-intent.controller.ts
+ M apps/api/src/modules/student/petros-session-intent/petros-session-intent.module.ts
+ M apps/api/src/modules/student/petros-session-intent/petros-session-intent.repository.ts
+ M apps/api/src/modules/student/petros-session-intent/petros-session-intent.service.spec.ts
+ M apps/api/src/modules/student/petros-session-intent/petros-session-intent.service.ts
+ M apps/institution-web/src/app/(app)/settings/federation/page.tsx
+ M apps/institution-web/src/app/(app)/teaching/[classId]/[subjectId]/page.tsx
+ M apps/institution-web/src/components/courses/course-syllabus-panel.tsx
+ M apps/institution-web/src/lib/courses.ts
+ M apps/student-web/next.config.mjs
+ M apps/student-web/src/app/(app)/courses/[id]/page.spec.tsx
+ M apps/student-web/src/app/(app)/courses/[id]/page.tsx
+ M apps/student-web/src/app/(app)/materials/page.spec.tsx
+ M apps/student-web/src/app/(app)/materials/page.tsx
+ M apps/student-web/src/components/app-shell/app-shell.spec.tsx
+ M apps/student-web/src/components/app-shell/app-shell.tsx
+ M apps/student-web/src/components/petros/petros-artifact-library.tsx
+ M apps/student-web/src/components/petros/petros-companion-panel.tsx
+ M apps/student-web/src/components/petros/petros-door-button.tsx
+ M apps/student-web/src/components/petros/petros-mentor.tsx
+ M apps/student-web/src/components/petros/petros-repair-session.spec.tsx
+ M apps/student-web/src/components/petros/petros-repair-session.tsx
+ M apps/student-web/src/lib/api-client.ts
+ M edrion_database_dump.sql
+ M edrion_database_dump.sql.gz
+ M packages/config/src/index.ts
+ M packages/database/migrations/meta/_journal.json
+ M packages/database/migrations/sql/zzz_grants.sql
+ M packages/database/src/schema/federation.ts
+ M packages/database/src/schema/index.ts
+ M packages/database/src/schema/institutional-bridge.ts
+ M packages/database/src/schema/integrations.ts
+ M packages/database/src/schema/petros-ai-routing.ts
+ M packages/database/src/schema/petros-artifacts.ts
+ M packages/database/src/schema/petros-learner-model.ts
+ M packages/database/src/schema/petros-learning.ts
+ M packages/database/src/schema/student-knowledge.ts
+ M packages/database/src/seed-proper-staff.ts
+ M packages/permissions/src/institution/catalogue.ts
+ M packages/schemas/src/federation.ts
+ M packages/schemas/src/index.ts
+ M packages/schemas/src/petros-institutional.ts
+ M packages/schemas/src/petros-learner-model.ts
+ M packages/schemas/src/petros-learning.ts
+ M packages/schemas/src/petros-session-intent.spec.ts
+ M packages/schemas/src/petros-session-intent.ts
+ M packages/schemas/src/portal-course-content.ts
+ M packages/schemas/src/portal-courses.ts
+ M packages/schemas/src/student/visual-graph-rules.ts
+ M tooling/eslint/index.mjs
+?? apps/api/src/modules/federation/federation.service.spec.ts
+?? apps/api/src/modules/integrations/petros-adaptive-journey.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-assignment-authority.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-assignment-learning.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-compatibility.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-curriculum-closure.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-learning-artifacts.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-objective-evidence.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-pack-authority.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-phase1-final-journey.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-phase2-authority-fixture.ts
+?? apps/api/src/modules/integrations/petros-phase2-full-journey.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-phase2-http.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-phase2-migration.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-phase2-owner-links.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-phase2-test-database.ts
+?? apps/api/src/modules/integrations/petros-phase3-browser-journey.cjs
+?? apps/api/src/modules/integrations/petros-phase3-browser-server.ts
+?? apps/api/src/modules/integrations/petros-projectile-commands.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-provider-mapping-closure.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-v10-migration.spec.ts
+?? apps/api/src/modules/integrations/petros-workspace.integration.spec.ts
+?? apps/api/src/modules/integrations/provider-mappings.repository.ts
+?? apps/api/src/modules/integrations/provider-mappings.service.spec.ts
+?? apps/api/src/modules/integrations/provider-mappings.service.ts
+?? apps/api/src/modules/petros-institutional/petros-admission.ts
+?? apps/api/src/modules/petros-institutional/petros-knowledge-policy.spec.ts
+?? apps/api/src/modules/petros-learner-model/petros-objective-evidence.controller.ts
+?? apps/api/src/modules/petros-learner-model/petros-objective-evidence.module.ts
+?? apps/api/src/modules/petros-learner-model/petros-objective-evidence.repository.ts
+?? apps/api/src/modules/petros-learner-model/petros-objective-evidence.service.spec.ts
+?? apps/api/src/modules/petros-learner-model/petros-objective-evidence.service.ts
+?? apps/api/src/modules/portal/course-content/portal-material-preparation.jobs.ts
+?? apps/api/src/modules/portal/courses/course-curriculum.repository.ts
+?? apps/api/src/modules/portal/courses/course-curriculum.spec.ts
+?? apps/api/src/modules/portal/petros-assignment-learning.controller.ts
+?? apps/api/src/modules/portal/petros-assignment-learning.module.ts
+?? apps/api/src/modules/portal/petros-assignment-learning.service.ts
+?? apps/api/src/modules/student/core/student-owned-transactions.ts
+?? apps/api/src/modules/student/knowledge/
+?? apps/api/src/modules/student/petros-artifacts/petros-learning-artifacts.controller.ts
+?? apps/api/src/modules/student/petros-artifacts/petros-learning-artifacts.service.ts
+?? apps/api/src/modules/student/petros-artifacts/petros-qualitative-review.controller.ts
+?? apps/api/src/modules/student/petros-artifacts/petros-qualitative-review.module.ts
+?? apps/api/src/modules/student/petros-artifacts/petros-qualitative-review.repository.ts
+?? apps/api/src/modules/student/petros-artifacts/petros-qualitative-review.service.ts
+?? apps/api/src/modules/student/petros-loop/petros-adaptive.controller.ts
+?? apps/api/src/modules/student/petros-loop/petros-adaptive.renderer.spec.ts
+?? apps/api/src/modules/student/petros-loop/petros-adaptive.renderer.ts
+?? apps/api/src/modules/student/petros-loop/petros-adaptive.service.ts
+?? apps/api/src/modules/student/petros-loop/petros-assessment.adapter.ts
+?? apps/api/src/modules/student/petros-loop/petros-knowledge-answer.ts
+?? apps/api/src/modules/student/petros-loop/petros-projectile.controller.ts
+?? apps/api/src/modules/student/petros-loop/petros-projectile.repository.ts
+?? apps/api/src/modules/student/petros-loop/petros-projectile.service.ts
+?? apps/api/src/modules/student/petros-loop/petros-question-execution.controller.ts
+?? apps/api/src/modules/student/petros-loop/petros-question-execution.repository.ts
+?? apps/api/src/modules/student/petros-loop/petros-question-execution.service.ts
+?? apps/api/src/modules/student/petros-loop/petros-workspace.controller.ts
+?? apps/api/src/modules/student/petros-loop/petros-workspace.repository.ts
+?? apps/api/src/modules/student/petros-loop/petros-workspace.service.ts
+?? apps/api/src/modules/student/petros-session-intent/petros-document-source.integration.spec.ts
+?? apps/api/src/modules/student/petros-session-intent/petros-document-source.spec.ts
+?? apps/api/src/modules/student/petros-session-intent/petros-document-source.ts
+?? apps/institution-web/src/components/materials/
+?? apps/student-web/scripts/petros-compatibility-browser-check.mjs
+?? apps/student-web/scripts/petros-phase2-browser-check.mjs
+?? apps/student-web/scripts/petros-preparation-browser-check.mjs
+?? apps/student-web/scripts/petros-question-browser-check.mjs
+?? apps/student-web/scripts/petros-visual-browser-check.mjs
+?? apps/student-web/src/components/petros/material-preparation-status.spec.tsx
+?? apps/student-web/src/components/petros/petros-artifact-library.spec.tsx
+?? apps/student-web/src/components/petros/petros-compatibility-surfaces.spec.tsx
+?? apps/student-web/src/components/petros/petros-document-door.spec.tsx
+?? apps/student-web/src/components/petros/petros-learning-resume.spec.tsx
+?? apps/student-web/src/components/petros/petros-learning-resume.tsx
+?? apps/student-web/src/components/petros/petros-program-worker.ts
+?? apps/student-web/src/components/petros/petros-program-workspace.module.css
+?? apps/student-web/src/components/petros/petros-program-workspace.spec.tsx
+?? apps/student-web/src/components/petros/petros-program-workspace.tsx
+?? apps/student-web/src/components/petros/petros-projectile-explorer.spec.tsx
+?? apps/student-web/src/components/petros/petros-projectile-explorer.tsx
+?? apps/student-web/src/components/petros/petros-reviewed-objective-picker.spec.tsx
+?? apps/student-web/src/components/petros/petros-reviewed-objective-picker.tsx
+?? apps/student-web/src/components/petros/petros-visual-explorer.module.css
+?? apps/student-web/src/components/petros/petros-visual-explorer.spec.tsx
+?? apps/student-web/src/components/petros/petros-visual-explorer.tsx
+?? apps/student-web/src/components/petros/use-document-question.spec.tsx
+?? apps/student-web/src/components/petros/use-document-question.tsx
+?? docs/PETROS-LEARNING-HARNESS-PLAN.md
+?? docs/PETROS-PHASE-1-VERIFICATION-PLAN.md
+?? docs/PETROS-PHASE-1-VERIFICATION-RESULTS.md
+?? docs/PETROS-PHASE-2-DEFERRED-VERIFICATION-PLAN.md
+?? docs/PETROS-PHASE-2-OWNER-MATRIX.md
+?? docs/PETROS-PHASE-2-PRODUCT-DECISIONS.md
+?? docs/PETROS-PHASE-2-VERIFICATION-RESULTS.md
+?? docs/PETROS-PHASE-3-DECISIONS.md
+?? docs/PETROS-PHASE-3-OWNER-MATRIX.md
+?? docs/PETROS-PHASE-3-VERIFICATION-PLAN.md
+?? docs/petros-phase2-source/
+?? docs/verification/
+?? output/
+?? packages/database/migrations/0208_knowledge_extraction_versions.sql
+?? packages/database/migrations/0209_knowledge_preparations.sql
+?? packages/database/migrations/0210_petros_question_execution.sql
+?? packages/database/migrations/0211_petros_ai_attempt_reservations.sql
+?? packages/database/migrations/0212_petros_visual_snapshot.sql
+?? packages/database/migrations/0213_petros_assessment_contract.sql
+?? packages/database/migrations/0214_petros_question_knowledge_policy.sql
+?? packages/database/migrations/0215_petros_compatibility_contracts.sql
+?? packages/database/migrations/0216_v10_rls_immutability.sql
+?? packages/database/migrations/0217_petros_runtime_closure.sql
+?? packages/database/migrations/0218_petros_teaching_packs.sql
+?? packages/database/migrations/0219_petros_objective_evidence.sql
+?? packages/database/migrations/0220_petros_projectile_commands.sql
+?? packages/database/migrations/0221_petros_adaptive_bindings.sql
+?? packages/database/migrations/0222_petros_assignment_learning.sql
+?? packages/database/migrations/0223_petros_learning_artifacts.sql
+?? packages/database/migrations/0224_petros_adaptive_observations.sql
+?? packages/database/migrations/0225_petros_qualitative_lifecycle.sql
+?? packages/database/migrations/0226_petros_phase2_owner_links.sql
+?? packages/database/migrations/0227_petros_workspace.sql
+?? packages/database/src/schema/curriculum-alignment.ts
+?? packages/database/src/schema/petros-adaptive.ts
+?? packages/database/src/schema/petros-assignment-learning.ts
+?? packages/database/src/schema/petros-learning-artifacts.ts
+?? packages/database/src/schema/petros-objective-evidence.ts
+?? packages/database/src/schema/petros-teaching-packs.ts
+?? packages/database/src/schema/petros-visual-operations.ts
+?? packages/database/src/schema/petros-workspace.ts
+?? packages/schemas/src/__fixtures__/
+?? packages/schemas/src/curriculum-alignment.spec.ts
+?? packages/schemas/src/curriculum-alignment.ts
+?? packages/schemas/src/petros-adaptive-policy.spec.ts
+?? packages/schemas/src/petros-adaptive-policy.ts
+?? packages/schemas/src/petros-assessment.spec.ts
+?? packages/schemas/src/petros-assessment.ts
+?? packages/schemas/src/petros-assignment-learning-release.ts
+?? packages/schemas/src/petros-compatibility.spec.ts
+?? packages/schemas/src/petros-compatibility.ts
+?? packages/schemas/src/petros-concept-pack-review.ts
+?? packages/schemas/src/petros-concept-pack.ts
+?? packages/schemas/src/petros-document-preparation.spec.ts
+?? packages/schemas/src/petros-document-preparation.ts
+?? packages/schemas/src/petros-document-retrieval.spec.ts
+?? packages/schemas/src/petros-document-retrieval.ts
+?? packages/schemas/src/petros-document-source.spec.ts
+?? packages/schemas/src/petros-document-source.ts
+?? packages/schemas/src/petros-engine-bindings.ts
+?? packages/schemas/src/petros-engine-compiler.ts
+?? packages/schemas/src/petros-engine-contract.ts
+?? packages/schemas/src/petros-engine-controller.ts
+?? packages/schemas/src/petros-engine-interpreter.ts
+?? packages/schemas/src/petros-engine-models.spec.ts
+?? packages/schemas/src/petros-engine-models.ts
+?? packages/schemas/src/petros-engine-presets.ts
+?? packages/schemas/src/petros-engine-registry.ts
+?? packages/schemas/src/petros-engine-spatial.ts
+?? packages/schemas/src/petros-engine-units.ts
+?? packages/schemas/src/petros-engine.spec.ts
+?? packages/schemas/src/petros-knowledge-policy.spec.ts
+?? packages/schemas/src/petros-knowledge-policy.ts
+?? packages/schemas/src/petros-learning-artifact-binding.ts
+?? packages/schemas/src/petros-objective-evidence.spec.ts
+?? packages/schemas/src/petros-objective-evidence.ts
+?? packages/schemas/src/petros-phase2-pack.spec.ts
+?? packages/schemas/src/petros-projectile-binding.spec.ts
+?? packages/schemas/src/petros-projectile-binding.ts
+?? packages/schemas/src/petros-projectile-command.ts
+?? packages/schemas/src/petros-projectile-model.spec.ts
+?? packages/schemas/src/petros-projectile-model.ts
+?? packages/schemas/src/petros-qualitative-review.spec.ts
+?? packages/schemas/src/petros-qualitative-review.ts
+?? packages/schemas/src/petros-question-execution.spec.ts
+?? packages/schemas/src/petros-question-execution.ts
+?? packages/schemas/src/petros-visual-adapter.ts
+?? packages/schemas/src/petros-visual-program.spec.ts
+?? packages/schemas/src/petros-visual-program.ts
+?? packages/schemas/src/provider-mapping.spec.ts
+?? packages/schemas/src/provider-mapping.ts

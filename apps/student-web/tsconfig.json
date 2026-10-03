@@ -19,7 +19,9 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next-dev/types/**/*.ts"
+    ".next-dev/types/**/*.ts",
+    ".next-petros-verification-dev/types/**/*.ts",
+    ".next-petros-verification/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

@@ -2,10 +2,11 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Optional,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import {
   PETROS_ARTIFACT_PROPOSAL_VERSION,
   PETROS_ARTIFACT_FUNCTION_KEYS,
@@ -21,6 +22,7 @@ import {
   petrosArtifactContentSchema,
   petrosSavedArtifactSchema,
   schedulePetrosReview,
+  compatibilityCanonicalJson,
   type PetrosArtifactBundle,
   type PetrosArtifactCommitResult,
   type PetrosArtifactContent,
@@ -37,12 +39,14 @@ import { PetrosLearnerModelService } from '../../petros-learner-model/petros-lea
 import type { InstitutionalStudentPrincipal } from '../student.types';
 import type { PetrosOwnerScope } from '../petros-loop/petros-loop.repository';
 import { PetrosArtifactsRepository } from './petros-artifacts.repository';
+import { PetrosLearningArtifactsService } from './petros-learning-artifacts.service';
 
 @Injectable()
 export class PetrosArtifactsService {
   constructor(
     private readonly repo: PetrosArtifactsRepository,
     private readonly learnerModels: PetrosLearnerModelService,
+    @Optional() private readonly learning?: PetrosLearningArtifactsService,
   ) {}
 
   async bundle(principal: InstitutionalStudentPrincipal, sessionId: string): Promise<PetrosArtifactBundle> {
@@ -93,7 +97,7 @@ export class PetrosArtifactsService {
     const firstReview = content.kind === 'flashcard' || content.kind === 'rule_card'
       ? firstPetrosReview(new Date(), sourceTimezone(session.learnerContext), examDate)
       : null;
-    const result = await this.repo.saveBlockArtifact({
+    const write = () => this.repo.saveBlockArtifact({
       scope,
       sessionId,
       blockId,
@@ -104,6 +108,7 @@ export class PetrosArtifactsService {
       firstReview,
       examDate,
     });
+    const result = this.learning ? await this.learning.save(principal,input.idempotencyKey,write) : await write();
     if (!result.artifact) {
       throw new ConflictException({
         code: 'PETROS_BLOCK_ARTIFACT_SAVE_FAILED',
@@ -159,10 +164,14 @@ export class PetrosArtifactsService {
     const bundle = await this.repo.findBundleById(scope, bundleId);
     if (!bundle) throw artifactNotFound('PETROS_BUNDLE_NOT_FOUND', 'Artifact bundle not found.');
     if (bundle.state === 'discarded') throw new ConflictException({ code: 'PETROS_BUNDLE_DISCARDED', message: 'This proposal bundle was discarded.' });
-    if (bundle.version !== input.expectedBundleVersion) throw staleBundle();
-    const command = await this.repo.beginCommit(scope, bundleId, input.idempotencyKey);
+    const authorizedSession = await this.repo.findSession(scope,bundle.sessionId);
+    if (!authorizedSession) throw artifactNotFound('PETROS_SESSION_NOT_FOUND','Session not found.');
+    await this.learning?.requireSession(principal,bundle.sessionId);
+    const requestHash = createHash('sha256').update(compatibilityCanonicalJson({bundleId,input})).digest('hex');
+    const command = await this.repo.beginCommit(scope, bundleId, input.idempotencyKey, requestHash);
     if (command.state === 'completed') return petrosArtifactCommitResultSchema.parse(command.response);
     if (command.state === 'in_flight' || !command.command) throw new ConflictException({ code: 'PETROS_ARTIFACT_COMMIT_IN_FLIGHT', message: 'These artifacts are already being saved.' });
+    if (bundle.version !== input.expectedBundleVersion) throw staleBundle();
     try {
       const session = await this.repo.findSession(scope, bundle.sessionId);
       if (!session) throw artifactNotFound('PETROS_SESSION_NOT_FOUND', 'Session not found.');
@@ -187,10 +196,11 @@ export class PetrosArtifactsService {
           const firstReview = content.kind === 'flashcard' || content.kind === 'rule_card'
             ? firstPetrosReview(new Date(), timezone, examDate)
             : null;
-          const saved = await this.repo.saveProposal({
+          const write = () => this.repo.saveProposal({
             scope, bundleId, proposalId: proposal.id, topic: session.topic,
             portableId: randomUUID(), firstReview, examDate,
           });
+          const saved = this.learning ? await this.learning.save(principal,input.idempotencyKey,write) : await write();
           if (saved.state === 'saved' || saved.state === 'already_saved') {
             if (saved.state === 'already_saved') {
               await this.repo.recordOperationalEvent(scope, {
@@ -323,9 +333,9 @@ export class PetrosArtifactsService {
       return result;
     }
     if (source.kind === 'document_page') {
-      const resolved = await this.repo.resolveKnowledgeSource(scope, source.knowledgeItemId!, source.pageIndex!);
+      const resolved = await this.repo.resolveKnowledgeSource(scope, source.knowledgeItemId!, source.pageIndex!, source.sessionId);
       const result = resolved?.pageId && resolved.status !== 'error'
-        ? { available: true, source, href: `/library/${source.knowledgeItemId}?page=${source.pageIndex! + 1}`, reason: null }
+        ? { available: true, source, locator: resolved.locator, text: resolved.text, href: `/petros/session?session=${source.sessionId}`, reason: null }
         : { available: false, source: { ...source, excerpt: null }, href: null, reason: 'The source page was removed, restricted, or is still unavailable. The artifact remains yours.' };
       if (!result.available) await this.repo.recordOperationalEvent(scope, { type: 'source.unavailable', sessionId: artifact.sessionId ?? undefined, artifactId, payload: { kind: source.kind } });
       return result;
@@ -386,8 +396,13 @@ export class PetrosArtifactsService {
 
   async review(principal: InstitutionalStudentPrincipal, artifactId: string, input: PetrosSubmitArtifactReviewInput) {
     const scope = owner(principal);
-    const artifact = await this.repo.findSaved(scope, artifactId);
+    let artifact = await this.repo.findSaved(scope, artifactId);
     if (!artifact || !['flashcard', 'rule_card'].includes(artifact.kind)) throw artifactNotFound('PETROS_REVIEW_CARD_NOT_FOUND', 'Review card not found.');
+    const learningBinding = await this.learning?.requireCurrent(principal,artifact);
+    await this.learning?.lockReview(principal,artifactId,input.clientReviewId);
+    if (this.learning) artifact = await this.repo.findSaved(scope,artifactId);
+    if (!artifact) throw artifactNotFound('PETROS_REVIEW_CARD_NOT_FOUND','Review card not found.');
+    if (learningBinding) await this.learning!.requireCurrent(principal,artifact);
     const reviewedAt = new Date(input.reviewedAt);
     if (reviewedAt > new Date(Date.now() + 5 * 60_000)) throw new BadRequestException({ code: 'PETROS_REVIEW_TIME_INVALID', message: 'A review cannot be recorded in the future.' });
     const scheduled = schedulePetrosReview({
@@ -406,7 +421,8 @@ export class PetrosArtifactsService {
     });
     const result = await this.repo.commitReview({ scope, artifact, review: input, scheduled });
     const outcome = result.outcome;
-    if (!outcome.learnerEvidenceEventId) {
+    const learningReview = await this.learning?.recordReview(principal,artifact,input,outcome);
+    if (!learningReview && !outcome.learnerEvidenceEventId) {
       try {
         const content = petrosArtifactContentSchema.parse(artifact.content);
         const evidence = await this.learnerModels.ingest(scope, {
@@ -447,7 +463,7 @@ export class PetrosArtifactsService {
       duplicate: result.state === 'duplicate',
       artifact: updated ? savedDto(updated) : savedDto(artifact),
       outcomeId: outcome.id,
-      nextDueAt: scheduled.dueAt.toISOString(),
+      nextDueAt: typeof outcome.stateAfter?.dueAt === 'string' ? outcome.stateAfter.dueAt : scheduled.dueAt.toISOString(),
       scheduleExplanation: scheduled.explanation,
     };
   }
@@ -631,6 +647,7 @@ function safeLocalId(value: string, fallback: string) {
 }
 
 function cleanGenerated(value: string, max: number) {
+  // eslint-disable-next-line no-control-regex -- Artifact sanitization intentionally removes control characters.
   return value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').replace(/<[^>]*>/g, '').trim().slice(0, max) || 'Key idea';
 }
 

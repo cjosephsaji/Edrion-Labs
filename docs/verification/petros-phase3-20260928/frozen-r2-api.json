@@ -1,0 +1,35 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/student/petros-session-intent",
+    "src/modules/student/materials",
+    "src/modules/student/knowledge",
+    "src/modules/student/petros-loop",
+    "src/modules/student/petros-input-modes",
+    "src/modules/student/petros-companion",
+    "src/modules/student/petros-artifacts",
+    "src/modules/student/petros-reflection",
+    "src/modules/petros-ai-routing",
+    "src/modules/petros-learner-model",
+    "src/modules/petros-institutional",
+    "src/modules/petros-topic-profiles",
+    "src/modules/integrations",
+    "src/modules/federation",
+    "src/modules/portal/courses",
+    "src/modules/student/courses",
+    "src/common",
+    "--pool=forks",
+    "--poolOptions.forks.singleFork=true"
+  ],
+  "start": "2026-10-02T06:15:43.262607+00:00",
+  "end": "2026-10-02T06:18:00.963736+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

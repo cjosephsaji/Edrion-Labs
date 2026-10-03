@@ -1,0 +1,17 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/schemas",
+    "--filter",
+    "@edrion/student-web",
+    "test"
+  ],
+  "start": "2026-10-02T16:18:55.964322+00:00",
+  "end": "2026-10-02T16:19:11.143552+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/Volumes/PetrosPhase4Verification/tmp"
+  }
+}

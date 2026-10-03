@@ -1,0 +1,20 @@
+{
+  "startedAt": "2026-09-24T20:59:46.018129+00:00",
+  "finishedAt": "2026-09-24T20:59:54.046106+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/integrations/petros-pack-authority.integration.spec.ts",
+    "src/modules/integrations/petros-objective-evidence.integration.spec.ts",
+    "src/modules/integrations/petros-learning-artifacts.integration.spec.ts",
+    "src/modules/integrations/petros-assignment-learning.integration.spec.ts",
+    "src/modules/integrations/petros-projectile-commands.integration.spec.ts",
+    "src/modules/integrations/petros-phase2-migration.integration.spec.ts"
+  ],
+  "exitCode": 0,
+  "log": "persistence-20260924.log"
+}

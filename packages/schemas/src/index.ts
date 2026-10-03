@@ -66,6 +66,7 @@ export * from './ai-governance';
 export * from './petros-ai-routing';
 export * from './petros-learning';
 export * from './petros-session-intent';
+export * from './petros-document-source';
 export * from './petros-input-modes';
 export * from './petros-teach-back';
 export * from './petros-reflection';
@@ -100,3 +101,46 @@ export * from './portal-learn-policy';
 export * from './library-fsrs';
 export * from './security/step-up-actions';
 export * from './federation';
+
+export * from './petros-document-preparation';
+export * from './petros-document-retrieval';
+export * from './petros-question-execution';
+
+export * from './petros-visual-program';
+export * from './petros-assessment';
+export * from './petros-visual-adapter';
+
+export * from './petros-knowledge-policy';
+export * from './petros-compatibility';
+export * from './provider-mapping';
+export * from './curriculum-alignment';
+
+// Phase 2 contracts; exporting does not grant runtime or review authority.
+export * from './petros-projectile-model';
+export * from './petros-concept-pack';
+export * from './petros-objective-evidence';
+export * from './petros-adaptive-policy';
+export * from './petros-assignment-learning-release';
+export * from './petros-projectile-binding';
+export * from './petros-concept-pack-review';
+export * from './petros-qualitative-review';
+export * from './petros-learning-artifact-binding';
+export * from './petros-projectile-command';
+export * from './petros-engine-contract';
+export * from './petros-engine-registry';
+export * from './petros-engine-models';
+export * from './petros-engine-units';
+export * from './petros-engine-compiler';
+export * from './petros-engine-interpreter';
+export * from './petros-engine-bindings';
+export * from './petros-engine-controller';
+export * from './petros-engine-presets';
+
+export * from './petros-engine-spatial';
+
+export * from './petros-continuity';
+export * from './petros-context';
+
+export * from './petros-phase4-institutional';
+export * from './petros-release';
+export * from './petros-source-comparison';

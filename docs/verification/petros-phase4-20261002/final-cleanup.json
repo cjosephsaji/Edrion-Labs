@@ -1,0 +1,58 @@
+{
+  "start": "2026-10-02T16:27:17.426385+00:00",
+  "ownedServicesAlreadyGracefullyStopped": [
+    41609,
+    41610,
+    41616,
+    70812,
+    70875,
+    70896
+  ],
+  "lightweightAgents": {
+    "institution_inventory": "completed, idle",
+    "web_inventory": "completed, idle",
+    "runtime_inventory": "stopped after usage-limit failure; primary completed remaining verification"
+  },
+  "heavyAgentsUsed": false,
+  "unrelatedPostgresRedisUntouched": [
+    669,
+    660
+  ],
+  "userOwnedChatsAltered": false,
+  "temporaryFilesystem": {
+    "creation": [
+      "hdiutil",
+      "create",
+      "-size",
+      "4g",
+      "-type",
+      "SPARSEBUNDLE",
+      "-fs",
+      "APFS",
+      "-volname",
+      "PetrosPhase4Verification",
+      "/Volumes/Chris/.petros-phase4-tmp-01a0fb94/verification.sparsebundle"
+    ],
+    "mount": "/Volumes/PetrosPhase4Verification"
+  },
+  "detach": {
+    "command": [
+      "hdiutil",
+      "detach",
+      "/Volumes/PetrosPhase4Verification"
+    ],
+    "exitCode": 0,
+    "output": "\"disk5\" ejected.\nhdiutil: WARNING: 'hdiutil detach ...' is deprecated. Please use 'diskutil eject ...' instead.\n"
+  },
+  "removedTaskOwnedPaths": [
+    "/Volumes/Chris/.petros-phase4-tmp-01a0fb94",
+    "/tmp/petros-phase4-browser.json",
+    "/tmp/petros-phase4-fixture-control.json",
+    "/tmp/petros-phase4-fixture-control-ack.json",
+    "/tmp/petros-phase4-institution-web.log",
+    "/tmp/petros-phase4-provider-capture.json",
+    "/tmp/petros-phase4-server-summary.json"
+  ],
+  "end": "2026-10-02T16:27:28.319765+00:00",
+  "privateFixtureProcessesRemaining": false
+}

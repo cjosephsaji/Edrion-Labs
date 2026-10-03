@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { versionSchema } from './common';
+import { curriculumAlignmentWriteSchema } from './curriculum-alignment';
 
 export const gradingSchemeRowSchema = z.object({
   component: z.string(),
@@ -28,6 +29,7 @@ export const syllabusModuleInputSchema = z.object({
 
 export const upsertSyllabusSchema = z.object({
   modules: z.array(syllabusModuleInputSchema),
+  curriculum: curriculumAlignmentWriteSchema.optional(),
 });
 
 export const courseEnrollmentSchema = z.object({

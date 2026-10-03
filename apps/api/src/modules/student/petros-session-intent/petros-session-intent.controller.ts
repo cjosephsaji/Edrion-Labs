@@ -1,6 +1,15 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, Headers, Param, ParseUUIDPipe, Post, Query, Req, UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
 import { ApiTags } from '@nestjs/swagger';
 import {
+  PETROS_DOCUMENT_SOURCE_VERSION,
+  petrosDocumentLocatorSchema,
+  type PetrosDocumentLocator,
+  petrosDocumentSearchSchema,
+  type PetrosDocumentSearch,
+  petrosSourceComparisonSchema,
+  type PetrosSourceComparison,
+  petrosSessionIntentV1,
   petrosAssistantQuestionSchema,
   petrosDoorsDashboardQuerySchema,
   petrosIntentMetricInputSchema,
@@ -50,26 +59,89 @@ export class StudentPetrosSessionIntentController {
     return raw;
   }
 
+  @Get('documents/:sourceId/scope')
+  @Header('Cache-Control', 'private, no-store')
+  documentScope(@CurrentStudent() raw: StudentPrincipal, @Param('sourceId', new ParseUUIDPipe()) sourceId: string) {
+    return this.service.selectedDocumentScope(this.principal(raw), sourceId);
+  }
+
+  @Post('documents/compare')
+  @Header('Cache-Control', 'private, no-store')
+  async compareDocuments(@CurrentStudent() raw: StudentPrincipal,
+    @Body(zodBody(petrosSourceComparisonSchema)) input: PetrosSourceComparison, @Req() request: Request) {
+    const abort = new AbortController();
+    const cancel = () => abort.abort();
+    request.res?.once('close', cancel);
+    if (request.aborted || request.res?.destroyed) cancel();
+    try { return await this.service.compareDocuments(this.principal(raw), input, abort.signal); }
+    finally { request.res?.off('close', cancel); }
+  }
+
+  @Post('documents/:sourceId/search')
+  @Header('Cache-Control', 'private, no-store')
+  async searchDocument(
+    @CurrentStudent() raw: StudentPrincipal,
+    @Param('sourceId', new ParseUUIDPipe()) sourceId: string,
+    @Body(zodBody(petrosDocumentSearchSchema)) input: PetrosDocumentSearch,
+    @Req() request: Request,
+  ) {
+    const abort = new AbortController();
+    const cancel = () => abort.abort();
+    request.res?.once('close', cancel);
+    if (request.aborted || request.res?.destroyed) cancel();
+    try { return await this.service.searchDocument(this.principal(raw), sourceId, input, abort.signal); }
+    finally { request.res?.off('close', cancel); }
+  }
+
+  @Post('documents/:sourceId/resolve-locator')
+  @Header('Cache-Control', 'private, no-store')
+  documentLocator(
+    @CurrentStudent() raw: StudentPrincipal,
+    @Param('sourceId', new ParseUUIDPipe()) sourceId: string,
+    @Body(zodBody(petrosDocumentLocatorSchema)) locator: PetrosDocumentLocator,
+  ) {
+    return this.service.documentLocator(this.principal(raw), sourceId, locator);
+  }
+
   @Post('intents/resolve')
-  resolve(
+  @Header('Cache-Control', 'private, no-store')
+  @Header('Vary', 'x-petros-document-source')
+  async resolve(
+    @Headers('x-petros-document-source') sourceContract: string | undefined,
     @CurrentStudent() raw: StudentPrincipal,
     @Body(zodBody(resolvePetrosSessionIntentSchema)) body: ResolvePetrosSessionIntentInput,
   ) {
-    return this.service.resolve(this.principal(raw), body);
+    const intent = await this.service.resolve(this.principal(raw), body);
+    return sourceContract === PETROS_DOCUMENT_SOURCE_VERSION ? intent : petrosSessionIntentV1(intent);
   }
 
   @Get('intents/:intentId')
-  read(@CurrentStudent() raw: StudentPrincipal, @Param('intentId') intentId: string) {
-    return this.service.read(this.principal(raw), intentId);
+  @Header('Cache-Control', 'private, no-store')
+  @Header('Vary', 'x-petros-document-source')
+  async read(
+    @CurrentStudent() raw: StudentPrincipal,
+    @Param('intentId') intentId: string,
+    @Headers('x-petros-document-source') sourceContract?: string,
+  ) {
+    const intent = await this.service.read(this.principal(raw), intentId);
+    return sourceContract === PETROS_DOCUMENT_SOURCE_VERSION ? intent : petrosSessionIntentV1(intent);
   }
 
   @Post('intents/:intentId/start')
-  start(
+  @Header('Cache-Control', 'private, no-store')
+  @Header('Vary', 'x-petros-document-source')
+  async start(
     @CurrentStudent() raw: StudentPrincipal,
     @Param('intentId') intentId: string,
     @Body(zodBody(startPetrosSessionIntentSchema)) body: StartPetrosSessionIntentInput,
+    @Headers('x-petros-document-source') sourceContract?: string,
   ) {
-    return this.service.start(this.principal(raw), intentId, body);
+    const result = await this.service.start(this.principal(raw), intentId, body);
+    return {
+      ...result,
+      intent: sourceContract === PETROS_DOCUMENT_SOURCE_VERSION
+        ? result.intent : petrosSessionIntentV1(result.intent),
+    };
   }
 
   @Post('intents/:intentId/events')

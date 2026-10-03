@@ -1,0 +1,66 @@
+{
+  "completedAt": "2026-10-03T08:55:31.693899+00:00",
+  "removed": [
+    {
+      "path": "/tmp/petros-phase5-server-summary.json",
+      "bytes": 29476,
+      "sha256": "0b6c1a2f169f2da1f6ed324d0a7d42f2c5e49ed1387c5b29d8e880c527c30db2",
+      "purpose": "task-created synthetic fixture metadata/control/log; final browser logs and summaries retained in dated evidence"
+    },
+    {
+      "path": "/tmp/petros-phase5-fixture-control.json",
+      "bytes": 73,
+      "sha256": "d0feb9a9704032a77e1eb09b19485c467dd1748f61e72296e3d43f706c27d3a8",
+      "purpose": "task-created synthetic fixture metadata/control/log; final browser logs and summaries retained in dated evidence"
+    },
+    {
+      "path": "/tmp/petros-phase5-institution-web.log",
+      "bytes": 1095,
+      "sha256": "ed1e2c7989ecc9fe5be326220760537ed6bd76768dfa3d2dbe10e856099bf372",
+      "purpose": "task-created synthetic fixture metadata/control/log; final browser logs and summaries retained in dated evidence"
+    },
+    {
+      "path": "/tmp/petros-phase5-super-admin-web.log",
+      "bytes": 588,
+      "sha256": "b2436cac7646643a3ead0f12159dd5568d30c7e5ec9e2c23d76dd12fb43af349",
+      "purpose": "task-created synthetic fixture metadata/control/log; final browser logs and summaries retained in dated evidence"
+    },
+    {
+      "path": "/tmp/petros-phase5-provider-capture.json",
+      "bytes": 33268,
+      "sha256": "789704a66cb6788bdbf17abee29238f426203d952f8ce90b5fda4461667e9ca6",
+      "purpose": "task-created synthetic fixture metadata/control/log; final browser logs and summaries retained in dated evidence"
+    },
+    {
+      "path": "/tmp/petros-phase5-browser.json",
+      "bytes": 16060,
+      "sha256": "5bfa1269e5d05a3f0556d82af89687288d2363d61799a1d5427c02bd7e5b229a",
+      "purpose": "task-created synthetic fixture metadata/control/log; final browser logs and summaries retained in dated evidence"
+    },
+    {
+      "path": "/tmp/petros-phase5-fixture-control-ack.json",
+      "bytes": 115,
+      "sha256": "f46faa9fcfee21704c890b224b17ccc65c2909a197fbfd98cf8dc7ab74d07a12",
+      "purpose": "task-created synthetic fixture metadata/control/log; final browser logs and summaries retained in dated evidence"
+    },
+    {
+      "path": "/private/tmp/petros-phase5-browsers-20261003-01a0fb94",
+      "purpose": "task-owned downloaded/copied Playwright runtime; binary identities and launch logs retained"
+    },
+    {
+      "path": "/Volumes/Chris/.petros-phase5-browsers-20261003",
+      "purpose": "task-owned downloaded/copied Playwright runtime; binary identities and launch logs retained"
+    },
+    {
+      "path": "/Volumes/Chris/.petros-phase5-tmp-01a0fb94",
+      "purpose": "empty task-owned build parent and its task-created AppleDouble metadata"
+    }
+  ],
+  "taskServicesRemaining": [],
+  "sharedServicesPreserved": [
+    "911     1 /opt/homebrew/opt/redis/bin/redis-server 127.0.0.1:6379",
+    "920     1 /opt/homebrew/opt/postgresql@15/bin/postgres -D /opt/homebrew/var/postgresql@15"
+  ],
+  "disk": "Filesystem      Size    Used   Avail Capacity iused ifree %iused  Mounted on\n/dev/disk3s5   228Gi   189Gi    11Gi    95%    1.8M  112M    2%   /System/Volumes/Data\n/dev/disk4s2   477Gi   234Gi   243Gi    50%       1     0  100%   /Volumes/Chris\n",
+  "note": "No shared service stopped, no protected dump or workspace source removed. No system clock/security settings changed. Synthetic metadata values are not printed."
+}

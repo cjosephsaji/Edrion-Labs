@@ -1,0 +1,13 @@
+{
+  "command": [
+    "python3",
+    "docs/verification/petros-phase6-20261003/run-isolated-student-web.py"
+  ],
+  "start": "2026-10-03T10:53:20.303369+00:00",
+  "end": "2026-10-03T11:19:36.646405+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+  }
+}

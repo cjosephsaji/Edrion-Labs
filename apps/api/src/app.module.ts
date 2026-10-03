@@ -42,6 +42,7 @@ import { PetrosTopicProfilesModule } from './modules/petros-topic-profiles/petro
 import { PetrosQualityModule } from './modules/petros-quality/petros-quality.module';
 import { PetrosLearnerModelModule } from './modules/petros-learner-model/petros-learner-model.module';
 import { PetrosInstitutionalModule } from './modules/petros-institutional/petros-institutional.module';
+import { PetrosAssignmentLearningModule } from './modules/portal/petros-assignment-learning.module';
 
 /**
  * Root module. Global guards run in order: AuthGuard (authenticate + attach principal) →
@@ -87,6 +88,7 @@ import { PetrosInstitutionalModule } from './modules/petros-institutional/petros
     PetrosQualityModule,
     PetrosLearnerModelModule,
     PetrosInstitutionalModule,
+    PetrosAssignmentLearningModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },

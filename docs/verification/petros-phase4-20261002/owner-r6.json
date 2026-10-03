@@ -1,0 +1,24 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/integrations/petros-phase4-continuity.integration.spec.ts",
+    "src/modules/integrations/petros-phase4-journey.integration.spec.ts",
+    "src/modules/integrations/petros-phase4-cohort.integration.spec.ts",
+    "src/modules/integrations/petros-phase4-institutional.integration.spec.ts",
+    "src/modules/petros-ai-routing/petros-ai-gateway.service.spec.ts",
+    "src/modules/petros-institutional/petros-institutional.service.spec.ts",
+    "--pool=forks",
+    "--poolOptions.forks.singleFork=true"
+  ],
+  "start": "2026-10-02T11:00:13.902961+00:00",
+  "end": "2026-10-02T11:00:33.743550+00:00",
+  "exitCode": 1,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

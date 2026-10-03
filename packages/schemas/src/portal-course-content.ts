@@ -83,3 +83,10 @@ export type CreateClassMaterialInput = z.infer<typeof createClassMaterialSchema>
 export type CreateClassNoteInput = z.infer<typeof createClassNoteSchema>;
 export type UpdateClassNoteInput = z.infer<typeof updateClassNoteSchema>;
 export type PublishClassNoteInput = z.infer<typeof publishClassNoteSchema>;
+
+/** Republish an existing material from an already uploaded staff-owned object. */
+export const republishClassMaterialSchema = z.object({
+  objectId: z.string().uuid(),
+  version: z.number().int().positive(),
+}).strict();
+export type RepublishClassMaterialInput = z.infer<typeof republishClassMaterialSchema>;

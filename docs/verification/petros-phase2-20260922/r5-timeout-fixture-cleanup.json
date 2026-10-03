@@ -1,0 +1,8 @@
+{
+  "timestamp": "2026-09-26T15:06:00.821750+00:00",
+  "cluster": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-phase2-test-CX2oNJ",
+  "result": "Stopped and removed leftover private Unix-socket cluster from timed-out initial R5 test fixture.",
+  "pid": 28797,
+  "stopExitCode": 0,
+  "sharedOrProductionDatabase": false
+}

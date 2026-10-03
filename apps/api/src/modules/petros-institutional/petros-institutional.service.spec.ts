@@ -130,43 +130,35 @@ describe('Petros Stage 12 institutional service', () => {
     await expect(wrongClass.service.createHandoff(principal, input)).rejects.toMatchObject({ status: 403 });
   });
 
-  it('enforces guardian scope, opt-out, bounded source period, and provider-neutral digest fallback', async () => {
+  it('hard-disables new Petros guardian outputs even when older digest policy is enabled', async () => {
     const { service, repo } = harness({ digestEnabled: true });
     const command = { studentId: STUDENT, periodStart: '2026-08-06T10:00:00.000Z', periodEnd: '2026-08-13T10:00:00.000Z', language: 'en', action: 'preview' as const, idempotencyKey: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee' };
-    const digest = await service.parentDigestCommand(guardian, command);
-    expect(digest).toMatchObject({ status: 'preview', rawContentExcluded: true });
-    expect(JSON.stringify((digest as { content: { sections: unknown[] } }).content.sections)).not.toMatch(/raw transcript|private question|ability label/i);
-    expect((digest as { content: { privacyNotice: string } }).content.privacyNotice).toMatch(/excluded/i);
-    repo.preference.mockResolvedValue({ optedOut: true });
-    await expect(service.parentDigestCommand(guardian, command)).resolves.toMatchObject({ status: 'opted_out' });
-    await expect(service.parentDigestHistory({ ...guardian, students: [], studentIds: [] }, STUDENT)).rejects.toMatchObject({ status: 403 });
+    await expect(service.parentDigestCommand(guardian, command)).rejects.toMatchObject({ status: 403, response: expect.objectContaining({ code: 'PETROS_GUARDIAN_OUTPUT_DISABLED' }) });
+    await expect(service.parentPreferences(guardian, { studentId: STUDENT, optedOut: false, language: 'en', deliveryChannels: ['portal'] })).rejects.toMatchObject({ status: 403 });
+    await expect(service.parentDigestHistory(guardian, STUDENT)).rejects.toMatchObject({ status: 403 });
+    expect(repo.createDigest).not.toHaveBeenCalled();
   });
 
-  it('localizes the deterministic Hindi fallback and enforces configured cadence', async () => {
-    const { service } = harness({ digestEnabled: true });
-    const first = await service.parentDigestCommand(guardian, {
-      studentId: STUDENT, periodStart: '2026-08-01T10:00:00.000Z', periodEnd: '2026-08-08T10:00:00.000Z', language: 'hi', action: 'send', idempotencyKey: '11111111-bbbb-4ccc-8ddd-eeeeeeeeeeee',
-    });
-    expect((first as any).content.sections[0].heading).toMatch(/[\u0900-\u097F]/);
-    await expect(service.parentDigestCommand(guardian, {
-      studentId: STUDENT, periodStart: '2026-08-02T10:00:00.000Z', periodEnd: '2026-08-09T10:00:00.000Z', language: 'hi', action: 'send', idempotencyKey: '22222222-bbbb-4ccc-8ddd-eeeeeeeeeeee',
-    })).rejects.toMatchObject({ status: 409 });
+  it('does not deliver queued Petros guardian digests from the worker', async () => {
+    const { service, repo } = harness({ digestEnabled: true });
+    repo.queuedDigests.mockResolvedValue([{ status: 'queued' }]);
+    await service.processJobs(new Date('2026-08-13T12:00:00.000Z'));
+    expect(repo.updateDigest).not.toHaveBeenCalled();
   });
 
-  it('delivers portal digests and fails unconfigured email with bounded provider-neutral retry', async () => {
+  it('keeps guardian delivery disabled regardless of stored digest channel', async () => {
     const portal = harness({ digestEnabled: true });
-    await portal.service.parentDigestCommand(guardian, {
+    await expect(portal.service.parentDigestCommand(guardian, {
       studentId: STUDENT, periodStart: '2026-08-01T10:00:00.000Z', periodEnd: '2026-08-08T10:00:00.000Z', language: 'en', action: 'send', idempotencyKey: '33333333-bbbb-4ccc-8ddd-eeeeeeeeeeee',
-    });
-    await expect(portal.service.processJobs(new Date('2026-08-13T12:00:00.000Z'))).resolves.toMatchObject({ digestsDelivered: 1, digestsFailed: 0 });
-    expect(portal.repo.updateDigest).toHaveBeenLastCalledWith(INSTITUTION, GUARDIAN, expect.any(String), expect.objectContaining({ status: 'delivered', attemptCount: 1 }));
+    })).rejects.toMatchObject({ status: 403 });
+    await expect(portal.service.processJobs(new Date('2026-08-13T12:00:00.000Z'))).resolves.toMatchObject({ digestsDelivered: 0, digestsFailed: 0 });
 
     const email = harness({ digestEnabled: true });
     email.repo.preference.mockResolvedValue({ optedOut: false, language: 'en', deliveryChannels: ['email'] });
-    await email.service.parentDigestCommand(guardian, {
+    await expect(email.service.parentDigestCommand(guardian, {
       studentId: STUDENT, periodStart: '2026-08-01T10:00:00.000Z', periodEnd: '2026-08-08T10:00:00.000Z', language: 'en', action: 'send', idempotencyKey: '44444444-bbbb-4ccc-8ddd-eeeeeeeeeeee',
-    });
-    await expect(email.service.processJobs(new Date('2026-08-13T12:00:00.000Z'))).resolves.toMatchObject({ digestsDelivered: 0, digestsFailed: 1, digestsExhausted: 0 });
-    expect(email.repo.updateDigest).toHaveBeenLastCalledWith(INSTITUTION, GUARDIAN, expect.any(String), expect.objectContaining({ status: 'failed', errorCode: 'PETROS_DIGEST_EMAIL_DELIVERY_UNCONFIGURED', attemptCount: 1 }));
+    })).rejects.toMatchObject({status:403});
+    await expect(email.service.processJobs(new Date('2026-08-13T12:00:00.000Z'))).resolves.toMatchObject({ digestsDelivered: 0, digestsFailed: 0, digestsExhausted: 0 });
+    expect(email.repo.updateDigest).not.toHaveBeenCalled();
   });
 });

@@ -1,0 +1,21 @@
+# Petros Phase 2 product decisions
+
+Decision authority: on 25 September 2026 the user answered "I have no idea, you decide" when asked for the initial source/objective and authorized reviewers. This delegates selection and preparation. It does not establish a person's credentials, approve a curriculum alignment, authorize real data, or enable deployment. Earlier E1-E8 records remain historical; the choices below supersede their product-selection portions.
+
+| Area | Selected decision | Implementation / remaining gate |
+|---|---|---|
+| Initial subject | Introductory projectile motion: uniform gravity, no drag, equal launch/landing ground, SI units | Matches the trusted implemented solver; no broader physics or generated executable behavior |
+| Source | Original two-page `output/pdf/petros-projectile-source-v1.pdf`, version 1; exact hash in `docs/petros-phase2-source/source-manifest.json` | Authored and visually checked; canonical extraction/import and qualified content review remain pending |
+| Objective | Predict horizontal displacement and vertical velocity within flight, explain the apex and identify model limits | Exact statement and source support in the review packet; canonical course/subject/objective registration remains an institution/curriculum-owner action |
+| Teaching/rubric candidate | Source-local concept map, worked/non-examples, two diagnostics, two held-out numeric tasks and three qualitative criteria | Prepared in `docs/petros-phase2-source/educator-review-packet-v1.md`; candidate only, no approval ID |
+| Reviewer roles | Active institution-authorized physics educator with verified subject qualification and course scope; qualitative reviewer also needs current grading authority | A named person's actual qualification and appointment cannot be manufactured. No synthetic reviewer becomes a real educator |
+| Intended cohort | Adults 18+, English, introductory mechanics with basic arithmetic/algebra | Product scope selected. No minor cohort, real enrollment or accessibility acceptance is inferred |
+| Accessibility | Keyboard operation, reduced motion, text descriptions/equations alongside linked views; no essential color/audio-only cue | Existing controlled browser checks cover these components; physical-device/screen-reader acceptance remains separate |
+| Assistance | Source-bound ordinary practice; registered hints allowed and recorded; first unseen response collected before worked solution; external help recorded only when declared | No untracked general composer help in a bound task. Do not relax a stricter assignment/institution policy |
+| Sharing | Student private by default; exact draft/revision sharing is explicit; learning provenance requires a separate opt-in and stops at submission time | No automatic teacher feed, cohort comparison, guardian disclosure or misconduct inference |
+| Retention | Remain in synthetic disposable engineering mode; no real learner retention or sharing until an institution authorizes retention/erasure rules | Preserve immutable test history only for verification evidence. Existing product deletion is not claimed to implement a complete real-data erasure policy |
+| Delayed review | Use the existing versioned Petros scheduler and its persisted due time; no bespoke Phase 2 interval override | Self-reported recall remains separate from transfer evidence. No claim of pedagogical effectiveness after a human delay |
+| Classroom publication | First release supports one existing enrolled student in an existing published assignment, document/objective target only | Do not invent enrollment, course ownership or journey identity. Cohort/journey release remains unsupported |
+| Rollout | Every Phase 2 admission stays default-off until engineering review, real authority records and content approval are complete | No deployment, production mutation, commit, push or PR authorized |
+
+Prepared content is an original review candidate, not authoritative curriculum, a runtime seed, or student data. The learner PDF excludes assessment prompts/keys. The separate educator packet must not be imported as the learner source. After an authorized canonical import, exact source locators must be derived from the extraction owner and bound to the approved objective; placeholder UUIDs or synthetic approvals are prohibited.

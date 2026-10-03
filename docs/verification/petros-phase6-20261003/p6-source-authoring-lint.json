@@ -1,0 +1,17 @@
+{
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "eslint",
+    "src/modules/integrations/petros-phase6-source-authoring.integration.spec.ts"
+  ],
+  "start": "2026-10-03T11:24:02.450278+00:00",
+  "end": "2026-10-03T11:24:04.227218+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+  }
+}

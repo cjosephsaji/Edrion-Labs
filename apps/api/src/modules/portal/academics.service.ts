@@ -682,7 +682,7 @@ export class AcademicsService {
     await this.assertRef(ctx, 'academicYears', input.academicYearId, 'academic year');
     await this.assertRef(ctx, 'gradeLevels', input.gradeLevelId, 'grade level');
     let programmeLevelId = input.programmeLevelId ?? null;
-    let termId = input.termId ?? null;
+    const termId = input.termId ?? null;
     const term = termId
       ? await this.repo.findAcademicTerm(termId, ctx.principal.institutionId)
       : null;
@@ -1151,7 +1151,7 @@ export class AcademicsService {
     departmentId: string | null;
     gradeLevelId: string | null;
   }> {
-    let programmeLevelId = input.programmeLevelId ?? null;
+    const programmeLevelId = input.programmeLevelId ?? null;
     let departmentId = input.departmentId ?? null;
     let gradeLevelId = input.gradeLevelId ?? null;
 

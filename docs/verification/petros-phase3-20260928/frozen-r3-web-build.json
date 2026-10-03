@@ -1,0 +1,17 @@
+{
+  "command": [
+    "env",
+    "PETROS_ISOLATED_VERIFICATION=1",
+    "NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:3407",
+    "pnpm",
+    "--filter",
+    "@edrion/student-web",
+    "build"
+  ],
+  "start": "2026-10-02T06:29:19.289971+00:00",
+  "end": "2026-10-02T06:29:54.626366+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

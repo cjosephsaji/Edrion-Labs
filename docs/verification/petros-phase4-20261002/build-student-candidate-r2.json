@@ -1,0 +1,13 @@
+{
+  "command": [
+    "python3",
+    "docs/verification/petros-phase4-20261002/build-isolated-web.py",
+    "student-web"
+  ],
+  "start": "2026-10-02T11:22:58.840405+00:00",
+  "end": "2026-10-02T11:22:59.083258+00:00",
+  "exitCode": 1,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

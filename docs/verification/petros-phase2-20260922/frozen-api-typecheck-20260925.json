@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-25T16:16:28.793663+00:00",
+  "finishedAt": "2026-09-25T16:16:50.867543+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "typecheck"
+  ],
+  "exitCode": 2,
+  "log": "frozen-api-typecheck-20260925.log"
+}

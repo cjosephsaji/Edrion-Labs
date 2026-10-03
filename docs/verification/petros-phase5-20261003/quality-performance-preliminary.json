@@ -1,0 +1,24 @@
+{
+  "command": [
+    "env",
+    "PETROS_PHASE5_QUALITY_ARTIFACT=/Volumes/Chris/Edrion Labs/docs/verification/petros-phase5-20261003/production-quality-performance-preliminary.json",
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/integrations/petros-phase5-quality.integration.spec.ts",
+    "src/modules/integrations/petros-phase5-gateway.integration.spec.ts",
+    "--pool=forks",
+    "--poolOptions.forks.singleFork=true",
+    "--testTimeout=30000"
+  ],
+  "start": "2026-10-03T03:47:39.507187+00:00",
+  "end": "2026-10-03T03:47:51.828720+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+  }
+}

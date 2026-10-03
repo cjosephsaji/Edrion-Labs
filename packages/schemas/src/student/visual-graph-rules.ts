@@ -413,7 +413,7 @@ function validateGlobalRules(
     }
   }
 
-  let rootId: string | null = graph.root_node_id;
+  const rootId: string | null = graph.root_node_id;
   if (rootId === null) {
     pushIssue(issues, ['root_node_id'], 'A complete graph needs a root');
     return { nodeById, nodeIndexById, rootId: null };

@@ -1,0 +1,16 @@
+[
+  "teacher B request failed: http://127.0.0.1:3423/dashboard?_rsc=3agkm net::ERR_ABORTED",
+  "teacher B request failed: http://127.0.0.1:3423/attention?_rsc=3agkm net::ERR_ABORTED",
+  "teacher B request failed: http://127.0.0.1:3423/petros?_rsc=3agkm net::ERR_ABORTED",
+  "teacher B request failed: http://127.0.0.1:3423/petros-support?_rsc=3agkm net::ERR_ABORTED",
+  "teacher B request failed: http://127.0.0.1:3423/approvals?_rsc=3agkm net::ERR_ABORTED",
+  "teacher B request failed: http://127.0.0.1:3423/workflow/grievances?_rsc=3agkm net::ERR_ABORTED",
+  "teacher B request failed: http://127.0.0.1:3423/academics/years?_rsc=3agkm net::ERR_ABORTED",
+  "teacher B request failed: http://127.0.0.1:3423/academics/departments?_rsc=3agkm net::ERR_ABORTED",
+  "teacher B request failed: http://127.0.0.1:3423/academics/grades?_rsc=3agkm net::ERR_ABORTED",
+  "teacher B request failed: http://127.0.0.1:3423/academics/subjects?_rsc=3agkm net::ERR_ABORTED",
+  "teacher B request failed: http://127.0.0.1:3423/academics/classes?_rsc=3agkm net::ERR_ABORTED",
+  "teacher B request failed: http://127.0.0.1:3423/parents?_rsc=3agkm net::ERR_ABORTED",
+  "teacher B request failed: http://127.0.0.1:3423/careers/placements?_rsc=3agkm net::ERR_ABORTED",
+  "teacher B request failed: http://127.0.0.1:3423/teaching?_rsc=3agkm net::ERR_ABORTED"
+]

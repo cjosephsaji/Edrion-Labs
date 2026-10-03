@@ -99,12 +99,23 @@ export class PetrosTopicProfilesRepository {
       .limit(query.limit);
   }
 
-  createProfile(values: typeof schema.petrosTopicProfiles.$inferInsert) {
-    return this.db
+  async createProfile(values: typeof schema.petrosTopicProfiles.$inferInsert) {
+    const [created] = await this.db
       .insert(schema.petrosTopicProfiles)
       .values(values)
-      .returning()
-      .then((rows) => rows[0]!);
+      .onConflictDoNothing()
+      .returning();
+    if (created) return { profile: created, created: true as const };
+
+    // INSERT ... ON CONFLICT waits for a competing insert to commit. This
+    // subsequent statement then reads the winner under PostgreSQL READ COMMITTED.
+    const existing = await this.findByIdentity(
+      values.topicKey,
+      values.curriculumKey,
+      values.gradeBand,
+    );
+    if (!existing) throw new Error('PETROS_TOPIC_PROFILE_CACHE_KEY_CONFLICT');
+    return { profile: existing, created: false as const };
   }
 
   listVersions(profileId: string) {

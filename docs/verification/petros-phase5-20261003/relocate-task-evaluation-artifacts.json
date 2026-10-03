@@ -1,0 +1,14 @@
+{
+  "command": [
+    "python3",
+    "-c",
+    "import pathlib,hashlib; source=pathlib.Path('packages/learn-evals/eval-runs/petros-quality'); target=pathlib.Path('docs/verification/petros-phase5-20261003/legacy-quality-corpus'); paths=list(source.glob('phase5-20261003-frozen*')); assert len(paths)==4; expected=pathlib.Path('docs/verification/petros-phase5-20261003/frozen-final-r3/source-sha256.txt').read_text(); [(None if str(p) not in expected and (target/p.name).read_bytes()==p.read_bytes() else (_ for _ in ()).throw(AssertionError(str(p)))) for p in paths]; [(print(str(p),hashlib.sha256(p.read_bytes()).hexdigest()),p.unlink()) for p in paths]"
+  ],
+  "start": "2026-10-03T08:21:06.660126+00:00",
+  "end": "2026-10-03T08:21:06.759899+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+  }
+}

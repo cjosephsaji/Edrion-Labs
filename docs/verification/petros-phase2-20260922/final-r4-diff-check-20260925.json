@@ -1,0 +1,11 @@
+{
+  "startedAt": "2026-09-25T17:18:13.423007+00:00",
+  "finishedAt": "2026-09-25T17:18:13.492694+00:00",
+  "command": [
+    "git",
+    "diff",
+    "--check"
+  ],
+  "exitCode": 0,
+  "log": "final-r4-diff-check-20260925.log"
+}

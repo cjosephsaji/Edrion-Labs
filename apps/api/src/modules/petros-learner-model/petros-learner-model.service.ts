@@ -13,11 +13,12 @@ import {
   petrosLearnerSessionOverrideSchema,
   petrosLearnerSnapshotSchema,
   petrosNormalizedLearningEvidenceSchema,
+  adaptLegacyLearningEvidence, assessmentAdmission, petrosLearningEvidenceInputSchema, petrosAssessmentSchema,
+  type PetrosLearningEvidenceInput,
   type PetrosLearnerModelDiagnosticQuery,
   type PetrosLearnerModelImportInput,
   type PetrosLearnerModelRebuildInput,
   type PetrosLearnerSnapshot,
-  type PetrosNormalizedLearningEvidence,
 } from "@edrion/schemas";
 import { AUDIT_WRITER } from "../../common/tokens";
 import { baseAudit, type ActionContext } from "../../common/action-context";
@@ -44,7 +45,7 @@ export class PetrosLearnerModelService {
 
   async ingest(
     scope: LearnerOwnerScope,
-    raw: PetrosNormalizedLearningEvidence,
+    raw: PetrosLearningEvidenceInput,
   ) {
     const [result] = await this.ingestMany(scope, [raw]);
     return result!;
@@ -53,13 +54,13 @@ export class PetrosLearnerModelService {
   /** Inserts a source completion atomically from the model's perspective and recomputes once. */
   async ingestMany(
     scope: LearnerOwnerScope,
-    raws: PetrosNormalizedLearningEvidence[],
+    raws: PetrosLearningEvidenceInput[],
   ) {
     await this.assertScope(scope);
     const results: Array<
       | {
           accepted: false;
-          reason: "evaluation_isolation";
+          reason: string;
           sourceEventId: string;
         }
       | {
@@ -69,18 +70,37 @@ export class PetrosLearnerModelService {
         }
     > = [];
     let recomputeVersion: string | null = null;
-    for (const raw of raws) {
-      const input = petrosNormalizedLearningEvidenceSchema.parse(raw);
+    // Validate the entire batch before the first write, including compatibility adaptation.
+    const inputs = raws.map(raw => {
+      const parsed = petrosLearningEvidenceInputSchema.parse(raw);
+      return { parsed, typed: parsed.schemaVersion === 'petros.learner-evidence.v2' ? parsed : adaptLegacyLearningEvidence(parsed) };
+    });
+    for (const { parsed, typed } of inputs) {
       // Evaluation and synthetic identities never acquire a production student FK or learner row.
-      if (input.environment === "evaluation" || input.synthetic) {
+      if (parsed.environment === "evaluation" || parsed.synthetic) {
         results.push({
           accepted: false,
           reason: "evaluation_isolation",
-          sourceEventId: input.sourceEventId,
+          sourceEventId: parsed.sourceEventId,
         });
         continue;
       }
-      const result = await this.repo.insertEvidence({
+      const assessment = typed.assessment;
+      if (parsed.schemaVersion === 'petros.learner-evidence.v2') {
+        const reason = assessmentAdmission(assessment);
+        if (reason) { results.push({ accepted: false, reason, sourceEventId: parsed.sourceEventId }); continue; }
+      }
+      // Only admitted objective evidence receives the existing numeric projection columns.
+      const { assessment: _assessment, ...common } = typed;
+      const result = assessment.result;
+      const input = parsed.schemaVersion === 'petros.learner-evidence.v1' ? parsed : petrosNormalizedLearningEvidenceSchema.parse({
+        ...common, schemaVersion: 'petros.learner-evidence.v1',
+        ...(result.kind === 'objective' && result.judgment.status === 'evaluated' ? {
+          outcome: result.judgment.outcome, creditBasisPoints: result.judgment.creditBasisPoints,
+          postEvidenceBasisPoints: result.judgment.creditBasisPoints,
+        } : {}),
+      });
+      const inserted = await this.repo.insertEvidence({
         institutionId: scope.institutionId,
         studentId: scope.studentId,
         source: input.source,
@@ -108,13 +128,14 @@ export class PetrosLearnerModelService {
         environment: input.environment,
         synthetic: input.synthetic,
         metadata: input.metadata,
+        assessment,
         occurredAt: new Date(input.occurredAt),
       });
-      if (result.inserted) recomputeVersion = input.algorithmVersion;
+      if (inserted.inserted) recomputeVersion = input.algorithmVersion;
       results.push({
         accepted: true,
-        duplicate: !result.inserted,
-        evidenceEventId: result.row.id,
+        duplicate: !inserted.inserted,
+        evidenceEventId: inserted.row.id,
       });
     }
     if (recomputeVersion) await this.recompute(scope, recomputeVersion);
@@ -137,7 +158,8 @@ export class PetrosLearnerModelService {
         accepted: results.filter((item) => item.accepted).length,
         duplicates: results.filter((item) => item.accepted && item.duplicate)
           .length,
-        rejectedEvaluation: results.filter((item) => !item.accepted).length,
+        rejectedEvaluation: results.filter((item) => !item.accepted && item.reason === 'evaluation_isolation').length,
+        rejectedAssessment: results.filter((item) => !item.accepted && item.reason !== 'evaluation_isolation').length,
         sources: [...new Set(input.evidence.map((item) => item.source))],
       },
     );
@@ -425,6 +447,7 @@ export class PetrosLearnerModelService {
         errorCategory: item.errorCategory,
         occurredAt: item.occurredAt.toISOString(),
         algorithmVersion: item.algorithmVersion,
+        assessment: item.assessment ? petrosAssessmentSchema.parse(item.assessment) : null,
       })),
       quarantine: summaries.quarantine,
       jobs: summaries.jobs,
@@ -652,6 +675,14 @@ export class PetrosLearnerModelService {
     const rows = await this.repo.listEvidence(scope);
     const events = rows
       .filter((row) => row.classificationStatus === "ready")
+      .filter(row => {
+        if (!row.assessment) return true;
+        const a = petrosAssessmentSchema.parse(row.assessment);
+        if (a.result.kind !== 'objective') return false;
+        if (a.result.judgment.status === 'evaluated' && (a.result.judgment.outcome !== row.outcome || a.result.judgment.creditBasisPoints !== row.creditBasisPoints))
+          throw new ConflictException({ code: 'PETROS_ASSESSMENT_PROJECTION_MISMATCH' });
+        return a.origin === 'legacy_adapter' || assessmentAdmission(a) === null;
+      })
       .map((row) => ({
         parsed: petrosNormalizedLearningEvidenceSchema.parse({
           schemaVersion: row.schemaVersion,

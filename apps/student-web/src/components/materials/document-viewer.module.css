@@ -9,6 +9,7 @@
 }
 
 .backdrop {
+  border-radius: 0;
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -20,6 +21,7 @@
 }
 
 .dialog {
+  border-radius: var(--s-radius-card);
   position: relative;
   z-index: 1;
   display: grid;
@@ -36,6 +38,7 @@
 
 .dialog:fullscreen,
 .dialog[data-fullscreen='true'] {
+  border-radius: 0;
   width: 100vw;
   height: 100vh;
   max-width: none;
@@ -66,6 +69,7 @@
 .identity > div { min-width: 0; }
 
 .fileMark {
+  border-radius: var(--s-radius-control);
   display: grid;
   width: 46px;
   height: 54px;
@@ -137,6 +141,7 @@
 .iconAction,
 .closeAction,
 .downloadAction {
+  border-radius: var(--s-radius-control);
   display: inline-flex;
   min-width: 40px;
   min-height: 40px;
@@ -231,6 +236,7 @@
 }
 
 .pageControls {
+  border-radius: var(--s-radius-control);
   position: absolute;
   bottom: 16px;
   left: 50%;
@@ -246,6 +252,7 @@
 }
 
 .pageControls button {
+  border-radius: var(--s-radius-control);
   display: grid;
   width: 34px;
   height: 34px;
@@ -272,6 +279,7 @@
 
 .audioPreview,
 .unsupported {
+  border-radius: var(--s-radius-panel);
   display: grid;
   width: min(520px, calc(100% - 32px));
   justify-items: center;
@@ -311,6 +319,7 @@
 
 .previewNote,
 .truncatedNote {
+  border-radius: var(--s-radius-panel);
   margin: 0;
   border: 1px solid #b9c8c1;
   background: #f5f8f6;
@@ -323,6 +332,7 @@
 .textPage,
 .slidePage,
 .sheetPage {
+  border-radius: var(--s-radius-panel);
   min-width: 0;
   border: 1px solid #c7d0cc;
   background: #fff;
@@ -379,6 +389,7 @@
 }
 
 .tableScroll {
+  border-radius: var(--s-radius-panel);
   max-width: 100%;
   overflow: auto;
   border: 1px solid #d7dfdb;
@@ -413,6 +424,7 @@
 .previewTable td:last-child { border-right: 0; }
 
 .loading {
+  border-radius: var(--s-radius-panel);
   position: absolute;
   z-index: 2;
   display: inline-flex;
@@ -452,7 +464,7 @@
 
 @media (max-width: 760px) {
   .layer { padding: 0; }
-  .dialog { width: 100vw; height: 100dvh; border: 0; }
+  .dialog { border-radius: 0; width: 100vw; height: 100dvh; border: 0; }
   .header { align-items: flex-start; gap: 10px; min-height: auto; padding: 11px 10px 11px 12px; }
   .fileMark { display: none; }
   .identity h2 { max-width: 48vw; font-size: 17px; }

@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-25T06:50:22.005754+00:00",
+  "finishedAt": "2026-09-25T06:50:26.508493+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "lint"
+  ],
+  "exitCode": 0,
+  "log": "closure-api-lint-20260925.log"
+}

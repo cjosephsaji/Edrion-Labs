@@ -1,10 +1,14 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, desc, eq } from 'drizzle-orm';
 import { randomBytes } from 'node:crypto';
 import { schema, type Database } from '@edrion/database';
 import type { ApiEnv } from '@edrion/config';
-import type { UpsertIdentityProviderInput } from '@edrion/schemas';
-import { API_ENV, DATABASE } from '../../common/tokens';
+import type { RosterMappingContext, UpsertIdentityProviderInput } from '@edrion/schemas';
+import { rosterMappingPreviewSchema } from '@edrion/schemas';
+import type { AuditWriter, AuditEventInput } from '@edrion/audit';
+import { ProviderMappingsService } from '../integrations/provider-mappings.service';
+import { basePortalAudit, type PortalActionContext } from '../portal/portal-action-context';
+import { API_ENV, AUDIT_WRITER, DATABASE } from '../../common/tokens';
 import { signHs256, verifyHs256 } from '../../common/jwt';
 import { parseOnerosterUsersCsv } from './oneroster-csv';
 import { createSamlClient, samlLoginRedirectUrl, samlValidateResponse } from './saml-sp.service';
@@ -22,7 +26,21 @@ export class FederationService {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     @Inject(API_ENV) private readonly env: ApiEnv,
+    private readonly mappings: ProviderMappingsService,
+    @Inject(AUDIT_WRITER) private readonly audit: AuditWriter,
   ) {}
+
+  private requireVerifiedFederation() {
+    // A mapping is not token validation, reviewed account linking or local session issuance.
+    // Remove this gate only in a separately accepted federation implementation.
+    throw new ConflictException({ code: 'FEDERATION_AUTHENTICATION_DISABLED', message: 'Institutional federation authentication is not enabled.' });
+  }
+
+  private requireVerifiedRosterSync() {
+    // These adapters only fetch one users page; they do not reconcile or apply a roster.
+    // Keep every external sync route unavailable until a separately verified sync engine exists.
+    throw new ConflictException({ code: 'EXTERNAL_ROSTER_SYNC_DISABLED', message: 'External roster synchronization is disabled. Use OneRoster CSV preview.' });
+  }
 
   listProviders(institutionId: string) {
     return this.db
@@ -119,6 +137,7 @@ export class FederationService {
   }
 
   async startSamlLogin(institutionId: string, providerId: string, redirectUri: string) {
+    this.requireVerifiedFederation();
     const provider = await this.requireEnabledProvider(institutionId, providerId, 'saml');
     const meta = provider.metadata as { ssoUrl?: string; idpCertificate?: string };
     if (!meta.ssoUrl || !meta.idpCertificate) {
@@ -142,6 +161,7 @@ export class FederationService {
   }
 
   async completeSamlAcs(samlResponse: string, relayState: string) {
+    this.requireVerifiedFederation();
     let state: AuthStatePayload;
     try {
       state = verifyHs256(relayState, this.env.SESSION_COOKIE_SECRET) as unknown as AuthStatePayload;
@@ -198,6 +218,7 @@ export class FederationService {
   }
 
   async startOidcLogin(institutionId: string, providerId: string, redirectUri: string) {
+    this.requireVerifiedFederation();
     const provider = await this.requireEnabledProvider(institutionId, providerId, 'oidc');
 
     const discovery = await this.fetchJson(provider.discoveryUrl ?? `${provider.issuer}/.well-known/openid-configuration`);
@@ -224,6 +245,7 @@ export class FederationService {
   }
 
   async completeOidcCallback(code: string, stateToken: string) {
+    this.requireVerifiedFederation();
     let state: AuthStatePayload;
     try {
       state = verifyHs256(stateToken, this.env.SESSION_COOKIE_SECRET) as unknown as AuthStatePayload;
@@ -270,8 +292,20 @@ export class FederationService {
     };
   }
 
-  async importOnerosterCsv(institutionId: string, csv: string) {
+  async importOnerosterCsv(institutionId: string, csv: string, ctx: PortalActionContext, mappingContext?: RosterMappingContext, negotiated = false) {
+    // The existing parser is a limited preview, not a complete OneRoster bulk/delta adapter.
+    if (mappingContext) {
+      const lines = csv.split(/\r?\n/).filter((line) => line.trim().length > 0);
+      const headers = (lines[0] ?? '').split(',').map((value) => value.trim().toLowerCase());
+      const sourceIndex = headers.indexOf('sourcedid');
+      if (lines.length > 201 || sourceIndex < 0 || !headers.includes('role') || new Set(headers).size !== headers.length ||
+        csv.includes('"') || lines.some((line) => line.split(',').length !== headers.length) ||
+        lines.slice(1).some((line) => { const id = line.split(',')[sourceIndex] ?? ''; return !id || id !== id.trim(); })) {
+        throw new BadRequestException({ code: 'ROSTER_MAPPING_CSV_UNSUPPORTED', message: 'Quoted or irregular CSV cannot be used for mapping preview.' });
+      }
+    }
     const rows = parseOnerosterUsersCsv(csv);
+    const compatibility = mappingContext ? await this.mappings.preview(ctx, mappingContext, rows) : null;
     const [job] = await this.db
       .insert(schema.rosterSyncJobs)
       .values({
@@ -280,6 +314,7 @@ export class FederationService {
         status: 'running',
         startedAt: new Date(),
         stats: { parsed: rows.length },
+        compatibility,
       })
       .returning();
 
@@ -294,10 +329,15 @@ export class FederationService {
       })
       .where(eq(schema.rosterSyncJobs.id, job!.id));
 
-    return { jobId: job!.id, parsed: rows.length, students: students.length, teachers: teachers.length };
+    await this.audit.logAudit({ ...basePortalAudit(ctx), action: 'roster.preview', module: 'federation', entityType: 'roster_sync_job',
+      entityId: job!.id, newState: { parsed: rows.length, mode: 'preview', applied: 0, mapped: compatibility?.mapped ?? 0 },
+    } as AuditEventInput);
+    const legacy = { jobId: job!.id, parsed: rows.length, students: students.length, teachers: teachers.length };
+    return negotiated ? { ...legacy, compatibility: compatibility ?? { schemaVersion: 'petros.roster-preview.v1', mode: 'preview', applied: 0, status: 'unmapped' } } : legacy;
   }
 
   async syncClever(institutionId: string) {
+    this.requireVerifiedRosterSync();
     const dryRun = !this.env.CLEVER_CLIENT_ID || !this.env.CLEVER_CLIENT_SECRET;
     const [job] = await this.db
       .insert(schema.rosterSyncJobs)
@@ -352,6 +392,7 @@ export class FederationService {
   }
 
   async syncClasslink(institutionId: string) {
+    this.requireVerifiedRosterSync();
     const dryRun = !this.env.CLASSLINK_CLIENT_ID || !this.env.CLASSLINK_CLIENT_SECRET;
     const [job] = await this.db
       .insert(schema.rosterSyncJobs)
@@ -406,6 +447,7 @@ export class FederationService {
   }
 
   async syncOnerosterRest(institutionId: string, baseUrl: string, token: string) {
+    this.requireVerifiedRosterSync();
     const [job] = await this.db
       .insert(schema.rosterSyncJobs)
       .values({
@@ -439,13 +481,22 @@ export class FederationService {
     return { jobId: job!.id, synced: count };
   }
 
-  listRosterJobs(institutionId: string) {
-    return this.db
+  async listRosterJobs(institutionId: string, negotiated = false) {
+    const rows = await this.db
       .select()
       .from(schema.rosterSyncJobs)
       .where(eq(schema.rosterSyncJobs.institutionId, institutionId))
       .orderBy(desc(schema.rosterSyncJobs.createdAt))
       .limit(50);
+    return rows.map(({ compatibility, ...legacy }) => {
+      if (!negotiated) return legacy;
+      const parsed = compatibility ? rosterMappingPreviewSchema.safeParse(compatibility) : null;
+      return { ...legacy, compatibility: parsed?.success ? {
+        schemaVersion: 'petros.roster-preview.v1', mode: 'preview', applied: 0,
+        historical: true, currentMappingStatus: 'not_revalidated',
+        mappedAtPreview: parsed.data.mapped, unresolvedAtPreview: parsed.data.unresolved,
+      } : { status: compatibility ? 'unsupported_version' : 'legacy_unmapped' } };
+    });
   }
 
   private async fetchJson(url: string): Promise<Record<string, unknown>> {

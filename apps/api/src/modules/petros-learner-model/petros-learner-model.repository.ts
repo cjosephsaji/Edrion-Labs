@@ -1,4 +1,5 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
+import { assessmentAdmission, petrosAssessmentSchema } from '@edrion/schemas';
 import { and, desc, eq, schema, type Database } from '@edrion/database';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import { DATABASE } from '../../common/tokens';
@@ -28,6 +29,15 @@ export class PetrosLearnerModelRepository {
   }
 
   async insertEvidence(values: typeof schema.petrosLearnerEvidenceEvents.$inferInsert) {
+    if (values.assessment) {
+      const assessment = petrosAssessmentSchema.parse(values.assessment);
+      if (assessment.result.kind !== 'objective') throw new ConflictException({ code: 'PETROS_QUALITATIVE_ASSESSMENT_DISABLED' });
+      if (assessment.origin !== 'legacy_adapter' && assessmentAdmission(assessment)) throw new ConflictException({ code: 'PETROS_ASSESSMENT_NOT_ADMITTED' });
+      const result = assessment.result.judgment;
+      if (result.status === 'evaluated' && (result.outcome !== values.outcome || result.creditBasisPoints !== values.creditBasisPoints))
+        throw new ConflictException({ code: 'PETROS_ASSESSMENT_PROJECTION_MISMATCH' });
+      values.assessment = assessment;
+    }
     const [inserted] = await this.db
       .insert(schema.petrosLearnerEvidenceEvents)
       .values(values)
@@ -46,6 +56,9 @@ export class PetrosLearnerModelRepository {
         ),
       )
       .limit(1);
+    // Legacy sources retain their historical first-write-wins replay semantics.
+    if (values.assessment && values.assessment.origin !== 'legacy_adapter' && existing?.assessment && canonical(values.assessment) !== canonical(existing.assessment))
+      throw new ConflictException({ code: 'PETROS_ASSESSMENT_EVENT_CONFLICT' });
     return { inserted: false as const, row: existing! };
   }
 
@@ -280,4 +293,10 @@ function owner(
   scope: LearnerOwnerScope,
 ) {
   return and(eq(table.institutionId, scope.institutionId), eq(table.studentId, scope.studentId));
+}
+
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
+  if (value && typeof value === 'object') return `{${Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`).join(',')}}`;
+  return JSON.stringify(value);
 }

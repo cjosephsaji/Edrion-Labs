@@ -1,0 +1,12 @@
+{
+  "recordedAt": "2026-09-25T17:19:52.219363+00:00",
+  "files": 790,
+  "manifest": "final-artifact-sha256.txt",
+  "manifestSha256": "a21b20ceeca0104b29756173d312b1944ac0933a6773b95b4f935f82e0ac1b0f",
+  "exclusions": [
+    "final-artifact-sha256.txt",
+    "artifact-integrity.json"
+  ],
+  "reportLinksExist": true,
+  "finalCommandResultsValidated": true
+}

@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "petros.phase5.quality-report.v1",
+  "generatedAt": "2026-10-03T03:11:42.467Z",
+  "evidenceClass": "synthetic_engineering_only",
+  "externalEducatorJudgment": "not_performed",
+  "learningEfficacy": "not_measured",
+  "identities": {
+    "fixture": "phase2-authority-fixture.v1",
+    "source": "1693eb633bdc12e974d23b8980cdb509068d74c3f34035a3263dbedb4b2c44f2,00d4e704e94aa2856204852f08c471bc0b31611c5c9d7f44d6db5a98b0ffbae1",
+    "teachingPack": "1",
+    "policy": "institutional-policy/current-owner-read",
+    "prompt": "stage4-plan-v1,stage4-plan-v1",
+    "outputSchema": "petros.plan.v3,petros.plan.v3",
+    "controlledModel": "malformed-output-fixture.v1",
+    "evaluator": "deterministic-owner-assertions.v1"
+  },
+  "population": {
+    "owners": 2,
+    "tenants": 2
+  },
+  "counters": {
+    "sourceReady": 2,
+    "citationsResolved": 2,
+    "productionMoves": 2,
+    "controlledOutputsRejected": 0,
+    "foreignOwnerDenied": 1
+  },
+  "timingMs": {
+    "sourceResolveCold": {
+      "samples": 2,
+      "minMs": 1.4497499999997672,
+      "p50Ms": 1.4497499999997672,
+      "p95Ms": 1.9815419999999904,
+      "maxMs": 1.9815419999999904
+    },
+    "sourceResolveWarm": {
+      "samples": 40,
+      "minMs": 1.3328330000003916,
+      "p50Ms": 1.4210830000010901,
+      "p95Ms": 1.8154160000003685,
+      "maxMs": 4.132542000000285
+    },
+    "teachingStartCold": {
+      "samples": 2,
+      "minMs": 646.5374999999995,
+      "p50Ms": 646.5374999999995,
+      "p95Ms": 674.2950409999999,
+      "maxMs": 674.2950409999999
+    },
+    "teachingDocumentWarm": {
+      "samples": 40,
+      "minMs": 92.70958299999984,
+      "p50Ms": 94.52204100000017,
+      "p95Ms": 100.74875000000065,
+      "maxMs": 110.24504200000047
+    }
+  },
+  "contentDigests": [
+    "eab5732feae9b72979e7d02b2f385b9c160b56672b55eb23e0eb3b9939d2f447",
+    "eab5732feae9b72979e7d02b2f385b9c160b56672b55eb23e0eb3b9939d2f447"
+  ],
+  "controlledModelLayer": {
+    "result": "invalid structured output rejected; production loop used deterministic fallback",
+    "calls": 0,
+    "paidCalls": 0
+  },
+  "limitations": [
+    "Synthetic records and qualification receipts grant engineering fixture authority only.",
+    "Malformed controlled output verifies rejection and fallback; no model quality or human judgment is assessed.",
+    "Latency samples are local disposable-database measurements, not production SLOs.",
+    "No learner, pilot, privacy, curriculum, accessibility or fairness acceptance is implied."
+  ]
+}

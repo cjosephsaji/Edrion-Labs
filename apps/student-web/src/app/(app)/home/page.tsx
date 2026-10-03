@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Card, PageHeader } from '@/components/design-system';
 import { PetrosAskButton } from '@/components/petros/petros-ask-button';
+import { PetrosContinuityOverview } from '@/components/petros/petros-continuity';
 import { usePetrosPage, type PetrosCandidateInput } from '@/components/petros/petros-companion-context';
 import { ErrorState, LoadingBlock, UnauthorizedState } from '@/components/ui/states';
 import { StudentApiError, formatApiError } from '@/lib/api-client';
@@ -121,7 +122,7 @@ export default function HomePage() {
   if (me.kind === 'independent') {
     return (
       <div className="mx-auto w-full max-w-[1120px]">
-        <PageHeader title={`Hi ${firstName}.`} />
+        <PageHeader eyebrow={`Your day · ${firstName}`} title="Make room for understanding." description="Continue a lesson, choose a source, then take care of what is due." />
         <Card variant="emphasis" density="roomy">
           <Landmark className="h-7 w-7 text-[#a9c4ba]" aria-hidden="true" />
           <p className="mt-6 text-xs uppercase tracking-[.12em] text-[#a9c4ba]">Institutional portal</p>
@@ -134,7 +135,14 @@ export default function HomePage() {
 
   return (
     <div className="mx-auto w-full max-w-[1120px]">
-      <PageHeader title={`Hi ${firstName}.`} />
+      <PageHeader eyebrow={`Your day · ${firstName}`} title="Make room for understanding." description="Continue a lesson, choose a source, then take care of what is due." />
+
+      <PetrosContinuityOverview compact />
+      <nav className={styles.learningRoutes} aria-label="Learning starting points">
+        <Link href="/petros"><PlayCircle aria-hidden="true" /><span><strong>Prepare a lesson</strong><small>One goal, a source and a clear next step</small></span><ArrowUpRight aria-hidden="true" /></Link>
+        <Link href="/materials"><BookOpenCheck aria-hidden="true" /><span><strong>Study materials</strong><small>Find the source you want to understand</small></span><ArrowUpRight aria-hidden="true" /></Link>
+        <Link href="/petros/artifacts"><ClipboardList aria-hidden="true" /><span><strong>Notebook &amp; review</strong><small>Return to work you chose to keep</small></span><ArrowUpRight aria-hidden="true" /></Link>
+      </nav>
 
 
       <div className={styles.sectionHead}>
@@ -147,7 +155,7 @@ export default function HomePage() {
 
       {data.priorityCards.length ? (
         <section className={styles.grid} aria-label="Ranked student priorities">
-          {data.priorityCards.map((card, index) => <PriorityCard key={card.id} card={card} index={index} />)}
+          {data.priorityCards.slice(0, 3).map((card, index) => <PriorityCard key={card.id} card={card} index={index} />)}
         </section>
       ) : (
         <section className={styles.clearState}>
@@ -160,6 +168,7 @@ export default function HomePage() {
         </section>
       )}
 
+      {data.priorityCards.length > 3 && <details className={styles.morePriorities}><summary>More from your institution · {data.priorityCards.length - 3} items</summary><section className={styles.grid} aria-label="Other student priorities">{data.priorityCards.slice(3).map((card, index) => <PriorityCard key={card.id} card={card} index={index} />)}</section></details>}
       <p className={styles.recordNote}>Priorities use records published to your student account by your institution.</p>
     </div>
   );

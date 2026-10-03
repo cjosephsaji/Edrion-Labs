@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-25T17:15:28.355434+00:00",
+  "finishedAt": "2026-09-25T17:15:37.299113+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/schemas",
+    "typecheck"
+  ],
+  "exitCode": 0,
+  "log": "final-r4-schemas-typecheck-20260925.log"
+}

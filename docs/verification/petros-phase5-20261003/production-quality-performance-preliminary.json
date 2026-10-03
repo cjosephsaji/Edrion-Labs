@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "petros.phase5.quality-report.v1",
+  "generatedAt": "2026-10-03T03:47:51.505Z",
+  "evidenceClass": "synthetic_engineering_only",
+  "externalEducatorJudgment": "not_performed",
+  "learningEfficacy": "not_measured",
+  "identities": {
+    "fixture": "phase2-authority-fixture.v1",
+    "sourceVersions": [
+      "f92a040e6e478027736035c4468de6eb0bf3764371e0f87694ea6666e2801db6",
+      "7a9b4ec9e153a113393ddc0b4c67609d8e3ef9f9dc7607918ebf900f636a489e"
+    ],
+    "teachingPackVersions": [
+      1,
+      1
+    ],
+    "policy": "institutional-policy/current-owner-read",
+    "policyIdentities": [
+      {
+        "schemaVersion": "petros.knowledge-policy.v1",
+        "authorityHash": "85eaede3a05b969392b6bffa822ae9bfe7897e391d9e936046bae72c2495c765",
+        "versionIds": [
+          "a7a06819-e1f7-4d76-be4f-9bfb9114c88e"
+        ]
+      },
+      {
+        "schemaVersion": "petros.knowledge-policy.v1",
+        "authorityHash": "ac73856173f31715cfb92b63e802fd51b00207585527f7270912af2cc00c49a6",
+        "versionIds": [
+          "1678069a-d1be-4523-b9c2-3279804fa3c1"
+        ]
+      }
+    ],
+    "promptVersions": [
+      "stage4-plan-v1",
+      "stage4-plan-v1"
+    ],
+    "outputSchemaVersions": [
+      "petros.plan.v3",
+      "petros.plan.v3"
+    ],
+    "controlledModel": "malformed-output-fixture.v1",
+    "evaluator": "deterministic-owner-assertions.v1"
+  },
+  "population": {
+    "owners": 2,
+    "tenants": 2
+  },
+  "counters": {
+    "sourceReady": 2,
+    "citationsResolved": 2,
+    "productionMoves": 2,
+    "controlledOutputsRejected": 2,
+    "foreignOwnerDenied": 2
+  },
+  "timingMethod": {
+    "cold": "first service read/continuation for each newly created owner fixture; server and OS caches were not flushed",
+    "warm": "repeated reads against the same owner/source or persisted session after its first read",
+    "thresholds": "none; samples are descriptive engineering observations, not SLOs"
+  },
+  "timingMs": {
+    "sourceResolveCold": {
+      "samples": 2,
+      "minMs": 1.46270800000093,
+      "p50Ms": 1.46270800000093,
+      "p95Ms": 2.0325000000002547,
+      "maxMs": 2.0325000000002547
+    },
+    "sourceResolveWarm": {
+      "samples": 40,
+      "minMs": 1.356458999998722,
+      "p50Ms": 1.471957999998267,
+      "p95Ms": 1.897291999999652,
+      "maxMs": 4.176290999999765
+    },
+    "retrievalCold": {
+      "samples": 2,
+      "minMs": 1.6308330000010756,
+      "p50Ms": 1.6308330000010756,
+      "p95Ms": 2.9215839999997115,
+      "maxMs": 2.9215839999997115
+    },
+    "retrievalWarm": {
+      "samples": 40,
+      "minMs": 1.4683750000003783,
+      "p50Ms": 1.6365410000007614,
+      "p95Ms": 1.8043330000000424,
+      "maxMs": 2.0114999999996144
+    },
+    "teachingStartCold": {
+      "samples": 2,
+      "minMs": 652.3787499999999,
+      "p50Ms": 652.3787499999999,
+      "p95Ms": 680.4537920000002,
+      "maxMs": 680.4537920000002
+    },
+    "teachingDocumentWarm": {
+      "samples": 40,
+      "minMs": 92.80058400000053,
+      "p50Ms": 93.91112499999963,
+      "p95Ms": 96.9823750000005,
+      "maxMs": 103.64833399999952
+    }
+  },
+  "contentDigests": [
+    "eab5732feae9b72979e7d02b2f385b9c160b56672b55eb23e0eb3b9939d2f447",
+    "eab5732feae9b72979e7d02b2f385b9c160b56672b55eb23e0eb3b9939d2f447"
+  ],
+  "controlledModelLayer": {
+    "result": "invalid topic-profile output rejected; profile owner used deterministic seed; production loop rendered the approved pack",
+    "calls": 2,
+    "paidCalls": 0
+  },
+  "limitations": [
+    "Synthetic records and qualification receipts grant engineering fixture authority only.",
+    "Malformed controlled output verifies rejection and fallback; no model quality or human judgment is assessed.",
+    "Latency samples are local disposable-database measurements, not production SLOs.",
+    "No learner, pilot, privacy, curriculum, accessibility or fairness acceptance is implied."
+  ]
+}

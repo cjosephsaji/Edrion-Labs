@@ -1,0 +1,31 @@
+{
+  "startedAt": "2026-09-25T06:48:59.279748+00:00",
+  "finishedAt": "2026-09-25T06:50:22.806458+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/student/petros-session-intent",
+    "src/modules/student/materials",
+    "src/modules/student/knowledge",
+    "src/modules/student/petros-loop",
+    "src/modules/student/petros-input-modes",
+    "src/modules/student/petros-companion",
+    "src/modules/student/petros-artifacts",
+    "src/modules/petros-ai-routing",
+    "src/modules/petros-learner-model",
+    "src/modules/petros-institutional",
+    "src/modules/integrations",
+    "src/modules/federation",
+    "src/modules/portal/courses",
+    "src/modules/student/courses",
+    "src/common",
+    "--pool=forks",
+    "--poolOptions.forks.singleFork=true"
+  ],
+  "exitCode": 1,
+  "log": "phase1-api-closure-20260925.log"
+}

@@ -13,6 +13,7 @@ import {
   type Database,
 } from '@edrion/database';
 import { DATABASE } from '../../../common/tokens';
+import { STUDENT_OWNS_TRANSACTIONS } from './student-owned-transactions';
 
 /**
  * Binds Postgres RLS to the student-portal request path. Institutional students run inside
@@ -25,6 +26,8 @@ export class StudentTenantInterceptor implements NestInterceptor {
 
   intercept(ctx: ExecutionContext, next: CallHandler): Observable<unknown> {
     if (ctx.getType() !== 'http') return next.handle();
+    if (Reflect.getMetadata(STUDENT_OWNS_TRANSACTIONS, ctx.getHandler()) === true)
+      return next.handle();
     const req = ctx.switchToHttp().getRequest<Request>();
     const principal = req.studentContext?.principal;
     if (!principal) return next.handle();

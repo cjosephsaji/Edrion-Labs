@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "petros.phase5.quality-report.v1",
+  "generatedAt": "2026-10-03T03:20:09.382Z",
+  "evidenceClass": "synthetic_engineering_only",
+  "externalEducatorJudgment": "not_performed",
+  "learningEfficacy": "not_measured",
+  "identities": {
+    "fixture": "phase2-authority-fixture.v1",
+    "sourceVersions": [
+      "4f785260ddd055b69fb45803a4cbdca8500c2eadeaef43a99866b28ebdd4a5e7",
+      "5bc81c68a0e7e1fc0b4d52771a988838d8c348afacfbbf27f94521d5c3890d1e"
+    ],
+    "teachingPackVersions": [
+      1,
+      1
+    ],
+    "policy": "institutional-policy/current-owner-read",
+    "promptVersions": [
+      "stage4-plan-v1",
+      "stage4-plan-v1"
+    ],
+    "outputSchemaVersions": [
+      "petros.plan.v3",
+      "petros.plan.v3"
+    ],
+    "controlledModel": "malformed-output-fixture.v1",
+    "evaluator": "deterministic-owner-assertions.v1"
+  },
+  "population": {
+    "owners": 2,
+    "tenants": 2
+  },
+  "counters": {
+    "sourceReady": 2,
+    "citationsResolved": 2,
+    "productionMoves": 2,
+    "controlledOutputsRejected": 2,
+    "foreignOwnerDenied": 2
+  },
+  "timingMethod": {
+    "cold": "first service read/continuation for each newly created owner fixture; server and OS caches were not flushed",
+    "warm": "repeated reads against the same owner/source or persisted session after its first read",
+    "thresholds": "none; samples are descriptive engineering observations, not SLOs"
+  },
+  "timingMs": {
+    "sourceResolveCold": {
+      "samples": 2,
+      "minMs": 1.486917000000176,
+      "p50Ms": 1.486917000000176,
+      "p95Ms": 1.9489999999996144,
+      "maxMs": 1.9489999999996144
+    },
+    "sourceResolveWarm": {
+      "samples": 40,
+      "minMs": 1.3326250000009168,
+      "p50Ms": 1.4372089999997115,
+      "p95Ms": 1.835374999999658,
+      "maxMs": 4.148417000000336
+    },
+    "teachingStartCold": {
+      "samples": 2,
+      "minMs": 651.0890419999996,
+      "p50Ms": 651.0890419999996,
+      "p95Ms": 683.448625,
+      "maxMs": 683.448625
+    },
+    "teachingDocumentWarm": {
+      "samples": 40,
+      "minMs": 93.28974999999991,
+      "p50Ms": 94.32766699999956,
+      "p95Ms": 98.13358299999982,
+      "maxMs": 104.27037500000006
+    }
+  },
+  "contentDigests": [
+    "eab5732feae9b72979e7d02b2f385b9c160b56672b55eb23e0eb3b9939d2f447",
+    "eab5732feae9b72979e7d02b2f385b9c160b56672b55eb23e0eb3b9939d2f447"
+  ],
+  "controlledModelLayer": {
+    "result": "invalid topic-profile output rejected; profile owner used deterministic seed; production loop rendered the approved pack",
+    "calls": 2,
+    "paidCalls": 0
+  },
+  "limitations": [
+    "Synthetic records and qualification receipts grant engineering fixture authority only.",
+    "Malformed controlled output verifies rejection and fallback; no model quality or human judgment is assessed.",
+    "Latency samples are local disposable-database measurements, not production SLOs.",
+    "No learner, pilot, privacy, curriculum, accessibility or fairness acceptance is implied."
+  ]
+}

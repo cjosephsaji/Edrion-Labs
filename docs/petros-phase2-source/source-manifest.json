@@ -1,0 +1,42 @@
+{
+  "source": "output/pdf/petros-projectile-source-v1.pdf",
+  "sha256": "830a0de10eea9467c313c874c4cb4257afce2b184a67d1323aca079c22544ecd",
+  "pages": 2,
+  "status": "educator_review_pending",
+  "runtimeSourceIdentity": null,
+  "note": "PDF page numbers and section anchors are review references. Runtime object/unit IDs and UTF-16 locators must come from the canonical extraction owner after an authorized import; these are not fabricated here.",
+  "sections": [
+    {
+      "section": "S1",
+      "page": 1
+    },
+    {
+      "section": "S2",
+      "page": 1
+    },
+    {
+      "section": "S3",
+      "page": 1
+    },
+    {
+      "section": "S4",
+      "page": 1
+    },
+    {
+      "section": "S5",
+      "page": 2
+    },
+    {
+      "section": "S6",
+      "page": 2
+    },
+    {
+      "section": "S7",
+      "page": 2
+    },
+    {
+      "section": "S8",
+      "page": 2
+    }
+  ]
+}

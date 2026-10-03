@@ -1,7 +1,8 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { KnowledgeDocumentService } from '../knowledge/knowledge-document.service';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { and, desc, eq, schema, sql, type Database } from '@edrion/database';
+import { and, desc, eq, isNull, schema, sql, type Database } from '@edrion/database';
 import {
   PETROS_MUTATING_ACTIONS,
   resolvePetrosRoute,
@@ -130,6 +131,7 @@ export class PetrosActionRegistryService {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     private readonly intents: PetrosSessionIntentService,
+    private readonly documents: KnowledgeDocumentService,
   ) {}
 
   private assertPermission(principal: InstitutionalStudentPrincipal, actionKey: PetrosActionKey) {
@@ -468,26 +470,30 @@ export class PetrosActionRegistryService {
         ),
       )
       .limit(1)
-      .then((rows) => rows[0]);
+      .then(async (rows) => rows[0] && await this.documents.canReadSession(principal, rows[0].id) ? rows[0] : undefined);
   }
 
-  private learningSourceForMaterial(principal: InstitutionalStudentPrincipal, materialId: string) {
-    return this.db
+  private async learningSourceForMaterial(principal: InstitutionalStudentPrincipal, materialId: string) {
+    const source = await this.db
       .select({ id: schema.knowledgeItems.id, pageCount: schema.knowledgeItems.pageCount })
       .from(schema.knowledgeItems)
       .where(
         and(
           eq(schema.knowledgeItems.institutionId, principal.institutionId),
           eq(schema.knowledgeItems.studentId, principal.studentId),
-          eq(schema.knowledgeItems.status, 'ready'),
-          eq(schema.knowledgeItems.extractedTextReady, true),
-          eq(schema.knowledgeItems.indexReady, true),
           sql`${schema.knowledgeItems.origin}->>'classMaterialId' = ${materialId}`,
         ),
       )
       .orderBy(desc(schema.knowledgeItems.updatedAt))
       .limit(1)
       .then((rows) => rows[0]);
+    if (!source) return undefined;
+    try {
+      return await this.intents.documentAdmission(principal, source.id);
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof ConflictException) return undefined;
+      throw error;
+    }
   }
 
   private ownedPlannerItem(principal: InstitutionalStudentPrincipal, itemId: string) {
@@ -510,19 +516,20 @@ export class PetrosActionRegistryService {
 
   private ownedArtifact(principal: InstitutionalStudentPrincipal, artifactId: string) {
     return this.db
-      .select({ id: schema.petrosSavedArtifacts.id, content: schema.petrosSavedArtifacts.content })
+      .select({ id: schema.petrosSavedArtifacts.id, content: schema.petrosSavedArtifacts.content, sessionId: schema.petrosSavedArtifacts.sessionId, sources: schema.petrosSavedArtifacts.sources })
       .from(schema.petrosSavedArtifacts)
       .where(
         and(
           eq(schema.petrosSavedArtifacts.id, artifactId),
+          isNull(schema.petrosSavedArtifacts.deletedAt),
           eq(schema.petrosSavedArtifacts.studentId, principal.studentId),
           eq(schema.petrosSavedArtifacts.institutionId, principal.institutionId),
         ),
       )
       .limit(1)
-      .then((rows) => {
+      .then(async (rows) => {
         const row = rows[0];
-        return row ? { id: row.id, title: row.content.title } : undefined;
+        return row && await this.documents.canReadArtifact(principal, row) ? { id: row.id, title: row.content.title } : undefined;
       });
   }
 
@@ -571,7 +578,7 @@ export class PetrosActionRegistryService {
         ),
       )
       .limit(1);
-    if (!session || session.status !== 'closed') return null;
+    if (!session || session.status !== 'closed' || !await this.documents.canReadSession(principal, sessionId)) return null;
 
     const saved = await this.db
       .select({ id: schema.petrosSavedArtifacts.id })
@@ -610,7 +617,7 @@ export class PetrosActionRegistryService {
       )
       .orderBy(desc(schema.petrosLearningSessions.updatedAt))
       .limit(1)
-      .then((rows) => rows.find((row) => row.status === 'active' || row.status === 'paused'));
+      .then(async (rows) => { const row = rows.find((row) => row.status === 'active' || row.status === 'paused'); return row && await this.documents.canReadSession(principal, row.id) ? row : undefined; });
   }
 }
 

@@ -1,0 +1,56 @@
+{
+  "phase": "P6 bounded synthetic capabilities",
+  "teacherOnly": false,
+  "date": "2026-10-03T12:57:39.738Z",
+  "engine": "webkit",
+  "browserVersion": "26.5",
+  "checks": [
+    {
+      "label": "desktop comparison",
+      "page": 1440,
+      "viewport": 1440
+    },
+    {
+      "label": "mobile comparison",
+      "page": 390,
+      "viewport": 390
+    },
+    {
+      "label": "source pins, exact independent citations, differing claims, exploratory synthesis and background clearing"
+    },
+    {
+      "label": "live source withdrawal removes the whole rendered comparison on its 15-second current-access check"
+    },
+    {
+      "label": "current exact lesson passage inspection and Escape focus restoration"
+    },
+    {
+      "label": "mobile cooling",
+      "page": 390,
+      "viewport": 390
+    },
+    {
+      "label": "cooling actual workspace seek and independent temperature reference",
+      "time": 100,
+      "temperature": 322.58035529371534,
+      "unit": "K",
+      "tolerance": 1e-10
+    },
+    {
+      "label": "teacher A composes and saves new immutable version; self-approval is withheld",
+      "candidateId": "0089a18d-2a10-428a-a127-391844c4f3a9"
+    },
+    {
+      "label": "teacher publication",
+      "page": 1440,
+      "viewport": 1440
+    },
+    {
+      "label": "teacher B independent qualified review and current exact singleton assignment publication",
+      "lostReplyReplayed": false
+    }
+  ],
+  "pageErrors": [],
+  "externalAcceptance": "pending",
+  "admissions": "disabled"
+}

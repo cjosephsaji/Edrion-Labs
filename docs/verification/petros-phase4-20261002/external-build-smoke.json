@@ -1,0 +1,14 @@
+{
+  "command": [
+    "python3",
+    "docs/verification/petros-phase4-20261002/build-isolated-web.py",
+    "institution-web"
+  ],
+  "start": "2026-10-02T11:45:07.928008+00:00",
+  "end": "2026-10-02T11:45:09.503997+00:00",
+  "exitCode": 1,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/Volumes/Chris/.petros-phase4-tmp-01a0fb94"
+  }
+}

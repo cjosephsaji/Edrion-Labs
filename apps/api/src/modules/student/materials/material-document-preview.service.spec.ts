@@ -111,6 +111,24 @@ describe('MaterialDocumentPreviewService', () => {
       expect(result.sections[0]?.text).toContain('<script>alert(1)</script>');
     }
   });
+
+  it('marks empty fallback prose as unreadable and reports character truncation', async () => {
+    const empty = await previews.create({ filename: 'empty.txt', mimeType: 'text/plain', buffer: Buffer.from('\u0000') });
+    expect(empty.readable).toBe(false);
+    expect(empty.sections[0]?.text).toContain('No readable text');
+    const long = await previews.create({ filename: 'long.txt', mimeType: 'text/plain', buffer: Buffer.from('Material '.repeat(25_000)) });
+    expect(long).toMatchObject({ readable: true, truncated: true });
+    expect(long.sections[0]?.text?.length).toBeLessThanOrEqual(180_000);
+  });
+
+  it('reports XLSX column truncation without overwriting the last visible column', async () => {
+    const zip = new JSZip();
+    zip.file('xl/worksheets/sheet1.xml', '<worksheet><sheetData><row r="1"><c r="AN1"><v>visible</v></c><c r="AO1"><v>omitted</v></c></row></sheetData></worksheet>');
+    const preview = await previews.create({ filename: 'wide.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: await zip.generateAsync({ type: 'nodebuffer' }) });
+    expect(preview.truncated).toBe(true);
+    expect(preview.sections[0]?.rows?.[0]?.[39]).toBe('visible');
+    expect(JSON.stringify(preview.sections)).not.toContain('omitted');
+  });
 });
 
 function slideXml(title: string, body: string) {

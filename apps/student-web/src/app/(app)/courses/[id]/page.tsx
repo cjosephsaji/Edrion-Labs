@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { CURRICULUM_ALIGNMENT_VERSION, readCurriculumCompatibility } from '@edrion/schemas';
 import {
   ArrowLeft,
   ArrowRight,
@@ -72,7 +73,8 @@ export default function CourseDetailPage() {
   });
   const syllabus = useQuery({
     queryKey: ['student', 'courses', id, 'syllabus'],
-    queryFn: () => api.get<{ modules: SyllabusModule[] }>(`/student/courses/${id}/syllabus`),
+    queryFn: () => api.get<{ modules: SyllabusModule[]; curriculum?: unknown }>(`/student/courses/${id}/syllabus`, undefined,
+      { 'x-petros-curriculum-alignment': CURRICULUM_ALIGNMENT_VERSION }),
   });
   const materials = useQuery({
     queryKey: ['student', 'courses', id, 'materials'],
@@ -96,6 +98,7 @@ export default function CourseDetailPage() {
   const attendance = about.data?.attendance;
   const attendancePct = attendance?.total ? Math.round((attendance.present / attendance.total) * 100) : null;
   const modules = syllabus.data?.modules ?? [];
+  const curriculum = readCurriculumCompatibility(syllabus.data?.curriculum);
   const courseMaterials = materials.data?.items ?? [];
   const courseProjects = projects.data?.items ?? [];
   const courseAnnouncements = announcements.data?.items ?? [];
@@ -236,6 +239,22 @@ export default function CourseDetailPage() {
                     ))}
                   </ol>
                 ) : <CompactEmpty icon={BookOpen} title="Course plan not published" note="Weekly topics will appear when they are available." />}
+                {curriculum ? <details>
+                  <summary>Course objectives and standards</summary>
+                  <p>Alignment describes the course plan. It is not evidence of your learning.</p>
+                  {curriculum.status !== 'ready' ? <p>{curriculum.status === 'unmapped' ? 'No standard mappings are published.' :
+                    curriculum.status === 'stale' ? 'The course plan changed; its standard mappings need review.' : 'Standard mappings are currently unavailable.'}</p> : <>
+                    {curriculum.data.objectives.map((objective) => <div key={objective.id}>
+                      <strong>{objective.descriptor}</strong>
+                      {curriculum.data.alignments.filter((a) => a.objective.id === objective.id && a.state === 'approved').map((a) => {
+                        const standard = curriculum.data.items.find((i) => i.id === a.standard.id);
+                        return <p key={a.id}>{standard?.externalId}: {standard?.descriptor} ({a.relation.replace(/_/g, ' ')})
+                          {a.gaps.length ? ` · Gaps: ${a.gaps.join('; ')}` : ''}</p>;
+                      })}
+                      {curriculum.data.unmappedObjectives.includes(objective.id) ? <p>No current approved standard mapping.</p> : null}
+                    </div>)}
+                  </>}
+                </details> : null}
               </section>
             </main>
 

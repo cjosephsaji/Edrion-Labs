@@ -1,0 +1,13 @@
+{
+  "command": [
+    "python3",
+    "docs/verification/petros-phase5-20261003/build-review-indexes.py"
+  ],
+  "start": "2026-10-03T08:55:52.476517+00:00",
+  "end": "2026-10-03T08:55:52.527566+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+  }
+}

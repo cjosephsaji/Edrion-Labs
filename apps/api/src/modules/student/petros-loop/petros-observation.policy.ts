@@ -23,7 +23,7 @@ export interface LadderTransition {
   countedWrong: boolean;
   wrongAttemptCount: number;
   ladderLevel: number;
-  status: 'active' | 'reworded' | 'recovered' | 'stuck_support';
+  status: 'active' | 'reworded' | 'recovered' | 'stuck_support' | 'observed';
   supportKind: 'none' | 'hint' | 'missing_step' | 'worked_solution' | 'stuck_path';
   supportText: string | null;
   needsRewordedQuestion: boolean;

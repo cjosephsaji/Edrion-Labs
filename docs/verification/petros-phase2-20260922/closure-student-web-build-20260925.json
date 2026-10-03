@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-25T06:52:12.132421+00:00",
+  "finishedAt": "2026-09-25T06:52:31.993716+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/student-web",
+    "build"
+  ],
+  "exitCode": 0,
+  "log": "closure-student-web-build-20260925.log"
+}

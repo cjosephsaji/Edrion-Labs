@@ -279,6 +279,7 @@ export const PETROS_ACTION_STATUSES = [
 export type PetrosActionStatus = (typeof PETROS_ACTION_STATUSES)[number];
 
 export const petrosCompanionBlockSchema = z.discriminatedUnion('type', [
+  z.object({ type:z.literal('teaching_reference'), sessionId:z.string().uuid(), blockId:z.string().uuid(), sourceVersion:z.string().min(1).max(128), sceneRevision:z.number().int().nonnegative().nullable(), label:shortText }).strict(),
   z.object({ type: z.literal('text'), text: z.string().trim().min(1).max(4_000) }).strict(),
   z
     .object({

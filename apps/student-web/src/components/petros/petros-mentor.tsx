@@ -39,6 +39,7 @@ import type {
   PetrosMentorPriority,
 } from '@edrion/schemas';
 import { formatApiError, newIdempotencyKey, useStudentApi } from '@/lib/api-client';
+import { PetrosProgramWorkspaceCompanion } from './petros-program-workspace';
 import { PetrosDoorButton } from './petros-door-button';
 import {
   usePetrosCompanion,
@@ -61,6 +62,7 @@ import {
   type PetrosPointDirection,
 } from './petros-spatial';
 import { buildPetrosSpeechTimeline, usePetrosVoice } from './use-petros-voice';
+import { usePetrosConnectivityMode } from './use-petros-connectivity-mode';
 import styles from './petros-mentor.module.css';
 
 const QUERY_KEY = ['student', 'petros', 'mentor'];
@@ -189,6 +191,7 @@ export function PetrosMentor(props: {
 }) {
   const { studentId, navigation, onExplore, onCloseExplore } = props;
   const api = useStudentApi();
+  const { mode: connectivityMode, ready: connectivityReady } = usePetrosConnectivityMode();
   const queryClient = useQueryClient();
   const router = useRouter();
   const pathname = usePathname();
@@ -196,6 +199,7 @@ export function PetrosMentor(props: {
   const [expanded, setExpanded] = useState(false);
   const [wide, setWide] = useState(false);
   const [voiceSettings, setVoiceSettings] = useState({ autoRead: false, voice: 'cedar' as 'cedar' | 'marin', language: 'en' });
+  const autoRead = voiceSettings.autoRead && connectivityReady && connectivityMode !== 'low_bandwidth';
   const [transcriptReady, setTranscriptReady] = useState(false);
   const [view, setView] = useState<View>('buddy');
   const [input, setInput] = useState('');
@@ -287,6 +291,13 @@ export function PetrosMentor(props: {
     setView('buddy');
     inputRef.current?.focus();
   }, []), voiceSettings);
+  const stopSpeaking = voice.stopSpeaking;
+  useEffect(() => {
+    if (connectivityMode === 'low_bandwidth') {
+      lessonPlaybackRef.current += 1;
+      stopSpeaking();
+    }
+  }, [connectivityMode, stopSpeaking]);
   const [mouthOpen, setMouthOpen] = useState(false);
 
   useEffect(() => {
@@ -554,7 +565,7 @@ export function PetrosMentor(props: {
             : await companion.page.onAsk(message);
           lessonDetourIdsRef.current = [...lessonDetourIdsRef.current, interruption.detourId];
           setLessonInterruption(interruption);
-          if (voiceSettings.autoRead && interaction === interactionRef.current) {
+          if (autoRead && interaction === interactionRef.current) {
             void voice.speak(interruption.answer);
           }
         } finally {
@@ -575,7 +586,7 @@ export function PetrosMentor(props: {
       else companion.appendMessages([result.studentMessage, result.reply]);
       setLocalReply(result.reply);
       const spoken = replyText(result.reply);
-      if (spoken && voiceSettings.autoRead && interaction === interactionRef.current) void voice.speak(spoken);
+      if (spoken && autoRead && interaction === interactionRef.current) void voice.speak(spoken);
       const navigationBlock = result.reply.blocks.find((block): block is Extract<typeof block, { type: 'navigation' }> => block.type === 'navigation' && safeHref(block.href));
       if (navigationBlock && explicitMovementRequest(message) && interaction === interactionRef.current) navigationTimerRef.current = setTimeout(() => guideTo(navigationBlock.href), 650);
     } catch (caught) {
@@ -584,7 +595,16 @@ export function PetrosMentor(props: {
     } finally {
       setSending(false);
     }
-  }, [activeLessonSegment, api, companion, diagramNarration, guideTo, inLearningSession, lessonInterruption, sending, voice, voiceSettings.autoRead]);
+  }, [activeLessonSegment, api, autoRead, companion, diagramNarration, guideTo, inLearningSession, lessonInterruption, sending, voice]);
+
+  useEffect(() => {
+    const askSelectedElement = (event: Event) => {
+      const detail = (event as CustomEvent<{ question?: string }>).detail;
+      if (detail?.question) void send(detail.question);
+    };
+    window.addEventListener('petros:workspace-question', askSelectedElement);
+    return () => window.removeEventListener('petros:workspace-question', askSelectedElement);
+  }, [send]);
 
   const resumeLessonAfterQuestion = useCallback(async () => {
     if (!lessonInterruption || !companion.page?.onResumeQuestion || resumingDoubt) return;
@@ -610,7 +630,7 @@ export function PetrosMentor(props: {
               .map((word) => word.text)
               .join(' ')
               .trim();
-            if (remainder) void voice.speak(remainder, {
+            if (remainder && connectivityMode !== 'low_bandwidth') void voice.speak(remainder, {
               onEnded: () => window.dispatchEvent(new CustomEvent('petros:diagram-resume', {
                 detail: { diagramId: pause.diagram!.diagramId, step: pause.diagram!.step },
               })),
@@ -626,7 +646,7 @@ export function PetrosMentor(props: {
         setLessonSegmentIndex(safeIndex);
         setLessonSegmentId(lessonNarrationRef.current[safeIndex]?.id ?? '');
         setTargetKey(pause.point.targetKey);
-        if (pause.resumeSpeech) lessonPlayerRef.current(safeIndex, pause.point.wordIndex);
+        if (pause.resumeSpeech && connectivityMode !== 'low_bandwidth') lessonPlayerRef.current(safeIndex, pause.point.wordIndex);
       } else {
         setTargetKey('lesson:current');
       }
@@ -635,7 +655,7 @@ export function PetrosMentor(props: {
     } finally {
       setResumingDoubt(false);
     }
-  }, [companion.page, lessonInterruption, resumingDoubt, voice]);
+  }, [companion.page, connectivityMode, lessonInterruption, resumingDoubt, voice]);
 
   const decide = useCallback(async (proposalId: string, choice: 'confirm' | 'decline') => {
     if (busyProposal) return;
@@ -646,7 +666,7 @@ export function PetrosMentor(props: {
       setActions((current) => ({ ...current, [proposalId]: { status: result.status, message: result.message } }));
       if (result.status === 'executed' && result.href) {
         if (result.actionKey === 'navigate.open') guideTo(result.href);
-        else { if (voiceSettings.autoRead) void voice.speak('Let’s get started.'); router.push(result.href); }
+        else { if (autoRead) void voice.speak('Let’s get started.'); router.push(result.href); }
       }
       if (result.status === 'executed' && (result.actionKey === 'planner.create' || result.actionKey === 'planner.update')) await queryClient.invalidateQueries({ queryKey: ['student', 'calendar'] });
     } catch (caught) {
@@ -654,7 +674,7 @@ export function PetrosMentor(props: {
     } finally {
       setBusyProposal(null);
     }
-  }, [api, busyProposal, guideTo, queryClient, router, voice, voiceSettings.autoRead]);
+  }, [api, autoRead, busyProposal, guideTo, queryClient, router, voice]);
 
   useEffect(() => {
     if (!companion.guideRequest) return;
@@ -784,13 +804,12 @@ export function PetrosMentor(props: {
   useEffect(() => {
     if (!step || spokenGuideRef.current === `${guide?.index}:${step.text}`) return;
     spokenGuideRef.current = `${guide?.index}:${step.text}`;
-    if (guide?.auto && voiceSettings.autoRead) void voice.speak(step.text);
-  }, [guide?.auto, guide?.index, step, voice, voiceSettings.autoRead]);
+    if (guide?.auto && autoRead) void voice.speak(step.text);
+  }, [autoRead, guide?.auto, guide?.index, step, voice]);
   useEffect(() => {
     if (!inLearningSession || !lessonNarration.length) return;
     const key = lessonNarration[0]!.blockId || `${companion.page?.title}:${lessonNarration[0]!.id}`;
     if (spokenLessonRef.current === key) return;
-    const firstLesson = !spokenLessonRef.current;
     spokenLessonRef.current = key;
     lessonPlaybackRef.current += 1;
     lessonPauseRef.current = null;
@@ -800,9 +819,9 @@ export function PetrosMentor(props: {
     setLessonSegmentId(lessonNarration[0]!.id);
     setLocalReply(null);
     setTargetKey(lessonNarration[0]!.targetKey);
-    if (firstLesson || voiceSettings.autoRead) setExpanded(true);
-    if (voiceSettings.autoRead) window.setTimeout(() => lessonPlayerRef.current(0, 0), 0);
-  }, [companion.page?.title, inLearningSession, lessonNarration, voiceSettings.autoRead]);
+    if (autoRead) setExpanded(true);
+    if (autoRead) window.setTimeout(() => lessonPlayerRef.current(0, 0), 0);
+  }, [autoRead, companion.page?.title, inLearningSession, lessonNarration]);
 
   useEffect(() => {
     const update = (event: Event) => {
@@ -846,6 +865,7 @@ export function PetrosMentor(props: {
       setView('buddy');
       companion.setOpen(true);
       setTargetKey(detail.targetKey);
+      if (connectivityMode === 'low_bandwidth') return;
       voice.stopSpeaking();
       void voice.speak(detail.text, {
         onEnded: () => window.dispatchEvent(new CustomEvent('petros:diagram-advance', {
@@ -869,7 +889,17 @@ export function PetrosMentor(props: {
       window.removeEventListener('petros:diagram-step', onDiagramStep);
       window.removeEventListener('petros:diagram-stop', onDiagramStop);
     };
-  }, [companion, diagramNarration, voice]);
+  }, [companion, connectivityMode, diagramNarration, voice]);
+
+  useEffect(() => {
+    const interruptWorkspace = () => {
+      lessonPlaybackRef.current += 1;
+      voice.stopSpeaking();
+      setDiagramNarration(null);
+    };
+    window.addEventListener('petros:workspace-interrupt', interruptWorkspace);
+    return () => window.removeEventListener('petros:workspace-interrupt', interruptWorkspace);
+  }, [voice]);
 
   const pose = useMemo<keyof typeof POSES>(() => {
     if (voice.listening) return 'listening';
@@ -956,7 +986,7 @@ export function PetrosMentor(props: {
           <span>{sessionReaction?.label ?? 'Beside you for this step'}</span>
         </button>
       ) : null}
-      {!bubbleOpen ? <button type="button" className={styles.mic} onClick={() => { setExpanded(true); void voice.startListening(); }} aria-label="Talk to Petros"><Mic aria-hidden="true" /></button> : null}
+      {!bubbleOpen ? <button type="button" className={styles.mic} onClick={() => { setExpanded(true); void voice.startListening(); }} aria-label="Start voice conversation"><Mic aria-hidden="true" /></button> : null}
     </div>
   );
 
@@ -988,6 +1018,7 @@ export function PetrosMentor(props: {
           </header>
 
           <div ref={bodyRef} className={styles.bubbleBody} tabIndex={0} aria-label="Petros reply">
+            <PetrosProgramWorkspaceCompanion />
             {view === 'buddy' ? <>
               <p className={styles.contextLabel}>{guide ? 'Portal walkthrough' : diagramNarration ? 'Explaining this diagram' : inLearningSession ? companion.page?.title ?? 'Current lesson' : 'Let’s work through it'}</p>
               {lessonInterruption ? (
@@ -1021,7 +1052,7 @@ export function PetrosMentor(props: {
                   {voice.preparing ? <LoaderCircle aria-hidden="true" /> : voice.speaking ? <VolumeX aria-hidden="true" /> : <Volume2 aria-hidden="true" />}
                   {voice.preparing ? 'Cancel audio' : voice.speaking ? 'Stop audio' : 'Read aloud'}
                 </button>
-                <span>AI-generated voice · {voiceSettings.autoRead ? 'Auto-read on' : 'Only when you ask'}</span>
+                <span>AI-generated voice · {autoRead ? 'Auto-read on' : 'Only when you ask'}</span>
               </div>
               {lessonInterruption ? (
                 <div className={styles.understandingCheck} role="group" aria-label="Check understanding">
@@ -1057,7 +1088,7 @@ export function PetrosMentor(props: {
                   </div>
                 ) : !inLearningSession && !latestReply && lead && !paused ? (
                   <div className={styles.priorityActions}>
-                    <button type="button" className={styles.primary} onClick={() => { if (voiceSettings.autoRead) void voice.speak(lead.reason); guideTo(lead.href, lead); }}>Take me there<ArrowRight aria-hidden="true" /></button>
+                    <button type="button" className={styles.primary} onClick={() => { if (autoRead) void voice.speak(lead.reason); guideTo(lead.href, lead); }}>Take me there<ArrowRight aria-hidden="true" /></button>
                     {lead.entityId && (lead.kind === 'exam' || lead.kind === 'practice') ? <PetrosDoorButton door={lead.kind === 'exam' ? 'upcoming_exam' : 'reflection_action'} sourceId={lead.entityId} label={`Start ${energy === 'low' ? 15 : Math.min(minutes, 25)}-minute session`} timeBudgetSeconds={(energy === 'low' ? 15 : Math.min(minutes, 25)) * 60} /> : null}
                     <button type="button" onClick={() => { setMinutes(20); setPlanNotice(''); setView('plan'); }}>I only have 20 min</button>
                     <button type="button" disabled={busy} onClick={() => void feedback(lead, 'postponed')}>Later</button>
@@ -1078,7 +1109,8 @@ export function PetrosMentor(props: {
                 <h2>Make Petros work for you</h2>
                 <label className={styles.selectLabel}>Speaking voice<select value={voiceSettings.voice} onChange={(event) => updateVoiceSettings({ voice: event.target.value as 'cedar' | 'marin' })}><option value="cedar">Cedar</option><option value="marin">Marin</option></select></label>
                 <button type="button" onClick={() => voice.speaking || voice.preparing ? voice.stopSpeaking() : void voice.speak('Hi, I’m Petros. We can take this one step at a time. Ask a question whenever you need a hand.')} disabled={voice.listening || voice.transcribing}>{voice.speaking || voice.preparing ? 'Stop preview' : 'Preview voice'}</button>
-                <label><input type="checkbox" checked={voiceSettings.autoRead} onChange={(event) => updateVoiceSettings({ autoRead: event.target.checked })} />Read replies aloud automatically</label>
+                <label><input type="checkbox" checked={voiceSettings.autoRead} disabled={connectivityMode === 'low_bandwidth'} onChange={(event) => updateVoiceSettings({ autoRead: event.target.checked })} />Read replies aloud automatically</label>
+                {connectivityMode === 'low_bandwidth' && <p role="status">Automatic speech is paused in low-bandwidth mode. You can still request voice manually.</p>}
                 <label className={styles.selectLabel}>I speak in<select value={voiceSettings.language} onChange={(event) => updateVoiceSettings({ language: event.target.value })}><option value="en">English</option><option value="hi">Hindi</option><option value="ml">Malayalam</option><option value="ta">Tamil</option><option value="te">Telugu</option><option value="kn">Kannada</option><option value="auto">Detect automatically</option></select></label>
                 <p className={styles.voiceDisclosure}>Audio is AI-generated. The microphone records only when you press it. Review and edit what I heard before sending.</p>
                 <span>How much should I step in?</span>

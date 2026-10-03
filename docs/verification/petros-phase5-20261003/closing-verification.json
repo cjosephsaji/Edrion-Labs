@@ -1,0 +1,268 @@
+{
+  "verifiedAt": "2026-10-03T09:00:13.000040+00:00",
+  "matchingKeys": [
+    "head",
+    "branch",
+    "sourceManifestSha256",
+    "sourceManifestFileCount",
+    "relevantUntrackedSha256",
+    "protectedHashes"
+  ],
+  "identities": {
+    "frozen-final-r5": {
+      "timestamp": "2026-10-03T08:34:55.230568+00:00",
+      "head": "89c1ca29c117b2f9926e97e12a2738fa110cd2ca",
+      "branch": "new-student-UI",
+      "sourceManifestSha256": "55f11e10edaca878b246fa62061029822cb74728569ca5581c96148d1f4dc8de",
+      "sourceManifestFileCount": 2640,
+      "relevantUntrackedSha256": "652c66efa4d8e884cd28d955a9f9b355f132c71b7880096b5995c25c172d5464",
+      "protectedHashes": {
+        "pnpm-lock.yaml": "803ebf8798958d62a0a7e5ef905a97240c98e97b0d7dadcbff45027123378808",
+        "edrion_database_dump.sql": "6a3d616e8f215a071a25c7ed717f6b03a2aee514ecce87ef2b7dbb5a512f4b4d",
+        "edrion_database_dump.sql.gz": "a281acd5986dac80e4b0326b7f2c9a09249f73411ffd4951c59c01ddc5eb918b",
+        "docs/PETROS-PHASE-1-VERIFICATION-RESULTS.md": "4ded55f3a32a0df70da581551596e27c045658c606989da6ddaed780df0b47d8"
+      }
+    },
+    "verified-final-r5": {
+      "timestamp": "2026-10-03T08:56:13.861985+00:00",
+      "head": "89c1ca29c117b2f9926e97e12a2738fa110cd2ca",
+      "branch": "new-student-UI",
+      "sourceManifestSha256": "55f11e10edaca878b246fa62061029822cb74728569ca5581c96148d1f4dc8de",
+      "sourceManifestFileCount": 2640,
+      "relevantUntrackedSha256": "652c66efa4d8e884cd28d955a9f9b355f132c71b7880096b5995c25c172d5464",
+      "protectedHashes": {
+        "pnpm-lock.yaml": "803ebf8798958d62a0a7e5ef905a97240c98e97b0d7dadcbff45027123378808",
+        "edrion_database_dump.sql": "6a3d616e8f215a071a25c7ed717f6b03a2aee514ecce87ef2b7dbb5a512f4b4d",
+        "edrion_database_dump.sql.gz": "a281acd5986dac80e4b0326b7f2c9a09249f73411ffd4951c59c01ddc5eb918b",
+        "docs/PETROS-PHASE-1-VERIFICATION-RESULTS.md": "4ded55f3a32a0df70da581551596e27c045658c606989da6ddaed780df0b47d8"
+      }
+    },
+    "closing-final-r5": {
+      "timestamp": "2026-10-03T09:00:12.772400+00:00",
+      "head": "89c1ca29c117b2f9926e97e12a2738fa110cd2ca",
+      "branch": "new-student-UI",
+      "sourceManifestSha256": "55f11e10edaca878b246fa62061029822cb74728569ca5581c96148d1f4dc8de",
+      "sourceManifestFileCount": 2640,
+      "relevantUntrackedSha256": "652c66efa4d8e884cd28d955a9f9b355f132c71b7880096b5995c25c172d5464",
+      "protectedHashes": {
+        "pnpm-lock.yaml": "803ebf8798958d62a0a7e5ef905a97240c98e97b0d7dadcbff45027123378808",
+        "edrion_database_dump.sql": "6a3d616e8f215a071a25c7ed717f6b03a2aee514ecce87ef2b7dbb5a512f4b4d",
+        "edrion_database_dump.sql.gz": "a281acd5986dac80e4b0326b7f2c9a09249f73411ffd4951c59c01ddc5eb918b",
+        "docs/PETROS-PHASE-1-VERIFICATION-RESULTS.md": "4ded55f3a32a0df70da581551596e27c045658c606989da6ddaed780df0b47d8"
+      }
+    }
+  },
+  "finalCommandRecords": 14,
+  "finalBrowserCheckpoints": {
+    "chromium": 61,
+    "webkit": 61
+  },
+  "browserPageErrors": {
+    "chromium": 0,
+    "webkit": 0
+  },
+  "engineeringExit": "blocked_R1_Firefox_runtime",
+  "externalAcceptance": "pending",
+  "admissions": "disabled",
+  "resultLinksChecked": [
+    {
+      "label": "entry identity",
+      "target": "verification/petros-phase5-20261003/entry/identity.json"
+    },
+    {
+      "label": "frozen-final-r5",
+      "target": "verification/petros-phase5-20261003/frozen-final-r5/identity.json"
+    },
+    {
+      "label": "verified-final-r5",
+      "target": "verification/petros-phase5-20261003/verified-final-r5/identity.json"
+    },
+    {
+      "label": "closing-final-r5",
+      "target": "verification/petros-phase5-20261003/closing-final-r5/identity.json"
+    },
+    {
+      "label": "artifact index",
+      "target": "verification/petros-phase5-20261003/artifact-index.json"
+    },
+    {
+      "label": "entry-to-final change manifest",
+      "target": "verification/petros-phase5-20261003/implementation-change-manifest.json"
+    },
+    {
+      "label": "verification plan",
+      "target": "PETROS-PHASE-5-VERIFICATION-PLAN.md"
+    },
+    {
+      "label": "owner matrix",
+      "target": "PETROS-PHASE-5-OWNER-MATRIX.md"
+    },
+    {
+      "label": "decisions",
+      "target": "PETROS-PHASE-5-DECISIONS.md"
+    },
+    {
+      "label": "Environment record",
+      "target": "verification/petros-phase5-20261003/final-r5-environment.json"
+    },
+    {
+      "label": "api",
+      "target": "verification/petros-phase5-20261003/final-r5-api.json"
+    },
+    {
+      "label": "raw log",
+      "target": "verification/petros-phase5-20261003/final-r5-api.log"
+    },
+    {
+      "label": "schema-student-tests",
+      "target": "verification/petros-phase5-20261003/final-r5-schema-student-tests.json"
+    },
+    {
+      "label": "raw log",
+      "target": "verification/petros-phase5-20261003/final-r5-schema-student-tests.log"
+    },
+    {
+      "label": "typechecks",
+      "target": "verification/petros-phase5-20261003/final-r5-typechecks.json"
+    },
+    {
+      "label": "raw log",
+      "target": "verification/petros-phase5-20261003/final-r5-typechecks.log"
+    },
+    {
+      "label": "lint",
+      "target": "verification/petros-phase5-20261003/final-r5-lint.json"
+    },
+    {
+      "label": "raw log",
+      "target": "verification/petros-phase5-20261003/final-r5-lint.log"
+    },
+    {
+      "label": "eval-fixtures",
+      "target": "verification/petros-phase5-20261003/final-r5-eval-fixtures.json"
+    },
+    {
+      "label": "raw log",
+      "target": "verification/petros-phase5-20261003/final-r5-eval-fixtures.log"
+    },
+    {
+      "label": "eval-tests",
+      "target": "verification/petros-phase5-20261003/final-r5-eval-tests.json"
+    },
+    {
+      "label": "raw log",
+      "target": "verification/petros-phase5-20261003/final-r5-eval-tests.log"
+    },
+    {
+      "label": "eval-corpus",
+      "target": "verification/petros-phase5-20261003/final-r5-eval-corpus.json"
+    },
+    {
+      "label": "raw log",
+      "target": "verification/petros-phase5-20261003/final-r5-eval-corpus.log"
+    },
+    {
+      "label": "api-build",
+      "target": "verification/petros-phase5-20261003/final-r5-api-build.json"
+    },
+    {
+      "label": "raw log",
+      "target": "verification/petros-phase5-20261003/final-r5-api-build.log"
+    },
+    {
+      "label": "student-web-build",
+      "target": "verification/petros-phase5-20261003/final-r5-student-web-build.json"
+    },
+    {
+      "label": "raw log",
+      "target": "verification/petros-phase5-20261003/final-r5-student-web-build.log"
+    },
+    {
+      "label": "institution-web-build",
+      "target": "verification/petros-phase5-20261003/final-r5-institution-web-build.json"
+    },
+    {
+      "label": "raw log",
+      "target": "verification/petros-phase5-20261003/final-r5-institution-web-build.log"
+    },
+    {
+      "label": "super-admin-web-build",
+      "target": "verification/petros-phase5-20261003/final-r5-super-admin-web-build.json"
+    },
+    {
+      "label": "raw log",
+      "target": "verification/petros-phase5-20261003/final-r5-super-admin-web-build.log"
+    },
+    {
+      "label": "diff-check",
+      "target": "verification/petros-phase5-20261003/final-r5-diff-check.json"
+    },
+    {
+      "label": "raw log",
+      "target": "verification/petros-phase5-20261003/final-r5-diff-check.log"
+    },
+    {
+      "label": "browser-chromium-production",
+      "target": "verification/petros-phase5-20261003/final-r5-browser-chromium-production.json"
+    },
+    {
+      "label": "raw log",
+      "target": "verification/petros-phase5-20261003/final-r5-browser-chromium-production.log"
+    },
+    {
+      "label": "browser-webkit-production",
+      "target": "verification/petros-phase5-20261003/final-r5-browser-webkit-production.json"
+    },
+    {
+      "label": "raw log",
+      "target": "verification/petros-phase5-20261003/final-r5-browser-webkit-production.log"
+    },
+    {
+      "label": "chaos/recovery/rehearsal index",
+      "target": "verification/petros-phase5-20261003/chaos-recovery-rehearsal-index.json"
+    },
+    {
+      "label": "operator runbook",
+      "target": "PETROS-PHASE-5-OPERATOR-RUNBOOK.md"
+    },
+    {
+      "label": "engineering evidence bundle",
+      "target": "verification/petros-phase5-20261003/engineering-release-bundle.json"
+    },
+    {
+      "label": "production-owner quality/performance report",
+      "target": "verification/petros-phase5-20261003/production-quality-performance-final.json"
+    },
+    {
+      "label": "Chromium report",
+      "target": "verification/petros-phase5-20261003/browser/chromium/browser-journey.json"
+    },
+    {
+      "label": "WebKit report",
+      "target": "verification/petros-phase5-20261003/browser/webkit/browser-journey.json"
+    },
+    {
+      "label": "visual review",
+      "target": "verification/petros-phase5-20261003/browser-visual-review.json"
+    },
+    {
+      "label": "command record",
+      "target": "verification/petros-phase5-20261003/final-r5-browser-firefox.json"
+    },
+    {
+      "label": "raw log",
+      "target": "verification/petros-phase5-20261003/final-r5-browser-firefox.log"
+    },
+    {
+      "label": "acceptance packets",
+      "target": "PETROS-PHASE-5-ACCEPTANCE-PACKETS.md"
+    },
+    {
+      "label": "Cleanup record",
+      "target": "verification/petros-phase5-20261003/cleanup-record.json"
+    }
+  ],
+  "cleanupCompletedAt": "2026-10-03T08:55:31.693899+00:00",
+  "resultsSha256": "09a2f4b0d5d17262f5cec61a12707eb2a11270ceb8518ba14e01056e2cea67c8",
+  "ledgerSha256": "13eab4df3a92b126101d58c67d25829473f9a734e7a758f55ec316cd5df46a9a"
+}

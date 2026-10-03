@@ -24,6 +24,41 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO edrion_app;
 
 -- Append-only tables: revoke mutation, keep insert + read.
 REVOKE UPDATE, DELETE, TRUNCATE ON audit_events FROM edrion_app;
+-- Phase 2 history stays append-only when baseline grants are reapplied.
+DO $$ DECLARE t text; BEGIN
+  FOREACH t IN ARRAY ARRAY['petros_teaching_pack_candidates', 'petros_teaching_pack_reviews',
+    'petros_teaching_pack_review_revocations', 'petros_objective_evidence_commands',
+    'petros_objective_evidence_events', 'petros_qualitative_submissions', 'petros_qualitative_reviews', 'petros_qualitative_events',
+    'petros_visual_operations', 'petros_adaptive_bindings',
+    'petros_workspace_checkpoints', 'petros_workspace_operations',
+    'petros_workspace_prediction_challenges', 'petros_workspace_prediction_responses',
+    'petros_learning_artifact_receipts', 'petros_learning_review_receipts',
+    'petros_assignment_learning_releases', 'petros_assignment_learning_targets',
+    'petros_assignment_learning_recipients', 'petros_assignment_learning_receipts'] LOOP
+    IF to_regclass(t) IS NOT NULL THEN
+      EXECUTE format('REVOKE UPDATE, DELETE, TRUNCATE ON %I FROM edrion_app', t);
+    END IF;
+  END LOOP;
+  IF to_regclass('petros_reviewer_qualifications') IS NOT NULL THEN
+    REVOKE INSERT,UPDATE,DELETE,TRUNCATE ON petros_reviewer_qualifications FROM edrion_app;
+  END IF;
+END $$;
+DO $$ DECLARE t text; BEGIN
+  FOREACH t IN ARRAY ARRAY['integration_provider_mappings', 'course_curriculum_records', 'course_curriculum_revisions'] LOOP
+    IF to_regclass(t) IS NOT NULL THEN
+      EXECUTE format('REVOKE UPDATE, DELETE, TRUNCATE ON %I FROM edrion_app', t);
+    END IF;
+  END LOOP;
+END $$;
+-- Roster jobs remain status-updatable, but their history must not be erasable.
+DO $$ BEGIN
+  IF to_regclass('knowledge_preparations') IS NOT NULL THEN
+    REVOKE DELETE, TRUNCATE ON knowledge_preparations FROM edrion_app;
+  END IF;
+  IF to_regclass('roster_sync_jobs') IS NOT NULL THEN
+    REVOKE DELETE, TRUNCATE ON roster_sync_jobs FROM edrion_app;
+  END IF;
+END $$;
 REVOKE UPDATE, DELETE, TRUNCATE ON fee_invoice_items, fee_gateway_events FROM edrion_app;
 REVOKE DELETE, TRUNCATE ON fee_receipts, fee_structure_versions, fee_receipt_sequences, fee_waivers, institution_fee_config, fee_payments FROM edrion_app;
 REVOKE UPDATE ON fee_receipts FROM edrion_app;
@@ -71,3 +106,50 @@ BEGIN
   END LOOP;
 END
 $$;
+
+DO $$ BEGIN
+ IF to_regclass('petros_workspaces') IS NOT NULL THEN
+  GRANT SELECT,INSERT,UPDATE ON petros_workspaces TO edrion_app;
+  REVOKE DELETE,TRUNCATE ON petros_workspaces FROM edrion_app;
+  GRANT SELECT,INSERT ON petros_workspace_checkpoints,petros_workspace_operations TO edrion_app;
+  REVOKE UPDATE,DELETE,TRUNCATE ON petros_workspace_checkpoints,petros_workspace_operations FROM edrion_app;
+ END IF;
+END $$;
+
+-- Prediction observations stay append-only after generic grant replay.
+DO $$ BEGIN
+ IF to_regclass('petros_workspace_prediction_challenges') IS NOT NULL THEN
+  GRANT SELECT,INSERT ON petros_workspace_prediction_challenges,petros_workspace_prediction_responses TO edrion_app;
+  REVOKE UPDATE,DELETE,TRUNCATE ON petros_workspace_prediction_challenges,petros_workspace_prediction_responses FROM edrion_app;
+ END IF;
+END $$;
+
+DO $$ BEGIN
+ IF to_regclass('public.petros_journeys') IS NOT NULL THEN
+ REVOKE DELETE,TRUNCATE ON petros_journeys,petros_memory_records FROM edrion_app;
+ REVOKE UPDATE,DELETE,TRUNCATE ON petros_journey_sessions,petros_continuity_receipts FROM edrion_app;
+ END IF;
+END $$;
+
+-- Phase4 owner history grants survive broad grant replay.
+DO $$ BEGIN IF to_regclass('public.petros_material_corrections') IS NOT NULL THEN
+ REVOKE DELETE,TRUNCATE ON petros_material_corrections,petros_institutional_interventions FROM edrion_app;
+ END IF; END $$;
+
+-- Phase5 engineering indexes and synthetic instrumentation remain immutable after grant replay.
+DO $$ BEGIN IF to_regclass('public.petros_release_bundles') IS NOT NULL THEN
+ GRANT SELECT,INSERT ON petros_release_evaluations,petros_release_bundles,petros_release_disables,petros_pilot_events TO edrion_app;
+ REVOKE UPDATE,DELETE,TRUNCATE ON petros_release_evaluations,petros_release_bundles,petros_release_disables,petros_pilot_events FROM edrion_app;
+ END IF; END $$;
+
+-- Replay narrow Phase5 runtime/operations projections without PUBLIC execution.
+DO $$ BEGIN
+ IF to_regprocedure('edrion_petros_operations()') IS NOT NULL THEN
+  REVOKE ALL ON FUNCTION edrion_petros_operations() FROM PUBLIC;
+  GRANT EXECUTE ON FUNCTION edrion_petros_operations() TO edrion_app;
+ END IF;
+ IF to_regprocedure('edrion_petros_runtime_release(uuid,uuid)') IS NOT NULL THEN
+  REVOKE ALL ON FUNCTION edrion_petros_runtime_release(uuid,uuid) FROM PUBLIC;
+  GRANT EXECUTE ON FUNCTION edrion_petros_runtime_release(uuid,uuid) TO edrion_app;
+ END IF;
+END $$;

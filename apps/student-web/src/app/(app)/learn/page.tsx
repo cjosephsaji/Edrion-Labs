@@ -23,6 +23,7 @@ import {
   type PetrosCandidateInput,
 } from '@/components/petros/petros-companion-context';
 import { PetrosDoorButton } from '@/components/petros/petros-door-button';
+import { PetrosContinuityOverview } from '@/components/petros/petros-continuity';
 import { QueryPage } from '@/components/query-page';
 import { useStudentApi } from '@/lib/api-client';
 import { useStudentList } from '@/lib/hooks';
@@ -247,6 +248,8 @@ export default function LearnPage() {
               title="Learn"
               description="Pick up where you stopped, or choose one clear way to begin."
             />
+
+            <PetrosContinuityOverview />
 
             <section className={styles.focus} aria-labelledby="learn-focus-title" data-petros-target="learning:focus">
               <div className={styles.focusBody}>

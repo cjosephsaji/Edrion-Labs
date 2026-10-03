@@ -1,0 +1,13 @@
+{
+  "command": [
+    "git",
+    "diff",
+    "--check"
+  ],
+  "start": "2026-10-02T06:39:45.868725+00:00",
+  "end": "2026-10-02T06:39:45.967592+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1"
+  }
+}

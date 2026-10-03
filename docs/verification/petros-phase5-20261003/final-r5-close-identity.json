@@ -1,0 +1,14 @@
+{
+  "command": [
+    "python3",
+    "docs/verification/petros-phase5-20261003/capture-identity.py",
+    "closing-final-r5"
+  ],
+  "start": "2026-10-03T09:00:12.333643+00:00",
+  "end": "2026-10-03T09:00:12.920351+00:00",
+  "exitCode": 0,
+  "overrides": {
+    "PETROS_LOCAL_DB_TESTS": "1",
+    "TMPDIR": "/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/"
+  }
+}

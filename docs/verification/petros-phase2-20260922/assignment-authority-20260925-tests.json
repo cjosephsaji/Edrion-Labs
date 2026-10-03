@@ -1,0 +1,17 @@
+{
+  "startedAt": "2026-09-25T03:15:55.883983+00:00",
+  "finishedAt": "2026-09-25T03:16:00.297132+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/api",
+    "exec",
+    "vitest",
+    "run",
+    "src/modules/integrations/petros-assignment-learning.integration.spec.ts",
+    "src/modules/integrations/petros-assignment-authority.integration.spec.ts",
+    "--reporter=verbose"
+  ],
+  "exitCode": 0,
+  "log": "assignment-authority-20260925-tests.log"
+}

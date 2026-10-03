@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-09-25T17:16:25.982027+00:00",
+  "finishedAt": "2026-09-25T17:16:28.026704+00:00",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@edrion/institution-web",
+    "lint"
+  ],
+  "exitCode": 0,
+  "log": "final-r4-institution-web-lint-20260925.log"
+}

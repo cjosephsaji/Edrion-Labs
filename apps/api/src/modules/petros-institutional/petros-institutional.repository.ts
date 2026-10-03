@@ -16,11 +16,74 @@ import type {
   PetrosInstitutionalDashboardQuery,
   PetrosParentDigestPreferenceInput,
 } from '@edrion/schemas';
+import { petrosAssignmentLearningStudentBindingSchema } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 
 @Injectable()
 export class PetrosInstitutionalRepository {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
+
+  lockKnowledgeAuthority(institutionId: string) {
+    return this.db.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`petros-knowledge:${institutionId}`}, 0))`);
+  }
+
+  async documentKnowledgeContext(scope: { institutionId: string; studentId: string }, sessionId: string) {
+    const [session] = await this.db.select().from(schema.petrosLearningSessions).where(and(
+      eq(schema.petrosLearningSessions.id, sessionId), eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
+      eq(schema.petrosLearningSessions.studentId, scope.studentId))).limit(1);
+    if (!session || session.sourceContext?.door !== 'uploaded_document') return null;
+    const sourceId = session.sourceContext.referenceId;
+    if (typeof sourceId !== 'string') return null;
+    const [item] = await this.db.select().from(schema.knowledgeItems).where(and(eq(schema.knowledgeItems.id, sourceId),
+      eq(schema.knowledgeItems.institutionId, scope.institutionId), eq(schema.knowledgeItems.studentId, scope.studentId))).limit(1);
+    if (!item) return null;
+    const materialId = item.origin.classMaterialId;
+    const [material] = typeof materialId === 'string' ? await this.db.select().from(schema.classMaterials)
+      .where(and(eq(schema.classMaterials.id, materialId), eq(schema.classMaterials.institutionId, scope.institutionId))).limit(1) : [];
+    const matches = await this.db.select().from(schema.petrosHomeworkPolicyMatches).where(and(
+      eq(schema.petrosHomeworkPolicyMatches.institutionId, scope.institutionId), eq(schema.petrosHomeworkPolicyMatches.studentId, scope.studentId),
+      eq(schema.petrosHomeworkPolicyMatches.sessionId, sessionId), eq(schema.petrosHomeworkPolicyMatches.related, true))).for('share');
+    const context = session.sourceContext.assignmentContext as { assignmentId?: string } | undefined;
+    const learningRecipients = await this.db.select().from(schema.petrosAssignmentLearningRecipients).where(and(
+      eq(schema.petrosAssignmentLearningRecipients.institutionId,scope.institutionId),
+      eq(schema.petrosAssignmentLearningRecipients.studentId,scope.studentId),
+      eq(schema.petrosAssignmentLearningRecipients.sessionId,sessionId))).limit(2);
+    if (learningRecipients.length > 1) throw new Error('PETROS_ASSIGNMENT_MULTIPLE_RELEASES_UNSUPPORTED');
+    const learning = learningRecipients[0] ? petrosAssignmentLearningStudentBindingSchema.parse(learningRecipients[0].binding) : null;
+    let learningInvalid = false;
+    if (learning) {
+      const [course] = await this.db.select().from(schema.courses).where(and(eq(schema.courses.id,learning.courseId),
+        eq(schema.courses.institutionId,scope.institutionId))).for('share').limit(1);
+      const [enrollment] = await this.db.select().from(schema.courseEnrollments).where(and(
+        eq(schema.courseEnrollments.institutionId,scope.institutionId),eq(schema.courseEnrollments.courseId,learning.courseId),
+        eq(schema.courseEnrollments.studentId,scope.studentId))).for('share').limit(1);
+      learningInvalid = !course || course.status !== 'active' || course.version !== learning.courseVersion || !enrollment ||
+        enrollment.id !== learningRecipients[0]!.eligibilitySnapshot.courseEnrollmentId ||
+        learning.target.source.sessionId !== sessionId || learning.target.source.sourceVersion !== session.sourceContext.sourceFingerprint ||
+        context?.assignmentId !== learning.assignmentId;
+    }
+    // A learner's false-match claim cannot erase a binding restriction from this answer path.
+    const ids = [...new Set([...matches.map(row => row.assignmentId), ...(context?.assignmentId ? [context.assignmentId] : []),
+      ...(learning ? [learning.assignmentId] : [])])];
+    if (ids.length > 100) throw new Error('PETROS_KNOWLEDGE_BINDING_LIMIT');
+    const assignments = ids.length ? await this.db.select({ id: schema.assignments.id, version: schema.assignments.version, aiPolicy: schema.assignments.aiPolicy,
+      status:schema.assignments.status })
+      .from(schema.assignments).innerJoin(schema.assignmentAssignees, and(eq(schema.assignmentAssignees.assignmentId, schema.assignments.id), eq(schema.assignmentAssignees.studentId, scope.studentId)))
+      .where(and(eq(schema.assignments.institutionId, scope.institutionId), inArray(schema.assignments.id, ids)))
+      .for('share', { of: schema.assignments }) : [];
+    const homework = ids.length ? await this.db.select({ id: schema.homework.id, version: schema.homework.version, aiPolicy: schema.homework.aiPolicy })
+      .from(schema.homework).innerJoin(schema.homeworkAssignees, and(eq(schema.homeworkAssignees.homeworkId, schema.homework.id), eq(schema.homeworkAssignees.studentId, scope.studentId)))
+      .where(and(eq(schema.homework.institutionId, scope.institutionId), inArray(schema.homework.id, ids)))
+      .for('share', { of: schema.homework }) : [];
+    const institutional = session.sourceContext.institutionalDecision as { homework?: { finalAnswerAllowed?: boolean } } | undefined;
+    return { session, sourceId, subjectId: material?.subjectId ?? null,
+      answerRestricted: matches.some(row => row.active || row.studentCorrected) || institutional?.homework?.finalAnswerAllowed === false,
+      learning,
+      restrictions: [...assignments, ...homework].map(({id,version,aiPolicy}) => ({id,version,aiPolicy})).sort((a, b) => a.id.localeCompare(b.id)),
+      missingBinding: learningInvalid || (learning !== null && !assignments.some(row => row.id === learning.assignmentId &&
+        row.version === learning.assignmentVersion && row.status === 'published')) ||
+        ids.some(id => ![...assignments, ...homework].some(row => row.id === id)) };
+  }
 
   listPolicies(institutionId: string) {
     return this.db.select().from(schema.petrosInstitutionPolicyVersions)
@@ -276,6 +339,8 @@ export class PetrosInstitutionalRepository {
 
   staffForUser(institutionId: string, institutionUserId: string) {
     return this.db.select({ id: schema.staff.id }).from(schema.staff)
+      .innerJoin(schema.institutionUsers, and(eq(schema.institutionUsers.id, schema.staff.institutionUserId),
+        eq(schema.institutionUsers.institutionId, institutionId), eq(schema.institutionUsers.status, 'active')))
       .where(and(eq(schema.staff.institutionId, institutionId), eq(schema.staff.institutionUserId, institutionUserId)))
       .limit(1).then((rows) => rows[0]?.id ?? null);
   }
@@ -358,6 +423,13 @@ export class PetrosInstitutionalRepository {
       conceptId: schema.petrosLearnerEvidenceEvents.conceptId,
       outcome: schema.petrosLearnerEvidenceEvents.outcome,
       occurredAt: schema.petrosLearnerEvidenceEvents.occurredAt,
+      sourceRecordId: schema.petrosLearnerEvidenceEvents.sourceRecordId,
+      sourceEventId: schema.petrosLearnerEvidenceEvents.sourceEventId,
+      classificationStatus: schema.petrosLearnerEvidenceEvents.classificationStatus,
+      evaluatorVersion: schema.petrosLearnerEvidenceEvents.evaluatorVersion,
+      algorithmVersion: schema.petrosLearnerEvidenceEvents.algorithmVersion,
+      schemaVersion: schema.petrosLearnerEvidenceEvents.schemaVersion,
+      metadata: schema.petrosLearnerEvidenceEvents.metadata,
     }).from(schema.petrosLearnerEvidenceEvents)
       .innerJoin(schema.students, eq(schema.students.id, schema.petrosLearnerEvidenceEvents.studentId))
       .where(and(
@@ -367,6 +439,23 @@ export class PetrosInstitutionalRepository {
         eq(schema.petrosLearnerEvidenceEvents.synthetic, false),
         gte(schema.petrosLearnerEvidenceEvents.occurredAt, since),
       ));
+  }
+
+  classEligibleCount(institutionId: string, classId: string) {
+    return this.db.select({ id: schema.students.id }).from(schema.students).where(and(
+      eq(schema.students.institutionId, institutionId), eq(schema.students.classId, classId), eq(schema.students.status, 'enrolled'),
+    )).then((rows) => rows.length);
+  }
+
+  classSubjectEligibleCount(institutionId: string, classId: string, subjectId: string) {
+    return this.db.selectDistinct({ id: schema.students.id }).from(schema.students)
+      .innerJoin(schema.courseEnrollments, and(eq(schema.courseEnrollments.studentId, schema.students.id),
+        eq(schema.courseEnrollments.institutionId, institutionId)))
+      .innerJoin(schema.courses, and(eq(schema.courses.id, schema.courseEnrollments.courseId),
+        eq(schema.courses.institutionId, institutionId), eq(schema.courses.subjectId, subjectId)))
+      .where(and(eq(schema.students.institutionId, institutionId), eq(schema.students.classId, classId),
+        eq(schema.students.status, 'enrolled'), eq(schema.courses.status, 'active')))
+      .then((rows) => rows.length);
   }
 
   upsertClassSignal(values: typeof schema.petrosClassStruggleSignals.$inferInsert) {
@@ -383,6 +472,50 @@ export class PetrosInstitutionalRepository {
       ))
       .where(eq(schema.petrosClassStruggleSignals.institutionId, institutionId))
       .orderBy(desc(schema.petrosClassStruggleSignals.freshestAt)).then((rows) => rows.map((row) => row.signal));
+  }
+
+  currentClassLearnerIds(institutionId: string, classId: string) {
+    return this.db.select({ id: schema.students.id }).from(schema.students).where(and(
+      eq(schema.students.institutionId, institutionId), eq(schema.students.classId, classId), eq(schema.students.status, 'enrolled'),
+    ));
+  }
+
+  listInterventions(institutionId: string, classId: string, subjectId: string) {
+    return this.db.select().from(schema.petrosInstitutionalInterventions).where(and(
+      eq(schema.petrosInstitutionalInterventions.institutionId, institutionId),
+      eq(schema.petrosInstitutionalInterventions.classId, classId),
+      eq(schema.petrosInstitutionalInterventions.subjectId, subjectId),
+    )).orderBy(desc(schema.petrosInstitutionalInterventions.createdAt)).limit(50);
+  }
+
+  interventionByCommand(institutionId: string, commandId: string) {
+    return this.db.select().from(schema.petrosInstitutionalInterventions).where(and(
+      eq(schema.petrosInstitutionalInterventions.institutionId, institutionId), eq(schema.petrosInstitutionalInterventions.commandId, commandId),
+    )).limit(1).then((rows) => rows[0]);
+  }
+
+  createIntervention(values: typeof schema.petrosInstitutionalInterventions.$inferInsert) {
+    return this.db.insert(schema.petrosInstitutionalInterventions).values(values).returning().then((rows) => rows[0]);
+  }
+
+  intervention(institutionId: string, id: string) {
+    return this.db.select().from(schema.petrosInstitutionalInterventions).where(and(
+      eq(schema.petrosInstitutionalInterventions.institutionId, institutionId), eq(schema.petrosInstitutionalInterventions.id, id),
+    )).for('update').limit(1).then((rows) => rows[0]);
+  }
+
+  updateIntervention(institutionId: string, id: string, expectedVersion: number, values: Partial<typeof schema.petrosInstitutionalInterventions.$inferInsert>) {
+    return this.db.update(schema.petrosInstitutionalInterventions).set({ ...values, version: expectedVersion + 1 }).where(and(
+      eq(schema.petrosInstitutionalInterventions.institutionId, institutionId), eq(schema.petrosInstitutionalInterventions.id, id),
+      eq(schema.petrosInstitutionalInterventions.version, expectedVersion),
+    )).returning().then((rows) => rows[0]);
+  }
+
+  assignmentRecipientCount(institutionId: string, assignmentId: string) {
+    return this.db.select({ id: schema.assignmentAssignees.studentId }).from(schema.assignmentAssignees)
+      .innerJoin(schema.assignments, eq(schema.assignments.id, schema.assignmentAssignees.assignmentId))
+      .where(and(eq(schema.assignments.id, assignmentId), eq(schema.assignments.institutionId, institutionId)))
+      .then((rows) => rows.length);
   }
 
   preference(institutionId: string, guardianUserId: string, studentId: string) {

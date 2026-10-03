@@ -1,0 +1,37 @@
+{
+  "timestamp": "2026-10-02T11:45:37.589332+00:00",
+  "authority": "Browser worker explicitly confirmed these exact six fixtures and institution copy from its six isolated launches. No unrelated PostgreSQL or files altered.",
+  "stopped": [
+    {
+      "path": "/private/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-phase2-test-cQSoEP",
+      "exitCode": 0,
+      "output": "waiting for server to shut down.... done\nserver stopped\n"
+    },
+    {
+      "path": "/private/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-phase2-test-hWxlje",
+      "exitCode": 0,
+      "output": "waiting for server to shut down.... done\nserver stopped\n"
+    },
+    {
+      "path": "/private/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-phase2-test-tfhnVe",
+      "exitCode": 0,
+      "output": "waiting for server to shut down.... done\nserver stopped\n"
+    },
+    {
+      "path": "/private/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-phase2-test-YZ7Dly",
+      "exitCode": 0,
+      "output": "waiting for server to shut down.... done\nserver stopped\n"
+    },
+    {
+      "path": "/private/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-phase2-test-rJB4hi",
+      "exitCode": 0,
+      "output": "waiting for server to shut down.... done\nserver stopped\n"
+    },
+    {
+      "path": "/private/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-phase2-test-8ooM2n",
+      "exitCode": 0,
+      "output": "waiting for server to shut down.... done\nserver stopped\n"
+    }
+  ],
+  "removedInstitutionCopy": "/private/var/folders/t4/gvftc8ld2jv8vr4bxn2ty5mw0000gn/T/petros-phase4-institution-web-fm0JCm"
+}
