@@ -1,0 +1,10 @@
+# Recorded observations
+
+Availability is 99.9%. It is not available.
+
+1. Keep the label.
+2. Record Unicode: café, π, 水.
+
+## Explicit section
+
+A sample is evidence, not a conclusion.

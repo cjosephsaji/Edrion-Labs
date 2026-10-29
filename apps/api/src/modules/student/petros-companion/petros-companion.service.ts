@@ -1,4 +1,6 @@
 import { PetrosContinuityService } from '../petros-continuity/petros-continuity.service';
+import { PetrosPortalSpeechService } from './petros-portal-speech.service';
+import type { PetrosSpeechOptions } from '../../petros-ai-routing/petros-speech-capabilities';
 import { Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
@@ -168,6 +170,7 @@ export class PetrosCompanionService {
     @Inject(API_ENV) private readonly env: ApiEnv,
     private readonly mentor: PetrosMentorService,
     @Optional() private readonly continuity?: PetrosContinuityService,
+    @Optional() private readonly speechRoutes?: PetrosPortalSpeechService,
   ) {}
 
   private scope(principal: InstitutionalStudentPrincipal) {
@@ -179,8 +182,15 @@ export class PetrosCompanionService {
    * browser. Speech is deliberately transient: the authoritative response remains the
    * companion message stored in the thread and the audio never enters the shared cache.
    */
-  async speak(principal: InstitutionalStudentPrincipal, rawText: string, speech: { voice?: 'cedar' | 'marin'; speed?: number } = {}) {
+  voiceOptions(principal: InstitutionalStudentPrincipal) {
+    if (!this.speechRoutes) return { state: 'unavailable', voices: [], reason: 'Speech route qualification is unavailable.' };
+    return this.speechRoutes.options(principal);
+  }
+
+  async speak(principal: InstitutionalStudentPrincipal, rawText: string, speech: PetrosSpeechOptions = {}, signal?: AbortSignal) {
     const text = rawText.trim().slice(0, 2_000);
+    if (!this.speechRoutes) throw new NotFoundException({ code: 'PETROS_SPEECH_UNAVAILABLE', message: 'Speech route qualification is unavailable.' });
+    await this.speechRoutes.validate(principal, speech.voice);
     const spoken = await this.gateway.execute({
       context: {
         functionKey: 'speech.synthesise',
@@ -197,7 +207,9 @@ export class PetrosCompanionService {
       },
       input: [{ type: 'text', text }],
       metadata: { surface: 'portal_character', transient: true },
-      speech,
+      speech: { ...speech, strictVoice: true },
+      requireQualifiedSpeech: true,
+      signal,
       disableCache: true,
     });
     const content = spoken.content;
@@ -206,6 +218,7 @@ export class PetrosCompanionService {
       typeof content !== 'object' ||
       !('dataBase64' in content) ||
       typeof content.dataBase64 !== 'string'
+      || !('effectiveVoice' in content) || content.effectiveVoice !== speech.voice
     ) {
       throw new NotFoundException({
         code: 'PETROS_SPEECH_UNAVAILABLE',
@@ -221,6 +234,9 @@ export class PetrosCompanionService {
             : 'audio/mpeg',
       },
       transcript: text,
+      requestedVoice: speech.voice,
+      effective: { voice: content.effectiveVoice, modelKey: spoken.modelKey, providerKey: spoken.providerKey, routeId: spoken.routeId },
+      fallback: { voice: false, route: spoken.routeFallbackUsed },
     };
   }
 
@@ -369,6 +385,7 @@ export class PetrosCompanionService {
     principal: InstitutionalStudentPrincipal,
     input: PetrosCompanionTurnInput,
   ): Promise<PetrosCompanionTurnResult> {
+    await this.repo.assertV2Assistance?.();
     const scope = this.scope(principal);
 
     // Replay: the same key must never make a second AI call or a second message.

@@ -120,6 +120,14 @@ export class RegistrationService {
     const primaryContact = merge(request.primaryContact, patch.primaryContact);
     const subscription = merge(request.subscription, patch.subscription);
     const consent = merge(request.consent, patch.consent);
+    const changedSections = [
+      { key: 'institutionInfo', fields: changedRegistrationFields(request.institutionInfo, institutionInfo) },
+      { key: 'location', fields: changedRegistrationFields(request.location, location) },
+      { key: 'campusInfo', fields: changedRegistrationFields(request.campusInfo, campusInfo) },
+      { key: 'primaryContact', fields: changedRegistrationFields(request.primaryContact, primaryContact) },
+      { key: 'subscription', fields: changedRegistrationFields(request.subscription, subscription) },
+      { key: 'consent', fields: changedRegistrationFields(request.consent, consent) },
+    ].filter((section) => section.fields.length > 0);
 
     const nextEmail = primaryContact?.email ?? null;
     // Changing the contact email after verification invalidates it — the applicant must re-verify.
@@ -135,7 +143,13 @@ export class RegistrationService {
       ...this.derivedColumns({ institutionInfo, location, campusInfo, primaryContact, subscription }),
       ...(emailDrifted ? { emailVerifiedAt: null, verifiedEmail: null } : {}),
     });
-    await this.publicAudit(updated ?? request, 'registration.updated', reqCtx);
+    if (changedSections.length > 0) {
+      // Record field names only; registration values include contact details and must not be copied
+      // into the audit trail. This gives reviewers a useful change summary without duplicating PII.
+      await this.publicAudit(updated ?? request, 'registration.updated', reqCtx, {
+        newState: { changedSections },
+      });
+    }
     return this.toPublicView(updated ?? request);
   }
 
@@ -280,11 +294,11 @@ export class RegistrationService {
       });
     }
 
-    const duplicate = await this.repo.findActiveByEmail(contactEmail, id);
+    const duplicate = await this.repo.findDuplicateApplication(contactEmail, sections, id);
     if (duplicate) {
       throw new ConflictException({
         code: 'DUPLICATE_REGISTRATION',
-        message: 'An application with this contact email is already in progress.',
+        message: 'An application for this institution already exists under this contact email.',
       });
     }
 
@@ -547,9 +561,11 @@ export class RegistrationService {
       type: (s.institutionInfo?.type as InstitutionRegistrationRequest['type']) ?? null,
       country: s.location?.country ?? null,
       region: s.location?.region ?? null,
+      administrativeDivisionCode: s.location?.region ?? null,
       contactName: s.primaryContact?.fullName ?? null,
       contactEmail: s.primaryContact?.email ?? null,
       contactPhone: s.primaryContact?.phone ?? null,
+      contactPhoneE164: s.primaryContact?.phone ?? null,
       campusesCount: s.campusInfo?.currentCampuses ?? null,
       expectedStudents: s.campusInfo?.expectedStudents ?? null,
       preferredPlanKey: s.subscription?.planKey ?? null,
@@ -652,4 +668,15 @@ function merge<T extends Record<string, unknown>>(
     if (v !== undefined) next[k] = v;
   }
   return next as T;
+}
+
+function changedRegistrationFields<T extends Record<string, unknown>>(
+  before: T | null | undefined,
+  after: T | null | undefined,
+): string[] {
+  const previous = before ?? ({} as T);
+  const next = after ?? ({} as T);
+  return [...new Set([...Object.keys(previous), ...Object.keys(next)])]
+    .filter((key) => JSON.stringify(previous[key]) !== JSON.stringify(next[key]))
+    .sort();
 }

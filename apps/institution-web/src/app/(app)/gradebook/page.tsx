@@ -57,27 +57,56 @@ export default function GradebookPage() {
         nullable: true,
         options: (classes?.items ?? []).map((c) => ({ value: c.id, label: c.name })),
       },
-      { name: 'assessmentName', label: 'Assessment', type: 'text', required: true, placeholder: 'e.g. Midterm' },
+      {
+        name: 'assessmentName',
+        label: 'Assessment',
+        type: 'text',
+        required: true,
+        placeholder: 'e.g. Midterm',
+      },
       { name: 'marksObtained', label: 'Marks obtained', type: 'number', required: true, min: 0 },
       { name: 'maxMarks', label: 'Max marks', type: 'number', required: true, min: 1 },
       { name: 'letterGrade', label: 'Grade', type: 'text', nullable: true, placeholder: 'e.g. A' },
-      { name: 'remarks', label: 'Remarks', type: 'textarea', nullable: true, placeholder: 'Optional' },
+      {
+        name: 'remarks',
+        label: 'Remarks',
+        type: 'textarea',
+        nullable: true,
+        placeholder: 'Optional',
+      },
     ],
     [students, subjects, classes, exams, t],
   );
 
   const columns = useMemo<Column<GradeEntryRow>[]>(
     () => [
-      { key: 'studentName', header: t('student'), render: (r) => <span className="font-medium">{r.studentName ?? '—'}</span> },
+      {
+        key: 'studentName',
+        header: t('student'),
+        render: (r) => <span className="font-medium">{r.studentName ?? '—'}</span>,
+      },
       { key: 'subjectName', header: t('subject'), render: (r) => r.subjectName ?? '—' },
-      { key: 'assessmentName', header: 'Assessment', sortable: true, render: (r) => <span className="text-text-muted">{r.assessmentName}</span> },
-      { key: 'examName', header: 'Exam', render: (r) => <span className="text-text-muted">{r.examName ?? '—'}</span> },
+      {
+        key: 'assessmentName',
+        header: 'Assessment',
+        sortable: true,
+        render: (r) => <span className="text-text-muted">{r.assessmentName}</span>,
+      },
+      {
+        key: 'examName',
+        header: 'Exam',
+        render: (r) => <span className="text-text-muted">{r.examName ?? '—'}</span>,
+      },
       {
         key: 'marksObtained',
         header: 'Marks',
         align: 'right',
         sortable: true,
-        render: (r) => <span className="tabular-nums font-medium">{r.marksObtained}/{r.maxMarks}</span>,
+        render: (r) => (
+          <span className="tabular-nums font-medium">
+            {r.marksObtained}/{r.maxMarks}
+          </span>
+        ),
       },
       { key: 'letterGrade', header: 'Grade', align: 'right', render: (r) => r.letterGrade ?? '—' },
     ],
@@ -86,33 +115,37 @@ export default function GradebookPage() {
 
   return (
     <>
-      <GradebookReleasePanel />
-      <WeightMapEditor />
       <ResourceManager<GradeEntryRow>
-      resource="gradebook"
-      title="Gradebook"
-      noun="grade entry"
-      columns={columns}
-      fields={fields}
-      defaultSortBy="createdAt"
-      defaultSortDir="desc"
-      searchable
-      permissions={PERMISSIONS}
-      useList={useGradebookList}
-      useMutations={useGradebookMutations}
-      rowLabel={(r) => `${r.studentName ?? t('student')} · ${r.assessmentName}`}
-      toFormValues={(r) => ({
-        studentId: r.studentId,
-        subjectId: r.subjectId,
-        examId: r.examId ?? '',
-        classId: r.classId ?? '',
-        assessmentName: r.assessmentName,
-        marksObtained: r.marksObtained,
-        maxMarks: r.maxMarks,
-        letterGrade: r.letterGrade ?? '',
-        remarks: r.remarks ?? '',
-      })}
-    />
+        beforeList={
+          <>
+            <GradebookReleasePanel />
+            <WeightMapEditor />
+          </>
+        }
+        resource="gradebook"
+        title="Gradebook"
+        noun="grade entry"
+        columns={columns}
+        fields={fields}
+        defaultSortBy="createdAt"
+        defaultSortDir="desc"
+        searchable
+        permissions={PERMISSIONS}
+        useList={useGradebookList}
+        useMutations={useGradebookMutations}
+        rowLabel={(r) => `${r.studentName ?? t('student')} · ${r.assessmentName}`}
+        toFormValues={(r) => ({
+          studentId: r.studentId,
+          subjectId: r.subjectId,
+          examId: r.examId ?? '',
+          classId: r.classId ?? '',
+          assessmentName: r.assessmentName,
+          marksObtained: r.marksObtained,
+          maxMarks: r.maxMarks,
+          letterGrade: r.letterGrade ?? '',
+          remarks: r.remarks ?? '',
+        })}
+      />
     </>
   );
 }

@@ -1,5 +1,5 @@
-import { PetrosRepairSession } from '@/components/petros/petros-repair-session';
+import { PetrosSessionDispatch } from '@/features/petros-v2/petros-session-dispatch';
 
 export default function PetrosSessionPage({ searchParams }: { searchParams: { session?: string } }) {
-  return <PetrosRepairSession topic="this learning goal" source="portal" sessionId={searchParams.session} />;
+  return <PetrosSessionDispatch sessionId={searchParams.session} />;
 }

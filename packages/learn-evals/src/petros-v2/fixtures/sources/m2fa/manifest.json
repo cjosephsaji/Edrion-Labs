@@ -1,0 +1,267 @@
+{
+  "argument-code.md": {
+    "sha256": "1dd86a599088e13b928265f85a7c3b7735118649a7be19503e14721f8fbcd99c",
+    "bytes": 690,
+    "license": "CC0-1.0"
+  },
+  "argument-heading.md": {
+    "sha256": "e9c9f07318d12bb4991b42e56e260215c20488495412ac310fa518504b89b1de",
+    "bytes": 685,
+    "license": "CC0-1.0"
+  },
+  "argument-language.md": {
+    "sha256": "e5936fcd1d01615e9142af9b993a9d4c7ed70bad2c78afa5065bddba5c9cd5fb",
+    "bytes": 690,
+    "license": "CC0-1.0"
+  },
+  "argument-link.md": {
+    "sha256": "904d789a4936339aa62605f8a046a01fdf0189b3a62ead19f46ce38c8618bb3a",
+    "bytes": 684,
+    "license": "CC0-1.0"
+  },
+  "argument-notes.docx": {
+    "sha256": "d1894e6e0ffd37ed85d99f975a05959d815867230b778ee2708ff12dabd65ede",
+    "bytes": 4441,
+    "license": "CC0-1.0"
+  },
+  "argument-notes.md": {
+    "sha256": "b7225ac72e1e45abd0cef9d3bf6def2270371215933eb39a35e2adeb3b50d37b",
+    "bytes": 686,
+    "license": "CC0-1.0"
+  },
+  "argument-quote.md": {
+    "sha256": "56b901a46b8bd0ca7833f1c90dd2d39390fca4c9ef249f82a97cfd8351d95812",
+    "bytes": 691,
+    "license": "CC0-1.0"
+  },
+  "argument-table-cell.md": {
+    "sha256": "de72aedbfaf930e3935c088ec0f53f92abfb03ae10fe392774a0b2b4ef4ccd61",
+    "bytes": 686,
+    "license": "CC0-1.0"
+  },
+  "argument-unsafe-html.md": {
+    "sha256": "1a42f4de7de5204f5eebbecc3a0c2c7e6a63c8799df4cd4f548fe91f2e9f8488",
+    "bytes": 693,
+    "license": "CC0-1.0"
+  },
+  "cloud-delete-paragraph.docx": {
+    "sha256": "5000c9dcd7eb9589825afdd752d4757cec7d9918ad9945055ce1186ad12c39d0",
+    "bytes": 4405,
+    "license": "CC0-1.0"
+  },
+  "cloud-footnote.docx": {
+    "sha256": "1365413e13a9a3353860a923ee8fa6b55e6e63cda478fa021a73959874a54f83",
+    "bytes": 4439,
+    "license": "CC0-1.0"
+  },
+  "cloud-heading.docx": {
+    "sha256": "50186bd7b1aad1bc84c9f61e236e3767d38e85abb2d7042fcc32cabc6f195aec",
+    "bytes": 4448,
+    "license": "CC0-1.0"
+  },
+  "cloud-image.docx": {
+    "sha256": "8c5e5682634de646a5bf2ea1af006368fdfae6108f09a3e187a1ad177e352d26",
+    "bytes": 4440,
+    "license": "CC0-1.0"
+  },
+  "cloud-insert-paragraph.docx": {
+    "sha256": "804a904ffd920f1961208a7a85cf5d24f284e5f1ece6747bbab7a16ceb8f31a2",
+    "bytes": 4453,
+    "license": "CC0-1.0"
+  },
+  "cloud-list.docx": {
+    "sha256": "86179c2cad5b27bbb78852de7e9ad757237883fe6a6e2e6e6bd4b7f1f9653d99",
+    "bytes": 4447,
+    "license": "CC0-1.0"
+  },
+  "cloud-math.docx": {
+    "sha256": "f43a3295434821957c07e5d95bca4f4627f1ce1a054797ea2b50251dc8b83607",
+    "bytes": 4442,
+    "license": "CC0-1.0"
+  },
+  "cloud-notes.docx": {
+    "sha256": "762ebb8834d6bd79aecb9124a41a634e8dd29239d158e07bae2ef5bf80cff708",
+    "bytes": 4440,
+    "license": "CC0-1.0"
+  },
+  "cloud-notes.txt": {
+    "sha256": "d17a2aa27f14302b18377eb25d775e825c47a8a9bebd925df2b1af43b1c817ff",
+    "bytes": 182,
+    "license": "CC0-1.0"
+  },
+  "cloud-table-cell.docx": {
+    "sha256": "26e18ed8c4cb2d33acc3312e8f31d85b33cdaa7dec9ff8caf92b1e20a6bee2ca",
+    "bytes": 4442,
+    "license": "CC0-1.0"
+  },
+  "cloud-tracked-state.docx": {
+    "sha256": "f683c10d39a0c458cf7c066bf8816748ac4a614a7fcde958ab2f7e9634991430",
+    "bytes": 4438,
+    "license": "CC0-1.0"
+  },
+  "corrupt-media.docx": {
+    "sha256": "531843c00423a242a5b8b850675a74dfee483c94b7e68d5d8a66c0f20b945c83",
+    "bytes": 4345,
+    "license": "CC0-1.0"
+  },
+  "excessive-entries.docx": {
+    "sha256": "c5747cc907684a85afdab53029c86362fdd732e0d4940f6e62764fafa54816cd",
+    "bytes": 59624,
+    "license": "CC0-1.0"
+  },
+  "excessive-paragraphs.docx": {
+    "sha256": "3bb8f361c2f82bfa2733d5062bade55787e9b388f63b4ea330eb1f84ba1dec81",
+    "bytes": 4674,
+    "license": "CC0-1.0"
+  },
+  "executable.docx": {
+    "sha256": "01c21e006577a8a984feadc3ecc25d89260dc55696c86868d8a5bce56ccb3c5e",
+    "bytes": 4583,
+    "license": "CC0-1.0"
+  },
+  "external-image.docx": {
+    "sha256": "e20fbacc416fc12a035937a5ca7198e2a48f04133e21e3baa13e69243c1e9d84",
+    "bytes": 4434,
+    "license": "CC0-1.0"
+  },
+  "huge-image.docx": {
+    "sha256": "0f455fb16d3d1b83c39ffb937f0ae5ede071709ac2f6d9016bb42bc9a50d4ad9",
+    "bytes": 4425,
+    "license": "CC0-1.0"
+  },
+  "macro.docx": {
+    "sha256": "a6ca44f51a980bd5e3c3a3ba268e7a71a51268a8faf89ed309db2725b915ea0f",
+    "bytes": 4569,
+    "license": "CC0-1.0"
+  },
+  "malformed-package.docx": {
+    "sha256": "43590a67dc6fd1bdd55ade65ad3bb2261aea3aaca0d93111e2e34fe577bf43eb",
+    "bytes": 13,
+    "license": "CC0-1.0"
+  },
+  "malformed-xml.docx": {
+    "sha256": "275c1d62fe0221947b4c508d041d109052d46a77336335f67606b7a9916e1511",
+    "bytes": 3314,
+    "license": "CC0-1.0"
+  },
+  "markdown-deep.md": {
+    "sha256": "8ff9f3b19c9392c88f6754da021b377a64771832dfa0130f56fe270b6d5f8403",
+    "bytes": 86,
+    "license": "CC0-1.0"
+  },
+  "markdown-injection.md": {
+    "sha256": "25ba7c8ab13b75565a031c6483e5cc649a92d175fb987506e9178594ac9d69cf",
+    "bytes": 141,
+    "license": "CC0-1.0"
+  },
+  "markdown-mixed.md": {
+    "sha256": "7390068a7362588eb634539f0947ab03e662ec7bd0b1ebff8a548ea65bd3d82e",
+    "bytes": 64,
+    "license": "CC0-1.0"
+  },
+  "markdown-unclosed.md": {
+    "sha256": "1092fea3b30069427f39203e6871365c401c886ae138a6009a9b89c8df310103",
+    "bytes": 32,
+    "license": "CC0-1.0"
+  },
+  "missing-main.docx": {
+    "sha256": "22fbf8b27d87b581a09ea5b2c51d7755b07c86dfe7807ee9b030ff6b9bd4b365",
+    "bytes": 3180,
+    "license": "CC0-1.0"
+  },
+  "neutral-notes.docx": {
+    "sha256": "c464528116e1c9dca16fc5570b4e070a4511c3930e0b1807bb1bab2ae9f04ec5",
+    "bytes": 4435,
+    "license": "CC0-1.0"
+  },
+  "neutral-notes.md": {
+    "sha256": "c0a3148ee0a9cac4e0c9ee2cebd7e1ecb994074d2d9b0382507dfb0a9f248c4d",
+    "bytes": 673,
+    "license": "CC0-1.0"
+  },
+  "renamed-zip.docx": {
+    "sha256": "66a2093ac4c847c20539e425e9e27293d3ea6ddeae658bc62ee017f285e12b68",
+    "bytes": 139,
+    "license": "CC0-1.0"
+  },
+  "text-cr.txt": {
+    "sha256": "dd00dd0c102db44e980c5436aedd34f79c3069d428fb61577846f8c25f696d4e",
+    "bytes": 182,
+    "license": "CC0-1.0"
+  },
+  "text-crlf.txt": {
+    "sha256": "d117e4d9af2ac66d031305a96961881ccba4f6e60907c93437b6d03182ce748b",
+    "bytes": 192,
+    "license": "CC0-1.0"
+  },
+  "text-long-line.txt": {
+    "sha256": "d7c8dd4b019bc6cac896ccbf279967c3c8b4f61bd6a7172a7dce113e18ec85bf",
+    "bytes": 16001,
+    "license": "CC0-1.0"
+  },
+  "text-malformed-unicode.txt": {
+    "sha256": "91a681b998555fb475479817b126c94e57e52011fa1842c5d188795a4a05226b",
+    "bytes": 3,
+    "license": "CC0-1.0"
+  },
+  "text-malformed.txt": {
+    "sha256": "c77af045774f2c0ae333862b00dc779176a6f93d8fa59628c57b9dc075ea7935",
+    "bytes": 11,
+    "license": "CC0-1.0"
+  },
+  "text-mixed.txt": {
+    "sha256": "0e3a31e2fc4bdee20433931a85d68b3293ac709256e1c84ac902f002e0930733",
+    "bytes": 183,
+    "license": "CC0-1.0"
+  },
+  "text-negation.txt": {
+    "sha256": "e5ef514c84be0d94ca634ed851ef4c7cca9a8844d1fba55596d66be99e9de5f0",
+    "bytes": 186,
+    "license": "CC0-1.0"
+  },
+  "text-statistic.txt": {
+    "sha256": "4ef2cbbffc5cbc35b83e65f73cc61bdb8c72cafb555eacf074297eaa3bdea449",
+    "bytes": 182,
+    "license": "CC0-1.0"
+  },
+  "text-surrogate.txt": {
+    "sha256": "7dede2c66266f92ce35bf21a950f202c75633079eca964654959a3c611acaaa6",
+    "bytes": 4,
+    "license": "CC0-1.0"
+  },
+  "text-truncated-utf16.txt": {
+    "sha256": "c95a4fead577ca197f1094206aeb3263c8b553f5c4e89a00354f1db980c49657",
+    "bytes": 3,
+    "license": "CC0-1.0"
+  },
+  "text-utf16be.txt": {
+    "sha256": "3d9eddcd3244b19683601a8e391b354f4202e765e3e1c2f04afe4cec084f0274",
+    "bytes": 358,
+    "license": "CC0-1.0"
+  },
+  "text-utf16le.txt": {
+    "sha256": "b5e1b50aaea6c54a0c599f899d200bd55998cfbe7f684fa9f9ba59235e1bb163",
+    "bytes": 358,
+    "license": "CC0-1.0"
+  },
+  "text-utf8-bom.txt": {
+    "sha256": "9bbb9b01c45e8989bf97b84d020f6fef4c71ea5158687290b448742150d8fc70",
+    "bytes": 185,
+    "license": "CC0-1.0"
+  },
+  "unsafe-path.docx": {
+    "sha256": "34faed52eda04fc6044a955ad5a92be0652e532220f99f94fe89920ee5421c13",
+    "bytes": 4552,
+    "license": "CC0-1.0"
+  },
+  "xml-entity.docx": {
+    "sha256": "051c403a0d9a5e2da6bc5aa5afe32766f1fb0962e2b82230c1c46037b79a3430",
+    "bytes": 4474,
+    "license": "CC0-1.0"
+  },
+  "zip-bomb.docx": {
+    "sha256": "c93667466b8329e7cc892f0580dd935d687f929a74317276adae5b4768c1cde6",
+    "bytes": 5527,
+    "license": "CC0-1.0"
+  }
+}

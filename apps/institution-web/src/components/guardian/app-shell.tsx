@@ -7,6 +7,7 @@ import { useMe } from '@/lib/guardian/hooks';
 import { FAMILY_BASE, familyPath } from '@/lib/guardian/paths';
 import { usePortalClient } from '@/lib/portal-client';
 import { clearPortalSession } from '@/lib/portal-session';
+import { SwitchInstitutionLink } from '@/components/app-shell/switch-institution-link';
 import type { ReactNode } from 'react';
 
 const tabs = [
@@ -49,6 +50,7 @@ export function GuardianAppShell({ children }: { children: ReactNode }) {
           </span>
           <div className="flex items-center gap-2">
             {me && me.children.length > 1 && <ChildChips />}
+            <SwitchInstitutionLink guardian collapsed enabled={!!me} />
             <button
               type="button"
               onClick={() => void handleLogout()}

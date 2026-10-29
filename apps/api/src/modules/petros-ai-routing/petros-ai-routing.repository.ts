@@ -24,6 +24,10 @@ import type {
 } from '@edrion/schemas';
 import { PETROS_QUESTION_EXECUTION_VERSION } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
+import { canonicalContent, sourceRevisionSchema } from '@edrion/schemas';
+import { PetrosContentUnitRepository } from '../student/knowledge/petros-content-unit.repository';
+import { validateSourceReservation, type SourceReservation } from './petros-source-reservation';
+import { M2_EXTRACTOR, M2_LIMITS } from '../student/knowledge/adapters/content-adapter';
 
 export class PetrosBudgetError extends Error {
   constructor(readonly code: string) { super(code); }
@@ -343,6 +347,92 @@ export class PetrosAiRoutingRepository {
     return this.db.insert(schema.petrosAiUsageEvents).values(values).returning().then((rows) => rows[0]!);
   }
 
+  async reserveSourceAttempt(input: {
+    authority: SourceReservation; functionId: string; providerId: string; modelId: string; reserveMicros: number;
+  }) {
+    const authority = validateSourceReservation(input.authority);
+    return this.db.transaction(async raw => {
+      const tx = raw as unknown as Database;
+      const [stored] = await tx.select().from(schema.petrosDocumentSourceRevisions)
+        .where(and(eq(schema.petrosDocumentSourceRevisions.id, authority.sourceRevisionId),
+          eq(schema.petrosDocumentSourceRevisions.institutionId, authority.institutionId))).limit(1);
+      if (!stored?.v2Revision) throw new PetrosBudgetError('PETROS_SOURCE_REVISION_UNAVAILABLE');
+      const revision = sourceRevisionSchema.parse(stored.v2Revision);
+      const source = await new PetrosContentUnitRepository(tx).resolveOriginal(revision.source.binding, authority.sourceHash, true, true);
+      if (!['pdf', 'pptx', 'docx', 'txt', 'markdown'].includes(revision.source.kind) || revision.processing.extractor !== M2_EXTRACTOR ||
+        source.file.sizeBytes > M2_LIMITS.bytes ||
+        (revision.source.kind === 'pdf' && source.file.mimeType !== 'application/pdf') ||
+        (revision.source.kind === 'pptx' && source.file.mimeType !== 'application/vnd.openxmlformats-officedocument.presentationml.presentation') ||
+        (revision.source.kind === 'docx' && source.file.mimeType !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') ||
+        (revision.source.kind === 'txt' && source.file.mimeType !== 'text/plain') ||
+        (revision.source.kind === 'markdown' && source.file.mimeType !== 'text/markdown'))
+        throw new PetrosBudgetError('PETROS_SOURCE_EXTRACTION_INELIGIBLE');
+      if (source.actor.userId !== authority.staffActorId || source.actor.institutionId !== authority.institutionId ||
+        revision.source.originalHash !== authority.sourceHash)
+        throw new PetrosBudgetError('PETROS_SOURCE_ACTOR_INVALID');
+      const [preparation] = await tx.select().from(schema.knowledgePreparations).where(and(
+        eq(schema.knowledgePreparations.id, authority.preparationId),
+        eq(schema.knowledgePreparations.institutionId, authority.institutionId),
+        eq(schema.knowledgePreparations.requestedBy, authority.staffActorId),
+        eq(schema.knowledgePreparations.operationVersion, 'v2'),
+        eq(schema.knowledgePreparations.extractorVersion, M2_EXTRACTOR),
+        eq(schema.knowledgePreparations.fence, authority.fence),
+        eq(schema.knowledgePreparations.state, 'succeeded'),
+      )).limit(1).for('share');
+      if (!preparation || preparation.m2Progress?.revisionId !== revision.id ||
+        canonicalContent(preparation.sourceBinding) !== canonicalContent(revision.source.binding))
+        throw new PetrosBudgetError('PETROS_SOURCE_PREPARATION_STALE');
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended('petros-ai-durable-budget', 0))`);
+      const attemptKey = `source:${authority.preparationId}:${authority.fence}:${revision.id}:${authority.interpretationVersion}`;
+      const [duplicate] = await tx.select({ id: schema.petrosAiAttemptReservations.id }).from(schema.petrosAiAttemptReservations)
+        .where(eq(schema.petrosAiAttemptReservations.attemptKey, attemptKey)).limit(1);
+      if (duplicate) throw new PetrosBudgetError('PETROS_SOURCE_ATTEMPT_DUPLICATE');
+      const repository = new PetrosAiRoutingRepository(tx);
+      const [fn, provider, model, policy, route] = await Promise.all([
+        repository.findFunctionByKey(authority.stage), repository.findProvider(input.providerId), repository.findModel(input.modelId),
+        tx.select().from(schema.petrosAiBudgetPolicies).where(and(eq(schema.petrosAiBudgetPolicies.scope, 'global'),
+          sql`${schema.petrosAiBudgetPolicies.scopeId} is null`)).limit(1).for('share').then(rows => rows[0]),
+        tx.select().from(schema.petrosAiFunctionRoutes).where(and(eq(schema.petrosAiFunctionRoutes.id, authority.routeId),
+          eq(schema.petrosAiFunctionRoutes.functionId, input.functionId), eq(schema.petrosAiFunctionRoutes.providerId, input.providerId),
+          eq(schema.petrosAiFunctionRoutes.modelId, input.modelId), eq(schema.petrosAiFunctionRoutes.enabled, true))).limit(1).then(rows => rows[0]),
+      ]);
+      if (!fn?.enabled || fn.id !== input.functionId || !provider?.enabled || provider.paused ||
+        provider.key !== authority.providerKey || !model?.enabled || model.providerId !== provider.id ||
+        model.modelKey !== authority.modelKey || !route)
+        throw new PetrosBudgetError('PETROS_BUDGET_ROUTE_CHANGED');
+      if (!policy?.enabled || (policy.dailyBudgetMicros == null && policy.monthlyBudgetMicros == null))
+        throw new PetrosBudgetError('PETROS_BUDGET_UNCONFIGURED');
+      const minimumHold = Math.max(Number(fn.settings.maxCostPerRequestMicros ?? 0), Math.ceil((
+        Number(fn.settings.maxInputTokens) * Number(model.pricing.inputPerMillionMicros ?? 0) +
+        Number(fn.settings.maxOutputTokens) * Number(model.pricing.outputPerMillionMicros ?? 0)) / 1_000_000));
+      if (!Number.isSafeInteger(minimumHold) || minimumHold <= 0 || !Number.isSafeInteger(input.reserveMicros) ||
+        input.reserveMicros < minimumHold || input.reserveMicros > authority.maxSpendMicros)
+        throw new PetrosBudgetError('PETROS_SOURCE_REQUEST_BUDGET_EXCEEDED');
+      const [created] = await tx.execute<{ id: string }>(sql`insert into petros_ai_attempt_reservations
+        (command_id,session_id,student_id,source_context,institution_id,request_id,execution_fence,
+          function_id,provider_id,model_id,attempt_key,reserved_micros)
+        values (null,null,null,${JSON.stringify(authority)}::jsonb,${authority.institutionId}::uuid,
+          ${authority.requestId}::uuid,${authority.fence},${input.functionId}::uuid,${input.providerId}::uuid,
+          ${input.modelId}::uuid,${attemptKey},${input.reserveMicros}) returning id`);
+      const [hold] = await tx.select().from(schema.petrosAiAttemptReservations)
+        .where(eq(schema.petrosAiAttemptReservations.id, created!.id)).limit(1);
+      const [totals] = await tx.execute<{ global_daily: number; global_monthly: number; provider_daily: number; provider_monthly: number;
+        function_daily_requests: number; function_monthly_requests: number; institution_monthly_requests: number }>(
+        sql`select * from edrion_petros_source_budget_snapshot(${hold!.id}::uuid)`);
+      if (!totals) throw new PetrosBudgetError('PETROS_BUDGET_SNAPSHOT_UNAVAILABLE');
+      const exceeds = (total: number, cap: number | null | undefined) => cap != null && Number(total) > cap;
+      if (exceeds(totals.global_daily, policy.dailyBudgetMicros) || exceeds(totals.global_monthly, policy.monthlyBudgetMicros))
+        throw new PetrosBudgetError('PETROS_GLOBAL_BUDGET_EXCEEDED');
+      if (exceeds(totals.provider_daily, provider.dailyBudgetMicros) || exceeds(totals.provider_monthly, provider.monthlyBudgetMicros))
+        throw new PetrosBudgetError('PETROS_PROVIDER_BUDGET_EXCEEDED');
+      if (exceeds(totals.function_daily_requests, fn.settings.dailyRequestLimit) ||
+        exceeds(totals.function_monthly_requests, fn.settings.monthlyRequestLimit) ||
+        exceeds(totals.institution_monthly_requests, fn.settings.maxInstitutionUsage))
+        throw new PetrosBudgetError('PETROS_FUNCTION_QUOTA_EXCEEDED');
+      return { ...hold!, sourceContext: authority };
+    });
+  }
+
   /** Serialize durable paid attempts against every other durable attempt, across workers/tenants. */
   async reserveDocumentAttempt(input: {
     commandId: string; fence: number; attemptKey: string; requestId: string;
@@ -497,7 +587,7 @@ export class PetrosAiRoutingRepository {
       const [row] = await tx.select().from(reservations).where(eq(reservations.id, id)).limit(1).for('update');
       if (!row || row.state !== 'reserved' || !row.providerDispatchedAt || row.requestId !== values.requestId ||
           row.functionId !== values.functionId || row.providerId !== values.providerId ||
-          row.modelId !== values.modelId || row.studentId !== values.studentId ||
+          row.modelId !== values.modelId || (row.studentId ?? null) !== (values.studentId ?? null) ||
           row.institutionId !== values.institutionId)
         throw new PetrosBudgetError('PETROS_BUDGET_SETTLEMENT_CONFLICT');
       const cost = values.actualCostMicros ?? values.estimatedCostMicros ?? 0;

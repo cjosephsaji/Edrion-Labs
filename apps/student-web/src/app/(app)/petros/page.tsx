@@ -1,12 +1,12 @@
 import { Suspense } from 'react';
-import { PetrosInputModes } from '@/components/petros/petros-input-modes';
-import { TeachingStudioLauncher } from '@/features/learning-studio/teaching-studio-launcher';
+import { PetrosHome } from '@/components/petros/petros-home';
+import { PetrosV2Door } from '@/features/petros-v2/petros-v2-door';
 
 export default function PetrosInputModesPage() {
   return (
-    <>
-      <TeachingStudioLauncher />
-      <Suspense fallback={<p>Opening Petros…</p>}><PetrosInputModes /></Suspense>
-    </>
+    <Suspense fallback={<p>Opening Petros…</p>}>
+      <PetrosV2Door />
+      <PetrosHome />
+    </Suspense>
   );
 }

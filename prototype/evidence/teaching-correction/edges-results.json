@@ -1,0 +1,64 @@
+{
+  "cases": [
+    {
+      "id": "ai4",
+      "heldCheckpoint": "AI4-Q07",
+      "wrongThenCorrect": true
+    },
+    {
+      "id": "ehs3",
+      "heldCheckpoint": "EHS3-Q03",
+      "wrongThenCorrect": true
+    },
+    {
+      "id": "ehs5",
+      "heldCheckpoint": "EHS5-Q05",
+      "wrongThenCorrect": true
+    },
+    {
+      "id": "open-ai",
+      "heldCheckpoint": "AI-Q04",
+      "wrongThenCorrect": true
+    },
+    {
+      "id": "time",
+      "heldCheckpoint": "TIME-Q05",
+      "wrongThenCorrect": true
+    },
+    {
+      "mode": "classic",
+      "footerResume": true
+    },
+    {
+      "mode": "world",
+      "footerResume": true
+    }
+  ],
+  "errors": [],
+  "morePractice": {
+    "newPair": [
+      0,
+      3
+    ],
+    "correct": true
+  },
+  "previous": {
+    "checkpoint": "AI3-Q07",
+    "sourcePages": [
+      4,
+      5
+    ],
+    "restored": true
+  },
+  "transfer": {
+    "guaranteesConcealed": true
+  },
+  "arbitraryTopic": {
+    "honestUnavailable": true
+  },
+  "conceptFocus": {
+    "scaffoldCheckKeepsExcavationClosed": true,
+    "excavationOpensAtItsCheckpoint": true
+  },
+  "passed": true
+}

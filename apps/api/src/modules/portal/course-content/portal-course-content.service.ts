@@ -8,7 +8,7 @@ import {
   PETROS_DOCUMENT_MAX_FILE_BYTES,
   PETROS_DOCUMENT_SOURCE_VERSION, PETROS_PDF_EXTRACTOR_VERSION, petrosDocumentExtractionSchema, type PetrosDocumentExtraction, type PetrosPdfWorkerResult,
 } from '@edrion/schemas';
-import { and, desc, eq, inArray, schema, sql, type Database } from '@edrion/database';
+import { and, desc, eq, inArray, isNull, schema, sql, runInStudentTenant, runInAuthorizedCourseSource, type Database } from '@edrion/database';
 import type { ApiEnv } from '@edrion/config';
 import type {
   CreateClassMaterialInput,
@@ -28,6 +28,7 @@ import { hasUsableDocumentText } from '../../student/petros-session-intent/petro
 import { PortalCrudEngine, type CrudConfig } from '../portal-crud.engine';
 import { PortalResourceService, resourceConfig } from '../portal-resource.service';
 import { resolveCurrentStaffId } from '../current-staff';
+import { resolveScopeFilter } from '@edrion/auth';
 import type { PortalActionContext } from '../portal-action-context';
 import {
   buildSectionSourceStructure,
@@ -62,7 +63,7 @@ export class PortalCourseContentService extends PortalResourceService {
       subjectId: schema.classStreamPosts.subjectId,
       snapshot: (r) => ({ kind: r.kind, title: r.title }),
     }),
-    materials: resourceConfig(schema.classMaterials, {
+    materials: { ...resourceConfig(schema.classMaterials, {
       module: 'portal-course-content',
       entityType: 'class_material',
       actionPrefix: 'class_material',
@@ -71,7 +72,7 @@ export class PortalCourseContentService extends PortalResourceService {
       context: { contextType: schema.classMaterials.contextType, contextId: schema.classMaterials.contextId },
       subjectId: schema.classMaterials.subjectId,
       snapshot: (r) => ({ title: r.title, kindLabel: r.kindLabel }),
-    }),
+    }), visibility: isNull(schema.classMaterials.sourceRevokedAt) },
     notes: resourceConfig(schema.classNotes, {
       module: 'portal-course-content',
       entityType: 'class_note',
@@ -97,6 +98,14 @@ export class PortalCourseContentService extends PortalResourceService {
     return resolveCurrentStaffId(this.db, ctx.principal);
   }
 
+  override async remove(key: string, ctx: PortalActionContext, id: string, version: number): Promise<{ deleted: true }> {
+    if (key !== 'materials') return super.remove(key, ctx, id, version);
+    // Keep immutable source references intact. Existing CRUD enforces current
+    // permission/scope, optimistic version and the transactional audit write.
+    await this.crud.update(this.configs.materials!, ctx, id, version, { sourceRevokedAt: new Date() });
+    return { deleted: true };
+  }
+
   async createStream(ctx: PortalActionContext, input: CreateStreamPostInput) {
     return this.create('stream', ctx, {
       institutionId: ctx.principal.institutionId,
@@ -113,6 +122,7 @@ export class PortalCourseContentService extends PortalResourceService {
   }
 
   async createMaterial(ctx: PortalActionContext, input: CreateClassMaterialInput) {
+    await this.requireMaterialContext(ctx, input);
     return this.create('materials', ctx, {
       institutionId: ctx.principal.institutionId,
       contextType: input.contextType,
@@ -225,6 +235,9 @@ export class PortalCourseContentService extends PortalResourceService {
     mimeType: string,
     buffer: Buffer,
   ) {
+    // Validate the referenced target before storing bytes. The material's own
+    // institution_id RLS cannot validate a polymorphic class/course context_id.
+    await this.requireMaterialContext(ctx, input);
     if (buffer.length > PETROS_DOCUMENT_MAX_FILE_BYTES) {
       throw new BadRequestException({ code: 'PETROS_DOCUMENT_LIMIT', message: 'The file exceeds the 20 MiB text-preparation limit.' });
     }
@@ -259,6 +272,34 @@ export class PortalCourseContentService extends PortalResourceService {
     }
   }
 
+  private async requireMaterialContext(ctx: PortalActionContext, input: {
+    contextType: string; contextId: string; subjectId?: string | null;
+  }) {
+    if (input.contextType !== 'class' && input.contextType !== 'course')
+      throw new BadRequestException('Unsupported material context');
+    if (![input.contextId, ...(input.subjectId ? [input.subjectId] : [])]
+      .every(id => /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(id)))
+      throw new BadRequestException('Invalid material context');
+    const institutionId = ctx.principal.institutionId;
+    const target = input.contextType === 'course'
+      ? (await this.db.select({ campusId: schema.courses.campusId, subjectId: schema.courses.subjectId })
+        .from(schema.courses).where(and(eq(schema.courses.id, input.contextId),
+          eq(schema.courses.institutionId, institutionId), eq(schema.courses.status, 'active'))).for('share').limit(1))[0]
+      : (await this.db.select({ campusId: schema.classes.campusId })
+        .from(schema.classes).where(and(eq(schema.classes.id, input.contextId),
+          eq(schema.classes.institutionId, institutionId))).for('share').limit(1))[0];
+    if (!target) throw new NotFoundException('Material context unavailable');
+    const { campusIds } = resolveScopeFilter(ctx.principal, ctx.scope);
+    if (target.campusId && campusIds && !campusIds.includes(target.campusId))
+      throw new ForbiddenException('Material context outside current campus scope');
+    if (input.subjectId) {
+      const [subject] = await this.db.select({ id: schema.subjects.id }).from(schema.subjects)
+        .where(and(eq(schema.subjects.id, input.subjectId), eq(schema.subjects.institutionId, institutionId))).limit(1);
+      if (!subject || ('subjectId' in target && target.subjectId && target.subjectId !== input.subjectId))
+        throw new NotFoundException('Material subject unavailable');
+    }
+  }
+
   /** Existing portal permission/scope/audit owner; request tenant transaction includes every write. */
   async republishMaterial(ctx: PortalActionContext, id: string, input: RepublishClassMaterialInput) {
     return this.republishAuthorizedMaterial(ctx,id,input,ctx.principal.institutionUserId);
@@ -270,6 +311,7 @@ export class PortalCourseContentService extends PortalResourceService {
       eq(schema.classMaterials.id, id), eq(schema.classMaterials.institutionId, ctx.principal.institutionId),
     )).for('update').limit(1);
     if (!material) throw new NotFoundException('Material unavailable');
+    await this.requireMaterialContext(ctx, material);
     const replay = material.objectId === input.objectId && material.version === input.version + 1;
     if (material.version !== input.version && !replay) throw new ConflictException({ code: 'VERSION_CONFLICT', message: 'Reload the material before republishing.' });
     const [file] = await this.db.select().from(schema.storageObjects).where(and(
@@ -438,6 +480,14 @@ export class PortalCourseContentService extends PortalResourceService {
     file: { id: string; filename: string; mimeType: string }, sizeBytes: number,
     { pages, extraction }: { pages: string[]; extraction: PetrosDocumentExtraction },
   ) {
+    return runInAuthorizedCourseSource(this.db, material.institutionId, material.contextId, material.id,
+      () => this.persistScopedPreparedMaterial(material, file, sizeBytes, { pages, extraction }));
+  }
+
+  private async persistScopedPreparedMaterial(material: typeof schema.classMaterials.$inferSelect,
+    file: { id: string; filename: string; mimeType: string }, sizeBytes: number,
+    { pages, extraction }: { pages: string[]; extraction: PetrosDocumentExtraction },
+  ) {
     const recipients = material.contextType === 'course'
       ? await this.db
           .select({ id: schema.courseEnrollments.studentId })
@@ -460,9 +510,10 @@ export class PortalCourseContentService extends PortalResourceService {
 
     // Build the shared text structure from the bounded extraction. Geometry and
     // visual coverage remain unknown until a separate reviewed mapping exists.
-    const structure = buildSectionSourceStructure(extraction.fileSha256, pages.map((text) => ({ text })));
+    const pageChecksum = createHash('sha256').update(pages.map((text, index) => `${index}:${text}`).join('\n')).digest('hex');
+    const structure = buildSectionSourceStructure(pageChecksum, pages.map((text) => ({ text })));
     const now = new Date();
-    const [revision] = await this.db.insert(schema.petrosDocumentSourceRevisions).values({
+    await this.db.insert(schema.petrosDocumentSourceRevisions).values({
       institutionId: material.institutionId,
       classMaterialId: material.id,
       sourceKey: `material:${material.id}`,
@@ -474,27 +525,28 @@ export class PortalCourseContentService extends PortalResourceService {
       extractionStatus: structure.extractionComplete ? 'ready' : 'needs_attention',
       structure: structure as unknown as Record<string, unknown>,
       warnings: structure.warnings,
-    }).onConflictDoUpdate({
-      target: [
-        schema.petrosDocumentSourceRevisions.institutionId,
-        schema.petrosDocumentSourceRevisions.sourceKey,
-        schema.petrosDocumentSourceRevisions.documentVersion,
-        schema.petrosDocumentSourceRevisions.checksum,
-        schema.petrosDocumentSourceRevisions.parserVersion,
-      ],
-      set: { structure: structure as unknown as Record<string, unknown>, warnings: structure.warnings, extractionStatus: structure.extractionComplete ? 'ready' : 'needs_attention', updatedAt: now },
-    }).returning();
-    let canonicalLinked = Boolean(revision?.canonicalKnowledgeItemId);
+    }).onConflictDoNothing();
     // Keep the shared extraction even when nobody is enrolled yet. A later
     // enrollment can be mapped without asking the teacher to upload again.
     if (!recipients.length) return;
     for (const recipient of recipients) {
-      await this.db.transaction(async (tx) => {
+      // Recipients come from the current authorized class/course, never a queued principal.
+      await runInStudentTenant(this.db, { institutionId: material.institutionId, studentId: recipient.id }, () => this.db.transaction(async (tx) => {
         // Serialize both first publication and retries before looking up the canonical owner.
         await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`${material.institutionId}:${recipient.id}:${material.id}`}, 0))`);
         const [currentMaterial] = await tx.select().from(schema.classMaterials)
-          .where(and(eq(schema.classMaterials.id, material.id), eq(schema.classMaterials.institutionId, material.institutionId))).limit(1);
+          .where(and(eq(schema.classMaterials.id, material.id), eq(schema.classMaterials.institutionId, material.institutionId))).for('share').limit(1);
         if (!currentMaterial || currentMaterial.objectId !== file.id || currentMaterial.version !== material.version) throw new Error('Material was removed or replaced before extraction publication');
+        const [student] = await tx.select({ id: schema.students.id }).from(schema.students).where(and(
+          eq(schema.students.id, recipient.id), eq(schema.students.institutionId, material.institutionId), eq(schema.students.status, 'enrolled'))).for('share').limit(1);
+        if (!student) throw new Error('Material recipient is no longer active');
+        if (material.contextType === 'course') {
+          const [enrollment] = await tx.select({ id: schema.courseEnrollments.id }).from(schema.courseEnrollments)
+            .where(and(eq(schema.courseEnrollments.courseId, material.contextId), eq(schema.courseEnrollments.studentId, recipient.id),
+              eq(schema.courseEnrollments.institutionId, material.institutionId))).for('share').limit(1);
+          if (!enrollment) throw new Error('Material enrollment was revoked');
+        } else if (!(await tx.select({ id: schema.students.id }).from(schema.students).where(and(eq(schema.students.id, recipient.id),eq(schema.students.classId,material.contextId))).limit(1))[0])
+          throw new Error('Material class membership was revoked');
         const [deleted] = await tx.select().from(schema.knowledgeItemTombstones).where(and(
           eq(schema.knowledgeItemTombstones.institutionId, material.institutionId),
           eq(schema.knowledgeItemTombstones.studentId, recipient.id),
@@ -547,13 +599,11 @@ export class PortalCourseContentService extends PortalResourceService {
           if (extraction.representation === 'pdf_text') {
             const version = await publishKnowledgeExtraction(tx, { ...existing, ...source } as typeof existing, pages);
             if (version.replayed) {
-              if (revision && !canonicalLinked) {
-                await tx.update(schema.petrosDocumentSourceRevisions).set({ canonicalKnowledgeItemId: existing.id, updatedAt: now })
-                  .where(eq(schema.petrosDocumentSourceRevisions.id, revision.id));
-                canonicalLinked = true;
-              }
               return; // identical replay
             }
+            // Retain a usable V1 snapshot while recording an unreadable replacement.
+            // The new immutable version remains explicitly inadmissible.
+            if (!version.version.admissible && existing.status === 'ready' && existing.extractedTextReady) return;
           }
           [item] = await tx.update(schema.knowledgeItems).set(source).where(eq(schema.knowledgeItems.id, existing.id)).returning() as [typeof existing];
         } else {
@@ -561,12 +611,6 @@ export class PortalCourseContentService extends PortalResourceService {
           if (extraction.representation === 'pdf_text') await publishKnowledgeExtraction(tx, item, pages);
         }
         if (!item) throw new Error('Could not prepare the teacher material for Petros');
-
-        if (revision && !canonicalLinked) {
-          await tx.update(schema.petrosDocumentSourceRevisions).set({ canonicalKnowledgeItemId: item.id, updatedAt: now })
-            .where(eq(schema.petrosDocumentSourceRevisions.id, revision.id));
-          canonicalLinked = true;
-        }
 
         await tx.delete(schema.knowledgeItemPages).where(eq(schema.knowledgeItemPages.itemId, item.id));
         if (pages.length) {
@@ -580,7 +624,7 @@ export class PortalCourseContentService extends PortalResourceService {
             confirmedAt: null,
           })));
         }
-      });
+      }));
     }
   }
 

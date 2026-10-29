@@ -199,7 +199,7 @@ export type AddRegistrationNoteInput = z.infer<typeof addRegistrationNoteSchema>
 export const startReviewSchema = z.object({ version: versionSchema });
 export type StartReviewInput = z.infer<typeof startReviewSchema>;
 
-/** How the new institution admin receives access. */
+/** First-time administrator access. An existing active institution account is always reused. */
 export const credentialDeliverySchema = z.enum(['activation', 'temporary_password']);
 
 export const approveRegistrationSchema = z.object({

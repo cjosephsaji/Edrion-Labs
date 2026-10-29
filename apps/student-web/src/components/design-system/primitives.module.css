@@ -215,6 +215,7 @@
 .action:focus-visible { outline: 3px solid color-mix(in srgb, var(--s-accent) 68%, white); outline-offset: 3px; }
 .action:disabled { cursor: not-allowed; opacity: .55; }
 .action[aria-busy='true'] { cursor: progress; opacity: .82; }
+.action[data-loading-indicator='true'] svg:not([data-button-spinner]) { display: none; }
 .action[data-variant='secondary'] { border-color: var(--s-bd2); background: var(--s-card); color: var(--s-ink); }
 .action[data-variant='danger'] { border-color: var(--s-danger); background: var(--s-danger); }
 .loadingIcon { width: 17px; height: 17px; flex: none; animation: actionSpin 720ms linear infinite; }

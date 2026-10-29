@@ -1,0 +1,158 @@
+Skip to content
+Isolated M3 demonstration
+Education OS
+OVERVIEW
+Dashboard
+Attention Centre
+Petros
+Petros support
+WORKFLOW
+Approvals
+Grievances
+ACADEMIC SETUP
+Academic Years
+Departments
+Grades
+Subjects
+Classes
+Terms
+PEOPLE
+Students
+Student Conduct
+Staff
+Parents
+CAREERS
+Placement cell
+ACADEMICS
+Teaching
+Admissions
+Attendance
+Timetable
+Homework
+Exams
+Gradebook
+Report cards
+Assignments
+Calendar
+FINANCE
+Fees
+Expenses
+Payroll
+OPERATIONS
+Library
+Transport
+Inventory
+Hostel
+COMMUNICATION
+Announcements
+Notifications
+Messages
+PTM scheduling
+HEALTH & WELLBEING
+Health Records
+Medical Incidents
+Medication Logs
+Counseling
+Counseling Cases
+CAMPUS OPERATIONS
+Labs
+Lab Schedule
+Lab Incidents
+Debate calibration
+Front Desk
+Appointments
+Facilities
+Work Orders
+Maintenance
+Assets
+Visitor Logs
+Gate Passes
+Security Incidents
+Emergency Alerts
+Access Logs
+Sensitive Reports
+IT
+Devices
+Access Requests
+Webhooks
+INSIGHTS
+Reports
+ADMINISTRATION
+Campuses
+Documents & Policies
+User Management
+Roles & Permissions
+Settings
+Petros policy
+SSO & roster
+Billing
+Audit Logs
+SM
+Synthetic M3 actor
+4fd1aaa5-d0d2-4874-97e6-f2b7b89c8883@example.test
+Sign out
+Cloud Computing
+All subjects
+Cloud Computing
+
+Isolated source review class · 2 students enrolled
+
+Notes
+Files
+Class updates
+Petros Learn
+Petros Learn
+
+Prepare lessons and guide your students.
+
+Lessons
+Learning goals
+Student progress
+Curriculum authoring
+
+Changes saved. This revision needs review again.
+
+1
+Choose material
+2
+Review lesson
+3
+Preview activities
+4
+Save & submit
+
+STEP 3 OF 4
+
+Preview the proposed student activities
+cloud-models.pptx
+About 20 minutes
+Needs your attention
+Sample lesson — prepared from test data
+About this draft
+
+OBJECTIVE 2 OF 2
+
+Explain the distinction between logical resources and physical hardware using the source wording.
+Change activity
+Previous activity
+Next activity
+Proposed student task
+Read only
+Compare logical and physical resources
+
+Use the source example to explain how virtualization separates logical resources from physical hardware and how a virtual machine receives CPU and memory.
+
+Only a structural description is available. This activity cannot run here; choose a supported alternative. No task execution or answers are shown.
+
+What the student would produce
+
+A short comparison of logical resources and physical hardware, explaining the source example of allocated CPU and memory without treating a virtual machine as physical hardware.
+
+Read-only task layout · subject review required. No student work, assessment result or approved conceptual relationship is shown.
+
+View source material
+
+Student use is unavailable. See review details for requirements.
+
+Back
+Continue to submission

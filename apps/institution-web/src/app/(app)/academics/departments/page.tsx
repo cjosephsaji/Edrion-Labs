@@ -9,7 +9,7 @@ import { useTeachingStaffOptions, teachingStaffSelectOptions } from '@/lib/peopl
 import { useTerm } from '@/lib/term';
 
 export default function DepartmentsPage() {
-  const { t, tp } = useTerm();
+  const { tp } = useTerm();
   const { data: teachers } = useTeachingStaffOptions();
 
   const teacherOptions = teachingStaffSelectOptions(teachers);
@@ -50,7 +50,7 @@ export default function DepartmentsPage() {
       { name: 'code', label: 'Code', type: 'text', placeholder: 'e.g. SCI' },
       {
         name: 'headUserId',
-        label: `${t('department')} head`,
+        label: 'Department head',
         type: 'select',
         nullable: true,
         options: teacherOptions,
@@ -58,18 +58,19 @@ export default function DepartmentsPage() {
       },
       { name: 'description', label: 'Description', type: 'textarea', nullable: true, placeholder: 'Optional' },
     ],
-    [teacherOptions, t],
+    [teacherOptions],
   );
 
   return (
     <ResourceManager<DepartmentRow>
       resource="departments"
-      title={tp('department')}
-      noun={t('department').toLowerCase()}
+      title="Departments"
+      noun="department"
       columns={columns}
       fields={fields}
       filters={filters}
       defaultSortBy="name"
+      extraFilters={{ unitKind: 'department' }}
       toFormValues={(r) => ({ name: r.name, code: r.code, headUserId: r.headUserId ?? '', description: r.description ?? '' })}
     />
   );

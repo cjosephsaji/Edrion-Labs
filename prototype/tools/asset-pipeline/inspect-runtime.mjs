@@ -1,0 +1,3 @@
+import {fileURLToPath} from 'node:url';
+import{NodeIO}from'@gltf-transform/core';import{ALL_EXTENSIONS}from'@gltf-transform/extensions';import{getBounds}from'@gltf-transform/functions';import{MeshoptDecoder}from'meshoptimizer';
+await MeshoptDecoder.ready;const io=new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({'meshopt.decoder':MeshoptDecoder});for(const id of ['wooden_bookshelf_worn','book_encyclopedia_set_01','teaching-board']){const d=await io.read(fileURLToPath(new URL('../../assets/realism/runtime/'+id+'.glb',import.meta.url)));for(const n of d.getRoot().listNodes())if(n.getMesh())console.log(id,n.getName(),JSON.stringify(getBounds(n)));}

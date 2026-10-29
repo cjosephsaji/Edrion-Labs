@@ -104,6 +104,8 @@ export interface CrudConfig {
   refs?: RefSpec[];
   /** Extra equality filters and an optional date-range column. */
   filters?: CrudFilters;
+  /** Server-declared visibility predicate, including retained withdrawn source rows. */
+  visibility?: SQL;
   /**
    * Bespoke enrichment escape-hatch, run after `refs`. Receives the (already ref-enriched) page and
    * returns it with any extra derived fields (e.g. a student's guardian + age for Health). Must be
@@ -154,6 +156,7 @@ export class PortalCrudEngine {
     const f = this.filter(ctx);
     const c = cfg.columns;
     const conds: SQL[] = [eq(c.institutionId, ctx.principal.institutionId)];
+    if (cfg.visibility) conds.push(cfg.visibility);
     if (cfg.scope !== 'institution' && c.campusId && f.campusIds) {
       const inScope = or(isNull(c.campusId), inArray(c.campusId, f.campusIds));
       if (inScope) conds.push(inScope);
@@ -317,7 +320,7 @@ export class PortalCrudEngine {
     const [row] = await this.db
       .select()
       .from(cfg.table)
-      .where(and(eq(cfg.columns.id, id), eq(cfg.columns.institutionId, institutionId)))
+      .where(and(eq(cfg.columns.id, id), eq(cfg.columns.institutionId, institutionId), cfg.visibility))
       .limit(1);
     return row;
   }

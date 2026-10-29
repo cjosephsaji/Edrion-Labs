@@ -1,0 +1,1 @@
+A reconcile baseline; B additive locators; C TXT; D Markdown; E DOCX; F shared preparation/persistence; G controlled semantics; H existing inspector; I real-file/security/restricted-role evaluation and regressions; J evidence and stop.

@@ -4,6 +4,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
 import type { AuditWriter } from '@edrion/audit';
@@ -23,6 +24,8 @@ import {
   type PetrosTeachingPlanning,
   type PetrosTeachingPlanSelection,
   type PreparePetrosDocumentInput,
+  petrosTeacherGuidanceSchema,
+  type PetrosTeachingPriority,
 } from '@edrion/schemas';
 import { API_ENV, AUDIT_WRITER } from '../../../common/tokens';
 import { baseAudit, type ActionContext } from '../../../common/action-context';
@@ -34,6 +37,7 @@ import type { PetrosOwnerScope } from '../petros-loop/petros-loop.repository';
 import { PetrosSessionIntentRepository } from './petros-session-intent.repository';
 import { PetrosDocumentPreparationService } from './petros-document-preparation.service';
 import { documentReadiness, documentSourceVersion, documentPageCitation, requireDocumentReady, documentScopeDisclosure } from './petros-document-source';
+import { guidanceFileExcerpts } from '../assignments/petros-guidance-files';
 import {
   buildDocumentLessonOutline,
   isDocumentLessonOutline,
@@ -41,8 +45,8 @@ import {
 } from './petros-document-outline';
 import {
   publicDocumentTeachingPlan,
-  type DocumentTeachingGeneration,
 } from './petros-document-teaching';
+import { localDateTime } from '../petros-companion/petros-mentor.engine';
 
 type IntentRow = Awaited<ReturnType<PetrosSessionIntentRepository['findIntent']>> extends infer T
   ? NonNullable<T>
@@ -66,7 +70,7 @@ export class PetrosSessionIntentService {
     const scope = owner(principal);
     const existing = await this.repo.findIntentByKey(scope, input.idempotencyKey);
     if (existing) {
-      return this.revalidateDocumentIntent(scope, this.dto(existing));
+      return this.revalidatePreview(scope, this.dto(existing));
     }
     const started = Date.now();
     try {
@@ -155,7 +159,7 @@ export class PetrosSessionIntentService {
         durationMs: Date.now() - started,
         payload: { schemaVersion: intent.schemaVersion },
       });
-      return await this.revalidateDocumentIntent(scope, this.dto(persisted));
+      return await this.revalidatePreview(scope, this.dto(persisted));
     } catch (error) {
       await this.repo.recordFailureEvent({
         institutionId: scope.institutionId,
@@ -176,7 +180,7 @@ export class PetrosSessionIntentService {
   async read(principal: InstitutionalStudentPrincipal, intentId: string) {
     const row = await this.repo.findIntent(owner(principal), intentId);
     if (!row) throw intentNotFound();
-    return this.revalidateDocumentIntent(owner(principal), this.dto(row));
+    return this.revalidatePreview(owner(principal), this.dto(row));
   }
 
   async preparation(principal: InstitutionalStudentPrincipal, preparationId: string) {
@@ -190,6 +194,8 @@ export class PetrosSessionIntentService {
     sourceId: string,
     input: PreparePetrosDocumentInput,
   ) {
+    if (this.env.PETROS_DOCUMENT_TEACHING_ENABLED === false)
+      throw new ServiceUnavailableException('PETROS_DOCUMENT_TEACHING_DISABLED');
     const scope = owner(principal);
     const source = await this.repo.documentSource(scope, sourceId);
     if (!source) throw intentNotFound();
@@ -283,7 +289,7 @@ export class PetrosSessionIntentService {
     // Re-read authorized source at start. Preview excerpts are not sufficient to
     // teach a concept that spans several pages.
     let conceptSource: { pages: Array<{ page: number; text: string }>; complete: boolean } | undefined;
-    let documentTeaching: { publicPlan: ReturnType<typeof publicDocumentTeachingPlan>; internalPlan: DocumentTeachingGeneration } | undefined;
+    let documentTeaching: { id: string; publicPlan: ReturnType<typeof publicDocumentTeachingPlan> } | undefined;
     let documentPathId: string | null = null;
     if (intent.door === 'uploaded_document' && selectedTopic && this.env.PETROS_DOCUMENT_TEACHING_ENABLED !== false) {
       const source = await this.repo.documentSource(scope, referenceId);
@@ -340,9 +346,9 @@ export class PetrosSessionIntentService {
           : {}),
         ...(documentTeaching ? {
           documentTeachingPlan: documentTeaching.publicPlan,
-          documentTeachingInternalPlan: documentTeaching.internalPlan,
+          documentLessonId: documentTeaching.id,
           documentPathId,
-          documentConceptId: documentTeaching.internalPlan.topicId,
+          documentConceptId: documentTeaching.publicPlan.topicId,
         } : {}),
       },
       topicContext: {
@@ -507,6 +513,7 @@ export class PetrosSessionIntentService {
     principal: InstitutionalStudentPrincipal,
     input: PetrosAssistantQuestionInput,
   ) {
+    await this.repo.assertV2Assistance?.();
     const scope = owner(principal);
     const context = await this.quickContext(scope, input.route, input.sourceId);
     const sessionRecommended = requiresSession(input.question);
@@ -806,9 +813,14 @@ export class PetrosSessionIntentService {
       const source = await this.repo.assignmentSource(scope, input.sourceId);
       if (!source) throw intentNotFound();
       const assignment = source.assignment;
+      const parsedGuidance = petrosTeacherGuidanceSchema.safeParse(assignment.petrosGuidance);
+      const guidance = parsedGuidance.success ? parsedGuidance.data : null;
+      const fileContext = guidance ? guidanceFileExcerpts(source.guidanceFiles ?? [], guidance.focus,
+        10 - (guidance.instructions.match(/[\s\S]{1,600}/g)?.length ?? 0)) : [];
       if (!assignment.dueDate) throw staleIntent('This assignment does not have an active deadline window.');
       const opensAt = assignment.createdAt.toISOString();
-      const dueAt = `${assignment.dueDate}T23:59:59.999Z`;
+      const dueAt = guidance ? localDateTime(assignment.dueDate, '23:59:59', source.timezone ?? 'UTC').toISOString()
+        : `${assignment.dueDate}T23:59:59.999Z`;
       const status = normalizeHomeworkStatus(source.submission?.status, assignment.dueDate);
       const teacherOverride = assignment.aiPolicy === 'full'
         ? 'allow_solution' as const
@@ -816,17 +828,29 @@ export class PetrosSessionIntentService {
           ? 'force_guidance' as const
           : 'inherit' as const;
       return {
-        sessionType: 'repair' as const,
-        goal: `Work through ${assignment.title} using questions, hints, setup and feedback while the active assignment rule applies.`,
-        targetConcepts: [source.subjectName ?? assignment.title],
+        sessionType: guidance ? guidance.approach === 'review' ? 'revise' as const
+          : guidance.approach === 'practice' ? 'repair' as const : 'learn' as const : 'repair' as const,
+        teachingPriority: guidance ? guidance.approach === 'review' ? 'quick_review' as const
+          : guidance.approach === 'practice' ? 'revisit_weak_topic' as const : 'understand' as const : undefined,
+        sessionMinutes: guidance?.sessionMinutes,
+        goal: guidance ? `Teacher's learning goal: ${guidance.focus}. ${guidance.instructions}`.trim().slice(0, 600)
+          : `Work through ${assignment.title} using questions, hints, setup and feedback while the active assignment rule applies.`,
+        targetConcepts: [guidance?.focus ?? source.subjectName ?? assignment.title],
         scope: {
           summary: `${assignment.title} · due ${assignment.dueDate}`,
-          boundaries: [
+          boundaries: guidance ? [
+            `Follow the teacher's learning goal and ${guidance.approach} approach.`,
+            'Use the teaching instructions as learning context. Check understanding with practice and explanation.',
+          ] : [
             'Use the authoritative assignment status and deadline shown here.',
             'Change the teaching shape during an active related window instead of issuing an empty refusal.',
           ],
-          curriculum: [source.subjectName ?? assignment.title],
-          knownFailureDetails: assignment.instructions?.trim() ? [assignment.instructions.trim().slice(0, 600)] : [],
+          curriculum: [guidance?.focus ?? source.subjectName ?? assignment.title],
+          knownFailureDetails: guidance ? [
+            `Teacher's learning goal: ${guidance.focus}. Approach: ${guidance.approach}. Complete by ${assignment.dueDate}.`,
+            ...(guidance.instructions.match(/[\s\S]{1,600}/g) ?? []),
+            ...fileContext,
+          ] : assignment.instructions?.trim() ? [assignment.instructions.trim().slice(0, 600)] : [],
           learningPathPosition: null,
         },
         deadline: dueAt,
@@ -846,9 +870,13 @@ export class PetrosSessionIntentService {
           section: source.subjectName,
           excerpt: assignment.instructions?.trim().slice(0, 1_200) ?? null,
         }],
-        returnHref: `/assignments/${assignment.id}`,
-        returnLabel: 'Assignment',
-        policyDisclosures: [
+        returnHref: guidance ? `/learn/goals/${assignment.id}` : `/assignments/${assignment.id}`,
+        returnLabel: guidance ? 'Teacher learning goal' : 'Assignment',
+        policyDisclosures: guidance ? [
+          'Your teacher assigned this learning goal. Petros uses their goal, teaching instructions and completion date to guide this session.',
+          'Your teacher can see whether you started a session or reported completion. Finishing a session does not establish mastery.',
+          ...(guidance.attachmentObjectIds.length ? ['Your teacher attached supporting files. Petros uses selected readable excerpts; files without readable text remain references for you to open.'] : []),
+        ] : [
           'While this related assignment is active, Petros uses questions, hints, setup and feedback instead of supplying a final answer.',
           'This rule is based on the published assignment, its deadline and your submission status; an unrelated question is not restricted.',
         ],
@@ -871,10 +899,11 @@ export class PetrosSessionIntentService {
           status: assignment.status,
           dueDate: assignment.dueDate,
           aiPolicy: assignment.aiPolicy,
+          ...(guidance ? { petrosGuidance: guidance, timezone: source.timezone ?? 'UTC', guidanceFiles: (source.guidanceFiles ?? []).map((file) => ({ id: file.id, version: file.version, checksum: file.checksumSha256 })) } : {}),
           submissionStatus: source.submission?.status ?? 'assigned',
           submissionVersion: source.submission?.version ?? 0,
         }),
-        sourceExpiryMs: Math.min(new Date(dueAt).getTime(), Date.now() + 30 * 60_000),
+        sourceExpiryMs: guidance ? Date.now() + 30 * 60_000 : Math.min(new Date(dueAt).getTime(), Date.now() + 30 * 60_000),
       };
     }
     if (input.door === 'uploaded_document') {
@@ -1100,6 +1129,8 @@ export class PetrosSessionIntentService {
       scope: { summary: string; curriculum: string[] };
       deadline: string | null;
       examDate: string | null;
+      teachingPriority?: PetrosTeachingPriority;
+      sessionMinutes?: number;
       documentReadiness?: PetrosSessionIntent['documentReadiness'];
       documentPlanning?: {
         outline: DocumentLessonOutline;
@@ -1158,7 +1189,7 @@ export class PetrosSessionIntentService {
       summary: base.scope.summary.slice(0, 600),
       pageStart: null,
       pageEnd: null,
-      estimatedMinutes: input.door === 'upcoming_exam' ? 15 : 10,
+      estimatedMinutes: base.sessionMinutes ?? (input.door === 'upcoming_exam' ? 15 : 10),
       keyTerms: [],
       likelyDoubts: [],
     }));
@@ -1166,11 +1197,11 @@ export class PetrosSessionIntentService {
     return {
       topics,
       suggestedTopicId: topics[0]!.id,
-      suggestedPriority: input.door === 'upcoming_exam'
+      suggestedPriority: base.teachingPriority ?? (input.door === 'upcoming_exam'
         ? 'exam_prep'
         : input.door === 'result_repair' || input.door === 'reflection_action'
           ? 'revisit_weak_topic'
-          : 'understand',
+          : 'understand'),
       deadline: deadlineAt ? {
         kind: input.door === 'upcoming_exam' ? 'exam' : input.door === 'active_homework' ? 'assignment' : 'teacher_schedule',
         title: base.scope.summary,
@@ -1237,6 +1268,20 @@ export class PetrosSessionIntentService {
     const readiness = documentReadiness(document.item, document.allPages ?? document.pages);
     requireDocumentReady(readiness);
     return { id: document.item.id, pageCount: readiness.selectedPages.length };
+  }
+
+  /** A retried request must not bring back an invalidated or outdated teacher preview. */
+  private async revalidatePreview(scope: PetrosOwnerScope, intent: PetrosSessionIntent): Promise<PetrosSessionIntent> {
+    if (intent.status === 'invalidated' || intent.status === 'expired' ||
+      (intent.status === 'resolved' && Date.parse(intent.expiresAt) <= Date.now())) {
+      throw staleIntent('This preview is no longer current. Open it again to refresh its source.');
+    }
+    if (intent.door === 'active_homework' && intent.status === 'resolved' &&
+      await this.currentFingerprint(scope, intent) !== intent.sourceFingerprint) {
+      await this.repo.invalidate(scope, intent.id, 'invalidated');
+      throw staleIntent('The teacher’s goal or supporting files changed. Open a new preview.');
+    }
+    return this.revalidateDocumentIntent(scope, intent);
   }
 
   private async revalidateDocumentIntent(
@@ -1339,6 +1384,10 @@ export class PetrosSessionIntentService {
         status: source.assignment.status,
         dueDate: source.assignment.dueDate,
         aiPolicy: source.assignment.aiPolicy,
+        ...(source.assignment.petrosGuidance ? {
+          petrosGuidance: petrosTeacherGuidanceSchema.parse(source.assignment.petrosGuidance), timezone: source.timezone ?? 'UTC',
+          guidanceFiles: (source.guidanceFiles ?? []).map((file) => ({ id: file.id, version: file.version, checksum: file.checksumSha256 })),
+        } : {}),
         submissionStatus: source.submission?.status ?? 'assigned',
         submissionVersion: source.submission?.version ?? 0,
       });
@@ -1489,6 +1538,7 @@ export class PetrosSessionIntentService {
   }
 
   private dto(row: IntentRow): PetrosSessionIntent {
+    if(row.schemaVersion==='petros.v2.admission-intent.v1')throw intentNotFound();
     return petrosSessionIntentSchema.parse({
       ...row.resolvedIntent,
       status: row.status,
@@ -1639,9 +1689,10 @@ function plannedGoal(
     revisit_weak_topic: `Revisit ${focus}, repair the specific gap, and confirm the corrected idea.`,
     quick_review: `Review the essential ideas in ${focus} within the available time and finish with a short recall check.`,
   }[selection.priority];
+  const guidedPurpose = intent.door === 'active_homework' ? `${intent.goal} ${purpose}` : purpose;
   return selection.existingDoubt
-    ? `${purpose} Begin with the student's question: ${selection.existingDoubt}`.slice(0, 600)
-    : purpose.slice(0, 600);
+    ? `${guidedPurpose} Begin with the student's question: ${selection.existingDoubt}`.slice(0, 600)
+    : guidedPurpose.slice(0, 600);
 }
 
 function fingerprint(value: unknown) {

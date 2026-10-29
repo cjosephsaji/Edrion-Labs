@@ -1,0 +1,630 @@
+[
+  {
+    "id": "SchoolChair_01",
+    "name": "School Chair 01",
+    "creator": "Ethan Place",
+    "source": "https://polyhaven.com/a/SchoolChair_01",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "attributionRequired": false,
+    "sourceFormat": "glTF 2.0 + JPEG PBR maps",
+    "runtimeFormat": "GLB + EXT_meshopt_compression + EXT_texture_webp",
+    "triangles": 5072,
+    "textures": [
+      {
+        "name": "SchoolChair_01_nor_gl",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      },
+      {
+        "name": "SchoolChair_01_diff",
+        "mime": "image/webp",
+        "size": [
+          2048,
+          2048
+        ]
+      },
+      {
+        "name": "SchoolChair_01_metallic-SchoolChair_01_roughness",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "bytes": 365736,
+    "intendedLocation": "Desk/reading area",
+    "status": "integrated in browser-verified reference room; awaiting owner visual approval",
+    "file": "runtime/SchoolChair_01.glb",
+    "sha256": "0600c88eea368ccbc8de2f006f6bacaade540706e4bc53a61a860b670cab11b8"
+  },
+  {
+    "id": "SchoolDesk_01",
+    "name": "School Desk 01",
+    "creator": "Ethan Place",
+    "source": "https://polyhaven.com/a/SchoolDesk_01",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "attributionRequired": false,
+    "sourceFormat": "glTF 2.0 + JPEG PBR maps",
+    "runtimeFormat": "GLB + EXT_meshopt_compression + EXT_texture_webp",
+    "triangles": 4162,
+    "textures": [
+      {
+        "name": "SchoolDesk_01_nor_gl",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      },
+      {
+        "name": "SchoolDesk_01_diff",
+        "mime": "image/webp",
+        "size": [
+          2048,
+          2048
+        ]
+      },
+      {
+        "name": "SchoolDesk_01_metallic-SchoolDesk_01_roughness",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "bytes": 273084,
+    "intendedLocation": "Desk/study",
+    "status": "integrated in browser-verified reference room; awaiting owner visual approval",
+    "file": "runtime/SchoolDesk_01.glb",
+    "sha256": "c017d0241bdff3231152f7ae6bb6950cfa2f6549da13ab273376d97576b0fa54"
+  },
+  {
+    "id": "WoodenTable_01",
+    "name": "Wooden Table 01",
+    "creator": "Ethan Place",
+    "source": "https://polyhaven.com/a/WoodenTable_01",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "attributionRequired": false,
+    "sourceFormat": "glTF 2.0 + JPEG PBR maps",
+    "runtimeFormat": "GLB + EXT_meshopt_compression + EXT_texture_webp",
+    "triangles": 952,
+    "textures": [
+      {
+        "name": "WoodenTable_01_nor_gl",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      },
+      {
+        "name": "WoodenTable_01_diff",
+        "mime": "image/webp",
+        "size": [
+          2048,
+          2048
+        ]
+      },
+      {
+        "name": "WoodenTable_01_metallic-WoodenTable_01_roughness",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "bytes": 558948,
+    "intendedLocation": "Desk/study",
+    "status": "integrated in browser-verified reference room; awaiting owner visual approval",
+    "file": "runtime/WoodenTable_01.glb",
+    "sha256": "43909600285443b50e317278dc93010c4ea932d0285efcb63d10506456357cde"
+  },
+  {
+    "id": "book_encyclopedia_set_01",
+    "name": "Book Encyclopedia Set 01",
+    "creator": "John Malcolm",
+    "source": "https://polyhaven.com/a/book_encyclopedia_set_01",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "attributionRequired": false,
+    "sourceFormat": "glTF 2.0 + JPEG PBR maps",
+    "runtimeFormat": "GLB + EXT_meshopt_compression + EXT_texture_webp",
+    "triangles": 67306,
+    "textures": [
+      {
+        "name": "book_encyclopedia_set_01_cover_nor_gl",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      },
+      {
+        "name": "book_encyclopedia_set_01_cover_diff",
+        "mime": "image/webp",
+        "size": [
+          2048,
+          2048
+        ]
+      },
+      {
+        "name": "book_encyclopedia_set_01_cover_metallic-book_encyclopedia_set_01_cover_roughness",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      },
+      {
+        "name": "book_encyclopedia_set_01_paper_nor_gl",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      },
+      {
+        "name": "book_encyclopedia_set_01_paper_diff",
+        "mime": "image/webp",
+        "size": [
+          2048,
+          2048
+        ]
+      }
+    ],
+    "bytes": 1170288,
+    "intendedLocation": "Library/course resources",
+    "status": "integrated in browser-verified reference room; awaiting owner visual approval",
+    "file": "runtime/book_encyclopedia_set_01.glb",
+    "sha256": "fdbf2c71e39bc4080d2a9573cd094b95a5241ee88b65a4ba950186b2e7d4e94d"
+  },
+  {
+    "id": "desk_lamp_arm_01",
+    "name": "Desk Lamp Arm 01",
+    "creator": "Yann Kervran, Kuutti Siitonen",
+    "source": "https://polyhaven.com/a/desk_lamp_arm_01",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "attributionRequired": false,
+    "sourceFormat": "glTF 2.0 + JPEG PBR maps",
+    "runtimeFormat": "GLB + EXT_meshopt_compression + EXT_texture_webp",
+    "triangles": 24102,
+    "textures": [
+      {
+        "name": "desk_lamp_arm_01_nor_gl",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      },
+      {
+        "name": "desk_lamp_arm_01_diff",
+        "mime": "image/webp",
+        "size": [
+          2048,
+          2048
+        ]
+      },
+      {
+        "name": "desk_lamp_arm_01_metal-desk_lamp_arm_01_rough",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "bytes": 1088020,
+    "intendedLocation": "Desk",
+    "status": "integrated in browser-verified reference room; awaiting owner visual approval",
+    "file": "runtime/desk_lamp_arm_01.glb",
+    "sha256": "7af900c316303dacc415a2cdb1f098711bef7195fc87da24331b652d10c297e5"
+  },
+  {
+    "id": "mid_century_lounge_chair",
+    "name": "Mid Century Lounge Chair",
+    "creator": "Kuutti Siitonen",
+    "source": "https://polyhaven.com/a/mid_century_lounge_chair",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "attributionRequired": false,
+    "sourceFormat": "glTF 2.0 + JPEG PBR maps",
+    "runtimeFormat": "GLB + EXT_meshopt_compression + EXT_texture_webp",
+    "triangles": 6148,
+    "textures": [
+      {
+        "name": "mid_century_lounge_chair_nor_gl",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      },
+      {
+        "name": "mid_century_lounge_chair_diff",
+        "mime": "image/webp",
+        "size": [
+          2048,
+          2048
+        ]
+      },
+      {
+        "name": "mid_century_lounge_chair_metal-mid_century_lounge_chair_rough",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "bytes": 779700,
+    "intendedLocation": "Desk/reading area",
+    "status": "acquired candidate; not used in reference room",
+    "file": "runtime/mid_century_lounge_chair.glb",
+    "sha256": "e352b989f2b8e1d8b529a79c23b57e23ab9a1993e14a457d5ef018c96eb2107d"
+  },
+  {
+    "id": "modern_wooden_cabinet",
+    "name": "Modern Wooden Cabinet",
+    "creator": "Patrik Pangerl",
+    "source": "https://polyhaven.com/a/modern_wooden_cabinet",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "attributionRequired": false,
+    "sourceFormat": "glTF 2.0 + JPEG PBR maps",
+    "runtimeFormat": "GLB + EXT_meshopt_compression + EXT_texture_webp",
+    "triangles": 24976,
+    "textures": [
+      {
+        "name": "modern_wooden_cabinet_nor_gl",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      },
+      {
+        "name": "modern_wooden_cabinet_diff",
+        "mime": "image/webp",
+        "size": [
+          2048,
+          2048
+        ]
+      },
+      {
+        "name": "modern_wooden_cabinet_rough",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "bytes": 1075780,
+    "intendedLocation": "Desk/study",
+    "status": "integrated in browser-verified reference room; awaiting owner visual approval",
+    "file": "runtime/modern_wooden_cabinet.glb",
+    "sha256": "4d93cc3c59361d848457a7d251870e7ff3120452bd71b6c470afbaa5a2ce9f12"
+  },
+  {
+    "id": "potted_plant_02",
+    "name": "Potted Plant 02",
+    "creator": "Rico Cilliers",
+    "source": "https://polyhaven.com/a/potted_plant_02",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "attributionRequired": false,
+    "sourceFormat": "glTF 2.0 + JPEG PBR maps",
+    "runtimeFormat": "GLB + EXT_meshopt_compression + EXT_texture_webp",
+    "triangles": 69806,
+    "textures": [
+      {
+        "name": "potted_plant_02_pot_nor_gl",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      },
+      {
+        "name": "potted_plant_02_pot_diff",
+        "mime": "image/webp",
+        "size": [
+          2048,
+          2048
+        ]
+      },
+      {
+        "name": "potted_plant_02_pot_rough",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      },
+      {
+        "name": "potted_plant_02_leaves_nor_gl",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      },
+      {
+        "name": "potted_plant_02_leaves_diff",
+        "mime": "image/webp",
+        "size": [
+          2048,
+          2048
+        ]
+      },
+      {
+        "name": "potted_plant_02_leaves_rough",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "bytes": 1854292,
+    "intendedLocation": "Window corner",
+    "status": "integrated in browser-verified reference room; awaiting owner visual approval",
+    "file": "runtime/potted_plant_02.glb",
+    "sha256": "891d15047e2761f0471117717ab321e2d91ae7c44e5b832e2c334f67317a3d96"
+  },
+  {
+    "id": "wooden_bookshelf_worn",
+    "name": "Wooden Bookshelf Worn",
+    "creator": "Ulan Cabanilla",
+    "source": "https://polyhaven.com/a/wooden_bookshelf_worn",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "attributionRequired": false,
+    "sourceFormat": "glTF 2.0 + JPEG PBR maps",
+    "runtimeFormat": "GLB + EXT_meshopt_compression + EXT_texture_webp",
+    "triangles": 10106,
+    "textures": [
+      {
+        "name": "wooden_bookshelf_worn_nor_gl",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      },
+      {
+        "name": "wooden_bookshelf_worn_diff",
+        "mime": "image/webp",
+        "size": [
+          2048,
+          2048
+        ]
+      },
+      {
+        "name": "wooden_bookshelf_worn_metal-wooden_bookshelf_worn_rough",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "bytes": 1590756,
+    "intendedLocation": "Library",
+    "status": "acquired candidate; not used in reference room",
+    "file": "runtime/wooden_bookshelf_worn.glb",
+    "sha256": "ee09853d6a5bbeb310904fecd5b3d64cbd70e9e793bf1964a081e680c1e7043b"
+  },
+  {
+    "id": "wooden_display_shelves_01",
+    "name": "Wooden Display Shelves 01",
+    "creator": "James Ray Cock",
+    "source": "https://polyhaven.com/a/wooden_display_shelves_01",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "attributionRequired": false,
+    "sourceFormat": "glTF 2.0 + JPEG PBR maps",
+    "runtimeFormat": "GLB + EXT_meshopt_compression + EXT_texture_webp",
+    "triangles": 3174,
+    "textures": [
+      {
+        "name": "wooden_display_shelves_01_nor_gl",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      },
+      {
+        "name": "wooden_display_shelves_01_diff",
+        "mime": "image/webp",
+        "size": [
+          2048,
+          2048
+        ]
+      },
+      {
+        "name": "wooden_display_shelves_01_metal-wooden_display_shelves_01_rough",
+        "mime": "image/webp",
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "bytes": 420336,
+    "intendedLocation": "Library",
+    "status": "integrated in browser-verified reference room; awaiting owner visual approval",
+    "file": "runtime/wooden_display_shelves_01.glb",
+    "sha256": "9f40bab1109767ad170077c33ac0912dc522053e299de3ec3b18615a56e1b804"
+  },
+  {
+    "id": "classroom-shell",
+    "name": "Classroom architectural shell",
+    "creator": "Christophe Seux",
+    "source": "https://www.blender.org/download/demo-files/",
+    "download": "https://download.blender.org/demo/test/classroom.zip",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attributionRequired": false,
+    "sourceFormat": "Blender .blend with linked CC0 assets",
+    "runtimeFormat": "GLB + EXT_meshopt_compression + EXT_texture_webp",
+    "triangles": 72970,
+    "bounds": {
+      "min": [
+        -4.710119247436523,
+        -0.00017404364077527879,
+        -4.183609485626221
+      ],
+      "max": [
+        5.460630416870117,
+        3.1021388373762178,
+        4.182694056343544
+      ]
+    },
+    "textures": [
+      {
+        "name": "base_paintedPlasterWall",
+        "size": [
+          700,
+          700
+        ],
+        "mime": "image/webp"
+      },
+      {
+        "name": "woodPlanks",
+        "size": [
+          700,
+          700
+        ],
+        "mime": "image/webp"
+      },
+      {
+        "name": "base_wallPaint",
+        "size": [
+          2048,
+          2048
+        ],
+        "mime": "image/webp"
+      },
+      {
+        "name": "base_woodFloor",
+        "size": [
+          1024,
+          1024
+        ],
+        "mime": "image/webp"
+      }
+    ],
+    "bytes": 1302212,
+    "intendedLocation": "Architecture, floor, ceiling, windows and trim",
+    "status": "integrated in browser-verified reference room; awaiting owner visual approval",
+    "file": "runtime/classroom-shell.glb",
+    "sha256": "025419e375f9c1de670d4adbb9574fbd6dfebb2ed29353234ab54d6f1a95161f"
+  },
+  {
+    "id": "teaching-board",
+    "name": "Classroom teaching-board fixture",
+    "creator": "Christophe Seux",
+    "source": "https://www.blender.org/download/demo-files/",
+    "download": "https://download.blender.org/demo/test/classroom.zip",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attributionRequired": false,
+    "sourceFormat": "Blender .blend with linked CC0 assets",
+    "runtimeFormat": "GLB + EXT_meshopt_compression + EXT_texture_webp",
+    "triangles": 964,
+    "bounds": {
+      "min": [
+        -0.40009647607803345,
+        0.7086901217094218,
+        -3.2803338781123332
+      ],
+      "max": [
+        2.1949353218078613,
+        2.0843374526624032,
+        -3.0519676560444906
+      ]
+    },
+    "textures": [
+      {
+        "name": "base_paintedPlasterWall",
+        "size": [
+          700,
+          700
+        ],
+        "mime": "image/webp"
+      }
+    ],
+    "bytes": 86364,
+    "intendedLocation": "Teaching wall",
+    "status": "integrated in browser-verified reference room; awaiting owner visual approval",
+    "file": "runtime/teaching-board.glb",
+    "sha256": "8dcbee3c5f9d3ac2dcaf06756aad4114ea6553e44b07149deaa9b4e3241be847"
+  },
+  {
+    "id": "studio_small_03",
+    "name": "Studio Small 03",
+    "creator": "Greg Zaal",
+    "source": "https://polyhaven.com/a/studio_small_03",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "attributionRequired": false,
+    "sourceFormat": "Radiance HDR (1K)",
+    "runtimeFormat": "Radiance HDR (1K)",
+    "triangles": 0,
+    "textures": [
+      {
+        "name": "studio_small_03",
+        "size": [
+          1024,
+          512
+        ],
+        "mime": "image/vnd.radiance"
+      }
+    ],
+    "intendedLocation": "Indoor PBR environment",
+    "bytes": 1686299,
+    "file": "runtime/studio_small_03.hdr",
+    "sha256": "30933d55e45f0795daf49f3cbefbe0e5ebcb821ee04fb0a2818c02ffc3938817",
+    "status": "integrated in browser-verified reference room; awaiting owner visual approval"
+  },
+  {
+    "id": "spruit_sunrise",
+    "name": "Spruit Sunrise",
+    "creator": "Greg Zaal",
+    "source": "https://polyhaven.com/a/spruit_sunrise",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "attributionRequired": false,
+    "sourceFormat": "Radiance HDR (1K)",
+    "runtimeFormat": "Radiance HDR (1K)",
+    "triangles": 0,
+    "textures": [
+      {
+        "name": "spruit_sunrise",
+        "size": [
+          1024,
+          512
+        ],
+        "mime": "image/vnd.radiance"
+      }
+    ],
+    "intendedLocation": "Window view",
+    "bytes": 1500948,
+    "file": "runtime/spruit_sunrise.hdr",
+    "sha256": "38199a31e945906f6778431e989256a92d9d78b0cfc0f902accad9f5244bf50f",
+    "status": "integrated in browser-verified reference room; awaiting owner visual approval"
+  }
+]

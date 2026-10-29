@@ -5,6 +5,7 @@ import { campuses } from './campuses';
 import { classes, subjects, academicYears, academicTerms } from './academics';
 import { students, staff } from './people';
 import { storageObjects } from './student';
+import type { PetrosTeacherGuidance } from '@edrion/schemas';
 
 /**
  * INSTITUTION-PORTAL assignments (Phase 6). A two-level model, mirroring attendance/exams:
@@ -36,6 +37,7 @@ export const assignments = pgTable(
     subjectId: uuid('subject_id').references(() => subjects.id, { onDelete: 'set null' }),
     teacherId: uuid('teacher_id').references(() => staff.id, { onDelete: 'set null' }),
     instructions: text('instructions'),
+    petrosGuidance: jsonb('petros_guidance').$type<PetrosTeacherGuidance | null>(),
     dueDate: date('due_date'),
     maxPoints: integer('max_points').notNull().default(100),
     /** draft | published | closed. */

@@ -1,0 +1,53 @@
+import { petrosVerificationOutput } from './petros-verification-output';
+import { beforeAll,afterAll,describe,it,expect,vi } from 'vitest';
+import {randomUUID} from 'node:crypto';
+import {writeFileSync} from 'node:fs';
+import {eq,schema,runInScopedTenant,hasActiveTenantTransaction} from '@edrion/database';
+import {M3_MODEL_VERSION} from '@edrion/schemas';
+import {startM3Fixture,type M3Fixture} from './petros-m3-fixture';
+import {PetrosAiRoutingRepository} from '../petros-ai-routing/petros-ai-routing.repository';
+import {PetrosAiGatewayService} from '../petros-ai-routing/petros-ai-gateway.service';
+import {PetrosLearningProposalService} from '../portal/teaching/petros-learning-proposal.service';
+import {PetrosLearningProposalRepository} from '../portal/teaching/petros-learning-proposal.repository';
+import {PortalTeachingService} from '../portal/teaching/portal-teaching.service';
+import {engineeringOutline,proposalEvidence} from '../portal/teaching/petros-learning-proposal.validation';
+import {controlledAuthorization} from '../student/knowledge/petros-m2-controlled-gateway.fixture';
+describe.runIf(process.env.PETROS_M3_DB_TESTS==='1')('M3 actual restricted staff gateway ledger and durable proposal',()=>{
+ let f:M3Fixture;beforeAll(async()=>{f=await startM3Fixture();},120000);afterAll(async()=>{await f?.f.close();});
+ it('controlled transport uses registered teaching.propose, settles real usage and persists same validated proposal without provider transaction',async()=>{
+  const file=await f.document('m3/qualified-scope.txt','cloud'),scope={...f.scope,sourceItemId:file.id,courseId:f.courses.cloud};
+  const providerId=randomUUID(),modelId=randomUUID(),routeId=randomUUID();
+  await f.admin.insert(schema.petrosAiProviders).values({id:providerId,key:'m3-local-contract',displayName:'Controlled transport only',adapterType:'openai_compatible'});
+  await f.admin.insert(schema.petrosAiModels).values({id:modelId,providerId,modelKey:'m3-local-contract',displayName:'Controlled transport only',pricing:{inputPerMillionMicros:1000,outputPerMillionMicros:1000}});
+  const [fn]=await f.admin.insert(schema.petrosAiFunctions).values({key:'teaching.propose',displayName:'M3 controlled contract',description:'No genuine inference',category:'teaching',settings:{maxInputTokens:18000,maxOutputTokens:3000,temperature:0,timeoutMs:15000,maxRetries:0,streaming:false,caching:false}}).returning();
+  await f.admin.insert(schema.petrosAiFunctionRoutes).values({id:routeId,functionId:fn!.id,providerId,modelId});
+  await f.admin.insert(schema.petrosAiBudgetPolicies).values({scope:'global',dailyBudgetMicros:1000000,monthlyBudgetMicros:1000000}).onConflictDoNothing();
+  await f.admin.update(schema.petrosAiBudgetPolicies).set({enabled:true,dailyBudgetMicros:1000000,monthlyBudgetMicros:1000000}).where(eq(schema.petrosAiBudgetPolicies.scope,'global'));
+  const lookup=await runInScopedTenant(f.f.db,scope,()=>f.units.lookup(file.revision.id,{limit:8,visibleOnly:true}));if(lookup.status!=='available')throw Error('Missing real units');
+  const output=engineeringOutline(proposalEvidence(lookup.units)),preparation=await runInScopedTenant(f.f.db,scope,()=>f.preps.get(f.institutionId,file.preparationId,false,'v2'));
+  const candidate={routeId,providerId,modelId,tier:0},transport=vi.fn(async()=>{expect(hasActiveTenantTransaction()).toBe(false);return {kind:'json',content:output,inputTokens:10,outputTokens:8,cachedTokens:0,actualCostMicros:0};});
+  const ledger=new PetrosAiRoutingRepository(f.f.db),gateway=new PetrosAiGatewayService({ensureRegistry:async()=>{},previewRoute:async()=>({selected:candidate,attempts:[candidate],cacheAllowed:false,matchedRules:[]})} as never,ledger,{adapter:()=>({execute:transport})} as never,{get:vi.fn(),set:vi.fn()} as never,{PETROS_AI_MODE:'live',NODE_ENV:'test',PETROS_M2_ISOLATED_ENABLED:true} as never);
+  await expect(gateway.execute({context:{functionKey:'teaching.propose',institutionId:f.institutionId,studentId:f.student},
+    sessionId:randomUUID(),input:[{type:'text',text:'Negative authorization fixture only.'}]} as Parameters<typeof gateway.execute>[0]))
+    .rejects.toMatchObject({response:{code:'PETROS_SOURCE_BUDGET_SCOPE_INVALID'}});
+  expect(transport).not.toHaveBeenCalled();
+  const service=new PetrosLearningProposalService(f.f.db,{NODE_ENV:'test',PETROS_M2_ISOLATED_ENABLED:true} as never,new PortalTeachingService(f.f.db),f.units,new PetrosLearningProposalRepository(f.f.db),f.packs,gateway);
+  const ctx=await f.run(async c=>c),authorization=controlledAuthorization(file.revision);
+  Object.assign(authorization.sourceReservation!,{stage:'teaching.propose',interpretationVersion:M3_MODEL_VERSION,preparationId:file.preparationId,fence:preparation.fence,routeId,providerKey:'m3-local-contract',modelKey:'m3-local-contract'});
+  const command={commandId:randomUUID(),sourceRevisionId:file.revision.id,origin:'gateway'};
+  await expect(f.run(c=>service.prepareAuthorized(c,f.classId,f.subjects.cloud,command,authorization,new AbortController().signal))).rejects.toThrow('TRANSACTION_FORBIDDEN');expect(transport).not.toHaveBeenCalled();
+  const began=performance.now(),view=await service.prepareAuthorized(ctx,f.classId,f.subjects.cloud,command,authorization,new AbortController().signal);
+  const replay=await service.prepareAuthorized(ctx,f.classId,f.subjects.cloud,command,authorization,new AbortController().signal);expect(replay.proposal.id).toBe(view.proposal.id);expect(transport).toHaveBeenCalledOnce();expect(view.proposal.generator.origin).toBe('controlled_fixture');expect(view.proposal.generator.routeId).toBe(routeId);
+  const [usage]=await f.admin.select().from(schema.petrosAiUsageEvents).where(eq(schema.petrosAiUsageEvents.requestId,authorization.sourceReservation!.requestId));expect(usage?.studentId).toBeNull();expect(usage?.budgetReservationId).toBeTruthy();
+  const [hold]=await f.f.adminSql`select id,source_context as "sourceContext",student_id as "studentId",session_id as "sessionId" from petros_ai_attempt_reservations where id=${usage!.budgetReservationId!}`;expect(hold?.sourceContext?.stage).toBe('teaching.propose');expect(hold?.studentId).toBeNull();expect(hold?.sessionId).toBeNull();
+  const changedFile=await f.document('m3/qualified-scope.txt','cloud'),changedScope={...f.scope,sourceItemId:changedFile.id,courseId:f.courses.cloud};
+  const changedLookup=await runInScopedTenant(f.f.db,changedScope,()=>f.units.lookup(changedFile.revision.id,{limit:8,visibleOnly:true}));if(changedLookup.status!=='available')throw Error('Missing changed-source units');
+  const changedPrep=await runInScopedTenant(f.f.db,changedScope,()=>f.preps.get(f.institutionId,changedFile.preparationId,false,'v2')),changedAuth=controlledAuthorization(changedFile.revision);
+  Object.assign(changedAuth.sourceReservation!,{stage:'teaching.propose',interpretationVersion:M3_MODEL_VERSION,preparationId:changedFile.preparationId,fence:changedPrep.fence,routeId,providerKey:'m3-local-contract',modelKey:'m3-local-contract'});
+  transport.mockImplementationOnce(async()=>{expect(hasActiveTenantTransaction()).toBe(false);await f.admin.update(schema.classMaterials).set({sourceRevokedAt:new Date(),version:2}).where(eq(schema.classMaterials.id,changedFile.id));return {kind:'json',content:engineeringOutline(proposalEvidence(changedLookup.units)),inputTokens:10,outputTokens:8,cachedTokens:0,actualCostMicros:0};});
+  const rejectedCommand=randomUUID();await expect(service.prepareAuthorized(ctx,f.classId,f.subjects.cloud,{commandId:rejectedCommand,sourceRevisionId:changedFile.revision.id,origin:'gateway'},changedAuth,new AbortController().signal)).rejects.toThrow();
+  const rejected=await f.f.adminSql`select id from petros_document_preparations where request_context->>'commandId'=${rejectedCommand}`;expect(rejected).toHaveLength(0);
+  const [settled]=await f.admin.select().from(schema.petrosAiUsageEvents).where(eq(schema.petrosAiUsageEvents.requestId,changedAuth.sourceReservation!.requestId));expect(settled?.budgetReservationId).toBeTruthy();
+  writeFileSync(petrosVerificationOutput('docs/verification/petros-v2/m3-evidence/gateway-ledger.json'),JSON.stringify({label:'Controlled transport, real restricted ledger; zero genuine provider calls',proposalId:view.proposal.id,stage:hold!.sourceContext!.stage,usageId:usage!.id,reservationId:hold!.id,elapsedMs:performance.now()-began,transportCalls:transport.mock.calls.length,actualSpendingMicros:0,withdrawalDuringTransportRejected:true,withdrawnUsageSettled:true},null,2));
+ },60000);
+});

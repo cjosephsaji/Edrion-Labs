@@ -1,4 +1,5 @@
 import { KnowledgeDocumentService } from '../knowledge/knowledge-document.service';
+import { publicPetrosSessionColumns } from '../../../common/petros-session-projection';
 import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import {
@@ -13,7 +14,8 @@ import {
   or,
   schema,
   sql,
-  getDatabase,
+  runOutsideTenant,
+  runInStudentTenant,
   type Database,
 } from '@edrion/database';
 import {
@@ -42,7 +44,7 @@ export class PetrosArtifactsRepository {
   constructor(@Inject(DATABASE) private readonly db: Database, private readonly documents: KnowledgeDocumentService) {}
 
   findSession(scope: PetrosOwnerScope, sessionId: string) {
-    return this.db.select().from(schema.petrosLearningSessions).where(and(
+    return this.db.select(publicPetrosSessionColumns).from(schema.petrosLearningSessions).where(and(
       eq(schema.petrosLearningSessions.id, sessionId),
       eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
       eq(schema.petrosLearningSessions.studentId, scope.studentId),
@@ -276,8 +278,8 @@ export class PetrosArtifactsRepository {
 
   /**
    * Failure telemetry must survive the student request transaction that is intentionally rolled
-   * back when the API returns a validation error. This content-free write uses the maintenance
-   * path allowed by the Stage 7 event RLS policy and still carries the explicit owner scope.
+   * back when the API returns a validation error. This content-free write uses the restricted
+   * pool in a separate owner-scoped transaction.
    */
   recordFailureEvent(scope: PetrosOwnerScope, input: {
     type: 'artifact.save_failed' | 'artifact.sanitization_failed' | 'artifact.commit_failed';
@@ -285,14 +287,14 @@ export class PetrosArtifactsRepository {
     proposalId?: string;
     payload?: Record<string, unknown>;
   }) {
-    return getDatabase().insert(schema.petrosArtifactEvents).values({
+    return runOutsideTenant(() => runInStudentTenant(this.db, scope, () => this.db.insert(schema.petrosArtifactEvents).values({
       institutionId: scope.institutionId,
       studentId: scope.studentId,
       bundleId: input.bundleId,
       proposalId: input.proposalId,
       type: input.type,
       payload: input.payload ?? {},
-    });
+    })));
   }
 
   failCommit(commandId: string, errorCode: string) {

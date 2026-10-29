@@ -209,7 +209,12 @@ describe.runIf(process.env.PETROS_LOCAL_DB_TESTS === '1')(
       for (const filename of readdirSync(join(migrations, 'sql'))
         .filter((name) => name.endsWith('.sql') && !name.startsWith('._'))
         .sort()) {
-        await client.unsafe(readFileSync(join(migrations, 'sql', filename), 'utf8'));
+        const replay = readFileSync(join(migrations, 'sql', filename), 'utf8');
+        const overlay = replay.indexOf('-- M0-R: retain the final repair overlay');
+        // This deliberately old S1 schema predates the document tables. Install only
+        // its historical baseline here; the full final security overlay follows the
+        // actual complete migration below, before application services are exercised.
+        await client.unsafe(overlay >= 0 ? replay.slice(0, overlay) : replay);
       }
       await client.unsafe('ALTER ROLE edrion_app LOGIN');
       appClient = postgres({
@@ -243,6 +248,8 @@ describe.runIf(process.env.PETROS_LOCAL_DB_TESTS === '1')(
       await db.insert(schema.institutionUsers).values({ id: staffUserId, institutionId,
         fullName: 'Synthetic preparation staff', email: 'preparation-staff@example.test', status: 'active' });
       await db.insert(schema.institutionUserRoles).values({ institutionUserId: staffUserId, roleKey: 'institution_owner' });
+      await db.insert(schema.staff).values({ institutionId, institutionUserId: staffUserId,
+        firstName: 'Synthetic', lastName: 'Preparation educator', status: 'active' });
       const [year] = await db
         .insert(schema.academicYears)
         .values({
@@ -312,7 +319,8 @@ describe.runIf(process.env.PETROS_LOCAL_DB_TESTS === '1')(
       await migrate(db, { migrationsFolder: migrations });
       // Match the production migrator after additive Phase 2 tables are created.
       // The earlier grant pass only covered the historical schema.
-      await client.unsafe(readFileSync(join(migrations, 'sql/zzz_grants.sql'), 'utf8'));
+      for (const filename of readdirSync(join(migrations, 'sql')).filter(name => name.endsWith('.sql') && !name.startsWith('._')).sort())
+        await client.unsafe(readFileSync(join(migrations, 'sql', filename), 'utf8'));
       const profile = stage4ProfileFixture('cloud', institutionId);
       await db.insert(schema.petrosTopicProfiles).values({
         id: profile.profileId,
@@ -617,6 +625,7 @@ describe.runIf(process.env.PETROS_LOCAL_DB_TESTS === '1')(
           filename.endsWith('.pdf') ? 'application/pdf' : 'text/plain',
           buffer,
         ),
+        staffUserId,
       );
       if (filename.endsWith('.pdf')) await finishPreparation(publisher, material.id);
       const items = await db.select().from(schema.knowledgeItems);
@@ -783,7 +792,7 @@ describe.runIf(process.env.PETROS_LOCAL_DB_TESTS === '1')(
     const commandHttp = (materialId: string, id: string, action: string, version: number) => http()
       .post(`/v1/portal/course-content/materials/${materialId}/preparation/${id}/${action}`).set('Cookie', staffCookie).send({ version });
     const prep = (id: string) => runInInstitutionTenant(tenantDb, institutionId, () => preparationRepo().get(institutionId, id));
-    const inPortal = <T>(work: () => Promise<T>) => runInInstitutionTenant(tenantDb, institutionId, work);
+    const inPortal = <T>(work: () => Promise<T>) => runInInstitutionTenant(tenantDb, institutionId, work, staffUserId);
     const copies = (materialId: string) => db.select().from(schema.knowledgeItems).where(sql`${schema.knowledgeItems.origin}->>'classMaterialId' = ${materialId}`);
 
     it('commits authenticated PDF publication as durable queued work before any parser runs; status/cancel/retry are permissioned', async () => {
@@ -879,7 +888,8 @@ describe.runIf(process.env.PETROS_LOCAL_DB_TESTS === '1')(
         } finally {
           await db.update(schema.institutionUsers).set({ status: 'active' }).where(eq(schema.institutionUsers.id, staffUserId));
           await db.update(schema.students).set({ classId }).where(eq(schema.students.id, studentId));
-          await db.delete(schema.classMaterials).where(eq(schema.classMaterials.id, material.id));
+          // Retain completed shared source history. Cancel only the synthetic receipt.
+          await db.update(schema.knowledgePreparations).set({ state: 'cancelled' }).where(eq(schema.knowledgePreparations.materialId, material.id));
         }
       },
     );
@@ -2878,10 +2888,20 @@ describe.runIf(process.env.PETROS_LOCAL_DB_TESTS === '1')(
           await repo.finishCommand(command.row!.id, started.body.session);
         });
         try {
-          if (change === 'material_deleted')
-            await db
-              .delete(schema.classMaterials)
-              .where(eq(schema.classMaterials.id, published.material.id));
+          if (change === 'material_deleted') {
+            const [currentMaterial] = await db.select().from(schema.classMaterials).where(eq(schema.classMaterials.id, published.material.id));
+            await http().delete(`/v1/portal/course-content/materials/${published.material.id}`).set('Cookie', staffCookie)
+              .send({ version: currentMaterial!.version }).expect(200);
+            // User-visible deletion retains authoritative source history.
+            const [retained] = await db.select().from(schema.classMaterials).where(eq(schema.classMaterials.id, published.material.id));
+            expect(retained!.sourceRevokedAt).not.toBeNull();
+            await expect(inPortal(() => portalPublisher.get('materials', portalContext(), published.material.id)))
+              .rejects.toMatchObject({ status: 404 });
+            const visible = await http().get('/v1/portal/course-content/materials')
+              .query({ contextType: published.material.contextType, contextId: published.material.contextId })
+              .set('Cookie', staffCookie).expect(200);
+            expect(visible.body.items.some((row: { id: string }) => row.id === published.material.id)).toBe(false);
+          }
           if (change === 'source_revoked')
             await db
               .update(schema.knowledgeItems)
@@ -3429,7 +3449,7 @@ describe.runIf(process.env.PETROS_LOCAL_DB_TESTS === '1')(
       const { service, repo } = services();
       const input = request(item.id);
       const intent = await service.resolve(principal, input);
-      const before = await repo.documentSource(principal, item.id);
+      const before = await asStudent(() => repo.documentSource(principal, item.id));
       await db
         .update(schema.knowledgeItemPages)
         .set({ text: before!.pages[0]!.text.replace('grow', 'fall') })
@@ -3484,7 +3504,7 @@ describe.runIf(process.env.PETROS_LOCAL_DB_TESTS === '1')(
         const [original] = await db.select().from(schema.storageObjects).where(eq(schema.storageObjects.id, item.objectIds[0]!));
         await expect(runInInstitutionTenant(tenantDb, institutionId, () => publisher.publishPreparedPdf(
           material, { ...original!, checksumSha256: result.fileSha256 }, result,
-        ))).rejects.toThrow('synthetic replacement failure');
+        ), staffUserId)).rejects.toThrow('synthetic replacement failure');
       } finally {
         await client.unsafe('DROP TRIGGER reject_replacement_page ON knowledge_item_pages');
       }

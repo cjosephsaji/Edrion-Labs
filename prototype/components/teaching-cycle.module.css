@@ -1,0 +1,115 @@
+.cycle {
+  font-family: inherit;
+  color: #233f32;
+  padding: 16px 20px;
+  background: #fffff9;
+  border: 1px solid #d4dfce;
+  border-radius: 18px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.meta {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #5e7565;
+}
+.explanation {
+  font-size: 17px;
+  max-width: 76ch;
+  margin: 10px 0;
+}
+.cycle h2 {
+  font-size: 17px;
+  font-weight: 550;
+  margin: 10px 0;
+  line-height: 1.4;
+}
+.cycle button {
+  font: inherit;
+  color: inherit;
+  border: 1px solid #b8ccbb;
+  border-radius: 10px;
+  background: #f1f6ec;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.cycle button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.cycle button:focus-visible,
+.cycle input:focus-visible,
+.cycle textarea:focus-visible {
+  outline: 3px solid #b57f30;
+  outline-offset: 2px;
+}
+.cycle button[aria-pressed='true'],
+.cycle button.primary {
+  color: white;
+  background: #2e654b;
+  border-color: #2e654b;
+}
+.choices,
+.actions,
+.help,
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+.help button,
+.controls button {
+  font-size: 12px;
+  padding: 6px 9px;
+  background: transparent;
+}
+.controls {
+  border-top: 1px solid #e0e7da;
+  padding-top: 9px;
+}
+.feedback {
+  border-left: 3px solid #729365;
+  padding-left: 12px;
+  margin: 10px 0;
+}
+.example {
+  font-size: 14px;
+  color: #52654d;
+}
+.cycle input,
+.cycle textarea {
+  font: inherit;
+  padding: 9px;
+  border: 1px solid #a8b9a2;
+  border-radius: 8px;
+  color: inherit;
+  background: #fff;
+}
+.cycle textarea {
+  width: 100%;
+  resize: vertical;
+}
+.cycle input {
+  max-width: 130px;
+}
+.cycle small {
+  color: #6f7d68;
+  font-size: 11px;
+}
+@media (max-width: 600px) {
+  .cycle {
+    padding: 12px;
+    font-size: 14px;
+  }
+  .meta {
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+  .explanation,
+  .cycle h2 {
+    font-size: 15px;
+  }
+}

@@ -12,6 +12,7 @@ import { clearPortalSession } from '@/lib/portal-session';
 import { isNavItemActive } from '@/lib/nav';
 import { resolveNav } from '@/lib/resolve-nav';
 import { useTerm } from '@/lib/term';
+import { SwitchInstitutionLink } from './switch-institution-link';
 import { usePortalRequests } from '@/lib/requests';
 
 const COLLAPSE_KEY = 'edrion.portal.sidebar.collapsed';
@@ -198,6 +199,7 @@ export function Sidebar() {
         </div>
         </div>
 
+        <SwitchInstitutionLink collapsed={effectiveCollapsed} enabled={!!me} />
         <button
           onClick={handleLogout}
           aria-label="Sign out"

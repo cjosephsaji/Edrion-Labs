@@ -143,9 +143,19 @@ export function useAcademicMutations(resource: Resource) {
 const OPTION_PARAMS: ListParams = { page: 1, pageSize: 100, sortDir: 'asc' };
 
 /** Lightweight option lists for form selects (first 100 rows in scope). */
-export function useDepartmentOptions() {
-  return useAcademicList<DepartmentRow>('departments', { ...OPTION_PARAMS, sortBy: 'name' });
+export function useDepartmentOptions(unitKind: 'department' | 'programme' = 'programme') {
+  return useAcademicList<DepartmentRow>('departments', {
+    ...OPTION_PARAMS,
+    sortBy: 'name',
+    filters: unitKind ? { unitKind } : undefined,
+  });
 }
+
+/** Staff belong to organisational departments, independently of student courses/streams. */
+export function useStaffDepartmentOptions() {
+  return useDepartmentOptions('department');
+}
+
 export function useAcademicYearOptions(enabled = true) {
   return useAcademicList<AcademicYearRow>('academic-years', {
     ...OPTION_PARAMS,
@@ -401,31 +411,37 @@ export function useCommitProgrammeStructure() {
 export function useCreatedProgrammeStructures() {
   const client = usePortalClient();
   const { scope } = useScope();
-  const { data: depts } = useDepartmentOptions();
-  const deptIds = (depts?.items ?? []).map((d) => d.id).join(',');
-
   return useQuery({
-    queryKey: ['academics', 'programme-structures-created', scopeKey(scope), deptIds],
+    queryKey: ['academics', 'programme-structures-created', scopeKey(scope)],
     queryFn: async () => {
-      const items = depts?.items ?? [];
-      if (items.length === 0) return [] as ProgrammeStructureDetail[];
-
+      // Onboarding must expose every saved structure, including after deleting the last one.
+      const departments: DepartmentRow[] = [];
+      let page = 1;
+      let hasMore: boolean;
+      do {
+        const result = await client.get<Paged<DepartmentRow>>(
+          `/portal/academics/departments?page=${page}&pageSize=100&sortBy=name&sortDir=asc&unitKind=programme`,
+          scope,
+        );
+        departments.push(...result.items);
+        hasMore = result.hasMore;
+        page += 1;
+      } while (hasMore);
       const results = await Promise.all(
-        items.map(async (d) => {
+        departments.map(async (department) => {
           const detail = await client.get<ProgrammeStructureDetail>(
-            `/portal/academics/programmes/${d.id}/structure`,
+            `/portal/academics/programmes/${department.id}/structure`,
             scope,
           );
           return detail.totals.slots > 0 ? detail : null;
         }),
       );
-      return results.filter((r): r is ProgrammeStructureDetail => r != null);
+      return results.filter((result): result is ProgrammeStructureDetail => result != null);
     },
-    enabled: (depts?.items?.length ?? 0) > 0,
   });
 }
 
-export function useScheduleAcademicYear() {
+export function useScheduleAcademicYear(scopeOverride?: InstitutionScope) {
   const client = usePortalClient();
   const { scope } = useScope();
   const qc = useQueryClient();
@@ -437,12 +453,13 @@ export function useScheduleAcademicYear() {
       academicYearId: string;
       replaceExisting?: boolean;
     }) =>
-      client.post(`/portal/academics/academic-years/${academicYearId}/schedule`, scope, {
+      client.post(`/portal/academics/academic-years/${academicYearId}/schedule`, scopeOverride ?? scope, {
         replaceExisting,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['academics'] });
       qc.invalidateQueries({ queryKey: ['people'] });
+      qc.invalidateQueries({ queryKey: ['portal', 'onboarding-list'] });
     },
   });
 }

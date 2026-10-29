@@ -1,3 +1,4 @@
+import { publicPetrosSessionColumns } from '../../common/petros-session-projection';
 import { Inject, Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { and, asc, eq, lt, schema, sql, type Database } from '@edrion/database';
@@ -39,7 +40,7 @@ export class PetrosObjectiveEvidenceRepository {
       evaluation: schema.petrosAnswerEvaluations,
       observation: schema.petrosObservations,
       question: schema.petrosQuestionSpecs,
-      session: schema.petrosLearningSessions,
+      session: publicPetrosSessionColumns,
     }).from(schema.petrosAnswerEvaluations)
       .innerJoin(schema.petrosObservations, eq(schema.petrosObservations.id, schema.petrosAnswerEvaluations.observationId))
       .innerJoin(schema.petrosQuestionSpecs, eq(schema.petrosQuestionSpecs.id, schema.petrosAnswerEvaluations.questionId))
@@ -87,6 +88,7 @@ export class PetrosObjectiveEvidenceRepository {
     packVersion?: number;
   }) {
     const clauses = [
+      eq(schema.petrosObjectiveEvidenceEvents.engineVersion, 'v1'),
       eq(schema.petrosObjectiveEvidenceEvents.institutionId, scope.institutionId),
       eq(schema.petrosObjectiveEvidenceEvents.studentId, scope.studentId),
       eq(schema.petrosObjectiveEvidenceEvents.objectiveId, input.objectiveId),
@@ -177,6 +179,7 @@ export class PetrosObjectiveEvidenceRepository {
       eq(schema.petrosObjectiveEvidenceOutbox.institutionId, scope.institutionId),
       eq(schema.petrosObjectiveEvidenceOutbox.studentId, scope.studentId),
       eq(schema.petrosObjectiveEvidenceOutbox.status, 'pending'),
+      eq(schema.petrosObjectiveEvidenceOutbox.topic, 'petros.objective-evidence.appended.v1'),
     )).orderBy(asc(schema.petrosObjectiveEvidenceOutbox.availableAt))
       .limit(limit).for('update', { skipLocked: true });
   }

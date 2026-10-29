@@ -13,7 +13,16 @@ import {
   RegistrationStatus,
 } from '@edrion/shared-types';
 import type { ApproveRegistrationInput } from '@edrion/schemas';
-import { and, desc, eq, ilike, schema, seedInstitutionScheduleDefaults, type Database } from '@edrion/database';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  ilike,
+  schema,
+  seedInstitutionScheduleDefaults,
+  type Database,
+} from '@edrion/database';
 import type { InstitutionRegistrationRequest } from '@edrion/database';
 import type { AuditWriter, AuditEventInput } from '@edrion/audit';
 import type { ApiEnv } from '@edrion/config';
@@ -23,6 +32,10 @@ import { baseAudit, type ActionContext } from '../../common/action-context';
 import { hashPassword, hashToken, makeToken } from '../authentication/password.util';
 import { RegistrationRepository } from './registration.repository';
 import { RegistrationEmailService } from './registration-email.service';
+import {
+  existingPortalCredentialAccount,
+  portalCredentialGroupId,
+} from '../portal/portal-credential-account';
 
 const MODULE = 'registration';
 
@@ -44,6 +57,7 @@ export interface ApprovalResult {
   institutionPublicId: string;
   adminUserId: string;
   publicRef: string | null;
+  adminAccess: 'existing_account' | 'activation' | 'temporary_password';
 }
 
 /**
@@ -51,10 +65,8 @@ export interface ApprovalResult {
  * campus grants, onboarding checklist and the request transition — happens in ONE transaction so an
  * approval can never leave a half-built institution. Audits + emails are emitted after commit.
  *
- * Activation is credential-delivery-driven. The default (`activation`) creates the admin `invited`
- * and the institution in `Onboarding`, emailing a single-use set-password link; the institution
- * only flips to `Active` when the admin completes activation (see PortalCredentialService). The
- * `temporary_password` option instead hands over working credentials and goes live immediately.
+ * Returning administrators reuse an active account's credentials immediately. First-time users
+ * receive an activation link or temporary password. Institutions remain in Onboarding until go-live.
  */
 @Injectable()
 export class RegistrationApprovalService {
@@ -72,7 +84,8 @@ export class RegistrationApprovalService {
     ctx: ActionContext,
   ): Promise<ApprovalResult> {
     const request = await this.repo.findById(id);
-    if (!request) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Registration not found' });
+    if (!request)
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Registration not found' });
     if (request.status !== RegistrationStatus.UnderReview) {
       throw new ConflictException({
         code: 'INVALID_STATUS',
@@ -86,15 +99,38 @@ export class RegistrationApprovalService {
     const loc = request.location!;
     const contact = request.primaryContact!;
 
-    const tempPassword =
-      input.admin.credentialDelivery === 'temporary_password' ? generateTempPassword() : undefined;
-    // Activation delivery (the default): the admin gets a single-use link to set their own password.
-    // Their account stays `invited` and the institution stays `Onboarding` until they activate.
-    // Temporary-password delivery activates immediately, so no token is issued.
     const pepper = this.env.REGISTRATION_OTP_PEPPER ?? this.env.SESSION_COOKIE_SECRET;
-    const activationToken = tempPassword ? undefined : makeToken();
+    const adminEmail = input.admin.email.trim().toLowerCase();
 
     const result = await this.db.transaction(async (tx) => {
+      // Lock existing memberships in a stable order, also used by password reset, so approval
+      // cannot copy a password that is being changed concurrently.
+      const existingUsers = await tx
+        .select()
+        .from(schema.institutionUsers)
+        .where(eq(schema.institutionUsers.email, adminEmail))
+        .orderBy(asc(schema.institutionUsers.id))
+        .for('update');
+      const existingAccount = existingPortalCredentialAccount(existingUsers);
+      const credentialGroupId = existingAccount
+        ? portalCredentialGroupId(existingAccount)
+        : undefined;
+      const tempPassword =
+        !existingAccount && input.admin.credentialDelivery === 'temporary_password'
+          ? generateTempPassword()
+          : undefined;
+      const activationToken = !existingAccount && !tempPassword ? makeToken() : undefined;
+      if (existingAccount) {
+        await tx
+          .update(schema.institutionUsers)
+          .set({
+            metadata: { ...existingAccount.metadata, portalCredentialGroupId: credentialGroupId },
+            updatedAt: new Date(),
+            version: existingAccount.version + 1,
+          })
+          .where(eq(schema.institutionUsers.id, existingAccount.id));
+      }
+
       // Gap-safe public id: base on the highest INST- id in use (count() reissues a deleted number
       // and collides on institutions_public_id_unique), then pre-check each candidate for races.
       const [topInst] = await tx
@@ -103,7 +139,9 @@ export class RegistrationApprovalService {
         .where(ilike(schema.institutions.publicId, 'INST-%'))
         .orderBy(desc(schema.institutions.publicId))
         .limit(1);
-      let seq = topInst?.publicId ? Number.parseInt(topInst.publicId.slice('INST-'.length), 10) : 1000;
+      let seq = topInst?.publicId
+        ? Number.parseInt(topInst.publicId.slice('INST-'.length), 10)
+        : 1000;
       if (!Number.isFinite(seq)) seq = 1000;
       let institutionPublicId = `INST-${String(seq + 1).padStart(5, '0')}`;
       for (let attempt = 0; attempt < 5; attempt++) {
@@ -200,15 +238,26 @@ export class RegistrationApprovalService {
         .insert(schema.institutionUsers)
         .values({
           institutionId: institution!.id,
-          email: input.admin.email,
+          email: adminEmail,
           fullName: input.admin.fullName,
-          // Temp-password: active now with a usable bcrypt credential. Activation: invited, holding
-          // only the hash of a single-use link the admin uses to choose their own password.
-          status: tempPassword ? AccountStatus.Active : AccountStatus.Invited,
-          passwordHash: tempPassword ? await hashPassword(tempPassword) : null,
-          activatedAt: tempPassword ? now : null,
+          // A membership has its own roles and scope; only sign-in credentials are reused.
+          status: existingAccount || tempPassword ? AccountStatus.Active : AccountStatus.Invited,
+          passwordHash:
+            existingAccount?.passwordHash ??
+            (tempPassword ? await hashPassword(tempPassword) : null),
+          authUserId: existingAccount?.authUserId ?? null,
+          activatedAt: existingAccount || tempPassword ? now : null,
           activationTokenHash: activationToken ? hashToken(activationToken, pepper) : null,
-          activationTokenExpiresAt: activationToken ? new Date(Date.now() + ACTIVATION_TTL_MS) : null,
+          activationTokenExpiresAt: activationToken
+            ? new Date(Date.now() + ACTIVATION_TTL_MS)
+            : null,
+          mfaEnrolled: existingAccount?.mfaEnrolled ?? false,
+          requireMfa: existingAccount?.requireMfa ?? false,
+          failedLoginAttempts: existingAccount?.failedLoginAttempts ?? 0,
+          lockedUntil: existingAccount?.lockedUntil ?? null,
+          lockedAt: existingAccount?.lockedAt ?? null,
+          passwordResetRequiredAt: existingAccount?.passwordResetRequiredAt ?? null,
+          metadata: credentialGroupId ? { portalCredentialGroupId: credentialGroupId } : {},
           invitedAt: now,
           createdBy: employeeId,
         })
@@ -282,26 +331,51 @@ export class RegistrationApprovalService {
         campus: campus!,
         adminUser: adminUser!,
         institutionPublicId,
+        existingAccount,
+        tempPassword,
+        activationToken,
       };
     });
 
     // ── Post-commit: audit trail + notifications ──────────────────────────────
     const instName = result.institution.displayName;
+    const adminAccess = result.existingAccount
+      ? 'existing_account'
+      : result.tempPassword
+        ? 'temporary_password'
+        : 'activation';
     await this.writeAudit(ctx, result.institution.id, instName, 'institution.create', {
       entityType: 'institution',
       entityId: result.institution.id,
-      newState: { publicId: result.institutionPublicId, status: result.institution.status, source: 'registration', requestId: id },
+      newState: {
+        publicId: result.institutionPublicId,
+        status: result.institution.status,
+        source: 'registration',
+        requestId: id,
+      },
     });
     await this.writeAudit(ctx, result.institution.id, instName, 'campus.create', {
       entityType: 'campus',
       entityId: result.campus.id,
       newState: { name: result.campus.name, code: result.campus.code },
     });
-    await this.writeAudit(ctx, result.institution.id, instName, 'institution_user.invite', {
-      entityType: 'institution_user',
-      entityId: result.adminUser.id,
-      newState: { email: result.adminUser.email, roleKeys: input.admin.roleKeys, primaryAdmin: true },
-    });
+    await this.writeAudit(
+      ctx,
+      result.institution.id,
+      instName,
+      result.existingAccount ? 'institution_user.link' : 'institution_user.invite',
+      {
+        entityType: 'institution_user',
+        entityId: result.adminUser.id,
+        newState: {
+          email: result.adminUser.email,
+          roleKeys: input.admin.roleKeys,
+          primaryAdmin: true,
+          adminAccess,
+          existingInstitutionUserId: result.existingAccount?.id,
+        },
+      },
+    );
     await this.writeAudit(ctx, result.institution.id, instName, 'registration.approved', {
       entityType: 'registration_request',
       entityId: id,
@@ -310,36 +384,61 @@ export class RegistrationApprovalService {
     });
 
     const base = this.env.PORTAL_WEB_URL.replace(/\/$/, '');
-    // Activation delivery → a tokenised set-password link. Temp-password delivery → the plain login
-    // page (the credentials are in the email body). The welcome email is NOT sent here for the
-    // activation path — it fires once the admin actually activates (see PortalCredentialService).
-    const inviteUrl = activationToken ? `${base}/activate?token=${activationToken}` : `${base}/login`;
+    const loginUrl = `${base}/login`;
+    const inviteUrl = result.activationToken
+      ? `${base}/activate?token=${result.activationToken}`
+      : loginUrl;
 
-    if (request.contactEmail) {
-      const sent = await this.emails.sendApproved(request.contactEmail, instName);
+    // When the applicant is also the returning administrator, send one clear approval email.
+    // A separate applicant still receives the general approval notice, without activation instructions.
+    if (
+      request.contactEmail &&
+      (!result.existingAccount || request.contactEmail.toLowerCase() !== result.adminUser.email)
+    ) {
+      const sent = await this.emails.sendApproved(
+        request.contactEmail,
+        instName,
+        Boolean(result.existingAccount),
+      );
       await this.writeAudit(ctx, result.institution.id, instName, 'registration.email_sent', {
         entityType: 'registration_request',
         entityId: id,
-        newState: { template: 'registration_approved', to: request.contactEmail, messageId: sent.messageId },
+        newState: {
+          template: 'registration_approved',
+          to: request.contactEmail,
+          messageId: sent.messageId,
+        },
       });
     }
-    const invite = await this.emails.sendAdminInvitation(
-      result.adminUser.email,
-      result.adminUser.fullName,
-      instName,
-      inviteUrl,
-      tempPassword,
-    );
+    const invitation = result.existingAccount
+      ? await this.emails.sendExistingAccountApproved(
+          result.adminUser.email,
+          result.adminUser.fullName,
+          instName,
+          loginUrl,
+          Boolean(result.adminUser.passwordHash),
+        )
+      : await this.emails.sendAdminInvitation(
+          result.adminUser.email,
+          result.adminUser.fullName,
+          instName,
+          inviteUrl,
+          result.tempPassword,
+        );
     await this.writeAudit(ctx, result.institution.id, instName, 'registration.email_sent', {
       entityType: 'institution_user',
       entityId: result.adminUser.id,
-      newState: { template: 'administrator_invitation', to: result.adminUser.email, messageId: invite.messageId },
+      newState: {
+        template: result.existingAccount
+          ? 'existing_account_institution_approved'
+          : 'administrator_invitation',
+        to: result.adminUser.email,
+        messageId: invitation.messageId,
+      },
     });
 
-    // Temp-password accounts are live immediately, so the welcome is appropriate now. Activation
-    // accounts receive it on completion instead — avoids the premature "your workspace is ready".
-    if (tempPassword) {
-      const welcome = await this.emails.sendWelcome(result.adminUser.email, instName, `${base}/login`);
+    if (result.tempPassword) {
+      const welcome = await this.emails.sendWelcome(result.adminUser.email, instName, loginUrl);
       await this.writeAudit(ctx, result.institution.id, instName, 'registration.email_sent', {
         entityType: 'institution',
         entityId: result.institution.id,
@@ -352,6 +451,7 @@ export class RegistrationApprovalService {
       institutionPublicId: result.institutionPublicId,
       adminUserId: result.adminUser.id,
       publicRef: request.publicRef,
+      adminAccess,
     };
   }
 

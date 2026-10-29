@@ -36,6 +36,7 @@ export interface StudentRow extends PersonBase {
 }
 
 export interface StaffRow extends PersonBase {
+  departmentUnitKind?: 'department' | 'programme' | null;
   employeeNo: string | null;
   firstName: string;
   middleName: string | null;

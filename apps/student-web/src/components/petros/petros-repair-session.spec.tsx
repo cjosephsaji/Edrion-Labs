@@ -759,6 +759,10 @@ describe('Petros Stage 2 student document', () => {
 
   it('persists layer and Why-this state across an unmount/refresh resume', async () => {
     memory.document = storedDocument();
+    const content = memory.document.blocks[0]!.content;
+    if (content.type !== 'layered_explanation') throw new Error('Expected explanation.');
+    content.deeperLayers[0]!.predictionPrompt =
+      'How would carbon fixation change if the light reactions stopped supplying energy carriers?';
     const first = render(
       <PetrosRepairSession topic="photosynthesis" source="result" sessionId={memory.document.id} />,
     );
@@ -767,7 +771,7 @@ describe('Petros Stage 2 student document', () => {
     await waitFor(() => expect(api.put).toHaveBeenCalled());
     fireEvent.click(screen.getByRole('button', { name: 'Go one layer deeper' }));
     expect(screen.getByText('Predict before Petros reveals')).toBeVisible();
-    fireEvent.change(screen.getByRole('textbox', { name: /what do you think/i }), {
+    fireEvent.change(screen.getByRole('textbox', { name: /carbon fixation change/i }), {
       target: { value: 'Light reactions prepare the energy carriers used next.' },
     });
     fireEvent.click(screen.getByRole('button', { name: /lock in my prediction/i }));
@@ -788,6 +792,22 @@ describe('Petros Stage 2 student document', () => {
       'aria-expanded',
       'true',
     );
+  });
+
+  it('opens existing explanation layers without manufacturing questions from their headings', async () => {
+    memory.document = storedDocument();
+    const content = memory.document.blocks[0]!.content;
+    if (content.type !== 'layered_explanation') throw new Error('Expected explanation.');
+    content.deeperLayers[0]!.label = 'Concrete example and quick check';
+    render(
+      <PetrosRepairSession topic="photosynthesis" source="result" sessionId={memory.document.id} />,
+    );
+    await screen.findByRole('heading', { name: 'Follow the energy change' });
+    fireEvent.click(screen.getByRole('button', { name: 'Concrete example and quick check' }));
+    expect(await screen.findByLabelText(/light-dependent reactions/i)).toBeVisible();
+    expect(screen.queryByText('Predict before Petros reveals')).not.toBeInTheDocument();
+    expect(screen.queryByText('Your prediction')).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /what do you think/i })).not.toBeInTheDocument();
   });
 });
 

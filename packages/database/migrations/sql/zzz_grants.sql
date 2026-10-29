@@ -1,3 +1,5 @@
+SET lock_timeout='2s';
+SET statement_timeout='15s';
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Append-only enforcement + least-privilege grants.
 -- Applied AFTER Drizzle migrations by src/migrate.ts. Idempotent + tolerant of a
@@ -152,4 +154,40 @@ DO $$ BEGIN
   REVOKE ALL ON FUNCTION edrion_petros_runtime_release(uuid,uuid) FROM PUBLIC;
   GRANT EXECUTE ON FUNCTION edrion_petros_runtime_release(uuid,uuid) TO edrion_app;
  END IF;
+END $$;
+
+-- M0-R: retain the final repair overlay on every ordered standalone replay.
+-- Existing app role stays a non-owner. No passwords/login state are changed here.
+ALTER ROLE edrion_app NOSUPERUSER NOBYPASSRLS NOINHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+    WHERE n.nspname='public' AND pg_has_role('edrion_app',c.relowner,'MEMBER'))
+    OR EXISTS (SELECT 1 FROM pg_auth_members m WHERE m.member=(SELECT oid FROM pg_roles WHERE rolname='edrion_app')) THEN
+    RAISE EXCEPTION 'M0R_APP_OWNER_OR_MEMBERSHIP_REQUIRES_SEPARATE_RECONCILIATION';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='edrion_petros_document_worker') THEN
+    CREATE ROLE edrion_petros_document_worker NOLOGIN NOSUPERUSER NOBYPASSRLS NOINHERIT NOCREATEDB NOCREATEROLE;
+  END IF;
+END $$;
+REVOKE CREATE ON SCHEMA public FROM PUBLIC, edrion_app, edrion_petros_document_worker;
+GRANT USAGE ON SCHEMA public TO edrion_petros_document_worker;
+
+REVOKE ALL ON public.petros_document_source_revisions,public.petros_document_preparations,public.petros_document_lesson_artifacts,public.petros_document_learner_paths FROM PUBLIC,edrion_app,edrion_petros_document_worker;
+GRANT SELECT,INSERT ON public.petros_document_source_revisions TO edrion_app;
+GRANT SELECT,INSERT,UPDATE ON public.petros_document_preparations,public.petros_document_learner_paths TO edrion_app;
+-- Application services currently select whole artifact rows. Column privacy needs
+-- a reviewed public projection before activation; do not expose private_plan.
+GRANT SELECT(id,institution_id,source_revision_id,preparation_id,concept_id,subject,generator_version,status,public_plan,quality,provenance,published_at,created_at,updated_at) ON public.petros_document_lesson_artifacts TO edrion_app;
+GRANT SELECT ON public.petros_document_source_revisions,public.petros_document_preparations,public.petros_document_learner_paths TO edrion_petros_document_worker;
+GRANT SELECT,INSERT,UPDATE ON public.petros_document_lesson_artifacts TO edrion_petros_document_worker;
+GRANT UPDATE(status,stage,progress,message,document_map,recommended_concept_id,first_lesson_id,issue_code,issue_detail,retryable,attempt_count,token_usage,timing,lease_owner,lease_expires_at,started_at,completed_at,updated_at) ON public.petros_document_preparations TO edrion_petros_document_worker;
+-- Immutable contents remain protected even if old broad grants are replayed.
+DO $$ DECLARE t text; BEGIN
+ FOREACH t IN ARRAY ARRAY['petros_document_source_revisions','petros_planning_decisions','petros_observations','petros_session_events','petros_learner_plan_snapshots','petros_ai_usage_events'] LOOP
+  EXECUTE format('REVOKE UPDATE,DELETE,TRUNCATE ON public.%I FROM edrion_app,edrion_petros_document_worker',t);
+  EXECUTE format('DROP TRIGGER IF EXISTS m0r_history_immutable ON public.%I',t);
+  EXECUTE format('CREATE TRIGGER m0r_history_immutable BEFORE UPDATE OR DELETE ON public.%I FOR EACH ROW EXECUTE FUNCTION public.edrion_block_mutation()',t);
+  EXECUTE format('DROP TRIGGER IF EXISTS m0r_history_no_truncate ON public.%I',t);
+  EXECUTE format('CREATE TRIGGER m0r_history_no_truncate BEFORE TRUNCATE ON public.%I FOR EACH STATEMENT EXECUTE FUNCTION public.edrion_block_mutation()',t);
+ END LOOP;
 END $$;

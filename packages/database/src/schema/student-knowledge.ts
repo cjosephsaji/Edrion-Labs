@@ -1,5 +1,6 @@
 import {
   boolean,
+  check,
   index,
   integer,
   jsonb,
@@ -23,8 +24,13 @@ import { learnSessions } from './learn';
 export const knowledgePreparations = pgTable('knowledge_preparations', {
   id: primaryId(),
   institutionId: uuid('institution_id').notNull().references(() => institutions.id, { onDelete: 'cascade' }),
-  materialId: uuid('material_id').notNull(), // Content-free receipt survives material deletion for admission accounting.
-  materialVersion: integer('material_version').notNull(),
+  materialId: uuid('material_id'), // Nullable only for explicitly checked V2 guidance receipts.
+  materialVersion: integer('material_version'),
+  operationVersion: text('operation_version').notNull().default('v1'),
+  sourceKind: text('source_kind').notNull().default('material'),
+  sourceBinding: jsonb('source_binding').$type<Record<string, unknown>>(),
+  guidanceAssignmentId: uuid('guidance_assignment_id'),
+  guidancePublicationVersion: integer('guidance_publication_version'),
   objectId: uuid('object_id').notNull(),
   requestedBy: uuid('requested_by').notNull(),
   scope: jsonb('scope').$type<{ mode: 'institution' } | { mode: 'campus'; campusId: string }>().notNull(),
@@ -41,11 +47,13 @@ export const knowledgePreparations = pgTable('knowledge_preparations', {
   pagesDone: integer('pages_done').notNull().default(0),
   errorCode: text('error_code'),
   retryable: boolean('retryable').notNull().default(false),
+  m2Progress: jsonb('m2_progress').$type<{stage:string;updatedAt:string;revisionId?:string}>(),
   ...timestamps,
 }, (t) => ({
   publicationUq: uniqueIndex('knowledge_preparations_publication_uq').on(t.materialId, t.materialVersion, t.objectId, t.extractorVersion),
   dueIdx: index('knowledge_preparations_due_idx').on(t.state, t.nextDispatchAt),
   institutionIdx: index('knowledge_preparations_institution_idx').on(t.institutionId, t.createdAt),
+  bindingCheck: check('m1_knowledge_preparation_binding', sql`(${t.sourceKind}='material' AND ${t.materialId} IS NOT NULL AND ${t.materialVersion}>0 AND ${t.guidanceAssignmentId} IS NULL) OR (${t.operationVersion}='v2' AND ${t.sourceKind}='guidance_attachment' AND ${t.materialId} IS NULL AND ${t.materialVersion} IS NULL AND ${t.guidanceAssignmentId} IS NOT NULL AND ${t.guidancePublicationVersion}>=0 AND ${t.sourceBinding} IS NOT NULL)`),
 }));
 
 export type LibraryQuizPatterns = {

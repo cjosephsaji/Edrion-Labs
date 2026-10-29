@@ -10,6 +10,7 @@ import { PetrosNarratedText } from './petros-narrated-text';
 
 const mocks = vi.hoisted(() => ({
   get: vi.fn(),
+  voices: vi.fn(),
   post: vi.fn(),
   put: vi.fn(),
   push: vi.fn(),
@@ -23,16 +24,15 @@ vi.mock('next/navigation', () => ({
   usePathname: () => mocks.pathname,
   useRouter: () => ({ push: mocks.push }),
 }));
-vi.mock('@/lib/api-client', () => ({
-  useStudentApi: () => ({
-    get: mocks.get,
+vi.mock('@/lib/api-client', () => { const api = {
+    get: (path: string, ...args: unknown[]) => path.endsWith('/speech/voices') ? mocks.voices() : mocks.get(path, ...args),
     post: mocks.post,
     put: mocks.put,
     uploadPetrosMedia: vi.fn(),
-  }),
+  }; return { useStudentApi: () => api,
   formatApiError: (error: Error) => error.message,
   newIdempotencyKey: () => '00000000-0000-4000-8000-000000000001',
-}));
+}; });
 vi.mock('./petros-door-button', () => ({
   PetrosDoorButton: ({ label }: { label: string }) => <button>{label}</button>,
 }));
@@ -184,7 +184,7 @@ function characterButton() {
 
 class MentorAudio {
   static latest: MentorAudio;
-  onplay: (() => void) | null = null;
+  onplaying: (() => void) | null = null;
   ontimeupdate: (() => void) | null = null;
   onloadedmetadata: (() => void) | null = null;
   onended: (() => void) | null = null;
@@ -193,7 +193,7 @@ class MentorAudio {
   currentTime = 0;
   duration = 10;
   constructor(src: string) { this.src = src; MentorAudio.latest = this; }
-  play() { this.onplay?.(); return Promise.resolve(); }
+  play() { this.onplaying?.(); return Promise.resolve(); }
   pause() {}
 }
 
@@ -203,6 +203,7 @@ describe('embodied Petros portal agent', () => {
     const saved = new Map<string, string>();
     vi.stubGlobal('localStorage', { getItem: (key: string) => saved.get(key) ?? null, setItem: (key: string, value: string) => saved.set(key, value) });
     mocks.pathname = '/home';
+    mocks.voices.mockResolvedValue({ state: 'ready', voices: ['cedar','marin','onyx'], modelKey: 'gpt-4o-mini-tts', providerKey: 'fixture' });
     mocks.get.mockResolvedValue(structuredClone(decision));
     mocks.put.mockResolvedValue(structuredClone(decision));
     mocks.askLesson.mockResolvedValue({
@@ -212,9 +213,9 @@ describe('embodied Petros portal agent', () => {
       returnPlan: 'Return to the grid and cloud comparison.',
     });
     mocks.resumeLesson.mockResolvedValue(undefined);
-    mocks.post.mockImplementation((path: string) => {
+    mocks.post.mockImplementation((path: string, body: { voice?: string }) => {
       if (path === '/student/petros/companion/speech') {
-        return Promise.resolve({ audio: { dataBase64: 'AA==', mimeType: 'audio/mpeg' }, transcript: 'Hi' });
+        return Promise.resolve({ audio: { dataBase64: 'AA==', mimeType: 'audio/mpeg' }, transcript: 'Hi', requestedVoice: body.voice, effective: { voice: body.voice, modelKey: 'gpt-4o-mini-tts', providerKey: 'fixture', routeId: 'fixture-route' }, fallback: { voice: false, route: false } });
       }
       return Promise.resolve(structuredClone(decision));
     });
@@ -247,7 +248,7 @@ describe('embodied Petros portal agent', () => {
     expect(mocks.post).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Read aloud' }));
     await waitFor(() => expect(mocks.post).toHaveBeenCalledWith('/student/petros/companion/speech', expect.objectContaining({ text: expect.stringContaining('Compare grid computing'), voice: 'cedar' }), undefined, expect.any(AbortSignal)));
-    await waitFor(() => expect(screen.getByLabelText('Petros, your portal learning buddy')).toHaveAttribute('data-mouth', 'open'));
+    await waitFor(() => expect(document.querySelector('[data-shared-petros]')).toHaveAttribute('data-mouth', 'open'));
     expect(document.querySelector('[data-synced="true"] [data-active="true"]')).toBeTruthy();
     act(() => MentorAudio.latest.onended?.());
     await waitFor(() => expect(screen.getByLabelText('Petros, your portal learning buddy')).toHaveAttribute('data-mouth', 'rest'));
@@ -256,6 +257,7 @@ describe('embodied Petros portal agent', () => {
   it('narrates beside the lesson in listen-first mode and stops without opening chat', async () => {
     mocks.pathname = '/petros/session';
     mount(<TargetedLessonRegistration />);
+    await act(async () => { await Promise.resolve(); });
     expect(characterButton().parentElement).not.toHaveAttribute('data-docked');
     act(() => window.dispatchEvent(new CustomEvent('petros:lesson-play')));
     await waitFor(() => expect(mocks.post).toHaveBeenCalledWith(
@@ -405,6 +407,20 @@ describe('embodied Petros portal agent', () => {
     expect(mocks.post).not.toHaveBeenCalled();
   });
 
+  it('preserves an incompatible stored voice and requires an explicit supported choice', async () => {
+    localStorage.setItem('petros:voice:student1', JSON.stringify({ voice: 'cedar', language: 'en', autoRead: true }));
+    mocks.voices.mockResolvedValue({ state: 'ready', voices: ['onyx', 'nova'], modelKey: 'tts-1', providerKey: 'fixture' });
+    mount(); fireEvent.click(await screen.findByRole('button', { name: 'Settings' }));
+    await waitFor(() => expect(screen.getByLabelText('Speaking voice')).toHaveValue('cedar'));
+    expect(screen.getByRole('button', { name: 'Generate new voice sample' })).toBeDisabled();
+    expect(JSON.parse(localStorage.getItem('petros:voice:student1')!).voice).toBe('cedar');
+    expect(mocks.post).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText('Speaking voice'), { target: { value: 'nova' } });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Generate new voice sample' })).toBeEnabled());
+    expect(JSON.parse(localStorage.getItem('petros:voice:student1')!).voice).toBe('nova');
+    expect(mocks.post).not.toHaveBeenCalled();
+  });
+
   it('pauses automatic companion speech in low-bandwidth mode while leaving manual voice available', async () => {
     const saved = new Map<string, string>([
       ['petros:connectivity-mode', 'low_bandwidth'],
@@ -417,7 +433,7 @@ describe('embodied Petros portal agent', () => {
     await waitFor(() => expect(autoRead).toBeDisabled());
     expect(autoRead).toBeChecked();
     expect(screen.getByText(/Automatic speech is paused in low-bandwidth mode/i)).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Preview voice' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Generate new voice sample' })).toBeEnabled();
   });
 
   it('uses the learner’s stated time instead of inventing a completion promise', async () => {

@@ -130,6 +130,7 @@ export class StudentPetrosSessionIntentController {
   }
 
   @Get('document-preparations/:preparationId')
+  @Header('Cache-Control', 'private, no-store')
   preparation(
     @CurrentStudent() raw: StudentPrincipal,
     @Param('preparationId') preparationId: string,
@@ -138,6 +139,7 @@ export class StudentPetrosSessionIntentController {
   }
 
   @Post('documents/:sourceId/prepare')
+  @Header('Cache-Control', 'private, no-store')
   prepareDocument(
     @CurrentStudent() raw: StudentPrincipal,
     @Param('sourceId') sourceId: string,
@@ -147,6 +149,7 @@ export class StudentPetrosSessionIntentController {
   }
 
   @Get('documents/:sourceId/path')
+  @Header('Cache-Control', 'private, no-store')
   documentPath(
     @CurrentStudent() raw: StudentPrincipal,
     @Param('sourceId') sourceId: string,

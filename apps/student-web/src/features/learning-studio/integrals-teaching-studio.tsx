@@ -118,7 +118,7 @@ function CurvePlot({ constant }: { constant: number }) {
   );
 }
 
-function PetrosPlacement({ targetId, state }: { targetId: string | null; state: 'idle' | 'playing' | 'paused' | 'interrupted' }) {
+function PetrosPlacement({ targetId, state, speaking }: { speaking: boolean; targetId: string | null; state: 'idle' | 'playing' | 'paused' | 'interrupted' }) {
   const { targets } = useTeachingTargets();
   const dockRef = useRef<HTMLDivElement>(null);
   const target = targetId ? targets.get(targetId) : undefined;
@@ -133,7 +133,7 @@ function PetrosPlacement({ targetId, state }: { targetId: string | null; state: 
     <div ref={dockRef} className={styles.petrosDock} data-target-available={available || undefined}>
       <div className={styles.rigWrap}>
         <PetrosRig
-          state={state === 'playing' ? 'speak' : state === 'interrupted' ? 'listen' : state === 'paused' ? 'paused' : available ? 'point' : 'rest'}
+          state={speaking ? 'speak' : state === 'interrupted' ? 'listen' : state === 'paused' ? 'paused' : available ? 'point' : 'rest'}
           pointAngle={Math.max(-70, Math.min(55, angle - 180))}
         />
       </div>
@@ -256,7 +256,7 @@ function StudioExperience({ initialMode }: { initialMode: 'voice' | 'quiet' }) {
             {playback.caption ? <div className={styles.caption} aria-live="polite"><Volume2 aria-hidden="true" />{playback.caption}</div> : null}
           </aside>
 
-          <PetrosPlacement targetId={playback.beat.targetId} state={playback.status} />
+          <PetrosPlacement targetId={playback.beat.targetId} state={playback.status} speaking={playback.speaking} />
         </section>
 
         <footer className={styles.transport}>
@@ -278,7 +278,7 @@ function StudioExperience({ initialMode }: { initialMode: 'voice' | 'quiet' }) {
             <button className={styles.backdrop} type="button" aria-label="Close Ask Petros" onClick={closeQuestion} />
             <aside className={styles.questionPanel} role="dialog" aria-modal="true" aria-labelledby="ask-petros-title">
               <header><div><span>PAUSED AT IDEA {playback.index + 1}</span><h2 id="ask-petros-title">Ask about this visual</h2></div><button type="button" aria-label="Close" onClick={closeQuestion}><X /></button></header>
-              <div className={styles.questionPetros}><PetrosRig state={questionReply ? 'speak' : 'listen'} /><p>{questionReply || 'I’ll keep this exact diagram and your place while we talk.'}</p></div>
+              <div className={styles.questionPetros}><PetrosRig state={questionReply ? 'rest' : 'listen'} /><p>{questionReply || 'I’ll keep this exact diagram and your place while we talk.'}</p></div>
               <label htmlFor="question-draft">Your question</label>
               <textarea id="question-draft" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Why do all the curves have the same derivative?" />
               <button type="button" className={styles.primary} disabled={!question.trim()} onClick={ask}><Send /> Ask in context</button>

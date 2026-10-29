@@ -75,6 +75,7 @@ export default function HomeworkPage() {
         name: 'questions',
         label: 'Questions',
         type: 'custom',
+        required: true,
         render: (value, onChange) => (
           <HomeworkQuestionsField
             value={(value as HomeworkQuestionInput[]) ?? [{ promptText: '', maxMarks: 10 }]}

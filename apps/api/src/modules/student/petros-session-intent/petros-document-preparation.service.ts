@@ -1,8 +1,9 @@
-import { Inject, Injectable, type OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, Optional, ServiceUnavailableException, type OnModuleInit } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
-import { and, asc, desc, eq, isNotNull, or, schema, sql, runOutsideTenant, type Database } from '@edrion/database';
+import { and, asc, desc, eq, isNotNull, isNull, lt, lte, gt, or, schema, sql, runOutsideTenant, runInStudentTenant, type Database } from '@edrion/database';
 import type { ApiEnv } from '@edrion/config';
 import {
+  petrosDocumentTeachingPlanSchema,
   petrosDocumentMapSchema,
   petrosDocumentPreparationSchema,
   petrosDocumentPathSchema,
@@ -14,6 +15,7 @@ import {
 } from '@edrion/schemas';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import type { Job } from 'bullmq';
+import { PetrosDocumentDatabase } from '../../../common/petros-document-database';
 import { API_ENV, DATABASE } from '../../../common/tokens';
 import { JobsService } from '../../../common/queue/jobs.service';
 import { QueueWorkers } from '../../../common/queue/queue.worker';
@@ -33,6 +35,12 @@ import {
 } from './petros-document-teaching';
 
 export const PETROS_DOCUMENT_PREPARATION_JOB = 'petros.document.prepare';
+// An allowlist also works under column-level SELECT grants. Never select private_plan here.
+const publicLessonColumns = {
+  id: schema.petrosDocumentLessonArtifacts.id,
+  conceptId: schema.petrosDocumentLessonArtifacts.conceptId,
+  publicPlan: schema.petrosDocumentLessonArtifacts.publicPlan,
+};
 const LEGACY_PARSER_VERSION = 'legacy-page-regions-2026-09-08-r1';
 
 type DocumentSource = {
@@ -59,10 +67,12 @@ export class PetrosDocumentPreparationService implements OnModuleInit {
     private readonly jobs: JobsService,
     private readonly workers: QueueWorkers,
     private readonly gateway: PetrosAiGatewayService,
+    @Optional() private readonly runtime?: PetrosDocumentDatabase,
   ) {}
 
   onModuleInit() {
-    this.workers.register(PETROS_DOCUMENT_PREPARATION_JOB, (job: Job) => this.process(String(job.data.preparationId), String(job.data.studentId)));
+    if (this.env.PETROS_DOCUMENT_TEACHING_ENABLED === false) return;
+    this.workers.register(PETROS_DOCUMENT_PREPARATION_JOB, (job: Job) => this.process(String(job.data.preparationId), String(job.data.studentId), String(job.data.institutionId)));
   }
 
   async prepare(
@@ -70,7 +80,9 @@ export class PetrosDocumentPreparationService implements OnModuleInit {
     source: DocumentSource,
     sourceFingerprint: string,
     topic: TopicRequest,
-  ): Promise<{ preparation: PetrosDocumentPreparation; lesson: { publicPlan: PetrosDocumentTeachingPlan; internalPlan: DocumentTeachingGeneration } | null }> {
+  ): Promise<{ preparation: PetrosDocumentPreparation; lesson: { id: string; publicPlan: PetrosDocumentTeachingPlan } | null }> {
+    if (this.env.PETROS_DOCUMENT_TEACHING_ENABLED === false)
+      throw new ServiceUnavailableException('PETROS_DOCUMENT_TEACHING_DISABLED');
     const scope = { institutionId: principal.institutionId, studentId: principal.studentId };
     const revision = await this.ensureRevision(scope, source, sourceFingerprint);
     const requestedConceptId = topic.id || 'recommended';
@@ -110,7 +122,9 @@ export class PetrosDocumentPreparationService implements OnModuleInit {
         status: 'queued', stage: 'queued', progress: Math.min(preparation.progress, 8),
         message: 'The previous worker stopped responding. Petros is retrying from the saved stage.',
         leaseOwner: null, leaseExpiresAt: null, updatedAt: new Date(),
-      }).where(and(eq(schema.petrosDocumentPreparations.id, preparation.id), eq(schema.petrosDocumentPreparations.status, 'preparing'))).returning();
+      }).where(and(eq(schema.petrosDocumentPreparations.id, preparation.id), eq(schema.petrosDocumentPreparations.status, 'preparing'),
+        eq(schema.petrosDocumentPreparations.attemptCount, preparation.attemptCount),
+        lte(schema.petrosDocumentPreparations.leaseExpiresAt, new Date()))).returning();
       if (recovered) preparation = recovered;
     }
 
@@ -136,7 +150,7 @@ export class PetrosDocumentPreparationService implements OnModuleInit {
       const [retried] = await this.db.update(schema.petrosDocumentPreparations).set({ status: 'queued', stage: 'queued', progress: 2, issueCode: null, issueDetail: null, message: 'Petros is retrying the preparation.', updatedAt: new Date() }).where(eq(schema.petrosDocumentPreparations.id, preparation.id)).returning();
       if (retried) preparation = retried;
     }
-    if (preparation?.status === 'queued') await this.dispatch(preparation.id, scope.studentId);
+    if (preparation?.status === 'queued') await this.dispatch(preparation.id, scope.studentId, scope.institutionId);
     return { preparation: this.dto(preparation, learnerPath?.id), lesson: null };
   }
 
@@ -159,7 +173,7 @@ export class PetrosDocumentPreparationService implements OnModuleInit {
         ? preparation.leaseExpiresAt.getTime() <= Date.now()
         : preparation.updatedAt.getTime() <= Date.now() - 120_000
     );
-    if (leaseExpired) {
+    if (leaseExpired && this.env.PETROS_DOCUMENT_TEACHING_ENABLED !== false) {
       const [recovered] = await this.db.update(schema.petrosDocumentPreparations).set({
         status: 'queued',
         stage: 'queued',
@@ -171,10 +185,12 @@ export class PetrosDocumentPreparationService implements OnModuleInit {
       }).where(and(
         eq(schema.petrosDocumentPreparations.id, preparation.id),
         eq(schema.petrosDocumentPreparations.status, 'preparing'),
+        eq(schema.petrosDocumentPreparations.attemptCount, preparation.attemptCount),
+        or(lte(schema.petrosDocumentPreparations.leaseExpiresAt, new Date()), and(isNull(schema.petrosDocumentPreparations.leaseExpiresAt), lte(schema.petrosDocumentPreparations.updatedAt, new Date(Date.now() - 120_000)))),
       )).returning();
       if (recovered) {
         preparation = recovered;
-        await this.dispatch(preparation.id, scope.studentId);
+        await this.dispatch(preparation.id, scope.studentId, scope.institutionId);
       }
     }
     return this.dto(preparation, row.pathId);
@@ -208,7 +224,7 @@ export class PetrosDocumentPreparationService implements OnModuleInit {
     );
     const map = candidates[0]?.map;
     if (!map) return null;
-    const artifacts = await this.db.select().from(schema.petrosDocumentLessonArtifacts).where(and(
+    const artifacts = await this.db.select(publicLessonColumns).from(schema.petrosDocumentLessonArtifacts).where(and(
       eq(schema.petrosDocumentLessonArtifacts.institutionId, scope.institutionId),
       eq(schema.petrosDocumentLessonArtifacts.sourceRevisionId, row.revision.id),
       eq(schema.petrosDocumentLessonArtifacts.generatorVersion, DOCUMENT_TEACHING_GENERATOR_VERSION),
@@ -235,7 +251,7 @@ export class PetrosDocumentPreparationService implements OnModuleInit {
   }
 
   async lesson(scope: PetrosOwnerScope, lessonId: string) {
-    const [row] = await this.db.select({ artifact: schema.petrosDocumentLessonArtifacts })
+    const [row] = await this.db.select({ artifact: publicLessonColumns })
       .from(schema.petrosDocumentLearnerPaths)
       .innerJoin(schema.petrosDocumentLessonArtifacts, and(
         eq(schema.petrosDocumentLessonArtifacts.sourceRevisionId, schema.petrosDocumentLearnerPaths.sourceRevisionId),
@@ -244,18 +260,19 @@ export class PetrosDocumentPreparationService implements OnModuleInit {
       .where(and(
         eq(schema.petrosDocumentLearnerPaths.institutionId, scope.institutionId),
         eq(schema.petrosDocumentLearnerPaths.studentId, scope.studentId),
+        eq(schema.petrosDocumentLearnerPaths.status, 'active'),
         eq(schema.petrosDocumentLessonArtifacts.status, 'published'),
       )).limit(1);
     if (!row) return null;
     return {
-      publicPlan: row.artifact.publicPlan as unknown as PetrosDocumentTeachingPlan,
-      internalPlan: row.artifact.privatePlan as unknown as DocumentTeachingGeneration,
+      id: row.artifact.id,
+      publicPlan: petrosDocumentTeachingPlanSchema.parse(row.artifact.publicPlan),
     };
   }
 
-  private async dispatch(preparationId: string, studentId: string) {
-    const jobId = await this.jobs.enqueue('ai', PETROS_DOCUMENT_PREPARATION_JOB, { preparationId, studentId }, {
-      jobId: `petros-document:${preparationId}`,
+  private async dispatch(preparationId: string, studentId: string, institutionId: string) {
+    const jobId = await this.jobs.enqueue('ai', PETROS_DOCUMENT_PREPARATION_JOB, { preparationId, studentId, institutionId }, {
+      jobId: `petros-document-${preparationId}`,
       delay: 500,
       attempts: 3,
       backoff: { type: 'exponential', delay: 1_500 },
@@ -264,7 +281,7 @@ export class PetrosDocumentPreparationService implements OnModuleInit {
     // Development without Redis still uses the persisted state machine. Escape
     // the request transaction before doing any provider work.
     setTimeout(() => {
-      void runOutsideTenant(() => this.process(preparationId, studentId)).catch(() => undefined);
+      void runOutsideTenant(() => this.process(preparationId, studentId, institutionId)).catch(() => undefined);
     }, 500);
   }
 
@@ -273,6 +290,7 @@ export class PetrosDocumentPreparationService implements OnModuleInit {
     const sourceKey = classMaterialId ? `material:${classMaterialId}` : `knowledge:${source.item.id}`;
     const [existing] = await this.db.select().from(schema.petrosDocumentSourceRevisions).where(and(
       eq(schema.petrosDocumentSourceRevisions.institutionId, scope.institutionId),
+      eq(schema.petrosDocumentSourceRevisions.formatVersion, 'v1'),
       eq(schema.petrosDocumentSourceRevisions.sourceKey, sourceKey),
       eq(schema.petrosDocumentSourceRevisions.documentVersion, source.item.version),
     )).orderBy(asc(schema.petrosDocumentSourceRevisions.createdAt)).limit(1);
@@ -313,45 +331,57 @@ export class PetrosDocumentPreparationService implements OnModuleInit {
       eq(schema.petrosDocumentSourceRevisions.documentVersion, source.item.version),
       eq(schema.petrosDocumentSourceRevisions.checksum, checksum),
       eq(schema.petrosDocumentSourceRevisions.parserVersion, LEGACY_PARSER_VERSION),
+      eq(schema.petrosDocumentSourceRevisions.formatVersion, 'v1'),
     )).limit(1);
     if (!reread) throw new Error(`Could not persist document revision ${sourceFingerprint.slice(0, 12)}.`);
     return reread;
   }
 
-  private async process(preparationId: string, studentId: string) {
+  private async process(preparationId: string, studentId: string, institutionId: string) {
+    if (this.env.PETROS_DOCUMENT_TEACHING_ENABLED === false) return { disabled: true };
+    if (!this.runtime) throw new ServiceUnavailableException('PETROS_DOCUMENT_WORKER_UNAVAILABLE');
+    const scope = { institutionId, studentId, preparationId };
+    if (![institutionId, studentId, preparationId].every(value => /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(value))) return { denied: true };
     const workerId = `api:${process.pid}:${randomUUID()}`;
-    const [claimed] = await this.db.update(schema.petrosDocumentPreparations).set({
+    const claimed = await this.runtime.worker(scope, async db => {
+      await this.lockSource(db, scope);
+      const [claimed] = await db.update(schema.petrosDocumentPreparations).set({
       status: 'preparing', stage: 'checking_source', progress: 8,
       message: 'Checking the extracted source and access scope…',
       leaseOwner: workerId, leaseExpiresAt: new Date(Date.now() + 120_000),
       startedAt: new Date(), attemptCount: sql`${schema.petrosDocumentPreparations.attemptCount} + 1`, updatedAt: new Date(),
     }).where(and(
       eq(schema.petrosDocumentPreparations.id, preparationId),
-      or(eq(schema.petrosDocumentPreparations.status, 'queued'), eq(schema.petrosDocumentPreparations.status, 'needs_attention')),
+      lt(schema.petrosDocumentPreparations.attemptCount, 3),
+      or(eq(schema.petrosDocumentPreparations.status, 'queued'), and(eq(schema.petrosDocumentPreparations.status, 'needs_attention'), eq(schema.petrosDocumentPreparations.retryable, 1))),
     )).returning();
+      return claimed;
+    });
     if (!claimed) return { reused: true };
+    const authorized = <T>(work: (db: Database) => Promise<T>) => this.withClaim(scope, claimed, work);
+    const progress = (stage: string, amount: number, message: string) => authorized(db => db.update(schema.petrosDocumentPreparations).set({ stage, progress: amount, message, leaseExpiresAt: new Date(Date.now() + 120_000), updatedAt: new Date() }).where(eq(schema.petrosDocumentPreparations.id, claimed.id)).then(() => undefined));
     const started = Date.now();
     try {
-      const [revision] = await this.db.select().from(schema.petrosDocumentSourceRevisions).where(and(
+      const [revision] = await authorized(db => db.select().from(schema.petrosDocumentSourceRevisions).where(and(
         eq(schema.petrosDocumentSourceRevisions.id, claimed.sourceRevisionId),
         eq(schema.petrosDocumentSourceRevisions.institutionId, claimed.institutionId),
-      )).limit(1);
+      )).limit(1));
       if (!revision) throw issue('PETROS_SOURCE_REVISION_MISSING', 'The prepared source revision no longer exists.', false);
       const structure = petrosDocumentSourceStructureSchema.parse(revision.structure);
       const readable = structure.pages.flatMap((page) => page.regions).filter((region) => region.kind !== 'unresolved' && region.text.trim());
       if (!readable.length) throw issue('PETROS_SOURCE_UNREADABLE', 'No readable source regions are available. OCR or a clearer file is required.', false);
 
-      await this.progress(claimed.id, 'mapping_document', 24, 'Mapping concepts, prerequisites, examples and exercises…');
+      await progress('mapping_document', 24, 'Mapping concepts, prerequisites, examples and exercises…');
       const context = claimed.requestContext as Record<string, unknown>;
       const map = buildInitialMap(revision.id, revision.title, structure, context);
-      await this.db.update(schema.petrosDocumentPreparations).set({ documentMap: map as unknown as Record<string, unknown>, recommendedConceptId: map.recommendedConceptId, stage: 'selecting_start', progress: 38, message: 'Selecting a substantive starting concept…', updatedAt: new Date() }).where(eq(schema.petrosDocumentPreparations.id, claimed.id));
+      await authorized(db => db.update(schema.petrosDocumentPreparations).set({ documentMap: map as unknown as Record<string, unknown>, recommendedConceptId: map.recommendedConceptId, stage: 'selecting_start', progress: 38, message: 'Selecting a substantive starting concept…', updatedAt: new Date() }).where(eq(schema.petrosDocumentPreparations.id, claimed.id)));
       const concept = map.concepts.find((item) => item.id === map.recommendedConceptId) ?? map.concepts[0]!;
       const selectedRegions = boundedTeachingRegions(
         readable.filter((region) => concept.sourceRegionIds.includes(region.id)),
       );
       if (!selectedRegions.length) throw issue('PETROS_CONCEPT_SOURCE_UNRESOLVED', 'The selected concept depends on unresolved source material.', false);
       const pages = [...new Set(selectedRegions.map((region) => region.page))].map((page) => ({ page, text: selectedRegions.filter((region) => region.page === page).map((region) => region.text).join('\n') }));
-      await this.progress(claimed.id, 'generating_lesson', 50, `Building the first ${concept.subject} lesson with a visual demonstration and practice…`);
+      await progress('generating_lesson', 50, `Building the first ${concept.subject} lesson with a visual demonstration and practice…`);
 
       let generated: DocumentTeachingGeneration;
       let validated: DocumentTeachingGeneration;
@@ -381,6 +411,8 @@ export class PetrosDocumentPreparationService implements OnModuleInit {
         const immutableProvenance = { schemaVersion: 'petros.document-teaching.v3', experience: 'document-teaching-v1', generatorVersion: DOCUMENT_TEACHING_GENERATOR_VERSION, documentId: revision.canonicalKnowledgeItemId ?? revision.id, documentVersion: revision.documentVersion, sourceFingerprint: revision.checksum, topicId: concept.id, sourceComplete: structure.extractionComplete, sourcePageCount: pages.length, generatedAt: new Date().toISOString() };
         const result = await this.gateway.execute({
           context: generationContext,
+          databaseScope: work => runOutsideTenant(() => runInStudentTenant(this.db, scope, work)),
+          authorizeAttempt: () => authorized(async () => undefined),
           system: DOCUMENT_TEACHING_PROMPT,
           input: [{ type: 'text', text: JSON.stringify({
             immutableProvenance,
@@ -403,10 +435,12 @@ export class PetrosDocumentPreparationService implements OnModuleInit {
           generated = bindDocumentTeachingGeneration(normalizeTeachingDraft(result.content), binding);
           validated = validateDocumentTeachingGeneration(generated, pages);
         } catch (firstValidationError) {
-          await this.progress(claimed.id, 'repairing_lesson', 64, 'Repairing a malformed visual or assessment field without restarting source analysisâ€¦');
+          await progress('repairing_lesson', 64, 'Repairing a malformed visual or assessment field without restarting source analysisâ€¦');
           try {
             const repair = await this.gateway.execute({
               context: { ...generationContext, previousFailures: generationContext.previousFailures + 1 },
+              databaseScope: work => runOutsideTenant(() => runInStudentTenant(this.db, scope, work)),
+              authorizeAttempt: () => authorized(async () => undefined),
               system: `${DOCUMENT_TEACHING_PROMPT}\n\nRepair the rejected draft below. Preserve its grounded teaching content, but fix every listed validation error. Return one complete corrected JSON object; do not explain the repair.`,
               input: [{ type: 'text', text: JSON.stringify({
                 immutableProvenance,
@@ -450,20 +484,26 @@ export class PetrosDocumentPreparationService implements OnModuleInit {
           repairAttempted: finalResult !== result, cached: false,
         };
       }
-      await this.progress(claimed.id, 'validating_lesson', 72, 'Checking source references, visual relationships, answer keys and teaching phases…');
+      await progress('validating_lesson', 72, 'Checking source references, visual relationships, answer keys and teaching phases…');
       const publicPlan = publicDocumentTeachingPlan(validated);
-      const [artifact] = await this.db.insert(schema.petrosDocumentLessonArtifacts).values({
+      let nextPreparationId: string | undefined;
+      const artifact = await authorized(async db => {
+      let [artifact] = await db.insert(schema.petrosDocumentLessonArtifacts).values({
         institutionId: claimed.institutionId, sourceRevisionId: revision.id, preparationId: claimed.id,
         conceptId: concept.id, subject: concept.subject, generatorVersion: DOCUMENT_TEACHING_GENERATOR_VERSION,
         status: 'published', publicPlan: publicPlan as unknown as Record<string, unknown>, privatePlan: validated as unknown as Record<string, unknown>,
         quality: { instructionalPhases: 5, sourceReferencesValidated: true, privateAnswersSeparated: true, visualSpecValidated: true },
         provenance, publishedAt: new Date(),
-      }).onConflictDoUpdate({
-        target: [schema.petrosDocumentLessonArtifacts.institutionId, schema.petrosDocumentLessonArtifacts.sourceRevisionId, schema.petrosDocumentLessonArtifacts.conceptId, schema.petrosDocumentLessonArtifacts.generatorVersion],
-        set: { preparationId: claimed.id, status: 'published', publicPlan: publicPlan as unknown as Record<string, unknown>, privatePlan: validated as unknown as Record<string, unknown>, quality: { instructionalPhases: 5, sourceReferencesValidated: true, privateAnswersSeparated: true, visualSpecValidated: true }, provenance, publishedAt: new Date(), updatedAt: new Date() },
-      }).returning();
+      }).onConflictDoNothing().returning({ id: schema.petrosDocumentLessonArtifacts.id });
+      if (!artifact) [artifact] = await db.select({ id: schema.petrosDocumentLessonArtifacts.id }).from(schema.petrosDocumentLessonArtifacts).where(and(
+        eq(schema.petrosDocumentLessonArtifacts.institutionId, claimed.institutionId),
+        eq(schema.petrosDocumentLessonArtifacts.sourceRevisionId, revision.id),
+        eq(schema.petrosDocumentLessonArtifacts.conceptId, concept.id),
+        eq(schema.petrosDocumentLessonArtifacts.generatorVersion, DOCUMENT_TEACHING_GENERATOR_VERSION),
+        eq(schema.petrosDocumentLessonArtifacts.status, 'published'),
+      )).limit(1);
       if (!artifact) throw issue('PETROS_LESSON_PUBLISH_FAILED', 'The validated lesson could not be published.', true);
-      await this.db.update(schema.petrosDocumentPreparations).set({
+      await db.update(schema.petrosDocumentPreparations).set({
         status: 'ready', stage: 'first_lesson_ready', progress: 82,
         message: context.prepareAhead === false
           ? 'This validated lesson is ready.'
@@ -472,35 +512,81 @@ export class PetrosDocumentPreparationService implements OnModuleInit {
         timing: { firstLessonMs: Date.now() - started }, completedAt: new Date(), leaseOwner: null, leaseExpiresAt: null, updatedAt: new Date(),
       }).where(eq(schema.petrosDocumentPreparations.id, claimed.id));
       if (context.prepareAhead !== false) {
-        await this.queueOneLessonAhead(claimed, map, concept.id, studentId);
+        nextPreparationId = await this.queueOneLessonAhead(db, claimed, map, concept.id);
       }
+      return artifact;
+      });
+      if (nextPreparationId) await this.dispatch(nextPreparationId, studentId, institutionId);
       return { lessonId: artifact.id };
     } catch (error) {
       const typed = preparationFailure(error);
-      await this.db.update(schema.petrosDocumentPreparations).set({
+      await authorized(db => db.update(schema.petrosDocumentPreparations).set({
         status: 'needs_attention', stage: 'needs_attention', progress: 100,
         message: typed.message.slice(0, 500),
         issueCode: typed.issueCode ?? 'PETROS_PREPARATION_FAILED', issueDetail: typed.message.slice(0, 2_000), retryable: typed.retryable === false ? 0 : 1,
         timing: { failedAfterMs: Date.now() - started }, completedAt: new Date(), leaseOwner: null, leaseExpiresAt: null, updatedAt: new Date(),
-      }).where(eq(schema.petrosDocumentPreparations.id, claimed.id));
+      }).where(eq(schema.petrosDocumentPreparations.id, claimed.id))).catch(() => undefined);
       throw error;
     }
   }
 
-  private progress(id: string, stage: string, progress: number, message: string) {
-    return this.db.update(schema.petrosDocumentPreparations).set({ stage, progress, message, leaseExpiresAt: new Date(Date.now() + 120_000), updatedAt: new Date() }).where(eq(schema.petrosDocumentPreparations.id, id));
+  private async withClaim<T>(scope: { institutionId: string; studentId: string; preparationId: string },
+    claim: typeof schema.petrosDocumentPreparations.$inferSelect, work: (db: Database) => Promise<T>) {
+    if (!this.runtime || this.env.PETROS_DOCUMENT_TEACHING_ENABLED === false) throw new Error('PETROS_DOCUMENT_WORKER_UNAVAILABLE');
+    return this.runtime.worker(scope, async db => {
+      const t = schema.petrosDocumentPreparations;
+      const [current] = await db.select().from(t).where(and(eq(t.id, claim.id),
+        eq(t.status, 'preparing'), eq(t.leaseOwner, claim.leaseOwner!), eq(t.attemptCount, claim.attemptCount),
+        gt(t.leaseExpiresAt, new Date()))).for('update').limit(1);
+      if (!current) throw new Error('PETROS_DOCUMENT_LEASE_OR_AUTHORITY_LOST');
+      await this.lockSource(db, scope);
+      return work(db);
+    });
+  }
+
+  /** Lock each current authority row during short claims/commits; no parser/provider work here. */
+  private async lockSource(db: Database, scope: { institutionId: string; studentId: string; preparationId: string }) {
+    const [source] = await db.execute<{ item_id: string; object_id: string; material_id: string | null }>(sql`
+      SELECT k.id AS item_id, o.id AS object_id, r.class_material_id AS material_id
+      FROM public.petros_document_preparations p
+      JOIN public.petros_document_learner_paths path ON path.source_revision_id=p.source_revision_id
+        AND path.institution_id=p.institution_id AND path.student_id=${scope.studentId} AND path.status='active'
+      JOIN public.knowledge_items k ON k.id=path.knowledge_item_id AND k.source_revoked_at IS NULL AND k.status='ready'
+      JOIN public.petros_document_source_revisions r ON r.id=p.source_revision_id
+      JOIN public.storage_objects o ON o.id::text=k.object_ids->>0 AND o.institution_id=p.institution_id
+      JOIN public.students st ON st.id=path.student_id AND st.institution_id=p.institution_id AND st.status='enrolled'
+      JOIN public.institution_users iu ON iu.id=st.institution_user_id AND iu.institution_id=p.institution_id AND iu.status='active'
+        AND iu.disabled_at IS NULL AND iu.password_reset_required_at IS NULL
+      JOIN public.institution_user_roles ur ON ur.institution_user_id=iu.id AND ur.role_key='student'
+      WHERE p.id=${scope.preparationId} AND p.institution_id=${scope.institutionId}
+      FOR SHARE OF path,k,o,st,iu,ur`);
+    if (!source) throw new Error('PETROS_DOCUMENT_SOURCE_AUTHORITY_LOST');
+    // Invalidation is an authority change even when the source item itself is unchanged.
+    await db.execute(sql`SELECT v.id FROM public.knowledge_item_versions v JOIN public.knowledge_items k ON k.id=v.item_id
+      WHERE k.id=${source.item_id} AND v.ordinal=k.version FOR SHARE OF v`);
+    if (source.material_id) {
+      const [material] = await db.execute<{ context_type: string; context_id: string }>(sql`
+        SELECT context_type,context_id FROM public.class_materials WHERE id=${source.material_id} FOR SHARE`);
+      if (!material) throw new Error('PETROS_DOCUMENT_SOURCE_AUTHORITY_LOST');
+      if (material.context_type === 'course') {
+        const rows = await db.execute(sql`SELECT e.id FROM public.course_enrollments e JOIN public.courses c ON c.id=e.course_id
+          WHERE c.id=${material.context_id} AND e.student_id=${scope.studentId} AND e.institution_id=${scope.institutionId}
+            AND c.institution_id=${scope.institutionId} AND c.status='active' FOR SHARE OF e,c`);
+        if (!rows.length) throw new Error('PETROS_DOCUMENT_SOURCE_AUTHORITY_LOST');
+      }
+    }
   }
 
   private async queueOneLessonAhead(
+    db: Database,
     preparation: typeof schema.petrosDocumentPreparations.$inferSelect,
     map: PetrosDocumentMap,
     currentConceptId: string,
-    studentId: string,
   ) {
     const currentIndex = map.concepts.findIndex((concept) => concept.id === currentConceptId);
     const next = map.concepts.slice(currentIndex + 1).find((concept) => concept.classification === 'concept');
     if (!next) return;
-    const [queued] = await this.db.insert(schema.petrosDocumentPreparations).values({
+    const [queued] = await db.insert(schema.petrosDocumentPreparations).values({
       institutionId: preparation.institutionId,
       sourceRevisionId: preparation.sourceRevisionId,
       requestedConceptId: next.id,
@@ -528,7 +614,7 @@ export class PetrosDocumentPreparationService implements OnModuleInit {
       progress: 2,
       message: 'Queued as the next likely lesson.',
     }).onConflictDoNothing().returning();
-    if (queued) await this.dispatch(queued.id, studentId);
+    return queued?.id;
   }
 
   private dto(row: typeof schema.petrosDocumentPreparations.$inferSelect, pathId?: string): PetrosDocumentPreparation {

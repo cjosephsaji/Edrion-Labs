@@ -170,6 +170,26 @@ describe('Petros Stage 2 RENDER contract', () => {
     expect(petrosTeachingBlockContentSchema.safeParse(block).success).toBe(true);
   });
 
+  it('accepts an optional prediction question while preserving existing explanation layers', () => {
+    const explanation = blocks[0]!;
+    if (explanation.type !== 'layered_explanation') throw new Error('Expected explanation.');
+    expect(petrosTeachingBlockContentSchema.safeParse(explanation).success).toBe(true);
+    const withPrompt = {
+      ...explanation,
+      deeperLayers: explanation.deeperLayers.map((layer) => ({
+        ...layer,
+        predictionPrompt: 'What changes if the first quantity doubles while the second stays fixed?',
+      })),
+    };
+    expect(petrosTeachingBlockContentSchema.parse(withPrompt)).toEqual(withPrompt);
+    expect(
+      petrosTeachingBlockContentSchema.safeParse({
+        ...withPrompt,
+        deeperLayers: [{ ...withPrompt.deeperLayers[0], predictionPrompt: '' }],
+      }).success,
+    ).toBe(false);
+  });
+
   it('rejects invalid structures rather than guessing missing fields', () => {
     expect(
       petrosTeachingBlockContentSchema.safeParse({ ...blocks[0], type: 'video' }).success,

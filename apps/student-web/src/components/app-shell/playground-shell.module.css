@@ -1,0 +1,42 @@
+:global(body):has(.shell) { height: 100dvh; min-height: 0; overflow: hidden; padding-bottom: 0; }
+.shell:global(.student-shell) { display: flex; flex-direction: column; height: 100dvh; min-height: 0; overflow: hidden; }
+.shell > :global(.portal-header) { flex: none; }
+.shell :global(.portal-masthead), .shell :global(.portal-header.is-compact .portal-masthead) { height: 60px; padding: 0 20px; }
+.shell :global(.portal-brand-word) { font-size: 30px; }
+.shell :global(.portal-context) { font-size: 12px; }
+.shell :global(.portal-date-number) { font-size: 28px; }
+.shell :global(.portal-date-weekday), .shell :global(.portal-date-year) { display: none; }
+.shell :global(.portal-petros-perch) { display: none; }
+.focusButton { display: flex; gap: 6px; align-items: center; min-height: 40px; padding: 6px 10px; border: 1px solid #ffffff40; border-radius: 7px; font-size: .75rem; color: inherit; margin-left: auto; }
+.shell .main:global(.portal-main) { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; padding: 12px 18px 0; overflow: hidden; }
+.shell .main > :global(section) { max-width: none !important; }
+.sidebarToggle { display: flex; align-items: center; gap: 10px; padding: 10px 16px; min-height: 48px; font-size: .76rem; color: var(--s-muted); }
+.shell :global(.portal-identity) { min-width: 0; width: 100%; margin-left: 0; justify-content: flex-start; gap: 10px; padding: 14px 12px; }
+.shell :global(.portal-identity-name), .shell :global(.portal-identity-meta) { white-space: normal; overflow-wrap: anywhere; max-width: 100%; line-height: 1.4; }
+.shell :global(.portal-identity-meta) { font-size: .66rem; color: var(--s-muted); margin-top: 3px; }
+.shell :global(.portal-avatar) { width: 34px; height: 34px; font-size: 13px; }
+.shell > :global(.portal-mobile-nav) { position: static; flex: none; }
+@media (min-width: 921px) {
+  .shell :global(.portal-nav-row) { top: 60px; width: 204px; }
+  .shell .main:global(.portal-main) { margin-left: 204px; }
+  .shell :global(.portal-learning-rail) { padding: 8px; }
+  .shell :global(.portal-learning-rail p) { display: none; }
+  .shell :global(.portal-learning-rail a) { min-height: 44px; font-size: .83rem; padding: 10px; }
+  .shell[data-sidebar-collapsed='true'] :global(.portal-nav-row) { width: 64px; }
+  .shell[data-sidebar-collapsed='true'] .main:global(.portal-main) { margin-left: 64px; }
+  .shell[data-sidebar-collapsed='true'] :global(.portal-learning-rail a span), .shell[data-sidebar-collapsed='true'] :global(.portal-identity > span:last-child), .shell[data-sidebar-collapsed='true'] .sidebarToggle span { display: none; }
+  .shell[data-sidebar-collapsed='true'] :global(.portal-learning-rail a), .shell[data-sidebar-collapsed='true'] :global(.portal-identity), .shell[data-sidebar-collapsed='true'] .sidebarToggle { justify-content: center; }
+  .shell[data-sidebar-collapsed='true'] :global(.portal-tabs) { padding: 8px; }
+  .shell[data-sidebar-collapsed='true'] :global(.portal-more) { font-size: 0; justify-content: center; padding: 10px; }
+  .shell[data-sidebar-collapsed='true'] :global(.portal-more svg) { width: 19px; height: 19px; }
+}
+.shell[data-focus-mode='true'] :global(.portal-nav-row), .shell[data-focus-mode='true'] > :global(.portal-mobile-nav) { display: none; }
+.shell[data-focus-mode='true'] .main:global(.portal-main) { margin-left: 0; }
+@media (max-width: 920px), (max-height: 540px) {
+  .shell .main:global(.portal-main) { overflow-y: auto; overscroll-behavior-y: contain; scroll-padding-block: 12px 200px; }
+}
+@media (max-width: 920px) {
+  .sidebarToggle, .shell :global(.portal-header .portal-nav-row), .shell :global(.portal-brand-divider), .shell :global(.portal-context), .shell :global(.portal-date) { display: none; }
+  .shell .main:global(.portal-main) { padding: 10px 10px 0; }
+  .shell :global(.portal-masthead) { padding: 0 12px; }
+}

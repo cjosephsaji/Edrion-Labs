@@ -1,0 +1,9 @@
+An observation records what was measured in a stated setting. A statement about the setting must name the observed conditions.
+
+A comparison identifies the cases and a shared basis. The comparison remains bounded by the conditions recorded for those cases.
+
+A source passage provides evidence for a stated claim. The reader can identify the wording that supports the claim and describe its limits.
+
+An alternative interpretation can use the same evidence. The reader should state which assumptions distinguish the interpretations.
+
+A verification candidate asks for observable work under recorded assistance conditions. A reviewer must examine exposure and alternative defensible work before approving a private reference criterion.

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
-import { Bell, BookOpen, ChevronRight, House, LayoutGrid, LogOut, NotebookPen, RotateCcw, Settings, Sparkles, Star, UserRound, X } from 'lucide-react';
+import { Bell, BookOpen, ChevronRight, House, LayoutGrid, LogOut, Maximize2, Minimize2, NotebookPen, PanelLeftClose, PanelLeftOpen, RotateCcw, Settings, Sparkles, Star, UserRound, X } from 'lucide-react';
 import { STUDENT_NAV, type NavItem } from '@/lib/nav';
 import { useStudentLogout, useStudentMe, type StudentMe } from '@/lib/hooks';
 import { useStudentPreferences } from '@/lib/preferences';
@@ -13,6 +13,7 @@ import { PetrosMentor } from '@/components/petros/petros-mentor';
 import { clearQueuedNotesForOwner } from '@/lib/petros-offline-notes';
 import { NavigationFeedback } from './navigation-feedback';
 import { activeSectionNavigation, SectionNavigation } from './section-navigation';
+import playgroundShell from './playground-shell.module.css';
 import {
   isLearningWorkspaceRoute,
   LearningWorkspaceFrame,
@@ -43,7 +44,7 @@ function isActive(pathname: string, href: string) {
  * not rendered at all there.
  */
 function isFocusRoute(pathname: string) {
-  return /^\/exams\/[^/]+\/attempt$/.test(pathname);
+  return /^\/exams\/[^/]+\/attempt$/.test(pathname) || pathname === '/petros/v2' || pathname.startsWith('/petros/v2/');
 }
 
 function uniqueItems(items: Array<NavItem | undefined>) {
@@ -145,6 +146,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   const preferences = useStudentPreferences();
   const [menuPhase, setMenuPhase] = useState<'closed' | 'open' | 'closing'>('closed');
   const [headerCompact, setHeaderCompact] = useState(false);
+  const [lessonSidebarCollapsed, setLessonSidebarCollapsed] = useState(true);
+  const [lessonFocus, setLessonFocus] = useState(false);
+  useEffect(() => {
+    const showContext = () => setLessonFocus(false);
+    window.addEventListener('petros:show-context', showContext);
+    return () => window.removeEventListener('petros:show-context', showContext);
+  }, []);
   const [mentorGuideHost, setMentorGuideHost] = useState<HTMLDivElement | null>(null);
   const [mentorPerchHost, setMentorPerchHost] = useState<HTMLDivElement | null>(null);
   const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -260,8 +268,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, []);
 
   const firstName = me?.fullName?.split(' ')[0] || 'Student';
+  const isPlayground = pathname === '/petros/companion-playground';
   const initial = firstName.slice(0, 1).toUpperCase();
-  const learnerLine = [me?.className, me?.sectionName, me?.termName].filter(Boolean).join(' · ');
+  const learnerLine = [isPlayground ? me?.programmeName ?? me?.className : me?.className, me?.sectionName, me?.termName].filter(Boolean).join(' · ');
   const today = new Date();
   const day = String(today.getDate()).padStart(2, '0');
   const month = new Intl.DateTimeFormat('en', { month: 'short' }).format(today).toUpperCase();
@@ -297,7 +306,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <PetrosCompanionProvider>
     <PetrosProgramWorkspaceProvider key={me?.studentId ?? 'unavailable'}>
-    <div className="student-shell min-h-screen bg-[var(--s-page)] text-[var(--s-ink)]">
+    <div className={`student-shell min-h-screen bg-[var(--s-page)] text-[var(--s-ink)] ${isPlayground ? playgroundShell.shell : ''}`} data-contained-workspace={isPlayground ? 'petros-playground' : undefined} data-sidebar-collapsed={isPlayground ? lessonSidebarCollapsed : undefined} data-focus-mode={isPlayground ? lessonFocus : undefined}>
       <NavigationFeedback />
       <header className={`portal-header sticky top-0 z-40 ${headerCompact ? 'is-compact' : ''}`}>
         <div className="portal-masthead">
@@ -309,6 +318,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="portal-context">Student portal</span>
           </div>
           <div ref={setMentorPerchHost} className="portal-petros-perch" />
+          {isPlayground && <button className={playgroundShell.focusButton} aria-pressed={lessonFocus} onClick={() => setLessonFocus(!lessonFocus)}>{lessonFocus ? <Minimize2 size={16} /> : <Maximize2 size={16} />}{lessonFocus ? 'Exit focus' : 'Focus mode'}</button>}
           <div className="portal-date" suppressHydrationWarning aria-label={`${weekday}, ${day} ${month} ${year}`}>
             <span className="portal-date-weekday">{weekday}</span>
             <span className="portal-date-number">{day}</span>
@@ -317,7 +327,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        <div className="portal-nav-row">
+        <div className="portal-nav-row" id={isPlayground ? 'lesson-sidebar' : undefined}>
+          {isPlayground && <button className={playgroundShell.sidebarToggle} aria-label={lessonSidebarCollapsed ? 'Expand lesson sidebar' : 'Collapse lesson sidebar'} aria-expanded={!lessonSidebarCollapsed} aria-controls="lesson-sidebar" onClick={() => setLessonSidebarCollapsed(!lessonSidebarCollapsed)}>{lessonSidebarCollapsed ? <PanelLeftOpen size={19} /> : <PanelLeftClose size={19} />}<span>Navigation</span></button>}
           <nav className="portal-learning-rail" aria-label="Learning workspace">
             <p>Your workspace</p>
             {[
@@ -326,18 +337,18 @@ export function AppShell({ children }: { children: ReactNode }) {
               { href: '/petros', label: 'Petros', icon: Sparkles, permission: 'student.learn.use' },
               { href: '/materials', label: 'Materials', icon: BookOpen, permission: 'student.classes.view' },
               { href: '/petros/artifacts', label: 'Notebook & review', icon: NotebookPen, permission: 'student.learn.use' },
-            ].filter(item => canSee(me, item.permission)).map(item => <Link key={item.href} href={item.href}
+            ].filter(item => canSee(me, item.permission)).map(item => <Link key={item.href} href={item.href} aria-label={item.label} title={isPlayground ? item.label : undefined}
               aria-current={isActive(pathname, item.href) && !(item.href === '/petros' && pathname.startsWith('/petros/artifacts')) ? 'page' : undefined}>
               <item.icon aria-hidden="true" /><span>{item.label}</span>
             </Link>)}
           </nav>
           <nav className="portal-tabs" aria-label="Student portal">
             <div className="portal-quick-tabs">
-              {primaryTabs.map((item) => <PortalTab key={item.href} item={item} pathname={pathname} />)}
+              {!isPlayground && primaryTabs.map((item) => <PortalTab key={item.href} item={item} pathname={pathname} />)}
             </div>
             <button type="button" onClick={openMenu} data-petros-target="nav:explore" className="portal-tab portal-more" aria-expanded={menuOpen} aria-controls="portal-directory"><LayoutGrid className="h-4 w-4" aria-hidden="true" />Explore</button>
           </nav>
-          <Link href="/profile" className="portal-identity">
+          <Link href="/profile" className="portal-identity" aria-label={isPlayground ? `Student profile: ${me?.fullName?.trim() || 'Student'}` : undefined} title={isPlayground ? me?.fullName ?? 'Student profile' : undefined}>
             <span className="portal-avatar">{initial}</span>
             <span className="min-w-0">
               <span className="portal-identity-name">{me?.fullName ?? 'Student'}</span>
@@ -347,7 +358,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      {pathname !== '/petros/pilot' && pathname !== '/petros/document' && me?.kind === 'institutional' && me.studentId && canSee(me, 'student.learn.use') ? <PetrosMentor
+      {pathname !== '/petros/pilot' && pathname !== '/petros/document' && pathname !== '/petros/companion-playground' && me?.kind === 'institutional' && me.studentId && canSee(me, 'student.learn.use') ? <PetrosMentor
         studentId={me.studentId}
         navigation={allItems}
         guideHost={menuOpen ? mentorGuideHost : null}
@@ -356,8 +367,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         onCloseExplore={() => closeMenu(false)}
       /> : null}
 
-      <main data-petros-target={`page:${pathname}`} key={pathname} className="portal-main page-enter min-h-[calc(100vh-114px)] px-4 pb-24 pt-8 min-[921px]:px-10 min-[921px]:pb-16 min-[921px]:pt-12">
-        {sectionNavigation ? <SectionNavigation {...sectionNavigation} /> : null}
+      <main data-petros-target={`page:${pathname}`} key={pathname} tabIndex={isPlayground ? 0 : undefined} className={`portal-main page-enter min-h-[calc(100vh-114px)] px-4 pb-24 pt-8 min-[921px]:px-10 min-[921px]:pb-16 min-[921px]:pt-12 ${isPlayground ? playgroundShell.main : ''}`}>
+        {!isPlayground && sectionNavigation ? <SectionNavigation {...sectionNavigation} /> : null}
         {children}
       </main>
 

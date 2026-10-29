@@ -1,0 +1,156 @@
+Skip to content
+Isolated M3 demonstration
+Education OS
+OVERVIEW
+Dashboard
+Attention Centre
+Petros
+Petros support
+WORKFLOW
+Approvals
+Grievances
+ACADEMIC SETUP
+Academic Years
+Departments
+Grades
+Subjects
+Classes
+Terms
+PEOPLE
+Students
+Student Conduct
+Staff
+Parents
+CAREERS
+Placement cell
+ACADEMICS
+Teaching
+Admissions
+Attendance
+Timetable
+Homework
+Exams
+Gradebook
+Report cards
+Assignments
+Calendar
+FINANCE
+Fees
+Expenses
+Payroll
+OPERATIONS
+Library
+Transport
+Inventory
+Hostel
+COMMUNICATION
+Announcements
+Notifications
+Messages
+PTM scheduling
+HEALTH & WELLBEING
+Health Records
+Medical Incidents
+Medication Logs
+Counseling
+Counseling Cases
+CAMPUS OPERATIONS
+Labs
+Lab Schedule
+Lab Incidents
+Debate calibration
+Front Desk
+Appointments
+Facilities
+Work Orders
+Maintenance
+Assets
+Visitor Logs
+Gate Passes
+Security Incidents
+Emergency Alerts
+Access Logs
+Sensitive Reports
+IT
+Devices
+Access Requests
+Webhooks
+INSIGHTS
+Reports
+ADMINISTRATION
+Campuses
+Documents & Policies
+User Management
+Roles & Permissions
+Settings
+Petros policy
+SSO & roster
+Billing
+Audit Logs
+SM
+Synthetic M3 actor
+e8236aaf-5635-499b-89c4-6f9cfdf7c162@example.test
+Sign out
+Cloud Computing
+All subjects
+50cf13c4-8916-4cff-9433-65789578e67f Cloud Computing
+
+Isolated source review class · 2 students
+
+Notes
+Files
+Class updates
+Petros Learn
+Petros Learn
+
+Prepare lessons and guide your students.
+
+Lessons
+Learning goals
+Student progress
+Curriculum authoring
+
+Changes saved. This revision needs review again.
+
+1
+Choose material
+2
+Review lesson
+3
+Preview activities
+4
+Save & submit
+
+STEP 2 OF 4
+
+Here's what your students will learn
+
+Cloud Computing
+
+cloud-models.pptx
+About 20 minutes
+Draft saved · revision 11
+Sample lesson — prepared from test data
+About this draft
+1
+Classify the consumer and provider responsibilities using the cited source boundary.
+
+Connect ideas: Inspect responsibility or resource boundaries.
+
+Changed · review needed again
+Edit
+2
+Explain the distinction between logical resources and physical hardware using the source wording.
+
+Connect ideas: Inspect responsibility or resource boundaries.
+
+Ready for your review
+Edit
+Concepts & connections
+Check lesson claims
+Version history
+
+Saved to your draft. Student use is not enabled.
+
+Back
+Preview lesson

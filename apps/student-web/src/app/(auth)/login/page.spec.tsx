@@ -5,16 +5,21 @@ import LoginPage from './page';
 
 const login = vi.hoisted(() => ({
   mutate: vi.fn(),
+  reset: vi.fn(),
   isPending: false,
   error: null as Error | null,
 }));
 
 vi.mock('@/lib/hooks', () => ({ useStudentLogin: () => login }));
-vi.mock('@/lib/api-client', () => ({ formatApiError: (error: Error) => error.message }));
+vi.mock('@/lib/api-client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/api-client')>()),
+  formatApiError: (error: Error) => error.message,
+}));
 
 describe('student portal sign in', () => {
   beforeEach(() => {
     login.mutate.mockReset();
+    login.reset.mockReset();
     login.isPending = false;
     login.error = null;
   });

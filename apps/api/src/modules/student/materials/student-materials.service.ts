@@ -3,6 +3,7 @@ import { and, asc, desc, eq, schema, sql, type Database } from '@edrion/database
 import { DATABASE } from '../../../common/tokens';
 import type { InstitutionalStudentPrincipal } from '../student.types';
 import { canonicalMaterialMimeType } from './material-file-types';
+import { recordM4SourceExposure } from '../petros-v2/petros-v2-source-exposure';
 
 @Injectable()
 export class StudentMaterialsService {
@@ -115,6 +116,7 @@ export class StudentMaterialsService {
     if (!file) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Study material file not found' });
     }
+    await recordM4SourceExposure(this.db,principal,file.objectId);
     return {
       ...file,
       mimeType: canonicalMaterialMimeType(file.filename, file.mimeType),
@@ -123,6 +125,7 @@ export class StudentMaterialsService {
 
   /** Reuse the student's already-extracted Petros pages before parsing the source again. */
   async previewPages(principal: InstitutionalStudentPrincipal, materialId: string) {
+    await this.file(principal,materialId);
     const [source] = await this.db
       .select({ id: schema.knowledgeItems.id })
       .from(schema.knowledgeItems)

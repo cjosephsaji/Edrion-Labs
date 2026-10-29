@@ -1,10 +1,11 @@
 import { Global, Module } from '@nestjs/common';
-import { createDatabase, createTenantAwareDatabase, type Database } from '@edrion/database';
+import { assertRestrictedApplicationDatabase, createDatabase, createTenantAwareDatabase, type Database } from '@edrion/database';
 import { createAuditWriter } from '@edrion/audit';
 import { loadApiEnv, type ApiEnv } from '@edrion/config';
 import { createErrorReporter, createLogger, type ErrorReporter, type Logger } from '@edrion/observability';
 import { API_ENV, AUDIT_WRITER, DATABASE, ERROR_REPORTER, LOGGER } from './tokens';
 import { StructuredLogger } from './logger';
+import { PetrosDocumentDatabase } from './petros-document-database';
 
 /**
  * Global providers: validated env, the database pool, the append-only audit writer, and the
@@ -20,8 +21,13 @@ import { StructuredLogger } from './logger';
 @Module({
   providers: [
     StructuredLogger,
+    PetrosDocumentDatabase,
     { provide: API_ENV, useFactory: (): ApiEnv => loadApiEnv() },
-    { provide: DATABASE, useFactory: (): Database => createTenantAwareDatabase(createDatabase()) },
+    { provide: DATABASE, useFactory: async (): Promise<Database> => {
+      const base = createDatabase();
+      await assertRestrictedApplicationDatabase(base);
+      return createTenantAwareDatabase(base);
+    } },
     {
       provide: AUDIT_WRITER,
       useFactory: (db: Database) => createAuditWriter(db),
@@ -40,6 +46,6 @@ import { StructuredLogger } from './logger';
       inject: [API_ENV, LOGGER],
     },
   ],
-  exports: [API_ENV, DATABASE, AUDIT_WRITER, StructuredLogger, LOGGER, ERROR_REPORTER],
+  exports: [API_ENV, DATABASE, AUDIT_WRITER, StructuredLogger, LOGGER, ERROR_REPORTER, PetrosDocumentDatabase],
 })
 export class CoreModule {}

@@ -125,17 +125,19 @@ export class PetrosBriefingService {
       });
     }
 
-    if (this.has(principal, 'student.assignments.view')) {
+    if (this.has(principal, 'student.assignments.view') || this.has(principal, 'student.learn.use')) {
       for (const row of await this.dueAssignments(principal)) {
+        if (!row.petrosGuidance && !this.has(principal, 'student.assignments.view')) continue;
         const due = row.dueDate ? localDateTime(row.dueDate, '23:59:59', timeZone) : null;
         push({
           kind: 'due_work',
           title: row.title,
-          detail: describeDue(due, now, row.subject),
+          detail: row.petrosGuidance ? `Teacher's learning goal · ${describeDue(due, now, row.subject)} · ${row.petrosGuidance.sessionMinutes}-minute sessions`
+            : describeDue(due, now, row.subject),
           deadlineAt: due?.toISOString() ?? null,
           subject: row.subject,
           academicWeight: row.maxPoints,
-          href: `/assignments/${row.id}`,
+          href: row.petrosGuidance ? `/learn/goals/${row.id}` : `/assignments/${row.id}`,
           priority: bandForDue(due, now, PRIORITY),
           entityType: 'assignment',
           entityId: row.id,
@@ -310,6 +312,7 @@ export class PetrosBriefingService {
         subject: schema.subjects.name,
         dueDate: schema.assignments.dueDate,
         maxPoints: schema.assignments.maxPoints,
+        petrosGuidance: schema.assignments.petrosGuidance,
       })
       .from(schema.assignments)
       .leftJoin(schema.subjects, eq(schema.subjects.id, schema.assignments.subjectId))

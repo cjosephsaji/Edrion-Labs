@@ -1,0 +1,402 @@
+ M .gitignore
+ M .nvmrc
+ M apps/api/package.json
+ M apps/api/scripts/copy-build-assets.mjs
+ M apps/api/src/common/core.module.ts
+ M apps/api/src/main.ts
+ M apps/api/src/modules/integrations/petros-assignment-authority.integration.spec.ts
+ M apps/api/src/modules/integrations/petros-phase2-authority-fixture.ts
+ M apps/api/src/modules/integrations/petros-phase2-full-journey.integration.spec.ts
+ M apps/api/src/modules/integrations/petros-phase2-test-database.ts
+ M apps/api/src/modules/petros-ai-routing/petros-ai-gateway.service.ts
+ M apps/api/src/modules/petros-ai-routing/petros-ai-routing.repository.ts
+ M apps/api/src/modules/petros-ai-routing/petros-provider-adapters.spec.ts
+ M apps/api/src/modules/petros-ai-routing/petros-provider-adapters.ts
+ M apps/api/src/modules/petros-institutional/petros-cohort-evidence-authority.ts
+ M apps/api/src/modules/petros-institutional/petros-institutional.repository.ts
+ M apps/api/src/modules/petros-learner-model/petros-learner-model.module.ts
+ M apps/api/src/modules/petros-learner-model/petros-objective-evidence.repository.ts
+ M apps/api/src/modules/petros-learner-model/petros-objective-evidence.service.ts
+ M apps/api/src/modules/petros-topic-profiles/petros-topic-profiles.service.ts
+ M apps/api/src/modules/portal/academics.repository.ts
+ M apps/api/src/modules/portal/academics.service.ts
+ M apps/api/src/modules/portal/course-content/portal-course-content.service.ts
+ M apps/api/src/modules/portal/course-content/portal-material-preparation.jobs.ts
+ M apps/api/src/modules/portal/courses/course-curriculum.repository.ts
+ M apps/api/src/modules/portal/courses/portal-courses.service.ts
+ M apps/api/src/modules/portal/onboarding.repository.ts
+ M apps/api/src/modules/portal/onboarding.service.ts
+ M apps/api/src/modules/portal/people.repository.ts
+ M apps/api/src/modules/portal/people.service.ts
+ M apps/api/src/modules/portal/petros-assignment-learning.service.ts
+ M apps/api/src/modules/portal/portal-auth-login.service.ts
+ M apps/api/src/modules/portal/portal-auth.controller.ts
+ M apps/api/src/modules/portal/portal-auth.guard.ts
+ M apps/api/src/modules/portal/portal-auth.service.ts
+ M apps/api/src/modules/portal/portal-credential.service.ts
+ M apps/api/src/modules/portal/portal-crud.engine.ts
+ M apps/api/src/modules/portal/portal-session.service.ts
+ M apps/api/src/modules/portal/portal-tenant.interceptor.ts
+ M apps/api/src/modules/portal/portal.module.ts
+ M apps/api/src/modules/portal/programme-structure.repository.ts
+ M apps/api/src/modules/portal/programme-structure.service.ts
+ M apps/api/src/modules/portal/teaching/portal-teaching.controller.ts
+ M apps/api/src/modules/registration/registration-approval.service.ts
+ M apps/api/src/modules/registration/registration-email.service.ts
+ M apps/api/src/modules/registration/registration.repository.ts
+ M apps/api/src/modules/registration/registration.service.spec.ts
+ M apps/api/src/modules/registration/registration.service.ts
+ M apps/api/src/modules/student/assignments/student-assignments.controller.ts
+ M apps/api/src/modules/student/assignments/student-assignments.service.ts
+ M apps/api/src/modules/student/auth/student-auth.controller.ts
+ M apps/api/src/modules/student/auth/student-auth.service.ts
+ M apps/api/src/modules/student/core/student-auth.guard.ts
+ M apps/api/src/modules/student/core/student-owned-transactions.ts
+ M apps/api/src/modules/student/core/student-session.service.ts
+ M apps/api/src/modules/student/core/student-tenant.interceptor.ts
+ M apps/api/src/modules/student/core/student.decorators.ts
+ M apps/api/src/modules/student/courses/student-courses.service.ts
+ M apps/api/src/modules/student/homework/homework-policy.service.ts
+ M apps/api/src/modules/student/knowledge/knowledge-document.module.ts
+ M apps/api/src/modules/student/knowledge/knowledge-pdf-process.ts
+ M apps/api/src/modules/student/knowledge/knowledge-preparation.repository.ts
+ M apps/api/src/modules/student/knowledge/pdf-extract.cjs
+ M apps/api/src/modules/student/knowledge/petros-teaching-pack.module.ts
+ M apps/api/src/modules/student/knowledge/petros-teaching-pack.repository.ts
+ M apps/api/src/modules/student/knowledge/petros-teaching-pack.service.ts
+ M apps/api/src/modules/student/materials/material-document-preview.service.spec.ts
+ M apps/api/src/modules/student/materials/material-document-preview.service.ts
+ M apps/api/src/modules/student/materials/material-visual-preview.service.ts
+ M apps/api/src/modules/student/materials/student-materials.service.ts
+ M apps/api/src/modules/student/me/student-me.controller.ts
+ M apps/api/src/modules/student/me/student-me.service.ts
+ M apps/api/src/modules/student/petros-artifacts/petros-artifacts.repository.ts
+ M apps/api/src/modules/student/petros-artifacts/petros-qualitative-review.repository.ts
+ M apps/api/src/modules/student/petros-artifacts/petros-qualitative-review.service.ts
+ M apps/api/src/modules/student/petros-companion/petros-briefing.service.ts
+ M apps/api/src/modules/student/petros-companion/petros-companion.controller.ts
+ M apps/api/src/modules/student/petros-companion/petros-companion.module.ts
+ M apps/api/src/modules/student/petros-companion/petros-companion.repository.ts
+ M apps/api/src/modules/student/petros-companion/petros-companion.service.ts
+ M apps/api/src/modules/student/petros-companion/petros-companion.spec.ts
+ M apps/api/src/modules/student/petros-companion/petros-student-context.service.ts
+ M apps/api/src/modules/student/petros-loop/petros-adaptive.service.ts
+ M apps/api/src/modules/student/petros-loop/petros-loop.policy.ts
+ M apps/api/src/modules/student/petros-loop/petros-loop.repository.ts
+ M apps/api/src/modules/student/petros-loop/petros-loop.service.spec.ts
+ M apps/api/src/modules/student/petros-loop/petros-loop.service.ts
+ M apps/api/src/modules/student/petros-reflection/petros-reflection.repository.ts
+ M apps/api/src/modules/student/petros-session-intent/petros-document-preparation.service.ts
+ M apps/api/src/modules/student/petros-session-intent/petros-document-source.integration.spec.ts
+ M apps/api/src/modules/student/petros-session-intent/petros-session-intent.controller.ts
+ M apps/api/src/modules/student/petros-session-intent/petros-session-intent.module.ts
+ M apps/api/src/modules/student/petros-session-intent/petros-session-intent.repository.ts
+ M apps/api/src/modules/student/petros-session-intent/petros-session-intent.service.spec.ts
+ M apps/api/src/modules/student/petros-session-intent/petros-session-intent.service.ts
+ M apps/api/src/modules/student/student.module.ts
+ M apps/api/src/modules/student/student.types.ts
+ M apps/api/tsconfig.json
+ M apps/institution-web/next.config.mjs
+ M apps/institution-web/package.json
+ M apps/institution-web/src/app/(app)/academics/departments/page.tsx
+ M apps/institution-web/src/app/(app)/academics/programme-structure/page.tsx
+ M apps/institution-web/src/app/(app)/careers/placements/page.tsx
+ M apps/institution-web/src/app/(app)/gradebook/page.tsx
+ M apps/institution-web/src/app/(app)/homework/page.tsx
+ M apps/institution-web/src/app/(app)/onboarding/page.tsx
+ M apps/institution-web/src/app/(app)/staff/page.tsx
+ M apps/institution-web/src/app/(app)/students/page.tsx
+ M apps/institution-web/src/app/(app)/teaching/[classId]/[subjectId]/page.tsx
+ M apps/institution-web/src/app/(app)/users/page.tsx
+ M apps/institution-web/src/app/globals.css
+ M apps/institution-web/src/app/layout.tsx
+ M apps/institution-web/src/app/login/page.tsx
+ M apps/institution-web/src/app/providers.tsx
+ M apps/institution-web/src/components/academics/created-programmes-panel.tsx
+ M apps/institution-web/src/components/academics/curriculum-grid.tsx
+ M apps/institution-web/src/components/academics/programme-builder.tsx
+ M apps/institution-web/src/components/academics/resource-form.tsx
+ M apps/institution-web/src/components/academics/resource-manager.tsx
+ M apps/institution-web/src/components/app-shell/sidebar.tsx
+ M apps/institution-web/src/components/gradebook/release-panel.tsx
+ M apps/institution-web/src/components/gradebook/weight-map-editor.tsx
+ M apps/institution-web/src/components/guardian/app-shell.tsx
+ M apps/institution-web/src/components/timetable/timetable-grid.tsx
+ M apps/institution-web/src/lib/academics-types.ts
+ M apps/institution-web/src/lib/academics.ts
+ M apps/institution-web/src/lib/onboarding-types.ts
+ M apps/institution-web/src/lib/onboarding.ts
+ M apps/institution-web/src/lib/people-types.ts
+ M apps/institution-web/src/lib/portal-session.ts
+ M apps/institution-web/tailwind.config.ts
+ M apps/public-web/src/components/register/register-flow.tsx
+ M apps/student-web/next.config.mjs
+ M apps/student-web/src/app/(app)/assignments/[id]/page.tsx
+ M apps/student-web/src/app/(app)/layout.tsx
+ M apps/student-web/src/app/(app)/learn/page.tsx
+ M apps/student-web/src/app/(app)/petros/page.tsx
+ M apps/student-web/src/app/(app)/petros/session/page.tsx
+ M apps/student-web/src/app/(auth)/activate/page.tsx
+ M apps/student-web/src/app/(auth)/login/page.spec.tsx
+ M apps/student-web/src/app/(auth)/login/page.tsx
+ M apps/student-web/src/components/app-shell/app-shell.spec.tsx
+ M apps/student-web/src/components/app-shell/app-shell.tsx
+ M apps/student-web/src/components/assignment-list-screen.tsx
+ M apps/student-web/src/components/design-system/action-button.tsx
+ M apps/student-web/src/components/design-system/primitives.module.css
+ M apps/student-web/src/components/petros/petros-document-teaching.tsx
+ M apps/student-web/src/components/petros/petros-door-button.tsx
+ M apps/student-web/src/components/petros/petros-inflation-pilot.module.css
+ M apps/student-web/src/components/petros/petros-inflation-pilot.tsx
+ M apps/student-web/src/components/petros/petros-mentor.module.css
+ M apps/student-web/src/components/petros/petros-mentor.spec.tsx
+ M apps/student-web/src/components/petros/petros-mentor.tsx
+ M apps/student-web/src/components/petros/petros-repair-session.spec.tsx
+ M apps/student-web/src/components/petros/petros-repair-session.tsx
+ M apps/student-web/src/components/petros/petros-session.module.css
+ M apps/student-web/src/components/petros/use-petros-voice.spec.tsx
+ M apps/student-web/src/components/petros/use-petros-voice.ts
+ M apps/student-web/src/features/learning-studio/integrals-teaching-studio.spec.tsx
+ M apps/student-web/src/features/learning-studio/integrals-teaching-studio.tsx
+ M apps/student-web/src/features/learning-studio/learning-workspace-frame.tsx
+ M apps/student-web/src/features/learning-studio/petros-rig.tsx
+ M apps/student-web/src/features/learning-studio/target-registry.tsx
+ M apps/student-web/src/features/learning-studio/use-teaching-playback.ts
+ M apps/student-web/src/lib/api-client.ts
+ M apps/student-web/src/lib/hooks.ts
+ M apps/student-web/tsconfig.json
+ M apps/super-admin-web/src/app/(app)/registration-requests/[id]/page.tsx
+ M apps/super-admin-web/src/app/globals.css
+ M apps/super-admin-web/src/app/layout.tsx
+ M apps/super-admin-web/src/components/registration/approve-wizard.tsx
+ M package.json
+ M packages/api-client/src/types.ts
+ M packages/config/src/index.ts
+ M packages/database/migrations/meta/_journal.json
+ M packages/database/migrations/sql/zzz_grants.sql
+ M packages/database/migrations/sql/zzz_rls.sql
+ M packages/database/src/client.ts
+ M packages/database/src/schema/academics.ts
+ M packages/database/src/schema/assignments.ts
+ M packages/database/src/schema/curriculum-alignment.ts
+ M packages/database/src/schema/index.ts
+ M packages/database/src/schema/institutional-bridge.ts
+ M packages/database/src/schema/petros-ai-routing.ts
+ M packages/database/src/schema/petros-document-learning.ts
+ M packages/database/src/schema/petros-learning.ts
+ M packages/database/src/schema/petros-objective-evidence.ts
+ M packages/database/src/schema/petros-teaching-packs.ts
+ M packages/database/src/schema/student-knowledge.ts
+ M packages/schemas/src/academics.ts
+ M packages/schemas/src/index.ts
+ M packages/schemas/src/people.ts
+ M packages/schemas/src/petros-ai-routing.ts
+ M packages/schemas/src/petros-learning.spec.ts
+ M packages/schemas/src/petros-learning.ts
+ M packages/schemas/src/portal-auth.ts
+ M packages/schemas/src/registration.ts
+ M packages/schemas/src/student/auth.ts
+ M packages/schemas/src/student/me.ts
+ M packages/shared-types/src/programme-structure.spec.ts
+ M packages/shared-types/src/programme-structure.ts
+ M packages/ui/src/button.tsx
+ M packages/ui/src/tabs.tsx
+ M packages/ui/src/use-focus-trap.ts
+ M pnpm-lock.yaml
+ M scripts/registration-smoke.sh
+?? PETROS_V2_BLUEPRINT.md
+?? PETROS_V2_IMPLEMENTATION_PLAN.md
+?? apps/api/scripts/audit-petros-m3-preservation.py
+?? apps/api/scripts/benchmark-petros-m2.mjs
+?? apps/api/scripts/benchmark-petros-m2.ts
+?? apps/api/scripts/benchmark-petros-m2fa.ts
+?? apps/api/scripts/benchmark-petros-m3.ts
+?? apps/api/scripts/capture-petros-m3-teacher-ux-final-accessibility.mjs
+?? apps/api/scripts/capture-petros-m3-teacher-ux-visuals.mjs
+?? apps/api/scripts/inspect-petros-m2.mjs
+?? apps/api/scripts/inspect-petros-m2.ts
+?? apps/api/scripts/petros-m2-inspector.html
+?? apps/api/scripts/petros-teacher-ux-evidence-guard.cjs
+?? apps/api/scripts/petros-teacher-ux-final-evidence-guard.cjs
+?? apps/api/scripts/petros-v2-readiness-phase-b.sql
+?? apps/api/scripts/petros-v2-readiness-repair.sql
+?? apps/api/scripts/petros-v2-readiness-runtime-candidate.ts
+?? apps/api/scripts/prepare-petros-staging-package.py
+?? apps/api/scripts/record-petros-m2fa-baseline.mjs
+?? apps/api/scripts/rehearse-petros-staging.ts
+?? apps/api/scripts/rehearse-petros-v2-readiness-repair.ts
+?? apps/api/scripts/repair-petros-guidance-presentations.ts
+?? apps/api/scripts/restore-petros-m2fa-visual-evidence.py
+?? apps/api/scripts/restore-petros-m3-historical-evidence.py
+?? apps/api/scripts/serve-petros-m3-teacher-ux-final.ts
+?? apps/api/scripts/serve-petros-m3-teacher-ux.ts
+?? apps/api/scripts/serve-petros-m3.ts
+?? apps/api/scripts/serve-petros-m4.ts
+?? apps/api/scripts/start-built.cjs
+?? apps/api/scripts/summarize-petros-m2fa-evidence.py
+?? apps/api/scripts/verify-petros-m1.mjs
+?? apps/api/scripts/verify-petros-m2.mjs
+?? apps/api/scripts/verify-petros-m2fa-checks.mjs
+?? apps/api/scripts/verify-petros-m2fa-inspector.mjs
+?? apps/api/scripts/verify-petros-m2fa.mjs
+?? apps/api/scripts/verify-petros-m2g-inspector.mjs
+?? apps/api/scripts/verify-petros-m2g.mjs
+?? apps/api/scripts/verify-petros-m3-browser.mjs
+?? apps/api/scripts/verify-petros-m3-private-browser.mjs
+?? apps/api/scripts/verify-petros-m3-teacher-ux-browser.mjs
+?? apps/api/scripts/verify-petros-m3-teacher-ux-final-browser.mjs
+?? apps/api/scripts/verify-petros-m3-teacher-ux-final-regressions.mjs
+?? apps/api/scripts/verify-petros-m3-teacher-ux-final.mjs
+?? apps/api/scripts/verify-petros-m3-teacher-ux-playground.mjs
+?? apps/api/scripts/verify-petros-m3-teacher-ux.mjs
+?? apps/api/scripts/verify-petros-m3.mjs
+?? apps/api/scripts/verify-petros-m4-browser.mjs
+?? apps/api/scripts/verify-petros-m4.mjs
+?? apps/api/scripts/verify-petros-teacher-guidance.ts
+?? apps/api/scripts/verify-petros-v2-readiness.ts
+?? apps/api/src/common/petros-document-database.ts
+?? apps/api/src/common/petros-session-projection.ts
+?? apps/api/src/modules/integrations/petros-m1-foundations.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-m2-document-understanding.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-m3-fixture.ts
+?? apps/api/src/modules/integrations/petros-m3-gateway.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-m3-learning-proposals.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-m3-private-review.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-v2-readiness-security.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-v2-runtime-security.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-verification-output.ts
+?? apps/api/src/modules/petros-ai-routing/petros-source-reservation.ts
+?? apps/api/src/modules/petros-ai-routing/petros-speech-capabilities.ts
+?? apps/api/src/modules/petros-ai-routing/petros-speech-integration.spec.ts
+?? apps/api/src/modules/petros-ai-routing/petros-voice-route-capability.spec.ts
+?? apps/api/src/modules/petros-learner-model/petros-evidence-admission.service.ts
+?? apps/api/src/modules/portal/academics-programme-tree.spec.ts
+?? apps/api/src/modules/portal/onboarding-progress.spec.ts
+?? apps/api/src/modules/portal/portal-auth-login.service.spec.ts
+?? apps/api/src/modules/portal/portal-auth.controller.spec.ts
+?? apps/api/src/modules/portal/portal-auth.service.spec.ts
+?? apps/api/src/modules/portal/portal-credential-account.spec.ts
+?? apps/api/src/modules/portal/portal-credential-account.ts
+?? apps/api/src/modules/portal/portal-credential-multi-institution.spec.ts
+?? apps/api/src/modules/portal/portal-linked-credential-reset.spec.ts
+?? apps/api/src/modules/portal/portal-session.service.spec.ts
+?? apps/api/src/modules/portal/programme-structure-edit.spec.ts
+?? apps/api/src/modules/portal/staff-departments.spec.ts
+?? apps/api/src/modules/portal/student-default-account.spec.ts
+?? apps/api/src/modules/portal/teaching/petros-learning-proposal.fixture.ts
+?? apps/api/src/modules/portal/teaching/petros-learning-proposal.gateway.ts
+?? apps/api/src/modules/portal/teaching/petros-learning-proposal.repository.ts
+?? apps/api/src/modules/portal/teaching/petros-learning-proposal.service.ts
+?? apps/api/src/modules/portal/teaching/petros-learning-proposal.spec.ts
+?? apps/api/src/modules/portal/teaching/petros-learning-proposal.validation.ts
+?? apps/api/src/modules/portal/teaching/petros-teacher-guidance-files.service.spec.ts
+?? apps/api/src/modules/portal/teaching/petros-teacher-guidance-files.service.ts
+?? apps/api/src/modules/portal/teaching/petros-teacher-guidance.service.spec.ts
+?? apps/api/src/modules/portal/teaching/petros-teacher-guidance.service.ts
+?? apps/api/src/modules/registration/registration-approval.service.spec.ts
+?? apps/api/src/modules/registration/registration-email.service.spec.ts
+?? apps/api/src/modules/registration/registration.repository.spec.ts
+?? apps/api/src/modules/student/assignments/petros-guidance-files.ts
+?? apps/api/src/modules/student/assignments/petros-guidance-visibility.integration.spec.ts
+?? apps/api/src/modules/student/assignments/petros-guidance-visibility.ts
+?? apps/api/src/modules/student/assignments/petros-learning-goal-completion.spec.ts
+?? apps/api/src/modules/student/auth/student-password-setup.spec.ts
+?? apps/api/src/modules/student/knowledge/adapters/
+?? apps/api/src/modules/student/knowledge/petros-assessment-boundaries.spec.ts
+?? apps/api/src/modules/student/knowledge/petros-assessment-contract.server.ts
+?? apps/api/src/modules/student/knowledge/petros-content-edge-cases.spec.ts
+?? apps/api/src/modules/student/knowledge/petros-content-format-expansion.spec.ts
+?? apps/api/src/modules/student/knowledge/petros-content-intelligence.jobs.ts
+?? apps/api/src/modules/student/knowledge/petros-content-intelligence.service.ts
+?? apps/api/src/modules/student/knowledge/petros-content-intelligence.spec.ts
+?? apps/api/src/modules/student/knowledge/petros-content-interpretation.spec.ts
+?? apps/api/src/modules/student/knowledge/petros-content-interpretation.ts
+?? apps/api/src/modules/student/knowledge/petros-content-ocr.spec.ts
+?? apps/api/src/modules/student/knowledge/petros-content-ocr.ts
+?? apps/api/src/modules/student/knowledge/petros-content-unit.repository.ts
+?? apps/api/src/modules/student/knowledge/petros-m2-controlled-gateway.fixture.ts
+?? apps/api/src/modules/student/knowledge/petros-m2-test-helpers.ts
+?? apps/api/src/modules/student/knowledge/petros-m2g-pilot.ts
+?? apps/api/src/modules/student/knowledge/petros-m2g-review.spec.ts
+?? apps/api/src/modules/student/knowledge/petros-m2g-visual.spec.ts
+?? apps/api/src/modules/student/knowledge/petros-v2-publication.service.ts
+?? apps/api/src/modules/student/materials/presentation-converter.ts
+?? apps/api/src/modules/student/petros-companion/petros-portal-speech.service.ts
+?? apps/api/src/modules/student/petros-companion/petros-portal-speech.spec.ts
+?? apps/api/src/modules/student/petros-companion/petros-voice-preview.contract.ts
+?? apps/api/src/modules/student/petros-companion/petros-voice-preview.controller.ts
+?? apps/api/src/modules/student/petros-companion/petros-voice-preview.http.spec.ts
+?? apps/api/src/modules/student/petros-companion/petros-voice-preview.service.ts
+?? apps/api/src/modules/student/petros-companion/petros-voice-preview.spec.ts
+?? apps/api/src/modules/student/petros-v2/
+?? apps/institution-web/.next-petros-m3-ui-final-check/
+?? apps/institution-web/.next-petros-teacher-ux-build/
+?? apps/institution-web/.next-petros-teacher-ux-dev/
+?? apps/institution-web/.next-petros-teacher-ux-final-dev/
+?? apps/institution-web/public/
+?? apps/institution-web/src/app/choose-institution/
+?? apps/institution-web/src/components/academics/staff-departments-panel.tsx
+?? apps/institution-web/src/components/app-shell/switch-institution-link.tsx
+?? apps/institution-web/src/components/teaching/petros-guidance-attachments.tsx
+?? apps/institution-web/src/components/teaching/petros-learn-workspace.tsx
+?? apps/institution-web/src/components/teaching/petros-learn.module.css
+?? apps/institution-web/src/components/teaching/petros-learning-proposal.spec.tsx
+?? apps/institution-web/src/components/teaching/petros-learning-proposal.tsx
+?? apps/institution-web/src/components/teaching/petros-lesson-presentation.tsx
+?? apps/institution-web/src/components/teaching/petros-teacher-guidance.spec.tsx
+?? apps/institution-web/src/components/teaching/petros-teacher-guidance.tsx
+?? apps/institution-web/src/lib/academic-structure-terms.ts
+?? apps/institution-web/src/lib/institutions.ts
+?? apps/institution-web/src/lib/staff-profile-fields.ts
+?? apps/institution-web/vitest.config.ts
+?? apps/institution-web/vitest.setup.ts
+?? apps/student-web/public/petros/audio/
+?? apps/student-web/public/petros/v2/
+?? apps/student-web/src/app/(app)/learn/goals/
+?? apps/student-web/src/app/(app)/petros/companion-playground/
+?? apps/student-web/src/app/(app)/petros/v2/
+?? apps/student-web/src/app/(auth)/change-password/
+?? apps/student-web/src/app/(auth)/student-password-setup.spec.tsx
+?? apps/student-web/src/components/app-shell/playground-shell.module.css
+?? apps/student-web/src/components/design-system/button-loading.spec.tsx
+?? apps/student-web/src/components/petros/petros-assigned-goal.spec.tsx
+?? apps/student-web/src/components/petros/petros-assigned-goal.tsx
+?? apps/student-web/src/components/petros/petros-avatar.module.css
+?? apps/student-web/src/components/petros/petros-avatar.spec.tsx
+?? apps/student-web/src/components/petros/petros-avatar.tsx
+?? apps/student-web/src/components/petros/petros-home.module.css
+?? apps/student-web/src/components/petros/petros-home.spec.tsx
+?? apps/student-web/src/components/petros/petros-home.tsx
+?? apps/student-web/src/components/petros/petros-intent-detail.spec.ts
+?? apps/student-web/src/components/petros/petros-intent-detail.ts
+?? apps/student-web/src/components/petros/petros-speaking-avatar.tsx
+?? apps/student-web/src/components/petros/petros-speech-cloud.module.css
+?? apps/student-web/src/components/petros/petros-speech-cloud.tsx
+?? apps/student-web/src/components/petros/petros-speech-types.ts
+?? apps/student-web/src/components/petros/petros-teacher-goals.tsx
+?? apps/student-web/src/components/petros/petros-voice-controls.tsx
+?? apps/student-web/src/features/learning-studio/use-teaching-playback.spec.tsx
+?? apps/student-web/src/features/petros-v2/
+?? apps/super-admin-web/public/
+?? docs/verification/petros-teacher-guidance-20261007/
+?? docs/verification/petros-v2/
+?? output/petros-clean-build-20261009/
+?? output/petros-staging-20261009/
+?? packages/database/migrations/0231_staff_departments.sql
+?? packages/database/migrations/0232_maintenance_reporting_tables.sql
+?? packages/database/migrations/0233_petros_teacher_guidance.sql
+?? packages/database/migrations/0234_petros_readiness_repair.sql
+?? packages/database/migrations/0235_petros_v2_content_identity.sql
+?? packages/database/migrations/0236_petros_m2_preparation_progress.sql
+?? packages/database/migrations/0237_petros_v2_session_assessment.sql
+?? packages/database/migrations/sql/zzzz_petros_m1.sql
+?? packages/database/migrations/sql/zzzzz_petros_m4.sql
+?? packages/database/proposals/
+?? packages/database/src/schema/petros-concepts.ts
+?? packages/database/src/schema/petros-content-units.ts
+?? packages/database/src/schema/petros-v2-assessment.ts
+?? packages/learn-evals/src/petros-v2/
+?? packages/schemas/src/onboarding-structure.spec.ts
+?? packages/schemas/src/petros-teacher-guidance.ts
+?? packages/schemas/src/petros-v2/
+?? scripts/dev/backfill-student-logins.ts

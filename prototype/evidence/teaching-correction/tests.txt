@@ -1,0 +1,18 @@
+$ vitest run --config tests/vitest.config.ts
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v2.1.9 /Volumes/Chris/Edrion Labs/prototype
+
+ ✓ tests/realism-assets.spec.ts (4 tests) 9ms
+ ✓ tests/core.spec.ts (10 tests) 6ms
+ ✓ tests/teaching-controller.spec.ts (14 tests) 15ms
+ ✓ tests/access.spec.ts (7 tests) 5ms
+ ✓ tests/immersive.spec.ts (13 tests) 5ms
+ ✓ tests/banks.spec.ts (9 tests) 9ms
+ ✓ tests/v2.spec.ts (6 tests) 6ms
+
+ Test Files  7 passed (7)
+      Tests  63 passed (63)
+   Start at  22:55:00
+   Duration  498ms (transform 607ms, setup 0ms, collect 1.19s, tests 56ms, environment 1ms, prepare 707ms)
+

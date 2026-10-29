@@ -1,0 +1,2 @@
+.cloud { box-sizing: border-box; width: max-content; max-width: 100%; min-width: 0; }
+.cloud p { margin: 5px 0 0; overflow-wrap: anywhere; max-height: 88px; overflow-y: auto; overscroll-behavior: contain; }

@@ -36,7 +36,7 @@ loadWorkspacePublicEnv();
 const nextConfig = {
   reactStrictMode: true,
   distDir: process.env.PETROS_ISOLATED_VERIFICATION === '1'
-    ? (process.env.NODE_ENV === 'development' ? '.next-petros-verification-dev' : '.next-petros-verification')
+    ? (process.env.PETROS_ISOLATED_DIST_DIR || (process.env.NODE_ENV === 'development' ? '.next-petros-verification-dev' : '.next-petros-verification'))
     : '.next',
   // Workspace packages ship TS source; let Next transpile them.
   transpilePackages: [

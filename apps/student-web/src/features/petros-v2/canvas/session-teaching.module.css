@@ -1,0 +1,309 @@
+.stage {
+  padding: clamp(16px, 3vw, 32px);
+}
+.stage h2 {
+  font: 500 clamp(25px, 3vw, 34px)/1.25 var(--font-display, Georgia, serif);
+  margin: 12px 0;
+}
+.stage p {
+  line-height: 1.65;
+}
+:is(.stage, .formScope) form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  margin-block: 14px;
+}
+:is(.stage, .formScope) label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 200px;
+  font-size: 13px;
+  min-width: 0;
+}
+:is(.stage, .formScope) input,
+:is(.stage, .formScope) select,
+:is(.stage, .formScope) textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid #b8ccbf;
+  border-radius: 8px;
+  color: #163f33;
+  background: white;
+  font: inherit;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+:is(.stage, .formScope) button {
+  min-height: 44px;
+  border: 1px solid #b8ccbf;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 13px;
+}
+.stage button:focus-visible,
+.stage input:focus-visible,
+.stage select:focus-visible,
+.stage textarea:focus-visible {
+  outline: 3px solid #237a5f;
+  outline-offset: 3px;
+}
+.formScope form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 14px;
+}
+.formScope label {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.formScope textarea {
+  font-weight: 400;
+  line-height: 1.5;
+}
+.formScope form > button {
+  justify-self: start;
+  color: #275b43;
+  background: #fffefa;
+  font-size: 14px;
+  font-weight: 650;
+}
+.formScope form > button:disabled {
+  opacity: 1;
+  color: #738378;
+  background: #f4f7f1;
+  border-color: #d6dfd5;
+}
+.formScope textarea {
+  min-height: 112px;
+  resize: vertical;
+}
+.element {
+  padding: 18px;
+  border: 1px solid #d5e1d7;
+  border-radius: 12px;
+  background: white;
+  margin-block: 12px;
+}
+.element[data-highlighted='true'] {
+  border-left: 4px solid #28785c;
+  background: #edf5ee;
+}
+.element pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.stage table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-block: 16px;
+}
+.stage th,
+.stage td {
+  border-bottom: 1px solid #d5e1d7;
+  padding: 10px;
+  text-align: left;
+}
+@media (max-width: 600px) {
+  .stage form {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .stage button {
+    width: 100%;
+  }
+  .element {
+    padding: 14px;
+  }
+}
+
+.stage {
+  padding: 16px 20px 20px;
+}
+.stage > p {
+  margin-block: 8px;
+}
+.stage form {
+  gap: 10px;
+  margin-block: 10px;
+}
+.element {
+  padding: 14px 16px;
+  margin-block: 10px;
+}
+.element[data-highlighted='true'] {
+  border-left-color: #9ab3a4;
+  background: #f7f8f4;
+}
+.element[data-feedback='incorrect'],
+.element[data-feedback='correct'] {
+  border-color: var(--feedback-border);
+  background: var(--feedback-bg);
+}
+.stage li[data-feedback] {
+  padding-block: 6px;
+}
+.model {
+  padding: 12px;
+  background: #f1f4f7;
+  border: 1px solid #8192a4;
+  border-radius: 9px;
+}
+.model svg {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+}
+.stage tr[aria-current='step'] {
+  background: #edf1f7;
+  box-shadow: inset 3px 0 #7087a7;
+}
+.stage table {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .stage {
+    padding: 12px;
+  }
+  .element {
+    padding: 12px;
+  }
+}
+
+/* SVG controls already have explicit geometry; form input heights must not clip them. */
+.stage svg foreignObject :is(button, input, select) {
+  min-height: 0;
+  padding: 0 6px;
+}
+
+.stage .element form input {
+  width: min(100%, 200px);
+}
+.stage .element details {
+  margin-top: 10px;
+}
+.completed {
+  border-bottom: 1px solid #d5e1d7;
+  padding: 8px 0;
+  font-size: 13px;
+}
+.completed summary {
+  min-height: 32px;
+  display: list-item;
+  cursor: pointer;
+}
+.completed summary:focus-visible {
+  outline: 3px solid #237a5f;
+  outline-offset: 3px;
+}
+.completed > button {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 4px 8px;
+  min-height: 44px;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+.completed > button span {
+  color: #53675b;
+  font-size: 11px;
+}
+.referenceContent {
+  max-width: 560px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.referenceContent p {
+  margin: 8px 0;
+}
+.referenceContent button {
+  min-height: 44px;
+  border: 1px solid #b8ccbf;
+  border-radius: 8px;
+  padding: 8px 14px;
+  background: white;
+}
+.stepNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 11px;
+  color: #53675b;
+  grid-column: 1 / -1;
+}
+.stepNav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.stage[data-resource-workspace='true'] > h2 {
+  font-size: 26px;
+  margin: 4px 0 8px;
+}
+.stage[data-resource-workspace='true'] > p:first-child {
+  margin: 0 0 3px;
+}
+.resourceGrid {
+  gap: 8px;
+  align-items: start;
+}
+.resourceGrid > .completed {
+  grid-column: 1 / -1;
+}
+.resourceGrid > .element {
+  margin: 0;
+}
+@media (min-width: 1100px) {
+  .resourceGrid {
+    grid-template-columns: minmax(0, 2.3fr) minmax(260px, 1fr);
+  }
+  .resourceGrid > [data-learning-format='experiment'] {
+    grid-column: 1;
+  }
+  .resourceGrid > [data-learning-format='equation'] {
+    grid-column: 2;
+  }
+}
+.workspaceTabs,
+.stage button.mobileNext {
+  display: none;
+}
+@media (max-width: 1099px) {
+  .workspaceTabs {
+    display: flex;
+    gap: 6px;
+    grid-column: 1 / -1;
+  }
+  .workspaceTabs button {
+    flex: 1;
+    width: auto;
+    padding: 8px;
+  }
+  .workspaceTabs button[aria-pressed='true'] {
+    background: #e7edf2;
+    border-color: #7d91a2;
+  }
+  .resourceGrid > .stepNav {
+    display: none;
+  }
+  .resourceGrid[data-active-view='model'] > [data-learning-format='equation'],
+  .resourceGrid[data-active-view='calculation'] > [data-learning-format='experiment'] {
+    display: none;
+  }
+  .stage button.mobileNext {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

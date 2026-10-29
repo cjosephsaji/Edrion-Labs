@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { publicPetrosSessionColumns } from '../../common/petros-session-projection';
 import {
   and,
   desc,
@@ -28,7 +29,7 @@ export class PetrosInstitutionalRepository {
   }
 
   async documentKnowledgeContext(scope: { institutionId: string; studentId: string }, sessionId: string) {
-    const [session] = await this.db.select().from(schema.petrosLearningSessions).where(and(
+    const [session] = await this.db.select(publicPetrosSessionColumns).from(schema.petrosLearningSessions).where(and(
       eq(schema.petrosLearningSessions.id, sessionId), eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
       eq(schema.petrosLearningSessions.studentId, scope.studentId))).limit(1);
     if (!session || session.sourceContext?.door !== 'uploaded_document') return null;

@@ -12,10 +12,13 @@ import {
   ProviderCallError,
   type PetrosAiInputPart,
   type PetrosAiNormalizedResponse,
+  estimateModalityCostMicros,
 } from './petros-provider-adapters';
+import { supportedSpeechVoices, type PetrosSpeechOptions } from './petros-speech-capabilities';
 import { parseStructuredResponse, validatePetrosResponse } from './petros-response-validator';
 import { PetrosRoutingError } from './petros-routing-engine';
 import { PetrosReleaseService } from '../petros-quality/petros-release.service';
+import { validateSourceReservation, type SourceReservation } from './petros-source-reservation';
 
 export interface PetrosAiExecuteRequest {
   context: Omit<PetrosRouteContext, 'requestId'> & { requestId?: string };
@@ -31,6 +34,7 @@ export interface PetrosAiExecuteRequest {
   databaseScope?: <T>(work: () => Promise<T>) => Promise<T>;
   /** Internal durable command claim. Every provider attempt is reserved before dispatch. */
   budgetReservation?: { commandId: string; fence: number };
+  sourceReservation?: SourceReservation;
   /** Trusted current-authority check, before every provider retry/fallback and after reserving. */
   authorizeAttempt?: () => Promise<void>;
   sessionId?: string;
@@ -42,7 +46,11 @@ export interface PetrosAiExecuteRequest {
   disableCache?: boolean;
   /** Explicitly disables both cache reads and writes for this call. */
   cacheEnabled?: boolean;
-  speech?: { voice?: 'cedar' | 'marin'; speed?: number };
+  speech?: PetrosSpeechOptions;
+  /** Portal speech requires the installed bounded character billing contract on every fallback. */
+  requireQualifiedSpeech?: boolean;
+  /** Trusted internal preview fence: no silent model/voice fallback or unpriced dispatch. */
+  routeConstraint?: { routeId: string; providerKey: string; modelKey: string; maxModalityCostMicros: number; units: { characters?: number; audioSeconds?: number } };
   /** Long structured plans may need more room than the shared function default. */
   maxOutputTokens?: number;
   /** Feature-specific latency guard. Cannot extend the configured function timeout. */
@@ -56,6 +64,8 @@ export interface PetrosAiExecuteRequest {
 }
 
 export interface PetrosAiExecuteResult extends PetrosAiNormalizedResponse {
+  routeId: string;
+  routeFallbackUsed: boolean;
   requestId: string;
   providerKey: string;
   modelKey: string;
@@ -95,8 +105,25 @@ export class PetrosAiGatewayService {
   }
 
   async execute(raw: PetrosAiExecuteRequest): Promise<PetrosAiExecuteResult> {
-    if (raw.budgetReservation && !raw.databaseScope)
+    if (raw.context.functionKey === 'teaching.propose' && !raw.sourceReservation)
+      throw new BadGatewayException({ code: 'PETROS_SOURCE_BUDGET_SCOPE_INVALID', message: 'Staff source authority is unavailable.' });
+    if ((raw.budgetReservation || raw.sourceReservation) && !raw.databaseScope)
       throw new BadGatewayException({ code: 'PETROS_BUDGET_SCOPE_INVALID', message: 'Durable budget scope is unavailable.' });
+    if (raw.sourceReservation) {
+      validateSourceReservation(raw.sourceReservation);
+      if (this.env.NODE_ENV !== 'test' || !this.env.PETROS_M2_ISOLATED_ENABLED ||
+        raw.budgetReservation || !raw.authorizeAttempt || raw.context.studentId || raw.sessionId ||
+        raw.independentUserId || raw.dynamicContext || raw.context.functionKey !== raw.sourceReservation.stage ||
+        raw.applicationContractVersion !== raw.sourceReservation.interpretationVersion || !raw.system || !raw.responseSchema ||
+        raw.input.some(part => part.type !== 'text') ||
+        Buffer.byteLength(raw.input.map(part => part.type === 'text' ? part.text : '').join('')) > 48 * 1024 ||
+        raw.context.institutionId !== raw.sourceReservation.institutionId ||
+        raw.context.requestId !== raw.sourceReservation.requestId || !raw.disableCache ||
+        raw.maxRetries !== 0 || raw.maxRouteAttempts !== 1 ||
+        !Number.isSafeInteger(raw.maxOutputTokens) || raw.maxOutputTokens! < 1 || raw.maxOutputTokens! > 3000 ||
+        !Number.isSafeInteger(raw.timeoutMs) || raw.timeoutMs! < 1 || raw.timeoutMs! > 15000)
+        throw new BadGatewayException({ code: 'PETROS_SOURCE_BUDGET_SCOPE_INVALID', message: 'Staff source authority is unavailable.' });
+    }
     const repo = scopedOperations(this.repo, raw.databaseScope);
     const routing = scopedOperations(this.routing, raw.databaseScope);
     raw.signal?.throwIfAborted();
@@ -160,7 +187,7 @@ export class PetrosAiGatewayService {
     } : {};
     let plan;
     try {
-      plan = await routing.previewRoute(context, raw.budgetReservation ? { calendarMonth: true } : undefined);
+      plan = await routing.previewRoute(context, raw.budgetReservation || raw.sourceReservation ? { calendarMonth: true } : undefined);
     } catch (error) {
       if (error instanceof PetrosRoutingError) {
         throw new BadGatewayException({
@@ -172,7 +199,7 @@ export class PetrosAiGatewayService {
       throw error;
     }
     const settings = fn.settings;
-    const quota = raw.budgetReservation ? null : await repo.functionQuotaSnapshot(fn.id, context.studentId, context.institutionId);
+    const quota = raw.budgetReservation || raw.sourceReservation ? null : await repo.functionQuotaSnapshot(fn.id, context.studentId, context.institutionId);
     const boundedInputTokens=dynamicContext?Math.max(context.estimatedTokens,Math.ceil(Buffer.byteLength(`${system??''}${JSON.stringify(providerInput)}`,'utf8')/4)):context.estimatedTokens;
     const quotaError =
       (quota && settings.dailyRequestLimit != null && quota.dailyRequests >= settings.dailyRequestLimit && 'DAILY_FUNCTION_LIMIT') ||
@@ -201,7 +228,7 @@ export class PetrosAiGatewayService {
     }
     const cacheKey = this.cacheKey(context.functionKey, system, providerInput, fn.activePromptVersion, fn.activeSchemaVersion,
       dynamicContext?.cacheDimensions);
-    const cacheEnabled = raw.cacheEnabled !== false && !raw.disableCache;
+    const cacheEnabled = raw.cacheEnabled !== false && !raw.disableCache && context.functionKey !== 'speech.synthesise';
     if (plan.cacheAllowed && settings.caching && cacheEnabled && !applicationContract && !raw.deferResponseValidation) {
       const cached = await this.redis.get(cacheKey);
       if (cached) {
@@ -256,22 +283,57 @@ export class PetrosAiGatewayService {
         repo.findModel(candidate.modelId),
       ]);
       if (!provider || !model) continue;
+      if (raw.requireQualifiedSpeech) {
+        const price = Number(model.providerOptions.priceMicrosPerMillionCharacters);
+        const qualifiedVoices = model.providerOptions.qualifiedSpeechVoices;
+        if (!provider.enabled || provider.paused || provider.healthStatus === 'down' || !provider.credentialEnvelope || !model.enabled ||
+          !['openai', 'openai_compatible'].includes(provider.adapterType) || !['tts-1', 'tts-1-hd'].includes(model.modelKey) ||
+          model.providerOptions.pricingUnit !== 'character' || !Number.isFinite(price) || price <= 0 ||
+          (raw.speech?.voice && Array.isArray(qualifiedVoices) && !qualifiedVoices.includes(raw.speech.voice))) {
+          errors.push('SPEECH_ROUTE_UNAVAILABLE'); continue;
+        }
+      }
+      if (raw.routeConstraint) {
+        const pinned = raw.routeConstraint;
+        const cost = estimateModalityCostMicros(model.providerOptions, pinned.units);
+        if (candidate.routeId !== pinned.routeId || provider.key !== pinned.providerKey || model.modelKey !== pinned.modelKey ||
+          !provider.enabled || provider.paused || provider.healthStatus === 'down' || !provider.credentialEnvelope || !model.enabled ||
+          (raw.speech?.voice && Array.isArray(model.providerOptions.qualifiedSpeechVoices) && !model.providerOptions.qualifiedSpeechVoices.includes(raw.speech.voice)) ||
+          cost == null || cost > pinned.maxModalityCostMicros) {
+          throw new BadGatewayException({ code: 'PETROS_PREVIEW_ROUTE_CHANGED', message: 'The preview route or its pricing changed. Refresh the available routes.' });
+        }
+      }
+      if (raw.sourceReservation) {
+        const pinned = validateSourceReservation(raw.sourceReservation);
+        if (candidate.routeId !== pinned.routeId || provider.key !== pinned.providerKey ||
+          model.modelKey !== pinned.modelKey)
+          throw new BadGatewayException({ code: 'PETROS_SOURCE_ROUTE_CHANGED', message: 'The approved source route is unavailable.' });
+      }
+      // A retry may change route, never the student's selected voice. Skip an
+      // incompatible candidate before dispatch and preserve legitimate fallbacks.
+      if (fn.key === 'speech.synthesise' && raw.speech?.voice && !supportedSpeechVoices(model.modelKey).includes(raw.speech.voice)) {
+        errors.push('UNSUPPORTED_VOICE');
+        continue;
+      }
       const maxRetries = Math.max(0, Math.min(Number(settings.maxRetries ?? 0), raw.maxRetries ?? Number(settings.maxRetries ?? 0)));
       for (let retry = 0; retry <= maxRetries; retry += 1) {
         raw.signal?.throwIfAborted();
         await raw.authorizeAttempt?.();
         await recheckRelease();
         let hold: Awaited<ReturnType<PetrosAiRoutingRepository['reserveDocumentAttempt']>> | undefined;
-        if (raw.budgetReservation) {
+        if (raw.budgetReservation || raw.sourceReservation) {
           const reserveMicros = Math.max(
             Number(settings.maxCostPerRequestMicros ?? 0),
             estimateMaximumCost(model.pricing, settings.maxInputTokens, settings.maxOutputTokens),
           );
           try {
-            hold = await repo.reserveDocumentAttempt({
-              commandId: raw.budgetReservation.commandId,
-              fence: raw.budgetReservation.fence,
-              attemptKey: `${raw.budgetReservation.commandId}:${raw.budgetReservation.fence}:${candidate.providerId}:${candidate.modelId}:${candidate.tier}:${retry}`,
+            hold = raw.sourceReservation ? await repo.reserveSourceAttempt({
+              authority: raw.sourceReservation, functionId: fn.id, providerId: provider.id,
+              modelId: model.id, reserveMicros,
+            }) : await repo.reserveDocumentAttempt({
+              commandId: raw.budgetReservation!.commandId,
+              fence: raw.budgetReservation!.fence,
+              attemptKey: `${raw.budgetReservation!.commandId}:${raw.budgetReservation!.fence}:${candidate.providerId}:${candidate.modelId}:${candidate.tier}:${retry}`,
               requestId, institutionId: context.institutionId!, studentId: context.studentId!,
               functionId: fn.id, providerId: provider.id, modelId: model.id, reserveMicros,
             });
@@ -292,7 +354,10 @@ export class PetrosAiGatewayService {
             try { await repo.releaseDocumentAttempt(hold.id); } catch { /* recovered by command reconciliation */ }
             raw.signal.throwIfAborted();
           }
-          try { await raw.authorizeAttempt?.(); await recheckRelease(); } catch (error) {
+          try {
+            await raw.authorizeAttempt?.(); await recheckRelease();
+            if (raw.sourceReservation) validateSourceReservation(raw.sourceReservation);
+          } catch (error) {
             // Preserve the authoritative denial. The dispatch marker remains null, so a
             // transient release failure is recoverable at zero by command reconciliation.
             try { await repo.releaseDocumentAttempt(hold.id); } catch { /* recovered by command reconciliation */ }
@@ -302,6 +367,23 @@ export class PetrosAiGatewayService {
             await repo.markDocumentAttemptDispatched(hold.id);
           } catch {
             throw new BadGatewayException({ code: 'PETROS_BUDGET_ACCOUNTING_UNAVAILABLE', message: 'Durable provider dispatch accounting is unavailable.' });
+          }
+        }
+        // Internal preview approval can expire while the final release lookup awaits.
+        // Re-admit after all preflight awaits, with no awaited work before dispatch.
+        if (raw.routeConstraint) {
+          await raw.authorizeAttempt?.();
+          raw.signal?.throwIfAborted();
+        }
+        if (raw.sourceReservation) {
+          try {
+            validateSourceReservation(raw.sourceReservation);
+            raw.signal?.throwIfAborted();
+          } catch (error) {
+            if (hold) {
+              await repo.releaseKnownUndispatchedDocumentAttempt(hold.id).catch(() => undefined);
+            }
+            throw error;
           }
         }
         const started = Date.now();
@@ -344,6 +426,8 @@ export class PetrosAiGatewayService {
               { ...response, estimatedCostMicros },
             );
           }
+          if (raw.sourceReservation && estimatedCostMicros > raw.sourceReservation.maxSpendMicros)
+            throw new ProviderCallError('REQUEST_COST_LIMIT', 'Source budget exceeded.', false, { ...response, estimatedCostMicros });
           const usageRow = {
             requestId,
             sessionId: raw.sessionId,
@@ -376,6 +460,8 @@ export class PetrosAiGatewayService {
             ...response,
             content,
             requestId,
+            routeId: candidate.routeId,
+            routeFallbackUsed: candidate.routeId !== plan.selected.routeId,
             providerKey: provider.key,
             modelKey: model.modelKey,
             fallbackTier: candidate.tier,
@@ -389,6 +475,10 @@ export class PetrosAiGatewayService {
             retryCount: retry,
           };
           await recheckRelease();
+          if (raw.sourceReservation) {
+            raw.signal?.throwIfAborted();
+            await raw.authorizeAttempt!();
+          }
           if (plan.cacheAllowed && settings.caching && cacheEnabled && !applicationContract && !raw.deferResponseValidation) await this.redis.set(cacheKey, JSON.stringify(result), raw.cacheTtlSeconds ?? 3_600);
           return result;
         } catch (error) {
@@ -422,7 +512,8 @@ export class PetrosAiGatewayService {
               ...raw.metadata,
               ...contractMetadata,
               correlationId: raw.correlationId,
-              error: applicationContract ? typed.code : typed.message.slice(0, 500),
+              // Preview provider errors may echo submitted text/media. Persist a code only.
+              error: applicationContract || raw.routeConstraint ? typed.code : typed.message.slice(0, 500),
               ...(typed.usage?.providerRequestId ? { providerRequestId: typed.usage.providerRequestId } : {}),
             },
           };
@@ -443,6 +534,8 @@ export class PetrosAiGatewayService {
     }
     if (routeBudgetDenied && errors.length === 0)
       throw new BadGatewayException({ code: 'PETROS_BUDGET_ROUTE_UNAVAILABLE', message: 'No affordable Petros route is available.' });
+    if (errors.length && errors.every(code => code === 'UNSUPPORTED_VOICE'))
+      throw new BadGatewayException({ code: 'PETROS_UNSUPPORTED_VOICE', message: 'The selected voice is unavailable on the eligible speech models. Refresh voices and select a supported alternative.' });
     throw new BadGatewayException({
       code: 'PETROS_ALL_ROUTES_FAILED',
       message: 'Petros could not complete this teaching action right now.',

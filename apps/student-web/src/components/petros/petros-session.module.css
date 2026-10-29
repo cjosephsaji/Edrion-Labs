@@ -2442,6 +2442,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .predictionCompare > div { padding: 14px; }
+.predictionCompare[data-prediction='false'] { grid-template-columns: minmax(0, 1fr); }
 .predictionCompare > div + div { border-left: 1px solid var(--s-divider); background: color-mix(in srgb, var(--s-card) 76%, var(--s-accentSoft)); }
 .predictionCompare > div > span { color: var(--s-muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .predictionCompare p { margin: 6px 0 0; color: var(--s-inkSoft); font-size: 12px; line-height: 1.55; }
@@ -3236,7 +3237,8 @@
 .studyModes svg { width: 15px; height: 15px; }
 .studyModes > span { flex-basis: 100%; color: var(--s-muted); font-size: 12px; line-height: 1.5; }
 /* Phase 6 learning desk: content owns the space, tools are deliberately opened. */
-.shell .stickyHeader { top: 76px; border: 1px solid var(--s-bd1); border-radius: var(--s-radius-panel); }
+/* This header stays in document flow; a relative top offset overlaps the lesson below. */
+.shell .stickyHeader { top: 0; border: 1px solid var(--s-bd1); border-radius: var(--s-radius-panel); }
 .shell .headerRow, .shell .progressRow { max-width: none; }
 .shell .layout { max-width: none; padding: 24px 0 80px; gap: 24px; }
 .shell .layout[data-tools-open='true'] { grid-template-columns: minmax(0,1fr) 280px; }
@@ -3261,7 +3263,7 @@
 .lessonTools blockquote { border-left: 3px solid var(--s-accent); padding: 12px; background: var(--s-cardAlt); margin: 12px 0; }
 .toolKicker { font-size: .7rem; text-transform: uppercase; letter-spacing: .12em; color: var(--s-muted); }
 @media(max-width: 1200px) { .shell .layout[data-tools-open='true'] { grid-template-columns: 1fr; } .lessonTools { grid-column: 1; grid-row: 1; position: static; } .shell .layout[data-tools-open='true'] .document { grid-row: 2; } }
-@media(max-width: 920px) { .shell .stickyHeader { top: 54px; } .shell .headerRow { padding: 10px 12px; gap: 8px; grid-template-columns: minmax(0,1fr) auto; } .shell .headerRow .back { grid-column: 1 / -1; border: 0; } .shell .sessionControls { flex-wrap: wrap; } .shell .opening { padding: 24px 18px; } .shell .opening h1 { overflow-wrap: anywhere; } .shell .progressRow { display: block; padding: 10px 12px; } .shell .sessionScoreboard { margin-top: 10px; flex-wrap: wrap; } }
+@media(max-width: 920px) { .shell .headerRow { padding: 10px 12px; gap: 8px; grid-template-columns: minmax(0,1fr) auto; } .shell .headerRow .back { grid-column: 1 / -1; border: 0; } .shell .sessionControls { flex-wrap: wrap; } .shell .opening { padding: 24px 18px; } .shell .opening h1 { overflow-wrap: anywhere; } .shell .progressRow { display: block; padding: 10px 12px; } .shell .sessionScoreboard { margin-top: 10px; flex-wrap: wrap; } }
 
 .shell .sourcesToggle { font-size: 12px; min-width: 0; padding: 9px 10px; }
 .shell .sourcesToggle::after { content: none; }

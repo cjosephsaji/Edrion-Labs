@@ -1,4 +1,5 @@
 packages:
+  - "prototype"
   - "apps/*"
   - "packages/*"
   - "scripts"

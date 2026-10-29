@@ -284,7 +284,7 @@
 .resourceGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .resourceCard { border-radius: var(--s-radius-card); position: relative; overflow: hidden; border: 1px solid var(--s-bd1); background: var(--s-card); transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
 .resourceCard:hover { border-color: var(--s-accentBd); box-shadow: 0 14px 34px rgb(24 55 45 / 9%); transform: translateY(-1px); }
-.resourceCard:focus-within { border-color: var(--s-accentBd); box-shadow: 0 0 0 3px rgb(36 117 88 / 13%); }
+.resourceCard:focus-within { border-color: var(--s-accentBd); }
 .resourceCardMain,
 .resourceOpenLink { display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 14px; padding: 18px; }
 .resourceIcon { width: 46px; height: 54px; }

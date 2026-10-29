@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useMemo } from 'react';
-import { Badge, StatusBadge, type Column } from '@edrion/ui';
+import { Badge, Select, StatusBadge, type Column } from '@edrion/ui';
 import {
   ResourceManager,
   type FilterDef,
@@ -12,7 +12,7 @@ import { RoleMultiSelect } from '@/components/admin/role-multi-select';
 import { PortalUserAccessPanel } from '@/components/admin/staff-portal-access-panel';
 import { StaffPortalLoginSetup } from '@/components/admin/staff-portal-login-setup';
 import { UserProfileDialog } from '@/components/people/user-profile-dialog';
-import { useDepartmentOptions } from '@/lib/academics';
+import { useStaffDepartmentOptions } from '@/lib/academics';
 import { usePeopleList, usePeopleMutations, type StaffRow } from '@/lib/people';
 import { usePortalMe } from '@/lib/hooks';
 import { formatPersonName } from '@/lib/person-name';
@@ -21,8 +21,21 @@ import { useRolesList } from '@/lib/roles';
 import { useSetUserAccess } from '@/lib/users';
 import type { RoleRow } from '@/lib/admin-types';
 import { useTerm } from '@/lib/term';
+import {
+  STAFF_EMPLOYMENT_OPTIONS as EMPLOYMENT_OPTIONS,
+  STAFF_STATUS_OPTIONS as STATUS_OPTIONS,
+  STAFF_PROFILE_FIELDS,
+  STAFF_PROFILE_DEFAULTS,
+} from '@/lib/staff-profile-fields';
 
-const ACCESS_KEYS = new Set(['roleKeys', 'campusIds', 'directGrants', 'directDenies', 'userVersion', 'createLogin']);
+const ACCESS_KEYS = new Set([
+  'roleKeys',
+  'campusIds',
+  'directGrants',
+  'directDenies',
+  'userVersion',
+  'createLogin',
+]);
 
 const PERMISSIONS: ResourcePermissions = {
   view: 'staff.view',
@@ -30,18 +43,6 @@ const PERMISSIONS: ResourcePermissions = {
   update: 'staff.manage',
   delete: 'staff.manage',
 };
-
-const EMPLOYMENT_OPTIONS = [
-  { value: 'full_time', label: 'Full-time' },
-  { value: 'part_time', label: 'Part-time' },
-  { value: 'contract', label: 'Contract' },
-  { value: 'visiting', label: 'Visiting' },
-];
-const STATUS_OPTIONS = [
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
-  { value: 'on_leave', label: 'On leave' },
-];
 
 export default function StaffPage() {
   const { t, tp } = useTerm();
@@ -51,8 +52,12 @@ export default function StaffPage() {
   const canViewUsers = can('users.view');
   const canManageRoles = can('users.assign_scoped_roles') || can('users.manage_roles');
   const setAccess = useSetUserAccess();
-  const { data: departments } = useDepartmentOptions();
-  const { data: roles } = useRolesList<RoleRow>('roles', { page: 1, pageSize: 100, sortDir: 'asc' });
+  const { data: departments } = useStaffDepartmentOptions();
+  const { data: roles } = useRolesList<RoleRow>('roles', {
+    page: 1,
+    pageSize: 100,
+    sortDir: 'asc',
+  });
 
   const roleFilterOptions = useMemo(
     () => (roles?.items ?? []).map((r) => ({ value: r.key, label: r.name })),
@@ -65,7 +70,7 @@ export default function StaffPage() {
       { key: 'employmentType', label: 'All employment', options: EMPLOYMENT_OPTIONS },
       {
         key: 'departmentId',
-        label: `All ${tp('department')}`,
+        label: 'All departments',
         options: (departments?.items ?? []).map((d) => ({ value: d.id, label: d.name })),
       },
       { key: 'roleKey', label: 'All roles', options: roleFilterOptions },
@@ -78,30 +83,52 @@ export default function StaffPage() {
         ],
       },
     ],
-    [departments, roleFilterOptions, tp],
+    [departments, roleFilterOptions],
   );
 
   const fields = useMemo<FieldDef[]>(
-    () => [
-      { name: 'firstName', label: 'First name', type: 'text', required: true },
-      { name: 'middleName', label: 'Middle name', type: 'text', nullable: true, placeholder: 'Optional' },
-      { name: 'lastName', label: 'Last name', type: 'text', required: true },
-      { name: 'employeeNo', label: 'Employee no.', type: 'text', nullable: true, placeholder: 'e.g. EMP-512' },
-      {
-        name: 'departmentId',
-        label: t('department'),
-        type: 'select',
-        nullable: true,
-        options: (departments?.items ?? []).map((d) => ({ value: d.id, label: d.name })),
-      },
-      { name: 'designation', label: 'Designation', type: 'text', nullable: true, placeholder: 'e.g. Accountant' },
-      { name: 'employmentType', label: 'Employment', type: 'select', required: true, options: EMPLOYMENT_OPTIONS },
-      { name: 'status', label: 'Status', type: 'select', required: true, options: STATUS_OPTIONS },
-      { name: 'joinDate', label: 'Join date', type: 'date', nullable: true },
-      { name: 'email', label: 'Email', type: 'text', nullable: true, placeholder: 'Optional' },
-      { name: 'phone', label: 'Phone', type: 'phone', nullable: true },
-    ],
-    [departments, t],
+    () =>
+      STAFF_PROFILE_FIELDS.map(
+        (field): FieldDef =>
+          field.name === 'departmentId'
+            ? {
+                name: 'departmentId',
+                label: 'Department',
+                type: 'custom',
+                render: (value, onChange, ctx) => {
+                  const options = (departments?.items ?? []).map((department) => ({
+                    value: department.id,
+                    label: department.name,
+                  }));
+                  if (value && !options.some((option) => option.value === value))
+                    options.push({
+                      value: String(value),
+                      label: `Previous assignment: ${ctx?.values.departmentName ?? 'Department'}`,
+                    });
+                  return (
+                    <>
+                      <Select
+                        value={String(value ?? '')}
+                        options={options}
+                        placeholder="No department"
+                        disabled={ctx?.disabled}
+                        onChange={(event) => onChange(event.target.value || null)}
+                      />
+                      {ctx?.values.departmentUnitKind === 'programme' &&
+                        value === ctx.values.originalDepartmentId && (
+                          <p className="mt-1 text-xs text-text-muted">
+                            This is a previous course/stream link. Choose a staff department or
+                            clear the selection to replace it.
+                          </p>
+                        )}
+                    </>
+                  );
+                },
+                help: 'Staff departments are separate from student courses and streams.',
+              }
+            : field,
+      ),
+    [departments],
   );
 
   const createFields = useMemo<FieldDef[]>(
@@ -132,9 +159,27 @@ export default function StaffPage() {
 
   const columns = useMemo<Column<StaffRow>[]>(
     () => [
-      { key: 'lastName', header: 'Name', sortable: true, render: (r) => <span className="font-medium">{formatPersonName(r)}</span> },
-      { key: 'employeeNo', header: 'Employee', render: (r) => <span className="font-mono text-text-secondary">{r.employeeNo ?? '—'}</span> },
-      { key: 'departmentName', header: t('department'), render: (r) => <span className="text-text-muted">{r.departmentName ?? '—'}</span> },
+      {
+        key: 'lastName',
+        header: 'Name',
+        sortable: true,
+        render: (r) => <span className="font-medium">{formatPersonName(r)}</span>,
+      },
+      {
+        key: 'employeeNo',
+        header: 'Employee',
+        render: (r) => <span className="font-mono text-text-secondary">{r.employeeNo ?? '—'}</span>,
+      },
+      {
+        key: 'departmentName',
+        header: 'Department',
+        render: (r) => (
+          <span className="text-text-muted">
+            {r.departmentName ?? '—'}
+            {r.departmentUnitKind === 'programme' ? ' (previous course link)' : ''}
+          </span>
+        ),
+      },
       { key: 'designation', header: 'Designation', render: (r) => r.designation ?? '—' },
       {
         key: 'isTeaching',
@@ -142,9 +187,14 @@ export default function StaffPage() {
         render: (r) =>
           r.isTeaching ? <Badge tone="info">Teaching</Badge> : <Badge tone="neutral">Staff</Badge>,
       },
-      { key: 'status', header: 'Status', sortable: true, render: (r) => <StatusBadge status={r.status} /> },
+      {
+        key: 'status',
+        header: 'Status',
+        sortable: true,
+        render: (r) => <StatusBadge status={r.status} />,
+      },
     ],
-    [t],
+    [],
   );
 
   const onSubmitUpdate = useCallback(
@@ -169,8 +219,16 @@ export default function StaffPage() {
       const roleKeys = Array.isArray(body.roleKeys) ? (body.roleKeys as string[]) : [];
 
       // Roles are assigned during invite when createLogin is used; otherwise sync access when roles were picked.
-      const editingSelf = Boolean(me?.institutionUserId && institutionUserId === me.institutionUserId);
-      if (canManageRoles && institutionUserId && !justCreatedLogin && !editingSelf && roleKeys.length > 0) {
+      const editingSelf = Boolean(
+        me?.institutionUserId && institutionUserId === me.institutionUserId,
+      );
+      if (
+        canManageRoles &&
+        institutionUserId &&
+        !justCreatedLogin &&
+        !editingSelf &&
+        roleKeys.length > 0
+      ) {
         await setAccess.mutateAsync({
           id: institutionUserId,
           roleKeys,
@@ -192,6 +250,7 @@ export default function StaffPage() {
       columns={columns}
       fields={fields}
       createFields={createFields}
+      createInitialValues={STAFF_PROFILE_DEFAULTS}
       filters={filters}
       defaultSortBy="lastName"
       permissions={PERMISSIONS}
@@ -214,7 +273,8 @@ export default function StaffPage() {
                     />
                   ) : (
                     <p className="text-sm text-text-muted">
-                      Portal access details require the <span className="font-medium">users.view</span> permission.
+                      Portal access details require the{' '}
+                      <span className="font-medium">users.view</span> permission.
                     </p>
                   )
                 ) : canManageRoles ? (
@@ -241,6 +301,9 @@ export default function StaffPage() {
         lastName: r.lastName,
         employeeNo: r.employeeNo ?? '',
         departmentId: r.departmentId ?? '',
+        departmentName: r.departmentName,
+        departmentUnitKind: r.departmentUnitKind,
+        originalDepartmentId: r.departmentId,
         designation: r.designation ?? '',
         employmentType: r.employmentType,
         status: r.status,

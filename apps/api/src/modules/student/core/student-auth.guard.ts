@@ -1,6 +1,7 @@
 import {
   CanActivate,
   type ExecutionContext,
+  ForbiddenException,
   Inject,
   Injectable,
   UnauthorizedException,
@@ -10,6 +11,7 @@ import type { ApiEnv } from '@edrion/config';
 import { API_ENV } from '../../../common/tokens';
 import { StudentAuthService } from '../auth/student-auth.service';
 import { StudentSessionService } from './student-session.service';
+import { STUDENT_PASSWORD_SETUP_KEY } from './student.decorators';
 
 /**
  * Authenticates a student-portal request and attaches `studentContext`.
@@ -29,6 +31,11 @@ export class StudentAuthGuard implements CanActivate {
     const req = ctx.switchToHttp().getRequest<Request>();
     const { principal, authSessionId } = await this.resolvePrincipal(req);
     req.studentContext = { principal, authSessionId };
+    if (principal.kind === 'institutional' && principal.passwordChangeRequired &&
+      !Reflect.getMetadata(STUDENT_PASSWORD_SETUP_KEY, ctx.getHandler())) {
+      throw new ForbiddenException({ code: 'PASSWORD_CHANGE_REQUIRED',
+        message: 'Change your temporary password before accessing your portal.' });
+    }
     return true;
   }
 

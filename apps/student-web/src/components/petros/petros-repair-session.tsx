@@ -2234,11 +2234,11 @@ function BlockContent({
                       <Layers3 aria-hidden="true" /> {layer.label}
                       <ChevronRight aria-hidden="true" />
                     </button>
-                    {open && !revealed ? (
+                    {open && layer.predictionPrompt && !revealed ? (
                       <div className={styles.predictionGate}>
                         <span><Brain aria-hidden="true" /> Predict before Petros reveals</span>
                         <label htmlFor={`prediction-${block.id}-${layer.id}`}>
-                          In one sentence, what do you think “{layer.label}” means?
+                          {layer.predictionPrompt}
                         </label>
                         <textarea
                           id={`prediction-${block.id}-${layer.id}`}
@@ -2272,11 +2272,13 @@ function BlockContent({
                         </div>
                       </div>
                     ) : open ? (
-                      <div className={styles.predictionCompare}>
-                        <div>
-                          <span>Your prediction</span>
-                          <p>{prediction || 'You opened this before prediction mode was added.'}</p>
-                        </div>
+                      <div className={styles.predictionCompare} data-prediction={Boolean(layer.predictionPrompt)}>
+                        {layer.predictionPrompt && (
+                          <div>
+                            <span>Your prediction</span>
+                            <p>{prediction || 'You chose to reveal the explanation.'}</p>
+                          </div>
+                        )}
                         <div data-petros-target={petrosLessonTarget(block.id, `layer:${layer.id}`)}>
                           <span>Petros’s explanation</span>
                           <p>

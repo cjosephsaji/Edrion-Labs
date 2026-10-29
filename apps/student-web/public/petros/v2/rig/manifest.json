@@ -1,0 +1,221 @@
+{
+  "version": "petros.original-png.v6",
+  "artwork": "Original authored Petros PNG poses, selected by the user on 2026-10-21",
+  "poses": {
+    "neutral": "/petros/states/petros-idle.png",
+    "listening": "/petros/states/petros-listening.png",
+    "thinking": "/petros/states/petros-thinking.png",
+    "speaking": "/petros/states/petros-talking.png",
+    "point-right": "/petros/states/petros-point-right.png",
+    "point-left": "/petros/states/petros-point-left.png",
+    "point-up": "/petros/states/petros-point-up.png",
+    "point-down": "/petros/states/petros-point-down.png"
+  },
+  "supported": [
+    "static-poses",
+    "directional-pointing",
+    "speech-caption",
+    "status-cloud",
+    "speech-pose"
+  ],
+  "unsupported": [
+    "independent-eye-gaze",
+    "facial-controls",
+    "precise-hand-target",
+    "articulated-arms",
+    "writing-pose",
+    "handwriting",
+    "phoneme-mouth",
+    "walking",
+    "natural-blinking",
+    "eyebrow-controls",
+    "independent-head",
+    "independent-mouth",
+    "breathing-rig",
+    "layered-svg",
+    "open-hand",
+    "nod",
+    "acknowledge",
+    "amplitude-mouth",
+    "three-quarter-rig",
+    "short-dock-transition",
+    "pleased-expression",
+    "uncertain-expression"
+  ],
+  "fallback": "neutral",
+  "coordinateSystem": "384x512 static image; no joint or contact anchors",
+  "calloutAnchor": "Content-sized side cloud in reserved companion harbor; tail anchored to avatar",
+  "pointingPolicy": "Original authored cardinal poses only for an admitted current source-bound cue and its registered visible target. M6 event admission: one point per semantic cue and 30-second cooldown; legacy fixture admission retains its six-second cooldown. Missing, stale, clipped or unsupported targets use neutral artwork and the public caption/highlight.",
+  "assetInventory": {
+    "neutral": {
+      "sha256": "26fa3a0d8f831d19388a40aa6bb3a22d42e11535e18e5fff1d30236ce0584ec6",
+      "width": 384,
+      "height": 512,
+      "pngColorType": 6
+    },
+    "listening": {
+      "sha256": "60faf14dd2c92a2d8734ae95a421a81f44c8d758970b5b4f520d35bd76a1d0b3",
+      "width": 384,
+      "height": 512,
+      "pngColorType": 6
+    },
+    "thinking": {
+      "sha256": "df61ca41a8e270b7bd94a4ead7c28ee27627e88227f524dad2b10d27d2e96a41",
+      "width": 384,
+      "height": 512,
+      "pngColorType": 6
+    },
+    "speaking": {
+      "sha256": "fb12b6bbc7c900d717a0ebc5d59a2f83e06d801b73838478db43441d9c09c17b",
+      "width": 384,
+      "height": 512,
+      "pngColorType": 6
+    },
+    "point-right": {
+      "sha256": "6d6e6d95e289bdf8a69836d132a3e51644c59ce9da3c79068bf6a83ba7686c6e",
+      "width": 384,
+      "height": 512,
+      "pngColorType": 6
+    },
+    "point-left": {
+      "sha256": "29e57a3b7982bed2df9c55560bbd85c8018bde33d4873e37022a65da577a6ddd",
+      "width": 384,
+      "height": 512,
+      "pngColorType": 6
+    },
+    "point-up": {
+      "sha256": "dda2223d42d70c927a8a24ef79ebf59f42d897b3f96972836027c3ea85226493",
+      "width": 384,
+      "height": 512,
+      "pngColorType": 6
+    },
+    "point-down": {
+      "sha256": "517ed035b0b03bb49876d05f75457785e98b2a8a6e5f2bf2c2763b9d08e604f4",
+      "width": 384,
+      "height": 512,
+      "pngColorType": 6
+    }
+  },
+  "motion": {
+    "gestureCooldownMs": 30000,
+    "gestureHoldMs": [
+      700,
+      820,
+      940
+    ],
+    "transitionMs": 0,
+    "idle": "Static original neutral pose; no independent facial, head or body motion.",
+    "cancel": "Immediate neutral pose on input, pause, revocation or hidden page.",
+    "transition": "No crossfade or raster deformation in the current companion renderer.",
+    "speech": "Actual existing audio playback may select the original static talking pose. No timed overlay, amplitude mouth or lip synchronization."
+  },
+  "layers": [],
+  "pivots": {},
+  "contactAnchors": {},
+  "requiredArtwork": {
+    "natural-blinking": [
+      "clean underlying face",
+      "left/right open half closed eyelids",
+      "eye aperture and occlusion masks"
+    ],
+    "independent-eye-gaze": [
+      "left/right iris and pupil layers",
+      "eye whites",
+      "artist-authored centers and gaze limits"
+    ],
+    "independent-mouth": [
+      "clean underlying face",
+      "closed small medium rounded mouth shapes",
+      "mouth origin and safe bounds"
+    ],
+    "independent-head": [
+      "complete head and body surfaces",
+      "artist-authored neck pivot and range"
+    ],
+    "breathing-rig": [
+      "separate complete body and overlap layers",
+      "approved rest posture and deformation limits"
+    ],
+    "articulated-arms": [
+      "complete shoulder upper arm forearm wrist hand layers",
+      "artist-authored pivots and reach limits"
+    ]
+  },
+  "approximated": {},
+  "idlePolicy": "Static original artwork. The Studio and Playground do not use whole-image motion, artificial eyelids or a timed mouth overlay.",
+  "renderer": "original-authored-poses",
+  "legacySupported": [
+    "static-poses",
+    "directional-pointing",
+    "speech-caption",
+    "status-cloud",
+    "speech-pose",
+    "whole-pose-transition",
+    "whole-image-idle",
+    "approximate-mouth-overlay"
+  ],
+  "selection": {
+    "selected": "original-artwork",
+    "date": "2026-10-21",
+    "rejectedCandidate": "candidate-rejected.json",
+    "candidateStatus": "rejected-by-user",
+    "candidateActive": false
+  },
+  "viewBox": [
+    0,
+    0,
+    384,
+    512
+  ],
+  "runtimeLayerIds": [],
+  "characterOrigin": null,
+  "headPivot": null,
+  "eyeAnchors": null,
+  "mouthAnchor": null,
+  "shoulderPivots": null,
+  "elbowPivots": null,
+  "wristAnchors": null,
+  "gestureRanges": {},
+  "pointingDirections": [
+    "left",
+    "right",
+    "up",
+    "down"
+  ],
+  "approvedAnimationClips": [],
+  "fallbackPoses": {
+    "unsupportedGesture": "neutral",
+    "unavailableTarget": "neutral",
+    "listening": "listening",
+    "sourceCheck": "thinking",
+    "pendingEvaluation": "neutral"
+  },
+  "speechCloudAnchor": {
+    "kind": "reserved-harbor",
+    "attachment": "adjacent-to-upper-body",
+    "preciseContactAnchor": null,
+    "maxWidthPx": 320
+  },
+  "safePlacement": {
+    "coordinateSystem": "measured-reserved-harbor",
+    "anchors": [
+      "HOME",
+      "EXPLAIN",
+      "FOCUS_LEFT",
+      "FOCUS_RIGHT",
+      "QUIET",
+      "DOCKED_MOBILE"
+    ],
+    "mobileMaxWidthPx": 760,
+    "travelEnabled": false,
+    "fallback": "HOME",
+    "reason": "No visually accepted dock-transition or walking clip exists for the originals."
+  },
+  "artworkGate": {
+    "status": "blocked-missing-faithful-layers",
+    "default": "original-artwork",
+    "humanApprovalRequired": true,
+    "acceptedLayerHashes": [],
+    "note": "Flattened original PNGs do not contain complete hidden face, neck, shoulder or limb surfaces. No rejected vector layers or replacement overlays are admitted."
+  }
+}

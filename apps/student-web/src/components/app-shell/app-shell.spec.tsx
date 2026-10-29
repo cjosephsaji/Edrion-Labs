@@ -5,10 +5,10 @@ import { StudentPreferencesProvider } from '@/lib/preferences';
 import { StudentApiProvider } from '@/lib/api-client';
 import { AppShell } from './app-shell';
 
-const mocks = vi.hoisted(() => ({ permissions: ['*'], pathname: '/progress', institutionId: 'institution-a', studentId: 'student-a' }));
+const mocks = vi.hoisted(() => ({ permissions: ['*'], pathname: '/progress', institutionId: 'institution-a', studentId: 'student-a', fullName: 'Test Student' }));
 vi.mock('next/navigation', () => ({ usePathname: () => mocks.pathname, useRouter: () => ({ push: vi.fn() }) }));
 vi.mock('@/lib/hooks', () => ({
-  useStudentMe: () => ({ data: { kind: 'institutional', institutionId: mocks.institutionId, studentId: mocks.studentId, programmeName: 'Computer Science', fullName: 'Test Student', permissions: mocks.permissions, surfaces: {} } }),
+  useStudentMe: () => ({ data: { kind: 'institutional', institutionId: mocks.institutionId, studentId: mocks.studentId, programmeName: 'Computer Science', fullName: mocks.fullName, permissions: mocks.permissions, surfaces: {} } }),
   useStudentLogout: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 vi.mock('@/components/petros/petros-companion-context', () => ({ PetrosCompanionProvider: ({ children }: { children: React.ReactNode }) => children }));
@@ -37,6 +37,7 @@ describe('Explore quick navigation', () => {
     mocks.pathname = '/progress';
     mocks.institutionId = 'institution-a';
     mocks.studentId = 'student-a';
+    mocks.fullName = 'Test Student';
     offlineNotes.clearQueuedNotesForOwner.mockClear();
     vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
   });
@@ -99,5 +100,16 @@ describe('Explore quick navigation', () => {
     mocks.studentId = 'student-b';
     view.rerender(<Portal />);
     await waitFor(() => expect(offlineNotes.clearQueuedNotesForOwner).toHaveBeenCalledWith({ institutionId: 'institution-a', studentId: 'student-a' }));
+  });
+  it('uses the current authenticated profile in the collapsible lesson sidebar', () => {
+    mocks.pathname = '/petros/companion-playground';
+    mocks.fullName = 'Current Student With A Long Display Name';
+    const view = render(<Portal />);
+    expect(screen.getByRole('link', { name: `Student profile: ${mocks.fullName}` })).toHaveAttribute('href', '/profile');
+    fireEvent.click(screen.getByRole('button', { name: 'Expand lesson sidebar' }));
+    expect(screen.getByRole('button', { name: 'Collapse lesson sidebar' })).toHaveAttribute('aria-expanded', 'true');
+    mocks.fullName = 'Switched Account'; mocks.studentId = 'student-b'; view.rerender(<Portal />);
+    expect(screen.queryByText('Current Student With A Long Display Name')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Student profile: Switched Account' })).toHaveTextContent('Computer Science');
   });
 });

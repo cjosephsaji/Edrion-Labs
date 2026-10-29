@@ -85,7 +85,7 @@ export default function StudentsPage() {
 
   const fields = useMemo<FieldDef[]>(
     () => [
-      { name: 'admissionNo', label: 'Admission no.', type: 'text', required: true, placeholder: 'e.g. ADM-1024' },
+      { name: 'admissionNo', label: 'Admission no. (student ID)', type: 'text', required: true, placeholder: 'e.g. ADM-1024' },
       { name: 'firstName', label: 'First name', type: 'text', required: true },
       { name: 'middleName', label: 'Middle name', type: 'text', nullable: true, placeholder: 'Optional' },
       { name: 'lastName', label: 'Last name', type: 'text', required: true },
@@ -161,6 +161,13 @@ export default function StudentsPage() {
       noun={t('student').toLowerCase()}
       columns={columns}
       fields={fields}
+      createFields={[{
+        name: 'createPortalAccount',
+        label: 'Create portal account',
+        type: 'checkbox',
+        help: 'The student signs in with their admission number as both student ID and temporary password, then must change the password. Email is optional.',
+      }]}
+      createInitialValues={{ status: 'enrolled', createPortalAccount: true }}
       filters={filters}
       defaultSortBy="lastName"
       permissions={PERMISSIONS}

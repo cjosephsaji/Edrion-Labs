@@ -5,6 +5,7 @@
     "outDir": "dist",
     "types": ["node", "reflect-metadata"],
     "paths": {
+      "@edrion/*": ["../../packages/*/src/index.ts"],
       "@edrion/shared-types": ["../../packages/shared-types/src/index.ts"],
       "@edrion/permissions": ["../../packages/permissions/src/index.ts"],
       "@edrion/permissions/institution": ["../../packages/permissions/src/institution/index.ts"],

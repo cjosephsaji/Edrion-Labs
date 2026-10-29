@@ -148,7 +148,11 @@ export class PortalMaterialPreparationJobs implements OnModuleInit, OnModuleDest
     let pages = 0;
     let pulse: Promise<void> | undefined;
     try {
-      claim = await this.scoped(institutionId, () => this.repository.claim(institutionId, id));
+      claim = await this.scoped(institutionId, async () => {
+        const pending = await this.repository.get(institutionId, id);
+        await this.authorize(pending, true);
+        return this.repository.claim(institutionId, id);
+      });
       if (!claim) return;
       const claimed = claim;
       const input = await this.scoped(institutionId, () => this.authorize(claimed));
@@ -195,7 +199,8 @@ export class PortalMaterialPreparationJobs implements OnModuleInit, OnModuleDest
         await this.repository.assertLease(claimed);
         if ((await driver.size(current.file.storageKey)) !== current.file.sizeBytes)
           throw new PdfPreparationError('PETROS_SOURCE_UNAVAILABLE');
-        await this.content.publishPreparedPdf(current.material, current.file, result);
+        await runInInstitutionTenant(this.db, institutionId,
+          () => this.content.publishPreparedPdf(current.material, current.file, result), current.principal.institutionUserId);
         await this.repository.heartbeat(claimed, result.pages.length);
         await this.repository.complete(claimed);
       });
@@ -238,6 +243,8 @@ export class PortalMaterialPreparationJobs implements OnModuleInit, OnModuleDest
   }
 
   private async authorize(row: Preparation, lock = false) {
+    if ((row.operationVersion ?? 'v1') !== 'v1' || (row.sourceKind ?? 'material') !== 'material' || !row.materialId || !row.materialVersion)
+      throw new ConflictException('Unsupported preparation version');
     if (lock) {
       // Serialize final publication with material replacement/deletion and original revocation.
       await this.db
@@ -282,6 +289,6 @@ export class PortalMaterialPreparationJobs implements OnModuleInit, OnModuleDest
       .limit(1);
     if (!file || file.driver !== 'local' || file.processingStatus !== 'ready')
       throw new NotFoundException('Original source unavailable');
-    return { material, file };
+    return { material, file, principal };
   }
 }

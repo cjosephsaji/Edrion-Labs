@@ -21,7 +21,7 @@ import type {
   NewInstitutionRegistrationRequest,
   NewInstitutionRegistrationReview,
 } from '@edrion/database';
-import type { ListRegistrationsQuery, PublicPlanView } from '@edrion/schemas';
+import type { ListRegistrationsQuery, PublicPlanView, SubmitRegistrationInput } from '@edrion/schemas';
 import { DATABASE } from '../../common/tokens';
 
 const SORTABLE: Record<string, PgColumn> = {
@@ -88,9 +88,10 @@ export class RegistrationRepository {
     return row;
   }
 
-  /** An active (non-terminal) request for this contact email, excluding `exceptId`. */
-  async findActiveByEmail(
+  /** Block repeat applications for the same institution, while allowing a shared contact email. */
+  async findDuplicateApplication(
     email: string,
+    institution: Pick<SubmitRegistrationInput, 'institutionInfo' | 'location'>,
     exceptId?: string,
   ): Promise<InstitutionRegistrationRequest | undefined> {
     const rows = await this.db
@@ -106,7 +107,17 @@ export class RegistrationRepository {
           ),
         ),
       );
-    return rows.find((r) => r.id !== exceptId);
+    const normalize = (value: string | null | undefined) =>
+      value?.trim().replace(/\s+/g, ' ').toLowerCase();
+    return rows.find(
+      (row) =>
+        row.id !== exceptId &&
+        normalize(row.legalName ?? row.institutionInfo?.legalName) ===
+          normalize(institution.institutionInfo.legalName) &&
+        (row.type ?? row.institutionInfo?.type) === institution.institutionInfo.type &&
+        normalize(row.country ?? row.location?.country) === normalize(institution.location.country) &&
+        normalize(row.location?.address) === normalize(institution.location.address),
+    );
   }
 
   /** Most-recently-touched editable (draft) request for this contact email — for OTP resume. */

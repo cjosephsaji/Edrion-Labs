@@ -204,6 +204,7 @@ export const classMaterials = pgTable(
     title: text('title').notNull(),
     description: text('description'),
     kindLabel: text('kind_label').notNull().default('PDF'),
+    sourceRevokedAt: timestamp('source_revoked_at', { withTimezone: true }),
     objectId: uuid('object_id')
       .notNull()
       .references(() => storageObjects.id, { onDelete: 'restrict' }),

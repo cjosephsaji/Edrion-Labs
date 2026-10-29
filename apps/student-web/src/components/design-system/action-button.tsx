@@ -35,7 +35,9 @@ export function ActionButton({
       aria-busy={loading || props['aria-busy'] || undefined}
       aria-describedby={describedBy}
     >
-      {loading ? <LoaderCircle className={styles.loadingIcon} aria-hidden="true" /> : null}
+      {loading ? (
+        <LoaderCircle data-button-spinner className={styles.loadingIcon} aria-hidden="true" />
+      ) : null}
       {loading && loadingLabel ? loadingLabel : children}
     </button>
   );

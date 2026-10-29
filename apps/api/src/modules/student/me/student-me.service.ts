@@ -8,6 +8,7 @@ import { SurfacesService } from '../surfaces/surfaces.service';
 
 export type StudentMeResponse = {
   kind: 'institutional' | 'independent';
+  passwordChangeRequired: boolean;
   fullName: string;
   email: string | null;
   studentId: string | null;
@@ -36,6 +37,7 @@ export class StudentMeService {
     if (principal.kind === 'independent') {
       return {
         kind: 'independent',
+        passwordChangeRequired: false,
         fullName: principal.fullName,
         email: principal.email,
         studentId: null,
@@ -106,6 +108,7 @@ export class StudentMeService {
 
     return {
       kind: 'institutional',
+      passwordChangeRequired: Boolean(principal.passwordChangeRequired),
       fullName: principal.fullName,
       email: principal.email,
       studentId: principal.studentId,

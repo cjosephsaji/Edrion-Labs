@@ -1,0 +1,360 @@
+.lab {
+  min-width: 0;
+  color: #244b3d;
+}
+.overview,
+.legend,
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+}
+.overview {
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+.overview strong {
+  margin-left: 4px;
+}
+.memory {
+  border: 1px solid #c9d9cf;
+  border-radius: 10px;
+  padding: 12px;
+  background: #f7faf7;
+  transition:
+    background 0.16s,
+    border-color 0.16s;
+}
+.dropActive {
+  border-color: #326a50;
+  background: #e6f1e9;
+  outline: 2px dashed #326a50;
+}
+.dropReady {
+  background: #dbece0;
+  outline-style: solid;
+}
+.dropHint {
+  color: #326a50;
+  font-size: 12px;
+  margin: 6px 0 !important;
+}
+.bar {
+  display: flex;
+  height: 24px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #dce5de;
+}
+.bar > span {
+  flex-basis: 0;
+  min-width: 0;
+  transition: flex-grow 0.2s;
+}
+.reserved {
+  background: repeating-linear-gradient(45deg, #7c8a94, #7c8a94 4px, #9da8af 4px, #9da8af 8px);
+}
+.allocated {
+  background: #326a50;
+}
+.remaining {
+  background: #dce9dc;
+}
+.legend {
+  font-size: 11px;
+  margin: 6px 0;
+}
+.blocks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 66px;
+  align-items: center;
+}
+.vm {
+  display: grid;
+  grid-template-columns: 18px auto;
+  gap: 2px 6px;
+  border: 1px solid #a6bfae;
+  background: white;
+  padding: 7px 10px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+.vm small {
+  grid-column: 2;
+}
+.empty {
+  font-size: 13px;
+}
+.readout {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 8px 0 0;
+}
+.readout dt {
+  font-size: 11px;
+}
+.readout dd {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 2px 0 0;
+}
+.assumptions {
+  font-size: 11px;
+  line-height: 1.45 !important;
+  margin: 7px 0 !important;
+  color: #53675b;
+}
+.prediction {
+  border: 0;
+  border-top: 1px solid #d6e0d9;
+  padding: 10px 0 6px;
+  margin: 8px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.prediction legend {
+  font-size: 13px;
+  font-weight: 600;
+  padding-top: 4px;
+}
+.prediction button[aria-pressed='true'] {
+  background: #e9edf3;
+  border-color: #75899e;
+}
+.prediction span {
+  font-size: 12px;
+}
+.controls {
+  gap: 6px;
+}
+.controls button {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+.controls .dragHandle {
+  display: grid;
+  grid-template-columns: 24px auto;
+  gap: 3px 8px;
+  text-align: left;
+  border: 1px dashed #71967e;
+  border-radius: 8px;
+  background: #f7faf7;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+.dragHandle strong,
+.dragHandle small {
+  display: block;
+}
+.dragHandle small,
+.dragHint {
+  font-size: 11px;
+  font-weight: 400;
+}
+.dragHint {
+  grid-column: 1 / -1;
+}
+.dragHandle:active {
+  cursor: grabbing;
+}
+.dragPreview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 124px;
+  box-sizing: border-box;
+  z-index: 1000;
+  pointer-events: none;
+  color: #244b3d;
+  border: 2px solid #326a50;
+  box-shadow: 0 6px 18px #244b3d33;
+}
+.observation {
+  border-left: 3px solid #8294a0;
+  padding: 6px 10px;
+  background: #eff3f5;
+  margin-top: 10px;
+  font-size: 13px;
+}
+.observation p {
+  margin: 3px 0 !important;
+  line-height: 1.45 !important;
+}
+.lab form {
+  margin-bottom: 0;
+}
+.saved {
+  font-size: 12px;
+}
+.lab table {
+  table-layout: fixed;
+  font-size: 12px;
+}
+.lab caption {
+  text-align: left;
+  font-size: 11px;
+}
+@media (max-width: 600px) {
+  .readout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .controls button {
+    padding: 8px !important;
+  }
+  .prediction button {
+    flex: 1;
+    width: auto !important;
+  }
+  .memory {
+    padding: 9px;
+  }
+  .lab td,
+  .lab th {
+    padding: 5px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .memory,
+  .bar > span {
+    transition: none;
+  }
+}
+@media (min-width: 1100px) {
+  .lab {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 6px 12px;
+  }
+  .overview,
+  .lab > .assumptions,
+  .lab > form,
+  .lab > details,
+  .saved {
+    grid-column: 1 / -1;
+  }
+  .memory {
+    grid-column: 1;
+    grid-row: 2 / 5;
+  }
+  .prediction {
+    grid-column: 2;
+    grid-row: 2;
+    margin: 0;
+    padding-top: 0;
+  }
+  .controls {
+    grid-column: 2;
+    grid-row: 3;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .controls button {
+    padding: 7px 9px !important;
+  }
+  .observation {
+    grid-column: 2;
+    grid-row: 4;
+    margin: 0;
+  }
+  .readout {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+:global([data-reduced-motion='true']) .memory,
+:global([data-reduced-motion='true']) .bar > span {
+  transition: none;
+}
+.controls button:not(:disabled):hover {
+  background: #eaf2eb;
+  border-color: #8aa796;
+}
+.experiment {
+  min-width: 0;
+}
+.experiment .prediction {
+  margin-top: 0;
+}
+.experiment > button {
+  margin-top: 8px;
+}
+.lab .tools,
+.lab .history,
+.lab .inspectionPanel {
+  grid-column: 1 / -1;
+}
+.lab summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+}
+.lab .history ol {
+  padding-left: 20px;
+  margin: 0;
+}
+.lab .history li {
+  border-top: 1px solid #d6e0d9;
+  padding-block: 8px;
+  font-size: 12px;
+}
+.lab .history p {
+  margin-block: 4px;
+}
+.inspection {
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.inspection div {
+  display: grid;
+  grid-template-columns: minmax(80px, 1fr) minmax(0, 2fr);
+  gap: 8px;
+  padding-block: 3px;
+}
+.inspection dd {
+  margin: 0;
+}
+.comparison table {
+  margin-block: 4px;
+}
+@media (min-width: 1100px) {
+  .lab .memory {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .experiment {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .experiment .controls,
+  .experiment .observation {
+    display: flex;
+    flex-wrap: wrap;
+    grid-column: auto;
+    grid-row: auto;
+  }
+  .experiment .observation {
+    display: block;
+    margin-top: 8px;
+  }
+  .experiment form {
+    display: block;
+    margin-top: 8px;
+  }
+  .experiment form button {
+    margin-top: 6px;
+  }
+}

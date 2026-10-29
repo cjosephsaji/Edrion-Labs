@@ -370,6 +370,7 @@ export const petrosTeachingBlockContentSchema = z.discriminatedUnion('type', [
               id: z.string().trim().min(1).max(80),
               label: z.string().trim().min(1).max(120),
               content: z.string().trim().min(20).max(2_000),
+              predictionPrompt: z.string().trim().min(3).max(500).optional(),
             })
             .strict(),
         )

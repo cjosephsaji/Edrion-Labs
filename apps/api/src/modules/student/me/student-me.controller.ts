@@ -4,7 +4,7 @@ import { Public } from '../../../common/guards/auth.guard';
 import { SkipRateLimit } from '../../../common/decorators';
 import { StudentAuthGuard } from '../core/student-auth.guard';
 import { StudentPermissionsGuard } from '../core/student-permissions.guard';
-import { CurrentStudent } from '../core/student.decorators';
+import { AllowStudentPasswordSetup, CurrentStudent } from '../core/student.decorators';
 import type { StudentPrincipal } from '../student.types';
 import { StudentMeService } from './student-me.service';
 
@@ -17,6 +17,7 @@ export class StudentMeController {
   constructor(private readonly me: StudentMeService) {}
 
   @Get('me')
+  @AllowStudentPasswordSetup()
   getMe(@CurrentStudent() principal: StudentPrincipal) {
     return this.me.getMe(principal);
   }

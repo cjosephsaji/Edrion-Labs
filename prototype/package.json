@@ -1,0 +1,35 @@
+{
+  "name": "@edrion/petros-showcase",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "vitest run --config tests/vitest.config.ts",
+    "prepare:sources": "node teaching/prepare-sources.mjs",
+    "verify:browser": "tsx tests/teaching-browser.mts",
+    "verify:edges": "tsx tests/teaching-edges.mts",
+    "record:world": "tsx tests/teaching-browser.mts",
+    "verify:experiments": "tsx tests/teaching-edges.mts",
+    "verify:typography": "tsx tests/teaching-typography.mts"
+  },
+  "dependencies": {
+    "@react-three/fiber": "8.18.0",
+    "lucide-react": "^0.451.0",
+    "next": "14.2.13",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "three": "0.170.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.0.1",
+    "@types/node": "^20.16.5",
+    "@types/react": "^18.3.10",
+    "@types/react-dom": "^18.3.0",
+    "@types/three": "0.170.0",
+    "jsdom": "^25.0.1",
+    "playwright-core": "^1.61.1",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.1"
+  }
+}

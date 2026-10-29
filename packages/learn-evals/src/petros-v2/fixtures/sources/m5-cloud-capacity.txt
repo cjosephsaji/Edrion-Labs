@@ -1,0 +1,7 @@
+Cloud Computing — bounded engineering teaching source (CC0)
+
+Consumer responsibility: In Infrastructure as a Service (IaaS), the consumer manages the guest operating system and installed applications. The provider manages the underlying physical infrastructure. In Platform as a Service (PaaS), the provider manages the operating system and platform. Moving between these service models changes the operating-system responsibility boundary.
+
+Virtualization and capacity: For a uniform memory-only model, subtract reserved memory from total memory to find available memory. Divide available memory in GB by the per-VM requirement in GB/VM. Round down to the number of whole VMs. For a host with 64 GB total memory, 16 GB reserved and 8 GB per VM: available memory is 64 - 16 = 48 GB, and whole-VM capacity is floor(48 / 8) = 6 VM. This simple model ignores CPU, storage, scheduling and workload variation. With a constant request rate, multiply requests per second by elapsed seconds to obtain total requests. This model ignores bursts and losses.
+
+Worked method: Keep the unit at every step. A correct responsibility classification does not by itself demonstrate a correct capacity calculation. A correct final value does not establish the reasoning that produced it.

@@ -76,7 +76,7 @@ export class PortalCoursesService extends PortalResourceService {
         newState: { modules: input.modules.length, curriculumRevision: result?.row.revision ?? null },
       } as AuditEventInput);
       return this.getSyllabus(ctx, courseId, negotiated);
-    });
+    }, ctx.principal.institutionUserId);
   }
 
   async getSyllabus(ctx: PortalActionContext, courseId: string, negotiated = false) {

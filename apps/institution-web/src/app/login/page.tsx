@@ -57,6 +57,13 @@ export default function LoginPage() {
         setError(data?.message ?? 'Sign-in failed. Check your credentials and try again.');
         return;
       }
+      if (data.requiresInstitutionSelection) {
+        await qc.cancelQueries();
+        finalizePortalSignIn(qc);
+        const next = new URLSearchParams(window.location.search).get('next');
+        router.replace(`/choose-institution${next ? `?next=${encodeURIComponent(next)}` : ''}`);
+        return;
+      }
       finalizePortalSignIn(qc);
       const meRes = await fetch(`${webEnv.apiBaseUrl}/v1/portal/me`, {
         credentials: 'include',
@@ -67,7 +74,7 @@ export default function LoginPage() {
       const requestedNext = new URLSearchParams(window.location.search).get('next');
       const defaultHome =
         me && isParentPortalUser(me.roleKeys, me.permissions) ? '/family' : '/dashboard';
-      router.replace(requestedNext || defaultHome);
+      router.replace(requestedNext?.startsWith('/') && !requestedNext.startsWith('//') && !requestedNext.includes('\\') ? requestedNext : defaultHome);
     } catch {
       setError('Could not reach the server. Try again.');
     } finally {

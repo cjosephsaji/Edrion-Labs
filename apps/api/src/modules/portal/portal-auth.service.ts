@@ -45,7 +45,7 @@ export class PortalAuthService {
       .from(schema.institutionUsers)
       .where(eq(schema.institutionUsers.id, institutionUserId))
       .limit(1);
-    if (!user || user.status === 'disabled' || user.disabledAt) {
+    if (!user || user.status !== 'active' || user.disabledAt) {
       throw new UnauthorizedException({ code: 'UNAUTHENTICATED', message: 'Unknown or disabled user' });
     }
     return this.build(user, lastAuthAt, sessionAal);
@@ -53,26 +53,43 @@ export class PortalAuthService {
 
   // --- Login resolution + account lockout (Phase 12) --------------------------
 
-  /** Load an active (non-disabled) institution user by email, or undefined. */
+  /** Legacy/dev lookup is safe only for an unambiguous, activated membership. */
   async loadActiveByEmail(email: string): Promise<InstitutionUser | undefined> {
-    const [user] = await this.db
-      .select()
-      .from(schema.institutionUsers)
-      .where(eq(schema.institutionUsers.email, email.toLowerCase()))
-      .limit(1);
-    if (!user || user.status === 'disabled' || user.disabledAt) return undefined;
-    return user;
+    const users = await this.loadAllActiveByEmail(email);
+    return users.length === 1 ? users[0] : undefined;
   }
 
-  /** Load an active institution user by their Supabase auth identity, or undefined. */
   async loadActiveByAuthUserId(authUserId: string): Promise<InstitutionUser | undefined> {
-    const [user] = await this.db
-      .select()
-      .from(schema.institutionUsers)
-      .where(eq(schema.institutionUsers.authUserId, authUserId))
-      .limit(1);
-    if (!user || user.status === 'disabled' || user.disabledAt) return undefined;
-    return user;
+    const users = await this.loadAllActiveByAuthUserId(authUserId);
+    return users.length === 1 ? users[0] : undefined;
+  }
+
+  /** Identity discovery happens outside a tenant transaction; access is still checked per user. */
+  async loadAllActiveByEmail(email: string): Promise<InstitutionUser[]> {
+    const users = await this.db.select().from(schema.institutionUsers)
+      .where(eq(schema.institutionUsers.email, email.trim().toLowerCase()));
+    return users.filter((user) => user.status === 'active' && !user.disabledAt);
+  }
+
+  async loadAllActiveByAuthUserId(authUserId: string): Promise<InstitutionUser[]> {
+    const users = await this.db.select().from(schema.institutionUsers)
+      .where(eq(schema.institutionUsers.authUserId, authUserId));
+    return users.filter((user) => user.status === 'active' && !user.disabledAt);
+  }
+
+  async loadActiveById(id: string): Promise<InstitutionUser | undefined> {
+    const [user] = await this.db.select().from(schema.institutionUsers)
+      .where(eq(schema.institutionUsers.id, id)).limit(1);
+    return user?.status === 'active' && !user.disabledAt ? user : undefined;
+  }
+
+  async institutionNames(users: InstitutionUser[]): Promise<Map<string, string>> {
+    const names = await Promise.all(users.map(async (user) => {
+      const [institution] = await this.db.select({ name: schema.institutions.displayName })
+        .from(schema.institutions).where(eq(schema.institutions.id, user.institutionId)).limit(1);
+      return [user.institutionId, institution?.name ?? 'Institution'] as const;
+    }));
+    return new Map(names);
   }
 
   /** True when the account is currently locked out (failed-login threshold exceeded). */

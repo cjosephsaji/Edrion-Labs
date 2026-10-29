@@ -1,6 +1,6 @@
 import { ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { resolveScopeFilter } from '@edrion/auth';
-import { and, eq, runInInstitutionTenant, schema, sql, type Database } from '@edrion/database';
+import { and, eq, runInInstitutionTenant, runInStudentTenant, schema, sql, type Database } from '@edrion/database';
 import type { ApiEnv } from '@edrion/config';
 import type { AuditWriter } from '@edrion/audit';
 import { ActorType } from '@edrion/shared-types';
@@ -37,7 +37,7 @@ export class PetrosAssignmentLearningService {
       // Same order as document policy and pack consumers. No provider work takes this lock.
       await this.db.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`petros-knowledge:${ctx.principal.institutionId}`},0))`);
       return work();
-    });
+    }, ctx.principal.institutionUserId);
   }
 
   preview(ctx: PortalActionContext, assignmentId: string, raw: unknown) {
@@ -88,10 +88,16 @@ export class PetrosAssignmentLearningService {
         policy:{assistance:current.assistanceSnapshot.mode,resourceMode:current.resourceSnapshot.mode,
           answerDisclosure:current.evidenceSnapshot.answerDisclosure,evidenceRequirement:current.evidenceSnapshot.requirement},
         institutionalPolicySnapshot:current.institutionalPolicySnapshot});
-      await this.db.insert(schema.petrosAssignmentLearningRecipients).values(current.audienceSnapshot.recipients.map(recipient => ({
-        id:randomUUID(),institutionId:ctx.principal.institutionId,releaseId,studentId:recipient.studentId,
-        sessionId:recipient.sessionId,eligibilitySnapshot:recipient,binding,
-      })));
+      for (const recipient of current.audienceSnapshot.recipients) {
+        // resolve() has locked the current explicit audience, class membership,
+        // enrollment and owned session. Publication retains that staff authority.
+        await runInStudentTenant(this.db, {institutionId:ctx.principal.institutionId,
+          studentId:recipient.studentId,institutionUserId:ctx.principal.institutionUserId}, () =>
+          this.db.insert(schema.petrosAssignmentLearningRecipients).values({
+            id:randomUUID(),institutionId:ctx.principal.institutionId,releaseId,studentId:recipient.studentId,
+            sessionId:recipient.sessionId,eligibilitySnapshot:recipient,binding,
+          }));
+      }
       const response=petrosAssignmentLearningReceiptSchema.parse({schemaVersion:current.schemaVersion,
         commandId:command.commandId,releaseId,targetId,assignmentId,assignmentVersion:current.assignment.version,
         audienceHash:current.audienceSnapshot.hash,authorityHash:current.authorityHash,state:'released',replayed:false,
@@ -147,8 +153,10 @@ export class PetrosAssignmentLearningService {
       eq(schema.courseEnrollments.studentId,recipient.studentId))).for('share').limit(1);
     if (!course || course.status !== 'active' || !enrollment || assignment.subjectId !== course.subjectId)
       throw conflict('PETROS_ASSIGNMENT_COURSE_CHANGED');
-    const policy=await this.policies.documentKnowledgePolicy({institutionId:principal.institutionId,studentId:recipient.studentId},
-      recipient.sessionId,command.policy.resourceMode);
+    const policy=await runInStudentTenant(this.db, {institutionId:principal.institutionId,
+      studentId:recipient.studentId,institutionUserId:principal.institutionUserId}, () =>
+      this.policies.documentKnowledgePolicy({institutionId:principal.institutionId,studentId:recipient.studentId},
+        recipient.sessionId,command.policy.resourceMode));
     // The document session must already name the assignment; publication cannot silently change its S9 context.
     if (!policy.assignmentRestrictions.some(r => r.id === assignmentId && r.version === assignment.version))
       throw conflict('PETROS_ASSIGNMENT_SESSION_BINDING_REQUIRED');

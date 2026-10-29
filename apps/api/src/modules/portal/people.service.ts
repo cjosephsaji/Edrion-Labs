@@ -19,7 +19,8 @@ import type {
   UpdateStudentInput,
 } from '@edrion/schemas';
 import { formatPersonName } from '@edrion/schemas';
-import type { Database, Student } from '@edrion/database';
+import { and, eq, schema, type Database, type Student } from '@edrion/database';
+import { hashPassword } from '../authentication/password.util';
 import { AUDIT_WRITER, DATABASE } from '../../common/tokens';
 import type { Page } from './academics.repository';
 import type { ListResult } from './academics.service';
@@ -38,6 +39,33 @@ import { UsersService } from './users.service';
 
 const MODULE = 'portal-people';
 const TEACH_PERMISSION = 'academics.teach';
+
+function isAdmissionNoConflict(error: unknown): boolean {
+  const seen = new Set<unknown>();
+  let current = error;
+  while (current && typeof current === 'object' && !seen.has(current)) {
+    seen.add(current);
+    const dbError = current as {
+      code?: unknown;
+      constraint_name?: unknown;
+      constraint?: unknown;
+      cause?: unknown;
+    };
+    if (
+      dbError.code === '23505' &&
+      (dbError.constraint_name === 'students_admission_uniq' || dbError.constraint === 'students_admission_uniq')
+    ) return true;
+    current = dbError.cause;
+  }
+  return false;
+}
+
+function admissionNoConflict(admissionNo: string): ConflictException {
+  return new ConflictException({
+    code: 'ADMISSION_NO_TAKEN',
+    message: `Admission number "${admissionNo}" is already in use. Choose another number or find the existing student.`,
+  });
+}
 
 /**
  * Institution-portal People service (Phase 4). Owns the same tenant invariants as AcademicsService:
@@ -73,30 +101,60 @@ export class PeopleService {
       throw new BadRequestException({ code: 'INVALID_REFERENCE', message: 'Unknown class' });
     }
     const campusId = this.createCampusId(ctx.scope) ?? classScope?.campusId ?? null;
-    const row = await this.repo.insertStudent({
-      institutionId: ctx.principal.institutionId,
-      campusId,
-      admissionNo: input.admissionNo,
-      firstName: input.firstName,
-      middleName: input.middleName?.trim() || null,
-      lastName: input.lastName,
-      gender: input.gender ?? null,
-      dateOfBirth: input.dateOfBirth ?? null,
-      email: input.email ?? null,
-      phone: input.phone ?? null,
-      // A class is the authoritative placement. Never allow the student directory to disagree
-      // with the class roster about which grade/year the student belongs to.
-      gradeLevelId: classScope?.gradeLevelId ?? input.gradeLevelId ?? null,
-      classId: input.classId ?? null,
-      rollNo: input.rollNo ?? null,
-      address: input.address ?? null,
-      status: input.status,
-      enrollmentDate: input.enrollmentDate ?? null,
-      createdBy: ctx.principal.institutionUserId,
+    const passwordHash = input.createPortalAccount ? await hashPassword(input.admissionNo) : null;
+    const row = await this.db.transaction(async (tx) => {
+      const student = await this.repo.insertStudent({
+        institutionId: ctx.principal.institutionId,
+        campusId,
+        admissionNo: input.admissionNo,
+        firstName: input.firstName,
+        middleName: input.middleName?.trim() || null,
+        lastName: input.lastName,
+        gender: input.gender ?? null,
+        dateOfBirth: input.dateOfBirth ?? null,
+        email: input.email ?? null,
+        phone: input.phone ?? null,
+        // A class is the authoritative placement. Never allow the student directory to disagree
+        // with the class roster about which grade/year the student belongs to.
+        gradeLevelId: classScope?.gradeLevelId ?? input.gradeLevelId ?? null,
+        classId: input.classId ?? null,
+        rollNo: input.rollNo ?? null,
+        address: input.address ?? null,
+        status: input.status,
+        enrollmentDate: input.enrollmentDate ?? null,
+        createdBy: ctx.principal.institutionUserId,
+      }, tx);
+      if (input.createPortalAccount) {
+        // An internal address lets students without email use their institution code + ID.
+        const email = input.email ?? `stu-${student.id}@${ctx.principal.institutionId}.edrion.local`;
+        const [existing] = await tx.select({ id: schema.institutionUsers.id }).from(schema.institutionUsers)
+          .where(and(eq(schema.institutionUsers.institutionId, ctx.principal.institutionId),
+            eq(schema.institutionUsers.email, email))).limit(1);
+        if (existing) throw new ConflictException({ code: 'EMAIL_TAKEN',
+          message: 'This email already belongs to a portal account. Use another email or clear it to use student ID sign-in.' });
+        const [user] = await tx.insert(schema.institutionUsers).values({
+          institutionId: ctx.principal.institutionId,
+          email,
+          fullName: formatPersonName(student),
+          status: 'active',
+          passwordHash,
+          activatedAt: new Date(),
+          passwordResetRequiredAt: new Date(),
+          createdBy: ctx.principal.institutionUserId,
+        }).returning();
+        if (!user) throw new Error('Failed to create student portal account');
+        await tx.insert(schema.institutionUserRoles).values({ institutionUserId: user.id, roleKey: 'student' });
+        await tx.update(schema.students).set({ institutionUserId: user.id }).where(eq(schema.students.id, student.id));
+        student.institutionUserId = user.id;
+      }
+      await this.ensureStudentEnrollment(ctx, student, input.classId ?? null, input.enrollmentDate ?? null, tx as unknown as Database);
+      return student;
+    }).catch((error: unknown) => {
+      if (isAdmissionNoConflict(error)) throw admissionNoConflict(input.admissionNo);
+      throw error;
     });
-    await this.ensureStudentEnrollment(ctx, row, input.classId ?? null, input.enrollmentDate ?? null);
     await this.write(ctx, 'student.create', 'student', row.id, campusId, {
-      newState: { admissionNo: row.admissionNo, name: this.fullName(row) },
+      newState: { admissionNo: row.admissionNo, name: this.fullName(row), portalAccountCreated: Boolean(row.institutionUserId) },
     });
     return row;
   }
@@ -131,6 +189,9 @@ export class PeopleService {
       status: input.status ?? existing!.status,
       enrollmentDate: input.enrollmentDate === undefined ? existing!.enrollmentDate : input.enrollmentDate,
       updatedBy: ctx.principal.institutionUserId,
+    }).catch((error: unknown) => {
+      if (isAdmissionNoConflict(error)) throw admissionNoConflict(input.admissionNo ?? existing!.admissionNo);
+      throw error;
     });
     if (!updated) throw this.versionConflict();
     const placementChanged =
@@ -186,7 +247,7 @@ export class PeopleService {
   }
 
   async createStaff(ctx: PortalActionContext, input: CreateStaffInput) {
-    await this.assertOptional(ctx, 'departments', input.departmentId, 'department');
+    await this.assertStaffDepartment(ctx, input.departmentId);
     let institutionUserId = input.institutionUserId ?? null;
     const scopeCampusId = this.createCampusId(ctx.scope);
     const inputCampusIds = input.campusIds ?? [];
@@ -267,7 +328,8 @@ export class PeopleService {
     const f = this.filter(ctx);
     const existing = await this.repo.findStaff(id, ctx.principal.institutionId);
     this.assertInScope(existing?.campusId ?? null, existing, f);
-    await this.assertOptional(ctx, 'departments', input.departmentId, 'department');
+    // Preserve an existing legacy course link when editing other profile fields.
+    if (input.departmentId !== existing!.departmentId) await this.assertStaffDepartment(ctx, input.departmentId);
 
     let institutionUserId =
       input.institutionUserId === undefined ? existing!.institutionUserId : input.institutionUserId;
@@ -593,6 +655,7 @@ export class PeopleService {
     student: Student,
     classId: string | null,
     enrolledOn: string | null,
+    db: Database = this.db,
   ): Promise<void> {
     const f = this.filter(ctx);
     const institutionId = ctx.principal.institutionId;
@@ -603,7 +666,7 @@ export class PeopleService {
     let campusId = student.campusId;
 
     if (classId) {
-      const cls = await loadClassScope(this.db, classId, institutionId);
+      const cls = await loadClassScope(db, classId, institutionId);
       if (cls) {
         academicYearId = cls.academicYearId;
         termId = cls.termId;
@@ -613,11 +676,11 @@ export class PeopleService {
       }
     }
     if (!academicYearId) {
-      academicYearId = await findCurrentYearId(this.db, institutionId, f.campusIds);
+      academicYearId = await findCurrentYearId(db, institutionId, f.campusIds);
     }
     if (!academicYearId) return;
 
-    await upsertStudentEnrollment(this.db, {
+    await upsertStudentEnrollment(db, {
       institutionId,
       campusId,
       studentId: student.id,
@@ -665,6 +728,19 @@ export class PeopleService {
   private async assertRef(ctx: PortalActionContext, table: RefTable, id: string, label: string): Promise<void> {
     const ok = await this.repo.existsInInstitution(table, id, ctx.principal.institutionId);
     if (!ok) throw new BadRequestException({ code: 'INVALID_REFERENCE', message: `Unknown ${label}` });
+  }
+
+  private async assertStaffDepartment(ctx: PortalActionContext, id: string | null | undefined) {
+    if (!id) return;
+    const department = await this.repo.findStaffDepartment(id, ctx.principal.institutionId);
+    if (!department)
+      throw new BadRequestException({ code: 'INVALID_REFERENCE', message: 'Unknown department' });
+    this.assertInScope(department.campusId, department, this.filter(ctx));
+    if (department.unitKind !== 'department')
+      throw new BadRequestException({
+        code: 'INVALID_STAFF_DEPARTMENT',
+        message: 'Choose a staff department. Courses and streams belong to the student curriculum.',
+      });
   }
 
   private async assertOptional(

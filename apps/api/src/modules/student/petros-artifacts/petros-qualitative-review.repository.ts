@@ -11,6 +11,13 @@ import type { InstitutionalStudentPrincipal } from '../student.types';
 export class PetrosQualitativeReviewRepository {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
 
+  sharedOwner(kind: 'event' | 'submission' | 'review', institutionId: string, id: string) {
+    const t = kind === 'event' ? schema.petrosQualitativeEvents : kind === 'submission'
+      ? schema.petrosQualitativeSubmissions : schema.petrosQualitativeReviews;
+    return this.db.select({studentId:t.studentId,courseId:t.courseId}).from(t)
+      .where(and(eq(t.id,id),eq(t.institutionId,institutionId))).limit(1).then(rows=>rows[0]);
+  }
+
   lock(key: string) {
     return this.db.execute(sql`select pg_advisory_xact_lock(hashtextextended(${key}, 0))`);
   }

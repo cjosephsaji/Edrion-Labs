@@ -14,6 +14,7 @@ import type {
 } from '@edrion/schemas';
 import { formatApiError, newIdempotencyKey, useStudentApi } from '@/lib/api-client';
 import { usePetrosVoice } from './use-petros-voice';
+import { PetrosVoiceControls } from './petros-voice-controls';
 import { DocumentActivity } from './petros-document-activity';
 import { MathExpression, MathText } from './petros-math';
 import styles from './petros-document-teaching.module.css';
@@ -347,7 +348,7 @@ export function PetrosDocumentTeaching({ sessionId }: { sessionId?: string }) {
           {!teaching.plan.sourceComplete && <p className={styles.notice}>Some pages are still being processed. This lesson uses only the source available so far.</p>}
         </div>}
         {panel === 'help' && <div className={styles.helpPanel}>
-          <div className={styles.petrosIntro}><PetrosRig state={voice.speaking ? 'speak' : voice.listening ? 'listen' : 'rest'} /><span><strong>Petros</strong><small>Here when you want a hand</small></span></div>
+          <PetrosVoiceControls voice={voice} paused={session.status === 'paused'} /><div className={styles.petrosIntro}><PetrosRig state={voice.speaking ? 'speak' : voice.listening ? 'listen' : 'rest'} /><span><strong>Petros</strong><small>Here when you want a hand</small></span></div>
           <div className={styles.quickHelp}>
             <button type="button" disabled={busy} onClick={() => void send({ action: 'help', kind: 'hint' })}><Lightbulb /> Show a hint</button>
             <button type="button" disabled={busy} onClick={() => void send({ action: 'help', kind: 'example' })}>See a worked example</button>
@@ -355,7 +356,7 @@ export function PetrosDocumentTeaching({ sessionId }: { sessionId?: string }) {
             <button type="button" disabled={busy} onClick={() => void send({ action: 'help', kind: 'deeper' })}>Explain this visual</button>
           </div>
           {progress.help !== 'none' && <div className={styles.helpReply}><strong>{progress.help === 'hint' ? 'A small hint' : progress.help === 'example' ? 'Worked example' : 'Another way to see it'}</strong><MathText>{progress.help === 'hint' ? scene.hint : progress.help === 'example' ? progress.reply ?? scene.example : progress.reply ?? scene.explanation}</MathText></div>}
-          <label className={styles.askComposer}><span>Ask about this idea…</span><textarea value={question} onChange={(event) => setQuestion(event.target.value)} rows={3} /></label>
+          <label className={styles.askComposer}><span>Ask about this idea…</span><textarea value={question} onChange={(event) => { if (voice.listening || voice.transcribing) voice.cancelListening(); setQuestion(event.target.value); }} rows={3} /></label>
           <div className={styles.composerActions}><button type="button" onClick={() => { if (voice.listening) voice.stopListening(); else { voice.stopSpeaking(); voice.startListening(); } }}>{voice.listening ? 'Stop recording' : 'Use mic'}</button><button className={styles.primary} type="button" disabled={!question.trim() || busy} onClick={() => void send({ action: 'ask', question: question.trim() })}><Send /> Ask</button></div>
           {askReply && <div className={styles.helpReply}><MathText>{askReply}</MathText></div>}
         </div>}

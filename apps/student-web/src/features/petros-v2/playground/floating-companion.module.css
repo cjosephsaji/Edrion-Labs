@@ -1,0 +1,40 @@
+.floating { --avatar-size: 92px; --bubble-gap: 16px; position: fixed; z-index: 35; width: 278px; max-width: calc(100vw - 24px); color: var(--s-ink); pointer-events: none; }
+.floating[data-bubble-side='left'] { transform: translateX(calc(-100% + var(--avatar-size))); }
+.floating [aria-label='Petros companion'] { display: grid; grid-template-columns: var(--avatar-size) minmax(0, 1fr); gap: var(--bubble-gap); align-items: start; }
+.floating [data-cloud] { position: relative; grid-column: 2; grid-row: 1; justify-self: start; width: max-content; min-width: min(96px, 100%); max-width: 100%; height: auto; padding: 8px 10px; border-radius: 12px; cursor: grab; touch-action: none; pointer-events: auto; }
+.floating [data-cloud] p { max-height: 88px; overflow-y: auto; overscroll-behavior: contain; font-size: .78rem; cursor: auto; touch-action: pan-y; text-wrap: pretty; margin-bottom: 0; }
+.floating [data-pose] { position: relative; z-index: 2; grid-column: 1; grid-row: 1; width: var(--avatar-size); height: 124px; margin: 0; cursor: grab; touch-action: none; pointer-events: auto; }
+.floating [aria-label='Petros companion'] img { pointer-events: none; user-select: none; }
+
+.floating[data-bubble-side='left'] [aria-label='Petros companion'] { grid-template-columns: minmax(0, 1fr) var(--avatar-size); }
+.floating[data-bubble-side='left'] [data-cloud] { grid-column: 1; justify-self: end; }
+.floating[data-bubble-side='left'] [data-pose] { grid-column: 2; }
+.tail { position: absolute; z-index: 1; top: 0; left: calc(var(--avatar-size) + var(--bubble-gap) - 36px); width: 38px; height: 34px; fill: var(--s-accentSoft); stroke: var(--s-accentBd); stroke-width: 1px; transform: scaleX(-1); pointer-events: none; }
+.floating[data-bubble-side='left'] .tail { left: auto; right: calc(var(--avatar-size) + var(--bubble-gap) - 36px); transform: none; }
+.move { position: absolute; z-index: 3; top: 0; left: -1px; width: calc(var(--avatar-size) + 2px); height: 124px; padding: 0; border: 0; background: transparent; cursor: grab; touch-action: none; pointer-events: auto; border-radius: 8px; }
+.floating[data-bubble-side='left'] .move { left: auto; right: -1px; }
+.move:active { cursor: grabbing; }
+.move:focus-visible, .controls button:focus-visible { outline: 2px solid var(--s-accentDeep); outline-offset: -2px; }
+.controls { position: absolute; z-index: 4; top: -40px; left: 0; display: flex; gap: 2px; opacity: 0; pointer-events: none; }
+.floating[data-bubble-side='left'] .controls { left: auto; right: 0; }
+.floating:hover .controls, .floating:focus-within .controls, .floating[data-tools-open='true'] .controls { opacity: 1; pointer-events: auto; }
+.controls button { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--s-accentSoft); color: var(--s-accentDeep); }
+.controls button:hover:not(:disabled) { background: var(--s-accentBd); }
+.controls button:disabled { opacity: .4; }
+.floating[data-generating='true'] [data-pose], .floating[data-generating='true'] [data-cloud], .move:disabled { cursor: default; }
+.floating[data-compact='true'] { --avatar-size: 70px; }
+.floating[data-compact='true'] [aria-label='Petros companion'] { min-height: 94px; }
+.floating[data-compact='true'] [data-cloud] { display: none; }
+.floating[data-compact='true'] [data-pose], .floating[data-compact='true'] .move { height: 94px; }
+.compactStatus { position: absolute; top: 6px; left: calc(var(--avatar-size) + var(--bubble-gap)); width: 72px; font-size: .66rem; line-height: 1.4; text-align: center; color: var(--s-accentDeep); }
+.floating[data-bubble-side='left'] .compactStatus { left: auto; right: calc(var(--avatar-size) + var(--bubble-gap)); }
+.floating[data-compact='true'] .controls { top: 40px; left: calc(var(--avatar-size) + var(--bubble-gap)); opacity: 1; pointer-events: auto; }
+.floating[data-compact='true'][data-bubble-side='left'] .controls { left: auto; right: calc(var(--avatar-size) + var(--bubble-gap)); }
+.floating[data-compact='true'] .controls .park { display: none; }
+.floating[data-compact='true'] .controls button { width: 72px; min-height: 44px; gap: 4px; border-radius: 8px; font-size: .6rem; }
+@media (max-width: 920px) { .controls button { width: 44px; height: 44px; } .floating:not([data-compact='true']) .controls { top: -44px; } }
+
+.floating [data-cloud] > span { line-height: 1.4; display: block; }
+.floating [data-cloud='status'] { background: var(--s-cardAlt); border-style: dashed; }
+.floating[data-cloud-kind='status'] .tail { fill: var(--s-cardAlt); }
+@media (max-width: 920px) { .floating:not([data-compact='true']) { --avatar-size: 70px; } .floating:not([data-compact='true']) [data-pose], .floating:not([data-compact='true']) .move { height: 94px; } }

@@ -2,10 +2,14 @@ import { Inject, Injectable } from '@nestjs/common';
 import { and, desc, eq, schema, sql, type Database } from '@edrion/database';
 import type {
   PetrosConceptPackCandidate,
+  M3Proposal,
+  M3ReviewReceipt,
   PetrosConceptPackReviewReceipt,
   PetrosReviewerAuthoritySnapshot,
 } from '@edrion/schemas';
 import { DATABASE } from '../../../common/tokens';
+import { publicPetrosSessionColumns } from '../../../common/petros-session-projection';
+import { M3_PRIVATE_CANDIDATE_VERSION, type M3PrivateVerificationCandidate } from './petros-assessment-contract.server';
 
 @Injectable()
 export class PetrosTeachingPackRepository {
@@ -85,6 +89,50 @@ export class PetrosTeachingPackRepository {
       requestHash: input.requestHash,
       createdByUserId: input.createdByUserId,
     }).returning().then((rows) => rows[0]!);
+  }
+
+  insertM3Candidate(proposal: M3Proposal, commandId: string, requestHash: string, payloadHash: string,createdByUserId=proposal.createdBy) {
+    if (!proposal.courseId) throw new Error('CANONICAL_COURSE_MAPPING_REQUIRED');
+    return this.db.insert(schema.petrosTeachingPackCandidates).values({
+      institutionId: proposal.institutionId, courseId: proposal.courseId, sourceItemId: null,
+      sourceFormat: 'v2', sourceRevisionId: proposal.source.revisionId, sourceVersion: proposal.source.originalHash,
+      curriculumRevision: proposal.curriculumRevision, packId: proposal.id, packVersion: proposal.version,
+      compilerVersion: 'petros.m3.proposal.v1', schemaVersion: proposal.schemaVersion, payloadHash,
+      payload: proposal, commandId, requestHash, createdByUserId,
+    }).returning().then(rows=>rows[0]!);
+  }
+
+  m3Reviews(institutionId: string, candidateId: string) {
+    const t = schema.petrosTeachingPackReviews;
+    return this.db.select().from(t).where(and(eq(t.institutionId,institutionId),eq(t.candidateId,candidateId)))
+      .orderBy(desc(t.reviewVersion)).limit(100);
+  }
+
+  insertM3PrivateCandidate(proposal:M3Proposal,candidate:M3PrivateVerificationCandidate,payloadHash:string) {
+    return this.db.insert(schema.petrosTeachingPackCandidates).values({institutionId:proposal.institutionId,courseId:proposal.courseId!,
+      sourceItemId:null,sourceFormat:'v2',sourceRevisionId:proposal.source.revisionId,sourceVersion:proposal.source.originalHash,
+      curriculumRevision:proposal.curriculumRevision,packId:candidate.id,packVersion:candidate.version,
+      compilerVersion:'petros.m3.private-candidate.v1',schemaVersion:M3_PRIVATE_CANDIDATE_VERSION,payloadHash,
+      payload:candidate as never,commandId:candidate.correction.commandId,requestHash:candidate.correction.requestHash,
+      createdByUserId:candidate.correction.editorId}).returning().then(rows=>rows[0]!);
+  }
+
+  /** Bounded SQL projection: never returns a private body, question, key, rubric or body hash. */
+  async m3PrivatePublicStatus(proposal:M3Proposal) {
+    return this.db.execute<{family_id:string;family_version:number;context_current:boolean;review_id:string|null;
+      decision:string|null;reviewer_user_id:string|null;qualification_id:string|null;qualification_version:number|null;revoked:boolean}>(
+      sql`select * from m3_private_public_status(${proposal.institutionId}::uuid,${proposal.id}::uuid,${proposal.version}::integer)`);
+  }
+
+  insertM3Review(candidate: NonNullable<Awaited<ReturnType<PetrosTeachingPackRepository['candidateById']>>>,
+    receipt: M3ReviewReceipt, authority: PetrosReviewerAuthoritySnapshot, commandId: string, requestHash: string, reviewVersion: number) {
+    return this.db.insert(schema.petrosTeachingPackReviews).values({id:receipt.id,
+      institutionId:candidate.institutionId,courseId:candidate.courseId,candidateId:candidate.id,
+      sourceItemId:null,sourceFormat:'v2',sourceRevisionId:candidate.sourceRevisionId,sourceVersion:candidate.sourceVersion,
+      // Existing storage has a binary approval gate; retain the precise M3 decision in the receipt.
+      reviewVersion,decision:receipt.decision==='revision_requested'?'rejected':receipt.decision,payloadHash:candidate.payloadHash,reviewerUserId:receipt.reviewerUserId,
+      qualificationId:authority.qualificationId,qualificationVersion:authority.qualificationVersion,authoritySnapshot:authority,
+      receipt,commandId,requestHash}).returning().then(rows=>rows[0]!);
   }
 
   latestQualification(institutionId: string, qualificationId: string) {
@@ -218,7 +266,7 @@ export class PetrosTeachingPackRepository {
 
   session(institutionId: string, studentId: string, sessionId: string) {
     const t = schema.petrosLearningSessions;
-    return this.db.select().from(t).where(and(eq(t.institutionId, institutionId), eq(t.studentId, studentId),
+    return this.db.select(publicPetrosSessionColumns).from(t).where(and(eq(t.institutionId, institutionId), eq(t.studentId, studentId),
       eq(t.id, sessionId))).for('share').limit(1).then((rows) => rows[0]);
   }
 

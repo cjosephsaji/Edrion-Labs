@@ -7,6 +7,7 @@ import {
   newIdempotencyKey,
   useStudentApi,
 } from '@/lib/api-client';
+import type { PetrosSpeechOptions, PetrosSpeechReceipt } from './petros-speech-types';
 
 type ProcessedVoice = {
   media: PetrosMediaObject;
@@ -82,7 +83,7 @@ export function buildPetrosSpeechTimeline(text: string): PetrosSpeechWord[] {
  * by the student, stops when the page backgrounds, and interrupts any current Petros speech.
  */
 export function usePetrosVoice(onTranscript: (text: string) => void | Promise<void>, options: {
-  voice?: 'cedar' | 'marin';
+  voice?: string;
   speed?: number;
   language?: string;
 } = {}) {
@@ -95,6 +96,14 @@ export function usePetrosVoice(onTranscript: (text: string) => void | Promise<vo
   const recordingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const speechAbortRef = useRef<AbortController | null>(null);
+  const transcriptionAbortRef = useRef<AbortController | null>(null);
+  const [voiceOptions, setVoiceOptions] = useState<PetrosSpeechOptions | null>(null);
+  const [localVoice, setLocalVoice] = useState('cedar');
+  const selectedVoice = options.voice ?? localVoice;
+  const canSpeak = voiceOptions?.state === 'ready' && voiceOptions.voices.includes(selectedVoice);
+  const selectionReason = !voiceOptions ? 'Loading available speech voices…' : voiceOptions.state !== 'ready' ? voiceOptions.reason
+    : !canSpeak ? `${selectedVoice} is unavailable on ${voiceOptions.modelKey}. Select a supported voice. Your saved preference is unchanged.` : '';
+  const [receipt, setReceipt] = useState<PetrosSpeechReceipt | null>(null);
   const recordingGenerationRef = useRef(0);
   const startingRef = useRef(false);
   const [phase, setPhase] = useState<PetrosVoicePhase>('idle');
@@ -120,11 +129,23 @@ export function usePetrosVoice(onTranscript: (text: string) => void | Promise<vo
     callbackRef.current = onTranscript;
   }, [onTranscript]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    void api.get<PetrosSpeechOptions>('/student/petros/companion/speech/voices', controller.signal).then(result => {
+      if (!controller.signal.aborted) setVoiceOptions(result);
+    }).catch(() => { if (!controller.signal.aborted) setVoiceOptions({ state: 'unavailable', voices: [], reason: 'Available speech voices could not be loaded. You can keep using text.' }); });
+    return () => controller.abort();
+  }, [api]);
+
   const stopSpeaking = useCallback(() => {
     speechAbortRef.current?.abort();
     speechAbortRef.current = null;
     if (audioRef.current) {
       audioRef.current.onplay = null;
+      audioRef.current.onplaying = null;
+      audioRef.current.onpause = null;
+      audioRef.current.onwaiting = null;
+      audioRef.current.onstalled = null;
       audioRef.current.ontimeupdate = null;
       audioRef.current.onloadedmetadata = null;
       audioRef.current.onended = null;
@@ -138,6 +159,8 @@ export function usePetrosVoice(onTranscript: (text: string) => void | Promise<vo
     setActiveLineIndex(-1);
     setPhase((current) => (current === 'speaking' || current === 'preparing' ? 'idle' : current));
   }, []);
+
+  useEffect(() => { stopSpeaking(); setReceipt(null); }, [selectedVoice, stopSpeaking]);
 
   const stopTracks = useCallback(() => {
     if (recordingTimerRef.current) {
@@ -160,6 +183,10 @@ export function usePetrosVoice(onTranscript: (text: string) => void | Promise<vo
         return;
       }
       setPhase('transcribing');
+      const controller = new AbortController();
+      transcriptionAbortRef.current?.abort();
+      transcriptionAbortRef.current = controller;
+      const deadline = setTimeout(() => controller.abort(), 60_000);
       try {
         const intent = await api.post<{
           media: PetrosMediaObject;
@@ -174,15 +201,19 @@ export function usePetrosVoice(onTranscript: (text: string) => void | Promise<vo
           height: null,
           pageIndex: 0,
           idempotencyKey: newIdempotencyKey(),
-        });
+        }, undefined, controller.signal);
+        if (controller.signal.aborted || generation !== recordingGenerationRef.current) return;
         const uploaded = (await api.uploadPetrosMedia(intent.upload.url, blob, {
           idempotencyKey: newIdempotencyKey(),
+          signal: controller.signal,
         })) as PetrosMediaObject;
+        if (controller.signal.aborted || generation !== recordingGenerationRef.current) return;
         const processed = await api.post<ProcessedVoice>(
           `/student/petros/media/${uploaded.id}/process`,
           { idempotencyKey: newIdempotencyKey(), language: options.language ?? 'en' },
+          undefined, controller.signal,
         );
-        if (generation !== recordingGenerationRef.current) return;
+        if (controller.signal.aborted || generation !== recordingGenerationRef.current) return;
         const text = processed.transcription?.text.trim();
         if (!text) throw new Error('I could not turn that recording into words. Try once more.');
         setHeard(text);
@@ -190,8 +221,11 @@ export function usePetrosVoice(onTranscript: (text: string) => void | Promise<vo
         await callbackRef.current(text);
       } catch (caught) {
         if (generation !== recordingGenerationRef.current) return;
-        setError(formatApiError(caught));
+        setError(controller.signal.aborted ? 'Transcription timed out. Your typed question is still available.' : formatApiError(caught));
         setPhase('idle');
+      } finally {
+        clearTimeout(deadline);
+        if (transcriptionAbortRef.current === controller) transcriptionAbortRef.current = null;
       }
     },
     [api, options.language, stopTracks],
@@ -208,6 +242,8 @@ export function usePetrosVoice(onTranscript: (text: string) => void | Promise<vo
 
   const cancelListening = useCallback(() => {
     recordingGenerationRef.current += 1;
+    transcriptionAbortRef.current?.abort();
+    transcriptionAbortRef.current = null;
     const recorder = recorderRef.current;
     if (recorder) {
       recorder.onstop = null;
@@ -243,8 +279,8 @@ export function usePetrosVoice(onTranscript: (text: string) => void | Promise<vo
         return;
       }
       const mime = preferredAudioMime();
-      const recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
       streamRef.current = stream;
+      const recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
       recorderRef.current = recorder;
       chunksRef.current = [];
       recorder.ondataavailable = (event) => {
@@ -252,6 +288,11 @@ export function usePetrosVoice(onTranscript: (text: string) => void | Promise<vo
       };
       recorder.onstop = () => {
         void finishRecording(recorder.mimeType || mime || 'audio/webm', generation);
+      };
+      recorder.onerror = () => {
+        if (generation !== recordingGenerationRef.current) return;
+        cancelListening();
+        setError('Recording failed. You can keep using your typed question.');
       };
       startedAtRef.current = Date.now();
       recorder.start(250);
@@ -267,12 +308,13 @@ export function usePetrosVoice(onTranscript: (text: string) => void | Promise<vo
     } finally {
       startingRef.current = false;
     }
-  }, [finishRecording, phase, stopListening, stopSpeaking, stopTracks]);
+  }, [cancelListening, finishRecording, phase, stopListening, stopSpeaking, stopTracks]);
 
   const speak = useCallback(
     async (text: string, lifecycle: PetrosSpeechLifecycle = {}) => {
       const transcript = text.trim();
       if (!transcript) return;
+      if (!canSpeak) { setError(selectionReason); lifecycle.onError?.(); return; }
       cancelListening();
       stopSpeaking();
       setError('');
@@ -282,22 +324,37 @@ export function usePetrosVoice(onTranscript: (text: string) => void | Promise<vo
       setActiveLineIndex(-1);
       const controller = new AbortController();
       speechAbortRef.current = controller;
+      const deadline = setTimeout(() => {
+        controller.abort();
+        if (speechAbortRef.current === controller) {
+          setPhase('idle'); setError('Speech preparation timed out. The text remains available.');
+        }
+      }, 45_000);
       setPhase('preparing');
       try {
-        const result = await api.post<{
+        const result = await api.post<PetrosSpeechReceipt & {
           audio: { dataBase64: string; mimeType: string };
           transcript: string;
-        }>('/student/petros/companion/speech', { text: transcript.slice(0, 2_000), voice: options.voice ?? 'cedar', speed: options.speed ?? 1 }, undefined, controller.signal);
+        }>('/student/petros/companion/speech', { text: transcript.slice(0, 2_000), voice: selectedVoice, speed: options.speed ?? 1 }, undefined, controller.signal);
         if (controller.signal.aborted || typeof Audio === 'undefined') return;
+        if (result.requestedVoice !== selectedVoice || result.effective?.voice !== selectedVoice || result.fallback?.voice !== false ||
+          !result.effective.modelKey || !result.effective.providerKey || !result.effective.routeId) throw new Error('The speech receipt does not match the selected voice. Refresh available voices.');
+        setReceipt(result);
         const player = new Audio(
           `data:${result.audio.mimeType};base64,${result.audio.dataBase64}`,
         );
         audioRef.current = player;
-        player.onplay = () => {
+        player.onplaying = () => {
           if (audioRef.current !== player) return;
           setPhase('speaking');
           updateSpeechProgress(player, transcript);
           lifecycle.onStarted?.();
+        };
+        player.onpause = () => {
+          if (audioRef.current === player) setPhase('idle');
+        };
+        player.onwaiting = player.onstalled = () => {
+          if (audioRef.current === player) setPhase('preparing');
         };
         player.onloadedmetadata = () => {
           if (audioRef.current === player) updateSpeechProgress(player, transcript);
@@ -328,10 +385,11 @@ export function usePetrosVoice(onTranscript: (text: string) => void | Promise<vo
         setPhase('idle');
         lifecycle.onError?.();
       } finally {
+        clearTimeout(deadline);
         if (speechAbortRef.current === controller) speechAbortRef.current = null;
       }
     },
-    [api, cancelListening, options.speed, options.voice, stopSpeaking, updateSpeechProgress],
+    [api, canSpeak, cancelListening, options.speed, selectedVoice, selectionReason, stopSpeaking, updateSpeechProgress],
   );
 
   useEffect(() => {
@@ -350,6 +408,8 @@ export function usePetrosVoice(onTranscript: (text: string) => void | Promise<vo
 
   return {
     phase,
+    voiceOptions, selectedVoice, canSpeak, selectionReason, receipt,
+    selectVoice: (voice: string) => { stopSpeaking(); setLocalVoice(voice); },
     error,
     heard,
     spokenText,

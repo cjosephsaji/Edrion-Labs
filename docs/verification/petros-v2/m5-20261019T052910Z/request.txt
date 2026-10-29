@@ -1,0 +1,1968 @@
+# PETROS V2 — M5 IMPLEMENTATION
+## Build the Actual Adaptive, Interactive, Multimodal Teaching Engine
+
+**Project:** Edrion — Petros V2  
+**Milestone:** M5 — Multimodal Interactive Teaching Engine  
+**Repository:** `/Volumes/Chris/Edrion Labs`  
+**Authorization:** Isolated engineering implementation only  
+**Next milestone:** M6 — Advanced Companion Integration  
+**Priority:** Critical  
+**Implementation standard:** Actual source-backed teaching, real student participation, reliable evaluation and evidence-conditioned adaptation
+
+---
+
+# 1. THE MOST IMPORTANT INSTRUCTION
+
+We have completed the foundations of Petros V2, including document extraction, teacher lesson preparation, durable student sessions and a redesigned student Learning Studio.
+
+However, the current student experience still behaves too much like an ordinary online course.
+
+Petros displays content, guides students through predetermined stages, asks questions and shows feedback.
+
+That is not the final product I want.
+
+**M5 must make Petros behave like an actual interactive tutor.**
+
+The central difference is:
+
+**Ordinary course:** Present information → ask question → show result → continue.
+
+**Petros:** Understand the approved learning objective → inspect relevant student evidence → decide what to teach next → demonstrate using the actual learning workspace → invite meaningful participation → evaluate committed student work → adapt the next teaching action.
+
+The experience must be genuinely interactive and reusable across different subjects.
+
+I do not want a polished scripted demonstration.
+
+I do not want a large collection of hardcoded animations.
+
+I do not want two predefined teaching branches that merely switch after clicking different answers.
+
+I want a real, general-purpose instructional engine operating under source, review, security and assessment constraints.
+
+**This milestone is the core technical differentiation of Petros.**
+
+Implement it thoroughly.
+
+---
+
+# 2. UPDATED MASTER PLAN
+
+First read the strengthened implementation plan:
+
+`PETROS_V2_IMPLEMENTATION_PLAN_M5_STRENGTHENED.md`
+
+If it has not yet been copied into the repository, use the provided updated document and reconcile it with the existing:
+
+`PETROS_V2_IMPLEMENTATION_PLAN.md`
+
+The strengthened plan includes the section:
+
+**M5 strengthened acceptance amendment — 19 October 2026**
+
+This amendment supplements the original M5 requirements.
+
+It does not replace existing M1–M4 security or assessment contracts.
+
+Do not discard earlier plans, tests or completed functionality.
+
+The original plan's full Teaching Action Engine scope, including canvas operations, validated equation steps, diagram construction, student participation, registered simulations, presentation timelines, accessibility and qualified evidence, remains mandatory.
+
+---
+
+# 3. INSPECT EVERYTHING THAT ALREADY EXISTS
+
+Before changing code, inspect the actual repository and the most recent verification reports.
+
+Relevant materials include:
+
+- `PETROS_V2_BLUEPRINT.md`
+- `PETROS_V2_IMPLEMENTATION_PLAN.md`
+- The strengthened M5 amendment.
+- M0-R readiness and security reports.
+- M0-P Companion Playground reports.
+- M1 source and schema foundations.
+- M2 document-understanding reports.
+- M2-G quality and semantic reports.
+- M2-F-A format-expansion report.
+- M3 learning-proposals report.
+- M3 teacher UI verification reports.
+- M4 student-session and assessment report.
+- M4 Living Learning Studio implementation report.
+- Existing source and task qualification records.
+- Existing canvas contracts.
+- Existing Petros engine modules.
+- Existing learner-evidence and assessment services.
+- Existing companion and presentation controllers.
+
+Review the latest student experience recordings, if available:
+
+- `A-desktop-cloud.mp4`
+- `B-desktop-english.mp4`
+- `C-mobile-360.mp4`
+- `D-companion-behavior.mp4`
+
+The recordings demonstrate the existing visual foundation, not the completed teaching engine.
+
+### Repository preservation
+
+Record the current Git status.
+
+Identify uncommitted user work.
+
+Record relevant file and verification-artifact hashes.
+
+Do not reset, overwrite, stash or discard unrelated changes.
+
+Do not modify historical verification reports to make previous milestones appear more complete.
+
+Do not automatically commit changes unless the user has explicitly requested a commit.
+
+Use new timestamped evidence directories.
+
+---
+
+# 4. NON-NEGOTIABLE MILESTONE BOUNDARIES
+
+This task authorizes:
+
+- M5 implementation in the existing repository.
+- Teaching-action compilation.
+- Evidence-conditioned orchestration.
+- Canvas action execution.
+- Student interaction and submission integrations.
+- Trusted equation/diagram/process validation.
+- Registered bounded simulation capabilities.
+- Source-backed tutoring context.
+- Categorical concept-belief engineering.
+- Isolated provider contract tests.
+- Disposable database and queue tests.
+- Student Learning Studio integration.
+- Local browser demonstrations.
+- Relevant regression testing.
+
+This task does not authorize:
+
+- Production deployment.
+- Staging migration installation.
+- Real academic qualification creation.
+- Publishing unapproved material.
+- Exposing real students to unapproved sessions.
+- Unapproved paid AI inference.
+- Unapproved source uploads to external AI models.
+- Arbitrary student or model code execution.
+- Unrestricted internet access.
+- Weakening M4 assessment privacy.
+- Starting M6's advanced character-artwork milestone.
+- Starting M7's production voice milestone.
+- Declaring M8 release readiness.
+
+### Existing blockers must remain visible
+
+Genuine source semantic inference, qualified real-provider use, independent subject review, some source-extraction accuracy, database installation and production-security gates remain unresolved unless separately verified.
+
+Do not claim those issues were resolved because M5's engineering tests pass.
+
+**If external authorization or academic qualification is missing, implement and verify everything that can safely run in isolation, then report the blocked quality or release gate.**
+
+Do not substitute fake results.
+
+---
+
+# 5. THE REQUIRED END-TO-END TEACHING LOOP
+
+Implement this actual architecture:
+
+**Authorized teaching scope**
+
+→ Retrieve the current learning objective and relevant evidence.
+
+**Evidence-aware decision**
+
+→ Determine what the student currently needs, subject to actual evidence and uncertainty.
+
+**Select teaching action**
+
+→ Choose a valid instructional strategy.
+
+**Teaching Action Engine**
+
+→ Validate the action, source references, target elements, registered capabilities and execution constraints.
+
+**Shared learning stage**
+
+→ Execute meaningful canvas operations.
+
+**Petros companion**
+
+→ Refer to the same visible content using supported public cues.
+
+**Student participation**
+
+→ Invite the student to manipulate, construct, explain or revise something.
+
+**Committed student work**
+
+→ Save the exact validated work and assistance/exposure conditions.
+
+**Private evaluation**
+
+→ Evaluate against an authorized task or return a review-required result.
+
+**Evidence admission**
+
+→ Record eligible criteria without inflating mastery.
+
+**Next instructional decision**
+
+→ Choose a different action when the new evidence supports it.
+
+That loop must actually operate.
+
+A frontend animation that resembles this sequence but is disconnected from assessment and session state does not qualify.
+
+---
+
+# 6. THE KEY DEMONSTRATION — TWO STUDENTS, TWO DIFFERENT TEACHING PATHS
+
+This is the highest-priority acceptance scenario.
+
+Use the same authorized Cloud Computing teaching material.
+
+Create two separately owned, properly scoped **synthetic student identities** in an isolated environment.
+
+Both receive learning tasks derived from the same approved objective/scope.
+
+Their committed responses must provide meaningfully different evidence.
+
+## Student A — Conceptual responsibility misunderstanding
+
+Student A incorrectly assigns an operating-system responsibility to the wrong party in a service-model scenario.
+
+The system must:
+
+1. Accept an actual server-issued task.
+2. Persist Student A's committed response.
+3. Evaluate the applicable criterion.
+4. Preserve any uncertainty.
+5. Identify a provisional responsibility misconception or supported conceptual gap, according to available distinguishing evidence.
+6. Select an appropriate instructional action.
+7. Construct or revise a responsibility comparison on the shared canvas.
+8. Highlight the exact relevant responsibility boundary.
+9. Invite the student to correct an actual relationship.
+10. Persist the student correction.
+11. Evaluate the committed correction where authorized.
+12. Offer an appropriately fresh question or explicitly mark verification unavailable.
+
+The selected action should be something like a relationship contrast, classification or concept comparison.
+
+It should not simply repeat the previous explanation.
+
+## Student B — Calculation or method error
+
+Student B correctly understands the responsibility distinction but makes an error in a bounded resource-capacity calculation.
+
+The system must:
+
+1. Accept the genuine committed response.
+2. Evaluate the supported mathematical criterion.
+3. Distinguish the calculation issue from a conceptual responsibility issue.
+4. Preserve correct reasoning already demonstrated.
+5. Select a focused arithmetic or unit-repair action.
+6. Display the actual relevant equation.
+7. Show source-backed or registered, mathematically checked steps.
+8. Highlight the incorrect substitution or arithmetic operation.
+9. Invite the student to correct that step.
+10. Commit and evaluate the correction.
+11. Continue with an appropriate fresh check where authorized.
+
+Student B must not receive Student A's generic responsibility diagram merely because both are studying cloud computing.
+
+## The critical restriction
+
+**Do not hardcode these two teaching paths.**
+
+The runtime must not contain conditions such as:
+
+- If student is A, show relationship board.
+- If student is B, show equation.
+- If response equals a predefined demo string, choose a scripted branch.
+- If subject equals cloud, run a fixed sequence.
+- If objective number equals two, show a predetermined repair.
+
+The decision must derive from actual assessment criteria, evidence, current objective, source support and available teaching capabilities.
+
+### Prove it is not scripted
+
+Create perturbation tests that:
+
+- Swap the two students' responses.
+- Change the mathematical error.
+- Change the responsibility misconception.
+- Change source labels.
+- Remove a teaching capability.
+- Add conflicting evidence.
+- Change the available reviewed task family.
+- Revoke the source.
+- Change a valid criterion outcome.
+
+The system's choices must respond appropriately to these changes.
+
+If the same canned result is returned regardless of evidence, M5 fails.
+
+---
+
+# 7. SECOND SUBJECT — ENGLISH ARGUMENT ANALYSIS
+
+M5 must demonstrate the same engine in a substantially different educational domain.
+
+Use actual extracted English argument material.
+
+Support teaching concepts such as:
+
+- Claim.
+- Evidence.
+- Warrant.
+- Counterargument.
+- Alternative interpretation.
+- Logical or rhetorical support.
+
+### Required demonstration
+
+A student examines an actual source passage.
+
+Petros highlights a claim and a potential supporting passage.
+
+The student is invited to connect evidence to the claim or explain the warrant.
+
+The student commits an actual relationship or explanation.
+
+The private assessment mechanism evaluates the result where qualified.
+
+Where the interpretation is ambiguous or the evaluator is unqualified, the system must abstain or request human review.
+
+The orchestrator then chooses a source-supported next step.
+
+For example:
+
+- Clarify a missing warrant.
+- Compare evidence with unsupported assertion.
+- Examine an alternative interpretation.
+- Invite a revised claim–evidence relationship.
+- Present a counterexample.
+- Ask a fresh discriminating question.
+
+Do not collapse every English answer into one supposedly correct reading.
+
+### Cross-subject independence
+
+The same orchestration/action contracts must serve Cloud Computing and English.
+
+Subject-specific knowledge belongs in:
+
+- Actual source content.
+- Approved concepts.
+- Reviewed criteria.
+- Task families.
+- Capability registrations.
+
+Do not build separate Cloud and English teaching engines.
+
+---
+
+# 8. IMPLEMENT THE ORCHESTRATOR
+
+Inspect and create or extend:
+
+`apps/api/src/modules/student/petros-v2/petros-v2-orchestrator.service.ts`
+
+`apps/api/src/modules/student/petros-v2/petros-v2-context.ts`
+
+`apps/api/src/modules/student/petros-v2/tools.ts`
+
+Reuse actual existing implementations where they already exist.
+
+The orchestrator chooses **why and what to teach next**.
+
+It does not directly mutate the canvas or determine official assessment correctness.
+
+### Context should include
+
+- Authorized student/session.
+- Current objective.
+- Current approved teaching scope.
+- Exact source pins.
+- Current concept and prerequisites.
+- Committed criterion outcomes.
+- Assistance and exposure records.
+- Provisional misconception hypotheses.
+- Current canvas/work state.
+- Student-selected target.
+- Available approved activity families.
+- Registered tool capabilities.
+- Source limitations.
+- Relevant accessibility preferences.
+- Time and cost constraints.
+- Current review/qualification status.
+
+Only include information permitted in the teaching context.
+
+### Hard constraints first
+
+Before selecting an action, deterministically reject options that violate:
+
+- Source authorization.
+- Assessment privacy.
+- Review status.
+- Scope.
+- Capability availability.
+- Tool-domain restrictions.
+- Task exposure policy.
+- Session epoch/fence.
+- Cost limits.
+- Accessibility availability.
+
+Do not ask a model to decide whether it should bypass these controls.
+
+### Decision categories
+
+Support at least:
+
+- Orientation.
+- Source-backed explanation.
+- Clarifying question.
+- Focused vocabulary repair.
+- Conceptual contrast.
+- Calculation or method repair.
+- Evidence/warrant inspection.
+- Assumption comparison.
+- Worked example.
+- Faded support.
+- Trusted bounded experiment.
+- Student participation request.
+- Fresh eligible verification.
+- Review-required abstention.
+- Pause/unavailable response.
+
+### Decision explanation
+
+Every accepted instructional decision should record:
+
+- Triggering evidence.
+- Selected objective/criterion.
+- Supported pedagogical hypothesis.
+- Current uncertainty.
+- Selected strategy.
+- Expected student observation.
+- Relevant source references.
+- Registered capabilities.
+- Why another obvious strategy was not selected, where useful.
+- Termination/fallback policy.
+
+The student-facing explanation may be concise.
+
+The engineering trace must be sufficiently inspectable to understand the choice.
+
+---
+
+# 9. DETERMINISTIC POLICY AND GENUINE MODEL USE
+
+The approved architecture uses deterministic hard constraints followed by a bounded structured decision request where qualified.
+
+Preserve that design.
+
+### Deterministic responsibilities
+
+Use deterministic logic for:
+
+- Permission enforcement.
+- Eligible task selection.
+- Source-revision checking.
+- Exact capability validation.
+- Mathematical kernel execution.
+- Session state transitions.
+- Evidence eligibility.
+- Tool execution.
+- Safety limits.
+
+### Model responsibilities
+
+A qualified model may propose:
+
+- An instructional strategy.
+- A source-supported explanation.
+- A useful comparison.
+- An appropriate next question.
+- A validated teaching-action composition.
+
+But it cannot:
+
+- Grant authorization.
+- Fabricate approved sources.
+- Issue official marks.
+- Approve assessment instruments.
+- Write learner beliefs directly.
+- Bypass the private evaluator.
+- Execute arbitrary code.
+- Introduce unsupported tools.
+- Reveal private answers.
+
+### Genuine AI status
+
+If real model inference remains unauthorized:
+
+- Implement the real gateway integration and strict contracts.
+- Use controlled provider responses for contract testing.
+- Exercise real deterministic evaluation and teaching actions wherever possible.
+- Keep genuine semantic performance unverified.
+
+Do not call a controlled fixture an independently intelligent AI tutor.
+
+Do not claim the model genuinely interpreted an uploaded educational document without an actual qualified model execution.
+
+### Bounded generation
+
+Retain the master plan's bounded decisions, retrieval passes, repair attempts, deadlines and token/spending controls.
+
+Do not create an indefinite AI-agent loop.
+
+---
+
+# 10. BUILD THE TEACHING ACTION ENGINE
+
+Create or extend:
+
+`apps/api/src/modules/student/petros-v2/petros-experience-compiler.ts`
+
+`apps/api/src/modules/student/petros-v2/petros-teaching-actions.ts`
+
+`apps/api/src/modules/student/petros-v2/petros-equation-validator.ts`
+
+and their focused tests.
+
+The Teaching Action Engine checks **whether and how an instructional action can be executed safely**.
+
+It does not decide the student's grade.
+
+### Required action pipeline
+
+1. Receive an authorized structured instructional decision.
+2. Validate schema and payload limits.
+3. Check current scope and source.
+4. Validate referenced source claims.
+5. Validate operation and element IDs.
+6. Check registered capabilities.
+7. Check student-edit permissions.
+8. Check numerical/domain/units.
+9. Check supported equation or diagram transformations.
+10. Check accessible alternatives.
+11. Remove private/assessment-only content.
+12. Compile trusted canvas operations.
+13. Compile the presentation timeline.
+14. Publish the accepted action atomically under current session authority.
+15. Persist operation receipts and meaningful checkpoints.
+
+A formally valid action is not automatically educationally correct.
+
+Source meaning, mathematical validity and academic review remain distinct.
+
+---
+
+# 11. THE SHARED CANVAS MUST BE REAL
+
+This is a central M5 deliverable.
+
+Do not build a visually animated imitation of a whiteboard.
+
+Petros and the student must operate on the same meaningful educational representation.
+
+Inspect and reuse the existing canvas contracts and reducers:
+
+`packages/schemas/src/petros-v2/canvas.ts`
+
+`packages/schemas/src/petros-v2/canvas-reducer.ts`
+
+`packages/schemas/src/petros-v2/teaching-actions.ts`
+
+`packages/schemas/src/petros-v2/timeline.ts`
+
+### Each element needs
+
+- Stable logical ID.
+- Type.
+- Source/provenance reference.
+- Position or structural identity.
+- Current revision.
+- Parent/group relationship.
+- Edit permissions.
+- Accessible text description.
+- Semantic payload.
+- Validation rules.
+
+### Required student operations
+
+Support registered bounded operations such as:
+
+- Add element.
+- Remove permitted element.
+- Move permitted element.
+- Connect elements.
+- Disconnect elements.
+- Replace text.
+- Annotate.
+- Highlight.
+- Set a bounded parameter.
+- Complete a step.
+- Change a classification.
+- Save checkpoint.
+- Commit work.
+- Undo.
+- Redo.
+
+Do not accept generic arbitrary JSON patches.
+
+Do not trust the client to declare its own correctness.
+
+### Petros and student concurrency
+
+Petros must not overwrite student work while the student is editing.
+
+An action referencing a stale canvas revision must be rejected or reconciled safely.
+
+Preserve unsaved local drafts when possible.
+
+Every actual submission must pin a validated immutable snapshot.
+
+---
+
+# 12. REQUIRED TEACHING CAPABILITIES
+
+Implement the required families from the approved Teaching Action Engine.
+
+Use one shared action architecture.
+
+## A. Source reading and highlighting
+
+Petros can:
+
+- Display authorized passages.
+- Highlight exact relevant source spans.
+- Focus a real document section.
+- Compare authorized passages.
+- Annotate a passage without altering the original.
+
+Source locators must remain authentic for PDF, PPTX, DOCX, TXT and Markdown where supported.
+
+Do not fabricate source geometry.
+
+## B. Progressive writing
+
+Petros can:
+
+- Reveal text in meaningful steps.
+- Write mathematical steps progressively.
+- Type inert code or pseudocode.
+- Modify permitted derived content.
+
+The displayed operation must correspond to actual validated content.
+
+Progressive text reveal is not real handwriting.
+
+## C. Equations
+
+Support validated, bounded:
+
+- Arithmetic.
+- Substitution.
+- Unit checks.
+- Permitted transformations.
+- Explicit assumptions.
+- Step identity.
+- Correction lineage.
+
+Reject unsupported algebraic transformations.
+
+Do not silently discard conditions such as nonzero divisors.
+
+## D. Diagrams and graphs
+
+Support construction and editing of:
+
+- Relationship diagrams.
+- Flowcharts.
+- Concept maps.
+- Argument maps.
+- Graphs.
+- Tables.
+- Process sequences.
+- Classification structures.
+- Supported network and system diagrams.
+
+Edges must have valid endpoints and registered meanings.
+
+Do not infer causation from a decorative arrow.
+
+## E. Meaningful processes
+
+Support finite, inspectable:
+
+- Step reveals.
+- State transitions.
+- Data movement.
+- Algorithm traces.
+- Compared before/after representations.
+
+Every animation should explain something educationally relevant.
+
+## F. Experiments and simulations
+
+Use trusted, registered bounded kernels.
+
+At minimum, implement the planned resource/capacity model and one suitable existing kernel after confirming its qualifications.
+
+Simulations must declare:
+
+- Model/solver version.
+- Inputs.
+- Units.
+- Assumptions.
+- Parameter ranges.
+- Runtime limits.
+- Output validation.
+- Educational limitations.
+- Accessible alternatives.
+
+No arbitrary model-authored solver.
+
+## G. Student participation
+
+Support meaningful checkpoints such as:
+
+- Correct a relationship.
+- Complete an equation.
+- Classify an item.
+- Edit a concept diagram.
+- Predict an outcome.
+- Compare two states.
+- Supply a missing explanation.
+- Modify an argument.
+- Annotate evidence.
+- Correct a worked example.
+
+The student must have a genuine opportunity to act.
+
+## H. Evaluation
+
+Only committed student work may enter a server-authorized assessment.
+
+The action engine must never manufacture a grade.
+
+## I. Inert code and algorithm traces
+
+Support safe display and reviewed traces.
+
+Never execute arbitrary uploaded student/model code.
+
+---
+
+# 13. MAKE THE STUDENT INTERACTION MEANINGFUL
+
+I do not want students to spend the entire session pressing Continue.
+
+Each supported activity should make the learning objective visible through an actual student action.
+
+For example:
+
+**Instead of:** "Read this diagram."
+
+**Prefer:** "Move the responsibility to the correct service layer and explain your choice."
+
+**Instead of:** "Read this equation."
+
+**Prefer:** "Complete the next step and explain why that substitution works."
+
+**Instead of:** "Read the argument."
+
+**Prefer:** "Connect the evidence to the claim and identify what the argument still needs."
+
+These are design examples only.
+
+Actual tasks must be derived from approved source and capability contracts.
+
+Do not force interaction where a short explanation or question would be more educationally appropriate.
+
+The orchestrator should be able to choose a simple explanation rather than animation when the latter adds no value.
+
+---
+
+# 14. EVALUATE ACTUAL COMMITTED WORK
+
+Reuse the M4 session and private assessment system.
+
+The teaching engine should inspect:
+
+- Committed response text.
+- Accepted canvas operations.
+- Final canvas snapshot.
+- Changed element IDs.
+- Relevant source references.
+- Approved task criterion results.
+- Assistance/exposure conditions.
+- Available uncertainty.
+
+### Required distinctions
+
+A student may:
+
+- Reach the correct answer using invalid reasoning.
+- Use a correct method but make a small arithmetic error.
+- Misinterpret a term.
+- Make a conceptual mistake.
+- Omit a key explanation.
+- Give a valid alternative interpretation.
+- Provide an unsupported assertion.
+- Need clarification rather than correction.
+
+Petros should not treat all these outcomes as the same generic wrong answer.
+
+### Assessment constraints
+
+Preserve:
+
+- The M4 task issue.
+- Immutable submission.
+- Private reference contract.
+- Criterion-level evaluation.
+- Exposure tracking.
+- Qualified evidence admission.
+- Correction lineage.
+- Review/abstention.
+
+Do not let the orchestrator assign correctness directly.
+
+If evaluation is pending or unqualified, the next action must reflect uncertainty.
+
+---
+
+# 15. MISCONCEPTION HANDLING
+
+A wrong response is not necessarily proof of a misconception.
+
+Implement provisional hypotheses.
+
+### Required policy
+
+After one suggestive response:
+
+**Candidate misunderstanding.**
+
+After suitable distinguishing evidence:
+
+**Supported misunderstanding hypothesis**, where actual policy and evidence justify it.
+
+After appropriate successful unassisted checks:
+
+**Potential resolution**, subject to verified criteria.
+
+Do not claim a misconception was permanently corrected because a student clicked the right option once.
+
+### Required hypothesis categories
+
+The architecture must handle:
+
+- Conceptual misunderstanding.
+- Terminology confusion.
+- Arithmetic slip.
+- Incorrect assumption.
+- Missing reasoning step.
+- Unsupported evidence link.
+- Ambiguous interpretation.
+
+Do not use a permanent list of hardcoded subject-specific misconception labels.
+
+Store criterion/source-linked hypotheses and counterevidence.
+
+---
+
+# 16. CATEGORICAL BELIEF ENGINE
+
+Create or extend:
+
+`apps/api/src/modules/petros-learner-model/petros-concept-belief.engine.ts`
+
+`apps/api/src/modules/petros-learner-model/petros-concept-belief.repository.ts`
+
+Use the approved concept-belief schema and existing learner-evidence lineage.
+
+### Planned categorical states
+
+- `not_assessed`
+- `developing`
+- `demonstrated_in_session`
+- `retention_supported`
+- `review_due`
+
+Do not invent a percentage mastery score.
+
+### Hard evidence requirements
+
+Demonstrated-in-session learning requires the approved criteria across non-equivalent eligible tasks, including explanation and unseen application where specified.
+
+Assisted responses cannot silently satisfy independent demonstration requirements.
+
+Repeated equivalent tasks cannot inflate evidence.
+
+Actual retention requires an actual later check.
+
+Do not simulate a seven-day delay and claim retention.
+
+### Rebuildability
+
+The belief state must be reproducible from valid ledger events and pinned algorithm/graph versions.
+
+A revoked or corrected evaluation must change the current projection appropriately without rewriting historical records.
+
+---
+
+# 17. NO DUPLICATE LEARNING ARCHITECTURE
+
+Reuse M4's durable session commands, existing workspace checkpoints and existing objective-evidence ledger.
+
+Do not introduce a separate M5 session database.
+
+Do not introduce a second learning-history service.
+
+Do not maintain independent authoritative student state in browser memory.
+
+### Important rules
+
+- The session owner remains the durable command authority.
+- The canvas reducer validates semantic operations.
+- The orchestrator chooses instructional strategy.
+- The action compiler validates execution.
+- The private evaluator determines authorized criterion outcomes.
+- Evidence admission determines eligibility.
+- The belief reducer summarizes admitted evidence.
+- The frontend renders accepted public state.
+
+Keep these responsibilities separate.
+
+---
+
+# 18. ONE PRESENTATION TIMELINE
+
+Every instructional demonstration must use the approved versioned presentation timeline.
+
+The timeline coordinates:
+
+- Accepted canvas operations.
+- Content reveals.
+- Source highlights.
+- Student checkpoints.
+- Petros's supported public cues.
+- Optional qualified speech segments.
+- Pauses.
+- Interruptions.
+- Resume boundaries.
+
+Do not use independent timers that cause the character, canvas and narration to drift apart.
+
+### Required behavior
+
+When Petros refers to an element:
+
+- That element must actually exist.
+- Its revision must be current.
+- Its visible position must be registered.
+- The source relationship must be valid.
+- The cue must be supported by the current rig.
+
+When the student interrupts:
+
+- Stop pending presentation.
+- Preserve the accepted semantic prefix.
+- Fence stale callbacks.
+- Preserve student drafts.
+- Resume from a valid checkpoint.
+
+When audio is unavailable:
+
+- Text mode must work completely.
+
+When reduced motion is enabled:
+
+- The same educational content and participation opportunity must remain accessible.
+
+---
+
+# 19. PETROS COMPANION INTEGRATION
+
+The recordings show that the current character presence is still limited.
+
+M5 should make Petros meaningfully connected to actual teaching operations, using existing approved artwork and controls.
+
+Do not wait until M6 to connect basic companion presence to the Teaching Action Engine.
+
+### Required M5 behavior
+
+Petros should:
+
+- Introduce the current concept.
+- Refer to actual source/workspace targets.
+- Use supported gaze or gestures.
+- Yield when the student begins work.
+- Remain quiet during focused interaction.
+- Acknowledge a committed response.
+- Wait during genuine evaluation.
+- Deliver authorized public feedback.
+- Return to an interrupted task.
+- Express uncertainty appropriately.
+
+### What remains for M6
+
+Do not pretend the current art supports:
+
+- Articulated handwriting.
+- Precise wrist/pen movement.
+- Natural walking.
+- Advanced full-body acting.
+- Unsupported facial layers.
+- Perfect mouth synchronization.
+
+Those remain separately qualified capabilities.
+
+### Character requirement
+
+Petros must feel connected to the workspace, but the actual intelligence must come from the learning engine—not from random gestures.
+
+Do not let animation count as evidence of learning.
+
+---
+
+# 20. REDESIGN THE ACTUAL LEARNING STAGE AROUND ACTIONS
+
+Preserve the good visual foundation established by the M4 Living Learning Studio.
+
+Do not waste time creating another unrelated UI design.
+
+However, the central learning stage must now support actual construction, editing and reasoning.
+
+### Expected visual behavior
+
+During explanation:
+
+- The relevant source-backed representation appears.
+- Elements are introduced in a meaningful order.
+- Petros references the visible work.
+
+During demonstration:
+
+- The workspace changes through actual accepted operations.
+- Steps can be inspected and replayed.
+
+During student participation:
+
+- Editing controls become available.
+- Petros yields attention.
+- The student can interact directly with permitted elements.
+
+During evaluation:
+
+- The committed work remains visible.
+- The interface clearly indicates pending or completed evaluation.
+
+During feedback:
+
+- Highlight the relevant correct, incorrect or uncertain part.
+- Display grounded feedback.
+- Petros responds appropriately.
+
+During adaptation:
+
+- The next visual representation or interaction changes because the evidence changed.
+
+### Do not create fake dynamism
+
+Animated cards and decorative particles do not count.
+
+The student must actually be able to change the educational representation.
+
+---
+
+# 21. RELEVANT FRONTEND FILES
+
+Inspect and reuse the current code before creating files.
+
+Expected targets include:
+
+`apps/student-web/src/features/petros-v2/experience-renderer.tsx`
+
+`apps/student-web/src/features/petros-v2/source-inspector.tsx`
+
+`apps/student-web/src/features/petros-v2/objective-status.tsx`
+
+`apps/student-web/src/features/petros-v2/presentation-controller.ts`
+
+`apps/student-web/src/features/petros-v2/experiences/relationship-board.tsx`
+
+`apps/student-web/src/features/petros-v2/experiences/prediction-explanation.tsx`
+
+Existing and planned canvas components:
+
+`apps/student-web/src/features/petros-v2/canvas/teaching-canvas.tsx`
+
+`apps/student-web/src/features/petros-v2/canvas/diagram-editor.tsx`
+
+`apps/student-web/src/features/petros-v2/canvas/equation-board.tsx`
+
+`apps/student-web/src/features/petros-v2/canvas/code-trace.tsx`
+
+Reuse:
+
+- Current student Learning Studio shell.
+- M4 session hook.
+- Existing source inspector.
+- Existing Petros rig.
+- Existing presentation controller.
+- Shared canvas reducer.
+- Existing safe mathematical and SVG renderers.
+
+Do not create separate canvas engines for Cloud Computing, English and Mathematics.
+
+---
+
+# 22. SOURCE-GROUNDED TOOL EXECUTION
+
+Implement small scoped tool executors that support:
+
+- Authorized source lookup.
+- Approved task selection.
+- Public explanation composition.
+- Trusted bounded experiment.
+- Safe hint selection.
+- Validated source inspection.
+- Teaching-action compilation.
+
+### Tool requirements
+
+Every tool must declare:
+
+- Input schema.
+- Output schema.
+- Authorization context.
+- Current source pins.
+- Capability requirements.
+- Runtime and resource limits.
+- Logging/redaction policy.
+- Failure behavior.
+
+Do not create a generic unrestricted tool-discovery system.
+
+No arbitrary shell, filesystem, internet or student-data access may be exposed to the teaching model.
+
+---
+
+# 23. GENUINE SOURCE INTERPRETATION LIMITATIONS
+
+Earlier M2-G reports established that genuine provider inference had not yet been authorized.
+
+Do not forget this.
+
+M5 must distinguish:
+
+**Extracted source fact**
+
+Actual original document content.
+
+**Mechanically grounded statement**
+
+A claim with valid source identity/locator and bounded consistency checks.
+
+**Proposed semantic interpretation**
+
+A model or engineering proposal that may require review.
+
+**Reviewed instructional claim**
+
+A claim approved under actual academic policy.
+
+**Private verified assessment**
+
+A separately qualified issued instrument and evaluator result.
+
+### Important
+
+A citation does not prove a statement is true.
+
+A well-formed teaching action does not prove it is educationally appropriate.
+
+A passing controlled-provider test does not establish genuine model reasoning.
+
+If the actual semantic inference route remains blocked, the relevant quality gate remains blocked.
+
+Do not remove that limitation to make the demo impressive.
+
+---
+
+# 24. MANDATORY ADVERSARIAL TESTING
+
+Include cases for:
+
+1. Fabricated source reference.
+2. Cross-tenant source reference.
+3. Revoked teaching source.
+4. Changed source revision.
+5. Unapproved claim.
+6. Unsupported equation transformation.
+7. Division by zero.
+8. Invalid units.
+9. Wrong graph endpoint.
+10. Deleted target.
+11. Reversed source relationship.
+12. Diagram arrow without qualified direction.
+13. Invalid prerequisite graph.
+14. Unsupported simulation parameter.
+15. Arbitrary executable code.
+16. Malformed teaching-action schema.
+17. Excessive canvas operation count.
+18. Missing accessible alternative.
+19. Private assessment reference in a public action.
+20. Model attempting to assign a grade.
+21. Model attempting to approve a task.
+22. Model attempting to change student evidence.
+23. Student attempting to alter a protected source element.
+24. Stale canvas revision.
+25. Conflicting student and Petros edits.
+26. Duplicate edit command.
+27. Duplicate submission.
+28. Replay after evaluation.
+29. Undo after submission.
+30. Interrupted equation reveal.
+31. Interrupted diagram construction.
+32. Audio callback after new epoch.
+33. Source withdrawal during an action.
+34. Reviewer withdrawal during evaluation.
+35. Unsupported avatar gesture.
+36. Simulated provider output marked genuine.
+37. Keyword-stuffed answer.
+38. Correct final answer with invalid reasoning.
+39. Incorrect result with correct partial method.
+40. Ambiguous valid interpretation.
+41. Hint used before a supposedly independent check.
+42. Repeated equivalent task.
+43. Correct prediction without explanation.
+44. Failed evaluation.
+45. Empty or contradictory evidence.
+46. Source title/subject changed while content stays equivalent.
+47. Different student evidence selecting the same canned branch incorrectly.
+48. Model timeout or unavailable provider.
+49. Reduced-motion interaction.
+50. Mobile keyboard/touch interaction.
+
+Reject, abstain or request review where necessary.
+
+Do not turn every negative case into a successful result through generic fallbacks.
+
+---
+
+# 25. TEST WHETHER THE ADAPTATION IS REAL
+
+Create a formal evaluation harness.
+
+Required files include, where appropriate:
+
+`packages/learn-evals/src/petros-v2/adaptation.ts`
+
+`packages/learn-evals/src/petros-v2/assessment.ts`
+
+`packages/learn-evals/src/petros-v2/teaching-actions.ts`
+
+`packages/learn-evals/src/petros-v2/student-work.ts`
+
+`packages/learn-evals/src/petros-v2/runner.ts`
+
+### Minimum evaluation
+
+At least **20 paired instructional cases for Cloud Computing**.
+
+At least **20 paired instructional cases for English Argument Analysis**.
+
+Each case must contain:
+
+- Source/scope references.
+- Actual task or criterion evidence.
+- Student response.
+- Evaluation result.
+- Available pedagogical hypotheses.
+- Eligible instructional actions.
+- Actual selected action.
+- Explanation of the decision.
+- Expected educational outcome.
+- Expert suitability judgment where available.
+- Safety/scope result.
+
+### Target
+
+At least **90% expert-judged instructional suitability**, under the original plan's criteria.
+
+All hard source/assessment/scope restrictions must pass.
+
+### Critical distinction
+
+Engineering-authored expected cases can prove contract and behavior correctness.
+
+They do not substitute for an independent qualified expert evaluation.
+
+If reviewers are unavailable, report the expert gate as pending.
+
+If genuine qualitative evaluation is unavailable, do not claim full real-AI adaptation accuracy.
+
+### Essential perturbation tests
+
+Re-run cases after altering:
+
+- Student answer.
+- Criterion result.
+- Source relationship.
+- Available action.
+- Prior evidence.
+- Task equivalence.
+- Assistance status.
+- Current uncertainty.
+
+The instructional decision should respond to these alterations.
+
+A fixed scripted branch must fail the acceptance harness.
+
+---
+
+# 26. EVALUATE EDUCATIONAL QUALITY, NOT VISUAL ACTIVITY
+
+For every major demonstration, record:
+
+- What the student needed to learn.
+- Which evidence motivated the action.
+- What the action was intended to change.
+- What student interaction followed.
+- What actual response was committed.
+- What was genuinely evaluated.
+- What remained uncertain.
+- What the next decision did differently.
+
+### Invalid success metrics
+
+Do not count these as educational success:
+
+- More animations.
+- Longer sessions.
+- More taps.
+- Higher avatar activity.
+- More time on the screen.
+- Completing every visual step.
+- A single correct multiple-choice answer.
+- Student self-reported confidence.
+
+### Useful measurements
+
+Track:
+
+- Criterion-level answer quality.
+- Correctness of instructional strategy.
+- Explanation quality.
+- Unassisted fresh application.
+- Assistance dependence.
+- False acceptance.
+- Unsupported claim rate.
+- Source-grounding validity.
+- Learning-task completion with valid evidence.
+- Later retention, when real time and qualification permit.
+
+---
+
+# 27. UI AND ACCESSIBILITY ACCEPTANCE
+
+This is another significant visual milestone.
+
+Do not consider M5 complete merely because backend tests pass.
+
+The user must manually inspect actual student teaching.
+
+### Required screen sizes
+
+- 1440px desktop.
+- 1280px laptop.
+- 768px tablet.
+- 390px mobile.
+- 360px mobile.
+
+### Required experiences
+
+- Source highlighting.
+- Diagram creation.
+- Student diagram editing.
+- Equation writing.
+- Student step completion.
+- Prediction/experiment.
+- Feedback based on submitted work.
+- A context question.
+- Pause/Resume.
+- Reduced motion.
+- Text-only alternative.
+- Keyboard editing.
+- Source inspection.
+- Invalid or blocked action.
+
+### Accessibility
+
+Every required graphical operation must have an appropriate keyboard and nonvisual alternative.
+
+Do not make understanding depend solely on:
+
+- Animation.
+- Color.
+- Dragging.
+- Audio.
+- The avatar's gesture.
+
+The companion must not occlude input fields or steal focus.
+
+---
+
+# 28. PERFORMANCE AND COST
+
+Preserve the master plan's performance targets.
+
+Relevant proposed targets include:
+
+- Local interaction feedback p95 ≤100 ms.
+- Meaningful animation target ≥30 fps on stated baseline devices.
+- Warm session admission p95 ≤500 ms.
+- Reviewed cached action latency ≤1.5 seconds.
+- New text action p50 ≤4 seconds and p95 ≤10 seconds.
+- Planning hard deadline 20 seconds.
+- Deterministic evaluation p95 ≤300 ms.
+- Qualified explanation evaluation p95 ≤5 seconds or honest pending status.
+
+These are targets requiring measured evidence.
+
+Report sample counts and testing environment.
+
+### Model efficiency
+
+Do not make provider requests for:
+
+- Each character reveal.
+- Each diagram movement.
+- Every frame.
+- Every local edit.
+- Every slider change.
+- Every avatar gesture.
+- Every click.
+- Every checkpoint save.
+
+Use deterministic local execution after an authorized structured teaching decision.
+
+Reuse already approved fragments where appropriate.
+
+### Budget
+
+Retain the plan's 15-minute-session cost feasibility targets.
+
+Do not invent actual model prices or usage.
+
+If no qualified model route is available, report provider cost unmeasured.
+
+---
+
+# 29. FAILURE, RECOVERY AND PERSISTENCE
+
+M5 must preserve M4's strongest property: committed student work survives interruptions.
+
+Test:
+
+- Duplicate command.
+- Duplicate assessment response.
+- Canvas mutation conflict.
+- Student editing during Petros output.
+- Interrupt during a diagram build.
+- Interrupt during an equation reveal.
+- Interrupt during speech.
+- Reload while evaluation is pending.
+- Pause during a simulation.
+- Return from a contextual question.
+- Source withdrawal.
+- Reviewer revocation.
+- Worker crash.
+- Redis retry.
+- Browser reconnect.
+- Old timeline callback.
+- Wrong element target.
+- Replay after a submitted task.
+- Undo after evaluation.
+- Invalid belief rebuild.
+
+### Required result
+
+No lost committed answer.
+
+No duplicated learning evidence.
+
+No stale visual action after the session epoch changes.
+
+No answer leakage.
+
+No reverted academic history.
+
+No fake progress.
+
+Actual acknowledged canvas state must be recoverable.
+
+---
+
+# 30. DATABASE AND MIGRATION POLICY
+
+Inspect the current schema and migration journal.
+
+The original plan mentions a conceptual M5 belief migration:
+
+`0236_petros_v2_beliefs.sql`
+
+That historical number may already have been consumed by M2 or M2-G work.
+
+Do not reuse it blindly.
+
+Use actual current migration state.
+
+### Requirements
+
+- Additive schema changes only.
+- Existing concept/evidence owners reused.
+- Restricted-role/RLS tests.
+- No V1 record changes.
+- No arbitrary new mastery table.
+- No duplicate canvas persistence.
+- Rebuildable belief projections.
+- Stable version pins.
+- Current source/review checks.
+- Disposable-database rehearsal.
+- No configured database migrations.
+- No production deployment.
+
+If an already existing schema supports the requirement, use it.
+
+Do not introduce new tables unnecessarily.
+
+---
+
+# 31. REQUIRED BROWSER DEMONSTRATIONS
+
+Generate authentic screen recordings from the implemented application.
+
+## Recording A — Cloud Student A
+
+Demonstrate:
+
+1. Authorized isolated student session.
+2. Actual source-backed task.
+3. Conceptual misunderstanding.
+4. Committed response.
+5. Legitimate evaluation.
+6. Evidence-conditioned relationship/contrast decision.
+7. Petros constructing or revising a diagram.
+8. Student editing the diagram.
+9. Commit and evaluation.
+10. Fresh eligible question or honest blocked status.
+
+## Recording B — Cloud Student B
+
+Use the same source and same general engine.
+
+Show:
+
+1. Different committed criterion outcome.
+2. An arithmetic or method mistake.
+3. Different selected teaching strategy.
+4. Actual equation or calculation construction.
+5. Student correction.
+6. Evaluation and next action.
+
+## Recording C — English Argument Analysis
+
+Show:
+
+1. Real source-backed argument passage.
+2. Claim/evidence/warrant representation.
+3. Student interaction.
+4. Submitted work.
+5. Qualified evaluation or explicit uncertainty.
+6. Appropriate next action.
+7. Actual adaptation, where evidence supports it.
+
+## Recording D — Companion and Canvas Coordination
+
+Show:
+
+- Petros references a current element.
+- A real highlight or construction occurs.
+- The student begins editing.
+- Petros yields.
+- The student commits work.
+- Petros waits during evaluation.
+- Public feedback appears.
+- An interruption and resume preserve the state.
+
+## Recording E — Mobile
+
+Demonstrate interactive work at 360px.
+
+Do not show only a screenshot of the initial lesson.
+
+## Recording F — Reduced Motion and Accessibility
+
+Demonstrate equivalent instructional content and actions without relying on decorative animation.
+
+### Important
+
+The recordings must capture genuine application behavior.
+
+Do not stitch together unrelated scripted UI scenes.
+
+Do not manipulate mock evaluation results during recording to make the system appear more capable.
+
+Synthetic authorized test fixtures are acceptable when clearly identified.
+
+---
+
+# 32. REQUIRED HUMAN TESTING
+
+Prepare a manual testing guide that assumes I have no knowledge of the internal codebase.
+
+Tell me:
+
+1. Exact localhost URL.
+2. Whether local servers are running.
+3. How to launch them safely if stopped.
+4. Which synthetic student identity to select.
+5. How to reproduce Student A.
+6. How to reproduce Student B.
+7. How to see the different teaching action.
+8. How to change a diagram.
+9. How to correct an equation.
+10. How to test English.
+11. How to interrupt Petros.
+12. How to pause/resume.
+13. How to test mobile.
+14. What should be visibly different between the two students.
+15. Which capabilities remain controlled or unqualified.
+
+Do not tell me merely to consult a JSON file or an engineering report.
+
+Give direct URLs and straightforward instructions.
+
+---
+
+# 33. REQUIRED VERIFICATION REPORT
+
+Create:
+
+`docs/verification/petros-v2/m5-teaching-engine.md`
+
+Also update or create the existing planned:
+
+`docs/verification/petros-v2/teaching-engine.md`
+
+Include:
+
+## A. Executive summary
+
+Actual implemented teaching capabilities.
+
+## B. Existing infrastructure reused
+
+Session, assessment, canvas, source, companion and gateway owners.
+
+## C. Teaching Action Engine
+
+Contracts, compiler, validation and operation execution.
+
+## D. Orchestrator
+
+Decision context, hard constraints, selection policy and tool boundaries.
+
+## E. Actual two-student differentiation
+
+Separate Cloud Student A/B evidence, evaluation, chosen actions and resulting work.
+
+## F. English subject independence
+
+Actual argument-analysis trace.
+
+## G. Canvas construction
+
+Semantic changes, source references, editing and checkpoints.
+
+## H. Student work
+
+Committed operations, assessment and response hashes.
+
+## I. Assessment
+
+Qualified deterministic checks, qualitative limitations and abstentions.
+
+## J. Concept beliefs
+
+Evidence eligibility, hypotheses, correction and replay.
+
+## K. Source grounding
+
+Actual source hashes and claim support.
+
+## L. Presentation and companion
+
+Timeline/canvas synchronization, supported rig cues and remaining artwork limitations.
+
+## M. Accessibility
+
+Keyboard, mobile, text-only and reduced-motion equivalents.
+
+## N. Reliability
+
+Crashes, duplicates, conflict, interrupt, resume and revocation.
+
+## O. Security
+
+Private assessment boundaries, provider authorization and adversarial testing.
+
+## P. Adaptation evaluation
+
+Per-subject case counts, actual criteria, judge origins, accuracy, abstention and confidence limitations.
+
+## Q. Performance
+
+Interaction time, model/worker latency, memory, frame rate and cost where measured.
+
+## R. Tests
+
+Exact commands, passes, failures, skips and warnings.
+
+## S. Code inventory
+
+Created/modified files and dependencies.
+
+## T. Preservation
+
+Historical evidence, migrations and unrelated-work audit.
+
+## U. Existing blockers
+
+M2-G, provider, academic, production and release restrictions.
+
+## V. Browser demonstrations
+
+Exact URLs, recordings and screenshots.
+
+## W. Manual acceptance checklist
+
+What I need to inspect personally.
+
+## X. M6 readiness
+
+Whether M5 has actually met the stronger interactive/adaptive engineering requirements, and which independent quality or operational gates remain blocked.
+
+---
+
+# 34. REQUIRED IMPLEMENTATION ORDER
+
+Implement in this sequence.
+
+### Phase 1 — Audit
+
+Inspect all existing owners, contracts, source quality, M4 durability, companion capabilities and current UI.
+
+### Phase 2 — Decision and action contracts
+
+Complete the typed orchestrator decision, action validation and tool interfaces.
+
+### Phase 3 — Canvas execution
+
+Implement genuine source-backed construction, editing, mutation validation and student checkpoints.
+
+### Phase 4 — Trusted educational capabilities
+
+Implement equations, diagrams, processes, safe code traces and the required bounded simulations.
+
+### Phase 5 — Evaluation integration
+
+Connect committed student work and authorized criterion outcomes to the decision context.
+
+### Phase 6 — Adaptation
+
+Implement real evidence-conditioned instructional selection.
+
+### Phase 7 — Belief and hypothesis handling
+
+Implement categorical projections and evidence constraints using existing ledger records.
+
+### Phase 8 — Presentation integration
+
+Coordinate actions, canvas, companion cues and interruption boundaries through one timeline.
+
+### Phase 9 — Student UI
+
+Expose the actual teaching capabilities within the current Learning Studio.
+
+### Phase 10 — Two-subject demonstrations
+
+Build authentic isolated end-to-end Cloud and English traces.
+
+### Phase 11 — Adversarial evaluation
+
+Execute perturbation, privacy, correctness, reliability and source-revision tests.
+
+### Phase 12 — Manual handoff
+
+Start the local demo and provide recordings, links and instructions.
+
+### Phase 13 — Final reporting
+
+Document what passed, what failed and what remains blocked.
+
+Stop before M6.
+
+---
+
+# 35. M5 ACCEPTANCE REQUIREMENTS
+
+Do not describe M5 as completed merely because its files exist.
+
+## Engineering requirements
+
+The following are mandatory:
+
+1. A genuine authorized source-to-action pipeline.
+2. A working orchestrator.
+3. Strict teaching-action validation.
+4. Real semantic canvas mutations.
+5. Real student editing.
+6. Exact source references.
+7. Durable checkpoints.
+8. Committed work evaluation.
+9. Evidence-conditioned action selection.
+10. Different appropriate teaching strategies for different evaluated student needs.
+11. A functional Cloud Computing demonstration.
+12. A functional English Argument Analysis demonstration.
+13. A checked equation example.
+14. An actual editable diagram.
+15. An actual student participation checkpoint.
+16. A bounded registered simulation.
+17. An additional qualified trusted kernel.
+18. A safe process/code-trace example.
+19. An accessible nonvisual alternative.
+20. A single synchronized presentation timeline.
+21. Safe interruption and recovery.
+22. No private-answer leakage.
+23. No arbitrary executable model output.
+24. No V1 regression.
+25. No source or reviewer authorization bypass.
+
+## Pedagogical requirements
+
+Also require:
+
+1. A reason for each instructional action.
+2. Evidence supporting each adaptation.
+3. Actual evaluation results, not frontend guesses.
+4. Cross-subject reuse.
+5. Response perturbation sensitivity.
+6. Appropriate handling of uncertainty.
+7. Correct reasoning versus correct answer distinction.
+8. Appropriate use of source evidence.
+9. No fake mastery.
+10. No fake independent reviewer qualification.
+
+## Quantitative requirements
+
+Preserve the planned:
+
+- At least 20 paired adaptation cases per subject.
+- At least 90% independently expert-judged suitable decisions before passing the expert gate.
+- 100% hard scope/security/assessment rule compliance.
+- 100% supported-domain golden mathematical/kernel tests.
+- Current performance and accessibility thresholds.
+
+If independent expertise or genuine inference is unavailable, mark those acceptance gates blocked.
+
+Do not alter denominators or exclude difficult tests merely to obtain a passing percentage.
+
+## Visual requirements
+
+The browser demonstration must clearly show that:
+
+- Petros actually constructs instructional content.
+- Students actually interact with that content.
+- Student work is committed.
+- Evaluated evidence affects what Petros teaches next.
+- The resulting actions differ meaningfully.
+- Petros refers to actual visible work.
+- The interface works on desktop and mobile.
+
+A good-looking animation without these properties is insufficient.
+
+---
+
+# 36. THE MOST IMPORTANT FAILURE CONDITION
+
+**M5 fails if the implementation is fundamentally a scripted lesson with decorative branching.**
+
+Examples of unacceptable substitutes:
+
+- Different animation selected by a demo button.
+- A fixed hint for all wrong answers.
+- A hardcoded Cloud lesson and separate hardcoded English lesson.
+- A pretend AI response generated from local test strings.
+- A static diagram presented as collaborative editing.
+- An activity that records clicks but not committed reasoning.
+- A fake rubric that approves every long explanation.
+- A concept-belief record created from one correct answer.
+- A character that points randomly during narration.
+- A timeline that doesn't correspond to persisted canvas changes.
+- A browser demo that bypasses normal authorization and assessment.
+
+Implement the real capability or report the limitation.
+
+---
+
+# FINAL DIRECTIVE
+
+**BEGIN IMPLEMENTING THE STRENGTHENED M5 TEACHING ENGINE NOW.**
+
+Use the existing Petros architecture.
+
+Preserve the current student Learning Studio's established visual identity.
+
+Focus on the actual intelligence and interactivity that make Petros different.
+
+Petros should teach through real shared work.
+
+Students should participate by changing and explaining educational representations.
+
+Student responses should be durably committed and assessed through the proper private evaluation system.
+
+The next instructional decision should depend on actual evidence.
+
+Different learning needs should produce different appropriate teaching actions.
+
+The same architecture must work for Cloud Computing and English Argument Analysis.
+
+Petros should feel like a friendly, attentive learning partner through meaningful participation and supported contextual cues—not a mascot attached to a static course.
+
+Do not manufacture model intelligence, academic qualifications, mastery or production readiness.
+
+Do not bypass the unresolved provider and source-quality gates.
+
+Do not destroy existing code or historical evidence.
+
+Implement the milestone, verify it, create authentic browser demonstrations and provide complete manual review instructions.
+
+**STOP AFTER M5. DO NOT START M6.**
+
+**M5 requires explicit human approval of both its adaptive behavior and student-facing visual experience before development proceeds.**

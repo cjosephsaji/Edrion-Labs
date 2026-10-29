@@ -14,8 +14,9 @@ export class PdfPreparationError extends Error {
   constructor(
     readonly code: string,
     readonly retryable = false,
+    options?: ErrorOptions,
   ) {
-    super(code);
+    super(code, options);
   }
 }
 
@@ -33,7 +34,7 @@ export class KnowledgePdfProcess {
   }
 
   // Separate seam also exercises hostile trusted-worker fixtures under the actual sandbox in tests.
-  async run(
+  async run<T = PetrosPdfWorkerResult>(
     buffer: Buffer,
     signal: AbortSignal,
     progress: (page: number) => void,
@@ -43,7 +44,16 @@ export class KnowledgePdfProcess {
       rssKiB: 262_144,
       outputBytes: 16 * 1024 * 1024,
     },
-  ): Promise<PetrosPdfWorkerResult> {
+    outputSchema: { parse(input: unknown): T } = petrosPdfWorkerResultSchema as unknown as {
+      parse(input: unknown): T;
+    },
+    runtime: {
+      readRoots?: string[];
+      args?: string[];
+      addons?: boolean;
+      onMetrics?: (metrics: { wallMs: number; peakRssKiB: number; outputBytes: number; validationMs?:number;parseMs?:number;structuralMs?:number;selfPeakRssKiB?:number }) => void;
+    } = {},
+  ): Promise<T> {
     if (signal.aborted) throw new PdfPreparationError('PETROS_PREPARATION_CANCELLED');
     const node = await realpath(process.execPath);
     const require = createRequire(join(__dirname, 'pdf-extract.cjs'));
@@ -57,6 +67,7 @@ export class KnowledgePdfProcess {
         pdf,
         workDir,
         Math.max(1, Math.min(15, Math.floor(limits.cpuSeconds ?? 15))),
+        runtime,
       ).catch(() => {
         throw new PdfPreparationError('PETROS_SANDBOX_UNAVAILABLE', true);
       });
@@ -71,8 +82,11 @@ export class KnowledgePdfProcess {
         let error: PdfPreparationError | undefined;
         let output = '';
         let bytes = 0;
-        let result: PetrosPdfWorkerResult | undefined;
+        let result: T | undefined;
         let checking = false;
+        let peakRssKiB = 0;
+        let nativeMetrics: {validationMs:number;parseMs:number;structuralMs:number;selfPeakRssKiB:number} | undefined;
+        const began = performance.now();
         const kill = (code: string, retryable = false) => {
           error ??= new PdfPreparationError(code, retryable);
           try {
@@ -94,8 +108,8 @@ export class KnowledgePdfProcess {
             { timeout: 500, maxBuffer: 1024 * 1024 },
             (err, stdout) => {
               checking = false;
-              if (!err && processTreeRss(stdout, child.pid!) > limits.rssKiB)
-                kill('PETROS_PDF_MEMORY_LIMIT');
+              if (!err) peakRssKiB = Math.max(peakRssKiB, processTreeRss(stdout, child.pid!));
+              if (!err && peakRssKiB > limits.rssKiB) kill('PETROS_PDF_MEMORY_LIMIT');
               else if (err && child.exitCode === null && child.signalCode === null)
                 kill('PETROS_PDF_MONITOR_FAILED', true);
             },
@@ -112,15 +126,18 @@ export class KnowledgePdfProcess {
             output = output.slice(newline + 1);
             try {
               const value = JSON.parse(line);
-              if (Number.isInteger(value.progress) && value.progress >= 1 && value.progress <= 500)
+              if (value.nativeMetrics && !nativeMetrics && Object.keys(value).length===1 &&
+                Object.keys(value.nativeMetrics).sort().join(',')==='parseMs,selfPeakRssKiB,structuralMs,validationMs' &&
+                Object.entries(value.nativeMetrics).every(([key,n])=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=(key==='selfPeakRssKiB'?limits.rssKiB:limits.wallMs)))
+                nativeMetrics=value.nativeMetrics;
+              else if (Number.isInteger(value.progress) && value.progress >= 1 && value.progress <= 500)
                 progress(value.progress);
               else if (
-                value.error === 'PETROS_DOCUMENT_LIMIT' ||
-                value.error === 'PETROS_PDF_INVALID'
+                typeof value.error === 'string' &&
+                /^PETROS_(DOCUMENT_LIMIT|PDF_INVALID|PDF_ENCRYPTED|M2_[A-Z_]+)$/.test(value.error)
               )
                 error = new PdfPreparationError(value.error);
-              else if (value.result && !result)
-                result = petrosPdfWorkerResultSchema.parse(value.result);
+              else if (value.result && !result) result = outputSchema.parse(value.result);
               else kill('PETROS_PDF_PROTOCOL_INVALID');
             } catch {
               kill('PETROS_PDF_PROTOCOL_INVALID');
@@ -139,6 +156,16 @@ export class KnowledgePdfProcess {
           clearTimeout(timeout);
           clearInterval(monitor);
           signal.removeEventListener('abort', abort);
+          try {
+            runtime.onMetrics?.({
+              wallMs: performance.now() - began,
+              peakRssKiB,
+              outputBytes: bytes,
+              ...nativeMetrics,
+            });
+          } catch {
+            /* An optional telemetry observer cannot prevent cleanup or settle the parser result. */
+          }
           if (error) reject(error);
           else if (stoppedBy === 'SIGXCPU' || stoppedBy === 'SIGKILL')
             reject(new PdfPreparationError('PETROS_PDF_PROCESS_LIMIT'));
@@ -160,20 +187,23 @@ async function sandboxCommand(
   pdf: string,
   workDir: string,
   cpuSeconds: number,
+  runtime: { readRoots?: string[]; args?: string[]; addons?: boolean },
 ): Promise<string[]> {
   const pdfRoot = dirname(dirname(dirname(pdf)));
   const nodeArgs = [
     node,
     '--max-old-space-size=128',
     '--openssl-config=/dev/null',
-    '--no-addons',
+    ...(runtime.addons ? ['--allow-addons'] : ['--no-addons']),
     process.allowedNodeEnvironmentFlags.has('--permission')
       ? '--permission'
       : '--experimental-permission',
     `--allow-fs-read=${worker}`,
     `--allow-fs-read=${pdfRoot}`,
+    ...(runtime.readRoots ?? []).map((path) => `--allow-fs-read=${path}`),
     worker,
     pdf,
+    ...(runtime.args ?? []),
   ];
   if (process.platform === 'darwin') {
     await access('/usr/bin/sandbox-exec');
@@ -190,6 +220,7 @@ async function sandboxCommand(
       (allow sysctl-read) (allow mach-lookup)
       (allow file-read-metadata)
       (allow file-read* ${runtimeRoots.map((p) => `(subpath ${literal(p)})`).join(' ')}
+        ${(runtime.readRoots ?? []).map((p) => `(subpath ${literal(p)})`).join(' ')}
         (subpath ${literal(pdfRoot)}) (literal ${literal(worker)})
         (literal "/") (literal "/bin/bash") (literal ${literal(node)}) (literal "/dev/null") (literal "/dev/urandom") (literal "/dev/random"))
       (allow file-read* file-write* (subpath ${literal(workDir)}))`;
@@ -207,7 +238,14 @@ async function sandboxCommand(
   if (process.platform === 'linux') {
     // Installed by the deployment image, not downloaded or silently replaced at runtime.
     await Promise.all([access('/usr/bin/bwrap'), access('/usr/bin/prlimit')]);
-    const roots = ['/usr', '/lib', '/lib64', dirname(dirname(node)), pdfRoot];
+    const roots = [
+      '/usr',
+      '/lib',
+      '/lib64',
+      dirname(dirname(node)),
+      pdfRoot,
+      ...(runtime.readRoots ?? []),
+    ];
     const mounts: string[] = [];
     for (const path of [...new Set(roots)]) {
       try {

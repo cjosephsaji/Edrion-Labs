@@ -4,6 +4,10 @@ import type { StudentContext, StudentPrincipal } from '../student.types';
 
 export const STUDENT_PERMISSIONS_KEY = 'edrion:student:permissions';
 export const STUDENT_RATE_LIMIT_KEY = 'edrion:student:rate_limit';
+export const STUDENT_PASSWORD_SETUP_KEY = 'edrion:student:password_setup';
+
+/** Permit only account setup and session inspection while a password change is required. */
+export const AllowStudentPasswordSetup = () => SetMetadata(STUDENT_PASSWORD_SETUP_KEY, true);
 
 /** Require ALL listed student permission keys for the handler. */
 export const RequireStudentPermissions = (...keys: string[]) =>

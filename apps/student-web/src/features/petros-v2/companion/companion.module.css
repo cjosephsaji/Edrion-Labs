@@ -1,0 +1,320 @@
+.dock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+.cloud {
+  width: 100%;
+  border: 1px solid var(--s-accentBd);
+  border-radius: 12px 12px 12px 4px;
+  padding: 12px;
+  background: var(--s-accentSoft);
+  color: var(--s-ink);
+  box-sizing: border-box;
+  min-width: 0;
+}
+.captionBody {
+  min-width: 0;
+}
+.cloud p {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 5px 0 0;
+  overflow-wrap: anywhere;
+}
+.mode {
+  text-transform: capitalize;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  color: var(--s-accentDeep);
+}
+.avatar {
+  position: relative;
+  height: clamp(150px, 22dvh, 220px);
+  width: auto;
+  aspect-ratio: 3 / 4;
+  margin-top: 10px;
+}
+.caption {
+  color: var(--s-muted);
+  font-size: 0.65rem;
+  text-align: center;
+  line-height: 1.45;
+}
+.caption span {
+  display: block;
+}
+.dock[data-suspended='true'] img {
+  transition: none;
+}
+.dock[data-reduced-motion='true'] * {
+  animation: none;
+  transition: none;
+}
+.dock[data-layout='studio'] {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+}
+.dock[data-layout='studio'] .avatar {
+  order: -1;
+  width: 120px;
+  height: 160px;
+  flex: none;
+  margin: -10px 0;
+}
+.dock[data-layout='studio'] .cloud {
+  position: relative;
+  background: #f6fbef;
+  border: 1px solid #c2d5b9;
+  border-radius: 4px 12px 12px 12px;
+  padding: 9px 13px;
+  max-width: 320px;
+  box-shadow: 0 2px 6px #213d3405;
+}
+.dock[data-layout='studio'] .cloud p {
+  font-size: 14px;
+  line-height: 1.5;
+}
+@media (max-width: 760px) {
+  .dock[data-layout='studio'] {
+    gap: 10px;
+  }
+  .dock[data-layout='studio'] .avatar {
+    width: 58px;
+    height: 78px;
+    margin: 0;
+  }
+  .dock[data-layout='studio'] .cloud {
+    padding-left: 12px;
+  }
+  .dock[data-layout='studio'] .cloud p {
+    font-size: 14px;
+  }
+}
+@media (max-width: 999px) {
+  .avatar {
+    height: 80px;
+    width: 60px;
+    margin: 0;
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .dock {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 8px 12px;
+  }
+  .cloud {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .caption {
+    grid-column: 1 / -1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .avatar,
+  .avatar img {
+    animation: none !important;
+    transition: none;
+  }
+}
+
+.dock[data-layout='studio'][data-mode='teaching'] .cloud {
+  border-color: #90b57b;
+  background: #edf7e3;
+}
+.dock[data-layout='studio'][data-mode='listening'] .cloud {
+  border-color: #8daab4;
+  background: #f0f7f8;
+}
+.dock[data-layout='studio'] .cloud::before {
+  content: '';
+  position: absolute;
+  top: 22px;
+  left: -6px;
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+  border-left: 1px solid #c2d5b9;
+  border-bottom: 1px solid #c2d5b9;
+  background: inherit;
+}
+.dock[data-layout='studio'] .mode {
+  font-size: 10px;
+  line-height: 1.3;
+}
+.dock[data-layout='studio'] .cloud p {
+  margin-top: 4px;
+}
+
+:global([data-studio-companion][data-feedback]) .dock[data-layout='studio'] .cloud {
+  background: var(--feedback-bg);
+  border-color: var(--feedback-border);
+  color: var(--feedback-ink);
+}
+:global([data-studio-companion][data-feedback]) .dock[data-layout='studio'] .cloud::before {
+  border-color: var(--feedback-border);
+}
+:global([data-studio-companion][data-feedback]) .dock[data-layout='studio'] .mode {
+  color: var(--feedback-ink);
+}
+
+.layered {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+.headMotion {
+  transform-origin: 192px 326px;
+}
+.headMotion[data-nod='true'] {
+  animation: petrosNod 940ms ease-in-out 1;
+}
+.blinkEyes {
+  animation: petrosBlinkEyes 12s linear infinite;
+}
+.blinkLids {
+  opacity: 0;
+  animation: petrosBlinkLids 12s linear infinite;
+}
+.hiddenLids {
+  display: none;
+}
+@keyframes petrosBlinkEyes {
+  0%,
+  95%,
+  96.5%,
+  100% {
+    transform: scaleY(1);
+  }
+  95.7%,
+  96% {
+    transform: scaleY(0.02);
+  }
+}
+@keyframes petrosBlinkLids {
+  0%,
+  95.5%,
+  96.4%,
+  100% {
+    opacity: 0;
+  }
+  95.7%,
+  96.1% {
+    opacity: 1;
+  }
+}
+@keyframes petrosNod {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  35% {
+    transform: rotate(4deg);
+  }
+  68% {
+    transform: rotate(-1deg);
+  }
+}
+.dock[data-suspended='true'] .headMotion,
+.dock[data-reduced-motion='true'] .layered * {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .layered * {
+    animation: none !important;
+    transition: none !important;
+  }
+  .blinkLids {
+    opacity: 0;
+  }
+}
+.cloudTools {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 6px;
+}
+.cloudTools button {
+  font: inherit;
+  font-size: 11px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 3px 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.cloudTools button:focus-visible {
+  outline: 2px solid #315d49;
+  outline-offset: 3px;
+}
+.transcript {
+  font-size: 13px;
+  line-height: 1.6;
+  max-height: 160px;
+  overflow: auto;
+}
+.headMotion[data-lean='true'] {
+  transform: rotate(2deg);
+}
+
+.dock[data-layout='studio'] .cloud {
+  flex: 1;
+  height: 142px;
+  overflow: hidden;
+  min-height: 142px;
+}
+.dock[data-layout='studio'] .captionBody {
+  height: 84px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.dock[data-layout='studio'] .transcript {
+  max-height: none;
+}
+@media (max-width: 760px) {
+  .dock[data-layout='studio'] .cloud {
+    max-width: 320px;
+  }
+}
+
+.dock[data-layout='studio'] .cloudTools button {
+  min-height: 24px;
+  padding: 2px 4px;
+  border: 0;
+  background: transparent;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.layered g,
+.layered use {
+  transition: transform 180ms ease-out;
+}
+.dock[data-suspended='true'] .layered *,
+.dock[data-input='typing'] .layered *,
+.dock[data-input='dragging'] .layered * {
+  transition: none;
+}
+.headMotion[data-acknowledge='true'] {
+  animation: petrosAcknowledge 760ms ease-in-out 1;
+}
+@keyframes petrosAcknowledge {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  40% {
+    transform: rotate(2deg);
+  }
+  70% {
+    transform: rotate(1deg);
+  }
+}

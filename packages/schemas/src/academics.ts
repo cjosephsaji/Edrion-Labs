@@ -92,6 +92,7 @@ export const academicsListQuerySchema = paginationQuerySchema
   gradeLevelNumber: z.coerce.number().int().min(0).max(20).optional(),
   subjectId: z.string().uuid().optional(),
   kind: subjectKindSchema.optional(),
+  unitKind: z.enum(['department', 'programme']).optional(),
   hasHead: z.enum(['true', 'false']).optional(),
 });
 export type AcademicsListQuery = z.infer<typeof academicsListQuerySchema>;
@@ -134,6 +135,7 @@ export type UpdateAcademicYearInput = z.infer<typeof updateAcademicYearSchema>;
 
 export const createDepartmentSchema = z.object({
   name,
+  unitKind: z.enum(['department', 'programme']).optional(),
   code: optionalCode,
   headUserId: optionalUuid,
   description: z.string().trim().max(500).nullish(),
@@ -407,6 +409,7 @@ export const previewStructureSchema = z.object({
 export type PreviewStructureInput = z.infer<typeof previewStructureSchema>;
 
 export const plannedLevelSchema = z.object({
+  id: z.string().uuid().optional(),
   sequence: z.coerce.number().int().min(1).max(30),
   name,
   durationMonths: z.coerce.number().int().min(1).max(120).nullish(),
@@ -414,6 +417,7 @@ export const plannedLevelSchema = z.object({
 export type PlannedLevelInput = z.infer<typeof plannedLevelSchema>;
 
 export const plannedSlotSchema = z.object({
+  id: z.string().uuid().optional(),
   levelSequence: z.coerce.number().int().min(1).max(30),
   sequenceInYear: z.coerce.number().int().min(1).max(20),
   absoluteSequence: z.coerce.number().int().min(1).max(200),
@@ -424,16 +428,56 @@ export const plannedSlotSchema = z.object({
 });
 export type PlannedSlotInput = z.infer<typeof plannedSlotSchema>;
 
-export const commitStructureSchema = z.object({
+const commitStructureBaseSchema = z.object({
+  name: name.optional(),
+  version: versionSchema.optional(),
   termSystem: termSystemSchema,
   durationMonths: z.coerce.number().int().min(1).max(240).nullish(),
   termsPerYear: z.coerce.number().int().min(0).max(12),
   levels: z.array(plannedLevelSchema).max(30),
   slots: z.array(plannedSlotSchema).max(200),
 });
+export const commitStructureSchema = commitStructureBaseSchema.superRefine((value, ctx) => {
+  const unique = (items: (string | number | undefined)[], path: string) => {
+    const present = items.filter((item) => item !== undefined);
+    if (new Set(present).size !== present.length)
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [path],
+        message: 'Each row must have a unique identity and position.',
+      });
+  };
+  unique(
+    value.levels.map((level) => level.id),
+    'levels',
+  );
+  unique(
+    value.levels.map((level) => level.sequence),
+    'levels',
+  );
+  unique(
+    value.slots.map((slot) => slot.id),
+    'slots',
+  );
+  unique(
+    value.slots.map((slot) => slot.absoluteSequence),
+    'slots',
+  );
+  unique(
+    value.slots.map((slot) => `${slot.levelSequence}:${slot.sequenceInYear}`),
+    'slots',
+  );
+  const sequences = new Set(value.levels.map((level) => level.sequence));
+  if (value.slots.some((slot) => !sequences.has(slot.levelSequence)))
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['slots'],
+      message: 'Each term must belong to a grade or year in this structure.',
+    });
+});
 export type CommitStructureInput = z.infer<typeof commitStructureSchema>;
 
-export const patchStructureSchema = commitStructureSchema.partial().extend({ ...withVersion });
+export const patchStructureSchema = commitStructureBaseSchema.partial().extend({ ...withVersion });
 export type PatchStructureInput = z.infer<typeof patchStructureSchema>;
 
 export const scheduleAcademicYearSchema = z.object({

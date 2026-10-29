@@ -13,6 +13,7 @@ import { institutions } from './institutions';
 import { students } from './people';
 import { classMaterials } from './institutional-bridge';
 import { knowledgeItems } from './student-knowledge';
+import type { SourceRevision } from '@edrion/schemas';
 
 /** Immutable, shared extraction of one authorized material revision. */
 export const petrosDocumentSourceRevisions = pgTable(
@@ -28,6 +29,9 @@ export const petrosDocumentSourceRevisions = pgTable(
     documentVersion: integer('document_version').notNull(),
     checksum: text('checksum').notNull(),
     parserVersion: text('parser_version').notNull(),
+    formatVersion: text('format_version').notNull().default('v1'),
+    originalSourceId: uuid('original_source_id'),
+    v2Revision: jsonb('v2_revision').$type<SourceRevision>(),
     extractionStatus: text('extraction_status').notNull().default('ready'),
     structure: jsonb('structure').$type<Record<string, unknown>>().notNull(),
     warnings: jsonb('warnings').$type<string[]>().notNull().default([]),

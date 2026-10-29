@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { PetrosAiModel, PetrosAiProvider } from '@edrion/database';
 import { PetrosAiCredentialsService } from './petros-ai-credentials.service';
+import { supportedSpeechVoices, supportsTutorInstructions, type PetrosSpeechOptions } from './petros-speech-capabilities';
 
 export interface PetrosAiInputPart {
   type: 'text' | 'image' | 'audio' | 'document';
@@ -23,7 +24,7 @@ export interface PetrosAiNormalizedRequest {
   signal?: AbortSignal;
   stream: boolean;
   language?: string;
-  speech?: { voice?: 'cedar' | 'marin'; speed?: number };
+  speech?: PetrosSpeechOptions;
 }
 
 export interface PetrosAiNormalizedResponse {
@@ -255,7 +256,10 @@ class OpenAiCompatibleAdapter extends HttpAdapter implements PetrosProviderAdapt
         outputTokens: Math.ceil(text.length / 4),
         cachedTokens: 0,
         providerRequestId: response.headers.get('x-request-id') ?? undefined,
-        actualCostMicros: estimateModalityCostMicros(model.providerOptions, { audioSeconds }),
+        actualCostMicros: estimateModalityCostMicros({ ...model.providerOptions,
+          ...(provider.key === 'groq' && ['whisper-large-v3', 'whisper-large-v3-turbo'].includes(model.modelKey)
+            ? { minimumBillableSeconds: Math.max(10, number(model.providerOptions.minimumBillableSeconds)) } : {}),
+        }, { audioSeconds }),
       };
     } catch (error) {
       if (error instanceof ProviderCallError) throw error;
@@ -274,17 +278,24 @@ class OpenAiCompatibleAdapter extends HttpAdapter implements PetrosProviderAdapt
     const text = request.input.map((part) => part.text ?? '').join('\n').trim();
     if (!text) throw new ProviderCallError('TEXT_INPUT_REQUIRED', 'Text input is required.', false);
     const billableText = text.slice(0, 4_096);
+    const voices = supportedSpeechVoices(model.modelKey);
+    const requestedVoice = request.speech?.voice;
+    if (!voices.length || (requestedVoice && !voices.includes(requestedVoice)) || (request.speech?.strictVoice && !requestedVoice)) {
+      throw new ProviderCallError('UNSUPPORTED_VOICE', 'The selected voice is unavailable on this speech model. Select a supported voice.', false);
+    }
+    const effectiveVoice = requestedVoice && voices.includes(requestedVoice)
+      ? requestedVoice : supportsTutorInstructions(model.modelKey) ? 'cedar' : 'onyx';
     const base = provider.baseUrl ?? 'https://api.openai.com/v1';
     const response = await this.postBinary(
       `${base.replace(/\/$/, '')}/audio/speech`,
       { authorization: `Bearer ${this.key(provider)}` },
       {
         model: model.modelKey,
-        voice: /gpt-4o.*tts/i.test(model.modelKey) ? request.speech?.voice ?? 'cedar' : 'onyx',
+        voice: effectiveVoice,
         speed: request.speech?.speed ?? 1,
         response_format: 'wav',
         input: billableText,
-        ...(/gpt-4o.*tts/i.test(model.modelKey)
+        ...(supportsTutorInstructions(model.modelKey)
           ? {
               instructions:
                 'Speak naturally and clearly, like a calm helpful tutor in a one-to-one conversation. Use a relaxed, grounded tone and normal pitch. No cartoon character, exaggerated enthusiasm, theatrical delivery, or announcer voice. Read only the supplied text, in its language. Use short natural pauses.',
@@ -300,6 +311,9 @@ class OpenAiCompatibleAdapter extends HttpAdapter implements PetrosProviderAdapt
         dataBase64: response.body.toString('base64'),
         mimeType: response.headers.get('content-type')?.split(';')[0] ?? 'audio/wav',
         transcript: billableText,
+        requestedVoice: requestedVoice ?? null,
+        effectiveVoice,
+        voiceFallbackUsed: false,
       },
       inputTokens: Math.ceil(billableText.length / 4),
       outputTokens: 0,
@@ -527,7 +541,7 @@ export function estimateModalityCostMicros(
   units: { audioSeconds?: number; characters?: number },
 ): number | undefined {
   if (providerOptions.pricingUnit === 'audio_hour') {
-    const seconds = number(units.audioSeconds);
+    const seconds = Math.max(number(units.audioSeconds), number(providerOptions.minimumBillableSeconds));
     const rate = number(providerOptions.priceMicrosPerHour);
     return seconds > 0 && rate > 0 ? Math.round((seconds * rate) / 3_600) : undefined;
   }

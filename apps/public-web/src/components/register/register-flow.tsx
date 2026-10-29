@@ -336,13 +336,17 @@ export function RegisterFlow() {
   }, [persist]);
 
   const autosave = useCallback(
-    async (section: SectionKey) => {
+    async (section: SectionKey): Promise<boolean> => {
       setSaving(true);
       try {
         const { id, token } = await ensureDraft();
         await registrationApi.patch(id, token, { [section]: clean(data[section]) });
-      } catch {
-        /* autosave is best-effort; the final submit re-sends everything */
+        return true;
+      } catch (e) {
+        setSubmitError(
+          e instanceof Error ? e.message : 'Could not save this section. Please try again.',
+        );
+        return false;
       } finally {
         setSaving(false);
       }
@@ -411,6 +415,7 @@ export function RegisterFlow() {
   }, [hydrated, step, data.location.country, persist]);
 
   const goNext = async () => {
+    setSubmitError(null);
     if (isEmailStep) {
       if (!emailVerified) {
         setErrors((e) => ({ ...e, email: 'Please verify your email to continue.' }));
@@ -423,7 +428,9 @@ export function RegisterFlow() {
     if (!isReview) {
       const s = STEPS[step - 1]!;
       if (!validateSection(s)) return;
-      void autosave(s.key);
+      // Wait for each checkpoint to finish before advancing. Otherwise a slow draft PATCH can
+      // complete after final submit and overwrite the fully validated section data.
+      if (!(await autosave(s.key))) return;
     }
     setErrors({});
     setStep((x) => Math.min(x + 1, REVIEW_STEP));
@@ -609,7 +616,7 @@ export function RegisterFlow() {
             <ArrowLeft className="h-4 w-4" /> Back
           </Button>
           {!isReview ? (
-            <Button onClick={goNext}>
+            <Button onClick={goNext} disabled={saving}>
               Continue <ArrowRight className="h-4 w-4" />
             </Button>
           ) : (

@@ -1,0 +1,157 @@
+{
+  "approved": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d",
+  "classic": {
+    "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d",
+    "elements": [
+      {
+        "tag": "SPAN",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "SPAN",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "H2",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "BUTTON",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "BUTTON",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "BUTTON",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "BUTTON",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "BUTTON",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "BUTTON",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "BUTTON",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "BUTTON",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "BUTTON",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "SMALL",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      }
+    ],
+    "branded": 787.82373046875,
+    "fallback": 803.0625,
+    "loaded": [
+      {
+        "family": "__Outfit_a80a2d",
+        "status": "unloaded",
+        "weight": "100 900"
+      },
+      {
+        "family": "__Outfit_a80a2d",
+        "status": "loaded",
+        "weight": "100 900"
+      },
+      {
+        "family": "__Outfit_Fallback_a80a2d",
+        "status": "unloaded",
+        "weight": "normal"
+      }
+    ]
+  },
+  "world": {
+    "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d",
+    "elements": [
+      {
+        "tag": "SPAN",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "SPAN",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "H2",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "BUTTON",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "BUTTON",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "BUTTON",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "BUTTON",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "BUTTON",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "BUTTON",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "BUTTON",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "BUTTON",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "BUTTON",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      },
+      {
+        "tag": "SMALL",
+        "family": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+      }
+    ],
+    "branded": 787.82373046875,
+    "fallback": 803.0625,
+    "loaded": [
+      {
+        "family": "__Outfit_a80a2d",
+        "status": "unloaded",
+        "weight": "100 900"
+      },
+      {
+        "family": "__Outfit_a80a2d",
+        "status": "loaded",
+        "weight": "100 900"
+      },
+      {
+        "family": "__Outfit_Fallback_a80a2d",
+        "status": "loaded",
+        "weight": "normal"
+      }
+    ],
+    "board": "__Outfit_a80a2d, __Outfit_Fallback_a80a2d"
+  },
+  "passed": true
+}

@@ -218,6 +218,12 @@ import { MaterialDocumentPreviewService } from "../student/materials/material-do
 import { MaterialVisualPreviewService } from "../student/materials/material-visual-preview.service";
 import { PortalTeachingController } from "./teaching/portal-teaching.controller";
 import { PortalTeachingService } from "./teaching/portal-teaching.service";
+import { KnowledgeDocumentModule } from "../student/knowledge/knowledge-document.module";
+import { PetrosTeachingPackModule } from "../student/knowledge/petros-teaching-pack.module";
+import { PetrosLearningProposalService } from "./teaching/petros-learning-proposal.service";
+import { PetrosLearningProposalRepository } from "./teaching/petros-learning-proposal.repository";
+import { PetrosTeacherGuidanceService } from "./teaching/petros-teacher-guidance.service";
+import { PetrosTeacherGuidanceFilesService } from "./teaching/petros-teacher-guidance-files.service";
 import { PortalCoursesController } from "./courses/portal-courses.controller";
 import { PortalCoursesService } from "./courses/portal-courses.service";
 import { PortalReportCardsController } from "./report-cards/portal-report-cards.controller";
@@ -247,6 +253,8 @@ import { CalendarEventsService } from "./calendar-events/calendar-events.service
     CampusMirrorsModule,
     PetrosLearnerModelModule,
     PetrosAiRoutingModule,
+    KnowledgeDocumentModule,
+    forwardRef(() => PetrosTeachingPackModule),
     forwardRef(() => FederationModule),
   ],
   controllers: [
@@ -457,6 +465,10 @@ import { CalendarEventsService } from "./calendar-events/calendar-events.service
     MaterialDocumentPreviewService,
     MaterialVisualPreviewService,
     PortalTeachingService,
+    PetrosTeacherGuidanceService,
+    PetrosLearningProposalService,
+    PetrosLearningProposalRepository,
+    PetrosTeacherGuidanceFilesService,
     PortalCoursesService,
     PortalReportCardsService,
     PortalLearningSummaryService,

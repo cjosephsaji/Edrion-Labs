@@ -379,7 +379,8 @@ describe('route registry, from the API side', () => {
 describe('portal character speech', () => {
   it('routes transient TTS through the governed gateway without caching audio', async () => {
     const execute = vi.fn().mockResolvedValue({
-      content: { dataBase64: 'AA==', mimeType: 'audio/mpeg' },
+      content: { dataBase64: 'AA==', mimeType: 'audio/mpeg', effectiveVoice: 'marin' },
+      routeId: 'actual-route', routeFallbackUsed: true, modelKey: 'gpt-4o-mini-tts', providerKey: 'successful-provider',
     });
     const service = new PetrosCompanionService(
       {} as never,
@@ -389,6 +390,8 @@ describe('portal character speech', () => {
       { execute } as never,
       {} as never,
       {} as never,
+      undefined,
+      { validate: vi.fn().mockResolvedValue({}) } as never,
     );
     await expect(
       service.speak(
@@ -399,11 +402,13 @@ describe('portal character speech', () => {
     ).resolves.toEqual({
       audio: { dataBase64: 'AA==', mimeType: 'audio/mpeg' },
       transcript: 'Come on. I will show you.',
+      requestedVoice: 'marin', effective: { voice: 'marin', routeId: 'actual-route', modelKey: 'gpt-4o-mini-tts', providerKey: 'successful-provider' },
+      fallback: { voice: false, route: true },
     });
     expect(execute).toHaveBeenCalledWith(
       expect.objectContaining({
         disableCache: true,
-        speech: { voice: 'marin', speed: 1 },
+        speech: { voice: 'marin', speed: 1, strictVoice: true },
         context: expect.objectContaining({ functionKey: 'speech.synthesise' }),
         metadata: { surface: 'portal_character', transient: true },
       }),

@@ -11,6 +11,7 @@ import {
 import { DATABASE } from '../../../common/tokens';
 import { SurfaceGateService } from '../surfaces/surface-gate.service';
 import type { InstitutionalStudentPrincipal } from '../student.types';
+import { petrosGuidanceVisibility } from '../assignments/petros-guidance-visibility';
 
 /**
  * A candidate the API itself resolved. `title`/`summary` here come from the database,
@@ -817,7 +818,7 @@ export class PetrosStudentContextService {
         : undefined,
     ].filter((part): part is NonNullable<typeof part> => Boolean(part));
     if (!parts.length) return null;
-    return parts.length === 1 ? parts[0]! : or(...parts);
+    return and(parts.length === 1 ? parts[0]! : or(...parts), petrosGuidanceVisibility(principal.studentId));
   }
 
   private classId(principal: InstitutionalStudentPrincipal) {

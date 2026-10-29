@@ -44,6 +44,35 @@ import { ApproveWizard } from '@/components/registration/approve-wizard';
 import { RejectDialog } from '@/components/registration/reject-dialog';
 import { formatContactMethod, formatPlanName, planNameByKey } from '@/lib/registration-display';
 
+const AUDIT_SECTION_LABELS: Record<string, string> = {
+  institutionInfo: 'Institution',
+  location: 'Location',
+  campusInfo: 'Campuses',
+  primaryContact: 'Contact',
+  subscription: 'Plan and requirements',
+  consent: 'Consent',
+};
+
+function registrationAuditDetails(event: { action: string; newState: Record<string, unknown> | null }): string | null {
+  if (event.action !== 'registration.updated') return null;
+  const changedSections = event.newState?.changedSections;
+  if (!Array.isArray(changedSections) || changedSections.length === 0) {
+    return 'Field changes were not captured for this event.';
+  }
+
+  return changedSections
+    .flatMap((entry) => {
+      if (!entry || typeof entry !== 'object') return [];
+      const section = entry as { key?: unknown; fields?: unknown };
+      if (typeof section.key !== 'string' || !Array.isArray(section.fields)) return [];
+      const fields = section.fields.filter((field): field is string => typeof field === 'string');
+      if (fields.length === 0) return [];
+      const label = AUDIT_SECTION_LABELS[section.key] ?? section.key;
+      return [`${label}: ${fields.map((field) => field.replace(/([A-Z])/g, ' $1').toLowerCase()).join(', ')}`];
+    })
+    .join(' · ');
+}
+
 export default function RegistrationRequestDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -317,15 +346,22 @@ export default function RegistrationRequestDetailPage() {
                 {data.auditEvents.length === 0 ? (
                   <p className="text-sm text-text-muted">No audit events.</p>
                 ) : (
-                  <ul className="space-y-2">
-                    {data.auditEvents.map((e) => (
-                      <li key={e.id} className="flex items-center justify-between gap-2 text-sm">
-                        <span className="flex items-center gap-1.5 text-text-secondary">
-                          <Clock className="h-3.5 w-3.5" /> {e.action.replace(/^registration\./, '').replace(/_/g, ' ')}
-                        </span>
-                        <span className="text-xs text-text-muted">{new Date(e.occurredAt).toLocaleString()}</span>
-                      </li>
-                    ))}
+                    <ul className="space-y-2">
+                    {data.auditEvents.map((e) => {
+                      const details = registrationAuditDetails(e);
+                      return (
+                        <li key={e.id} className="flex items-start justify-between gap-3 text-sm">
+                          <span className="min-w-0 text-text-secondary">
+                            <span className="flex items-center gap-1.5">
+                              <Clock className="h-3.5 w-3.5 shrink-0" />
+                              {e.action.replace(/^registration\./, '').replace(/_/g, ' ')}
+                            </span>
+                            {details && <span className="ml-5 mt-0.5 block text-xs text-text-muted">{details}</span>}
+                          </span>
+                          <span className="shrink-0 text-xs text-text-muted">{new Date(e.occurredAt).toLocaleString()}</span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </CardContent>

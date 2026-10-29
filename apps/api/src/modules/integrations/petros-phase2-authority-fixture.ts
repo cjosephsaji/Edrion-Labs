@@ -55,7 +55,7 @@ export async function phase2AuthorityFixture(
   const ctx={principal,scope:{mode:'institution'},request:{}} as PortalActionContext;
   const student:InstitutionalStudentPrincipal={kind:'institutional',institutionId,studentId,institutionUserId:studentUserId,
     campusId:null,email:`${studentId}@example.test`,fullName:'Synthetic learner',permissions:['student.learn.use'],lastAuthAt:null};
-  const institution=<T>(work:()=>Promise<T>)=>runInInstitutionTenant(fixture.db,institutionId,work);
+  const institution=<T>(work:()=>Promise<T>)=>runInInstitutionTenant(fixture.db,institutionId,work,teacherUserId);
   const owned=<T>(work:()=>Promise<T>)=>runInStudentTenant(fixture.db,student,work);
   const common=()=>({id:randomUUID(),version:1,provenance:{method:'manual' as const,sourceRef:'synthetic-phase2',
     sourceHash:'a'.repeat(64),observedAt:'2026-01-01T00:00:00.000Z',licence:'synthetic-only'}});

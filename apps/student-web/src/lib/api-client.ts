@@ -221,6 +221,7 @@ export class StudentApiClient {
     file: Blob,
     options: {
       idempotencyKey: string;
+      signal?: AbortSignal;
       rotationDegrees?: 0 | 90 | 180 | 270;
       crop?: { x: number; y: number; width: number; height: number } | null;
     },
@@ -235,6 +236,7 @@ export class StudentApiClient {
       {
         method: 'PUT',
         body: file,
+        signal: options.signal,
         headers: { 'content-type': file.type || 'application/octet-stream' },
       },
       { rawBody: true },

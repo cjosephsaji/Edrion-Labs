@@ -25,6 +25,6 @@ import { PetrosDocumentPreparationService } from './petros-document-preparation.
     StudentRateLimitGuard,
     SurfacesService,
   ],
-  exports: [PetrosSessionIntentService],
+  exports: [PetrosSessionIntentService,PetrosSessionIntentRepository],
 })
 export class PetrosSessionIntentModule {}

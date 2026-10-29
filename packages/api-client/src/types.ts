@@ -1619,6 +1619,7 @@ export interface RegistrationApprovalResultDto {
   institutionPublicId: string;
   adminUserId: string;
   publicRef: string | null;
+  adminAccess: 'existing_account' | 'activation' | 'temporary_password';
 }
 
 export interface PetrosLearnerDiagnosticDto {

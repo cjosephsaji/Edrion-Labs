@@ -20,6 +20,13 @@ export const portalLoginSchema = z
   });
 export type PortalLoginInput = z.infer<typeof portalLoginSchema>;
 
+/** Choose a membership after login, or switch using an existing server session. */
+export const portalSelectInstitutionSchema = z.object({
+  institutionUserId: z.string().uuid(),
+  password: z.string().min(1).optional(),
+});
+export type PortalSelectInstitutionInput = z.infer<typeof portalSelectInstitutionSchema>;
+
 /** Complete account activation: set the first password using the token from the invitation email. */
 export const portalActivateSchema = z.object({
   token: z.string().min(1),

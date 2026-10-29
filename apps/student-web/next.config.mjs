@@ -1,3 +1,4 @@
+/* global process */
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,6 +29,12 @@ function loadWorkspacePublicEnv() {
 
 loadWorkspacePublicEnv();
 
+// Separate review processes must never replace each other's development chunks.
+const studioInstance = process.env.PETROS_STUDIO_INSTANCE;
+if (studioInstance && !/^[a-z0-9-]{1,48}$/.test(studioInstance)) {
+  throw new Error('Invalid studio verification instance');
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -35,9 +42,20 @@ const nextConfig = {
   // beside the local portal replaced the development manifests while its HTML still linked
   // to the old CSS chunks, leaving the browser with a fully unstyled page. Keep their
   // generated assets isolated so validation builds never break an active study session.
-  distDir: process.env.PETROS_ISOLATED_VERIFICATION === '1'
-    ? (process.env.NODE_ENV === 'development' ? '.next-petros-verification-dev' : '.next-petros-verification')
-    : (process.env.NODE_ENV === 'development' ? '.next-dev' : '.next'),
+  distDir:
+    process.env.PETROS_M4_VERIFICATION === '1'
+      ? `.next-petros-m4${studioInstance ? `-${studioInstance}` : ''}-${process.env.NODE_ENV === 'development' ? 'dev' : 'build'}`
+      : process.env.PETROS_ISOLATED_VERIFICATION === '1'
+        ? process.env.PETROS_M0P_VERIFICATION === '1'
+          ? process.env.NODE_ENV === 'development'
+            ? '.next-petros-m0p-verification-dev'
+            : '.next-petros-m0p-verification'
+          : process.env.NODE_ENV === 'development'
+            ? '.next-petros-verification-dev'
+            : '.next-petros-verification'
+        : process.env.NODE_ENV === 'development'
+          ? '.next-dev'
+          : '.next',
   transpilePackages: [
     '@edrion/ui',
     '@edrion/schemas',

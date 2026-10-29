@@ -4,11 +4,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Stable family names keep the app and token aliases aligned across dev rebuilds. */
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/outfit-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-latin.woff2') format('woff2');
+}
+
 @layer base {
   * {
     border-color: var(--border);
   }
   html {
+    --font-st-body-face: 'Outfit';
+    --font-st-mono-face: 'JetBrains Mono';
     --font-st-display-face: var(--font-st-body-face);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

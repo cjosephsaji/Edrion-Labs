@@ -14,12 +14,14 @@ import {
   independentSignupSchema,
   independentVerifySchema,
   studentActivateSchema,
+  studentChangePasswordSchema,
   studentLoginSchema,
   studentResetRequestSchema,
   studentResetSchema,
   type IndependentSignupInput,
   type IndependentVerifyInput,
   type StudentActivateInput,
+  type StudentChangePasswordInput,
   type StudentLoginInput,
   type StudentResetInput,
   type StudentResetRequestInput,
@@ -30,7 +32,7 @@ import type { EdrionRequestContext } from '../../../common/request-context';
 import { zodBody } from '../../../common/zod-validation.pipe';
 import { StudentAuthGuard } from '../core/student-auth.guard';
 import { StudentSessionService } from '../core/student-session.service';
-import { CurrentStudentContext } from '../core/student.decorators';
+import { AllowStudentPasswordSetup, CurrentStudentContext } from '../core/student.decorators';
 import type { StudentContext } from '../student.types';
 import { StudentAuthService } from './student-auth.service';
 
@@ -51,14 +53,31 @@ export class StudentAuthController {
     @ReqContext() req: EdrionRequestContext,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { token } = await this.auth.login(body, req);
+    const { token, passwordChangeRequired } = await this.auth.login(body, req);
     res.cookie(this.sessions.cookieName, token, this.sessions.cookieOptions());
-    return { authenticated: true };
+    return { authenticated: true, passwordChangeRequired };
+  }
+
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(StudentAuthGuard)
+  @AllowStudentPasswordSetup()
+  async changePassword(
+    @Body(zodBody(studentChangePasswordSchema)) body: StudentChangePasswordInput,
+    @CurrentStudentContext() sc: StudentContext,
+    @ReqContext() req: EdrionRequestContext,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    this.requireSessionId(sc);
+    const { token } = await this.auth.changePassword(sc.principal, body, req);
+    res.cookie(this.sessions.cookieName, token, this.sessions.cookieOptions());
+    return { passwordChanged: true };
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @UseGuards(StudentAuthGuard)
+  @AllowStudentPasswordSetup()
   async logout(
     @CurrentStudentContext() sc: StudentContext,
     @ReqContext() req: EdrionRequestContext,

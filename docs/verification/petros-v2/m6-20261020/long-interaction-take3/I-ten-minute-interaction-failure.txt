@@ -1,0 +1,114 @@
+Skip to your learning stage
+Your lessons
+petros
+LEARNING STUDIO
+Pause lesson
+Demo preview · Sample content and simulated reviews
+About this demo
+Cloud Computing
+Explore
+Your turn
+03
+Reflect
+
+OUR FOCUS
+Distinguish service responsibility and apply the bounded memory-capacity method.
+
+Petros · Looking Back
+
+Take your time. Your work stays here.
+
+Transcript
+Dismiss caption
+Hide character
+What happened when you tried VM 5?
+
+Current challenge · Predict whether another allocation fits. Test the model, then revise your calculation and explain what changed.
+
+Question, previous feedback and teaching rationale
+Inspect teaching source
+Available memory · Previously checked
+VM memory laboratory · Explore
+Whole VM capacity · Revise, then submit
+Explanation · Saved · hasn’t been checked
+Available memory — 48 GB
+Previously checked · View calculation
+VM memory laboratory
+Total 64 GB
+Host reservation 16 GB
+Each whole VM 8 GB
+Available for VMs 48 GB
+▧ Reserved
+▣ VM allocations
+□ Remaining
+VM 1
+8 GB
+VM 2
+8 GB
+VM 3
+8 GB
+VM 4
+8 GB
+VM 5
+8 GB
+Allocated VMs
+5
+VM memory used
+40 GB
+Remaining for VMs
+8 GB
+Utilization of available memory
+83.3%
+What happened · VM 5
+
+Your prediction: it will fit.
+
+Observed: the allocation was accepted. 5 VMs now use 40 GB; 8 GB remain.
+
+This test supported your prediction. It is an observation, not a grade.
+
+Compare this test
+What happened, and why?
+Save explanation
+Try another VM
+Change the allocation
+
+GB · fixed host reservation · whole 8 GB VMs · no overcommit. Exploration.
+
+Earlier tests (11)
+Current test details
+About this memory model
+Whole VM capacity
+You’re working on
+
+Your previous answer
+
+48
+/
+8
+=
+7
+𝑉
+𝑀
+48/8=7VM
+See the worked example
+
+Change your answer, then save it before submitting.
+
+Your answer · Whole VM capacity
+Unit: VM
+Save step
+What this example assumes
+Explain this step
+Your turn
+
+Correct the whole-VM capacity step. Explain what each unit means.
+
+Review your correction
+Undo edit
+Redo edit
+Read this explanation
+Submitted work saved
+Sources
+Ask Petros
+End session

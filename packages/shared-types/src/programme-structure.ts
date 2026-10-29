@@ -30,12 +30,15 @@ export interface SlotOverride {
 }
 
 export interface PlannedLevel {
+  /** Existing row identity, retained when editing a saved structure. */
+  id?: string;
   sequence: number;
   name: string;
   durationMonths: number | null;
 }
 
 export interface PlannedSlot {
+  id?: string;
   levelSequence: number;
   sequenceInYear: number;
   absoluteSequence: number;
@@ -58,6 +61,33 @@ export interface GeneratedStructure {
   levels: PlannedLevel[];
   slots: PlannedSlot[];
   totals: { years: number; slots: number };
+}
+
+/** Keep year, term and absolute positions contiguous after editing a preview. */
+export function normalizeStructure(
+  levels: PlannedLevel[],
+  slots: PlannedSlot[],
+): GeneratedStructure {
+  const nextSlots: PlannedSlot[] = [];
+  const nextLevels = levels.map((level, levelIndex) => {
+    slots
+      .filter((slot) => slot.levelSequence === level.sequence)
+      .sort((a, b) => a.sequenceInYear - b.sequenceInYear)
+      .forEach((slot, slotIndex) => {
+        nextSlots.push({
+          ...slot,
+          levelSequence: levelIndex + 1,
+          sequenceInYear: slotIndex + 1,
+          absoluteSequence: nextSlots.length + 1,
+        });
+      });
+    return { ...level, sequence: levelIndex + 1 };
+  });
+  return {
+    levels: nextLevels,
+    slots: nextSlots,
+    totals: { years: nextLevels.length, slots: nextSlots.length },
+  };
 }
 
 export interface StructurePreset extends GenerateStructureInput {
@@ -199,7 +229,7 @@ function applyOverrides(
 ): { levels: PlannedLevel[]; slots: PlannedSlot[] } {
   if (!overrides?.length) return { levels, slots };
 
-  let nextLevels = [...levels];
+  const nextLevels = [...levels];
   let nextSlots = [...slots];
 
   for (const o of overrides) {

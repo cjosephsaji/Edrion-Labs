@@ -12,6 +12,7 @@ export interface IssueStudentSessionInput {
   institutionId?: string;
   ip?: string;
   userAgent?: string;
+  passwordSetupOnly?: boolean;
 }
 
 export interface VerifiedStudentSession {
@@ -20,6 +21,7 @@ export interface VerifiedStudentSession {
   userId: string;
   institutionId?: string;
   lastAuthAt: Date;
+  passwordSetupOnly?: boolean;
 }
 
 /**
@@ -76,6 +78,7 @@ export class StudentSessionService {
         sid: session.id,
         uid: session.institutionUserId,
         kind: 'institutional',
+        ...(input.passwordSetupOnly ? { passwordSetupOnly: true } : {}),
       };
       const token = signHs256(payload, this.env.SESSION_COOKIE_SECRET, this.env.SESSION_TTL_SECONDS, now);
       return { token, sessionId: session.id };
@@ -139,6 +142,7 @@ export class StudentSessionService {
         userId: session.institutionUserId,
         institutionId: session.institutionId,
         lastAuthAt: session.lastAuthAt,
+        passwordSetupOnly: payload.passwordSetupOnly === true,
       };
     }
 

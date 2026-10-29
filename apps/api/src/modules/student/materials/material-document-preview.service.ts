@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import JSZip from 'jszip';
 import mammoth from 'mammoth';
+import { convertPresentation } from './presentation-converter';
 
 const MAX_PREVIEW_CHARS = 180_000;
 const MAX_SPREADSHEET_ROWS = 250;
@@ -64,6 +65,9 @@ export class MaterialDocumentPreviewService {
         sections = await wordSections(input.buffer, budget);
       } else if (extension === 'pptx' || isPptx(input.mimeType)) {
         sections = await slideSections(input.buffer, budget);
+      } else if (extension === 'ppt' || input.mimeType.toLowerCase() === 'application/vnd.ms-powerpoint') {
+        // Legacy PPT strings include font/shape/master metadata. Read actual slide text instead.
+        sections = await slideSections(await convertPresentation(input.buffer, 'ppt', 'pptx'), budget);
       } else if (extension === 'xlsx' || isXlsx(input.mimeType)) {
         sections = await spreadsheetSections(input.buffer, budget);
       } else if (['odt', 'odp', 'ods'].includes(extension)) {
@@ -75,12 +79,12 @@ export class MaterialDocumentPreviewService {
       } else if (format === 'text') {
         sections = textSections(decodeText(input.buffer), budget);
       } else {
-        // Older .doc/.ppt/.xls files are OLE binaries. Their readable string records still
+        // Older .doc/.xls files are OLE binaries. Their readable string records still
         // provide a useful in-app preview when an extracted Petros copy is not available.
         sections = textSections(extractBinaryStrings(input.buffer), budget);
       }
     } catch {
-      sections = textSections(extractBinaryStrings(input.buffer), budget);
+      sections = format === 'slides' ? [] : textSections(extractBinaryStrings(input.buffer), budget);
     }
 
     const readable = sections.some((section) => Boolean(section.text?.trim()) || section.rows?.some((row) => row.some((cell) => cell.trim())));

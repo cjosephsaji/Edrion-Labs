@@ -1,0 +1,105 @@
+- alert
+- main:
+  - link "Skip to your learning stage":
+    - /url: "#learning-stage"
+  - button "Your lessons":
+    - generic: Your lessons
+  - button "Petros learning studio":
+    - text: petros
+    - generic: LEARNING STUDIO
+  - button "Learning preferences":
+  - button "Pause lesson":
+    - generic: Pause lesson
+  - strong: Demo preview
+  - text: · Sample content and simulated reviews
+  - button "About this demo":
+    - text: About this demo
+  - heading "English Argument Analysis" [level=1]
+  - navigation "Lesson progress":
+    - list:
+      - text: Explore
+      - text: Your turn
+      - generic: "03"
+      - text: Reflect
+  - paragraph:
+    - generic: OUR FOCUS
+    - text: Identify the author’s claim and distinguish it from the evidence offered for it.
+  - region "Learning studio":
+    - region "Petros companion":
+      - text: Petros · Looking back
+      - paragraph: Your explanation is saved for review. I can’t confirm its correctness yet.
+      - img "Petros, waiting"
+    - generic: "?"
+    - text: Teacher review needed
+    - button "Hide Petros character": Hide character
+    - region "Interactive teaching workspace":
+      - generic "Structured canvas elements":
+        - region "Build and explain the connections":
+          - heading "Build and explain the connections" [level=3]
+          - toolbar "Diagram navigation":
+            - generic "Select and ask about teaching elements. Editing opens at Your turn.": Reviewing
+            - button "Undo diagram edit" [disabled]:
+            - button "Redo diagram edit" [disabled]:
+            - button "Zoom out":
+            - button "Zoom in":
+            - button "Fit diagram to view":
+            - button "Text version and keyboard help":
+              - text: Text
+          - generic "Diagram editing surface":
+            - group "Editable service relationship diagram":
+              - button "Claim · inspect the quoted source"
+              - button "Evidence · survey passage"
+              - button "Warrant or alternative explanation"
+              - button "supports"
+          - paragraph: Read each connection as a sentence, from its starting idea to its destination.
+          - list "Diagram relationships":
+            - strong: Evidence · survey passage
+            - text: supports
+            - strong: Claim · inspect the quoted source
+        - generic "Exact source passage · supporting material"
+        - generic "Exact survey passage · supporting material"
+      - button "Teaching text alternative"
+    - region "Connect the survey to the claim. Annotate the assumption and a defensible alternative reading.":
+      - paragraph: Your saved response
+      - strong: Question you’re working on
+      - heading "Connect the survey to the claim. Annotate the assumption and a defensible alternative reading." [level=2]
+      - paragraph: Assisted practice · your use of the reviewed explanation is recorded.
+      - paragraph: The source passage
+      - blockquote:
+        - button "Focus passage paragraph 1": Identify the author’s claim, the supporting evidence, and explain how the evidence supports the claim.
+      - paragraph: Select wording to keep it in focus while you write.
+      - group "Your response":
+        - generic: Your response
+        - generic: Your answer
+        - textbox "Your answer" [disabled]: The survey of 120 learners, with 84 preferring later access, supports considering the library-hours claim. The sample may not represent all residents, and preference does not by itself prove a benefit for every resident.
+      - status [active]: Answer submitted. Your response needs teacher review.
+      - generic "Response feedback":
+        - heading "Teacher review needed" [level=3]
+        - paragraph: Correctness is not fully established.
+        - generic: ↗
+        - text: Assisted practice · separate from independent verification
+        - strong:
+          - generic: "?"
+          - text: Claim identification
+        - text: · Teacher review needed
+        - paragraph: This part of your response needs teacher review.
+        - strong:
+          - generic: "?"
+          - text: Evidence identification
+        - text: · Teacher review needed
+        - paragraph: This part of your response needs teacher review.
+        - strong:
+          - generic: "?"
+          - text: Explanation and alternatives
+        - text: · Teacher review needed
+        - paragraph: This part of your response needs teacher review.
+        - paragraph: Your explanation is saved for teacher review. Checked factual parts remain marked individually.
+        - generic "About this feedback"
+    - button "Work on this with Petros"
+    - status: Submitted work saved
+    - button "Sources":
+      - text: Sources
+    - button "Ask Petros":
+      - text: Ask Petros
+    - button "End session":
+      - text: End session

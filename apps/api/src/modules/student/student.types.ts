@@ -10,6 +10,7 @@ export interface InstitutionalStudentPrincipal {
   email: string;
   fullName: string;
   lastAuthAt: Date | null;
+  passwordChangeRequired?: boolean;
   permissions: string[];
 }
 
@@ -36,6 +37,7 @@ export interface StudentSessionTokenPayload {
   sid: string;
   uid: string;
   kind: StudentSessionKind;
+  passwordSetupOnly?: boolean;
   iat?: number;
   exp?: number;
 }

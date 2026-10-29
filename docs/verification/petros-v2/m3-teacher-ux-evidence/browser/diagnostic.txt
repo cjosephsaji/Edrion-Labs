@@ -1,0 +1,134 @@
+Skip to content
+Isolated M3 demonstration
+Education OS
+OVERVIEW
+Dashboard
+Attention Centre
+Petros
+Petros support
+WORKFLOW
+Approvals
+Grievances
+ACADEMIC SETUP
+Academic Years
+Departments
+Grades
+Subjects
+Classes
+Terms
+PEOPLE
+Students
+Student Conduct
+Staff
+Parents
+CAREERS
+Placement cell
+ACADEMICS
+Teaching
+Admissions
+Attendance
+Timetable
+Homework
+Exams
+Gradebook
+Report cards
+Assignments
+Calendar
+FINANCE
+Fees
+Expenses
+Payroll
+OPERATIONS
+Library
+Transport
+Inventory
+Hostel
+COMMUNICATION
+Announcements
+Notifications
+Messages
+PTM scheduling
+HEALTH & WELLBEING
+Health Records
+Medical Incidents
+Medication Logs
+Counseling
+Counseling Cases
+CAMPUS OPERATIONS
+Labs
+Lab Schedule
+Lab Incidents
+Debate calibration
+Front Desk
+Appointments
+Facilities
+Work Orders
+Maintenance
+Assets
+Visitor Logs
+Gate Passes
+Security Incidents
+Emergency Alerts
+Access Logs
+Sensitive Reports
+IT
+Devices
+Access Requests
+Webhooks
+INSIGHTS
+Reports
+ADMINISTRATION
+Campuses
+Documents & Policies
+User Management
+Roles & Permissions
+Settings
+Petros policy
+SSO & roster
+Billing
+Audit Logs
+SM
+Synthetic M3 actor
+e8236aaf-5635-499b-89c4-6f9cfdf7c162@example.test
+Sign out
+Cloud Computing
+All subjects
+50cf13c4-8916-4cff-9433-65789578e67f Cloud Computing
+
+Isolated source review class · 2 students
+
+Notes
+Files
+Class updates
+Petros Learn
+Petros Learn
+
+Prepare lessons and guide your students.
+
+Lessons
+Learning goals
+Student progress
+Curriculum authoring
+That action could not be completed. Your changes are still here. Check your connection and try again.
+1
+Choose material
+2
+Review lesson
+3
+Preview activities
+4
+Save & submit
+
+STEP 1 OF 4
+
+What would you like Petros to teach?
+
+Start with your teaching material. Review the lesson, preview the activities, then request approval.
+
+No teaching material available
+
+Add or select a supported file in the teaching workspace’s Files tab.
+
+Your lesson stays private until approved.
+
+Prepare document outline

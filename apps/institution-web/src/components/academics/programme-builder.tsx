@@ -1,40 +1,102 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
 import { Button, Input, Label, Select } from '@edrion/ui';
+import { commitStructureSchema } from '@edrion/schemas';
 import {
-  STRUCTURE_PRESETS,
   TERM_SYSTEMS,
+  SLOT_KINDS,
+  defaultSlotName,
   generateStructure,
+  normalizeStructure,
+  slotKindForSystem,
+  termsPerYearForSystem,
   type GeneratedStructure,
-  type SlotOverride,
+  type InstitutionType,
+  type PlannedSlot,
   type TermSystem,
 } from '@edrion/shared-types';
-import { useCommitProgrammeStructure } from '@/lib/academics';
-import { useTeachingStaffOptions, teachingStaffSelectOptions } from '@/lib/people';
-import { useTerm } from '@/lib/term';
+import { useCommitProgrammeStructure, type ProgrammeStructureDetail } from '@/lib/academics';
+import { useAcademicStructureTerms } from '@/lib/academic-structure-terms';
 
 const TERM_SYSTEM_LABELS: Record<TermSystem, string> = {
   annual: 'Yearly',
   semester: 'Semesters',
   trimester: 'Trimesters',
   quarter: 'Quarters',
-  modular: 'No fixed terms',
+  modular: 'Modules',
   custom: 'Custom',
   term: 'Terms',
 };
+const SLOT_KIND_LABELS = {
+  term: 'Term',
+  semester: 'Semester',
+  trimester: 'Trimester',
+  quarter: 'Quarter',
+  phase: 'Phase',
+  module: 'Module',
+};
+
+function initialStructure(type: InstitutionType) {
+  const termSystem: TermSystem =
+    type === 'school' ? 'term' : type === 'training_center' ? 'modular' : 'semester';
+  return {
+    termSystem,
+    grid: generateStructure({
+      termSystem,
+      durationMonths: type === 'school' ? null : type === 'training_center' ? 6 : 36,
+      gradeCount: type === 'school' ? 1 : undefined,
+    }),
+  };
+}
+
+function slotsForLevel(termSystem: TermSystem, levelSequence: number): PlannedSlot[] {
+  return Array.from({ length: termsPerYearForSystem(termSystem) }, (_, index) => ({
+    levelSequence,
+    sequenceInYear: index + 1,
+    absoluteSequence: index + 1,
+    name: defaultSlotName(termSystem, index + 1),
+    kind: slotKindForSystem(termSystem),
+    durationMonths: null,
+    isTerminal: false,
+  }));
+}
+
+function savedStructure(detail: ProgrammeStructureDetail): GeneratedStructure {
+  return normalizeStructure(
+    detail.levels.map((level) => ({
+      id: level.id,
+      sequence: level.sequence,
+      name: level.name,
+      durationMonths: level.durationLabel ? Number.parseInt(level.durationLabel, 10) || null : null,
+    })),
+    detail.levels.flatMap((level) =>
+      level.slots.map((slot) => ({
+        id: slot.id,
+        levelSequence: level.sequence,
+        sequenceInYear: slot.sequenceInYear,
+        absoluteSequence: slot.absoluteSequence,
+        name: slot.name,
+        kind: slot.kind as PlannedSlot['kind'],
+        durationMonths: slot.durationMonths,
+        isTerminal: slot.isTerminal,
+      })),
+    ),
+  );
+}
 
 interface ProgrammeBuilderProps {
+  initialStructureDetail?: ProgrammeStructureDetail;
+  onCancel?: () => void;
   departmentId?: string;
   onCreated?: (departmentId: string) => void;
   onCommitted?: (detail: import('@/lib/academics').ProgrammeStructureDetail) => void;
+  onDraftChange?: (hasDraft: boolean) => void;
   canManage?: boolean;
-  /** When set, creates the department first then commits structure. */
   createDepartment?: (input: {
     name: string;
-    code?: string;
-    headUserId?: string | null;
+    unitKind: 'programme';
     termSystem: TermSystem;
     durationMonths?: number | null;
     termsPerYear?: number;
@@ -42,288 +104,456 @@ interface ProgrammeBuilderProps {
 }
 
 export function ProgrammeBuilder({
+  initialStructureDetail,
+  onCancel,
   departmentId: initialDeptId,
   onCreated,
   onCommitted,
+  onDraftChange,
   canManage = true,
   createDepartment,
 }: ProgrammeBuilderProps) {
-  const { t, tp } = useTerm();
+  const { t, tp, type } = useAcademicStructureTerms();
   const commit = useCommitProgrammeStructure();
-  const { data: teachers } = useTeachingStaffOptions();
-  const teacherOptions = teachingStaffSelectOptions(teachers);
-
-  const [departmentId, setDepartmentId] = useState(initialDeptId ?? '');
-  const [name, setName] = useState('');
-  const [headUserId, setHeadUserId] = useState('');
-  const [presetId, setPresetId] = useState('btech');
-  const [termSystem, setTermSystem] = useState<TermSystem>('semester');
-  const [durationYears, setDurationYears] = useState('4');
-  const [termsPerYear, setTermsPerYear] = useState('2');
-  const [gradeCount, setGradeCount] = useState('12');
-  const [grid, setGrid] = useState<GeneratedStructure | null>(null);
-  const [overrides, setOverrides] = useState<SlotOverride[]>([]);
+  const [departmentId, setDepartmentId] = useState(
+    initialStructureDetail?.department.id ?? initialDeptId ?? '',
+  );
+  const [name, setName] = useState(initialStructureDetail?.department.name ?? '');
+  const [termSystem, setTermSystem] = useState<TermSystem>(() =>
+    initialStructureDetail
+      ? (initialStructureDetail.department.termSystem as TermSystem)
+      : initialStructure(type).termSystem,
+  );
+  const [grid, setGrid] = useState<GeneratedStructure>(() =>
+    initialStructureDetail ? savedStructure(initialStructureDetail) : initialStructure(type).grid,
+  );
+  const [hasDraft, setHasDraft] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const editable = canManage && !saving && !initialStructureDetail?.department.structureLocked;
 
-  function resetForAnother() {
-    setDepartmentId('');
-    setName('');
-    setHeadUserId('');
-    setOverrides([]);
-    setPresetId('btech');
-    setTermSystem('semester');
-    setDurationYears('4');
-    setTermsPerYear('2');
-    setGradeCount('12');
-    setError(null);
+  useEffect(() => {
+    onDraftChange?.(hasDraft);
+  }, [hasDraft, onDraftChange]);
+
+  function editGrid(update: (current: GeneratedStructure) => GeneratedStructure) {
+    setGrid(update);
+    setHasDraft(true);
+    setSuccess(null);
   }
 
-  const preset = STRUCTURE_PRESETS.find((p) => p.id === presetId);
+  function changeTermSystem(next: TermSystem) {
+    setTermSystem(next);
+    editGrid((current) =>
+      normalizeStructure(
+        current.levels,
+        current.levels.flatMap((level) => slotsForLevel(next, level.sequence)),
+      ),
+    );
+  }
 
-  useEffect(() => {
-    if (!preset) return;
-    setTermSystem(preset.termSystem);
-    if (preset.durationMonths != null) setDurationYears(String(preset.durationMonths / 12));
-    if (preset.gradeCount != null) setGradeCount(String(preset.gradeCount));
-    if (preset.termsPerYear != null) setTermsPerYear(String(preset.termsPerYear));
-  }, [preset]);
+  function editSlot(levelSequence: number, sequenceInYear: number, update: Partial<PlannedSlot>) {
+    editGrid((current) =>
+      normalizeStructure(
+        current.levels,
+        current.slots.map((slot) =>
+          slot.levelSequence === levelSequence && slot.sequenceInYear === sequenceInYear
+            ? { ...slot, ...update }
+            : slot,
+        ),
+      ),
+    );
+  }
 
-  const previewInput = useMemo(() => {
-    const durationMonths =
-      termSystem === 'term'
-        ? null
-        : termSystem === 'modular' && preset?.durationMonths == null
-          ? null
-          : Math.round(Number(durationYears || '0') * 12) || preset?.durationMonths || null;
+  function addSlot(levelSequence: number) {
+    editGrid((current) => {
+      const sequenceInYear =
+        current.slots.filter((slot) => slot.levelSequence === levelSequence).length + 1;
+      return normalizeStructure(current.levels, [
+        ...current.slots,
+        {
+          levelSequence,
+          sequenceInYear,
+          absoluteSequence: current.slots.length + 1,
+          name: defaultSlotName(termSystem, sequenceInYear),
+          kind: slotKindForSystem(termSystem),
+          durationMonths: null,
+          isTerminal: false,
+        },
+      ]);
+    });
+  }
 
-    return {
-      termSystem,
-      durationMonths,
-      termsPerYear: termSystem === 'custom' ? Number(termsPerYear) || 2 : undefined,
-      gradeCount: termSystem === 'term' ? Number(gradeCount) || 12 : undefined,
-      preset: preset?.preset ?? (presetId === 'mbbs' || presetId === 'bds' ? presetId : undefined),
-      overrides,
-    };
-  }, [termSystem, durationYears, termsPerYear, gradeCount, preset, presetId, overrides]);
-
-  useEffect(() => {
-    setGrid(generateStructure(previewInput));
-  }, [previewInput]);
-
-  function renameSlot(levelSequence: number, sequenceInYear: number, newName: string) {
-    setOverrides((prev) => {
-      const rest = prev.filter(
-        (o) => !(o.levelSequence === levelSequence && o.sequenceInYear === sequenceInYear),
+  function addLevel() {
+    editGrid((current) => {
+      const sequence = current.levels.length + 1;
+      return normalizeStructure(
+        [
+          ...current.levels,
+          {
+            sequence,
+            name: t('gradeLevel') + ' ' + sequence,
+            durationMonths: type === 'school' ? null : 12,
+          },
+        ],
+        [...current.slots, ...slotsForLevel(termSystem, sequence)],
       );
-      return [...rest, { levelSequence, sequenceInYear, name: newName }];
     });
   }
 
   async function handleCommit() {
-    if (!grid) return;
     setError(null);
     setSuccess(null);
-    const programmeName = name.trim();
+    if (
+      grid.levels.some((level) => !grid.slots.some((slot) => slot.levelSequence === level.sequence))
+    ) {
+      setError('Add at least one term or module to each ' + t('gradeLevel').toLowerCase() + '.');
+      return;
+    }
+    const durationMonths = grid.levels.every((level) => level.durationMonths != null)
+      ? grid.levels.reduce((total, level) => total + (level.durationMonths ?? 0), 0)
+      : null;
+    const termsPerYear = Math.max(
+      ...grid.levels.map(
+        (level) => grid.slots.filter((slot) => slot.levelSequence === level.sequence).length,
+      ),
+    );
+    const validated = commitStructureSchema.safeParse({
+      name: name.trim(),
+      version: initialStructureDetail?.department.version,
+      termSystem,
+      durationMonths,
+      termsPerYear,
+      levels: grid.levels,
+      slots: grid.slots,
+    });
+    if (!validated.success) {
+      setError(
+        validated.error.issues[0]?.message ?? 'Check the names and durations in the preview.',
+      );
+      return;
+    }
+    setSaving(true);
     try {
       let deptId = departmentId;
       if (!deptId && createDepartment) {
         const created = await createDepartment({
-          name: programmeName,
-          headUserId: headUserId || null,
+          name: name.trim(),
+          unitKind: 'programme',
           termSystem,
-          durationMonths: previewInput.durationMonths,
-          termsPerYear: Number(termsPerYear) || (termSystem === 'semester' ? 2 : 3),
+          durationMonths,
+          termsPerYear,
         });
         deptId = created.id;
+        // A failed structure save can retry without creating a duplicate department.
+        setDepartmentId(deptId);
         onCreated?.(deptId);
       }
       if (!deptId) {
-        setError('Enter a programme name first.');
+        setError('Enter a ' + t('department').toLowerCase() + ' name first.');
         return;
       }
-      const result = await commit.mutateAsync({
-        departmentId: deptId,
-        body: {
-          termSystem,
-          durationMonths: previewInput.durationMonths ?? undefined,
-          termsPerYear: Number(termsPerYear) || (termSystem === 'semester' ? 2 : 3),
-          levels: grid.levels,
-          slots: grid.slots,
-        },
-      });
+      const result = await commit.mutateAsync({ departmentId: deptId, body: validated.data });
       onCommitted?.(result);
-      setSuccess(`${result.department.name} structure saved.`);
-      resetForAnother();
+      setSuccess(result.department.name + ' structure saved.');
+      if (initialStructureDetail) {
+        setHasDraft(false);
+        return;
+      }
+      const defaults = initialStructure(type);
+      setDepartmentId(initialDeptId ?? '');
+      setName('');
+      setTermSystem(defaults.termSystem);
+      setGrid(defaults.grid);
+      setHasDraft(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save structure.');
+    } finally {
+      setSaving(false);
     }
   }
 
-  const slotsByLevel = useMemo(() => {
-    const map = new Map<number, GeneratedStructure['slots']>();
-    for (const s of grid?.slots ?? []) {
-      const list = map.get(s.levelSequence) ?? [];
-      list.push(s);
-      map.set(s.levelSequence, list);
-    }
-    return map;
-  }, [grid]);
-
   return (
     <div className="space-y-4">
+      {initialStructureDetail?.department.structureLocked && (
+        <p role="status" className="text-sm text-text-secondary">
+          This structure is locked because students are enrolled.
+        </p>
+      )}
+      {type === 'school' && (
+        <p className="text-sm text-text-secondary">
+          Create a course or stream, add the grades it offers (for example Grade X and Grade XI),
+          then assign required and elective subjects in Curriculum.
+        </p>
+      )}
       <div>
-        <Label>{t('department')} name</Label>
+        <Label htmlFor="programme-name">{t('department')} name</Label>
         <Input
+          id="programme-name"
           value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={`e.g. MBBS, B.Tech CSE`}
-          disabled={!canManage}
+          maxLength={160}
+          onChange={(e) => {
+            setName(e.target.value);
+            setHasDraft(true);
+            setSuccess(null);
+          }}
+          placeholder={
+            type === 'school'
+              ? 'e.g. Computer Mathematics, Science, Commerce'
+              : type === 'training_center'
+                ? 'e.g. Web development'
+                : 'e.g. BSc Computer Science'
+          }
+          disabled={!editable}
         />
       </div>
-
-      <div>
-        <Label>{t('department')} head (optional)</Label>
-        <Select
-          value={headUserId}
-          onChange={(e) => setHeadUserId(e.target.value)}
-          placeholder="No head assigned"
-          options={[{ value: '', label: 'No head assigned' }, ...teacherOptions]}
-          disabled={!canManage}
-        />
-        <p className="mt-1 text-xs text-text-muted">A teaching staff member who leads this {t('department').toLowerCase()}.</p>
-      </div>
-
-      <div>
-        <Label>Starting template</Label>
-        <Select
-          value={presetId}
-          onChange={(e) => setPresetId(e.target.value)}
-          options={STRUCTURE_PRESETS.map((p) => ({ value: p.id, label: p.label }))}
-          disabled={!canManage}
-        />
-      </div>
-
-      <div>
-        <Label>How is it split?</Label>
-        <div className="mt-1.5 flex flex-wrap gap-2">
-          {TERM_SYSTEMS.filter((s) => s !== 'custom').map((s) => (
-            <Button
-              key={s}
-              type="button"
-              size="sm"
-              variant={termSystem === s ? 'primary' : 'secondary'}
-              onClick={() => setTermSystem(s)}
-              disabled={!canManage}
-            >
-              {TERM_SYSTEM_LABELS[s]}
-            </Button>
-          ))}
+      <div className="space-y-4 rounded-lg border border-border bg-background-secondary/40 p-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+            Live preview
+          </p>
+          <p className="mt-1 text-sm text-text-secondary">
+            Add, edit, or remove {tp('gradeLevel').toLowerCase()} and their terms here before
+            saving.
+          </p>
         </div>
-      </div>
-
-      {termSystem !== 'term' && termSystem !== 'modular' && (
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>How long? (years)</Label>
-            <Input
-              type="number"
-              min={1}
-              max={20}
-              value={durationYears}
-              onChange={(e) => setDurationYears(e.target.value)}
-              disabled={!canManage}
-            />
+        <div>
+          <Label>Academic calendar</Label>
+          <div className="mt-1.5 flex flex-wrap gap-2">
+            {TERM_SYSTEMS.filter((system) => system !== 'custom').map((system) => (
+              <Button
+                key={system}
+                type="button"
+                size="sm"
+                variant={termSystem === system ? 'primary' : 'secondary'}
+                onClick={() => changeTermSystem(system)}
+                disabled={!editable || system === termSystem}
+              >
+                {TERM_SYSTEM_LABELS[system]}
+              </Button>
+            ))}
           </div>
-          {termSystem === 'custom' && (
-            <div>
-              <Label>Terms per year</Label>
-              <Input
-                type="number"
-                min={1}
-                max={12}
-                value={termsPerYear}
-                onChange={(e) => setTermsPerYear(e.target.value)}
-                disabled={!canManage}
-              />
-            </div>
+          <p className="mt-1 text-xs text-text-muted">
+            Choosing a calendar rebuilds its default terms. You can customise each row below.
+          </p>
+        </div>
+        <ul className="space-y-4">
+          {grid.levels.map((level) => {
+            const slots = grid.slots.filter((slot) => slot.levelSequence === level.sequence);
+            return (
+              <li key={level.sequence} className="rounded-md border border-border bg-surface p-3">
+                <div className="flex flex-wrap items-end gap-3">
+                  <div className="min-w-40 flex-1">
+                    <Label htmlFor={'level-name-' + level.sequence}>{t('gradeLevel')} name</Label>
+                    <Input
+                      id={'level-name-' + level.sequence}
+                      value={level.name}
+                      maxLength={160}
+                      disabled={!editable}
+                      onChange={(e) =>
+                        editGrid((current) =>
+                          normalizeStructure(
+                            current.levels.map((item) =>
+                              item.sequence === level.sequence
+                                ? { ...item, name: e.target.value }
+                                : item,
+                            ),
+                            current.slots,
+                          ),
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="w-36">
+                    <Label htmlFor={'level-duration-' + level.sequence}>Months (optional)</Label>
+                    <Input
+                      id={'level-duration-' + level.sequence}
+                      type="number"
+                      min={1}
+                      max={120}
+                      value={level.durationMonths ?? ''}
+                      disabled={!editable}
+                      onChange={(e) =>
+                        editGrid((current) =>
+                          normalizeStructure(
+                            current.levels.map((item) =>
+                              item.sequence === level.sequence
+                                ? {
+                                    ...item,
+                                    durationMonths:
+                                      e.target.value === '' ? null : Number(e.target.value),
+                                  }
+                                : item,
+                            ),
+                            current.slots,
+                          ),
+                        )
+                      }
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    aria-label={'Remove ' + level.name}
+                    disabled={!editable || grid.levels.length === 1}
+                    onClick={() =>
+                      editGrid((current) =>
+                        normalizeStructure(
+                          current.levels.filter((item) => item.sequence !== level.sequence),
+                          current.slots,
+                        ),
+                      )
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <ul className="mt-3 space-y-3 border-l-2 border-primary/30 pl-3">
+                  {slots.map((slot) => {
+                    const key = slot.levelSequence + '-' + slot.sequenceInYear;
+                    return (
+                      <li key={key} className="flex flex-wrap items-end gap-2">
+                        <div className="min-w-36 flex-1">
+                          <Label htmlFor={'slot-name-' + key}>Name</Label>
+                          <Input
+                            id={'slot-name-' + key}
+                            value={slot.name}
+                            maxLength={160}
+                            disabled={!editable}
+                            onChange={(e) =>
+                              editSlot(level.sequence, slot.sequenceInYear, {
+                                name: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="w-36">
+                          <Label htmlFor={'slot-kind-' + key}>Type</Label>
+                          <Select
+                            id={'slot-kind-' + key}
+                            value={slot.kind}
+                            options={SLOT_KINDS.map((kind) => ({
+                              value: kind,
+                              label: SLOT_KIND_LABELS[kind],
+                            }))}
+                            disabled={!editable}
+                            onChange={(e) =>
+                              editSlot(level.sequence, slot.sequenceInYear, {
+                                kind: e.target.value as PlannedSlot['kind'],
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="w-36">
+                          <Label htmlFor={'slot-duration-' + key}>Months (optional)</Label>
+                          <Input
+                            id={'slot-duration-' + key}
+                            type="number"
+                            min={1}
+                            max={120}
+                            value={slot.durationMonths ?? ''}
+                            disabled={!editable}
+                            onChange={(e) =>
+                              editSlot(level.sequence, slot.sequenceInYear, {
+                                durationMonths:
+                                  e.target.value === '' ? null : Number(e.target.value),
+                              })
+                            }
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          aria-label={'Remove ' + slot.name + ' from ' + level.name}
+                          disabled={!editable}
+                          onClick={() =>
+                            editGrid((current) =>
+                              normalizeStructure(
+                                current.levels,
+                                current.slots.filter(
+                                  (item) =>
+                                    !(
+                                      item.levelSequence === level.sequence &&
+                                      item.sequenceInYear === slot.sequenceInYear
+                                    ),
+                                ),
+                              ),
+                            )
+                          }
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <Button
+                  className="mt-3"
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  disabled={!editable || slots.length >= 12 || grid.slots.length >= 200}
+                  onClick={() => addSlot(level.sequence)}
+                >
+                  <Plus className="mr-1 h-4 w-4" /> Add{' '}
+                  {SLOT_KIND_LABELS[slotKindForSystem(termSystem)].toLowerCase()}
+                </Button>
+              </li>
+            );
+          })}
+        </ul>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          disabled={
+            !editable ||
+            grid.levels.length >= 20 ||
+            grid.slots.length + termsPerYearForSystem(termSystem) > 200
+          }
+          onClick={addLevel}
+        >
+          <Plus className="mr-1 h-4 w-4" /> Add {t('gradeLevel').toLowerCase()}
+        </Button>
+        <p className="text-sm text-text-secondary">
+          {grid.totals.slots} terms over {grid.totals.years} {tp('gradeLevel').toLowerCase()}
+        </p>
+      </div>
+      {error && (
+        <p role="alert" className="text-sm text-danger">
+          {error}
+        </p>
+      )}
+      {success && (
+        <p role="status" className="text-sm text-success">
+          {success}
+        </p>
+      )}
+      {canManage && (
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            onClick={handleCommit}
+            loading={saving}
+            disabled={!editable || !name.trim() || grid.slots.length === 0}
+          >
+            {initialStructureDetail ? (
+              'Save changes'
+            ) : (
+              <>
+                <Plus className="mr-1 h-4 w-4" /> Add {t('department').toLowerCase()}
+              </>
+            )}
+          </Button>
+          {onCancel && (
+            <Button type="button" variant="secondary" onClick={onCancel} disabled={saving}>
+              Cancel
+            </Button>
           )}
         </div>
-      )}
-
-      {termSystem === 'term' && (
-        <div>
-          <Label>Number of {tp('gradeLevel').toLowerCase()}</Label>
-          <Input
-            type="number"
-            min={1}
-            max={20}
-            value={gradeCount}
-            onChange={(e) => setGradeCount(e.target.value)}
-            disabled={!canManage}
-          />
-        </div>
-      )}
-
-      <div className="rounded-lg border border-border bg-background-secondary/40 p-4">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">Live preview</p>
-        {!grid ? (
-          <p className="text-sm text-text-muted">Generating preview…</p>
-        ) : grid.slots.length === 0 ? (
-          <p className="text-sm text-text-muted">No fixed terms — add modules manually after go-live.</p>
-        ) : (
-          <ul className="space-y-3">
-            {grid.levels.map((level) => (
-              <li key={level.sequence}>
-                <p className="text-sm font-semibold text-text-primary">
-                  {level.name}
-                  {level.durationMonths != null && (
-                    <span className="ml-2 text-xs font-normal text-text-muted">{level.durationMonths} mo</span>
-                  )}
-                </p>
-                <ul className="mt-1 space-y-1 border-l-2 border-primary/30 pl-3">
-                  {(slotsByLevel.get(level.sequence) ?? []).map((slot) => (
-                    <li key={`${slot.levelSequence}-${slot.sequenceInYear}`} className="flex items-center gap-2">
-                      <Input
-                        className="h-8 flex-1 text-sm"
-                        value={slot.name}
-                        onChange={(e) =>
-                          renameSlot(slot.levelSequence, slot.sequenceInYear, e.target.value)
-                        }
-                        disabled={!canManage}
-                      />
-                      {slot.durationMonths != null && (
-                        <span className="text-xs text-text-muted">{slot.durationMonths} mo</span>
-                      )}
-                      {slot.isTerminal && (
-                        <span className="text-xs text-warning">terminal</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ))}
-          </ul>
-        )}
-        {grid && (
-          <p className="mt-4 text-sm text-text-secondary">
-            {grid.totals.slots} {tp('term').toLowerCase()} over {grid.totals.years}{' '}
-            {tp('gradeLevel').toLowerCase()}
-          </p>
-        )}
-      </div>
-
-      {error && <p className="text-sm text-danger">{error}</p>}
-      {success && <p className="text-sm text-success">{success}</p>}
-
-      {canManage && (
-        <Button
-          onClick={handleCommit}
-          loading={commit.isPending}
-          disabled={!grid || !name.trim()}
-        >
-          <Plus className="mr-1 h-4 w-4" /> Add {t('department').toLowerCase()}
-        </Button>
       )}
     </div>
   );

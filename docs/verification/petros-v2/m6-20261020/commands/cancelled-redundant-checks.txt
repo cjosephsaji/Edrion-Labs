@@ -1,0 +1,2 @@
+Cancelled redundant earlier API typecheck PID 28931 and student typecheck PID 29758 after launching their newer checks. No compile success is inferred from these cancelled commands. Production builds and the newer student typecheck continue. These were task-owned processes.
+Stopped failed diagnostic sampler PID 30021 and failed first long interaction PID 30300 during slow browser cleanup. Their failed screenshots/logs are retained; these takes are not acceptance evidence.

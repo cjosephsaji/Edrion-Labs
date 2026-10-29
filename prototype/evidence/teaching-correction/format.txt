@@ -1,0 +1,22 @@
+prototype/teaching/types.ts 128ms
+prototype/teaching/controller.ts 41ms
+prototype/teaching/checkpoint.ts 19ms
+prototype/teaching/curriculum.ts 22ms
+prototype/teaching/use-lesson-controller.ts 5ms
+prototype/teaching/contextual-explanations.ts 13ms
+prototype/components/teaching-cycle.tsx 15ms
+prototype/components/teaching-cycle.module.css 22ms
+prototype/components/workspace.tsx 21ms
+prototype/components/showcase.tsx 26ms
+prototype/components/tree.tsx 16ms
+prototype/components/topic-models.tsx 11ms
+prototype/world/room.tsx 77ms
+prototype/world/board-content.ts 21ms
+prototype/world/board-surface.tsx 12ms (unchanged)
+prototype/world/scene.tsx 42ms
+prototype/lessons/ai3.ts 3ms (unchanged)
+prototype/tests/teaching-controller.spec.ts 17ms
+prototype/tests/teaching-browser.mts 34ms
+prototype/tests/teaching-smoke.mts 4ms
+prototype/tests/core.spec.ts 5ms (unchanged)
+prototype/tests/v2.spec.ts 6ms (unchanged)

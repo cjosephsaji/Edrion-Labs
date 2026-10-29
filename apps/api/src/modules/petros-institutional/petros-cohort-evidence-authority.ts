@@ -97,6 +97,7 @@ export class PetrosCohortEvidenceAuthority {
             eq(schema.courseEnrollments.studentId, schema.petrosObjectiveEvidenceEvents.studentId),
             eq(schema.courseEnrollments.institutionId, institutionId)))
           .where(and(eq(schema.petrosObjectiveEvidenceEvents.institutionId, institutionId),
+            eq(schema.petrosObjectiveEvidenceEvents.engineVersion, 'v1'),
             eq(schema.petrosObjectiveEvidenceEvents.studentId, member.studentId), eq(schema.courses.status, 'active'),
             eq(schema.courses.subjectId, subjectId), gte(schema.petrosObjectiveEvidenceEvents.occurredAt, since),lte(schema.petrosObjectiveEvidenceEvents.occurredAt,new Date())))
           .limit(2001));

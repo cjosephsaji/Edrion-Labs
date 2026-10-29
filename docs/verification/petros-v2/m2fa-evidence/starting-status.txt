@@ -1,0 +1,947 @@
+ M .gitignore
+ M .nvmrc
+ M apps/api/package.json
+ M apps/api/scripts/copy-build-assets.mjs
+ M apps/api/src/common/core.module.ts
+ M apps/api/src/main.ts
+ M apps/api/src/modules/integrations/petros-assignment-authority.integration.spec.ts
+ M apps/api/src/modules/integrations/petros-phase2-authority-fixture.ts
+ M apps/api/src/modules/integrations/petros-phase2-full-journey.integration.spec.ts
+ M apps/api/src/modules/integrations/petros-phase2-test-database.ts
+ M apps/api/src/modules/petros-ai-routing/petros-ai-gateway.service.ts
+ M apps/api/src/modules/petros-ai-routing/petros-ai-routing.repository.ts
+ M apps/api/src/modules/petros-ai-routing/petros-provider-adapters.spec.ts
+ M apps/api/src/modules/petros-ai-routing/petros-provider-adapters.ts
+ M apps/api/src/modules/petros-institutional/petros-institutional.repository.ts
+ M apps/api/src/modules/petros-learner-model/petros-objective-evidence.repository.ts
+ M apps/api/src/modules/petros-topic-profiles/petros-topic-profiles.service.ts
+ M apps/api/src/modules/portal/academics.repository.ts
+ M apps/api/src/modules/portal/academics.service.ts
+ M apps/api/src/modules/portal/course-content/portal-course-content.service.ts
+ M apps/api/src/modules/portal/course-content/portal-material-preparation.jobs.ts
+ M apps/api/src/modules/portal/courses/portal-courses.service.ts
+ M apps/api/src/modules/portal/onboarding.repository.ts
+ M apps/api/src/modules/portal/onboarding.service.ts
+ M apps/api/src/modules/portal/people.repository.ts
+ M apps/api/src/modules/portal/people.service.ts
+ M apps/api/src/modules/portal/petros-assignment-learning.service.ts
+ M apps/api/src/modules/portal/portal-auth-login.service.ts
+ M apps/api/src/modules/portal/portal-auth.controller.ts
+ M apps/api/src/modules/portal/portal-auth.guard.ts
+ M apps/api/src/modules/portal/portal-auth.service.ts
+ M apps/api/src/modules/portal/portal-credential.service.ts
+ M apps/api/src/modules/portal/portal-crud.engine.ts
+ M apps/api/src/modules/portal/portal-session.service.ts
+ M apps/api/src/modules/portal/portal-tenant.interceptor.ts
+ M apps/api/src/modules/portal/portal.module.ts
+ M apps/api/src/modules/portal/programme-structure.repository.ts
+ M apps/api/src/modules/portal/programme-structure.service.ts
+ M apps/api/src/modules/portal/teaching/portal-teaching.controller.ts
+ M apps/api/src/modules/registration/registration-approval.service.ts
+ M apps/api/src/modules/registration/registration-email.service.ts
+ M apps/api/src/modules/registration/registration.repository.ts
+ M apps/api/src/modules/registration/registration.service.spec.ts
+ M apps/api/src/modules/registration/registration.service.ts
+ M apps/api/src/modules/student/assignments/student-assignments.controller.ts
+ M apps/api/src/modules/student/assignments/student-assignments.service.ts
+ M apps/api/src/modules/student/auth/student-auth.controller.ts
+ M apps/api/src/modules/student/auth/student-auth.service.ts
+ M apps/api/src/modules/student/core/student-auth.guard.ts
+ M apps/api/src/modules/student/core/student-owned-transactions.ts
+ M apps/api/src/modules/student/core/student-session.service.ts
+ M apps/api/src/modules/student/core/student-tenant.interceptor.ts
+ M apps/api/src/modules/student/core/student.decorators.ts
+ M apps/api/src/modules/student/courses/student-courses.service.ts
+ M apps/api/src/modules/student/homework/homework-policy.service.ts
+ M apps/api/src/modules/student/knowledge/knowledge-document.module.ts
+ M apps/api/src/modules/student/knowledge/knowledge-pdf-process.ts
+ M apps/api/src/modules/student/knowledge/knowledge-preparation.repository.ts
+ M apps/api/src/modules/student/knowledge/pdf-extract.cjs
+ M apps/api/src/modules/student/knowledge/petros-teaching-pack.repository.ts
+ M apps/api/src/modules/student/knowledge/petros-teaching-pack.service.ts
+ M apps/api/src/modules/student/materials/material-document-preview.service.spec.ts
+ M apps/api/src/modules/student/materials/material-document-preview.service.ts
+ M apps/api/src/modules/student/materials/material-visual-preview.service.ts
+ M apps/api/src/modules/student/me/student-me.controller.ts
+ M apps/api/src/modules/student/me/student-me.service.ts
+ M apps/api/src/modules/student/petros-artifacts/petros-artifacts.repository.ts
+ M apps/api/src/modules/student/petros-artifacts/petros-qualitative-review.repository.ts
+ M apps/api/src/modules/student/petros-artifacts/petros-qualitative-review.service.ts
+ M apps/api/src/modules/student/petros-companion/petros-briefing.service.ts
+ M apps/api/src/modules/student/petros-companion/petros-companion.controller.ts
+ M apps/api/src/modules/student/petros-companion/petros-companion.module.ts
+ M apps/api/src/modules/student/petros-companion/petros-companion.service.ts
+ M apps/api/src/modules/student/petros-companion/petros-companion.spec.ts
+ M apps/api/src/modules/student/petros-companion/petros-student-context.service.ts
+ M apps/api/src/modules/student/petros-loop/petros-adaptive.service.ts
+ M apps/api/src/modules/student/petros-loop/petros-loop.policy.ts
+ M apps/api/src/modules/student/petros-loop/petros-loop.repository.ts
+ M apps/api/src/modules/student/petros-loop/petros-loop.service.spec.ts
+ M apps/api/src/modules/student/petros-loop/petros-loop.service.ts
+ M apps/api/src/modules/student/petros-reflection/petros-reflection.repository.ts
+ M apps/api/src/modules/student/petros-session-intent/petros-document-preparation.service.ts
+ M apps/api/src/modules/student/petros-session-intent/petros-document-source.integration.spec.ts
+ M apps/api/src/modules/student/petros-session-intent/petros-session-intent.controller.ts
+ M apps/api/src/modules/student/petros-session-intent/petros-session-intent.repository.ts
+ M apps/api/src/modules/student/petros-session-intent/petros-session-intent.service.spec.ts
+ M apps/api/src/modules/student/petros-session-intent/petros-session-intent.service.ts
+ M apps/api/src/modules/student/student.types.ts
+ M apps/api/tsconfig.json
+ M apps/institution-web/src/app/(app)/academics/departments/page.tsx
+ M apps/institution-web/src/app/(app)/academics/programme-structure/page.tsx
+ M apps/institution-web/src/app/(app)/careers/placements/page.tsx
+ M apps/institution-web/src/app/(app)/gradebook/page.tsx
+ M apps/institution-web/src/app/(app)/homework/page.tsx
+ M apps/institution-web/src/app/(app)/onboarding/page.tsx
+ M apps/institution-web/src/app/(app)/staff/page.tsx
+ M apps/institution-web/src/app/(app)/students/page.tsx
+ M apps/institution-web/src/app/(app)/teaching/[classId]/[subjectId]/page.tsx
+ M apps/institution-web/src/app/(app)/users/page.tsx
+ M apps/institution-web/src/app/globals.css
+ M apps/institution-web/src/app/layout.tsx
+ M apps/institution-web/src/app/login/page.tsx
+ M apps/institution-web/src/app/providers.tsx
+ M apps/institution-web/src/components/academics/created-programmes-panel.tsx
+ M apps/institution-web/src/components/academics/curriculum-grid.tsx
+ M apps/institution-web/src/components/academics/programme-builder.tsx
+ M apps/institution-web/src/components/academics/resource-form.tsx
+ M apps/institution-web/src/components/academics/resource-manager.tsx
+ M apps/institution-web/src/components/app-shell/sidebar.tsx
+ M apps/institution-web/src/components/gradebook/release-panel.tsx
+ M apps/institution-web/src/components/gradebook/weight-map-editor.tsx
+ M apps/institution-web/src/components/guardian/app-shell.tsx
+ M apps/institution-web/src/components/timetable/timetable-grid.tsx
+ M apps/institution-web/src/lib/academics-types.ts
+ M apps/institution-web/src/lib/academics.ts
+ M apps/institution-web/src/lib/onboarding-types.ts
+ M apps/institution-web/src/lib/onboarding.ts
+ M apps/institution-web/src/lib/people-types.ts
+ M apps/institution-web/src/lib/portal-session.ts
+ M apps/institution-web/tailwind.config.ts
+ M apps/public-web/src/components/register/register-flow.tsx
+ M apps/student-web/next.config.mjs
+ M apps/student-web/src/app/(app)/assignments/[id]/page.tsx
+ M apps/student-web/src/app/(app)/layout.tsx
+ M apps/student-web/src/app/(app)/learn/page.tsx
+ M apps/student-web/src/app/(app)/petros/page.tsx
+ M apps/student-web/src/app/(auth)/activate/page.tsx
+ M apps/student-web/src/app/(auth)/login/page.spec.tsx
+ M apps/student-web/src/app/(auth)/login/page.tsx
+ M apps/student-web/src/components/app-shell/app-shell.spec.tsx
+ M apps/student-web/src/components/app-shell/app-shell.tsx
+ M apps/student-web/src/components/assignment-list-screen.tsx
+ M apps/student-web/src/components/design-system/action-button.tsx
+ M apps/student-web/src/components/design-system/primitives.module.css
+ M apps/student-web/src/components/petros/petros-document-teaching.tsx
+ M apps/student-web/src/components/petros/petros-door-button.tsx
+ M apps/student-web/src/components/petros/petros-inflation-pilot.module.css
+ M apps/student-web/src/components/petros/petros-inflation-pilot.tsx
+ M apps/student-web/src/components/petros/petros-mentor.module.css
+ M apps/student-web/src/components/petros/petros-mentor.spec.tsx
+ M apps/student-web/src/components/petros/petros-mentor.tsx
+ M apps/student-web/src/components/petros/petros-repair-session.spec.tsx
+ M apps/student-web/src/components/petros/petros-repair-session.tsx
+ M apps/student-web/src/components/petros/petros-session.module.css
+ M apps/student-web/src/components/petros/use-petros-voice.spec.tsx
+ M apps/student-web/src/components/petros/use-petros-voice.ts
+ M apps/student-web/src/features/learning-studio/integrals-teaching-studio.spec.tsx
+ M apps/student-web/src/features/learning-studio/integrals-teaching-studio.tsx
+ M apps/student-web/src/features/learning-studio/petros-rig.tsx
+ M apps/student-web/src/features/learning-studio/target-registry.tsx
+ M apps/student-web/src/features/learning-studio/use-teaching-playback.ts
+ M apps/student-web/src/lib/api-client.ts
+ M apps/student-web/src/lib/hooks.ts
+ M apps/student-web/tsconfig.json
+ M apps/super-admin-web/src/app/(app)/registration-requests/[id]/page.tsx
+ M apps/super-admin-web/src/app/globals.css
+ M apps/super-admin-web/src/app/layout.tsx
+ M apps/super-admin-web/src/components/registration/approve-wizard.tsx
+ M package.json
+ M packages/api-client/src/types.ts
+ M packages/config/src/index.ts
+ M packages/database/migrations/meta/_journal.json
+ M packages/database/migrations/sql/zzz_grants.sql
+ M packages/database/migrations/sql/zzz_rls.sql
+ M packages/database/src/client.ts
+ M packages/database/src/schema/academics.ts
+ M packages/database/src/schema/assignments.ts
+ M packages/database/src/schema/curriculum-alignment.ts
+ M packages/database/src/schema/index.ts
+ M packages/database/src/schema/institutional-bridge.ts
+ M packages/database/src/schema/petros-ai-routing.ts
+ M packages/database/src/schema/petros-document-learning.ts
+ M packages/database/src/schema/petros-teaching-packs.ts
+ M packages/database/src/schema/student-knowledge.ts
+ M packages/schemas/src/academics.ts
+ M packages/schemas/src/index.ts
+ M packages/schemas/src/people.ts
+ M packages/schemas/src/petros-learning.spec.ts
+ M packages/schemas/src/petros-learning.ts
+ M packages/schemas/src/portal-auth.ts
+ M packages/schemas/src/registration.ts
+ M packages/schemas/src/student/auth.ts
+ M packages/schemas/src/student/me.ts
+ M packages/shared-types/src/programme-structure.spec.ts
+ M packages/shared-types/src/programme-structure.ts
+ M packages/ui/src/button.tsx
+ M scripts/registration-smoke.sh
+?? PETROS_V2_BLUEPRINT.md
+?? PETROS_V2_IMPLEMENTATION_PLAN.md
+?? apps/api/scripts/benchmark-petros-m2.mjs
+?? apps/api/scripts/benchmark-petros-m2.ts
+?? apps/api/scripts/inspect-petros-m2.mjs
+?? apps/api/scripts/inspect-petros-m2.ts
+?? apps/api/scripts/petros-m2-inspector.html
+?? apps/api/scripts/petros-v2-readiness-phase-b.sql
+?? apps/api/scripts/petros-v2-readiness-repair.sql
+?? apps/api/scripts/petros-v2-readiness-runtime-candidate.ts
+?? apps/api/scripts/prepare-petros-staging-package.py
+?? apps/api/scripts/rehearse-petros-staging.ts
+?? apps/api/scripts/rehearse-petros-v2-readiness-repair.ts
+?? apps/api/scripts/repair-petros-guidance-presentations.ts
+?? apps/api/scripts/start-built.cjs
+?? apps/api/scripts/verify-petros-m1.mjs
+?? apps/api/scripts/verify-petros-m2.mjs
+?? apps/api/scripts/verify-petros-m2g-inspector.mjs
+?? apps/api/scripts/verify-petros-m2g.mjs
+?? apps/api/scripts/verify-petros-teacher-guidance.ts
+?? apps/api/scripts/verify-petros-v2-readiness.ts
+?? apps/api/src/common/petros-document-database.ts
+?? apps/api/src/common/petros-session-projection.ts
+?? apps/api/src/modules/integrations/petros-m1-foundations.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-m2-document-understanding.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-v2-readiness-security.integration.spec.ts
+?? apps/api/src/modules/integrations/petros-v2-runtime-security.integration.spec.ts
+?? apps/api/src/modules/petros-ai-routing/petros-source-reservation.ts
+?? apps/api/src/modules/petros-ai-routing/petros-speech-capabilities.ts
+?? apps/api/src/modules/petros-ai-routing/petros-speech-integration.spec.ts
+?? apps/api/src/modules/petros-ai-routing/petros-voice-route-capability.spec.ts
+?? apps/api/src/modules/portal/academics-programme-tree.spec.ts
+?? apps/api/src/modules/portal/onboarding-progress.spec.ts
+?? apps/api/src/modules/portal/portal-auth-login.service.spec.ts
+?? apps/api/src/modules/portal/portal-auth.controller.spec.ts
+?? apps/api/src/modules/portal/portal-auth.service.spec.ts
+?? apps/api/src/modules/portal/portal-credential-account.spec.ts
+?? apps/api/src/modules/portal/portal-credential-account.ts
+?? apps/api/src/modules/portal/portal-credential-multi-institution.spec.ts
+?? apps/api/src/modules/portal/portal-linked-credential-reset.spec.ts
+?? apps/api/src/modules/portal/portal-session.service.spec.ts
+?? apps/api/src/modules/portal/programme-structure-edit.spec.ts
+?? apps/api/src/modules/portal/staff-departments.spec.ts
+?? apps/api/src/modules/portal/student-default-account.spec.ts
+?? apps/api/src/modules/portal/teaching/petros-teacher-guidance-files.service.spec.ts
+?? apps/api/src/modules/portal/teaching/petros-teacher-guidance-files.service.ts
+?? apps/api/src/modules/portal/teaching/petros-teacher-guidance.service.spec.ts
+?? apps/api/src/modules/portal/teaching/petros-teacher-guidance.service.ts
+?? apps/api/src/modules/registration/registration-approval.service.spec.ts
+?? apps/api/src/modules/registration/registration-email.service.spec.ts
+?? apps/api/src/modules/registration/registration.repository.spec.ts
+?? apps/api/src/modules/student/assignments/petros-guidance-files.ts
+?? apps/api/src/modules/student/assignments/petros-guidance-visibility.integration.spec.ts
+?? apps/api/src/modules/student/assignments/petros-guidance-visibility.ts
+?? apps/api/src/modules/student/assignments/petros-learning-goal-completion.spec.ts
+?? apps/api/src/modules/student/auth/student-password-setup.spec.ts
+?? apps/api/src/modules/student/knowledge/adapters/content-adapter.ts
+?? apps/api/src/modules/student/knowledge/adapters/m2-crop.cjs
+?? apps/api/src/modules/student/knowledge/adapters/m2-native.cjs
+?? apps/api/src/modules/student/knowledge/adapters/pdf-content.adapter.ts
+?? apps/api/src/modules/student/knowledge/adapters/pptx-content.adapter.ts
+?? apps/api/src/modules/student/knowledge/petros-assessment-boundaries.spec.ts
+?? apps/api/src/modules/student/knowledge/petros-assessment-contract.server.ts
+?? apps/api/src/modules/student/knowledge/petros-content-edge-cases.spec.ts
+?? apps/api/src/modules/student/knowledge/petros-content-intelligence.jobs.ts
+?? apps/api/src/modules/student/knowledge/petros-content-intelligence.service.ts
+?? apps/api/src/modules/student/knowledge/petros-content-intelligence.spec.ts
+?? apps/api/src/modules/student/knowledge/petros-content-interpretation.spec.ts
+?? apps/api/src/modules/student/knowledge/petros-content-interpretation.ts
+?? apps/api/src/modules/student/knowledge/petros-content-ocr.spec.ts
+?? apps/api/src/modules/student/knowledge/petros-content-ocr.ts
+?? apps/api/src/modules/student/knowledge/petros-content-unit.repository.ts
+?? apps/api/src/modules/student/knowledge/petros-m2-controlled-gateway.fixture.ts
+?? apps/api/src/modules/student/knowledge/petros-m2-test-helpers.ts
+?? apps/api/src/modules/student/knowledge/petros-m2g-pilot.ts
+?? apps/api/src/modules/student/knowledge/petros-m2g-review.spec.ts
+?? apps/api/src/modules/student/knowledge/petros-m2g-visual.spec.ts
+?? apps/api/src/modules/student/materials/presentation-converter.ts
+?? apps/api/src/modules/student/petros-companion/petros-portal-speech.service.ts
+?? apps/api/src/modules/student/petros-companion/petros-portal-speech.spec.ts
+?? apps/api/src/modules/student/petros-companion/petros-voice-preview.contract.ts
+?? apps/api/src/modules/student/petros-companion/petros-voice-preview.controller.ts
+?? apps/api/src/modules/student/petros-companion/petros-voice-preview.http.spec.ts
+?? apps/api/src/modules/student/petros-companion/petros-voice-preview.service.ts
+?? apps/api/src/modules/student/petros-companion/petros-voice-preview.spec.ts
+?? apps/institution-web/public/fonts/JetBrains-Mono-OFL.txt
+?? apps/institution-web/public/fonts/Outfit-OFL.txt
+?? apps/institution-web/public/fonts/README.md
+?? apps/institution-web/public/fonts/jetbrains-mono-latin.woff2
+?? apps/institution-web/public/fonts/outfit-latin.woff2
+?? apps/institution-web/src/app/choose-institution/page.tsx
+?? apps/institution-web/src/components/academics/staff-departments-panel.tsx
+?? apps/institution-web/src/components/app-shell/switch-institution-link.tsx
+?? apps/institution-web/src/components/teaching/petros-guidance-attachments.tsx
+?? apps/institution-web/src/components/teaching/petros-teacher-guidance.tsx
+?? apps/institution-web/src/lib/academic-structure-terms.ts
+?? apps/institution-web/src/lib/institutions.ts
+?? apps/institution-web/src/lib/staff-profile-fields.ts
+?? apps/student-web/public/petros/audio/argument-reading-beat-1.mp3
+?? apps/student-web/public/petros/audio/argument-reading-beat-2.mp3
+?? apps/student-web/public/petros/audio/argument-reading-beat-3.mp3
+?? apps/student-web/public/petros/audio/argument-reading-beat-4.mp3
+?? apps/student-web/public/petros/audio/argument-reading-reply-1.mp3
+?? apps/student-web/public/petros/audio/argument-reading-reply-2.mp3
+?? apps/student-web/public/petros/audio/argument-reading-reply-3.mp3
+?? apps/student-web/public/petros/audio/argument-reading-reply-4.mp3
+?? apps/student-web/public/petros/audio/cloud-drawing-beat-1.mp3
+?? apps/student-web/public/petros/audio/cloud-drawing-beat-2.mp3
+?? apps/student-web/public/petros/audio/cloud-drawing-beat-3.mp3
+?? apps/student-web/public/petros/audio/cloud-drawing-beat-4.mp3
+?? apps/student-web/public/petros/audio/cloud-drawing-beat-5.mp3
+?? apps/student-web/public/petros/audio/cloud-drawing-beat-6.mp3
+?? apps/student-web/public/petros/audio/cloud-drawing-reply-1.mp3
+?? apps/student-web/public/petros/audio/cloud-drawing-reply-2.mp3
+?? apps/student-web/public/petros/audio/cloud-drawing-reply-3.mp3
+?? apps/student-web/public/petros/audio/cloud-drawing-reply-4.mp3
+?? apps/student-web/public/petros/audio/slope-writing-beat-1.mp3
+?? apps/student-web/public/petros/audio/slope-writing-beat-2.mp3
+?? apps/student-web/public/petros/audio/slope-writing-beat-3.mp3
+?? apps/student-web/public/petros/audio/slope-writing-beat-4.mp3
+?? apps/student-web/public/petros/audio/slope-writing-beat-5.mp3
+?? apps/student-web/public/petros/audio/slope-writing-reply-1.mp3
+?? apps/student-web/public/petros/audio/slope-writing-reply-2.mp3
+?? apps/student-web/public/petros/audio/slope-writing-reply-3.mp3
+?? apps/student-web/public/petros/audio/slope-writing-reply-4.mp3
+?? apps/student-web/public/petros/audio/spoken-fixtures.json
+?? apps/student-web/public/petros/v2/rig/manifest.json
+?? apps/student-web/src/app/(app)/learn/goals/[id]/page.tsx
+?? apps/student-web/src/app/(app)/petros/companion-playground/page.spec.tsx
+?? apps/student-web/src/app/(app)/petros/companion-playground/page.tsx
+?? apps/student-web/src/app/(auth)/change-password/page.tsx
+?? apps/student-web/src/app/(auth)/student-password-setup.spec.tsx
+?? apps/student-web/src/components/app-shell/playground-shell.module.css
+?? apps/student-web/src/components/design-system/button-loading.spec.tsx
+?? apps/student-web/src/components/petros/petros-assigned-goal.spec.tsx
+?? apps/student-web/src/components/petros/petros-assigned-goal.tsx
+?? apps/student-web/src/components/petros/petros-avatar.module.css
+?? apps/student-web/src/components/petros/petros-avatar.spec.tsx
+?? apps/student-web/src/components/petros/petros-avatar.tsx
+?? apps/student-web/src/components/petros/petros-home.module.css
+?? apps/student-web/src/components/petros/petros-home.spec.tsx
+?? apps/student-web/src/components/petros/petros-home.tsx
+?? apps/student-web/src/components/petros/petros-intent-detail.spec.ts
+?? apps/student-web/src/components/petros/petros-intent-detail.ts
+?? apps/student-web/src/components/petros/petros-speaking-avatar.tsx
+?? apps/student-web/src/components/petros/petros-speech-cloud.module.css
+?? apps/student-web/src/components/petros/petros-speech-cloud.tsx
+?? apps/student-web/src/components/petros/petros-speech-types.ts
+?? apps/student-web/src/components/petros/petros-teacher-goals.tsx
+?? apps/student-web/src/components/petros/petros-voice-controls.tsx
+?? apps/student-web/src/features/learning-studio/use-teaching-playback.spec.tsx
+?? apps/student-web/src/features/petros-v2/canvas/diagram-editor.tsx
+?? apps/student-web/src/features/petros-v2/canvas/diagram-routing.spec.ts
+?? apps/student-web/src/features/petros-v2/canvas/diagram-routing.ts
+?? apps/student-web/src/features/petros-v2/canvas/equation-board.tsx
+?? apps/student-web/src/features/petros-v2/canvas/teaching-canvas.module.css
+?? apps/student-web/src/features/petros-v2/canvas/teaching-canvas.tsx
+?? apps/student-web/src/features/petros-v2/companion/companion-cloud.spec.tsx
+?? apps/student-web/src/features/petros-v2/companion/companion-cloud.tsx
+?? apps/student-web/src/features/petros-v2/companion/companion-controller.spec.ts
+?? apps/student-web/src/features/petros-v2/companion/companion-controller.ts
+?? apps/student-web/src/features/petros-v2/companion/companion-naturalness.spec.tsx
+?? apps/student-web/src/features/petros-v2/companion/companion-persona.ts
+?? apps/student-web/src/features/petros-v2/companion/companion-policy.ts
+?? apps/student-web/src/features/petros-v2/companion/companion-rig.tsx
+?? apps/student-web/src/features/petros-v2/companion/companion.module.css
+?? apps/student-web/src/features/petros-v2/playground/companion-playground.module.css
+?? apps/student-web/src/features/petros-v2/playground/companion-playground.tsx
+?? apps/student-web/src/features/petros-v2/playground/floating-companion.module.css
+?? apps/student-web/src/features/petros-v2/playground/floating-companion.tsx
+?? apps/student-web/src/features/petros-v2/playground/narration-playback.spec.ts
+?? apps/student-web/src/features/petros-v2/playground/playback-refinement.spec.ts
+?? apps/student-web/src/features/petros-v2/playground/playground-adapter.ts
+?? apps/student-web/src/features/petros-v2/playground/playground-admission.ts
+?? apps/student-web/src/features/petros-v2/playground/playground-scenarios.ts
+?? apps/student-web/src/features/petros-v2/playground/practice-history.spec.ts
+?? apps/student-web/src/features/petros-v2/playground/teaching-fixtures.ts
+?? apps/student-web/src/features/petros-v2/playground/teaching-playground.spec.tsx
+?? apps/student-web/src/features/petros-v2/playground/workspace-scroll.spec.ts
+?? apps/student-web/src/features/petros-v2/playground/workspace-scroll.ts
+?? apps/student-web/src/features/petros-v2/presentation-controller.ts
+?? apps/student-web/src/features/petros-v2/source-inspector.tsx
+?? apps/student-web/src/features/petros-v2/voice/teaching-voice-controls.spec.tsx
+?? apps/student-web/src/features/petros-v2/voice/teaching-voice-controls.tsx
+?? apps/student-web/src/features/petros-v2/voice/use-voice-preview.ts
+?? apps/student-web/src/features/petros-v2/voice/voice-preview-audio.spec.ts
+?? apps/student-web/src/features/petros-v2/voice/voice-preview-audio.ts
+?? apps/student-web/src/features/petros-v2/voice/voice-preview-types.ts
+?? apps/student-web/src/features/petros-v2/voice/voice-preview.module.css
+?? apps/student-web/src/features/petros-v2/voice/voice-preview.spec.tsx
+?? apps/student-web/src/features/petros-v2/voice/voice-preview.tsx
+?? apps/student-web/src/features/petros-v2/voice/voice-service-status.spec.ts
+?? apps/student-web/src/features/petros-v2/voice/voice-service-status.ts
+?? apps/super-admin-web/public/fonts/JetBrains-Mono-OFL.txt
+?? apps/super-admin-web/public/fonts/Outfit-OFL.txt
+?? apps/super-admin-web/public/fonts/README.md
+?? apps/super-admin-web/public/fonts/jetbrains-mono-latin.woff2
+?? apps/super-admin-web/public/fonts/outfit-latin.woff2
+?? docs/verification/petros-teacher-guidance-20261007/README.md
+?? docs/verification/petros-teacher-guidance-20261007/browser-results.json
+?? docs/verification/petros-teacher-guidance-20261007/student-desktop.png
+?? docs/verification/petros-teacher-guidance-20261007/student-mobile.png
+?? docs/verification/petros-teacher-guidance-20261007/teacher-dark.png
+?? docs/verification/petros-teacher-guidance-20261007/teacher-desktop.png
+?? docs/verification/petros-teacher-guidance-20261007/teacher-mobile.png
+?? docs/verification/petros-v2/avatar-art/character-rig-handoff.md
+?? docs/verification/petros-v2/clean-build-fixes.diff
+?? docs/verification/petros-v2/clean-build-operations.md
+?? docs/verification/petros-v2/clean-build-results.json
+?? docs/verification/petros-v2/clean-build.md
+?? docs/verification/petros-v2/companion-integration-audit.md
+?? docs/verification/petros-v2/companion-integration-fixes.md
+?? docs/verification/petros-v2/companion-playground.md
+?? docs/verification/petros-v2/companion-playground/browser-results.json
+?? docs/verification/petros-v2/companion-playground/change-manifest.json
+?? docs/verification/petros-v2/companion-playground/desktop-conversation-scroll.png
+?? docs/verification/petros-v2/companion-playground/desktop-diagram-text.png
+?? docs/verification/petros-v2/companion-playground/desktop-diagram.png
+?? docs/verification/petros-v2/companion-playground/desktop-equation.png
+?? docs/verification/petros-v2/companion-playground/desktop-reading.png
+?? docs/verification/petros-v2/companion-playground/desktop-response-scroll.png
+?? docs/verification/petros-v2/companion-playground/desktop-teaching.png
+?? docs/verification/petros-v2/companion-playground/diagram-detail.png
+?? docs/verification/petros-v2/companion-playground/mobile-conversation-scroll.png
+?? docs/verification/petros-v2/companion-playground/mobile-diagram.png
+?? docs/verification/petros-v2/companion-playground/preservation-audit.json
+?? docs/verification/petros-v2/companion-playground/short-viewport-scroll.png
+?? docs/verification/petros-v2/companion-playground/verification-results.json
+?? docs/verification/petros-v2/companion-spoken-teaching.md
+?? docs/verification/petros-v2/expressive-v2-20261011/after-1440x600.png
+?? docs/verification/petros-v2/expressive-v2-20261011/after-320x568.png
+?? docs/verification/petros-v2/expressive-v2-20261011/after-360x800.png
+?? docs/verification/petros-v2/expressive-v2-20261011/after-768x800.png
+?? docs/verification/petros-v2/expressive-v2-20261011/after-desktop-multiple-routes.png
+?? docs/verification/petros-v2/expressive-v2-20261011/after-desktop-profile.png
+?? docs/verification/petros-v2/expressive-v2-20261011/after-desktop-step1.png
+?? docs/verification/petros-v2/expressive-v2-20261011/after-mobile-touch.png
+?? docs/verification/petros-v2/expressive-v2-20261011/art-handoff.md
+?? docs/verification/petros-v2/expressive-v2-20261011/artifact-manifest.json
+?? docs/verification/petros-v2/expressive-v2-20261011/artwork-inventory.json
+?? docs/verification/petros-v2/expressive-v2-20261011/browser-failure.png
+?? docs/verification/petros-v2/expressive-v2-20261011/browser-results.json
+?? docs/verification/petros-v2/expressive-v2-20261011/capability-disabled-neutral.png
+?? docs/verification/petros-v2/expressive-v2-20261011/cloud-empty.png
+?? docs/verification/petros-v2/expressive-v2-20261011/cloud-long.png
+?? docs/verification/petros-v2/expressive-v2-20261011/cloud-results.json
+?? docs/verification/petros-v2/expressive-v2-20261011/cloud-short.png
+?? docs/verification/petros-v2/expressive-v2-20261011/cloud-status.png
+?? docs/verification/petros-v2/expressive-v2-20261011/cloud-tests.json
+?? docs/verification/petros-v2/expressive-v2-20261011/cloud-two.png
+?? docs/verification/petros-v2/expressive-v2-20261011/companion-tests.json
+?? docs/verification/petros-v2/expressive-v2-20261011/diagram-directional-pose.png
+?? docs/verification/petros-v2/expressive-v2-20261011/equation-directional-pose.png
+?? docs/verification/petros-v2/expressive-v2-20261011/expanded-avatar-1440.png
+?? docs/verification/petros-v2/expressive-v2-20261011/expanded-avatar-320.png
+?? docs/verification/petros-v2/expressive-v2-20261011/expanded-avatar-360.png
+?? docs/verification/petros-v2/expressive-v2-20261011/frontend-root-tests.json
+?? docs/verification/petros-v2/expressive-v2-20261011/frontend-tests.json
+?? docs/verification/petros-v2/expressive-v2-20261011/idle-after-66-seconds.png
+?? docs/verification/petros-v2/expressive-v2-20261011/idle-observation.json
+?? docs/verification/petros-v2/expressive-v2-20261011/media-browser-results.json
+?? docs/verification/petros-v2/expressive-v2-20261011/mobile-expanded-results.json
+?? docs/verification/petros-v2/expressive-v2-20261011/multiple-route-geometry.json
+?? docs/verification/petros-v2/expressive-v2-20261011/naturalness-recording/page@6f30b002eb1514b698a7021d6923007e.webm
+?? docs/verification/petros-v2/expressive-v2-20261011/naturalness-walkthrough.mp4
+?? docs/verification/petros-v2/expressive-v2-20261011/naturalness-walkthrough.webm
+?? docs/verification/petros-v2/expressive-v2-20261011/node-drag-and-connect.mp4
+?? docs/verification/petros-v2/expressive-v2-20261011/node-drag-and-connect.webm
+?? docs/verification/petros-v2/expressive-v2-20261011/qa-silent-test-signal.wav
+?? docs/verification/petros-v2/expressive-v2-20261011/recording/page@283ba7501adb842e4719e6196d04db61.webm
+?? docs/verification/petros-v2/expressive-v2-20261011/recording/page@4bb6fffc312312c9b4894fa28961c754.webm
+?? docs/verification/petros-v2/expressive-v2-20261011/report.md
+?? docs/verification/petros-v2/expressive-v2-20261011/root-starting-hashes.json
+?? docs/verification/petros-v2/expressive-v2-20261011/schema-tests.json
+?? docs/verification/petros-v2/expressive-v2-20261011/source-file-manifest.json
+?? docs/verification/petros-v2/expressive-v2-20261011/student-waiting.png
+?? docs/verification/petros-v2/expressive-v2-20261011/typing-stable-conversation.png
+?? docs/verification/petros-v2/expressive-v2-20261011/v1-compatibility-tests.json
+?? docs/verification/petros-v2/expressive-v2-20261011/verification-results.json
+?? docs/verification/petros-v2/expressive-v2-20261011/voice-approval-required.png
+?? docs/verification/petros-v2/expressive-v2-20261011/voice-backend-tests.json
+?? docs/verification/petros-v2/expressive-v2-20261011/voice-backend-verification.json
+?? docs/verification/petros-v2/expressive-v2-20261011/voice-browser-requests.json
+?? docs/verification/petros-v2/expressive-v2-20261011/voice-browser-results.json
+?? docs/verification/petros-v2/expressive-v2-20261011/voice-frontend-report.md
+?? docs/verification/petros-v2/expressive-v2-20261011/voice-frontend-tests.json
+?? docs/verification/petros-v2/expressive-v2-20261011/voice-local-audio-speaking.png
+?? docs/verification/petros-v2/expressive-v2-20261011/voice-microphone-denied.png
+?? docs/verification/petros-v2/expressive-v2-20261011/voice-preview-1440.png
+?? docs/verification/petros-v2/expressive-v2-20261011/voice-preview-320.png
+?? docs/verification/petros-v2/expressive-v2-20261011/voice-preview-360.png
+?? docs/verification/petros-v2/expressive-v2-20261011/voice-preview-768.png
+?? docs/verification/petros-v2/expressive-v2-20261011/voice-route-audit.md
+?? docs/verification/petros-v2/expressive-v2-20261011/waiting-after-30-seconds.png
+?? docs/verification/petros-v2/expressive-v2-20261011/waiting-observation.json
+?? docs/verification/petros-v2/generate-spoken-fixtures.mjs
+?? docs/verification/petros-v2/idle-pose-crop-20261011.jpg
+?? docs/verification/petros-v2/integration-fixes-20261011/api-tests.json
+?? docs/verification/petros-v2/integration-fixes-20261011/browser-motion-summary.json
+?? docs/verification/petros-v2/integration-fixes-20261011/browser-results.json
+?? docs/verification/petros-v2/integration-fixes-20261011/cloud-empty.png
+?? docs/verification/petros-v2/integration-fixes-20261011/cloud-long.png
+?? docs/verification/petros-v2/integration-fixes-20261011/cloud-short.png
+?? docs/verification/petros-v2/integration-fixes-20261011/cloud-status.png
+?? docs/verification/petros-v2/integration-fixes-20261011/cloud-two.png
+?? docs/verification/petros-v2/integration-fixes-20261011/code-files.json
+?? docs/verification/petros-v2/integration-fixes-20261011/diagram-attention.png
+?? docs/verification/petros-v2/integration-fixes-20261011/document-browser-results.json
+?? docs/verification/petros-v2/integration-fixes-20261011/document-shared-avatar.webm
+?? docs/verification/petros-v2/integration-fixes-20261011/document-shared-paused-reduced-motion.png
+?? docs/verification/petros-v2/integration-fixes-20261011/document-shared-speaking.png
+?? docs/verification/petros-v2/integration-fixes-20261011/equation-attention.png
+?? docs/verification/petros-v2/integration-fixes-20261011/evidence-inventory.json
+?? docs/verification/petros-v2/integration-fixes-20261011/frontend-tests.json
+?? docs/verification/petros-v2/integration-fixes-20261011/playground-idle-teaching-speech.webm
+?? docs/verification/petros-v2/integration-fixes-20261011/playground-idle.png
+?? docs/verification/petros-v2/integration-fixes-20261011/playground-interactions-short.webm
+?? docs/verification/petros-v2/integration-fixes-20261011/playground-mobile-reduced-motion.png
+?? docs/verification/petros-v2/integration-fixes-20261011/playground-reduced-motion.png
+?? docs/verification/petros-v2/integration-fixes-20261011/playground-speaking.png
+?? docs/verification/petros-v2/integration-fixes-20261011/playground-speech-paused.png
+?? docs/verification/petros-v2/integration-fixes-20261011/portal-avatar-geometry.json
+?? docs/verification/petros-v2/integration-fixes-20261011/portal-idle-and-speech.webm
+?? docs/verification/petros-v2/integration-fixes-20261011/portal-idle.png
+?? docs/verification/petros-v2/integration-fixes-20261011/portal-reduced-motion.png
+?? docs/verification/petros-v2/integration-fixes-20261011/portal-speaking.png
+?? docs/verification/petros-v2/integration-fixes-20261011/portal-speech-short.webm
+?? docs/verification/petros-v2/integration-fixes-20261011/portal-stale-preference.png
+?? docs/verification/petros-v2/integration-fixes-20261011/preliminary-browser-failure.json
+?? docs/verification/petros-v2/integration-fixes-20261011/preservation-audit.json
+?? docs/verification/petros-v2/integration-fixes-20261011/schema-tests.json
+?? docs/verification/petros-v2/integration-fixes-20261011/starting-hashes.json
+?? docs/verification/petros-v2/integration-fixes-20261011/starting-status.txt
+?? docs/verification/petros-v2/integration-fixes-20261011/verification-results.json
+?? docs/verification/petros-v2/m0p-bubble-spacing/desktop-listening.png
+?? docs/verification/petros-v2/m0p-bubble-spacing/listening-1100x800.png
+?? docs/verification/petros-v2/m0p-bubble-spacing/listening-1440x600.png
+?? docs/verification/petros-v2/m0p-bubble-spacing/results.json
+?? docs/verification/petros-v2/m0p-card-spacing/desktop-complete-selected.png
+?? docs/verification/petros-v2/m0p-card-spacing/desktop-progressive-selected.png
+?? docs/verification/petros-v2/m0p-card-spacing/mobile-320-selected.png
+?? docs/verification/petros-v2/m0p-card-spacing/mobile-360-selected.png
+?? docs/verification/petros-v2/m0p-card-spacing/results.json
+?? docs/verification/petros-v2/m0p-context-refinement/diagram-ask-padding.png
+?? docs/verification/petros-v2/m0p-context-refinement/editable-toolbar-1440.png
+?? docs/verification/petros-v2/m0p-context-refinement/editable-toolbar-320.png
+?? docs/verification/petros-v2/m0p-context-refinement/editable-toolbar-360.png
+?? docs/verification/petros-v2/m0p-context-refinement/notes.md
+?? docs/verification/petros-v2/m0p-context-refinement/required-response-1440x600.png
+?? docs/verification/petros-v2/m0p-context-refinement/required-response-1440x900.png
+?? docs/verification/petros-v2/m0p-context-refinement/required-response-320x568.png
+?? docs/verification/petros-v2/m0p-context-refinement/required-response-360x800.png
+?? docs/verification/petros-v2/m0p-context-refinement/results.json
+?? docs/verification/petros-v2/m0p-expressive/after-1440x600.png
+?? docs/verification/petros-v2/m0p-expressive/after-320x568.png
+?? docs/verification/petros-v2/m0p-expressive/after-360x800.png
+?? docs/verification/petros-v2/m0p-expressive/after-768x800.png
+?? docs/verification/petros-v2/m0p-expressive/after-desktop-multiple-routes.png
+?? docs/verification/petros-v2/m0p-expressive/after-desktop-profile.png
+?? docs/verification/petros-v2/m0p-expressive/after-desktop-step1.png
+?? docs/verification/petros-v2/m0p-expressive/after-mobile-touch.png
+?? docs/verification/petros-v2/m0p-expressive/browser-failure.png
+?? docs/verification/petros-v2/m0p-expressive/browser-results.json
+?? docs/verification/petros-v2/m0p-expressive/capability-disabled-neutral.png
+?? docs/verification/petros-v2/m0p-expressive/diagram-directional-pose.png
+?? docs/verification/petros-v2/m0p-expressive/equation-directional-pose.png
+?? docs/verification/petros-v2/m0p-expressive/existing-art-inventory.png
+?? docs/verification/petros-v2/m0p-expressive/expanded-avatar-1440.png
+?? docs/verification/petros-v2/m0p-expressive/expanded-avatar-320.png
+?? docs/verification/petros-v2/m0p-expressive/expanded-avatar-360.png
+?? docs/verification/petros-v2/m0p-expressive/file-manifest.json
+?? docs/verification/petros-v2/m0p-expressive/frontend-tests.json
+?? docs/verification/petros-v2/m0p-expressive/idle-after-three-minutes.png
+?? docs/verification/petros-v2/m0p-expressive/idle-observation.json
+?? docs/verification/petros-v2/m0p-expressive/initial-browser-results.json
+?? docs/verification/petros-v2/m0p-expressive/initial-node25-tests.json
+?? docs/verification/petros-v2/m0p-expressive/inventory-voice-routes.mjs
+?? docs/verification/petros-v2/m0p-expressive/media-browser-results.json
+?? docs/verification/petros-v2/m0p-expressive/mobile-expanded-results.json
+?? docs/verification/petros-v2/m0p-expressive/multiple-route-geometry.json
+?? docs/verification/petros-v2/m0p-expressive/naturalness-recording/page@8ae5d2fca2d8b7ddae71922dce49dcd0.webm
+?? docs/verification/petros-v2/m0p-expressive/naturalness-walkthrough.mp4
+?? docs/verification/petros-v2/m0p-expressive/naturalness-walkthrough.webm
+?? docs/verification/petros-v2/m0p-expressive/node-drag-and-connect.webm
+?? docs/verification/petros-v2/m0p-expressive/preservation-audit.json
+?? docs/verification/petros-v2/m0p-expressive/qa-silent-test-signal.wav
+?? docs/verification/petros-v2/m0p-expressive/recording/page@c460e4b9c2e9971a8de18fdab8f20dc8.webm
+?? docs/verification/petros-v2/m0p-expressive/recording/page@cc8697673ad53f84e54d0c1e3933be31.webm
+?? docs/verification/petros-v2/m0p-expressive/report.md
+?? docs/verification/petros-v2/m0p-expressive/schema-tests.json
+?? docs/verification/petros-v2/m0p-expressive/starting-hashes.json
+?? docs/verification/petros-v2/m0p-expressive/starting-status.txt
+?? docs/verification/petros-v2/m0p-expressive/student-waiting.png
+?? docs/verification/petros-v2/m0p-expressive/typing-stable-conversation.png
+?? docs/verification/petros-v2/m0p-expressive/verification-results.json
+?? docs/verification/petros-v2/m0p-expressive/voice-audition-proposal.md
+?? docs/verification/petros-v2/m0p-expressive/voice-contract-tests.json
+?? docs/verification/petros-v2/m0p-expressive/voice-routes.json
+?? docs/verification/petros-v2/m0p-final/after-1440x600.png
+?? docs/verification/petros-v2/m0p-final/after-320x568.png
+?? docs/verification/petros-v2/m0p-final/after-360x800.png
+?? docs/verification/petros-v2/m0p-final/after-768x800.png
+?? docs/verification/petros-v2/m0p-final/after-desktop-multiple-routes.png
+?? docs/verification/petros-v2/m0p-final/after-desktop-profile-long.png
+?? docs/verification/petros-v2/m0p-final/after-desktop-profile.png
+?? docs/verification/petros-v2/m0p-final/after-desktop-step1.png
+?? docs/verification/petros-v2/m0p-final/after-mobile-touch.png
+?? docs/verification/petros-v2/m0p-final/artifact-manifest.json
+?? docs/verification/petros-v2/m0p-final/before-desktop-step1.png
+?? docs/verification/petros-v2/m0p-final/browser-results.json
+?? docs/verification/petros-v2/m0p-final/capture-before.mjs
+?? docs/verification/petros-v2/m0p-final/capture-recording.mjs
+?? docs/verification/petros-v2/m0p-final/file-manifest.json
+?? docs/verification/petros-v2/m0p-final/frontend-tests.json
+?? docs/verification/petros-v2/m0p-final/multiple-route-geometry.json
+?? docs/verification/petros-v2/m0p-final/node-drag-and-connect.mp4
+?? docs/verification/petros-v2/m0p-final/node-drag-and-connect.webm
+?? docs/verification/petros-v2/m0p-final/preservation-audit.json
+?? docs/verification/petros-v2/m0p-final/profile-long-results.json
+?? docs/verification/petros-v2/m0p-final/report.md
+?? docs/verification/petros-v2/m0p-final/routing-tests.json
+?? docs/verification/petros-v2/m0p-final/schema-tests.json
+?? docs/verification/petros-v2/m0p-final/starting-hashes.json
+?? docs/verification/petros-v2/m0p-final/starting-status.txt
+?? docs/verification/petros-v2/m0p-final/verification-results.json
+?? docs/verification/petros-v2/m1-browser-check.mjs
+?? docs/verification/petros-v2/m1-evidence/api-regression-tests.json
+?? docs/verification/petros-v2/m1-evidence/assignment-database-tests.json
+?? docs/verification/petros-v2/m1-evidence/browser-assessment-boundary.json
+?? docs/verification/petros-v2/m1-evidence/browser/backend-disabled.png
+?? docs/verification/petros-v2/m1-evidence/browser/browser-results.json
+?? docs/verification/petros-v2/m1-evidence/browser/diagram-narrated-node.png
+?? docs/verification/petros-v2/m1-evidence/browser/diagram-narrated-relationship.png
+?? docs/verification/petros-v2/m1-evidence/browser/equation-narrated-formula.png
+?? docs/verification/petros-v2/m1-evidence/browser/equation-narration-paused.png
+?? docs/verification/petros-v2/m1-evidence/browser/equation-text-only.png
+?? docs/verification/petros-v2/m1-evidence/browser/local-fixture-response.png
+?? docs/verification/petros-v2/m1-evidence/browser/mobile-320-paused.png
+?? docs/verification/petros-v2/m1-evidence/browser/mobile-reduced-motion-speech.png
+?? docs/verification/petros-v2/m1-evidence/browser/qa-question.aiff
+?? docs/verification/petros-v2/m1-evidence/browser/qa-question.txt
+?? docs/verification/petros-v2/m1-evidence/browser/qa-question.wav
+?? docs/verification/petros-v2/m1-evidence/browser/question-recording.png
+?? docs/verification/petros-v2/m1-evidence/browser/question-reviewed-response.png
+?? docs/verification/petros-v2/m1-evidence/browser/reading-narrated-passage.png
+?? docs/verification/petros-v2/m1-evidence/browser/recordings/page@4f847df09f1eab15895122ff7b2d0a99.webm
+?? docs/verification/petros-v2/m1-evidence/browser/spoken-teaching-walkthrough.webm
+?? docs/verification/petros-v2/m1-evidence/contract-tests.json
+?? docs/verification/petros-v2/m1-evidence/database-tests.json
+?? docs/verification/petros-v2/m1-evidence/execution-exit-codes.json
+?? docs/verification/petros-v2/m1-evidence/files-manifest.json
+?? docs/verification/petros-v2/m1-evidence/frontend-isolated-diagnostics.json
+?? docs/verification/petros-v2/m1-evidence/frontend-tests.json
+?? docs/verification/petros-v2/m1-evidence/goal-completion-tests.json
+?? docs/verification/petros-v2/m1-evidence/guidance-database-tests.json
+?? docs/verification/petros-v2/m1-evidence/lint-files.json
+?? docs/verification/petros-v2/m1-evidence/materials-reconciliation.json
+?? docs/verification/petros-v2/m1-evidence/preservation.json
+?? docs/verification/petros-v2/m1-evidence/repository-query-behavior.json
+?? docs/verification/petros-v2/m1-evidence/source-identity-demo.json
+?? docs/verification/petros-v2/m1-evidence/starting-hashes.json
+?? docs/verification/petros-v2/m1-evidence/starting-status.txt
+?? docs/verification/petros-v2/m1-evidence/v1-database-tests.json
+?? docs/verification/petros-v2/m1-evidence/verification-summary.json
+?? docs/verification/petros-v2/m1-foundations.md
+?? docs/verification/petros-v2/m2-document-understanding.md
+?? docs/verification/petros-v2/m2-quality-and-semantics.md
+?? docs/verification/petros-v2/m2/browser-qa.json
+?? docs/verification/petros-v2/m2/built-adapter-smoke.json
+?? docs/verification/petros-v2/m2/database-evidence.json
+?? docs/verification/petros-v2/m2/database-tests.json
+?? docs/verification/petros-v2/m2/edge-case-tests.json
+?? docs/verification/petros-v2/m2/evaluation.json
+?? docs/verification/petros-v2/m2/execution-plan.md
+?? docs/verification/petros-v2/m2/file-inventory.md
+?? docs/verification/petros-v2/m2/frontend-regression-tests.json
+?? docs/verification/petros-v2/m2/inspector-http-checks.json
+?? docs/verification/petros-v2/m2/m1-regression-tests.json
+?? docs/verification/petros-v2/m2/native-and-model-tests.json
+?? docs/verification/petros-v2/m2/ocr-tests.json
+?? docs/verification/petros-v2/m2/performance.json
+?? docs/verification/petros-v2/m2/preservation-audit.json
+?? docs/verification/petros-v2/m2/runs.json
+?? docs/verification/petros-v2/m2/schema-regression-tests.json
+?? docs/verification/petros-v2/m2/screenshots/cloud-reversed-arrow.jpg
+?? docs/verification/petros-v2/m2/screenshots/cloud-revised-cell.jpg
+?? docs/verification/petros-v2/m2/screenshots/cloud-table.jpg
+?? docs/verification/petros-v2/m2/screenshots/corrupt-blocked.jpg
+?? docs/verification/petros-v2/m2/screenshots/english-evidence.jpg
+?? docs/verification/petros-v2/m2/screenshots/image-only-uncertainty.jpg
+?? docs/verification/petros-v2/m2/screenshots/narrow-inspector.jpg
+?? docs/verification/petros-v2/m2/screenshots/ocr-crop-receipt.jpg
+?? docs/verification/petros-v2/m2/starting-hashes.json
+?? docs/verification/petros-v2/m2/starting-status.txt
+?? docs/verification/petros-v2/m2/verification-commands.md
+?? docs/verification/petros-v2/m2/verification-manifest.json
+?? docs/verification/petros-v2/m2g-2026-10-13/api-regression-tests.json
+?? docs/verification/petros-v2/m2g-2026-10-13/browser-qa.json
+?? docs/verification/petros-v2/m2g-2026-10-13/check-commands.json
+?? docs/verification/petros-v2/m2g-2026-10-13/database-evidence.json
+?? docs/verification/petros-v2/m2g-2026-10-13/database-tests.json
+?? docs/verification/petros-v2/m2g-2026-10-13/evaluation.json
+?? docs/verification/petros-v2/m2g-2026-10-13/frontend-regression-tests.json
+?? docs/verification/petros-v2/m2g-2026-10-13/historical-backup/repository-query-behavior.json
+?? docs/verification/petros-v2/m2g-2026-10-13/historical-backup/source-identity-demo.json
+?? docs/verification/petros-v2/m2g-2026-10-13/historical-hashes.txt
+?? docs/verification/petros-v2/m2g-2026-10-13/inspector-cloud.png
+?? docs/verification/petros-v2/m2g-2026-10-13/inspector-english.png
+?? docs/verification/petros-v2/m2g-2026-10-13/inspector-flattened.png
+?? docs/verification/petros-v2/m2g-2026-10-13/inspector-quality.png
+?? docs/verification/petros-v2/m2g-2026-10-13/interpretation-tests.json
+?? docs/verification/petros-v2/m2g-2026-10-13/live-pilot-pending.json
+?? docs/verification/petros-v2/m2g-2026-10-13/m1-current-repository-query-behavior.json
+?? docs/verification/petros-v2/m2g-2026-10-13/m1-current-source-identity-demo.json
+?? docs/verification/petros-v2/m2g-2026-10-13/m1-regression-tests.json
+?? docs/verification/petros-v2/m2g-2026-10-13/m1-repository-query-current.json
+?? docs/verification/petros-v2/m2g-2026-10-13/m1-source-identity-current.json
+?? docs/verification/petros-v2/m2g-2026-10-13/measurement-summary.json
+?? docs/verification/petros-v2/m2g-2026-10-13/resumed-status.txt
+?? docs/verification/petros-v2/m2g-2026-10-13/runs.json
+?? docs/verification/petros-v2/m2g-2026-10-13/schema-regression-tests.json
+?? docs/verification/petros-v2/m2g-2026-10-13/semantic-contract-tests.json
+?? docs/verification/petros-v2/m2g-2026-10-13/semantic-gold-pending.json
+?? docs/verification/petros-v2/m2g-2026-10-13/source-preservation.json
+?? docs/verification/petros-v2/m2g-2026-10-13/test-summary.json
+?? docs/verification/petros-v2/m2g-2026-10-13/verification-commands.json
+?? docs/verification/petros-v2/m2g-2026-10-13/visual-tests.json
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/change-label.json
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/change-label.png
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/change-label.pptx
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/change-resolution.json
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/change-resolution.png
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/change-resolution.pptx
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/held-out-image.json
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/held-out-image.png
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/held-out-image.pptx
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/move-crop.json
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/move-crop.png
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/move-crop.pptx
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/remove-arrowhead.json
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/remove-arrowhead.png
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/remove-arrowhead.pptx
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/reverse-arrow.json
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/reverse-arrow.png
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/reverse-arrow.pptx
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/unrelated-arrow.json
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/unrelated-arrow.png
+?? docs/verification/petros-v2/m2g-2026-10-13/visual/unrelated-arrow.pptx
+?? docs/verification/petros-v2/phase-b-preservation-audit.json
+?? docs/verification/petros-v2/phase-b-verification-results.json
+?? docs/verification/petros-v2/proposed-production-files.json
+?? docs/verification/petros-v2/proposed-production.diff
+?? docs/verification/petros-v2/readiness-remediation-phase-b.md
+?? docs/verification/petros-v2/readiness-remediation.md
+?? docs/verification/petros-v2/readiness.md
+?? docs/verification/petros-v2/remediation-live-evidence.json
+?? docs/verification/petros-v2/remediation-rehearsal-result.json
+?? docs/verification/petros-v2/remediation-security-results.json
+?? docs/verification/petros-v2/responsive-companion-fix-20261011/compact-320.jpg
+?? docs/verification/petros-v2/responsive-companion-fix-20261011/expanded-688.jpg
+?? docs/verification/petros-v2/responsive-companion-fix-20261011/report.md
+?? docs/verification/petros-v2/responsive-companion-fix-20261011/source-manifest.json
+?? docs/verification/petros-v2/responsive-companion-fix-20261011/teaching-688.jpg
+?? docs/verification/petros-v2/spoken-teaching-20261011/api-tests.json
+?? docs/verification/petros-v2/spoken-teaching-20261011/audio-validation.json
+?? docs/verification/petros-v2/spoken-teaching-20261011/backend-disabled.png
+?? docs/verification/petros-v2/spoken-teaching-20261011/browser-results.json
+?? docs/verification/petros-v2/spoken-teaching-20261011/diagram-edit-checkpoint-recovery.png
+?? docs/verification/petros-v2/spoken-teaching-20261011/diagram-narrated-node.png
+?? docs/verification/petros-v2/spoken-teaching-20261011/diagram-narrated-relationship.png
+?? docs/verification/petros-v2/spoken-teaching-20261011/equation-narrated-formula.png
+?? docs/verification/petros-v2/spoken-teaching-20261011/equation-narration-paused.png
+?? docs/verification/petros-v2/spoken-teaching-20261011/equation-text-only.png
+?? docs/verification/petros-v2/spoken-teaching-20261011/evidence-inventory.json
+?? docs/verification/petros-v2/spoken-teaching-20261011/frontend-tests.json
+?? docs/verification/petros-v2/spoken-teaching-20261011/local-fixture-response.png
+?? docs/verification/petros-v2/spoken-teaching-20261011/mobile-320-paused.png
+?? docs/verification/petros-v2/spoken-teaching-20261011/mobile-reduced-motion-speech.png
+?? docs/verification/petros-v2/spoken-teaching-20261011/preservation-audit.json
+?? docs/verification/petros-v2/spoken-teaching-20261011/qa-question.aiff
+?? docs/verification/petros-v2/spoken-teaching-20261011/qa-question.txt
+?? docs/verification/petros-v2/spoken-teaching-20261011/qa-question.wav
+?? docs/verification/petros-v2/spoken-teaching-20261011/question-recording.png
+?? docs/verification/petros-v2/spoken-teaching-20261011/question-reviewed-response.png
+?? docs/verification/petros-v2/spoken-teaching-20261011/reading-narrated-passage.png
+?? docs/verification/petros-v2/spoken-teaching-20261011/recordings/page@2cb565d43d91ce600bd08e6b3edf8e5d.webm
+?? docs/verification/petros-v2/spoken-teaching-20261011/recordings/page@451cfb909eaf304b211eeb8b89c1adab.webm
+?? docs/verification/petros-v2/spoken-teaching-20261011/recordings/page@b6edf498d87108c9212a6d90530ebeed.webm
+?? docs/verification/petros-v2/spoken-teaching-20261011/recordings/page@f3f98d77442f2c3ecad71402f0a9d146.webm
+?? docs/verification/petros-v2/spoken-teaching-20261011/regression-browser-results.json
+?? docs/verification/petros-v2/spoken-teaching-20261011/runtime-diagnosis.json
+?? docs/verification/petros-v2/spoken-teaching-20261011/source-file-manifest.json
+?? docs/verification/petros-v2/spoken-teaching-20261011/spoken-teaching-walkthrough.webm
+?? docs/verification/petros-v2/spoken-teaching-20261011/starting-hashes.json
+?? docs/verification/petros-v2/spoken-teaching-20261011/starting-status.txt
+?? docs/verification/petros-v2/spoken-teaching-20261011/verification-results.json
+?? docs/verification/petros-v2/staging-application-results.json
+?? docs/verification/petros-v2/staging-build-results.json
+?? docs/verification/petros-v2/staging-configuration-audit.json
+?? docs/verification/petros-v2/staging-migration.env.example
+?? docs/verification/petros-v2/staging-operations.md
+?? docs/verification/petros-v2/staging-package-results.json
+?? docs/verification/petros-v2/staging-preflight.md
+?? docs/verification/petros-v2/staging-preservation-audit.json
+?? docs/verification/petros-v2/staging-rehearsed-source-manifest.json
+?? docs/verification/petros-v2/staging-runtime-fixes.diff
+?? docs/verification/petros-v2/staging-verification-results.json
+?? docs/verification/petros-v2/staging.env.example
+?? docs/verification/petros-v2/ui-phase1.md
+?? docs/verification/petros-v2/ui-phase1/after-desktop-equation.png
+?? docs/verification/petros-v2/ui-phase1/after-desktop-floating-petros.png
+?? docs/verification/petros-v2/ui-phase1/after-desktop-focus.png
+?? docs/verification/petros-v2/ui-phase1/after-desktop-independent-scroll.png
+?? docs/verification/petros-v2/ui-phase1/after-desktop-initial.png
+?? docs/verification/petros-v2/ui-phase1/after-desktop-inline-rename.png
+?? docs/verification/petros-v2/ui-phase1/after-desktop-petros-bubble-left.png
+?? docs/verification/petros-v2/ui-phase1/after-desktop-petros-bubble-right.png
+?? docs/verification/petros-v2/ui-phase1/after-desktop-profile.png
+?? docs/verification/petros-v2/ui-phase1/after-desktop-transparent-labels.png
+?? docs/verification/petros-v2/ui-phase1/after-desktop.png
+?? docs/verification/petros-v2/ui-phase1/after-mobile-context.png
+?? docs/verification/petros-v2/ui-phase1/after-mobile-diagram.png
+?? docs/verification/petros-v2/ui-phase1/after-mobile-equation.png
+?? docs/verification/petros-v2/ui-phase1/after-mobile-footer-focus.png
+?? docs/verification/petros-v2/ui-phase1/after-mobile-footer.png
+?? docs/verification/petros-v2/ui-phase1/after-mobile-petros-panel.png
+?? docs/verification/petros-v2/ui-phase1/before-desktop.png
+?? docs/verification/petros-v2/ui-phase1/before-mobile-footer.png
+?? docs/verification/petros-v2/ui-phase1/before-mobile.png
+?? docs/verification/petros-v2/ui-phase1/browser-results.json
+?? docs/verification/petros-v2/ui-phase1/bubble-correction-starting-hashes.json
+?? docs/verification/petros-v2/ui-phase1/file-manifest.json
+?? docs/verification/petros-v2/ui-phase1/followup-starting-hashes.json
+?? docs/verification/petros-v2/ui-phase1/footer-correction-starting-hashes.json
+?? docs/verification/petros-v2/ui-phase1/frontend-tests.json
+?? docs/verification/petros-v2/ui-phase1/schema-tests.json
+?? docs/verification/petros-v2/ui-phase1/starting-hashes.json
+?? docs/verification/petros-v2/ui-phase1/verification-results.json
+?? docs/verification/petros-v2/verify-companion-integration-fixes.mjs
+?? docs/verification/petros-v2/verify-companion-playground.mjs
+?? docs/verification/petros-v2/verify-expressive-v2-expanded.mjs
+?? docs/verification/petros-v2/verify-expressive-v2-media.mjs
+?? docs/verification/petros-v2/verify-expressive-v2.mjs
+?? docs/verification/petros-v2/verify-m0p-expanded.mjs
+?? docs/verification/petros-v2/verify-m0p-expressive.mjs
+?? docs/verification/petros-v2/verify-m0p-final.mjs
+?? docs/verification/petros-v2/verify-m0p-media.mjs
+?? docs/verification/petros-v2/verify-spoken-teaching-regression.mjs
+?? docs/verification/petros-v2/verify-spoken-teaching.mjs
+?? docs/verification/petros-v2/verify-ui-phase1.mjs
+?? docs/verification/petros-v2/verify-voice-preview-browser.mjs
+?? output/petros-clean-build-20261009/clean-build-fixes.diff
+?? output/petros-clean-build-20261009/clean-build-operations.md
+?? output/petros-clean-build-20261009/clean-build-results.json
+?? output/petros-clean-build-20261009/evidence/SHASUMS256.txt
+?? output/petros-clean-build-20261009/evidence/asset-results.json
+?? output/petros-clean-build-20261009/evidence/clean-runtime-harness.ts
+?? output/petros-clean-build-20261009/evidence/compiled-application-results.json
+?? output/petros-clean-build-20261009/evidence/final-lockfile-validation.json
+?? output/petros-clean-build-20261009/evidence/final-package-verification.json
+?? output/petros-clean-build-20261009/evidence/fixed-build-2-result.json
+?? output/petros-clean-build-20261009/evidence/fixed-build-result.json
+?? output/petros-clean-build-20261009/evidence/index.json
+?? output/petros-clean-build-20261009/evidence/install-result.json
+?? output/petros-clean-build-20261009/evidence/original-build-result.json
+?? output/petros-clean-build-20261009/evidence/original-verification.json
+?? output/petros-clean-build-20261009/evidence/pdf-sandbox-command.json
+?? output/petros-clean-build-20261009/evidence/pdf-sandbox-tests.json
+?? output/petros-clean-build-20261009/evidence/preservation-final.json
+?? output/petros-clean-build-20261009/evidence/runtime-harness-result.json
+?? output/petros-clean-build-20261009/evidence/toolchain.json
+?? output/petros-clean-build-20261009/evidence/verify-built-assets.cjs
+?? output/petros-clean-build-20261009/manifest.json
+?? output/petros-clean-build-20261009/petros-m0r-clean-source.tar.gz
+?? output/petros-clean-build-20261009/staging-approval-required.json
+?? output/petros-clean-build-20261009/workspace.json
+?? output/petros-staging-20261009/evidence/petros-staging-disabled-red.json
+?? output/petros-staging-20261009/evidence/petros-staging-final-focusedRegression.json
+?? output/petros-staging-20261009/evidence/petros-staging-final-proposalCompatibility.json
+?? output/petros-staging-20261009/evidence/petros-staging-final-restrictedSecurity.json
+?? output/petros-staging-20261009/evidence/petros-staging-final-topicProfiles.json
+?? output/petros-staging-20261009/evidence/petros-staging-final-v1BaselineAndDocumentWorkers.json
+?? output/petros-staging-20261009/evidence/petros-staging-foreign-publish-red.json
+?? output/petros-staging-20261009/evidence/staging-application-results.json
+?? output/petros-staging-20261009/evidence/staging-build-results.json
+?? output/petros-staging-20261009/evidence/staging-configuration-audit.json
+?? output/petros-staging-20261009/evidence/staging-package-results.json
+?? output/petros-staging-20261009/evidence/staging-preservation-audit.json
+?? output/petros-staging-20261009/evidence/staging-rehearsed-source-manifest.json
+?? output/petros-staging-20261009/evidence/staging-verification-results.json
+?? output/petros-staging-20261009/manifest.json
+?? output/petros-staging-20261009/petros-m0r-staging-source.tar.gz
+?? output/petros-staging-20261009/staging-preflight.md
+?? packages/database/migrations/0231_staff_departments.sql
+?? packages/database/migrations/0232_maintenance_reporting_tables.sql
+?? packages/database/migrations/0233_petros_teacher_guidance.sql
+?? packages/database/migrations/0234_petros_readiness_repair.sql
+?? packages/database/migrations/0235_petros_v2_content_identity.sql
+?? packages/database/migrations/0236_petros_m2_preparation_progress.sql
+?? packages/database/migrations/sql/zzzz_petros_m1.sql
+?? packages/database/proposals/m2g-staff-source-reservations.sql
+?? packages/database/src/schema/petros-concepts.ts
+?? packages/database/src/schema/petros-content-units.ts
+?? packages/learn-evals/src/petros-v2/fixtures/argument-analysis.ts
+?? packages/learn-evals/src/petros-v2/fixtures/cloud-computing.ts
+?? packages/learn-evals/src/petros-v2/fixtures/generate-edge-sources.py
+?? packages/learn-evals/src/petros-v2/fixtures/generate-sources.py
+?? packages/learn-evals/src/petros-v2/fixtures/manifest.ts
+?? packages/learn-evals/src/petros-v2/fixtures/source-manifest.json
+?? packages/learn-evals/src/petros-v2/fixtures/sources/ambiguous-arrow.pptx
+?? packages/learn-evals/src/petros-v2/fixtures/sources/argument-commentary.pptx
+?? packages/learn-evals/src/petros-v2/fixtures/sources/argument-revised.pdf
+?? packages/learn-evals/src/petros-v2/fixtures/sources/argument.pdf
+?? packages/learn-evals/src/petros-v2/fixtures/sources/cloud-models-revised.pptx
+?? packages/learn-evals/src/petros-v2/fixtures/sources/cloud-models.pptx
+?? packages/learn-evals/src/petros-v2/fixtures/sources/cloud-reference.pdf
+?? packages/learn-evals/src/petros-v2/fixtures/sources/corrupt.pdf
+?? packages/learn-evals/src/petros-v2/fixtures/sources/embedded-executable.pptx
+?? packages/learn-evals/src/petros-v2/fixtures/sources/encrypted.pdf
+?? packages/learn-evals/src/petros-v2/fixtures/sources/external-link.pptx
+?? packages/learn-evals/src/petros-v2/fixtures/sources/grouped-shapes.pptx
+?? packages/learn-evals/src/petros-v2/fixtures/sources/hidden-slide.pptx
+?? packages/learn-evals/src/petros-v2/fixtures/sources/huge-dimensions.pdf
+?? packages/learn-evals/src/petros-v2/fixtures/sources/image-only.pdf
+?? packages/learn-evals/src/petros-v2/fixtures/sources/injection.pdf
+?? packages/learn-evals/src/petros-v2/fixtures/sources/legacy-blocked.ppt
+?? packages/learn-evals/src/petros-v2/fixtures/sources/macro.pptx
+?? packages/learn-evals/src/petros-v2/fixtures/sources/malformed.pptx
+?? packages/learn-evals/src/petros-v2/fixtures/sources/oversized-pages.pdf
+?? packages/learn-evals/src/petros-v2/fixtures/sources/rotated.pdf
+?? packages/learn-evals/src/petros-v2/fixtures/sources/smartart.pptx
+?? packages/learn-evals/src/petros-v2/fixtures/sources/structures.pdf
+?? packages/learn-evals/src/petros-v2/fixtures/sources/unsafe-path.pptx
+?? packages/learn-evals/src/petros-v2/fixtures/sources/xml-entity.pptx
+?? packages/learn-evals/src/petros-v2/fixtures/sources/zip-bomb.pptx
+?? packages/learn-evals/src/petros-v2/semantic-cases.ts
+?? packages/learn-evals/src/petros-v2/semantic-review.ts
+?? packages/schemas/src/onboarding-structure.spec.ts
+?? packages/schemas/src/petros-teacher-guidance.ts
+?? packages/schemas/src/petros-v2/assessment.ts
+?? packages/schemas/src/petros-v2/canvas-reducer.spec.ts
+?? packages/schemas/src/petros-v2/canvas-reducer.ts
+?? packages/schemas/src/petros-v2/canvas.ts
+?? packages/schemas/src/petros-v2/companion.ts
+?? packages/schemas/src/petros-v2/content.spec.ts
+?? packages/schemas/src/petros-v2/content.ts
+?? packages/schemas/src/petros-v2/decision.ts
+?? packages/schemas/src/petros-v2/experience.ts
+?? packages/schemas/src/petros-v2/foundations.spec.ts
+?? packages/schemas/src/petros-v2/index.ts
+?? packages/schemas/src/petros-v2/m1-fixtures.ts
+?? packages/schemas/src/petros-v2/proposal.ts
+?? packages/schemas/src/petros-v2/semantic-review.ts
+?? packages/schemas/src/petros-v2/session.ts
+?? packages/schemas/src/petros-v2/teaching-actions.spec.ts
+?? packages/schemas/src/petros-v2/teaching-actions.ts
+?? packages/schemas/src/petros-v2/test-fixture.ts
+?? packages/schemas/src/petros-v2/timeline.spec.ts
+?? packages/schemas/src/petros-v2/timeline.ts
+?? scripts/dev/backfill-student-logins.ts

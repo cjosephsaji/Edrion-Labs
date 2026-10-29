@@ -9,12 +9,17 @@ import {
   or,
   schema,
   sql,
-  getDatabase,
+  runOutsideTenant,
+  runInStudentTenant,
   type Database,
 } from '@edrion/database';
 import { DATABASE } from '../../../common/tokens';
+import { randomUUID } from 'node:crypto';
+import { assertM4AssistanceBoundary } from '../petros-v2/petros-v2-source-exposure';
 import type { PetrosOwnerScope } from '../petros-loop/petros-loop.repository';
 import { KnowledgeDocumentService } from '../knowledge/knowledge-document.service';
+import { petrosGuidanceVisibility } from '../assignments/petros-guidance-visibility';
+import { readGuidanceFiles } from '../assignments/petros-guidance-files';
 
 @Injectable()
 export class PetrosSessionIntentRepository {
@@ -22,6 +27,15 @@ export class PetrosSessionIntentRepository {
     @Inject(DATABASE) private readonly db: Database,
     private readonly documents: KnowledgeDocumentService,
   ) {}
+  assertV2Assistance(){return assertM4AssistanceBoundary(this.db);}
+
+  /** Server-created V2 intent uses the same owned, expiring admission-intent store. */
+  createV2ReleaseIntent(scope:PetrosOwnerScope,publicationId:string,publicationHash:string) {
+    return this.createIntent({id:randomUUID(),institutionId:scope.institutionId,studentId:scope.studentId,
+      schemaVersion:'petros.v2.admission-intent.v1',door:'learning_path',sessionType:'learn',sourceEntityIds:[publicationId],
+      sourceFingerprint:publicationHash,idempotencyKey:randomUUID(),correlationId:randomUUID(),
+      resolvedIntent:{engine:'v2',publicationId,publicationHash},expiresAt:new Date(Date.now()+15*60_000)});
+  }
 
   findIntentByKey(scope: PetrosOwnerScope, idempotencyKey: string) {
     return this.db
@@ -38,7 +52,7 @@ export class PetrosSessionIntentRepository {
       .then((rows) => rows[0]);
   }
 
-  findIntent(scope: PetrosOwnerScope, intentId: string, lock = false) {
+  async findIntent(scope: PetrosOwnerScope, intentId: string, lock = false) {
     const query = this.db
       .select()
       .from(schema.petrosSessionIntents)
@@ -51,7 +65,13 @@ export class PetrosSessionIntentRepository {
       )
       .limit(1);
     // Serialize starts without blocking the failure-telemetry connection's FK key-share lock.
-    return (lock ? query.for('no key update') : query).then((rows) => rows[0]);
+    const [row] = await (lock ? query.for('no key update') : query);
+    if (row || !lock) return row;
+    // A waiting READ COMMITTED statement can see the updated intent's session_id
+    // while its RLS parent lookup still uses the pre-commit statement snapshot.
+    // Re-read under a fresh snapshot and the same unchanged owner/parent policies.
+    const [current] = await query.for('no key update');
+    return current;
   }
 
   studentClassId(scope: PetrosOwnerScope) {
@@ -109,15 +129,17 @@ export class PetrosSessionIntentRepository {
 
   /**
    * Rejected student requests roll their tenant transaction back. Failure telemetry is content-free
-   * and must survive that rollback, so it uses the maintenance connection with explicit owner scope.
+   * and must survive that rollback, so it uses a separate scoped transaction on the restricted pool.
    */
   recordFailureEvent(values: typeof schema.petrosDoorEvents.$inferInsert) {
-    return getDatabase()
+    if (!values.studentId || !values.institutionId) throw new Error('PETROS_FAILURE_SCOPE_REQUIRED');
+    return runOutsideTenant(() => runInStudentTenant(this.db,
+      { institutionId: values.institutionId!, studentId: values.studentId! }, () => this.db
       .insert(schema.petrosDoorEvents)
       .values(values)
       .onConflictDoNothing()
       .returning()
-      .then((rows) => rows[0]);
+      .then((rows) => rows[0])));
   }
 
   async resultSource(scope: PetrosOwnerScope, sourceId: string) {
@@ -203,6 +225,7 @@ export class PetrosSessionIntentRepository {
           eq(schema.assignments.id, sourceId),
           eq(schema.assignments.institutionId, scope.institutionId),
           eq(schema.assignments.status, 'published'),
+          petrosGuidanceVisibility(scope.studentId),
         ))
         .limit(1).then((rows) => rows[0]),
     ]);
@@ -230,7 +253,10 @@ export class PetrosSessionIntentRepository {
         : Promise.resolve(undefined),
     ]);
     if (student.classId !== assignment.classId && !assignee && !enrollment) return undefined;
-    return { assignment, submission, subjectName: subject?.name ?? null };
+    const [institution] = await this.db.select({ timezone: schema.institutions.timezone })
+      .from(schema.institutions).where(eq(schema.institutions.id, scope.institutionId)).limit(1);
+    return { assignment, submission, subjectName: subject?.name ?? null, timezone: institution?.timezone ?? 'UTC',
+      guidanceFiles: await readGuidanceFiles(this.db, assignment) };
   }
 
   documentSource(scope: PetrosOwnerScope, sourceId: string, page?: number, fingerprint?: string) {
@@ -365,6 +391,7 @@ export class PetrosSessionIntentRepository {
           eq(schema.assignments.subjectId, material.subjectId),
           eq(schema.assignments.status, 'published'),
           gte(schema.assignments.dueDate, today),
+          petrosGuidanceVisibility(scope.studentId),
         )).orderBy(asc(schema.assignments.dueDate)).limit(1).then((rows) => rows[0]),
     ]);
     const dates = [

@@ -359,7 +359,7 @@ export class PetrosObjectiveEvidenceService {
     const prior = await this.repo.event(scope, command.correction.correctsEventId);
     if (!prior || prior.objectiveId !== objective.id || prior.objectiveVersion !== objective.version)
       throw conflict('PETROS_EVIDENCE_CORRECTION_SCOPE_INVALID');
-    const previousAnswer = await this.repo.canonicalAnswer(scope, prior.evaluationId);
+    const previousAnswer = await this.repo.canonicalAnswer(scope, prior.evaluationId!);
     // Learners may add a help disclosure to the SAME response; they cannot replace its judgment.
     if (!previousAnswer || previousAnswer.observation.id !== answer.observation.id ||
       previousAnswer.question.id !== answer.question.id || prior.sessionId !== answer.session.id ||

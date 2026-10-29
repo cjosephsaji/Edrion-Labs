@@ -1,5 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 
+export const PORTAL_SESSION_CHANGE_KEY = 'edrion.portal.session-change';
+
 const SCOPE_STORAGE_KEY = 'edrion.portal.scope';
 
 const ACADEMIC_CONTEXT_KEY = 'edrion.portal.academic-context';
@@ -9,11 +11,11 @@ export function finalizePortalSignIn(qc: QueryClient) {
   try {
     localStorage.removeItem(SCOPE_STORAGE_KEY);
     localStorage.removeItem(ACADEMIC_CONTEXT_KEY);
+    localStorage.setItem(PORTAL_SESSION_CHANGE_KEY, crypto.randomUUID());
   } catch {
     /* ignore */
   }
-  qc.removeQueries({ queryKey: ['portal'] });
-  qc.removeQueries({ queryKey: ['academics'] });
+  qc.clear();
 }
 
 /** Clear client-side portal state on sign-out. */
@@ -21,9 +23,9 @@ export function clearPortalSession(qc: QueryClient) {
   try {
     localStorage.removeItem(SCOPE_STORAGE_KEY);
     localStorage.removeItem(ACADEMIC_CONTEXT_KEY);
+    localStorage.setItem(PORTAL_SESSION_CHANGE_KEY, crypto.randomUUID());
   } catch {
     /* ignore */
   }
-  qc.removeQueries({ queryKey: ['portal'] });
-  qc.removeQueries({ queryKey: ['academics'] });
+  qc.clear();
 }

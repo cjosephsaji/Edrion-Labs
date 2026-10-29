@@ -1,0 +1,13 @@
+# M6 human review protocol — pending
+
+No participant sessions or human scores have been collected by this implementation.
+
+Recruit at least 12 representative learners, six per subject (Cloud Computing and English argument analysis), spanning the intended learner ages. Include at least two keyboard users and two reduced-motion users; include physical mobile and assistive-device users where possible. Obtain the normal institutional participation/consent arrangements. These are usability observations, not educational-effectiveness claims.
+
+Use the M6 engineering demo and preserved M5 comparison recordings with the same public source, initial task, assistance policy and evaluation outcome. Assign six participants old → new and six new → old; counterbalance within subject and interaction mode. For the character-only comparison, the shared sampler shows the same caption and scale. Explain that source/qualification records are synthetic and that interpretation may need teacher review. Do not suggest which version should be preferred.
+
+Each session: (1) inspect the neutral/expression/gaze/gesture sampler at normal and compact sizes; (2) complete the assigned subject task; (3) interrupt an explanation, edit and save, then resume; (4) inspect actual feedback; (5) dismiss a caption and retrieve the transcript; (6) repeat with reduced motion or minimized character. Allow about ten minutes of free follow-up using the available reviewed-source reread and controls. No live AI conversation is connected.
+
+Record 1–7 ratings separately for naturalness, supportiveness, clarity, distraction, repetition, interruptibility, ease of dismissing help and understanding of cues. Record task completion, time on task, hints/exposures, unsolicited repeats, successful interruptions, unwanted scroll/focus changes, attempted versus completed dismissals and whether the learner mistakes saving/prediction for evaluation. Ask: “What did you think Petros was doing here?” for pending, refusal, incorrect, partial, correct and review-required states. Collect concrete failure examples and free comments.
+
+Keep anonymous participant IDs, subject, accessibility settings, order, device, actual application version, source/task pins, timestamps, ratings and observations in a new dated evidence folder. Do not store sensitive learner information in Git. Retain consent separately under institutional policy. Report missing data and withdrawals; do not impute favorable scores. A reviewer must explicitly sign off appearance, gesture meaning, assessment neutrality, interruptibility and non-occlusion before M7. All gates remain pending until real observations and approval exist.

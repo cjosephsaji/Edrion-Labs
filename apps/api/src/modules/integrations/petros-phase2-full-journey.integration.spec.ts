@@ -205,7 +205,18 @@ describe.runIf(process.env.PETROS_LOCAL_DB_TESTS === '1')(
 
       const explanation = await next();
       expect(explanation.blocks.at(-1)!.content.type).toBe('layered_explanation');
+      if (process.env.PETROS_READINESS_PROPOSAL_TESTS === '1') {
+        const id=explanation.blocks.at(-1)!.decisionId;
+        await expect(f.owned(()=>database.db.update(schema.petrosPlanningDecisions).set({studentSafeReason:'rewrite'})
+          .where(eq(schema.petrosPlanningDecisions.id,id)))).rejects.toMatchObject({code:'42501'});
+        await expect(f.admin.update(schema.petrosPlanningDecisions).set({studentSafeReason:'rewrite'})
+          .where(eq(schema.petrosPlanningDecisions.id,id))).rejects.toThrow('content is immutable');
+      }
       await complete();
+      if (process.env.PETROS_READINESS_PROPOSAL_TESTS === '1') {
+        await expect(f.owned(()=>database.db.update(schema.petrosPlanningDecisions).set({status:'planned'})
+          .where(eq(schema.petrosPlanningDecisions.id,explanation.blocks.at(-1)!.decisionId)))).rejects.toThrow('lifecycle transition denied');
+      }
 
       const diagnostic = (await next()).blocks.at(-1)!;
       expect(diagnostic.content.type).toBe('recall_check');

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useState, type ReactNode } from 'react';
 import {
   AdministrativeDivisionSelect,
   Button,
@@ -49,6 +49,7 @@ export type FieldDef =
       name: string;
       label: string;
       type: 'custom';
+      required?: boolean;
       render: (
         value: unknown,
         onChange: (v: unknown) => void,
@@ -63,7 +64,10 @@ export type FieldDef =
 
 type Values = Record<string, unknown>;
 
-function isFieldConditionMet(values: Values, condition?: { field: string; equals: unknown }): boolean {
+function isFieldConditionMet(
+  values: Values,
+  condition?: { field: string; equals: unknown },
+): boolean {
   if (!condition) return true;
   return values[condition.field] === condition.equals;
 }
@@ -129,13 +133,16 @@ function buildBody(fields: FieldDef[], values: Values): Values {
 }
 
 function initialFor(fields: FieldDef[], initial: Values): Values {
-  const v: Values = {};
+  // Custom controls may use contextual metadata such as a legacy assignment's display name.
+  // buildBody only sends declared fields, so this metadata remains inside the form.
+  const v: Values = { ...initial };
   for (const f of fields) {
     const provided = initial[f.name];
     if (f.type === 'checkbox') v[f.name] = !!provided;
     else if (f.type === 'custom') v[f.name] = provided ?? undefined;
     // Stored minor units → shown as major units for editing (150000 → "1500").
-    else if (f.type === 'money') v[f.name] = provided == null || provided === '' ? '' : String(Number(provided) / 100);
+    else if (f.type === 'money')
+      v[f.name] = provided == null || provided === '' ? '' : String(Number(provided) / 100);
     else v[f.name] = provided ?? '';
   }
   if (formHasCreateLogin(fields) && hasPortalLoginEmail(v.email)) {
@@ -152,6 +159,7 @@ export function ResourceForm({
   drawerClassName,
   fields,
   initial,
+  resetKey,
   submitting,
   error,
   onSubmit,
@@ -164,6 +172,8 @@ export function ResourceForm({
   drawerClassName?: string;
   fields: FieldDef[];
   initial: Values;
+  /** Identity of the edited record. Parent renders and option refreshes must preserve the draft. */
+  resetKey?: string | null;
   submitting?: boolean;
   error?: string | null;
   onSubmit: (body: Values) => void;
@@ -171,6 +181,7 @@ export function ResourceForm({
   /** Optional section below the standard fields; may register extra submit payload. */
   extra?: ReactNode | ((api: ResourceFormExtraApi) => ReactNode);
 }) {
+  const formId = useId();
   const [values, setValues] = useState<Values>(() => initialFor(fields, initial));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [extraPayload, setExtraPayload] = useState<Values>({});
@@ -187,9 +198,17 @@ export function ResourceForm({
       setExtraPayload({});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, initial]);
+  }, [open, resetKey]);
 
   function set(name: string, value: unknown) {
+    setErrors((current) => {
+      const next = { ...current };
+      delete next[name];
+      if ((name === 'email' && !hasPortalLoginEmail(value)) || (name === 'createLogin' && value === false)) {
+        delete next.roleKeys;
+      }
+      return next;
+    });
     setValues((v) => {
       const next = { ...v, [name]: value };
       if (name === 'email' && formHasCreateLogin(fields)) {
@@ -225,23 +244,41 @@ export function ResourceForm({
     for (const f of fields) {
       if ('required' in f && f.required) {
         const v = activeValues[f.name];
-        if (v === '' || v === undefined || v === null) next[f.name] = `${f.label} is required`;
+        if ((typeof v === 'string' && !v.trim()) || v === undefined || v === null)
+          next[f.name] = `${f.label} is required`;
       }
     }
     const start = activeValues.startDate;
     const end = activeValues.endDate;
-    if (typeof start === 'string' && typeof end === 'string' && start && end && !isEndAfterStart(start, end)) {
+    if (
+      typeof start === 'string' &&
+      typeof end === 'string' &&
+      start &&
+      end &&
+      !isEndAfterStart(start, end)
+    ) {
       next.endDate = 'End date must be after the start date';
     }
     for (const f of fields) {
       if (f.type !== 'custom') continue;
-      if (!isFieldConditionMet(activeValues, f.requiredWhen)) continue;
+      if (!f.required && (!f.requiredWhen || !isFieldConditionMet(activeValues, f.requiredWhen))) continue;
       const v = activeValues[f.name];
       const empty = Array.isArray(v) ? v.length === 0 : v === '' || v === undefined || v === null;
       if (empty) next[f.name] = `${f.label} is required`;
     }
     setErrors(next);
+    const firstError = Object.keys(next)[0];
+    if (firstError) focusField(firstError);
     return Object.keys(next).length === 0;
+  }
+
+  function focusField(name: string) {
+    const wrapper = Array.from(document.getElementById(formId)?.children ?? []).find(
+      (element) => element.getAttribute('data-form-field') === name,
+    );
+    const control = wrapper?.querySelector<HTMLElement>('input:not([type="hidden"]), button, textarea');
+    wrapper?.scrollIntoView({ block: 'center' });
+    control?.focus({ preventScroll: true });
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -259,31 +296,62 @@ export function ResourceForm({
       description={description}
       className={drawerClassName}
       footer={
-        <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={onClose} disabled={submitting}>
-            Cancel
-          </Button>
-          <Button type="submit" form="resource-form" loading={submitting}>
-            Save
-          </Button>
+        <div className="space-y-3">
+          {(Object.keys(errors).length > 0 || error) && (
+            <div
+              role="alert"
+              className="max-h-32 overflow-y-auto rounded-md border border-danger/30 bg-danger/5 px-3 py-2 text-sm text-danger"
+            >
+              {Object.keys(errors).length > 0 ? (
+                <>
+                  <p>{Object.values(errors)[0]}</p>
+                  <button
+                    type="button"
+                    className="mt-1 font-medium underline"
+                    onClick={() => focusField(Object.keys(errors)[0]!)}
+                  >
+                    Review{' '}
+                    {Object.keys(errors).length === 1
+                      ? 'field'
+                      : `${Object.keys(errors).length} fields`}
+                  </button>
+                </>
+              ) : (
+                error
+              )}
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={onClose} disabled={submitting}>
+              Cancel
+            </Button>
+            <Button type="submit" form={formId} loading={submitting}>
+              Save
+            </Button>
+          </div>
         </div>
       }
     >
-      <form id="resource-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {error && (
-          <div role="alert" className="rounded-md border border-danger/30 bg-danger/5 px-3 py-2 text-sm text-danger">
-            {error}
-          </div>
-        )}
+      <form
+        id={formId}
+        onSubmit={handleSubmit}
+        onInvalid={(event) => {
+          const control = event.target as HTMLInputElement;
+          const name = control.closest('[data-form-field]')?.getAttribute('data-form-field');
+          if (name) setErrors((current) => ({ ...current, [name]: control.validationMessage }));
+        }}
+        className="flex flex-col gap-4"
+      >
         {fields.map((f) => (
-          <Field
-            key={f.name}
-            field={f}
-            value={values[f.name]}
-            values={values}
-            error={errors[f.name]}
-            onChange={(v) => set(f.name, v)}
-          />
+          <div key={f.name} data-form-field={f.name}>
+            <Field
+              field={f}
+              value={values[f.name]}
+              values={values}
+              error={errors[f.name]}
+              onChange={(v) => set(f.name, v)}
+            />
+          </div>
         ))}
         {extra && (
           <div className="border-t border-border pt-4">
@@ -332,7 +400,9 @@ function Field({
           <span className="text-sm font-medium text-text-primary">{field.label}</span>
         </label>
         {portalLoginField && !hasEmail && (
-          <p className="mt-1 text-xs text-text-muted">Add an email address above to enable portal login.</p>
+          <p className="mt-1 text-xs text-text-muted">
+            Add an email address above to enable portal login.
+          </p>
         )}
         {field.help && <p className="mt-1 text-xs text-text-muted">{field.help}</p>}
       </div>
@@ -341,7 +411,7 @@ function Field({
 
   if (field.type === 'custom') {
     const enabled = isFieldConditionMet(values, field.enabledWhen);
-    const required = isFieldConditionMet(values, field.requiredWhen);
+    const required = field.required || (!!field.requiredWhen && isFieldConditionMet(values, field.requiredWhen));
     return (
       <div className={enabled ? undefined : 'opacity-50'}>
         <Label>
@@ -357,7 +427,8 @@ function Field({
     );
   }
 
-  const requiredMark = 'required' in field && field.required ? <span className="text-danger"> *</span> : null;
+  const requiredMark =
+    'required' in field && field.required ? <span className="text-danger"> *</span> : null;
   const countryValue =
     'countryField' in field && field.countryField ? String(values[field.countryField] ?? '') : '';
   const labelText =
@@ -412,6 +483,8 @@ function Field({
           onChange={(e) => onChange(e.target.value)}
           options={field.options}
           placeholder={field.placeholder ?? (field.required ? 'Select…' : '—')}
+          className={error ? 'border-danger' : undefined}
+          aria-describedby={errId}
         />
       ) : field.type === 'combobox' ? (
         <Combobox
@@ -427,7 +500,10 @@ function Field({
         />
       ) : field.type === 'money' ? (
         <div className="relative">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-muted" aria-hidden="true">
+          <span
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-muted"
+            aria-hidden="true"
+          >
             {fmt.currencySymbol}
           </span>
           <Input
@@ -439,6 +515,7 @@ function Field({
             className="pl-9 tabular-nums"
             value={String(value ?? '')}
             aria-describedby={errId}
+            aria-invalid={!!error}
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.placeholder ?? '0.00'}
           />
@@ -450,6 +527,8 @@ function Field({
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
           rows={3}
+          aria-describedby={errId}
+          aria-invalid={!!error}
           className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
         />
       ) : (
@@ -469,6 +548,8 @@ function Field({
               : undefined
           }
           value={String(value ?? '')}
+          aria-describedby={errId}
+          aria-invalid={!!error}
           onChange={(e) => onChange(e.target.value)}
           placeholder={'placeholder' in field ? field.placeholder : undefined}
         />

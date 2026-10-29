@@ -321,6 +321,15 @@ describe.runIf(process.env.PETROS_LOCAL_DB_TESTS === '1')(
         reason: 'Synthetic publication for current-authority rejection.',
         confirmDisclosureReviewed: true,
       }));
+      if (process.env.PETROS_READINESS_PROPOSAL_TESTS === '1') {
+        const [event]=await f.institution(()=>database.db.select().from(schema.petrosInstitutionalEvents)
+          .where(eq(schema.petrosInstitutionalEvents.entityId,draft.id)));
+        expect(event).toBeTruthy();
+        await expect(f.institution(()=>database.db.update(schema.petrosInstitutionalEvents).set({payload:{rewrite:true}})
+          .where(eq(schema.petrosInstitutionalEvents.id,event!.id)))).rejects.toMatchObject({code:'42501'});
+        await expect(f.admin.update(schema.petrosInstitutionalEvents).set({payload:{rewrite:true}})
+          .where(eq(schema.petrosInstitutionalEvents.id,event!.id))).rejects.toThrow('append-only');
+      }
       await expect(f.service.commit(f.ctx, f.assignment.id, {
         schemaVersion: f.input.schemaVersion,
         commandId: randomUUID(),

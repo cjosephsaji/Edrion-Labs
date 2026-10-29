@@ -1,0 +1,303 @@
+Skip to content
+Isolated M3 demonstration
+Education OS
+OVERVIEW
+Dashboard
+Attention Centre
+Petros
+Petros support
+WORKFLOW
+Approvals
+Grievances
+ACADEMIC SETUP
+Academic Years
+Departments
+Grades
+Subjects
+Classes
+Terms
+PEOPLE
+Students
+Student Conduct
+Staff
+Parents
+CAREERS
+Placement cell
+ACADEMICS
+Teaching
+Admissions
+Attendance
+Timetable
+Homework
+Exams
+Gradebook
+Report cards
+Assignments
+Calendar
+FINANCE
+Fees
+Expenses
+Payroll
+OPERATIONS
+Library
+Transport
+Inventory
+Hostel
+COMMUNICATION
+Announcements
+Notifications
+Messages
+PTM scheduling
+HEALTH & WELLBEING
+Health Records
+Medical Incidents
+Medication Logs
+Counseling
+Counseling Cases
+CAMPUS OPERATIONS
+Labs
+Lab Schedule
+Lab Incidents
+Debate calibration
+Front Desk
+Appointments
+Facilities
+Work Orders
+Maintenance
+Assets
+Visitor Logs
+Gate Passes
+Security Incidents
+Emergency Alerts
+Access Logs
+Sensitive Reports
+IT
+Devices
+Access Requests
+Webhooks
+INSIGHTS
+Reports
+ADMINISTRATION
+Campuses
+Documents & Policies
+User Management
+Roles & Permissions
+Settings
+Petros policy
+SSO & roster
+Billing
+Audit Logs
+SM
+Synthetic M3 actor
+81876f78-078c-4550-acf5-d5fbb18e6c28@example.test
+Sign out
+Cloud Computing
+All subjects
+8694501d-37f7-4203-a3e9-dde6694887b7 Cloud Computing
+
+Isolated source review class · 2 students
+
+Notes
+Files
+Class updates
+Petros Learn
+Prepare a learning proposal
+
+Petros organizes an authorized document into a draft. Review its objectives, evidence and activities before academic release.
+
+No current qualified reviewer authority is available for this course. Refresh current draft
+
+Source document
+Select an extracted document
+cloud-models.pptx · pptx
+m2fa/cloud-notes.docx · docx
+m2fa/cloud-notes.txt · txt
+What should students learn? (optional)
+Lesson duration (minutes)
+Open saved proposal
+
+cloud-models.pptx · Source extracted · Coverage partial
+
+Semantics unverified. Genuine proposal inference is unavailable.
+
+Source identity
+Proposed learning content · Revision 5
+
+Controlled fixture · Teacher edited · under review
+
+Save draft
+
+Objective 1 · edited · Semantics require review
+
+Classify the stated responsibility boundaries and justify the distinction using the cited source.
+
+Concepts: Service responsibility boundary
+
+Accept objective 1
+Edit objective 1
+Remove objective 1
+Move up
+Inspect evidence 1
+Proposed activity
+Choose a supported activity
+relationship board · structural preview
+comparison · structural preview
+Preview activity 1
+Reject selected activity
+
+Practice candidate available. Verification family requires separate qualified instrument review.
+
+Scope, assumptions and criteria
+
+Objective 2 · needs review · Semantics require review
+
+Explain the distinction between logical resources and physical hardware using the source wording.
+
+Concepts: Logical and physical resources
+
+Accept objective 2
+Edit objective 2
+Remove objective 2
+Move up
+Inspect evidence 2
+Proposed activity
+Choose a supported activity
+relationship board · structural preview
+comparison · structural preview
+Preview activity 2
+Reject selected activity
+
+Practice candidate available. Verification family requires separate qualified instrument review.
+
+Scope, assumptions and criteria
+Inspect concept relationships
+
+2 stable concepts · Maximum 24 concepts / 48 relationships · Traversal depth 2
+
+Service responsibility boundary → Logical and physical resources: related · Review required. A candidate relationship for subject review; no semantic equivalence is established.
+
+Review source-backed claims
+Actual source evidence
+
+Structural source preview · table
+
+Model
+Consumer responsibility
+Provider responsibility
+IaaS
+Operating system
+Physical hardware
+PaaS
+Application code
+Runtime
+SaaS
+Access policy
+Application platform
+Exact native locator and content hash
+
+Structural preview · Adaptive execution requires M5.
+
+PROPOSED STUDENT-FACING REPRESENTATION
+
+Proposed comparison
+interactive diagram
+
+This diagram is interactive. Choose “Explain diagram” and I’ll point through each part in order.
+
+Read-only preview. Interactions here do not submit work or record learner progress.
+
+Expected observation: Given a service-model case, classify the consumer and provider responsibilities using the cited boundary.
+
+Accessible alternative: Model Consumer responsibility Provider responsibility IaaS Operating system Physical hardware PaaS Application code Runtime SaaS Access policy Application platform Virtualization separates logical resources from physical hardware.A virtual machine has an allocated CPU and memory budget.
+
+Coverage and uncertainty
+
+Visible relationships do not establish causation.
+
+Extraction coverage: partial. Source quality and independent academic acceptance remain open.
+
+Review and release
+
+teaching scope: Review required
+
+concepts: Review required
+
+activities: Review required
+
+assessment instrument: Review required
+
+Practice available; verification pending.
+
+Teaching approval cannot approve an assessment key. Student publication remains blocked.
+
+Submit for teaching review
+Qualified reviewer decisions
+
+Qualifications must already exist in the academic owner. The server validates current scope, status and validity.
+
+Current reviewer qualification
+No current qualification
+
+No current qualified reviewer authority is available for this course.
+
+Review reason
+Approve teaching scope
+Approve concepts
+Approve activities
+Request verification review
+Request changes
+
+Release blocked
+
+teaching scope review required
+
+concepts review required
+
+activities review required
+
+source coverage review required
+
+m2 g quality acceptance open
+
+qualified instrument required
+
+m4 student admission not implemented
+
+Check and record isolated release
+Withdraw proposal
+Correction lineage
+Guide what your students learn
+
+Choose who needs support, tell Petros what to focus on, and set a completion date. Petros uses your instructions when the student starts their learning session.
+
+Cloud Computing · Isolated source review class
+
+Who should learn this?
+Selected students
+Find a student
+
+There are no enrolled students in this class yet.
+
+0 selected
+
+What should they learn or improve?
+How would you like Petros to guide them? · optional
+Supporting files · optional
+
+Attach up to five PDFs, documents, slides, spreadsheets, text files, or images, up to 20 MiB each. Files are shared with the students when you assign this goal.
+
+Attach files
+Learning focus
+Build understanding
+Complete by
+Suggested session length
+15 minutes
+Preview learning goal
+Assigned learning goals
+Refresh progress
+
+Participation and reported completion help you follow up. They do not establish mastery.
+
+Your assigned learning goals will appear here.
+
+Advanced: author and review reusable lessons

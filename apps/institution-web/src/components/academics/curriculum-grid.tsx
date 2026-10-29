@@ -20,7 +20,7 @@ import {
 } from '@/lib/academics';
 import { subjectKindLabel } from '@edrion/schemas';
 import { PortalClientError } from '@/lib/portal-client';
-import { useTerm } from '@/lib/term';
+import { useAcademicStructureTerms } from '@/lib/academic-structure-terms';
 
 const NEW_COURSE = '__new__';
 
@@ -51,8 +51,8 @@ interface CurriculumGridProps {
 }
 
 export function CurriculumGrid({ canManage = true, onChanged }: CurriculumGridProps) {
-  const { t, tp } = useTerm();
-  const { data: departments } = useDepartmentOptions();
+  const { t, tp } = useAcademicStructureTerms();
+  const { data: departments } = useDepartmentOptions('programme');
   const [departmentId, setDepartmentId] = useState('');
   const { data: structure, refetch: refetchStructure } = useProgrammeStructureDetail(
     departmentId || undefined,
@@ -92,14 +92,14 @@ export function CurriculumGrid({ canManage = true, onChanged }: CurriculumGridPr
 
       {!departmentId && (
         <p className="text-sm text-text-muted">
-          Choose a programme to see its {tp('term').toLowerCase()} slots and placed{' '}
+          Choose a {t('department').toLowerCase()} to see its {tp('term').toLowerCase()} slots and placed{' '}
           {tp('subject').toLowerCase()}.
         </p>
       )}
 
       {departmentId && slots.length === 0 && (
         <p className="text-sm text-text-muted">
-          This programme has no structure yet. Build it in the previous step first.
+          This {t('department').toLowerCase()} has no structure yet. Build it in the previous step first.
         </p>
       )}
 
@@ -136,7 +136,7 @@ function SlotCurriculumCard({
   canManage,
   onChanged,
 }: SlotCurriculumCardProps) {
-  const { t, tp } = useTerm();
+  const { t, tp } = useAcademicStructureTerms();
   const { data: subjects } = useSubjectOptions();
   const subjectMut = useAcademicMutations('subjects');
   const curriculumMut = useAcademicMutations('programme-subjects');

@@ -4,6 +4,7 @@ import { curriculumReadSchema, studentCurriculumReadView } from '@edrion/schemas
 import { DATABASE } from '../../../common/tokens';
 import type { InstitutionalStudentPrincipal } from '../student.types';
 import { readCourseCurriculum } from '../../portal/courses/course-curriculum.repository';
+import { petrosGuidanceVisibility } from '../assignments/petros-guidance-visibility';
 
 const profName = sql<string>`concat_ws(' ', ${schema.staff.firstName}, ${schema.staff.lastName})`;
 
@@ -87,7 +88,8 @@ export class StudentCoursesService {
     const rows = await this.db
       .select({ id: schema.assignments.id, title: schema.assignments.title, dueDate: schema.assignments.dueDate })
       .from(schema.assignments)
-      .where(and(eq(schema.assignments.courseId, courseId), eq(schema.assignments.status, 'published')));
+      .where(and(eq(schema.assignments.institutionId, principal.institutionId), eq(schema.assignments.courseId, courseId),
+        eq(schema.assignments.status, 'published'), petrosGuidanceVisibility(principal.studentId)));
     return { items: rows };
   }
 

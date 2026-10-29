@@ -67,6 +67,8 @@ const ACADEMICS_PERMISSIONS: ResourcePermissions = {
 export interface ResourceManagerProps<TRow extends { id: string; version: number }> {
   resource: string;
   title: string;
+  /** Page-specific panels inside the standard padded content area, below the topbar. */
+  beforeList?: React.ReactNode;
   /** Singular noun for buttons/dialogs, e.g. "academic year". */
   noun: string;
   columns: Column<TRow>[];
@@ -363,6 +365,7 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
       />
 
       <div className="page-enter flex flex-1 flex-col gap-4 p-5">
+        {props.beforeList}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-sm text-text-secondary">
@@ -480,6 +483,7 @@ export function ResourceManager<TRow extends { id: string; version: number }>(pr
         drawerClassName={props.editDrawerClassName}
         fields={props.fields}
         initial={editing ? props.toFormValues(editing) : {}}
+        resetKey={editing?.id}
         submitting={update.isPending}
         error={formError}
         onSubmit={submitUpdate}

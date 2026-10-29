@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatApiError, useStudentApi } from '@/lib/api-client';
@@ -9,9 +9,18 @@ export default function ActivatePage() {
   const api = useStudentApi();
   const router = useRouter();
   const [token, setToken] = useState('');
+  const [hasInviteLink, setHasInviteLink] = useState(false);
   const [password, setPassword] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const inviteToken = new URLSearchParams(window.location.search).get('token');
+    if (inviteToken) {
+      setToken(inviteToken);
+      setHasInviteLink(true);
+    }
+  }, []);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -38,7 +47,9 @@ export default function ActivatePage() {
           Activate your account
         </h1>
         <p className="mt-1 text-sm text-[var(--s-muted)]">
-          Enter the invite code from your institution and choose a password.
+          {hasInviteLink
+            ? 'Choose a password to activate your account.'
+            : 'Open the activation link in your invitation email, or paste its token below.'}
         </p>
       </div>
 
@@ -46,15 +57,17 @@ export default function ActivatePage() {
         onSubmit={onSubmit}
         className="rounded-2xl border border-[var(--s-bd1)] bg-[var(--s-card)] p-5 shadow-[0_16px_40px_-28px_rgba(23,37,31,0.45)]"
       >
-        <label className="block text-sm">
-          <span className="mb-1.5 block font-medium text-[var(--s-inkSoft)]">Activation code</span>
-          <input
-            required
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            className="w-full rounded-xl border border-[var(--s-bd1)] bg-[var(--s-cardAlt)] px-3 py-2.5 text-[var(--s-ink)] outline-none focus:border-[var(--s-accent)]"
-          />
-        </label>
+        {!hasInviteLink && (
+          <label className="block text-sm">
+            <span className="mb-1.5 block font-medium text-[var(--s-inkSoft)]">Invitation token</span>
+            <input
+              required
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              className="w-full rounded-xl border border-[var(--s-bd1)] bg-[var(--s-cardAlt)] px-3 py-2.5 text-[var(--s-ink)] outline-none focus:border-[var(--s-accent)]"
+            />
+          </label>
+        )}
         <label className="mt-4 block text-sm">
           <span className="mb-1.5 block font-medium text-[var(--s-inkSoft)]">New password</span>
           <input

@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -41,6 +40,8 @@ import type {
 import { formatApiError, newIdempotencyKey, useStudentApi } from '@/lib/api-client';
 import { PetrosProgramWorkspaceCompanion } from './petros-program-workspace';
 import { PetrosDoorButton } from './petros-door-button';
+import { PetrosAvatar } from './petros-avatar';
+import { PetrosSpeechCloud } from './petros-speech-cloud';
 import {
   usePetrosCompanion,
   type PetrosLessonInterruption,
@@ -107,19 +108,7 @@ const PAGE_HINTS: Record<string, string> = {
   '/flashcards': 'Your saved flashcards and due reviews are here.',
 };
 
-const POSES: Record<
-  'idle' | 'listening' | 'thinking' | 'talking' | `point-${PetrosPointDirection}`,
-  string
-> = {
-  idle: '/petros/states/petros-idle.png',
-  listening: '/petros/states/petros-listening.png',
-  thinking: '/petros/states/petros-thinking.png',
-  talking: '/petros/states/petros-talking.png',
-  'point-left': '/petros/states/petros-point-left.png',
-  'point-right': '/petros/states/petros-point-right.png',
-  'point-up': '/petros/states/petros-point-up.png',
-  'point-down': '/petros/states/petros-point-down.png',
-};
+type PortalPose = 'idle' | 'listening' | 'thinking' | 'talking' | `point-${PetrosPointDirection}`;
 
 function replyText(message: PetrosCompanionMessage | null | undefined) {
   return (message?.blocks ?? [])
@@ -198,7 +187,7 @@ export function PetrosMentor(props: {
   const companion = usePetrosCompanion();
   const [expanded, setExpanded] = useState(false);
   const [wide, setWide] = useState(false);
-  const [voiceSettings, setVoiceSettings] = useState({ autoRead: false, voice: 'cedar' as 'cedar' | 'marin', language: 'en' });
+  const [voiceSettings, setVoiceSettings] = useState({ autoRead: false, voice: 'cedar', language: 'en' });
   const autoRead = voiceSettings.autoRead && connectivityReady && connectivityMode !== 'low_bandwidth';
   const [transcriptReady, setTranscriptReady] = useState(false);
   const [view, setView] = useState<View>('buddy');
@@ -298,17 +287,6 @@ export function PetrosMentor(props: {
       stopSpeaking();
     }
   }, [connectivityMode, stopSpeaking]);
-  const [mouthOpen, setMouthOpen] = useState(false);
-
-  useEffect(() => {
-    if (!voice.speaking) {
-      setMouthOpen(false);
-      return undefined;
-    }
-    setMouthOpen(true);
-    const timer = window.setInterval(() => setMouthOpen((current) => !current), 135);
-    return () => window.clearInterval(timer);
-  }, [voice.speaking]);
 
   useEffect(() => {
     if (!inLearningSession || !activeLessonSegment || lessonInterruption || diagramNarration) return;
@@ -376,7 +354,7 @@ export function PetrosMentor(props: {
       const stored = JSON.parse(localStorage.getItem(`petros:voice:${studentId}`) ?? 'null');
       if (stored) setVoiceSettings({
         autoRead: stored.autoRead === true,
-        voice: stored.voice === 'marin' ? 'marin' : 'cedar',
+        voice: typeof stored.voice === 'string' && /^[a-z]{1,30}$/.test(stored.voice) ? stored.voice : 'cedar',
         language: ['en', 'hi', 'ml', 'ta', 'te', 'kn', 'auto'].includes(stored.language) ? stored.language : 'en',
       });
     } catch { /* Preferences are optional when storage is unavailable. */ }
@@ -791,6 +769,7 @@ export function PetrosMentor(props: {
         previous: placement,
       });
       setPlacement((current) => {
+        if (voice.speaking && current) return current;
         if (current && Math.abs(current.x - next.x) < 1 && Math.abs(current.y - next.y) < 1 && current.point === next.point) return current;
         if (current) {
           setMoving(data?.preferences.animate !== false);
@@ -815,7 +794,7 @@ export function PetrosMentor(props: {
     };
     // Placement is the prior location for scoring, not a re-measure trigger.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bubbleOpen, data?.preferences.animate, diagramNarration, guide, guidePanelSide, hidden, lessonTeachingTarget, pathname, spatialKey, step, view, wide]);
+  }, [bubbleOpen, data?.preferences.animate, diagramNarration, guide, guidePanelSide, hidden, lessonTeachingTarget, pathname, spatialKey, step, view, voice.speaking, wide]);
 
   useEffect(() => () => {
     if (moveTimerRef.current) clearTimeout(moveTimerRef.current);
@@ -924,14 +903,14 @@ export function PetrosMentor(props: {
     return () => window.removeEventListener('petros:workspace-interrupt', interruptWorkspace);
   }, [voice]);
 
-  const pose = useMemo<keyof typeof POSES>(() => {
+  const pose = useMemo<PortalPose>(() => {
     if (voice.listening) return 'listening';
+    if (voice.speaking) return 'talking';
     if (sending || voice.transcribing || voice.preparing || busy || decision.isLoading) return 'thinking';
     if (sessionReaction?.kind === 'thinking') return 'thinking';
     if (sessionReaction?.kind === 'retry') return 'listening';
     if (sessionReaction && ['correct', 'checkpoint', 'celebrate'].includes(sessionReaction.kind)) return 'point-up';
     if ((diagramNarration || lessonTeachingTarget) && placement && !bubbleOpen) return `point-${placement.point}`;
-    if (voice.speaking) return 'talking';
     if (spatialKey && placement && (!bubbleOpen || guide)) return `point-${placement.point}`;
     return 'idle';
   }, [bubbleOpen, busy, decision.isLoading, diagramNarration, guide, lessonTeachingTarget, placement, sending, sessionReaction, spatialKey, voice]);
@@ -947,9 +926,9 @@ export function PetrosMentor(props: {
 
   const thoughts = useMemo(() => {
     if (!(sending || voice.transcribing || decision.isLoading)) return [];
-    if (voice.transcribing) return ['Listening back…', 'Turning speech into words…'];
-    return [lead?.deadlineAt ? 'Checking deadlines…' : 'Checking your portal…', data?.learning ? 'Looking at progress…' : 'Finding what matters…', 'Building the fastest useful next step…'];
-  }, [data?.learning, decision.isLoading, lead?.deadlineAt, sending, voice.transcribing]);
+    if (voice.transcribing) return ['Transcribing your recording…'];
+    return ['Preparing a response…'];
+  }, [decision.isLoading, sending, voice.transcribing]);
 
   const contextualText = lessonInterruption?.answer || diagramNarration?.text || activeLessonSegment?.text || replyText(latestReply) || lessonSummary || (companion.focus
     ? `I’m beside ${companion.focus.title}. What do you want to know?`
@@ -984,14 +963,10 @@ export function PetrosMentor(props: {
   const character = (
     <div className={styles.characterWrap} data-docked={characterDocked || undefined} style={characterDocked ? undefined : characterStyle}>
       <button id="petros-mentor-toggle" type="button" className={styles.character} onClick={() => { if (bubbleOpen) closeConversation(); else { setExpanded(true); companion.setOpen(true); } }} aria-label={bubbleOpen ? 'Let Petros idle' : 'Talk to Petros'} aria-expanded={bubbleOpen} aria-controls="petros-conversation">
-        {pose === 'talking' ? (
-          <>
-            <Image className={styles.mouthFrame} data-visible={!mouthOpen || undefined} src={POSES.idle} alt="" aria-hidden="true" width={384} height={512} priority unoptimized />
-            <Image className={styles.mouthFrame} data-visible={mouthOpen || undefined} src={POSES.talking} alt="" aria-hidden="true" width={384} height={512} priority unoptimized />
-          </>
-        ) : (
-          <Image key={pose} src={POSES[pose]} alt="Petros, your animated learning buddy" width={384} height={512} priority unoptimized />
-        )}
+        <PetrosAvatar pose={pose === 'idle' ? 'neutral' : pose === 'talking' ? 'speaking' : pose} speaking={voice.speaking}
+          idle={pose === 'idle' && !input && !bubbleOpen && !paused && !inLearningSession}
+          transition={!voice.preparing && !voice.transcribing && !input}
+          animate={data?.preferences.animate !== false} label="Petros, your animated learning buddy" />
         <span className={styles.groundShadow} aria-hidden="true" />
       </button>
       {!characterDocked && sessionReaction ? (
@@ -1014,10 +989,10 @@ export function PetrosMentor(props: {
   );
 
   return (
-    <div className={styles.agent} data-conversation={bubbleOpen ? 'open' : 'closed'} data-guide={guide ? 'true' : undefined} data-learning={inLearningSession || undefined} data-size={wide ? 'wide' : 'normal'} data-animate={data?.preferences.animate !== false} data-moving={(!bubbleOpen || guide) && moving || undefined} data-pose={pose} data-reaction={sessionReaction?.kind ?? (inLearningSession ? 'reading' : undefined)} data-avatar-state={avatarState} data-voice-phase={voice.phase} data-mouth={voice.speaking ? mouthOpen ? 'open' : 'closed' : 'rest'} aria-label="Petros, your portal learning buddy">
+    <div className={styles.agent} data-conversation={bubbleOpen ? 'open' : 'closed'} data-guide={guide ? 'true' : undefined} data-learning={inLearningSession || undefined} data-size={wide ? 'wide' : 'normal'} data-animate={data?.preferences.animate !== false} data-moving={!voice.speaking && (!bubbleOpen || guide) && moving || undefined} data-pose={pose} data-reaction={sessionReaction?.kind ?? (inLearningSession ? 'reading' : undefined)} data-avatar-state={avatarState} data-voice-phase={voice.phase} data-mouth={voice.speaking ? 'approximate' : 'rest'} aria-label="Petros, your portal learning buddy">
       {!bubbleOpen && thoughts.length ? (
         <div className={styles.thoughts} style={characterStyle} aria-live="polite">
-          {thoughts.map((thought, index) => <span key={thought} style={{ '--thought-index': index } as CSSProperties}>{thought}</span>)}
+          <PetrosSpeechCloud text={thoughts.join(' ')} kind="status" label={voice.transcribing ? 'Transcribing' : 'Status'} />
         </div>
       ) : null}
 
@@ -1128,8 +1103,14 @@ export function PetrosMentor(props: {
             ) : (
               <div className={styles.settings}>
                 <h2>Make Petros work for you</h2>
-                <label className={styles.selectLabel}>Speaking voice<select value={voiceSettings.voice} onChange={(event) => updateVoiceSettings({ voice: event.target.value as 'cedar' | 'marin' })}><option value="cedar">Cedar</option><option value="marin">Marin</option></select></label>
-                <button type="button" onClick={() => voice.speaking || voice.preparing ? voice.stopSpeaking() : void voice.speak('Hi, I’m Petros. We can take this one step at a time. Ask a question whenever you need a hand.')} disabled={voice.listening || voice.transcribing}>{voice.speaking || voice.preparing ? 'Stop preview' : 'Preview voice'}</button>
+                <label className={styles.selectLabel}>Speaking voice<select aria-label="Speaking voice" value={voiceSettings.voice} onChange={(event) => updateVoiceSettings({ voice: event.target.value })} disabled={voice.voiceOptions?.state !== 'ready'}>
+                  {!voice.voiceOptions?.voices.includes(voiceSettings.voice) && <option value={voiceSettings.voice} disabled>{voiceSettings.voice} — unavailable; select an alternative</option>}
+                  {voice.voiceOptions?.voices.map(name => <option key={name} value={name}>{name[0]!.toUpperCase() + name.slice(1)}</option>)}
+                </select></label>
+                {voice.selectionReason && <p role="status">{voice.selectionReason}</p>}
+                {voice.voiceOptions?.modelKey && <p>Available route: {voice.voiceOptions.providerKey} / {voice.voiceOptions.modelKey}</p>}
+                <button type="button" onClick={() => voice.speaking || voice.preparing ? voice.stopSpeaking() : void voice.speak('Hi, I’m Petros. We can take this one step at a time. Ask a question whenever you need a hand.')} disabled={voice.listening || voice.transcribing || (!voice.canSpeak && !voice.speaking && !voice.preparing)}>{voice.speaking || voice.preparing ? 'Stop preview' : 'Generate new voice sample'}</button>
+                {voice.receipt && <p role="status">Last generated audio: {voice.receipt.effective.voice} · {voice.receipt.effective.modelKey} · {voice.receipt.effective.providerKey}{voice.receipt.fallback.route ? ' · alternate route used' : ''}</p>}
                 <label><input type="checkbox" checked={voiceSettings.autoRead} disabled={connectivityMode === 'low_bandwidth'} onChange={(event) => updateVoiceSettings({ autoRead: event.target.checked })} />Read replies aloud automatically</label>
                 {connectivityMode === 'low_bandwidth' && <p role="status">Automatic speech is paused in low-bandwidth mode. You can still request voice manually.</p>}
                 <label className={styles.selectLabel}>I speak in<select value={voiceSettings.language} onChange={(event) => updateVoiceSettings({ language: event.target.value })}><option value="en">English</option><option value="hi">Hindi</option><option value="ml">Malayalam</option><option value="ta">Tamil</option><option value="te">Telugu</option><option value="kn">Kannada</option><option value="auto">Detect automatically</option></select></label>
@@ -1150,7 +1131,7 @@ export function PetrosMentor(props: {
               {voice.listening || voice.transcribing ? <p className={styles.recordingStatus} role="status">{voice.listening ? 'Recording · press the microphone to finish' : 'Transcribing your recording…'}<button type="button" onClick={voice.cancelListening}>Cancel</button></p> : null}
               <form className={styles.composer} onSubmit={(event) => { event.preventDefault(); void send(input); }}>
                 <label className="sr-only" htmlFor="petros-direct-input">Talk to Petros</label>
-                <textarea ref={inputRef} id="petros-direct-input" value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (!voice.listening && !voice.transcribing) void send(input); } }} placeholder={inLearningSession ? 'Ask about this lesson…' : companion.focus ? `Ask about ${companion.focus.title}…` : 'Ask a question or tell me what you need…'} maxLength={2_000} rows={2} />
+                <textarea ref={inputRef} id="petros-direct-input" value={input} onChange={(event) => { if (voice.listening || voice.transcribing) voice.cancelListening(); setInput(event.target.value); }} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (!voice.listening && !voice.transcribing) void send(input); } }} placeholder={inLearningSession ? 'Ask about this lesson…' : companion.focus ? `Ask about ${companion.focus.title}…` : 'Ask a question or tell me what you need…'} maxLength={2_000} rows={2} />
                 <div className={styles.composerActions}><span>Enter to send · Shift + Enter for a new line</span><button type="button" disabled={voice.transcribing || sending} data-listening={voice.listening || undefined} onClick={() => void voice.startListening()} aria-label={voice.listening ? 'Stop listening' : 'Talk to Petros'}>{voice.listening ? <MicOff aria-hidden="true" /> : <Mic aria-hidden="true" />}</button><button type="submit" className={styles.primary} disabled={sending || voice.listening || voice.transcribing || input.trim().length < 2} aria-label="Send to Petros">{sending ? <LoaderCircle aria-hidden="true" /> : <Send aria-hidden="true" />}</button></div>
               </form>
             </> : null}

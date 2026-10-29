@@ -165,6 +165,7 @@ export const PETROS_FUNCTION_CATALOG: PetrosFunctionDefinition[] = [
   fn('engagement.motivate', 'Humour or motivational intervention', 'Engagement', 'Generate appropriate light motivation grounded in effort.'),
   fn('language.translate', 'Translation', 'Language', 'Translate educational material while preserving meaning.'),
   fn('language.mixed_teaching', 'Mixed-language teaching', 'Language', 'Teach naturally in an approved mixed-language register.'),
+  fn('teaching.propose', 'Learning proposal', 'Grounding', 'Propose source-grounded teaching drafts for qualified staff review.', { allowedInputTypes: ['text'], responseFormat: 'json', requiredCapabilities: ['text', 'structured_output'] }),
   fn('document.understand', 'Document understanding', 'Grounding', 'Understand student or institution documents.', { allowedInputTypes: ['document', 'text'], responseFormat: 'json', requiredCapabilities: ['text', 'structured_output'] }),
   fn('syllabus.retrieve_ground', 'Syllabus retrieval and grounding', 'Grounding', 'Retrieve and ground teaching inside the active syllabus.', { essential: true }),
   fn('assignment.assist', 'Assignment assistance', 'Governance', 'Provide policy-aware assignment help that shifts toward questioning.', { essential: true }),

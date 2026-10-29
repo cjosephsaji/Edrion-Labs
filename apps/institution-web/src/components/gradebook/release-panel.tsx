@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Badge, Button, Skeleton } from '@edrion/ui';
+import { Badge, Button, Input, Select, Skeleton } from '@edrion/ui';
 import { useAcademicContext } from '@/lib/academic-context';
 import { useClassOptions, useSubjectOptions } from '@/lib/academics';
 import { useExamOptions } from '@/lib/exams';
@@ -41,7 +41,11 @@ export function GradebookReleasePanel() {
       ? scope.campusId
       : campusId || campuses[0]?.id || me?.campuses[0]?.id || '';
 
-  const { data: batches, isLoading, refetch } = useMarkReleases(termId || undefined, subjectId || undefined);
+  const {
+    data: batches,
+    isLoading,
+    refetch,
+  } = useMarkReleases(termId || undefined, subjectId || undefined);
   const { upsert, release, approve, retract } = useMarkReleaseMutations();
 
   const scopedBatches = useMemo(() => {
@@ -98,7 +102,7 @@ export function GradebookReleasePanel() {
   if (!canManage && !canApprove) return null;
 
   return (
-    <section className="mb-6 rounded-xl border border-border bg-surface-elevated p-4 shadow-sm">
+    <section className="rounded-xl border border-border bg-surface-elevated p-4 shadow-sm">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="font-semibold text-text-primary">Mark release</h2>
@@ -115,48 +119,41 @@ export function GradebookReleasePanel() {
 
       <div className="mb-4 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         <Field label="Subject">
-          <select
-            className="w-full rounded-lg border border-border bg-surface px-2 py-2 text-sm"
+          <Select
             value={subjectId}
             onChange={(e) => setSubjectId(e.target.value)}
-          >
-            <option value="">Select subject</option>
-            {(subjects?.items ?? []).map((s) => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Select subject' },
+              ...(subjects?.items ?? []).map((s) => ({ value: s.id, label: s.name })),
+            ]}
+          />
         </Field>
         <Field label="Class">
-          <select
-            className="w-full rounded-lg border border-border bg-surface px-2 py-2 text-sm"
+          <Select
             value={classId}
             onChange={(e) => setClassId(e.target.value)}
-          >
-            <option value="">Select class</option>
-            {(classes?.items ?? []).map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Select class' },
+              ...(classes?.items ?? []).map((c) => ({ value: c.id, label: c.name })),
+            ]}
+          />
         </Field>
         <Field label="Exam">
-          <select
-            className="w-full rounded-lg border border-border bg-surface px-2 py-2 text-sm"
+          <Select
             value={examId}
             onChange={(e) => {
               setExamId(e.target.value);
               if (e.target.value) setAssessmentName('');
             }}
-          >
-            <option value="">Ad-hoc assessment</option>
-            {(exams?.items ?? []).map((e) => (
-              <option key={e.id} value={e.id}>{e.name}</option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Ad-hoc assessment' },
+              ...(exams?.items ?? []).map((e) => ({ value: e.id, label: e.name })),
+            ]}
+          />
         </Field>
         {!examId ? (
           <Field label="Assessment name">
-            <input
-              className="w-full rounded-lg border border-border bg-surface px-2 py-2 text-sm"
+            <Input
               value={assessmentName}
               onChange={(e) => setAssessmentName(e.target.value)}
               placeholder="e.g. Midterm"
@@ -165,16 +162,14 @@ export function GradebookReleasePanel() {
         ) : null}
         {scope.mode === 'institution' ? (
           <Field label="Campus">
-            <select
-              className="w-full rounded-lg border border-border bg-surface px-2 py-2 text-sm"
+            <Select
               value={campusId}
               onChange={(e) => setCampusId(e.target.value)}
-            >
-              <option value="">Default campus</option>
-              {campuses.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+              options={[
+                { value: '', label: 'Default campus' },
+                ...campuses.map((c) => ({ value: c.id, label: c.name })),
+              ]}
+            />
           </Field>
         ) : null}
       </div>
@@ -189,12 +184,16 @@ export function GradebookReleasePanel() {
 
       <ul className="space-y-2">
         {scopedBatches.map((batch) => (
-          <li key={batch.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+          <li
+            key={batch.id}
+            className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm"
+          >
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Badge tone={statusTone(batch.status)}>{batch.status.replace('_', ' ')}</Badge>
                 <span className="text-text-muted">
-                  {batch.scope.exam_id ? 'Exam scope' : batch.scope.assessment_name} · {batch.preview.entered} marks
+                  {batch.scope.exam_id ? 'Exam scope' : batch.scope.assessment_name} ·{' '}
+                  {batch.preview.entered} marks
                 </span>
               </div>
               {batch.preview.missing > 0 ? (
@@ -236,7 +235,10 @@ export function GradebookReleasePanel() {
                     const note = window.prompt('Retract note (required):');
                     if (!note?.trim()) return;
                     try {
-                      await retract.mutateAsync({ id: batch.id, body: { version: batch.version, note: note.trim() } });
+                      await retract.mutateAsync({
+                        id: batch.id,
+                        body: { version: batch.version, note: note.trim() },
+                      });
                       await refetch();
                     } catch (err) {
                       setError(formatPortalError(err));

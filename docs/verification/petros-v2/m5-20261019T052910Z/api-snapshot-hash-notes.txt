@@ -1,0 +1,1 @@
+M5 adds evaluator-only committed canvas receipt verification. Original immutable checkpoints and submitted response hashes remain authoritative.

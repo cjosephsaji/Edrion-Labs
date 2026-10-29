@@ -39,9 +39,9 @@ describe('integrals teaching studio', () => {
 
   it('renders the original Petros character artwork', () => {
     render(<PetrosRig state="point" />);
-    expect(screen.getByRole('img', { name: 'Petros' }).querySelector('image')).toHaveAttribute(
-      'href',
-      '/petros/petros-pointing.png',
+    expect(screen.getByRole('img', { name: 'Petros' }).querySelector('img[data-active="true"]')).toHaveAttribute(
+      'src',
+      '/petros/states/petros-point-left.png',
     );
   });
 });

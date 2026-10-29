@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import {
   and,
   asc,
@@ -263,76 +263,196 @@ export class ProgrammeStructureRepository {
     actorId: string | null,
   ): Promise<ProgrammeStructureDetail> {
     await this.db.transaction(async (tx) => {
-      await tx
-        .update(schema.departments)
-        .set({
-          termSystem: input.termSystem,
-          durationMonths: input.durationMonths ?? null,
-          termsPerYear: input.termsPerYear,
-          updatedBy: actorId,
-          updatedAt: new Date(),
-        })
-        .where(eq(schema.departments.id, departmentId));
-
+      // Serialize edits to the same structure and reject stale onboarding previews.
+      const [department] = await tx
+        .select()
+        .from(schema.departments)
+        .where(
+          and(
+            eq(schema.departments.id, departmentId),
+            eq(schema.departments.institutionId, institutionId),
+          ),
+        )
+        .for('update');
+      if (!department || (input.version != null && department.version !== input.version)) {
+        throw new ConflictException({
+          code: 'VERSION_CONFLICT',
+          message: 'This structure changed. Refresh and try again.',
+        });
+      }
       const existingLevels = await tx
         .select()
         .from(schema.departmentGradeLevels)
         .where(eq(schema.departmentGradeLevels.departmentId, departmentId));
+      const existingSlots = await tx
+        .select()
+        .from(schema.programmeTermSlots)
+        .where(eq(schema.programmeTermSlots.departmentId, departmentId));
+      const placements = await tx
+        .select()
+        .from(schema.programmeSubjects)
+        .where(eq(schema.programmeSubjects.departmentId, departmentId));
+      for (const placement of placements.filter((row) => !row.slotId)) {
+        const slot = existingSlots.find(
+          (item) =>
+            item.programmeLevelId === placement.programmeLevelId &&
+            item.sequenceInYear === placement.semesterSequence,
+        );
+        if (!slot)
+          throw new ConflictException({
+            code: 'STRUCTURE_IN_USE',
+            message: 'Repair curriculum entries without a term before editing this structure.',
+          });
+        if (slot)
+          await tx
+            .update(schema.programmeSubjects)
+            .set({ slotId: slot.id })
+            .where(eq(schema.programmeSubjects.id, placement.id));
+      }
+      const levelIds = new Set(existingLevels.map((level) => level.id));
+      const slotIds = new Set(existingSlots.map((slot) => slot.id));
+      if (
+        input.levels.some((level) => level.id && !levelIds.has(level.id)) ||
+        input.slots.some((slot) => slot.id && !slotIds.has(slot.id))
+      ) {
+        throw new ConflictException({
+          code: 'INVALID_STRUCTURE_REFERENCE',
+          message: 'An edited row does not belong to this structure.',
+        });
+      }
+      const keptLevels = new Set(input.levels.flatMap((level) => (level.id ? [level.id] : [])));
+      const keptSlots = new Set(input.slots.flatMap((slot) => (slot.id ? [slot.id] : [])));
+      const removedLevels = existingLevels.filter((level) => !keptLevels.has(level.id));
+      const removedSlots = existingSlots.filter((slot) => !keptSlots.has(slot.id));
+      const removedGradeIds = removedLevels.map((level) => level.gradeLevelId);
+      const removedSlotIds = removedSlots.map((slot) => slot.id);
 
-      if (existingLevels.length > 0) {
-        const levelIds = existingLevels.map((l) => l.id);
-        await tx
-          .delete(schema.programmeTermSlots)
-          .where(inArray(schema.programmeTermSlots.programmeLevelId, levelIds));
-        await tx
-          .delete(schema.departmentGradeLevels)
-          .where(eq(schema.departmentGradeLevels.departmentId, departmentId));
-        const gradeIds = existingLevels.map((l) => l.gradeLevelId);
-        if (gradeIds.length > 0) {
-          await tx.delete(schema.gradeLevels).where(inArray(schema.gradeLevels.id, gradeIds));
+      // Removing a populated row must never silently discard curriculum or student placement.
+      if (removedGradeIds.length) {
+        const [students] = await tx
+          .select({ value: count() })
+          .from(schema.students)
+          .where(inArray(schema.students.gradeLevelId, removedGradeIds));
+        const [classes] = await tx
+          .select({ value: count() })
+          .from(schema.classes)
+          .where(inArray(schema.classes.gradeLevelId, removedGradeIds));
+        const [enrollments] = await tx
+          .select({ value: count() })
+          .from(schema.studentEnrollments)
+          .where(inArray(schema.studentEnrollments.gradeLevelId, removedGradeIds));
+        if (
+          Number(students?.value) > 0 ||
+          Number(classes?.value) > 0 ||
+          Number(enrollments?.value) > 0
+        ) {
+          throw new ConflictException({
+            code: 'STRUCTURE_IN_USE',
+            message: 'Move students and classes out of a grade before removing it.',
+          });
         }
       }
-
-      const levelIdBySequence = new Map<number, string>();
-
-      for (const level of input.levels) {
-        const [grade] = await tx
-          .insert(schema.gradeLevels)
-          .values({
-            institutionId,
-            campusId,
-            name: level.name,
-            level: level.sequence,
-            departmentId,
-            createdBy: actorId,
-          } satisfies NewGradeLevel)
-          .returning();
-
-        const [link] = await tx
-          .insert(schema.departmentGradeLevels)
-          .values({
-            institutionId,
-            campusId,
-            departmentId,
-            gradeLevelId: grade!.id,
-            sequence: level.sequence,
-            durationLabel:
-              level.durationMonths != null ? `${level.durationMonths} mo` : null,
-            createdBy: actorId,
-          } satisfies NewDepartmentGradeLevel)
-          .returning();
-
-        levelIdBySequence.set(level.sequence, link!.id);
+      if (removedSlotIds.length) {
+        const [subjects] = await tx
+          .select({ value: count() })
+          .from(schema.programmeSubjects)
+          .where(inArray(schema.programmeSubjects.slotId, removedSlotIds));
+        const [classes] = await tx
+          .select({ value: count() })
+          .from(schema.classes)
+          .innerJoin(schema.academicTerms, eq(schema.classes.termId, schema.academicTerms.id))
+          .where(inArray(schema.academicTerms.slotId, removedSlotIds));
+        if (Number(subjects?.value) > 0 || Number(classes?.value) > 0) {
+          throw new ConflictException({
+            code: 'STRUCTURE_IN_USE',
+            message: 'Remove subject placements and classes from a term before removing it.',
+          });
+        }
+        await tx
+          .delete(schema.academicTerms)
+          .where(inArray(schema.academicTerms.slotId, removedSlotIds));
+        await tx
+          .delete(schema.programmeTermSlots)
+          .where(inArray(schema.programmeTermSlots.id, removedSlotIds));
       }
-
+      if (removedLevels.length) {
+        await tx.delete(schema.departmentGradeLevels).where(
+          inArray(
+            schema.departmentGradeLevels.id,
+            removedLevels.map((level) => level.id),
+          ),
+        );
+        await tx.delete(schema.gradeLevels).where(inArray(schema.gradeLevels.id, removedGradeIds));
+      }
+      for (const placement of placements) {
+        await tx
+          .update(schema.programmeSubjects)
+          .set({ semesterSequence: -placement.semesterSequence })
+          .where(eq(schema.programmeSubjects.id, placement.id));
+      }
+      // Free unique sequence positions before renumbering retained slots.
+      for (const slot of existingSlots.filter((slot) => keptSlots.has(slot.id))) {
+        await tx
+          .update(schema.programmeTermSlots)
+          .set({ sequenceInYear: -slot.sequenceInYear, absoluteSequence: -slot.absoluteSequence })
+          .where(eq(schema.programmeTermSlots.id, slot.id));
+      }
+      const levelIdBySequence = new Map<number, string>();
+      for (const level of input.levels) {
+        const existing = existingLevels.find((item) => item.id === level.id);
+        if (existing) {
+          await tx
+            .update(schema.gradeLevels)
+            .set({
+              name: level.name,
+              level: level.sequence,
+              updatedBy: actorId,
+              updatedAt: new Date(),
+              version: sql`${schema.gradeLevels.version} + 1`,
+            })
+            .where(eq(schema.gradeLevels.id, existing.gradeLevelId));
+          await tx
+            .update(schema.departmentGradeLevels)
+            .set({
+              sequence: level.sequence,
+              durationLabel: level.durationMonths != null ? `${level.durationMonths} mo` : null,
+              updatedBy: actorId,
+              updatedAt: new Date(),
+              version: sql`${schema.departmentGradeLevels.version} + 1`,
+            })
+            .where(eq(schema.departmentGradeLevels.id, existing.id));
+          levelIdBySequence.set(level.sequence, existing.id);
+        } else {
+          const [grade] = await tx
+            .insert(schema.gradeLevels)
+            .values({
+              institutionId,
+              campusId,
+              name: level.name,
+              level: level.sequence,
+              departmentId,
+              createdBy: actorId,
+            } satisfies NewGradeLevel)
+            .returning();
+          const [link] = await tx
+            .insert(schema.departmentGradeLevels)
+            .values({
+              institutionId,
+              campusId,
+              departmentId,
+              gradeLevelId: grade!.id,
+              sequence: level.sequence,
+              durationLabel: level.durationMonths != null ? `${level.durationMonths} mo` : null,
+              createdBy: actorId,
+            } satisfies NewDepartmentGradeLevel)
+            .returning();
+          levelIdBySequence.set(level.sequence, link!.id);
+        }
+      }
       for (const slot of input.slots) {
         const programmeLevelId = levelIdBySequence.get(slot.levelSequence);
         if (!programmeLevelId) continue;
-
-        await tx.insert(schema.programmeTermSlots).values({
-          institutionId,
-          campusId,
-          departmentId,
+        const data = {
           programmeLevelId,
           sequenceInYear: slot.sequenceInYear,
           absoluteSequence: slot.absoluteSequence,
@@ -340,9 +460,67 @@ export class ProgrammeStructureRepository {
           kind: slot.kind,
           durationMonths: slot.durationMonths ?? null,
           isTerminal: slot.isTerminal,
-          createdBy: actorId,
-        } satisfies NewProgrammeTermSlot);
+        };
+        if (slot.id) {
+          const existing = existingSlots.find((item) => item.id === slot.id)!;
+          if (existing.programmeLevelId !== programmeLevelId) {
+            throw new ConflictException({
+              code: 'INVALID_STRUCTURE_REFERENCE',
+              message: 'A saved term cannot be moved to another grade.',
+            });
+          }
+          await tx
+            .update(schema.programmeTermSlots)
+            .set({
+              ...data,
+              updatedBy: actorId,
+              updatedAt: new Date(),
+              version: sql`${schema.programmeTermSlots.version} + 1`,
+            })
+            .where(eq(schema.programmeTermSlots.id, slot.id));
+          await tx
+            .update(schema.programmeSubjects)
+            .set({
+              semesterSequence: slot.sequenceInYear,
+              updatedAt: new Date(),
+              version: sql`${schema.programmeSubjects.version} + 1`,
+            })
+            .where(eq(schema.programmeSubjects.slotId, slot.id));
+          await tx
+            .update(schema.academicTerms)
+            .set({
+              name: slot.name,
+              kind: slot.kind,
+              sequence: slot.sequenceInYear,
+              updatedAt: new Date(),
+              version: sql`${schema.academicTerms.version} + 1`,
+            })
+            .where(eq(schema.academicTerms.slotId, slot.id));
+        } else {
+          await tx
+            .insert(schema.programmeTermSlots)
+            .values({
+              institutionId,
+              campusId,
+              departmentId,
+              ...data,
+              createdBy: actorId,
+            } satisfies NewProgrammeTermSlot);
+        }
       }
+      await tx
+        .update(schema.departments)
+        .set({
+          unitKind: 'programme',
+          ...(input.name ? { name: input.name } : {}),
+          termSystem: input.termSystem,
+          durationMonths: input.durationMonths ?? null,
+          termsPerYear: input.termsPerYear,
+          updatedBy: actorId,
+          updatedAt: new Date(),
+          version: sql`${schema.departments.version} + 1`,
+        })
+        .where(eq(schema.departments.id, departmentId));
     });
 
     const result = await this.getStructure(departmentId, institutionId);
@@ -405,6 +583,7 @@ export class ProgrammeStructureRepository {
     institutionId: string,
     campusId: string | null,
     actorId: string | null,
+    refreshDepartmentId?: string,
   ): Promise<{ created: number; skipped: number }> {
     const yearIds = await this.listAcademicYearIds(institutionId);
     let created = 0;
@@ -416,6 +595,7 @@ export class ProgrammeStructureRepository {
         campusId,
         actorId,
         false,
+        refreshDepartmentId,
       );
       created += result.created;
       skipped += result.skipped;
@@ -429,6 +609,7 @@ export class ProgrammeStructureRepository {
     campusId: string | null,
     actorId: string | null,
     replaceExisting: boolean,
+    refreshDepartmentId?: string,
   ): Promise<{ created: number; skipped: number }> {
     const year = await this.findAcademicYear(academicYearId, institutionId);
     if (!year) return { created: 0, skipped: 0 };
@@ -477,6 +658,14 @@ export class ProgrammeStructureRepository {
           .limit(1);
 
         if (existing) {
+          if (refreshDepartmentId === slot.departmentId) {
+            const dates = schedule.get(slot.id)!;
+            await tx.update(schema.academicTerms).set({
+              name: slot.name, kind: slot.kind, sequence: slot.sequenceInYear,
+              startDate: dates.startDate, endDate: dates.endDate,
+              updatedBy: actorId, updatedAt: new Date(), version: sql`${schema.academicTerms.version} + 1`,
+            }).where(eq(schema.academicTerms.id, existing.id));
+          }
           skipped += 1;
           continue;
         }

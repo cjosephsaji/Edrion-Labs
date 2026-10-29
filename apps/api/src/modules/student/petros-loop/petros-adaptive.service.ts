@@ -59,7 +59,7 @@ export class PetrosAdaptiveService {
   async availability(principal: InstitutionalStudentPrincipal, sessionId: string) {
     await this.principal(principal, principal.institutionUserId);
     const t = schema.petrosLearningSessions;
-    const session = (await this.db.select().from(t).where(and(eq(t.id,sessionId),
+    const session = (await this.db.select({status:t.status,sourceContext:t.sourceContext}).from(t).where(and(eq(t.id,sessionId),
       eq(t.institutionId,principal.institutionId),eq(t.studentId,principal.studentId))).limit(1))[0];
     if (!session) throw new NotFoundException();
     if (!this.env.PETROS_ADAPTIVE_TEACHING_ENABLED || !this.env.PETROS_ASSESSMENT_CONTRACT_ENABLED)

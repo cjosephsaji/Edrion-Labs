@@ -21,7 +21,20 @@
     ".next/types/**/*.ts",
     ".next-dev/types/**/*.ts",
     ".next-petros-verification-dev/types/**/*.ts",
-    ".next-petros-verification/types/**/*.ts"
+    ".next-petros-verification/types/**/*.ts",
+    ".next-petros-m0p-verification-dev/types/**/*.ts",
+    ".next-petros-m0p-verification/types/**/*.ts",
+    ".next-petros-m4-dev/types/**/*.ts",
+    ".next-petros-m4-build/types/**/*.ts",
+    ".next-petros-m4-review-20261019-dev/types/**/*.ts",
+    ".next-petros-m4-review-20261019-build/types/**/*.ts",
+    ".next-petros-m4-m5-interactive-dev/types/**/*.ts",
+    ".next-petros-m4-m5-interactive-build/types/**/*.ts",
+    ".next-petros-m4-m5-vm-final-dev/types/**/*.ts",
+    ".next-petros-m4-m5-vm-final-build/types/**/*.ts",
+    ".next-petros-m4-m6-dev/types/**/*.ts",
+    ".next-petros-m4-m6-build-build/types/**/*.ts",
+    ".next-petros-m4-m6-original-animation-dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

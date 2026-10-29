@@ -577,6 +577,10 @@ export function TimetableGrid() {
         }
         fields={slotFields}
         initial={slotFormValues}
+        resetKey={
+          editingSlot?.id ??
+          (cellTarget ? `${cellTarget.dayOfWeek}:${cellTarget.period.startTime}` : null)
+        }
         error={formError}
         submitting={create.isPending || update.isPending}
         onSubmit={onSaveSlot}

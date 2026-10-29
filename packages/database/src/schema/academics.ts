@@ -52,6 +52,8 @@ export const departments = pgTable(
     campusId: uuid('campus_id').references(() => campuses.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
     code: text('code').notNull(),
+    /** Organisational staff department versus a student course/stream/programme. */
+    unitKind: text('unit_kind').$type<'department' | 'programme'>().notNull().default('department'),
     /** Optional department head — a teacher (People phase, teachers.ts is the FK target). */
     headUserId: uuid('head_user_id').references(() => staff.id, { onDelete: 'set null' }),
     description: text('description'),
@@ -69,6 +71,7 @@ export const departments = pgTable(
   },
   (t) => ({
     instIdx: index('departments_institution_idx').on(t.institutionId),
+    unitKindIdx: index('departments_institution_unit_kind_idx').on(t.institutionId, t.unitKind),
     scopeIdx: index('departments_institution_campus_idx').on(t.institutionId, t.campusId),
   }),
 );

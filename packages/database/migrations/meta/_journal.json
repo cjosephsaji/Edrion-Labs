@@ -1072,6 +1072,62 @@
       "when": 1790985600000,
       "tag": "0230_petros_phase5_release",
       "breakpoints": true
+    },
+    {
+      "idx": 153,
+      "version": "7",
+      "when": 1791244800000,
+      "tag": "0231_staff_departments",
+      "breakpoints": true
+    },
+    {
+      "idx": 154,
+      "version": "7",
+      "when": 1791331200000,
+      "tag": "0232_maintenance_reporting_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 155,
+      "version": "7",
+      "when": 1791417600000,
+      "tag": "0233_petros_teacher_guidance",
+      "breakpoints": true
+    },
+    {
+      "idx": 156,
+      "version": "7",
+      "when": 1791417600001,
+      "tag": "0234_petros_readiness_repair",
+      "breakpoints": true
+    },
+    {
+      "idx": 157,
+      "version": "7",
+      "when": 1791763200000,
+      "tag": "0235_petros_v2_content_identity",
+      "breakpoints": true
+    },
+    {
+      "idx": 158,
+      "version": "7",
+      "when": 1791763200001,
+      "tag": "0236_petros_m2_preparation_progress",
+      "breakpoints": true
+    },
+    {
+      "idx": 159,
+      "version": "7",
+      "when": 1792065600000,
+      "tag": "0237_petros_v2_session_assessment",
+      "breakpoints": true
+    },
+    {
+      "idx": 160,
+      "version": "7",
+      "when": 1792382400000,
+      "tag": "0238_petros_v2_teaching_beliefs",
+      "breakpoints": true
     }
   ]
 }

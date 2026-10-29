@@ -11,6 +11,7 @@ import {
 } from '@edrion/database';
 import { PETROS_COMPANION_SCHEMA_VERSION } from '@edrion/schemas';
 import { DATABASE } from '../../../common/tokens';
+import { assertM4AssistanceBoundary } from '../petros-v2/petros-v2-source-exposure';
 import type { PetrosOwnerScope } from '../petros-loop/petros-loop.repository';
 
 /** Verbatim turns kept in the prompt before older ones are folded into the summary. */
@@ -19,6 +20,7 @@ export const COMPANION_VERBATIM_WINDOW = 12;
 @Injectable()
 export class PetrosCompanionRepository {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
+  assertV2Assistance(){return assertM4AssistanceBoundary(this.db);}
 
   private ownerWhere(scope: PetrosOwnerScope) {
     return and(

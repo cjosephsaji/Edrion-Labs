@@ -1,0 +1,162 @@
+Skip to content
+Isolated lesson preview
+Education OS
+OVERVIEW
+Dashboard
+Attention Centre
+Petros
+Petros support
+WORKFLOW
+Approvals
+Grievances
+ACADEMIC SETUP
+Academic Years
+Departments
+Grades
+Subjects
+Classes
+Terms
+PEOPLE
+Students
+Student Conduct
+Staff
+Parents
+CAREERS
+Placement cell
+ACADEMICS
+Teaching
+Admissions
+Attendance
+Timetable
+Homework
+Exams
+Gradebook
+Report cards
+Assignments
+Calendar
+FINANCE
+Fees
+Expenses
+Payroll
+OPERATIONS
+Library
+Transport
+Inventory
+Hostel
+COMMUNICATION
+Announcements
+Notifications
+Messages
+PTM scheduling
+HEALTH & WELLBEING
+Health Records
+Medical Incidents
+Medication Logs
+Counseling
+Counseling Cases
+CAMPUS OPERATIONS
+Labs
+Lab Schedule
+Lab Incidents
+Debate calibration
+Front Desk
+Appointments
+Facilities
+Work Orders
+Maintenance
+Assets
+Visitor Logs
+Gate Passes
+Security Incidents
+Emergency Alerts
+Access Logs
+Sensitive Reports
+IT
+Devices
+Access Requests
+Webhooks
+INSIGHTS
+Reports
+ADMINISTRATION
+Campuses
+Documents & Policies
+User Management
+Roles & Permissions
+Settings
+Petros policy
+SSO & roster
+Billing
+Audit Logs
+St
+Sample teacher
+f92d3396-cd05-4c20-9912-b6750dc402ed@example.test
+Sign out
+Cloud Computing
+All subjects
+Cloud Computing
+
+Isolated source review class · 2 students enrolled
+
+Notes
+Files
+Class updates
+Petros Learn
+Petros Learn
+
+Prepare lessons and guide your students.
+
+Lessons
+Learning goals
+Student progress
+Curriculum authoring
+
+Changes saved. This revision needs review again.
+
+1
+Choose material
+2
+Review lesson
+3
+Preview activities
+4
+Save & submit
+
+STEP 2 OF 4
+
+Here's what your students will learn
+cloud-models.pptx
+About 20 minutes
+Needs your attention
+Sample lesson — prepared from test data
+About this draft
+1
+Explain the distinction between logical resources and physical hardware using the source wording.
+
+Compare logical and physical resources
+
+Check this objective
+Edit
+2
+Classify the stated responsibility boundaries and justify the distinction using the cited source.
+
+Match the responsibilities
+
+Kept in draft · academic review still required
+Edit
+
+Keeping an objective records a draft choice. Move down is unavailable: this is last.
+
+Keep this objective
+Remove from lesson
+Move up
+Move down
+Inspect source
+Objective details
+Concepts & connections
+Check lesson claims
+Version history
+
+Student use is unavailable. See review details for requirements.
+
+Back
+Preview lesson

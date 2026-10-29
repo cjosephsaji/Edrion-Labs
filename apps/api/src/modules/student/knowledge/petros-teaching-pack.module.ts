@@ -12,12 +12,13 @@ import {
 } from './petros-teaching-pack.controller';
 import { PetrosTeachingPackRepository } from './petros-teaching-pack.repository';
 import { PetrosTeachingPackService } from './petros-teaching-pack.service';
+import { PetrosV2PublicationService } from './petros-v2-publication.service';
 
 @Module({
   imports: [FeatureControlsModule, KnowledgeDocumentModule, StudentAuthModule, forwardRef(() => PortalModule)],
   controllers: [PortalPetrosTeachingPackController, StudentPetrosTeachingPackController],
-  providers: [PetrosTeachingPackRepository, PetrosTeachingPackService, StudentPortalGuard,
+  providers: [PetrosV2PublicationService, PetrosTeachingPackRepository, PetrosTeachingPackService, StudentPortalGuard,
     StudentRateLimitGuard, SurfacesService],
-  exports: [PetrosTeachingPackService],
+  exports: [PetrosTeachingPackService, PetrosV2PublicationService],
 })
 export class PetrosTeachingPackModule {}

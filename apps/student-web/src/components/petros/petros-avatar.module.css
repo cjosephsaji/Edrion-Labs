@@ -1,0 +1,16 @@
+.avatar { display: block; position: relative; width: 100%; height: 100%; }
+.art { display: block; position: relative; width: 100%; height: 100%; transform-origin: 50% 85%; }
+.art > img, .art > svg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.art > img { opacity: 0; }
+.art > img[src='/petros/states/petros-idle.png'] { clip-path: inset(0 0 6.25% 0); }
+.art > img[data-active='true'] { opacity: 1; }
+.avatar[data-transition='true'] .art > img { transition: opacity 240ms cubic-bezier(.22, 1, .36, 1); }
+/* A long resting interval, one small lift and a slight whole-image tilt. No face articulation. */
+.avatar[data-idle-motion='true'] .art { animation: petros-rest 18s ease-in-out infinite; }
+@keyframes petros-rest {
+  0%, 28%, 62%, 100% { transform: translateY(0) rotate(0); }
+  39% { transform: translateY(-2px) rotate(-.35deg); }
+  49% { transform: translateY(-1px) rotate(.2deg); }
+}
+.avatar[data-motion='false'] *, :global(html[data-reduced-motion='true']) .avatar * { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) { .avatar * { animation: none !important; transition: none !important; } }

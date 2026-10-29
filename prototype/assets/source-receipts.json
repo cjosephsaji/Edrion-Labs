@@ -1,0 +1,46 @@
+[
+  {
+    "filename": "AI_Module_3.pdf",
+    "subject": "Artificial Intelligence",
+    "module": 3,
+    "bytes": 4384789,
+    "sha256": "7575fe98e7b69c4da8f5994964e7b9f3776ee3d68de620dcd4474f171b4894f9",
+    "parser": "Existing M2 pdf-extract.cjs / PDF.js 4.10.38",
+    "status": "verified",
+    "extractedPages": 38,
+    "pageCount": 38
+  },
+  {
+    "filename": "AI_Module_4.pdf",
+    "subject": "Artificial Intelligence",
+    "module": 4,
+    "bytes": 9865830,
+    "sha256": "9a86e9ac718bfc77ad6c6bfbe39f40152870bfa56b4d8e2444cc00a802ee96ab",
+    "parser": "Existing M2 pdf-extract.cjs / PDF.js 4.10.38",
+    "status": "verified",
+    "extractedPages": 28,
+    "pageCount": 30
+  },
+  {
+    "filename": "EHS_Module_3.pdf",
+    "subject": "Environmental and Health Safety",
+    "module": 3,
+    "bytes": 7513547,
+    "sha256": "c72a6df16651166ecc96e546de30309ce784ad1339d53ce059f3f412d9dcb660",
+    "parser": "Existing M2 pdf-extract.cjs / PDF.js 4.10.38",
+    "status": "verified",
+    "extractedPages": 158,
+    "pageCount": 188
+  },
+  {
+    "filename": "EHS_Module_5.pdf",
+    "subject": "Environmental and Health Safety",
+    "module": 5,
+    "bytes": 1849035,
+    "sha256": "16d5da2b78c32489419afaa7322869dfae7b21fec11b3eaec23cb22183c599e1",
+    "parser": "Existing M2 pdf-extract.cjs / PDF.js 4.10.38",
+    "status": "verified",
+    "extractedPages": 54,
+    "pageCount": 54
+  }
+]

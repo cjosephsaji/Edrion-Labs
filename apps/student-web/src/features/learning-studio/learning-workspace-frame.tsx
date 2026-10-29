@@ -25,11 +25,11 @@ const learningNavigation = [
 export function isLearningWorkspaceRoute(pathname: string) {
   // Dedicated studios supply their own navigation. Keep the portal's
   // permissions and saved quick links on the other student pages.
-  return pathname === '/petros/document' || pathname === '/petros/pilot';
+  return pathname === '/petros/document' || pathname === '/petros/pilot' || pathname === '/petros/v2' || pathname === '/petros/v2/session';
 }
 
 function isStudyRoute(pathname: string) {
-  return pathname === '/petros/document' || pathname === '/petros/session' || pathname === '/petros/pilot';
+  return pathname === '/petros/document' || pathname === '/petros/session' || pathname === '/petros/pilot' || pathname === '/petros/v2' || pathname === '/petros/v2/session';
 }
 
 export function LearningWorkspaceFrame({ children }: { children: ReactNode }) {

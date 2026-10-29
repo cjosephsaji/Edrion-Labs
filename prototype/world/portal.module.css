@@ -1,0 +1,320 @@
+.portal {
+  --portal-size: min(84vmin, calc(100dvh - 128px), 720px);
+  --portal-center-y: calc((100dvh - 96px) / 2);
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  color: #f4f8ea;
+  font: inherit;
+  isolation: isolate;
+}
+.dimmer {
+  position: absolute;
+  inset: 0;
+  background: #142d28;
+  opacity: 0.95;
+}
+.composition {
+  position: absolute;
+  left: 50%;
+  top: var(--portal-center-y);
+  width: var(--portal-size);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+}
+.halo {
+  position: absolute;
+  inset: -15%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    #acc6a77a 0,
+    #77a28b38 38%,
+    transparent 70%
+  );
+  filter: blur(10px);
+}
+.ring {
+  position: absolute;
+  inset: 0;
+  border: 1px solid #cbe6bf8c;
+  border-radius: 50%;
+  box-shadow:
+    0 0 65px #a2cf9c35,
+    inset 0 0 45px #a2cf9c26;
+  transform-origin: center;
+}
+.portal .copy {
+  position: relative;
+  width: 68%;
+  text-align: center;
+  padding: 0;
+  z-index: 3;
+  text-shadow: 0 2px 20px #102a24;
+}
+.copy > span {
+  font-size: clamp(9px, 1.3vmin, 11px);
+  letter-spacing: 2.5px;
+  color: #c2d6bd;
+}
+.portal .copy h2 {
+  font-size: clamp(18px, 4.6vmin, 32px);
+  font-weight: 500;
+  line-height: 1.25;
+  font-family: inherit;
+  letter-spacing: -0.4px;
+  margin: 12px 0 10px;
+  text-wrap: balance;
+}
+.portal .copy p {
+  font-size: clamp(12px, 1.8vmin, 16px);
+  line-height: 1.45;
+  color: #cfdeca;
+  margin: 0;
+  text-wrap: balance;
+}
+.copy progress {
+  display: block;
+  width: min(170px, 80%);
+  height: 3px;
+  margin: 18px auto 0;
+  accent-color: #b3d3a7;
+}
+.actions {
+  position: absolute;
+  bottom: 32px;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  z-index: 8;
+}
+.actions button {
+  font: inherit;
+  font-size: 13px;
+  border: 1px solid #c5d6bc66;
+  background: #213b32b3;
+  color: #f2f6e9;
+  border-radius: 30px;
+  padding: 10px 18px;
+  cursor: pointer;
+}
+.actions button:focus-visible {
+  outline: 3px solid #b0d29f;
+  outline-offset: 4px;
+}
+.streaks {
+  position: absolute;
+  width: 120vmin;
+  height: 120vmin;
+  left: 50%;
+  top: var(--portal-center-y);
+  transform: translate(-50%, -50%);
+  fill: #d3e9c1;
+  stroke: #d1ebbb;
+  stroke-width: 1;
+  pointer-events: none;
+  opacity: 0.6;
+}
+.streaks path {
+  fill: none;
+  stroke-dasharray: 80 450;
+}
+.portal[data-phase='entering'] .dimmer {
+  animation: veil 2.2s both;
+}
+.portal[data-phase='entering'] .ring {
+  animation: openPortal 2.2s cubic-bezier(0.3, 0.05, 0.2, 1) both;
+}
+.portal[data-phase='entering'] .halo {
+  animation: portalGlow 2.2s both;
+}
+.portal[data-phase='entering'] .streaks {
+  animation: travel 2.2s both;
+}
+.portal[data-phase='entering'] .copy {
+  animation: travelCopy 2.2s both;
+}
+.portal[data-phase='leaving'] .dimmer {
+  animation: veilOut 1.8s both;
+}
+.portal[data-phase='leaving'] .ring {
+  animation: openPortal 1.8s both;
+}
+.portal[data-phase='leaving'] .copy {
+  animation: travelCopy 1.8s both;
+}
+.portal[data-phase='loading'] .ring {
+  animation: breathe 2s ease-in-out infinite;
+}
+.portal[data-phase='loading'] .streaks {
+  display: none;
+}
+@keyframes veil {
+  0% {
+    opacity: 0;
+  }
+  16% {
+    opacity: 0.7;
+  }
+  43% {
+    opacity: 0.98;
+  }
+  70% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes veilOut {
+  0% {
+    opacity: 0;
+  }
+  45% {
+    opacity: 0.96;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes openPortal {
+  0% {
+    opacity: 0;
+    transform: scale(0.15);
+  }
+  16% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  43% {
+    opacity: 1;
+    transform: scale(1.3);
+  }
+  70% {
+    opacity: 0.8;
+    transform: scale(4);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(6);
+  }
+}
+@keyframes portalGlow {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  65% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes travel {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-20deg) scale(1.6);
+  }
+  30% {
+    opacity: 0.6;
+  }
+  70% {
+    opacity: 0.4;
+    transform: translate(-50%, -50%) rotate(35deg) scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(55deg) scale(0.2);
+  }
+}
+@keyframes travelCopy {
+  0%,
+  16% {
+    opacity: 0;
+  }
+  22%,
+  43% {
+    opacity: 1;
+  }
+  65%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes breathe {
+  50% {
+    box-shadow:
+      0 0 90px #a2cf9c60,
+      inset 0 0 65px #a2cf9c40;
+  }
+}
+.portal[data-reduced='true'] .ring,
+.portal[data-reduced='true'] .halo,
+.portal[data-reduced='true'] .streaks {
+  display: none;
+}
+.portal[data-reduced='true'] .dimmer {
+  animation: crossfade 0.18s ease both;
+}
+.portal[data-reduced='true'] .copy {
+  animation: none;
+  opacity: 1;
+}
+@keyframes crossfade {
+  from {
+    opacity: 0.8;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (max-width: 760px) {
+  .actions {
+    bottom: 24px;
+  }
+}
+@media (max-height: 520px) {
+  .portal .copy h2 {
+    font-size: 16px;
+    margin: 8px 0;
+  }
+  .portal .copy p {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .copy progress {
+    margin-top: 12px;
+  }
+  .copy > span {
+    font-size: 9px;
+    letter-spacing: 2px;
+  }
+  .actions {
+    bottom: 16px;
+  }
+}
+@media (max-height: 340px) {
+  .composition {
+    width: min(560px, calc(100vw - 40px));
+    aspect-ratio: auto;
+  }
+  .portal .copy {
+    width: 100%;
+  }
+  .ring {
+    display: none;
+  }
+}
+.portal[data-phase='loading'] .dimmer {
+  opacity: 1;
+}

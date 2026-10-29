@@ -107,3 +107,16 @@ export async function appendCourseCurriculum(db: Database, ctx: PortalActionCont
     subjectId: course.subjectId, payload: input.payload, actorId: ctx.principal.institutionUserId, reason: input.reason }).returning();
   return { row: row!, replayed: false };
 }
+
+/** Course sources require explicit enrollment evidence for this exact class. Matching names are insufficient. */
+export async function resolveProposalCourse(db: Database, institutionId: string, classId: string, subjectId: string, sourceCourseId: string | null) {
+  if (!sourceCourseId) return null;
+  const c = schema.courses, st = schema.students, en = schema.courseEnrollments;
+  const [course] = await db.select().from(c).where(and(eq(c.id, sourceCourseId), eq(c.institutionId, institutionId),
+    eq(c.subjectId, subjectId), eq(c.status, 'active'))).limit(1);
+  if (!course) return null;
+  const students = await db.select({ id: st.id }).from(st).where(and(eq(st.institutionId,institutionId),eq(st.classId,classId),eq(st.status,'enrolled')));
+  if (!students.length) return null;
+  const enrollments = await db.select({ id: en.studentId }).from(en).where(and(eq(en.institutionId,institutionId),eq(en.courseId,sourceCourseId)));
+  return students.every(s=>enrollments.some(e=>e.id===s.id)) ? course : null;
+}

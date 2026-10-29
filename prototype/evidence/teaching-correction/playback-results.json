@@ -1,0 +1,21 @@
+{
+  "recordings": [
+    {
+      "name": "path-a-understands",
+      "duration": 107.2,
+      "width": 1440,
+      "height": 900,
+      "bytes": 10504156,
+      "decodedAndSeeked": true
+    },
+    {
+      "name": "path-b-struggles",
+      "duration": 52.56,
+      "width": 1440,
+      "height": 900,
+      "bytes": 5511493,
+      "decodedAndSeeked": true
+    }
+  ],
+  "passed": true
+}

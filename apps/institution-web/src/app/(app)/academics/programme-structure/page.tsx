@@ -1,15 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { ChevronDown, Pencil, Plus, Trash2 } from 'lucide-react';
-import {
-  Button,
-  ConfirmDialog,
-  Dialog,
-  Input,
-  Label,
-  Select,
-  Skeleton,
-} from '@edrion/ui';
+import { Button, ConfirmDialog, Dialog, Input, Label, Select, Skeleton } from '@edrion/ui';
 import { subjectKindLabel } from '@edrion/schemas';
 import { Topbar } from '@/components/app-shell/topbar';
 import {
@@ -32,7 +24,7 @@ import type {
   ProgrammeStructureTerm,
 } from '@/lib/academics-types';
 import { usePermissions } from '@/lib/permissions';
-import { useTerm } from '@/lib/term';
+import { useAcademicStructureTerms } from '@/lib/academic-structure-terms';
 
 /** Sentinel option in the class picker: reveal a name field and create a fresh class instead. */
 const NEW_SECTION = '__new__';
@@ -94,7 +86,7 @@ function CourseMeta({
 }
 
 export default function ProgrammeStructurePage() {
-  const { t, tp } = useTerm();
+  const { t, tp } = useAcademicStructureTerms();
   const { can } = usePermissions();
   const canManage = can('academics.manage');
   const { data, isLoading, refetch } = useProgrammeStructure();
@@ -105,20 +97,27 @@ export default function ProgrammeStructurePage() {
       <Topbar title={title} />
       <div className="page-enter mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 p-5">
         <p className="text-sm leading-relaxed text-text-secondary">
-          Build each {t('department').toLowerCase()} from the top down — add {tp('gradeLevel').toLowerCase()}, then{' '}
-          {tp('term').toLowerCase()}, then the {tp('subject').toLowerCase()} and {tp('class').toLowerCase()} that sit
-          inside each one. {tp('subject')} added here become the curriculum every intake of this{' '}
+          Build each {t('department').toLowerCase()} from the top down — add{' '}
+          {tp('gradeLevel').toLowerCase()}, then {tp('term').toLowerCase()}, then the{' '}
+          {tp('subject').toLowerCase()} and {tp('class').toLowerCase()} that sit inside each one.{' '}
+          {tp('subject')} added here become the curriculum every intake of this{' '}
           {t('gradeLevel').toLowerCase()} inherits.
         </p>
         {isLoading && <Skeleton className="h-64 w-full rounded-lg" />}
         {!isLoading && (data?.length ?? 0) === 0 && (
           <p className="rounded-lg border border-border bg-surface px-4 py-8 text-center text-sm text-text-muted">
-            No {tp('department').toLowerCase()} yet. Add programmes first, then return here to define their structure.
+            No {tp('department').toLowerCase()} yet. Add programmes first, then return here to
+            define their structure.
           </p>
         )}
         <div className="space-y-4">
           {(data ?? []).map((dept) => (
-            <ProgrammeNode key={dept.id} dept={dept} canManage={canManage} onChanged={() => refetch()} />
+            <ProgrammeNode
+              key={dept.id}
+              dept={dept}
+              canManage={canManage}
+              onChanged={() => refetch()}
+            />
           ))}
         </div>
       </div>
@@ -135,7 +134,7 @@ function ProgrammeNode({
   canManage: boolean;
   onChanged: () => void;
 }) {
-  const { t, tp } = useTerm();
+  const { t, tp } = useAcademicStructureTerms();
   const [open, setOpen] = useState(true);
   const [addYear, setAddYear] = useState(false);
   const gradeMut = useAcademicMutations('grade-levels');
@@ -216,7 +215,11 @@ function ProgrammeNode({
           )}
         </div>
       </TreePanel>
-      <Dialog open={addYear} onClose={() => setAddYear(false)} title={`Add ${t('gradeLevel').toLowerCase()}`}>
+      <Dialog
+        open={addYear}
+        onClose={() => setAddYear(false)}
+        title={`Add ${t('gradeLevel').toLowerCase()}`}
+      >
         <div className="flex flex-col gap-3 p-5">
           <div>
             <Label>Name</Label>
@@ -239,7 +242,11 @@ function ProgrammeNode({
             <Button variant="secondary" onClick={() => setAddYear(false)}>
               Cancel
             </Button>
-            <Button onClick={saveYear} loading={gradeMut.create.isPending || linkMut.create.isPending} disabled={!yearName.trim()}>
+            <Button
+              onClick={saveYear}
+              loading={gradeMut.create.isPending || linkMut.create.isPending}
+              disabled={!yearName.trim()}
+            >
               Save
             </Button>
           </div>
@@ -271,7 +278,7 @@ function LevelNode({
   onRemove: () => void;
   onChanged: () => void;
 }) {
-  const { t, tp } = useTerm();
+  const { t, tp } = useAcademicStructureTerms();
   const [open, setOpen] = useState(false);
   const [addTerm, setAddTerm] = useState(false);
   const termMut = useAcademicMutations('academic-terms');
@@ -282,7 +289,8 @@ function LevelNode({
   const [endDate, setEndDate] = useState('');
 
   async function saveTerm() {
-    if (!currentYear || !termName || !startDate || !endDate || !isEndAfterStart(startDate, endDate)) return;
+    if (!currentYear || !termName || !startDate || !endDate || !isEndAfterStart(startDate, endDate))
+      return;
     await termMut.create.mutateAsync({
       academicYearId: currentYear.id,
       programmeLevelId: level.id,
@@ -337,7 +345,13 @@ function LevelNode({
         <div className="space-y-3 border-t border-border/60 px-4 py-3 pl-10">
           <div className="space-y-3">
             {realTerms.map((term) => (
-              <TermNode key={term.id} term={term} level={level} canManage={canManage} onChanged={onChanged} />
+              <TermNode
+                key={term.id}
+                term={term}
+                level={level}
+                canManage={canManage}
+                onChanged={onChanged}
+              />
             ))}
           </div>
           {canManage && (
@@ -349,11 +363,20 @@ function LevelNode({
           )}
         </div>
       </TreePanel>
-      <Dialog open={addTerm} onClose={() => setAddTerm(false)} title={`Add ${t('term').toLowerCase()}`}>
+      <Dialog
+        open={addTerm}
+        onClose={() => setAddTerm(false)}
+        title={`Add ${t('term').toLowerCase()}`}
+      >
         <div className="flex flex-col gap-3 p-5">
           <div>
             <Label>Name</Label>
-            <Input value={termName} onChange={(e) => setTermName(e.target.value)} placeholder={`${t('term')} 1`} autoFocus />
+            <Input
+              value={termName}
+              onChange={(e) => setTermName(e.target.value)}
+              placeholder={`${t('term')} 1`}
+              autoFocus
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -383,7 +406,11 @@ function LevelNode({
             <Button variant="secondary" onClick={() => setAddTerm(false)}>
               Cancel
             </Button>
-            <Button onClick={saveTerm} loading={termMut.create.isPending} disabled={!termName || !isEndAfterStart(startDate, endDate)}>
+            <Button
+              onClick={saveTerm}
+              loading={termMut.create.isPending}
+              disabled={!termName || !isEndAfterStart(startDate, endDate)}
+            >
               Save
             </Button>
           </div>
@@ -404,7 +431,7 @@ function TermNode({
   canManage: boolean;
   onChanged: () => void;
 }) {
-  const { t, tp } = useTerm();
+  const { t, tp } = useAcademicStructureTerms();
   const client = usePortalClient();
   const { scope } = useScope();
   const [addSection, setAddSection] = useState(false);
@@ -627,10 +654,18 @@ function TermNode({
                       value={subjectId}
                       onChange={(e) => setSubjectId(e.target.value)}
                       placeholder={`Pick a ${t('subject').toLowerCase()}…`}
-                      options={availableSubjects.map((s) => ({ value: s.id, label: `${s.name} (${s.code})` }))}
+                      options={availableSubjects.map((s) => ({
+                        value: s.id,
+                        label: `${s.name} (${s.code})`,
+                      }))}
                       className="h-9 min-w-[12rem] flex-1 text-sm"
                     />
-                    <Button size="sm" onClick={saveSubject} loading={curriculumMut.create.isPending} disabled={!subjectId}>
+                    <Button
+                      size="sm"
+                      onClick={saveSubject}
+                      loading={curriculumMut.create.isPending}
+                      disabled={!subjectId}
+                    >
                       Add
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => setAddSubject(false)}>
@@ -695,7 +730,12 @@ function TermNode({
           {canManage && (
             <>
               {!addSection ? (
-                <Button size="sm" variant="secondary" className="mt-3" onClick={() => setAddSection(true)}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="mt-3"
+                  onClick={() => setAddSection(true)}
+                >
                   <Plus className="mr-1.5 h-3.5 w-3.5" /> Add {t('class').toLowerCase()}
                 </Button>
               ) : (

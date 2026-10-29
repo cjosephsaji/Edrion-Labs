@@ -1,9 +1,8 @@
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
-import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { ApiEnv } from '@edrion/config';
@@ -11,6 +10,7 @@ import { eq, schema, type Database } from '@edrion/database';
 import { API_ENV, DATABASE } from '../../../common/tokens';
 import { LocalDiskDriver } from '../storage/drivers/local-disk.driver';
 import { canonicalMaterialMimeType, isPresentationMaterial, materialFileExtension } from './material-file-types';
+import { convertPresentation } from './presentation-converter';
 
 const execFileAsync = promisify(execFile);
 
@@ -142,25 +142,10 @@ export class MaterialVisualPreviewService {
   private async create(file: MaterialStoredFile, sourceBuffer?: Buffer): Promise<MaterialRenderedFile | null> {
     const extension = materialFileExtension(file.filename);
     const inputExtension = ['ppt', 'pptx', 'odp'].includes(extension) ? extension : 'pptx';
-    const workDir = await mkdtemp(join(tmpdir(), 'edrion-slide-preview-'));
     try {
       const source = sourceBuffer ?? await this.driver.read(file.storageKey);
       const sourceSha256 = createHash('sha256').update(source).digest('hex');
-      const inputName = `presentation.${inputExtension}`;
-      const inputPath = join(workDir, inputName);
-      const outputPath = join(workDir, 'presentation.pdf');
-      await writeFile(inputPath, source);
-      const converter = await presentationConverter();
-      await execFileAsync(converter, [
-        '--headless',
-        `-env:UserInstallation=${pathToFileURL(join(workDir, 'libreoffice-profile')).href}`,
-        '--convert-to',
-        'pdf',
-        '--outdir',
-        workDir,
-        inputPath,
-      ], { timeout: 120_000, maxBuffer: 2 * 1024 * 1024 });
-      const pdf = await readFile(outputPath);
+      const pdf = await convertPresentation(source, inputExtension as 'ppt' | 'pptx' | 'odp', 'pdf');
       if (!pdf.subarray(0, 5).equals(Buffer.from('%PDF-'))) throw new Error('Converter did not produce a PDF');
 
       const previewStorageKey = await this.driver.put(join(dirname(file.storageKey), 'derived'), pdf);
@@ -180,27 +165,8 @@ export class MaterialVisualPreviewService {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.warn(`Could not render presentation ${file.objectId}: ${message}`);
       return null;
-    } finally {
-      await rm(workDir, { recursive: true, force: true });
     }
   }
-}
-
-async function presentationConverter(): Promise<string> {
-  const configured = process.env.MATERIAL_PREVIEW_CONVERTER_BIN?.trim();
-  if (configured) return configured;
-  const candidates = process.platform === 'darwin'
-    ? ['/Applications/LibreOffice.app/Contents/MacOS/soffice', '/opt/homebrew/bin/soffice', '/usr/local/bin/soffice']
-    : ['/usr/bin/soffice', '/usr/local/bin/soffice'];
-  for (const candidate of candidates) {
-    try {
-      await access(candidate);
-      return candidate;
-    } catch {
-      // Try the next standard installation location.
-    }
-  }
-  return 'soffice';
 }
 
 async function pdfPageRenderer(): Promise<string> {

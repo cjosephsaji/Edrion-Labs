@@ -7,7 +7,7 @@
 #      with a human-readable reference (EDR-REG-YYYY-NNNNNN) assigned only on submit.
 #   2. OTP security  — a wrong code is rejected (OTP_INVALID); submit before verify -> EMAIL_NOT_VERIFIED.
 #   3. resume token  — a missing/garbage token -> 403 INVALID_RESUME_TOKEN.
-#   4. duplicate     — a second active application for the same email -> 409 DUPLICATE_REGISTRATION.
+#   4. duplicate     — a second application for the same institution and email -> 409 DUPLICATE_REGISTRATION.
 #   5. reviewer flow — list/detail (registration.view), start-review, approve wizard payload.
 #   6. provisioning  — approval creates an institution (status=onboarding) + a campus + the primary
 #      admin (status=invited) + a 6-item onboarding checklist, and links the request (status=approved).
@@ -141,11 +141,11 @@ AUD=$(psql "$DBURL" -tA -c "select count(*) from audit_events where entity_id='$
 INSTA=$(psql "$DBURL" -tA -c "select count(*) from audit_events where institution_id='$INST_ID' and action in ('institution.create','institution_user.invite')")
 [ "${INSTA:-0}" -ge 2 ] && { echo "  PASS  provisioning audit rows ($INSTA)"; pass=$((pass+1)); } || { echo "  FAIL  provisioning audit rows ($INSTA)"; fail=$((fail+1)); }
 
-# 14. Duplicate active application for the same (now approved) email -> 409 on submit.
+# 14. Duplicate application for the same (now approved) institution and email -> 409 on submit.
 R=$(pub POST "" "" '{}'); ID2=$(body "$R" | field id); T2=$(body "$R" | field resumeToken)
 R=$(pub POST "/$ID2/otp" "$T2" "{\"email\":\"$EMAIL\"}"); OTP2=$(body "$R" | field devCode)
 pub POST "/$ID2/otp/verify" "$T2" "{\"code\":\"$OTP2\"}" >/dev/null
-R=$(pub POST "/$ID2/submit" "$T2" "$SECTIONS"); chk "duplicate email -> 409" "$(code "$R")" 409
+R=$(pub POST "/$ID2/submit" "$T2" "$SECTIONS"); chk "duplicate institution -> 409" "$(code "$R")" 409
 has "  code DUPLICATE_REGISTRATION" "$(body "$R")" "DUPLICATE_REGISTRATION"
 
 # Cleanup the throwaway second draft.

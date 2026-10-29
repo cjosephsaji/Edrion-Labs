@@ -43,6 +43,7 @@ export interface StudentRow extends Student {
   portalUserStatus: string | null;
 }
 export interface StaffRow extends Staff {
+  departmentUnitKind: 'department' | 'programme' | null;
   departmentName: string | null;
 }
 export type ParentRow = Parent;
@@ -134,6 +135,12 @@ export class PeopleRepository {
     return !!row;
   }
 
+  async findStaffDepartment(id: string, institutionId: string) {
+    const [row] = await this.db.select().from(schema.departments)
+      .where(and(eq(schema.departments.id, id), eq(schema.departments.institutionId, institutionId))).limit(1);
+    return row;
+  }
+
   // --- students --------------------------------------------------------------
 
   async listStudents(institutionId: string, campusIds: CampusFilter, q: PeopleListQuery): Promise<Page<StudentRow>> {
@@ -145,7 +152,14 @@ export class PeopleRepository {
     if (q.classId) conds.push(eq(t.classId, q.classId));
     if (q.gender) conds.push(eq(t.gender, q.gender));
     const enrolled = enrolledStudentsCond(this.db, q, t.id);
-    if (enrolled) conds.push(enrolled);
+    if (enrolled) {
+      // Keep students without any placement visible so their records can be found and assigned
+      // to an academic year. Otherwise the year filter hides them while their admission number
+      // remains reserved institution-wide.
+      const unplaced = sql`NOT EXISTS (SELECT 1 FROM student_enrollments e WHERE e.student_id = ${t.id})`;
+      const visible = or(enrolled, unplaced);
+      if (visible) conds.push(visible);
+    }
     const where = and(...conds);
     const sortable: Record<string, PgColumn> = {
       admissionNo: t.admissionNo,
@@ -189,8 +203,8 @@ export class PeopleRepository {
     return row;
   }
 
-  async insertStudent(values: NewStudent): Promise<Student> {
-    const [row] = await this.db.insert(schema.students).values(values).returning();
+  async insertStudent(values: NewStudent, db: Pick<Database, 'insert'> = this.db): Promise<Student> {
+    const [row] = await db.insert(schema.students).values(values).returning();
     return row!;
   }
 
@@ -254,7 +268,7 @@ export class PeopleRepository {
     const { limit, offset } = this.pageBounds(q);
 
     const base = this.db
-      .select({ staff: t, departmentName: schema.departments.name })
+      .select({ staff: t, departmentName: schema.departments.name, departmentUnitKind: schema.departments.unitKind })
       .from(t)
       .leftJoin(schema.departments, eq(schema.departments.id, t.departmentId));
 
@@ -278,7 +292,7 @@ export class PeopleRepository {
     ).where(where);
 
     return {
-      items: rows.map((r) => ({ ...r.staff, departmentName: r.departmentName })),
+      items: rows.map((r) => ({ ...r.staff, departmentName: r.departmentName, departmentUnitKind: r.departmentUnitKind })),
       total: Number(tot?.value ?? 0),
     };
   }
@@ -297,12 +311,12 @@ export class PeopleRepository {
     const assigned = assignedStaffCond(this.db, q, t.id);
     if (assigned) conds.push(assigned);
     const rows = await this.db
-      .select({ staff: t, departmentName: schema.departments.name })
+      .select({ staff: t, departmentName: schema.departments.name, departmentUnitKind: schema.departments.unitKind })
       .from(t)
       .leftJoin(schema.departments, eq(schema.departments.id, t.departmentId))
       .where(and(...conds))
       .orderBy(asc(t.lastName), asc(t.firstName));
-    return rows.map((r) => ({ ...r.staff, departmentName: r.departmentName }));
+    return rows.map((r) => ({ ...r.staff, departmentName: r.departmentName, departmentUnitKind: r.departmentUnitKind }));
   }
 
   async findStaff(id: string, institutionId: string): Promise<Staff | undefined> {

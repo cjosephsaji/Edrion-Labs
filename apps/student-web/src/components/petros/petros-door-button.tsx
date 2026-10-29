@@ -8,10 +8,12 @@ import { PETROS_DOCUMENT_SOURCE_VERSION, petrosDocumentReadinessSchema, type Pet
 import type { PetrosDocumentPreparation, PetrosLearningSessionDocument, PetrosSessionIntent, PetrosTeachingPriority } from '@edrion/schemas';
 import { formatApiError, newIdempotencyKey, useStudentApi } from '@/lib/api-client';
 import styles from './petros-door-button.module.css';
+import { studentIntentDetail } from './petros-intent-detail';
 
 type Door = PetrosSessionIntent['door'];
 
 function isExpiredIntent(intent: PetrosSessionIntent) {
+  if (intent.status === 'invalidated' || intent.status === 'expired') return true;
   const expiresAt = Date.parse(intent.expiresAt);
   return Number.isFinite(expiresAt) && expiresAt <= Date.now();
 }
@@ -352,7 +354,7 @@ export function PetrosDoorButton({
               {intent.scope.knownFailureDetails.length ? (
                 <section className={styles.details}>
                   <h3>What Petros knows now</h3>
-                  <ul>{intent.scope.knownFailureDetails.map((detail) => <li key={detail}>{detail}</li>)}</ul>
+                  <ul>{intent.scope.knownFailureDetails.map((detail) => <li key={detail}>{studentIntentDetail(detail)}</li>)}</ul>
                 </section>
               ) : null}
               {intent.citations.length ? (

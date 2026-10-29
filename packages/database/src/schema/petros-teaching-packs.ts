@@ -2,6 +2,9 @@ import type {
   PetrosConceptPackCandidate,
   PetrosConceptPackReviewReceipt,
   PetrosReviewerAuthoritySnapshot,
+  LearningProposal,
+  M3Proposal,
+  M3ReviewReceipt,
 } from '@edrion/schemas';
 import {
   foreignKey,
@@ -20,13 +23,16 @@ import { courses } from './institutional-bridge';
 import { knowledgeItems } from './student-knowledge';
 import { staff } from './people';
 import { institutionUsers } from './users';
+import { petrosDocumentSourceRevisions } from './petros-document-learning';
 
 /** Immutable, structurally/source-validated compiler output. It has no authority by itself. */
 export const petrosTeachingPackCandidates = pgTable('petros_teaching_pack_candidates', {
   id: primaryId(),
   institutionId: uuid('institution_id').notNull().references(() => institutions.id, { onDelete: 'restrict' }),
   courseId: uuid('course_id').notNull().references(() => courses.id, { onDelete: 'restrict' }),
-  sourceItemId: uuid('source_item_id').notNull().references(() => knowledgeItems.id, { onDelete: 'restrict' }),
+  sourceItemId: uuid('source_item_id').references(() => knowledgeItems.id, { onDelete: 'restrict' }),
+  sourceFormat: text('source_format').notNull().default('v1'),
+  sourceRevisionId: uuid('source_revision_id').references(() => petrosDocumentSourceRevisions.id, { onDelete: 'restrict' }),
   sourceVersion: text('source_version').notNull(),
   curriculumRevision: integer('curriculum_revision').notNull(),
   packId: uuid('pack_id').notNull(),
@@ -34,7 +40,7 @@ export const petrosTeachingPackCandidates = pgTable('petros_teaching_pack_candid
   compilerVersion: text('compiler_version').notNull(),
   schemaVersion: text('schema_version').notNull(),
   payloadHash: text('payload_hash').notNull(),
-  payload: jsonb('payload').$type<PetrosConceptPackCandidate>().notNull(),
+  payload: jsonb('payload').$type<PetrosConceptPackCandidate | LearningProposal | M3Proposal>().notNull(),
   commandId: uuid('command_id').notNull(),
   requestHash: text('request_hash').notNull(),
   createdByUserId: uuid('created_by_user_id').notNull().references(() => institutionUsers.id, { onDelete: 'restrict' }),
@@ -78,7 +84,9 @@ export const petrosTeachingPackReviews = pgTable('petros_teaching_pack_reviews',
   institutionId: uuid('institution_id').notNull().references(() => institutions.id, { onDelete: 'restrict' }),
   courseId: uuid('course_id').notNull().references(() => courses.id, { onDelete: 'restrict' }),
   candidateId: uuid('candidate_id').notNull().references(() => petrosTeachingPackCandidates.id, { onDelete: 'restrict' }),
-  sourceItemId: uuid('source_item_id').notNull().references(() => knowledgeItems.id, { onDelete: 'restrict' }),
+  sourceItemId: uuid('source_item_id').references(() => knowledgeItems.id, { onDelete: 'restrict' }),
+  sourceFormat: text('source_format').notNull().default('v1'),
+  sourceRevisionId: uuid('source_revision_id').references(() => petrosDocumentSourceRevisions.id, { onDelete: 'restrict' }),
   sourceVersion: text('source_version').notNull(),
   reviewVersion: integer('review_version').notNull(),
   decision: text('decision').notNull(),
@@ -87,7 +95,7 @@ export const petrosTeachingPackReviews = pgTable('petros_teaching_pack_reviews',
   qualificationId: uuid('qualification_id').notNull(),
   qualificationVersion: integer('qualification_version').notNull(),
   authoritySnapshot: jsonb('authority_snapshot').$type<PetrosReviewerAuthoritySnapshot>().notNull(),
-  receipt: jsonb('receipt').$type<PetrosConceptPackReviewReceipt>().notNull(),
+  receipt: jsonb('receipt').$type<PetrosConceptPackReviewReceipt | M3ReviewReceipt>().notNull(),
   commandId: uuid('command_id').notNull(),
   requestHash: text('request_hash').notNull(),
   reviewedAt: timestamp('reviewed_at', { withTimezone: true }).notNull().defaultNow(),

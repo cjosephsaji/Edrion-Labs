@@ -1,3 +1,4 @@
+import { publicPetrosSessionColumns } from '../../../common/petros-session-projection';
 import { Inject, Injectable } from '@nestjs/common';
 import {
   and,
@@ -23,6 +24,7 @@ import type {
   PetrosSessionRecap,
 } from '@edrion/schemas';
 import { DATABASE } from '../../../common/tokens';
+import { petrosGuidanceVisibility } from '../assignments/petros-guidance-visibility';
 import type { PetrosOwnerScope } from '../petros-loop/petros-loop.repository';
 import type {
   ReflectionCurriculumTopic,
@@ -112,7 +114,7 @@ export class PetrosReflectionRepository {
           )
           .orderBy(asc(schema.petrosLearnerEvidenceEvents.occurredAt)),
         this.db
-          .select()
+          .select(publicPetrosSessionColumns)
           .from(schema.petrosLearningSessions)
           .where(
             and(
@@ -895,6 +897,7 @@ export class PetrosReflectionRepository {
           and(
             eq(schema.assignments.institutionId, scope.institutionId),
             inArray(schema.assignments.id, assignmentIds),
+            petrosGuidanceVisibility(scope.studentId),
           ),
         );
       for (const row of rows) out.set(`assignment:${row.id}`, row.title);

@@ -15,7 +15,7 @@ const config: Config = {
         ink: '#25241d',
         muted: '#746d5d',
         line: '#e2d9c8',
-        surface: '#fffaf1',
+        surface: 'var(--surface)',
         card: '#ffffff',
         canvas: '#f8f5ee',
         good: '#37825f',

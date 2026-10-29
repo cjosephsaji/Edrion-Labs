@@ -2,14 +2,18 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { ErrorState, Skeleton } from '@edrion/ui';
+import { Button, ErrorState, Input, Label, Select, Skeleton } from '@edrion/ui';
 import { Topbar } from '@/components/app-shell/topbar';
 import { formatPortalError, usePortalClient } from '@/lib/portal-client';
 import { useScope } from '@/lib/scope';
 
 type Season = { id: string; name: string; status: string };
 type Company = { id: string; name: string; sector: string | null };
-type DriveRow = { drive: { id: string; title: string; status: string }; company: { name: string }; season: { name: string } };
+type DriveRow = {
+  drive: { id: string; title: string; status: string };
+  company: { name: string };
+  season: { name: string };
+};
 type AppRow = {
   application: { id: string; status: string; submittedAt: string | null };
   drive: { title: string };
@@ -58,7 +62,8 @@ export default function PlacementsPage() {
     onError: (err) => setFormError(formatPortalError(err)),
   });
   const createCompany = useMutation({
-    mutationFn: () => client.post<{ id: string }>('/portal/placements/companies', scope, { name: companyName }),
+    mutationFn: () =>
+      client.post<{ id: string }>('/portal/placements/companies', scope, { name: companyName }),
     onSuccess: (row) => {
       setSelectedCompanyId(row.id);
       setCompanyName('');
@@ -99,10 +104,14 @@ export default function PlacementsPage() {
       <div className="flex flex-1 flex-col gap-4 p-5 lg:p-6">
         <p className="max-w-3xl text-sm text-text-secondary">
           Run campus recruitment: create a <strong>season</strong> (e.g. 2025–26), register{' '}
-          <strong>companies</strong>, schedule <strong>drives</strong>, then track student applications through the funnel.
+          <strong>companies</strong>, schedule <strong>drives</strong>, then track student
+          applications through the funnel.
         </p>
         {formError ? (
-          <p role="alert" className="rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
+          <p
+            role="alert"
+            className="rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger"
+          >
             {formError}
           </p>
         ) : null}
@@ -110,20 +119,22 @@ export default function PlacementsPage() {
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="rounded-xl border border-border bg-surface p-4">
             <p className="text-sm font-medium text-text-primary">New season</p>
-            <input
-              className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              placeholder="e.g. Placement 2025–26"
+            <Input
+              className="mt-2"
+              aria-label="Season name"
+              placeholder="e.g. Placement 2026–27"
               value={seasonName}
               onChange={(e) => setSeasonName(e.target.value)}
             />
-            <button
+            <Button
               type="button"
               disabled={!seasonName.trim() || createSeason.isPending}
               onClick={() => createSeason.mutate()}
-              className="mt-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+              className="mt-3"
+              size="sm"
             >
               Create season
-            </button>
+            </Button>
             {seasonOptions.length > 0 ? (
               <ul className="mt-3 space-y-1 text-xs text-text-muted">
                 {seasonOptions.map((s) => (
@@ -136,20 +147,22 @@ export default function PlacementsPage() {
           </div>
           <div className="rounded-xl border border-border bg-surface p-4">
             <p className="text-sm font-medium text-text-primary">New company</p>
-            <input
-              className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            <Input
+              className="mt-2"
+              aria-label="Company name"
               placeholder="Company name"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
             />
-            <button
+            <Button
               type="button"
               disabled={!companyName.trim() || createCompany.isPending}
               onClick={() => createCompany.mutate()}
-              className="mt-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+              className="mt-3"
+              size="sm"
             >
               Add company
-            </button>
+            </Button>
             {companyOptions.length > 0 ? (
               <ul className="mt-3 space-y-1 text-xs text-text-muted">
                 {companyOptions.map((c) => (
@@ -160,44 +173,42 @@ export default function PlacementsPage() {
           </div>
           <div className="rounded-xl border border-border bg-surface p-4">
             <p className="text-sm font-medium text-text-primary">New drive</p>
-            <select
-              className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              value={seasonId}
-              onChange={(e) => setSelectedSeasonId(e.target.value)}
-            >
-              <option value="">Season…</option>
-              {seasonOptions.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-            <select
-              className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              value={companyId}
-              onChange={(e) => setSelectedCompanyId(e.target.value)}
-            >
-              <option value="">Company…</option>
-              {companyOptions.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <input
-              className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            <div className="mt-3">
+              <Label htmlFor="placement-seasonId">Season</Label>
+              <Select
+                id="placement-seasonId"
+                value={seasonId}
+                onChange={(e) => setSelectedSeasonId(e.target.value)}
+                placeholder="Select season"
+                options={seasonOptions.map((row) => ({ value: row.id, label: row.name }))}
+              />
+            </div>
+            <div className="mt-3">
+              <Label htmlFor="placement-companyId">Company</Label>
+              <Select
+                id="placement-companyId"
+                value={companyId}
+                onChange={(e) => setSelectedCompanyId(e.target.value)}
+                placeholder="Select company"
+                options={companyOptions.map((row) => ({ value: row.id, label: row.name }))}
+              />
+            </div>
+            <Input
+              className="mt-2"
+              aria-label="Drive title"
               placeholder="Drive title"
               value={driveTitle}
               onChange={(e) => setDriveTitle(e.target.value)}
             />
-            <button
+            <Button
               type="button"
               disabled={!driveTitle.trim() || !seasonId || !companyId || createDrive.isPending}
               onClick={() => createDrive.mutate()}
-              className="mt-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+              className="mt-3"
+              size="sm"
             >
               Schedule drive
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -210,25 +221,34 @@ export default function PlacementsPage() {
           {applications.isError && <ErrorState title="Could not load applications" />}
           <ul className="mt-3 space-y-2 text-sm">
             {(applications.data ?? []).map((row) => (
-              <li key={row.application.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 py-2">
+              <li
+                key={row.application.id}
+                className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 py-2"
+              >
                 <span>
-                  {row.student.firstName} {row.student.lastName} · {row.company.name} — {row.drive.title}
+                  {row.student.firstName} {row.student.lastName} · {row.company.name} —{' '}
+                  {row.drive.title}
                 </span>
-                <select
-                  className="rounded-md border border-border bg-background px-2 py-1 text-xs"
+                <Select
+                  className="w-full sm:w-44"
+                  aria-label={`Application status for ${row.student.firstName} ${row.student.lastName}`}
                   value={row.application.status}
-                  onChange={(e) => patchStatus.mutate({ id: row.application.id, status: e.target.value })}
-                >
-                  {['submitted', 'shortlisted', 'offered', 'rejected', 'withdrawn'].map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(e) =>
+                    patchStatus.mutate({ id: row.application.id, status: e.target.value })
+                  }
+                  options={['submitted', 'shortlisted', 'offered', 'rejected', 'withdrawn'].map(
+                    (status) => ({
+                      value: status,
+                      label: status.charAt(0).toUpperCase() + status.slice(1),
+                    }),
+                  )}
+                />
               </li>
             ))}
             {(applications.data ?? []).length === 0 && !applications.isLoading && (
-              <li className="text-text-muted">No applications yet — students apply from the student portal once drives are open.</li>
+              <li className="text-text-muted">
+                No applications yet — students apply from the student portal once drives are open.
+              </li>
             )}
           </ul>
         </div>

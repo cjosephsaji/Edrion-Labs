@@ -1,0 +1,198 @@
+{
+  "version": "public-fixture-speech.v1",
+  "provenance": "approved-local-fixture",
+  "source": "Public fixture text, offline macOS Samantha synthesis at 165 words/minute. Synthetic demonstration voice; no cloud provider. No word or viseme timestamps.",
+  "segments": [
+    {
+      "beatId": "argument-reading-beat-1",
+      "src": "/petros/audio/argument-reading-beat-1.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "Let’s read this together. A school library should stay open after classes. Students who share a quiet space at home with other family members need somewhere to study. An after-school library gives them access to a calm workspace.",
+      "sha256": "cdc4b083d0e4be40df3cbed10c878e3ac11f842dd88a671afcbc9672c4369b5d"
+    },
+    {
+      "beatId": "argument-reading-beat-2",
+      "src": "/petros/audio/argument-reading-beat-2.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "Here’s the claim, separated from its support.",
+      "sha256": "4a09a5effbb2224b30ce716bdf84838be8ad4aaf8c9a2a0430813b3e11b2f2aa"
+    },
+    {
+      "beatId": "argument-reading-beat-3",
+      "src": "/petros/audio/argument-reading-beat-3.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "This sentence gives a reason: some students need a quiet place to study.",
+      "sha256": "4187e5b08943521f30a541d1562e70bd6cd825b14342e8db1f7cbc4124603226"
+    },
+    {
+      "beatId": "argument-reading-beat-4",
+      "src": "/petros/audio/argument-reading-beat-4.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "The link is access: opening the library creates a calm workspace. Select any card and ask me about that part.",
+      "sha256": "1f2da7e65d39616bad90ba6de3fb591d668714f0b5a05dc926ccf3bb9983dd7a"
+    },
+    {
+      "beatId": "slope-writing-beat-1",
+      "src": "/petros/audio/slope-writing-beat-1.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "Let’s find how steep the line is between point A, at one comma two, and point B, at four comma eight.",
+      "sha256": "f516821af3f1d1577936a6d0a9ad817978bbb1f60d830ca80ad3fea2f1c41c31"
+    },
+    {
+      "beatId": "slope-writing-beat-2",
+      "src": "/petros/audio/slope-writing-beat-2.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "Start with change in y divided by change in x. The two x coordinates must be different.",
+      "sha256": "9f108083ff123561d818b7329dfac4717527525847674180fb81ba608dfe420f"
+    },
+    {
+      "beatId": "slope-writing-beat-3",
+      "src": "/petros/audio/slope-writing-beat-3.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "Substitute the coordinates: eight minus two over four minus one. That becomes six over three.",
+      "sha256": "1254a7e16d38064bc2f42b7c87961b9e81cfe082517b972a14970f5bb3cf674b"
+    },
+    {
+      "beatId": "slope-writing-beat-4",
+      "src": "/petros/audio/slope-writing-beat-4.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "Your turn. Complete m equals six divided by three, and tell me how you got there. I’ll wait.",
+      "sha256": "8a90b770099e7b3c03ca036c86ac6cf0e66e1988bd1712970f6ca4067e5c0b7c"
+    },
+    {
+      "beatId": "slope-writing-beat-5",
+      "src": "/petros/audio/slope-writing-beat-5.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "We’ve kept your submitted work beside the derivation. The slope describes vertical change for one unit of horizontal change.",
+      "sha256": "fdaff05bb1164b60d9b76e5bfbac83ff6c6135e597646cae59f9778c3f0b7684"
+    },
+    {
+      "beatId": "cloud-drawing-beat-1",
+      "src": "/petros/audio/cloud-drawing-beat-1.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "Start with the learner. We’ll build this relationship map one part at a time.",
+      "sha256": "e38dd02bbb98879b8b95792a6eecb79fc925ee9d1c33b97586e2bbd71ce2beb8"
+    },
+    {
+      "beatId": "cloud-drawing-beat-2",
+      "src": "/petros/audio/cloud-drawing-beat-2.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "The learner uses an app. Here’s that second node.",
+      "sha256": "ae1f493858b45adc59ee49ae4a3aa49c8f46ca7ec00013d089bc0f99a84a59a5"
+    },
+    {
+      "beatId": "cloud-drawing-beat-3",
+      "src": "/petros/audio/cloud-drawing-beat-3.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "Connect the learner to the app. The arrow names the relationship.",
+      "sha256": "d318a1b1ad41fff5a8bade1379ec8dd20e37d1ab3bea0632ca862ec829637533"
+    },
+    {
+      "beatId": "cloud-drawing-beat-4",
+      "src": "/petros/audio/cloud-drawing-beat-4.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "Shared computing resources sit behind the app. One relationship is still missing.",
+      "sha256": "684aaaae7f495523b30be276f08e6b0a88860c0a94619f6cd24e4a6978794844"
+    },
+    {
+      "beatId": "cloud-drawing-beat-5",
+      "src": "/petros/audio/cloud-drawing-beat-5.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "Add the missing relationship. You can also rename or move a node. The source explains what each arrow means.",
+      "sha256": "17503e7a4d9596d28e213a35c5ed514db6b26c655154dee3f2057d2316e5a349"
+    },
+    {
+      "beatId": "cloud-drawing-beat-6",
+      "src": "/petros/audio/cloud-drawing-beat-6.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "Your diagram is preserved. Read each arrow as a sentence, including its direction.",
+      "sha256": "3d9852e82db9fbe806ef21468b7dd88dd38ed2492334558f42961027914e0e38"
+    }
+  ],
+  "responses": [
+    {
+      "text": "The claim is that the school library should stay open after classes. That is the position the writer wants us to accept.",
+      "src": "/petros/audio/argument-reading-reply-1.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "The claim is that the school library should stay open after classes. That is the position the writer wants us to accept.",
+      "sha256": "a96d3434a25c49630ff52f679eea30c3f9d5dd185fabfdc69509ffd25dba557a"
+    },
+    {
+      "text": "The passage says some students need a quiet place to study. That is its supporting reason. It gives no survey or measurement, so we should not invent one.",
+      "src": "/petros/audio/argument-reading-reply-2.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "The passage says some students need a quiet place to study. That is its supporting reason. It gives no survey or measurement, so we should not invent one.",
+      "sha256": "1c17c6f06494266d0950419a199d7647083e62261f4970a6bf444ce3a5cb4403"
+    },
+    {
+      "text": "The link is that opening the library provides a calm workspace for students who need one. It explains why the reason supports the claim.",
+      "src": "/petros/audio/argument-reading-reply-3.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "The link is that opening the library provides a calm workspace for students who need one. It explains why the reason supports the claim.",
+      "sha256": "6356e377d43f1057a7b7172d9525b453498281c6d67248f153a20767ee366e8b"
+    },
+    {
+      "text": "Let’s take one part: “should stay open” is the claim. “Need somewhere to study” gives the reason. Which of those did you mean?",
+      "src": "/petros/audio/argument-reading-reply-4.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "Let’s take one part: “should stay open” is the claim. “Need somewhere to study” gives the reason. Which of those did you mean?",
+      "sha256": "568145cebeaed0f523672b60629bc4e8fbcf3da8c1b84ac735fe9811ec255f76"
+    },
+    {
+      "text": "Slope compares vertical change with horizontal change. Here the vertical change is 6 and the horizontal change is 3. Their ratio describes the rise for one unit across.",
+      "src": "/petros/audio/slope-writing-reply-1.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "Slope compares vertical change with horizontal change. Here the vertical change is 6 and the horizontal change is 3. Their ratio describes the rise for one unit across.",
+      "sha256": "f4a489da12023708cff818fbfa44c11d31d81e36b2e6171ee9ec31f9852258fa"
+    },
+    {
+      "text": "Subtract in the same point order on top and bottom. Reversing both orders gives −6 divided by −3, the same ratio. Reversing only one changes the sign.",
+      "src": "/petros/audio/slope-writing-reply-2.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "Subtract in the same point order on top and bottom. Reversing both orders gives negative six divided by negative three, the same ratio. Reversing only one changes the sign.",
+      "sha256": "788f08ee43fd89e8b5a2074d767ae9ea99a535f417492c90ca637f3b4d7d55c3"
+    },
+    {
+      "text": "The formula needs a nonzero change in x. If the x coordinates match, the line is vertical and this slope ratio is undefined.",
+      "src": "/petros/audio/slope-writing-reply-3.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "The formula needs a nonzero change in x. If the x coordinates match, the line is vertical and this slope ratio is undefined.",
+      "sha256": "82c19a08c728ce13463e22dee5291866aa562cb0f6c48e46758993c97496f54e"
+    },
+    {
+      "text": "Let’s just compare the changes: y goes from 2 to 8, while x goes from 1 to 4. Which change would you like to work through?",
+      "src": "/petros/audio/slope-writing-reply-4.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "Let’s just compare the changes: y goes from 2 to 8, while x goes from 1 to 4. Which change would you like to work through?",
+      "sha256": "e34516c455ad3c44737c12a71b14ca2a2157bd21de598d4a62e2f94de714fe51"
+    },
+    {
+      "text": "In this simplified example, the provider’s shared resources support the app. The diagram leaves out many production details; it shows one relationship rather than a full architecture.",
+      "src": "/petros/audio/cloud-drawing-reply-1.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "In this simplified example, the provider’s shared resources support the app. The diagram leaves out many production details; it shows one relationship rather than a full architecture.",
+      "sha256": "7c078a711a9eb2bac3ee4f00bb7231c3e79d48a6d878b34cd9ef463d81c2408f"
+    },
+    {
+      "text": "Read the arrow as a sentence: shared resources provide computing for the app. The direction should run from “Shared resources” to “App”.",
+      "src": "/petros/audio/cloud-drawing-reply-2.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "Read the arrow as a sentence: shared resources provide computing for the app. The direction should run from “Shared resources” to “App”.",
+      "sha256": "9f625a132739ddd1f8cee0ec7d7d33225609fb07b2d33a1588476a53157eead9"
+    },
+    {
+      "text": "The learner interacts with the app. The app connects to the provider’s resources. Those are distinct roles even if we change the labels.",
+      "src": "/petros/audio/cloud-drawing-reply-3.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "The learner interacts with the app. The app connects to the provider’s resources. Those are distinct roles even if we change the labels.",
+      "sha256": "c2e62bb3a0a6d75aa4a47d22e87e7c6737e3bee690176404cd4d3ae22df0262b"
+    },
+    {
+      "text": "Let’s read one arrow at a time. The learner connects to the app. Which other relationship did you mean?",
+      "src": "/petros/audio/cloud-drawing-reply-4.mp3",
+      "mimeType": "audio/mpeg",
+      "caption": "Let’s read one arrow at a time. The learner connects to the app. Which other relationship did you mean?",
+      "sha256": "64b3832c9ccfd4fd9b5813b500362455275334c80372289b73d16f806e0e63ca"
+    }
+  ]
+}

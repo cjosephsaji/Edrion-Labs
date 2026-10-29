@@ -32,6 +32,7 @@ export interface AcademicYearRow extends BaseRow {
 }
 
 export interface DepartmentRow extends BaseRow {
+  unitKind: 'department' | 'programme';
   name: string;
   code: string;
   headUserId: string | null;

@@ -1,0 +1,89 @@
+Skip to your learning stage
+Your lessons
+petros
+LEARNING STUDIO
+Pause lesson
+Cloud Computing
+Explore
+Your turn
+03
+Reflect
+
+OUR FOCUS
+Distinguish service responsibility and apply the bounded memory-capacity method.
+
+Hide character
+
+EXPLORE · TRY · REVISE
+
+Work through the calculation
+Question you’re working on
+
+For IaaS, who manages the guest operating system? A memory-only host has 64 GB, reserves 16 GB, and needs 8 GB per VM. Record available memory and whole-VM capacity.
+
+From your last submitted answer
+
+Already correct
+Operating-system responsibility
+Available-memory method
+Let’s revisit
+Whole-VM arithmetic
+Why this step?
+
+You need to know how much memory remains before using it in the next calculation. This step separates the memory set aside from the memory available.
+
+Teaching source
+Read the material behind this step
+Your next move
+
+First subtract the memory set aside. Use the remaining amount in the next calculation and keep track of the units. Compare the example with your saved answer.
+
+Show next teaching step
+Play demonstration
+Step 2 of 5
+Available memory — 48 GB
+Previously checked · View calculation
+Whole VM capacity
+Worked example
+48
+/
+8
+=
+6
+𝑉
+𝑀
+48/8=6VM
+
+Each VM needs 8 GB. Divide the available memory into equal groups and count only whole VMs.
+
+Fit VMs into the available memory
+48 GB available
+8 GB per VM
+VM 1
+8 GB
+VM 2
+8 GB
+VM 3
+8 GB
+VM 4
+8 GB
+VM 5
+8 GB
+VM 6
+8 GB
+
+Each VM takes one 8 GB group. The worked example fits 6 whole VMs.
+
+Your answer:
+7
+
+What this example assumes
+Read this explanation
+
+Your change could not be saved. Your local work is still here.
+
+Check saved lesson
+Saving…
+Sources
+Ask Petros
+End session

@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  /><title>Petros M2 · Source review</title>
+  <style>
+    :root {
+      font:
+        15px/1.5 Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        sans-serif;
+      color: #213847;
+      background: #f1f5f8;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+    }
+    header {
+      padding: 22px 28px;
+      background: #fff;
+      border-bottom: 1px solid #d8e2e9;
+    }
+    h1 {
+      font-size: 22px;
+      margin: 0 0 6px;
+    }
+    p {
+      margin: 8px 0;
+    }
+    select,
+    button {
+      font: inherit;
+      border: 1px solid #c6d5df;
+      border-radius: 7px;
+      background: white;
+      padding: 8px 10px;
+      color: inherit;
+    }
+    button {
+      cursor: pointer;
+    }
+    button:hover,
+    button[aria-pressed='true'] {
+      background: #e5f0f6;
+      border-color: #326783;
+    }
+    button:focus-visible,
+    select:focus-visible,
+    a:focus-visible {
+      outline: 3px solid #367fa6;
+      outline-offset: 2px;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-top: 15px;
+    }
+    .toolbar > label { min-width: 0; max-width: 100%; }
+    main {
+      padding: 24px 28px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 1fr);
+      gap: 22px;
+      align-items: start;
+    }
+    .panel {
+      min-width: 0;
+      background: #fff;
+      border: 1px solid #d8e2e9;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .bar {
+      padding: 16px;
+      border-bottom: 1px solid #e0e8ed;
+    }
+    .body {
+      padding: 16px;
+    }
+    .source {
+      position: relative;
+      width: 100%;
+      background: #fff;
+    }
+    .source img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .overlay {
+      position: absolute;
+      border: 2px solid #eb8d18;
+      background: #ffd97544;
+      pointer-events: none;
+    }
+    .warning {
+      color: #7d530f;
+      background: #fff5df;
+      padding: 12px;
+      border-radius: 7px;
+    }
+    .failure {
+      color: #8a2632;
+      background: #fff0f2;
+      padding: 14px;
+    }
+    .meta {
+      font-size: 12px;
+      color: #647782;
+      overflow-wrap: anywhere;
+    }
+    h2 {
+      font-size: 17px;
+      margin: 0 0 8px;
+    }
+    .units {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 310px;
+      overflow: auto;
+      margin: 12px 0;
+    }
+    .units button {
+      text-align: left;
+      font-size: 13px;
+    }
+    .units span {
+      display: block;
+      font-size: 11px;
+      color: #677d8c;
+    }
+    pre {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-size: 12px;
+      background: #f3f6f8;
+      padding: 12px;
+      max-height: 350px;
+      overflow: auto;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .chips button {
+      font-size: 12px;
+      padding: 5px 8px;
+    }
+    #readable {
+      margin: 14px 0;
+      overflow: auto;
+    }
+    #readable table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    #readable th,
+    #readable td {
+      border: 1px solid #d8e2e9;
+      padding: 8px;
+      text-align: left;
+    }
+    #readable pre {
+      font-size: 14px;
+    }
+    #crop {
+      max-width: 100%;
+      height: auto;
+    }
+    details {
+      margin-top: 12px;
+    }
+    summary {
+      cursor: pointer;
+    }
+    a {
+      color: #286584;
+    }
+    footer {
+      padding: 0 28px 24px;
+      font-size: 12px;
+      color: #667d8b;
+    }
+    .hidden {
+      display: none !important;
+    }
+    @media (max-width: 760px) {
+      .toolbar > label { min-width: 0; max-width: 100%; }
+    main {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 14px;
+        gap: 14px;
+      }
+      header {
+        padding: 17px;
+      }
+      select {
+        max-width: 100%;
+      }
+      footer {
+        padding: 14px;
+      }
+      .units {
+        max-height: 230px;
+      }
+    }
+  </style>
+  <header>
+    <h1>Petros M2 · Document understanding</h1>
+    <p>
+      Compare the original source with extracted evidence. Every result stays subject to source and
+      academic review.
+    </p>
+    <div class="toolbar">
+      <label
+        >Document
+        <select id="document"></select></label
+      ><label
+        >Page / slide
+        <select id="surface"></select></label
+      ><label
+        >Channel
+        <select id="channel">
+          <option value="visible">Visible source</option>
+          <option value="notes">Speaker notes</option>
+          <option value="hidden">Hidden content</option>
+        </select></label
+      ><a id="download">Download original</a>
+    </div>
+  </header>
+  <main>
+    <section class="panel">
+      <div class="bar">
+        <h2 id="sourceTitle">Original source</h2>
+        <div class="meta" id="hash"></div>
+      </div>
+      <div class="source" id="source">
+        <img id="image" alt="Rendered original page or slide" />
+        <div class="overlay hidden" id="overlay"></div>
+        <div id="nativeSource" class="body hidden" aria-label="Native original source"></div>
+        <div class="body hidden" id="nativeSelection"><strong>Selected original source range</strong><pre id="nativeSelected" tabindex="0"></pre><p class="meta" id="nativeLocation"></p></div>
+      </div>
+      <div class="body">
+        <p id="status"></p>
+        <p class="warning" id="renderWarning"></p>
+        <div class="meta" id="transform"></div>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="bar">
+        <h2>Native extraction and assisted evidence</h2>
+        <p class="meta" id="count"></p>
+        <p class="warning">
+          AI semantics: unavailable. No genuine model inference has been executed. Extracted text
+          and structures remain separate from proposed reasoning.
+        </p>
+      </div>
+      <div class="body">
+        <div id="units" class="units"></div>
+        <h2 id="unitTitle">Select a content unit</h2>
+        <p class="meta" id="locator"></p>
+        <p class="warning hidden" id="uncertainty"></p>
+        <div id="anchors" class="chips"></div>
+        <div id="readable"></div>
+        <details id="visualDetail" class="hidden">
+          <summary>Selected visual crop · OCR requires review</summary>
+          <img id="crop" alt="Exact selected source crop" />
+          <pre id="ocr"></pre>
+        </details>
+        <details>
+          <summary>Structured payload</summary>
+          <pre id="payload"></pre>
+        </details>
+        <details>
+          <summary>Model-proposed claims · mechanical references are not semantic approval</summary>
+          <pre id="modelClaims"></pre>
+        </details>
+        <details>
+          <summary>Coverage and evaluation</summary>
+          <pre id="evaluation"></pre>
+        </details>
+        <details>
+          <summary>M2-G categories · not academic approval</summary>
+          <pre id="qualityCategories"></pre>
+        </details>
+        <details>
+          <summary>Reviewer-facing semantic challenges · independent review pending</summary>
+          <pre id="semanticReview"></pre>
+        </details>
+        <details>
+          <summary>Provider execution · controlled tests are not genuine results</summary>
+          <pre id="providerExecution"></pre>
+        </details>
+        <details>
+          <summary>Source revision comparison</summary>
+          <pre id="changes"></pre>
+        </details>
+        <details>
+          <summary>Restricted-role security evidence</summary>
+          <pre id="security"></pre>
+        </details>
+        <details>
+          <summary>Processing provenance</summary>
+          <pre id="provenance"></pre>
+        </details>
+      </div>
+    </section>
+  </main>
+  <footer>
+    Original CC0 engineering fixtures. Gold labels are provisional; independent academic review
+    remains open. Local inspection grants no release or teaching approval.
+  </footer>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let data, run, selected;
+    const text = (id, value) => ($(id).textContent = value ?? '');
+    const pretty = (x) => JSON.stringify(x, null, 2);
+    const page = (u) => (u.locator.kind === 'pdf' ? u.locator.page : u.locator.slide);
+    function highlight(region) {
+      $('overlay').classList.toggle('hidden', !region);
+      if (region)
+        Object.assign($('overlay').style, {
+          left: region.x * 100 + '%',
+          top: region.y * 100 + '%',
+          width: region.width * 100 + '%',
+          height: region.height * 100 + '%',
+        });
+    }
+    function showUnit(u) {
+      selected = u;
+      for (const b of $('units').children)
+        b.setAttribute('aria-pressed', String(b.dataset.unit === u.id));
+      text('unitTitle', u.payload.kind + ' · ' + (u.sourceChannel || 'visible'));
+      text('locator', pretty(u.locator) + ' · Unit ' + u.id);
+      text('payload', pretty(u.payload));
+      const payload = u.payload;
+      $('readable').replaceChildren();
+      const add = (tag, value, parent = $('readable')) => {
+        const el = document.createElement(tag);
+        el.textContent = value;
+        parent.append(el);
+        return el;
+      };
+      if (payload.kind === 'table') {
+        const table = document.createElement('table');
+        $('readable').append(table);
+        for (const row of payload.rows) {
+          const tr = document.createElement('tr');
+          table.append(tr);
+          for (const cell of payload.cells.filter((c) => c.row === row)) {
+            const td = add(cell.header ? 'th' : 'td', cell.value, tr);
+            td.rowSpan = cell.rowSpan;
+            td.colSpan = cell.columnSpan;
+          }
+        }
+      } else if (payload.kind === 'chart') {
+        for (const s of payload.series || []) {
+          add('strong', s.name);
+          for (const p of s.points) add('p', p.category + ': ' + p.value);
+        }
+        add('p', 'Native chart cache. Axis geometry and computation require review.');
+      } else if (payload.kind === 'diagram') {
+        add('p', payload.nodes.map((n) => n.label).join(' · '));
+        for (const r of payload.relationships)
+          add(
+            'p',
+            (payload.nodes.find((n) => n.id === r.from)?.label || r.from) +
+              (r.kind === 'arrow' ? ' → ' : ' ↔ ') +
+              (payload.nodes.find((n) => n.id === r.to)?.label || r.to) +
+              ' · ' +
+              r.assertion,
+          );
+      } else if (payload.kind === 'list') {
+        const list = document.createElement(payload.ordered ? 'ol' : 'ul');
+        $('readable').append(list);
+        for (const i of payload.items) add('li', i.text, list);
+      } else if (payload.kind === 'figure')
+        add(
+          'p',
+          'Source figure retained. Pixel labels and relationships remain subject to visual review.',
+        );
+      else
+        add(
+          payload.kind === 'code' || payload.kind === 'equation' ? 'pre' : 'p',
+          payload.text || payload.original || payload.reason,
+        );
+      const ocr = (run.ocr || []).find(
+        (r) =>
+          r.status === 'review_required' && JSON.stringify(r.locator) === JSON.stringify(u.locator),
+      );
+      $('visualDetail').classList.toggle('hidden', !ocr);
+      if (ocr) {
+        $('crop').src = 'data:image/png;base64,' + ocr.crop.data;
+        text(
+          'ocr',
+          pretty({
+            text: ocr.text,
+            method: ocr.method,
+            version: ocr.version,
+            cropHash: ocr.crop.hash,
+            confidence: ocr.confidence,
+            reason: ocr.reason,
+          }),
+        );
+      }
+      text(
+        'uncertainty',
+        u.quality.uncertainties.join(' ') ||
+          'No extraction warning recorded. Educational use still requires review.',
+      );
+      $('uncertainty').classList.remove('hidden');
+      highlight(u.locator.region);
+      if(run.evidence?.nativeDocument) nativeHighlight(u.locator);
+      $('anchors').replaceChildren();
+      const anchors =
+        u.payload.kind === 'table'
+          ? u.payload.cells
+          : u.payload.kind === 'diagram'
+            ? u.payload.nodes
+            : [];
+      for (const a of anchors) {
+        const b = document.createElement('button');
+        b.textContent = a.value || a.label || a.id;
+        b.onclick = () => {
+          highlight(a.region);
+          const nativeAnchor=u.native?.cells?.find(c=>c.id===a.id)?.locator;
+          if(nativeAnchor) nativeHighlight(nativeAnchor);
+          text('locator', pretty(nativeAnchor || u.locator) + ' · Anchor ' + a.id + ' · ' + pretty(a.region));
+        };
+        $('anchors').append(b);
+      }
+      text(
+        'provenance',
+        pretty({
+          id: u.id,
+          contentHash: u.contentHash,
+          sourceHash: u.sourceHash,
+          sourceRevisionId: u.sourceRevisionId,
+          representationHash: u.representationHash,
+          processing: u.processing,
+          quality: u.quality,
+          capabilities: u.capabilities,
+        }),
+      );
+      text(
+        'modelClaims',
+        pretty({
+          claims: u.claims || [],
+          semanticSupportStatus: 'Review required unless independently reviewed',
+          academicAuthorization: 'Not granted by extraction or model output',
+        }),
+      );
+    }
+    function nativeHighlight(locator) {
+      if (!run.evidence?.nativeDocument) return;
+      const doc = run.evidence.nativeDocument;
+      $('nativeSelection').classList.remove('hidden');
+      let value = '';
+      if (locator.kind === 'docx') {
+        const part = doc.parts.find(p => p.name === locator.part);
+        value = part?.xml.slice(locator.xmlSpan.start,locator.xmlSpan.end) || 'Original XML part unavailable.';
+      } else value = doc.text?.slice(locator.textSpan.start,locator.textSpan.end) || '';
+      text('nativeSelected',value);
+      text('nativeLocation',pretty(locator));
+      for (const source of $('nativeSource').querySelectorAll('[data-source-key]')) {
+        const match = locator.kind === 'docx' ? source.dataset.sourceKey === locator.elementId :
+          Number(source.dataset.sourceLine) >= locator.start.line && Number(source.dataset.sourceLine) <= locator.end.line;
+        source.style.borderLeft = match ? '4px solid #326783' : '4px solid transparent';
+        source.style.background = match ? '#e5f0f6' : '';
+        source.setAttribute('aria-current',String(match));
+      }
+    }
+    function nativePreview() {
+      const e=run.evidence,doc=e.nativeDocument,channel=$('channel').value;
+      $('nativeSource').replaceChildren();
+      const add=(tag,value,parent=$('nativeSource'))=>{const el=document.createElement(tag);el.textContent=value;parent.append(el);return el;};
+      add('p',doc.policy);
+      if(doc.text!==null) {
+        add('p','Encoding '+doc.encoding+' · Newlines '+doc.newline+' · '+doc.byteLength+' original bytes · BOM '+doc.bomBytes);
+        const original=doc.text.split(/\r\n|\r|\n/);
+        original.slice(0,200).forEach((line,i)=>{const row=add('pre',String(i+1).padStart(4)+'  '+line);row.dataset.sourceLine=String(i+1);row.dataset.sourceKey='line.'+(i+1);row.style.margin='0';row.style.padding='2px 6px';});
+        if(original.length>200)add('p','First 200 lines shown. Selecting a unit reveals its exact complete source range below.');
+      } else {
+        add('p','DOCX structural reconstruction. No Microsoft Word page geometry is asserted.');
+        for(const el of e.elements.filter(x=>x.channel===channel)) {
+          const card=add('div','');card.dataset.sourceKey=el.key;card.style.padding='10px 6px';
+          add('strong',el.payload.kind+' · '+el.key,card);
+          if(el.payload.kind==='table') {
+            const table=add('table','',card);table.style.borderCollapse='collapse';
+            for(const row of el.payload.rows){const tr=add('tr','',table);for(const c of el.payload.cells.filter(c=>c.row===row)){const cell=add(c.header?'th':'td',c.value,tr);cell.rowSpan=c.rowSpan;cell.colSpan=c.columnSpan;cell.style.border='1px solid #c6d5df';cell.style.padding='6px';}}
+          } else if(el.sourceImage) {const img=add('img','',card);img.src='data:image/'+el.sourceImage.format+';base64,'+el.sourceImage.data;img.alt=el.native?.media?.alt||'Embedded original media';img.style.width='auto';img.style.maxWidth='100%';}
+          else add(el.payload.kind==='equation'?'pre':'p',el.text||el.payload.original||el.payload.reason||'',card);
+          add('small',el.locator.part+' '+el.locator.path,card);
+        }
+      }
+    }
+    function showSurface() {
+      selected = null;
+      highlight(null);
+      const nativeMode=!!run.evidence?.nativeDocument;
+      $('nativeSource').classList.toggle('hidden',!nativeMode);
+      $('nativeSelection').classList.add('hidden');
+      if(nativeMode)nativePreview();
+      const number = Number($('surface').value || 1),
+        e = run.evidence,
+        s = e?.surfaces[number - 1];
+      $('units').replaceChildren();
+      $('readable').replaceChildren();
+      $('visualDetail').classList.add('hidden');
+      $('anchors').replaceChildren();
+      text('payload', '');
+      text('unitTitle', 'Select a content unit');
+      text('locator', '');
+      $('uncertainty').classList.add('hidden');
+      const original = run.originalRendering?.surfaces[number - 1],
+        preview = original?.preview || s?.preview;
+      $('image').classList.toggle('hidden', !preview);
+      if (preview)
+        $('image').src =
+          preview.kind === 'png'
+            ? 'data:image/png;base64,' + preview.data
+            : 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(preview.data);
+      text(
+        'sourceTitle',
+        preview?.fidelity === 'source_render'
+          ? 'Original source · rendered page / slide'
+          : nativeMode ? 'Native original source · structural anchors' : 'Native reconstruction · original render unavailable',
+      );
+      text(
+        'renderWarning',
+        run.error ||
+          run.renderingBlocked ||
+          (!original && preview?.fidelity === 'reconstruction'
+            ? 'This view reconstructs native objects. Fonts, layout and unsupported graphics may differ from the original.'
+            : run.originalRendering?.warning) ||
+          s?.warnings.join(' ') ||
+          (nativeMode ? 'Native source structure from actual bytes; layout rendering unavailable.' : 'Rendered from actual source bytes.'),
+      );
+      text(
+        'transform',
+        s
+          ? pretty({
+              coordinateSystem: s.coordinateSystem,
+              sourceWidth: s.sourceWidth,
+              sourceHeight: s.sourceHeight,
+              transform: s.transform,
+              offsetEncoding: s.offsetEncoding,
+            })
+          : nativeMode ? 'Exact native source locations; page geometry is unavailable.' : 'No source geometry: parsing was blocked.',
+      );
+      const channel = $('channel').value,
+        units = (run.units || []).filter(
+          (u) => (nativeMode || page(u) === number) && (u.sourceChannel || 'visible') === channel,
+        );
+      text(
+        'count',
+        units.length + ' units on this surface · ' + (run.units?.length || 0) + ' in the document',
+      );
+      for (const u of units) {
+        const b = document.createElement('button');
+        b.dataset.unit = u.id;
+        b.setAttribute('aria-pressed', 'false');
+        b.textContent =
+          u.payload.kind +
+          ' · ' +
+          (u.searchableText.slice(0, 90) || u.payload.reason || 'Source visual');
+        const m = document.createElement('span');
+        m.textContent = u.quality.state + ' · ' + u.id;
+        b.append(m);
+        b.onclick = () => showUnit(u);
+        $('units').append(b);
+      }
+      if (units[0]) showUnit(units[0]);
+    }
+    function showRun() {
+      run = data.runs.find((r) => r.name === $('document').value);
+      text('hash', 'SHA-256 ' + run.originalHash);
+      text(
+        'status',
+        run.status === 'blocked'
+          ? 'Blocked: ' + run.error
+          : run.status.replaceAll('_', ' ') +
+              ' · ' +
+              (run.units?.length || 0) +
+              ' immutable fixture units',
+      );
+      $('status').className = run.status === 'blocked' ? 'failure' : '';
+      $('download').href = '/sources/' + encodeURIComponent(run.name);
+      $('surface').disabled=!!run.evidence?.nativeDocument;
+      const channels=['visible','notes','hidden',...(run.evidence?.nativeDocument?['headers','footers','footnotes','endnotes','comments','insertions','deletions']:[])];
+      $('channel').replaceChildren();
+      for(const ch of channels){const o=document.createElement('option');o.value=ch;o.textContent=ch;$('channel').append(o);}
+      $('surface').replaceChildren();
+      for (let i = 1; i <= (run.evidence?.surfaces.length || 1); i++) {
+        const option = document.createElement('option');
+        option.value = String(i);
+        option.textContent = String(i);
+        $('surface').append(option);
+      }
+      text('evaluation', pretty(data.formatExpansion || data.evaluation));
+      text(
+        'qualityCategories',
+        pretty(data.qualityCategories || 'Historical native/OCR evidence; M2-G categories absent.'),
+      );
+      text(
+        'semanticReview',
+        pretty(data.semanticReview || 'No independent semantic review recorded.'),
+      );
+      text(
+        'providerExecution',
+        pretty(
+          data.providerExecution || {
+            genuineRequests: data.providerCalls || 0,
+            status: 'unavailable',
+          },
+        ),
+      );
+      text('changes', pretty(data.formatChanges || data.changes));
+      text(
+        'security',
+        data.security
+          ? pretty(data.security)
+          : 'Run the disposable database verifier to generate current security evidence.',
+      );
+      showSurface();
+    }
+    fetch('/runs.json')
+      .then((r) => r.json())
+      .then((d) => {
+        data = d;
+        for (const r of d.runs) {
+          const o = document.createElement('option');
+          o.value = r.name;
+          o.textContent = r.name + ' · ' + r.status.replaceAll('_', ' ');
+          $('document').append(o);
+        }
+        $('document').onchange = showRun;
+        $('surface').onchange = showSurface;
+        $('channel').onchange = showSurface;
+        showRun();
+      })
+      .catch(() => text('status', 'Inspector data could not be loaded.'));
+  </script>
+</html>

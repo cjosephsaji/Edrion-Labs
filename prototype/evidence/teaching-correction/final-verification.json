@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "scope": "prototype/",
+  "focusedTests": 63,
+  "browserPrimaryCheckpointInteractions": 128,
+  "noResponseSeconds": {
+    "classic": 31,
+    "world": 31
+  },
+  "typecheck": "passed",
+  "optimizedBuild": "passed",
+  "typography": "loaded self-hosted Outfit in both modes and board",
+  "recordings": [
+    {
+      "name": "path-a-understands",
+      "duration": 107.2,
+      "width": 1440,
+      "height": 900,
+      "bytes": 10504156,
+      "decodedAndSeeked": true
+    },
+    {
+      "name": "path-b-struggles",
+      "duration": 52.56,
+      "width": 1440,
+      "height": 900,
+      "bytes": 5511493,
+      "decodedAndSeeked": true
+    }
+  ],
+  "productionMutationsObserved": [],
+  "sourceIntegrity": true,
+  "limitations": [
+    "Prepared contextual teaching; no qualified isolated live AI connector",
+    "Text-led teaching; no qualified TTS",
+    "Browser-memory observations; reload clears session"
+  ]
+}

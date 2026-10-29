@@ -18,6 +18,7 @@ export type AssignmentRow = {
   dueAt: string | null;
   status: string | null;
   late?: boolean;
+  isPetrosGuidance?: boolean;
 };
 
 type CourseworkRow = AssignmentRow & {
@@ -153,7 +154,9 @@ export function AssignmentListScreen({ kind }: { kind: 'assignments' | 'homework
       ) : (
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           {rows.map((row, index) => {
-            const status = statusStyle(row.status ?? 'assigned', Boolean(row.late));
+            const status = row.isPetrosGuidance && ['submitted', 'late', 'graded'].includes(row.status ?? '')
+              ? { label: 'Completion reported', tone: 'positive' as StatusTone }
+              : statusStyle(row.status ?? 'assigned', Boolean(row.late));
             const urgent = Boolean(row.late) || row.status === 'late';
             return (
               <Link
@@ -169,7 +172,7 @@ export function AssignmentListScreen({ kind }: { kind: 'assignments' | 'homework
                       <h2 className="text-xl leading-tight text-[var(--s-ink)]">{row.title || 'Untitled'}</h2>
                       <StatusPill label={status.label} tone={status.tone} />
                     </div>
-                    <p className="mt-2 text-sm text-[var(--s-muted)]">{[row.subjectName, row.sourceKind === 'homework' ? 'Homework set' : 'Published assignment'].filter(Boolean).join(' · ')}</p>
+                    <p className="mt-2 text-sm text-[var(--s-muted)]">{[row.subjectName, row.isPetrosGuidance ? 'Petros learning goal' : row.sourceKind === 'homework' ? 'Homework set' : 'Published assignment'].filter(Boolean).join(' · ')}</p>
                   </div>
                   <div className="mt-6 flex items-center justify-between gap-3">
                     <p className={`text-base font-semibold ${urgent ? 'text-[var(--s-danger)]' : 'text-[var(--s-inkSoft)]'}`}>{dueLabel(row.dueAt)}</p>

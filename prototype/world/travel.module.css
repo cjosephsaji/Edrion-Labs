@@ -1,0 +1,109 @@
+.classicLayer[data-travel='entering'] {
+  animation: leaveClassic 2.2s both;
+}
+.classicLayer[data-travel='leaving'] {
+  animation: returnClassic 1.8s both;
+}
+.destination {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  opacity: 1;
+}
+.destination[data-travel='loading'] {
+  opacity: 0;
+  pointer-events: none;
+}
+.destination[data-travel='entering'] {
+  animation: arriveWorld 2.2s both;
+  pointer-events: none;
+}
+.destination[data-travel='leaving'] {
+  animation: leaveWorld 1.8s both;
+  pointer-events: none;
+}
+@keyframes leaveClassic {
+  0%,
+  10% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  43%,
+  100% {
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+@keyframes returnClassic {
+  0%,
+  40% {
+    opacity: 0;
+  }
+  85%,
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes arriveWorld {
+  0%,
+  43% {
+    opacity: 0;
+    clip-path: circle(0 at 50% 48%);
+  }
+  44% {
+    opacity: 1;
+    clip-path: circle(10vmin at 50% 48%);
+  }
+  75%,
+  100% {
+    opacity: 1;
+    clip-path: circle(150vmax at 50% 48%);
+  }
+}
+@keyframes leaveWorld {
+  0% {
+    opacity: 1;
+  }
+  55%,
+  100% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .classicLayer[data-travel],
+  .destination[data-travel] {
+    animation-duration: 0.18s;
+    clip-path: none;
+    filter: none;
+  }
+}
+.destination[data-reduced='true'][data-travel='entering'] {
+  animation: reducedArrive 0.18s both;
+  clip-path: none;
+}
+.destination[data-reduced='true'][data-travel='leaving'] {
+  animation: reducedLeave 0.18s both;
+}
+.classicLayer[data-reduced='true'][data-travel='entering'] {
+  animation: reducedLeave 0.18s both;
+  filter: none;
+}
+.classicLayer[data-reduced='true'][data-travel='leaving'] {
+  animation: reducedArrive 0.18s both;
+}
+@keyframes reducedArrive {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes reducedLeave {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

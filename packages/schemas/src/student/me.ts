@@ -18,6 +18,7 @@ export const studentPreferencesSchema = z.object({
 
 export const studentMeSchema = z.object({
   kind: z.enum(['institutional', 'independent']),
+  passwordChangeRequired: z.boolean().default(false),
   id: z.string().uuid(),
   fullName: z.string(),
   initial: z.string(),

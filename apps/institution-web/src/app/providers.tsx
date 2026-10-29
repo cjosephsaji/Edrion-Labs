@@ -1,10 +1,11 @@
 'use client';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PortalClientProvider } from '@/lib/portal-client';
 import { ScopeProvider } from '@/lib/scope';
 import { AcademicContextProvider } from '@/lib/academic-context';
 import { webEnv } from '@/lib/env';
+import { PORTAL_SESSION_CHANGE_KEY } from '@/lib/portal-session';
 import { ToastProvider } from '@edrion/ui';
 
 /**
@@ -24,6 +25,14 @@ export function Providers({ children }: { children: ReactNode }) {
         },
       }),
   );
+
+  useEffect(() => {
+    const syncSession = (event: StorageEvent) => {
+      if (event.key === PORTAL_SESSION_CHANGE_KEY) window.location.reload();
+    };
+    window.addEventListener('storage', syncSession);
+    return () => window.removeEventListener('storage', syncSession);
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

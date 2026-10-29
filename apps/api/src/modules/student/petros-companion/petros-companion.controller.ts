@@ -1,4 +1,7 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req, Res, UseGuards } from '@nestjs/common';
+import type { Request, Response } from 'express';
+import { TUTOR_TTS_VOICES } from '../../petros-ai-routing/petros-speech-capabilities';
+import { withPreviewDisconnect } from './petros-voice-preview.controller';
 import { ApiTags } from '@nestjs/swagger';
 import { z } from 'zod';
 import {
@@ -28,7 +31,7 @@ import { PetrosCompanionService } from './petros-companion.service';
 const dismissSchema = z.object({ nudgeKey: z.string().trim().min(1).max(200) }).strict();
 const speechSchema = z.object({
   text: z.string().trim().min(1).max(2_000),
-  voice: z.enum(['cedar', 'marin']).optional(),
+  voice: z.enum(TUTOR_TTS_VOICES),
   speed: z.number().min(0.85).max(1.15).optional(),
 }).strict();
 
@@ -78,8 +81,17 @@ export class StudentPetrosCompanionController {
   speech(
     @CurrentStudent() raw: StudentPrincipal,
     @Body(zodBody(speechSchema)) body: z.infer<typeof speechSchema>,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ) {
-    return this.service.speak(this.principal(raw), body.text, { voice: body.voice, speed: body.speed });
+    res.setHeader('Cache-Control', 'no-store');
+    return withPreviewDisconnect(req, res, signal => this.service.speak(this.principal(raw), body.text, { voice: body.voice, speed: body.speed }, signal));
+  }
+
+  @Get('speech/voices')
+  voices(@CurrentStudent() raw: StudentPrincipal, @Res({ passthrough: true }) res: Response) {
+    res.setHeader('Cache-Control', 'no-store');
+    return this.service.voiceOptions(this.principal(raw));
   }
 
   @Post('actions/:proposalId/decision')

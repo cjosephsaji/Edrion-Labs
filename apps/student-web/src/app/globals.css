@@ -60,6 +60,7 @@
     --s-radius-panel: var(--radius-lg);
     --s-radius-card: var(--radius-xl);
     --s-radius-pill: var(--radius-full);
+    --s-focus-ring: var(--s-accentDeep);
     --space-1: 4px;
     --space-2: 8px;
     --space-3: 12px;
@@ -94,6 +95,23 @@
   :where(button, input:not([type='checkbox']):not([type='radio']):not([type='range']), textarea, select) {
     border-radius: var(--s-radius-control);
   }
+  :where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']):not([type='hidden']), textarea, select) {
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: 44px;
+    border: 1px solid var(--s-bd2);
+    background: var(--s-card);
+    color: var(--s-ink);
+    padding: 10px 12px;
+    font: inherit;
+    line-height: 1.5;
+  }
+  :where(textarea) {
+    resize: vertical;
+  }
+  svg foreignObject :where(input, textarea, select) {
+    min-height: 0;
+  }
   body {
     background: var(--s-page, var(--background));
     color: var(--s-ink, var(--text-primary));
@@ -106,12 +124,26 @@
   :where(h1, h2, h3) {
     font-family: var(--font-display);
   }
-  :focus-visible {
-    outline: 2px solid var(--s-accent, var(--primary));
-    outline-offset: 2px;
-  }
   ::selection {
     background-color: var(--s-selection, var(--primary-soft));
+  }
+}
+
+/* One focus treatment throughout the student site. This deliberately takes
+   precedence over legacy module outlines and Tailwind rings so they cannot stack. */
+html :is(button, a[href], input, textarea, select, summary, [tabindex], [role='button']):focus-visible {
+  outline: 2px solid var(--s-focus-ring, var(--s-accentDeep, #27644b)) !important;
+  outline-offset: 2px !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+}
+html :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']), textarea, select):focus-visible {
+  outline-offset: -1px !important;
+  box-shadow: none !important;
+}
+@media (forced-colors: active) {
+  html :is(button, a[href], input, textarea, select, summary, [tabindex], [role='button']):focus-visible {
+    outline-color: Highlight !important;
   }
 }
 

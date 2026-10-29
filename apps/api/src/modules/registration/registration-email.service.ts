@@ -4,6 +4,7 @@ import {
   emailCodeBlock,
   emailLayout,
   emailReferenceBlock,
+  escapeHtml,
 } from '../../common/email-templates';
 import { EmailService, type SentEmail } from '../portal/email.service';
 
@@ -44,7 +45,12 @@ export class RegistrationEmailService {
         ${emailReferenceBlock(publicRef)}
         <p style="margin:0;">We'll email you once the review is complete. No action is needed from you right now.</p>`,
     });
-    return this.email.send({ to, subject: `Your Edrion application is under review (${publicRef})`, text, html });
+    return this.email.send({
+      to,
+      subject: `Your Edrion application is under review (${publicRef})`,
+      text,
+      html,
+    });
   }
 
   sendSubmitted(to: string, displayName: string, publicRef: string): Promise<SentEmail> {
@@ -58,20 +64,61 @@ export class RegistrationEmailService {
         ${emailReferenceBlock(publicRef)}
         <p style="margin:0;">Our onboarding team will review your request and email you once the review is complete. No action is needed from you right now.</p>`,
     });
-    return this.email.send({ to, subject: `We've received your Edrion application (${publicRef})`, text, html });
+    return this.email.send({
+      to,
+      subject: `We've received your Edrion application (${publicRef})`,
+      text,
+      html,
+    });
   }
 
-  sendApproved(to: string, displayName: string): Promise<SentEmail> {
-    const text = `Great news — the registration for ${displayName} has been approved. Your administrator will receive a separate invitation email to set up access and begin onboarding.`;
+  sendApproved(to: string, displayName: string, existingAdministrator = false): Promise<SentEmail> {
+    const accessNote = existingAdministrator
+      ? 'Your nominated administrator already has an Edrion account and will receive sign-in details for this institution.'
+      : 'Your administrator will receive a separate invitation email to set up access and begin onboarding.';
+    const text = `Great news — the registration for ${displayName} has been approved. ${accessNote}`;
     const html = emailLayout({
       heading: 'Your application is approved 🎉',
-      preheader: `${displayName} is approved`,
+      preheader: escapeHtml(`${displayName} is approved`),
       footer: REGISTRATION_FOOTER,
-      bodyHtml: `<p style="margin:0 0 16px;">Welcome to Edrion! The registration for <strong>${displayName}</strong> has been approved and your workspace is being prepared.</p>
-        <p style="margin:0 0 16px;">Your nominated administrator will receive a separate invitation email with steps to activate their account and start onboarding your institution.</p>
-        <p style="margin:0;">We're delighted to have you on board.</p>`,
+      bodyHtml: `<p style="margin:0 0 16px;">The registration for <strong>${escapeHtml(displayName)}</strong> has been approved.</p>
+        <p style="margin:0;">${accessNote}</p>`,
     });
-    return this.email.send({ to, subject: `${displayName} has been approved on Edrion`, text, html });
+    return this.email.send({
+      to,
+      subject: `${displayName} has been approved on Edrion`,
+      text,
+      html,
+    });
+  }
+
+  /** Only used when approval adds another institution to an already active institution account. */
+  sendExistingAccountApproved(
+    to: string,
+    fullName: string,
+    displayName: string,
+    loginUrl: string,
+    hasNativePassword = true,
+  ): Promise<SentEmail> {
+    const signInNote = hasNativePassword
+      ? `Sign in with your current email (${to}) and password.`
+      : 'Sign in using your existing Edrion sign-in method.';
+    const text = `Hi ${fullName}, your new institution ${displayName} has been approved on Edrion and linked to your existing account. ${signInNote} No account activation or new password is needed. Sign in at ${loginUrl}, then choose ${displayName} to start onboarding. You can switch institutions beside Sign out.`;
+    const html = emailLayout({
+      heading: 'Your new institution is approved',
+      preheader: escapeHtml(`${displayName} is ready to access with your existing account`),
+      footer: REGISTRATION_FOOTER,
+      bodyHtml: `<p style="margin:0 0 16px;">Hi ${escapeHtml(fullName)}, your new institution <strong>${escapeHtml(displayName)}</strong> has been approved on Edrion and linked to your existing account.</p>
+        <p style="margin:0 0 16px;">${escapeHtml(signInNote)} No account activation or new password is needed.</p>
+        <p style="margin:0 0 18px;">After signing in, choose <strong>${escapeHtml(displayName)}</strong> to start onboarding. You can switch institutions beside <strong>Sign out</strong>.</p>
+        ${emailButton(escapeHtml(loginUrl), 'Sign in to Edrion')}`,
+    });
+    return this.email.send({
+      to,
+      subject: `${displayName} has been approved on Edrion`,
+      text,
+      html,
+    });
   }
 
   sendRejected(to: string, displayName: string, reason: string): Promise<SentEmail> {
@@ -85,7 +132,12 @@ export class RegistrationEmailService {
         <div style="margin:0 0 18px;background:#E7F0EA;border-radius:12px;padding:14px 18px;color:#1C2B24;">${reason}</div>
         <p style="margin:0;">If you believe this was in error or your circumstances change, simply reply to this email — we're happy to help.</p>`,
     });
-    return this.email.send({ to, subject: `Update on your Edrion application for ${displayName}`, text, html });
+    return this.email.send({
+      to,
+      subject: `Update on your Edrion application for ${displayName}`,
+      text,
+      html,
+    });
   }
 
   sendAdminInvitation(
@@ -111,21 +163,38 @@ export class RegistrationEmailService {
       footer: REGISTRATION_FOOTER,
       bodyHtml: `<p style="margin:0 0 16px;">Hi ${fullName}, you've been set up as the primary administrator for <strong>${displayName}</strong> on Edrion.</p>${credHtml}`,
     });
-    return this.email.send({ to, subject: `Activate your Edrion administrator account`, text, html });
+    return this.email.send({
+      to,
+      subject: `Activate your Edrion administrator account`,
+      text,
+      html,
+    });
   }
 
-  sendPasswordReset(to: string, fullName: string, resetUrl: string): Promise<SentEmail> {
-    const text = `Hi ${fullName}, we received a request to reset your Edrion password. Use this link to choose a new one (it expires in 1 hour): ${resetUrl}. If you didn't request this, you can safely ignore this email.`;
+  sendPasswordReset(
+    to: string,
+    fullName: string,
+    resetUrl: string,
+    institutionName?: string,
+  ): Promise<SentEmail> {
+    const institutionNote = institutionName ? ` for ${institutionName}` : '';
+    const htmlInstitutionNote = escapeHtml(institutionNote);
+    const text = `Hi ${fullName}, we received a request to reset your Edrion password${institutionNote}. Use this link to choose a new one (it expires in 1 hour): ${resetUrl}. If you didn't request this, you can safely ignore this email.`;
     const html = emailLayout({
-      heading: 'Reset your password',
+      heading: `Reset your password${institutionNote}`,
       preheader: 'Choose a new Edrion password',
       footer: REGISTRATION_FOOTER,
-      bodyHtml: `<p style="margin:0 0 16px;">Hi ${fullName}, we received a request to reset the password on your Edrion account.</p>
+      bodyHtml: `<p style="margin:0 0 16px;">Hi ${fullName}, we received a request to reset the password on your Edrion account${htmlInstitutionNote}.</p>
         <p style="margin:0 0 18px;">Click below to choose a new password. This link expires in <strong>1 hour</strong>.</p>
         ${emailButton(resetUrl, 'Reset your password')}
         <p style="margin:18px 0 0;">If you didn't request this, you can safely ignore this email — your password won't change.</p>`,
     });
-    return this.email.send({ to, subject: 'Reset your Edrion password', text, html });
+    return this.email.send({
+      to,
+      subject: `Reset your Edrion password${institutionNote}`,
+      text,
+      html,
+    });
   }
 
   sendWelcome(to: string, displayName: string, loginUrl: string): Promise<SentEmail> {

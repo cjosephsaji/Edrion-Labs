@@ -13,8 +13,23 @@ const bool = z
 export const apiEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 
+  /** Public-fixture preview only; never enables the production V2 engine. */
+  PETROS_V2_COMPANION_PLAYGROUND_ENABLED: bool.default(false),
+  PETROS_V2_COMPANION_PLAYGROUND_TESTER_IDS: z.string().default(''),
+  /** Internal audition only. All gates fail closed; never enables production learning. */
+  PETROS_V2_VOICE_PREVIEW_ENABLED: bool.default(false),
+  PETROS_V2_VOICE_PREVIEW_PAID_APPROVED: bool.default(false),
+  PETROS_V2_VOICE_PREVIEW_ISOLATED_APPROVED: bool.default(false),
+  PETROS_V2_VOICE_PREVIEW_APPROVAL_ID: z.string().max(100).default(''),
+  PETROS_V2_VOICE_PREVIEW_APPROVAL_EXPIRES_AT: z.string().default(''),
+  PETROS_V2_VOICE_PREVIEW_MAX_TOTAL_COST_MICROS: z.coerce.number().int().min(0).max(750_000).default(0),
+  PETROS_V2_VOICE_PREVIEW_MAX_CALL_COST_MICROS: z.coerce.number().int().min(1).max(50_000).default(10_000),
+
   DATABASE_URL: z.string().url(),
   DATABASE_MIGRATION_URL: z.string().url().optional(),
+  /** Separate restricted credentials. Never substitute DATABASE_URL when absent. */
+  PETROS_DOCUMENT_WORKER_DATABASE_URL: z.string().url().optional(),
+  PETROS_DOCUMENT_EVALUATOR_DATABASE_URL: z.string().url().optional(),
   REDIS_URL: z.string().url().default('redis://localhost:6379'),
   /** Master switch for all Redis-backed concerns (rate limit, idempotency fast-path, queues). */
   REDIS_ENABLED: bool.default(true),
@@ -39,6 +54,9 @@ export const apiEnvSchema = z.object({
   QUEUE_WORKERS_ENABLED: bool.default(true),
   /** Enable restricted PDF preparation delivery. Never falls back to in-process parsing. */
   PETROS_PDF_PREPARATION_ENABLED: bool.default(false),
+  PETROS_M2_ISOLATED_ENABLED: bool.default(false),
+  PETROS_V2_SESSIONS_ENABLED: bool.default(false),
+  PETROS_V2_EVALUATOR_DATABASE_URL: z.string().optional(),
   /** Declarative lesson visual bindings only; generated behavior remains unsupported. */
   PETROS_VISUAL_PROGRAM_ENABLED: bool.default(false),
   PETROS_ASSESSMENT_CONTRACT_ENABLED: bool.default(false),

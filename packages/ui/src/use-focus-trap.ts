@@ -2,7 +2,7 @@
 import { useEffect, useRef, type RefObject } from 'react';
 
 const FOCUSABLE =
-  'a[href],area[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),button:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  'a[href],area[href],summary,input:not([disabled]),select:not([disabled]),textarea:not([disabled]),button:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
 /**
  * Accessibility wiring shared by the modal primitives (Drawer, Dialog). While `open`:
@@ -28,7 +28,17 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
     const previouslyFocused = document.activeElement as HTMLElement | null;
 
     // Move focus into the modal on open.
-    const focusables = () => Array.from(container?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []);
+    const focusables = () =>
+      Array.from(
+        container?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [],
+      ).filter((element) => {
+        if (element.closest('[hidden], [aria-hidden="true"]')) return false;
+        const closed = element.closest('details:not([open])');
+        return (
+          !closed ||
+          (element.tagName === 'SUMMARY' && element.parentElement === closed)
+        );
+      });
     const first = focusables()[0];
     (first ?? container)?.focus({ preventScroll: true });
 

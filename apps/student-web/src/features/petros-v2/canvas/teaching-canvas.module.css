@@ -1,0 +1,122 @@
+.canvas { min-height: 100%; padding: 16px; border-radius: 14px; border: 1px solid var(--s-bd1); background: var(--s-card); background-image: radial-gradient(var(--s-bd1) .7px, transparent .7px); background-size: 20px 20px; }
+.empty { min-height: 48dvh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+.empty span, .select { color: var(--s-muted); font-size: .65rem; letter-spacing: .09em; }
+.empty h2 { font-family: var(--font-display, Georgia, serif); font-size: clamp(1.4rem, 2.5vw, 2rem); margin: 12px 0 8px; }
+.empty p { color: var(--s-muted); line-height: 1.7; font-size: .85rem; }
+.cards { display: grid; gap: 8px; }
+.card { min-width: 0; padding: 8px 12px; border: 1px solid var(--s-bd1); border-radius: 10px; background: var(--s-card); }
+.card[data-highlighted='true'] { border-color: var(--s-accentDeep); background: var(--s-accentSoft); box-shadow: inset 3px 0 var(--s-accentDeep); }
+.card[data-selected='true'] { outline: 2px solid var(--s-accentBd); outline-offset: 2px; }
+.select { width: 100%; display: flex; justify-content: space-between; text-align: left; min-height: 24px; text-transform: uppercase; }
+.text { margin: 4px 0; font-family: var(--font-display, Georgia, serif); font-size: 1.05rem; line-height: 1.6; overflow-wrap: anywhere; }
+.equation { font-size: 1.25rem; overflow-wrap: anywhere; }
+.equation :global(.katex-display) { margin: 4px 0; max-width: 100%; overflow-x: auto; padding-bottom: 2px; }
+.progressive { display: block; font-family: monospace; padding: 4px 0; font-size: 1rem; }
+.cursor { color: var(--s-accentDeep); }
+.detail { color: var(--s-muted); font-size: .73rem; line-height: 1.5; margin: 4px 0; }
+.inlineEquation { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 8px; }
+.inlineEquation input { width: 100px; min-height: 48px; text-align: center; border: 2px solid var(--s-accentDeep); border-radius: 8px; background: var(--s-card); color: var(--s-ink); font-size: 1.5rem; }
+.diagram { min-width: 0; }
+.diagramBar { display: flex; align-items: center; gap: 3px; border-bottom: 1px solid var(--s-bd1); padding-bottom: 6px; }
+.diagramBar > span { margin-right: auto; color: var(--s-muted); font-size: .72rem; }
+.diagramBar button, .contextToolbar button { display: flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; border-radius: 6px; color: var(--s-accentDeep); }
+.diagram button:disabled { opacity: .35; cursor: default; }
+.diagramBar button:hover:not(:disabled), .contextToolbar button:hover:not(:disabled) { background: var(--s-accentSoft); }
+.diagramStage { position: relative; height: clamp(200px, calc(100dvh - 580px), 420px); min-width: 0; touch-action: none; }
+.diagramStage > svg { display: block; width: 100%; height: 100%; cursor: grab; }
+.diagramStage > svg:active { cursor: grabbing; }
+.node, .nodeInput { width: 100%; height: 100%; border-radius: 12px; background: var(--s-card); border: 2px solid var(--s-bd2); color: var(--s-ink); font-size: 17px; font-family: var(--font-body); padding: 8px 22px 8px 8px; overflow-wrap: anywhere; }
+.node[data-editable='true'] { cursor: move; }
+.node[data-highlighted='true'], .node[data-selected='true'] { background: var(--s-accentSoft); border-color: var(--s-accentDeep); }
+.nodeInput { border-color: var(--s-accentDeep); padding: 8px; text-align: center; outline: none; }
+.edge { stroke: var(--s-accentDeep); stroke-width: 2; }
+.edge[data-highlighted='true'] { stroke-width: 3; }
+.pendingEdge { stroke: var(--s-accentDeep); stroke-width: 2; stroke-dasharray: 6 4; pointer-events: none; }
+.edgeLabel { width: 100%; height: 100%; border: 0; background: transparent; border-radius: 5px; color: var(--s-accentDeep); font-size: 16px; font-weight: 500; padding: 0; line-height: 1.25; }
+.edgeLabel[data-highlighted='true'] { font-weight: 600; }
+.edgeLabel[aria-pressed='true'] { text-decoration: underline; text-underline-offset: 4px; }
+.relationInput { width: 100%; height: 100%; border: 2px solid var(--s-accentDeep); border-radius: 5px; background: var(--s-card); font-size: 16px; color: var(--s-ink); }
+.handle { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--s-accentDeep); }
+.handle svg { background: var(--s-card); outline: 2px solid var(--s-accentDeep); border-radius: 50%; padding: 4px; width: 28px; height: 28px; }
+.handle[aria-pressed='true'] svg { background: var(--s-accentSoft); }
+.contextToolbar { position: absolute; z-index: 3; display: flex; flex-wrap: wrap; gap: 4px; max-width: min(300px, calc(100% - 16px)); overflow-y: auto; overflow-anchor: none; padding: 4px; background: var(--s-card); border: 1px solid var(--s-accentBd); border-radius: 9px; box-shadow: 0 4px 14px #0001; }
+.nudge { display: flex; border-left: 1px solid var(--s-bd1); }
+.diagramHint { min-height: 18px; color: var(--s-muted); font-size: .7rem; line-height: 1.5; margin: 4px 0; }
+.diagramText { border-top: 1px solid var(--s-bd1); }
+.diagramText summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; color: var(--s-muted); font-size: .73rem; cursor: pointer; list-style: none; }
+.diagramText summary::-webkit-details-marker { display: none; }
+.diagramText[open] summary svg { transform: rotate(180deg); }
+.relationships { font-size: .8rem; list-style: none; padding: 0; margin: 0; }
+.relationships li + li { border-top: 1px solid var(--s-bd1); }
+.textRelationship { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; width: 100%; min-height: 44px; padding: 8px 0; text-align: left; overflow-wrap: anywhere; }
+.textRelationship[aria-pressed='true'] { color: var(--s-accentDeep); }
+.textRelation { display: inline-flex; align-items: center; gap: 8px; color: var(--s-muted); }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+@media (max-width: 600px) {
+  .canvas { padding: 10px; min-height: 0; } .empty { min-height: 300px; } .card { padding: 8px 10px; } .equation { font-size: 1rem; }
+  .diagramStage { height: 420px; } .diagramBar > span { font-size: .64rem; } .diagramBar button, .contextToolbar button { min-width: 44px; min-height: 44px; }
+  .diagramHint { font-size: .66rem; } .diagramText summary { min-height: 44px; }
+}
+@media (min-width: 921px) and (max-height: 700px) { .diagramStage { height: 280px; } .canvas { padding: 10px; } }
+/* Compact classroom controls leave the drawing surface as the main content. */
+.canvas { padding: 8px; }
+.canvas[data-has-diagram='true'] { min-height: 0; }
+.diagramBar { flex-wrap: wrap; padding-bottom: 2px; gap: 2px; }
+.diagramBar button { font-size: .68rem; gap: 3px; }
+.diagramState { border-radius: 5px; background: var(--s-accentSoft); color: var(--s-accentDeep) !important; padding: 3px 7px; }
+.diagramStage { height: clamp(260px, calc(100dvh - 340px), 580px); }
+.node { padding: 8px 16px; transition: background .15s, border-color .15s; }
+.node[data-selected='true'] { border: 3px solid var(--s-accentDeep); box-shadow: inset 0 0 0 3px var(--s-card); }
+.node[data-destination='true'] { border-style: dashed; background: var(--s-accentSoft); }
+.nodeGroup[data-dragging='true'] .node { box-shadow: inset 0 0 0 3px var(--s-card); cursor: grabbing; }
+.handle { opacity: 0; transition: opacity .12s; }
+.handle span { width: 12px; height: 12px; background: var(--s-card); border: 2px solid var(--s-accentDeep); border-radius: 50%; box-shadow: 0 0 0 3px var(--s-card); }
+.nodeGroup:hover .handle, .nodeGroup:focus-within .handle, .nodeGroup[data-selected='true'] .handle, .nodeGroup[data-destination='true'] .handle { opacity: 1; }
+.nodeGroup[data-destination='true'] .handle span { background: var(--s-accentDeep); }
+.edge { pointer-events: none; }
+.edge[data-selected='true'] { stroke-width: 4; filter: drop-shadow(0 0 2px var(--s-accentBd)); }
+.edgeHit { stroke: transparent; stroke-width: 18; cursor: pointer; pointer-events: stroke; }
+.edgeLabel[data-selected='true'] { outline: 2px solid var(--s-accentDeep); outline-offset: -2px; border-radius: 5px; }
+.pendingEdge { stroke-width: 3; }
+.connectionChoice { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 32px; color: var(--s-muted); font-size: .68rem; }
+.connectionChoice select { min-height: 30px; border-radius: 5px; border: 1px solid var(--s-bd2); background: var(--s-card); color: var(--s-ink); padding: 2px 6px; }
+.connectionChoice span { margin-left: auto; }
+.contextToolbar { max-width: calc(100% - 16px); }
+.contextToolbar button { gap: 4px; font-size: .72rem; }
+.contextToolbar .diagramAsk { gap: 6px; padding: 8px 12px; line-height: 1.25; white-space: nowrap; }
+.diagramAsk svg { flex-shrink: 0; }
+.cardActions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 4px; }
+.cardAsk, .cardClear { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 32px; padding: 4px 8px; border-radius: 6px; font-size: .72rem; line-height: 1.25; white-space: nowrap; }
+.cardAsk { border: 1px solid var(--s-accentBd); background: var(--s-card); color: var(--s-accentDeep); }
+.cardAsk svg { flex-shrink: 0; }
+.cardClear { color: var(--s-muted); }
+.cardAsk:hover, .cardClear:hover { background: var(--s-accentSoft); color: var(--s-accentDeep); }
+.cardAsk:focus-visible, .cardClear:focus-visible { outline: 2px solid var(--s-accentDeep); outline-offset: 2px; }
+.card[data-selected='true'] { outline-color: var(--s-accentDeep); }
+.editActions { position: absolute; bottom: 8px; left: 8px; display: flex; gap: 6px; padding: 4px; border: 1px solid var(--s-accentBd); border-radius: 7px; background: var(--s-card); z-index: 3; }
+.editActions button { padding: 5px 10px; min-height: 36px; font-size: .72rem; color: var(--s-accentDeep); }
+.diagramText { padding-top: 6px; }
+@media (prefers-reduced-motion: no-preference) { .nodeGroup[data-selected='true'] .node, .card[data-selected='true'] { animation: selection .18s ease-out; } }
+@keyframes selection { from { opacity: .72; } to { opacity: 1; } }
+@media (max-width: 600px) {
+  .canvas { padding: 6px; }
+  .diagramStage { height: clamp(330px, calc(100dvh - 330px), 480px); }
+  .diagramBar > span { flex: 1 0 100%; width: fit-content; background: none; padding-block: 0; }
+  .connectionChoice span { display: none; }
+  .connectionChoice select { font-size: 16px; }
+  .handle { opacity: 1; }
+  .cardAsk, .cardClear { min-height: 44px; }
+  .contextToolbar[data-editable='true'] { width: 198px; }
+  .contextToolbar[data-editable='true'] > button { order: 2; }
+  .contextToolbar[data-editable='true'] .diagramAsk { order: 0; flex: 1 0 calc(100% - 48px); }
+  .contextToolbar[data-editable='true'] .diagramClear { order: 1; }
+  .contextToolbar .nudge { order: 3; }
+}
+@media (min-width: 921px) and (max-height: 700px) { .diagramStage { height: 300px; } }
+@media (prefers-reduced-motion: reduce) { .node, .handle { transition: none; } }
+.canvas[data-reduced-motion='true'] .node, .canvas[data-reduced-motion='true'] .handle { transition: none; }
+.canvas[data-reduced-motion='true'] .nodeGroup[data-selected='true'] .node, .canvas[data-reduced-motion='true'] .card[data-selected='true'] { animation: none; }
+
+.diagram[data-semantic-feedback='true'] [data-feedback] .edge { stroke: var(--feedback-border); }
+
+.diagram[data-semantic-feedback='true'] [data-feedback] .edgeLabel { color: var(--feedback-ink); background: var(--feedback-bg); border: 1px solid var(--feedback-border); }

@@ -1,0 +1,9 @@
+# Observed checkpoint verification
+
+- Preparatory baseline: repository status recorded before edits. Existing student production build passed. The initial test command ran the existing suite: 87 files / 630 tests passed, with pre-existing motion matchMedia warnings. Four PDF hashes, sizes and page inventories verified through the existing M2 parser. No AGENTS.md applied to this checkout.
+- Checkpoint A: nine initial deterministic/state tests passed. Real browser loaded the gated Classic page, answered minimax practice, opened/closed the source reader and extracted/recognized the actual AI3 PDF. `checkpoint-a-results.json` records no page errors.
+- Checkpoint B: eighteen tests passed. Real browser derived HasWings(Tweety), reported CanFly as not entailed, inspected three construction hazards, changed the safer illustration, applied two river controls, adjusted the tiny model and clock model, and exercised interruption and arbitrary-topic unavailability. `checkpoint-b-results.json` records no page errors.
+- Checkpoint C: the real Three/R3F room loaded, semantic station controls worked, and actual canvas ray picks hit all four station objects. `world-picking.json` includes projected pick points, observed station changes, mesh metrics and transition frame timing. Mode switches retained a draft. Context loss and reduced motion were exercised in the full browser run.
+- Checkpoint D: all 64 checkpoint paths completed in the browser with actual recaps; four viewport sizes passed overflow checks; source/privacy rejection cases passed; focused production regression tests passed. See final result files for exact counts and the recording's observed timing.
+
+Reports distinguish prepared authored copy from computed values and unavailable live model capabilities. No observed outcome is a user-study, academic-validation or regulatory-certification claim.

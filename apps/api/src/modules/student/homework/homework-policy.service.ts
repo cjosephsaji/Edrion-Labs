@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { petrosGuidanceVisibility } from '../assignments/petros-guidance-visibility';
 import { and, eq, schema, type Database } from '@edrion/database';
 import { HOMEWORK_AI_POLICY_NOTES, type HomeworkAiPolicy } from '@edrion/shared-types';
 import { DATABASE } from '../../../common/tokens';
@@ -24,13 +25,14 @@ export class HomeworkPolicyService implements HomeworkPolicyPort {
       .select({ aiPolicy: schema.assignments.aiPolicy })
       .from(schema.assignments)
       .innerJoin(schema.assignmentSubmissions, eq(schema.assignmentSubmissions.assignmentId, schema.assignments.id))
-      .where(and(eq(schema.assignments.id, assignmentId), eq(schema.assignmentSubmissions.studentId, studentId)))
+      .where(and(eq(schema.assignments.id, assignmentId), eq(schema.assignmentSubmissions.studentId, studentId),
+        petrosGuidanceVisibility(studentId)))
       .limit(1);
     if (!row) {
       const [a] = await this.db
         .select({ aiPolicy: schema.assignments.aiPolicy })
         .from(schema.assignments)
-        .where(eq(schema.assignments.id, assignmentId))
+        .where(and(eq(schema.assignments.id, assignmentId), petrosGuidanceVisibility(studentId)))
         .limit(1);
       if (!a) return { policy: 'off', note: HOMEWORK_AI_POLICY_NOTES.off, available: false };
       return this.toResult(a.aiPolicy as HomeworkAiPolicy);

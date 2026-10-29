@@ -23,6 +23,147 @@ export function createDatabase(opts: CreateDbOptions = {}): Database {
   return drizzle(sqlClient, { schema, casing: 'snake_case' });
 }
 
+export type ReadinessScope = {
+  institutionId?: string;
+  studentId?: string;
+  independentUserId?: string;
+  institutionUserId?: string;
+  preparationId?: string;
+  lessonId?: string;
+  sessionId?: string;
+  courseId?: string;
+  sourceItemId?: string;
+  assignmentId?: string;
+  reviewRequestId?: string;
+};
+
+const readinessScopeSettings: Record<keyof ReadinessScope, string> = {
+  institutionId: 'app.institution_id',
+  studentId: 'app.student_id',
+  independentUserId: 'app.independent_user_id',
+  institutionUserId: 'app.institution_user_id',
+  preparationId: 'app.preparation_id',
+  lessonId: 'app.lesson_id',
+  sessionId: 'app.session_id',
+  courseId: 'app.course_id',
+  sourceItemId: 'app.source_item_id',
+  assignmentId: 'app.assignment_id',
+  reviewRequestId: 'app.review_request_id',
+};
+
+/** Startup must fail before ordinary repositories can use an unsafe connection. */
+export async function assertRestrictedApplicationDatabase(db: Database): Promise<void> {
+  return assertRestrictedDatabaseRole(db, 'edrion_app');
+}
+
+export async function assertRestrictedDatabaseRole(
+  db: Database,
+  expectedRole: 'edrion_app' | 'edrion_petros_document_worker' | 'edrion_petros_document_evaluator' | 'edrion_petros_v2_evaluator',
+): Promise<void> {
+  const [role] = await db.execute<{
+    current_role: string;
+    session_role: string;
+    unsafe: boolean;
+  }>(sql`
+    SELECT current_user AS current_role, session_user AS session_role,
+      (r.rolsuper OR r.rolbypassrls OR r.rolcreaterole OR r.rolcreatedb OR r.rolreplication
+       OR EXISTS(SELECT 1 FROM pg_auth_members m WHERE m.member=r.oid)
+       OR EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+          WHERE n.nspname='public' AND pg_has_role(r.oid,c.relowner,'MEMBER'))
+       OR has_schema_privilege(current_user,'public','CREATE')) AS unsafe
+    FROM pg_roles r WHERE r.rolname=current_user`);
+  if (
+    !role ||
+    role.unsafe ||
+    role.current_role !== expectedRole ||
+    role.session_role !== expectedRole
+  )
+    throw new Error('PETROS_APPLICATION_DATABASE_ROLE_UNSAFE');
+}
+
+/** Every entry replaces all identity/job GUCs, including nested or reused connections. */
+export async function bindReadinessScope(
+  db: Pick<Database, 'execute'>,
+  scope: ReadinessScope,
+): Promise<void> {
+  for (const [key, setting] of Object.entries(readinessScopeSettings))
+    await db.execute(sql`SELECT set_config(${setting},${scope[key as keyof ReadinessScope] ?? ''},true)`);
+}
+
+/** An explicit handle is used for isolated worker/evaluator pools, never ambient ALS. */
+export async function runInReadinessScope<T>(
+  db: Database, scope: ReadinessScope, fn: (tx: Database) => Promise<T>,
+): Promise<T> {
+  return db.transaction(async (tx) => {
+    // RELEASE SAVEPOINT retains SET LOCAL values. Explicit pools have no ALS
+    // parent, so capture the actual connection's scope before replacing it.
+    const [previous] = await tx.execute<ReadinessScope>(sql`SELECT ${sql.join(
+      Object.entries(readinessScopeSettings).map(([key, setting]) =>
+        sql`nullif(current_setting(${setting},true),'') AS ${sql.identifier(key)}`), sql`, `,
+    )}`);
+    await bindReadinessScope(tx as unknown as Database, scope);
+    const result = await fn(tx as unknown as Database);
+    await bindReadinessScope(tx as unknown as Database, previous!);
+    // On failure PostgreSQL rolls back the savepoint and restores its GUCs.
+    return result;
+  });
+}
+
+/** Only call after the pack service has resolved current course authority. */
+export async function runInAuthorizedCourseSource<T>(
+  db: Database, institutionId: string, courseId: string, sourceItemId: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  return db.transaction(async (rawTx) => {
+    const tx = rawTx as unknown as Database;
+    const [actor] = await tx.execute<{ student: string | null; user: string | null }>(sql`
+      SELECT nullif(current_setting('app.student_id',true),'') AS student,
+        nullif(current_setting('app.institution_user_id',true),'') AS "user"`);
+    // Student admission remains inside its existing owner scope.
+    if (actor?.student) return fn();
+    if (!actor?.user) throw new Error('PETROS_PACK_AUTHENTICATED_SCOPE_REQUIRED');
+    const parentScope = tenantStore.getStore()?.scope ?? { institutionId, institutionUserId: actor.user };
+    const scope = { institutionId, institutionUserId: actor.user, courseId, sourceItemId };
+    await bindReadinessScope(tx, scope);
+    const result = await tenantStore.run({ db: tx, scope }, fn);
+    await bindReadinessScope(tx, parentScope);
+    return result;
+  });
+}
+
+/** Call only after current class/subject publication authority has been checked. */
+export async function runInAuthorizedAssignmentParticipation<T>(
+  db: Database, institutionId: string, assignmentId: string, fn: () => Promise<T>,
+): Promise<T> {
+  const parent = tenantStore.getStore()?.scope;
+  if (!parent?.institutionUserId || parent.institutionId !== institutionId || parent.studentId)
+    throw new Error('PETROS_ASSIGNMENT_AUTHENTICATED_SCOPE_REQUIRED');
+  return db.transaction(async raw => {
+    const tx = raw as unknown as Database;
+    const scope = { ...parent, assignmentId };
+    await bindReadinessScope(tx, scope);
+    const result = await tenantStore.run({ db: tx, scope }, fn);
+    await bindReadinessScope(tx, parent);
+    return result;
+  });
+}
+
+
+/** Select one explicitly shared review record after checking current staff permission. */
+export async function runInAuthorizedSharedReview<T>(db: Database, institutionId: string,
+  reviewRequestId: string, fn: () => Promise<T>): Promise<T> {
+  const parent = tenantStore.getStore()?.scope;
+  if (!parent?.institutionUserId || parent.institutionId !== institutionId || parent.studentId)
+    throw new Error('PETROS_REVIEW_AUTHENTICATED_SCOPE_REQUIRED');
+  return db.transaction(async raw => {
+    const tx = raw as unknown as Database, scope = { ...parent, reviewRequestId };
+    await bindReadinessScope(tx, scope);
+    const result = await tenantStore.run({ db: tx, scope }, fn);
+    await bindReadinessScope(tx, parent);
+    return result;
+  });
+}
+
 /** Process-wide singleton for the API. */
 export function getDatabase(): Database {
   if (!singleton) singleton = createDatabase();
@@ -41,10 +182,7 @@ export async function withInstitutionScope<T>(
   institutionId: string,
   fn: (tx: Database) => Promise<T>,
 ): Promise<T> {
-  return db.transaction(async (tx) => {
-    await tx.execute(sql`select set_config('app.institution_id', ${institutionId}, true)`);
-    return fn(tx as unknown as Database);
-  });
+  return runInReadinessScope(db, { institutionId }, fn);
 }
 
 /**
@@ -54,11 +192,20 @@ export async function withInstitutionScope<T>(
  * GUC the transaction set actually binds the RLS policies, without threading a `tx` argument
  * through every repository. Outside a tenant context the store is empty and queries use the pool.
  */
-const tenantStore = new AsyncLocalStorage<{ db: Database }>();
+const tenantStore = new AsyncLocalStorage<{ db: Database; scope?: ReadinessScope }>();
+
+/** Provider work must never inherit a request/domain database transaction. */
+export function hasActiveTenantTransaction(): boolean { return tenantStore.getStore() !== undefined; }
+
+/** Scoped domain jobs using injected repositories must share the same transaction via ALS. */
+export async function runInScopedTenant<T>(db: Database, scope: ReadinessScope, fn: () => Promise<T>): Promise<T> {
+  return runInReadinessScope(db, scope, tx => tenantStore.run({ db: tx, scope }, fn));
+}
 
 /** Atomic domain effect + injected AuditWriter. Preserve any existing RLS scope. */
 export async function runInDatabaseTransaction<T>(db: Database, fn: () => Promise<T>): Promise<T> {
-  return db.transaction(tx => tenantStore.run({ db: tx as unknown as Database }, fn));
+  const scope = tenantStore.getStore()?.scope;
+  return db.transaction(tx => tenantStore.run({ db: tx as unknown as Database, scope }, fn));
 }
 
 /**
@@ -91,23 +238,30 @@ export async function runInInstitutionTenant<T>(
   db: Database,
   institutionId: string,
   fn: () => Promise<T>,
+  institutionUserId?: string,
 ): Promise<T> {
+  const parentScope = tenantStore.getStore()?.scope;
   return db.transaction(async (tx) => {
-    await tx.execute(sql`select set_config('app.institution_id', ${institutionId}, true)`);
-    return tenantStore.run({ db: tx as unknown as Database }, fn);
+    const scope = { institutionId, institutionUserId };
+    await bindReadinessScope(tx as unknown as Database, scope);
+    const result = await tenantStore.run({ db: tx as unknown as Database, scope }, fn);
+    if (parentScope) await bindReadinessScope(tx as unknown as Database, parentScope);
+    return result;
   });
 }
 
 /** Run fn inside a transaction scoped to an institutional student (institution + student GUCs). */
 export async function runInStudentTenant<T>(
   db: Database,
-  input: { institutionId: string; studentId: string },
+  input: { institutionId: string; studentId: string; institutionUserId?: string },
   fn: () => Promise<T>,
 ): Promise<T> {
+  const parentScope = tenantStore.getStore()?.scope;
   return db.transaction(async (tx) => {
-    await tx.execute(sql`select set_config('app.institution_id', ${input.institutionId}, true)`);
-    await tx.execute(sql`select set_config('app.student_id', ${input.studentId}, true)`);
-    return tenantStore.run({ db: tx as unknown as Database }, fn);
+    await bindReadinessScope(tx as unknown as Database, input);
+    const result = await tenantStore.run({ db: tx as unknown as Database, scope: input }, fn);
+    if (parentScope) await bindReadinessScope(tx as unknown as Database, parentScope);
+    return result;
   });
 }
 
@@ -117,9 +271,13 @@ export async function runInIndependentStudentTenant<T>(
   independentUserId: string,
   fn: () => Promise<T>,
 ): Promise<T> {
+  const parentScope = tenantStore.getStore()?.scope;
   return db.transaction(async (tx) => {
-    await tx.execute(sql`select set_config('app.independent_user_id', ${independentUserId}, true)`);
-    return tenantStore.run({ db: tx as unknown as Database }, fn);
+    const scope = { independentUserId };
+    await bindReadinessScope(tx as unknown as Database, scope);
+    const result = await tenantStore.run({ db: tx as unknown as Database, scope }, fn);
+    if (parentScope) await bindReadinessScope(tx as unknown as Database, parentScope);
+    return result;
   });
 }
 

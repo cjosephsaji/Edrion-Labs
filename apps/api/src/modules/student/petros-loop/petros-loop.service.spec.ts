@@ -20,6 +20,8 @@ import { StudentPetrosLoopController } from './petros-loop.controller';
 import { deterministicPlan, deterministicRender } from './petros-loop.policy';
 import { PetrosLoopService } from './petros-loop.service';
 import { stage4ProfileFixture } from './petros-stage4.fixture';
+import { fallbackDocumentTeachingPlan, publicDocumentTeachingPlan } from '../petros-session-intent/petros-document-teaching';
+import { initialDocumentTeachingState } from './petros-document-teaching.policy';
 
 const INSTITUTION_ID = '33333333-3333-4333-8333-333333333333';
 const STUDENT_ID = '22222222-2222-4222-8222-222222222222';
@@ -48,6 +50,7 @@ function makeHarness(
     documentSource?: boolean;
     questionExecutionEnabled?: boolean;
     knowledgePolicyEnabled?: boolean;
+    documentDatabase?: unknown;
   } = {},
 ) {
   const now = new Date('2026-08-08T08:00:00.000Z');
@@ -396,6 +399,9 @@ function makeHarness(
       PETROS_DOCUMENT_QUESTION_EXECUTION_ENABLED: options.questionExecutionEnabled ?? false,
       PETROS_DOCUMENT_KNOWLEDGE_POLICY_ENABLED: options.knowledgePolicyEnabled ?? false,
     } as never,
+    undefined,
+    undefined,
+    options.documentDatabase as never,
   );
   return {
     service,
@@ -412,6 +418,32 @@ function makeHarness(
 }
 
 describe('PetrosLoopService coordination', () => {
+  it('keeps document help/model context public and selects a private instrument only for an answer', async () => {
+    const generated = fallbackDocumentTeachingPlan({documentId:SESSION_ID,documentVersion:1,sourceFingerprint:'a'.repeat(64),
+      topicId:'source-concept',title:'Synthetic energy',summary:'Explain energy transfer.',prerequisites:[],
+      pages:[{page:1,text:'Energy transfers between objects.'}]});
+    const privateMarker = 'PRIVATE_ASSESSMENT_MARKER';
+    const assessment = vi.fn(async () => ({diagnostic:{...generated.diagnostic,rubric:privateMarker},scene:undefined}));
+    const harness = makeHarness({documentDatabase:{assessment}});
+    const context: Record<string,unknown> = {documentTeaching:initialDocumentTeachingState(publicDocumentTeachingPlan(generated)),
+      documentLessonId:SESSION_ID,documentTeachingInternalPlan:{secret:privateMarker}};
+    harness.session.learnerContext = context;
+    const commit = vi.fn(async (_scope,_id,_version,values) => {Object.assign(harness.session,values);harness.session.version++;return harness.session;});
+    Object.assign(harness.repo,{commitPilot:commit});
+    harness.execute.mockResolvedValueOnce({content:{answer:'Energy moves from one object to another.'}} as never);
+    const help = await harness.service.documentTeachingAction(principal,SESSION_ID,
+      {action:'ask',question:'How does energy transfer?',idempotencyKey:crypto.randomUUID(),expectedVersion:0});
+    expect(assessment).not.toHaveBeenCalled();
+    expect(JSON.stringify(harness.execute.mock.calls)).not.toContain(privateMarker);
+    expect(JSON.stringify(help)).not.toContain(privateMarker);
+    const evaluate = vi.spyOn(harness.service as any,'evaluateAnswer').mockResolvedValue({source:'deterministic',evaluation:{
+      correctness:'partial',feedback:'Explain the transfer.',safeNextHint:'Describe which object gains energy.'}});
+    await harness.service.documentTeachingAction(principal,SESSION_ID,
+      {action:'diagnostic',answer:'Energy moves.',idempotencyKey:crypto.randomUUID(),expectedVersion:1});
+    expect(assessment).toHaveBeenCalledWith({institutionId:INSTITUTION_ID,studentId:STUDENT_ID},SESSION_ID,1,'diagnostic');
+    expect(evaluate.mock.calls[0]![1]).toMatchObject({rubric:privateMarker});
+    expect(commit.mock.calls.at(-1)![3].learnerContext).not.toHaveProperty('documentTeachingInternalPlan');
+  });
   it('V11-01 gates document composer calls before profile or command mutation', async () => {
     const durable = makeHarness({ documentSource: true, questionExecutionEnabled: true });
     await expect(durable.service.assertComposerQuestionAllowed(principal, SESSION_ID)).rejects.toMatchObject({

@@ -1,3 +1,5 @@
+import { publicPetrosSessionColumns as publicSessionColumns } from '../../../common/petros-session-projection';
+import { assertM4AssistanceBoundary } from '../petros-v2/petros-v2-source-exposure';
 import { KnowledgeDocumentService } from '../knowledge/knowledge-document.service';
 import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
@@ -25,9 +27,15 @@ export interface PetrosOwnerScope {
   studentId: string;
 }
 
+const preserveLegacyAssessment = (context: Record<string, unknown>) => sql`
+  ${JSON.stringify(context)}::jsonb || CASE WHEN ${schema.petrosLearningSessions.learnerContext} ? 'documentTeachingInternalPlan'
+    THEN jsonb_build_object('documentTeachingInternalPlan',${schema.petrosLearningSessions.learnerContext}->'documentTeachingInternalPlan')
+    ELSE '{}'::jsonb END`;
+
 @Injectable()
 export class PetrosLoopRepository {
   constructor(@Inject(DATABASE) private readonly db: Database, private readonly documents: KnowledgeDocumentService) {}
+  assertV2Assistance(){return assertM4AssistanceBoundary(this.db);}
 
   async recordDocumentPathProgress(
     scope: PetrosOwnerScope,
@@ -63,7 +71,7 @@ export class PetrosLoopRepository {
     return this.db
       .insert(schema.petrosLearningSessions)
       .values(values)
-      .returning()
+      .returning(publicSessionColumns)
       .then((rows) => rows[0]!);
   }
 
@@ -88,9 +96,10 @@ export class PetrosLoopRepository {
           eq(schema.petrosLearningSessions.id, sessionId),
           eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
           eq(schema.petrosLearningSessions.studentId, scope.studentId),
+          eq(schema.petrosLearningSessions.engineVersion, 'v1'),
         ),
       )
-      .returning()
+      .returning(publicSessionColumns)
       .then((rows) => rows[0]);
   }
 
@@ -104,7 +113,7 @@ export class PetrosLoopRepository {
       .select({
         id: schema.petrosLearningSessions.id,
         topic: schema.petrosLearningSessions.topic,
-        learnerContext: schema.petrosLearningSessions.learnerContext,
+        learnerContext: publicSessionColumns.learnerContext,
         sourceContext: schema.petrosLearningSessions.sourceContext,
         sessionType: schema.petrosLearningSessions.sessionType,
         status: schema.petrosLearningSessions.status,
@@ -119,6 +128,7 @@ export class PetrosLoopRepository {
         and(
           eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
           eq(schema.petrosLearningSessions.studentId, scope.studentId),
+          eq(schema.petrosLearningSessions.engineVersion, 'v1'),
         ),
       )
       .orderBy(desc(schema.petrosLearningSessions.updatedAt))
@@ -165,12 +175,13 @@ export class PetrosLoopRepository {
 
   findSessionByRequest(scope: PetrosOwnerScope, clientRequestId: string) {
     return this.db
-      .select()
+      .select(publicSessionColumns)
       .from(schema.petrosLearningSessions)
       .where(
         and(
           eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
           eq(schema.petrosLearningSessions.studentId, scope.studentId),
+          eq(schema.petrosLearningSessions.engineVersion, 'v1'),
           eq(schema.petrosLearningSessions.clientRequestId, clientRequestId),
         ),
       )
@@ -183,13 +194,14 @@ export class PetrosLoopRepository {
 
   findSession(scope: PetrosOwnerScope, sessionId: string) {
     return this.db
-      .select()
+      .select(publicSessionColumns)
       .from(schema.petrosLearningSessions)
       .where(
         and(
           eq(schema.petrosLearningSessions.id, sessionId),
           eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
           eq(schema.petrosLearningSessions.studentId, scope.studentId),
+          eq(schema.petrosLearningSessions.engineVersion, 'v1'),
         ),
       )
       .limit(1)
@@ -326,6 +338,7 @@ export class PetrosLoopRepository {
           eq(schema.petrosLearningSessions.id, sessionId),
           eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
           eq(schema.petrosLearningSessions.studentId, scope.studentId),
+          eq(schema.petrosLearningSessions.engineVersion, 'v1'),
           eq(schema.petrosLearningSessions.status, 'active'),
           or(
             isNull(schema.petrosLearningSessions.planningStartedAt),
@@ -333,7 +346,7 @@ export class PetrosLoopRepository {
           ),
         ),
       )
-      .returning()
+      .returning(publicSessionColumns)
       .then((rows) => rows[0]);
   }
 
@@ -346,6 +359,7 @@ export class PetrosLoopRepository {
           eq(schema.petrosLearningSessions.id, sessionId),
           eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
           eq(schema.petrosLearningSessions.studentId, scope.studentId),
+          eq(schema.petrosLearningSessions.engineVersion, 'v1'),
         ),
       );
   }
@@ -511,7 +525,7 @@ export class PetrosLoopRepository {
     return this.db
       .update(schema.petrosLearningSessions)
       .set({
-        learnerContext,
+        learnerContext: preserveLegacyAssessment(learnerContext),
         version: sql`${schema.petrosLearningSessions.version} + 1`,
         updatedAt: new Date(),
       })
@@ -520,9 +534,10 @@ export class PetrosLoopRepository {
           eq(schema.petrosLearningSessions.id, sessionId),
           eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
           eq(schema.petrosLearningSessions.studentId, scope.studentId),
+          eq(schema.petrosLearningSessions.engineVersion, 'v1'),
         ),
       )
-      .returning()
+      .returning(publicSessionColumns)
       .then((rows) => rows[0]);
   }
 
@@ -535,7 +550,7 @@ export class PetrosLoopRepository {
     return this.db
       .update(schema.petrosLearningSessions)
       .set({
-        learnerContext,
+        learnerContext: preserveLegacyAssessment(learnerContext),
         version: sql`${schema.petrosLearningSessions.version} + 1`,
         updatedAt: new Date(),
       })
@@ -544,10 +559,11 @@ export class PetrosLoopRepository {
           eq(schema.petrosLearningSessions.id, sessionId),
           eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
           eq(schema.petrosLearningSessions.studentId, scope.studentId),
+          eq(schema.petrosLearningSessions.engineVersion, 'v1'),
           eq(schema.petrosLearningSessions.version, expectedVersion),
         ),
       )
-      .returning()
+      .returning(publicSessionColumns)
       .then((rows) => rows[0]);
   }
 
@@ -558,13 +574,14 @@ export class PetrosLoopRepository {
       'learnerContext' | 'checkpoints' | 'currentCheckpointId' | 'status' | 'closeReason' | 'closedAt' | 'elapsedSeconds' | 'activeSince'>,
   ) {
     return this.db.update(schema.petrosLearningSessions)
-      .set({ ...values, version: sql`${schema.petrosLearningSessions.version} + 1`, updatedAt: new Date() })
+      .set({ ...values, ...(values.learnerContext ? { learnerContext: preserveLegacyAssessment(values.learnerContext) } : {}), version: sql`${schema.petrosLearningSessions.version} + 1`, updatedAt: new Date() })
       .where(and(eq(schema.petrosLearningSessions.id, sessionId),
         eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
         eq(schema.petrosLearningSessions.studentId, scope.studentId),
+          eq(schema.petrosLearningSessions.engineVersion, 'v1'),
         eq(schema.petrosLearningSessions.status, 'active'),
         eq(schema.petrosLearningSessions.version, expectedVersion)))
-      .returning().then(rows => rows[0]);
+      .returning(publicSessionColumns).then(rows => rows[0]);
   }
 
   updateSessionSourceContext(
@@ -580,9 +597,10 @@ export class PetrosLoopRepository {
           eq(schema.petrosLearningSessions.id, sessionId),
           eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
           eq(schema.petrosLearningSessions.studentId, scope.studentId),
+          eq(schema.petrosLearningSessions.engineVersion, 'v1'),
         ),
       )
-      .returning()
+      .returning(publicSessionColumns)
       .then((rows) => rows[0]);
   }
 
@@ -885,7 +903,7 @@ export class PetrosLoopRepository {
             isNull(schema.petrosLearningSessions.planningStartedAt),
           ),
         )
-        .returning();
+        .returning(publicSessionColumns);
       if (!session) return undefined;
       const [observation] = await tx
         .insert(schema.petrosObservations)
@@ -1065,6 +1083,7 @@ export class PetrosLoopRepository {
             eq(schema.petrosLearningSessions.id, sessionId),
             eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
             eq(schema.petrosLearningSessions.studentId, scope.studentId),
+          eq(schema.petrosLearningSessions.engineVersion, 'v1'),
           ),
         );
       return block;
@@ -1091,10 +1110,11 @@ export class PetrosLoopRepository {
           eq(schema.petrosLearningSessions.id, sessionId),
           eq(schema.petrosLearningSessions.institutionId, scope.institutionId),
           eq(schema.petrosLearningSessions.studentId, scope.studentId),
+          eq(schema.petrosLearningSessions.engineVersion, 'v1'),
           expectedVersion === undefined ? undefined : eq(schema.petrosLearningSessions.version, expectedVersion),
         ),
       )
-      .returning()
+      .returning(publicSessionColumns)
       .then((rows) => rows[0]);
   }
 

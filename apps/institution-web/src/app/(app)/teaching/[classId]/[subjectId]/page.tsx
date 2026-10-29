@@ -2,7 +2,7 @@
 import { MaterialPreparationStatus } from '@/components/materials/material-preparation-status';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Paperclip, Trash2, Upload } from 'lucide-react';
 import { Badge, Button, EmptyState, Input, Label, Skeleton, Tabs, useToast, type TabItem } from '@edrion/ui';
 import { Topbar } from '@/components/app-shell/topbar';
@@ -19,7 +19,7 @@ import {
 import { useAssignment, usePublishMaterial } from '@/lib/teaching';
 import { formatPortalError } from '@/lib/portal-client';
 import { PetrosMaterialCorrectionReview, PetrosTeacherInterventionPanel } from '@/components/teaching/petros-phase4-teacher-tools';
-import { PetrosPhase6LessonAuthor } from '@/components/teaching/petros-phase6-lesson-author';
+import { PetrosLearnWorkspace } from '@/components/teaching/petros-learn-workspace';
 
 const TEXTAREA =
   'w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-text-primary shadow-xs ' +
@@ -49,6 +49,8 @@ export default function TeachingWorkspacePage() {
   const { classId, subjectId } = params;
   const { data: assignment, isLoading } = useAssignment(classId, subjectId);
 
+  const [entryTab, setEntryTab] = useState('notes');
+  useEffect(() => { if (window.location.hash.startsWith('#petros-')) setEntryTab('petros-learn'); }, []);
   const contextIds = assignment?.contextIds;
   const tabs: TabItem[] = useMemo(
     () => [
@@ -68,11 +70,11 @@ export default function TeachingWorkspacePage() {
         content: <UpdatesTab classId={classId} subjectId={subjectId} contextIds={contextIds} />,
       },
       {
-        key: 'petros-lesson',
-        label: 'Petros lesson',
+        key: 'petros-learn',
+        label: 'Petros Learn',
         content: assignment
-          ? <PetrosPhase6LessonAuthor assignment={assignment} classId={classId} subjectId={subjectId} />
-          : <p className="p-4 text-sm text-text-muted">Load the current class and subject authority before authoring a lesson.</p>,
+          ? <PetrosLearnWorkspace key={`${classId}:${subjectId}`} assignment={assignment} />
+          : <p className="p-4 text-sm text-text-muted">Load the class and subject before assigning a learning goal.</p>,
       },
     ],
     [assignment, classId, subjectId, contextIds],
@@ -81,7 +83,7 @@ export default function TeachingWorkspacePage() {
   return (
     <>
       <Topbar title={assignment ? assignment.subjectName : 'Teaching'} />
-      <div className="page-enter flex flex-1 flex-col gap-5 p-5">
+      <div className="page-enter flex flex-1 flex-col gap-5 p-3 sm:p-5">
         <div>
           <Link
             href="/teaching"
@@ -95,14 +97,14 @@ export default function TeachingWorkspacePage() {
           ) : assignment ? (
             <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <h1 className="text-lg font-semibold text-text-primary">
-                {assignment.subjectCode ? (
+                {assignment.subjectCode && !/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(assignment.subjectCode) ? (
                   <span className="font-mono text-sm text-text-muted">{assignment.subjectCode} </span>
                 ) : null}
                 {assignment.subjectName}
               </h1>
               <p className="text-sm text-text-secondary">
                 {assignment.className} · {assignment.studentCount}{' '}
-                {assignment.studentCount === 1 ? 'student' : 'students'}
+                {assignment.studentCount === 1 ? 'student on the class list' : 'students on the class list'}
               </p>
               {!assignment.isMine && assignment.teacherName && (
                 <Badge tone="warning">Posting as {assignment.teacherName}</Badge>
@@ -115,7 +117,7 @@ export default function TeachingWorkspacePage() {
           )}
         </div>
 
-        {assignment && <Tabs items={tabs} defaultKey="notes" />}
+        {assignment && <Tabs key={entryTab} items={tabs} defaultKey={entryTab} keepMounted tablistClassName="flex-wrap overflow-visible" />}
       </div>
     </>
   );

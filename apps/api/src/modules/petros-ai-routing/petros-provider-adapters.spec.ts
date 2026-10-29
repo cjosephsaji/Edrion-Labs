@@ -42,6 +42,9 @@ describe('Petros provider modality pricing', () => {
   it('does not invent a price when modality pricing is absent', () => {
     expect(estimateModalityCostMicros({}, { audioSeconds: 10 })).toBeUndefined();
   });
+  it('supports an explicit minimum billed recording duration', () => {
+    expect(estimateModalityCostMicros({ pricingUnit: 'audio_hour', priceMicrosPerHour: 40_000, minimumBillableSeconds: 10 }, { audioSeconds: 1 })).toBe(111);
+  });
 
   it('selects the exact schema branch for specific teaching render functions', () => {
     const schema = {
@@ -105,13 +108,34 @@ describe('Petros speech provider requests', () => {
     expect(result.content).toMatchObject({ mimeType: 'audio/wav' });
   });
 
-  it('keeps legacy TTS requests compatible with their supported voices', async () => {
+  it.each(['cedar', 'marin'] as const)('rejects non-strict unsupported legacy voice %s without substitution', async (voice) => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(new Uint8Array([1, 2])));
     vi.stubGlobal('fetch', fetchMock);
-    await adapter().execute(provider as never, { modelKey: 'tts-1', providerOptions: {} } as never, { ...request, speech: { voice: 'cedar' } });
-    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
-    expect(body.voice).toBe('onyx');
-    expect(body).not.toHaveProperty('instructions');
+    await expect(adapter().execute(provider as never, { modelKey: 'tts-1', providerOptions: {} } as never, { ...request, speech: { voice } })).rejects.toMatchObject({ code: 'UNSUPPORTED_VOICE' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+  it.each(['alloy', 'ash', 'coral', 'echo', 'fable', 'onyx', 'nova', 'sage', 'shimmer'] as const)('strict legacy preview forwards %s and reports the effective voice', async (voice) => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(new Uint8Array([1, 2]), { headers: { 'content-type': 'audio/wav' } }));
+    vi.stubGlobal('fetch', fetchMock);
+    const result = await adapter().execute(provider as never, { modelKey: 'tts-1', providerOptions: {} } as never, { ...request, speech: { voice, strictVoice: true } });
+    expect(JSON.parse(fetchMock.mock.calls[0]![1].body).voice).toBe(voice);
+    expect(result.content).toMatchObject({ effectiveVoice: voice });
+  });
+  it.each(['cedar', 'marin'] as const)('strict legacy preview rejects unsupported %s before HTTP', async (voice) => {
+    const fetchMock = vi.fn(); vi.stubGlobal('fetch', fetchMock);
+    await expect(adapter().execute(provider as never, { modelKey: 'tts-1', providerOptions: {} } as never, { ...request, speech: { voice, strictVoice: true } })).rejects.toMatchObject({ code: 'UNSUPPORTED_VOICE' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+  it.each(['speech.synthesise', 'speech.transcribe'])('propagates %s cancellation to HTTP', async (functionKey) => {
+    const abort = new AbortController(); let entered!: () => void; const started = new Promise<void>(r => { entered = r; });
+    let signal: AbortSignal | undefined;
+    vi.stubGlobal('fetch', vi.fn((_url, init: RequestInit) => new Promise((_resolve, reject) => {
+      signal = init.signal as AbortSignal; signal.addEventListener('abort', () => reject(new DOMException('Cancelled', 'AbortError')), { once: true }); entered();
+    })));
+    const task = adapter().execute(provider as never, { modelKey: functionKey === 'speech.synthesise' ? 'tts-1' : 'whisper-large-v3-turbo', providerOptions: {} } as never,
+      { ...request, functionKey, signal: abort.signal, input: functionKey === 'speech.synthesise' ? request.input : [{ type: 'audio', dataBase64: 'AA==', mediaType: 'audio/wav' }] });
+    const rejected = expect(task).rejects.toMatchObject({ code: 'TIMEOUT' }); await started; abort.abort(); await rejected;
+    expect(signal?.aborted).toBe(true);
   });
 
   it.each([

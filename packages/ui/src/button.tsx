@@ -1,5 +1,5 @@
 'use client';
-import { Children, forwardRef, isValidElement } from 'react';
+import { forwardRef } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Loader2 } from 'lucide-react';
 import { cn } from './cn';
@@ -17,12 +17,14 @@ const button = cva(
   {
     variants: {
       variant: {
-        primary: 'bg-primary text-primary-foreground shadow-sm hover:bg-primary-hover hover:shadow-md',
+        primary:
+          'bg-primary text-primary-foreground shadow-sm hover:bg-primary-hover hover:shadow-md',
         secondary:
           'bg-surface-elevated text-text-primary border border-border shadow-xs hover:border-border-strong hover:bg-surface',
         ghost: 'text-text-secondary hover:bg-primary-soft hover:text-primary',
         danger: 'bg-danger text-white shadow-sm hover:opacity-90 hover:shadow-md',
-        outline: 'border border-border-strong bg-surface/70 text-text-primary hover:bg-background-secondary hover:shadow-xs',
+        outline:
+          'border border-border-strong bg-surface/70 text-text-primary hover:bg-background-secondary hover:shadow-xs',
       },
       size: {
         sm: 'h-8 px-3 text-sm',
@@ -36,27 +38,27 @@ const button = cva(
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof button> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof button> {
   loading?: boolean;
-}
-
-function isButtonIcon(child: React.ReactNode): boolean {
-  if (!isValidElement<{ className?: unknown }>(child)) return false;
-  const className = child.props.className;
-  return typeof className === 'string' && /\bh-\S+\b/.test(className) && /\bw-\S+\b/.test(className);
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, loading, disabled, children, ...props }, ref) => (
     <button
       ref={ref}
-      className={cn(button({ variant, size }), className)}
+      className={cn(
+        button({ variant, size }),
+        className,
+        loading && '[&_svg:not([data-button-spinner])]:hidden',
+      )}
       disabled={disabled || loading}
       {...props}
+      aria-busy={loading || props['aria-busy'] || undefined}
     >
-      {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-      {loading ? Children.map(children, (child) => (isButtonIcon(child) ? null : child)) : children}
+      {loading && (
+        <Loader2 data-button-spinner className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
+      )}
+      {children}
     </button>
   ),
 );

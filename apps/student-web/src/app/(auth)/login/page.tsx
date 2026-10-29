@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   TrendingUp,
 } from 'lucide-react';
-import { formatApiError } from '@/lib/api-client';
+import { formatApiError, StudentApiError } from '@/lib/api-client';
 import { useStudentLogin } from '@/lib/hooks';
 import styles from './login.module.css';
 
@@ -37,11 +37,15 @@ export default function LoginPage() {
   const login = useStudentLogin();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [institutionCode, setInstitutionCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const needsInstitutionCode = !identifier.includes('@') && login.error instanceof StudentApiError &&
+    login.error.code === 'INSTITUTION_CODE_REQUIRED';
 
   function onSubmit(event: FormEvent) {
     event.preventDefault();
-    login.mutate({ identifier: identifier.trim(), password });
+    login.mutate({ identifier: identifier.trim(), password,
+      ...(!identifier.includes('@') && institutionCode.trim() ? { institutionCode: institutionCode.trim() } : {}) });
   }
 
   return (
@@ -107,9 +111,19 @@ export default function LoginPage() {
                 autoCapitalize="none"
                 spellCheck={false}
                 value={identifier}
-                onChange={(event) => setIdentifier(event.target.value)}
+                onChange={(event) => { setIdentifier(event.target.value); setInstitutionCode(''); login.reset(); }}
                 placeholder="Enter your email or ID"
               />
+
+              {needsInstitutionCode ? (
+                <>
+                  <label htmlFor="student-institution-code">Institution code</label>
+                  <input id="student-institution-code" type="text" required
+                    autoCapitalize="none" spellCheck={false} value={institutionCode}
+                    onChange={(event) => setInstitutionCode(event.target.value)}
+                    placeholder="Code provided by your institution" />
+                </>
+              ) : null}
 
               <div className={styles.passwordLabel}>
                 <label htmlFor="student-password">Password</label>
@@ -145,11 +159,14 @@ export default function LoginPage() {
             </form>
 
             <div className={styles.activation}>
-              <span>First time here?</span>
+              <span>Have an invitation link?</span>
               <Link href="/activate">Activate your account <ArrowRight aria-hidden="true" /></Link>
             </div>
           </div>
 
+          <p className={styles.helpText}>
+            First sign-in? Use your student ID as your temporary password, then choose a new password.
+          </p>
           <p className={styles.helpText}>
             Can’t access your account? Contact your institution administrator.
           </p>

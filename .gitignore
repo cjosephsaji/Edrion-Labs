@@ -46,3 +46,41 @@ cookies.txt
 # Disposable Petros full-app verification output
 .next-petros-verification/
 .next-petros-verification-dev/
+.next-petros-m0p-verification/
+.next-petros-m0p-verification-dev/
+
+# Disposable M4 student verification output
+.next-petros-m4-*/
+
+# Local verification builds (all named Next build directories)
+.next-*/
+
+# Generated deployment packages and machine-local capture bundles
+/output/
+/docs/verification/**
+!/docs/verification/**/
+!/docs/verification/**/*.md
+!/docs/verification/**/*.txt
+
+# Private course inputs; share with an authorized collaborator outside Git
+/prototype/assets/source-pdfs/*.pdf
+/prototype/assets/extracted-sources.json
+/prototype/private-handoff/
+
+# Reproducible authoring/download inputs; optimized runtime models stay versioned
+/prototype/assets/realism/source/
+
+# Historical capture output stays local. Keep handoff notes and current evidence.
+/prototype/evidence/**
+!/prototype/evidence/**/
+!/prototype/evidence/**/*.md
+!/prototype/evidence/teaching-correction/*.json
+!/prototype/evidence/teaching-correction/*.txt
+/prototype/evidence/teaching-correction/*trace.zip
+!/prototype/evidence/teaching-correction/font-classic.png
+!/prototype/evidence/teaching-correction/font-world.png
+!/prototype/evidence/teaching-correction/min-misconception.png
+!/prototype/evidence/teaching-correction/min-followup-correct.png
+!/prototype/evidence/teaching-correction/contextual-interruption.png
+!/prototype/evidence/teaching-correction/recordings/path-a-understands.webm
+!/prototype/evidence/teaching-correction/recordings/path-b-struggles.webm

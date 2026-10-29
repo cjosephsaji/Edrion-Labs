@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { generateStructure, STRUCTURE_PRESETS } from './programme-structure';
+import { generateStructure, normalizeStructure, STRUCTURE_PRESETS } from './programme-structure';
 
 describe('generateStructure', () => {
   it('generates school K–12 with 12 grades × 3 terms', () => {
@@ -84,5 +84,50 @@ describe('generateStructure', () => {
       const r = generateStructure(p);
       expect(r.totals.slots).toBeGreaterThanOrEqual(0);
     }
+  });
+});
+
+describe('normalizeStructure', () => {
+  it('supports an extra semester in one year without changing other years', () => {
+    const initial = generateStructure({ termSystem: 'semester', durationMonths: 24 });
+    const extra = {
+      ...initial.slots[0]!,
+      sequenceInYear: 3,
+      name: 'Summer semester',
+      durationMonths: 2,
+    };
+    const edited = normalizeStructure(initial.levels, [...initial.slots, extra]);
+    expect(edited.slots.filter((slot) => slot.levelSequence === 1)).toHaveLength(3);
+    expect(edited.slots.filter((slot) => slot.levelSequence === 2)).toHaveLength(2);
+    expect(edited.slots[2]).toMatchObject({ name: 'Summer semester', kind: 'semester', durationMonths: 2 });
+    expect(edited.slots.map((slot) => slot.absoluteSequence)).toEqual([1, 2, 3, 4, 5]);
+    expect(edited.totals).toEqual({ years: 2, slots: 5 });
+    expect(initial.slots).toHaveLength(4);
+  });
+
+  it('renumbers remaining terms after removing a term from the middle', () => {
+    const initial = generateStructure({ termSystem: 'trimester', durationMonths: 24 });
+    const edited = normalizeStructure(initial.levels, initial.slots.filter((slot) =>
+      !(slot.levelSequence === 1 && slot.sequenceInYear === 2),
+    ));
+    expect(edited.slots.slice(0, 2).map((slot) => [slot.name, slot.sequenceInYear])).toEqual([
+      ['Trimester 1', 1], ['Trimester 3', 2],
+    ]);
+    expect(edited.slots.map((slot) => slot.absoluteSequence)).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('removes a deleted year and retains the following year with its edited terms', () => {
+    const initial = generateStructure({ termSystem: 'semester', durationMonths: 36 });
+    const edited = normalizeStructure(
+      initial.levels.filter((level) => level.sequence !== 2),
+      initial.slots.map((slot) => slot.levelSequence === 3 && slot.sequenceInYear === 2
+        ? { ...slot, name: 'Placement', kind: 'module' as const, isTerminal: true } : slot),
+    );
+    expect(edited.levels.map((level) => [level.sequence, level.name])).toEqual([[1, 'Year 1'], [2, 'Year 3']]);
+    expect(edited.slots.at(-1)).toMatchObject({
+      levelSequence: 2, sequenceInYear: 2, absoluteSequence: 4,
+      name: 'Placement', kind: 'module', isTerminal: true,
+    });
+    expect(edited.totals).toEqual({ years: 2, slots: 4 });
   });
 });

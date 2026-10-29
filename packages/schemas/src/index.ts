@@ -20,6 +20,7 @@ export * from './question-registry';
 export * from './gradebook';
 export * from './grading';
 export * from './assignments';
+export * from './petros-teacher-guidance';
 export * from './fees';
 export * from './payroll';
 export * from './library';
@@ -148,3 +149,5 @@ export * from './petros-context';
 export * from './petros-phase4-institutional';
 export * from './petros-release';
 export * from './petros-source-comparison';
+
+export * from './petros-v2';

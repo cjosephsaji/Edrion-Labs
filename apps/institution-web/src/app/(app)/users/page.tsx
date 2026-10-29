@@ -84,6 +84,7 @@ export default function UsersPage() {
         name: 'roleKeys',
         label: 'Roles',
         type: 'custom',
+        required: true,
         help: 'At least one role is required for new users.',
         render: (value, onChange) => (
           <RoleMultiSelect value={(value as string[]) ?? []} onChange={(keys) => onChange(keys)} />

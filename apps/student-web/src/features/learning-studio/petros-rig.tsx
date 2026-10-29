@@ -1,6 +1,7 @@
 'use client';
 
 import { motion, useReducedMotion } from 'motion/react';
+import { PetrosAvatar } from '@/components/petros/petros-avatar';
 
 export type PetrosRigState = 'enter' | 'walk' | 'point' | 'speak' | 'listen' | 'think' | 'acknowledge' | 'rest' | 'paused';
 
@@ -26,13 +27,10 @@ export function PetrosRig({
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: reducedMotion ? 0 : 0.34, ease: [0.22, 1, 0.36, 1] }}
     >
-      <image
-        href="/petros/petros-pointing.png"
-        width="724"
-        height="760"
-        preserveAspectRatio="xMidYMid meet"
-        transform={facing === 'right' ? 'translate(724 0) scale(-1 1)' : undefined}
-      />
+      <foreignObject aria-hidden="true" x="77" y="0" width="570" height="760">
+        <PetrosAvatar pose={state === 'speak' ? 'speaking' : state === 'listen' ? 'listening' : state === 'think' ? 'thinking' : state === 'point' ? `point-${facing}` : 'neutral'}
+          speaking={state === 'speak'} idle={state === 'rest'} reducedMotion={Boolean(reducedMotion)} label={label} />
+      </foreignObject>
     </motion.svg>
   );
 }

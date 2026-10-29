@@ -2,6 +2,7 @@ import { foreignKey, index, integer, jsonb, pgTable, text, timestamp, uniqueInde
 import { primaryId } from './_helpers';
 import { institutions } from './institutions';
 import { courses } from './institutional-bridge';
+import type { ConceptGraph } from '@edrion/schemas';
 
 /** Append-only records belong to the existing course curriculum, not to learner state. */
 export const courseCurriculumRecords = pgTable('course_curriculum_records', {
@@ -31,6 +32,7 @@ export const courseCurriculumRevisions = pgTable('course_curriculum_revisions', 
   syllabusHash: text('syllabus_hash').notNull(),
   subjectId: uuid('subject_id'),
   payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
+  v2ConceptManifest: jsonb('v2_concept_manifest').$type<ConceptGraph>(),
   actorId: uuid('actor_id').notNull(),
   reason: text('reason').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

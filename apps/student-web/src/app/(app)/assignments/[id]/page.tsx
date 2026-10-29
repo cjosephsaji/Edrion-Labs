@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Check, FileCheck2, FileUp, LockKeyhole, Paperclip, X } from 'lucide-react';
 import { QueryPage } from '@/components/query-page';
 import { PetrosDoorButton } from '@/components/petros/petros-door-button';
+import { PetrosAssignedGoal, type AssignedPetrosGoal } from '@/components/petros/petros-assigned-goal';
 import { usePetrosPage } from '@/components/petros/petros-companion-context';
 import { formatApiError, useStudentApi } from '@/lib/api-client';
 
@@ -22,6 +23,8 @@ type Detail = {
   pointsAwarded: number | null;
   feedback: string | null;
   versions: Array<{ versionNo: number; submittedAt: string; late: boolean; note: string | null }>;
+  petrosGuidance?: AssignedPetrosGoal['petrosGuidance'] | null;
+  petrosParticipation?: AssignedPetrosGoal['petrosParticipation'];
 };
 
 function GovernancePill({ policy }: { policy?: string }) {
@@ -83,6 +86,8 @@ export default function AssignmentDetailPage() {
     <QueryPage query={query} loadingLabel="Loading assignment…">
       {(raw) => {
         const data = raw as Detail;
+        if (data.petrosGuidance) return <PetrosAssignedGoal data={{ id: data.id, dueAt: data.dueAt,
+          status: data.status, petrosGuidance: data.petrosGuidance, petrosParticipation: data.petrosParticipation ?? null }} />;
         const locked = ['graded', 'returned'].includes(data.status) && !data.allowResubmission;
         const canSubmit = !locked && data.status !== 'graded';
         const due = data.dueAt ? new Date(data.dueAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'No due date';

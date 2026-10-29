@@ -1,9 +1,11 @@
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { commitStructureSchema } from '@edrion/schemas';
 import { generateStructure } from '@edrion/shared-types';
 import type { AuditEventInput, AuditWriter } from '@edrion/audit';
 import type {
@@ -47,12 +49,18 @@ export class ProgrammeStructureService {
     departmentId: string,
     input: CommitStructureInput,
   ): Promise<ProgrammeStructureDetail> {
+    const validated = commitStructureSchema.safeParse(input);
+    if (!validated.success) throw new BadRequestException({ code: 'INVALID_STRUCTURE', message: validated.error.issues[0]?.message ?? 'Check the structure rows.' });
     const dept = await this.repo.findDepartment(departmentId, ctx.principal.institutionId);
     if (!dept) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Programme not found.' });
     }
 
-    if (dept.structureLocked) {
+    if (dept.unitKind !== 'programme') throw new BadRequestException({
+      code: 'INVALID_PROGRAMME', message: 'Choose a course or programme. Staff departments cannot contain a student course structure.',
+    });
+
+    if (dept.structureLocked || await this.repo.hasEnrolledStudents(departmentId)) {
       throw new ConflictException({
         code: 'STRUCTURE_LOCKED',
         message: 'This programme structure is locked because students are enrolled.',
@@ -97,6 +105,7 @@ export class ProgrammeStructureService {
       ctx.principal.institutionId,
       campusId,
       ctx.principal.institutionUserId,
+      departmentId,
     );
 
     return result;
@@ -132,20 +141,24 @@ export class ProgrammeStructureService {
     }
 
     const merged: CommitStructureInput = {
+      name: input.name,
+      version: input.version,
       termSystem: (input.termSystem ?? current.department.termSystem) as CommitStructureInput['termSystem'],
-      durationMonths: input.durationMonths ?? current.department.durationMonths ?? undefined,
+      durationMonths: input.durationMonths !== undefined ? input.durationMonths : current.department.durationMonths,
       termsPerYear: input.termsPerYear ?? current.department.termsPerYear,
       levels:
         input.levels ??
         current.levels.map((l) => ({
+          id: l.id,
           sequence: l.sequence,
           name: l.name,
-          durationMonths: null,
+          durationMonths: l.durationLabel ? Number.parseInt(l.durationLabel, 10) || null : null,
         })),
       slots:
         input.slots ??
         current.levels.flatMap((l) =>
           l.slots.map((s) => ({
+            id: s.id,
             levelSequence: s.levelSequence,
             sequenceInYear: s.sequenceInYear,
             absoluteSequence: s.absoluteSequence,

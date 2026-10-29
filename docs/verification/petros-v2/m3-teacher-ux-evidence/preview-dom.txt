@@ -1,0 +1,179 @@
+Skip to content
+Isolated M3 demonstration
+Education OS
+OVERVIEW
+Dashboard
+Attention Centre
+Petros
+Petros support
+WORKFLOW
+Approvals
+Grievances
+ACADEMIC SETUP
+Academic Years
+Departments
+Grades
+Subjects
+Classes
+Terms
+PEOPLE
+Students
+Student Conduct
+Staff
+Parents
+CAREERS
+Placement cell
+ACADEMICS
+Teaching
+Admissions
+Attendance
+Timetable
+Homework
+Exams
+Gradebook
+Report cards
+Assignments
+Calendar
+FINANCE
+Fees
+Expenses
+Payroll
+OPERATIONS
+Library
+Transport
+Inventory
+Hostel
+COMMUNICATION
+Announcements
+Notifications
+Messages
+PTM scheduling
+HEALTH & WELLBEING
+Health Records
+Medical Incidents
+Medication Logs
+Counseling
+Counseling Cases
+CAMPUS OPERATIONS
+Labs
+Lab Schedule
+Lab Incidents
+Debate calibration
+Front Desk
+Appointments
+Facilities
+Work Orders
+Maintenance
+Assets
+Visitor Logs
+Gate Passes
+Security Incidents
+Emergency Alerts
+Access Logs
+Sensitive Reports
+IT
+Devices
+Access Requests
+Webhooks
+INSIGHTS
+Reports
+ADMINISTRATION
+Campuses
+Documents & Policies
+User Management
+Roles & Permissions
+Settings
+Petros policy
+SSO & roster
+Billing
+Audit Logs
+SM
+Synthetic M3 actor
+b5178a91-62cf-42ef-9e94-d3ff7142663f@example.test
+Sign out
+Cloud Computing
+All subjects
+ba789be5-8b5c-4bb7-a527-fdda5f971c47 Cloud Computing
+
+Isolated source review class · 2 students
+
+Notes
+Files
+Class updates
+Petros Learn
+Petros Learn
+
+Prepare lessons and guide your students.
+
+Lessons
+Learning goals
+Student progress
+Curriculum authoring
+
+Your lesson draft is saved.
+
+1
+Choose material
+2
+Review lesson
+3
+Preview activities
+4
+Save & submit
+
+STEP 3 OF 4
+
+See how Petros will teach this lesson
+
+Cloud Computing
+
+cloud-models.pptx
+About 20 minutes
+Draft saved · revision 1
+Sample lesson — prepared from test data
+About this draft
+
+OBJECTIVE 1 OF 2
+
+Given a service-model case, classify the consumer and provider responsibilities using the cited boundary.
+Change activity
+Lesson preview
+Read only
+Connect ideas
+
+Inspect responsibility or resource boundaries.
+
+Service responsibility boundary
+
+Model
+Consumer responsibility
+Provider responsibility
+IaaS
+Operating system
+Physical hardware
+PaaS
+Application code
+Runtime
+SaaS
+Access policy
+Application platform
+
+Logical and physical resources
+
+Virtualization separates logical resources from physical hardware.A virtual machine has an allocated CPU and memory budget.
+
+Proposed connections · subject review needed
+
+Service responsibility boundary
+Logical and physical resources
+
+This is a read-only representation of the proposed activity. Student interaction becomes available in a later development stage.
+
+Previous activity
+View source material
+Next activity
+
+Saved to your draft. Student use is not enabled.
+
+Back
+Continue to approval

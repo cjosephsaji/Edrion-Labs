@@ -7,6 +7,7 @@ import { clearQueuedNotes } from './petros-offline-notes';
 
 export type StudentMe = {
   kind: 'institutional' | 'independent';
+  passwordChangeRequired?: boolean;
   fullName: string;
   email: string | null;
   studentId: string | null;
@@ -98,10 +99,11 @@ export function useStudentLogin() {
   const router = useRouter();
   return useMutation({
     mutationFn: (body: { identifier: string; password: string; institutionCode?: string }) =>
-      api.post<{ authenticated: true }>('/student/auth/login', body),
-    onSuccess: async () => {
+      api.post<{ authenticated: true; passwordChangeRequired: boolean }>('/student/auth/login', body),
+    onSuccess: async (result) => {
+      qc.removeQueries({ queryKey: ['student'] });
       await qc.invalidateQueries({ queryKey: ['student'] });
-      router.replace('/home');
+      router.replace(result.passwordChangeRequired ? '/change-password' : '/home');
     },
   });
 }

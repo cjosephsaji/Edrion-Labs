@@ -1,0 +1,101 @@
+Skip to your learning stage
+Your lessons
+petros
+LEARNING STUDIO
+Pause lesson
+Demo preview · Sample content and simulated reviews
+About this demo
+Cloud Computing
+Explore
+Your turn
+03
+Reflect
+
+OUR FOCUS
+Distinguish service responsibility and apply the bounded memory-capacity method.
+
+Petros · Looking Back
+
+Take your time. I’ll stay quiet while you work.
+
+Hide character
+Can VM 4 fit in the remaining memory?
+
+Current challenge · Predict whether another allocation fits. Test the model, then revise your calculation and explain what changed.
+
+Question, previous feedback and teaching rationale
+Inspect teaching source
+Available memory · Previously checked
+VM memory laboratory · Explore
+Whole VM capacity · Revise, then submit
+Explanation · Next
+Available memory — 48 GB
+Previously checked · View calculation
+VM memory laboratory
+Total 64 GB
+Host reservation 16 GB
+Each whole VM 8 GB
+Available for VMs 48 GB
+▧ Reserved
+▣ VM allocations
+□ Remaining
+VM 1
+8 GB
+VM 2
+8 GB
+VM 3
+8 GB
+Allocated VMs
+3
+VM memory used
+24 GB
+Remaining for VMs
+24 GB
+Utilization of available memory
+50.0%
+Your prediction · VM 4
+It will fit
+It won’t fit
+
+Make a prediction to begin a new test. Earlier results are in your test history.
+
+Change the allocation
+
+GB · fixed host reservation · whole 8 GB VMs · no overcommit. Exploration.
+
+Earlier tests (8)
+About this memory model
+Whole VM capacity
+You’re working on
+
+Your previous answer
+
+48
+/
+8
+=
+7
+𝑉
+𝑀
+48/8=7VM
+See the worked example
+
+Change your answer, then save it before submitting.
+
+Your answer · Whole VM capacity
+Unit: VM
+Save step
+What this example assumes
+Explain this step
+Your turn
+
+Correct the whole-VM capacity step. Explain what each unit means.
+
+Review your correction
+Undo edit
+Redo edit
+Read this explanation
+Submitted work saved
+Sources
+Ask Petros
+End session

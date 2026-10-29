@@ -6,6 +6,13 @@ import type { ApiEnv } from '@edrion/config';
 import { API_ENV, DATABASE } from '../../common/tokens';
 import { JwtError, signHs256, verifyHs256 } from '../../common/jwt';
 
+export interface PortalMembershipProof {
+  userId: string;
+  credentialVersion: string;
+  aal: Aal;
+  lastAuthAt: string;
+}
+
 export interface IssuePortalSessionInput {
   institutionId: string;
   institutionUserId: string;
@@ -13,6 +20,9 @@ export interface IssuePortalSessionInput {
   idpSessionId?: string;
   ip?: string;
   userAgent?: string;
+  membershipProofs?: PortalMembershipProof[];
+  lastAuthAt?: Date;
+  expiresAt?: Date;
 }
 
 /**
@@ -53,7 +63,7 @@ export class PortalSessionService {
   /** Create a session row + sign the cookie JWT. Called on a successful portal login. */
   async issue(input: IssuePortalSessionInput): Promise<{ token: string; session: PortalSession }> {
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + this.env.SESSION_TTL_SECONDS * 1000);
+    const expiresAt = input.expiresAt ?? new Date(now.getTime() + this.env.SESSION_TTL_SECONDS * 1000);
     const [session] = await this.db
       .insert(schema.portalSessions)
       .values({
@@ -61,7 +71,7 @@ export class PortalSessionService {
         institutionUserId: input.institutionUserId,
         aal: input.aal,
         idpSessionId: input.idpSessionId ?? null,
-        lastAuthAt: now,
+        lastAuthAt: input.lastAuthAt ?? now,
         expiresAt,
         ip: input.ip ?? null,
         userAgent: input.userAgent ?? null,
@@ -73,7 +83,12 @@ export class PortalSessionService {
       sid: session.id,
       uid: session.institutionUserId,
     };
-    const token = signHs256(payload, this.env.SESSION_COOKIE_SECRET, this.env.SESSION_TTL_SECONDS, now);
+    const token = signHs256(
+      { ...payload, membershipProofs: input.membershipProofs ?? [] },
+      this.env.SESSION_COOKIE_SECRET,
+      Math.max(1, Math.floor((expiresAt.getTime() - now.getTime()) / 1000)),
+      now,
+    );
     return { token, session };
   }
 

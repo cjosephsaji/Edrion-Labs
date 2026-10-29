@@ -1,10 +1,11 @@
 import {
   BadRequestException,
+  ConflictException,
   Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { and, eq, gt, schema, type Database, type IndependentUser, type InstitutionUser } from '@edrion/database';
+import { and, eq, gt, isNull, isNotNull, schema, type Database, type IndependentUser, type InstitutionUser } from '@edrion/database';
 import { evaluatePermissions, expandEffectiveKeys } from '@edrion/permissions';
 import { ALL_STUDENT_PERMISSION_KEYS, STUDENT_DEFAULT_ROLES } from '@edrion/permissions';
 import { AccountStatus, ActorType, AuditResult, RiskLevel } from '@edrion/shared-types';
@@ -12,6 +13,7 @@ import type {
   IndependentSignupInput,
   IndependentVerifyInput,
   StudentActivateInput,
+  StudentChangePasswordInput,
   StudentLoginInput,
   StudentResetInput,
   StudentResetRequestInput,
@@ -63,13 +65,15 @@ export class StudentAuthService {
       return this.buildIndependent(await this.requireIndependentUser(session.userId), session.lastAuthAt);
     }
     const user = await this.requireInstitutionStudentUser(session.userId);
-    return this.buildInstitutional(user, session.lastAuthAt);
+    const principal = await this.buildInstitutional(user, session.lastAuthAt);
+    principal.passwordChangeRequired ||= session.passwordSetupOnly === true;
+    return principal;
   }
 
   /** Worker identity is reconstructed from a persisted initiating user, never a copied principal. */
   async resolveInstitutionalWorker(userId: string): Promise<InstitutionalStudentPrincipal> {
     const user = await this.requireInstitutionStudentUser(userId);
-    if (user.status !== AccountStatus.Active) throw new UnauthorizedException('Student account is inactive');
+    if (user.status !== AccountStatus.Active || user.passwordResetRequiredAt) throw new UnauthorizedException('Student account setup is incomplete');
     return this.buildInstitutional(user, null);
   }
 
@@ -82,7 +86,7 @@ export class StudentAuthService {
     throw new UnauthorizedException({ code: 'UNAUTHENTICATED', message: 'No such student user' });
   }
 
-  async login(input: StudentLoginInput, req: EdrionRequestContext): Promise<{ token: string }> {
+  async login(input: StudentLoginInput, req: EdrionRequestContext): Promise<{ token: string; passwordChangeRequired: boolean }> {
     const resolved = await this.resolveLoginIdentity(input);
     const user = resolved.user;
 
@@ -93,7 +97,7 @@ export class StudentAuthService {
 
     const invalid = new UnauthorizedException({
       code: 'UNAUTHENTICATED',
-      message: 'Incorrect email or password',
+      message: 'Incorrect email, student ID or password',
     });
     if (!(await verifyPassword(input.password, user.passwordHash))) {
       await this.registerFailedLogin(resolved.kind, user.id, user.failedLoginAttempts);
@@ -109,6 +113,7 @@ export class StudentAuthService {
             kind: 'institutional',
             userId: user.id,
             institutionId: (user as InstitutionUser).institutionId,
+            passwordSetupOnly: Boolean((user as InstitutionUser).passwordResetRequiredAt),
             ip: req.ip,
             userAgent: req.userAgent,
           })
@@ -128,6 +133,45 @@ export class StudentAuthService {
       result: AuditResult.Success,
       riskLevel: RiskLevel.Low,
     });
+    return { token: issue.token, passwordChangeRequired: resolved.kind === 'institutional' &&
+      Boolean((user as InstitutionUser).passwordResetRequiredAt) };
+  }
+
+  async changePassword(principal: StudentPrincipal, input: StudentChangePasswordInput,
+    req: EdrionRequestContext): Promise<{ token: string }> {
+    if (principal.kind !== 'institutional') throw new BadRequestException('This setup is for institution student accounts.');
+    const user = await this.requireInstitutionStudentUser(principal.institutionUserId);
+    // The authenticated setup session already verified the temporary password at sign-in.
+    // Password-free replacement is available only while mandatory setup is still pending.
+    if (user.status !== AccountStatus.Active || user.institutionId !== principal.institutionId ||
+      !principal.passwordChangeRequired || !user.passwordResetRequiredAt || !user.passwordHash) {
+      throw new UnauthorizedException({ code: 'PASSWORD_SETUP_UNAVAILABLE', message: 'Password setup is no longer available. Sign in again.' });
+    }
+    const [student] = await this.db.select({ admissionNo: schema.students.admissionNo }).from(schema.students)
+      .where(and(eq(schema.students.institutionUserId, user.id), eq(schema.students.institutionId, user.institutionId))).limit(1);
+    if (input.newPassword === student?.admissionNo || await verifyPassword(input.newPassword, user.passwordHash)) {
+      throw new BadRequestException({ code: 'PASSWORD_UNCHANGED', message: 'Choose a new password different from your student ID and current password.' });
+    }
+    const passwordHash = await hashPassword(input.newPassword);
+    const now = new Date();
+    // Clear setup and revoke temporary sessions together. Only the newly issued session can proceed.
+    await this.db.transaction(async (tx) => {
+      const [updated] = await tx.update(schema.institutionUsers).set({ passwordHash,
+        passwordResetRequiredAt: null, passwordResetTokenHash: null, passwordResetExpiresAt: null,
+        sessionsRevokedAt: now, failedLoginAttempts: 0, lockedUntil: null,
+      }).where(and(eq(schema.institutionUsers.id, user.id), eq(schema.institutionUsers.passwordHash, user.passwordHash!),
+        isNotNull(schema.institutionUsers.passwordResetRequiredAt),
+        eq(schema.institutionUsers.status, AccountStatus.Active), isNull(schema.institutionUsers.disabledAt)))
+        .returning({ id: schema.institutionUsers.id });
+      if (!updated) throw new ConflictException('Your password changed. Sign in again.');
+      await tx.update(schema.portalSessions).set({ revokedAt: now, revokedReason: 'password_change' })
+        .where(eq(schema.portalSessions.institutionUserId, user.id));
+    });
+    const issue = await this.sessions.issue({ kind: 'institutional', userId: user.id,
+      institutionId: user.institutionId, ip: req.ip, userAgent: req.userAgent });
+    await this.audit.logAudit({ ...this.actorFields('institutional', user, req),
+      action: 'student.auth.password_changed', module: MODULE, entityType: 'institution_user',
+      entityId: user.id, result: AuditResult.Success, riskLevel: RiskLevel.Medium });
     return { token: issue.token };
   }
 
@@ -233,7 +277,7 @@ export class StudentAuthService {
     const identifier = input.identifier.trim();
     const invalid = new UnauthorizedException({
       code: 'UNAUTHENTICATED',
-      message: 'Incorrect email or password',
+      message: 'Incorrect email, student ID or password',
     });
 
     if (identifier.includes('@')) {
@@ -244,24 +288,34 @@ export class StudentAuthService {
       throw invalid;
     }
 
-    if (!input.institutionCode) throw invalid;
-    const [inst] = await this.db
-      .select({ id: schema.institutions.id })
-      .from(schema.institutions)
-      .where(eq(schema.institutions.publicId, input.institutionCode.trim()))
-      .limit(1);
-    if (!inst) throw invalid;
-
-    const [student] = await this.db
-      .select()
+    let institutionId: string | undefined;
+    if (input.institutionCode?.trim()) {
+      const [inst] = await this.db.select({ id: schema.institutions.id }).from(schema.institutions)
+        .where(eq(schema.institutions.publicId, input.institutionCode.trim())).limit(1);
+      if (!inst) throw invalid;
+      institutionId = inst.id;
+    }
+    const students = await this.db
+      .select({ institutionUserId: schema.students.institutionUserId })
       .from(schema.students)
+      .innerJoin(schema.institutionUsers, and(
+        eq(schema.institutionUsers.id, schema.students.institutionUserId),
+        eq(schema.institutionUsers.institutionId, schema.students.institutionId)))
+      .innerJoin(schema.institutionUserRoles, and(
+        eq(schema.institutionUserRoles.institutionUserId, schema.institutionUsers.id),
+        eq(schema.institutionUserRoles.roleKey, 'student')))
       .where(
         and(
-          eq(schema.students.institutionId, inst.id),
+          institutionId ? eq(schema.students.institutionId, institutionId) : undefined,
           eq(schema.students.admissionNo, identifier),
+          eq(schema.institutionUsers.status, AccountStatus.Active),
+          isNull(schema.institutionUsers.disabledAt),
         ),
       )
-      .limit(1);
+      .limit(institutionId ? 1 : 2);
+    if (students.length > 1) throw new BadRequestException({ code: 'INSTITUTION_CODE_REQUIRED',
+      message: 'This student ID exists at more than one institution. Enter your institution code.' });
+    const student = students[0];
     if (!student?.institutionUserId) throw invalid;
 
     const user = await this.requireInstitutionStudentUser(student.institutionUserId);
@@ -289,6 +343,7 @@ export class StudentAuthService {
       email: user.email,
       fullName: user.fullName,
       lastAuthAt,
+      passwordChangeRequired: Boolean(user.passwordResetRequiredAt),
       permissions: this.toPermissions(),
     };
   }
@@ -429,6 +484,7 @@ export class StudentAuthService {
         .set({
           passwordHash,
           status: AccountStatus.Active,
+          passwordResetRequiredAt: null,
           activatedAt: now,
           activationTokenHash: null,
           activationTokenExpiresAt: null,
@@ -554,6 +610,10 @@ export class StudentAuthService {
     password: string,
     req: EdrionRequestContext,
   ): Promise<void> {
+    if (kind === 'institutional' && (user as InstitutionUser).passwordResetRequiredAt &&
+      await verifyPassword(password, user.passwordHash)) {
+      throw new BadRequestException({ code: 'PASSWORD_UNCHANGED', message: 'Choose a password different from your temporary password.' });
+    }
     const passwordHash = await hashPassword(password);
     if (kind === 'institutional') {
       const iu = user as InstitutionUser;
@@ -562,6 +622,7 @@ export class StudentAuthService {
         .set({
           passwordHash,
           passwordResetTokenHash: null,
+          passwordResetRequiredAt: null,
           passwordResetExpiresAt: null,
           failedLoginAttempts: 0,
           lockedUntil: null,

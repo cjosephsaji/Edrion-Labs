@@ -235,6 +235,7 @@ export class AcademicsService {
       institutionId: ctx.principal.institutionId,
       campusId,
       name: input.name,
+      unitKind: input.unitKind ?? 'department',
       code: input.code?.trim() || defaultResourceCode(input.name),
       headUserId: input.headUserId ?? null,
       description: input.description ?? null,
@@ -1197,9 +1198,16 @@ export class AcademicsService {
   }
 
   private async guardDelete(fn: () => Promise<boolean>): Promise<{ deleted: true }> {
-    const ok = await fn();
-    if (!ok) throw this.versionConflict();
-    return { deleted: true };
+    try {
+      const ok = await fn();
+      if (!ok) throw this.versionConflict();
+      return { deleted: true };
+    } catch (error) {
+      if (typeof error === 'object' && error !== null && 'code' in error && error.code === '23503') {
+        throw new ConflictException({ code: 'RECORD_IN_USE', message: 'This record is still used by other records. Remove or reassign those links before deleting it.' });
+      }
+      throw error;
+    }
   }
 
   private paginate<T>(page: Page<T>, q: AcademicsListQuery): ListResult<T> {

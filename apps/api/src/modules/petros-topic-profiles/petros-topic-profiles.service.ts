@@ -71,13 +71,14 @@ export class PetrosTopicProfilesService {
   }): Promise<PetrosResolvedTopicProfile> {
     const generatedInput = profileInputFromSession(input.topic, input.profileContext ?? {});
     const identity = [
+      input.institutionId,
       generatedInput.topicKey,
       generatedInput.curriculumKey,
       generatedInput.gradeBand,
     ].join(':');
     let profileLoad = this.sessionProfileLoads.get(identity);
     if (!profileLoad) {
-      profileLoad = this.loadSessionProfile(generatedInput);
+      profileLoad = this.loadSessionProfile(generatedInput, input.institutionId);
       this.sessionProfileLoads.set(identity, profileLoad);
     }
     let profile: NonNullable<ProfileRow>;
@@ -114,6 +115,7 @@ export class PetrosTopicProfilesService {
 
   private async loadSessionProfile(
     generatedInput: PetrosGenerateTopicProfileInput,
+    institutionId: string,
   ): Promise<NonNullable<ProfileRow>> {
     const existing = await this.repo.findByIdentity(
       generatedInput.topicKey,
@@ -121,10 +123,10 @@ export class PetrosTopicProfilesService {
       generatedInput.gradeBand,
     );
     if (!existing) {
-      const created = await this.generateInternal(generatedInput, 'system:session-bootstrap', true);
+      const created = await this.generateInternal(generatedInput, 'system:session-bootstrap', true, institutionId);
       return this.requireProfile(created.id);
     }
-    return this.generateInternal(generatedInput, 'system:session-cache-check', false);
+    return this.generateInternal(generatedInput, 'system:session-cache-check', false, institutionId);
   }
 
   async resolve(profileId: string, institutionId: string) {
@@ -282,6 +284,7 @@ export class PetrosTopicProfilesService {
     input: PetrosGenerateTopicProfileInput,
     actor: string,
     autoPublish: boolean,
+    institutionId?: string,
   ) {
     const trusted = generationContext(input);
     let profileRow = await this.repo.findByIdentity(input.topicKey, input.curriculumKey, input.gradeBand);
@@ -292,7 +295,7 @@ export class PetrosTopicProfilesService {
       profileRow.publishedVersionId
     ) {
       await this.repo.touchCacheHit(profileRow.id);
-      await this.localAudit(profileRow.id, 'cache.hit', actor, input.reason, { cacheKey: trusted.cacheKey });
+      await this.localAudit(profileRow.id, 'cache.hit', actor, input.reason, { cacheKey: trusted.cacheKey }, institutionId);
       return profileRow;
     }
     if (profileRow && profileRow.cacheKey !== trusted.cacheKey) {
@@ -335,7 +338,7 @@ export class PetrosTopicProfilesService {
       version: nextVersion,
       source: generated.result ? 'ai' : 'deterministic_seed',
       requestId: generated.result?.requestId ?? null,
-    });
+    }, institutionId);
     if (autoPublish || profileRow.publishedVersionId == null) {
       const refreshed = await this.requireProfile(profileRow.id);
       await this.repo.publish(profileRow.id, nextVersion, refreshed.version, actor);

@@ -22,6 +22,8 @@ export function useTeachingPlayback(
   const [mode, setMode] = useState<'voice' | 'quiet'>(options.initialCheckpoint?.mode ?? 'voice');
   const [status, setStatus] = useState<'idle' | 'playing' | 'paused' | 'interrupted'>('idle');
   const [caption, setCaption] = useState('');
+  const [speaking, setSpeaking] = useState(false);
+  const generation = useRef(0);
   const audio = useRef<HTMLAudioElement | null>(null);
   const interruptedStatus = useRef<'idle' | 'playing' | 'paused'>('paused');
   const beat = presentation.beats[index]!;
@@ -31,11 +33,16 @@ export function useTeachingPlayback(
   }, []);
 
   const stopAudio = useCallback(() => {
+    generation.current++;
+    setSpeaking(false);
     audio.current?.pause();
     stopDeviceNarration();
   }, [stopDeviceNarration]);
 
   const play = useCallback(() => {
+    const epoch = ++generation.current;
+    const currentEpoch = () => generation.current === epoch;
+    setSpeaking(false);
     setCaption(beat.narration);
     if (mode === 'quiet') {
       setStatus('paused');
@@ -47,16 +54,23 @@ export function useTeachingPlayback(
         ? audio.current
         : new Audio(beat.audioSrc);
       audio.current = current;
-      current.onended = () => setStatus('paused');
-      current.onpause = () => setStatus((value) => (value === 'interrupted' ? value : 'paused'));
-      void current.play().catch(() => setStatus('paused'));
+      current.onplaying = () => { if (currentEpoch()) setSpeaking(true); };
+      current.onwaiting = current.onstalled = () => { if (currentEpoch()) setSpeaking(false); };
+      current.onended = current.onerror = () => { if (currentEpoch()) { setSpeaking(false); setStatus('paused'); } };
+      current.onpause = () => { if (currentEpoch()) { setSpeaking(false); setStatus((value) => (value === 'interrupted' ? value : 'paused')); } };
+      void current.play().catch(() => { if (currentEpoch()) { setSpeaking(false); setStatus('paused'); } });
       return;
     }
     if ('speechSynthesis' in window) {
+      // Device narration restarts the current beat. Clear a paused/queued
+      // utterance before speaking so stale device events cannot own the new beat.
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.resume();
       const utterance = new SpeechSynthesisUtterance(beat.narration);
       utterance.rate = 0.96;
-      utterance.onend = () => setStatus('paused');
-      utterance.onerror = () => setStatus('paused');
+      utterance.onstart = utterance.onresume = () => { if (currentEpoch()) setSpeaking(true); };
+      utterance.onpause = () => { if (currentEpoch()) setSpeaking(false); };
+      utterance.onend = utterance.onerror = () => { if (currentEpoch()) { setSpeaking(false); setStatus('paused'); } };
       window.speechSynthesis.speak(utterance);
     } else {
       setStatus('paused');
@@ -64,6 +78,7 @@ export function useTeachingPlayback(
   }, [beat.audioSrc, beat.narration, mode]);
 
   const pause = useCallback(() => {
+    generation.current++; setSpeaking(false);
     audio.current?.pause();
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.pause();
     setStatus('paused');
@@ -121,6 +136,7 @@ export function useTeachingPlayback(
       mode,
       status,
       caption,
+      speaking,
       isFirst: index === 0,
       isLast: index === presentation.beats.length - 1,
       play,
@@ -136,6 +152,6 @@ export function useTeachingPlayback(
       interrupt,
       resume,
     }),
-    [beat, caption, index, interrupt, mode, move, pause, play, presentation.beats.length, replay, resume, status, stopAudio],
+    [beat, caption, speaking, index, interrupt, mode, move, pause, play, presentation.beats.length, replay, resume, status, stopAudio],
   );
 }

@@ -1,0 +1,150 @@
+Skip to content
+Isolated lesson preview
+Education OS
+OVERVIEW
+Dashboard
+Attention Centre
+Petros
+Petros support
+WORKFLOW
+Approvals
+Grievances
+ACADEMIC SETUP
+Academic Years
+Departments
+Grades
+Subjects
+Classes
+Terms
+PEOPLE
+Students
+Student Conduct
+Staff
+Parents
+CAREERS
+Placement cell
+ACADEMICS
+Teaching
+Admissions
+Attendance
+Timetable
+Homework
+Exams
+Gradebook
+Report cards
+Assignments
+Calendar
+FINANCE
+Fees
+Expenses
+Payroll
+OPERATIONS
+Library
+Transport
+Inventory
+Hostel
+COMMUNICATION
+Announcements
+Notifications
+Messages
+PTM scheduling
+HEALTH & WELLBEING
+Health Records
+Medical Incidents
+Medication Logs
+Counseling
+Counseling Cases
+CAMPUS OPERATIONS
+Labs
+Lab Schedule
+Lab Incidents
+Debate calibration
+Front Desk
+Appointments
+Facilities
+Work Orders
+Maintenance
+Assets
+Visitor Logs
+Gate Passes
+Security Incidents
+Emergency Alerts
+Access Logs
+Sensitive Reports
+IT
+Devices
+Access Requests
+Webhooks
+INSIGHTS
+Reports
+ADMINISTRATION
+Campuses
+Documents & Policies
+User Management
+Roles & Permissions
+Settings
+Petros policy
+SSO & roster
+Billing
+Audit Logs
+St
+Sample teacher
+3c774f14-e9b1-41fc-ad8d-f7aca5a97147@example.test
+Sign out
+Cloud Computing
+All subjects
+Cloud Computing
+
+Isolated source review class · 2 students enrolled
+
+Notes
+Files
+Class updates
+Petros Learn
+Petros Learn
+
+Prepare lessons and guide your students.
+
+Lessons
+Learning goals
+Student progress
+Curriculum authoring
+1
+Choose material
+2
+Review lesson
+3
+Preview activities
+4
+Save & submit
+
+STEP 2 OF 4
+
+Here's what your students will learn
+cloud-models.pptx
+About 20 minutes
+Needs your attention
+Sample lesson — prepared from test data
+About this draft
+1
+Given a service-model case, classify the consumer and provider responsibilities using the cited boundary.
+
+Match the responsibilities
+
+Check this objective
+Edit
+2
+Explain the distinction between logical resources and physical hardware using the source wording.
+
+Compare logical and physical resources
+
+Check this objective
+Edit
+Concepts & connections
+Check lesson claims
+Version history
+
+Student use is unavailable. See review details for requirements.
+
+Back
+Preview lesson

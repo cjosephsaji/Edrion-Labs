@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import {
   and,
   asc,
@@ -284,11 +284,38 @@ export class AcademicsRepository {
       .where(and(...conds, notInArray(t.id, [exceptId])));
   }
 
-  deleteAcademicYear = (id: string, version: number) => this.del(schema.academicYears, id, version);
+  async deleteAcademicYear(id: string, version: number): Promise<boolean> {
+    return this.db.transaction(async (tx) => {
+      const [year] = await tx
+        .select()
+        .from(schema.academicYears)
+        .where(and(eq(schema.academicYears.id, id), eq(schema.academicYears.version, version)))
+        .for('update');
+      if (!year) return false;
+      // Template-generated terms alone should not prevent correcting onboarding.
+      // Other references to the year retain their FK restrictions; the transaction rolls back.
+      const [classes] = await tx
+        .select({ value: count() })
+        .from(schema.classes)
+        .where(eq(schema.classes.academicYearId, id));
+      if (Number(classes?.value) > 0)
+        throw new ConflictException({
+          code: 'RECORD_IN_USE',
+          message: 'Remove classes from this academic year before deleting it.',
+        });
+      await tx.delete(schema.academicTerms).where(eq(schema.academicTerms.academicYearId, id));
+      await tx.delete(schema.academicYears).where(eq(schema.academicYears.id, id));
+      return true;
+    });
+  }
 
   // --- academic terms --------------------------------------------------------
 
-  async listAcademicTerms(institutionId: string, campusIds: CampusFilter, q: AcademicsListQuery): Promise<Page<AcademicTermRow>> {
+  async listAcademicTerms(
+    institutionId: string,
+    campusIds: CampusFilter,
+    q: AcademicsListQuery,
+  ): Promise<Page<AcademicTermRow>> {
     const t = schema.academicTerms;
     const conds = this.scopeConds(t.institutionId, t.campusId, institutionId, campusIds);
     if (q.search) conds.push(ilike(t.name, `%${q.search}%`));
@@ -334,11 +361,20 @@ export class AcademicsRepository {
     const gradeLevelOrder = asc(sql`coalesce(${schema.gradeLevels.level}, 999)`);
     const termOrder =
       q.sortBy === 'gradeLevelNumber'
-        ? [this.order(sortable.gradeLevelNumber, q.sortDir, t.sequence), asc(t.sequence), asc(t.name)]
+        ? [
+            this.order(sortable.gradeLevelNumber, q.sortDir, t.sequence),
+            asc(t.sequence),
+            asc(t.name),
+          ]
         : q.sortBy === 'sequence'
           ? [gradeLevelOrder, this.order(sortable.sequence, q.sortDir, t.sequence), asc(t.name)]
           : q.sortBy && sortable[q.sortBy]
-            ? [this.order(sortable[q.sortBy], q.sortDir, t.sequence), gradeLevelOrder, asc(t.sequence), asc(t.name)]
+            ? [
+                this.order(sortable[q.sortBy], q.sortDir, t.sequence),
+                gradeLevelOrder,
+                asc(t.sequence),
+                asc(t.name),
+              ]
             : [gradeLevelOrder, asc(t.sequence), asc(t.name)];
 
     const rows = await this.db
@@ -359,7 +395,11 @@ export class AcademicsRepository {
     const [tot] = await this.db.select({ value: count() }).from(t).where(where);
 
     const termIds = rows.map((r) => r.term.id);
-    const classCounts = await this.countByForeignKey(schema.classes, schema.classes.termId, termIds);
+    const classCounts = await this.countByForeignKey(
+      schema.classes,
+      schema.classes.termId,
+      termIds,
+    );
     const subjectCounts = await this.countTermCurriculum(rows.map((r) => r.term));
 
     return {
@@ -380,7 +420,12 @@ export class AcademicsRepository {
    * fall back to (programme level, within-year sequence) for legacy rows.
    */
   private async countTermCurriculum(
-    terms: { id: string; programmeLevelId: string | null; sequence: number; slotId: string | null }[],
+    terms: {
+      id: string;
+      programmeLevelId: string | null;
+      sequence: number;
+      slotId: string | null;
+    }[],
   ): Promise<Map<string, number>> {
     const map = new Map<string, number>();
     const placed = terms.filter((t) => t.programmeLevelId);
@@ -403,7 +448,10 @@ export class AcademicsRepository {
     for (const r of rows) {
       const n = Number(r.value ?? 0);
       if (r.slotId) bySlotId.set(r.slotId, (bySlotId.get(r.slotId) ?? 0) + n);
-      byLevelSeq.set(`${r.programmeLevelId}:${r.semesterSequence}`, (byLevelSeq.get(`${r.programmeLevelId}:${r.semesterSequence}`) ?? 0) + n);
+      byLevelSeq.set(
+        `${r.programmeLevelId}:${r.semesterSequence}`,
+        (byLevelSeq.get(`${r.programmeLevelId}:${r.semesterSequence}`) ?? 0) + n,
+      );
     }
     for (const t of placed) {
       const count =
@@ -417,7 +465,11 @@ export class AcademicsRepository {
 
   async findAcademicTerm(id: string, institutionId: string): Promise<AcademicTerm | undefined> {
     const t = schema.academicTerms;
-    const [row] = await this.db.select().from(t).where(and(eq(t.id, id), eq(t.institutionId, institutionId))).limit(1);
+    const [row] = await this.db
+      .select()
+      .from(t)
+      .where(and(eq(t.id, id), eq(t.institutionId, institutionId)))
+      .limit(1);
     return row;
   }
 
@@ -426,7 +478,11 @@ export class AcademicsRepository {
     return row!;
   }
 
-  async updateAcademicTerm(id: string, version: number, patch: Partial<NewAcademicTerm>): Promise<AcademicTerm | undefined> {
+  async updateAcademicTerm(
+    id: string,
+    version: number,
+    patch: Partial<NewAcademicTerm>,
+  ): Promise<AcademicTerm | undefined> {
     const t = schema.academicTerms;
     const [row] = await this.db
       .update(t)
@@ -436,7 +492,11 @@ export class AcademicsRepository {
     return row;
   }
 
-  async clearCurrentAcademicTerm(institutionId: string, campusId: string | null, exceptId: string): Promise<void> {
+  async clearCurrentAcademicTerm(
+    institutionId: string,
+    campusId: string | null,
+    exceptId: string,
+  ): Promise<void> {
     const t = schema.academicTerms;
     const conds: SQL[] = [eq(t.institutionId, institutionId), eq(t.isCurrent, true)];
     conds.push(campusId === null ? isNull(t.campusId) : eq(t.campusId, campusId));
@@ -457,6 +517,7 @@ export class AcademicsRepository {
       const s = or(ilike(t.name, `%${q.search}%`), ilike(t.code, `%${q.search}%`));
       if (s) conds.push(s);
     }
+    if (q.unitKind) conds.push(eq(t.unitKind, q.unitKind));
     if (q.hasHead === 'true') conds.push(isNotNull(t.headUserId));
     else if (q.hasHead === 'false') conds.push(isNull(t.headUserId));
     const where = and(...conds);
@@ -511,7 +572,55 @@ export class AcademicsRepository {
     return row;
   }
 
-  deleteDepartment = (id: string, version: number) => this.del(schema.departments, id, version);
+  async deleteDepartment(id: string, version: number): Promise<boolean> {
+    return this.db.transaction(async (tx) => {
+      const [department] = await tx
+        .select()
+        .from(schema.departments)
+        .where(and(eq(schema.departments.id, id), eq(schema.departments.version, version)))
+        .for('update');
+      if (!department) return false;
+      if (department.structureLocked)
+        throw new ConflictException({
+          code: 'STRUCTURE_LOCKED',
+          message: 'This structure is locked because students are enrolled.',
+        });
+      const grades = await tx
+        .select({ id: schema.gradeLevels.id })
+        .from(schema.gradeLevels)
+        .where(eq(schema.gradeLevels.departmentId, id));
+      const gradeIds = grades.map((grade) => grade.id);
+      if (gradeIds.length) {
+        const [students] = await tx
+          .select({ value: count() })
+          .from(schema.students)
+          .where(inArray(schema.students.gradeLevelId, gradeIds));
+        const [classes] = await tx
+          .select({ value: count() })
+          .from(schema.classes)
+          .where(inArray(schema.classes.gradeLevelId, gradeIds));
+        const [enrollments] = await tx
+          .select({ value: count() })
+          .from(schema.studentEnrollments)
+          .where(inArray(schema.studentEnrollments.gradeLevelId, gradeIds));
+        if (
+          Number(students?.value) > 0 ||
+          Number(classes?.value) > 0 ||
+          Number(enrollments?.value) > 0
+        ) {
+          throw new ConflictException({
+            code: 'STRUCTURE_IN_USE',
+            message: 'Move students and classes out of this structure before deleting it.',
+          });
+        }
+      }
+      await tx.delete(schema.academicTerms).where(eq(schema.academicTerms.departmentId, id));
+      await tx.delete(schema.departments).where(eq(schema.departments.id, id));
+      if (gradeIds.length)
+        await tx.delete(schema.gradeLevels).where(inArray(schema.gradeLevels.id, gradeIds));
+      return true;
+    });
+  }
 
   // --- grade levels ----------------------------------------------------------
 
@@ -680,6 +789,7 @@ export class AcademicsRepository {
       institutionId,
       campusIds,
     );
+    deptConds.push(eq(schema.departments.unitKind, 'programme'));
     if (departmentId) deptConds.push(eq(schema.departments.id, departmentId));
     const depts = await this.db
       .select({

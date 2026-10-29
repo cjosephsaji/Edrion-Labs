@@ -22,9 +22,9 @@ function token(draftId = ID, purpose = 'registration_draft') {
 
 const SECTIONS = {
   institutionInfo: { legalName: 'Greenwood', displayName: 'Greenwood High', type: 'school' as const },
-  location: { country: 'US', city: 'Springfield', address: '1 Elm St', timezone: 'UTC' },
+  location: { country: 'US', region: 'US-IL', city: 'Springfield', address: '1 Elm St', timezone: 'UTC' },
   campusInfo: { currentCampuses: 1, firstCampusName: 'Main', expectedStudents: 500 },
-  primaryContact: { fullName: 'Head Teacher', email: EMAIL },
+  primaryContact: { fullName: 'Head Teacher', email: EMAIL, phone: '+12175550123' },
   subscription: {},
   consent: { termsAccepted: true as const, privacyAccepted: true as const, marketingOptIn: false },
 };
@@ -34,7 +34,7 @@ function makeService() {
     findById: vi.fn(),
     update: vi.fn(),
     updateWithVersion: vi.fn(),
-    findActiveByEmail: vi.fn().mockResolvedValue(undefined),
+    findDuplicateApplication: vi.fn().mockResolvedValue(undefined),
     maxRefSeqForYear: vi.fn().mockResolvedValue(0),
     publicRefExists: vi.fn().mockResolvedValue(false),
     insertReview: vi.fn().mockResolvedValue({}),
@@ -78,6 +78,42 @@ describe('RegistrationService resume token', () => {
   });
 });
 
+describe('RegistrationService.patchDraft audit details', () => {
+  it('records changed section and field names without field values', async () => {
+    const { service, repo, audit } = makeService();
+    const draft = {
+      id: ID,
+      status: 'draft',
+      institutionInfo: { legalName: 'Old Legal Name', displayName: 'Greenwood', type: 'school' },
+      location: null,
+      campusInfo: null,
+      primaryContact: null,
+      subscription: null,
+      consent: null,
+      verifiedEmail: null,
+      updatedAt: new Date(),
+    };
+    repo.findById.mockResolvedValue(draft);
+    repo.update.mockImplementation(async (_id, patch) => ({ ...draft, ...patch }));
+
+    await service.patchDraft(
+      ID,
+      token(),
+      { institutionInfo: { legalName: 'New Legal Name', displayName: 'Greenwood' } } as never,
+      reqCtx,
+    );
+
+    expect(audit.logAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'registration.updated',
+        newState: {
+          changedSections: [{ key: 'institutionInfo', fields: ['legalName'] }],
+        },
+      }),
+    );
+  });
+});
+
 describe('RegistrationService.submit', () => {
   let h: ReturnType<typeof makeService>;
   beforeEach(() => {
@@ -91,17 +127,33 @@ describe('RegistrationService.submit', () => {
     });
   });
 
-  it('blocks a duplicate active application for the same email', async () => {
+  it('blocks a duplicate application for the same institution', async () => {
     h.repo.findById.mockResolvedValue({
       id: ID,
       status: 'draft',
       emailVerifiedAt: new Date(),
       verifiedEmail: EMAIL,
     });
-    h.repo.findActiveByEmail.mockResolvedValue({ id: 'other' });
+    h.repo.findDuplicateApplication.mockResolvedValue({ id: 'other' });
     await expect(h.service.submit(ID, token(), SECTIONS as never, reqCtx)).rejects.toMatchObject({
       response: { code: 'DUPLICATE_REGISTRATION' },
     });
+  });
+
+  it('allows the contact email to be reused for another institution', async () => {
+    h.repo.findById.mockResolvedValue({
+      id: ID,
+      status: 'draft',
+      emailVerifiedAt: new Date(),
+      verifiedEmail: EMAIL,
+    });
+    h.repo.findDuplicateApplication.mockResolvedValue(undefined);
+    h.repo.update.mockImplementation(async (_id, patch) => ({ id: ID, ...patch }));
+
+    const result = await h.service.submit(ID, token(), SECTIONS as never, reqCtx);
+
+    expect(result.status).toBe('submitted');
+    expect(h.repo.findDuplicateApplication).toHaveBeenCalledWith(EMAIL, SECTIONS, ID);
   });
 
   it('assigns a reference, audits, and emails on success', async () => {
@@ -119,6 +171,19 @@ describe('RegistrationService.submit', () => {
     expect(res.status).toBe('submitted');
     expect(res.publicRef).toMatch(/^EDR-REG-\d{4}-000001$/);
     expect(h.emails.sendSubmitted).toHaveBeenCalledWith(EMAIL, 'Greenwood High', res.publicRef);
+    expect(h.repo.update).toHaveBeenCalledWith(
+      ID,
+      expect.objectContaining({
+        institutionInfo: SECTIONS.institutionInfo,
+        location: SECTIONS.location,
+        campusInfo: SECTIONS.campusInfo,
+        primaryContact: SECTIONS.primaryContact,
+        subscription: SECTIONS.subscription,
+        consent: expect.objectContaining(SECTIONS.consent),
+        administrativeDivisionCode: 'US-IL',
+        contactPhoneE164: '+12175550123',
+      }),
+    );
     const actions = h.audit.logAudit.mock.calls.map((c) => c[0].action);
     expect(actions).toContain('registration.submitted');
   });

@@ -32,6 +32,9 @@ import {
   useStudentApi,
 } from '@/lib/api-client';
 import { usePetrosVoice } from './use-petros-voice';
+import { PetrosVoiceControls } from './petros-voice-controls';
+import { petrosStatus } from './petros-speech-cloud';
+import { PetrosAvatar } from './petros-avatar';
 import styles from './petros-inflation-pilot.module.css';
 
 type Action = PetrosPilotAction extends infer T
@@ -880,31 +883,20 @@ export function PetrosInflationPilot({ sessionId }: { sessionId?: string }) {
                   data-pose={
                     voice.speaking
                       ? 'talking'
-                      : asking
+                      : voice.listening
                         ? 'listening'
-                        : 'pointing'
+                        : asking ? 'neutral' : 'pointing'
                   }
                   style={{
                     left: targetPosition,
                   }}
                 >
-                  <Image
-                    src={`/petros/states/petros-${voice.speaking ? 'talking' : asking ? 'listening' : 'point-up'}.png`}
-                    width={116}
-                    height={154}
-                    alt=""
-                    priority
-                  />
+                  <PetrosAvatar pose={voice.speaking ? 'speaking' : voice.listening ? 'listening' : asking ? 'neutral' : 'point-up'} speaking={voice.speaking} label="Petros" />
                   <span />
                 </div>
                 <span className={styles.characterCaption}>
-                  {voice.preparing
-                    ? 'Preparing narration…'
-                    : voice.speaking
-                      ? 'Petros is explaining'
-                      : asking
-                        ? 'Petros is listening'
-                        : 'Take a moment. Try the idea.'}
+                  {petrosStatus({ recording: voice.listening, transcribing: voice.transcribing, preparing: voice.preparing,
+                    speaking: voice.speaking, paused, questionReady: asking && !paused, teaching: !asking && !paused })}
                 </span>
               </div>
               <div className={styles.teachingCaption}>
@@ -946,6 +938,7 @@ export function PetrosInflationPilot({ sessionId }: { sessionId?: string }) {
                     <ChevronDown size={13} />
                   </button>
                   <small>AI-generated voice</small>
+                  <PetrosVoiceControls voice={voice} paused={paused} />
                 </div>
                 {voice.error && (
                   <p role="status" className={styles.error}>
@@ -976,7 +969,7 @@ export function PetrosInflationPilot({ sessionId }: { sessionId?: string }) {
                   <textarea
                     id="pilot-question"
                     value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
+                    onChange={(e) => { if (voice.listening || voice.transcribing) voice.cancelListening(); setQuestion(e.target.value); }}
                     maxLength={2000}
                     disabled={busy || paused}
                     placeholder="Why does…"

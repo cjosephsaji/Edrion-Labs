@@ -34,6 +34,8 @@ export const petrosLearningSessions = pgTable(
       .references(() => students.id, { onDelete: 'cascade' }),
     clientRequestId: uuid('client_request_id').notNull(),
     stateVersion: text('state_version').notNull(),
+    engineVersion: text('engine_version').notNull().default('v1'),
+    v2State: jsonb('v2_state').$type<Record<string, unknown> | null>(),
     sessionType: text('session_type').notNull(),
     status: text('status').notNull().default('active'),
     topic: text('topic').notNull(),

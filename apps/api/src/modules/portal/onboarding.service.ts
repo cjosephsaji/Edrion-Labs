@@ -8,11 +8,13 @@ import { basePortalAudit, type PortalActionContext } from './portal-action-conte
 
 const MODULE = 'portal-onboarding';
 
-/** The onboarding journey, in order. Every step is completed by entering real data in the wizard. */
+/** Terms are configured inside the programme structure preview. */
 const STEPS: { key: keyof OnboardingSignals; label: string; required: number }[] = [
   { key: 'academicYears', label: 'Academic Years', required: 1 },
+  { key: 'departments', label: 'Departments', required: 0 },
   { key: 'programmeStructures', label: 'Programmes', required: 1 },
   { key: 'subjects', label: 'Curriculum', required: 1 },
+  { key: 'classes', label: 'Classes & sections', required: 1 },
   { key: 'students', label: 'Students', required: 1 },
   { key: 'staff', label: 'Staff', required: 1 },
 ];
@@ -41,10 +43,10 @@ export interface OnboardingSummary {
 }
 
 /**
- * Institution onboarding wizard service. The whole journey is data-driven: each step (academic
- * years, departments, subjects, students, staff) completes the moment the admin adds a
- * record — there is no manual checklist. Go-live is blocked until every step has data. Reads need
- * `institution_settings.view`; go-live needs the sensitive `institution_settings.manage`.
+ * Institution onboarding wizard service. Progress is driven by real records, not a manual
+ * checklist. Go-live is blocked until every required step has data. Programme terms are
+ * configured in the structure preview. Reads need `institution_settings.view`; go-live needs
+ * the sensitive `institution_settings.manage`.
  */
 @Injectable()
 export class OnboardingService {
@@ -63,7 +65,8 @@ export class OnboardingService {
     if (!meta) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Institution not found' });
 
     const isComplete =
-      meta.onboardingStatus === OnboardingStatus.Completed || meta.status === InstitutionStatus.Active;
+      meta.onboardingStatus === OnboardingStatus.Completed ||
+      meta.status === InstitutionStatus.Active;
 
     return { ...this.shape(signals, meta, isComplete) };
   }
@@ -72,20 +75,26 @@ export class OnboardingService {
   async complete(ctx: PortalActionContext): Promise<OnboardingSummary> {
     const summary = await this.getSummary(ctx);
     if (summary.institution.isComplete) {
-      throw new ConflictException({ code: 'ALREADY_ACTIVE', message: 'This institution is already live.' });
+      throw new ConflictException({
+        code: 'ALREADY_ACTIVE',
+        message: 'This institution is already live.',
+      });
     }
-    const outstanding = summary.steps.filter((s) => !s.done);
+    const outstanding = summary.steps.filter((s) => s.required > 0 && !s.done);
     if (outstanding.length > 0) {
       throw new ConflictException({
         code: 'ONBOARDING_INCOMPLETE',
-        message: `Add at least one record to every step before going live (${outstanding.length} remaining).`,
+        message: `Add at least one record to every required step before going live (${outstanding.length} remaining).`,
       });
     }
 
     const meta = await this.repo.goLive(ctx.principal.institutionId);
     await this.programmeStructure.scheduleAllYears(ctx);
     await this.write(ctx, 'onboarding.completed', 'institution', ctx.principal.institutionId, {
-      previousState: { status: summary.institution.status, onboardingStatus: summary.institution.onboardingStatus },
+      previousState: {
+        status: summary.institution.status,
+        onboardingStatus: summary.institution.onboardingStatus,
+      },
       newState: { status: meta?.status, onboardingStatus: meta?.onboardingStatus },
     });
     return this.getSummary(ctx);
@@ -98,7 +107,7 @@ export class OnboardingService {
   ): OnboardingSummary {
     const steps: OnboardingStepDto[] = STEPS.map((s) => {
       const value = signals[s.key];
-      const done = s.required === 0 ? true : value >= s.required;
+      const done = s.required === 0 ? value > 0 : value >= s.required;
       return { key: s.key, label: s.label, count: value, required: s.required, done };
     });
     const mandatory = steps.filter((s) => s.required > 0);

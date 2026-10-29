@@ -8,7 +8,7 @@ import {
 import type { AuditWriter } from '@edrion/audit';
 import type { InstitutionPrincipal } from '@edrion/auth';
 import type { ApiEnv } from '@edrion/config';
-import { type Database } from '@edrion/database';
+import { and, eq, schema, runInAuthorizedCourseSource, runInStudentTenant, type Database } from '@edrion/database';
 import { can } from '@edrion/permissions';
 import {
   compatibilityCanonicalJson,
@@ -30,6 +30,8 @@ import {
   type PetrosTeachingPackReviewCommand,
   type PetrosTeachingPackReviewRevocation,
   petrosSessionBlockSchema,
+  m3ReviewReceiptSchema, m3ReviewCommandSchema, type M3Proposal,
+  type ContentUnit, type SourceRevision,
 } from '@edrion/schemas';
 import { createHash, randomUUID } from 'node:crypto';
 import { API_ENV, AUDIT_WRITER, DATABASE } from '../../../common/tokens';
@@ -40,6 +42,8 @@ import type { InstitutionalStudentPrincipal } from '../student.types';
 import { KnowledgeDocumentService } from './knowledge-document.service';
 import { PetrosTeachingPackRepository } from './petros-teaching-pack.repository';
 import { assertPetrosAdaptivePackRenderable, PetrosAdaptivePackRenderabilityError, renderTeachingPackPreview } from '../petros-loop/petros-adaptive.renderer';
+import { m3PrivateDraftCommandSchema, m3PrivateVerificationCandidateSchema, M3_PRIVATE_CANDIDATE_VERSION } from './petros-assessment-contract.server';
+import { referenceFor, validateInterpretation, M2_PROMPT } from './petros-content-interpretation';
 
 type CandidateRow = NonNullable<Awaited<ReturnType<PetrosTeachingPackRepository['candidateById']>>>;
 type CourseRow = NonNullable<Awaited<ReturnType<PetrosTeachingPackRepository['course']>>>;
@@ -81,6 +85,207 @@ export class PetrosTeachingPackService {
     this.authoringEnabled = env.PETROS_TEACHER_AUTHORING_ENABLED;
   }
 
+  /** The authorized author submits the exact immutable draft before an independent review. */
+  async submitLearningProposal(ctx:PortalActionContext,proposal:M3Proposal,commandId:string) {
+    this.requireAuthoringEnabled();await this.requireActionPermissions(ctx.principal,['class_content.manage','syllabus.manage']);
+    if(!proposal.courseId||!proposal.curriculumRevision) return;
+    const existing=await this.repo.candidateByRef(proposal.institutionId,proposal.id,proposal.version);
+    if(existing) {if(existing.payloadHash!==digest(proposal))throw conflict('M3_CANDIDATE_HASH_CONFLICT');return;}
+    await this.repo.insertM3Candidate(proposal,commandId,digest({proposalId:proposal.id,version:proposal.version,commandId}),digest(proposal),ctx.principal.institutionUserId);
+  }
+
+  private async requireM3PrivateAuthority(ctx:PortalActionContext,p:M3Proposal) {
+    this.requireAuthoringEnabled();await this.requireActionPermissions(ctx.principal,['academics.alignments.approve','class_content.manage','syllabus.manage']);
+    if(!p.courseId)throw conflict('CANONICAL_COURSE_MAPPING_REQUIRED');
+    const {items}=await this.reviewerQualifications(ctx,p.courseId);
+    if(!items.length)throw new ForbiddenException({code:'PETROS_REVIEWER_AUTHORITY_DENIED',message:'Current qualified reviewer authority is required for private verification materials.'});
+    return this.requireReviewerAuthority(ctx.principal,{institutionId:p.institutionId,courseId:p.courseId,subjectKey:p.subjectId,
+      qualificationId:items[0]!.id,expectedQualificationVersion:items[0]!.version});
+  }
+  private verificationTask(p:M3Proposal,id:string) {
+    const task=p.taskCandidates.find(t=>t.id===id&&t.kind!=='formative_practice'&&t.nonEquivalenceRequired);
+    if(!task)throw unavailable('M3_VERIFICATION_CANDIDATE_UNAVAILABLE');return task;
+  }
+  private parsePrivate(p:M3Proposal,row:CandidateRow|undefined) {
+    if(!row||row.schemaVersion!==M3_PRIVATE_CANDIDATE_VERSION)throw unavailable('M3_PRIVATE_CANDIDATE_UNAVAILABLE');
+    const c=m3PrivateVerificationCandidateSchema.parse(row.payload);
+    if(c.institutionId!==p.institutionId||c.courseId!==p.courseId||c.subjectId!==p.subjectId||c.proposalId!==p.id||
+      c.proposalVersion!==p.version||c.proposalHash!==digest(p)||c.sourceRevisionId!==p.source.revisionId||c.sourceHash!==p.source.originalHash||
+      row.payloadHash!==digest(c))throw conflict('M3_PRIVATE_CANDIDATE_STALE');
+    const task=this.verificationTask(p,c.id),objective=p.objectives.find(o=>o.id===task.objectiveId);
+    if(!objective||c.objectiveId!==objective.id||c.objectiveVersion!==objective.version||c.criterionId!==task.id)throw conflict('M3_PRIVATE_CANDIDATE_STALE');
+    return c;
+  }
+  async preparePrivateVerification(ctx:PortalActionContext,p:M3Proposal,taskId:string,raw:unknown,revision:SourceRevision,heldOut:ContentUnit|null) {
+    await this.requireM3PrivateAuthority(ctx,p);
+    const input=m3PrivateDraftCommandSchema.parse(raw),task=this.verificationTask(p,taskId);
+    if(input.expectedVersion!==p.version)throw conflict('M3_REVISION_CONFLICT');
+    if(p.state!=='under_review')throw conflict('M3_SUBMIT_REVIEW_REQUIRED');
+    if(!heldOut||p.source.references.some(r=>r.unitId===heldOut.id))throw conflict('M3_HELD_OUT_RESERVATION_REQUIRED');
+    await this.repo.lock(`m3-private:${p.institutionId}:${taskId}`);
+    const requestHash=digest({proposalId:p.id,version:p.version,taskId,input,actorId:ctx.principal.institutionUserId});
+    const replay=await this.repo.candidateCommand(p.institutionId,input.commandId);
+    if(replay){if(replay.requestHash!==requestHash)throw conflict('M3_PRIVATE_RETRY_CONFLICT');this.parsePrivate(p,replay);return this.privateVerificationPreview(ctx,p,taskId);}
+    const previous=await this.repo.latestCandidate(p.institutionId,taskId);
+    if((previous?.packVersion??0)!==input.expectedFamilyVersion)throw conflict('M3_INSTRUMENT_REVISION_CONFLICT');
+    const objective=p.objectives.find(o=>o.id===task.objectiveId)!;
+    const support=[{reference:referenceFor(heldOut),quote:heldOut.searchableText.slice(0,1200)}];
+    const question=input.questionText??`Provide ${task.kind.replaceAll('_',' ')} work for this objective using the reserved passage: ${objective.wording}. Criterion: ${task.criterion}`;
+    const normalized=(value:string)=>value.toLowerCase().replace(/\W+/g,' ').trim();
+    const teaching=[...p.taskCandidates.filter(t=>t.kind==='formative_practice').map(t=>t.expectedWork),...p.activities.flatMap(a=>[a.purpose,a.expectedObservation,a.expectedResult])];
+    if(teaching.some(text=>normalized(text)===normalized(question)))throw conflict('M3_TASK_FAMILY_EQUIVALENCE_REQUIRED');
+    for(const other of p.taskCandidates.filter(t=>t.id!==taskId&&t.kind!=='formative_practice')) {
+      const stored=await this.repo.latestCandidate(p.institutionId,other.id);
+      if(stored?.schemaVersion===M3_PRIVATE_CANDIDATE_VERSION&&normalized(m3PrivateVerificationCandidateSchema.parse(stored.payload).question)===normalized(question))
+        throw conflict('M3_TASK_FAMILY_EQUIVALENCE_REQUIRED');
+    }
+    const answer=input.referenceText??support[0]!.quote,alternatives=input.alternativeTexts??[];
+    for(const statement of [answer,...alternatives])validateInterpretation({schemaVersion:M2_PROMPT,uncertainties:[],
+      proposals:[{kind:'claim',statement,support,relatedUnitId:null,diagramEdge:null}]},revision,[heldOut]);
+    const at=new Date().toISOString();
+    const c=m3PrivateVerificationCandidateSchema.parse({schemaVersion:M3_PRIVATE_CANDIDATE_VERSION,id:taskId,version:(previous?.packVersion??0)+1,
+      institutionId:p.institutionId,courseId:p.courseId,subjectId:p.subjectId,proposalId:p.id,proposalVersion:p.version,proposalHash:digest(p),
+      objectiveId:objective.id,objectiveVersion:objective.version,criterionId:task.id,kind:task.kind,assistance:'unassisted',
+      sourceRevisionId:p.source.revisionId,sourceHash:p.source.originalHash,support,question,answer,referenceAnswers:alternatives,
+      rubric:(input.criteriaTexts??[task.criterion,'Check the source support and preserve defensible alternative readings.']).map(privateRule=>({criterionId:task.id,privateRule})),
+      discriminators:[`Independent review must establish non-equivalence with ${task.kind} practice and other families.`],
+      privateEvaluationPrompt:input.evaluationInstruction??'Candidate instructions only. Do not execute an evaluator or issue a grade in M3.',
+      origin:input.questionText?'qualified_teacher_edit':'engineering_private_outline',status:'qualified_review_required',
+      exposure:{sourceWasPublished:true,questionWasPublished:false,privateCriteriaWerePublished:false,nonEquivalence:'independent_review_required'},
+      correction:{previousVersion:previous?.packVersion??null,editorId:ctx.principal.institutionUserId,commandId:input.commandId,requestHash,at},createdBy:ctx.principal.institutionUserId,createdAt:at});
+    if(Buffer.byteLength(JSON.stringify(c))>48*1024)throw conflict('M3_PRIVATE_CANDIDATE_LIMIT');
+    await this.repo.insertM3PrivateCandidate(p,c,digest(c));
+    return this.privateVerificationPreview(ctx,p,taskId);
+  }
+  async privateVerificationPreview(ctx:PortalActionContext,p:M3Proposal,taskId:string) {
+    await this.requireM3PrivateAuthority(ctx,p);this.verificationTask(p,taskId);
+    const c=this.parsePrivate(p,await this.repo.latestCandidate(p.institutionId,taskId));
+    return {family:{id:c.id,version:c.version},origin:c.origin,classification:'Private review draft; no student task or evaluator execution',
+      panels:[{label:'Candidate question',content:c.question},{label:'Private reference criteria',content:[c.answer,...c.referenceAnswers,...c.rubric.map(r=>r.privateRule)].join('\n\n')},
+        {label:'Private evaluation instructions',content:c.privateEvaluationPrompt},{label:'Reserved source evidence',content:JSON.stringify(c.support,null,2)},
+        {label:'Exposure and non-equivalence review',content:JSON.stringify(c.exposure,null,2)}]};
+  }
+  async privateVerificationStatus(p:M3Proposal) {
+    if(!p.courseId)return [];
+    const rows=await this.repo.m3PrivatePublicStatus(p),result=[];
+    // Request-local only: exact qualification/version decisions share one current owner read.
+    const authorityReads=new Map<string,boolean>();
+    for(const row of rows) {
+      let status=row.context_current?(row.decision??'qualified_review_required'):'stale_proposal';
+      if(row.review_id&&row.reviewer_user_id&&row.qualification_id&&row.qualification_version) {
+        const pin=`${row.reviewer_user_id}:${row.qualification_id}:${row.qualification_version}`;
+        if(!authorityReads.has(pin)) {
+          try {const principal=await this.portalAuth.resolveById(row.reviewer_user_id,null);
+            await this.requireActionPermissions(principal,['academics.alignments.approve','class_content.manage']);
+            await this.requireReviewerAuthority(principal,{institutionId:p.institutionId,courseId:p.courseId,subjectKey:p.subjectId,
+              qualificationId:row.qualification_id,expectedQualificationVersion:row.qualification_version});authorityReads.set(pin,true);}
+          catch {authorityReads.set(pin,false);}
+        }
+        if(!authorityReads.get(pin))status='authority_revoked_or_expired';
+        if(row.revoked)status='review_revoked';
+      }
+      result.push({id:row.family_id,version:row.family_version,status,receiptId:row.review_id??undefined});
+    }
+    return result;
+  }
+  /** M3 decisions remain in the established candidate/qualification/review owners. */
+  async reviewLearningProposal(ctx: PortalActionContext, proposal: M3Proposal, raw: unknown) {
+    this.requireAuthoringEnabled();
+    const input = m3ReviewCommandSchema.parse(raw);
+    await this.requireActionPermissions(ctx.principal, ['academics.alignments.approve', 'class_content.manage']);
+    if (!proposal.courseId) throw conflict('CANONICAL_COURSE_MAPPING_REQUIRED');
+    if (input.expectedVersion !== proposal.version) throw conflict('M3_REVISION_CONFLICT');
+    const authority = await this.requireReviewerAuthority(ctx.principal, {institutionId:proposal.institutionId,courseId:proposal.courseId,
+      subjectKey:proposal.subjectId,qualificationId:input.qualificationId,expectedQualificationVersion:input.qualificationVersion});
+    let taskFamily:{id:string;version:number;hash:string}|null=null;
+    if(input.dimension==='assessment_instrument') {
+      if(!input.taskFamilyId||!input.taskFamilyVersion)throw conflict('M3_QUALIFIED_INSTRUMENT_CONTRACT_REQUIRED');
+      const row=await this.repo.latestCandidate(proposal.institutionId,input.taskFamilyId),privateBody=this.parsePrivate(proposal,row);
+      if(privateBody.version!==input.taskFamilyVersion)throw conflict('M3_INSTRUMENT_REVISION_CONFLICT');
+      if(input.decision==='approved'&&input.nonEquivalenceDecision!=='distinct')throw conflict('M3_TASK_FAMILY_EQUIVALENCE_REQUIRED');
+      if(input.decision==='approved'&&privateBody.createdBy===ctx.principal.institutionUserId)throw new ForbiddenException({code:'PETROS_PACK_SELF_APPROVAL_DENIED',message:'An independent qualified reviewer must approve this private instrument.'});
+      taskFamily={id:privateBody.id,version:privateBody.version,hash:row!.payloadHash};
+    } else if(input.taskFamilyId||input.taskFamilyVersion||input.nonEquivalenceDecision)throw conflict('M3_REVIEW_DIMENSION_MISMATCH');
+    const requestHash = digest({proposalId:proposal.id,version:proposal.version,reviewerUserId:ctx.principal.institutionUserId,input,taskFamily});
+    const prior = await this.repo.reviewCommand(proposal.institutionId,input.commandId);
+    if (prior) {
+      if(prior.requestHash !== requestHash) throw conflict('M3_REVIEW_RETRY_CONFLICT');
+      return m3ReviewReceiptSchema.parse(prior.receipt);
+    }
+    if(input.decision==='approved'&&(proposal.createdBy===ctx.principal.institutionUserId||proposal.correction.editorId===ctx.principal.institutionUserId)) throw new ForbiddenException({code:'PETROS_PACK_SELF_APPROVAL_DENIED',message:'An independent qualified reviewer must approve this lesson.'});
+    let candidate=await this.repo.candidateByRef(proposal.institutionId,proposal.id,proposal.version);
+    const payloadHash=digest(proposal);
+    if(candidate && candidate.payloadHash!==payloadHash) throw conflict('M3_CANDIDATE_HASH_CONFLICT');
+    if(!candidate) throw conflict('M3_SUBMIT_REVIEW_REQUIRED');
+    const rows=await this.repo.m3Reviews(proposal.institutionId,candidate.id);
+    const receipt=m3ReviewReceiptSchema.parse({schemaVersion:'petros.v2.scope-review.v1',id:randomUUID(),proposalId:proposal.id,
+      proposalVersion:proposal.version,sourceRevisionId:proposal.source.revisionId,payloadHash,dimension:input.dimension,
+      decision:input.decision,reviewerUserId:ctx.principal.institutionUserId,qualificationId:authority.qualificationId,
+      qualificationVersion:authority.qualificationVersion,taskFamily,nonEquivalenceDecision:input.nonEquivalenceDecision,reason:input.reason,reviewedAt:new Date().toISOString()});
+    await this.repo.insertM3Review(candidate,receipt,authority,input.commandId,requestHash,(rows[0]?.reviewVersion??0)+1);
+    if(input.decision==='approved'&&input.dimension!=='assessment_instrument') {
+      await this.db.insert(schema.courseCurriculumRecords).values({institutionId:proposal.institutionId,courseId:proposal.courseId,
+        kind:`petros_v2_${input.dimension}`,recordId:proposal.id,recordVersion:proposal.version,contentHash:payloadHash,
+        content:{proposalId:proposal.id,proposalVersion:proposal.version,sourceRevisionId:proposal.source.revisionId,reviewId:receipt.id,
+          objectives:proposal.objectives.map(o=>({id:o.id,version:o.version,wording:o.wording,conceptRefs:o.conceptRefs})),
+          relationships:proposal.relationships},actorId:ctx.principal.institutionUserId}).onConflictDoNothing();
+    }
+    return receipt;
+  }
+
+  async learningProposalReviewState(proposal: M3Proposal) {
+    const candidate=await this.repo.candidateByRef(proposal.institutionId,proposal.id,proposal.version);
+    const result:Record<string,{status:string;receiptId?:string}>={};
+    if(!candidate) return result;
+    if(candidate.payloadHash!==digest(proposal)) throw conflict('M3_CANDIDATE_HASH_CONFLICT');
+    for(const row of await this.repo.m3Reviews(proposal.institutionId,candidate.id)) {
+      const receipt=m3ReviewReceiptSchema.parse(row.receipt);
+      if(receipt.dimension==='assessment_instrument'||result[receipt.dimension]) continue;
+      let valid=proposal.createdBy!==row.reviewerUserId;
+      try { await this.requireStoredReviewerAuthority(proposal.courseId!,row.authoritySnapshot,['academics.alignments.approve']); }
+      catch { valid=false; }
+      if(await this.repo.reviewRevocation(proposal.institutionId,row.id)) valid=false;
+      result[receipt.dimension]={status:valid?receipt.decision:'authority_revoked_or_expired',receiptId:row.id};
+    }
+    const instruments=await this.privateVerificationStatus(proposal);
+    const needed=proposal.taskCandidates.filter(t=>t.kind!=='formative_practice');
+    result.assessment_instrument={status:needed.length&&needed.every(t=>instruments.some(i=>i.id===t.id&&i.status==='approved'))?'approved':'verification_pending'};
+    return result;
+  }
+
+  /** Immutable release manifest; no student session/task/evidence is created. Caller holds current source/class locks. */
+  async learningProposalManifest(proposal:M3Proposal) {
+    if(!proposal.courseId)return null;
+    const t=schema.courseCurriculumRecords;
+    const [row]=await this.db.select({id:t.id,createdAt:t.createdAt}).from(t).where(and(eq(t.institutionId,proposal.institutionId),
+      eq(t.courseId,proposal.courseId),eq(t.kind,'petros_v2_release'),eq(t.recordId,proposal.id),eq(t.recordVersion,proposal.version),
+      eq(t.contentHash,digest(proposal)))).limit(1);
+    return row?{id:row.id,proposalVersion:proposal.version,recordedAt:row.createdAt.toISOString(),
+      mode:'isolated_teaching_scope_only',studentPublication:'not_enabled',currentChecksRequired:true}:null;
+  }
+
+  async releaseLearningProposal(ctx:PortalActionContext,proposal:M3Proposal,commandId:string,recipientHash:string,reviewRefs:string[]) {
+    this.requireAuthoringEnabled();
+    await this.requireActionPermissions(ctx.principal,['class_content.manage','academics.alignments.approve']);
+    const states=await this.learningProposalReviewState(proposal);
+    if(['teaching_scope','concepts','activities'].some(d=>states[d]?.status!=='approved')) throw conflict('M3_REVIEW_REQUIRED');
+    const instrumentRefs=(await this.privateVerificationStatus(proposal)).filter(i=>i.status==='approved').map(({id,version,receiptId})=>({id,version,receiptId})).sort((a,b)=>a.id.localeCompare(b.id));
+    const t=schema.courseCurriculumRecords;
+    const requestHash=digest({proposalId:proposal.id,version:proposal.version,commandId,recipientHash,reviewRefs,instrumentRefs});
+    const [prior]=await this.db.select().from(t).where(and(eq(t.institutionId,proposal.institutionId),eq(t.courseId,proposal.courseId!),
+      eq(t.kind,'petros_v2_release'),eq(t.recordId,proposal.id),eq(t.recordVersion,proposal.version))).limit(1);
+    if(prior) {
+      if(prior.content.requestHash!==requestHash) throw conflict('M3_RELEASE_RETRY_CONFLICT');
+      return {id:prior.id,version:proposal.version,isolatedAuthorizationPath:true,replayed:true};
+    }
+    const [row]=await this.db.insert(t).values({institutionId:proposal.institutionId,courseId:proposal.courseId!,kind:'petros_v2_release',
+      recordId:proposal.id,recordVersion:proposal.version,contentHash:digest(proposal),content:{schemaVersion:'petros.v2.release-manifest.v1',
+        mode:'isolated_teaching_scope_only',proposalId:proposal.id,proposalVersion:proposal.version,source:proposal.source,
+        classId:proposal.classId,subjectId:proposal.subjectId,recipientHash,reviewRefs,requestHash,commandId,
+        instrumentRefs,verification:states.assessment_instrument?.status==='approved'?'qualified_synthetic_review':'pending',studentPublication:'not_enabled'},actorId:ctx.principal.institutionUserId}).returning();
+    return {id:row!.id,version:proposal.version,isolatedAuthorizationPath:true,replayed:false};
+  }
+
   async compileAuthoredCandidate(ctx: PortalActionContext, input: PetrosTeachingPackCompileCommand) {
     this.requireAuthoringEnabled();
     return this.compile(ctx, input);
@@ -104,6 +309,7 @@ export class PetrosTeachingPackService {
     const items = [];
     let unavailableCount = 0;
     for (const row of rows) {
+      if ((row.sourceFormat ?? 'v1') !== 'v1' || !row.sourceItemId) { unavailableCount++; continue; }
       const candidate = this.requireStoredCandidate(row);
       try { validatePetrosConceptPackCandidate(candidate, await this.buildTrustedContext(course, row.sourceItemId, candidate)); }
       catch (error) { if (error instanceof NotFoundException || error instanceof ConflictException || error instanceof ForbiddenException) { unavailableCount++; continue; } throw error; }
@@ -137,7 +343,7 @@ export class PetrosTeachingPackService {
     this.requireAuthoringEnabled();
     await this.requireActionPermissions(ctx.principal, ['class_content.manage', 'syllabus.manage']);
     const row = await this.repo.candidateById(ctx.principal.institutionId, candidateId);
-    if (!row) throw unavailable('PETROS_PACK_CANDIDATE_NOT_FOUND');
+    if (!row || (row.sourceFormat ?? 'v1') !== 'v1' || !row.sourceItemId) throw unavailable('PETROS_PACK_CANDIDATE_NOT_FOUND');
     const course = await this.requireCourseAuthority(ctx.principal, ctx.scope, row.courseId, 'share');
     const candidate = this.requireStoredCandidate(row);
     validatePetrosConceptPackCandidate(candidate, await this.buildTrustedContext(course, row.sourceItemId, candidate));
@@ -212,7 +418,7 @@ export class PetrosTeachingPackService {
     if (!found) throw new NotFoundException({ code: 'PETROS_PACK_CANDIDATE_NOT_FOUND' });
     const course = await this.requireCourseAuthority(ctx.principal, ctx.scope, found.courseId, 'exclusive');
     const row = await this.repo.candidateById(institutionId, candidateId);
-    if (!row || row.courseId !== course.id) throw new NotFoundException({ code: 'PETROS_PACK_CANDIDATE_NOT_FOUND' });
+    if (!row || row.courseId !== course.id || (row.sourceFormat ?? 'v1') !== 'v1' || !row.sourceItemId) throw new NotFoundException({ code: 'PETROS_PACK_CANDIDATE_NOT_FOUND' });
     const candidate = this.requireStoredCandidate(row);
     const trustedContext = await this.buildTrustedContext(course, row.sourceItemId, candidate);
     validatePetrosConceptPackCandidate(candidate, trustedContext);
@@ -295,7 +501,7 @@ export class PetrosTeachingPackService {
     if (!found) throw new NotFoundException({ code: 'PETROS_PACK_REVIEW_NOT_FOUND' });
     await this.requireCourseAuthority(ctx.principal, ctx.scope, found.courseId, 'exclusive');
     const review = await this.repo.reviewById(institutionId, reviewId);
-    if (!review || review.courseId !== found.courseId) throw new NotFoundException({ code: 'PETROS_PACK_REVIEW_NOT_FOUND' });
+    if (!review || review.courseId !== found.courseId || (review.sourceFormat ?? 'v1') !== 'v1' || !review.sourceItemId) throw new NotFoundException({ code: 'PETROS_PACK_REVIEW_NOT_FOUND' });
     if (review.reviewVersion !== input.expectedReviewVersion)
       throw conflict('PETROS_PACK_REVIEW_VERSION_CONFLICT');
     const requestHash = digest({ reviewId, input });
@@ -384,10 +590,23 @@ export class PetrosTeachingPackService {
     packId: string;
     packVersion: number;
   }): Promise<PetrosApprovedPack> {
+    return this.withCourseRecipient(principal, input.courseId, input.studentId, () =>
+      this.requireApprovedPackForOwner(principal.institutionId, input.studentId, input.sessionId,
+        { packId: input.packId, packVersion: input.packVersion }, input.courseId));
+  }
+
+  /** Staff delegation is bounded by current course authority and a locked recipient enrollment. */
+  async withCourseRecipient<T>(principal: InstitutionPrincipal, courseId: string, studentId: string,
+    work: () => Promise<T>): Promise<T> {
     this.requireEnabled();
-    await this.requireCourseAuthority(principal, { mode: 'institution' }, input.courseId, 'share');
-    return this.requireApprovedPackForOwner(principal.institutionId, input.studentId, input.sessionId,
-      { packId: input.packId, packVersion: input.packVersion }, input.courseId);
+    await this.requireCourseAuthority(principal, { mode: 'institution' }, courseId, 'share');
+    const enrollment = await this.repo.enrollment(principal.institutionId, courseId, studentId);
+    if (!enrollment || enrollment.studentStatus !== 'enrolled')
+      throw new ForbiddenException({ code: 'PETROS_PACK_COURSE_ACCESS_DENIED' });
+    // Current course authority and the locked enrollment authorize this bounded
+    // recipient read. Retain the staff actor; only public session columns are read.
+    return runInStudentTenant(this.db, { institutionId: principal.institutionId,
+      studentId, institutionUserId: principal.institutionUserId }, work);
   }
 
   private async requireApprovedPackForOwner(institutionId: string, studentId: string, sessionId: string,
@@ -409,7 +628,7 @@ export class PetrosTeachingPackService {
     const course = await this.repo.course(institutionId, found.courseId, 'share');
     if (!course || course.status !== 'active') throw unavailable('PETROS_PACK_COURSE_UNAVAILABLE');
     const row = await this.repo.candidateByRef(institutionId, packRef.packId, packRef.packVersion);
-    if (!row || row.courseId !== course.id) throw new NotFoundException({ code: 'PETROS_PACK_NOT_FOUND' });
+    if (!row || row.courseId !== course.id || (row.sourceFormat ?? 'v1') !== 'v1' || !row.sourceItemId) throw new NotFoundException({ code: 'PETROS_PACK_NOT_FOUND' });
     if (row.sourceItemId !== sourceContext.referenceId || row.sourceVersion !== sourceContext.sourceFingerprint)
       throw conflict('PETROS_PACK_SESSION_SOURCE_MISMATCH');
     const latestCandidate = await this.repo.latestCandidate(institutionId, row.packId);
@@ -493,6 +712,7 @@ export class PetrosTeachingPackService {
   }
 
   private requireStoredCandidate(row: CandidateRow) {
+    if ((row.sourceFormat ?? 'v1') !== 'v1' || !row.sourceItemId) throw unavailable('PETROS_PACK_CANDIDATE_NOT_FOUND');
     const candidate = petrosConceptPackCandidateSchema.parse(row.payload);
     if (candidate.pack.id !== row.packId || candidate.pack.version !== row.packVersion ||
       candidate.sourceVersion !== row.sourceVersion || candidate.curriculumRevision !== row.curriculumRevision ||
@@ -555,6 +775,12 @@ export class PetrosTeachingPackService {
   }
 
   private async buildTrustedContext(course: CourseRow, sourceItemId: string,
+    candidate: PetrosConceptPackCandidate): Promise<PetrosConceptPackTrustedContext> {
+    return runInAuthorizedCourseSource(this.db, course.institutionId, course.id, sourceItemId,
+      () => this.buildScopedTrustedContext(course, sourceItemId, candidate));
+  }
+
+  private async buildScopedTrustedContext(course: CourseRow, sourceItemId: string,
     candidate: PetrosConceptPackCandidate): Promise<PetrosConceptPackTrustedContext> {
     const source = await this.repo.source(course.institutionId, sourceItemId);
     if (!source?.studentId || source.sourceRevokedAt) throw unavailable('PETROS_PACK_SOURCE_UNAVAILABLE');

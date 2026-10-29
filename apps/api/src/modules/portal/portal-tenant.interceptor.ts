@@ -32,7 +32,7 @@ export class PortalTenantInterceptor implements NestInterceptor {
     if (!institutionId) return next.handle();
 
     return from(
-      runInInstitutionTenant(this.db, institutionId, () => lastValueFrom(next.handle())),
+      runInInstitutionTenant(this.db, institutionId, () => lastValueFrom(next.handle()), req.institutionContext!.principal.institutionUserId),
     );
   }
 }

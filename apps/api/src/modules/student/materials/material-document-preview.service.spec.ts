@@ -1,10 +1,14 @@
 import JSZip from 'jszip';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MaterialDocumentPreviewService } from './material-document-preview.service';
+import { convertPresentation } from './presentation-converter';
+
+vi.mock('./presentation-converter', () => ({ convertPresentation: vi.fn() }));
 
 const previews = new MaterialDocumentPreviewService();
 
 describe('MaterialDocumentPreviewService', () => {
+  beforeEach(() => { vi.mocked(convertPresentation).mockReset().mockRejectedValue(new Error('Conversion unavailable')); });
   it('uses verified extracted pages for any Office generation', async () => {
     const result = await previews.create({
       filename: 'lecture.doc',
@@ -84,10 +88,9 @@ describe('MaterialDocumentPreviewService', () => {
     ]);
   });
 
-  it('extracts readable strings from legacy Word, PowerPoint, and Excel binaries', async () => {
+  it('extracts readable strings from legacy Word and Excel binaries', async () => {
     for (const [filename, mimeType, expectedFormat] of [
       ['notes.doc', 'application/msword', 'word'],
-      ['slides.ppt', 'application/vnd.ms-powerpoint', 'slides'],
       ['results.xls', 'application/vnd.ms-excel', 'spreadsheet'],
     ] as const) {
       const buffer = Buffer.concat([
@@ -97,6 +100,30 @@ describe('MaterialDocumentPreviewService', () => {
       const result = await previews.create({ filename, mimeType, buffer });
       expect(result.format).toBe(expectedFormat);
       expect(result.sections[0]?.text).toContain('Legacy document preview content');
+    }
+  });
+
+  it('reads actual legacy PPT slide text without font and shape metadata', async () => {
+    const zip = new JSZip();
+    zip.file('ppt/slides/slide1.xml', slideXml('Cloud Computing Models', 'IaaS, PaaS and SaaS'));
+    zip.file('ppt/slides/slide2.xml', slideXml('Deployment models', 'Public, private, hybrid and community clouds'));
+    vi.mocked(convertPresentation).mockResolvedValueOnce(await zip.generateAsync({ type: 'nodebuffer' }));
+    const bytes = Buffer.from('Arial\nTimes\nRectangle 4\nFooter Placeholder 2\n___PPT12');
+    const result = await previews.create({ filename: 'cloud.ppt', mimeType: 'application/vnd.ms-powerpoint', buffer: bytes });
+    expect(convertPresentation).toHaveBeenCalledWith(bytes, 'ppt', 'pptx');
+    expect(result).toMatchObject({ readable: true, format: 'slides', sections: [
+      { title: 'Slide 1', text: 'Cloud Computing Models\nIaaS, PaaS and SaaS' },
+      { title: 'Slide 2', text: 'Deployment models\nPublic, private, hybrid and community clouds' },
+    ] });
+    expect(JSON.stringify(result)).not.toMatch(/Arial|Placeholder|Rectangle|___PPT/);
+  });
+
+  it('does not claim unreadable slides are grounded when conversion or XML parsing fails', async () => {
+    for (const filename of ['cloud.ppt', 'cloud.pptx']) {
+      const result = await previews.create({ filename, mimeType: 'application/octet-stream',
+        buffer: Buffer.from('Times\nArial\nFooter Placeholder 2\nLooks like readable text') });
+      expect(result.readable).toBe(false);
+      expect(JSON.stringify(result.sections)).not.toContain('Placeholder');
     }
   });
 

@@ -24,6 +24,7 @@ import {
 } from '@/components/petros/petros-companion-context';
 import { PetrosDoorButton } from '@/components/petros/petros-door-button';
 import { PetrosContinuityOverview } from '@/components/petros/petros-continuity';
+import { PetrosTeacherGoals } from '@/components/petros/petros-teacher-goals';
 import { QueryPage } from '@/components/query-page';
 import { useStudentApi } from '@/lib/api-client';
 import { useStudentList } from '@/lib/hooks';
@@ -250,6 +251,7 @@ export default function LearnPage() {
             />
 
             <PetrosContinuityOverview />
+            <PetrosTeacherGoals />
 
             <section className={styles.focus} aria-labelledby="learn-focus-title" data-petros-target="learning:focus">
               <div className={styles.focusBody}>

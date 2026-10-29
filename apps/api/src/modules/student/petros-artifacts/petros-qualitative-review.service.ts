@@ -8,7 +8,7 @@ import {
 import type { AuditWriter } from '@edrion/audit';
 import type { InstitutionPrincipal } from '@edrion/auth';
 import type { ApiEnv } from '@edrion/config';
-import { and,eq,runInStudentTenant,schema,sql,type Database } from '@edrion/database';
+import { and,eq,runInStudentTenant,runInInstitutionTenant,runInAuthorizedSharedReview,schema,sql,type Database } from '@edrion/database';
 import {
   compatibilityCanonicalJson,
   petrosArtifactContentSchema,
@@ -189,6 +189,11 @@ export class PetrosQualitativeReviewService {
 
   /** Explicit qualified educator decision. Narrative only; no S8 or numeric projection write. */
   async review(principal: InstitutionPrincipal, raw: unknown) {
+    const command=petrosQualitativeReviewCommandSchema.parse(raw);
+    return this.sharedReview(principal,'submission',command.submissionId,()=>this.reviewOwned(principal,command));
+  }
+
+  private async reviewOwned(principal: InstitutionPrincipal, raw: unknown) {
     await this.packs.requireActionPermissions(principal,['homework.grade']);
     this.enabled();
     const command = petrosQualitativeReviewCommandSchema.parse(raw);
@@ -377,6 +382,9 @@ export class PetrosQualitativeReviewService {
   }
 
   async inspectDraft(principal:InstitutionPrincipal,requestId:string) {
+    return this.sharedReview(principal,'event',requestId,()=>this.inspectDraftOwned(principal,requestId));
+  }
+  private async inspectDraftOwned(principal:InstitutionPrincipal,requestId:string) {
     await this.packs.requireActionPermissions(principal,['homework.grade']);
     this.enabled();
     const row=await this.repo.lifecycleEvent(principal.institutionId,requestId);
@@ -393,6 +401,10 @@ export class PetrosQualitativeReviewService {
   }
 
   async draftFeedback(principal:InstitutionPrincipal,raw:unknown) {
+    const command=petrosQualitativeDraftFeedbackCommandSchema.parse(raw);
+    return this.sharedReview(principal,'event',command.requestId,()=>this.draftFeedbackOwned(principal,command));
+  }
+  private async draftFeedbackOwned(principal:InstitutionPrincipal,raw:unknown) {
     await this.packs.requireActionPermissions(principal,['homework.grade']);
     this.enabled();const command=petrosQualitativeDraftFeedbackCommandSchema.parse(raw);
     const row=await this.repo.lifecycleEvent(principal.institutionId,command.requestId);
@@ -448,6 +460,10 @@ export class PetrosQualitativeReviewService {
   }
 
   async revoke(principal:InstitutionPrincipal,raw:unknown) {
+    const command=petrosQualitativeRevokeCommandSchema.parse(raw);
+    return this.sharedReview(principal,'review',command.reviewId,()=>this.revokeOwned(principal,command));
+  }
+  private async revokeOwned(principal:InstitutionPrincipal,raw:unknown) {
     await this.packs.requireActionPermissions(principal,['homework.grade']);
     this.enabled();const command=petrosQualitativeRevokeCommandSchema.parse(raw);
     const row=await this.repo.reviewById(principal.institutionId,command.reviewId);
@@ -504,6 +520,9 @@ export class PetrosQualitativeReviewService {
 
   /** Allowlisted educator projection of an explicitly shared revision and optional provenance. */
   async inspect(principal:InstitutionPrincipal,submissionId:string) {
+    return this.sharedReview(principal,'submission',submissionId,()=>this.inspectOwned(principal,submissionId));
+  }
+  private async inspectOwned(principal:InstitutionPrincipal,submissionId:string) {
     await this.packs.requireActionPermissions(principal,['homework.grade']);
     this.enabled();
     const row=await this.repo.submission(principal.institutionId,submissionId);
@@ -568,6 +587,17 @@ export class PetrosQualitativeReviewService {
       policyVersion:submission.policyVersion,draftFeedback:submission.draftFeedback,reviewStatus,provenance,
       sharedWork:{currentText:note(artifact.content),previousText:note(previous.content)},
       evidenceAdmission:'not_granted',numericProjection:false,meaning:'Individual recorded observations; no cohort or causal inference.'};
+  }
+
+  private sharedReview<T>(principal: InstitutionPrincipal, kind: 'event' | 'submission' | 'review',
+    id: string, work: () => Promise<T>) {
+    return runInInstitutionTenant(this.db,principal.institutionId,async()=> {
+      this.enabled();await this.packs.requireActionPermissions(principal,['homework.grade']);
+      const owner=await runInAuthorizedSharedReview(this.db,principal.institutionId,id,()=>
+        this.repo.sharedOwner(kind,principal.institutionId,id));
+      if (!owner) throw new NotFoundException();
+      return this.packs.withCourseRecipient(principal,owner.courseId,owner.studentId,work);
+    },principal.institutionUserId);
   }
 
   private lifecycleAudit(institutionId:string,actorId:string,entityId:string,commandId:string,action:string) {

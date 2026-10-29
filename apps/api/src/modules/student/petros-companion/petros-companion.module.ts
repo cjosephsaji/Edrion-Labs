@@ -17,13 +17,18 @@ import { StudentPetrosCompanionController } from './petros-companion.controller'
 import { PetrosCompanionRepository } from './petros-companion.repository';
 import { PetrosCompanionService } from './petros-companion.service';
 import { PetrosStudentContextService } from './petros-student-context.service';
+import { PetrosVoicePreviewController } from './petros-voice-preview.controller';
+import { PetrosVoicePreviewService } from './petros-voice-preview.service';
+import { PetrosPortalSpeechService } from './petros-portal-speech.service';
 
 @Module({
   imports: [PetrosContinuityModule, KnowledgeDocumentModule,PetrosReflectionModule, FeatureControlsModule, PetrosAiRoutingModule, PetrosSessionIntentModule],
-  controllers: [StudentPetrosCompanionController],
+  controllers: [StudentPetrosCompanionController, PetrosVoicePreviewController],
   providers: [
     PetrosCompanionRepository,
     PetrosCompanionService,
+    PetrosVoicePreviewService,
+    PetrosPortalSpeechService,
     PetrosStudentContextService,
     PetrosActionRegistryService,
     PetrosBriefingService,

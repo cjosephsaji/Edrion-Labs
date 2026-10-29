@@ -5,7 +5,7 @@ export interface OnboardingStep {
   label: string;
   /** Live count of records the admin has added for this step. */
   count: number;
-  /** How many are needed to complete the step (currently 1). */
+  /** Records needed to complete a required step; zero marks an optional step. */
   required: number;
   done: boolean;
 }

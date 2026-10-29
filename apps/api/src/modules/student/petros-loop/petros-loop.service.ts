@@ -99,10 +99,11 @@ import {
   safeFallbackEvaluation,
   type LadderTransition,
 } from './petros-observation.policy';
+import { PetrosDocumentDatabase } from '../../../common/petros-document-database';
 import { PetrosLoopRepository, type PetrosOwnerScope } from './petros-loop.repository';
 import { initialPilotState, PILOT_RUBRICS, transitionPilot } from './petros-pilot.policy';
 import { initialDocumentTeachingState, transitionDocumentTeaching } from './petros-document-teaching.policy';
-import { evaluateExpectedMathAnswer, type PetrosExpectedMathAnswer } from './petros-math-evaluator';
+import { evaluateExpectedMathAnswer } from './petros-math-evaluator';
 import { knowledgeEvidenceFallback, renderKnowledgeAnswer } from './petros-knowledge-answer';
 import { knowledgeDenied } from '../../petros-institutional/petros-admission';
 import { executionConflict } from './petros-question-execution.repository';
@@ -150,6 +151,7 @@ export class PetrosLoopService {
     @Optional() @Inject(API_ENV) private readonly env?: ApiEnv,
     @Optional() private readonly adaptive?: PetrosAdaptiveService,
     @Optional() private readonly objectiveEvidence?: PetrosObjectiveEvidenceService,
+    @Optional() private readonly documentDatabase?: PetrosDocumentDatabase,
   ) {}
 
   async resolveQuestionPolicy(scope: PetrosOwnerScope, sessionId: string, mode?: PetrosKnowledgeMode) {
@@ -220,7 +222,6 @@ export class PetrosLoopService {
     const existing = await this.repo.findSessionByRequest(scope, input.clientRequestId);
     if (existing) return this.document(scope, existing.id);
     const isPilot = input.experience === PETROS_INFLATION_PILOT;
-    const internalDocumentPlan = input.learnerContext?.documentTeachingInternalPlan;
     const publicDocumentPlan = input.learnerContext?.documentTeachingPlan;
     const isDocumentTeaching = input.experience === PETROS_DOCUMENT_TEACHING_EXPERIENCE || Boolean(publicDocumentPlan);
     const documentPlan = isDocumentTeaching ? petrosDocumentTeachingPlanSchema.parse(publicDocumentPlan) : null;
@@ -267,7 +268,6 @@ export class PetrosLoopService {
         ...(isPilot ? { pilot: initialPilotState() } : {}),
         ...(documentPlan ? {
           documentTeaching: initialDocumentTeachingState(documentPlan, documentStartingLevel),
-          documentTeachingInternalPlan: internalDocumentPlan,
         } : {}),
       },
       topicContext: input.topicContext ?? {},
@@ -992,6 +992,7 @@ export class PetrosLoopService {
     blockId: string,
     input: PetrosReexplainBlockInput,
   ) {
+    await this.repo.assertV2Assistance?.();
     const scope = owner(principal);
     if (await this.adaptive?.current(scope,sessionId))
       throw executionConflict('PETROS_REVIEWED_EXPLANATION_CHANGE_UNAVAILABLE');
@@ -1381,6 +1382,7 @@ export class PetrosLoopService {
     blockId: string,
     input: PetrosRequestHintInput,
   ) {
+    await this.repo.assertV2Assistance?.();
     const scope = owner(principal);
     const [session, block, question] = await Promise.all([
       this.requireSession(scope, sessionId),
@@ -1498,6 +1500,7 @@ export class PetrosLoopService {
     sessionId: string,
     knowledgeMode?: PetrosComposerQuestionInput['knowledgeMode'],
   ) {
+    await this.repo.assertV2Assistance?.();
     const scope = owner(principal);
     await this.assertAdaptiveComposerAllowed(scope,sessionId);
     const session = await this.repo.findSession(scope, sessionId);
@@ -1838,11 +1841,6 @@ export class PetrosLoopService {
     if (session.version !== input.expectedVersion) throw staleSession();
     if (session.status !== 'active') throw new ConflictException('Resume the lesson before changing it.');
     const scene = state.plan.scenes[state.scene]!;
-    const internal = session.learnerContext.documentTeachingInternalPlan as {
-      scenes?: Array<{ id: string; rubric: string; correctChoiceId: string | null; example?: string; expectedAnswer?: PetrosExpectedMathAnswer | null; response?: PetrosDocumentResponseSpec; activitySpec?: PetrosDocumentActivitySpec }>;
-      diagnostic?: { rubric: string; responseType: 'choice' | 'explanation'; choices: Array<{ id: string; label: string }>; correctChoiceId?: string | null };
-    } | undefined;
-    const privateScene = internal?.scenes?.find(item => item.id === scene.id);
     let evaluation: PetrosAnswerEvaluation | undefined;
     let teachingEvaluation: { correctness: 'correct' | 'partial' | 'incorrect'; feedback: string; safeNextHint: string } | undefined;
     let reply: string | undefined;
@@ -1852,9 +1850,12 @@ export class PetrosLoopService {
       if (isDiagnostic && !answer.trim()) {
         teachingEvaluation = { correctness: 'partial', feedback: 'We will begin with balanced support and adjust as you work.', safeNextHint: state.plan.diagnostic.hint };
       } else {
+      if (!this.documentDatabase) throw new ServiceUnavailableException('PETROS_DOCUMENT_EVALUATOR_UNAVAILABLE');
+      const instrument = await this.documentDatabase.assessment(scope, sessionId, input.expectedVersion, isDiagnostic ? 'diagnostic' : scene.id);
+      const privateScene = instrument.scene;
       const internalQuestion = isDiagnostic
-        ? { id: 'diagnostic', learningTask: null, prompt: state.plan.diagnostic.prompt, responseType: state.plan.diagnostic.responseType === 'choice' ? 'single_choice' as const : 'short_answer' as const, choices: state.plan.diagnostic.choices, rubric: internal?.diagnostic?.rubric ?? 'Assess the learner response for current topic understanding.', correctChoiceId: internal?.diagnostic?.correctChoiceId ?? null, acceptableAnswers: [], evaluationMode: state.plan.diagnostic.responseType === 'choice' ? 'deterministic' as const : 'ai' as const, hint: state.plan.diagnostic.hint, missingStep: state.plan.diagnostic.hint, workedSolution: state.plan.overview }
-        : { id: scene.id, learningTask: null, prompt: scene.question, responseType: scene.responseType === 'choice' ? 'single_choice' as const : 'short_answer' as const, choices: scene.choices, rubric: internal?.scenes?.find(item => item.id === scene.id)?.rubric ?? 'Assess whether the answer explains the selected document concept and accepts defensible alternatives.', correctChoiceId: internal?.scenes?.find(item => item.id === scene.id)?.correctChoiceId ?? null, acceptableAnswers: [], evaluationMode: scene.responseType === 'choice' ? 'deterministic' as const : 'ai' as const, hint: scene.hint, missingStep: scene.hint, workedSolution: scene.example };
+        ? { id: 'diagnostic', learningTask: null, prompt: state.plan.diagnostic.prompt, responseType: state.plan.diagnostic.responseType === 'choice' ? 'single_choice' as const : 'short_answer' as const, choices: state.plan.diagnostic.choices, rubric: instrument.diagnostic?.rubric ?? 'Assess the learner response for current topic understanding.', correctChoiceId: instrument.diagnostic?.correctChoiceId ?? null, acceptableAnswers: [], evaluationMode: state.plan.diagnostic.responseType === 'choice' ? 'deterministic' as const : 'ai' as const, hint: state.plan.diagnostic.hint, missingStep: state.plan.diagnostic.hint, workedSolution: state.plan.overview }
+        : { id: scene.id, learningTask: null, prompt: scene.question, responseType: scene.responseType === 'choice' ? 'single_choice' as const : 'short_answer' as const, choices: scene.choices, rubric: privateScene?.rubric ?? 'Assess whether the answer explains the selected document concept and accepts defensible alternatives.', correctChoiceId: privateScene?.correctChoiceId ?? null, acceptableAnswers: [], evaluationMode: scene.responseType === 'choice' ? 'deterministic' as const : 'ai' as const, hint: scene.hint, missingStep: scene.hint, workedSolution: scene.example };
       const internalScene = !isDiagnostic ? privateScene : undefined;
       const expectedMathAnswer = internalScene?.expectedAnswer ?? null;
       const structuredEvaluation = !isDiagnostic && internalScene?.response && internalScene.activitySpec
@@ -1893,7 +1894,7 @@ export class PetrosLoopService {
       reply = result.text;
     }
     if (input.action === 'help' && input.kind === 'example') {
-      reply = privateScene?.example;
+      reply = scene.example;
     }
     let next;
     try { next = transitionDocumentTeaching(state, input, teachingEvaluation, reply); }
@@ -1901,8 +1902,9 @@ export class PetrosLoopService {
     const lessonFinished = next.scene === next.plan.scenes.length - 1
       && next.scenes[next.plan.scenes.at(-1)!.id]?.outcome !== 'unseen'
       && (input.action === 'advance' || input.action === 'complete');
+    await this.requireSession(scope, sessionId); // Revalidate source after any evaluator/model work.
     const updated = await this.repo.commitPilot(scope, sessionId, input.expectedVersion, {
-      learnerContext: { ...session.learnerContext, documentTeaching: next },
+      learnerContext: { ...publicLearnerContext(session.learnerContext), documentTeaching: next },
       checkpoints: next.plan.scenes.map((item, index) => ({ id: item.id, label: item.title, status: index === next.scene ? 'current' as const : index < next.unlocked ? 'complete' as const : 'pending' as const })),
       currentCheckpointId: next.plan.scenes[next.scene]!.id,
       ...(lessonFinished
@@ -2341,7 +2343,7 @@ export class PetrosLoopService {
           observedOutcome: decision.observedOutcome,
         };
       }),
-      learnerContext: session.learnerContext,
+      learnerContext: publicLearnerContext(session.learnerContext),
       learnerSnapshot,
       topicContext: session.topicContext,
       resolvedTopicProfile: session.resolvedTopicProfile,
@@ -3558,4 +3560,10 @@ function guidedHomework(session: PetrosLearningSession) {
     !Array.isArray(homework) &&
     (homework as Record<string, unknown>).mode === 'guided_homework',
   );
+}
+
+/** Legacy document keys are never normal teaching-model context. */
+function publicLearnerContext(context: Record<string, unknown>) {
+  const { documentTeachingInternalPlan: _private, ...publicContext } = context;
+  return publicContext;
 }

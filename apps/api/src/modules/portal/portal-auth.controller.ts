@@ -7,11 +7,12 @@ import {
   Inject,
   Post,
   Query,
+  Req,
   Res,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { ApiTags } from '@nestjs/swagger';
 import {
   portalAcceptInvitePreviewQuerySchema,
@@ -19,6 +20,7 @@ import {
   portalActivateSchema,
   portalForgotPasswordSchema,
   portalLoginSchema,
+  portalSelectInstitutionSchema,
   portalReauthSchema,
   portalResetPasswordSchema,
   type PortalAcceptInviteInput,
@@ -26,6 +28,7 @@ import {
   type PortalActivateInput,
   type PortalForgotPasswordInput,
   type PortalLoginInput,
+  type PortalSelectInstitutionInput,
   type PortalReauthInput,
   type PortalResetPasswordInput,
 } from '@edrion/schemas';
@@ -37,7 +40,7 @@ import { ReqContext, SkipRateLimit } from '../../common/decorators';
 import { API_ENV, DATABASE } from '../../common/tokens';
 import type { EdrionRequestContext } from '../../common/request-context';
 import { zodBody } from '../../common/zod-validation.pipe';
-import { InstitutionAuthGuard } from './portal-auth.guard';
+import { InstitutionAuthGuard, readCookie } from './portal-auth.guard';
 import { CurrentInstitutionContext } from './portal.decorators';
 import { PortalAuthLoginService } from './portal-auth-login.service';
 import { PortalCredentialService } from './portal-credential.service';
@@ -71,8 +74,44 @@ export class PortalAuthController {
     @ReqContext() req: EdrionRequestContext,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { token } = await this.login.login(body, req);
+    const result = await this.login.login(body, req);
+    if (result.selectionToken) {
+      res.clearCookie(this.sessions.cookieName, this.sessions.clearCookieOptions());
+      res.cookie(this.login.selectionCookieName, result.selectionToken, {
+        ...this.sessions.cookieOptions(), maxAge: 300_000,
+      });
+      return { authenticated: false, requiresInstitutionSelection: true };
+    }
+    res.clearCookie(this.login.selectionCookieName, this.sessions.clearCookieOptions());
+    res.cookie(this.sessions.cookieName, result.token, this.sessions.cookieOptions());
+    return { authenticated: true };
+  }
+
+  /** Cross-institution discovery must run outside the current tenant's RLS transaction.
+   * The service verifies the cookie itself and returns only linked memberships. */
+  @Get('institutions')
+  async institutionsHandler(@Req() req: Request) {
+    return this.login.institutions(
+      readCookie(req.headers.cookie, this.sessions.cookieName),
+      readCookie(req.headers.cookie, this.login.selectionCookieName),
+    );
+  }
+
+  @Post('select-institution')
+  @HttpCode(HttpStatus.OK)
+  async selectInstitutionHandler(
+    @Body(zodBody(portalSelectInstitutionSchema)) body: PortalSelectInstitutionInput,
+    @Req() httpReq: Request,
+    @ReqContext() req: EdrionRequestContext,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { token } = await this.login.selectInstitution(
+      body, req,
+      readCookie(httpReq.headers.cookie, this.sessions.cookieName),
+      readCookie(httpReq.headers.cookie, this.login.selectionCookieName),
+    );
     res.cookie(this.sessions.cookieName, token, this.sessions.cookieOptions());
+    res.clearCookie(this.login.selectionCookieName, this.sessions.clearCookieOptions());
     return { authenticated: true };
   }
 
@@ -85,6 +124,7 @@ export class PortalAuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const { token } = await this.credentials.activate(body, req);
+    res.clearCookie(this.login.selectionCookieName, this.sessions.clearCookieOptions());
     res.cookie(this.sessions.cookieName, token, this.sessions.cookieOptions());
     return { activated: true };
   }
@@ -106,6 +146,7 @@ export class PortalAuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const { token } = await this.credentials.acceptInvite(body, req);
+    res.clearCookie(this.login.selectionCookieName, this.sessions.clearCookieOptions());
     res.cookie(this.sessions.cookieName, token, this.sessions.cookieOptions());
     return { accepted: true };
   }
@@ -156,6 +197,7 @@ export class PortalAuthController {
   ) {
     await this.login.logout(this.requireSessionId(ic), this.userOf(ic), req);
     res.clearCookie(this.sessions.cookieName, this.sessions.clearCookieOptions());
+    res.clearCookie(this.login.selectionCookieName, this.sessions.clearCookieOptions());
     return { loggedOut: true };
   }
 

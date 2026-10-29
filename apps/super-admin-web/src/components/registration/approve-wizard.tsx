@@ -23,8 +23,8 @@ const ROLE_OPTIONS = [
   { value: 'institution_admin', label: 'Institution Admin' },
 ];
 const DELIVERY_OPTIONS = [
-  { value: 'activation', label: 'Send activation email' },
-  { value: 'temporary_password', label: 'Generate temporary password' },
+  { value: 'activation', label: 'Activation link for new accounts' },
+  { value: 'temporary_password', label: 'Temporary password for new accounts' },
 ];
 
 /**
@@ -50,7 +50,9 @@ export function ApproveWizard({
 
   const [supportTier, setSupportTier] = useState('standard');
   const [planKey] = useState(request.preferredPlanKey ?? '');
-  const [campusName, setCampusName] = useState(request.campusInfo?.firstCampusName ?? `${request.displayName ?? 'Main'} Campus`);
+  const [campusName, setCampusName] = useState(
+    request.campusInfo?.firstCampusName ?? `${request.displayName ?? 'Main'} Campus`,
+  );
   const [adminName, setAdminName] = useState(request.contactName ?? '');
   const [adminEmail, setAdminEmail] = useState(request.contactEmail ?? '');
   const [adminRole, setAdminRole] = useState('institution_owner');
@@ -65,7 +67,8 @@ export function ApproveWizard({
     }
     if (step === 3) {
       if (adminName.trim().length < 2) return setError('Administrator name is required.');
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(adminEmail.trim())) return setError('Enter a valid administrator email.');
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(adminEmail.trim()))
+        return setError('Enter a valid administrator email.');
     }
     setStep((s) => Math.min(s + 1, STEP_TITLES.length - 1));
   };
@@ -99,7 +102,12 @@ export function ApproveWizard({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} title="Approve & provision institution" className="max-w-lg">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Approve & provision institution"
+      className="max-w-lg"
+    >
       <div className="p-5">
         <div className="mb-4">
           <h2 className="text-md font-semibold text-text-primary">Approve &amp; provision</h2>
@@ -109,13 +117,19 @@ export function ApproveWizard({
                 <span
                   className={cn(
                     'flex items-center gap-1',
-                    i === step ? 'font-semibold text-primary' : i < step ? 'text-success' : 'text-text-muted',
+                    i === step
+                      ? 'font-semibold text-primary'
+                      : i < step
+                        ? 'text-success'
+                        : 'text-text-muted',
                   )}
                 >
                   {i < step && <Check className="h-3 w-3 shrink-0" />}
                   <span>{t}</span>
                 </span>
-                {i < STEP_TITLES.length - 1 && <ChevronRight className="h-3 w-3 text-text-muted/40 shrink-0" />}
+                {i < STEP_TITLES.length - 1 && (
+                  <ChevronRight className="h-3 w-3 text-text-muted/40 shrink-0" />
+                )}
               </li>
             ))}
           </ol>
@@ -124,13 +138,21 @@ export function ApproveWizard({
         <div className="page-enter min-h-[180px] space-y-4">
           {step === 0 && (
             <div className="space-y-2 text-sm">
-              <p className="text-text-secondary">You're about to create a live institution from this application.</p>
+              <p className="text-text-secondary">
+                You're about to create a live institution from this application.
+              </p>
               <Row label="Institution" value={request.displayName ?? request.legalName ?? '—'} />
               <Row label="Legal name" value={request.legalName ?? '—'} />
               <Row label="Type" value={request.type?.replace(/_/g, ' ') ?? '—'} />
               <Row label="Country" value={request.country ? countryName(request.country) : '—'} />
-              <Row label="Primary contact" value={`${request.contactName ?? '—'} · ${request.contactEmail ?? ''}`} />
-              <Row label="Expected students" value={request.expectedStudents?.toLocaleString() ?? '—'} />
+              <Row
+                label="Primary contact"
+                value={`${request.contactName ?? '—'} · ${request.contactEmail ?? ''}`}
+              />
+              <Row
+                label="Expected students"
+                value={request.expectedStudents?.toLocaleString() ?? '—'}
+              />
             </div>
           )}
 
@@ -138,7 +160,12 @@ export function ApproveWizard({
             <div className="space-y-4">
               <div>
                 <Label htmlFor="tier">Support tier</Label>
-                <Select id="tier" options={TIER_OPTIONS} value={supportTier} onChange={(e) => setSupportTier(e.target.value)} />
+                <Select
+                  id="tier"
+                  options={TIER_OPTIONS}
+                  value={supportTier}
+                  onChange={(e) => setSupportTier(e.target.value)}
+                />
               </div>
               <div>
                 <Label>Selected plan</Label>
@@ -150,7 +177,8 @@ export function ApproveWizard({
                   )}
                 </div>
                 <p className="mt-1 text-xs text-text-muted">
-                  Chosen by the institution during registration. A trial subscription on this plan is opened on approval.
+                  Chosen by the institution during registration. A trial subscription on this plan
+                  is opened on approval.
                 </p>
               </div>
             </div>
@@ -160,8 +188,14 @@ export function ApproveWizard({
             <div className="space-y-4">
               <div>
                 <Label htmlFor="campus-name">First campus name</Label>
-                <Input id="campus-name" value={campusName} onChange={(e) => setCampusName(e.target.value)} />
-                <p className="mt-1 text-xs text-text-muted">A unique campus code is generated automatically on provisioning.</p>
+                <Input
+                  id="campus-name"
+                  value={campusName}
+                  onChange={(e) => setCampusName(e.target.value)}
+                />
+                <p className="mt-1 text-xs text-text-muted">
+                  A unique campus code is generated automatically on provisioning.
+                </p>
               </div>
             </div>
           )}
@@ -170,37 +204,76 @@ export function ApproveWizard({
             <div className="space-y-4">
               <div>
                 <Label htmlFor="admin-name">Administrator name</Label>
-                <Input id="admin-name" value={adminName} onChange={(e) => setAdminName(e.target.value)} />
+                <Input
+                  id="admin-name"
+                  value={adminName}
+                  onChange={(e) => setAdminName(e.target.value)}
+                />
               </div>
               <div>
                 <Label htmlFor="admin-email">Administrator email</Label>
-                <Input id="admin-email" type="email" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} />
+                <Input
+                  id="admin-email"
+                  type="email"
+                  value={adminEmail}
+                  onChange={(e) => setAdminEmail(e.target.value)}
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="admin-role">Role</Label>
-                  <Select id="admin-role" options={ROLE_OPTIONS} value={adminRole} onChange={(e) => setAdminRole(e.target.value)} />
+                  <Select
+                    id="admin-role"
+                    options={ROLE_OPTIONS}
+                    value={adminRole}
+                    onChange={(e) => setAdminRole(e.target.value)}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="admin-delivery">Access</Label>
-                  <Select id="admin-delivery" options={DELIVERY_OPTIONS} value={delivery} onChange={(e) => setDelivery(e.target.value)} />
+                  <Select
+                    id="admin-delivery"
+                    aria-describedby="admin-delivery-note"
+                    options={DELIVERY_OPTIONS}
+                    value={delivery}
+                    onChange={(e) => setDelivery(e.target.value)}
+                  />
                 </div>
               </div>
+              <p id="admin-delivery-note" className="text-xs text-text-muted">
+                An existing active institution account uses its current sign-in and receives an
+                approval email. This choice applies to new accounts.
+              </p>
             </div>
           )}
 
           {step === 4 && (
             <div className="space-y-2 text-sm">
-              <p className="text-text-secondary">Confirm to create the institution (in Onboarding), its first campus, the administrator and an onboarding checklist.</p>
+              <p className="text-text-secondary">
+                Confirm to create the institution (in Onboarding), its first campus, the
+                administrator and an onboarding checklist.
+              </p>
               <Row label="Institution" value={request.displayName ?? request.legalName ?? '—'} />
               <Row label="Support tier" value={supportTier} />
               <Row label="Campus" value={campusName} />
               <Row label="Administrator" value={`${adminName} · ${adminEmail}`} />
               <Row label="Role" value={adminRole.replace(/_/g, ' ')} />
-              <Row label="Access" value={delivery === 'activation' ? 'Activation email' : 'Temporary password'} />
+              <Row
+                label="Access"
+                value={
+                  delivery === 'activation'
+                    ? 'Existing account sign-in, or activation for a new account'
+                    : 'Existing account sign-in, or a temporary password for a new account'
+                }
+              />
               <div className="pt-2">
                 <Label htmlFor="approve-note">Note (optional)</Label>
-                <Input id="approve-note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Recorded with the approval" />
+                <Input
+                  id="approve-note"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Recorded with the approval"
+                />
               </div>
             </div>
           )}
@@ -209,8 +282,19 @@ export function ApproveWizard({
         </div>
 
         <div className="mt-6 flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={step === 0 ? onClose : back} disabled={mutation.isPending}>
-            {step === 0 ? 'Cancel' : (<><ArrowLeft className="h-4 w-4" /> Back</>)}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={step === 0 ? onClose : back}
+            disabled={mutation.isPending}
+          >
+            {step === 0 ? (
+              'Cancel'
+            ) : (
+              <>
+                <ArrowLeft className="h-4 w-4" /> Back
+              </>
+            )}
           </Button>
           {step < STEP_TITLES.length - 1 ? (
             <Button onClick={next}>

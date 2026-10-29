@@ -110,6 +110,8 @@ export const createStudentSchema = z.object({
   address: shortText(300),
   status: studentStatusSchema.default('enrolled'),
   enrollmentDate: isoDate,
+  /** Create an active student login with admissionNo as its temporary password. */
+  createPortalAccount: z.boolean().default(true),
 });
 export type CreateStudentInput = z.infer<typeof createStudentSchema>;
 

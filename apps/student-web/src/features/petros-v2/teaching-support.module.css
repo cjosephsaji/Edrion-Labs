@@ -1,0 +1,388 @@
+.context {
+  display: grid;
+  gap: 16px;
+  margin: 20px 0;
+}
+.question {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 14px;
+  padding: 18px 20px;
+  border: 1px solid #bdccc8;
+  border-radius: 12px;
+  background: #f1f5f2;
+}
+.question > svg {
+  margin-top: 1px;
+  color: #326657;
+}
+.question h3,
+.rationale h3 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.question p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.questionDetails {
+  margin-top: 10px;
+}
+.questionPassage {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #d2ded5;
+}
+.questionPassage > strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 11px;
+  color: #557061;
+}
+.questionDetails summary,
+.notes summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  list-style: none;
+}
+.questionDetails summary::before,
+.notes summary::before {
+  content: '+';
+  font-size: 19px;
+  width: 14px;
+}
+.questionDetails[open] > summary::before,
+.notes[open] > summary::before {
+  content: '−';
+}
+.questionDetails p {
+  padding: 10px 0;
+}
+.lastAnswer {
+  min-width: 0;
+}
+.smallLabel {
+  margin: 0 0 8px;
+  color: #596d63;
+  font-size: 11px;
+  letter-spacing: 0.035em;
+}
+.feedbackGroups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.keep,
+.revisit {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1 1 240px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid;
+  font-size: 12px;
+}
+.keep {
+  background: #edf5ef;
+  border-color: #b9d3bf;
+  color: #28523a;
+}
+.revisit {
+  background: #fbf5e9;
+  border-color: #dbcaa5;
+  color: #705520;
+}
+.keep svg,
+.revisit svg {
+  flex: none;
+  margin-top: 1px;
+}
+.feedbackGroups ul {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  line-height: 1.6;
+}
+.supportGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(220px, 1fr);
+  gap: 12px;
+}
+.rationale {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  padding: 16px;
+  background: #f8f5ed;
+  border: 1px solid #dfd7c5;
+  border-radius: 12px;
+}
+.rationale p {
+  margin: 0;
+  color: #525f54;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #eae8da;
+  color: #6a622f;
+  flex: none;
+}
+button.sourceButton {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  gap: 12px;
+  background: #f4f7f8;
+  border: 1px solid #c6d4da;
+  border-radius: 12px;
+  color: #304f5b;
+  padding: 16px;
+  cursor: pointer;
+}
+.sourceButton .icon {
+  color: #365e6d;
+  background: #e4edf0;
+}
+.sourceButton > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.sourceButton strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 13px;
+}
+.sourceButton > span > span {
+  display: block;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.sourceButton > svg {
+  flex: none;
+}
+.sourceButton:hover {
+  background: #eaf1f3;
+  border-color: #7796a1;
+}
+.instruction {
+  border-left: 3px solid #7b9c8b;
+  padding: 2px 0 2px 14px;
+}
+.instruction > strong {
+  font-size: 12px;
+  color: #365b4a;
+}
+.instruction p {
+  margin: 5px 0 0;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.sources {
+  display: grid;
+  gap: 18px;
+}
+.provenance {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #c7d5cd;
+  background: #eff4ef;
+  border-radius: 11px;
+}
+.provenance > svg {
+  flex: none;
+  margin-top: 2px;
+  color: #456e5d;
+}
+.provenance strong,
+.provenance h3 {
+  font-size: 15px;
+  margin: 0;
+}
+.provenance p {
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 7px 0 0;
+}
+.excerpt {
+  padding: 0 0 14px;
+  border-bottom: 1px solid #d5dfd4;
+}
+.excerpt h3 {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #49634f;
+}
+.excerpt blockquote {
+  margin: 0;
+  padding: 14px 16px;
+  border-left: 3px solid #839b87;
+  border-radius: 0 8px 8px 0;
+  background: #f1f4ed;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.75;
+}
+.notes {
+  padding: 4px 14px;
+  border: 1px solid #d4ddcf;
+  border-radius: 9px;
+}
+.notes ul,
+.excerpt ul {
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.75;
+}
+.context :is(button, summary):focus-visible,
+.sources summary:focus-visible {
+  outline: 3px solid #237a5f;
+  outline-offset: 3px;
+}
+@media (max-width: 700px) {
+  .context {
+    gap: 12px;
+    margin-block: 16px;
+  }
+  .question {
+    padding: 14px;
+    gap: 10px;
+  }
+  .supportGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rationale,
+  button.sourceButton {
+    padding: 14px;
+  }
+  .feedbackGroups {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.compact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 8px 0;
+}
+.compact > p {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 13px;
+}
+.compact details {
+  flex: 1;
+  font-size: 12px;
+  min-width: 180px;
+}
+.compact details p {
+  margin: 8px 0;
+}
+.compact button {
+  background: white;
+}
+.context:has(.compact) {
+  margin: 6px 0 10px;
+  gap: 6px;
+}
+.context .compact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 12px;
+  margin: 0;
+}
+.context .compact > p,
+.context .compact > details {
+  grid-column: 1;
+}
+.context .compact > button {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: center;
+}
+@media (max-width: 600px) {
+  .context .compact {
+    grid-template-columns: 1fr;
+  }
+  .context .compact > button {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: start;
+  }
+}
+
+/* Classic keeps the current question and exact passage prominent; rationale is optional reading. */
+.classic .question {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.classic .question p {
+  font-size: 17px;
+}
+.classic .supportGrid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: 8px 22px;
+}
+.classic .rationale {
+  display: block;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  flex: 1 1 200px;
+}
+.classic .rationale summary {
+  min-height: 44px;
+  align-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.classic .rationale p {
+  font-size: 16px;
+}
+.classic .sourceButton {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  min-height: 44px;
+}
+.classic .sourceButton .icon,
+.classic .sourceButton > span > span {
+  display: none;
+}
+.classic .sourceButton strong {
+  font-size: 14px;
+  margin: 0;
+}
+.classic .instruction p {
+  font-size: 16px;
+}

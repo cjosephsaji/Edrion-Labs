@@ -3,7 +3,7 @@ import { config as loadDotenv } from 'dotenv';
 import { join } from 'node:path';
 // Load the workspace-root .env so the API has DATABASE_URL etc. when run via turbo (cwd = apps/api).
 // override: true — a stale DATABASE_URL in the shell (e.g. localhost) must not win over repo .env.
-loadDotenv({ path: join(__dirname, '../../../.env'), override: true });
+loadDotenv({ path: process.env.EDRION_ENV_FILE ?? join(__dirname, '../../../.env'), override: true });
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { json, urlencoded } from 'express';

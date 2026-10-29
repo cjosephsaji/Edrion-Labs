@@ -1,0 +1,104 @@
+- alert
+- main:
+  - link "Skip to your learning stage":
+    - /url: "#learning-stage"
+  - button "Your lessons":
+    - generic: Your lessons
+  - button "Petros learning studio": petros
+  - button "Learning preferences":
+  - button "Pause lesson":
+    - generic: Pause lesson
+  - button "About this demo":
+    - text: About this demo
+  - heading "Cloud Computing" [level=1]
+  - navigation "Lesson progress":
+    - list:
+      - text: Explore
+      - text: Your turn
+      - generic: "03"
+      - text: Reflect
+  - paragraph: OUR FOCUSDistinguish service responsibility and apply the bounded memory-capacity method.
+  - region "Learning studio":
+    - region "Petros companion":
+      - text: Petros · Looking back
+      - paragraph: The checked parts passed. Review the feedback before trying the next step.
+      - img "Petros, acknowledging"
+    - generic: ✓
+    - text: Correct — all checked parts passed
+    - button "Hide Petros character": Hide character
+    - region "Interactive teaching workspace":
+      - generic "Structured canvas elements":
+        - 'generic "Available memory: 48 · Correct in your submitted work"'
+        - 'generic "Whole VM capacity: 6 · Correct in your submitted work"'
+        - region "VM memory laboratory":
+          - heading "VM memory laboratory" [level=3]
+          - text: Total
+          - strong: 64 GB
+          - text: Host reservation
+          - strong: 16 GB
+          - text: Each whole VM
+          - strong: 8 GB
+          - text: Available for VMs
+          - strong: 48 GB
+          - generic "Memory allocation area":
+            - generic: ▧ Reserved
+            - generic: ▣ VM allocations
+            - generic: □ Remaining
+            - generic: VM 1
+            - generic: 8 GB
+            - generic: VM 2
+            - generic: 8 GB
+            - generic: VM 3
+            - generic: 8 GB
+            - generic: VM 4
+            - generic: 8 GB
+            - generic: VM 5
+            - generic: 8 GB
+            - generic: VM 6
+            - generic: 8 GB
+            - term: Allocated VMs
+            - definition: "6"
+            - term: VM memory used
+            - definition: 48 GB
+            - term: Remaining for VMs
+            - definition: 0 GB
+            - term: Utilization of available memory
+            - definition: 100.0%
+          - paragraph: GB · fixed host reservation · whole 8 GB allocations · no overcommit. This educational model ignores CPU, storage and hypervisor overhead.
+          - status:
+            - strong: Allocation refused — capacity limit
+            - paragraph: 7 complete VMs cannot fit. The allocation stays at 6; 0 GB remain.
+            - paragraph: "Your saved prediction for 7 VMs: will fit. Observed: allocation refused."
+          - paragraph: Assisted practice · observations are formative. They do not grade your explanation or count as independent verification.
+          - generic "Compare before and after"
+          - paragraph: "Saved explanation: Seven 8 GB VMs need 56 GB, but the fixed reservation leaves 48 GB. Six complete VMs use the available memory. · not evaluated"
+      - button "Teaching text alternative"
+    - region "Correct the whole-VM capacity step. Explain what each unit means.":
+      - paragraph: Your saved response
+      - strong: Question you’re working on
+      - heading "Correct the whole-VM capacity step. Explain what each unit means." [level=2]
+      - paragraph: Assisted practice · your use of the reviewed explanation is recorded.
+      - paragraph: The source passage
+      - blockquote:
+        - button "Focus passage paragraph 1": For IaaS, who manages the guest operating system? A memory-only host has 64 GB, reserves 16 GB, and needs 8 GB per VM. Record available memory and whole-VM capacity.
+      - paragraph: Select wording to keep it in focus while you write.
+      - group "Your response":
+        - generic: Your response
+        - generic: Your answer
+        - textbox "Your answer" [disabled]: The fixed reservation leaves 48 GB for VMs. Six whole 8 GB allocations use that memory; seven require 56 GB. I changed my saved capacity from seven to six after testing the model.
+      - status [active]: Answer submitted. Saved to your learning session.
+      - generic "Response feedback":
+        - heading "Correct — all checked parts passed" [level=3]
+        - paragraph: Deterministically checked
+        - generic: ↗
+        - text: Assisted practice · separate from independent verification
+        - paragraph: Review the checked parts, then continue with the next available learning step.
+        - generic "About this feedback"
+    - button "Work on this with Petros"
+    - status: Submitted work saved
+    - button "Sources":
+      - text: Sources
+    - button "Ask Petros":
+      - text: Ask Petros
+    - button "End session":
+      - text: End session

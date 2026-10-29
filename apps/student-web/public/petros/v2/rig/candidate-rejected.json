@@ -1,0 +1,412 @@
+{
+  "version": "petros.layered.candidate.v2",
+  "artwork": "Rejected layered SVG candidate; original Petros PNGs are selected for live use",
+  "poses": {
+    "neutral": "/petros/states/petros-idle.png",
+    "listening": "/petros/states/petros-listening.png",
+    "thinking": "/petros/states/petros-thinking.png",
+    "speaking": "/petros/states/petros-talking.png",
+    "point-right": "/petros/states/petros-point-right.png",
+    "point-left": "/petros/states/petros-point-left.png",
+    "point-up": "/petros/states/petros-point-up.png",
+    "point-down": "/petros/states/petros-point-down.png"
+  },
+  "supported": [
+    "directional-pointing",
+    "speech-caption",
+    "status-cloud",
+    "layered-svg",
+    "independent-eye-gaze",
+    "facial-controls",
+    "natural-blinking",
+    "eyebrow-controls",
+    "independent-head",
+    "independent-mouth",
+    "open-hand",
+    "nod",
+    "amplitude-mouth"
+  ],
+  "unsupported": [
+    "precise-hand-target",
+    "articulated-fingers",
+    "writing-pose",
+    "handwriting",
+    "phoneme-mouth",
+    "walking",
+    "breathing-rig",
+    "three-quarter-rig"
+  ],
+  "fallback": "neutral",
+  "coordinateSystem": "SVG user units, 384 \u00d7 512, y down",
+  "calloutAnchor": "Content-sized side cloud in reserved companion harbor; tail anchored to avatar",
+  "pointingPolicy": "Bounded authored SVG clips only, for the latest current public action and its registered visible source-bound target. Look, gesture, companion highlight, settle; one point per semantic event, 30-second cooldown. No arbitrary reaching or fingertip/pen contact. Missing/offscreen targets, input, pause and reduced motion settle safely.",
+  "assetInventory": {
+    "neutral": {
+      "sha256": "26fa3a0d8f831d19388a40aa6bb3a22d42e11535e18e5fff1d30236ce0584ec6",
+      "width": 384,
+      "height": 512,
+      "pngColorType": 6
+    },
+    "listening": {
+      "sha256": "60faf14dd2c92a2d8734ae95a421a81f44c8d758970b5b4f520d35bd76a1d0b3",
+      "width": 384,
+      "height": 512,
+      "pngColorType": 6
+    },
+    "thinking": {
+      "sha256": "df61ca41a8e270b7bd94a4ead7c28ee27627e88227f524dad2b10d27d2e96a41",
+      "width": 384,
+      "height": 512,
+      "pngColorType": 6
+    },
+    "speaking": {
+      "sha256": "fb12b6bbc7c900d717a0ebc5d59a2f83e06d801b73838478db43441d9c09c17b",
+      "width": 384,
+      "height": 512,
+      "pngColorType": 6
+    },
+    "point-right": {
+      "sha256": "6d6e6d95e289bdf8a69836d132a3e51644c59ce9da3c79068bf6a83ba7686c6e",
+      "width": 384,
+      "height": 512,
+      "pngColorType": 6
+    },
+    "point-left": {
+      "sha256": "29e57a3b7982bed2df9c55560bbd85c8018bde33d4873e37022a65da577a6ddd",
+      "width": 384,
+      "height": 512,
+      "pngColorType": 6
+    },
+    "point-up": {
+      "sha256": "dda2223d42d70c927a8a24ef79ebf59f42d897b3f96972836027c3ea85226493",
+      "width": 384,
+      "height": 512,
+      "pngColorType": 6
+    },
+    "point-down": {
+      "sha256": "517ed035b0b03bb49876d05f75457785e98b2a8a6e5f2bf2c2763b9d08e604f4",
+      "width": 384,
+      "height": 512,
+      "pngColorType": 6
+    }
+  },
+  "motion": {
+    "gestureCooldownMs": 30000,
+    "gestureHoldMs": [
+      700,
+      820,
+      940
+    ],
+    "transitionMs": 180,
+    "blinkIntervalMs": [
+      9000,
+      12000,
+      15000
+    ],
+    "blinkDurationMs": 150,
+    "speech": "Actual amplitude samples only; absent/stalled/stopped audio closes the mouth",
+    "cancel": "Immediate settled pose on interruption, hidden, pause, revocation or typing",
+    "upPoint": "Separately authored raised arm/hand clip clears the shell; not rotation of a hand behind the head.",
+    "acknowledgmentVariants": {
+      "nod": {
+        "durationMs": 940,
+        "maxHeadDegrees": 4
+      },
+      "acknowledge": {
+        "durationMs": 760,
+        "maxHeadDegrees": 2
+      }
+    }
+  },
+  "layers": [
+    "legs",
+    "body",
+    "arm-left",
+    "arm-right",
+    "head-shell",
+    "eye-left",
+    "eye-right",
+    "pupil-left",
+    "pupil-right",
+    "lid-left",
+    "lid-right",
+    "brow-left",
+    "brow-right",
+    "mouth-closed",
+    "book",
+    "point-up"
+  ],
+  "pivots": {
+    "head": [
+      192,
+      326
+    ],
+    "arm-left": [
+      112,
+      251
+    ],
+    "arm-right": [
+      272,
+      251
+    ]
+  },
+  "contactAnchors": {
+    "eye-left": [
+      155,
+      208
+    ],
+    "eye-right": [
+      231,
+      211
+    ],
+    "mouth": [
+      193,
+      272
+    ],
+    "hand-left": [
+      80,
+      319
+    ],
+    "hand-right": [
+      304,
+      319
+    ]
+  },
+  "requiredArtwork": {
+    "three-quarter-rig": [
+      "Authored reference study provided; reviewed aligned runtime turning layers remain unavailable"
+    ],
+    "writing-pose": [
+      "Reviewed pen/grip/contact clips and stroke synchronization"
+    ],
+    "human-art-acceptance": [
+      "Human review of silhouette, expression, layering, gesture meaning and all sizes"
+    ]
+  },
+  "approximated": {},
+  "idlePolicy": "Silent settled SVG assembly; infrequent independent 12-second eyelid blink only when permitted. No whole-image idle transform or timed raster mouth overlay. Hidden, pause, reduced motion and issued verification disable cycling.",
+  "renderer": "layered-svg",
+  "viewBox": [
+    0,
+    0,
+    384,
+    512
+  ],
+  "origin": [
+    192,
+    470
+  ],
+  "footBaseline": 470,
+  "zOrder": [
+    "legs",
+    "body",
+    "arm-left",
+    "arm-right",
+    "head",
+    "book"
+  ],
+  "expressions": [
+    "neutral",
+    "attentive",
+    "thoughtful",
+    "pleased",
+    "uncertain"
+  ],
+  "expressionCombinations": {
+    "neutral": {
+      "head": 0,
+      "brows": [
+        0,
+        0
+      ]
+    },
+    "attentive": {
+      "head": -2,
+      "brows": [
+        -2,
+        -2
+      ]
+    },
+    "thoughtful": {
+      "head": 3,
+      "brows": [
+        2,
+        -3
+      ]
+    },
+    "pleased": {
+      "head": 0,
+      "brows": [
+        -1,
+        -1
+      ]
+    },
+    "uncertain": {
+      "head": -3,
+      "brows": [
+        -4,
+        3
+      ]
+    }
+  },
+  "limits": {
+    "gazeX": 4,
+    "gazeY": 3,
+    "headDegrees": [
+      -4,
+      4
+    ],
+    "armDegrees": [
+      -48,
+      72
+    ]
+  },
+  "mouthShapes": [
+    "closed",
+    "small",
+    "medium",
+    "wide"
+  ],
+  "gestureClips": [
+    "settled",
+    "lean",
+    "nod",
+    "acknowledge",
+    "open-hand",
+    "point-left",
+    "point-right",
+    "point-up",
+    "point-down"
+  ],
+  "supportedDirections": [
+    "left",
+    "right",
+    "up",
+    "down"
+  ],
+  "calloutAnchors": {
+    "speech": [
+      300,
+      156
+    ],
+    "status": [
+      300,
+      133
+    ]
+  },
+  "humanAcceptance": "rejected-by-user",
+  "fallbackStates": [
+    "neutral",
+    "text-only"
+  ],
+  "gestureReview": "Rejected by user on 2026-10-21; inactive candidate retained for evidence only",
+  "assetVersion": "m6-svg-2",
+  "assets": {
+    "layers.svg": {
+      "sha256": "9719477c9c015135fbbf136a6aca697076cbb3cbf9b39679f23941bc75c675c9"
+    },
+    "neutral.png": {
+      "sha256": "d2723e0f91d4a41e755242fd4d7512ddc238e0df48de2e65b8d07fb3b0ee66ad",
+      "width": 384,
+      "height": 512
+    },
+    "attentive.png": {
+      "sha256": "abe940d95652e28f88f0e660d1c65f8a6ed21b2d50471ec5216df9dfcb428c9c",
+      "width": 384,
+      "height": 512
+    },
+    "thoughtful.png": {
+      "sha256": "2d5587a0cf95e20c31463354fcbbe8daafa9985a84bf2bbcc05cece4b6f5391d",
+      "width": 384,
+      "height": 512
+    },
+    "pleased.png": {
+      "sha256": "c61eaf7559aafe9042dd8b64e67f0312158bb6b8ea91f63f7918cc2259f4210a",
+      "width": 384,
+      "height": 512
+    },
+    "uncertain.png": {
+      "sha256": "8f024be59245e500127c4b1f46e8edf56445937e139535622d662a904eae9a95",
+      "width": 384,
+      "height": 512
+    }
+  },
+  "legacyArtwork": {
+    "neutral": "/petros/states/petros-idle.png",
+    "listening": "/petros/states/petros-listening.png",
+    "thinking": "/petros/states/petros-thinking.png",
+    "speaking": "/petros/states/petros-talking.png",
+    "point-right": "/petros/states/petros-point-right.png",
+    "point-left": "/petros/states/petros-point-left.png",
+    "point-up": "/petros/states/petros-point-up.png",
+    "point-down": "/petros/states/petros-point-down.png"
+  },
+  "anchorLayers": {
+    "head-shell": [
+      192,
+      326
+    ],
+    "eye-left": [
+      155,
+      208
+    ],
+    "eye-right": [
+      231,
+      211
+    ],
+    "mouth-closed": [
+      193,
+      272
+    ],
+    "arm-left": [
+      112,
+      251
+    ],
+    "arm-right": [
+      272,
+      251
+    ]
+  },
+  "legacySupported": [
+    "static-poses",
+    "directional-pointing",
+    "speech-caption",
+    "status-cloud",
+    "speech-pose",
+    "whole-pose-transition",
+    "whole-image-idle",
+    "approximate-mouth-overlay"
+  ],
+  "expressionGesturePolicy": {
+    "nod": [
+      "neutral",
+      "pleased"
+    ],
+    "acknowledge": [
+      "neutral",
+      "pleased"
+    ],
+    "lean": [
+      "neutral",
+      "attentive",
+      "pleased",
+      "uncertain"
+    ]
+  },
+  "legacyCompatibility": "poses, assetInventory and legacySupported preserve the unchanged V1/old-fixture pose map only; supported describes the layered M6 candidate.",
+  "authoringReferences": {
+    "front": "docs/verification/petros-v2/avatar-art/m6/petros-master.svg",
+    "threeQuarterStudy": "docs/verification/petros-v2/avatar-art/m6/three-quarter-study.svg",
+    "review": "pending"
+  },
+  "gestureLayerIds": [
+    "point-right",
+    "point-up",
+    "open-right"
+  ],
+  "selection": {
+    "active": false,
+    "rejectedAt": "2026-10-21",
+    "replacement": "manifest.json"
+  }
+}

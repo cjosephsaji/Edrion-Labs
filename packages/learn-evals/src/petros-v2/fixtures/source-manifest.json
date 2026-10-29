@@ -1,0 +1,158 @@
+{
+  "argument-commentary.pptx": {
+    "sha256": "b872d142670e4f7a83ff6008a81ecd4d7f039118563b677dff538a2f5d1f7b12",
+    "bytes": 36252,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "argument-revised.pdf": {
+    "sha256": "72f43bc3970eccb4cf0b55c827ea12a1bc2e2217f740eac0246b32a35ba0dbba",
+    "bytes": 2328,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "argument.pdf": {
+    "sha256": "d63c78926db53b0f0da0c766bfb0c5a3c377f42d000273cae5a83e8ca567c007",
+    "bytes": 2334,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "cloud-models-revised.pptx": {
+    "sha256": "1a5c979987d088c28faf69d03fbd26c8f27607707fccfe7a9225912e02c02dfd",
+    "bytes": 56004,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "cloud-models.pptx": {
+    "sha256": "5ce5e6b855309556f0990ece00a6d7a2ecf7f7cb9a35f1b0a50b255c061e2c3b",
+    "bytes": 55997,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "cloud-reference.pdf": {
+    "sha256": "996bf873b5708c3150c29d146ae6578dfcf35dac4aaadf9bdfd7c27bcb508229",
+    "bytes": 15103,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "corrupt.pdf": {
+    "sha256": "321904c045cd541bbc756bae501de67a88ca0462c1f6b8001e20e34765b8c98b",
+    "bytes": 18,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "encrypted.pdf": {
+    "sha256": "599ec8e81cade662259fcab1e020fd62d19bb1230b3d1015da205443ad726175",
+    "bytes": 2367,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "image-only.pdf": {
+    "sha256": "02073bed10e5d7703e7f6eab70bd4bf93b01f2ef9f5dbfd50ac0a8fe17f6e2bc",
+    "bytes": 13396,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "injection.pdf": {
+    "sha256": "7b6b1270441653325ca359ca1cf1cde5014c09f05030316721940af911c54952",
+    "bytes": 1538,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "legacy-blocked.ppt": {
+    "sha256": "399f230fa64356a8a98262d63b5238919624fc15720045789c3345a8e097bec4",
+    "bytes": 30,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "malformed.pptx": {
+    "sha256": "fe82b0cc7e0be9c7484d18d98d804760589ed40071c6ba037edc2bba2e103b75",
+    "bytes": 11,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "oversized-pages.pdf": {
+    "sha256": "8f2b7a821ff8e612892750568fdddbf5866f628bc18988ac2310e8fb52461f09",
+    "bytes": 10573,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "smartart.pptx": {
+    "sha256": "053a172cf1580426d1dd5007af67bfb581a33e3cc7f539d3083038b70cf6b93d",
+    "bytes": 56051,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "unsafe-path.pptx": {
+    "sha256": "b616892037cb74162d53a9aaae0fb7eb6099e73ef41930562d08af6738bf884d",
+    "bytes": 135,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "xml-entity.pptx": {
+    "sha256": "d3eb467089ada1443aba2c58285d8a876a8f7a69f01180c9a9135e57a63bbff9",
+    "bytes": 209,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "zip-bomb.pptx": {
+    "sha256": "95725380d76a64545e1f809d14b5deef3e195e98a5704baeda1272f000d487a9",
+    "bytes": 2068,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "structures.pdf": {
+    "sha256": "01d477766099561215a3f612719f8a923850402a079dddcbf1e8190a6ae31ac5",
+    "bytes": 1955,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "rotated.pdf": {
+    "sha256": "fa7bb7400e28d7ed890a5eb200d581f2272e84b753d9cdbb701410e5e39d00ca",
+    "bytes": 1386,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "huge-dimensions.pdf": {
+    "sha256": "1f9457aab1f76bbb2ab531cd73a8780252b3f69ea011275ffc798826d604f9fc",
+    "bytes": 1369,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "ambiguous-arrow.pptx": {
+    "sha256": "25ba0241d29b668a173a7708b669af1afba69ad310fff5dad6c24ffd177b4b70",
+    "bytes": 55984,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "hidden-slide.pptx": {
+    "sha256": "0dfabe06fc5ca1c099fa58980b4cd3d9b480b50083aec6f2164334507aab9545",
+    "bytes": 56003,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "grouped-shapes.pptx": {
+    "sha256": "741a936dbddb1954b18f0ad97a995de04edea4217dcfc83af7b7fccf5c6d6939",
+    "bytes": 56016,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "external-link.pptx": {
+    "sha256": "f882ffed4a20730d652f451cabfc8086d90277b86e0b61db3b00fbcc38faabeb",
+    "bytes": 56041,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "macro.pptx": {
+    "sha256": "2f4332cb3225e4705e69ee08f9915aa2546e795ff91dd979ce3f3d65e08ad928",
+    "bytes": 56153,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  },
+  "embedded-executable.pptx": {
+    "sha256": "1bd70b59e2790e5bc821a3b1a8c70e3ab8358ca548d74f154ae9af676119f5f5",
+    "bytes": 56154,
+    "license": "CC0-1.0",
+    "labelOrigin": "Original engineering author; independent academic review OPEN"
+  }
+}
