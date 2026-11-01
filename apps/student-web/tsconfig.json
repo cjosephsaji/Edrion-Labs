@@ -34,7 +34,8 @@
     ".next-petros-m4-m5-vm-final-build/types/**/*.ts",
     ".next-petros-m4-m6-dev/types/**/*.ts",
     ".next-petros-m4-m6-build-build/types/**/*.ts",
-    ".next-petros-m4-m6-original-animation-dev/types/**/*.ts"
+    ".next-petros-m4-m6-original-animation-dev/types/**/*.ts",
+    ".next-petros-m4-learning-loop-dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

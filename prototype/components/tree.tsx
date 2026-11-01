@@ -1,4 +1,5 @@
 'use client';
+import type { CSSProperties } from 'react';
 import { activeTree } from '../teaching/tree-variant';
 import { alphaBeta, minimax } from '../teaching/algorithms';
 import type { ShowcaseState } from '../teaching/types';
@@ -20,12 +21,20 @@ export function Tree({
   const mm = minimax(tree),
     ab = alphaBeta(tree);
   const events = ab.events.slice(0, v.pruneStep);
+  const committed =
+    state.teaching.status === 'READY_TO_CONTINUE' &&
+    state.observations[state.questionId ?? '']?.responses.at(-1)?.validation ===
+      'correct';
   const visible = v.reveal >= 1 || Number(state.questionId?.slice(-2)) >= 2;
   const branchShown = (b: number) =>
     v.reveal >= 2 ||
-    (!v.transfer && state.completion[`AI3-Q0${b + 3}`]?.outcome === 'explored');
+    (!v.transfer && state.completion[`AI3-Q0${b + 4}`]?.outcome === 'explored');
   function select(id: string, value: string) {
-    if (state.paused) return;
+    if (
+      state.paused ||
+      ['READY_TO_CONTINUE', 'RETEACHING'].includes(state.teaching.status)
+    )
+      return;
     patch({
       highlightTargetId: id,
       visualState: { ...v, selected: id },
@@ -49,8 +58,18 @@ export function Tree({
       <g
         key={id}
         role="button"
-        tabIndex={0}
+        tabIndex={
+          state.paused ||
+          ['READY_TO_CONTINUE', 'RETEACHING'].includes(state.teaching.status)
+            ? -1
+            : 0
+        }
+        aria-disabled={
+          state.paused ||
+          ['READY_TO_CONTINUE', 'RETEACHING'].includes(state.teaching.status)
+        }
         aria-label={`${id}: ${label}`}
+        aria-pressed={selected || (small && state.studentResponse === value)}
         onClick={() => select(id, value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -59,7 +78,7 @@ export function Tree({
           }
         }}
         className={s.svgNode}
-        data-selected={selected}
+        data-selected={selected || (small && state.studentResponse === value)}
         data-skipped={event?.skipped}
       >
         <rect
@@ -85,7 +104,7 @@ export function Tree({
           y={y + 5}
           textAnchor="middle"
           fill={selected ? 'white' : '#223a2d'}
-          fontSize={small ? 20 : 17}
+          fontSize={small ? 28 : 20}
           fontWeight="600"
         >
           {label}
@@ -104,6 +123,58 @@ export function Tree({
       </g>
     );
   }
+  if (v.opponents)
+    return (
+      <div
+        className={s.opponentBoard}
+        data-testid="tree"
+        aria-label="Two players with opposing goals"
+      >
+        <div className={s.boardLabel}>
+          <span>ONE GAME · TWO GOALS</span>
+          <span>YOUR MOVE MATTERS</span>
+        </div>
+        <div className={s.players}>
+          <div>
+            <span className={s.playerPiece} aria-hidden="true">
+              ♙
+            </span>
+            <strong>You</strong>
+            <small>Want a higher score</small>
+          </div>
+          <span className={s.opposingArrow} aria-hidden="true">
+            ⇄
+          </span>
+          <div>
+            <span className={s.playerPiece} aria-hidden="true">
+              ♟
+            </span>
+            <strong>Your opponent</strong>
+            <small>Wants to reduce your score</small>
+          </div>
+        </div>
+        <div className={s.moveCards}>
+          <div>
+            <span>MOVE A</span>
+            <p>
+              <b>2</b>
+              <em>or</em>
+              <b>9</b>
+            </p>
+            <small>Your opponent chooses the outcome</small>
+          </div>
+          <div>
+            <span>MOVE B</span>
+            <p>
+              <b>4</b>
+              <em>or</em>
+              <b>5</b>
+            </p>
+            <small>Your opponent chooses the outcome</small>
+          </div>
+        </div>
+      </div>
+    );
   if (v.example) {
     const ex = v.example,
       answer =
@@ -120,12 +191,6 @@ export function Tree({
             {ex.role} {ex.role === 'MAX' ? '↑' : '↓'}
           </span>
         </div>
-        {state.questionId === 'AI3-Q03' && (
-          <p className={s.caption}>
-            Checkpoint: MIN A has 3 and 5. We keep this MIN checkpoint while
-            comparing examples.
-          </p>
-        )}
         <svg
           viewBox="0 0 700 240"
           className={s.tree}
@@ -140,11 +205,11 @@ export function Tree({
             />
           ))}
           {node(
-            state.questionId === 'AI3-Q03'
+            state.questionId === 'AI3-Q04'
               ? 'branch-0'
-              : state.questionId === 'AI3-Q04'
+              : state.questionId === 'AI3-Q05'
                 ? 'branch-1'
-                : state.questionId === 'AI3-Q05'
+                : state.questionId === 'AI3-Q06'
                   ? 'branch-2'
                   : 'root',
             350,
@@ -161,6 +226,18 @@ export function Tree({
               String(n),
               true,
             ),
+          )}
+          {committed && (
+            <ValueTravel
+              value={answer}
+              from={[
+                150 +
+                  ex.values.indexOf(answer) *
+                    (400 / Math.max(1, ex.values.length - 1)),
+                198,
+              ]}
+              to={[350, 45]}
+            />
           )}
         </svg>
         <p className={s.caption}>
@@ -227,12 +304,28 @@ export function Tree({
             })}
           </g>
         ))}
+        {committed &&
+          [4, 5, 6].includes(Number(state.questionId?.slice(-2))) &&
+          (() => {
+            const b = Number(state.questionId?.slice(-2)) - 4;
+            const x = [130, 350, 570][b]!;
+            return (
+              <ValueTravel
+                value={mm.children[b]!}
+                from={[
+                  x + (tree[b]!.indexOf(mm.children[b]!) === 0 ? -45 : 45),
+                  246,
+                ]}
+                to={[x, 138]}
+              />
+            );
+          })()}
         {node(
           'root',
           350,
           38,
           v.reveal >= 3 ||
-            (!v.transfer && state.completion['AI3-Q06']?.outcome === 'explored')
+            (!v.transfer && state.completion['AI3-Q07']?.outcome === 'explored')
             ? `MAX = ${mm.value}`
             : 'MAX',
           'Root MAX + children MIN',
@@ -268,46 +361,20 @@ export function Tree({
           </g>
         ))}
       </svg>
-      <div className={s.boardControls}>
-        <button
-          onClick={() =>
-            patch({
-              visualState: {
-                ...v,
-                allLeaves: !v.allLeaves,
-                reveal: Math.max(v.reveal, 1),
-                pruneStep: 0,
-              },
-            })
-          }
-        >
-          Show all leaves
-        </button>
-        <button
-          disabled={Number(state.questionId?.slice(-2)) < 8}
-          onClick={() =>
-            patch({
-              visualState: {
-                ...v,
-                reveal: 4,
-                allLeaves: false,
-                pruneStep: Math.min(ab.events.length, v.pruneStep + 1),
-              },
-            })
-          }
-        >
-          Step pruning
-        </button>
-        <span aria-live="polite">
-          {events.filter((e) => !e.skipped).length} evaluated ·{' '}
-          {events.filter((e) => e.skipped).length} skipped
-        </span>
-      </div>
+      {v.pruneStep > 0 && (
+        <div className={s.boardControls}>
+          <span aria-live="polite">
+            {events.filter((e) => !e.skipped).length} evaluated ·{' '}
+            {events.filter((e) => e.skipped).length} skipped
+          </span>
+        </div>
+      )}
       {v.pruneStep > 0 && (
         <p className={s.bound}>
           Traversal A → B → C · α{' '}
           {v.pruneStep >= 2 ? '= ' + mm.children[0] : 'starts at −∞'} · prune
-          when β ≤ α
+          when β ≤ α ·{' '}
+          {events.at(-1) ? `current β = ${events.at(-1)!.beta}` : ''}
         </p>
       )}
       <p className={s.caption}>
@@ -320,5 +387,32 @@ export function Tree({
           : ''}
       </p>
     </div>
+  );
+}
+function ValueTravel({
+  value,
+  from,
+  to,
+}: {
+  value: number;
+  from: [number, number];
+  to: [number, number];
+}) {
+  return (
+    <text
+      aria-hidden="true"
+      className={s.valueTravel}
+      x={from[0]}
+      y={from[1]}
+      textAnchor="middle"
+      style={
+        {
+          '--dx': `${to[0] - from[0]}px`,
+          '--dy': `${to[1] - from[1]}px`,
+        } as CSSProperties
+      }
+    >
+      {value}
+    </text>
   );
 }

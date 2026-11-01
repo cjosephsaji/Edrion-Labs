@@ -57,9 +57,11 @@ $env:PETROS_ISOLATED_VERIFICATION = '1'
 pnpm --filter @edrion/student-web exec next dev --hostname 127.0.0.1 -p 3021
 ```
 
-Open **http://127.0.0.1:3021/prototype** in a recent browser. Allow initial font loading to finish. Petros World requires WebGL; Classic remains available when a device cannot render the room. Windows/Linux have not been browser-tested in this handoff; the runtime source paths and setup commands do not require the owner's Mac path.
+Open **http://127.0.0.1:3021/prototype** in a recent browser. Allow initial font loading to finish. Petros World requires WebGL; Classic remains available when a device cannot render the room. The 30 October learning redesign was browser-tested on Windows with Chrome/Edge at desktop and phone viewport sizes; see [the current evidence report](evidence/learning-redesign/HANDOFF.md). Linux has not been browser-tested in this handoff.
 
 ## Environment and services
+
+Optional new-topic generation is configured separately in [TOPIC_SETUP.md](TOPIC_SETUP.md). The API key belongs in the ignored local environment file. AI, time travel, integrals and the authored knowledge assessment work without it. A working server-side key enables structured lesson planning and contextual questions; no production database or tutor API is required.
 
 The local showcase flags above are sufficient. The showcase does **not** require the owner's `.env`, database dump, Supabase/service-role keys, cookies, uploaded student files, Redis, or a running API server. Do not send those secrets as part of this prototype handoff.
 
@@ -72,6 +74,6 @@ pnpm --filter @edrion/petros-showcase test
 pnpm --filter @edrion/student-web exec tsc --noEmit
 ```
 
-Run TypeScript checking after any `next build` has completed; the build regenerates its type files. Browser recording scripts currently target the installed Brave executable on the owner's Mac. Running the product does not require Brave or Playwright; running those recordings on another OS requires adapting the browser executable path.
+Run TypeScript checking after any `next build` has completed; the build regenerates its type files. The current learning tests discover an installed Chromium browser, or use the executable specified by `PETROS_BROWSER`. With the showcase running, set `SHOWCASE_TEST_URL=http://127.0.0.1:3021` for this guide's port, then run `pnpm --filter @edrion/petros-showcase run verify:learning` and `run verify:learning-world`. The browser test dependency is installed with the workspace; running the product itself does not require Playwright.
 
-Progress remains in browser memory and resets on page reload. Curated teaching and practice work locally; broader live AI and TTS retain their disclosed unavailable status.
+The active lesson, diagram, committed responses, assistance and selected mode recover after refresh using storage scoped to this browser tab. Uploaded PDF contents/receipts are excluded from storage. If storage is unavailable, the footer reports memory-only progress. Prepared teaching and practice work locally. New topic planning and contextual questions use the optional connector in [TOPIC_SETUP.md](TOPIC_SETUP.md); its key is blank by default. TTS remains unavailable.

@@ -1,13 +1,15 @@
 import { worldTypeface } from './typography';
-import {
-  alphaBeta,
-  elapsedTime,
-  entail,
-  minimax,
-  tinyModel,
-} from '../teaching/algorithms';
+import { alphaBeta, elapsedTime, entail, minimax, tinyModel } from '../teaching/algorithms';
 import { activeTree } from '../teaching/tree-variant';
-import type { ShowcaseState } from '../teaching/types';
+import { integralArea } from '../teaching/topic-content';
+import type { ShowcaseState, VisualState } from '../teaching/types';
+import { between, ease } from './motion';
+import type { BoardOperation } from './board-motion';
+import { resolveLesson } from '../teaching/lesson-registry';
+import { currentQuestion } from '../teaching/checkpoint';
+import { visualScene } from '../teaching/visual-scene';
+import { runtime } from '../teaching/visual-spec';
+import { paintVisual } from './visual-painter';
 export const BOARD = {
   width: 1600,
   height: 900,
@@ -33,6 +35,14 @@ export interface BoardFrame {
   title?: string;
   progress?: number;
   visible: boolean;
+  animation?: {
+    kind: BoardOperation['kind'];
+    elapsed: number;
+    duration: number;
+    before: VisualState | null;
+    newIds: string[];
+    oldTarget: string | null;
+  };
 }
 export interface BoardResult {
   fontFamily: string;
@@ -72,6 +82,10 @@ export function paintBoard(
     bounds: [],
     errors: [],
   };
+  const anim = frame.animation;
+  const fraction = anim?.duration ? Math.min(1, anim.elapsed / anim.duration) : 1;
+  const part = (start: number, duration: number) =>
+    anim ? between(anim.elapsed, start, duration) : 1;
   ctx.clearRect(0, 0, 1600, 900);
   ctx.fillStyle = '#f8f9f2';
   ctx.fillRect(0, 0, 1600, 900);
@@ -86,14 +100,8 @@ export function paintBoard(
     maxLines = 2,
   ) {
     ctx.font = `${box === BOARD.header ? 600 : box === BOARD.explanation || box === BOARD.foot ? 400 : 500} ${size}px ${result.fontFamily}`;
-    const layout = fitLines(
-      value,
-      box.w - 12,
-      (s) => ctx.measureText(s).width,
-      maxLines,
-    );
-    if (layout.overflow)
-      result.errors.push('Text needs another beat: ' + value);
+    const layout = fitLines(value, box.w - 12, (s) => ctx.measureText(s).width, maxLines);
+    if (layout.overflow) result.errors.push('Text needs another beat: ' + value);
     const h = layout.lines.length * size * 1.16;
     if (h > box.h + 1) result.errors.push('Text height exceeds zone: ' + value);
     result.text.push(value);
@@ -121,13 +129,15 @@ export function paintBoard(
     y2: number,
     color = '#a6bcb2',
     dashed = false,
+    progress = 1,
+    width = 5,
   ) {
     ctx.strokeStyle = color;
-    ctx.lineWidth = 5;
+    ctx.lineWidth = width;
     ctx.setLineDash(dashed ? [13, 10] : []);
     ctx.beginPath();
     ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
+    ctx.lineTo(x1 + (x2 - x1) * progress, y1 + (y2 - y1) * progress);
     ctx.stroke();
     ctx.setLineDash([]);
   }
@@ -142,6 +152,18 @@ export function paintBoard(
     color = '#e9f0e8',
   ) {
     const selected = state.highlightTargetId === id;
+    ctx.save();
+    if (anim?.kind === 'network-build')
+      ctx.globalAlpha =
+        id === 'input'
+          ? part(0, 250)
+          : id === 'weight'
+            ? part(750, 200)
+            : id === 'output'
+              ? part(1000, 250)
+              : 1;
+    else if (anim?.kind === 'rule-link' && anim.newIds.includes(id))
+      ctx.globalAlpha = part(id.startsWith('HasWings') ? 300 : 0, 300);
     ctx.fillStyle = selected ? '#d2e4c2' : color;
     ctx.strokeStyle = selected ? '#40764c' : '#9fb5a8';
     ctx.lineWidth = selected ? 5 : 2;
@@ -152,24 +174,37 @@ export function paintBoard(
     const box = { x: x - w / 2 + 9, y: y - h / 2 + 3, w: w - 18, h: h - 6 };
     text(label, box, label.length > 12 ? 43 : label.length > 7 ? 51 : 68);
     result.hits.push({ id, label, value, x: x - w / 2, y: y - h / 2, w, h });
+    if (selected && anim?.kind === 'highlight') {
+      ctx.strokeStyle = '#b68c40';
+      ctx.globalAlpha = 1 - ease(fraction);
+      ctx.lineWidth = 5;
+      ctx.strokeRect(x - w / 2 - 5, y - h / 2 - 5, w + 10, h + 10);
+    }
+    ctx.restore();
   }
   const v = state.visualState;
+  const lesson = resolveLesson(state);
+  const activeQuestion = lesson ? currentQuestion(state, lesson) : undefined;
   const predicting = ['CHECKING_UNDERSTANDING', 'AWAITING_RESPONSE'].includes(
     state.teaching.status,
   );
   let title =
     frame.title ??
-    (v.kind === 'tree'
-      ? 'How does AI choose the best move?'
-      : v.kind === 'kb'
-        ? 'Facts + rules → supported conclusions'
-        : v.kind === 'network'
-          ? 'How does one connection learn?'
-          : v.kind === 'clocks'
-            ? 'Two clocks. Different elapsed time.'
-            : v.kind === 'hazards'
-              ? 'Inspect the scaffold. Explain the risk.'
-              : 'Follow the river. Control the source.');
+    (v.kind === 'topic'
+      ? state.learning?.stage === 'test'
+        ? 'Observe this new application'
+        : v.heading
+      : v.kind === 'tree'
+        ? 'How does AI choose the best move?'
+        : v.kind === 'kb'
+          ? 'Facts + rules → supported conclusions'
+          : v.kind === 'network'
+            ? 'How does one connection learn?'
+            : v.kind === 'clocks'
+              ? 'Two clocks. Different elapsed time.'
+              : v.kind === 'hazards'
+                ? 'Inspect the scaffold. Explain the risk.'
+                : 'Follow the river. Control the source.');
   if (!frame.visible) {
     title = 'A space for your curiosity.';
     text(title, BOARD.header, 56);
@@ -177,24 +212,163 @@ export function paintBoard(
     return result;
   }
   text(title, BOARD.header, 56);
-  text(frame.caption, BOARD.explanation, 38, '#557568');
+  text(
+    v.kind === 'topic' && v.visual
+      ? state.learning?.stage === 'test'
+        ? 'Read the geometry and arrows. Submit your prediction below.'
+        : v.visual.objective
+      : activeQuestion?.board
+        ? activeQuestion.task
+        : frame.caption || (v.kind === 'topic' ? v.caption : ''),
+    BOARD.explanation,
+    38,
+    '#557568',
+  );
   ctx.strokeStyle = '#d5dfd6';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(80, 225);
   ctx.lineTo(1520, 225);
   ctx.stroke();
+  if (v.kind === 'kb' && activeQuestion?.board) {
+    const board = activeQuestion.board;
+    text('SUPPLIED FACTS', { x: 100, y: 245, w: 600, h: 55 }, 31);
+    text('ONE-WAY RULES', { x: 810, y: 245, w: 690, h: 55 }, 31);
+    text(
+      board.facts.join(' · ') || 'No named fact stored yet',
+      { x: 100, y: 315, w: 600, h: 145 },
+      37,
+      '#254e40',
+      'center',
+      3,
+    );
+    text(
+      board.rules.map((r) => r.premise + ' → ' + r.conclusion).join(' · '),
+      { x: 810, y: 315, w: 690, h: 145 },
+      36,
+      '#254e40',
+      'center',
+      3,
+    );
+    const selected = state.studentResponse;
+    activeQuestion.options.forEach((option, index) => {
+      const box = { x: 110, y: 490 + index * 98, w: 1380, h: 86 };
+      ctx.fillStyle = selected === option ? '#d7e6cc' : '#eef3e8';
+      ctx.fillRect(box.x, box.y, box.w, box.h);
+      text(option, box, 32, '#254e40', 'center', 2);
+      result.hits.push({
+        ...box,
+        id: 'response-' + index,
+        label: option,
+        value: option,
+      });
+    });
+    text(
+      'Choose a response on the board or use the keyboard controls. Then check your answer.',
+      BOARD.foot,
+      29,
+    );
+    return result;
+  }
+  if (v.kind === 'topic') {
+    if (v.visual) {
+      const scene = visualScene(
+        v.visual,
+        v.runtime ?? runtime(v.visual.initial),
+        state.learning?.stage === 'test',
+      );
+      paintVisual(ctx, scene, result.fontFamily);
+      result.text.push(
+        state.learning?.stage === 'test'
+          ? 'Application diagram: use the geometry and arrows to infer the process.'
+          : scene.description,
+        scene.note,
+        ...scene.marks.filter((x) => x.kind === 'text').map((x) => x.text),
+      );
+      if (v.visual.type === 'relationships') {
+        const labels = v.visual.nodes
+          .filter((n) => !(state.learning?.stage === 'test' && n.role === 'conclusion'))
+          .map((n) => n.label);
+        result.text.push(...labels.filter((label) => !result.text.includes(label)));
+      }
+      text('Schematic model · not to scale · use Focus Board for controls', BOARD.foot, 30);
+    } else if (v.area) {
+      const { slope, upper, slices } = v.area,
+        totals = integralArea(v.area),
+        yMax = Math.max(4, slope * upper);
+      const left = 220,
+        base = 650,
+        width = 1100,
+        height = 300;
+      ctx.strokeStyle = '#7e9a87';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(left, 280);
+      ctx.lineTo(left, base);
+      ctx.lineTo(1440, base);
+      ctx.stroke();
+      for (let i = 0; i < slices; i++) {
+        const w = (width * upper) / 4 / slices,
+          h = (height * slope * upper * i) / slices / yMax;
+        ctx.fillStyle = '#b9d2ae';
+        ctx.fillRect(left + i * w, base - h, w, h);
+        ctx.strokeStyle = '#6e9878';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(left + i * w, base - h, w, h);
+      }
+      ctx.strokeStyle = '#285f48';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(left, base);
+      ctx.lineTo(left + (width * upper) / 4, base - (height * slope * upper) / yMax);
+      ctx.stroke();
+      text(`f(x) = ${slope === 1 ? 'x' : slope + 'x'}`, { x: 900, y: 270, w: 480, h: 70 }, 44);
+      text('0', { x: 170, y: 660, w: 100, h: 60 }, 32);
+      text(String(upper), { x: left + (width * upper) / 4 - 50, y: 660, w: 100, h: 60 }, 32);
+      text(String(yMax), { x: 90, y: 320, w: 100, h: 65 }, 32);
+      text(
+        `Left sum ${Number(totals.left.toFixed(6))}   |   Exact integral ${Number(totals.exact.toFixed(6))}   |   ${slices} rectangles`,
+        { x: 120, y: 740, w: 1360, h: 65 },
+        36,
+      );
+    } else {
+      text(
+        'Visual specification unavailable. Use the worked example, or regenerate this saved topic.',
+        { x: 160, y: 340, w: 1280, h: 220 },
+        42,
+        '#557568',
+        'center',
+        3,
+      );
+    }
+    if (!v.visual)
+      text(
+        state.topicLesson?.origin === 'generated'
+          ? 'AI-generated general knowledge · check important facts'
+          : 'Prepared mathematics lesson · interactive example',
+        BOARD.foot,
+        32,
+        '#667f70',
+      );
+    return result;
+  } else if (v.kind === 'tree' && v.opponents) {
+    text('YOU  ⇄  OPPONENT', { x: 100, y: 270, w: 1400, h: 100 }, 66);
+    text('Higher score  ⇄  Lower score for you', { x: 100, y: 390, w: 1400, h: 80 }, 44);
+    node('move-a', 'Move A: 2 or 9', 'A', 430, 580, 590, 130);
+    node('move-b', 'Move B: 4 or 5', 'B', 1170, 580, 590, 130);
+    text('You pick the move. Your opponent picks the outcome.', BOARD.foot, 40);
+    return result;
+  }
   if (v.kind === 'tree' && v.example) {
     const ex = v.example,
-      answer =
-        ex.role === 'MIN' ? Math.min(...ex.values) : Math.max(...ex.values);
+      answer = ex.role === 'MIN' ? Math.min(...ex.values) : Math.max(...ex.values);
     text(ex.label, { x: 100, y: 270, w: 1400, h: 65 }, 48);
     node(
-      state.questionId === 'AI3-Q03'
+      state.questionId === 'AI3-Q04'
         ? 'branch-0'
-        : state.questionId === 'AI3-Q04'
+        : state.questionId === 'AI3-Q05'
           ? 'branch-1'
-          : state.questionId === 'AI3-Q05'
+          : state.questionId === 'AI3-Q06'
             ? 'branch-2'
             : 'root',
       ex.role + (ex.revealAnswer ? ` = ${answer}` : ''),
@@ -209,6 +383,22 @@ export function paintBoard(
       line(800, 490, x, 650);
       node(`example-${i}`, String(n), String(n), x, 700, 180, 100);
     });
+    if (anim?.kind === 'value-pass' && ex.revealAnswer && fraction < 1) {
+      const i = ex.values.indexOf(answer),
+        p = ease(fraction),
+        from = 350 + i * (900 / Math.max(1, ex.values.length - 1));
+      text(
+        String(answer),
+        {
+          x: from + (800 - from) * p - 45,
+          y: 700 + (440 - 700) * p - 45,
+          w: 90,
+          h: 90,
+        },
+        68,
+        '#6f7d31',
+      );
+    }
     text(
       ex.revealAnswer
         ? `${ex.role} chooses the ${ex.role === 'MIN' ? 'smaller' : 'larger'} score.`
@@ -223,30 +413,16 @@ export function paintBoard(
       mm = minimax(tree),
       pass = alphaBeta(tree),
       events = pass.events.slice(0, v.pruneStep),
-      r = frame.reveal;
+      r = v.reveal >= 3 ? 10 : v.reveal >= 2 ? 9 : 6;
     const xs = [320, 800, 1280],
       rootY = 305,
       minY = 490,
       leafY = 700;
-    if (r === 0) {
-      text(
-        'MAX  ·  seeks the highest score',
-        { x: 130, y: 330, w: 1340, h: 100 },
-        64,
-      );
-      text(
-        'MIN  ·  chooses the least favorable reply',
-        { x: 110, y: 520, w: 1380, h: 100 },
-        58,
-        '#9a653e',
-      );
-    }
     if (r >= 1) {
       if (r >= 2) xs.forEach((x) => line(800, 350, x, 440));
       node(
         'root',
-        r >= 10 ||
-          (!v.transfer && state.completion['AI3-Q06']?.outcome === 'explored')
+        r >= 10 || (!v.transfer && state.completion['AI3-Q07']?.outcome === 'explored')
           ? `MAX = ${mm.value}`
           : 'MAX',
         'Root MAX + children MIN',
@@ -262,7 +438,7 @@ export function paintBoard(
         if (r < 3 && b > 0) return;
         node(
           `branch-${b}`,
-          `MIN ${'ABC'[b]}${r >= 7 + b || (!v.transfer && state.completion[`AI3-Q0${b + 3}`]?.outcome === 'explored') ? ' = ' + mm.children[b] : ''}`,
+          `MIN ${'ABC'[b]}${r >= 7 + b || (!v.transfer && state.completion[`AI3-Q0${b + 4}`]?.outcome === 'explored') ? ' = ' + mm.children[b] : ''}`,
           'ABC'[b]!,
           x,
           minY,
@@ -274,14 +450,7 @@ export function paintBoard(
         tree[b]!.forEach((n, l) => {
           const lx = x + (l === 0 ? -98 : 98);
           const e = events.find((e) => e.branch === b && e.leaf === l);
-          line(
-            x,
-            537,
-            lx,
-            651,
-            e?.skipped ? '#b38a54' : e ? '#477a58' : '#adbcaf',
-            e?.skipped,
-          );
+          line(x, 537, lx, 651, e?.skipped ? '#b38a54' : e ? '#477a58' : '#adbcaf', e?.skipped);
           node(
             `leaf-${b}-${l}`,
             String(n),
@@ -292,13 +461,7 @@ export function paintBoard(
             96,
             e?.skipped ? '#f4e8d0' : e ? '#d4e8ce' : '#f1f4ed',
           );
-          if (e?.skipped)
-            text(
-              'skipped',
-              { x: lx - 115, y: 754, w: 230, h: 40 },
-              32,
-              '#966d38',
-            );
+          if (e?.skipped) text('skipped', { x: lx - 115, y: 754, w: 230, h: 40 }, 32, '#966d38');
         });
       });
     if (r >= 7 && r <= 9) {
@@ -313,11 +476,7 @@ export function paintBoard(
         ctx.beginPath();
         ctx.arc(x, y, 42, 0, Math.PI * 2);
         ctx.fill();
-        text(
-          String(mm.children[b]),
-          { x: x - 38, y: y - 38, w: 76, h: 76 },
-          60,
-        );
+        text(String(mm.children[b]), { x: x - 38, y: y - 38, w: 76, h: 76 }, 60);
       }
     }
     if (v.pruneStep > 0)
@@ -330,28 +489,24 @@ export function paintBoard(
   } else if (v.kind === 'kb') {
     const heads = ['FACTS', 'RULE', 'CONCLUSIONS'];
     const xs = [290, 800, 1310];
-    heads.forEach((t, i) =>
-      text(t, { x: xs[i]! - 210, y: 280, w: 420, h: 70 }, 48),
-    );
+    heads.forEach((t, i) => text(t, { x: xs[i]! - 210, y: 280, w: 420, h: 70 }, 48));
     const facts = frame.reveal >= 2 ? v.facts : [],
       derived = frame.reveal >= 4 ? v.derived : [];
-    facts.forEach((fact, i) =>
-      node(fact, fact, fact, 290, 430 + i * 135, 380, 100),
-    );
+    facts.forEach((fact, i) => node(fact, fact, fact, 290, 430 + i * 135, 380, 100));
     if (frame.reveal >= 3) {
-      node(
-        'rule',
-        'Bird(x) → HasWings(x)',
-        'Bird(x) → HasWings(x)',
-        800,
-        450,
-        490,
-        125,
-      );
+      node('rule', 'Bird(x) → HasWings(x)', 'Bird(x) → HasWings(x)', 800, 450, 490, 125);
       line(495, 450, 545, 450);
     }
     derived.forEach((fact, i) => {
-      line(1050, 450 + i * 135, 1100, 450 + i * 135, '#588961');
+      line(
+        1050,
+        450 + i * 135,
+        1100,
+        450 + i * 135,
+        '#588961',
+        false,
+        anim?.kind === 'rule-link' ? part(0, 400) : 1,
+      );
       node(fact, fact, fact, 1310, 450 + i * 135, 390, 100);
     });
     if (v.query) {
@@ -364,13 +519,32 @@ export function paintBoard(
       );
     }
   } else if (v.kind === 'network') {
-    if (frame.reveal >= 1)
-      node('input', `Input ${v.input}`, '', 300, 450, 350, 130);
+    const updating =
+      anim?.kind === 'network-update' && anim.before?.kind === 'network' && fraction < 1;
+    const weight = updating
+      ? Number(
+          (anim.before!.kind === 'network'
+            ? anim.before!.weight + (v.weight - anim.before!.weight) * ease(fraction)
+            : v.weight
+          ).toFixed(2),
+        )
+      : v.weight;
+    const output = tinyModel(v.input, weight);
+    if (frame.reveal >= 1) node('input', `Input ${v.input}`, '', 300, 450, 350, 130);
     if (frame.reveal >= 2) {
-      line(480, 450, 1110, 450);
+      line(
+        480,
+        450,
+        1110,
+        450,
+        '#a6bcb2',
+        false,
+        anim?.kind === 'network-build' ? part(250, 500) : 1,
+        2 + 2 * weight,
+      );
       node(
         'weight',
-        `Weight ${v.weight.toFixed(1)}`,
+        `Weight ${weight.toFixed(updating ? 2 : 1)}${updating ? ` → ${v.weight.toFixed(1)}` : ''}`,
         '',
         800,
         450,
@@ -384,19 +558,30 @@ export function paintBoard(
         'output',
         predicting && ['AI-Q04', 'AI-Q07'].includes(state.questionId ?? '')
           ? '?'
-          : String(tinyModel(v.input, v.weight).toFixed(1)),
+          : String(output.toFixed(updating ? 2 : 1)),
         '',
         1300,
         450,
         300,
         130,
       );
-    if (frame.reveal >= 4)
+    if (frame.reveal >= 4) {
+      const hidden = predicting && ['AI-Q04', 'AI-Q05', 'AI-Q07'].includes(state.questionId ?? '');
+      ctx.save();
+      if (anim?.kind === 'network-build') ctx.globalAlpha = part(1150, 300);
+      if (!hidden)
+        text(
+          `${v.input} × ${weight.toFixed(updating ? 2 : 1)} = ${output.toFixed(updating ? 2 : 1)}`,
+          { x: 130, y: 550, w: 1340, h: 80 },
+          46,
+        );
       text(
-        `Target ${v.target} · absolute error ${predicting && ['AI-Q04', 'AI-Q05', 'AI-Q07'].includes(state.questionId ?? '') ? '?' : Math.abs(tinyModel(v.input, v.weight) - v.target).toFixed(1)}`,
+        `Target ${v.target} · absolute error ${predicting && ['AI-Q04', 'AI-Q05', 'AI-Q07'].includes(state.questionId ?? '') ? '?' : Math.abs(output - v.target).toFixed(updating ? 2 : 1)}`,
         { x: 130, y: 650, w: 1340, h: 90 },
         54,
       );
+      ctx.restore();
+    }
   } else if (v.kind === 'clocks') {
     if (frame.reveal >= 1) {
       node('earth', `${v.earthYears} years`, '', 440, 470, 550, 160);
@@ -414,14 +599,9 @@ export function paintBoard(
         550,
         160,
       );
-      text(
-        `Traveler · ${v.speed.toFixed(1)}c`,
-        { x: 880, y: 330, w: 560, h: 70 },
-        48,
-      );
+      text(`Traveler · ${v.speed.toFixed(1)}c`, { x: 880, y: 330, w: 560, h: 70 }, 48);
     }
-    if (frame.reveal >= 3)
-      text('Δτ = Δt √(1 − v²/c²)', { x: 180, y: 660, w: 1240, h: 90 }, 62);
+    if (frame.reveal >= 3) text('Δτ = Δt √(1 − v²/c²)', { x: 180, y: 660, w: 1240, h: 90 }, 62);
   } else {
     text(
       v.kind === 'hazards'
@@ -435,7 +615,9 @@ export function paintBoard(
     text(
       state.sourceId
         ? `${state.sourceId} · pp. ${state.sourcePages.join(', ')} · teaching illustration`
-        : 'Prepared general knowledge · simplified teaching model',
+        : state.topicLesson?.origin === 'generated'
+          ? 'AI-generated general knowledge · check important facts'
+          : 'Prepared general knowledge · simplified teaching model',
       BOARD.foot,
       32,
       '#667f70',

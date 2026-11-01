@@ -1,0 +1,24 @@
+{
+  "liveProviderCall": true,
+  "status": "passed",
+  "elapsedMs": 51410,
+  "concepts": 4,
+  "visuals": [
+    {
+      "type": "plate-tectonics",
+      "view": "layers"
+    },
+    {
+      "type": "plate-tectonics",
+      "view": "movement"
+    },
+    {
+      "type": "plate-tectonics",
+      "view": "boundaries"
+    },
+    {
+      "type": "plate-tectonics",
+      "view": "boundaries"
+    }
+  ]
+}

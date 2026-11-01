@@ -1,0 +1,42 @@
+{
+  "method": "fresh browser contexts, shared browser process; local development server; selection-to-first-3D-render and selection-to-portal-dismissal measured separately",
+  "viewports": [
+    {
+      "width": 1920,
+      "height": 1080,
+      "first3DRenderMs": 13565,
+      "initialBoardPixel": [
+        248,
+        249,
+        242,
+        255
+      ],
+      "arrivalReadyMs": 15947
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "first3DRenderMs": 5957,
+      "initialBoardPixel": [
+        248,
+        249,
+        242,
+        255
+      ],
+      "arrivalReadyMs": 8266
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "first3DRenderMs": 4003,
+      "initialBoardPixel": [
+        248,
+        249,
+        242,
+        255
+      ],
+      "arrivalReadyMs": 6295
+    }
+  ],
+  "errors": []
+}

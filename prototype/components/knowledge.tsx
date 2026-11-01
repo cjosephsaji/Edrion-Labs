@@ -3,6 +3,9 @@ import { entail } from '../teaching/algorithms';
 import type { ShowcaseState } from '../teaching/types';
 import type { Patch } from './workspace';
 import s from './showcase.module.css';
+import { currentQuestion } from '../teaching/checkpoint';
+import { resolveLesson } from '../teaching/lesson-registry';
+import { ReasoningBoard } from './reasoning-board';
 export function Knowledge({
   state,
   patch,
@@ -14,6 +17,12 @@ export function Knowledge({
 }) {
   const visual = state.visualState;
   if (visual.kind !== 'kb') return null;
+  const lesson = resolveLesson(state);
+  const question = lesson ? currentQuestion(state, lesson) : undefined;
+  if (question?.board)
+    return (
+      <ReasoningBoard state={state} question={question} onSelect={onSelect} />
+    );
   const v = visual;
   function tell(entity: string) {
     patch({

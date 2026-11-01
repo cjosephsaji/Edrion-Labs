@@ -1,0 +1,44 @@
+.body,
+.caption {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    opacity 210ms ease-out,
+    translate 210ms ease-out;
+}
+.body[data-message-phase='enter'],
+.caption[data-message-phase='enter'] {
+  opacity: 0;
+  translate: 0 6px;
+}
+.body[data-message-phase='exit'],
+.caption[data-message-phase='exit'] {
+  opacity: 0;
+  translate: 0 3px;
+  transition-duration: 170ms;
+}
+.body > span {
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  color: #627752;
+}
+.body > button {
+  position: absolute;
+  right: 8px;
+  top: 4px;
+}
+.body p {
+  padding-right: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .body,
+  .caption {
+    transition: none;
+    translate: none;
+  }
+  .body[data-message-phase],
+  .caption[data-message-phase] {
+    opacity: 1;
+    translate: none;
+  }
+}

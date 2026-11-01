@@ -1,0 +1,1270 @@
+{
+  "id": "topic-01928084-2154-4a69-b91e-16fda20bbbeb",
+  "origin": "generated",
+  "subject": "Earth science",
+  "module": null,
+  "general": true,
+  "title": "Earth’s Moving Plates",
+  "subtitle": "Layers, slow motion, boundaries, and evidence",
+  "chips": [
+    "1. The lithosphere is more than crust",
+    "2. Plates move slowly",
+    "3. Three kinds of boundary"
+  ],
+  "introduction": "Earth’s outer shell is broken into large, slowly moving plates. To understand what happens where plates meet, first distinguish the rigid lithosphere from the softer material below it. Then connect plate motion to boundary types and to evidence that geologists investigate.",
+  "learningGoals": [
+    "Identify the crust, rigid uppermost mantle, and ductile asthenosphere, and distinguish lithosphere from crust alone.",
+    "Describe plate motion as slow movement of lithospheric plates over the asthenosphere.",
+    "Distinguish divergent, convergent, and transform boundaries by their relative motions.",
+    "Use observations and a simple model to investigate a plate-boundary process while recognizing what the model cannot show."
+  ],
+  "prerequisites": [
+    "Know that Earth has internal layers.",
+    "Understand that arrows can represent direction of motion."
+  ],
+  "steps": [
+    "1. The lithosphere is more than crust",
+    "2. Plates move slowly",
+    "3. Three kinds of boundary",
+    "4. Investigate a boundary with evidence"
+  ],
+  "questions": [
+    {
+      "id": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q1",
+      "task": "Which pair makes up the lithosphere?",
+      "type": "choice",
+      "options": [
+        "Crust and rigid uppermost mantle",
+        "Crust and asthenosphere",
+        "Asthenosphere and lower mantle"
+      ],
+      "correct": [
+        "Crust and rigid uppermost mantle"
+      ],
+      "pages": [],
+      "phase": "interact",
+      "concept": "1. The lithosphere is more than crust",
+      "explanation": "The lithosphere consists of crust plus rigid uppermost mantle. The ductile asthenosphere is beneath it.",
+      "optionFeedback": [
+        "Correct: the lithosphere includes crust and rigid uppermost mantle.",
+        "The crust is part of the lithosphere, but not all of it.",
+        "The asthenosphere lies beneath the lithosphere and is ductile."
+      ],
+      "misconception": "Revisit 1. the lithosphere is more than crust.",
+      "hints": [
+        "The crust is only the outer skin. The lithosphere is the crust plus a rigid layer underneath it; ductile asthenosphere lies below.",
+        "A piece of oceanic lithosphere includes oceanic crust and rigid uppermost mantle, resting on asthenosphere."
+      ],
+      "retry": "retry-worked-skip",
+      "next": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q2",
+      "teaching": {
+        "introduction": "Earth’s rigid outer shell is called the lithosphere. It includes the crust and the rigid uppermost mantle. Beneath it is the asthenosphere, a hot, mostly solid layer that can deform and flow very slowly over long timescales.",
+        "demonstration": "Imagine a rigid plate made of crust plus the uppermost rigid mantle resting on warm, ductile asthenosphere. The asthenosphere is not an underground ocean of magma: most of it is solid, though it can deform gradually. The plate and the asthenosphere are different parts of the upper mantle system.",
+        "simpler": "The crust is only the outer skin. The lithosphere is the crust plus a rigid layer underneath it; ductile asthenosphere lies below.",
+        "example": "A piece of oceanic lithosphere includes oceanic crust and rigid uppermost mantle, resting on asthenosphere.",
+        "diagram": {
+          "heading": "1. The lithosphere is more than crust",
+          "labels": [
+            "Crust",
+            "Rigid uppermost mantle",
+            "Lithosphere: crust plus rigid mantle"
+          ],
+          "caption": "A cross-section distinguishes the crust, rigid uppermost mantle, and deeper ductile asthenosphere.",
+          "visual": {
+            "version": 1,
+            "objective": "Distinguish the crust, lithosphere, and asthenosphere as layers with different mechanical behavior.",
+            "rationale": "A layer cross-section makes clear that lithosphere includes both crust and rigid uppermost mantle, while asthenosphere lies below it.",
+            "initial": {
+              "values": [
+                {
+                  "id": "progress",
+                  "value": 0.3
+                },
+                {
+                  "id": "rate",
+                  "value": 2
+                }
+              ],
+              "boundary": "divergent",
+              "highlights": [],
+              "selected": null,
+              "reveal": false
+            },
+            "demonstration": {
+              "values": [
+                {
+                  "id": "progress",
+                  "value": 0.3
+                },
+                {
+                  "id": "rate",
+                  "value": 2
+                }
+              ],
+              "boundary": "divergent",
+              "highlights": [
+                "crust",
+                "mantle",
+                "asthenosphere"
+              ],
+              "selected": "crust",
+              "reveal": true
+            },
+            "apply": {
+              "values": [
+                {
+                  "id": "progress",
+                  "value": 0.3
+                },
+                {
+                  "id": "rate",
+                  "value": 2
+                }
+              ],
+              "boundary": "divergent",
+              "highlights": [
+                "crust",
+                "mantle",
+                "asthenosphere"
+              ],
+              "selected": "mantle",
+              "reveal": true
+            },
+            "transfer": {
+              "values": [
+                {
+                  "id": "progress",
+                  "value": 0.3
+                },
+                {
+                  "id": "rate",
+                  "value": 2
+                }
+              ],
+              "boundary": "divergent",
+              "highlights": [
+                "crust",
+                "mantle",
+                "asthenosphere"
+              ],
+              "selected": "asthenosphere",
+              "reveal": true
+            },
+            "feedback": {
+              "correct": [
+                "crust",
+                "mantle",
+                "asthenosphere"
+              ],
+              "incorrect": [
+                "crust"
+              ]
+            },
+            "type": "plate-tectonics",
+            "view": "layers"
+          }
+        },
+        "followup": {
+          "task": "What best describes the asthenosphere?",
+          "options": [
+            "Mostly solid material that can deform slowly",
+            "A global ocean of liquid magma",
+            "The rigid crust and uppermost mantle"
+          ],
+          "correct": [
+            "Mostly solid material that can deform slowly"
+          ],
+          "explanation": "The asthenosphere is hot and ductile, but mostly solid; it can flow very slowly over geologic time.",
+          "optionFeedback": [
+            "Correct: the asthenosphere is mostly solid but can deform slowly.",
+            "It is not generally a global ocean of liquid magma.",
+            "It is not the rigid plate layer; the lithosphere is."
+          ],
+          "visualSnapshot": {
+            "values": [
+              {
+                "id": "progress",
+                "value": 0.35
+              },
+              {
+                "id": "rate",
+                "value": 3
+              }
+            ],
+            "boundary": "divergent",
+            "highlights": [],
+            "selected": null,
+            "reveal": false
+          }
+        }
+      },
+      "visualSnapshot": {
+        "values": [
+          {
+            "id": "progress",
+            "value": 0.3
+          },
+          {
+            "id": "rate",
+            "value": 2
+          }
+        ],
+        "boundary": "divergent",
+        "highlights": [],
+        "selected": null,
+        "reveal": false
+      }
+    },
+    {
+      "id": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q2",
+      "task": "Why can a few centimeters of plate motion per year matter?",
+      "type": "choice",
+      "options": [
+        "Small yearly motion accumulates over millions of years.",
+        "The plates move several kilometers each day.",
+        "The asthenosphere is a global ocean of liquid magma."
+      ],
+      "correct": [
+        "Small yearly motion accumulates over millions of years."
+      ],
+      "pages": [],
+      "phase": "interact",
+      "concept": "2. Plates move slowly",
+      "explanation": "A small annual distance accumulates substantially over geologic time.",
+      "optionFeedback": [
+        "Correct: slow motion can accumulate into large change over time.",
+        "Plates do not move rapidly on a human timescale.",
+        "Plate motion does not mean plates float on a global liquid magma ocean."
+      ],
+      "misconception": "Revisit 2. plates move slowly.",
+      "hints": [
+        "The plates are rigid pieces that creep along very slowly; they do not race across Earth’s surface.",
+        "At a spreading ridge, two plates move away from the ridge in opposite directions over time."
+      ],
+      "retry": "retry-worked-skip",
+      "next": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q3",
+      "teaching": {
+        "introduction": "Lithospheric plates move relative to one another. Their motion is slow on a human timescale, often only a few centimeters per year, though rates vary by plate and location. Over millions of years, that small annual motion can add up to large distances.",
+        "demonstration": "In a simple movement view, two rigid plates shift gradually over the ductile asthenosphere. The motion is not the plates floating freely on liquid magma. Rather, the lithosphere moves as large, coherent pieces while the asthenosphere deforms slowly beneath and around them.",
+        "simpler": "The plates are rigid pieces that creep along very slowly; they do not race across Earth’s surface.",
+        "example": "At a spreading ridge, two plates move away from the ridge in opposite directions over time.",
+        "diagram": {
+          "heading": "2. Plates move slowly",
+          "labels": [
+            "Rigid plate",
+            "Relative motion",
+            "Ductile asthenosphere"
+          ],
+          "caption": "Arrows show two plates moving slowly in opposite directions above ductile asthenosphere.",
+          "visual": {
+            "version": 1,
+            "objective": "Interpret plate motion as slow relative movement of rigid plates over ductile asthenosphere.",
+            "rationale": "The movement view connects plate direction to the underlying layer without implying a liquid magma ocean.",
+            "initial": {
+              "values": [
+                {
+                  "id": "progress",
+                  "value": 0.2
+                },
+                {
+                  "id": "rate",
+                  "value": 2
+                }
+              ],
+              "boundary": "divergent",
+              "highlights": [],
+              "selected": null,
+              "reveal": false
+            },
+            "demonstration": {
+              "values": [
+                {
+                  "id": "progress",
+                  "value": 0.65
+                },
+                {
+                  "id": "rate",
+                  "value": 3
+                }
+              ],
+              "boundary": "divergent",
+              "highlights": [
+                "plate-left",
+                "plate-right",
+                "motion"
+              ],
+              "selected": "motion",
+              "reveal": true
+            },
+            "apply": {
+              "values": [
+                {
+                  "id": "progress",
+                  "value": 0.45
+                },
+                {
+                  "id": "rate",
+                  "value": 4
+                }
+              ],
+              "boundary": "convergent",
+              "highlights": [
+                "plate-left",
+                "plate-right",
+                "motion"
+              ],
+              "selected": "plate-left",
+              "reveal": true
+            },
+            "transfer": {
+              "values": [
+                {
+                  "id": "progress",
+                  "value": 0.8
+                },
+                {
+                  "id": "rate",
+                  "value": 2
+                }
+              ],
+              "boundary": "transform",
+              "highlights": [
+                "plate-left",
+                "plate-right",
+                "motion"
+              ],
+              "selected": "plate-right",
+              "reveal": true
+            },
+            "feedback": {
+              "correct": [
+                "plate-left",
+                "plate-right",
+                "motion"
+              ],
+              "incorrect": [
+                "asthenosphere"
+              ]
+            },
+            "type": "plate-tectonics",
+            "view": "movement"
+          }
+        },
+        "followup": {
+          "task": "Which statement best describes plate movement?",
+          "options": [
+            "Rigid plates move slowly relative to each other.",
+            "The whole crust moves rapidly every day.",
+            "Plates float on a planet-wide sea of liquid magma."
+          ],
+          "correct": [
+            "Rigid plates move slowly relative to each other."
+          ],
+          "explanation": "Plate motion is slow relative movement of lithospheric plates; the asthenosphere is mostly solid and ductile.",
+          "optionFeedback": [
+            "Correct: plates are rigid pieces moving relative to each other.",
+            "The plates do not move rapidly across the surface.",
+            "The asthenosphere is mostly solid and ductile, not a magma ocean."
+          ],
+          "visualSnapshot": {
+            "values": [
+              {
+                "id": "progress",
+                "value": 0.25
+              },
+              {
+                "id": "rate",
+                "value": 1
+              }
+            ],
+            "boundary": "convergent",
+            "highlights": [],
+            "selected": null,
+            "reveal": false
+          }
+        }
+      },
+      "visualSnapshot": {
+        "values": [
+          {
+            "id": "progress",
+            "value": 0.55
+          },
+          {
+            "id": "rate",
+            "value": 3
+          }
+        ],
+        "boundary": "divergent",
+        "highlights": [],
+        "selected": null,
+        "reveal": false
+      }
+    },
+    {
+      "id": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q3",
+      "task": "Two plates slide horizontally past one another. What boundary is this?",
+      "type": "choice",
+      "options": [
+        "Transform",
+        "Convergent",
+        "Divergent"
+      ],
+      "correct": [
+        "Transform"
+      ],
+      "pages": [],
+      "phase": "interact",
+      "concept": "3. Three kinds of boundary",
+      "explanation": "Transform boundaries are defined by plates sliding past each other.",
+      "optionFeedback": [
+        "Correct: transform boundaries involve sideways sliding.",
+        "Apart describes divergent motion.",
+        "Toward one another describes convergent motion."
+      ],
+      "misconception": "Revisit 3. three kinds of boundary.",
+      "hints": [
+        "Apart = divergent; together = convergent; sideways past = transform.",
+        "A ridge spreading apart is divergent; an oceanic plate descending beneath a continent is one convergent case; two plates sliding sideways are transform."
+      ],
+      "retry": "retry-worked-skip",
+      "next": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q4",
+      "teaching": {
+        "introduction": "Boundary names describe how neighboring plates move relative to each other. At a divergent boundary, they move apart. At a convergent boundary, they move toward one another. At a transform boundary, they slide horizontally past each other. The effects depend on the setting and materials involved.",
+        "demonstration": "Consider an oceanic plate meeting a continental plate at a convergent boundary. In this particular configuration, the denser oceanic lithosphere descends beneath the continental plate, a process called subduction. Other convergent collisions can differ; not every convergence involves the same plate pair or outcome. Divergent boundaries can create new crust, while transform motion commonly produces earthquakes along faults.",
+        "simpler": "Apart = divergent; together = convergent; sideways past = transform.",
+        "example": "A ridge spreading apart is divergent; an oceanic plate descending beneath a continent is one convergent case; two plates sliding sideways are transform.",
+        "diagram": {
+          "heading": "3. Three kinds of boundary",
+          "labels": [
+            "Plates move apart",
+            "Plates move together",
+            "Plates slide past"
+          ],
+          "caption": "Three boundary views compare relative plate motion; the convergent example shows oceanic–continental subduction.",
+          "visual": {
+            "version": 1,
+            "objective": "Classify boundaries by relative motion and recognize oceanic–continental subduction as one convergent configuration.",
+            "rationale": "Distinct boundary views make the three motion patterns easy to compare while showing subduction as a specific case, not a universal convergence outcome.",
+            "initial": {
+              "values": [
+                {
+                  "id": "progress",
+                  "value": 0.5
+                },
+                {
+                  "id": "rate",
+                  "value": 3
+                }
+              ],
+              "boundary": "divergent",
+              "highlights": [],
+              "selected": null,
+              "reveal": false
+            },
+            "demonstration": {
+              "values": [
+                {
+                  "id": "progress",
+                  "value": 0.6
+                },
+                {
+                  "id": "rate",
+                  "value": 3
+                }
+              ],
+              "boundary": "convergent",
+              "highlights": [
+                "plate-left",
+                "plate-right",
+                "boundary",
+                "slab"
+              ],
+              "selected": "slab",
+              "reveal": true
+            },
+            "apply": {
+              "values": [
+                {
+                  "id": "progress",
+                  "value": 0.4
+                },
+                {
+                  "id": "rate",
+                  "value": 2
+                }
+              ],
+              "boundary": "divergent",
+              "highlights": [
+                "plate-left",
+                "plate-right",
+                "boundary",
+                "upwelling"
+              ],
+              "selected": "upwelling",
+              "reveal": true
+            },
+            "transfer": {
+              "values": [
+                {
+                  "id": "progress",
+                  "value": 0.7
+                },
+                {
+                  "id": "rate",
+                  "value": 4
+                }
+              ],
+              "boundary": "transform",
+              "highlights": [
+                "plate-left",
+                "plate-right",
+                "boundary",
+                "earthquakes"
+              ],
+              "selected": "boundary",
+              "reveal": true
+            },
+            "feedback": {
+              "correct": [
+                "plate-left",
+                "plate-right",
+                "boundary",
+                "slab",
+                "upwelling",
+                "earthquakes"
+              ],
+              "incorrect": [
+                "volcano"
+              ]
+            },
+            "type": "plate-tectonics",
+            "view": "boundaries"
+          }
+        },
+        "followup": {
+          "task": "At a ridge, neighboring plates move away from each other. Which boundary type fits?",
+          "options": [
+            "Divergent",
+            "Transform",
+            "Convergent"
+          ],
+          "correct": [
+            "Divergent"
+          ],
+          "explanation": "Divergent boundaries are where plates move apart.",
+          "optionFeedback": [
+            "Correct: divergent plates move apart.",
+            "Toward one another is convergent motion.",
+            "Sideways past is transform motion."
+          ],
+          "visualSnapshot": {
+            "values": [
+              {
+                "id": "progress",
+                "value": 0.65
+              },
+              {
+                "id": "rate",
+                "value": 3
+              }
+            ],
+            "boundary": "divergent",
+            "highlights": [],
+            "selected": null,
+            "reveal": false
+          }
+        }
+      },
+      "visualSnapshot": {
+        "values": [
+          {
+            "id": "progress",
+            "value": 0.5
+          },
+          {
+            "id": "rate",
+            "value": 3
+          }
+        ],
+        "boundary": "transform",
+        "highlights": [],
+        "selected": null,
+        "reveal": false
+      }
+    },
+    {
+      "id": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q4",
+      "task": "A trench offshore, deeper inland earthquakes, and a continental volcanic arc are observed. Which interpretation best fits this model?",
+      "type": "choice",
+      "options": [
+        "Oceanic lithosphere subducts beneath continental lithosphere.",
+        "The plates move apart at a ridge.",
+        "The plates only slide horizontally past each other."
+      ],
+      "correct": [
+        "Oceanic lithosphere subducts beneath continental lithosphere."
+      ],
+      "pages": [],
+      "phase": "interact",
+      "concept": "4. Investigate a boundary with evidence",
+      "explanation": "This combination is consistent with an oceanic plate descending beneath a continent. It supports, but does not by itself prove every detail of, the interpretation.",
+      "optionFeedback": [
+        "Correct: the pattern is consistent with oceanic–continental subduction.",
+        "A divergent interpretation would involve plates moving apart.",
+        "A transform interpretation would involve sideways sliding, not subduction."
+      ],
+      "misconception": "Revisit 4. investigate a boundary with evidence.",
+      "hints": [
+        "Observe a pattern, propose a plate-motion explanation, compare it with a model, and state what the model cannot prove.",
+        "A seafloor ridge with shallow earthquakes and evidence of crust forming nearby is consistent with a divergent-boundary interpretation; more data would strengthen the case."
+      ],
+      "retry": "retry-worked-skip",
+      "next": "recap",
+      "teaching": {
+        "introduction": "A geological investigation combines observations, a question, and a model. First identify evidence such as earthquake locations, a volcanic arc, or the shape of the seafloor. Then ask which boundary motion could explain the pattern. A model helps test that explanation, but it simplifies a complex, three-dimensional Earth.",
+        "demonstration": "Suppose a map shows a trench offshore, a line of earthquakes that becomes deeper inland, and volcanoes on the continent. Ask whether these observations fit an oceanic plate descending beneath continental lithosphere. In a boundary model, select convergent motion and compare the observations with the subduction configuration. The pattern supports that interpretation, but a map alone is not a complete measurement of plate motion or all subsurface structure.",
+        "simpler": "Observe a pattern, propose a plate-motion explanation, compare it with a model, and state what the model cannot prove.",
+        "example": "A seafloor ridge with shallow earthquakes and evidence of crust forming nearby is consistent with a divergent-boundary interpretation; more data would strengthen the case.",
+        "diagram": {
+          "heading": "4. Investigate a boundary with evidence",
+          "labels": [
+            "Boundary model",
+            "Earthquake and landform evidence",
+            "Interpretation to test"
+          ],
+          "caption": "An investigation uses a boundary model to compare a proposed motion with mapped geological evidence.",
+          "visual": {
+            "version": 1,
+            "objective": "Use observations to test a boundary interpretation and recognize the limits of a simplified model.",
+            "rationale": "A boundary view can represent a physical plate interaction while an investigation links the model to observations without treating it as a complete replica of Earth.",
+            "initial": {
+              "values": [
+                {
+                  "id": "progress",
+                  "value": 0.6
+                },
+                {
+                  "id": "rate",
+                  "value": 3
+                }
+              ],
+              "boundary": "convergent",
+              "highlights": [],
+              "selected": null,
+              "reveal": false
+            },
+            "demonstration": {
+              "values": [
+                {
+                  "id": "progress",
+                  "value": 0.6
+                },
+                {
+                  "id": "rate",
+                  "value": 3
+                }
+              ],
+              "boundary": "convergent",
+              "highlights": [
+                "boundary",
+                "slab",
+                "earthquakes",
+                "volcano"
+              ],
+              "selected": "earthquakes",
+              "reveal": true
+            },
+            "apply": {
+              "values": [
+                {
+                  "id": "progress",
+                  "value": 0.45
+                },
+                {
+                  "id": "rate",
+                  "value": 3
+                }
+              ],
+              "boundary": "divergent",
+              "highlights": [
+                "boundary",
+                "upwelling",
+                "earthquakes"
+              ],
+              "selected": "boundary",
+              "reveal": true
+            },
+            "transfer": {
+              "values": [
+                {
+                  "id": "progress",
+                  "value": 0.7
+                },
+                {
+                  "id": "rate",
+                  "value": 2
+                }
+              ],
+              "boundary": "transform",
+              "highlights": [
+                "boundary",
+                "earthquakes",
+                "motion"
+              ],
+              "selected": "earthquakes",
+              "reveal": true
+            },
+            "feedback": {
+              "correct": [
+                "boundary",
+                "slab",
+                "earthquakes",
+                "volcano",
+                "upwelling"
+              ],
+              "incorrect": [
+                "volcano"
+              ]
+            },
+            "type": "plate-tectonics",
+            "view": "boundaries"
+          }
+        },
+        "followup": {
+          "task": "A ridge has evidence of new crust and the neighboring plates move apart. What is a reasonable interpretation?",
+          "options": [
+            "A divergent boundary",
+            "A transform boundary",
+            "An oceanic–continental subduction zone"
+          ],
+          "correct": [
+            "A divergent boundary"
+          ],
+          "explanation": "Plates moving apart and crust formation at a ridge fit a divergent-boundary interpretation.",
+          "optionFeedback": [
+            "Correct: a ridge with plates moving apart fits divergence.",
+            "Plates moving together would be convergent.",
+            "Sideways sliding would be transform motion."
+          ],
+          "visualSnapshot": {
+            "values": [
+              {
+                "id": "progress",
+                "value": 0.5
+              },
+              {
+                "id": "rate",
+                "value": 2
+              }
+            ],
+            "boundary": "divergent",
+            "highlights": [],
+            "selected": null,
+            "reveal": false
+          }
+        }
+      },
+      "visualSnapshot": {
+        "values": [
+          {
+            "id": "progress",
+            "value": 0.6
+          },
+          {
+            "id": "rate",
+            "value": 3
+          }
+        ],
+        "boundary": "convergent",
+        "highlights": [],
+        "selected": null,
+        "reveal": false
+      }
+    }
+  ],
+  "experience": {
+    "objectives": {
+      "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q1": "Distinguish the crust, lithosphere, and asthenosphere as layers with different mechanical behavior.",
+      "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q2": "Interpret plate motion as slow relative movement of rigid plates over ductile asthenosphere.",
+      "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q3": "Classify boundaries by relative motion and recognize oceanic–continental subduction as one convergent configuration.",
+      "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q4": "Use observations to test a boundary interpretation and recognize the limits of a simplified model."
+    },
+    "diagnostic": [
+      {
+        "id": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q1-diagnostic",
+        "task": "Which description best defines the lithosphere?",
+        "type": "choice",
+        "options": [
+          "The crust and rigid uppermost mantle",
+          "The crust alone",
+          "The asthenosphere and the whole mantle"
+        ],
+        "correct": [
+          "The crust and rigid uppermost mantle"
+        ],
+        "pages": [],
+        "phase": "interact",
+        "concept": "1. The lithosphere is more than crust",
+        "explanation": "The lithosphere is Earth’s rigid outer layer, made of the crust and the rigid uppermost mantle. It rests on the more ductile asthenosphere.",
+        "optionFeedback": [
+          "Correct: the lithosphere includes the crust and rigid uppermost mantle.",
+          "Not quite: the lithosphere is not just the crust; it includes rigid uppermost mantle too.",
+          "Not quite: the asthenosphere is beneath the lithosphere, not its rigid upper part."
+        ],
+        "misconception": "Revisit 1. the lithosphere is more than crust.",
+        "hints": [
+          "The crust is only the outer skin. The lithosphere is the crust plus a rigid layer underneath it; ductile asthenosphere lies below.",
+          "A piece of oceanic lithosphere includes oceanic crust and rigid uppermost mantle, resting on asthenosphere."
+        ],
+        "retry": "retry-worked-skip",
+        "next": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q2",
+        "visualSnapshot": {
+          "values": [
+            {
+              "id": "progress",
+              "value": 0.4
+            },
+            {
+              "id": "rate",
+              "value": 3
+            }
+          ],
+          "boundary": "convergent",
+          "highlights": [],
+          "selected": null,
+          "reveal": false
+        }
+      },
+      {
+        "id": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q2-diagnostic",
+        "task": "At which boundary do plates slide horizontally past one another?",
+        "type": "choice",
+        "options": [
+          "Transform",
+          "Divergent",
+          "Convergent"
+        ],
+        "correct": [
+          "Transform"
+        ],
+        "pages": [],
+        "phase": "interact",
+        "concept": "2. Plates move slowly",
+        "explanation": "At a transform boundary, plates move sideways relative to each other. They do not primarily move apart or converge.",
+        "optionFeedback": [
+          "Correct: transform-boundary plates slide horizontally past one another.",
+          "Not quite: plates moving apart describe a divergent boundary.",
+          "Not quite: one plate descending beneath another describes a convergent boundary."
+        ],
+        "misconception": "Revisit 2. plates move slowly.",
+        "hints": [
+          "The plates are rigid pieces that creep along very slowly; they do not race across Earth’s surface.",
+          "At a spreading ridge, two plates move away from the ridge in opposite directions over time."
+        ],
+        "retry": "retry-worked-skip",
+        "next": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q3",
+        "visualSnapshot": {
+          "values": [
+            {
+              "id": "progress",
+              "value": 0.6
+            },
+            {
+              "id": "rate",
+              "value": 2
+            }
+          ],
+          "boundary": "transform",
+          "highlights": [],
+          "selected": null,
+          "reveal": false
+        }
+      }
+    ],
+    "tests": {
+      "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q1": [
+        {
+          "id": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q1-independent",
+          "task": "A student says, “Lithosphere means crust only.” Which correction is best?",
+          "type": "choice",
+          "options": [
+            "It means crust plus rigid uppermost mantle.",
+            "That is correct; mantle is never part of lithosphere.",
+            "It means asthenosphere only."
+          ],
+          "correct": [
+            "It means crust plus rigid uppermost mantle."
+          ],
+          "pages": [],
+          "phase": "interact",
+          "concept": "1. The lithosphere is more than crust",
+          "explanation": "The lithosphere includes the crust and rigid uppermost mantle; the asthenosphere lies beneath.",
+          "optionFeedback": [
+            "Correct: the lithosphere includes crust and rigid uppermost mantle.",
+            "Crust alone leaves out the rigid mantle portion.",
+            "The asthenosphere is below, rather than part of, the lithosphere."
+          ],
+          "misconception": "Revisit 1. the lithosphere is more than crust.",
+          "hints": [
+            "The crust is only the outer skin. The lithosphere is the crust plus a rigid layer underneath it; ductile asthenosphere lies below.",
+            "A piece of oceanic lithosphere includes oceanic crust and rigid uppermost mantle, resting on asthenosphere."
+          ],
+          "retry": "retry-worked-skip",
+          "next": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q2",
+          "visualSnapshot": {
+            "values": [
+              {
+                "id": "progress",
+                "value": 0.4
+              },
+              {
+                "id": "rate",
+                "value": 4
+              }
+            ],
+            "boundary": "convergent",
+            "highlights": [],
+            "selected": null,
+            "reveal": false
+          }
+        }
+      ],
+      "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q2": [
+        {
+          "id": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q2-independent",
+          "task": "Which scale is a reasonable general description of plate speeds?",
+          "type": "choice",
+          "options": [
+            "Often a few centimeters per year, with variation",
+            "Several kilometers per day everywhere",
+            "Exactly one meter per year at every boundary"
+          ],
+          "correct": [
+            "Often a few centimeters per year, with variation"
+          ],
+          "pages": [],
+          "phase": "interact",
+          "concept": "2. Plates move slowly",
+          "explanation": "Many plate speeds are on the order of centimeters per year, but rates vary.",
+          "optionFeedback": [
+            "Correct: rates vary, and centimeters per year are plausible.",
+            "A rate of kilometers per day is not characteristic of plate motion.",
+            "A single rate does not apply to every plate boundary."
+          ],
+          "misconception": "Revisit 2. plates move slowly.",
+          "hints": [
+            "The plates are rigid pieces that creep along very slowly; they do not race across Earth’s surface.",
+            "At a spreading ridge, two plates move away from the ridge in opposite directions over time."
+          ],
+          "retry": "retry-worked-skip",
+          "next": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q3",
+          "visualSnapshot": {
+            "values": [
+              {
+                "id": "progress",
+                "value": 0.75
+              },
+              {
+                "id": "rate",
+                "value": 5
+              }
+            ],
+            "boundary": "transform",
+            "highlights": [],
+            "selected": null,
+            "reveal": false
+          }
+        }
+      ],
+      "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q3": [
+        {
+          "id": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q3-independent",
+          "task": "An oceanic plate descends beneath a continental plate. Which motion is occurring?",
+          "type": "choice",
+          "options": [
+            "Convergent",
+            "Divergent",
+            "Transform"
+          ],
+          "correct": [
+            "Convergent"
+          ],
+          "pages": [],
+          "phase": "interact",
+          "concept": "3. Three kinds of boundary",
+          "explanation": "Subduction at an oceanic–continental margin is a convergent-boundary configuration.",
+          "optionFeedback": [
+            "Correct: oceanic lithosphere descends beneath continental lithosphere in this example.",
+            "This describes plates moving apart, not this subduction configuration.",
+            "Transform boundaries slide sideways."
+          ],
+          "misconception": "Revisit 3. three kinds of boundary.",
+          "hints": [
+            "Apart = divergent; together = convergent; sideways past = transform.",
+            "A ridge spreading apart is divergent; an oceanic plate descending beneath a continent is one convergent case; two plates sliding sideways are transform."
+          ],
+          "retry": "retry-worked-skip",
+          "next": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q4",
+          "visualSnapshot": {
+            "values": [
+              {
+                "id": "progress",
+                "value": 0.55
+              },
+              {
+                "id": "rate",
+                "value": 4
+              }
+            ],
+            "boundary": "convergent",
+            "highlights": [],
+            "selected": null,
+            "reveal": false
+          }
+        }
+      ],
+      "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q4": [
+        {
+          "id": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q4-independent",
+          "task": "Mapped earthquakes follow a fault where plates slide sideways. Which boundary is the best match?",
+          "type": "choice",
+          "options": [
+            "Transform",
+            "Convergent",
+            "Divergent"
+          ],
+          "correct": [
+            "Transform"
+          ],
+          "pages": [],
+          "phase": "interact",
+          "concept": "4. Investigate a boundary with evidence",
+          "explanation": "Sideways relative motion along a fault is characteristic of a transform boundary; earthquake patterns are evidence to examine.",
+          "optionFeedback": [
+            "Correct: sideways motion with earthquakes fits a transform setting.",
+            "Subduction requires convergence, which is not described.",
+            "A ridge separating plates is not the stated sideways motion."
+          ],
+          "misconception": "Revisit 4. investigate a boundary with evidence.",
+          "hints": [
+            "Observe a pattern, propose a plate-motion explanation, compare it with a model, and state what the model cannot prove.",
+            "A seafloor ridge with shallow earthquakes and evidence of crust forming nearby is consistent with a divergent-boundary interpretation; more data would strengthen the case."
+          ],
+          "retry": "retry-worked-skip",
+          "next": "recap",
+          "visualSnapshot": {
+            "values": [
+              {
+                "id": "progress",
+                "value": 0.75
+              },
+              {
+                "id": "rate",
+                "value": 4
+              }
+            ],
+            "boundary": "transform",
+            "highlights": [],
+            "selected": null,
+            "reveal": false
+          }
+        }
+      ]
+    },
+    "final": [
+      {
+        "conceptId": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q1",
+        "question": {
+          "id": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q1-final",
+          "task": "Which statement correctly separates lithosphere from asthenosphere?",
+          "type": "choice",
+          "options": [
+            "Lithosphere is crust plus rigid uppermost mantle; asthenosphere is below and ductile.",
+            "Lithosphere is liquid magma above the crust.",
+            "Asthenosphere is another name for crust alone."
+          ],
+          "correct": [
+            "Lithosphere is crust plus rigid uppermost mantle; asthenosphere is below and ductile."
+          ],
+          "pages": [],
+          "phase": "interact",
+          "concept": "1. The lithosphere is more than crust",
+          "explanation": "Lithosphere describes the rigid outer layer; the mostly solid but ductile asthenosphere lies below it.",
+          "optionFeedback": [
+            "Correct: the lithosphere is the rigid crust-and-uppermost-mantle layer.",
+            "The asthenosphere is not the lithosphere’s rigid uppermost mantle.",
+            "The crust alone is only one component of the lithosphere."
+          ],
+          "misconception": "Revisit 1. the lithosphere is more than crust.",
+          "hints": [
+            "The crust is only the outer skin. The lithosphere is the crust plus a rigid layer underneath it; ductile asthenosphere lies below.",
+            "A piece of oceanic lithosphere includes oceanic crust and rigid uppermost mantle, resting on asthenosphere."
+          ],
+          "retry": "retry-worked-skip",
+          "next": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q2",
+          "visualSnapshot": {
+            "values": [
+              {
+                "id": "progress",
+                "value": 0.45
+              },
+              {
+                "id": "rate",
+                "value": 2
+              }
+            ],
+            "boundary": "transform",
+            "highlights": [],
+            "selected": null,
+            "reveal": false
+          }
+        }
+      },
+      {
+        "conceptId": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q2",
+        "question": {
+          "id": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q2-final",
+          "task": "A plate moves only a little each year. What is the best inference?",
+          "type": "choice",
+          "options": [
+            "The movement can still add up over geologic time.",
+            "The movement is too small to change Earth ever.",
+            "The plate must be floating on liquid magma."
+          ],
+          "correct": [
+            "The movement can still add up over geologic time."
+          ],
+          "pages": [],
+          "phase": "interact",
+          "concept": "2. Plates move slowly",
+          "explanation": "Small yearly motion accumulates over long spans and can change ocean basins and continents.",
+          "optionFeedback": [
+            "Correct: slow motion can produce major changes over long periods.",
+            "Plate motion is not a rapid daily movement.",
+            "The asthenosphere is mostly solid, not a liquid ocean."
+          ],
+          "misconception": "Revisit 2. plates move slowly.",
+          "hints": [
+            "The plates are rigid pieces that creep along very slowly; they do not race across Earth’s surface.",
+            "At a spreading ridge, two plates move away from the ridge in opposite directions over time."
+          ],
+          "retry": "retry-worked-skip",
+          "next": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q3",
+          "visualSnapshot": {
+            "values": [
+              {
+                "id": "progress",
+                "value": 0.9
+              },
+              {
+                "id": "rate",
+                "value": 4
+              }
+            ],
+            "boundary": "divergent",
+            "highlights": [],
+            "selected": null,
+            "reveal": false
+          }
+        }
+      },
+      {
+        "conceptId": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q3",
+        "question": {
+          "id": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q3-final",
+          "task": "A fault marks plates moving sideways relative to each other. Classify it.",
+          "type": "choice",
+          "options": [
+            "Transform boundary",
+            "Convergent boundary",
+            "Divergent boundary"
+          ],
+          "correct": [
+            "Transform boundary"
+          ],
+          "pages": [],
+          "phase": "interact",
+          "concept": "3. Three kinds of boundary",
+          "explanation": "Sideways relative motion is the defining feature of a transform boundary.",
+          "optionFeedback": [
+            "Correct: transform boundaries are characterized by sideways relative motion.",
+            "Plates moving together define convergence.",
+            "Plates moving apart define divergence."
+          ],
+          "misconception": "Revisit 3. three kinds of boundary.",
+          "hints": [
+            "Apart = divergent; together = convergent; sideways past = transform.",
+            "A ridge spreading apart is divergent; an oceanic plate descending beneath a continent is one convergent case; two plates sliding sideways are transform."
+          ],
+          "retry": "retry-worked-skip",
+          "next": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q4",
+          "visualSnapshot": {
+            "values": [
+              {
+                "id": "progress",
+                "value": 0.35
+              },
+              {
+                "id": "rate",
+                "value": 2
+              }
+            ],
+            "boundary": "transform",
+            "highlights": [],
+            "selected": null,
+            "reveal": false
+          }
+        }
+      },
+      {
+        "conceptId": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q4",
+        "question": {
+          "id": "TOPIC-01928084-2154-4A69-B91E-16FDA20BBBEB-Q4-final",
+          "task": "What is the most careful conclusion when a simple model matches mapped subduction evidence?",
+          "type": "choice",
+          "options": [
+            "The evidence supports the interpretation, but the model simplifies Earth.",
+            "The model proves every detail of the real boundary.",
+            "The model makes geological observations unnecessary."
+          ],
+          "correct": [
+            "The evidence supports the interpretation, but the model simplifies Earth."
+          ],
+          "pages": [],
+          "phase": "interact",
+          "concept": "4. Investigate a boundary with evidence",
+          "explanation": "A simplified model helps test an explanation, but it does not reproduce every process or replace multiple lines of geological evidence.",
+          "optionFeedback": [
+            "Correct: models simplify and cannot capture every Earth process or prove an interpretation alone.",
+            "A model is not an exact, complete replica of Earth.",
+            "The model can support reasoning, but evidence and limitations still matter."
+          ],
+          "misconception": "Revisit 4. investigate a boundary with evidence.",
+          "hints": [
+            "Observe a pattern, propose a plate-motion explanation, compare it with a model, and state what the model cannot prove.",
+            "A seafloor ridge with shallow earthquakes and evidence of crust forming nearby is consistent with a divergent-boundary interpretation; more data would strengthen the case."
+          ],
+          "retry": "retry-worked-skip",
+          "next": "recap",
+          "visualSnapshot": {
+            "values": [
+              {
+                "id": "progress",
+                "value": 0.4
+              },
+              {
+                "id": "rate",
+                "value": 3
+              }
+            ],
+            "boundary": "convergent",
+            "highlights": [],
+            "selected": null,
+            "reveal": false
+          }
+        }
+      }
+    ]
+  }
+}

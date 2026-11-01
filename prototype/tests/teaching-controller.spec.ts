@@ -31,17 +31,22 @@ describe('student-paced instructional decisions', () => {
   it('requires a response and explicit continuation before the next concept', () => {
     let s = ask(start(1));
     expect(continueCheckpoint(s, ai3)).toEqual(s);
-    s = practice({ ...s, studentResponse: '7' }, currentQuestion(s, ai3));
+    s = practice({ ...s, studentResponse: '8' }, currentQuestion(s, ai3));
     expect(s.teaching.status).toBe('READY_TO_CONTINUE');
     expect(s.questionId).toBe('AI3-Q02');
     expect(s.observations['AI3-Q02']?.explicitContinuation).toBe(false);
+    s = teachAction(s, ai3, 'practice');
+    s = practice(
+      { ...s, studentResponse: currentQuestion(s, ai3).correct[0]! },
+      ai3.questions[1]!,
+    );
     s = continueCheckpoint(s, ai3);
     expect(s.questionId).toBe('AI3-Q03');
     expect(s.observations['AI3-Q02']?.continuation).toBe('validated');
   });
   it('diagnoses the MIN misconception and checks different actual values before continuation', () => {
     let s = practice(
-      { ...ask(start(2)), studentResponse: '5' },
+      { ...ask(start(2)), studentResponse: '8' },
       ai3.questions[2]!,
     );
     expect(s.questionId).toBe('AI3-Q03');
@@ -49,29 +54,34 @@ describe('student-paced instructional decisions', () => {
     expect(s.completion['AI3-Q03']).toBeUndefined();
     expect(
       s.visualState.kind === 'tree' && s.visualState.example?.values,
-    ).toEqual([2, 6]);
+    ).toEqual([3, 8, 5]);
     expect(continueCheckpoint(s, ai3)).toEqual(s);
     s = teachAction(teachAction(s, ai3, 'check'), ai3, 'answer');
     const follow = currentQuestion(s, ai3);
-    expect(follow.correct).toEqual(['1']);
+    expect(follow.correct).toEqual(['3']);
     expect(
       s.visualState.kind === 'tree' && s.visualState.example?.values,
-    ).toEqual([1, 7]);
-    s = practice({ ...s, studentResponse: '1' }, ai3.questions[2]!);
-    expect(s.lastFeedback).toContain('min(1,7)=1');
+    ).toEqual([3, 8, 5]);
+    s = practice({ ...s, studentResponse: '3' }, ai3.questions[2]!);
+    expect(s.lastFeedback).toContain('smallest score');
     expect(s.questionId).toBe('AI3-Q03');
     expect(
       s.observations['AI3-Q03']?.responses.map((r) => r.validation),
     ).toEqual(['incorrect', 'correct']);
+    s = teachAction(s, ai3, 'practice');
+    s = practice(
+      { ...s, studentResponse: currentQuestion(s, ai3).correct[0]! },
+      ai3.questions[2]!,
+    );
     expect(continueCheckpoint(s, ai3).questionId).toBe('AI3-Q04');
   });
   it('does not convert repeated wrong answers into completion', () => {
     let s = practice(
-      { ...ask(start(2)), studentResponse: '5' },
+      { ...ask(start(2)), studentResponse: '8' },
       ai3.questions[2]!,
     );
     s = teachAction(teachAction(s, ai3, 'check'), ai3, 'answer');
-    s = practice({ ...s, studentResponse: '7' }, ai3.questions[2]!);
+    s = practice({ ...s, studentResponse: '8' }, ai3.questions[2]!);
     expect(s.teaching.variant).toBe('second-example');
     expect(s.observations['AI3-Q03']?.retries).toBe(2);
     expect(s.completion['AI3-Q03']).toBeUndefined();
@@ -94,15 +104,17 @@ describe('student-paced instructional decisions', () => {
     );
     expect(s.observations['AI3-Q06']?.responses[0]?.validation).toBe('unclear');
     expect(s.teaching.status).toBe('AWAITING_RESPONSE');
+    const kb = lessons[1]!;
+    s = goToCheckpoint(selectLesson(initialState, kb, null), kb, 11);
     s = practice(
-      { ...ask(start(11)), studentResponse: 'I do not know' },
-      ai3.questions[11]!,
+      { ...ask(s, kb), studentResponse: 'I do not know' },
+      kb.questions[11]!,
     );
-    expect(s.observations['AI3-Q12']?.responses[0]?.validation).toBe(
+    expect(s.observations['AI4-Q12']?.responses[0]?.validation).toBe(
       'unverified',
     );
-    expect(s.completion['AI3-Q12']?.outcome).toBe('recorded');
-    expect(continueCheckpoint(s, ai3)).toEqual(s);
+    expect(s.completion['AI4-Q12']?.outcome).toBe('recorded');
+    expect(continueCheckpoint(s, kb)).toEqual(s);
   });
   it('retains supported portions of a partially correct multi-selection', () => {
     const lesson = lessons.find((l) => l.id === 'ehs5')!;
@@ -201,14 +213,9 @@ describe('conversation recovery and application boundaries', () => {
     let s = ask(start(11));
     expect(s.visualState.kind === 'tree' && s.visualState.transfer).toBe(true);
     expect(s.visualState.kind === 'tree' && s.visualState.reveal).toBe(1);
-    s = practice(
-      { ...s, studentResponse: 'A, because its smaller child is 4.' },
-      ai3.questions[11]!,
-    );
+    s = practice({ ...s, studentResponse: 'A' }, ai3.questions[11]!);
     expect(s.visualState.kind === 'tree' && s.visualState.reveal).toBe(3);
-    expect(s.observations['AI3-Q12']?.responses[0]?.validation).toBe(
-      'unverified',
-    );
+    expect(s.observations['AI3-Q12']?.responses[0]?.validation).toBe('correct');
   });
   it('changes actual KB and model state only after the permitted checked action', () => {
     const kb = lessons[1]!;
@@ -232,7 +239,7 @@ describe('conversation recovery and application boundaries', () => {
 });
 
 it('distinguishes an explicitly named node from an article in a contextual request', () => {
-  const s = teachAction(start(3), ai3, 'demonstrate');
+  const s = teachAction(start(4), ai3, 'demonstrate');
   const named = retrieveExplanation(s, ai3, 'Why did MIN A choose 3?')!;
   expect(named.target).toBe('branch-0');
   expect(named.text).toContain('min(3, 5) = 3');
@@ -252,7 +259,7 @@ it('marks a pruned edge when its actual cutoff response is validated', () => {
   );
   expect(s.visualState.kind === 'tree' && s.visualState.pruneStep).toBe(4);
   expect(s.questionId).toBe('AI3-Q09');
-  s = practice({ ...ask(start(9)), studentResponse: '4' }, ai3.questions[9]!);
+  s = practice({ ...ask(start(9)), studentResponse: 'Yes' }, ai3.questions[9]!);
   expect(s.visualState.kind === 'tree' && s.visualState.pruneStep).toBe(6);
   expect(s.questionId).toBe('AI3-Q10');
 });

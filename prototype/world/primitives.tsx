@@ -1,8 +1,10 @@
 'use client';
 import { worldTypeface } from './typography';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef, type Ref } from 'react';
 import * as THREE from 'three';
-import type { ThreeEvent } from '@react-three/fiber';
+import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
+import { useWorldMotion } from './motion-context';
+import { MotionTrack } from './motion';
 export type V3 = [number, number, number];
 export type Pick = (id: string, value?: string) => void;
 export function SoftBox({
@@ -13,6 +15,7 @@ export function SoftBox({
   radius = 0.055,
   onClick,
   opacity = 1,
+  materialRef,
 }: {
   position?: V3;
   size: V3;
@@ -21,6 +24,7 @@ export function SoftBox({
   radius?: number;
   onClick?: (event: ThreeEvent<MouseEvent>) => void;
   opacity?: number;
+  materialRef?: Ref<THREE.MeshStandardMaterial>;
 }) {
   const geometry = useMemo(() => {
     const [outerW, outerH, d] = size;
@@ -60,6 +64,7 @@ export function SoftBox({
       receiveShadow
     >
       <meshStandardMaterial
+        ref={materialRef}
         color={color}
         roughness={0.72}
         transparent={opacity < 1}
@@ -183,6 +188,44 @@ export function ButtonNode({
   onClick: () => void;
   size?: [number, number];
 }) {
+  const material = useRef<THREE.MeshStandardMaterial>(null),
+    initial = useRef(selected ? '#c4d9ad' : color);
+  const motion = useWorldMotion(),
+    { invalidate } = useThree();
+  const track = useRef<null | {
+    clock: MotionTrack;
+    last: number;
+    from: THREE.Color;
+    to: THREE.Color;
+  }>(null);
+  useEffect(() => {
+    if (!material.current) return;
+    const to = new THREE.Color(selected ? '#c4d9ad' : color);
+    if (material.current.color.equals(to)) return;
+    track.current = {
+      clock: new MotionTrack(0.18),
+      last: performance.now(),
+      from: material.current.color.clone(),
+      to,
+    };
+    invalidate();
+  }, [selected, color, invalidate]);
+  useEffect(() => {
+    if (track.current) track.current.last = performance.now();
+    invalidate();
+  }, [motion?.paused, motion?.reduced, invalidate]);
+  useFrame(() => {
+    const t = track.current;
+    if (!t || !material.current || motion?.paused) return;
+    const now = performance.now(),
+      p = t.clock.advance((now - t.last) / 1000, false, motion?.reduced);
+    t.last = now;
+    material.current.color.lerpColors(t.from, t.to, p);
+    if (t.clock.done) {
+      material.current.color.copy(t.to);
+      track.current = null;
+    } else invalidate();
+  });
   const click = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
     onClick();
@@ -199,7 +242,8 @@ export function ButtonNode({
     >
       <SoftBox
         size={[size[0], size[1], 0.07]}
-        color={selected ? '#c4d9ad' : color}
+        color={initial.current}
+        materialRef={material}
         onClick={click}
       />
       <Label

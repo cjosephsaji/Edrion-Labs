@@ -1,0 +1,742 @@
+{
+  "tests": [
+    "World library selection opens a real two-question diagnostic; misconception responses choose relevant starting teaching without verification",
+    "Keyboard Focus Board selection submits an unsupported conclusion; targeted feedback changes the teaching path and board focus",
+    "Help marks a Test attempt assisted; a different fact/rule context is required before independent verification",
+    "World → Classic and refresh preserve the exact independent/assisted evidence and active question",
+    "All twelve concepts can run Learn / Apply / Test; the five-question mixed check records actual correct, incorrect, assisted and skipped responses",
+    "A failed mixed-concept application produces a real weak-area review without erasing earlier evidence"
+  ],
+  "errors": [],
+  "productionMutations": [],
+  "layouts": [
+    {
+      "width": 1366,
+      "height": 900,
+      "taskDockInBounds": true,
+      "horizontalOverflow": false,
+      "wholeBoardInBounds": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "taskDockInBounds": true,
+      "horizontalOverflow": false,
+      "wholeBoardInBounds": true
+    }
+  ],
+  "liveModelCalls": false,
+  "summary": {
+    "progress": {
+      "concepts": [
+        {
+          "id": "AI4-Q01",
+          "questionIndex": 0,
+          "concept": "Knowledge representation",
+          "visited": true,
+          "verified": true,
+          "needsPractice": false,
+          "skipped": false,
+          "status": "Verified now",
+          "attempts": [
+            {
+              "id": "48154fd8-dddc-46cd-b3a3-b13545c07700",
+              "conceptId": "AI4-Q01",
+              "questionId": "AI4-Q01",
+              "kind": "apply",
+              "response": "Facts and rules in a knowledge base",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": false,
+              "skipped": false,
+              "intervention": null,
+              "submittedAt": 1793511082942
+            },
+            {
+              "id": "27fb6432-2877-46c1-b30d-755a1d99dd1a",
+              "conceptId": "AI4-Q01",
+              "questionId": "AI4-Q01-test-a",
+              "kind": "test",
+              "response": "Sensor(Sora1) and Sensor(x) → Online(x)",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": true,
+              "skipped": false,
+              "intervention": "independent",
+              "submittedAt": 1793511083278
+            }
+          ]
+        },
+        {
+          "id": "AI4-Q02",
+          "questionIndex": 1,
+          "concept": "TELL adds knowledge",
+          "visited": true,
+          "verified": true,
+          "needsPractice": false,
+          "skipped": false,
+          "status": "Verified now",
+          "attempts": [
+            {
+              "id": "5554aeef-f625-4a44-aa8e-ecab123ee561",
+              "conceptId": "AI4-Q02",
+              "questionId": "AI4-Q02",
+              "kind": "apply",
+              "response": "TELL Bird(Tweety)",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": false,
+              "skipped": false,
+              "intervention": null,
+              "submittedAt": 1793511083791
+            },
+            {
+              "id": "3b4d1bce-ed26-443f-b96c-46dd50677692",
+              "conceptId": "AI4-Q02",
+              "questionId": "AI4-Q02-test-a",
+              "kind": "test",
+              "response": "TELL Sensor(Sora2)",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": true,
+              "skipped": false,
+              "intervention": "independent",
+              "submittedAt": 1793511084018
+            }
+          ]
+        },
+        {
+          "id": "AI4-Q03",
+          "questionIndex": 2,
+          "concept": "Rule versus fact",
+          "visited": true,
+          "verified": true,
+          "needsPractice": false,
+          "skipped": false,
+          "status": "Verified now",
+          "attempts": [
+            {
+              "id": "7574b367-a131-423b-a0fd-00772bc94439",
+              "conceptId": "AI4-Q03",
+              "questionId": "AI4-Q03",
+              "kind": "apply",
+              "response": "Rules",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": false,
+              "skipped": false,
+              "intervention": null,
+              "submittedAt": 1793511084584
+            },
+            {
+              "id": "e3d55ea5-da7e-42c2-9434-51eb0777b2d2",
+              "conceptId": "AI4-Q03",
+              "questionId": "AI4-Q03-test-a",
+              "kind": "test",
+              "response": "Sensor(x) → Online(x)",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": true,
+              "skipped": false,
+              "intervention": "independent",
+              "submittedAt": 1793511084813
+            },
+            {
+              "id": "703d2b9d-ead5-4da7-ae52-2c36202cbe61",
+              "conceptId": "AI4-Q03",
+              "questionId": "AI4-Q03-test-final",
+              "kind": "final",
+              "response": "Member(x) → CanEnter(x)",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": true,
+              "skipped": false,
+              "intervention": "independent",
+              "submittedAt": 1793511099962
+            }
+          ]
+        },
+        {
+          "id": "AI4-Q04",
+          "questionIndex": 3,
+          "concept": "Substitution",
+          "visited": true,
+          "verified": true,
+          "needsPractice": false,
+          "skipped": false,
+          "status": "Verified now",
+          "attempts": [
+            {
+              "id": "ba32c633-b5da-448b-ac6c-2b800091c6dd",
+              "conceptId": "AI4-Q04",
+              "questionId": "AI4-Q04",
+              "kind": "apply",
+              "response": "x = Tweety",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": false,
+              "skipped": false,
+              "intervention": null,
+              "submittedAt": 1793511085324
+            },
+            {
+              "id": "06da3149-2cd7-42a9-bee2-a25bb4d95ec8",
+              "conceptId": "AI4-Q04",
+              "questionId": "AI4-Q04-test-a",
+              "kind": "test",
+              "response": "x = Sora4",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": true,
+              "skipped": false,
+              "intervention": "independent",
+              "submittedAt": 1793511085557
+            }
+          ]
+        },
+        {
+          "id": "AI4-Q05",
+          "questionIndex": 4,
+          "concept": "Supported derivation",
+          "visited": true,
+          "verified": false,
+          "needsPractice": true,
+          "skipped": false,
+          "status": "Needs practice",
+          "attempts": [
+            {
+              "id": "53803fc6-901c-43f5-a68f-e49a41c49fba",
+              "conceptId": "AI4-Q05",
+              "questionId": "AI4-Q05",
+              "kind": "apply",
+              "response": "CanFly(Tweety)",
+              "validation": "incorrect",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": false,
+              "skipped": false,
+              "intervention": "unsupported-conclusion",
+              "submittedAt": 1793511088302
+            },
+            {
+              "id": "bcd21c29-8478-45d3-bac9-d66b527ea9d8",
+              "conceptId": "AI4-Q05",
+              "questionId": "AI4-Q05-followup",
+              "kind": "apply",
+              "response": "HasWings(Rio)",
+              "validation": "correct",
+              "assisted": true,
+              "assistance": [
+                "help-used-this-attempt"
+              ],
+              "attempt": 1,
+              "independent": false,
+              "skipped": false,
+              "intervention": null,
+              "submittedAt": 1793511089758
+            },
+            {
+              "id": "fe62cb3b-70e3-4867-a84f-f6ad4425ae5f",
+              "conceptId": "AI4-Q05",
+              "questionId": "AI4-Q05-test-a",
+              "kind": "test",
+              "response": "Online(Sora5)",
+              "validation": "correct",
+              "assisted": true,
+              "assistance": [
+                "opened-help",
+                "example",
+                "opened-help",
+                "simpler",
+                "help-used-this-attempt"
+              ],
+              "attempt": 1,
+              "independent": false,
+              "skipped": false,
+              "intervention": null,
+              "submittedAt": 1793511090813
+            },
+            {
+              "id": "933ad66b-8d75-4f39-9492-1d3b1bd05c46",
+              "conceptId": "AI4-Q05",
+              "questionId": "AI4-Q05-test-b",
+              "kind": "test",
+              "response": "NeedsWater(Milo5)",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": true,
+              "skipped": false,
+              "intervention": "independent",
+              "submittedAt": 1793511091287
+            },
+            {
+              "id": "628f5d44-47d6-4a1f-9272-01f0d93d1278",
+              "conceptId": "AI4-Q05",
+              "questionId": "AI4-final-chain",
+              "kind": "final",
+              "response": "CanFly(Elm)",
+              "validation": "incorrect",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": true,
+              "skipped": false,
+              "intervention": "unsupported-conclusion",
+              "submittedAt": 1793511100290
+            }
+          ]
+        },
+        {
+          "id": "AI4-Q06",
+          "questionIndex": 5,
+          "concept": "Entailment",
+          "visited": true,
+          "verified": true,
+          "needsPractice": false,
+          "skipped": false,
+          "status": "Verified now",
+          "attempts": [
+            {
+              "id": "6b31510b-420b-427e-b333-68b0e26ad787",
+              "conceptId": "AI4-Q06",
+              "questionId": "AI4-Q06",
+              "kind": "apply",
+              "response": "Yes, entailed by this KB",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": false,
+              "skipped": false,
+              "intervention": null,
+              "submittedAt": 1793511094539
+            },
+            {
+              "id": "35277f09-eb0c-4ef3-89b5-cef00b8c25e7",
+              "conceptId": "AI4-Q06",
+              "questionId": "AI4-Q06-test-a",
+              "kind": "test",
+              "response": "Supported by the matching sensor fact and rule",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": true,
+              "skipped": false,
+              "intervention": "independent",
+              "submittedAt": 1793511094730
+            }
+          ]
+        },
+        {
+          "id": "AI4-Q07",
+          "questionIndex": 6,
+          "concept": "Unknown is not false",
+          "visited": true,
+          "verified": true,
+          "needsPractice": false,
+          "skipped": false,
+          "status": "Verified now",
+          "attempts": [
+            {
+              "id": "a4313295-976f-4109-ac5a-0f1b590e644b",
+              "conceptId": "AI4-Q07",
+              "questionId": "AI4-Q07",
+              "kind": "apply",
+              "response": "Not entailed by this KB",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": false,
+              "skipped": false,
+              "intervention": null,
+              "submittedAt": 1793511095512
+            },
+            {
+              "id": "8751f45a-366f-4ce8-a3b7-7e9fafcc8704",
+              "conceptId": "AI4-Q07",
+              "questionId": "AI4-Q07-test-a",
+              "kind": "test",
+              "response": "Not established by this knowledge base",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": true,
+              "skipped": false,
+              "intervention": "independent",
+              "submittedAt": 1793511095745
+            },
+            {
+              "id": "473871d4-3fbd-4f8b-9401-aa1422064343",
+              "conceptId": "AI4-Q07",
+              "questionId": "AI4-Q07-test-final",
+              "kind": "final",
+              "response": "Not established by this knowledge base",
+              "validation": "correct",
+              "assisted": true,
+              "assistance": [
+                "opened-help",
+                "repeat",
+                "help-used-this-attempt"
+              ],
+              "attempt": 1,
+              "independent": false,
+              "skipped": false,
+              "intervention": null,
+              "submittedAt": 1793511100568
+            }
+          ]
+        },
+        {
+          "id": "AI4-Q08",
+          "questionIndex": 7,
+          "concept": "Forward chaining",
+          "visited": true,
+          "verified": true,
+          "needsPractice": false,
+          "skipped": false,
+          "status": "Verified now",
+          "attempts": [
+            {
+              "id": "995d80c6-46bd-4928-a432-66d72f5e3552",
+              "conceptId": "AI4-Q08",
+              "questionId": "AI4-Q08",
+              "kind": "apply",
+              "response": "Facts → applicable rule → new fact",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": false,
+              "skipped": false,
+              "intervention": null,
+              "submittedAt": 1793511096229
+            },
+            {
+              "id": "f1753ce7-ff22-405d-813c-a53586354788",
+              "conceptId": "AI4-Q08",
+              "questionId": "AI4-Q08-test-a",
+              "kind": "test",
+              "response": "Sensor(Sora8) → match rule → Online(Sora8)",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": true,
+              "skipped": false,
+              "intervention": "independent",
+              "submittedAt": 1793511096414
+            }
+          ]
+        },
+        {
+          "id": "AI4-Q09",
+          "questionIndex": 8,
+          "concept": "Backward chaining",
+          "visited": true,
+          "verified": true,
+          "needsPractice": false,
+          "skipped": false,
+          "status": "Verified now",
+          "attempts": [
+            {
+              "id": "35d6185c-884e-42b0-975c-60c086d0c291",
+              "conceptId": "AI4-Q09",
+              "questionId": "AI4-Q09",
+              "kind": "apply",
+              "response": "Goal → required premise → stored fact",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": false,
+              "skipped": false,
+              "intervention": null,
+              "submittedAt": 1793511096924
+            },
+            {
+              "id": "1ddaa0c3-b6e9-482e-a615-3db6e4473ce9",
+              "conceptId": "AI4-Q09",
+              "questionId": "AI4-Q09-test-a",
+              "kind": "test",
+              "response": "Online(Sora9) → require Sensor(Sora9) → find fact",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": true,
+              "skipped": false,
+              "intervention": "independent",
+              "submittedAt": 1793511097107
+            },
+            {
+              "id": "94e9c4a9-054e-4ede-b54c-8197897de0ea",
+              "conceptId": "AI4-Q09",
+              "questionId": "AI4-Q09-test-final",
+              "kind": "final",
+              "response": "",
+              "validation": "unverified",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": false,
+              "skipped": true,
+              "intervention": null,
+              "submittedAt": 1793511100668
+            }
+          ]
+        },
+        {
+          "id": "AI4-Q10",
+          "questionIndex": 9,
+          "concept": "Transfer the same rule",
+          "visited": true,
+          "verified": true,
+          "needsPractice": false,
+          "skipped": false,
+          "status": "Verified now",
+          "attempts": [
+            {
+              "id": "207606b3-74fc-4022-96ee-546f89edaf96",
+              "conceptId": "AI4-Q10",
+              "questionId": "AI4-Q10",
+              "kind": "apply",
+              "response": "HasWings(Rio)",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": false,
+              "skipped": false,
+              "intervention": null,
+              "submittedAt": 1793511097577
+            },
+            {
+              "id": "2b63f307-83ef-40a7-982d-64507a689795",
+              "conceptId": "AI4-Q10",
+              "questionId": "AI4-Q10-test-a",
+              "kind": "test",
+              "response": "Online(Sora10)",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": true,
+              "skipped": false,
+              "intervention": "independent",
+              "submittedAt": 1793511097774
+            },
+            {
+              "id": "f50ad684-bbd3-40e7-8b49-bcde9d8866e5",
+              "conceptId": "AI4-Q10",
+              "questionId": "AI4-Q10-test-final",
+              "kind": "final",
+              "response": "CanEnter(Indigo)",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": true,
+              "skipped": false,
+              "intervention": "independent",
+              "submittedAt": 1793511100921
+            }
+          ]
+        },
+        {
+          "id": "AI4-Q11",
+          "questionIndex": 10,
+          "concept": "Unsupported inference",
+          "visited": true,
+          "verified": true,
+          "needsPractice": false,
+          "skipped": false,
+          "status": "Verified now",
+          "attempts": [
+            {
+              "id": "0547d67c-8eea-49e3-8184-7ac4f1dddb39",
+              "conceptId": "AI4-Q11",
+              "questionId": "AI4-Q11",
+              "kind": "apply",
+              "response": "Bird(Tweety) → CanFly(Tweety)",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": false,
+              "skipped": false,
+              "intervention": null,
+              "submittedAt": 1793511098355
+            },
+            {
+              "id": "63875476-ff88-492b-a389-1a9cd025f5ea",
+              "conceptId": "AI4-Q11",
+              "questionId": "AI4-Q11-test-a",
+              "kind": "test",
+              "response": "Calibrated(Sora11)",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": true,
+              "skipped": false,
+              "intervention": "independent",
+              "submittedAt": 1793511098618
+            }
+          ]
+        },
+        {
+          "id": "AI4-Q12",
+          "questionIndex": 11,
+          "concept": "Explain knowledge operations",
+          "visited": true,
+          "verified": true,
+          "needsPractice": false,
+          "skipped": false,
+          "status": "Verified now",
+          "attempts": [
+            {
+              "id": "564234ff-4a10-47ee-adb5-ea005a9f0741",
+              "conceptId": "AI4-Q12",
+              "questionId": "AI4-Q12",
+              "kind": "apply",
+              "response": "TELL adds represented knowledge; ASK checks the supported consequences.",
+              "validation": "unverified",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": false,
+              "skipped": false,
+              "intervention": "clarify",
+              "submittedAt": 1793511099157
+            },
+            {
+              "id": "8923d925-e800-4372-8573-6bb1a0fca600",
+              "conceptId": "AI4-Q12",
+              "questionId": "AI4-Q12-test-a",
+              "kind": "test",
+              "response": "TELL Sensor(Sora12), then ASK Online(Sora12)",
+              "validation": "correct",
+              "assisted": false,
+              "assistance": [],
+              "attempt": 1,
+              "independent": true,
+              "skipped": false,
+              "intervention": "independent",
+              "submittedAt": 1793511099516
+            }
+          ]
+        }
+      ],
+      "visited": 12,
+      "verified": 11,
+      "practice": 1,
+      "unverified": 1,
+      "skipped": 0
+    },
+    "mixed": [
+      {
+        "id": "703d2b9d-ead5-4da7-ae52-2c36202cbe61",
+        "conceptId": "AI4-Q03",
+        "questionId": "AI4-Q03-test-final",
+        "kind": "final",
+        "response": "Member(x) → CanEnter(x)",
+        "validation": "correct",
+        "assisted": false,
+        "assistance": [],
+        "attempt": 1,
+        "independent": true,
+        "skipped": false,
+        "intervention": "independent",
+        "submittedAt": 1793511099962
+      },
+      {
+        "id": "628f5d44-47d6-4a1f-9272-01f0d93d1278",
+        "conceptId": "AI4-Q05",
+        "questionId": "AI4-final-chain",
+        "kind": "final",
+        "response": "CanFly(Elm)",
+        "validation": "incorrect",
+        "assisted": false,
+        "assistance": [],
+        "attempt": 1,
+        "independent": true,
+        "skipped": false,
+        "intervention": "unsupported-conclusion",
+        "submittedAt": 1793511100290
+      },
+      {
+        "id": "473871d4-3fbd-4f8b-9401-aa1422064343",
+        "conceptId": "AI4-Q07",
+        "questionId": "AI4-Q07-test-final",
+        "kind": "final",
+        "response": "Not established by this knowledge base",
+        "validation": "correct",
+        "assisted": true,
+        "assistance": [
+          "opened-help",
+          "repeat",
+          "help-used-this-attempt"
+        ],
+        "attempt": 1,
+        "independent": false,
+        "skipped": false,
+        "intervention": null,
+        "submittedAt": 1793511100568
+      },
+      {
+        "id": "94e9c4a9-054e-4ede-b54c-8197897de0ea",
+        "conceptId": "AI4-Q09",
+        "questionId": "AI4-Q09-test-final",
+        "kind": "final",
+        "response": "",
+        "validation": "unverified",
+        "assisted": false,
+        "assistance": [],
+        "attempt": 1,
+        "independent": false,
+        "skipped": true,
+        "intervention": null,
+        "submittedAt": 1793511100668
+      },
+      {
+        "id": "f50ad684-bbd3-40e7-8b49-bcde9d8866e5",
+        "conceptId": "AI4-Q10",
+        "questionId": "AI4-Q10-test-final",
+        "kind": "final",
+        "response": "CanEnter(Indigo)",
+        "validation": "correct",
+        "assisted": false,
+        "assistance": [],
+        "attempt": 1,
+        "independent": true,
+        "skipped": false,
+        "intervention": "independent",
+        "submittedAt": 1793511100921
+      }
+    ]
+  }
+}

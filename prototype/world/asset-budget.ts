@@ -11,6 +11,13 @@ export function assetBudget(scene: THREE.Scene, gl: THREE.WebGLRenderer) {
     for (const m of Array.isArray(o.material) ? o.material : [o.material])
       for (const value of Object.values(m))
         if (value instanceof THREE.Texture) textures.add(value);
+    for (const material of Array.isArray(o.material)
+      ? o.material
+      : [o.material])
+      if (material instanceof THREE.ShaderMaterial)
+        for (const uniform of Object.values(material.uniforms))
+          if (uniform.value instanceof THREE.Texture)
+            textures.add(uniform.value);
   });
   for (const g of geometries) {
     for (const a of [...Object.values(g.attributes), g.index]) {

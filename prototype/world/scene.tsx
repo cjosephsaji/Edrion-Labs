@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { useFrame, useLoader, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { lessons } from '../lessons';
@@ -15,6 +15,16 @@ import { BOARD_POSITION, BOARD_SIZE } from './board-surface';
 import { Label, type Pick, type V3 } from './primitives';
 import type { AvatarProjection } from './cloud-layout';
 import type { ScenePresentation } from './storyboard';
+import {
+  MotionTrack,
+  cameraDuration,
+  cameraPoint,
+  createMotionSignals,
+  recordFrame,
+  type MotionSignals,
+  type Point3,
+} from './motion';
+import { WorldMotionContext, useWorldMotion } from './motion-context';
 const ANCHORS: Record<Station, V3> = {
   desk: [-1.65, 0.568, -0.9],
   bookshelf: [-2.15, 0.568, -3.1],
@@ -42,7 +52,15 @@ for (const [id, x, y] of [
   ];
 }
 interface WorldMetrics {
-  transitions: { preset: string; frames: number; ms: number; fps: number }[];
+  transitions: {
+    preset: string;
+    frames: number;
+    ms: number;
+    fps: number;
+    status?: string;
+    id?: number;
+    expectedMs?: number;
+  }[];
   renderer: string;
   triangles: number;
   drawCalls: number;
@@ -66,9 +84,10 @@ export interface SceneProps {
   scene: ScenePresentation;
   reduced: boolean;
   frozen: boolean;
+  active?: boolean;
   previewId?: string;
   onReady: () => void;
-  onBookArrived: () => void;
+  onBookArrived: (id: string) => void;
   onStation: (s: Station) => void;
   onBook: (l: Lesson) => void;
   onPick: Pick;
@@ -92,6 +111,7 @@ function SourceBook({
   reduced,
   onBook,
   onArrived,
+  resumeAtStand,
 }: {
   lesson: Lesson;
   active: boolean;
@@ -99,82 +119,105 @@ function SourceBook({
   paused: boolean;
   reduced: boolean;
   onBook: (l: Lesson) => void;
-  onArrived: () => void;
+  onArrived: (id: string) => void;
+  resumeAtStand: boolean;
 }) {
-  const held = useRef(false);
+  const initialReading = useRef(active && resumeAtStand),
+    held = useRef(initialReading.current);
   const group = useRef<THREE.Group>(null);
-  const elapsed = useRef(0);
-  const started = useRef(0);
-  const done = useRef(false);
-  const { invalidate } = useThree();
-  const start = bookStart(lesson);
-  const destination: V3 = [-3.15, 0.925, -1.7];
-  const moving =
-    (active &&
-      (phase === 'retrieving' ||
-        phase === 'book' ||
-        phase === 'teaching' ||
-        phase === 'practice' ||
-        phase === 'recap')) ||
-    (held.current && (phase === 'arrival' || phase === 'library'));
+  const start = bookStart(lesson),
+    destination: V3 = [-3.15, 0.925, -1.7];
+  const initial = useRef(initialReading.current ? destination : start);
+  const { invalidate, gl } = useThree();
+  const task = useRef<null | {
+    clock: MotionTrack;
+    last: number;
+    wall: number;
+    from: THREE.Vector3;
+    to: THREE.Vector3;
+    fromQ: THREE.Quaternion;
+    toQ: THREE.Quaternion;
+    reading: boolean;
+  }>(null);
+  const callback = useRef(onArrived);
+  callback.current = onArrived;
   useEffect(() => {
+    const g = group.current;
+    if (!g) return;
     if (phase === 'retrieving' && !active) held.current = false;
-    if (phase === 'retrieving' && active) {
-      elapsed.current = 0;
-      started.current = performance.now();
-      done.current = false;
-      invalidate();
-    }
+    const reading =
+      (active &&
+        ['retrieving', 'book', 'teaching', 'practice', 'recap'].includes(
+          phase,
+        )) ||
+      (held.current && ['arrival', 'library'].includes(phase));
+    const target = new THREE.Vector3(...(reading ? destination : start));
+    const targetQ = new THREE.Quaternion().setFromEuler(
+      new THREE.Euler(reading ? -Math.PI / 2 : 0, 0, reading ? 0.1 : 0),
+    );
+    if (
+      g.position.distanceToSquared(target) < 1e-10 &&
+      g.quaternion.angleTo(targetQ) < 1e-6 &&
+      !(phase === 'retrieving' && active)
+    )
+      return;
+    const instant = g.position.distanceToSquared(target) < 1e-10;
+    task.current = {
+      clock: new MotionTrack(instant ? 0 : reading ? 0.9 : 0.65),
+      last: performance.now(),
+      wall: performance.now(),
+      from: g.position.clone(),
+      to: target,
+      fromQ: g.quaternion.clone(),
+      toQ: targetQ,
+      reading,
+    };
+    invalidate();
   }, [phase, active, invalidate]);
   useEffect(() => {
+    if (task.current) task.current.last = performance.now();
     invalidate();
   }, [paused, reduced, invalidate]);
-  useFrame((_, delta) => {
-    if (!group.current) return;
-    if (moving) {
-      const p =
-        phase === 'retrieving'
-          ? reduced
-            ? 1
-            : Math.min(1, elapsed.current / 0.9)
-          : 1;
-      if (!paused && phase === 'retrieving')
-        elapsed.current += Math.min(delta, 0.06);
-      const eased = p * p * (3 - 2 * p);
-      group.current.position.set(
-        THREE.MathUtils.lerp(start[0], destination[0], eased),
-        THREE.MathUtils.lerp(start[1], destination[1], eased) +
-          Math.sin(Math.PI * p) * 0.65,
-        THREE.MathUtils.lerp(start[2], destination[2], eased),
-      );
-      group.current.rotation.set((-Math.PI / 2) * eased, 0, 0.1 * eased);
-      if (window.__PETROS_WORLD_METRICS__)
-        window.__PETROS_WORLD_METRICS__.books[lesson.id] = {
-          x: group.current.position.x,
-          y: group.current.position.y,
-          z: group.current.position.z,
-        };
-      if (p < 1 && !paused) invalidate();
-      else if (p >= 1 && phase === 'retrieving' && !done.current) {
-        done.current = true;
-        held.current = true;
-        if (window.__PETROS_WORLD_METRICS__)
-          window.__PETROS_WORLD_METRICS__.bookAnimation = {
-            id: lesson.id,
-            completed: true,
-            durationMs: reduced ? 0 : performance.now() - started.current,
-          };
-        onArrived();
-      }
-    } else {
-      group.current.position.set(...start);
-      group.current.rotation.set(0, 0, 0);
+  useFrame(() => {
+    const g = group.current;
+    if (!g) return;
+    const t = task.current;
+    if (t && !paused) {
+      const now = performance.now(),
+        p = t.clock.advance((now - t.last) / 1000, false, reduced);
+      t.last = now;
+      g.position.lerpVectors(t.from, t.to, p);
+      g.position.y += Math.sin(Math.PI * p) * 0.45;
+      g.quaternion.slerpQuaternions(t.fromQ, t.toQ, p);
+      gl.shadowMap.needsUpdate = true;
+      if (t.clock.done) {
+        g.position.copy(t.to);
+        g.quaternion.copy(t.toQ);
+        held.current = t.reading;
+        task.current = null;
+        if (t.reading && active && phase === 'retrieving') {
+          if (window.__PETROS_WORLD_METRICS__)
+            window.__PETROS_WORLD_METRICS__.bookAnimation = {
+              id: lesson.id,
+              completed: true,
+              durationMs: reduced ? 0 : now - t.wall,
+            };
+          callback.current(lesson.id);
+        }
+      } else invalidate();
     }
+    if (window.__PETROS_WORLD_METRICS__)
+      window.__PETROS_WORLD_METRICS__.books[lesson.id] = {
+        x: g.position.x,
+        y: g.position.y,
+        z: g.position.z,
+      };
   });
   return (
     <group
       ref={group}
-      position={start}
+      position={initial.current}
+      rotation={initialReading.current ? [-Math.PI / 2, 0, 0.1] : [0, 0, 0]}
       scale={0.37}
       onClick={(e) => {
         e.stopPropagation();
@@ -259,54 +302,117 @@ function Character({
     '/petros/states/petros-thinking.png',
     '/petros/states/petros-point-right.png',
   ]);
-  const [anchor, setAnchor] = useState<Station>('desk');
-  const material = useRef<THREE.SpriteMaterial>(null);
-  const elapsed = useRef(1);
+  const motion = useWorldMotion();
+  const initial = useRef(station),
+    anchor = useRef(station),
+    target = useRef(station),
+    cameraTrack = useRef<number | null>(null),
+    started = useRef(false),
+    alpha = useRef(1),
+    local = useRef(new MotionTrack(0.24)),
+    last = useRef(performance.now());
+  const sprite = useRef<THREE.Sprite>(null),
+    shadow = useRef<THREE.Mesh>(null),
+    material = useRef<THREE.SpriteMaterial>(null);
   const { invalidate, camera, size } = useThree();
-  const first = useRef(true);
-  const target = useRef(station);
-  const anchorCallback = useRef(onAnchor);
-  anchorCallback.current = onAnchor;
+  const callback = useRef(onAnchor);
+  callback.current = onAnchor;
+  const projection = useRef('');
   useEffect(() => {
-    target.current = station;
-    if (first.current) {
-      first.current = false;
-      setAnchor(station);
-      elapsed.current = 0.8;
-    } else elapsed.current = 0;
-    invalidate();
+    if (target.current !== station) {
+      target.current = station;
+      cameraTrack.current = null;
+      local.current = new MotionTrack(0.24);
+      started.current = true;
+      alpha.current = material.current?.opacity ?? 1;
+      last.current = performance.now();
+      invalidate();
+    }
   }, [station, invalidate]);
   useEffect(() => {
+    last.current = performance.now();
     invalidate();
-  }, [frozen, state.paused, invalidate]);
-  useFrame((_, delta) => {
-    if (!material.current) return;
-    if (elapsed.current < 0.8) {
-      if (!frozen && !state.paused) elapsed.current += delta;
-      const t = reduced ? 0.8 : elapsed.current;
+  }, [frozen, state.paused, reduced, invalidate]);
+  useFrame(() => {
+    if (!sprite.current || !material.current || !shadow.current) return;
+    const now = performance.now(),
+      paused = state.paused || frozen;
+    const cam = motion?.signals.camera;
+    if (started.current && !paused) {
+      let p: number;
+      if (cam?.status === 'moving' && !reduced) {
+        cameraTrack.current = cam.id;
+        p = cam.progress;
+      } else if (cameraTrack.current === cam?.id && cam.status === 'idle') {
+        // Camera completion owns the final reveal; do not restart the fallback fade.
+        p = 1;
+      } else {
+        p = local.current.advance((now - last.current) / 1000, false, reduced);
+      }
       material.current.opacity =
-        t < 0.15 ? 1 - t / 0.15 : t < 0.65 ? 0 : Math.min(1, (t - 0.65) / 0.15);
-      if (t >= 0.15 && anchor !== target.current) setAnchor(target.current);
-      if (t < 0.8 && !frozen && !state.paused) invalidate();
+        p < 0.18
+          ? alpha.current * (1 - p / 0.18)
+          : p < 0.65
+            ? 0
+            : Math.min(1, (p - 0.65) / 0.35);
+      if (p >= 0.18 && anchor.current !== target.current) {
+        anchor.current = target.current;
+        sprite.current.position.set(...ANCHORS[anchor.current]);
+        shadow.current.position.set(
+          ANCHORS[anchor.current][0],
+          0.012,
+          ANCHORS[anchor.current][2],
+        );
+      }
+      if (p >= 1) {
+        material.current.opacity = 1;
+        started.current = false;
+      } else invalidate();
     }
+    last.current = now;
+    shadow.current.visible = material.current.opacity > 0.01;
+    (shadow.current.material as THREE.MeshBasicMaterial).opacity =
+      0.22 * material.current.opacity;
+    if (motion) {
+      motion.signals.character.station = anchor.current;
+      motion.signals.character.opacity = material.current.opacity;
+      motion.signals.character.moving = started.current;
+    }
+    const stamp = [
+      ...camera.matrixWorld.elements,
+      ...camera.projectionMatrix.elements,
+      size.width,
+      size.height,
+      anchor.current,
+      material.current.opacity,
+    ].join(',');
+    if (stamp === projection.current) return;
+    projection.current = stamp;
     const rect = document
       .querySelector('[data-world-scene] canvas')
       ?.getBoundingClientRect();
-    const project = (dy: number) => {
-      const p = new THREE.Vector3(...ANCHORS[anchor]);
-      p.y += dy;
-      p.project(camera);
-      return {
-        x: (rect?.left ?? 0) + ((p.x + 1) * size.width) / 2,
-        y: (rect?.top ?? 0) + ((1 - p.y) * size.height) / 2,
-      };
-    };
-    anchorCallback.current({
-      head: project(0.7),
-      feet: project(-0.55),
-      visible: material.current.opacity > 0.25,
+    const head = new THREE.Vector3(...ANCHORS[anchor.current]);
+    head.y += 0.7;
+    head.project(camera);
+    const feet = new THREE.Vector3(...ANCHORS[anchor.current]);
+    feet.y -= 0.55;
+    feet.project(camera);
+    callback.current({
+      head: {
+        x: (rect?.left ?? 0) + ((head.x + 1) * size.width) / 2,
+        y: (rect?.top ?? 0) + ((1 - head.y) * size.height) / 2,
+      },
+      feet: {
+        x: (rect?.left ?? 0) + ((feet.x + 1) * size.width) / 2,
+        y: (rect?.top ?? 0) + ((1 - feet.y) * size.height) / 2,
+      },
+      visible:
+        material.current.opacity > 0.25 &&
+        Math.abs(head.x) < 1 &&
+        Math.abs(head.y) < 1 &&
+        head.z < 1,
     });
-  });
+  }, -1);
   const pose =
     frozen || state.pendingRequest
       ? 1
@@ -319,7 +425,11 @@ function Character({
           : 0;
   return (
     <group>
-      <sprite position={ANCHORS[anchor]} scale={[1.15, 1.54, 1]}>
+      <sprite
+        ref={sprite}
+        position={ANCHORS[initial.current]}
+        scale={[1.15, 1.54, 1]}
+      >
         <spriteMaterial
           ref={material}
           map={textures[pose]}
@@ -330,8 +440,13 @@ function Character({
         />
       </sprite>
       <mesh
+        ref={shadow}
         rotation={[-Math.PI / 2, 0, 0]}
-        position={[ANCHORS[anchor][0], 0.012, ANCHORS[anchor][2]]}
+        position={[
+          ANCHORS[initial.current][0],
+          0.012,
+          ANCHORS[initial.current][2],
+        ]}
         scale={[0.5, 0.18, 1]}
       >
         <circleGeometry args={[0.5, 24]} />
@@ -350,89 +465,72 @@ function CameraRig({
   state,
   reduced,
   frozen,
+  active,
+  signals,
   onCamera,
 }: {
   scene: ScenePresentation;
   state: ShowcaseState;
   reduced: boolean;
   frozen: boolean;
+  active: boolean;
+  signals: MotionSignals;
   onCamera: SceneProps['onCamera'];
 }) {
-  const { camera, size, invalidate, gl, scene: threeScene } = useThree();
-  const look = useRef(new THREE.Vector3(-0.4, 1.5, -3));
+  const { camera, size, invalidate } = useThree();
   const initialized = useRef(false),
-    lastSkip = useRef(scene.skipCamera);
-  const freeze = useRef(frozen);
-  freeze.current = frozen;
-  const transition = useRef<{
-    t: number;
+    lastSkip = useRef(scene.skipCamera),
+    serial = useRef(0);
+  const look = useRef(new THREE.Vector3(-0.4, 1.5, -3));
+  const callback = useRef(onCamera);
+  callback.current = onCamera;
+  const live = useRef({ frozen, reduced, active });
+  live.current = { frozen, reduced, active };
+  const transition = useRef<null | {
+    id: number;
+    clock: MotionTrack;
+    last: number;
     wall: number;
-    position: THREE.Vector3;
-    look: THREE.Vector3;
-    fov: number;
     frames: number;
-    duration: number;
-  } | null>(null);
+    from: Point3;
+    to: Point3;
+    fromQ: THREE.Quaternion;
+    toQ: THREE.Quaternion;
+    fromLook: THREE.Vector3;
+    toLook: THREE.Vector3;
+    fromFov: number;
+    toFov: number;
+    label: string;
+  }>(null);
   const library = ['library', 'retrieving', 'book'].includes(scene.phase);
   const experiment = state.sceneStation === 'experiment';
-  useEffect(() => {
-    if (freeze.current && initialized.current) return;
-    const instant =
-      !initialized.current || lastSkip.current !== scene.skipCamera;
-    initialized.current = true;
-    lastSkip.current = scene.skipCamera;
-    transition.current = {
-      t: 0,
-      wall: performance.now(),
-      position: camera.position.clone(),
-      look: look.current.clone(),
-      fov: (camera as THREE.PerspectiveCamera).fov,
-      frames: 0,
-      duration: reduced || instant ? 0 : 0.9,
-    };
-    onCamera(true);
-    invalidate();
-  }, [
-    scene.preset,
-    library,
-    experiment,
-    scene.skipCamera,
-    size.width,
-    size.height,
-    reduced,
-  ]);
-  useFrame((_, delta) => {
-    const t = transition.current;
-    if (!t) return;
-    if (freeze.current && t.duration > 0) {
-      transition.current = null;
-      onCamera(false);
-      return;
-    }
+  function destination() {
     const focus = scene.preset === 'teaching' || scene.preset === 'interaction';
-    const destination = library
-      ? new THREE.Vector3(-2.8, 1.6, 0.1)
+    const position: Point3 = library
+      ? [-2.8, 1.6, 0.1]
       : focus && experiment
-        ? new THREE.Vector3(2.5, 1.78, 2.6)
+        ? [2.5, 1.78, 2.6]
         : focus
-          ? new THREE.Vector3(-0.55, 1.65, 1.85)
-          : new THREE.Vector3(0.2, 1.65, 3.95);
-    const target = library
-      ? new THREE.Vector3(-2.8, 1.27, -3.55)
-      : focus && experiment
-        ? new THREE.Vector3(1.8, 1.24, -0.2)
-        : focus
-          ? new THREE.Vector3(0.0, 1.3, -3.6)
-          : new THREE.Vector3(-0.1, 1.35, -2.9);
-    const distance = destination.distanceTo(target);
+          ? [-0.55, 1.65, 1.85]
+          : [0.2, 1.65, 3.95];
+    const target = new THREE.Vector3(
+      ...((library
+        ? [-2.8, 1.27, -3.55]
+        : focus && experiment
+          ? [1.8, 1.24, -0.2]
+          : focus
+            ? [size.width < 600 ? 0.8 : 0, size.width < 600 ? 1.61 : 1.3, -3.6]
+            : [-0.1, 1.35, -2.9]) as Point3),
+    );
     const span =
       focus && !experiment
-        ? { w: 6.5, h: 3.35 }
+        ? { w: size.width < 600 ? 5.2 : 6.5, h: 3.6 }
         : library
-          ? { w: 4.0, h: 3.35 }
+          ? { w: 4, h: 3.35 }
           : focus
             ? { w: 3.7, h: 2.25 }
             : null;
+    const distance = new THREE.Vector3(...position).distanceTo(target);
     const fov = span
       ? THREE.MathUtils.radToDeg(
           2 *
@@ -442,77 +540,256 @@ function CameraRig({
             ),
         )
       : 60;
-    t.t += Math.min(delta, 0.06);
-    const p = t.duration ? Math.min(1, t.t / t.duration) : 1,
-      e = p * p * (3 - 2 * p);
-    camera.position.lerpVectors(t.position, destination, e);
-    look.current.lerpVectors(t.look, target, e);
-    camera.lookAt(look.current);
+    const orientation = new THREE.Quaternion().setFromRotationMatrix(
+      new THREE.Matrix4().lookAt(
+        new THREE.Vector3(...position),
+        target,
+        camera.up,
+      ),
+    );
+    return { position, target, fov, orientation };
+  }
+  useEffect(() => {
+    if (!active && initialized.current) return;
+    const end = destination(),
+      now = performance.now(),
+      instant =
+        !initialized.current ||
+        lastSkip.current !== scene.skipCamera ||
+        reduced;
+    const old = transition.current;
+    if (old) publish(old, 'cancelled');
+    initialized.current = true;
+    lastSkip.current = scene.skipCamera;
+    const alreadyThere =
+      camera.position.distanceToSquared(new THREE.Vector3(...end.position)) <
+        1e-10 && camera.quaternion.angleTo(end.orientation) < 1e-6;
+    const task = {
+      id: ++serial.current,
+      clock: new MotionTrack(
+        instant || alreadyThere ? 0 : cameraDuration(state.sceneStation),
+      ),
+      last: now,
+      wall: now,
+      frames: 0,
+      from: camera.position.toArray() as Point3,
+      to: end.position,
+      fromQ: camera.quaternion.clone(),
+      toQ: end.orientation,
+      fromLook: look.current.clone(),
+      toLook: end.target,
+      fromFov: (camera as THREE.PerspectiveCamera).fov,
+      toFov: end.fov,
+      label: library ? 'library' : experiment ? 'experiment' : scene.preset,
+    };
+    transition.current = task;
+    signals.camera = {
+      id: task.id,
+      progress: 0,
+      status: frozen ? 'paused' : 'moving',
+      station: state.sceneStation,
+    };
+    callback.current(true);
+    invalidate();
+  }, [
+    scene.preset,
+    library,
+    state.sceneStation,
+    scene.skipCamera,
+    reduced,
+    active,
+  ]);
+  useEffect(() => {
+    const task = transition.current;
+    if (!active && initialized.current) {
+      if (task?.id === 1 && task.clock.duration === 0) {
+        invalidate();
+        return;
+      }
+      if (task) publish(task, 'cancelled');
+      transition.current = null;
+      signals.camera.status = 'cancelled';
+      callback.current(false);
+      return;
+    }
+    if (task) {
+      task.last = performance.now();
+      signals.camera.status = frozen ? 'paused' : 'moving';
+      invalidate();
+    }
+  }, [frozen, active]);
+  useEffect(() => {
+    const task = transition.current;
+    const end = destination();
+    if (task) {
+      task.toFov = end.fov;
+      task.toQ.copy(end.orientation);
+      task.toLook.copy(end.target);
+    } else {
+      // CSS panel/viewport resizing also changes the canvas aspect. Fit the full
+      // teaching span after ResizeObserver reports that size, without a camera journey.
+      (camera as THREE.PerspectiveCamera).fov = end.fov;
+      camera.quaternion.copy(end.orientation);
+      look.current.copy(end.target);
+      camera.updateProjectionMatrix();
+    }
+    invalidate();
+  }, [size.width, size.height]);
+  useEffect(
+    () => () => {
+      serial.current++;
+      transition.current = null;
+      signals.camera.status = 'cancelled';
+    },
+    [],
+  );
+  const resize = useRef(false);
+  useEffect(() => {
+    const request = () => {
+      resize.current = true;
+      invalidate();
+    };
+    window.addEventListener('resize', request);
+    return () => window.removeEventListener('resize', request);
+  }, [invalidate]);
+  function publish(
+    task: NonNullable<typeof transition.current>,
+    status: 'completed' | 'cancelled',
+  ) {
+    const previous = window.__PETROS_WORLD_METRICS__;
+    const picks: WorldMetrics['picks'] = {};
+    for (const [id, point] of Object.entries(PICKS)) {
+      const v = new THREE.Vector3(...point).project(camera);
+      picks[id] = {
+        x: ((v.x + 1) * size.width) / 2,
+        y: ((1 - v.y) * size.height) / 2,
+      };
+    }
+    window.__PETROS_WORLD_METRICS__ = {
+      transitions: [
+        ...(previous?.transitions ?? []),
+        {
+          preset: task.label,
+          frames: task.frames,
+          ms: performance.now() - task.wall,
+          fps: task.clock.elapsed ? task.frames / task.clock.elapsed : 0,
+          status,
+          id: task.id,
+          expectedMs: task.clock.duration * 1000,
+        },
+      ].slice(-40),
+      renderer: previous?.renderer ?? '',
+      triangles: previous?.triangles ?? 0,
+      drawCalls: previous?.drawCalls ?? 0,
+      picks,
+      stationClicks: previous?.stationClicks ?? [],
+      books: previous?.books ?? {},
+      bookAnimation: previous?.bookAnimation,
+      budget: previous?.budget,
+      ready: true,
+      camera: {
+        position: camera.position.toArray(),
+        quaternion: camera.quaternion.toArray(),
+        zoom: 1,
+      },
+    };
+  }
+  useFrame(() => {
+    const task = transition.current,
+      now = performance.now();
+    if (!task) {
+      if (resize.current && !live.current.frozen) {
+        resize.current = false;
+        (camera as THREE.PerspectiveCamera).fov = destination().fov;
+        camera.updateProjectionMatrix();
+      }
+      return;
+    }
+    if (live.current.frozen && task.clock.duration) {
+      task.last = now;
+      signals.camera.status = 'paused';
+      return;
+    }
+    const delta = Math.max(0, (now - task.last) / 1000);
+    task.last = now;
+    if (task.frames > 0) recordFrame(signals.frameTimes.camera, delta);
+    const p = task.clock.advance(delta, false, live.current.reduced);
+    camera.position.set(...cameraPoint(task.from, task.to, p));
+    camera.quaternion.slerpQuaternions(task.fromQ, task.toQ, p);
+    look.current.lerpVectors(task.fromLook, task.toLook, p);
     (camera as THREE.PerspectiveCamera).fov = THREE.MathUtils.lerp(
-      t.fov,
-      fov,
-      e,
+      task.fromFov,
+      task.toFov,
+      p,
     );
     camera.updateProjectionMatrix();
-    t.frames++;
-    const snapshot = {
-      position: camera.position.toArray(),
-      quaternion: camera.quaternion.toArray(),
-      zoom: 1,
-      fov: (camera as THREE.PerspectiveCamera).fov,
-    };
+    camera.updateMatrixWorld();
     if (window.__PETROS_WORLD_METRICS__)
-      window.__PETROS_WORLD_METRICS__.camera = snapshot;
-    if (p < 1) invalidate();
-    else {
-      const previous = window.__PETROS_WORLD_METRICS__;
-      const picks: WorldMetrics['picks'] = {};
-      for (const [id, point] of Object.entries(PICKS)) {
-        const v = new THREE.Vector3(...point).project(camera);
-        picks[id] = {
-          x: ((v.x + 1) * size.width) / 2,
-          y: ((1 - v.y) * size.height) / 2,
-        };
-      }
-      let triangles = 0;
-      threeScene.traverse((o) => {
-        if (o instanceof THREE.Mesh) {
-          const g = o.geometry;
-          triangles +=
-            ((g.index ? g.index.count : (g.attributes.position?.count ?? 0)) /
-              3) *
-            (o instanceof THREE.InstancedMesh ? o.count : 1);
-        }
-      });
-      window.__PETROS_WORLD_METRICS__ = {
-        transitions: [
-          ...(previous?.transitions ?? []),
-          {
-            preset: library
-              ? 'library'
-              : focus && experiment
-                ? 'experiment'
-                : scene.preset,
-            frames: t.frames,
-            ms: performance.now() - t.wall,
-            fps: t.duration
-              ? (t.frames * 1000) / (performance.now() - t.wall)
-              : 0,
-          },
-        ].slice(-30),
-        budget: assetBudget(threeScene, gl),
-        renderer: gl.getContext().getParameter(gl.getContext().RENDERER),
-        triangles,
-        drawCalls: gl.info.render.calls,
-        picks,
-        stationClicks: previous?.stationClicks ?? [],
-        books: previous?.books ?? {},
-        bookAnimation: previous?.bookAnimation,
-        ready: true,
-        camera: snapshot,
+      window.__PETROS_WORLD_METRICS__!.camera = {
+        position: camera.position.toArray(),
+        quaternion: camera.quaternion.toArray(),
+        zoom: 1,
       };
+    task.frames++;
+    signals.camera.progress = task.clock.progress;
+    signals.camera.status = 'moving';
+    if (!task.clock.done) invalidate();
+    else if (transition.current === task) {
+      camera.position.set(...task.to);
+      camera.quaternion.copy(task.toQ);
+      look.current.copy(task.toLook);
+      signals.camera.status = 'idle';
+      signals.camera.progress = 1;
       transition.current = null;
-      onCamera(false);
+      publish(task, 'completed');
+      callback.current(false);
+    }
+  }, -2);
+  return null;
+}
+function ScenePerformance({
+  signals,
+  kind,
+}: {
+  signals: MotionSignals;
+  kind: string;
+}) {
+  const { gl, scene, invalidate } = useThree();
+  useEffect(() => {
+    let dead = false;
+    // Reuse the exact detailed shadow map while only the camera/whiteboard changes.
+    gl.shadowMap.autoUpdate = false;
+    gl.shadowMap.needsUpdate = true;
+    invalidate();
+    const collect = () => {
+      if (dead) return;
+      const budget = assetBudget(scene, gl);
+      const previous = window.__PETROS_WORLD_METRICS__;
+      if (previous) {
+        previous.budget = budget;
+        previous.drawCalls = gl.info.render.calls;
+        previous.triangles = gl.info.render.triangles;
+        const ctx = gl.getContext(),
+          debug = ctx.getExtension('WEBGL_debug_renderer_info');
+        previous.renderer = String(
+          ctx.getParameter(
+            debug ? debug.UNMASKED_RENDERER_WEBGL : ctx.RENDERER,
+          ),
+        );
+      }
+    };
+    const timer = setTimeout(collect, 1200);
+    return () => {
+      dead = true;
+      clearTimeout(timer);
+    };
+  }, [gl, scene, kind, invalidate]);
+  useFrame(() => {
+    (window as any).__PETROS_ANIMATION__ = signals;
+    const metric = window.__PETROS_WORLD_METRICS__;
+    if (metric) {
+      metric.drawCalls = gl.info.render.calls;
+      if (metric.budget) metric.budget.rendererObjects = { ...gl.info.memory };
     }
   });
   return null;
@@ -542,8 +819,14 @@ function SpatialBounds() {
   return null;
 }
 function Ready({ onReady }: { onReady: () => void }) {
-  const fired = useRef(false);
+  const fired = useRef(false),
+    frames = useRef(0);
+  const { invalidate } = useThree();
   useFrame(() => {
+    if (++frames.current < 2) {
+      invalidate();
+      return;
+    }
     if (!fired.current) {
       fired.current = true;
       onReady();
@@ -551,7 +834,20 @@ function Ready({ onReady }: { onReady: () => void }) {
   });
   return null;
 }
-export function Scene(props: SceneProps) {
+const StaticInterior = memo(function StableInterior({
+  onStation,
+  signals,
+}: {
+  onStation: SceneProps['onStation'];
+  signals: MotionSignals;
+}) {
+  useEffect(() => {
+    signals.assets.interiorMounts++;
+  }, [signals]);
+  return <Interior onStation={onStation} />;
+});
+const StableBook = memo(SourceBook);
+export const Scene = memo(function Scene(props: SceneProps) {
   const {
     state,
     scene,
@@ -567,6 +863,15 @@ export function Scene(props: SceneProps) {
     onAnchor,
     onCamera,
   } = props;
+  const signals = useMemo(createMotionSignals, []);
+  const motionContext = useMemo(
+    () => ({
+      signals,
+      reduced,
+      paused: state.paused || props.active === false,
+    }),
+    [signals, reduced, state.paused, props.active],
+  );
   useEffect(
     () => () => {
       document.body.style.cursor = '';
@@ -574,13 +879,24 @@ export function Scene(props: SceneProps) {
     [],
   );
   return (
-    <>
-      <Interior onStation={props.onStation} />
+    <WorldMotionContext.Provider value={motionContext}>
+      <CameraRig
+        scene={scene}
+        state={state}
+        reduced={reduced}
+        frozen={frozen || state.paused}
+        active={props.active ?? true}
+        signals={signals}
+        onCamera={onCamera}
+      />
+      <ScenePerformance signals={signals} kind={state.visualState.kind} />
+      <StaticInterior onStation={props.onStation} signals={signals} />
       {lessons.map((l) => (
-        <SourceBook
+        <StableBook
           key={l.id}
           lesson={l}
           active={l.id === (previewId ?? state.lessonId)}
+          resumeAtStand={state.phase !== 'welcome'}
           phase={scene.phase}
           paused={state.paused || frozen}
           reduced={reduced}
@@ -622,14 +938,7 @@ export function Scene(props: SceneProps) {
         frozen={frozen}
         onAnchor={onAnchor}
       />
-      <CameraRig
-        scene={scene}
-        state={state}
-        reduced={reduced}
-        frozen={frozen || state.paused}
-        onCamera={onCamera}
-      />
       <Ready onReady={onReady} />
-    </>
+    </WorldMotionContext.Provider>
   );
-}
+});

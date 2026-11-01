@@ -1,0 +1,17 @@
+{
+  "tests": [
+    "explicit unconfigured-response fixture reports its error beside the form and preserves the question",
+    "the exact requested topic opens a real integrals model, exposes the lesson plan and survives refresh",
+    "all six integral concepts complete through demonstration, response, targeted feedback, fresh retry, help and explicit continuation",
+    "World uses the same topic/area controls, focus and context; a topic does not wait for a nonexistent source book",
+    "controlled contextual-answer fixture: a tutor reply preserves the question and cannot submit an answer or advance the lesson",
+    "controlled provider fixture: a validated generated plan renders, refreshes, switches modes and completes all concepts",
+    "in-flight generation is visibly busy; a late result cannot replace a module the student selected",
+    "a cancelled tutor request cannot overwrite the next lesson or leave its Ask button locked",
+    "integrals layout remains usable without horizontal overflow on desktop and phone"
+  ],
+  "errors": [],
+  "productionMutations": [],
+  "liveModelCalls": false,
+  "connectionCheck": "Key configured: the missing-connection form state uses an explicit fixture; blank-key endpoint handling is covered by unit tests."
+}

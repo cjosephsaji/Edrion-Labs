@@ -1,0 +1,11 @@
+{
+  "liveProviderRequest": true,
+  "productionMutations": [],
+  "errors": [],
+  "httpStatus": 503,
+  "elapsedMs": 744,
+  "code": "MODEL_AUTH_FAILED",
+  "message": "The model connection needs a valid API key. You can still use the ready-made lessons.",
+  "success": false,
+  "failure": "Live topic request returned 503 (MODEL_AUTH_FAILED)."
+}

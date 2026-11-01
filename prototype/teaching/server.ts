@@ -7,6 +7,19 @@ import { showcaseAccess } from './access';
 import manifest from '../assets/source-manifest.json';
 import { RUNTIME_ASSETS } from '../assets/realism/runtime-manifest';
 import type { LessonId } from './types';
+import {
+  generateTopic,
+  answerTopicQuestion,
+  topicModelConfigured,
+  TopicModelError,
+} from './topic-provider';
+import { preparedTopic } from './topic-catalog';
+import {
+  validTopicLesson,
+  validDiagram,
+  integralArea,
+  savedTopicExplanation,
+} from './topic-content';
 const MODULES: LessonId[] = ['ai3', 'ai4', 'ehs3', 'ehs5'];
 export const MAX_BYTES = 20 * 1024 * 1024;
 export function recognize(hash: string) {
@@ -151,7 +164,140 @@ export async function handleShowcase(request: Request, action: string[]) {
     const origin = request.headers.get('origin');
     if (origin && new URL(origin).host !== request.headers.get('host'))
       return json({ error: 'Origin not permitted.' }, 403);
-    if (action[0] === 'ask' || action[0] === 'topic')
+    if (action[0] === 'topic') {
+      try {
+        const reader = request.body?.getReader();
+        if (!reader) return json({ error: 'Enter a learning question.' }, 400);
+        const parts: Uint8Array[] = [];
+        let size = 0;
+        try {
+          for (;;) {
+            const part = await reader.read();
+            if (part.done) break;
+            size += part.value.byteLength;
+            if (size > 2048) {
+              await reader.cancel();
+              return json(
+                { error: 'Keep your topic under 240 characters.' },
+                400,
+              );
+            }
+            parts.push(part.value);
+          }
+        } finally {
+          reader.releaseLock();
+        }
+        const body = JSON.parse(Buffer.concat(parts).toString('utf8'));
+        if (
+          typeof body.topic !== 'string' ||
+          body.topic.trim().length < 3 ||
+          body.topic.trim().length > 240
+        )
+          return json(
+            {
+              error: 'Enter a learning question between 3 and 240 characters.',
+            },
+            400,
+          );
+        const topic = body.topic.trim();
+        const lesson =
+          preparedTopic(topic) ?? (await generateTopic(topic, request.signal));
+        return json({ lesson });
+      } catch (error) {
+        if (error instanceof TopicModelError)
+          return json({ error: error.message, code: error.code }, error.status);
+        return json(
+          { error: 'The topic request could not be read. Please try again.' },
+          400,
+        );
+      }
+    }
+    if (action[0] === 'ask') {
+      try {
+        if (Number(request.headers.get('content-length')) > 300000)
+          return json({ error: 'The question context is too large.' }, 400);
+        const raw = await request.text();
+        if (raw.length > 300000)
+          return json({ error: 'The question context is too large.' }, 400);
+        const body = JSON.parse(raw);
+        if (body.topicLesson) {
+          const lesson = body.topicLesson;
+          if (
+            !validTopicLesson(lesson) ||
+            body.lessonId !== lesson.id ||
+            typeof body.questionText !== 'string' ||
+            !body.questionText.trim() ||
+            body.questionText.length > 1200
+          )
+            return json(
+              { error: 'The lesson question context is invalid.' },
+              400,
+            );
+          const q = lesson.questions.find((q) => q.id === body.questionId);
+          if (!q)
+            return json(
+              { error: 'The current lesson step could not be found.' },
+              400,
+            );
+          const visual = validDiagram(body.visual)
+            ? body.visual
+            : q.teaching!.diagram;
+          if (!topicModelConfigured()) {
+            const hint = savedTopicExplanation(
+              lesson,
+              q,
+              body.questionText,
+              visual,
+            );
+            if (hint)
+              return json({
+                answer: hint.text,
+                label: hint.label,
+                live: false,
+              });
+          }
+          const answer = await answerTopicQuestion(
+            {
+              topic: lesson.title,
+              concept: q.concept,
+              explanation: q.teaching,
+              currentTask: body.teaching?.followup
+                ? q.teaching!.followup.task
+                : q.task,
+              status:
+                typeof body.teaching?.status === 'string'
+                  ? body.teaching.status
+                  : 'AWAITING_RESPONSE',
+              diagram: visual,
+              computed: visual.area ? integralArea(visual.area) : null,
+              previousResponse:
+                typeof body.previousResponse === 'string'
+                  ? body.previousResponse.slice(0, 1200)
+                  : '',
+              question: body.questionText,
+            },
+            request.signal,
+          );
+          return json({ answer });
+        }
+      } catch (error) {
+        if (error instanceof TopicModelError)
+          return json(
+            {
+              error: error.message,
+              reason: 'Your current lesson is preserved.',
+              code: error.code,
+            },
+            error.status,
+          );
+        return json(
+          {
+            error: 'The question context could not be read.',
+            reason: 'Your current lesson is preserved.',
+          },
+          400,
+        );
+      }
       return json(
         {
           error: "I couldn't answer that right now. Your lesson is still here.",
@@ -161,6 +307,7 @@ export async function handleShowcase(request: Request, action: string[]) {
         },
         503,
       );
+    }
     if (action[0] !== 'upload') return json({ error: 'Unknown action.' }, 404);
     if (Number(request.headers.get('content-length')) > MAX_BYTES + 1024 * 1024)
       return json({ error: 'PDF exceeds the 20 MB limit.' }, 413);
@@ -220,9 +367,11 @@ export async function handleShowcase(request: Request, action: string[]) {
   if (action[0] === 'capabilities')
     return json({
       model: false,
+      topicModel: topicModelConfigured(),
       voice: false,
-      reason:
-        'No isolated qualified provider. Prepared teaching and deterministic practice are available.',
+      reason: topicModelConfigured()
+        ? 'New topic lessons use the configured model. Prepared lessons also work offline.'
+        : 'Integrals, AI and time travel are ready. Other topics need a model connection.',
     });
   if (action[0] === 'source') {
     const source = manifest.source_files.find((f) => f.filename === action[1]);

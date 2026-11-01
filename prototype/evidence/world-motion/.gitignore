@@ -1,0 +1,11 @@
+# Keep the requested motion evidence with its handoff. Failed scratch captures remain ignored.
+!.gitignore
+!**/results.json
+!after/loading.json
+!after/camera-review.png
+!**/board-*.png
+!interaction/interrupted-board.png
+!interaction/validated-weight.png
+!interaction/safer-model.png
+!**/recordings/continuous-*.webm
+!before/source/*.txt

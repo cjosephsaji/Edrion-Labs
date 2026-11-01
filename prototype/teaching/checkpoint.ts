@@ -6,6 +6,12 @@ import type {
   TeachingCycle,
 } from './types';
 import { teachingPlan } from './curriculum';
+import {
+  assistance as markAssisted,
+  emptyEvidence,
+  visitConcept,
+} from './learning-evidence';
+import { runtime } from './visual-spec';
 
 export const initialCycle: TeachingCycle = {
   status: 'INTRODUCING',
@@ -14,9 +20,252 @@ export const initialCycle: TeachingCycle = {
   practiceCount: 0,
 };
 export function currentQuestion(s: ShowcaseState, lesson: Lesson) {
+  const assessed = assessmentQuestion(s, lesson);
+  if (assessed) return assessed;
   const base =
     lesson.questions.find((q) => q.id === s.questionId) ?? lesson.questions[0]!;
   return s.teaching.followup ? teachingPlan(s, lesson, base).followup : base;
+}
+export function assessmentQuestion(
+  s: ShowcaseState,
+  lesson: Lesson,
+): Question | undefined {
+  const nav = s.learning,
+    experience = lesson.experience;
+  if (!nav || !experience) return;
+  if (nav.activity === 'diagnostic') return experience.diagnostic[nav.item];
+  if (nav.activity === 'final') return experience.final[nav.item]?.question;
+  if (nav.stage === 'test')
+    return experience.tests[s.questionId ?? '']?.find(
+      (q) => q.id === nav.taskId,
+    );
+}
+function openAssessment(
+  s: ShowcaseState,
+  q: Question,
+  activity: 'lesson' | 'diagnostic' | 'final',
+  item = 0,
+): ShowcaseState {
+  const evidence = s.evidence ?? emptyEvidence();
+  const base = lessonDiagramForAssessment(s, q);
+  return {
+    ...s,
+    phase: 'interact',
+    paused: false,
+    studentResponse: '',
+    questionAttempt: 0,
+    lastFeedback: '',
+    permittedHintLevel: 0,
+    misconceptionCategory: null,
+    cue: null,
+    learning: {
+      stage: 'test',
+      activity,
+      item,
+      taskId: q.id,
+      assisted: false,
+      fresh: !evidence.exposed.includes(q.id),
+    },
+    teaching: { ...initialCycle, status: 'AWAITING_RESPONSE' },
+    evidence: {
+      ...evidence,
+      exposed: [...new Set([...evidence.exposed, q.id])],
+    },
+    highlightTargetId: null,
+    visualState: q.board
+      ? {
+          kind: 'kb',
+          facts: q.board.facts,
+          derived: [],
+          query: '',
+          direction: 'forward',
+        }
+      : base,
+  };
+}
+function lessonDiagramForAssessment(s: ShowcaseState, q: Question) {
+  const base = s.topicLesson?.questions.find(x => x.id === s.questionId)?.teaching?.diagram;
+  if (base?.visual && q.visualSnapshot) return { kind: 'topic' as const, ...base, runtime: runtime(q.visualSnapshot) };
+  return s.visualState;
+}
+export function startLearning(s: ShowcaseState, lesson: Lesson): ShowcaseState {
+  if (s.pendingRequest || s.paused) return s;
+  if (s.learning?.activity === 'diagnostic') return s;
+  if (
+    lesson.experience?.diagnostic.length &&
+    (s.evidence?.diagnostic ?? 'not-assessed') === 'not-assessed'
+  )
+    return openAssessment(s, lesson.experience.diagnostic[0]!, 'diagnostic');
+  return goToCheckpoint(s, lesson, 0);
+}
+export function skipDiagnostic(
+  s: ShowcaseState,
+  lesson: Lesson,
+): ShowcaseState {
+  if (s.pendingRequest) return s;
+  if (s.learning?.activity !== 'diagnostic') return s;
+  return goToCheckpoint(
+    {
+      ...s,
+      evidence: {
+        ...(s.evidence ?? emptyEvidence()),
+        diagnostic: 'skipped',
+        startingPoint: 'standard',
+      },
+    },
+    lesson,
+    0,
+  );
+}
+export function beginConceptTest(
+  s: ShowcaseState,
+  lesson: Lesson,
+): ShowcaseState {
+  if (s.paused || s.pendingRequest || s.interruptionCheckpoint) return s;
+  if (s.teaching.status !== 'READY_TO_CONTINUE') return s;
+  const next = lesson.experience?.tests[s.questionId ?? '']?.find(
+    (q) => !s.evidence?.exposed.includes(q.id),
+  );
+  return next
+    ? openAssessment(s, next, 'lesson')
+    : {
+        ...s,
+        lastFeedback:
+          'No unused independent question remains for this concept. You can practise, review or continue with the recorded evidence unchanged.',
+      };
+}
+export function startFinalAssessment(
+  s: ShowcaseState,
+  lesson: Lesson,
+): ShowcaseState {
+  if (
+    s.paused ||
+    s.pendingRequest ||
+    s.interruptionCheckpoint ||
+    !lesson.experience ||
+    s.phase !== 'recap'
+  )
+    return s;
+  const item = lesson.experience.final.findIndex(
+    (entry) => !s.evidence?.exposed.includes(entry.question.id),
+  );
+  if (item < 0) return s;
+  const entry = lesson.experience.final[item]!;
+  return openAssessment(
+    {
+      ...s,
+      questionId: entry.conceptId,
+      sourcePages: entry.question.pages,
+      sceneStation: 'board',
+    },
+    entry.question,
+    'final',
+    item,
+  );
+}
+export function continueAssessment(
+  s: ShowcaseState,
+  lesson: Lesson,
+  skip = false,
+): ShowcaseState {
+  if (
+    s.paused ||
+    s.pendingRequest ||
+    s.interruptionCheckpoint ||
+    !lesson.experience
+  )
+    return s;
+  if (!skip && s.teaching.status !== 'READY_TO_CONTINUE') return s;
+  const nav = s.learning;
+  if (!nav || nav.activity === 'lesson') return s;
+  let evidence = s.evidence ?? emptyEvidence();
+  const active = assessmentQuestion(s, lesson);
+  if (skip && active && s.teaching.status !== 'READY_TO_CONTINUE') {
+    evidence = {
+      ...evidence,
+      attempts: [
+        ...evidence.attempts,
+        {
+          id: crypto.randomUUID(),
+          conceptId: s.questionId!,
+          questionId: active.id,
+          kind: nav.activity,
+          response: '',
+          validation: 'unverified',
+          assisted: nav.assisted,
+          assistance: [],
+          attempt: 1,
+          independent: false,
+          skipped: true,
+          intervention: null,
+          submittedAt: Date.now(),
+        },
+      ],
+    };
+  }
+  if (nav.activity === 'diagnostic') {
+    const next = lesson.experience.diagnostic[nav.item + 1];
+    if (next)
+      return openAssessment(
+        { ...s, evidence },
+        next,
+        'diagnostic',
+        nav.item + 1,
+      );
+    const answers = evidence.attempts.filter((a) => a.kind === 'diagnostic');
+    const ready =
+      answers.length === 2 &&
+      answers.every((a) => a.validation === 'correct' && !a.assisted);
+    const reverse = answers.some((a) => a.intervention === 'wrong-rule');
+    evidence = {
+      ...evidence,
+      diagnostic: 'completed',
+      startingPoint: ready
+        ? 'application'
+        : reverse
+          ? 'rule-repair'
+          : 'foundation',
+    };
+    const nextState = goToCheckpoint({ ...s, evidence }, lesson, 0);
+    return {
+      ...nextState,
+      teaching: ready
+        ? { ...nextState.teaching, status: 'AWAITING_RESPONSE' }
+        : nextState.teaching,
+      learning: {
+        ...nextState.learning!,
+        stage: ready ? 'apply' : 'learn',
+        introduction: lesson.id !== 'ai4' ? undefined : ready
+          ? undefined
+          : reverse
+            ? 'Start with direction: Bird(x) → HasWings(x) goes from bird to wings. Wings alone cannot prove that something is a bird. We will practise following only supplied links.'
+            : 'Start with two building blocks: a fact names something known; a rule connects a matching premise to a conclusion. Together they can justify a new statement.',
+      },
+    };
+  }
+  const item = lesson.experience.final.findIndex(
+    (entry, i) => i > nav.item && !evidence.exposed.includes(entry.question.id),
+  );
+  if (item < 0)
+    return {
+      ...s,
+      evidence,
+      phase: 'recap',
+      sceneStation: 'desk',
+      learning: { ...nav, item: lesson.experience.final.length, taskId: null },
+    };
+  const entry = lesson.experience.final[item]!;
+  return openAssessment(
+    {
+      ...s,
+      evidence,
+      questionId: entry.conceptId,
+      sourcePages: entry.question.pages,
+    },
+    entry.question,
+    'final',
+    item,
+  );
 }
 export function observation(
   s: ShowcaseState,
@@ -47,39 +296,37 @@ export function checkpointVisual(
   const plan = teachingPlan(s, lesson, q),
     i = lesson.questions.indexOf(q);
   let v = s.visualState;
+  if (v.kind === 'topic' && q.teaching)
+    {
+      const diagram = q.teaching.diagram, spec = diagram.visual;
+      const snapshot = stage === 'check'
+        ? (s.teaching.followup ? q.teaching.followup.visualSnapshot : q.visualSnapshot) ?? spec?.apply
+        : stage === 'demo' || stage === 'retry' ? spec?.demonstration : spec?.initial;
+      v = { kind: 'topic', ...diagram, ...(snapshot ? { runtime: runtime(snapshot) } : {}) };
+      if (stage === 'retry' && v.runtime && spec) v.runtime.highlights = spec.feedback.incorrect;
+    }
   if (v.kind === 'tree') {
     const example =
-      stage === 'demo' && !s.teaching.followup
-        ? plan.demoExample
-        : stage === 'check' && s.teaching.followup
-          ? plan.followupExample
-          : stage === 'retry'
-            ? plan.retryExample
-            : stage === 'check'
-              ? plan.checkExample
-              : undefined;
+      stage === 'introduce' && !s.teaching.followup
+        ? plan.checkExample
+        : stage === 'demo' && !s.teaching.followup
+          ? plan.demoExample
+          : stage === 'check' && s.teaching.followup
+            ? plan.followupExample
+            : stage === 'retry'
+              ? plan.retryExample
+              : stage === 'check'
+                ? plan.checkExample
+                : undefined;
     v = {
       ...v,
+      opponents: i === 0,
+      allLeaves: i >= 3,
       example: example
-        ? { ...example, revealAnswer: stage !== 'check' }
+        ? { ...example, revealAnswer: stage === 'demo' || stage === 'retry' }
         : undefined,
       transfer: i === 11 || (s.teaching.followup && [5, 6, 11].includes(i)),
-      reveal:
-        i < 1
-          ? 0
-          : i < 3
-            ? 1
-            : i === 3
-              ? 1
-              : i === 4
-                ? 1
-                : i === 5
-                  ? 2
-                  : i === 6
-                    ? 3
-                    : i >= 7
-                      ? 3
-                      : 1,
+      reveal: i < 3 ? 1 : i < 6 ? 1 : i === 6 ? 2 : 3,
       selected: plan.target ?? '',
       pruneStep: i === 8 ? 3 : i === 9 ? 5 : i >= 10 && i < 11 ? 6 : 0,
     };
@@ -119,7 +366,11 @@ export function checkpointVisual(
     v = {
       ...v,
       selected: plan.target ?? '',
-      safer: stage === 'retry' || i === 6 || (i === 8 && stage === 'demo'),
+      safer:
+        s.teaching.followup ||
+        stage === 'retry' ||
+        i === 6 ||
+        (i === 8 && stage === 'demo'),
     };
   if (v.kind === 'river')
     v = {
@@ -138,7 +389,7 @@ export function checkpointVisual(
     v = {
       ...v,
       input: stage === 'demo' && i === 3 ? 4 : 2,
-      weight: i >= 6 ? 1.5 : 0.5,
+      weight: i >= 6 || (stage === 'demo' && i === 5) ? 1.5 : 0.5,
       target: 3,
     };
   if (v.kind === 'network' && (s.teaching.followup || stage === 'retry'))
@@ -190,6 +441,15 @@ export function goToCheckpoint(
     misconceptionCategory: null,
     paused: false,
     cue: null,
+    evidence: visitConcept(s, q.id),
+    learning: {
+      stage: 'learn' as const,
+      activity: 'lesson' as const,
+      item: 0,
+      taskId: null,
+      assisted: false,
+      fresh: false,
+    },
     sceneStation: lesson.id.startsWith('ehs')
       ? ('experiment' as const)
       : ('board' as const),
@@ -214,21 +474,23 @@ export function teachAction(
     s.teaching.status === 'RESUMING'
   )
     return s;
+  // Help during an assessment must not replace its task or reset its conditions.
+  if (s.learning?.stage === 'test') return markAssisted(s, action);
   const q =
     lesson.questions.find((q) => q.id === s.questionId) ?? lesson.questions[0]!;
   const record = observation(s, lesson, q);
-  const assistance = ['simpler', 'example', 'practice'].includes(action);
+  const assistance = ['simpler', 'example', 'repeat'].includes(action);
   const variant =
     action === 'simpler'
       ? 'simpler'
-      : action === 'example' || action === 'practice'
+      : action === 'example'
         ? 'second-example'
         : s.teaching.variant;
   const status =
     action === 'demonstrate'
       ? 'DEMONSTRATING'
-      : action === 'check'
-        ? 'CHECKING_UNDERSTANDING'
+      : action === 'check' || action === 'practice'
+        ? 'AWAITING_RESPONSE'
         : action === 'answer'
           ? 'AWAITING_RESPONSE'
           : action === 'repeat'
@@ -236,14 +498,16 @@ export function teachAction(
             : 'RETEACHING';
   const next = {
     ...s,
-    ...(action === 'answer' && s.teaching.followup
+    ...(action === 'answer' || action === 'check' || action === 'practice'
       ? { studentResponse: '' }
       : {}),
     teaching: {
       ...s.teaching,
       status,
       variant,
-      followup: assistance || s.teaching.followup,
+      followup:
+        ['simpler', 'example', 'practice'].includes(action) ||
+        s.teaching.followup,
       practiceCount: s.teaching.practiceCount + (action === 'practice' ? 1 : 0),
     },
     observations: {
@@ -266,6 +530,17 @@ export function teachAction(
         }
       : {}),
     cue: null,
+    learning: {
+      stage:
+        status === 'AWAITING_RESPONSE'
+          ? ('apply' as const)
+          : ('learn' as const),
+      activity: 'lesson' as const,
+      item: 0,
+      taskId: null,
+      assisted: assistance || !!s.learning?.assisted,
+      fresh: false,
+    },
   } as ShowcaseState;
   return {
     ...next,
@@ -289,6 +564,8 @@ export function continueCheckpoint(
   reason: 'validated' | 'self-reported' | 'skipped' = 'validated',
 ): ShowcaseState {
   if (s.paused || s.pendingRequest || s.interruptionCheckpoint) return s;
+  if (s.learning?.activity !== 'lesson' && s.learning?.activity)
+    return continueAssessment(s, lesson, reason === 'skipped');
   const q =
     lesson.questions.find((q) => q.id === s.questionId) ?? lesson.questions[0]!;
   const record = observation(s, lesson, q),
@@ -297,6 +574,12 @@ export function continueCheckpoint(
     reason === 'validated' &&
     (s.teaching.status !== 'READY_TO_CONTINUE' ||
       last?.validation !== 'correct')
+  )
+    return s;
+  if (
+    reason === 'validated' &&
+    ['AI3-Q02', 'AI3-Q03'].includes(q.id) &&
+    !s.teaching.followup
   )
     return s;
   const observations = {
@@ -320,7 +603,45 @@ export function continueCheckpoint(
           },
         }
       : s.completion;
-  const next = { ...s, observations, completion };
+  let evidence = s.evidence ?? emptyEvidence();
+  if (reason === 'skipped') {
+    const active = currentQuestion(s, lesson);
+    evidence = {
+      ...evidence,
+      attempts: [
+        ...evidence.attempts,
+        {
+          id: crypto.randomUUID(),
+          conceptId: q.id,
+          questionId: active.id,
+          kind: s.learning?.stage === 'test' ? 'test' : 'apply',
+          response: s.studentResponse,
+          validation: 'unverified',
+          assisted: !!s.learning?.assisted,
+          assistance: [],
+          attempt:
+            evidence.attempts.filter((a) => a.questionId === active.id).length +
+            1,
+          independent: false,
+          skipped: true,
+          intervention: null,
+          submittedAt: Date.now(),
+        },
+      ],
+    };
+  }
+  const next = {
+    ...s,
+    observations,
+    completion,
+    evidence: {
+      ...evidence,
+      skipped:
+        reason === 'skipped'
+          ? [...new Set([...evidence.skipped, q.id])]
+          : evidence.skipped,
+    },
+  };
   const index = lesson.questions.indexOf(q);
   return index === lesson.questions.length - 1
     ? { ...next, phase: 'recap', sceneStation: 'desk', cue: null }

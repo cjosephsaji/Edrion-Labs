@@ -1,0 +1,10 @@
+!.gitignore
+!HANDOFF.md
+!results.json
+!world-*.png
+!classic-*.png
+!unsupported-feedback.png
+!mixed-results.png
+!live-topic-result.json
+!live-topic-result.png
+!verification.txt

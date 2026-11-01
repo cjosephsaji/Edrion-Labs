@@ -13,7 +13,9 @@ import {
   resume,
   cueAllowed,
   yieldCue,
+  selectLesson,
 } from '../teaching/controller';
+import { goToCheckpoint, teachAction } from '../teaching/checkpoint';
 import { recognize } from '../teaching/server';
 import manifest from '../assets/source-manifest.json';
 describe('Checkpoint A', () => {
@@ -39,16 +41,21 @@ describe('Checkpoint A', () => {
         ...initialState,
         studentResponse: 'I am not sure; perhaps the bound excludes it.',
       },
-      ai3.questions[11]!,
+      { ...ai3.questions[11]!, type: 'text' },
     );
     expect(s.completion['AI3-Q12']?.outcome).toBe('recorded');
     expect(s.lastFeedback).toContain('not automatically evaluated');
   });
   it('supports specific retry and worked-step help exposure', () => {
     const q = ai3.questions[2]!;
-    let s = practice({ ...initialState, studentResponse: '5' }, q);
+    const start = teachAction(
+      goToCheckpoint(selectLesson(initialState, ai3, null), ai3, 2),
+      ai3,
+      'check',
+    );
+    let s = practice({ ...start, studentResponse: '5' }, q);
     expect(s.lastFeedback).toContain('MIN');
-    s = practice(s, q);
+    s = practice({ ...teachAction(s, ai3, 'check'), studentResponse: '5' }, q);
     expect(s.completion[q.id]).toBeUndefined();
     expect(s.permittedHintLevel).toBe(2);
     expect(s.teaching.status).toBe('RETEACHING');

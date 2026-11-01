@@ -5,6 +5,8 @@ import {
   useEffect,
   useRef,
   useState,
+  useMemo,
+  useCallback,
   type ReactNode,
 } from 'react';
 import { Canvas } from '@react-three/fiber';
@@ -26,8 +28,12 @@ import { BoardSemantics, FocusBoard } from './board-surface';
 import { activeTree } from '../teaching/tree-variant';
 import { teachingPlan } from '../teaching/curriculum';
 import { TeachingCycle } from '../components/teaching-cycle';
-import { goToCheckpoint } from '../teaching/checkpoint';
-import { resume } from '../teaching/controller';
+import { TopicControls } from '../components/topic-lesson';
+import { preparedTopics } from '../teaching/topic-catalog';
+import { currentQuestion, startLearning } from '../teaching/checkpoint';
+import { assistance } from '../teaching/learning-evidence';
+import { LearningSummary } from '../components/learning-progress';
+import { resume, selectResponse } from '../teaching/controller';
 import { Scene } from './scene';
 import { greeting, type ScenePresentation } from './storyboard';
 import { lessons } from '../lessons';
@@ -35,6 +41,7 @@ import { alphaBeta, entail, HAZARDS, POLLUTION } from '../teaching/algorithms';
 import { useLessonController } from '../teaching/use-lesson-controller';
 import type { Lesson, Patch, ShowcaseState, Station } from '../teaching/types';
 import { Reader } from '../components/reader';
+import { WorldCloud } from './cloud';
 import s from './world.module.css';
 export interface RoomProps {
   state: ShowcaseState;
@@ -91,6 +98,22 @@ export default function World(props: RoomProps) {
     </RoomBoundary>
   );
 }
+function checkpointReveal(state: ShowcaseState, lesson: Lesson) {
+  const index = lesson.questions.findIndex((q) => q.id === state.questionId);
+  if (state.visualState.kind === 'tree' && state.visualState.transfer)
+    return state.visualState.reveal >= 3 ? 10 : 6;
+  return index === 0
+    ? 2
+    : index <= 2
+      ? 4
+      : index === 3
+        ? 5
+        : index === 4
+          ? 6
+          : index === 5
+            ? 9
+            : 10;
+}
 function WorldExperience(props: RoomProps) {
   const {
     state,
@@ -110,9 +133,20 @@ function WorldExperience(props: RoomProps) {
     onReducedChange: setReduced,
   } = props;
   const [scene, setScene] = useState<ScenePresentation>({
-    phase: 'arrival',
-    preset: 'wide',
-    reveal: 0,
+    phase:
+      lesson && state.phase !== 'welcome'
+        ? state.phase === 'recap'
+          ? 'recap'
+          : 'teaching'
+        : 'arrival',
+    preset:
+      lesson && state.phase !== 'welcome'
+        ? lesson.id.startsWith('ehs')
+          ? 'interaction'
+          : 'teaching'
+        : 'wide',
+    reveal:
+      lesson && state.phase !== 'welcome' ? checkpointReveal(state, lesson) : 0,
     replay: 0,
     skipCamera: 0,
     modelAngle: 0,
@@ -131,6 +165,24 @@ function WorldExperience(props: RoomProps) {
     [preview, setPreview] = useState<Lesson | null>(null),
     [bubbleDismissed, setBubbleDismissed] = useState(false),
     [topicDraft, setTopicDraft] = useState('');
+  const [topicBusy, setTopicBusy] = useState(false),
+    [topicError, setTopicError] = useState('');
+  async function exploreTopic() {
+    if (topicBusy || topicDraft.trim().length < 3) return;
+    setTopicBusy(true);
+    setTopicError('');
+    try {
+      await onTopic(topicDraft.trim());
+    } catch (error) {
+      setTopicError(
+        error instanceof Error
+          ? error.message
+          : 'The lesson could not be prepared. Please try again.',
+      );
+    } finally {
+      setTopicBusy(false);
+    }
+  }
   const [economy, setEconomy] = useState(false);
   useEffect(() => {
     setEconomy(window.innerWidth <= 800 || navigator.hardwareConcurrency <= 4);
@@ -142,6 +194,9 @@ function WorldExperience(props: RoomProps) {
   const bubble = useRef<HTMLDivElement>(null);
   const previousReaderPause = useRef(false);
   const previousFocusPause = useRef(false);
+  const previousAskPause = useRef(false);
+  const retrievingLesson = useRef<string | null>(null);
+  const avatarProjection = useRef<AvatarProjection | null>(null);
   const readySent = useRef(false),
     arrived = useRef(false),
     lastLesson = useRef(state.lessonId);
@@ -189,6 +244,10 @@ function WorldExperience(props: RoomProps) {
     if (!active || arrived.current) return;
     arrived.current = true;
     if (lesson && state.phase !== 'welcome') {
+      if (!['board', 'experiment'].includes(state.sceneStation))
+        patch({
+          sceneStation: lesson.id.startsWith('ehs') ? 'experiment' : 'board',
+        });
       setScene((x) => ({
         ...x,
         phase: state.phase === 'recap' ? 'recap' : 'teaching',
@@ -200,6 +259,21 @@ function WorldExperience(props: RoomProps) {
     if (lastLesson.current === state.lessonId) return;
     lastLesson.current = state.lessonId;
     if (!activeRef.current) return;
+    if (lesson?.id.startsWith('topic-')) {
+      retrievingLesson.current = null;
+      setLibrary(false);
+      setPreview(null);
+      setBubbleDismissed(false);
+      setScene((x) => ({
+        ...x,
+        phase: 'teaching',
+        preset: 'teaching',
+        reveal: 2,
+      }));
+      patch({ sceneStation: 'board', paused: false });
+      return;
+    }
+    retrievingLesson.current = state.lessonId;
     setLibrary(false);
     setPreview(null);
     setBubbleDismissed(false);
@@ -221,31 +295,25 @@ function WorldExperience(props: RoomProps) {
   }, [scene.phase, state.questionId, state.lastFeedback]);
   // Presentation follows the shared checkpoint; elapsed time never changes teaching state.
   useEffect(() => {
-    if (!lesson || state.phase === 'welcome' || !active) return;
-    const i = currentLesson.questions.findIndex(
-      (q) => q.id === state.questionId,
-    );
-    const reveal =
-      state.visualState.kind === 'tree' && state.visualState.transfer
-        ? state.visualState.reveal >= 3
-          ? 10
-          : 6
-        : i === 0
-          ? 2
-          : i <= 2
-            ? 4
-            : i === 3
-              ? 5
-              : i === 4
-                ? 6
-                : i === 5
-                  ? 9
-                  : 10;
+    if (
+      !lesson ||
+      state.phase === 'welcome' ||
+      !active ||
+      retrievingLesson.current
+    )
+      return;
+    const reveal = checkpointReveal(state, currentLesson);
     setScene((x) => ({
       ...x,
       reveal,
-      phase: state.phase === 'recap' ? 'recap' : 'teaching',
-      preset: lesson.id.startsWith('ehs') ? 'interaction' : 'teaching',
+      phase:
+        state.phase === 'recap'
+          ? 'recap'
+          : x.phase === 'practice'
+            ? 'practice'
+            : ['arrival', 'library', 'retrieving', 'book'].includes(x.phase)
+              ? x.phase
+              : 'teaching',
     }));
   }, [
     active,
@@ -258,7 +326,12 @@ function WorldExperience(props: RoomProps) {
     const key = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !document.querySelector('dialog[open]')) {
         if (askOpen) {
-          setAskOpen(false);
+          closeConversation();
+          return;
+        }
+        if (focusBoard) {
+          setFocusBoard(false);
+          patch({ paused: previousFocusPause.current });
           return;
         }
         if (library) {
@@ -274,10 +347,22 @@ function WorldExperience(props: RoomProps) {
     };
     window.addEventListener('keydown', key);
     return () => window.removeEventListener('keydown', key);
-  }, [askOpen, library, settings]);
+  }, [askOpen, library, settings, focusBoard, state.pendingRequest]);
+  function closeConversation() {
+    if (state.pendingRequest) return;
+    patch((current) =>
+      current.interruptionCheckpoint
+        ? resume(current)
+        : { ...current, paused: previousAskPause.current },
+    );
+    setAskOpen(false);
+  }
   function openReader(kind: 'source' | 'explanation') {
     previousReaderPause.current = state.paused;
-    patch({ paused: true });
+    patch((current) => ({
+      ...assistance(current, 'read-source'),
+      paused: true,
+    }));
     setReader(kind);
   }
   function overview() {
@@ -293,6 +378,11 @@ function WorldExperience(props: RoomProps) {
     window.__PETROS_WORLD_METRICS__?.stationClicks.push(id);
     if (!active) return;
     setBubbleDismissed(false);
+    setPrecision(false);
+    if (id !== 'bookshelf') {
+      setLibrary(false);
+      setPreview(null);
+    }
     if (id === 'bookshelf') {
       setLibrary(true);
       setScene((x) => ({ ...x, phase: 'library', preset: 'wide' }));
@@ -310,6 +400,13 @@ function WorldExperience(props: RoomProps) {
     patch({ sceneStation: id });
   }
   function retrieve(l: Lesson) {
+    if (l.id.startsWith('topic-')) {
+      if (l.id === lesson?.id) beginTeaching();
+      else onBook(l);
+      setLibrary(false);
+      setPreview(null);
+      return;
+    }
     setLibrary(false);
     setPreview(null);
     setBubbleDismissed(false);
@@ -321,8 +418,12 @@ function WorldExperience(props: RoomProps) {
   }
   function beginTeaching() {
     if (!lesson) return;
+    retrievingLesson.current = null;
+    patch({
+      sceneStation: lesson.id.startsWith('ehs') ? 'experiment' : 'board',
+    });
     if (state.phase === 'welcome')
-      patch((current) => goToCheckpoint(current, currentLesson, 0));
+      patch((current) => startLearning(current, currentLesson));
     setScene((x) => ({
       ...x,
       phase: 'teaching',
@@ -337,11 +438,22 @@ function WorldExperience(props: RoomProps) {
     patch({ sceneStation: 'bookshelf' });
   }
   function pick(id: string, value?: string) {
-    if (!lesson || state.interruptionCheckpoint || askOpen) return;
+    if (
+      !lesson ||
+      state.interruptionCheckpoint ||
+      askOpen ||
+      state.paused ||
+      cameraBusy
+    )
+      return;
     setToolsOpen(false);
     setPrecision(true);
     patch({ highlightTargetId: id });
     const v = state.visualState;
+    if (v.kind === 'topic') {
+      patch({ highlightTargetId: id });
+      return;
+    }
     if (v.kind === 'tree') {
       patch({ visualState: { ...v, selected: id } });
     }
@@ -404,6 +516,7 @@ function WorldExperience(props: RoomProps) {
     });
   }
   function positionCloud(avatar: AvatarProjection) {
+    avatarProjection.current = avatar;
     const el = bubble.current;
     if (!el) return;
     const canvas = document
@@ -460,9 +573,11 @@ function WorldExperience(props: RoomProps) {
     if (dock) {
       el.style.left = '';
       el.style.top = '';
+      el.style.transform = '';
     } else {
-      el.style.left = placement.x + 'px';
-      el.style.top = placement.y + 'px';
+      el.style.left = '0px';
+      el.style.top = '0px';
+      el.style.transform = `translate3d(${placement.x}px,${placement.y}px,0)`;
     }
     el.style.setProperty('--tail', placement.tail + 'px');
   }
@@ -470,6 +585,7 @@ function WorldExperience(props: RoomProps) {
     await onAsk(text);
   }
   const teaching = ['teaching', 'practice'].includes(scene.phase) && !!lesson;
+  const visibleModel = state.visualState;
   // The shared teaching surface owns teaching captions. The avatar cloud is only for arrival.
   const plan = teachingPlan(state, currentLesson, c.base);
   const spoken =
@@ -487,15 +603,82 @@ function WorldExperience(props: RoomProps) {
   const sourcePages = state.sourcePages.length
     ? state.sourcePages
     : (lesson?.questions[0]?.pages ?? []);
-  const allCount = Object.values(state.completion).filter(
-    (x) => x.outcome !== 'skipped',
-  ).length;
+
+  const sceneState = useMemo(
+    () => state,
+    [
+      state.lessonId,
+      state.phase,
+      state.questionId,
+      state.visualState,
+      state.highlightTargetId,
+      state.teaching,
+      state.completion,
+      state.sourcePages,
+      state.sourceId,
+      state.paused,
+      state.pendingRequest,
+      state.cue,
+      state.sceneStation,
+      state.interruptionCheckpoint,
+    ],
+  );
+  const latest = useRef({
+    lessonId: state.lessonId,
+    station,
+    chooseBook,
+    pick,
+    positionCloud,
+    onReady,
+    onStatus,
+  });
+  latest.current = {
+    lessonId: state.lessonId,
+    station,
+    chooseBook,
+    pick,
+    positionCloud,
+    onReady,
+    onStatus,
+  };
+  const sceneStation = useCallback(
+    (id: Station) => latest.current.station(id),
+    [],
+  );
+  const sceneBook = useCallback(
+    (book: Lesson) => latest.current.chooseBook(book),
+    [],
+  );
+  const scenePick = useCallback(
+    (id: string, value?: string) => latest.current.pick(id, value),
+    [],
+  );
+  const sceneAnchor = useCallback(
+    (point: AvatarProjection) => latest.current.positionCloud(point),
+    [],
+  );
+  const sceneReady = useCallback(() => {
+    if (!readySent.current) {
+      readySent.current = true;
+      latest.current.onStatus('Your study is ready.');
+      latest.current.onReady();
+    }
+  }, []);
+  const bookArrived = useCallback((id: string) => {
+    if (latest.current.lessonId !== id) return;
+    setScene((x) => (x.phase === 'retrieving' ? { ...x, phase: 'book' } : x));
+  }, []);
+  const cloudLayout = useCallback(() => {
+    if (avatarProjection.current)
+      latest.current.positionCloud(avatarProjection.current);
+  }, []);
   return (
     <main
       className={s.world}
       data-tools-open={toolsOpen}
       data-world-typeface
       data-world-phase={scene.phase}
+      data-learning-panel={teaching}
       data-question-id={state.questionId}
       data-teaching-state={state.teaching.status}
       data-reveal={scene.reveal}
@@ -562,29 +745,20 @@ function WorldExperience(props: RoomProps) {
           >
             <Suspense fallback={null}>
               <Scene
-                state={state}
+                state={sceneState}
                 scene={scene}
+                active={active}
                 reduced={reduced}
                 frozen={focused || precision || !active}
                 caption={''}
                 progress={1}
                 previewId={preview?.id}
-                onReady={() => {
-                  if (!readySent.current) {
-                    readySent.current = true;
-                    onStatus('Your study is ready.');
-                    onReady();
-                  }
-                }}
-                onBookArrived={() =>
-                  setScene((x) =>
-                    x.phase === 'retrieving' ? { ...x, phase: 'book' } : x,
-                  )
-                }
-                onStation={station}
-                onBook={chooseBook}
-                onPick={pick}
-                onAnchor={positionCloud}
+                onReady={sceneReady}
+                onBookArrived={bookArrived}
+                onStation={sceneStation}
+                onBook={sceneBook}
+                onPick={scenePick}
+                onAnchor={sceneAnchor}
                 onCamera={setCameraBusy}
               />
             </Suspense>
@@ -612,29 +786,25 @@ function WorldExperience(props: RoomProps) {
           <Settings2 size={19} />
         </button>
       </header>
-      {active &&
-        supported &&
-        !lost &&
-        !bubbleDismissed &&
-        !library &&
-        !askOpen &&
-        !teaching && (
-          <div
-            ref={bubble}
-            className={s.speech}
-            data-kind={state.cue?.kind ?? 'speech'}
-            role="status"
-          >
-            <span>PETROS</span>
-            <button
-              aria-label="Dismiss World speech"
-              onClick={() => setBubbleDismissed(true)}
-            >
-              ×
-            </button>
-            <p>{shortSpoken}</p>
-          </div>
-        )}
+      <WorldCloud
+        text={shortSpoken}
+        identity={`${state.sessionId}:${scene.phase}`}
+        visible={
+          !!active &&
+          !!supported &&
+          !lost &&
+          !bubbleDismissed &&
+          !library &&
+          !askOpen &&
+          !teaching
+        }
+        discard={teaching}
+        element={bubble}
+        className={s.speech}
+        kind={state.cue?.kind ?? 'speech'}
+        onDismiss={() => setBubbleDismissed(true)}
+        onLayout={cloudLayout}
+      />
       {cameraBusy && active && (
         <button
           className={s.skipCamera}
@@ -740,90 +910,112 @@ function WorldExperience(props: RoomProps) {
           <div
             data-world-obstacle
             className={s.questionDock}
+            role="region"
             aria-label="World guided checkpoint"
           >
-            <TeachingCycle state={state} lesson={lesson} patch={patch} />
-          </div>
-          {toolsOpen && (
-            <WorldTools
+            <TeachingCycle
               state={state}
-              patch={(update) => {
-                patch(update);
-                if (state.visualState.kind === 'hazards') {
-                  setPrecision(true);
-                  setToolsOpen(false);
-                }
+              lesson={lesson}
+              patch={patch}
+              onAsk={onAsk}
+              onFocusBoard={() => {
+                previousFocusPause.current = state.paused;
+                setFocusBoard(true);
+                if (state.visualState.kind !== 'topic' || !state.visualState.visual) patch({ paused: true });
               }}
-              pick={pick}
-              tell={tell}
-              apply={apply}
-              query={query}
+              interactionBlocked={cameraBusy}
+              teachingCaption={
+                ['INTRODUCING', 'DEMONSTRATING'].includes(
+                  state.interruptionCheckpoint?.teaching.status ??
+                    state.teaching.status,
+                )
+                  ? visibleModel.kind === 'hazards' && visibleModel.safer
+                    ? `This is the safer comparison. ${HAZARDS.find((h) => h.id === visibleModel.selected)?.reason ?? 'Compare the added protections with the original setup.'}`
+                    : visibleModel.kind === 'river' &&
+                        visibleModel.controls.length
+                      ? `This comparison shows ${visibleModel.controls
+                          .map(
+                            (id) => POLLUTION.find((p) => p.id === id)?.control,
+                          )
+                          .filter(Boolean)
+                          .join(
+                            ', ',
+                          )}. Each prevention acts on its own pathway; this illustration does not establish drinking safety.`
+                      : undefined
+                  : undefined
+              }
             />
+          </div>
+          {toolsOpen && !question.board && (
+            <fieldset
+              disabled={cameraBusy || state.paused}
+              style={{ display: 'contents' }}
+            >
+              <WorldTools
+                state={state}
+                patch={(update) => {
+                  patch(update);
+                  if (state.visualState.kind === 'hazards') {
+                    setPrecision(true);
+                    setToolsOpen(false);
+                  }
+                }}
+                pick={pick}
+                tell={tell}
+                apply={apply}
+                query={query}
+              />
+            </fieldset>
           )}
         </>
       )}
       {(scene.phase === 'recap' || state.phase === 'recap') && lesson && (
         <section className={s.recap}>
-          <span className={s.kicker}>BACK AT THE DESK</span>
-          <h2>Ideas to take with you.</h2>
-          <p>
-            {allCount} / {lesson.questions.length} checkpoints explored.{' '}
-            {Object.values(state.completion).filter((x) => x.help > 0).length}{' '}
-            used help.
-          </p>
-          <p>
-            {[
-              ...new Set(
-                lesson.questions
-                  .filter(
-                    (q) =>
-                      state.completion[q.id]?.outcome &&
-                      state.completion[q.id]?.outcome !== 'skipped',
-                  )
-                  .map((q) => q.concept),
-              ),
-            ].join(' · ')}
-          </p>
-          <small>Practice recap · no mastery or certification claim</small>
-          <button
-            className={s.primary}
-            onClick={() => {
+          <LearningSummary
+            state={state}
+            lesson={lesson}
+            patch={patch}
+            onHome={() => {
               setLibrary(true);
               setScene((x) => ({ ...x, phase: 'library', preset: 'wide' }));
             }}
-          >
-            Choose another book
-          </button>
+          />
         </section>
       )}
       <footer className={s.bottomHud} data-world-obstacle>
-        <button
-          aria-pressed={state.paused}
-          disabled={!!state.pendingRequest}
-          onClick={() =>
-            patch((current) =>
-              current.paused && current.interruptionCheckpoint
-                ? resume(current)
-                : { ...current, paused: !current.paused },
-            )
-          }
-        >
-          {state.paused ? <Play size={16} /> : <Pause size={16} />}
-          {state.paused ? 'Resume' : 'Pause'}
-        </button>
-        <button
-          className={s.askButton}
-          onClick={() => {
-            setAskOpen(true);
-            patch({ paused: true });
-          }}
-        >
-          <MessageCircle size={17} /> Ask Petros anything
-        </button>
+        {
+          <button
+            aria-label={state.paused ? 'Resume motion' : 'Pause motion'}
+            aria-pressed={state.paused}
+            disabled={!!state.pendingRequest}
+            onClick={() =>
+              patch((current) =>
+                current.paused && current.interruptionCheckpoint
+                  ? resume(current)
+                  : { ...current, paused: !current.paused },
+              )
+            }
+          >
+            {state.paused ? <Play size={16} /> : <Pause size={16} />}
+            {state.paused ? 'Resume' : 'Pause'}
+          </button>
+        }
+        {!teaching && (
+          <button
+            className={s.askButton}
+            onClick={() => {
+              previousAskPause.current = state.paused;
+              setAskOpen(true);
+              patch({ paused: true });
+            }}
+          >
+            <MessageCircle size={17} /> Ask Petros anything
+          </button>
+        )}
         <button onClick={overview}>
           <Eye size={16} /> Room overview
         </button>
-        {teaching && (
+        {teaching && !question?.board && (
           <button
             aria-pressed={toolsOpen}
             onClick={() => {
@@ -838,17 +1030,6 @@ function WorldExperience(props: RoomProps) {
         {lesson?.filename && (
           <button onClick={() => openReader('source')} aria-label="Read source">
             Source · {sourcePages.join(', ')}
-          </button>
-        )}
-        {teaching && !lesson?.id.startsWith('ehs') && (
-          <button
-            onClick={() => {
-              previousFocusPause.current = state.paused;
-              setFocusBoard(true);
-              patch({ paused: true });
-            }}
-          >
-            Focus board
           </button>
         )}
         <span>Text-led teaching</span>
@@ -913,7 +1094,12 @@ function WorldExperience(props: RoomProps) {
           )}
           <div className={s.curiosity}>
             <span className={s.kicker}>CURIOSITY NOTEBOOKS</span>
-            {lessons
+            {[
+              ...preparedTopics,
+              ...(state.topicLesson?.origin === 'generated'
+                ? [state.topicLesson]
+                : []),
+            ]
               .filter((l) => l.general)
               .map((l) => (
                 <button key={l.id} onClick={() => retrieve(l)}>
@@ -923,19 +1109,33 @@ function WorldExperience(props: RoomProps) {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                void onTopic(topicDraft);
+                void exploreTopic();
               }}
             >
               <input
                 aria-label="World open topic"
+                aria-describedby={topicError ? 'world-topic-error' : undefined}
                 maxLength={240}
                 value={topicDraft}
-                onChange={(e) => setTopicDraft(e.target.value)}
+                onChange={(e) => {
+                  setTopicDraft(e.target.value);
+                  setTopicError('');
+                }}
                 placeholder="Another question on your mind?"
               />
-              <button disabled={topicDraft.trim().length < 3}>Explore</button>
+              <button disabled={topicBusy || topicDraft.trim().length < 3}>
+                {topicBusy ? 'Preparing…' : 'Explore'}
+              </button>
             </form>
-            <small>Other topics require a qualified model connection.</small>
+            {topicError && (
+              <p role="alert" id="world-topic-error">
+                {topicError}
+              </p>
+            )}
+            <small>
+              AI, time travel and integrals are ready. Other topics use a
+              connected model.
+            </small>
           </div>
         </section>
       )}
@@ -948,7 +1148,7 @@ function WorldExperience(props: RoomProps) {
             </div>
             <button
               aria-label="Close World conversation"
-              onClick={() => setAskOpen(false)}
+              onClick={closeConversation}
             >
               <X size={18} />
             </button>
@@ -1016,7 +1216,6 @@ function WorldExperience(props: RoomProps) {
             onClick={() => {
               patch((current) => resume(current));
               setAskOpen(false);
-              setScene((x) => ({ ...x, phase: 'teaching' }));
             }}
           >
             Continue lesson · same checkpoint <ChevronRight size={16} />
@@ -1026,8 +1225,22 @@ function WorldExperience(props: RoomProps) {
       {focusBoard && (
         <FocusBoard
           state={state}
+          patch={patch}
           frame={{ reveal: scene.reveal, visible: true, caption: shortSpoken }}
-          onPick={pick}
+          onPick={(id, value) => {
+            setFocusBoard(false);
+            patch((current) =>
+              selectResponse(
+                {
+                  ...current,
+                  paused: previousFocusPause.current,
+                  highlightTargetId: id,
+                },
+                currentQuestion(current, currentLesson),
+                value ?? '',
+              ),
+            );
+          }}
           onClose={() => {
             setFocusBoard(false);
             patch({ paused: previousFocusPause.current });
@@ -1310,6 +1523,7 @@ function WorldTools({
             Input {v.input}
             <input
               aria-label="World model input"
+              disabled={state.teaching.status === 'AWAITING_RESPONSE'}
               type="range"
               min="1"
               max="5"
@@ -1324,6 +1538,10 @@ function WorldTools({
             Weight {v.weight.toFixed(1)}
             <input
               aria-label="World connection weight"
+              disabled={
+                state.teaching.status === 'AWAITING_RESPONSE' &&
+                state.questionId !== 'AI-Q06'
+              }
               type="range"
               min="0"
               max="2"
@@ -1341,6 +1559,16 @@ function WorldTools({
           </label>
           <small>Illustrative multiplication, not an LLM.</small>
         </>
+      ) : v.kind === 'topic' ? (
+        <>
+          <span>{v.area ? 'EXPLORE THE INTEGRAL' : 'EXPLORE THE CONCEPT'}</span>
+          <TopicControls state={state} patch={patch} compact />
+          <small>
+            {v.area
+              ? 'Change one quantity and compare the rectangle sum with the exact area.'
+              : 'Select an idea on the board to highlight it.'}
+          </small>
+        </>
       ) : (
         <>
           <span>SIMPLIFIED RELATIVITY</span>
@@ -1348,6 +1576,10 @@ function WorldTools({
             Speed {v.speed.toFixed(1)}c
             <input
               aria-label="World traveler speed"
+              disabled={
+                state.teaching.status === 'AWAITING_RESPONSE' &&
+                state.questionId !== 'TIME-Q04'
+              }
               type="range"
               min="0"
               max=".9"
@@ -1359,6 +1591,10 @@ function WorldTools({
             />
           </label>
           <button
+            disabled={
+              state.teaching.status === 'AWAITING_RESPONSE' &&
+              state.questionId !== 'TIME-Q04'
+            }
             onClick={() =>
               patch({ visualState: { ...v, speed: 0.6, earthYears: 10 } })
             }
@@ -1366,6 +1602,10 @@ function WorldTools({
             Try 0.6c
           </button>
           <button
+            disabled={
+              state.teaching.status === 'AWAITING_RESPONSE' &&
+              state.questionId !== 'TIME-Q04'
+            }
             onClick={() =>
               patch({ visualState: { ...v, speed: 0.8, earthYears: 10 } })
             }

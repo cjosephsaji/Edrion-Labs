@@ -61,7 +61,7 @@ describe('immersive teaching and contextual retrieval', () => {
       ai3,
       'Why does pruning skip those leaves?',
     )!;
-    expect(r.text).toContain('evaluates 4 leaves and skips 2');
+    expect(r.text).toContain('evaluates 5 leaves and skips 1');
     expect(s.studentResponse).toBe('my original explanation');
   });
   it('keeps unsupported flight distinct from false', () => {
@@ -124,6 +124,24 @@ describe('immersive teaching and contextual retrieval', () => {
     expect(teachingStepForQuestion('ai4', 4)).toBe(3);
     expect(teachingStepForQuestion('ehs3', 10)).toBe(5);
   });
-  it('resolves a named flight question without needing a prior ASK click',()=>{const l=lessons[1]!;const r=retrieveExplanation(state({lessonId:'ai4',questionId:'AI4-Q07',visualState:{kind:'kb',facts:['Bird(Tweety)'],derived:[],query:'',direction:'forward'}}),l,'Why is CanFly(Tweety) not supported?');expect(r?.target).toBe('CanFly(Tweety)');expect(r?.text).toContain('not entailed');});
-
+  it('resolves a named flight question without needing a prior ASK click', () => {
+    const l = lessons[1]!;
+    const r = retrieveExplanation(
+      state({
+        lessonId: 'ai4',
+        questionId: 'AI4-Q07',
+        visualState: {
+          kind: 'kb',
+          facts: ['Bird(Tweety)'],
+          derived: [],
+          query: '',
+          direction: 'forward',
+        },
+      }),
+      l,
+      'Why is CanFly(Tweety) not supported?',
+    );
+    expect(r?.target).toBe('CanFly(Tweety)');
+    expect(r?.text).toContain('not entailed');
+  });
 });

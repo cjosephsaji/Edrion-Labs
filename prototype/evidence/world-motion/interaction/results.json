@@ -1,0 +1,15 @@
+{
+  "tests": [
+    "camera pause retains progress; resume completes without academic advancement",
+    "board animation pauses for a contextual question, typing creates no scene/texture mounts, resume finishes the same operation",
+    "response gate remains stationary and unanswered",
+    "validated weight 0.5 -> 1.5 interpolates with its computed output, with no caption-driven camera move",
+    "focus mode and Escape preserve the camera and teaching context",
+    "mode exit cancels presentation; return preserves progress and settles committed visuals without replay",
+    "rapid station requests finish at the latest target without stale drawer/callback",
+    "actual scaffold changes interpolate, pause/resume and reset precisely; repeated changes do not duplicate geometry/textures",
+    "reduced motion settles camera/models and persists with lesson/mode after refresh"
+  ],
+  "errors": [],
+  "productionMutations": []
+}

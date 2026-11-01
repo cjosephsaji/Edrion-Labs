@@ -3,13 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "verify:visuals": "tsx tests/visual-learning-browser.mts",
     "test": "vitest run --config tests/vitest.config.ts",
     "prepare:sources": "node teaching/prepare-sources.mjs",
     "verify:browser": "tsx tests/teaching-browser.mts",
     "verify:edges": "tsx tests/teaching-edges.mts",
     "record:world": "tsx tests/teaching-browser.mts",
     "verify:experiments": "tsx tests/teaching-edges.mts",
-    "verify:typography": "tsx tests/teaching-typography.mts"
+    "verify:typography": "tsx tests/teaching-typography.mts",
+    "verify:learning": "tsx tests/learning-redesign-browser.mts",
+    "verify:learning-world": "tsx tests/learning-world-browser.mts",
+    "verify:learning-accessibility": "tsx tests/learning-accessibility-browser.mts",
+    "verify:motion": "tsx tests/world-motion-browser.mts",
+    "verify:motion-loading": "tsx tests/world-motion-loading.mts",
+    "verify:motion-interactions": "tsx tests/world-motion-interactions.mts",
+    "verify:topics": "tsx tests/topic-workflow-browser.mts",
+    "verify:experience": "tsx tests/learning-experience-browser.mts"
   },
   "dependencies": {
     "@react-three/fiber": "8.18.0",

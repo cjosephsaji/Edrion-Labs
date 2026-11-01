@@ -1,4 +1,6 @@
 import { teachingPlan } from './curriculum';
+import { assessmentQuestion } from './checkpoint';
+import { savedTopicExplanation } from './topic-content';
 import { activeTree } from './tree-variant';
 import {
   alphaBeta,
@@ -27,13 +29,41 @@ export function retrieveExplanation(
     lesson.questions[0]!;
   const text = prompt.trim().toLowerCase();
   const target = state.highlightTargetId;
+  const assessment = assessmentQuestion(state, lesson);
+  if (
+    assessment?.board &&
+    /rule|fact|support|conclu|why|this|that|example|simply|simpler|understand|premise|reverse/.test(
+      text,
+    )
+  ) {
+    const board = assessment.board;
+    return {
+      text:
+        'For this question, the supplied facts are ' +
+        (board.facts.join('; ') || 'none yet') +
+        '. The rules are ' +
+        board.rules.map((r) => r.premise + ' → ' + r.conclusion).join('; ') +
+        '. Follow each arrow only from a matching premise to its conclusion. An absent link proves neither a claim nor its negation. This help makes the current attempt assisted; another fresh question is needed for independent verification.',
+      label: 'Authored assessment hint',
+      target: null,
+    };
+  }
+  if (state.visualState.kind === 'topic') {
+    // Explicit lesson commands use the saved plan. Free-form questions go through
+    // the server, which selects live help or an honestly labelled offline hint.
+    return /simpler|simply|example|repeat|continue|previous|go back|understand/.test(
+      text,
+    )
+      ? savedTopicExplanation(lesson, q, prompt, state.visualState)
+      : null;
+  }
   const simpler =
     /simpler|simply|another example|didn.t understand|don.t understand|do not understand/.test(
       text,
     );
   const relevant =
     simpler ||
-    /another example|what.s the point|quiz me|more practice|go back|previous step/.test(
+    /another example|what.s the point|quiz me|more practice|go back|previous step|let.s continue|show me how|explain.*differently/.test(
       text,
     ) ||
     /\bmin\b|\bmax\b|node|branch|leaf|this|that|this step|didn.t understand|go back|check|choose|chosen|support|follow|prun|unknown|false|clock|weight|hazard|pollut|tweety|rio|rule|fact|scaffold|runoff/.test(
@@ -47,6 +77,12 @@ export function retrieveExplanation(
     ? ` Source: ${lesson.filename}, pp. ${(state.sourcePages.length ? state.sourcePages : q.pages).join(', ')}.`
     : '';
   const v = state.visualState;
+  if (/let.s continue/.test(text))
+    return {
+      text: 'Your current task is saved. Choose Resume this step to continue from here.',
+      label: 'Prepared lesson control',
+      target,
+    };
   if (/another example|quiz me|more practice/.test(text)) {
     const plan = teachingPlan(state, lesson, q);
     return {
@@ -68,6 +104,12 @@ export function retrieveExplanation(
       target,
     };
   if (v.kind === 'tree') {
+    if (v.opponents)
+      return {
+        text: `In Move A, your opponent can pick 2 instead of the possible 9. In Move B, they can pick 4 instead of 5. The opponent's reply changes what you can guarantee: 2 from A, 4 from B.${suffix}`,
+        label,
+        target: null,
+      };
     if (v.example) {
       const ex = v.example,
         answer =
@@ -116,7 +158,8 @@ export function retrieveExplanation(
           ? `Think of MIN ${'ABC'[index]} as your opponent choosing from ${values.join(' and ')}. They choose the smaller score, ${result.children[index]}, because the score is measured for MAX. A tempting larger leaf is not guaranteed: your opponent controls this choice.${suffix}`
           : `At the highlighted MIN ${'ABC'[index]}, the actual alternatives are ${values.join(' and ')}. MIN returns min(${values.join(', ')}) = ${result.children[index]}. It minimizes MAX's utility, so the larger leaf cannot be promised to MAX.${suffix}`,
         label,
-        target: named && selected !== String(index) ? `branch-${index}` : target,
+        target:
+          named && selected !== String(index) ? `branch-${index}` : target,
       };
     }
     if (explicitRoot || target === 'root')

@@ -1354,3 +1354,34 @@
 .world[data-world-phase='teaching'] .questionDock h2 { display:block; }
 .questionDock > section { width:100%; }
 @media(max-width:800px) { .world[data-world-phase='teaching'] .questionDock,.world[data-world-phase='practice'] .questionDock { max-height:49vh; left:8px;right:8px; } }
+
+/* A single shared task dock with enough room for the help popover. */
+.world[data-world-phase='teaching'] .questionDock,
+.world[data-world-phase='practice'] .questionDock {
+  overflow: auto;
+  max-height: 53vh;
+  width: min(860px, calc(100vw - 160px));
+}
+@media (max-width: 800px) {
+  .world[data-world-phase='teaching'] .questionDock,
+  .world[data-world-phase='practice'] .questionDock {
+    width: auto;
+    max-width: none;
+  }
+}
+
+/* Anchors move through transforms; message content owns its own fade. */
+.speech { transition:opacity 180ms ease-out; will-change:transform,opacity; }
+.speech[data-avatar-visible='false'] { opacity:0; pointer-events:none; }
+
+/* Learning has a stable reading column; the classroom remains available in Room overview. */
+.world[data-learning-panel='true'] .canvasStage {right:478px;bottom:var(--footer);}
+.world[data-learning-panel='true'] .questionDock {top:96px;bottom:76px;left:auto;right:16px;transform:none;width:444px;height:auto;max-height:none;display:block;padding:0;overflow:auto;border-radius:16px;border:1px solid #c8d5bf;background:#fffef8;}
+.world[data-learning-panel='true'] .speech {display:none;}
+.world[data-learning-panel='true'] .questionDock>section {border:0;border-radius:16px;padding:15px;}
+.world[data-learning-panel='true'] .tools {right:480px;}
+.world .recap {max-height:calc(100svh - 180px);overflow:auto;width:min(760px,calc(100vw - 40px));}
+@media(max-width:1000px){.world[data-learning-panel='true'] .canvasStage{right:410px;}.world[data-learning-panel='true'] .questionDock{width:390px;right:10px;}}
+@media(max-width:800px){.world[data-learning-panel='true'] .canvasStage{right:0;bottom:53svh;}.world[data-learning-panel='true'] .questionDock{top:46svh;bottom:64px;left:8px;right:8px;width:auto;max-height:none;}.world[data-learning-panel='true'] .questionDock>section{padding:12px;}.world .recap{inset:84px 10px 76px;width:auto;transform:none;max-height:none;}}
+
+@media(max-width:800px){.world[data-learning-panel='true'] .canvasStage{bottom:62svh;}.world[data-learning-panel='true'] .questionDock{top:36svh;}}

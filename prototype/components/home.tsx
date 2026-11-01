@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ArrowRight,
   FileText,
@@ -10,6 +10,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import { lessons } from '../lessons';
+import { resolveLesson } from '../teaching/lesson-registry';
+import { preparedTopics } from '../teaching/topic-catalog';
 import receipts from '../assets/source-receipts.json';
 import type { Lesson, ShowcaseState, Receipt } from '../teaching/types';
 import s from './showcase.module.css';
@@ -35,6 +37,32 @@ export function Home({
   const [error, setError] = useState('');
   const [drop, setDrop] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [topicBusy, setTopicBusy] = useState(false),
+    [topicError, setTopicError] = useState('');
+  const topicMounted = useRef(true);
+  useEffect(() => {
+    topicMounted.current = true;
+    return () => {
+      topicMounted.current = false;
+    };
+  }, []);
+  async function explore(text: string) {
+    if (topicBusy || text.trim().length < 3) return;
+    setTopicError('');
+    setTopicBusy(true);
+    try {
+      await onTopic(text.trim());
+    } catch (error) {
+      if (topicMounted.current)
+        setTopicError(
+          error instanceof Error
+            ? error.message
+            : 'The lesson could not be prepared. Please try again.',
+        );
+    } finally {
+      if (topicMounted.current) setTopicBusy(false);
+    }
+  }
   const [uploads, setUploads] = useState<{ name: string; status: string }[]>(
     [],
   );
@@ -133,8 +161,7 @@ export function Home({
         <button className={s.resume} onClick={onResume}>
           <BookOpen size={20} />
           <span>
-            <strong>Resume lesson</strong> ·{' '}
-            {lessons.find((l) => l.id === state.lessonId)?.title}{' '}
+            <strong>Resume lesson</strong> · {resolveLesson(state)?.title}{' '}
             <small>
               {state.phase} ·{' '}
               {
@@ -343,11 +370,12 @@ export function Home({
         <span className={s.eyebrow}>A QUESTION IS A GREAT PLACE TO START</span>
         <h2>Where does your curiosity go?</h2>
         <div className={s.topicChips}>
-          {[
-            'How does artificial intelligence work?',
-            'Is time travel possible?',
-          ].map((t) => (
-            <button key={t} onClick={() => void onTopic(t)}>
+          {preparedTopics.map(({ title: t }) => (
+            <button
+              key={t}
+              disabled={topicBusy}
+              onClick={() => void explore(t)}
+            >
               <Sparkles size={18} />
               {t}
               <ArrowRight size={16} />
@@ -356,9 +384,10 @@ export function Home({
         </div>
         <form
           className={s.topicForm}
+          aria-busy={topicBusy}
           onSubmit={(e) => {
             e.preventDefault();
-            void onTopic(topic.trim());
+            void explore(topic);
           }}
         >
           <input
@@ -366,15 +395,38 @@ export function Home({
             maxLength={240}
             placeholder="Or ask about something else…"
             value={topic}
-            onChange={(e) => setTopic(e.target.value)}
+            aria-describedby={
+              topicError ? 'topic-request-error' : 'topic-request-help'
+            }
+            aria-invalid={!!topicError}
+            onChange={(e) => {
+              setTopic(e.target.value);
+              setTopicError('');
+            }}
           />
-          <button className={s.primary} disabled={topic.trim().length < 3}>
-            Let’s explore <ArrowRight size={17} />
+          <button
+            className={s.primary}
+            disabled={topicBusy || topic.trim().length < 3}
+          >
+            {topicBusy ? (
+              <>
+                <Loader2 className={s.spin} size={17} /> Preparing your lesson…
+              </>
+            ) : (
+              <>
+                Let’s explore <ArrowRight size={17} />
+              </>
+            )}
           </button>
         </form>
-        <p className={s.caption}>
-          Two prepared topic lessons. Other topics require a live model
-          connection.
+        {topicError && (
+          <p id="topic-request-error" role="alert" className={s.topicStatus}>
+            {topicError}
+          </p>
+        )}
+        <p className={s.caption} id="topic-request-help">
+          AI, time travel and integrals are ready to explore. Other questions
+          use a connected model.
         </p>
       </section>
     </>

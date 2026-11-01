@@ -1,5 +1,6 @@
 import type { Lesson } from '../teaching/types';
 import { q } from './helpers';
+import { knowledgeExperience } from './knowledge-experience';
 export const ai4: Lesson = {
   id: 'ai4',
   subject: 'Artificial Intelligence',
@@ -158,3 +159,4 @@ export const ai4: Lesson = {
     ),
   ],
 };
+ai4.experience = knowledgeExperience(ai4.questions);

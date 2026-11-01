@@ -2,6 +2,8 @@ import type { VisualState } from './types';
 /** Manual, prepared presentation steps. Academic answer history is never changed here. */
 export function demonstrate(v: VisualState, step: number): VisualState {
   switch (v.kind) {
+    case 'topic':
+      return v;
     case 'tree':
       return {
         ...v,

@@ -61,7 +61,7 @@ describe('feature and state boundaries', () => {
   });
   it('accepts numerically equivalent structured answers, without evaluating prose', () => {
     expect(
-      practice({ ...initialState, studentResponse: '3.0' }, ai3.questions[5]!)
+      practice({ ...initialState, studentResponse: '1.0' }, ai3.questions[5]!)
         .completion['AI3-Q06']?.outcome,
     ).toBe('explored');
   });

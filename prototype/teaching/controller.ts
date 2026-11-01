@@ -1,8 +1,16 @@
 import { teachingPlan } from './curriculum';
-import { checkpointVisual, initialCycle, observation } from './checkpoint';
+import {
+  assessmentQuestion,
+  checkpointVisual,
+  initialCycle,
+  observation,
+} from './checkpoint';
+import { validateResponse } from './validation';
+import { assistance, emptyEvidence, recordAttempt } from './learning-evidence';
 import { lessonForState } from './tree-variant';
-import { lessons } from '../lessons';
+import { resolveLesson } from './lesson-registry';
 import type { ShowcaseState, Lesson, VisualState, Question } from './types';
+import { runtime } from './visual-spec';
 export const initialState: ShowcaseState = {
   teaching: { ...initialCycle },
   observations: {},
@@ -46,7 +54,9 @@ export const initialState: ShowcaseState = {
   receipts: [],
   cue: null,
 };
-export function lessonVisual(id: string): VisualState {
+export function lessonVisual(id: string, lesson?: Lesson): VisualState {
+  if (id.startsWith('topic-') && lesson?.questions[0]?.teaching)
+    return { kind: 'topic', ...lesson.questions[0].teaching.diagram, ...(lesson.questions[0].teaching.diagram.visual ? { runtime: runtime(lesson.questions[0].teaching.diagram.visual.initial) } : {}) };
   if (id === 'ai4')
     return {
       kind: 'kb',
@@ -61,7 +71,11 @@ export function lessonVisual(id: string): VisualState {
   if (id === 'open-ai')
     return { kind: 'network', input: 2, weight: 0.5, target: 3 };
   if (id === 'time') return { kind: 'clocks', speed: 0.6, earthYears: 10 };
-  return { ...initialState.visualState };
+  return {
+    ...initialState.visualState,
+    kind: 'tree',
+    treeOrder: 'v2',
+  } as VisualState;
 }
 export function selectLesson(
   s: ShowcaseState,
@@ -74,22 +88,43 @@ export function selectLesson(
     mode: s.mode,
     receipts: s.receipts,
     lessonId: lesson.id,
+    topicLesson: lesson.id.startsWith('topic-') ? lesson : undefined,
     moduleId: lesson.module,
     sourceId: lesson.filename ?? null,
     sourceHash: hash,
-    inputOrigin: lesson.general
-      ? 'curated_open_topic'
-      : s.receipts.some((r) => r.recognized === lesson.id)
-        ? 'uploaded_pdf'
-        : 'seeded_pdf',
+    inputOrigin:
+      lesson.origin === 'generated'
+        ? 'live_open_topic'
+        : lesson.general
+          ? 'curated_open_topic'
+          : s.receipts.some((r) => r.recognized === lesson.id)
+            ? 'uploaded_pdf'
+            : 'seeded_pdf',
     sourcePages: lesson.questions[0]!.pages,
     questionId: lesson.questions[0]!.id,
-    visualState: lessonVisual(lesson.id),
+    visualState: lessonVisual(lesson.id, lesson),
     cue: null,
+    evidence: emptyEvidence(),
+    learning: {
+      stage: 'learn',
+      activity: 'lesson',
+      item: 0,
+      taskId: null,
+      assisted: false,
+      fresh: false,
+    },
   };
 }
 export function practice(s: ShowcaseState, q: Question): ShowcaseState {
-  const actualLesson = lessons.find((l) => l.id === s.lessonId);
+  if (
+    s.paused ||
+    s.pendingRequest ||
+    s.interruptionCheckpoint ||
+    s.teaching.status === 'READY_TO_CONTINUE' ||
+    s.teaching.status === 'RETEACHING'
+  )
+    return s;
+  const actualLesson = resolveLesson(s);
   q =
     lessonForState(actualLesson, s)?.questions.find(
       (item) => item.id === q.id,
@@ -104,52 +139,38 @@ export function practice(s: ShowcaseState, q: Question): ShowcaseState {
   const base = lessonForState(actualLesson, s);
   const original =
     base?.questions.find((item) => item.id === s.questionId) ?? q;
-  if (base && s.teaching.followup) q = teachingPlan(s, base, original).followup;
-  const validOption =
-    q.type === 'multi'
-      ? response.split('|').every((value) => q.options.includes(value))
-      : q.options.includes(response);
-  const accepted =
-    q.type === 'text'
-      ? false
-      : q.type === 'multi'
-        ? JSON.stringify(response.split('|').sort()) ===
-          JSON.stringify([...q.correct].sort())
-        : q.type === 'number'
-          ? Number.isFinite(Number(response)) &&
-            q.correct.some((value) => Number(value) === Number(response))
-          : q.correct.includes(response);
-  const partial =
-    q.type === 'multi' &&
-    !accepted &&
-    response.split('|').some((value) => q.correct.includes(value));
-  const unclear =
-    q.type !== 'text' &&
-    (q.type === 'number' ? !Number.isFinite(Number(response)) : !validOption);
+  const assessed = base ? assessmentQuestion(s, base) : undefined;
+  if (assessed) q = assessed;
+  else if (base && s.teaching.followup)
+    q = teachingPlan(s, base, original).followup;
+  const comparison = validateResponse(q, response);
+  const generated = actualLesson?.origin === 'generated';
+  // A model-declared key can support comparison, not establish factual correctness.
   const validation =
-    q.type === 'text'
-      ? 'unverified'
-      : accepted
-        ? 'correct'
-        : unclear
-          ? 'unclear'
-          : partial
-            ? 'partial'
-            : 'incorrect';
+    generated && comparison !== 'unclear' ? 'unverified' : comparison;
+  const accepted = comparison === 'correct',
+    partial = !generated && comparison === 'partial',
+    unclear = comparison === 'unclear';
+  const recorded = accepted || q.type === 'text';
   const help = Math.max(
     s.permittedHintLevel,
     s.completion[original.id]?.help ?? 0,
   );
   const completion = { ...s.completion };
-  if (accepted || q.type === 'text')
+  if (recorded && s.learning?.activity !== 'diagnostic')
     completion[original.id] = {
       response,
       attempts: attempt,
-      outcome: q.type === 'text' ? 'recorded' : 'explored',
+      outcome: q.type === 'text' || generated ? 'recorded' : 'explored',
       help,
     };
   const plan = base ? teachingPlan(s, base, original) : null;
   const minMistake = original.id === 'AI3-Q03' && validation === 'incorrect';
+  const minRoleConfusion =
+    minMistake &&
+    s.visualState.kind === 'tree' &&
+    s.visualState.example &&
+    Number(response) === Math.max(...s.visualState.example.values);
   const misconception =
     validation === 'incorrect'
       ? original.id === 'AI4-Q07' && response === 'Definitely false'
@@ -158,29 +179,47 @@ export function practice(s: ShowcaseState, q: Question): ShowcaseState {
           ? 'rule-as-individual-fact'
           : original.id === 'AI3-Q07' && response === 'B'
             ? 'large-leaf-as-guarantee'
-            : minMistake
+            : minRoleConfusion
               ? 'MIN-maximizes-MAX-score'
-              : q.misconception
+              : minMistake
+                ? 'MIN-comparison-incomplete'
+                : q.misconception
       : partial
         ? 'incomplete-selection'
         : null;
   const feedback =
-    q.type === 'text'
-      ? 'Recorded — not automatically evaluated. Which part of the visible rule supports your explanation? You can compare it with an example or explicitly continue with understanding unverified.'
-      : accepted
-        ? `Practice feedback · ${q.explanation}`
-        : unclear
-          ? 'I cannot evaluate that response. Please use a displayed option or clarify the numerical value.'
-          : partial
-            ? `You selected supported controls: ${response
-                .split('|')
-                .filter((value) => q.correct.includes(value))
-                .join(
-                  ', ',
-                )}. ${response.split('|').some((value) => !q.correct.includes(value)) ? 'Some selected items are unsupported. ' : ''}Which remaining pathway still needs a matching control?`
-            : minMistake
-              ? 'You chose the larger score. That follows MAX’s goal, but this is MIN: the opponent wants the least favorable result for MAX. Keep MIN A in view and compare the simpler example below.'
-              : `You selected “${response}”. ${plan?.simpler ?? q.hints[0]}`;
+    generated && !unclear
+      ? 'Generated practice · Your response ' +
+        (accepted ? 'matches' : 'differs from') +
+        ' the model-declared key. That key is not an independently validated answer. Compare this explanation: ' +
+        q.explanation +
+        ' Your understanding remains unverified.'
+      : assessed && !unclear
+        ? accepted
+          ? 'Practice feedback · ' + q.explanation
+          : 'You selected “' +
+            response +
+            '”. ' +
+            (q.optionFeedback?.[q.options.indexOf(response)] ??
+              'Trace the supplied premises and one-way rules before deciding.')
+        : q.type === 'text'
+          ? 'Recorded — not automatically evaluated. Which part of the visible rule supports your explanation? You can compare it with an example or explicitly continue with understanding unverified.'
+          : accepted
+            ? `Practice feedback · ${q.explanation}`
+            : unclear
+              ? 'I cannot evaluate that response. Please use a displayed option or clarify the numerical value.'
+              : partial
+                ? `You selected supported controls: ${response
+                    .split('|')
+                    .filter((value) => q.correct.includes(value))
+                    .join(
+                      ', ',
+                    )}. ${response.split('|').some((value) => !q.correct.includes(value)) ? 'Some selected items are unsupported. ' : ''}Which remaining pathway still needs a matching control?`
+                : minMistake
+                  ? `You chose ${response}. ${response === '8' ? "That would be MAX's choice, because 8 is the highest. But MIN wants the smallest score for MAX. Let's compare the choices again." : 'MIN wants fewer points for MAX. Compare your choice with the smaller values still on the board.'}`
+                  : original.id === 'AI3-Q02'
+                    ? `You chose ${response}. MAX wants the highest score; a larger choice is still available. Compare the values before trying a new example.`
+                    : `You selected “${response}”. ${q.optionFeedback?.[q.options.indexOf(response)] ?? plan?.simpler ?? q.hints[0]}`;
   const record = base ? observation(s, base, original) : null;
   let next: ShowcaseState = {
     ...s,
@@ -188,23 +227,23 @@ export function practice(s: ShowcaseState, q: Question): ShowcaseState {
     lastFeedback: feedback,
     completion,
     misconceptionCategory: misconception,
-    permittedHintLevel:
-      accepted || q.type === 'text' ? help : Math.min(2, attempt),
+    permittedHintLevel: recorded ? help : Math.min(2, attempt),
     teaching: {
       ...s.teaching,
-      status:
-        accepted || q.type === 'text'
-          ? 'READY_TO_CONTINUE'
-          : unclear || partial
-            ? 'AWAITING_RESPONSE'
-            : 'RETEACHING',
+      status: recorded
+        ? 'READY_TO_CONTINUE'
+        : unclear || partial
+          ? 'AWAITING_RESPONSE'
+          : 'RETEACHING',
       followup: partial
         ? false
-        : accepted || unclear || q.type === 'text'
+        : recorded || unclear
           ? s.teaching.followup
-          : true,
+          : minMistake && attempt === 1 && !s.teaching.followup
+            ? false
+            : true,
       variant:
-        accepted || unclear || q.type === 'text'
+        recorded || unclear
           ? s.teaching.variant
           : attempt > 1
             ? 'second-example'
@@ -220,6 +259,7 @@ export function practice(s: ShowcaseState, q: Question): ShowcaseState {
               {
                 questionId: q.id,
                 response,
+                task: q.task,
                 validation,
                 misconception,
                 variant: s.teaching.variant,
@@ -231,7 +271,7 @@ export function practice(s: ShowcaseState, q: Question): ShowcaseState {
             explanationVariants: [
               ...new Set([
                 ...record.explanationVariants,
-                ...(!accepted && !unclear
+                ...(!recorded && !unclear
                   ? [attempt > 1 ? 'second-example' : 'simpler']
                   : []),
               ]),
@@ -240,9 +280,88 @@ export function practice(s: ShowcaseState, q: Question): ShowcaseState {
         }
       : s.observations,
     cue: null,
+    evidence: recordAttempt(s, q, original.id, validation),
   };
-  if (base && !accepted && !unclear && q.type !== 'text')
+  if (next.visualState.kind === 'topic' && next.visualState.visual && !unclear) {
+    const v = next.visualState, spec = v.visual!;
+    next = { ...next, visualState: { ...v, runtime: { ...(v.runtime ?? runtime(spec.initial)), playing: false, highlights: accepted ? spec.feedback.correct : spec.feedback.incorrect, reveal: true } }, highlightTargetId: (accepted ? spec.feedback.correct : spec.feedback.incorrect)[0] ?? null };
+  }
+  if (assessed) {
+    const entry = next.evidence!.attempts.at(-1)!;
+    if (
+      s.learning?.activity === 'diagnostic' ||
+      s.learning?.activity === 'final'
+    ) {
+      return {
+        ...next,
+        teaching: {
+          ...next.teaching,
+          status: unclear ? 'AWAITING_RESPONSE' : 'READY_TO_CONTINUE',
+        },
+      };
+    }
+    if (accepted)
+      return {
+        ...next,
+        lastFeedback:
+          generated ? feedback : (entry.independent
+            ? 'Verified now · A fresh, unassisted application. '
+            : 'Assisted practice · This attempt does not independently verify the concept. ') +
+          q.explanation,
+        teaching: { ...next.teaching, status: 'READY_TO_CONTINUE' },
+      };
+    if (!unclear)
+      return {
+        ...next,
+        learning: {
+          stage: 'apply',
+          activity: 'lesson',
+          item: 0,
+          taskId: null,
+          assisted: true,
+          fresh: false,
+        },
+        teaching: {
+          ...next.teaching,
+          status: 'RETEACHING',
+          followup: true,
+          variant: 'simpler',
+        },
+        lastFeedback:
+          feedback +
+          ' Let us compare a supported path before a new application.',
+        highlightTargetId: next.visualState.kind === 'topic' ? next.highlightTargetId : entry.intervention === 'wrong-rule' ? 'rule' : 'unsupported',
+      };
+    return next;
+  }
+  const intervention = next.evidence!.attempts.at(-1)?.intervention;
+  if (!accepted && !unclear && intervention) {
+    next = {
+      ...next,
+      highlightTargetId:
+        intervention === 'wrong-rule'
+          ? 'rule'
+          : intervention === 'unsupported-conclusion'
+            ? 'unsupported'
+            : next.highlightTargetId,
+      lastFeedback:
+        feedback +
+        (intervention === 'repeated'
+          ? ' Repeating this check is not helping yet. Use another worked example, review the idea, or continue with understanding unverified.'
+          : ''),
+    };
+  }
+  if (
+    base &&
+    !recorded &&
+    !unclear &&
+    !partial &&
+    q.type !== 'text' &&
+    attempt > 1
+  )
     next = { ...next, ...checkpointVisual(next, base, original, 'retry') };
+  if (accepted && original.id === 'AI3-Q07' && next.visualState.kind === 'tree')
+    next = { ...next, visualState: { ...next.visualState, reveal: 3 } };
   if (accepted && !s.teaching.followup) {
     const v = next.visualState;
     if (v.kind === 'tree' && ['AI3-Q09', 'AI3-Q10'].includes(original.id))
@@ -296,11 +415,42 @@ export function practice(s: ShowcaseState, q: Question): ShowcaseState {
     };
   return next;
 }
+/** All diagram, overlay and keyboard selections use the same response gate. */
+export function selectResponse(
+  s: ShowcaseState,
+  q: Question,
+  value: string,
+): ShowcaseState {
+  if (
+    s.paused ||
+    s.pendingRequest ||
+    s.interruptionCheckpoint ||
+    s.teaching.status !== 'AWAITING_RESPONSE' ||
+    q.type === 'text' ||
+    q.type === 'number' ||
+    !q.options.includes(value)
+  )
+    return s;
+  const values = s.studentResponse ? s.studentResponse.split('|') : [];
+  return {
+    ...s,
+    studentResponse:
+      q.type === 'multi'
+        ? (values.includes(value)
+            ? values.filter((v) => v !== value)
+            : [...values, value]
+          ).join('|')
+        : value,
+    cue: yieldCue(s.cue),
+    lastFeedback: '',
+  };
+}
 
 export function cueAllowed(typing: boolean, requested: boolean) {
   return requested || !typing;
 }
 export function interrupt(s: ShowcaseState, requestId: string): ShowcaseState {
+  s = assistance(s, requestId ? 'asked-petros' : 'opened-help');
   return {
     ...s,
     teaching: { ...s.teaching, status: 'INTERRUPTED' },
@@ -321,10 +471,8 @@ export function resume(s: ShowcaseState): ShowcaseState {
   if (s.pendingRequest) return s;
   const saved = s.interruptionCheckpoint;
   const sourcePages =
-    lessons
-      .find((l) => l.id === s.lessonId)
-      ?.questions.find((q) => q.id === saved?.questionId)?.pages ??
-    s.sourcePages;
+    resolveLesson(s)?.questions.find((q) => q.id === saved?.questionId)
+      ?.pages ?? s.sourcePages;
   return {
     ...s,
     paused: false,

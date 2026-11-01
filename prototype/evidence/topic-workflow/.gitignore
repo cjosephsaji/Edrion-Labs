@@ -1,0 +1,6 @@
+# Requested acceptance evidence, excluding failed scratch captures.
+!.gitignore
+!results.json
+!integrals-*.png
+!inline-connection-message.png
+!provider-fixture-flow.png

@@ -23,9 +23,9 @@ export interface TeachingPlan {
 const rows: Record<string, string[][]> = {
   ai3: [
     [
-      'A game has two decision makers. A move that looks good now can be spoiled by the opponent’s next choice.',
+      "Imagine you're playing a game. You want the best outcome, but your opponent wants to stop you. So the best move isn't always the one with the biggest possible reward.",
       'Think of offering your opponent two doors. They choose the door that helps them, so you cannot promise yourself the better prize.',
-      'Look at MAX above MIN A: the first player chooses a branch; the opponent chooses the outcome below it.',
+      'Move A could give you 9, but your opponent can choose 2 instead. Move B offers 4 or 5. Your opponent can force the smaller result, so B guarantees more.',
     ],
     [
       'Scores measure how good an outcome is for MAX. When MAX controls a choice, it wants the larger score.',
@@ -35,22 +35,22 @@ const rows: Record<string, string[][]> = {
     [
       'MIN is the opponent. It chooses the smaller score because the scores measure MAX’s benefit.',
       'MIN wants MAX to get fewer points. A large score may exist, but the opponent can choose the smaller one.',
-      'In a worked MIN example, the scores are 1 and 4. MIN returns 1. Now try MIN A with 3 and 5.',
+      'In this worked MIN example, the scores are 1 and 4. MIN returns 1. Your turn uses different values.',
     ],
     [
       'A game tree shows choices in layers. Select an internal MIN node to inspect its children; that node returns one guarantee to its parent.',
       'Work on just one pair of leaves. The opponent chooses from that pair before MAX can compare branches.',
-      'Inspect MIN B and its two children, 2 and 9. Which is the least favorable score for MAX?',
+      'Start at MIN A. Its two children are 3 and 5. Which score will the opponent pass upward?',
     ],
     [
       'The same MIN rule applies to every opponent branch. The order of the leaves does not change their minimum.',
       'Read both children. Keep the smaller score, even if it is drawn on the right.',
-      'Inspect MIN C. Compare its actual two children before returning a value upward.',
+      'Now inspect MIN B. Both 2 and 9 are possible, but the opponent controls which score is passed upward.',
     ],
     [
-      'Back values up from leaves toward the root. Once each opponent has chosen, MAX compares the three guarantees.',
-      'Replace each pair with its smaller score. Then choose the largest of those three results.',
-      'The internal values are A=3, B=2 and C=1. Predict the value MAX returns.',
+      'Apply the MIN rule to the last pair. Then all three guarantees can be compared at MAX.',
+      'Compare 4 with 1. The smaller score is the one MIN C passes up.',
+      'MIN C has 4 on the left and 1 on the right. Placement does not change MIN’s goal: reduce MAX’s score.',
     ],
     [
       'Choose a whole branch by its guaranteed result. An attractive leaf inside a branch is not a promise.',
@@ -373,7 +373,7 @@ function follow(
 }
 const secondExamples: Record<string, string[]> = {
   ai3: [
-    'Inspect MIN B: MAX might hope for the leaf 9, but the opponent can choose 2. That shows why a possible prize is not a promise.',
+    'In Move A, you might hope for 9, but your opponent can choose 2. Move B guarantees 4 instead. A possible prize is not a promise.',
     'MAX chooses 6 from 2 and 6. The check will use a different pair.',
     'MIN chooses 2 from 2 and 6: the opponent controls this choice, and smaller scores hurt MAX.',
     'A second MIN node compares 4 and 8 and returns 4. Both possibilities exist, but only the smaller result is guaranteed.',
@@ -454,6 +454,17 @@ export function teachingPlan(
   lesson: Lesson,
   q: Question,
 ): TeachingPlan {
+  if (q.teaching) {
+    const t = q.teaching;
+    return {
+      introduction: t.introduction,
+      demonstration: t.demonstration,
+      simpler: t.simpler,
+      example: t.example,
+      target: null,
+      followup: { ...q, ...t.followup, id: q.id + '-followup', type: 'choice' },
+    };
+  }
   const i = lesson.questions.findIndex((item) => item.id === q.id);
   const row = rows[lesson.id]![Math.max(0, i)]!;
   let followup: Question;
@@ -471,11 +482,11 @@ export function teachingPlan(
     const mm = minimax(tree),
       pass = alphaBeta(tree);
     target =
-      i === 2
+      i === 3
         ? 'branch-0'
-        : i === 3
+        : i === 4
           ? 'branch-1'
-          : i === 4
+          : i === 5
             ? 'branch-2'
             : i === 8
               ? 'leaf-1-0'
@@ -492,7 +503,7 @@ export function teachingPlan(
       };
       checkExample = {
         role,
-        values: i === 1 ? [4, 7] : [3, 5],
+        values: [3, 8, 5],
         revealAnswer: false,
         label: 'Your prediction',
       };
@@ -505,8 +516,8 @@ export function teachingPlan(
     }
     if (i === 3 || i === 4 || i === 5)
       retryExample = {
-        role: i === 5 ? 'MAX' : 'MIN',
-        values: i === 3 ? [4, 8] : i === 4 ? [7, 2] : [4, 3, 2],
+        role: 'MIN',
+        values: [2, 6],
         revealAnswer: true,
         label: 'Second worked example',
       };
@@ -542,10 +553,10 @@ export function teachingPlan(
         'The minimum is 2; drawing order does not change MIN’s rule.',
       ],
       [
-        'MAX receives guarantees 4, 3 and 2 in a new tree. What value returns to the root?',
-        ['4', '3', '2'],
-        ['4'],
-        'MAX keeps the largest guarantee, max(4,3,2)=4.',
+        'Another MIN node has 6 and 2. What score does it return?',
+        ['6', '2'],
+        ['2'],
+        'MIN keeps the smaller score, min(6,2)=2.',
       ],
       [
         'New tree: A=min(4,7), B=min(3,8), C=min(2,6). Which first branch should MAX choose?',
@@ -591,7 +602,7 @@ export function teachingPlan(
     followup = follow(q, ...items[i]!);
     if (i <= 5 && i >= 1)
       followupExample = {
-        role: i === 1 || i === 5 ? 'MAX' : 'MIN',
+        role: i === 1 ? 'MAX' : 'MIN',
         values:
           i === 1
             ? [3, 8]
@@ -601,7 +612,7 @@ export function teachingPlan(
                 ? [4, 8]
                 : i === 4
                   ? [7, 2]
-                  : [4, 3, 2],
+                  : [6, 2],
         revealAnswer: false,
         label: 'Follow-up prediction',
       };
@@ -689,6 +700,11 @@ export function teachingPlan(
       ],
     ];
     followup = follow(q, ...items[i]!);
+    if (q.board)
+      followup.board = {
+        facts: i === 9 ? [] : ['Bird(Rio)'],
+        rules: [{ premise: 'Bird(x)', conclusion: 'HasWings(x)' }],
+      };
   } else if (lesson.id === 'ehs3') {
     target = [
       'edge',
@@ -1004,6 +1020,13 @@ export function teachingPlan(
     (state.questionAttempt > 1 || state.teaching.practiceCount > 0)
   ) {
     const role = i === 1 ? 'MAX' : 'MIN';
+    const freshValues = [
+      [0, 3],
+      [2, 5],
+      [1, 4],
+    ][
+      Math.max(0, state.questionAttempt - 2 + state.teaching.practiceCount) % 3
+    ]!;
     retryExample = {
       role,
       values: [1, 2],
@@ -1012,16 +1035,20 @@ export function teachingPlan(
     };
     followupExample = {
       role,
-      values: [0, 3],
+      values: freshValues,
       revealAnswer: false,
       label: 'Try a new pair',
     };
     followup = follow(
       q,
-      `${role} can choose 0 or 3. Which score does ${role} choose?`,
-      ['0', '3'],
-      [role === 'MIN' ? '0' : '3'],
-      `${role} chooses ${role === 'MIN' ? 'min(0,3)=0' : 'max(0,3)=3'} using the same rule.`,
+      `${role} can choose ${freshValues.join(' or ')}. Which score does ${role} choose?`,
+      freshValues.map(String),
+      [
+        String(
+          role === 'MIN' ? Math.min(...freshValues) : Math.max(...freshValues),
+        ),
+      ],
+      `${role} chooses ${role.toLowerCase()}(${freshValues.join(',')})=${role === 'MIN' ? Math.min(...freshValues) : Math.max(...freshValues)} using the same rule.`,
     );
   }
   const cBound =

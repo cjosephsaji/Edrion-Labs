@@ -1,5 +1,5 @@
 import type { Lesson, ShowcaseState, Patch } from './types';
-import { practice, yieldCue } from './controller';
+import { practice, selectResponse } from './controller';
 import {
   continueCheckpoint,
   currentQuestion,
@@ -30,7 +30,12 @@ export function useLessonController(
   function next(
     reason: 'validated' | 'self-reported' | 'skipped' = 'validated',
   ) {
-    patch((current) => continueCheckpoint(current, lesson, reason));
+    patch((current) =>
+      current.questionId !== state.questionId ||
+      current.learning?.taskId !== state.learning?.taskId
+        ? current
+        : continueCheckpoint(current, lesson, reason),
+    );
   }
   function choose(value: string) {
     if (
@@ -42,23 +47,9 @@ export function useLessonController(
       !q.options.includes(value)
     )
       return;
-    patch((current) => {
-      const values = current.studentResponse
-        ? current.studentResponse.split('|')
-        : [];
-      return {
-        ...current,
-        studentResponse:
-          q.type === 'multi'
-            ? (values.includes(value)
-                ? values.filter((v) => v !== value)
-                : [...values, value]
-              ).join('|')
-            : value,
-        cue: yieldCue(current.cue),
-        lastFeedback: '',
-      };
-    });
+    patch((current) =>
+      selectResponse(current, currentQuestion(current, lesson), value),
+    );
   }
   function step(direction: number) {
     if (direction < 0) question(Math.max(0, qi - 1));

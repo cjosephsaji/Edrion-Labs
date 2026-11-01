@@ -1,0 +1,6 @@
+# Keep the reviewed public-topic acceptance evidence with the implementation.
+!.gitignore
+!results.json
+!*.png
+!live-result.json
+!live-generated-tectonics.json

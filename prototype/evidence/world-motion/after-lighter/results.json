@@ -1,0 +1,3649 @@
+{
+  "phase": "after-lighter",
+  "viewports": [
+    {
+      "width": 1920,
+      "height": 1080,
+      "sceneLoadMs": 17597,
+      "samples": [
+        {
+          "label": "overview-to-library",
+          "method": "browser requestAnimationFrame intervals during the operation; renderer transition counters reported separately",
+          "frames": 6,
+          "elapsedMs": 5316.0999999940395,
+          "averageFps": 60.347116614768616,
+          "p99FrameMs": 16.799999999999272,
+          "maxFrameMs": 16.799999999999272,
+          "over50Ms": 0,
+          "transitions": [
+            {
+              "preset": "teaching",
+              "frames": 1,
+              "ms": 199.29999999701977,
+              "fps": 0,
+              "status": "completed",
+              "id": 1,
+              "expectedMs": 0
+            },
+            {
+              "preset": "teaching",
+              "frames": 1,
+              "ms": 9.599999994039536,
+              "fps": 0,
+              "status": "completed",
+              "id": 2,
+              "expectedMs": 0
+            },
+            {
+              "preset": "wide",
+              "frames": 28,
+              "ms": 1166.2999999970198,
+              "fps": 24.347826086956523,
+              "status": "completed",
+              "id": 3,
+              "expectedMs": 1150
+            }
+          ],
+          "budget": {
+            "drawCalls": 327,
+            "renderedTriangles": 648900,
+            "geometries": 130,
+            "geometryBytes": 5570392,
+            "textureCount": 52,
+            "textureBytesEstimated": 380623812,
+            "maps": [
+              {
+                "name": "base_paintedPlasterWall",
+                "width": 700,
+                "height": 700,
+                "estimatedBytes": 2613334
+              },
+              {
+                "name": "woodPlanks",
+                "width": 700,
+                "height": 700,
+                "estimatedBytes": 2613334
+              },
+              {
+                "name": "base_wallPaint",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "base_woodFloor",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "wooden_display_shelves_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "wooden_display_shelves_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "wooden_display_shelves_01_metal-wooden_display_shelves_01_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "book_encyclopedia_set_01_cover_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "book_encyclopedia_set_01_cover_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "book_encyclopedia_set_01_cover_metallic-book_encyclopedia_set_01_cover_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "book_encyclopedia_set_01_paper_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "book_encyclopedia_set_01_paper_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolDesk_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "SchoolDesk_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolDesk_01_metallic-SchoolDesk_01_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolChair_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "SchoolChair_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolChair_01_metallic-SchoolChair_01_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "desk_lamp_arm_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "desk_lamp_arm_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "desk_lamp_arm_01_metal-desk_lamp_arm_01_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "WoodenTable_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "WoodenTable_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "WoodenTable_01_metallic-WoodenTable_01_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "modern_wooden_cabinet_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "modern_wooden_cabinet_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "modern_wooden_cabinet_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_pot_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "potted_plant_02_pot_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_pot_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_leaves_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "potted_plant_02_leaves_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_leaves_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 465,
+                "estimatedBytes": 1269760
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "base_paintedPlasterWall",
+                "width": 700,
+                "height": 700,
+                "estimatedBytes": 2613334
+              },
+              {
+                "name": "Computed whiteboard",
+                "width": 1600,
+                "height": 900,
+                "estimatedBytes": 7680000
+              }
+            ],
+            "drawingBuffer": [
+              1920,
+              661
+            ],
+            "pixelRatio": 1,
+            "shadows": true,
+            "exposure": 0.92,
+            "rendererObjects": {
+              "geometries": 150,
+              "textures": 63
+            },
+            "estimateExcludes": "PMREM, shadow maps, framebuffer/MSAA, driver overhead; RGBA8 mipmapped material maps assumed."
+          },
+          "animation": {
+            "character": {
+              "station": "desk",
+              "opacity": 0.9977777777777778,
+              "moving": true
+            },
+            "camera": {
+              "id": 4,
+              "progress": 0.0004,
+              "status": "moving",
+              "station": "bookshelf"
+            },
+            "board": {
+              "key": "AI-Q01:settle",
+              "elapsed": 0,
+              "duration": 0,
+              "status": "idle"
+            },
+            "frameTimes": {
+              "camera": [
+                273.29999999701977,
+                23.700000002980232,
+                13,
+                33.20000000298023,
+                19.599999994039536,
+                69.80000001192093,
+                22.19999998807907,
+                11.600000008940697,
+                108.8999999910593,
+                18.100000008940697,
+                18.5,
+                19.5,
+                27,
+                36.099999994039536,
+                33.5,
+                30,
+                32.29999999701977,
+                34,
+                96.5,
+                19.200000002980232,
+                22.299999997019768,
+                24.700000002980232,
+                36,
+                35,
+                36.20000000298023,
+                33.900000005960464,
+                33.69999998807907
+              ],
+              "board": [],
+              "model": []
+            },
+            "assets": {
+              "interiorMounts": 1,
+              "boardTexturesCreated": 1,
+              "boardTexturesDisposed": 0
+            }
+          }
+        },
+        {
+          "label": "library-to-whiteboard",
+          "method": "browser requestAnimationFrame intervals during the operation; renderer transition counters reported separately",
+          "frames": 103,
+          "elapsedMs": 1913.4000000059605,
+          "averageFps": 53.2766720256731,
+          "p99FrameMs": 33.900000000001455,
+          "maxFrameMs": 49.70000000000073,
+          "over50Ms": 0,
+          "transitions": [
+            {
+              "preset": "wide",
+              "frames": 28,
+              "ms": 1166.2999999970198,
+              "fps": 24.347826086956523,
+              "status": "completed",
+              "id": 3,
+              "expectedMs": 1150
+            },
+            {
+              "preset": "library",
+              "frames": 2,
+              "ms": 5385,
+              "fps": 1.6,
+              "status": "completed",
+              "id": 4,
+              "expectedMs": 1250
+            },
+            {
+              "preset": "teaching",
+              "frames": 58,
+              "ms": 1160.5,
+              "fps": 50.434782608695656,
+              "status": "completed",
+              "id": 5,
+              "expectedMs": 1150
+            }
+          ],
+          "budget": {
+            "drawCalls": 327,
+            "renderedTriangles": 648900,
+            "geometries": 130,
+            "geometryBytes": 5570392,
+            "textureCount": 52,
+            "textureBytesEstimated": 380623812,
+            "maps": [
+              {
+                "name": "base_paintedPlasterWall",
+                "width": 700,
+                "height": 700,
+                "estimatedBytes": 2613334
+              },
+              {
+                "name": "woodPlanks",
+                "width": 700,
+                "height": 700,
+                "estimatedBytes": 2613334
+              },
+              {
+                "name": "base_wallPaint",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "base_woodFloor",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "wooden_display_shelves_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "wooden_display_shelves_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "wooden_display_shelves_01_metal-wooden_display_shelves_01_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "book_encyclopedia_set_01_cover_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "book_encyclopedia_set_01_cover_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "book_encyclopedia_set_01_cover_metallic-book_encyclopedia_set_01_cover_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "book_encyclopedia_set_01_paper_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "book_encyclopedia_set_01_paper_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolDesk_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "SchoolDesk_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolDesk_01_metallic-SchoolDesk_01_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolChair_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "SchoolChair_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolChair_01_metallic-SchoolChair_01_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "desk_lamp_arm_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "desk_lamp_arm_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "desk_lamp_arm_01_metal-desk_lamp_arm_01_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "WoodenTable_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "WoodenTable_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "WoodenTable_01_metallic-WoodenTable_01_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "modern_wooden_cabinet_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "modern_wooden_cabinet_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "modern_wooden_cabinet_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_pot_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "potted_plant_02_pot_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_pot_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_leaves_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "potted_plant_02_leaves_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_leaves_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 465,
+                "estimatedBytes": 1269760
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "base_paintedPlasterWall",
+                "width": 700,
+                "height": 700,
+                "estimatedBytes": 2613334
+              },
+              {
+                "name": "Computed whiteboard",
+                "width": 1600,
+                "height": 900,
+                "estimatedBytes": 7680000
+              }
+            ],
+            "drawingBuffer": [
+              1920,
+              661
+            ],
+            "pixelRatio": 1,
+            "shadows": true,
+            "exposure": 0.92,
+            "rendererObjects": {
+              "geometries": 150,
+              "textures": 63
+            },
+            "estimateExcludes": "PMREM, shadow maps, framebuffer/MSAA, driver overhead; RGBA8 mipmapped material maps assumed."
+          },
+          "animation": {
+            "character": {
+              "station": "board",
+              "opacity": 1,
+              "moving": false
+            },
+            "camera": {
+              "id": 5,
+              "progress": 1,
+              "status": "idle",
+              "station": "board"
+            },
+            "board": {
+              "key": "AI-Q01:settle",
+              "elapsed": 0,
+              "duration": 0,
+              "status": "idle"
+            },
+            "frameTimes": {
+              "camera": [
+                273.29999999701977,
+                23.700000002980232,
+                13,
+                33.20000000298023,
+                19.599999994039536,
+                69.80000001192093,
+                22.19999998807907,
+                11.600000008940697,
+                108.8999999910593,
+                18.100000008940697,
+                18.5,
+                19.5,
+                27,
+                36.099999994039536,
+                33.5,
+                30,
+                32.29999999701977,
+                34,
+                96.5,
+                19.200000002980232,
+                22.299999997019768,
+                24.700000002980232,
+                36,
+                35,
+                36.20000000298023,
+                33.900000005960464,
+                33.69999998807907,
+                5384.29999999702,
+                17.200000002980232,
+                59.70000000298023,
+                12.5,
+                13.400000005960464,
+                14.399999991059303,
+                18.799999997019768,
+                15.400000005960464,
+                16.200000002980232,
+                15.700000002980232,
+                17.099999994039536,
+                16.599999994039536,
+                16.400000005960464,
+                16.599999994039536,
+                16.600000008940697,
+                16.799999997019768,
+                16.700000002980232,
+                16.299999997019768,
+                17.5,
+                23.299999997019768,
+                12.600000008940697,
+                13.899999991059303,
+                16.700000002980232,
+                16.299999997019768,
+                23,
+                13.100000008940697,
+                16.19999998807907,
+                15.400000005960464,
+                30.099999994039536,
+                14.300000011920929,
+                23.5,
+                21.899999991059303,
+                20.5,
+                22.400000005960464,
+                22,
+                23,
+                18.5,
+                21.700000002980232,
+                22.599999994039536,
+                22.700000002980232,
+                20.799999997019768,
+                21.099999994039536,
+                22.400000005960464,
+                21.299999997019768,
+                22.200000002980232,
+                23.299999997019768,
+                22.799999997019768,
+                23.700000002980232,
+                22.900000005960464,
+                24.099999994039536,
+                22.400000005960464,
+                22.5,
+                21.799999997019768,
+                22.400000005960464,
+                23.799999997019768,
+                24.399999991059303,
+                24,
+                21.5
+              ],
+              "board": [],
+              "model": []
+            },
+            "assets": {
+              "interiorMounts": 1,
+              "boardTexturesCreated": 1,
+              "boardTexturesDisposed": 0
+            }
+          }
+        },
+        {
+          "label": "teaching-input-connection-weight",
+          "method": "browser requestAnimationFrame intervals during the operation; renderer transition counters reported separately",
+          "frames": 82,
+          "elapsedMs": 1914.0999999940395,
+          "averageFps": 42.67200505742281,
+          "p99FrameMs": 133.20000000000073,
+          "maxFrameMs": 133.20000000000073,
+          "over50Ms": 3,
+          "transitions": [
+            {
+              "preset": "wide",
+              "frames": 28,
+              "ms": 1166.2999999970198,
+              "fps": 24.347826086956523,
+              "status": "completed",
+              "id": 3,
+              "expectedMs": 1150
+            },
+            {
+              "preset": "library",
+              "frames": 2,
+              "ms": 5385,
+              "fps": 1.6,
+              "status": "completed",
+              "id": 4,
+              "expectedMs": 1250
+            },
+            {
+              "preset": "teaching",
+              "frames": 58,
+              "ms": 1160.5,
+              "fps": 50.434782608695656,
+              "status": "completed",
+              "id": 5,
+              "expectedMs": 1150
+            }
+          ],
+          "budget": {
+            "drawCalls": 327,
+            "renderedTriangles": 648900,
+            "geometries": 130,
+            "geometryBytes": 5570392,
+            "textureCount": 52,
+            "textureBytesEstimated": 380623812,
+            "maps": [
+              {
+                "name": "base_paintedPlasterWall",
+                "width": 700,
+                "height": 700,
+                "estimatedBytes": 2613334
+              },
+              {
+                "name": "woodPlanks",
+                "width": 700,
+                "height": 700,
+                "estimatedBytes": 2613334
+              },
+              {
+                "name": "base_wallPaint",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "base_woodFloor",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "wooden_display_shelves_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "wooden_display_shelves_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "wooden_display_shelves_01_metal-wooden_display_shelves_01_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "book_encyclopedia_set_01_cover_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "book_encyclopedia_set_01_cover_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "book_encyclopedia_set_01_cover_metallic-book_encyclopedia_set_01_cover_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "book_encyclopedia_set_01_paper_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "book_encyclopedia_set_01_paper_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolDesk_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "SchoolDesk_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolDesk_01_metallic-SchoolDesk_01_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolChair_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "SchoolChair_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolChair_01_metallic-SchoolChair_01_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "desk_lamp_arm_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "desk_lamp_arm_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "desk_lamp_arm_01_metal-desk_lamp_arm_01_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "WoodenTable_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "WoodenTable_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "WoodenTable_01_metallic-WoodenTable_01_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "modern_wooden_cabinet_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "modern_wooden_cabinet_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "modern_wooden_cabinet_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_pot_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "potted_plant_02_pot_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_pot_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_leaves_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "potted_plant_02_leaves_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_leaves_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 465,
+                "estimatedBytes": 1269760
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "base_paintedPlasterWall",
+                "width": 700,
+                "height": 700,
+                "estimatedBytes": 2613334
+              },
+              {
+                "name": "Computed whiteboard",
+                "width": 1600,
+                "height": 900,
+                "estimatedBytes": 7680000
+              }
+            ],
+            "drawingBuffer": [
+              1920,
+              661
+            ],
+            "pixelRatio": 1,
+            "shadows": true,
+            "exposure": 0.92,
+            "rendererObjects": {
+              "geometries": 150,
+              "textures": 63
+            },
+            "estimateExcludes": "PMREM, shadow maps, framebuffer/MSAA, driver overhead; RGBA8 mipmapped material maps assumed."
+          },
+          "animation": {
+            "character": {
+              "station": "board",
+              "opacity": 1,
+              "moving": false
+            },
+            "camera": {
+              "id": 5,
+              "progress": 1,
+              "status": "idle",
+              "station": "board"
+            },
+            "board": {
+              "key": "AI-Q01:network-build",
+              "elapsed": 1450,
+              "duration": 1450,
+              "status": "idle"
+            },
+            "frameTimes": {
+              "camera": [
+                273.29999999701977,
+                23.700000002980232,
+                13,
+                33.20000000298023,
+                19.599999994039536,
+                69.80000001192093,
+                22.19999998807907,
+                11.600000008940697,
+                108.8999999910593,
+                18.100000008940697,
+                18.5,
+                19.5,
+                27,
+                36.099999994039536,
+                33.5,
+                30,
+                32.29999999701977,
+                34,
+                96.5,
+                19.200000002980232,
+                22.299999997019768,
+                24.700000002980232,
+                36,
+                35,
+                36.20000000298023,
+                33.900000005960464,
+                33.69999998807907,
+                5384.29999999702,
+                17.200000002980232,
+                59.70000000298023,
+                12.5,
+                13.400000005960464,
+                14.399999991059303,
+                18.799999997019768,
+                15.400000005960464,
+                16.200000002980232,
+                15.700000002980232,
+                17.099999994039536,
+                16.599999994039536,
+                16.400000005960464,
+                16.599999994039536,
+                16.600000008940697,
+                16.799999997019768,
+                16.700000002980232,
+                16.299999997019768,
+                17.5,
+                23.299999997019768,
+                12.600000008940697,
+                13.899999991059303,
+                16.700000002980232,
+                16.299999997019768,
+                23,
+                13.100000008940697,
+                16.19999998807907,
+                15.400000005960464,
+                30.099999994039536,
+                14.300000011920929,
+                23.5,
+                21.899999991059303,
+                20.5,
+                22.400000005960464,
+                22,
+                23,
+                18.5,
+                21.700000002980232,
+                22.599999994039536,
+                22.700000002980232,
+                20.799999997019768,
+                21.099999994039536,
+                22.400000005960464,
+                21.299999997019768,
+                22.200000002980232,
+                23.299999997019768,
+                22.799999997019768,
+                23.700000002980232,
+                22.900000005960464,
+                24.099999994039536,
+                22.400000005960464,
+                22.5,
+                21.799999997019768,
+                22.400000005960464,
+                23.799999997019768,
+                24.399999991059303,
+                24,
+                21.5
+              ],
+              "board": [
+                6.700000002980232,
+                16.899999991059303,
+                67.20000000298023,
+                42.5,
+                59.400000005960464,
+                16,
+                58.20000000298023,
+                138.79999999701977,
+                12.799999997019768,
+                9.700000002980232,
+                29.5,
+                16.200000002980232,
+                16.099999994039536,
+                17.200000002980232,
+                16,
+                18.299999997019768,
+                22.900000005960464,
+                20.899999991059303,
+                22.200000002980232,
+                21.299999997019768,
+                21.799999997019768,
+                22.30000001192093,
+                21.599999994039536,
+                22,
+                21.900000005960464,
+                23.5,
+                23.5,
+                22.69999998807907,
+                22.400000005960464,
+                21.900000005960464,
+                23.799999997019768,
+                22.599999994039536,
+                22.900000005960464,
+                22.200000002980232,
+                24.399999991059303,
+                22.200000002980232,
+                22.200000002980232,
+                25,
+                26.899999991059303,
+                24.200000002980232,
+                22.799999997019768,
+                23.5,
+                23.900000005960464,
+                25.599999994039536,
+                25.30000001192093,
+                24.099999994039536,
+                24.299999997019768,
+                23.299999997019768,
+                26.80000001192093,
+                23.299999997019768,
+                22.899999991059303,
+                22.600000008940697,
+                22.399999991059303,
+                24,
+                22.700000002980232,
+                23.700000002980232
+              ],
+              "model": []
+            },
+            "assets": {
+              "interiorMounts": 1,
+              "boardTexturesCreated": 1,
+              "boardTexturesDisposed": 0
+            }
+          }
+        },
+        {
+          "label": "whiteboard-to-experiment",
+          "method": "browser requestAnimationFrame intervals during the operation; renderer transition counters reported separately",
+          "frames": 101,
+          "elapsedMs": 1913.7999999970198,
+          "averageFps": 52.22477543346566,
+          "p99FrameMs": 33.599999999998545,
+          "maxFrameMs": 33.70000000000073,
+          "over50Ms": 0,
+          "transitions": [
+            {
+              "preset": "library",
+              "frames": 2,
+              "ms": 5385,
+              "fps": 1.6,
+              "status": "completed",
+              "id": 4,
+              "expectedMs": 1250
+            },
+            {
+              "preset": "teaching",
+              "frames": 58,
+              "ms": 1160.5,
+              "fps": 50.434782608695656,
+              "status": "completed",
+              "id": 5,
+              "expectedMs": 1150
+            },
+            {
+              "preset": "experiment",
+              "frames": 49,
+              "ms": 1053.2999999970198,
+              "fps": 46.666666666666664,
+              "status": "completed",
+              "id": 6,
+              "expectedMs": 1050
+            }
+          ],
+          "budget": {
+            "drawCalls": 327,
+            "renderedTriangles": 648900,
+            "geometries": 130,
+            "geometryBytes": 5570392,
+            "textureCount": 52,
+            "textureBytesEstimated": 380623812,
+            "maps": [
+              {
+                "name": "base_paintedPlasterWall",
+                "width": 700,
+                "height": 700,
+                "estimatedBytes": 2613334
+              },
+              {
+                "name": "woodPlanks",
+                "width": 700,
+                "height": 700,
+                "estimatedBytes": 2613334
+              },
+              {
+                "name": "base_wallPaint",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "base_woodFloor",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "wooden_display_shelves_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "wooden_display_shelves_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "wooden_display_shelves_01_metal-wooden_display_shelves_01_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "book_encyclopedia_set_01_cover_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "book_encyclopedia_set_01_cover_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "book_encyclopedia_set_01_cover_metallic-book_encyclopedia_set_01_cover_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "book_encyclopedia_set_01_paper_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "book_encyclopedia_set_01_paper_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolDesk_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "SchoolDesk_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolDesk_01_metallic-SchoolDesk_01_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolChair_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "SchoolChair_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolChair_01_metallic-SchoolChair_01_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "desk_lamp_arm_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "desk_lamp_arm_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "desk_lamp_arm_01_metal-desk_lamp_arm_01_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "WoodenTable_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "WoodenTable_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "WoodenTable_01_metallic-WoodenTable_01_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "modern_wooden_cabinet_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "modern_wooden_cabinet_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "modern_wooden_cabinet_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_pot_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "potted_plant_02_pot_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_pot_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_leaves_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "potted_plant_02_leaves_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_leaves_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 465,
+                "estimatedBytes": 1269760
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "base_paintedPlasterWall",
+                "width": 700,
+                "height": 700,
+                "estimatedBytes": 2613334
+              },
+              {
+                "name": "Computed whiteboard",
+                "width": 1600,
+                "height": 900,
+                "estimatedBytes": 7680000
+              }
+            ],
+            "drawingBuffer": [
+              1920,
+              661
+            ],
+            "pixelRatio": 1,
+            "shadows": true,
+            "exposure": 0.92,
+            "rendererObjects": {
+              "geometries": 150,
+              "textures": 63
+            },
+            "estimateExcludes": "PMREM, shadow maps, framebuffer/MSAA, driver overhead; RGBA8 mipmapped material maps assumed."
+          },
+          "animation": {
+            "character": {
+              "station": "experiment",
+              "opacity": 1,
+              "moving": false
+            },
+            "camera": {
+              "id": 6,
+              "progress": 1,
+              "status": "idle",
+              "station": "experiment"
+            },
+            "board": {
+              "key": "AI-Q01:settle",
+              "elapsed": 0,
+              "duration": 0,
+              "status": "idle"
+            },
+            "frameTimes": {
+              "camera": [
+                273.29999999701977,
+                23.700000002980232,
+                13,
+                33.20000000298023,
+                19.599999994039536,
+                69.80000001192093,
+                22.19999998807907,
+                11.600000008940697,
+                108.8999999910593,
+                18.100000008940697,
+                18.5,
+                19.5,
+                27,
+                36.099999994039536,
+                33.5,
+                30,
+                32.29999999701977,
+                34,
+                96.5,
+                19.200000002980232,
+                22.299999997019768,
+                24.700000002980232,
+                36,
+                35,
+                36.20000000298023,
+                33.900000005960464,
+                33.69999998807907,
+                5384.29999999702,
+                17.200000002980232,
+                59.70000000298023,
+                12.5,
+                13.400000005960464,
+                14.399999991059303,
+                18.799999997019768,
+                15.400000005960464,
+                16.200000002980232,
+                15.700000002980232,
+                17.099999994039536,
+                16.599999994039536,
+                16.400000005960464,
+                16.599999994039536,
+                16.600000008940697,
+                16.799999997019768,
+                16.700000002980232,
+                16.299999997019768,
+                17.5,
+                23.299999997019768,
+                12.600000008940697,
+                13.899999991059303,
+                16.700000002980232,
+                16.299999997019768,
+                23,
+                13.100000008940697,
+                16.19999998807907,
+                15.400000005960464,
+                30.099999994039536,
+                14.300000011920929,
+                23.5,
+                21.899999991059303,
+                20.5,
+                22.400000005960464,
+                22,
+                23,
+                18.5,
+                21.700000002980232,
+                22.599999994039536,
+                22.700000002980232,
+                20.799999997019768,
+                21.099999994039536,
+                22.400000005960464,
+                21.299999997019768,
+                22.200000002980232,
+                23.299999997019768,
+                22.799999997019768,
+                23.700000002980232,
+                22.900000005960464,
+                24.099999994039536,
+                22.400000005960464,
+                22.5,
+                21.799999997019768,
+                22.400000005960464,
+                23.799999997019768,
+                24.399999991059303,
+                24,
+                21.5,
+                16.5,
+                16.69999998807907,
+                17.5,
+                16.600000008940697,
+                16.200000002980232,
+                34.29999999701977,
+                38.599999994039536,
+                22.100000008940697,
+                24.5,
+                24.099999994039536,
+                24.599999994039536,
+                25.600000008940697,
+                22.799999997019768,
+                25.5,
+                25,
+                24,
+                23,
+                21.700000002980232,
+                24.799999997019768,
+                22.5,
+                21.599999994039536,
+                23.100000008940697,
+                21.899999991059303,
+                21.200000002980232,
+                19,
+                19.400000005960464,
+                19.899999991059303,
+                19.80000001192093,
+                18.69999998807907,
+                20.30000001192093,
+                21.19999998807907,
+                21,
+                19.100000008940697,
+                19.700000002980232,
+                20.099999994039536,
+                22.099999994039536,
+                20.700000002980232,
+                19.600000008940697,
+                20.099999994039536,
+                20.200000002980232,
+                20.099999994039536,
+                19.799999997019768,
+                20.400000005960464,
+                22.5,
+                21.400000005960464,
+                21.599999994039536,
+                20.599999994039536,
+                20
+              ],
+              "board": [
+                6.700000002980232,
+                16.899999991059303,
+                67.20000000298023,
+                42.5,
+                59.400000005960464,
+                16,
+                58.20000000298023,
+                138.79999999701977,
+                12.799999997019768,
+                9.700000002980232,
+                29.5,
+                16.200000002980232,
+                16.099999994039536,
+                17.200000002980232,
+                16,
+                18.299999997019768,
+                22.900000005960464,
+                20.899999991059303,
+                22.200000002980232,
+                21.299999997019768,
+                21.799999997019768,
+                22.30000001192093,
+                21.599999994039536,
+                22,
+                21.900000005960464,
+                23.5,
+                23.5,
+                22.69999998807907,
+                22.400000005960464,
+                21.900000005960464,
+                23.799999997019768,
+                22.599999994039536,
+                22.900000005960464,
+                22.200000002980232,
+                24.399999991059303,
+                22.200000002980232,
+                22.200000002980232,
+                25,
+                26.899999991059303,
+                24.200000002980232,
+                22.799999997019768,
+                23.5,
+                23.900000005960464,
+                25.599999994039536,
+                25.30000001192093,
+                24.099999994039536,
+                24.299999997019768,
+                23.299999997019768,
+                26.80000001192093,
+                23.299999997019768,
+                22.899999991059303,
+                22.600000008940697,
+                22.399999991059303,
+                24,
+                22.700000002980232,
+                23.700000002980232
+              ],
+              "model": []
+            },
+            "assets": {
+              "interiorMounts": 1,
+              "boardTexturesCreated": 1,
+              "boardTexturesDisposed": 0
+            }
+          }
+        },
+        {
+          "label": "rapid-latest-station",
+          "method": "browser requestAnimationFrame intervals during the operation; renderer transition counters reported separately",
+          "frames": 92,
+          "elapsedMs": 2311.1000000089407,
+          "averageFps": 39.3207449336732,
+          "p99FrameMs": 199.8000000000029,
+          "maxFrameMs": 199.8000000000029,
+          "over50Ms": 5,
+          "transitions": [
+            {
+              "preset": "library",
+              "frames": 11,
+              "ms": 487.8999999910593,
+              "fps": 23.285351397561783,
+              "status": "cancelled",
+              "id": 7,
+              "expectedMs": 1250
+            },
+            {
+              "preset": "teaching",
+              "frames": 12,
+              "ms": 488.6000000089407,
+              "fps": 25.28977871443625,
+              "status": "cancelled",
+              "id": 8,
+              "expectedMs": 1150
+            },
+            {
+              "preset": "experiment",
+              "frames": 53,
+              "ms": 1063.2000000029802,
+              "fps": 50.476190476190474,
+              "status": "completed",
+              "id": 9,
+              "expectedMs": 1050
+            }
+          ],
+          "budget": {
+            "drawCalls": 327,
+            "renderedTriangles": 648900,
+            "geometries": 130,
+            "geometryBytes": 5570392,
+            "textureCount": 52,
+            "textureBytesEstimated": 380623812,
+            "maps": [
+              {
+                "name": "base_paintedPlasterWall",
+                "width": 700,
+                "height": 700,
+                "estimatedBytes": 2613334
+              },
+              {
+                "name": "woodPlanks",
+                "width": 700,
+                "height": 700,
+                "estimatedBytes": 2613334
+              },
+              {
+                "name": "base_wallPaint",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "base_woodFloor",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "wooden_display_shelves_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "wooden_display_shelves_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "wooden_display_shelves_01_metal-wooden_display_shelves_01_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "book_encyclopedia_set_01_cover_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "book_encyclopedia_set_01_cover_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "book_encyclopedia_set_01_cover_metallic-book_encyclopedia_set_01_cover_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "book_encyclopedia_set_01_paper_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "book_encyclopedia_set_01_paper_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolDesk_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "SchoolDesk_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolDesk_01_metallic-SchoolDesk_01_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolChair_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "SchoolChair_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolChair_01_metallic-SchoolChair_01_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "desk_lamp_arm_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "desk_lamp_arm_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "desk_lamp_arm_01_metal-desk_lamp_arm_01_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "WoodenTable_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "WoodenTable_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "WoodenTable_01_metallic-WoodenTable_01_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "modern_wooden_cabinet_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "modern_wooden_cabinet_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "modern_wooden_cabinet_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_pot_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "potted_plant_02_pot_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_pot_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_leaves_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "potted_plant_02_leaves_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_leaves_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 465,
+                "estimatedBytes": 1269760
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "base_paintedPlasterWall",
+                "width": 700,
+                "height": 700,
+                "estimatedBytes": 2613334
+              },
+              {
+                "name": "Computed whiteboard",
+                "width": 1600,
+                "height": 900,
+                "estimatedBytes": 7680000
+              }
+            ],
+            "drawingBuffer": [
+              1920,
+              661
+            ],
+            "pixelRatio": 1,
+            "shadows": true,
+            "exposure": 0.92,
+            "rendererObjects": {
+              "geometries": 150,
+              "textures": 63
+            },
+            "estimateExcludes": "PMREM, shadow maps, framebuffer/MSAA, driver overhead; RGBA8 mipmapped material maps assumed."
+          },
+          "animation": {
+            "character": {
+              "station": "experiment",
+              "opacity": 1,
+              "moving": false
+            },
+            "camera": {
+              "id": 9,
+              "progress": 1,
+              "status": "idle",
+              "station": "experiment"
+            },
+            "board": {
+              "key": "AI-Q01:settle",
+              "elapsed": 0,
+              "duration": 0,
+              "status": "idle"
+            },
+            "frameTimes": {
+              "camera": [
+                273.29999999701977,
+                23.700000002980232,
+                13,
+                33.20000000298023,
+                19.599999994039536,
+                69.80000001192093,
+                22.19999998807907,
+                11.600000008940697,
+                108.8999999910593,
+                18.100000008940697,
+                18.5,
+                19.5,
+                27,
+                36.099999994039536,
+                33.5,
+                30,
+                32.29999999701977,
+                34,
+                96.5,
+                19.200000002980232,
+                22.299999997019768,
+                24.700000002980232,
+                36,
+                35,
+                36.20000000298023,
+                33.900000005960464,
+                33.69999998807907,
+                5384.29999999702,
+                17.200000002980232,
+                59.70000000298023,
+                12.5,
+                13.400000005960464,
+                14.399999991059303,
+                18.799999997019768,
+                15.400000005960464,
+                16.200000002980232,
+                15.700000002980232,
+                17.099999994039536,
+                16.599999994039536,
+                16.400000005960464,
+                16.599999994039536,
+                16.600000008940697,
+                16.799999997019768,
+                16.700000002980232,
+                16.299999997019768,
+                17.5,
+                23.299999997019768,
+                12.600000008940697,
+                13.899999991059303,
+                16.700000002980232,
+                16.299999997019768,
+                23,
+                13.100000008940697,
+                16.19999998807907,
+                15.400000005960464,
+                30.099999994039536,
+                14.300000011920929,
+                23.5,
+                21.899999991059303,
+                20.5,
+                22.400000005960464,
+                22,
+                23,
+                18.5,
+                21.700000002980232,
+                22.599999994039536,
+                22.700000002980232,
+                20.799999997019768,
+                21.099999994039536,
+                22.400000005960464,
+                21.299999997019768,
+                22.200000002980232,
+                23.299999997019768,
+                22.799999997019768,
+                23.700000002980232,
+                22.900000005960464,
+                24.099999994039536,
+                22.400000005960464,
+                22.5,
+                21.799999997019768,
+                22.400000005960464,
+                23.799999997019768,
+                24.399999991059303,
+                24,
+                21.5,
+                16.5,
+                16.69999998807907,
+                17.5,
+                16.600000008940697,
+                16.200000002980232,
+                34.29999999701977,
+                38.599999994039536,
+                22.100000008940697,
+                24.5,
+                24.099999994039536,
+                24.599999994039536,
+                25.600000008940697,
+                22.799999997019768,
+                25.5,
+                25,
+                24,
+                23,
+                21.700000002980232,
+                24.799999997019768,
+                22.5,
+                21.599999994039536,
+                23.100000008940697,
+                21.899999991059303,
+                21.200000002980232,
+                19,
+                19.400000005960464,
+                19.899999991059303,
+                19.80000001192093,
+                18.69999998807907,
+                20.30000001192093,
+                21.19999998807907,
+                21,
+                19.100000008940697,
+                19.700000002980232,
+                20.099999994039536,
+                22.099999994039536,
+                20.700000002980232,
+                19.600000008940697,
+                20.099999994039536,
+                20.200000002980232,
+                20.099999994039536,
+                19.799999997019768,
+                20.400000005960464,
+                22.5,
+                21.400000005960464,
+                21.599999994039536,
+                20.599999994039536,
+                20,
+                35.6000000089407,
+                17.69999998807907,
+                239.20000000298023,
+                23.200000002980232,
+                13.5,
+                20.099999994039536,
+                13.900000005960464,
+                16.599999994039536,
+                18.400000005960464,
+                72.59999999403954,
+                221.79999999701977,
+                32.20000000298023,
+                32.69999998807907,
+                16.600000008940697,
+                28.899999991059303,
+                17.600000008940697,
+                13.799999997019768,
+                20.900000005960464,
+                28.69999998807907,
+                29.600000008940697,
+                29.899999991059303,
+                33.70000000298023,
+                21.700000002980232,
+                19.099999994039536,
+                22.799999997019768,
+                17.80000001192093,
+                16.799999997019768,
+                20.799999997019768,
+                20.299999997019768,
+                19.400000005960464,
+                20.200000002980232,
+                21.099999994039536,
+                19.099999994039536,
+                21,
+                20.200000002980232,
+                18,
+                19,
+                19.100000008940697,
+                18.399999991059303,
+                19,
+                19.400000005960464,
+                27.200000002980232,
+                12.899999991059303,
+                20.5,
+                20,
+                20.200000002980232,
+                24.5,
+                34.29999999701977,
+                21.100000008940697,
+                17.899999991059303,
+                19.5,
+                18.799999997019768,
+                17.100000008940697,
+                18.099999994039536,
+                19.400000005960464,
+                24.200000002980232,
+                20.899999991059303,
+                18.100000008940697,
+                12.599999994039536,
+                60.400000005960464,
+                15.599999994039536,
+                12.200000002980232,
+                15.799999997019768,
+                16.400000005960464,
+                18.5,
+                14.799999997019768,
+                16.899999991059303,
+                18.400000005960464,
+                15.599999994039536,
+                15.400000005960464,
+                20.799999997019768,
+                19,
+                20.299999997019768
+              ],
+              "board": [
+                6.700000002980232,
+                16.899999991059303,
+                67.20000000298023,
+                42.5,
+                59.400000005960464,
+                16,
+                58.20000000298023,
+                138.79999999701977,
+                12.799999997019768,
+                9.700000002980232,
+                29.5,
+                16.200000002980232,
+                16.099999994039536,
+                17.200000002980232,
+                16,
+                18.299999997019768,
+                22.900000005960464,
+                20.899999991059303,
+                22.200000002980232,
+                21.299999997019768,
+                21.799999997019768,
+                22.30000001192093,
+                21.599999994039536,
+                22,
+                21.900000005960464,
+                23.5,
+                23.5,
+                22.69999998807907,
+                22.400000005960464,
+                21.900000005960464,
+                23.799999997019768,
+                22.599999994039536,
+                22.900000005960464,
+                22.200000002980232,
+                24.399999991059303,
+                22.200000002980232,
+                22.200000002980232,
+                25,
+                26.899999991059303,
+                24.200000002980232,
+                22.799999997019768,
+                23.5,
+                23.900000005960464,
+                25.599999994039536,
+                25.30000001192093,
+                24.099999994039536,
+                24.299999997019768,
+                23.299999997019768,
+                26.80000001192093,
+                23.299999997019768,
+                22.899999991059303,
+                22.600000008940697,
+                22.399999991059303,
+                24,
+                22.700000002980232,
+                23.700000002980232
+              ],
+              "model": []
+            },
+            "assets": {
+              "interiorMounts": 1,
+              "boardTexturesCreated": 1,
+              "boardTexturesDisposed": 0
+            }
+          }
+        }
+      ],
+      "bookRetrievalPresented": true,
+      "drawerStaleAfterStation": false,
+      "interruptionPreserved": true,
+      "noAutomaticProgress": true,
+      "inputLatencyMs": 7.399999991059303,
+      "final": {
+        "metrics": {
+          "transitions": [
+            {
+              "preset": "teaching",
+              "frames": 1,
+              "ms": 199.29999999701977,
+              "fps": 0,
+              "status": "completed",
+              "id": 1,
+              "expectedMs": 0
+            },
+            {
+              "preset": "teaching",
+              "frames": 1,
+              "ms": 9.599999994039536,
+              "fps": 0,
+              "status": "completed",
+              "id": 2,
+              "expectedMs": 0
+            },
+            {
+              "preset": "wide",
+              "frames": 28,
+              "ms": 1166.2999999970198,
+              "fps": 24.347826086956523,
+              "status": "completed",
+              "id": 3,
+              "expectedMs": 1150
+            },
+            {
+              "preset": "library",
+              "frames": 2,
+              "ms": 5385,
+              "fps": 1.6,
+              "status": "completed",
+              "id": 4,
+              "expectedMs": 1250
+            },
+            {
+              "preset": "teaching",
+              "frames": 58,
+              "ms": 1160.5,
+              "fps": 50.434782608695656,
+              "status": "completed",
+              "id": 5,
+              "expectedMs": 1150
+            },
+            {
+              "preset": "experiment",
+              "frames": 49,
+              "ms": 1053.2999999970198,
+              "fps": 46.666666666666664,
+              "status": "completed",
+              "id": 6,
+              "expectedMs": 1050
+            },
+            {
+              "preset": "library",
+              "frames": 11,
+              "ms": 487.8999999910593,
+              "fps": 23.285351397561783,
+              "status": "cancelled",
+              "id": 7,
+              "expectedMs": 1250
+            },
+            {
+              "preset": "teaching",
+              "frames": 12,
+              "ms": 488.6000000089407,
+              "fps": 25.28977871443625,
+              "status": "cancelled",
+              "id": 8,
+              "expectedMs": 1150
+            },
+            {
+              "preset": "experiment",
+              "frames": 53,
+              "ms": 1063.2000000029802,
+              "fps": 50.476190476190474,
+              "status": "completed",
+              "id": 9,
+              "expectedMs": 1050
+            },
+            {
+              "preset": "teaching",
+              "frames": 57,
+              "ms": 1154.9000000059605,
+              "fps": 49.56521739130435,
+              "status": "completed",
+              "id": 10,
+              "expectedMs": 1150
+            }
+          ],
+          "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A7A8) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+          "triangles": 648900,
+          "drawCalls": 333,
+          "picks": {
+            "desk": {
+              "x": -3075.4577431432194,
+              "y": 1434.990833672191
+            },
+            "bookshelf": {
+              "x": 182.14667573163229,
+              "y": 243.78805110587535
+            },
+            "board": {
+              "x": 1111.5052066310323,
+              "y": 245.04263083749095
+            },
+            "experiment": {
+              "x": 2184.6680676373103,
+              "y": 638.5619435945036
+            },
+            "root": {
+              "x": 1112.4871624595362,
+              "y": 188.40380932737472
+            },
+            "branch-0": {
+              "x": 868.1611525153239,
+              "y": 283.11812185319053
+            },
+            "branch-1": {
+              "x": 1111.6256267566587,
+              "y": 282.46070389966076
+            },
+            "branch-2": {
+              "x": 1344.1258518765526,
+              "y": 281.83289229523746
+            },
+            "leaf-0-0": {
+              "x": 817.9725174183104,
+              "y": 391.7283703164045
+            },
+            "leaf-1-0": {
+              "x": 1062.1754843400008,
+              "y": 388.57441750203856
+            },
+            "book-ai3": {
+              "x": 229.2004057935605,
+              "y": 132.4005725180323
+            },
+            "book-ai4": {
+              "x": 295.92613864873664,
+              "y": 133.12795751509728
+            },
+            "book-ehs3": {
+              "x": 235.2313752031675,
+              "y": 270.2477898847689
+            },
+            "book-ehs5": {
+              "x": 301.3740906501244,
+              "y": 270.15527297442577
+            },
+            "book-open-ai": {
+              "x": -2937.063825435244,
+              "y": 1135.0653988556082
+            },
+            "book-time": {
+              "x": -3831.1312212448606,
+              "y": 1189.8312912887602
+            }
+          },
+          "stationClicks": [
+            "bookshelf",
+            "experiment",
+            "bookshelf",
+            "board",
+            "experiment",
+            "board"
+          ],
+          "books": {
+            "ai3": {
+              "x": -3.5,
+              "y": 2.23,
+              "z": -3.54
+            },
+            "ai4": {
+              "x": -3.2,
+              "y": 2.23,
+              "z": -3.54
+            },
+            "ehs3": {
+              "x": -3.5,
+              "y": 1.575,
+              "z": -3.54
+            },
+            "ehs5": {
+              "x": -3.2,
+              "y": 1.575,
+              "z": -3.54
+            },
+            "open-ai": {
+              "x": -3.15,
+              "y": 0.925,
+              "z": -1.7
+            },
+            "time": {
+              "x": -3.4,
+              "y": 1.08,
+              "z": 0.95
+            }
+          },
+          "bookAnimation": {
+            "id": "open-ai",
+            "completed": true,
+            "durationMs": 4.5
+          },
+          "budget": {
+            "drawCalls": 327,
+            "renderedTriangles": 648900,
+            "geometries": 130,
+            "geometryBytes": 5570392,
+            "textureCount": 52,
+            "textureBytesEstimated": 380623812,
+            "maps": [
+              {
+                "name": "base_paintedPlasterWall",
+                "width": 700,
+                "height": 700,
+                "estimatedBytes": 2613334
+              },
+              {
+                "name": "woodPlanks",
+                "width": 700,
+                "height": 700,
+                "estimatedBytes": 2613334
+              },
+              {
+                "name": "base_wallPaint",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "base_woodFloor",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "wooden_display_shelves_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "wooden_display_shelves_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "wooden_display_shelves_01_metal-wooden_display_shelves_01_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "book_encyclopedia_set_01_cover_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "book_encyclopedia_set_01_cover_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "book_encyclopedia_set_01_cover_metallic-book_encyclopedia_set_01_cover_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "book_encyclopedia_set_01_paper_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "book_encyclopedia_set_01_paper_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolDesk_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "SchoolDesk_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolDesk_01_metallic-SchoolDesk_01_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolChair_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "SchoolChair_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "SchoolChair_01_metallic-SchoolChair_01_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "desk_lamp_arm_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "desk_lamp_arm_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "desk_lamp_arm_01_metal-desk_lamp_arm_01_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "WoodenTable_01_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "WoodenTable_01_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "WoodenTable_01_metallic-WoodenTable_01_roughness",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "modern_wooden_cabinet_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "modern_wooden_cabinet_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "modern_wooden_cabinet_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_pot_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "potted_plant_02_pot_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_pot_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_leaves_diff",
+                "width": 2048,
+                "height": 2048,
+                "estimatedBytes": 22369622
+              },
+              {
+                "name": "potted_plant_02_leaves_nor_gl",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "potted_plant_02_leaves_rough",
+                "width": 1024,
+                "height": 1024,
+                "estimatedBytes": 5592406
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 101,
+                "estimatedBytes": 275798
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 465,
+                "estimatedBytes": 1269760
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 126,
+                "estimatedBytes": 344064
+              },
+              {
+                "name": "generated teaching/label canvas",
+                "width": 512,
+                "height": 168,
+                "estimatedBytes": 458752
+              },
+              {
+                "name": "base_paintedPlasterWall",
+                "width": 700,
+                "height": 700,
+                "estimatedBytes": 2613334
+              },
+              {
+                "name": "Computed whiteboard",
+                "width": 1600,
+                "height": 900,
+                "estimatedBytes": 7680000
+              }
+            ],
+            "drawingBuffer": [
+              1920,
+              661
+            ],
+            "pixelRatio": 1,
+            "shadows": true,
+            "exposure": 0.92,
+            "rendererObjects": {
+              "geometries": 150,
+              "textures": 63
+            },
+            "estimateExcludes": "PMREM, shadow maps, framebuffer/MSAA, driver overhead; RGBA8 mipmapped material maps assumed."
+          },
+          "ready": true,
+          "camera": {
+            "position": [
+              -0.55,
+              1.65,
+              1.85
+            ],
+            "quaternion": [
+              -0.031858710235513156,
+              -0.05024168421557474,
+              -0.0016034773562373333,
+              0.9982275415002735
+            ],
+            "zoom": 1
+          }
+        },
+        "animation": {
+          "character": {
+            "station": "board",
+            "opacity": 1,
+            "moving": false
+          },
+          "camera": {
+            "id": 10,
+            "progress": 1,
+            "status": "idle",
+            "station": "board"
+          },
+          "board": {
+            "key": "AI-Q01:settle",
+            "elapsed": 0,
+            "duration": 0,
+            "status": "idle"
+          },
+          "frameTimes": {
+            "camera": [
+              273.29999999701977,
+              23.700000002980232,
+              13,
+              33.20000000298023,
+              19.599999994039536,
+              69.80000001192093,
+              22.19999998807907,
+              11.600000008940697,
+              108.8999999910593,
+              18.100000008940697,
+              18.5,
+              19.5,
+              27,
+              36.099999994039536,
+              33.5,
+              30,
+              32.29999999701977,
+              34,
+              96.5,
+              19.200000002980232,
+              22.299999997019768,
+              24.700000002980232,
+              36,
+              35,
+              36.20000000298023,
+              33.900000005960464,
+              33.69999998807907,
+              5384.29999999702,
+              17.200000002980232,
+              59.70000000298023,
+              12.5,
+              13.400000005960464,
+              14.399999991059303,
+              18.799999997019768,
+              15.400000005960464,
+              16.200000002980232,
+              15.700000002980232,
+              17.099999994039536,
+              16.599999994039536,
+              16.400000005960464,
+              16.599999994039536,
+              16.600000008940697,
+              16.799999997019768,
+              16.700000002980232,
+              16.299999997019768,
+              17.5,
+              23.299999997019768,
+              12.600000008940697,
+              13.899999991059303,
+              16.700000002980232,
+              16.299999997019768,
+              23,
+              13.100000008940697,
+              16.19999998807907,
+              15.400000005960464,
+              30.099999994039536,
+              14.300000011920929,
+              23.5,
+              21.899999991059303,
+              20.5,
+              22.400000005960464,
+              22,
+              23,
+              18.5,
+              21.700000002980232,
+              22.599999994039536,
+              22.700000002980232,
+              20.799999997019768,
+              21.099999994039536,
+              22.400000005960464,
+              21.299999997019768,
+              22.200000002980232,
+              23.299999997019768,
+              22.799999997019768,
+              23.700000002980232,
+              22.900000005960464,
+              24.099999994039536,
+              22.400000005960464,
+              22.5,
+              21.799999997019768,
+              22.400000005960464,
+              23.799999997019768,
+              24.399999991059303,
+              24,
+              21.5,
+              16.5,
+              16.69999998807907,
+              17.5,
+              16.600000008940697,
+              16.200000002980232,
+              34.29999999701977,
+              38.599999994039536,
+              22.100000008940697,
+              24.5,
+              24.099999994039536,
+              24.599999994039536,
+              25.600000008940697,
+              22.799999997019768,
+              25.5,
+              25,
+              24,
+              23,
+              21.700000002980232,
+              24.799999997019768,
+              22.5,
+              21.599999994039536,
+              23.100000008940697,
+              21.899999991059303,
+              21.200000002980232,
+              19,
+              19.400000005960464,
+              19.899999991059303,
+              19.80000001192093,
+              18.69999998807907,
+              20.30000001192093,
+              21.19999998807907,
+              21,
+              19.100000008940697,
+              19.700000002980232,
+              20.099999994039536,
+              22.099999994039536,
+              20.700000002980232,
+              19.600000008940697,
+              20.099999994039536,
+              20.200000002980232,
+              20.099999994039536,
+              19.799999997019768,
+              20.400000005960464,
+              22.5,
+              21.400000005960464,
+              21.599999994039536,
+              20.599999994039536,
+              20,
+              35.6000000089407,
+              17.69999998807907,
+              239.20000000298023,
+              23.200000002980232,
+              13.5,
+              20.099999994039536,
+              13.900000005960464,
+              16.599999994039536,
+              18.400000005960464,
+              72.59999999403954,
+              221.79999999701977,
+              32.20000000298023,
+              32.69999998807907,
+              16.600000008940697,
+              28.899999991059303,
+              17.600000008940697,
+              13.799999997019768,
+              20.900000005960464,
+              28.69999998807907,
+              29.600000008940697,
+              29.899999991059303,
+              33.70000000298023,
+              21.700000002980232,
+              19.099999994039536,
+              22.799999997019768,
+              17.80000001192093,
+              16.799999997019768,
+              20.799999997019768,
+              20.299999997019768,
+              19.400000005960464,
+              20.200000002980232,
+              21.099999994039536,
+              19.099999994039536,
+              21,
+              20.200000002980232,
+              18,
+              19,
+              19.100000008940697,
+              18.399999991059303,
+              19,
+              19.400000005960464,
+              27.200000002980232,
+              12.899999991059303,
+              20.5,
+              20,
+              20.200000002980232,
+              24.5,
+              34.29999999701977,
+              21.100000008940697,
+              17.899999991059303,
+              19.5,
+              18.799999997019768,
+              17.100000008940697,
+              18.099999994039536,
+              19.400000005960464,
+              24.200000002980232,
+              20.899999991059303,
+              18.100000008940697,
+              12.599999994039536,
+              60.400000005960464,
+              15.599999994039536,
+              12.200000002980232,
+              15.799999997019768,
+              16.400000005960464,
+              18.5,
+              14.799999997019768,
+              16.899999991059303,
+              18.400000005960464,
+              15.599999994039536,
+              15.400000005960464,
+              20.799999997019768,
+              19,
+              20.299999997019768,
+              17.900000005960464,
+              15.5,
+              16.5,
+              17.599999994039536,
+              15.700000002980232,
+              18.100000008940697,
+              15.199999988079071,
+              17.600000008940697,
+              20.099999994039536,
+              12.5,
+              16.600000008940697,
+              16.899999991059303,
+              15.900000005960466,
+              18.399999991059303,
+              20.700000002980232,
+              22.200000002980232,
+              23.900000005960464,
+              21,
+              21.899999991059303,
+              22.200000002980232,
+              20,
+              22.200000002980232,
+              18.399999991059303,
+              20,
+              19.30000001192093,
+              18.799999997019768,
+              20.5,
+              19.899999991059303,
+              20.700000002980232,
+              20.5,
+              20.600000008940697,
+              19.799999997019768,
+              20.399999991059303,
+              20.100000008940697,
+              19.599999994039536,
+              21.900000005960464,
+              20.700000002980232,
+              21.399999991059303,
+              21.400000005960464,
+              20.799999997019768,
+              21.200000002980232,
+              20.399999991059303,
+              23.600000008940697,
+              22.099999994039536,
+              20.299999997019768,
+              22.5,
+              23.700000002980232,
+              23.799999997019768,
+              23.100000008940697,
+              26.200000002980232,
+              22.599999994039536,
+              23,
+              22.099999994039536,
+              25.200000002980232,
+              26.5,
+              23.900000005960464
+            ],
+            "board": [
+              6.700000002980232,
+              16.899999991059303,
+              67.20000000298023,
+              42.5,
+              59.400000005960464,
+              16,
+              58.20000000298023,
+              138.79999999701977,
+              12.799999997019768,
+              9.700000002980232,
+              29.5,
+              16.200000002980232,
+              16.099999994039536,
+              17.200000002980232,
+              16,
+              18.299999997019768,
+              22.900000005960464,
+              20.899999991059303,
+              22.200000002980232,
+              21.299999997019768,
+              21.799999997019768,
+              22.30000001192093,
+              21.599999994039536,
+              22,
+              21.900000005960464,
+              23.5,
+              23.5,
+              22.69999998807907,
+              22.400000005960464,
+              21.900000005960464,
+              23.799999997019768,
+              22.599999994039536,
+              22.900000005960464,
+              22.200000002980232,
+              24.399999991059303,
+              22.200000002980232,
+              22.200000002980232,
+              25,
+              26.899999991059303,
+              24.200000002980232,
+              22.799999997019768,
+              23.5,
+              23.900000005960464,
+              25.599999994039536,
+              25.30000001192093,
+              24.099999994039536,
+              24.299999997019768,
+              23.299999997019768,
+              26.80000001192093,
+              23.299999997019768,
+              22.899999991059303,
+              22.600000008940697,
+              22.399999991059303,
+              24,
+              22.700000002980232,
+              23.700000002980232
+            ],
+            "model": []
+          },
+          "assets": {
+            "interiorMounts": 1,
+            "boardTexturesCreated": 1,
+            "boardTexturesDisposed": 0
+          }
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "productionMutations": []
+}

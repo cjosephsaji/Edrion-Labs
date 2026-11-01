@@ -1,3 +1,6 @@
+import type { Intervention, LearningEvidence } from './learning-evidence';
+import type { MiniExample } from './curriculum';
+import type { ModelState, VisualRuntime, VisualSpec } from './visual-spec';
 export type Mode = 'classic' | 'world';
 export type Station = 'desk' | 'bookshelf' | 'board' | 'experiment';
 export type Phase =
@@ -7,7 +10,33 @@ export type Phase =
   | 'interact'
   | 'explain'
   | 'recap';
-export type LessonId = 'ai3' | 'ai4' | 'ehs3' | 'ehs5' | 'open-ai' | 'time';
+export type LessonId =
+  | 'ai3'
+  | 'ai4'
+  | 'ehs3'
+  | 'ehs5'
+  | 'open-ai'
+  | 'time'
+  | `topic-${string}`;
+export interface TopicDiagram {
+  heading: string;
+  labels: string[];
+  caption: string;
+  area?: { slope: number; upper: number; slices: number };
+  visual?: VisualSpec;
+  runtime?: VisualRuntime;
+}
+export interface TopicTeaching {
+  introduction: string;
+  demonstration: string;
+  simpler: string;
+  example: string;
+  diagram: TopicDiagram;
+  followup: Pick<
+    Question,
+    'task' | 'options' | 'correct' | 'explanation' | 'optionFeedback' | 'visualSnapshot'
+  >;
+}
 export type VisualState =
   | {
       kind: 'tree';
@@ -17,7 +46,8 @@ export type VisualState =
       allLeaves: boolean;
       selected: string;
       transfer: boolean;
-      example?: import('./curriculum').MiniExample;
+      example?: MiniExample;
+      opponents?: boolean;
     }
   | {
       kind: 'kb';
@@ -35,7 +65,8 @@ export type VisualState =
     }
   | { kind: 'river'; selected: string; controls: string[]; angle?: number }
   | { kind: 'network'; input: number; weight: number; target: number }
-  | { kind: 'clocks'; speed: number; earthYears: number };
+  | { kind: 'clocks'; speed: number; earthYears: number }
+  | ({ kind: 'topic' } & TopicDiagram);
 export type ResponseType =
   | 'choice'
   | 'multi'
@@ -44,6 +75,11 @@ export type ResponseType =
   | 'text'
   | 'action';
 export interface Question {
+  visualSnapshot?: ModelState;
+  board?: { facts: string[]; rules: { premise: string; conclusion: string }[] };
+  errorCategories?: Record<string, Intervention>;
+  optionFeedback?: string[];
+  teaching?: TopicTeaching;
   id: string;
   task: string;
   type: ResponseType;
@@ -59,6 +95,16 @@ export interface Question {
   next: string | 'recap';
 }
 export interface Lesson {
+  references?: { title: string; url: string }[];
+  experience?: {
+    objectives: Record<string, string>;
+    diagnostic: Question[];
+    tests: Record<string, Question[]>;
+    final: { conceptId: string; question: Question }[];
+  };
+  learningGoals?: string[];
+  prerequisites?: string[];
+  origin?: 'prepared' | 'generated';
   id: LessonId;
   subject: string;
   module: number | null;
@@ -108,6 +154,7 @@ export interface PracticeObservation {
   responses: {
     questionId: string;
     response: string;
+    task?: string;
     validation: 'correct' | 'incorrect' | 'partial' | 'unclear' | 'unverified';
     misconception: string | null;
     variant: TeachingCycle['variant'];
@@ -125,6 +172,17 @@ export interface PracticeObservation {
     | null;
 }
 export interface ShowcaseState {
+  learning?: {
+    stage: 'learn' | 'apply' | 'test';
+    activity: 'lesson' | 'diagnostic' | 'final';
+    item: number;
+    taskId: string | null;
+    assisted: boolean;
+    fresh: boolean;
+    helpUsed?: string[];
+    introduction?: string;
+  };
+  evidence?: LearningEvidence;
   teaching: TeachingCycle;
   observations: Record<string, PracticeObservation>;
   sessionId: string;
@@ -139,6 +197,7 @@ export interface ShowcaseState {
   sourcePages: number[];
   moduleId: number | null;
   lessonId: LessonId | null;
+  topicLesson?: Lesson;
   phase: Phase;
   stepId: number;
   highlightTargetId: string | null;
@@ -169,7 +228,7 @@ export interface ShowcaseState {
   } | null;
   welcomeCueShown: boolean;
   speechState: 'captions';
-  saveStatus: 'memory-only';
+  saveStatus: 'memory-only' | 'session';
   modeSwitchInProgress: boolean;
   paused: boolean;
   askDraft: string;
