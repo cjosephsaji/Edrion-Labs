@@ -4,6 +4,10 @@ import {
   createHash,
   randomUUID,
 } from 'node:crypto';
+import {
+  validPasswordHash,
+  verifyPreviewPassword,
+} from './preview-credentials';
 const cookieName = 'petros_v2';
 const equal = (a: string, b: string) => {
   const x = Buffer.from(a),
@@ -13,9 +17,32 @@ const equal = (a: string, b: string) => {
 function secret() {
   return process.env.PETROS_V2_ACCESS_SECRET ?? '';
 }
+export function previewAccount() {
+  const username =
+    process.env.PETROS_V2_YC_USERNAME?.trim().toLowerCase() ?? '';
+  const passwordHash = process.env.PETROS_V2_YC_PASSWORD_HASH ?? '';
+  const requested = !!(username || passwordHash);
+  return {
+    username,
+    passwordHash,
+    requested,
+    valid:
+      /^[a-z0-9][a-z0-9._-]{2,63}$/.test(username) &&
+      validPasswordHash(passwordHash),
+  };
+}
+export function accessReady() {
+  const account = previewAccount();
+  return secret().length >= 32 && (!account.requested || account.valid);
+}
 function sign(s: string) {
+  const account = previewAccount();
   return createHmac('sha256', secret())
-    .update('petros-v2:' + s)
+    .update(
+      account.requested
+        ? `petros-v2:yc:${account.username}:${account.passwordHash}:${s}`
+        : 'petros-v2:' + s,
+    )
     .digest('hex');
 }
 export function localAccess(h: Headers) {
@@ -29,7 +56,7 @@ export function localAccess(h: Headers) {
 }
 export function identity(h: Headers): string | null {
   if (localAccess(h)) return 'local-development';
-  if (secret().length < 32) return null;
+  if (!accessReady()) return null;
   const token = h
     .get('cookie')
     ?.split(';')
@@ -37,7 +64,9 @@ export function identity(h: Headers): string | null {
     .find((s) => s.startsWith(cookieName + '='))
     ?.slice(cookieName.length + 1);
   if (!token) return null;
-  const [id, expires, mac] = token.split('.');
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  const [id, expires, mac] = parts;
   if (
     !/^[a-f0-9-]{36}$/.test(id ?? '') ||
     !/^\d{13}$/.test(expires ?? '') ||
@@ -48,23 +77,39 @@ export function identity(h: Headers): string | null {
   )
     return null;
   return equal(mac, sign(`${id}.${expires}`))
-    ? createHash('sha256').update(id).digest('hex')
+    ? createHash('sha256')
+        .update(
+          previewAccount().requested ? `yc:${previewAccount().username}` : id,
+        )
+        .digest('hex')
     : null;
 }
 export async function unlock(r: Request) {
-  if (secret().length < 32)
-    return new Response('Set PETROS_V2_ACCESS_SECRET on the server.', {
+  if (!accessReady())
+    return new Response('Preview access is not configured on the server.', {
       status: 503,
     });
-  if (
-    !r.headers.get('origin') ||
-    new URL(r.headers.get('origin')!).host !== r.headers.get('host')
-  )
-    return new Response(null, { status: 403 });
+  if (!sameOrigin(r)) return new Response(null, { status: 403 });
   const text = await r.text();
   if (text.length > 1024) return new Response(null, { status: 413 });
-  const pass = new URLSearchParams(text).get('secret') ?? '';
-  if (!equal(pass, secret()))
+  const form = new URLSearchParams(text),
+    account = previewAccount();
+  let valid: boolean;
+  if (account.requested) {
+    const username = (form.get('username') ?? '').trim().toLowerCase();
+    const password = form.get('password') ?? '';
+    // Check the password even when the username differs; failure messages are identical.
+    const passwordMatches = await verifyPreviewPassword(
+      password,
+      account.passwordHash,
+    );
+    valid =
+      equal(
+        createHash('sha256').update(username).digest('hex'),
+        createHash('sha256').update(account.username).digest('hex'),
+      ) && passwordMatches;
+  } else valid = equal(form.get('secret') ?? '', secret());
+  if (!valid)
     return new Response(null, {
       status: 303,
       headers: { Location: '/prototype?retry=1' },
@@ -77,6 +122,26 @@ export async function unlock(r: Request) {
     headers: {
       Location: '/prototype',
       'Set-Cookie': `${cookieName}=${token}.${sign(token)}; Path=/prototype; HttpOnly; SameSite=Strict; Max-Age=28800${new URL(r.url).protocol === 'https:' ? '; Secure' : ''}`,
+      'Cache-Control': 'no-store',
+    },
+  });
+}
+export function sameOrigin(r: Request) {
+  const origin = r.headers.get('origin');
+  if (!origin) return false;
+  try {
+    return new URL(origin).host === r.headers.get('host');
+  } catch {
+    return false;
+  }
+}
+export function logout(r: Request) {
+  if (!sameOrigin(r)) return new Response(null, { status: 403 });
+  return new Response(null, {
+    status: 303,
+    headers: {
+      Location: '/prototype',
+      'Set-Cookie': `${cookieName}=; Path=/prototype; HttpOnly; SameSite=Strict; Max-Age=0${new URL(r.url).protocol === 'https:' ? '; Secure' : ''}`,
       'Cache-Control': 'no-store',
     },
   });
@@ -114,8 +179,14 @@ export async function consume(
     });
     if (!r.ok) throw Error('Usage accounting unavailable.');
     const result = await r.json();
-    if (typeof result[0]?.result !== 'number' || result[0].result > max)
-      throw Error('Hourly usage limit reached.');
+    if (
+      !Array.isArray(result) ||
+      !Number.isInteger(result[0]?.result) ||
+      result[0].result < 1 ||
+      result[1]?.result !== 1
+    )
+      throw Error('Usage accounting unavailable.');
+    if (result[0].result > max) throw Error('Hourly usage limit reached.');
     return;
   }
   if (process.env.NODE_ENV === 'production')

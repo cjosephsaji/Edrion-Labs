@@ -1,4 +1,4 @@
-import { identity, consume, unlock } from './access';
+import { identity, consume, unlock, logout, sameOrigin } from './access';
 import { teach, type TeacherInput } from './teacher-planner';
 import { ProviderError } from './provider-adapter';
 import { createVoiceSession } from './voice-session';
@@ -31,18 +31,27 @@ export async function handleV2(
   authorizedUser?: string,
 ) {
   const route = action.join('/');
-  if (route === 'unlock' && r.method === 'POST') {
+  if (route === 'logout' && r.method === 'POST') return logout(r);
+  if (['unlock', 'login'].includes(route) && r.method === 'POST') {
+    if (!sameOrigin(r)) return new Response(null, { status: 403, headers });
     try {
       await consume(
-        r.headers.get('x-forwarded-for')?.split(',')[0] ?? 'local',
+        r.headers.get('x-nf-client-connection-ip') ??
+          r.headers.get('x-forwarded-for')?.split(',')[0] ??
+          'local',
         'unlock',
       );
       return await unlock(r);
-    } catch {
-      return Response.json(
-        { error: 'Unlock temporarily unavailable.' },
-        { status: 429, headers },
-      );
+    } catch (e) {
+      const limited =
+        e instanceof Error && /Hourly usage limit/.test(e.message);
+      return new Response(null, {
+        status: 303,
+        headers: {
+          ...headers,
+          Location: `/prototype?retry=${limited ? 'rate-limit' : 'unavailable'}`,
+        },
+      });
     }
   }
   const user = authorizedUser ?? identity(r.headers);
@@ -66,11 +75,7 @@ export async function handleV2(
       { headers },
     );
   if (r.method !== 'POST') return new Response(null, { status: 405, headers });
-  if (
-    !r.headers.get('origin') ||
-    new URL(r.headers.get('origin')!).host !== r.headers.get('host')
-  )
-    return new Response(null, { status: 403, headers });
+  if (!sameOrigin(r)) return new Response(null, { status: 403, headers });
   try {
     if (
       !prototypeFeatures.liveAI &&

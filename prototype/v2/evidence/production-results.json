@@ -1,12 +1,20 @@
 {
   "passed": true,
   "productionBuild": true,
-  "privatePage": true,
-  "unsignedApi": 401,
+  "usernamePasswordLogin": true,
+  "wrongPasswordRejected": true,
+  "sessionSurvivesReload": true,
   "signedApi": 200,
-  "missingSharedBudget": 429,
+  "unsignedApi": 401,
   "crossOrigin": 403,
+  "logoutClearsCookie": true,
+  "topics": 5,
+  "actualRedis": true,
   "clientJavaScriptFilesScanned": 31,
   "secretsFound": 0,
+  "aiRequests": [],
+  "errors": [],
+  "desktop": "1440x900 @ DPR2",
+  "mobile": "390x844 @ DPR2",
   "deployed": false
 }

@@ -6,5 +6,6 @@ node_modules/
 *.tsbuildinfo
 next-env.d.ts
 evidence/*.webm
+YC_ACCESS_DETAILS.local.md
 
 **/._*

@@ -77,10 +77,12 @@ export function LiveTeachingSurface({
   api = '/prototype/api',
   assetBase = '/petros',
   presentation = 'world',
+  canSignOut = false,
 }: {
   api?: string;
   assetBase?: string;
   presentation?: '2d' | 'world';
+  canSignOut?: boolean;
 }) {
   const isSpatial = prototypeFeatures.world && presentation === 'world';
   const s = isSpatial ? worldStyles : classicStyles;
@@ -1274,23 +1276,35 @@ export function LiveTeachingSurface({
           <span className={s.brandMark}>p</span>petros
           <span className={s.brandSub}>a little curiosity goes a long way</span>
         </a>
-        {prototypeFeatures.world ? (
-          <nav className={s.mode} aria-label="Learning view">
-            <a
-              href="/prototype?view=2d"
-              aria-current={!isSpatial ? 'page' : undefined}
-            >
-              2D tutor
-            </a>
-            <a href="/prototype" aria-current={isSpatial ? 'page' : undefined}>
-              3D world ↗
-            </a>
-          </nav>
-        ) : (
-          <span className={s.prototypeBadge}>
-            Interactive prototype · AI paused
-          </span>
-        )}
+        <div className={s.headerActions}>
+          {prototypeFeatures.world ? (
+            <nav className={s.mode} aria-label="Learning view">
+              <a
+                href="/prototype?view=2d"
+                aria-current={!isSpatial ? 'page' : undefined}
+              >
+                2D tutor
+              </a>
+              <a
+                href="/prototype"
+                aria-current={isSpatial ? 'page' : undefined}
+              >
+                3D world ↗
+              </a>
+            </nav>
+          ) : (
+            <span className={s.prototypeBadge}>
+              Interactive prototype · AI paused
+            </span>
+          )}
+          {canSignOut && (
+            <form method="post" action={`${api}/logout`}>
+              <button type="submit" className={s.signOut}>
+                Sign out
+              </button>
+            </form>
+          )}
+        </div>
       </header>
       <nav className={s.tabs} aria-label="Interactive topics">
         {TOPICS.map((id, i) => (

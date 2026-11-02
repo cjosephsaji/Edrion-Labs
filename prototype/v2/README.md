@@ -1,5 +1,7 @@
 # Petros V2 — implemented prototype
 
+Current demo configuration: the regular tutor uses prepared questions and live simulations; AI and the 3D world are paused. YC reviewers sign in with the dedicated shared username/password account. See [YC_PREVIEW_SETUP.md](YC_PREVIEW_SETUP.md) for Netlify settings and the credential-generation workflow. Private credential files are Git-ignored and must be imported separately into hosting.
+
 Isolated Next.js app and reusable route component. Development stays in `prototype/v2/`; the original Edrion apps, PDFs, academic APIs and uncommitted prototype changes are retained. The independent Claude review was not present in the supplied archive; `CODEX_BUILD_NOW.md` supplies the approved implementation decisions. Starter numerical modules were tested before adaptation; their rocket impact timestamp was corrected.
 
 Run from this directory with Node 22–24:
