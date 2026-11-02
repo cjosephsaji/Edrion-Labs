@@ -1,0 +1,9 @@
+# This branch deploys the standalone Petros app.
+[build]
+  base = "prototype/v2"
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NPM_FLAGS = "--workspaces=false"
