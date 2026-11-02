@@ -19,7 +19,7 @@ const parse = (s: string) =>
 const local = parse(text),
   record = parse(await readFile(recordFile, 'utf8').catch(() => ''));
 const rotate = process.argv.includes('--rotate');
-const username = local.PETROS_V2_YC_USERNAME || 'yc-reviewer';
+const username = local.PETROS_V2_YC_USERNAME || 'petros-guest';
 let password = record.YC_REVIEWER_PASSWORD;
 let passwordHash = local.PETROS_V2_YC_PASSWORD_HASH;
 if (passwordHash && !rotate) {

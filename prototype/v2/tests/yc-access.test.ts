@@ -13,7 +13,7 @@ import {
 } from '../server/access';
 import { handleV2 } from '../server/handler';
 
-const username = 'yc-reviewer',
+const username = 'reviewer-fixture',
   password = 'A-test-only-reviewer-password',
   signingKey = 'test-session-key-'.repeat(4);
 let hash: string, replacementHash: string;
@@ -62,7 +62,7 @@ it('verifies a salted password hash and rejects malformed hashes', async () => {
   );
 });
 it('logs in with a username and creates private, eight-hour HTTPS cookies', async () => {
-  const response = await unlock(request('YC-Reviewer'));
+  const response = await unlock(request(username.toUpperCase()));
   expect(response.status).toBe(303);
   expect(response.headers.get('Location')).toBe('/prototype');
   const value = response.headers.get('set-cookie')!;

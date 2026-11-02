@@ -10,7 +10,7 @@ Configure these server-side environment variables in Netlify:
 | --- | --- |
 | `NODE_VERSION` | `22` |
 | `PETROS_V2_ACCESS_SECRET` | Random session-signing key, at least 32 characters |
-| `PETROS_V2_YC_USERNAME` | Reviewer username, such as `yc-reviewer` |
+| `PETROS_V2_YC_USERNAME` | Reviewer username from the generated access details |
 | `PETROS_V2_YC_PASSWORD_HASH` | Generated salted PBKDF2-HMAC-SHA256 hash; 600,000 iterations |
 | `UPSTASH_REDIS_REST_URL` | HTTPS REST endpoint from the preview’s Upstash database |
 | `UPSTASH_REDIS_REST_TOKEN` | Standard REST token with read/write command access |
