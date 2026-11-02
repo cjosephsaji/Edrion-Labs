@@ -1,7 +1,8 @@
 # This branch deploys the standalone Petros app.
 [build]
   base = "prototype/v2"
-  command = "npm run build"
+  # Install the standalone lockfile and invoke its Next CLI directly.
+  command = "npm ci --workspaces=false --include=dev && node ./node_modules/next/dist/bin/next build --webpack"
   publish = ".next"
 
 [build.environment]
