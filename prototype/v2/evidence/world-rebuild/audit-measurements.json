@@ -1,0 +1,214 @@
+[
+  {
+    "viewport": [
+      1440,
+      900
+    ],
+    "devicePixelRatio": 2,
+    "canvasCss": [
+      964.765625,
+      432
+    ],
+    "drawingBuffer": [
+      1447,
+      648
+    ],
+    "effectiveDPR": 1.4998461413879667,
+    "contextAttributes": {
+      "alpha": true,
+      "antialias": true,
+      "depth": true,
+      "desynchronized": false,
+      "failIfMajorPerformanceCaveat": false,
+      "powerPreference": "high-performance",
+      "premultipliedAlpha": true,
+      "preserveDrawingBuffer": false,
+      "stencil": false,
+      "xrCompatible": false
+    },
+    "assets": [
+      {
+        "file": "studio_small_03.hdr",
+        "decodedBytes": 1686299
+      },
+      {
+        "file": "floor-color.jpg",
+        "decodedBytes": 925789
+      },
+      {
+        "file": "floor-normal.jpg",
+        "decodedBytes": 665094
+      },
+      {
+        "file": "floor-roughness.jpg",
+        "decodedBytes": 658448
+      },
+      {
+        "file": "book_encyclopedia_set_01.glb",
+        "decodedBytes": 1170288
+      },
+      {
+        "file": "wooden_display_shelves_01.glb",
+        "decodedBytes": 420336
+      },
+      {
+        "file": "mid_century_lounge_chair.glb",
+        "decodedBytes": 779700
+      },
+      {
+        "file": "WoodenTable_01.glb",
+        "decodedBytes": 558948
+      },
+      {
+        "file": "desk_lamp_arm_01.glb",
+        "decodedBytes": 1088020
+      },
+      {
+        "file": "potted_plant_02.glb",
+        "decodedBytes": 1854292
+      },
+      {
+        "file": "rocket.glb",
+        "decodedBytes": 149372
+      },
+      {
+        "file": "car.glb",
+        "decodedBytes": 104228
+      },
+      {
+        "file": "draco/draco_wasm_wrapper.js",
+        "decodedBytes": 58456
+      },
+      {
+        "file": "draco/draco_decoder.wasm",
+        "decodedBytes": 192420
+      },
+      {
+        "file": "shuttle.glb",
+        "decodedBytes": 1194068
+      },
+      {
+        "file": "earth.jpg",
+        "decodedBytes": 266599
+      },
+      {
+        "file": "Textures/colormap.png",
+        "decodedBytes": 10219
+      },
+      {
+        "file": "draco/draco_wasm_wrapper.js",
+        "decodedBytes": 58456
+      },
+      {
+        "file": "draco/draco_decoder.wasm",
+        "decodedBytes": 192420
+      }
+    ]
+  },
+  {
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 2,
+    "canvasCss": [
+      342,
+      280
+    ],
+    "drawingBuffer": [
+      513,
+      420
+    ],
+    "effectiveDPR": 1.5,
+    "contextAttributes": {
+      "alpha": true,
+      "antialias": true,
+      "depth": true,
+      "desynchronized": false,
+      "failIfMajorPerformanceCaveat": false,
+      "powerPreference": "high-performance",
+      "premultipliedAlpha": true,
+      "preserveDrawingBuffer": false,
+      "stencil": false,
+      "xrCompatible": false
+    },
+    "assets": [
+      {
+        "file": "studio_small_03.hdr",
+        "decodedBytes": 1686299
+      },
+      {
+        "file": "floor-normal.jpg",
+        "decodedBytes": 665094
+      },
+      {
+        "file": "floor-color.jpg",
+        "decodedBytes": 925789
+      },
+      {
+        "file": "floor-roughness.jpg",
+        "decodedBytes": 658448
+      },
+      {
+        "file": "book_encyclopedia_set_01.glb",
+        "decodedBytes": 1170288
+      },
+      {
+        "file": "wooden_display_shelves_01.glb",
+        "decodedBytes": 420336
+      },
+      {
+        "file": "mid_century_lounge_chair.glb",
+        "decodedBytes": 779700
+      },
+      {
+        "file": "WoodenTable_01.glb",
+        "decodedBytes": 558948
+      },
+      {
+        "file": "desk_lamp_arm_01.glb",
+        "decodedBytes": 1088020
+      },
+      {
+        "file": "potted_plant_02.glb",
+        "decodedBytes": 1854292
+      },
+      {
+        "file": "rocket.glb",
+        "decodedBytes": 149372
+      },
+      {
+        "file": "car.glb",
+        "decodedBytes": 104228
+      },
+      {
+        "file": "draco/draco_wasm_wrapper.js",
+        "decodedBytes": 58456
+      },
+      {
+        "file": "draco/draco_decoder.wasm",
+        "decodedBytes": 192420
+      },
+      {
+        "file": "shuttle.glb",
+        "decodedBytes": 1194068
+      },
+      {
+        "file": "earth.jpg",
+        "decodedBytes": 266599
+      },
+      {
+        "file": "Textures/colormap.png",
+        "decodedBytes": 10219
+      },
+      {
+        "file": "draco/draco_wasm_wrapper.js",
+        "decodedBytes": 58456
+      },
+      {
+        "file": "draco/draco_decoder.wasm",
+        "decodedBytes": 192420
+      }
+    ]
+  }
+]

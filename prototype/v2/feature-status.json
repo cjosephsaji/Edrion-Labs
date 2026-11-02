@@ -1,0 +1,188 @@
+{
+  "version": 1,
+  "verified_on": "2026-11-02",
+  "branch": "codex/petros-v2-interactive",
+  "implementation_scope": "prototype/v2",
+  "production_apps_modified_by_this_build": false,
+  "status_values": [
+    "NOT_STARTED",
+    "WORKING",
+    "TESTED",
+    "DEPLOYED"
+  ],
+  "topics": {
+    "neural": {
+      "numerics": "TESTED",
+      "interactive_desktop_mobile": "TESTED",
+      "live_ai_tools_and_misconception_repair": "TESTED",
+      "synthetic_spoken_end_to_end": "TESTED",
+      "evidence": [
+        "evidence/browser-results.json",
+        "evidence/browser-ai-results.json",
+        "tests/engines.test.ts",
+        "evidence/voice-five-topics.json"
+      ]
+    },
+    "rocket": {
+      "numerics": "TESTED",
+      "interactive_desktop_mobile": "TESTED",
+      "live_ai_tools_and_misconception_repair": "TESTED",
+      "synthetic_spoken_end_to_end": "TESTED",
+      "evidence": [
+        "evidence/browser-results.json",
+        "evidence/browser-ai-results.json",
+        "tests/engines.test.ts",
+        "evidence/voice-five-topics.json"
+      ]
+    },
+    "attention": {
+      "numerics": "TESTED",
+      "interactive_desktop_mobile": "TESTED",
+      "live_ai_tools_and_misconception_repair": "TESTED",
+      "synthetic_spoken_end_to_end": "TESTED",
+      "evidence": [
+        "evidence/browser-results.json",
+        "evidence/browser-ai-results.json",
+        "tests/engines.test.ts",
+        "evidence/voice-five-topics.json"
+      ]
+    },
+    "traffic": {
+      "numerics": "TESTED",
+      "interactive_desktop_mobile": "TESTED",
+      "live_ai_tools_and_misconception_repair": "TESTED",
+      "synthetic_spoken_end_to_end": "TESTED",
+      "evidence": [
+        "evidence/browser-results.json",
+        "evidence/browser-ai-results.json",
+        "tests/engines.test.ts",
+        "evidence/voice-five-topics.json"
+      ]
+    },
+    "relativity": {
+      "numerics": "TESTED",
+      "interactive_desktop_mobile": "TESTED",
+      "live_ai_tools_and_misconception_repair": "TESTED",
+      "synthetic_spoken_end_to_end": "TESTED",
+      "evidence": [
+        "evidence/browser-results.json",
+        "evidence/browser-ai-results.json",
+        "tests/engines.test.ts",
+        "evidence/voice-five-topics.json"
+      ]
+    }
+  },
+  "features": {
+    "semantic_scene_compiler": {
+      "status": "TESTED",
+      "evidence": [
+        "tests/core.test.ts",
+        "evidence/lesson-layout-results.json"
+      ]
+    },
+    "semantic_pointer_and_camera_projection": {
+      "status": "TESTED",
+      "evidence": [
+        "evidence/world-pointer.json",
+        "tests/core.test.ts"
+      ]
+    },
+    "realtime_voice": {
+      "status": "TESTED",
+      "scope": "All five topics: AI-generated speech through a browser microphone device \u2192 real WebRTC \u2192 real transcription \u2192 teacher tools \u2192 measured simulation change \u2192 provider audio \u2192 interruption. Human microphone conditions not tested. Focused-tab push-to-talk, Ctrl+V exclusion and typing without accidental muting are also browser-tested.",
+      "evidence": [
+        "evidence/voice-results.json",
+        "evidence/voice-speech-results.json",
+        "evidence/voice-five-topics.json",
+        "tests/voice-continuation.test.ts"
+      ]
+    },
+    "classic_world_and_restore": {
+      "status": "TESTED",
+      "evidence": [
+        "evidence/browser-results.json"
+      ]
+    },
+    "auth_and_fail_closed_production_budgets": {
+      "status": "TESTED",
+      "evidence": [
+        "evidence/production-results.json",
+        "tests/access.test.ts"
+      ]
+    },
+    "live_shared_redis_accounting": {
+      "status": "WORKING",
+      "limitation": "Requires deployment credentials; real Redis service has not been exercised."
+    },
+    "vercel_build_support": {
+      "status": "TESTED",
+      "evidence": [
+        "vercel.json",
+        "package-lock.json",
+        "evidence/production-results.json"
+      ]
+    },
+    "vercel_deployment": {
+      "status": "NOT_STARTED",
+      "limitation": "No Vercel project authentication or production Redis credentials were available. No deployed URL is claimed."
+    },
+    "vision_fallback": {
+      "status": "NOT_STARTED",
+      "limitation": "Known in-app DOM/SVG/3D IDs are supported; foreign viewport capture/vision grounding is not implemented."
+    },
+    "server_enforced_realtime_call_teardown": {
+      "status": "NOT_STARTED",
+      "limitation": "Credential issuance is rate-limited; client disconnects at five minutes. Provider project spend caps are required for adversarial spend protection."
+    },
+    "physical_low_mid_hardware_and_human_voice_acceptance": {
+      "status": "NOT_STARTED",
+      "limitation": "Browser CPU throttling and synthetic audio were tested; physical device/accent/noise tests remain."
+    },
+    "scientific_trajectory_review": {
+      "status": "TESTED",
+      "scope": "Recorded-velocity grounding rejects an invented rocket ascent in the targeted live regression. This is not a guarantee of every future AI response.",
+      "evidence": [
+        "evidence/scientific-review-regression.json"
+      ]
+    },
+    "visual_regression": {
+      "status": "TESTED",
+      "scope": "Ten desktop/mobile reference renders and pixel comparisons, complete semantic labels and no diagram overflow. References are local browser renders, not external design approval.",
+      "evidence": [
+        "evidence/lesson-layout-results.json",
+        "evidence/visual-regression-results.json"
+      ]
+    },
+    "physical_quantity_labels": {
+      "status": "TESTED",
+      "scope": "Rejects total-mass values labeled as dry mass, and preserves the pre-question baseline across multi-tool experiments.",
+      "evidence": [
+        "tests/quantities.test.ts",
+        "evidence/mass-comparison-regression.json"
+      ]
+    }
+  },
+  "checks": {
+    "starter_reference_tests": 12,
+    "new_unit_tests": 75,
+    "existing_regression_tests": 187,
+    "production_build": "PASS",
+    "typecheck": "PASS",
+    "npm_audit_vulnerabilities": 0,
+    "client_js_files_scanned": 25,
+    "client_secrets_found": 0,
+    "visual_comparisons": 10,
+    "all_five_synthetic_voice_topics": "PASS",
+    "voice_speech_input": "AI_GENERATED_TEST_SPEECH_NOT_HUMAN_MICROPHONE"
+  },
+  "performance": {
+    "environment": "Local Brave headless; development build; 4\u00d7 CPU throttling; not physical low-end hardware",
+    "interactiveMs": 1145,
+    "workerStepAndPaintMs": 126,
+    "worldFrameMedianMs": 16.699999999999818,
+    "worldFrameP95Ms": 16.800000000000182,
+    "sampleFrames": 89
+  },
+  "claim_boundary": "TESTED applies only to the evidence listed. No topic is marked DEPLOYED, and no model/human-speech/physical-realism guarantee is inferred.",
+  "source_commit": "c2151438adb26afeaec5da403643cc7875aa8de4"
+}

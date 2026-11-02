@@ -1,0 +1,3 @@
+import {NodeIO} from '@gltf-transform/core';import {ALL_EXTENSIONS} from '@gltf-transform/extensions';import {prune,meshopt} from '@gltf-transform/functions';import {MeshoptDecoder,MeshoptEncoder} from 'meshoptimizer';
+await Promise.all([MeshoptDecoder.ready,MeshoptEncoder.ready]);const io=new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({'meshopt.decoder':MeshoptDecoder,'meshopt.encoder':MeshoptEncoder});
+for(const name of ['rocket','car','ship']){const doc=await io.read(`public/world-v3/${name}.glb`);for(const mat of doc.getRoot().listMaterials())mat.setOcclusionTexture(null);await doc.transform(prune(),meshopt({encoder:MeshoptEncoder,level:'medium'}));await io.write(`public/world-v3/${name}-proxy.glb`,doc);}

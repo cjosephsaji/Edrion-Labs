@@ -1,0 +1,230 @@
+[
+  {
+    "file": "simulations/runtime.ts",
+    "sha256": "699252c6baf4b8e1815db10a7c2f1532f00d845cd3c2267f3ef4d79397ae9089"
+  },
+  {
+    "file": "simulations/worker.ts",
+    "sha256": "e7c01d2a25f0e290cc4ddec337caf973fb9eb9fd17455ebc98a7b9756d27f14c"
+  },
+  {
+    "file": "simulations/worker-adapter.ts",
+    "sha256": "b1ecf212f4c50457ccf899a85a1e6d22c138bca69b6fb698f8c162449f21fb36"
+  },
+  {
+    "file": "simulations/foundations/attention.ts",
+    "sha256": "305d2e3ed776c1a6d23af179fdf30a37787c6c1695a08ae54e3ef1768aaeff82"
+  },
+  {
+    "file": "simulations/foundations/neural.ts",
+    "sha256": "04f5cd7fe0fb9bfb62d5e857443dfbce6c654da004fe383e7bc4b337a6774567"
+  },
+  {
+    "file": "simulations/foundations/relativity.ts",
+    "sha256": "73225758cdfcee1e9d3582cf0a4fdf869ea74904cee1afe5ae67dceb83212c94"
+  },
+  {
+    "file": "simulations/foundations/rocket.ts",
+    "sha256": "de78e105608f1ca732b55a5db934d83dfdae7aafab1cdeb8eab31e7b1eb7db8b"
+  },
+  {
+    "file": "simulations/foundations/traffic.ts",
+    "sha256": "138ac4e94cd21f0412a4c5d398076ce507ea8cc9e873ec879de1002e5f61b437"
+  },
+  {
+    "file": "simulations/foundations/linear.ts",
+    "sha256": "b245884475b69c22557edbbdba32350ab82744592b5942fc7e1cc185da136656"
+  },
+  {
+    "file": "server/provider-adapter.ts",
+    "sha256": "7099c3f6c163735d0926f1d678eacdd8990dfb9c8bf98b27e3461b7e7b77d840"
+  },
+  {
+    "file": "server/tool-router.ts",
+    "sha256": "2f789b5dbb32eb984ce408ba29f944f18ad441e5882b6546f0d3f4551fb3834e"
+  },
+  {
+    "file": "server/teacher-planner.ts",
+    "sha256": "3fcf9b21a6797d6aca108a4c76b2a20aaa79af8c3ac0af82bcd7b333c7b8c0d7"
+  },
+  {
+    "file": "server/access.ts",
+    "sha256": "79a6fc568e21d7e078f17a4f58dd8a1749c94b75f0e6744208687874a4f186d0"
+  },
+  {
+    "file": "server/voice-session.ts",
+    "sha256": "278ba6a846dd115442030a3d501a7407db7cbbeea5db3aa24744aff9be2430bf"
+  },
+  {
+    "file": "server/handler.ts",
+    "sha256": "31b7a628580b549dee391de7fc511236158ec6088555072511a35a29433138ad"
+  },
+  {
+    "file": "server/quantity-guards.ts",
+    "sha256": "5fcaeaabb5d208b10f6625b5d2b697ca0dbfcf76093d1baba85e71c2ad8475d7"
+  },
+  {
+    "file": "server/parameter-intent.ts",
+    "sha256": "468d0143b51625e94f8c85fb572b0de963d2d11d74878593e47b80aac1277fb7"
+  },
+  {
+    "file": "core/scene-ir.ts",
+    "sha256": "db0f1e33e7a5f393149f2e2af713922b838b90e84ff2e6dc6143a6f8be09b92d"
+  },
+  {
+    "file": "core/scene-compiler.ts",
+    "sha256": "7a2816aa834e11bf7e706f1fc6b3da2dadbd52ec88d28de24fcb54cf7f220a2d"
+  },
+  {
+    "file": "core/teacher-policy.ts",
+    "sha256": "52332f6ec39c8bfd87f0453539c50ccf2867c2a120b21e2f89cfef8f594d0e9a"
+  },
+  {
+    "file": "core/session-store.ts",
+    "sha256": "1a0e59324f4d856e5a066bd848c6d3ba67814772110efc2fa0d5a1b936ea5a10"
+  },
+  {
+    "file": "core/beat-scheduler.ts",
+    "sha256": "4c82759716cc350acc19990f6ee22d60c6fd29ce3767503f679994edddb851de"
+  },
+  {
+    "file": "core/target-registry.ts",
+    "sha256": "89b1bafcf3757fd3d3e65b8dcdefa0aa95426898e9d16bc501ec0cf69d8fec10"
+  },
+  {
+    "file": "core/voice-provider.ts",
+    "sha256": "2b75d26590e41716d38c41152f592fc0a65e289b0e7c383fd83abf3e32fa5644"
+  },
+  {
+    "file": "core/teaching.ts",
+    "sha256": "3d401852626b20fbac3cef5590290bc2ca42e99b6c793cd4bafcb863f68ec669"
+  },
+  {
+    "file": "core/narration.ts",
+    "sha256": "40c056beafc6a5ccb79b68914b71fb9eacd906aeb1bc1e048b9812f1faf949c7"
+  },
+  {
+    "file": "tests/vitest.config.ts",
+    "sha256": "ca980bb8b6d5a202296902accc11b4d6867085642ab9485263a954dedc6b43aa"
+  },
+  {
+    "file": "tests/live.mts",
+    "sha256": "7f3fe4cf0f422e92925a49d8dba45e04905940a7e6df9ce6cf8167141aaf449f"
+  },
+  {
+    "file": "tests/engines.test.ts",
+    "sha256": "9460cd6a10657e4666f18de7fe6e2c6241fc1bc383dae558db3a2688fc236e30"
+  },
+  {
+    "file": "tests/core.test.ts",
+    "sha256": "0717dc025092fdd0b8412e7295ee4d5319de18c13212ad539d2109c2ade0c1d0"
+  },
+  {
+    "file": "tests/browser.mts",
+    "sha256": "0cb56d70e1edd627a7885438fd1ec97c0d3744e180e37e06e8a3053812e909dd"
+  },
+  {
+    "file": "tests/browser-ai.mts",
+    "sha256": "17eabc4f8139d787e2c053ee467dfe2fc4dda91fb951144698bed8ddac0aee37"
+  },
+  {
+    "file": "tests/voice-browser.mts",
+    "sha256": "ef1822a02587e6de81260ab185e2dba513585411622322e84450c5bac18a3e29"
+  },
+  {
+    "file": "tests/capture.mts",
+    "sha256": "19cdb86e8c2a950602fadc31f74b9eb37d5a2161b4b86d6b6d3a8bfc3354804e"
+  },
+  {
+    "file": "tests/voice-speech.mts",
+    "sha256": "a4de5027b9474875dd51c441c7667cda57f4b882f7c9da0efa7528d9bf7e2642"
+  },
+  {
+    "file": "tests/access.test.ts",
+    "sha256": "19327d68e81457d1fc165d8f5d58ee368a8103aa5e2d9abdea0c565c23ce1119"
+  },
+  {
+    "file": "tests/performance.mts",
+    "sha256": "3777e19c49eda026e0fe668e5d1066c4b5136caf2ba849f7f008cd9a3156dd12"
+  },
+  {
+    "file": "tests/world-pointer.mts",
+    "sha256": "36a7aaa6562faa565653f7834e84f0776a07abaf1ce0805b298446acfea68ef6"
+  },
+  {
+    "file": "tests/lesson-screenshots.mts",
+    "sha256": "85f81070b0729a9fd55372eef0241e2eed510ce92f6dd42e536e5c3ae20d6765"
+  },
+  {
+    "file": "tests/production.mts",
+    "sha256": "797cc4ca6468a1267f48188727ff613999fc687e9f83a1b0794fc108ff628edc"
+  },
+  {
+    "file": "tests/make-voice-fixtures.mts",
+    "sha256": "36a7c56bd42c20758ca868f3a3a8fd80099a6e3e5d418e86f3a40633748b8e9f"
+  },
+  {
+    "file": "tests/voice-five-topics.mts",
+    "sha256": "de1bff49d3841007e9d7bfbbfcbbc5209a13f4f61a00742fe07bc02ef00a351b"
+  },
+  {
+    "file": "tests/voice-continuation.test.ts",
+    "sha256": "fa53cb81e2e691fbee4810213eacdd99a929e6dbfd1002c7ea904b11809d0aa0"
+  },
+  {
+    "file": "tests/science-live.mts",
+    "sha256": "739914edaf12bbcdcd9c75526852c13a3d5ce04b65c1bad1709bd2586428f378"
+  },
+  {
+    "file": "tests/browser-executable.ts",
+    "sha256": "d6a8e52116796543a8728693b8557ceab900ea338d95513c2ea23b7d87e20c56"
+  },
+  {
+    "file": "tests/quantities.test.ts",
+    "sha256": "5db1985217a0a1afbfe444e6c26f00b89ebeb0a62cea41ed88324ac5724cfbcf"
+  },
+  {
+    "file": "tests/mass-live.mts",
+    "sha256": "6046db6b5317e086c1d348ad40763105f1851d01d843e20982e3544e38afd457"
+  },
+  {
+    "file": "tests/corrective.test.ts",
+    "sha256": "8415297d53fd3bbe404bb0454b23355bc62f1cf10977633a831559fa0706198f"
+  },
+  {
+    "file": "tests/corrective-browser.mts",
+    "sha256": "a0f1b8fc24ecf3b439a18aa64e1023662fe980bfa1bfa9fa57243848a8e351eb"
+  },
+  {
+    "file": "tests/corrective-voice.mts",
+    "sha256": "b51fd4e23cbe1fd0935c2d1d6b4a8851cdba2e2c75c5abc1dde867e5043ef8bb"
+  },
+  {
+    "file": "tests/corrective-live.mts",
+    "sha256": "56d5aa81774369f930f5115493fb775ebc64eefe8db12d4eb6555fb9d9408df8"
+  },
+  {
+    "file": "tests/corrective-interactions.mts",
+    "sha256": "3d5e7393ccfab8d3587ec38c1d8555313a7429febbd4a0c3a706329411e89b56"
+  },
+  {
+    "file": "tests/corrective-microphone.mts",
+    "sha256": "7b585b183ddf6b0f68eaa98e71efc2d09780862b43fafe56dea40e3bfd66de82"
+  },
+  {
+    "file": "tests/atelier-recording.mts",
+    "sha256": "c5c488d2cf72aa6cb8c0c45ef86fb012b5f2d490eb7b9d4f10548ff05eb3e5df"
+  },
+  {
+    "file": "tests/corrective-failure.mts",
+    "sha256": "5f8852f4c28a4fec1159194db7177c5a9f0f4e9d7567b7749a70e175b134972b"
+  },
+  {
+    "file": "tests/corrective-performance.mts",
+    "sha256": "0613a9a569bb42c3c7e042ccf2af0d5504747a9b61d33291213da4af8d2c8065"
+  },
+  {
+    "file": "tests/presentation-audit.mts",
+    "sha256": "aee4df4e79a5e9760201d12f1afe059d9f2ebc6bde0cf39f3d242fae896c3600"
+  }
+]

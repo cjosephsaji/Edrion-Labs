@@ -1,0 +1,75 @@
+{
+  "results": [
+    {
+      "width": 1440,
+      "topic": "neural",
+      "source": "Local macOS speech fixture, exact caption; provider disabled",
+      "mouthAmplitude": 0.275,
+      "interruption": true
+    },
+    {
+      "width": 1440,
+      "topic": "rocket",
+      "source": "Local macOS speech fixture, exact caption; provider disabled",
+      "mouthAmplitude": 0.238,
+      "interruption": true
+    },
+    {
+      "width": 1440,
+      "topic": "attention",
+      "source": "Local macOS speech fixture, exact caption; provider disabled",
+      "mouthAmplitude": 0.095,
+      "interruption": true
+    },
+    {
+      "width": 1440,
+      "topic": "traffic",
+      "source": "Local macOS speech fixture, exact caption; provider disabled",
+      "mouthAmplitude": 0.165,
+      "interruption": true
+    },
+    {
+      "width": 1440,
+      "topic": "relativity",
+      "source": "Local macOS speech fixture, exact caption; provider disabled",
+      "mouthAmplitude": 0.205,
+      "interruption": true
+    },
+    {
+      "width": 390,
+      "topic": "neural",
+      "source": "Local macOS speech fixture, exact caption; provider disabled",
+      "mouthAmplitude": 0.26,
+      "interruption": true
+    },
+    {
+      "width": 390,
+      "topic": "rocket",
+      "source": "Local macOS speech fixture, exact caption; provider disabled",
+      "mouthAmplitude": 0.177,
+      "interruption": true
+    },
+    {
+      "width": 390,
+      "topic": "attention",
+      "source": "Local macOS speech fixture, exact caption; provider disabled",
+      "mouthAmplitude": 0.269,
+      "interruption": true
+    },
+    {
+      "width": 390,
+      "topic": "traffic",
+      "source": "Local macOS speech fixture, exact caption; provider disabled",
+      "mouthAmplitude": 0.289,
+      "interruption": true
+    },
+    {
+      "width": 390,
+      "topic": "relativity",
+      "source": "Local macOS speech fixture, exact caption; provider disabled",
+      "mouthAmplitude": 0.204,
+      "interruption": true
+    }
+  ],
+  "providerVerified": false
+}

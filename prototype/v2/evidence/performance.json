@@ -1,0 +1,8 @@
+{
+  "environment": "Local Brave headless; development build; 4× CPU throttling; not physical low-end hardware",
+  "interactiveMs": 1145,
+  "workerStepAndPaintMs": 126,
+  "worldFrameMedianMs": 16.699999999999818,
+  "worldFrameP95Ms": 16.800000000000182,
+  "sampleFrames": 89
+}

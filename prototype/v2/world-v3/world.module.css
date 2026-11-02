@@ -1,0 +1,436 @@
+@font-face {
+  font-family: PetrosDisplay;
+  src: url('/world-v3/fonts/display.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: PetrosUI;
+  src: url('/world-v3/fonts/ui.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+.canvasHost {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+  z-index: 0;
+  outline-offset: -5px;
+  background: #b6c3c8;
+}
+.canvasHost canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  touch-action: none;
+}
+.canvasHost > span {
+  pointer-events: none;
+}
+.tools {
+  position: fixed;
+  top: 25px;
+  right: 28px;
+  z-index: 45;
+  display: flex;
+  gap: 8px;
+}
+.tools button {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #f7ecd5a8;
+  border-radius: 50%;
+  background: #f1e7d3b8;
+  color: #375344;
+  backdrop-filter: blur(18px);
+  font:
+    18px PetrosUI,
+    sans-serif;
+  cursor: pointer;
+  box-shadow: 0 3px 16px #1b40300b;
+}
+.tools button:hover {
+  background: #f3ead9;
+}
+.settings {
+  position: fixed;
+  right: 28px;
+  top: 78px;
+  width: 284px;
+  padding: 20px;
+  background: #f2ead9ed;
+  border: 1px solid #f8efd8;
+  border-radius: 18px;
+  box-shadow: 0 15px 50px #2a483525;
+  backdrop-filter: blur(24px);
+  z-index: 55;
+  color: #375344;
+  font:
+    13px/1.6 PetrosUI,
+    sans-serif;
+}
+.settings label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+.settings select {
+  font: 12px PetrosUI;
+  color: inherit;
+  background: #e4deca;
+  border: 0;
+  padding: 7px;
+  border-radius: 7px;
+}
+.settings p {
+  font-size: 11px;
+  color: #6e7e6d;
+}
+.settings button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid #d5d6bf;
+  padding: 10px 0;
+  color: inherit;
+  font: 12px PetrosUI;
+  cursor: pointer;
+}
+.settings summary {
+  cursor: pointer;
+  font-size: 11px;
+}
+.tourControl {
+  position: fixed;
+  left: 30px;
+  bottom: 28px;
+  z-index: 42;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+}
+.tourControl button {
+  border: 1px solid #ece5c9;
+  background: #f3ebd9bd;
+  color: #365842;
+  font: 12px PetrosUI;
+  padding: 11px 17px;
+  border-radius: 25px;
+  cursor: pointer;
+  backdrop-filter: blur(18px);
+}
+.tourControl span {
+  font: 9px PetrosUI;
+  color: #657c6c;
+  max-width: 250px;
+  text-shadow: 0 1px 4px #f1e2ce;
+}
+.opening {
+  position: fixed;
+  z-index: 30;
+  top: 25%;
+  left: 7vw;
+  max-width: 560px;
+  pointer-events: none;
+  color: #315341;
+  text-shadow: 0 2px 24px #e6e1cc6b;
+}
+.kicker {
+  font:
+    10px PetrosUI,
+    sans-serif;
+  letter-spacing: 3px;
+  color: #5d7c69;
+}
+.opening h1 {
+  font:
+    clamp(54px, 5.7vw, 88px)/0.99 PetrosDisplay,
+    Georgia,
+    serif;
+  letter-spacing: -2px;
+  font-weight: 400;
+  margin: 22px 0;
+}
+.opening h1 em {
+  font-weight: 400;
+  color: #a78651;
+}
+.opening p {
+  font:
+    16px/1.7 PetrosUI,
+    sans-serif;
+  color: #647a67;
+  margin: 0 0 25px;
+}
+.opening > div {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  pointer-events: auto;
+}
+.opening button {
+  font: 13px PetrosUI;
+  cursor: pointer;
+  padding: 14px 23px;
+  border-radius: 28px;
+}
+.startTour {
+  background: #365c46;
+  color: #f6ead1;
+  border: 1px solid #365c46;
+  box-shadow: 0 8px 22px #31534120;
+}
+.startTour span {
+  padding-left: 26px;
+}
+.explore {
+  background: #f0e8d3a8;
+  color: #3e604b;
+  border: 1px solid #f2e8ce;
+  backdrop-filter: blur(12px);
+}
+.opening small {
+  display: block;
+  font: 10px PetrosUI;
+  letter-spacing: 0.7px;
+  color: #788b74;
+  margin-top: 20px;
+}
+.loading {
+  position: fixed;
+  inset: 0;
+  background: #ebe5d6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 100;
+  color: #365943;
+  font-family: PetrosUI, system-ui;
+}
+.loadMark {
+  font:
+    italic 92px PetrosDisplay,
+    Georgia;
+  color: #3e634b;
+  margin-bottom: 10px;
+}
+.loadTitle {
+  font:
+    28px PetrosDisplay,
+    Georgia;
+}
+.loadTrack {
+  height: 3px;
+  background: #d2d7c5;
+  width: 190px;
+  margin-top: 28px;
+  overflow: hidden;
+  border-radius: 3px;
+}
+.loadTrack i {
+  display: block;
+  height: 100%;
+  background: #88a48b;
+  transition: width 0.3s;
+}
+.loading small {
+  font-size: 10px;
+  color: #7c8d75;
+  margin-top: 12px;
+}
+.error {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  background: #e9e1cc;
+  color: #35583f;
+  text-align: center;
+  font-family: PetrosUI;
+}
+.error h1 {
+  font: 40px PetrosDisplay;
+}
+.error button {
+  justify-self: center;
+  padding: 12px 24px;
+  border-radius: 30px;
+  border: 1px solid #6a8a69;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+@media (max-width: 760px) {
+  .tools {
+    right: 16px;
+    top: 18px;
+    gap: 6px;
+  }
+  .tools button {
+    width: 33px;
+    height: 33px;
+    font-size: 16px;
+  }
+  .settings {
+    right: 14px;
+    top: 64px;
+    width: min(284px, calc(100vw - 28px));
+  }
+  .opening {
+    left: 25px;
+    top: 21%;
+    max-width: calc(100vw - 50px);
+  }
+  .opening h1 {
+    font-size: 57px;
+    letter-spacing: -1.6px;
+    line-height: 1.01;
+  }
+  .opening p {
+    font-size: 14px;
+    max-width: 270px;
+  }
+  .opening > div {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .opening button {
+    font-size: 12px;
+    padding: 12px 17px;
+  }
+  .kicker {
+    font-size: 8px;
+    letter-spacing: 2px;
+  }
+  .tourControl {
+    left: 16px;
+    bottom: 18px;
+  }
+  .tourControl span {
+    display: none;
+  }
+  .tourControl button {
+    font-size: 10px;
+    padding: 9px 13px;
+  }
+  .loadTitle {
+    font-size: 23px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loadTrack i {
+    transition: none;
+  }
+}
+.opening {
+  top: auto;
+  left: 50%;
+  bottom: 7vh;
+  transform: translateX(-50%);
+  width: min(560px, 90vw);
+  max-width: none;
+  text-align: center;
+  text-shadow: 0 2px 18px #e9dfc4b8;
+}
+.opening .kicker {
+  font-size: 9px;
+  letter-spacing: 2.5px;
+}
+.opening h1 {
+  font-size: 40px;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+  margin: 10px 0;
+}
+.opening p {
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0 0 17px;
+  color: #526d5b;
+}
+.opening > div {
+  justify-content: center;
+}
+.opening small {
+  font-size: 9px;
+  margin-top: 12px;
+}
+@media (max-width: 760px) {
+  .opening {
+    left: 50%;
+    top: auto;
+    bottom: 8vh;
+    max-width: calc(100vw - 30px);
+    width: 350px;
+  }
+  .opening h1 {
+    font-size: 32px;
+  }
+  .opening p {
+    font-size: 11px;
+    max-width: none;
+  }
+  .opening .kicker {
+    font-size: 7px;
+  }
+  .opening button {
+    padding: 11px 16px;
+    font-size: 11px;
+  }
+}
+
+.placeLoading {
+  position: fixed;
+  top: 78px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 70;
+  background: #eee4cde6;
+  border: 1px solid #f5e8cb;
+  border-radius: 22px;
+  padding: 9px 18px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #44694e;
+  backdrop-filter: blur(16px);
+  font: 11px PetrosUI;
+}
+.placeLoading .loadMark {
+  font-size: 21px;
+  margin: 0;
+}
+.placeLoading .loadTitle {
+  display: none;
+}
+.placeLoading .loadTrack {
+  width: 55px;
+  margin: 0;
+}
+.placeLoading small {
+  font-size: 10px;
+}
+
+.settings .regularTutor {
+  display: block;
+  border-top: 1px solid #d5d6bf;
+  padding: 10px 0;
+  font:
+    12px PetrosUI,
+    sans-serif;
+  color: inherit;
+  text-decoration: none;
+}
+.settings .regularTutor:hover {
+  text-decoration: underline;
+}
+.settings .regularTutor:focus-visible {
+  outline: 2px solid #af894e;
+  outline-offset: 3px;
+}

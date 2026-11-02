@@ -1,0 +1,199 @@
+{
+  "connection": "REAL_WEBRTC",
+  "microphone": "SYNTHETIC_BROWSER_DEVICE",
+  "teacher": "REAL_OPENAI",
+  "playback": "REAL_PROVIDER_AUDIO_EVENT",
+  "interrupt": true,
+  "spokenRecognition": "NOT_TESTED",
+  "state": {
+    "topic": "neural",
+    "params": {
+      "x1": -1,
+      "x2": 0.5,
+      "target": 1,
+      "learningRate": 0.03
+    },
+    "observations": {
+      "primary": 0.8038722934504463,
+      "secondary": -0.26796868529979584,
+      "loss": 0.8038722934504463,
+      "prediction": -0.26796868529979584,
+      "target": 1,
+      "steps": 0,
+      "x1": -1,
+      "x2": 0.5,
+      "learningRate": 0.03
+    },
+    "activeQuestion": "Set input x1 to -1 and explain the output.",
+    "revision": 7,
+    "scene": {
+      "version": 1,
+      "id": "compare2",
+      "layout": "compare",
+      "objects": [
+        {
+          "id": "caseA",
+          "kind": "node",
+          "content": "x₁ = 1, x₂ = 0.5",
+          "revealed": true
+        },
+        {
+          "id": "caseB",
+          "kind": "node",
+          "content": "x₁ = -1, x₂ = 0.5",
+          "revealed": true
+        },
+        {
+          "id": "predB",
+          "kind": "node",
+          "content": "prediction = -0.2680",
+          "revealed": true
+        },
+        {
+          "id": "lossB",
+          "kind": "node",
+          "content": "loss = 0.8039",
+          "revealed": true
+        }
+      ],
+      "edges": [
+        {
+          "op": "connect",
+          "fromId": "caseB",
+          "toId": "predB",
+          "relation": "causes"
+        },
+        {
+          "op": "connect",
+          "fromId": "predB",
+          "toId": "lossB",
+          "relation": "causes"
+        }
+      ],
+      "marks": [
+        {
+          "targetId": "prediction",
+          "mode": "focus"
+        }
+      ],
+      "annotations": [],
+      "focus": "prediction"
+    },
+    "stateHash": "c3441e35",
+    "events": [
+      {
+        "at": 1793609920204,
+        "kind": "interruption",
+        "before": "f3a93d13",
+        "after": "f3a93d13",
+        "detail": "Cancelled pending narration and model request; preserved committed scene."
+      },
+      {
+        "at": 1793609920276,
+        "kind": "interruption",
+        "before": "f3a93d13",
+        "after": "f3a93d13",
+        "detail": "Cancelled pending narration and model request; preserved committed scene."
+      },
+      {
+        "at": 1793609920333,
+        "kind": "interruption",
+        "before": "f3a93d13",
+        "after": "f3a93d13",
+        "detail": "Cancelled pending narration and model request; preserved committed scene."
+      },
+      {
+        "at": 1793609920432,
+        "kind": "voice_event",
+        "before": "7ecfd6c0",
+        "after": "7ecfd6c0",
+        "detail": "error:response_cancel_not_active"
+      },
+      {
+        "at": 1793609920467,
+        "kind": "question",
+        "before": "f3a93d13",
+        "after": "f3a93d13",
+        "detail": "Set input x1 to -1 and explain the output."
+      },
+      {
+        "at": 1793609920501,
+        "kind": "voice_event",
+        "before": "7ecfd6c0",
+        "after": "7ecfd6c0",
+        "detail": "error:response_cancel_not_active"
+      },
+      {
+        "at": 1793609920558,
+        "kind": "voice_event",
+        "before": "7ecfd6c0",
+        "after": "7ecfd6c0",
+        "detail": "error:response_cancel_not_active"
+      },
+      {
+        "at": 1793609920689,
+        "kind": "voice_event",
+        "before": "7ecfd6c0",
+        "after": "7ecfd6c0",
+        "detail": "error:response_cancel_not_active"
+      },
+      {
+        "at": 1793609933555,
+        "kind": "teacher_tools",
+        "before": "f3a93d13",
+        "after": "a422b13d",
+        "detail": "[{\"tool\":\"sim_observe\",\"args\":\"{}\",\"before\":{\"primary\":0.16795951019073463,\"secondary\":0.42041478591887005,\"loss\":0.16795951019073463,\"prediction\":0.42041478591887005,\"target\":1,\"steps\":0,\"x1\":1,\"x2\":0.5,\"learningRate\":0.03},\"after\":{\"primary\":0.16795951019073463,\"secondary\":0.42041478591887005,\"loss\":0.16795951019073463,\"prediction\":0.42041478591887005,\"target\":1,\"steps\":0,\"x1\":1,\"x2\":0.5,\"learni"
+      },
+      {
+        "at": 1793609933556,
+        "kind": "teaching_beat",
+        "before": "a422b13d",
+        "after": "c3441e35",
+        "detail": "When x₁ changed from 1 to -1 while x₂ stayed 0.5, the prediction moved from 0.4204 to -0.2680. The target is still 1, so the loss increased from 0.1680 to 0.8039."
+      },
+      {
+        "at": 1793609934033,
+        "kind": "provider_caption",
+        "before": "27a5a1c0",
+        "after": "27a5a1c0",
+        "detail": "When"
+      },
+      {
+        "at": 1793609934048,
+        "kind": "provider_caption",
+        "before": "27a5a1c0",
+        "after": "27a5a1c0",
+        "detail": "When x"
+      },
+      {
+        "at": 1793609934059,
+        "kind": "provider_caption",
+        "before": "27a5a1c0",
+        "after": "27a5a1c0",
+        "detail": "When x₁"
+      },
+      {
+        "at": 1793609934068,
+        "kind": "provider_caption",
+        "before": "27a5a1c0",
+        "after": "27a5a1c0",
+        "detail": "When x₁ changed"
+      },
+      {
+        "at": 1793609934128,
+        "kind": "voice_event",
+        "before": "27a5a1c0",
+        "after": "27a5a1c0",
+        "detail": "output_audio_buffer.started"
+      },
+      {
+        "at": 1793609934199,
+        "kind": "interruption",
+        "before": "c3441e35",
+        "after": "c3441e35",
+        "detail": "Cancelled pending narration and model request; preserved committed scene."
+      }
+    ]
+  },
+  "errors": []
+}

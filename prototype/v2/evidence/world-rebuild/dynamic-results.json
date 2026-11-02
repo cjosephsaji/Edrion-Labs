@@ -1,0 +1,46 @@
+{
+  "results": [
+    {
+      "topic": "neural",
+      "fullNetwork": true,
+      "lossBefore": 5.599052784682109,
+      "lossAfter": 0.000003721048080853206
+    },
+    {
+      "topic": "rocket",
+      "actualBurn": true
+    },
+    {
+      "topic": "attention",
+      "actualQueryWeights": true
+    },
+    {
+      "topic": "traffic",
+      "cars": 45,
+      "brakePropagates": true,
+      "frontBefore": "car_0",
+      "frontAfter": "car_43",
+      "scope": "Development build on this Mac; 1440×900 DPR2, Balanced, running 45-car model",
+      "medianMs": 16.69999999999709,
+      "p95Ms": 16.799999999995634,
+      "fps": 60.00252111433254,
+      "canvas": {
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "traffic",
+        "drawCalls": "24",
+        "triangles": "341662",
+        "character": "rigged-glb",
+        "petrosState": "Idle",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "topic": "relativity",
+      "earth": 2.3999999999999964,
+      "ship": 1.4399999999999977,
+      "gamma": 1.6666666666666667
+    }
+  ]
+}

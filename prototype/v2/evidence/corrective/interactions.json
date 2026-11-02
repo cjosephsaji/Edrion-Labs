@@ -1,0 +1,79 @@
+[
+  {
+    "silenceSeconds": 31,
+    "allFiveWaitForStudent": true
+  },
+  {
+    "station": "Neural Learning Lab",
+    "semanticPointer": {
+      "ok": true,
+      "id": "weight",
+      "target": {
+        "x": 491.578125,
+        "y": 376.515625,
+        "width": 49.640625,
+        "height": 49.265625
+      }
+    },
+    "mobilePromptAboveFold": true
+  },
+  {
+    "station": "Rocket Launch Bay",
+    "semanticPointer": {
+      "ok": true,
+      "id": "rocket",
+      "target": {
+        "x": 475.578125,
+        "y": 314,
+        "width": 82.71875,
+        "height": 201.90625
+      }
+    },
+    "mobilePromptAboveFold": true
+  },
+  {
+    "station": "Language Studio",
+    "semanticPointer": {
+      "ok": true,
+      "id": "token-4",
+      "target": {
+        "x": 614.28125,
+        "y": 384.140625,
+        "width": 57.34375,
+        "height": 47.375
+      }
+    },
+    "mobilePromptAboveFold": true
+  },
+  {
+    "station": "Traffic Control Table",
+    "semanticPointer": {
+      "ok": true,
+      "id": "car_0",
+      "target": {
+        "x": 546.671875,
+        "y": 428.8125,
+        "width": 24.53125,
+        "height": 13.265625
+      }
+    },
+    "mobilePromptAboveFold": true
+  },
+  {
+    "station": "Relativity Observatory",
+    "semanticPointer": {
+      "ok": true,
+      "id": "ship-clock",
+      "target": {
+        "x": 534.140625,
+        "y": 480.796875,
+        "width": 150.125,
+        "height": 42.6875
+      }
+    },
+    "mobilePromptAboveFold": true
+  },
+  {
+    "attentionMathsComputedRows": 5
+  }
+]

@@ -1,0 +1,24 @@
+{
+  "errors": [],
+  "canvas": [
+    {
+      "width": 2880,
+      "height": 1800,
+      "css": [
+        1440,
+        900
+      ],
+      "data": {
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "hub",
+        "drawCalls": "97",
+        "triangles": "867965",
+        "character": "rigged-glb",
+        "petrosState": "Idle",
+        "mouthAmplitude": "0.000"
+      }
+    }
+  ]
+}

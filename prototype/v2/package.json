@@ -1,0 +1,61 @@
+{
+  "name": "petros-v2",
+  "private": true,
+  "version": "0.2.0",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "next build --webpack",
+    "start": "next start -H 127.0.0.1 -p 3022",
+    "test": "vitest run --config tests/vitest.config.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.check.json",
+    "test:browser": "tsx tests/browser.mts",
+    "test:ai": "tsx tests/browser-ai.mts",
+    "test:voice": "tsx tests/voice-browser.mts",
+    "test:voice:all": "tsx tests/make-voice-fixtures.mts && tsx tests/voice-five-topics.mts",
+    "test:production": "tsx tests/production.mts",
+    "test:layouts": "tsx tests/lesson-screenshots.mts",
+    "test:visual-regression": "PETROS_COMPARE=1 tsx tests/lesson-screenshots.mts",
+    "test:corrective": "tsx tests/corrective-browser.mts",
+    "test:corrective:interactions": "tsx tests/corrective-interactions.mts",
+    "test:corrective:live": "tsx tests/corrective-live.mts",
+    "test:corrective:voice": "tsx tests/corrective-voice.mts",
+    "test:corrective:microphone": "tsx tests/corrective-microphone.mts",
+    "test:corrective:record": "tsx tests/atelier-recording.mts",
+    "test:world": "tsx tests/world-v3-smoke.mts",
+    "test:world:learning": "tsx tests/world-v3-learning.mts",
+    "test:world:voice-fixture": "tsx tests/world-v3-voice.mts",
+    "test:world:tour": "tsx tests/world-v3-tour.mts",
+    "test:world:performance": "tsx tests/world-v3-performance.mts"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "9.8.2",
+    "@react-three/postprocessing": "^3.2.2",
+    "gsap": "^3.15.0",
+    "next": "16.4.3",
+    "postprocessing": "^6.39.6",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "three": "0.170.0",
+    "zustand": "^5.0.16"
+  },
+  "devDependencies": {
+    "@gltf-transform/cli": "^4.5.1",
+    "@gltf-transform/core": "^4.5.1",
+    "@gltf-transform/extensions": "^4.5.1",
+    "@gltf-transform/functions": "^4.5.1",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/three": "0.170.0",
+    "playwright-core": "^1.61.1",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  },
+  "engines": {
+    "node": ">=22 <25"
+  },
+  "type": "module"
+}

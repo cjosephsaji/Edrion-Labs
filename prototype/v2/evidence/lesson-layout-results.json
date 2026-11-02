@@ -1,0 +1,272 @@
+[
+  {
+    "topic": "neural",
+    "changedFraction": 0,
+    "size": "desktop",
+    "bounds": {
+      "width": 797,
+      "scroll": 797,
+      "labels": [
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "steps = 0"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "no parameter update"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "prediction, target, loss unchanged"
+        }
+      ]
+    },
+    "source": "REPLAY_OF_REAL_AI_TOOL_RESULTS"
+  },
+  {
+    "topic": "rocket",
+    "changedFraction": 0,
+    "size": "desktop",
+    "bounds": {
+      "width": 797,
+      "scroll": 797,
+      "labels": [
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Thrust: 14,400 N"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Mass: 2,875 kg"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Acceleration: -4.80 m/s²"
+        }
+      ]
+    },
+    "source": "REPLAY_OF_REAL_AI_TOOL_RESULTS"
+  },
+  {
+    "topic": "attention",
+    "changedFraction": 0,
+    "size": "desktop",
+    "bounds": {
+      "width": 797,
+      "scroll": 797,
+      "labels": [
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Token 0 row: only self is allowed"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Token 4 row: earlier tokens are allowed"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Causal mask blocks future positions"
+        }
+      ]
+    },
+    "source": "REPLAY_OF_REAL_AI_TOOL_RESULTS"
+  },
+  {
+    "topic": "traffic",
+    "changedFraction": 0,
+    "size": "desktop",
+    "bounds": {
+      "width": 797,
+      "scroll": 797,
+      "labels": [
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Jam front: car_0"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Slowest car: car_19"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Mean speed: 8.31 m/s"
+        }
+      ]
+    },
+    "source": "REPLAY_OF_REAL_AI_TOOL_RESULTS"
+  },
+  {
+    "topic": "relativity",
+    "changedFraction": 0,
+    "size": "desktop",
+    "bounds": {
+      "width": 797,
+      "scroll": 797,
+      "labels": [
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "β increases toward 1"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "γ increases"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Ship proper time decreases"
+        }
+      ]
+    },
+    "source": "REPLAY_OF_REAL_AI_TOOL_RESULTS"
+  },
+  {
+    "topic": "neural",
+    "changedFraction": 0,
+    "size": "mobile",
+    "bounds": {
+      "width": 294,
+      "scroll": 294,
+      "labels": [
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "steps = 0"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "no parameter update"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "prediction, target, loss unchanged"
+        }
+      ]
+    },
+    "source": "REPLAY_OF_REAL_AI_TOOL_RESULTS"
+  },
+  {
+    "topic": "rocket",
+    "changedFraction": 0,
+    "size": "mobile",
+    "bounds": {
+      "width": 294,
+      "scroll": 294,
+      "labels": [
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Thrust: 14,400 N"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Mass: 2,875 kg"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Acceleration: -4.80 m/s²"
+        }
+      ]
+    },
+    "source": "REPLAY_OF_REAL_AI_TOOL_RESULTS"
+  },
+  {
+    "topic": "attention",
+    "changedFraction": 0,
+    "size": "mobile",
+    "bounds": {
+      "width": 294,
+      "scroll": 294,
+      "labels": [
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Token 0 row: only self is allowed"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Token 4 row: earlier tokens are allowed"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Causal mask blocks future positions"
+        }
+      ]
+    },
+    "source": "REPLAY_OF_REAL_AI_TOOL_RESULTS"
+  },
+  {
+    "topic": "traffic",
+    "changedFraction": 0,
+    "size": "mobile",
+    "bounds": {
+      "width": 294,
+      "scroll": 294,
+      "labels": [
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Jam front: car_0"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Slowest car: car_19"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Mean speed: 8.31 m/s"
+        }
+      ]
+    },
+    "source": "REPLAY_OF_REAL_AI_TOOL_RESULTS"
+  },
+  {
+    "topic": "relativity",
+    "changedFraction": 0,
+    "size": "mobile",
+    "bounds": {
+      "width": 294,
+      "scroll": 294,
+      "labels": [
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "β increases toward 1"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "γ increases"
+        },
+        {
+          "client": 78,
+          "scroll": 78,
+          "text": "Ship proper time decreases"
+        }
+      ]
+    },
+    "source": "REPLAY_OF_REAL_AI_TOOL_RESULTS"
+  }
+]

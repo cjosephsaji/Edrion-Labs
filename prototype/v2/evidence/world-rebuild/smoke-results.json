@@ -1,0 +1,233 @@
+{
+  "results": [
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "topic": "Neural learning",
+      "canvas": {
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "neural",
+        "drawCalls": "32",
+        "triangles": "246520",
+        "character": "rigged-glb",
+        "petrosState": "Point",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "topic": "Rocket landing",
+      "canvas": {
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "rocket",
+        "drawCalls": "26",
+        "triangles": "248580",
+        "character": "rigged-glb",
+        "petrosState": "Point",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "topic": "Attention",
+      "canvas": {
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "attention",
+        "drawCalls": "38",
+        "triangles": "251318",
+        "character": "rigged-glb",
+        "petrosState": "Point",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "topic": "Traffic waves",
+      "canvas": {
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "traffic",
+        "drawCalls": "24",
+        "triangles": "291562",
+        "character": "rigged-glb",
+        "petrosState": "Point",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "topic": "Time dilation",
+      "canvas": {
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "relativity",
+        "drawCalls": "36",
+        "triangles": "309148",
+        "character": "rigged-glb",
+        "petrosState": "Point",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "high",
+      "dpr": 2
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "balanced",
+      "dpr": 2
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "low",
+      "dpr": 1.5
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "topic": "Neural learning",
+      "canvas": {
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "neural",
+        "drawCalls": "32",
+        "triangles": "246520",
+        "character": "rigged-glb",
+        "petrosState": "Point",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "topic": "Rocket landing",
+      "canvas": {
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "rocket",
+        "drawCalls": "26",
+        "triangles": "248580",
+        "character": "rigged-glb",
+        "petrosState": "Point",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "topic": "Attention",
+      "canvas": {
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "attention",
+        "drawCalls": "38",
+        "triangles": "279386",
+        "character": "rigged-glb",
+        "petrosState": "Point",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "topic": "Traffic waves",
+      "canvas": {
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "traffic",
+        "drawCalls": "23",
+        "triangles": "290090",
+        "character": "rigged-glb",
+        "petrosState": "Point",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "topic": "Time dilation",
+      "canvas": {
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "relativity",
+        "drawCalls": "30",
+        "triangles": "268128",
+        "character": "rigged-glb",
+        "petrosState": "Point",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "quality": "high",
+      "dpr": 2
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "quality": "balanced",
+      "dpr": 2
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "quality": "low",
+      "dpr": 1.5
+    }
+  ],
+  "errors": []
+}

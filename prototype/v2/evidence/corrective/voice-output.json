@@ -1,0 +1,50 @@
+{
+  "results": [
+    {
+      "topic": "Neural learning",
+      "providerSpeech": true,
+      "decodedAudibleSignal": true,
+      "peakRMS": 0.02542660139007753,
+      "caption": "NOTICE THISOur model wants to predict 4, but right now it predicts 1. Let’s find out why.Continue with Petros →Sound on · muteExplore freelyRestart lessonPause Petros",
+      "interrupted": true,
+      "noStaleAdvance": true
+    },
+    {
+      "topic": "Rocket landing",
+      "providerSpeech": true,
+      "decodedAudibleSignal": true,
+      "peakRMS": 0.060734807716198234,
+      "caption": "NOTICE THISThis rocket is 120 metres above its pad, falling at 12 metres per second. Can we bring it home gently?Continue with Petros →Sound on · muteExplore freelyRestart lessonPause Petros",
+      "interrupted": true,
+      "noStaleAdvance": true
+    },
+    {
+      "topic": "Attention",
+      "providerSpeech": true,
+      "decodedAudibleSignal": true,
+      "peakRMS": 0.027092830223377082,
+      "caption": "NOTICE THISLook at “the cat chased the ball”. Which earlier words will “ball” draw information from? Let’s follow the connections.Continue with Petros →Sound on · muteExplore freelyRestart lessonPause Petros",
+      "interrupted": true,
+      "noStaleAdvance": true
+    },
+    {
+      "topic": "Traffic waves",
+      "providerSpeech": true,
+      "decodedAudibleSignal": true,
+      "peakRMS": 0.044192194771420716,
+      "caption": "NOTICE THISWatch this one car brake briefly. Can a jam appear even though the road is clear?Continue with Petros →Sound on · muteExplore freelyRestart lessonPause Petros",
+      "interrupted": true,
+      "noStaleAdvance": true
+    },
+    {
+      "topic": "Time dilation",
+      "providerSpeech": true,
+      "decodedAudibleSignal": true,
+      "peakRMS": 0.05020949828884674,
+      "caption": "NOTICE THISImagine the ship travels very fast. Will its clock tick the same amount as the clock on Earth?Continue with Petros →Sound on · muteExplore freelyRestart lessonPause Petros",
+      "interrupted": true,
+      "noStaleAdvance": true
+    }
+  ],
+  "scope": "Real provider MP3 decoded and played in the browser, measured through Web Audio. Hardware speakers and human microphone conditions require human acceptance."
+}

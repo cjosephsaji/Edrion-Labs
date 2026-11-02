@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "entry": "Edrion student-web /prototype, temporary isolated verification server on 3025",
+  "destination": "http://127.0.0.1:3022/prototype",
+  "canvas": {
+    "css": [
+      1440,
+      900
+    ],
+    "backing": [
+      2880,
+      1800
+    ]
+  },
+  "integration": "Local development forwards to the isolated world. Production may opt in with PETROS_V2_ORIGIN; target retains its own access gate."
+}

@@ -1,0 +1,346 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "topic": "neural",
+      "size": "desktop",
+      "before": {
+        "primary": 0.16795951019073463,
+        "secondary": 0.42041478591887,
+        "loss": 0.16795951019073463,
+        "prediction": 0.42041478591887,
+        "target": 1,
+        "steps": 0,
+        "x1": 1,
+        "x2": 0.5,
+        "learningRate": 0.03
+      },
+      "after": {
+        "primary": 0.17304674023484573,
+        "secondary": 0.411702897789143,
+        "loss": 0.17304674023484573,
+        "prediction": 0.411702897789143,
+        "target": 1,
+        "steps": 15,
+        "x1": -1,
+        "x2": 0.5,
+        "learningRate": 0.03
+      },
+      "layout": {
+        "overflow": false,
+        "targets": []
+      }
+    },
+    {
+      "topic": "rocket",
+      "size": "desktop",
+      "before": {
+        "primary": 120,
+        "secondary": -12,
+        "altitude": 120,
+        "velocity": -12,
+        "fuel": 450,
+        "mass": 1450,
+        "thrust": 14400,
+        "acceleration": 0.1210344827586205,
+        "status": "flying",
+        "flightTime": 0
+      },
+      "after": {
+        "primary": 106.03576297324157,
+        "secondary": -15.926484780810462,
+        "altitude": 106.03576297324157,
+        "velocity": -15.926484780810462,
+        "fuel": 445.03448275861956,
+        "mass": 2445.0344827586196,
+        "thrust": 14400,
+        "acceleration": -3.920512509519644,
+        "status": "flying",
+        "flightTime": 0.9999999999999989
+      },
+      "layout": {
+        "overflow": false,
+        "targets": [
+          "ground"
+        ]
+      }
+    },
+    {
+      "topic": "attention",
+      "size": "desktop",
+      "before": {
+        "primary": 0.22522516193993086,
+        "secondary": 4,
+        "query": "ball",
+        "rowSum": 1,
+        "strongestToken": "cat",
+        "context": "[0.38969410024461165,0.27838894310587536,0.26524359087400545,0.07747748380600691]",
+        "weights": "[[1,0,0,0,0],[0.3893607660507781,0.610639233949222,0,0,0],[0.2878410040094024,0.2995880182273404,0.4125709777632573,0,0],[0.2450006665600173,0.25499933343998277,0.25499933343998277,0.2450006665600173,0],[0.1807474262309379,0.22522516193993086,0.19580134935150859,0.1807474262309379,0.21747863624668476]]",
+        "queries": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "keys": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "values": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "causal": true
+      },
+      "after": {
+        "primary": 0.2260988544051125,
+        "secondary": 4,
+        "query": "ball",
+        "rowSum": 1,
+        "strongestToken": "dog",
+        "context": "[0.3677724401308384,0.27818777875746475,0.28777990289557254,0.1]",
+        "weights": "[[1,0,0,0,0],[0.4073334000459302,0.5926665999540697,0,0,0],[0.2869769423672859,0.30169056483709566,0.4113324927956184,0,0],[0.244374387324048,0.2569037300883711,0.25434749526353295,0.244374387324048,0],[0.18054360228539734,0.2260988544051125,0.19558054950722203,0.18054360228539734,0.21723339151687082]]",
+        "queries": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "keys": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "values": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "causal": true
+      },
+      "layout": {
+        "overflow": false,
+        "targets": []
+      }
+    },
+    {
+      "topic": "traffic",
+      "size": "desktop",
+      "before": {
+        "jamFrontCar": "car_0",
+        "jamFrontPosition": 0,
+        "jamFrontExists": false,
+        "jamFrontGradient": 0,
+        "primary": 13,
+        "secondary": 13,
+        "meanSpeed": 13,
+        "minSpeed": 13,
+        "maxSpeed": 13,
+        "density": 57.14285714285714,
+        "slowestCar": "car_0",
+        "slowestPosition": 0,
+        "speedSpread": 0,
+        "elapsed": 0
+      },
+      "after": {
+        "jamFrontCar": "car_0",
+        "jamFrontPosition": 10.494622208005183,
+        "jamFrontExists": true,
+        "jamFrontGradient": 7.715866627319546,
+        "primary": 8.458671073075548,
+        "secondary": 1,
+        "meanSpeed": 8.458671073075548,
+        "minSpeed": 1,
+        "maxSpeed": 8.715866627319661,
+        "density": 85.71428571428571,
+        "slowestCar": "car_0",
+        "slowestPosition": 10.494622208005183,
+        "speedSpread": 7.715866627319661,
+        "elapsed": 1
+      },
+      "layout": {
+        "overflow": false,
+        "targets": []
+      }
+    },
+    {
+      "topic": "relativity",
+      "size": "desktop",
+      "before": {
+        "primary": 1.6666666666666667,
+        "secondary": 6,
+        "gamma": 1.6666666666666667,
+        "beta": 0.8,
+        "earthSeconds": 10,
+        "shipSeconds": 6,
+        "properInterval": 6,
+        "earthClock": 0,
+        "shipClock": 0,
+        "frame": "earth"
+      },
+      "after": {
+        "primary": 7.088812050083356,
+        "secondary": 1.410673597966589,
+        "gamma": 7.088812050083356,
+        "beta": 0.99,
+        "earthSeconds": 10,
+        "shipSeconds": 1.410673597966589,
+        "properInterval": 1.410673597966589,
+        "earthClock": 1,
+        "shipClock": 0.1410673597966589,
+        "frame": "earth"
+      },
+      "layout": {
+        "overflow": false,
+        "targets": []
+      }
+    },
+    {
+      "topic": "neural",
+      "size": "mobile",
+      "before": {
+        "primary": 0.16795951019073463,
+        "secondary": 0.42041478591887,
+        "loss": 0.16795951019073463,
+        "prediction": 0.42041478591887,
+        "target": 1,
+        "steps": 0,
+        "x1": 1,
+        "x2": 0.5,
+        "learningRate": 0.03
+      },
+      "after": {
+        "primary": 0.17304674023484573,
+        "secondary": 0.411702897789143,
+        "loss": 0.17304674023484573,
+        "prediction": 0.411702897789143,
+        "target": 1,
+        "steps": 15,
+        "x1": -1,
+        "x2": 0.5,
+        "learningRate": 0.03
+      },
+      "layout": {
+        "overflow": false,
+        "targets": []
+      }
+    },
+    {
+      "topic": "rocket",
+      "size": "mobile",
+      "before": {
+        "primary": 120,
+        "secondary": -12,
+        "altitude": 120,
+        "velocity": -12,
+        "fuel": 450,
+        "mass": 1450,
+        "thrust": 14400,
+        "acceleration": 0.1210344827586205,
+        "status": "flying",
+        "flightTime": 0
+      },
+      "after": {
+        "primary": 106.03576297324157,
+        "secondary": -15.926484780810462,
+        "altitude": 106.03576297324157,
+        "velocity": -15.926484780810462,
+        "fuel": 445.03448275861956,
+        "mass": 2445.0344827586196,
+        "thrust": 14400,
+        "acceleration": -3.920512509519644,
+        "status": "flying",
+        "flightTime": 0.9999999999999989
+      },
+      "layout": {
+        "overflow": false,
+        "targets": [
+          "ground"
+        ]
+      }
+    },
+    {
+      "topic": "attention",
+      "size": "mobile",
+      "before": {
+        "primary": 0.22522516193993086,
+        "secondary": 4,
+        "query": "ball",
+        "rowSum": 1,
+        "strongestToken": "cat",
+        "context": "[0.38969410024461165,0.27838894310587536,0.26524359087400545,0.07747748380600691]",
+        "weights": "[[1,0,0,0,0],[0.3893607660507781,0.610639233949222,0,0,0],[0.2878410040094024,0.2995880182273404,0.4125709777632573,0,0],[0.2450006665600173,0.25499933343998277,0.25499933343998277,0.2450006665600173,0],[0.1807474262309379,0.22522516193993086,0.19580134935150859,0.1807474262309379,0.21747863624668476]]",
+        "queries": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "keys": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "values": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "causal": true
+      },
+      "after": {
+        "primary": 0.2260988544051125,
+        "secondary": 4,
+        "query": "ball",
+        "rowSum": 1,
+        "strongestToken": "dog",
+        "context": "[0.3677724401308384,0.27818777875746475,0.28777990289557254,0.1]",
+        "weights": "[[1,0,0,0,0],[0.4073334000459302,0.5926665999540697,0,0,0],[0.2869769423672859,0.30169056483709566,0.4113324927956184,0,0],[0.244374387324048,0.2569037300883711,0.25434749526353295,0.244374387324048,0],[0.18054360228539734,0.2260988544051125,0.19558054950722203,0.18054360228539734,0.21723339151687082]]",
+        "queries": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "keys": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "values": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "causal": true
+      },
+      "layout": {
+        "overflow": false,
+        "targets": []
+      }
+    },
+    {
+      "topic": "traffic",
+      "size": "mobile",
+      "before": {
+        "jamFrontCar": "car_0",
+        "jamFrontPosition": 0,
+        "jamFrontExists": false,
+        "jamFrontGradient": 0,
+        "primary": 13,
+        "secondary": 13,
+        "meanSpeed": 13,
+        "minSpeed": 13,
+        "maxSpeed": 13,
+        "density": 57.14285714285714,
+        "slowestCar": "car_0",
+        "slowestPosition": 0,
+        "speedSpread": 0,
+        "elapsed": 0
+      },
+      "after": {
+        "jamFrontCar": "car_0",
+        "jamFrontPosition": 10.494622208005183,
+        "jamFrontExists": true,
+        "jamFrontGradient": 7.715866627319546,
+        "primary": 8.458671073075548,
+        "secondary": 1,
+        "meanSpeed": 8.458671073075548,
+        "minSpeed": 1,
+        "maxSpeed": 8.715866627319661,
+        "density": 85.71428571428571,
+        "slowestCar": "car_0",
+        "slowestPosition": 10.494622208005183,
+        "speedSpread": 7.715866627319661,
+        "elapsed": 1
+      },
+      "layout": {
+        "overflow": false,
+        "targets": []
+      }
+    },
+    {
+      "topic": "relativity",
+      "size": "mobile",
+      "before": {
+        "primary": 1.6666666666666667,
+        "secondary": 6,
+        "gamma": 1.6666666666666667,
+        "beta": 0.8,
+        "earthSeconds": 10,
+        "shipSeconds": 6,
+        "properInterval": 6,
+        "earthClock": 0,
+        "shipClock": 0,
+        "frame": "earth"
+      },
+      "after": {
+        "primary": 7.088812050083356,
+        "secondary": 1.410673597966589,
+        "gamma": 7.088812050083356,
+        "beta": 0.99,
+        "earthSeconds": 10,
+        "shipSeconds": 1.410673597966589,
+        "properInterval": 1.410673597966589,
+        "earthClock": 1,
+        "shipClock": 0.1410673597966589,
+        "frame": "earth"
+      },
+      "layout": {
+        "overflow": false,
+        "targets": []
+      }
+    }
+  ],
+  "errors": []
+}

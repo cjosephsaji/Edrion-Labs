@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "projection": "Three.js Box3 corners projected by the active camera",
+  "before": {
+    "x": 503.4375,
+    "y": 541.921875,
+    "width": 76.734375,
+    "height": 131.015625
+  },
+  "after": {
+    "x": 498.171875,
+    "y": -315.796875,
+    "width": 84.640625,
+    "height": 147.921875
+  },
+  "observations": {
+    "primary": 105.69695976582648,
+    "secondary": -11.830205013856675,
+    "altitude": 105.69695976582648,
+    "velocity": -11.830205013856675,
+    "fuel": 444.0413793103435,
+    "mass": 1444.0413793103435,
+    "thrust": 14400,
+    "acceleration": 0.16201341063873365,
+    "status": "flying",
+    "flightTime": 1.1999999999999982
+  }
+}

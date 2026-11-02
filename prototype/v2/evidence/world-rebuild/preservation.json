@@ -1,0 +1,8 @@
+{
+  "baselineFiles": 57,
+  "changed": [
+    "core/voice-provider.ts",
+    "core/narration.ts"
+  ],
+  "note": "Two presentational taps of existing client audio playback; numerical/teaching/server/model code and pre-existing tests preserved during the presentation rebuild. Minimum main route forwarding is recorded separately."
+}

@@ -1,0 +1,120 @@
+{
+  "error": "TimeoutError: page.waitForFunction: Timeout 45000ms exceeded.",
+  "results": [
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "topic": "Neural learning",
+      "canvas": {
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "neural",
+        "drawCalls": "91",
+        "triangles": "678365",
+        "character": "rigged-glb",
+        "petrosState": "Point",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "topic": "Rocket landing",
+      "canvas": {
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "true",
+        "destination": "rocket",
+        "drawCalls": "80",
+        "triangles": "693204",
+        "character": "rigged-glb",
+        "petrosState": "Hover",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "topic": "Attention",
+      "canvas": {
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "attention",
+        "drawCalls": "115",
+        "triangles": "764009",
+        "character": "rigged-glb",
+        "petrosState": "Point",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "topic": "Traffic waves",
+      "canvas": {
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "true",
+        "destination": "traffic",
+        "drawCalls": "65",
+        "triangles": "709760",
+        "character": "rigged-glb",
+        "petrosState": "Hover",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "topic": "Time dilation",
+      "canvas": {
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "relativity",
+        "drawCalls": "105",
+        "triangles": "795613",
+        "character": "rigged-glb",
+        "petrosState": "Point",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "high",
+      "dpr": 2
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "balanced",
+      "dpr": 2
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "low",
+      "dpr": 1.5
+    }
+  ],
+  "errors": []
+}

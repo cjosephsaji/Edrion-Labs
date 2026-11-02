@@ -1,0 +1,154 @@
+[
+  {
+    "file": "WoodenTable_01.glb",
+    "bytes": 558948,
+    "sha256": "43909600285443b50e317278dc93010c4ea932d0285efcb63d10506456357cde",
+    "gltfVersion": 2,
+    "meshes": 1,
+    "materials": 1,
+    "triangles": 952,
+    "primitivesWithUV": 1,
+    "primitives": 1,
+    "externalImages": [],
+    "extensions": [
+      "EXT_meshopt_compression",
+      "EXT_texture_webp",
+      "KHR_mesh_quantization"
+    ]
+  },
+  {
+    "file": "book_encyclopedia_set_01.glb",
+    "bytes": 1170288,
+    "sha256": "fdbf2c71e39bc4080d2a9573cd094b95a5241ee88b65a4ba950186b2e7d4e94d",
+    "gltfVersion": 2,
+    "meshes": 20,
+    "materials": 2,
+    "triangles": 67306,
+    "primitivesWithUV": 40,
+    "primitives": 40,
+    "externalImages": [],
+    "extensions": [
+      "EXT_meshopt_compression",
+      "EXT_texture_webp",
+      "KHR_mesh_quantization"
+    ]
+  },
+  {
+    "file": "car.glb",
+    "bytes": 104228,
+    "sha256": "df362d027a09b19395be0e96abd7cc2dc54608dfb920b592e64357b589f9fcd6",
+    "gltfVersion": 2,
+    "meshes": 6,
+    "materials": 1,
+    "triangles": 1104,
+    "primitivesWithUV": 6,
+    "primitives": 6,
+    "externalImages": [
+      "Textures/colormap.png"
+    ],
+    "extensions": [
+      "KHR_texture_transform"
+    ]
+  },
+  {
+    "file": "desk_lamp_arm_01.glb",
+    "bytes": 1088020,
+    "sha256": "7af900c316303dacc415a2cdb1f098711bef7195fc87da24331b652d10c297e5",
+    "gltfVersion": 2,
+    "meshes": 1,
+    "materials": 2,
+    "triangles": 24102,
+    "primitivesWithUV": 2,
+    "primitives": 2,
+    "externalImages": [],
+    "extensions": [
+      "EXT_meshopt_compression",
+      "EXT_texture_webp",
+      "KHR_mesh_quantization"
+    ]
+  },
+  {
+    "file": "mid_century_lounge_chair.glb",
+    "bytes": 779700,
+    "sha256": "e352b989f2b8e1d8b529a79c23b57e23ab9a1993e14a457d5ef018c96eb2107d",
+    "gltfVersion": 2,
+    "meshes": 1,
+    "materials": 1,
+    "triangles": 6148,
+    "primitivesWithUV": 1,
+    "primitives": 1,
+    "externalImages": [],
+    "extensions": [
+      "EXT_meshopt_compression",
+      "EXT_texture_webp",
+      "KHR_mesh_quantization"
+    ]
+  },
+  {
+    "file": "potted_plant_02.glb",
+    "bytes": 1854292,
+    "sha256": "891d15047e2761f0471117717ab321e2d91ae7c44e5b832e2c334f67317a3d96",
+    "gltfVersion": 2,
+    "meshes": 3,
+    "materials": 2,
+    "triangles": 69806,
+    "primitivesWithUV": 3,
+    "primitives": 3,
+    "externalImages": [],
+    "extensions": [
+      "EXT_meshopt_compression",
+      "EXT_texture_webp",
+      "KHR_mesh_quantization"
+    ]
+  },
+  {
+    "file": "rocket.glb",
+    "bytes": 149372,
+    "sha256": "6584639c0cdb982de8bfb24682c3f541789b73a396d11e95e564a78862393460",
+    "gltfVersion": 2,
+    "meshes": 23,
+    "materials": 7,
+    "triangles": 8933,
+    "primitivesWithUV": 31,
+    "primitives": 31,
+    "externalImages": [],
+    "extensions": [
+      "KHR_draco_mesh_compression",
+      "KHR_materials_specular",
+      "EXT_texture_webp"
+    ]
+  },
+  {
+    "file": "shuttle.glb",
+    "bytes": 1194068,
+    "sha256": "f5b079bce9c4e9012b8d3aaa4a1e30b1450dab2d17c134131d308693d3242253",
+    "gltfVersion": 2,
+    "meshes": 176,
+    "materials": 32,
+    "triangles": 212970,
+    "primitivesWithUV": 220,
+    "primitives": 234,
+    "externalImages": [],
+    "extensions": [
+      "KHR_draco_mesh_compression",
+      "KHR_materials_specular"
+    ]
+  },
+  {
+    "file": "wooden_display_shelves_01.glb",
+    "bytes": 420336,
+    "sha256": "9f40bab1109767ad170077c33ac0912dc522053e299de3ec3b18615a56e1b804",
+    "gltfVersion": 2,
+    "meshes": 4,
+    "materials": 1,
+    "triangles": 3174,
+    "primitivesWithUV": 4,
+    "primitives": 4,
+    "externalImages": [],
+    "extensions": [
+      "EXT_meshopt_compression",
+      "EXT_texture_webp",
+      "KHR_mesh_quantization"
+    ]
+  }
+]

@@ -1,0 +1,4 @@
+{
+  "error": "Error: page.evaluate: ReferenceError: __name is not defined\n    at eval (eval at evaluate (:370:30), <anonymous>:1:214)\n    at new Promise (<anonymous>)\n    at eval (eval at evaluate (:370:30), <anonymous>:1:5)\n    at UtilityScript.evaluate (<anonymous>:372:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)",
+  "results": []
+}

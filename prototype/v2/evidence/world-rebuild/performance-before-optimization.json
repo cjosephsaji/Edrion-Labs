@@ -1,0 +1,526 @@
+{
+  "scope": "Local production build; headless Brave on this Mac; 1440×900 CSS at native DPR 2, each steady-state sample 3 seconds. Not physical phone measurements. Includes all render passes in telemetry.",
+  "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+  "initialDecodedBytes": 9275861,
+  "initialEncodedBytes": 6305886,
+  "initialResources": [
+    {
+      "file": "/petros/petros-idle.png",
+      "decoded": 255463,
+      "encoded": 255463,
+      "transfer": 255763
+    },
+    {
+      "file": "/petros/petros-thinking.png",
+      "decoded": 253550,
+      "encoded": 253550,
+      "transfer": 253850
+    },
+    {
+      "file": "/petros/petros-listening.png",
+      "decoded": 255698,
+      "encoded": 255698,
+      "transfer": 255998
+    },
+    {
+      "file": "/petros/petros-talking.png",
+      "decoded": 253201,
+      "encoded": 253201,
+      "transfer": 253501
+    },
+    {
+      "file": "/_next/static/css/8c615e4f4b668477.css",
+      "decoded": 11002,
+      "encoded": 3236,
+      "transfer": 3536
+    },
+    {
+      "file": "/_next/static/chunks/main-app-33261918f8f58d83.js",
+      "decoded": 513,
+      "encoded": 513,
+      "transfer": 813
+    },
+    {
+      "file": "/_next/static/chunks/webpack-3acfafa57ca1a5f0.js",
+      "decoded": 4979,
+      "encoded": 2428,
+      "transfer": 2728
+    },
+    {
+      "file": "/_next/static/chunks/app/prototype/page-3f1a2e365fc66137.js",
+      "decoded": 107289,
+      "encoded": 36985,
+      "transfer": 37285
+    },
+    {
+      "file": "/_next/static/chunks/4bd1b696-c7408084347438ae.js",
+      "decoded": 203721,
+      "encoded": 64057,
+      "transfer": 64357
+    },
+    {
+      "file": "/_next/static/chunks/794-216401842b802bd7.js",
+      "decoded": 242566,
+      "encoded": 67415,
+      "transfer": 67715
+    },
+    {
+      "file": "/prototype/api/status",
+      "decoded": 51,
+      "encoded": 51,
+      "transfer": 351
+    },
+    {
+      "file": "/_next/static/chunks/b536a0f1.3d99cf38d057342f.js",
+      "decoded": 681268,
+      "encoded": 170861,
+      "transfer": 171161
+    },
+    {
+      "file": "/_next/static/chunks/a3cd4a83.8611f7c61fded47e.js",
+      "decoded": 182782,
+      "encoded": 77745,
+      "transfer": 78045
+    },
+    {
+      "file": "/_next/static/chunks/f6211eb1.76c6b7f0832ac66d.js",
+      "decoded": 159730,
+      "encoded": 83530,
+      "transfer": 83830
+    },
+    {
+      "file": "/_next/static/chunks/c15bf2b0.182b384b62e205ff.js",
+      "decoded": 51569,
+      "encoded": 19771,
+      "transfer": 20071
+    },
+    {
+      "file": "/_next/static/chunks/0f8af13e.2bc54c616db7516a.js",
+      "decoded": 81165,
+      "encoded": 28102,
+      "transfer": 28402
+    },
+    {
+      "file": "/_next/static/chunks/e49654ac.2d3016d2b13079bf.js",
+      "decoded": 166002,
+      "encoded": 52341,
+      "transfer": 52641
+    },
+    {
+      "file": "/_next/static/chunks/157.8b860aa878948b4c.js",
+      "decoded": 353373,
+      "encoded": 117573,
+      "transfer": 117873
+    },
+    {
+      "file": "/_next/static/chunks/519.7934ca0457c2bec0.js",
+      "decoded": 25268,
+      "encoded": 9402,
+      "transfer": 9702
+    },
+    {
+      "file": "/favicon.svg",
+      "decoded": 247,
+      "encoded": 247,
+      "transfer": 547
+    },
+    {
+      "file": "/_next/static/css/1c42380451e0bab1.css",
+      "decoded": 6652,
+      "encoded": 2019,
+      "transfer": 2319
+    },
+    {
+      "file": "/_next/static/chunks/757.952dae413e938fc7.js",
+      "decoded": 14943,
+      "encoded": 5511,
+      "transfer": 5811
+    },
+    {
+      "file": "/world-v3/fonts/ui.ttf",
+      "decoded": 110884,
+      "encoded": 57045,
+      "transfer": 57345
+    },
+    {
+      "file": "/world-v3/fonts/display.ttf",
+      "decoded": 76580,
+      "encoded": 42334,
+      "transfer": 42634
+    },
+    {
+      "file": "/world-v3/environment.hdr",
+      "decoded": 1686299,
+      "encoded": 1686299,
+      "transfer": 1686599
+    },
+    {
+      "file": "/world-v3/archipelago.glb",
+      "decoded": 598528,
+      "encoded": 338116,
+      "transfer": 338416
+    },
+    {
+      "file": "/world-v3/cloud.glb",
+      "decoded": 24144,
+      "encoded": 19590,
+      "transfer": 19890
+    },
+    {
+      "file": "/world-v3/node.glb",
+      "decoded": 10148,
+      "encoded": 4831,
+      "transfer": 5131
+    },
+    {
+      "file": "/world-v3/rocket-proxy.glb",
+      "decoded": 76832,
+      "encoded": 41137,
+      "transfer": 41437
+    },
+    {
+      "file": "/world-v3/word.glb",
+      "decoded": 3324,
+      "encoded": 1760,
+      "transfer": 2060
+    },
+    {
+      "file": "/world-v3/car-proxy.glb",
+      "decoded": 32684,
+      "encoded": 13612,
+      "transfer": 13912
+    },
+    {
+      "file": "/world-v3/planet.glb",
+      "decoded": 35812,
+      "encoded": 16232,
+      "transfer": 16532
+    },
+    {
+      "file": "/world-v3/ship-proxy.glb",
+      "decoded": 27344,
+      "encoded": 16760,
+      "transfer": 17060
+    },
+    {
+      "file": "/world-v3/petros.glb",
+      "decoded": 2697388,
+      "encoded": 2045683,
+      "transfer": 2045983
+    },
+    {
+      "file": "/world-v3/basis/basis_transcoder.js",
+      "decoded": 57529,
+      "encoded": 15169,
+      "transfer": 15469
+    },
+    {
+      "file": "/world-v3/basis/basis_transcoder.wasm",
+      "decoded": 527333,
+      "encoded": 247619,
+      "transfer": 247919
+    }
+  ],
+  "results": [
+    {
+      "topic": "neural",
+      "quality": "high",
+      "medianMs": 50,
+      "p95Ms": 50.100000000000364,
+      "fps": 22.629864563689353,
+      "frames": 66,
+      "canvas": {
+        "dpr": 2,
+        "engine": "three.js r170",
+        "quality": "high",
+        "travelling": "false",
+        "destination": "neural",
+        "drawCalls": "76",
+        "triangles": "452880",
+        "character": "rigged-glb",
+        "petrosState": "Idle",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "topic": "neural",
+      "quality": "balanced",
+      "medianMs": 33.30000000000291,
+      "p95Ms": 50,
+      "fps": 28.295776088364647,
+      "frames": 83,
+      "canvas": {
+        "dpr": 2,
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "neural",
+        "drawCalls": "77",
+        "triangles": "423205",
+        "character": "rigged-glb",
+        "petrosState": "Idle",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "topic": "neural",
+      "quality": "low",
+      "medianMs": 16.700000000000728,
+      "p95Ms": 16.799999999999272,
+      "fps": 59.99932585027133,
+      "frames": 178,
+      "canvas": {
+        "dpr": 1.5,
+        "engine": "three.js r170",
+        "quality": "low",
+        "travelling": "false",
+        "destination": "neural",
+        "drawCalls": "31",
+        "triangles": "214075",
+        "character": "rigged-glb",
+        "petrosState": "Idle",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "topic": "rocket",
+      "quality": "high",
+      "medianMs": 49.900000000001455,
+      "p95Ms": 50.099999999998545,
+      "fps": 22.97274129950283,
+      "frames": 67,
+      "canvas": {
+        "dpr": 2,
+        "engine": "three.js r170",
+        "quality": "high",
+        "travelling": "false",
+        "destination": "rocket",
+        "drawCalls": "69",
+        "triangles": "461000",
+        "character": "rigged-glb",
+        "petrosState": "Idle",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "topic": "rocket",
+      "quality": "balanced",
+      "medianMs": 33.30000000000291,
+      "p95Ms": 50,
+      "fps": 28.457793320990138,
+      "frames": 83,
+      "canvas": {
+        "dpr": 2,
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "rocket",
+        "drawCalls": "70",
+        "triangles": "431325",
+        "character": "rigged-glb",
+        "petrosState": "Idle",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "topic": "rocket",
+      "quality": "low",
+      "medianMs": 16.69999999999709,
+      "p95Ms": 16.799999999995634,
+      "fps": 60.003370975897525,
+      "frames": 178,
+      "canvas": {
+        "dpr": 1.5,
+        "engine": "three.js r170",
+        "quality": "low",
+        "travelling": "false",
+        "destination": "rocket",
+        "drawCalls": "25",
+        "triangles": "216135",
+        "character": "rigged-glb",
+        "petrosState": "Idle",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "topic": "attention",
+      "quality": "high",
+      "medianMs": 50,
+      "p95Ms": 50.099999999998545,
+      "fps": 22.06972654229455,
+      "frames": 64,
+      "canvas": {
+        "dpr": 2,
+        "engine": "three.js r170",
+        "quality": "high",
+        "travelling": "false",
+        "destination": "attention",
+        "drawCalls": "86",
+        "triangles": "535656",
+        "character": "rigged-glb",
+        "petrosState": "Idle",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "topic": "attention",
+      "quality": "balanced",
+      "medianMs": 33.30000000000291,
+      "p95Ms": 50,
+      "fps": 28.114928341219173,
+      "frames": 82,
+      "canvas": {
+        "dpr": 2,
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "attention",
+        "drawCalls": "87",
+        "triangles": "505981",
+        "character": "rigged-glb",
+        "petrosState": "Idle",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "topic": "attention",
+      "quality": "low",
+      "medianMs": 16.69999999999709,
+      "p95Ms": 16.700000000004366,
+      "fps": 60.00134834490666,
+      "frames": 178,
+      "canvas": {
+        "dpr": 1.5,
+        "engine": "three.js r170",
+        "quality": "low",
+        "travelling": "false",
+        "destination": "attention",
+        "drawCalls": "37",
+        "triangles": "218873",
+        "character": "rigged-glb",
+        "petrosState": "Idle",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "topic": "traffic",
+      "quality": "high",
+      "medianMs": 50,
+      "p95Ms": 50.10000000000582,
+      "fps": 21.944111092062457,
+      "frames": 64,
+      "canvas": {
+        "dpr": 2,
+        "engine": "three.js r170",
+        "quality": "high",
+        "travelling": "false",
+        "destination": "traffic",
+        "drawCalls": "58",
+        "triangles": "531464",
+        "character": "rigged-glb",
+        "petrosState": "Idle",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "topic": "traffic",
+      "quality": "balanced",
+      "medianMs": 33.30000000000291,
+      "p95Ms": 50,
+      "fps": 27.45762711864407,
+      "frames": 81,
+      "canvas": {
+        "dpr": 2,
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "traffic",
+        "drawCalls": "59",
+        "triangles": "501789",
+        "character": "rigged-glb",
+        "petrosState": "Idle",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "topic": "traffic",
+      "quality": "low",
+      "medianMs": 16.69999999999709,
+      "p95Ms": 16.70000000001164,
+      "fps": 60.00134834490651,
+      "frames": 178,
+      "canvas": {
+        "dpr": 1.5,
+        "engine": "three.js r170",
+        "quality": "low",
+        "travelling": "false",
+        "destination": "traffic",
+        "drawCalls": "23",
+        "triangles": "302559",
+        "character": "rigged-glb",
+        "petrosState": "Idle",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "topic": "relativity",
+      "quality": "high",
+      "medianMs": 50,
+      "p95Ms": 50.09999999999127,
+      "fps": 21.601234356248927,
+      "frames": 63,
+      "canvas": {
+        "dpr": 2,
+        "engine": "three.js r170",
+        "quality": "high",
+        "travelling": "false",
+        "destination": "relativity",
+        "drawCalls": "76",
+        "triangles": "566896",
+        "character": "rigged-glb",
+        "petrosState": "Idle",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "topic": "relativity",
+      "quality": "balanced",
+      "medianMs": 33.30000000000291,
+      "p95Ms": 50,
+      "fps": 27.273037193604445,
+      "frames": 80,
+      "canvas": {
+        "dpr": 2,
+        "engine": "three.js r170",
+        "quality": "balanced",
+        "travelling": "false",
+        "destination": "relativity",
+        "drawCalls": "77",
+        "triangles": "537221",
+        "character": "rigged-glb",
+        "petrosState": "Idle",
+        "mouthAmplitude": "0.000"
+      }
+    },
+    {
+      "topic": "relativity",
+      "quality": "low",
+      "medianMs": 16.69999999999709,
+      "p95Ms": 16.80000000000291,
+      "fps": 60.003370975897525,
+      "frames": 178,
+      "canvas": {
+        "dpr": 1.5,
+        "engine": "three.js r170",
+        "quality": "low",
+        "travelling": "false",
+        "destination": "relativity",
+        "drawCalls": "35",
+        "triangles": "320143",
+        "character": "rigged-glb",
+        "petrosState": "Idle",
+        "mouthAmplitude": "0.000"
+      }
+    }
+  ]
+}

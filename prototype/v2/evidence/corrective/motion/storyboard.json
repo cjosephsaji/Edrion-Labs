@@ -1,0 +1,38 @@
+[
+  {
+    "station": "Atrium",
+    "durationSeconds": 18.888,
+    "video": "atrium.webm",
+    "screenshot": "atrium.png"
+  },
+  {
+    "station": "Neural Learning Lab",
+    "durationSeconds": 18.949,
+    "video": "neural-learning-lab.webm",
+    "screenshot": "neural-learning-lab.png"
+  },
+  {
+    "station": "Rocket Launch Bay",
+    "durationSeconds": 42.374,
+    "video": "rocket-launch-bay.webm",
+    "screenshot": "rocket-launch-bay.png"
+  },
+  {
+    "station": "Language Studio",
+    "durationSeconds": 16.807,
+    "video": "language-studio.webm",
+    "screenshot": "language-studio.png"
+  },
+  {
+    "station": "Traffic Control Table",
+    "durationSeconds": 19.577,
+    "video": "traffic-control-table.webm",
+    "screenshot": "traffic-control-table.png"
+  },
+  {
+    "station": "Relativity Observatory",
+    "durationSeconds": 20.164,
+    "video": "relativity-observatory.webm",
+    "screenshot": "relativity-observatory.png"
+  }
+]

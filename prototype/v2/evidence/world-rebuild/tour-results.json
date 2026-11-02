@@ -1,0 +1,38 @@
+{
+  "durationMs": 120000,
+  "results": [
+    {
+      "topic": "neural",
+      "elapsedMs": 21408,
+      "phase": "PREDICT",
+      "hash": "32c181de"
+    },
+    {
+      "topic": "rocket",
+      "elapsedMs": 45405,
+      "phase": "PREDICT",
+      "hash": "9964537f"
+    },
+    {
+      "topic": "attention",
+      "elapsedMs": 69412,
+      "phase": "PREDICT",
+      "hash": "207482dd"
+    },
+    {
+      "topic": "traffic",
+      "elapsedMs": 93416,
+      "phase": "PREDICT",
+      "hash": "776bdd0c"
+    },
+    {
+      "topic": "relativity",
+      "elapsedMs": 117421,
+      "phase": "PREDICT",
+      "hash": "a9176884"
+    }
+  ],
+  "stopCancelsTimers": true,
+  "manualNavigationStopsTour": true,
+  "keyboardOrbit": true
+}

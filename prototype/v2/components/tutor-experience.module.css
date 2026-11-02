@@ -1,0 +1,347 @@
+.questions,
+.explanation {
+  --accent: #759247;
+  --accent-soft: #e9efd9;
+  --accent-border: #d2ddbb;
+}
+[data-topic='neural'].questions,
+[data-topic='neural'].explanation {
+  --accent: #5c8b77;
+  --accent-soft: #e3eee5;
+  --accent-border: #c4d9c9;
+}
+[data-topic='rocket'].questions,
+[data-topic='rocket'].explanation {
+  --accent: #ae8552;
+  --accent-soft: #f3e9d3;
+  --accent-border: #dfcdac;
+}
+[data-topic='attention'].questions,
+[data-topic='attention'].explanation {
+  --accent: #9577a3;
+  --accent-soft: #eee6f0;
+  --accent-border: #d8c7de;
+}
+[data-topic='traffic'].questions,
+[data-topic='traffic'].explanation {
+  --accent: #a0934b;
+  --accent-soft: #f0edce;
+  --accent-border: #dcd6a8;
+}
+[data-topic='relativity'].questions,
+[data-topic='relativity'].explanation {
+  --accent: #608a9a;
+  --accent-soft: #e2edf0;
+  --accent-border: #c4d8de;
+}
+.eyebrow {
+  font-size: 8px;
+  letter-spacing: 1.3px;
+  color: #8c815d;
+}
+.questions {
+  flex-shrink: 0;
+  margin: 0;
+}
+.questionsHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.questionsHeading h3 {
+  font:
+    400 22px/1.2 Georgia,
+    serif;
+  letter-spacing: -0.7px;
+  margin: 4px 0 0;
+}
+.localBadge {
+  border: 1px solid #cad6ba;
+  border-radius: 20px;
+  color: #647b50;
+  padding: 5px 9px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.invitation {
+  font-size: 11px;
+  color: #7a846e;
+  margin: 4px 0 8px;
+}
+.questionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.questionGrid button {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  min-width: 0;
+  border: 1px solid #d6ddc8;
+  border-radius: 13px;
+  padding: 8px 10px;
+  background: #fafbf2;
+  box-shadow: 0 2px 3px #354b3504;
+  transition:
+    transform 150ms,
+    background 150ms,
+    border-color 150ms;
+}
+.questionGrid button:hover {
+  background: #e8efdb;
+  border-color: #8da773;
+  transform: translateY(-2px);
+}
+.questionGrid button[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px #7f9b6722;
+}
+.questionTop {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  color: #8a9177;
+  font-size: 8px;
+  letter-spacing: 0.8px;
+}
+.questionTop > span:last-child {
+  font-size: 16px;
+  color: #708958;
+}
+.questionText {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #35523c;
+}
+.questions > small {
+  display: none;
+  margin-top: 9px;
+  font-size: 9px;
+  color: #859077;
+}
+.explanation {
+  position: relative;
+  background: linear-gradient(140deg, #fbfcf3, #f3f5e8);
+  border: 1px solid #d7dfc7;
+  border-radius: 18px;
+  padding: 15px;
+  box-shadow: 0 7px 24px #45563806;
+}
+.storyHeader {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.storyHeader h3 {
+  font:
+    400 23px/1.2 Georgia,
+    serif;
+  letter-spacing: -0.6px;
+  margin: 0;
+  color: #36573b;
+}
+.storySymbol {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  height: 34px;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-soft);
+  border-radius: 11px;
+  color: var(--accent);
+  font-size: 23px;
+}
+.caption p {
+  margin: 0;
+}
+.caption .lead {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #35533c;
+}
+.caption .detail {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #76806a;
+}
+.why {
+  margin-top: 11px;
+}
+.why summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 11px;
+  color: #75895e;
+  padding: 5px 0;
+}
+.why summary::-webkit-details-marker {
+  display: none;
+}
+.why summary:focus-visible {
+  outline: 2px solid #b59042;
+  outline-offset: 3px;
+}
+.why[open] summary > span {
+  transform: rotate(45deg);
+}
+.caption .followup {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #42684b;
+}
+.readingsLabel {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: #8b927d;
+  margin: 18px 0 8px;
+}
+.readingsLabel > span:last-child {
+  margin-left: auto;
+  font-size: 8px;
+  letter-spacing: 0;
+}
+.liveDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #8da55b;
+}
+.readings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid #dee3d1;
+  border-bottom: 1px solid #dee3d1;
+  padding: 10px 0;
+}
+.readings button {
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 3px 8px;
+  background: transparent;
+  text-align: left;
+}
+.readings button + button {
+  border-left: 1px solid #dfe5d2;
+}
+.readings button:hover {
+  background: #e9eedc;
+}
+.readings button span {
+  font-size: 8px;
+  display: block;
+  color: #879078;
+}
+.readings button strong {
+  display: block;
+  font-size: clamp(14px, 1.25vw, 19px);
+  font-weight: 500;
+  margin-top: 3px;
+  color: #3e6144;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.experiment {
+  margin-top: 13px;
+}
+.experiment button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  border: 1px solid #a9bb8c;
+  background: #e4ecd7;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 11px;
+  color: #486044;
+}
+.experiment button:hover {
+  background: #d7e4c5;
+}
+.experiment button > span:last-child {
+  margin-left: auto;
+}
+.experiment small {
+  display: block;
+  text-align: center;
+  margin-top: 7px;
+  font-size: 9px;
+  line-height: 1.5;
+  color: #8a927c;
+}
+@media (max-width: 640px) {
+  .questions {
+    margin: 0;
+  }
+  .questionGrid button {
+    padding: 8px 10px;
+    gap: 4px;
+  }
+  .questionText {
+    font-size: 12px;
+  }
+  .eyebrow {
+    font-size: 7px;
+  }
+  .explanation {
+    padding: 16px 14px;
+  }
+  .readings button strong {
+    font-size: 16px;
+  }
+}
+.questions .eyebrow {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .questionGrid button {
+    transition: none;
+  }
+  .questionGrid button:hover {
+    transform: none;
+  }
+}
+@media (max-height: 800px) {
+  .invitation {
+    display: none;
+  }
+  .questionGrid {
+    margin-top: 8px;
+  }
+  .questionGrid button {
+    padding: 7px 9px;
+  }
+  .questionText {
+    font-size: 11px;
+  }
+  .storyHeader {
+    margin-bottom: 10px;
+  }
+  .storyHeader h3 {
+    font-size: 21px;
+  }
+  .caption .lead {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .caption .detail {
+    font-size: 12px;
+    line-height: 1.65;
+  }
+}

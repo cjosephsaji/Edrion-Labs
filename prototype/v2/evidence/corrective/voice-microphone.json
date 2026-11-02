@@ -1,0 +1,347 @@
+[
+  {
+    "topic": "neural",
+    "passed": true,
+    "heardQuestion": "Set the first input to -1, and explain what changed.",
+    "result": {
+      "state": {
+        "version": 1,
+        "id": "neural",
+        "params": {
+          "model": "linear",
+          "weight": 0.5,
+          "x1": -1,
+          "x2": 0.5,
+          "target": 4,
+          "learningRate": 0.1
+        },
+        "time": 0,
+        "data": {
+          "neural": {
+            "input": [
+              -1,
+              0.5
+            ],
+            "target": 4,
+            "w1": [
+              [
+                0.2,
+                -0.1
+              ],
+              [
+                -0.3,
+                0.4
+              ],
+              [
+                0.6,
+                0.1
+              ]
+            ],
+            "b1": [
+              0.05,
+              -0.02,
+              0.01
+            ],
+            "w2": [
+              0.3,
+              -0.25,
+              0.4
+            ],
+            "b2": 0.1,
+            "steps": 0
+          }
+        },
+        "history": [],
+        "running": false
+      },
+      "scene": {
+        "version": 1,
+        "id": "lesson2",
+        "layout": "compare",
+        "objects": [
+          {
+            "id": "x1-old",
+            "kind": "node",
+            "content": "x₁ = 2",
+            "revealed": true
+          },
+          {
+            "id": "x1-new",
+            "kind": "node",
+            "content": "x₁ = -1",
+            "revealed": true
+          },
+          {
+            "id": "pred-old",
+            "kind": "node",
+            "content": "prediction = 1",
+            "revealed": true
+          },
+          {
+            "id": "pred-new",
+            "kind": "node",
+            "content": "prediction = -0.5",
+            "revealed": true
+          },
+          {
+            "id": "loss-old",
+            "kind": "node",
+            "content": "loss = 4.5",
+            "revealed": true
+          },
+          {
+            "id": "loss-new",
+            "kind": "node",
+            "content": "loss = 10.125",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "x1-old",
+            "toId": "pred-old",
+            "relation": "flows_to"
+          },
+          {
+            "op": "connect",
+            "fromId": "x1-new",
+            "toId": "pred-new",
+            "relation": "flows_to"
+          },
+          {
+            "op": "connect",
+            "fromId": "pred-old",
+            "toId": "loss-old",
+            "relation": "flows_to"
+          },
+          {
+            "op": "connect",
+            "fromId": "pred-new",
+            "toId": "loss-new",
+            "relation": "flows_to"
+          }
+        ],
+        "marks": [
+          {
+            "targetId": "pred-new",
+            "mode": "circle"
+          },
+          {
+            "targetId": "loss",
+            "mode": "underline"
+          }
+        ],
+        "annotations": [
+          {
+            "targetId": "weight",
+            "text": "Same weight; changing x₁ changes the output"
+          }
+        ],
+        "focus": "input-0"
+      },
+      "beats": [
+        {
+          "say": "Changing x₁ from 2 to -1 changed the prediction from 1 to -0.5. The loss also increased from 4.5 to 10.125.",
+          "do": [
+            {
+              "op": "create_scene",
+              "sceneId": "lesson2",
+              "layout": "compare"
+            },
+            {
+              "op": "add",
+              "sceneId": "lesson2",
+              "object": {
+                "id": "x1-old",
+                "kind": "node",
+                "content": "x₁ = 2"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "lesson2",
+              "object": {
+                "id": "x1-new",
+                "kind": "node",
+                "content": "x₁ = -1"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "lesson2",
+              "object": {
+                "id": "pred-old",
+                "kind": "node",
+                "content": "prediction = 1"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "lesson2",
+              "object": {
+                "id": "pred-new",
+                "kind": "node",
+                "content": "prediction = -0.5"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "lesson2",
+              "object": {
+                "id": "loss-old",
+                "kind": "node",
+                "content": "loss = 4.5"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "lesson2",
+              "object": {
+                "id": "loss-new",
+                "kind": "node",
+                "content": "loss = 10.125"
+              }
+            },
+            {
+              "op": "connect",
+              "fromId": "x1-old",
+              "toId": "pred-old",
+              "relation": "flows_to"
+            },
+            {
+              "op": "connect",
+              "fromId": "x1-new",
+              "toId": "pred-new",
+              "relation": "flows_to"
+            },
+            {
+              "op": "connect",
+              "fromId": "pred-old",
+              "toId": "loss-old",
+              "relation": "flows_to"
+            },
+            {
+              "op": "connect",
+              "fromId": "pred-new",
+              "toId": "loss-new",
+              "relation": "flows_to"
+            },
+            {
+              "op": "highlight",
+              "targetId": "pred-new",
+              "mode": "circle"
+            },
+            {
+              "op": "focus_target",
+              "targetId": "input-0"
+            }
+          ]
+        },
+        {
+          "say": "The input sign change made the weighted input switch from positive to negative, so the prediction crossed below zero. The gradient changed from -6 to 4.5, so the update direction would reverse.",
+          "do": [
+            {
+              "op": "highlight",
+              "targetId": "loss",
+              "mode": "underline"
+            },
+            {
+              "op": "annotate",
+              "targetId": "weight",
+              "text": "Same weight; changing x₁ changes the output",
+              "placement": "auto"
+            }
+          ]
+        }
+      ],
+      "followup": "If x₁ stayed at -1 but the weight were reduced, would the prediction move closer to zero or farther from zero?",
+      "move": "demonstrate",
+      "assessment": "question",
+      "skill": "effect of input sign on linear prediction",
+      "observations": {
+        "primary": 10.125,
+        "secondary": -0.5,
+        "loss": 10.125,
+        "prediction": -0.5,
+        "target": 4,
+        "steps": 0,
+        "x1": -1,
+        "x2": 0.5,
+        "learningRate": 0.1,
+        "model": "linear",
+        "weight": 0.5,
+        "gradient": 4.5
+      },
+      "events": [
+        {
+          "tool": "sim_set_params",
+          "args": "{\"patch\":{\"x1\":-1}}",
+          "before": {
+            "primary": 4.5,
+            "secondary": 1,
+            "loss": 4.5,
+            "prediction": 1,
+            "target": 4,
+            "steps": 0,
+            "x1": 2,
+            "x2": 0.5,
+            "learningRate": 0.1,
+            "model": "linear",
+            "weight": 0.5,
+            "gradient": -6
+          },
+          "after": {
+            "primary": 10.125,
+            "secondary": -0.5,
+            "loss": 10.125,
+            "prediction": -0.5,
+            "target": 4,
+            "steps": 0,
+            "x1": -1,
+            "x2": 0.5,
+            "learningRate": 0.1,
+            "model": "linear",
+            "weight": 0.5,
+            "gradient": 4.5
+          }
+        },
+        {
+          "tool": "sim_observe",
+          "args": "{}",
+          "before": {
+            "primary": 10.125,
+            "secondary": -0.5,
+            "loss": 10.125,
+            "prediction": -0.5,
+            "target": 4,
+            "steps": 0,
+            "x1": -1,
+            "x2": 0.5,
+            "learningRate": 0.1,
+            "model": "linear",
+            "weight": 0.5,
+            "gradient": 4.5
+          },
+          "after": {
+            "primary": 10.125,
+            "secondary": -0.5,
+            "loss": 10.125,
+            "prediction": -0.5,
+            "target": 4,
+            "steps": 0,
+            "x1": -1,
+            "x2": 0.5,
+            "learningRate": 0.1,
+            "model": "linear",
+            "weight": 0.5,
+            "gradient": 4.5
+          }
+        }
+      ],
+      "provider": "openai"
+    },
+    "interrupted": true,
+    "scope": "AI-generated WAV through the browser microphone device and real WebRTC/transcription/tool/audio loop"
+  }
+]

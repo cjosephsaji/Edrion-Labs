@@ -1,0 +1,38 @@
+{
+  "error": "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#petros-observations') to be visible\u001b[22m\n\u001b[2m    63 × locator resolved to hidden <script type=\"application/json\" id=\"petros-observations\">{\"topic\":\"neural\",\"params\":{\"x1\":1,\"x2\":0.5,\"targ…</script>\u001b[22m\n",
+  "state": {
+    "topic": "neural",
+    "params": {
+      "x1": 1,
+      "x2": 0.5,
+      "target": 1,
+      "learningRate": 0.03
+    },
+    "observations": {
+      "primary": 0.16795951019073463,
+      "secondary": 0.42041478591887,
+      "loss": 0.16795951019073463,
+      "prediction": 0.42041478591887,
+      "target": 1,
+      "steps": 0,
+      "x1": 1,
+      "x2": 0.5,
+      "learningRate": 0.03
+    },
+    "activeQuestion": "",
+    "revision": 0,
+    "scene": {
+      "version": 1,
+      "id": "lesson",
+      "layout": "flow",
+      "objects": [],
+      "edges": [],
+      "marks": [],
+      "annotations": [],
+      "focus": null
+    },
+    "stateHash": "f3a93d13",
+    "events": []
+  },
+  "body": "p\npetros\na little curiosity goes a long way\nClassic\nWorld ↗\nA QUESTION WORTH EXPLORING\nLet’s make the invisible click.\n\nChange a little. Notice a lot. Build an intuition with Petros.\n\n01Neural learning\n02Rocket landing\n03Attention\n04Traffic waves\n05Time dilation\n01 / NEURAL LEARNING\nHow a network learns\nLIVE MODEL\n\nCan a mistake teach a machine?\n\nINPUT\nTANH LAYER\nOUTPUT\n1.00\nx1\n0.50\nx2\n0.20\nh1\n-0.12\nh2\n0.58\nh3\n0.42\nprediction\ngreen = positive weight · terracotta = negative weight\nLoss\n0.16796\nTraining steps\n0\nTarget\n1\n▷ Run experiment\nStep +\n↺\n↶\nt = 0.0 s\nInput x₁\n1.00\nInput x₂\n0.50\nAdjust the experiment\n＋\nTraining loss\n½ (prediction − target)² / simulation time →\n0.000\n0\nRun an experiment to draw its trace\n\nToy 2 → 3 → 1 tanh regression network. One example, not an LLM or evidence of generalization.\n\nPetros\n●Here for your curiosity\nMAKE IT YOUR EXPERIMENT\n\nChange something, make a prediction, and test it. Ask me why whenever you’re curious.\n\nTRY ASKING\nWhat if the input becomes negative?\n↗\n↑\n◉ Connect voice\nStop\nAI teacher connected\nConversation & experiment log\nEDRION / LEARN BY EXPLORING\nSaved on this browser · no mastery inferred"
+}

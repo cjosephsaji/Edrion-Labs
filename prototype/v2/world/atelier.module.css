@@ -1,0 +1,155 @@
+.world {
+  overflow: hidden;
+  border-radius: 16px;
+  background: #e8e9dc;
+  border: 1px solid #d4d9c7;
+}
+.scene {
+  height: clamp(350px, 48vh, 520px);
+  position: relative;
+  overflow: hidden;
+  background: #e2e8dc;
+  outline-offset: -3px;
+}
+.scene canvas {
+  display: block;
+}
+.anchors {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.location {
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #fffdf0;
+  text-shadow: 0 1px 12px #112b23;
+  background: #244239b8;
+  padding: 12px 16px;
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+}
+.location span {
+  font-size: 8px;
+  letter-spacing: 2px;
+}
+.location strong {
+  font-size: 14px;
+  font-weight: 500;
+}
+.viewControls {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  display: flex;
+  gap: 4px;
+}
+.viewControls button {
+  background: #f9f8eedd !important;
+  backdrop-filter: blur(8px);
+  border-color: #fff9 !important;
+  width: 35px;
+  height: 33px;
+  padding: 0 !important;
+}
+.map {
+  display: flex;
+  gap: 5px;
+  padding: 10px;
+  flex-wrap: wrap;
+  border-top: 1px solid #d3d8c5;
+}
+.map button {
+  flex: 1;
+  white-space: nowrap;
+  background: #faf8ed !important;
+  font-size: 10px !important;
+  padding: 8px 7px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.map button[aria-pressed='true'] {
+  background: #3e624a !important;
+  color: #fff9e8 !important;
+}
+.map i {
+  width: 6px;
+  height: 6px;
+  border-radius: 100%;
+}
+.worldHint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 13px 11px;
+  color: #778571;
+  font-size: 10px;
+}
+.worldHint select {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font-size: 9px;
+  max-width: 120px;
+}
+.fallback {
+  padding: 60px 30px;
+  line-height: 1.7;
+}
+@media (max-width: 760px) {
+  .scene {
+    height: 360px;
+  }
+  .location {
+    top: 10px;
+    left: 10px;
+    padding: 8px 10px;
+  }
+  .location strong {
+    font-size: 11px;
+  }
+  .map {
+    gap: 4px;
+    padding: 7px;
+  }
+  .map button {
+    flex-basis: 29%;
+  }
+  .worldHint {
+    display: block;
+    font-size: 9px;
+  }
+  .worldHint select {
+    margin-top: 7px;
+  }
+}
+.stationAction {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 10px;
+}
+.stationAction span {
+  font-size: 10px;
+  color: #85917a;
+}
+.stationAction button {
+  background: #f8f4e5 !important;
+  border-color: #c9d2ba !important;
+  font-size: 11px !important;
+  padding: 8px 12px !important;
+}
+@media (max-width: 760px) {
+  .scene {
+    height: 280px;
+  }
+}

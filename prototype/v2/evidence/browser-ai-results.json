@@ -1,0 +1,5961 @@
+[
+  {
+    "topic": "neural",
+    "question": "What if the input becomes negative?",
+    "result": {
+      "state": {
+        "version": 1,
+        "id": "neural",
+        "params": {
+          "x1": -1,
+          "x2": 0.5,
+          "target": 1,
+          "learningRate": 0.03
+        },
+        "time": 0,
+        "data": {
+          "neural": {
+            "input": [
+              -1,
+              0.5
+            ],
+            "target": 1,
+            "w1": [
+              [
+                0.2,
+                -0.1
+              ],
+              [
+                -0.3,
+                0.4
+              ],
+              [
+                0.6,
+                0.1
+              ]
+            ],
+            "b1": [
+              0.05,
+              -0.02,
+              0.01
+            ],
+            "w2": [
+              0.3,
+              -0.25,
+              0.4
+            ],
+            "b2": 0.1,
+            "steps": 0
+          }
+        },
+        "history": [],
+        "running": false
+      },
+      "scene": {
+        "version": 1,
+        "id": "lesson2_fix",
+        "layout": "compare",
+        "objects": [
+          {
+            "id": "x1_pos",
+            "kind": "node",
+            "content": "x₁ = 1 → prediction = 0.420",
+            "revealed": true
+          },
+          {
+            "id": "x1_neg",
+            "kind": "node",
+            "content": "x₁ = −1 → prediction = −0.268",
+            "revealed": true
+          },
+          {
+            "id": "loss_cmp",
+            "kind": "equation",
+            "content": "loss: 0.168 → 0.804",
+            "revealed": true
+          },
+          {
+            "id": "toy_net",
+            "kind": "model",
+            "content": "Toy tanh regression network",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "x1_pos",
+            "toId": "toy_net",
+            "relation": "flows_to"
+          },
+          {
+            "op": "connect",
+            "fromId": "x1_neg",
+            "toId": "toy_net",
+            "relation": "flows_to"
+          },
+          {
+            "op": "connect",
+            "fromId": "toy_net",
+            "toId": "loss_cmp",
+            "relation": "causes"
+          }
+        ],
+        "marks": [
+          {
+            "targetId": "x1_neg",
+            "mode": "circle"
+          },
+          {
+            "targetId": "loss",
+            "mode": "underline"
+          }
+        ],
+        "annotations": [
+          {
+            "targetId": "prediction",
+            "text": "Here, the prediction shifts from positive to negative."
+          }
+        ],
+        "focus": "prediction"
+      },
+      "beats": [
+        {
+          "say": "When x₁ changes from 1 to −1, the observed prediction drops from 0.420 to −0.268, and the loss rises from 0.168 to 0.804. In this toy tanh network, that sign change makes the example fit the target much worse.",
+          "do": [
+            {
+              "op": "create_scene",
+              "sceneId": "lesson2_fix",
+              "layout": "compare"
+            },
+            {
+              "op": "add",
+              "sceneId": "lesson2_fix",
+              "object": {
+                "id": "x1_pos",
+                "kind": "node",
+                "content": "x₁ = 1 → prediction = 0.420"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "lesson2_fix",
+              "object": {
+                "id": "x1_neg",
+                "kind": "node",
+                "content": "x₁ = −1 → prediction = −0.268"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "lesson2_fix",
+              "object": {
+                "id": "loss_cmp",
+                "kind": "equation",
+                "content": "loss: 0.168 → 0.804"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "lesson2_fix",
+              "object": {
+                "id": "toy_net",
+                "kind": "model",
+                "content": "Toy tanh regression network"
+              }
+            },
+            {
+              "op": "connect",
+              "fromId": "x1_pos",
+              "toId": "toy_net",
+              "relation": "flows_to"
+            },
+            {
+              "op": "connect",
+              "fromId": "x1_neg",
+              "toId": "toy_net",
+              "relation": "flows_to"
+            },
+            {
+              "op": "connect",
+              "fromId": "toy_net",
+              "toId": "loss_cmp",
+              "relation": "causes"
+            },
+            {
+              "op": "highlight",
+              "targetId": "x1_neg",
+              "mode": "circle"
+            }
+          ]
+        },
+        {
+          "say": "The key comparison is against the original prediction at x₁ = 1, not against zero. Here, flipping x₁ reverses the prediction’s sign and increases the loss relative to that baseline.",
+          "do": [
+            {
+              "op": "focus_target",
+              "targetId": "prediction"
+            },
+            {
+              "op": "highlight",
+              "targetId": "loss",
+              "mode": "underline"
+            },
+            {
+              "op": "annotate",
+              "targetId": "prediction",
+              "text": "Here, the prediction shifts from positive to negative.",
+              "placement": "auto"
+            }
+          ]
+        }
+      ],
+      "followup": "If x₂ increased while x₁ stayed at −1, would you expect the prediction to move toward or away from the target?",
+      "move": "demonstrate",
+      "assessment": "question",
+      "skill": "neural input sign effect",
+      "observations": {
+        "primary": 0.8038722934504463,
+        "secondary": -0.2679686852997958,
+        "loss": 0.8038722934504463,
+        "prediction": -0.2679686852997958,
+        "target": 1,
+        "steps": 0,
+        "x1": -1,
+        "x2": 0.5,
+        "learningRate": 0.03
+      },
+      "events": [
+        {
+          "tool": "sim_observe",
+          "args": "{}",
+          "before": {
+            "primary": 0.16795951019073463,
+            "secondary": 0.42041478591887005,
+            "loss": 0.16795951019073463,
+            "prediction": 0.42041478591887005,
+            "target": 1,
+            "steps": 0,
+            "x1": 1,
+            "x2": 0.5,
+            "learningRate": 0.03
+          },
+          "after": {
+            "primary": 0.16795951019073463,
+            "secondary": 0.42041478591887005,
+            "loss": 0.16795951019073463,
+            "prediction": 0.42041478591887005,
+            "target": 1,
+            "steps": 0,
+            "x1": 1,
+            "x2": 0.5,
+            "learningRate": 0.03
+          }
+        },
+        {
+          "tool": "sim_set_params",
+          "args": "{\"patch\":{\"x1\":-1}}",
+          "before": {
+            "primary": 0.16795951019073463,
+            "secondary": 0.42041478591887005,
+            "loss": 0.16795951019073463,
+            "prediction": 0.42041478591887005,
+            "target": 1,
+            "steps": 0,
+            "x1": 1,
+            "x2": 0.5,
+            "learningRate": 0.03
+          },
+          "after": {
+            "primary": 0.8038722934504463,
+            "secondary": -0.2679686852997958,
+            "loss": 0.8038722934504463,
+            "prediction": -0.2679686852997958,
+            "target": 1,
+            "steps": 0,
+            "x1": -1,
+            "x2": 0.5,
+            "learningRate": 0.03
+          }
+        },
+        {
+          "tool": "sim_observe",
+          "args": "{}",
+          "before": {
+            "primary": 0.8038722934504463,
+            "secondary": -0.2679686852997958,
+            "loss": 0.8038722934504463,
+            "prediction": -0.2679686852997958,
+            "target": 1,
+            "steps": 0,
+            "x1": -1,
+            "x2": 0.5,
+            "learningRate": 0.03
+          },
+          "after": {
+            "primary": 0.8038722934504463,
+            "secondary": -0.2679686852997958,
+            "loss": 0.8038722934504463,
+            "prediction": -0.2679686852997958,
+            "target": 1,
+            "steps": 0,
+            "x1": -1,
+            "x2": 0.5,
+            "learningRate": 0.03
+          }
+        }
+      ],
+      "provider": "openai"
+    },
+    "wrongAnswer": {
+      "state": {
+        "version": 1,
+        "id": "neural",
+        "params": {
+          "x1": -1,
+          "x2": 0.5,
+          "target": 1,
+          "learningRate": 0.03
+        },
+        "time": 0,
+        "data": {
+          "neural": {
+            "input": [
+              -1,
+              0.5
+            ],
+            "target": 1,
+            "w1": [
+              [
+                0.2,
+                -0.1
+              ],
+              [
+                -0.3,
+                0.4
+              ],
+              [
+                0.6,
+                0.1
+              ]
+            ],
+            "b1": [
+              0.05,
+              -0.02,
+              0.01
+            ],
+            "w2": [
+              0.3,
+              -0.25,
+              0.4
+            ],
+            "b2": 0.1,
+            "steps": 0
+          }
+        },
+        "history": [],
+        "running": false
+      },
+      "scene": {
+        "version": 1,
+        "id": "repair_compare",
+        "layout": "compare",
+        "objects": [
+          {
+            "id": "pred_low",
+            "kind": "node",
+            "content": "prediction = −0.268",
+            "revealed": true
+          },
+          {
+            "id": "target_high",
+            "kind": "node",
+            "content": "target = 1",
+            "revealed": true
+          },
+          {
+            "id": "loss_nonzero",
+            "kind": "equation",
+            "content": "loss = 0.804",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "pred_low",
+            "toId": "target_high",
+            "relation": "compares"
+          },
+          {
+            "op": "connect",
+            "fromId": "pred_low",
+            "toId": "loss_nonzero",
+            "relation": "causes"
+          }
+        ],
+        "marks": [
+          {
+            "targetId": "prediction",
+            "mode": "circle"
+          },
+          {
+            "targetId": "loss",
+            "mode": "focus"
+          }
+        ],
+        "annotations": [
+          {
+            "targetId": "prediction",
+            "text": "The output is below the target, so the error is not zero."
+          },
+          {
+            "targetId": "loss",
+            "text": "Nonzero loss means the model should move the output toward the target."
+          }
+        ],
+        "focus": "loss"
+      },
+      "beats": [
+        {
+          "say": "The corrected comparison is that the prediction is below the target: −0.268 versus 1. That mismatch is why the loss is nonzero.",
+          "do": [
+            {
+              "op": "create_scene",
+              "sceneId": "repair_compare",
+              "layout": "compare"
+            },
+            {
+              "op": "add",
+              "sceneId": "repair_compare",
+              "object": {
+                "id": "pred_low",
+                "kind": "node",
+                "content": "prediction = −0.268"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "repair_compare",
+              "object": {
+                "id": "target_high",
+                "kind": "node",
+                "content": "target = 1"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "repair_compare",
+              "object": {
+                "id": "loss_nonzero",
+                "kind": "equation",
+                "content": "loss = 0.804"
+              }
+            },
+            {
+              "op": "connect",
+              "fromId": "pred_low",
+              "toId": "target_high",
+              "relation": "compares"
+            },
+            {
+              "op": "connect",
+              "fromId": "pred_low",
+              "toId": "loss_nonzero",
+              "relation": "causes"
+            },
+            {
+              "op": "focus_target",
+              "targetId": "prediction"
+            },
+            {
+              "op": "highlight",
+              "targetId": "prediction",
+              "mode": "circle"
+            },
+            {
+              "op": "highlight",
+              "targetId": "loss",
+              "mode": "underline"
+            },
+            {
+              "op": "annotate",
+              "targetId": "prediction",
+              "text": "The output is below the target, so the error is not zero.",
+              "placement": "auto"
+            }
+          ]
+        },
+        {
+          "say": "Fresh transfer question: when a prediction is too low, which direction should the output move to reduce the loss in this example?",
+          "do": [
+            {
+              "op": "focus_target",
+              "targetId": "loss"
+            },
+            {
+              "op": "highlight",
+              "targetId": "loss",
+              "mode": "focus"
+            },
+            {
+              "op": "annotate",
+              "targetId": "loss",
+              "text": "Nonzero loss means the model should move the output toward the target.",
+              "placement": "auto"
+            }
+          ]
+        }
+      ],
+      "followup": "If the prediction is below the target, should the output move up or down to reduce the loss?",
+      "move": "respond_to_misconception",
+      "assessment": "wrong",
+      "skill": "loss reflects prediction error, not a guarantee of zero",
+      "observations": {
+        "primary": 0.8038722934504463,
+        "secondary": -0.2679686852997958,
+        "loss": 0.8038722934504463,
+        "prediction": -0.2679686852997958,
+        "target": 1,
+        "steps": 0,
+        "x1": -1,
+        "x2": 0.5,
+        "learningRate": 0.03
+      },
+      "events": [
+        {
+          "tool": "sim_observe",
+          "args": "{}",
+          "before": {
+            "primary": 0.8038722934504463,
+            "secondary": -0.2679686852997958,
+            "loss": 0.8038722934504463,
+            "prediction": -0.2679686852997958,
+            "target": 1,
+            "steps": 0,
+            "x1": -1,
+            "x2": 0.5,
+            "learningRate": 0.03
+          },
+          "after": {
+            "primary": 0.8038722934504463,
+            "secondary": -0.2679686852997958,
+            "loss": 0.8038722934504463,
+            "prediction": -0.2679686852997958,
+            "target": 1,
+            "steps": 0,
+            "x1": -1,
+            "x2": 0.5,
+            "learningRate": 0.03
+          }
+        }
+      ],
+      "provider": "openai"
+    },
+    "followup": {
+      "state": {
+        "version": 1,
+        "id": "neural",
+        "params": {
+          "x1": -1,
+          "x2": 0.5,
+          "target": 1,
+          "learningRate": 0.03
+        },
+        "time": 0,
+        "data": {
+          "neural": {
+            "input": [
+              -1,
+              0.5
+            ],
+            "target": 1,
+            "w1": [
+              [
+                0.2,
+                -0.1
+              ],
+              [
+                -0.3,
+                0.4
+              ],
+              [
+                0.6,
+                0.1
+              ]
+            ],
+            "b1": [
+              0.05,
+              -0.02,
+              0.01
+            ],
+            "w2": [
+              0.3,
+              -0.25,
+              0.4
+            ],
+            "b2": 0.1,
+            "steps": 0
+          }
+        },
+        "history": [],
+        "running": false
+      },
+      "scene": {
+        "version": 1,
+        "id": "why_no_change",
+        "layout": "flow",
+        "objects": [
+          {
+            "id": "steps0",
+            "kind": "node",
+            "content": "steps = 0",
+            "revealed": true
+          },
+          {
+            "id": "no_update",
+            "kind": "node",
+            "content": "no parameter update",
+            "revealed": true
+          },
+          {
+            "id": "unchanged",
+            "kind": "equation",
+            "content": "prediction, target, loss unchanged",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "steps0",
+            "toId": "no_update",
+            "relation": "causes"
+          },
+          {
+            "op": "connect",
+            "fromId": "no_update",
+            "toId": "unchanged",
+            "relation": "flows_to"
+          }
+        ],
+        "marks": [
+          {
+            "targetId": "unchanged",
+            "mode": "circle"
+          }
+        ],
+        "annotations": [
+          {
+            "targetId": "steps0",
+            "text": "With steps still 0, the model did not update."
+          }
+        ],
+        "focus": "steps0"
+      },
+      "beats": [
+        {
+          "say": "Nothing changed in this observation because no update was taken: the step count stayed at 0, so the prediction stayed at −0.268, the target stayed at 1, and the loss stayed at 0.804.",
+          "do": [
+            {
+              "op": "create_scene",
+              "sceneId": "why_no_change",
+              "layout": "flow"
+            },
+            {
+              "op": "add",
+              "sceneId": "why_no_change",
+              "object": {
+                "id": "steps0",
+                "kind": "node",
+                "content": "steps = 0"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "why_no_change",
+              "object": {
+                "id": "no_update",
+                "kind": "node",
+                "content": "no parameter update"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "why_no_change",
+              "object": {
+                "id": "unchanged",
+                "kind": "equation",
+                "content": "prediction, target, loss unchanged"
+              }
+            },
+            {
+              "op": "connect",
+              "fromId": "steps0",
+              "toId": "no_update",
+              "relation": "causes"
+            },
+            {
+              "op": "connect",
+              "fromId": "no_update",
+              "toId": "unchanged",
+              "relation": "flows_to"
+            },
+            {
+              "op": "focus_target",
+              "targetId": "steps0"
+            },
+            {
+              "op": "highlight",
+              "targetId": "unchanged",
+              "mode": "focus"
+            },
+            {
+              "op": "annotate",
+              "targetId": "steps0",
+              "text": "With steps still 0, the model did not update.",
+              "placement": "auto"
+            }
+          ]
+        },
+        {
+          "say": "So the mismatch is still there because the output is below the target, but without an update there is no movement toward it. If one gradient step were taken, what change would you expect in the prediction relative to the target?",
+          "do": [
+            {
+              "op": "highlight",
+              "targetId": "unchanged",
+              "mode": "circle"
+            }
+          ]
+        }
+      ],
+      "followup": "If one gradient step were taken, what change would you expect in the prediction relative to the target?",
+      "move": "respond_to_misconception",
+      "assessment": "question",
+      "skill": "cause-and-effect in a toy neural network",
+      "observations": {
+        "primary": 0.8038722934504463,
+        "secondary": -0.2679686852997958,
+        "loss": 0.8038722934504463,
+        "prediction": -0.2679686852997958,
+        "target": 1,
+        "steps": 0,
+        "x1": -1,
+        "x2": 0.5,
+        "learningRate": 0.03
+      },
+      "events": [
+        {
+          "tool": "sim_observe",
+          "args": "{}",
+          "before": {
+            "primary": 0.8038722934504463,
+            "secondary": -0.2679686852997958,
+            "loss": 0.8038722934504463,
+            "prediction": -0.2679686852997958,
+            "target": 1,
+            "steps": 0,
+            "x1": -1,
+            "x2": 0.5,
+            "learningRate": 0.03
+          },
+          "after": {
+            "primary": 0.8038722934504463,
+            "secondary": -0.2679686852997958,
+            "loss": 0.8038722934504463,
+            "prediction": -0.2679686852997958,
+            "target": 1,
+            "steps": 0,
+            "x1": -1,
+            "x2": 0.5,
+            "learningRate": 0.03
+          }
+        }
+      ],
+      "provider": "openai"
+    },
+    "after": {
+      "topic": "neural",
+      "params": {
+        "x1": -1,
+        "x2": 0.5,
+        "target": 1,
+        "learningRate": 0.03
+      },
+      "observations": {
+        "primary": 0.8038722934504463,
+        "secondary": -0.26796868529979584,
+        "loss": 0.8038722934504463,
+        "prediction": -0.26796868529979584,
+        "target": 1,
+        "steps": 0,
+        "x1": -1,
+        "x2": 0.5,
+        "learningRate": 0.03
+      },
+      "activeQuestion": "Why did that change? Use our current experiment to explain.",
+      "revision": 12,
+      "scene": {
+        "version": 1,
+        "id": "why_no_change",
+        "layout": "flow",
+        "objects": [
+          {
+            "id": "steps0",
+            "kind": "node",
+            "content": "steps = 0",
+            "revealed": true
+          },
+          {
+            "id": "no_update",
+            "kind": "node",
+            "content": "no parameter update",
+            "revealed": true
+          },
+          {
+            "id": "unchanged",
+            "kind": "equation",
+            "content": "prediction, target, loss unchanged",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "steps0",
+            "toId": "no_update",
+            "relation": "causes"
+          },
+          {
+            "op": "connect",
+            "fromId": "no_update",
+            "toId": "unchanged",
+            "relation": "flows_to"
+          }
+        ],
+        "marks": [
+          {
+            "targetId": "unchanged",
+            "mode": "circle"
+          }
+        ],
+        "annotations": [
+          {
+            "targetId": "steps0",
+            "text": "With steps still 0, the model did not update."
+          }
+        ],
+        "focus": "steps0"
+      },
+      "stateHash": "65f972af",
+      "events": [
+        {
+          "at": 1793607416671,
+          "kind": "question",
+          "before": "f3a93d13",
+          "after": "f3a93d13",
+          "detail": "What if the input becomes negative?"
+        },
+        {
+          "at": 1793607433967,
+          "kind": "teacher_tools",
+          "before": "f3a93d13",
+          "after": "a422b13d",
+          "detail": "[{\"tool\":\"sim_observe\",\"args\":\"{}\",\"before\":{\"primary\":0.16795951019073463,\"secondary\":0.42041478591887005,\"loss\":0.16795951019073463,\"prediction\":0.42041478591887005,\"target\":1,\"steps\":0,\"x1\":1,\"x2\":0.5,\"learningRate\":0.03},\"after\":{\"primary\":0.16795951019073463,\"secondary\":0.42041478591887005,\"loss\":0.16795951019073463,\"prediction\":0.42041478591887005,\"target\":1,\"steps\":0,\"x1\":1,\"x2\":0.5,\"learni"
+        },
+        {
+          "at": 1793607433969,
+          "kind": "teaching_beat",
+          "before": "a422b13d",
+          "after": "53873bf9",
+          "detail": "When x₁ changes from 1 to −1, the observed prediction drops from 0.420 to −0.268, and the loss rises from 0.168 to 0.804. In this toy tanh network, that sign change makes the example fit the target much worse."
+        },
+        {
+          "at": 1793607434034,
+          "kind": "teaching_beat",
+          "before": "53873bf9",
+          "after": "a0d825da",
+          "detail": "The key comparison is against the original prediction at x₁ = 1, not against zero. Here, flipping x₁ reverses the prediction’s sign and increases the loss relative to that baseline."
+        },
+        {
+          "at": 1793607434395,
+          "kind": "question",
+          "before": "a0d825da",
+          "after": "a0d825da",
+          "detail": "I predict the loss must always be zero, because a network cannot make errors. Is that correct?"
+        },
+        {
+          "at": 1793607452909,
+          "kind": "teacher_tools",
+          "before": "a0d825da",
+          "after": "a0d825da",
+          "detail": "[{\"tool\":\"sim_observe\",\"args\":\"{}\",\"before\":{\"primary\":0.8038722934504463,\"secondary\":-0.2679686852997958,\"loss\":0.8038722934504463,\"prediction\":-0.2679686852997958,\"target\":1,\"steps\":0,\"x1\":-1,\"x2\":0.5,\"learningRate\":0.03},\"after\":{\"primary\":0.8038722934504463,\"secondary\":-0.2679686852997958,\"loss\":0.8038722934504463,\"prediction\":-0.2679686852997958,\"target\":1,\"steps\":0,\"x1\":-1,\"x2\":0.5,\"learning"
+        },
+        {
+          "at": 1793607452909,
+          "kind": "teaching_beat",
+          "before": "a0d825da",
+          "after": "994e63f3",
+          "detail": "The corrected comparison is that the prediction is below the target: −0.268 versus 1. That mismatch is why the loss is nonzero."
+        },
+        {
+          "at": 1793607452968,
+          "kind": "teaching_beat",
+          "before": "994e63f3",
+          "after": "8871ac30",
+          "detail": "Fresh transfer question: when a prediction is too low, which direction should the output move to reduce the loss in this example?"
+        },
+        {
+          "at": 1793607452984,
+          "kind": "question",
+          "before": "8871ac30",
+          "after": "8871ac30",
+          "detail": "Why did that change? Use our current experiment to explain."
+        },
+        {
+          "at": 1793607462991,
+          "kind": "teacher_tools",
+          "before": "8871ac30",
+          "after": "8871ac30",
+          "detail": "[{\"tool\":\"sim_observe\",\"args\":\"{}\",\"before\":{\"primary\":0.8038722934504463,\"secondary\":-0.2679686852997958,\"loss\":0.8038722934504463,\"prediction\":-0.2679686852997958,\"target\":1,\"steps\":0,\"x1\":-1,\"x2\":0.5,\"learningRate\":0.03},\"after\":{\"primary\":0.8038722934504463,\"secondary\":-0.2679686852997958,\"loss\":0.8038722934504463,\"prediction\":-0.2679686852997958,\"target\":1,\"steps\":0,\"x1\":-1,\"x2\":0.5,\"learning"
+        },
+        {
+          "at": 1793607462992,
+          "kind": "teaching_beat",
+          "before": "8871ac30",
+          "after": "a4f381eb",
+          "detail": "Nothing changed in this observation because no update was taken: the step count stayed at 0, so the prediction stayed at −0.268, the target stayed at 1, and the loss stayed at 0.804."
+        },
+        {
+          "at": 1793607463051,
+          "kind": "teaching_beat",
+          "before": "a4f381eb",
+          "after": "65f972af",
+          "detail": "So the mismatch is still there because the output is below the target, but without an update there is no movement toward it. If one gradient step were taken, what change would you expect in the prediction relative to the target?"
+        }
+      ]
+    }
+  },
+  {
+    "topic": "rocket",
+    "question": "Double the mass and show how the landing changes.",
+    "result": {
+      "state": {
+        "version": 1,
+        "id": "rocket",
+        "params": {
+          "dryMass": 2450,
+          "fuel": 450,
+          "throttle": 0.6,
+          "gravity": 9.81,
+          "altitude": 120
+        },
+        "time": 4.989521444431114,
+        "data": {
+          "rocket": {
+            "altitude": 0,
+            "velocity": -36.06521146034248,
+            "fuelMass": 425.21379310344264,
+            "time": 4.989521444431114,
+            "thrustFraction": 0.6,
+            "status": "crashed"
+          }
+        },
+        "history": [
+          {
+            "t": 0,
+            "a": 120,
+            "b": -12
+          },
+          {
+            "t": 0.09999999999999999,
+            "a": 118.77577900828119,
+            "b": -12.484405760049192
+          },
+          {
+            "t": 0.19999999999999998,
+            "a": 117.50312169286941,
+            "b": -12.96872646903783
+          },
+          {
+            "t": 0.3000000000000001,
+            "a": 116.1820365603275,
+            "b": -13.452962097827747
+          },
+          {
+            "t": 0.4000000000000004,
+            "a": 114.81253212013286,
+            "b": -13.937112617265798
+          },
+          {
+            "t": 0.5000000000000007,
+            "a": 113.39461688467898,
+            "b": -14.421177998183865
+          },
+          {
+            "t": 0.6000000000000003,
+            "a": 111.92829936927689,
+            "b": -14.905158211398822
+          },
+          {
+            "t": 0.7,
+            "a": 110.41358809215666,
+            "b": -15.389053227712532
+          },
+          {
+            "t": 0.7999999999999996,
+            "a": 108.85049157446893,
+            "b": -15.872863017911854
+          },
+          {
+            "t": 0.8999999999999992,
+            "a": 107.23901834028652,
+            "b": -16.35658755276861
+          },
+          {
+            "t": 0.9999999999999989,
+            "a": 105.57917691660563,
+            "b": -16.840226803039585
+          },
+          {
+            "t": 1.0999999999999985,
+            "a": 103.87097583334769,
+            "b": -17.323780739466518
+          },
+          {
+            "t": 1.1999999999999982,
+            "a": 102.1144236233606,
+            "b": -17.80724933277608
+          },
+          {
+            "t": 1.2999999999999978,
+            "a": 100.30952882242039,
+            "b": -18.290632553679885
+          },
+          {
+            "t": 1.3999999999999975,
+            "a": 98.4562999692327,
+            "b": -18.773930372874457
+          },
+          {
+            "t": 1.4999999999999971,
+            "a": 96.55474560543428,
+            "b": -19.257142761041234
+          },
+          {
+            "t": 1.5999999999999968,
+            "a": 94.60487427559441,
+            "b": -19.740269688846563
+          },
+          {
+            "t": 1.6999999999999964,
+            "a": 92.6066945272166,
+            "b": -20.223311126941674
+          },
+          {
+            "t": 1.799999999999996,
+            "a": 90.56021491073994,
+            "b": -20.706267045962672
+          },
+          {
+            "t": 1.8999999999999957,
+            "a": 88.46544397954061,
+            "b": -21.18913741653053
+          },
+          {
+            "t": 1.9999999999999953,
+            "a": 86.32239028993358,
+            "b": -21.67192220925108
+          },
+          {
+            "t": 2.099999999999995,
+            "a": 84.13106240117382,
+            "b": -22.154621394714997
+          },
+          {
+            "t": 2.199999999999995,
+            "a": 81.89146887545824,
+            "b": -22.63723494349782
+          },
+          {
+            "t": 2.2999999999999945,
+            "a": 79.6036182779267,
+            "b": -23.11976282615989
+          },
+          {
+            "t": 2.399999999999994,
+            "a": 77.26751917666391,
+            "b": -23.60220501324635
+          },
+          {
+            "t": 2.499999999999994,
+            "a": 74.8831801427008,
+            "b": -24.08456147528719
+          },
+          {
+            "t": 2.5999999999999934,
+            "a": 72.45060975001608,
+            "b": -24.566832182797175
+          },
+          {
+            "t": 2.699999999999993,
+            "a": 69.96981657553776,
+            "b": -25.04901710627584
+          },
+          {
+            "t": 2.7999999999999927,
+            "a": 67.44080919914458,
+            "b": -25.53111621620752
+          },
+          {
+            "t": 2.8999999999999924,
+            "a": 64.86359620366771,
+            "b": -26.013129483061302
+          },
+          {
+            "t": 2.999999999999992,
+            "a": 62.23818617489207,
+            "b": -26.495056877291024
+          },
+          {
+            "t": 3.0999999999999917,
+            "a": 59.56458770155805,
+            "b": -26.976898369335274
+          },
+          {
+            "t": 3.1999999999999913,
+            "a": 56.84280937536287,
+            "b": -27.458653929617377
+          },
+          {
+            "t": 3.299999999999991,
+            "a": 54.072859790962234,
+            "b": -27.940323528545363
+          },
+          {
+            "t": 3.3999999999999906,
+            "a": 51.25474754597181,
+            "b": -28.42190713651198
+          },
+          {
+            "t": 3.4999999999999902,
+            "a": 48.3884812409687,
+            "b": -28.903404723894692
+          },
+          {
+            "t": 3.59999999999999,
+            "a": 45.47406947949309,
+            "b": -29.384816261055647
+          },
+          {
+            "t": 3.6999999999999895,
+            "a": 42.511520868049665,
+            "b": -29.86614171834166
+          },
+          {
+            "t": 3.799999999999989,
+            "a": 39.50084401610924,
+            "b": -30.347381066084218
+          },
+          {
+            "t": 3.899999999999989,
+            "a": 36.442047536110216,
+            "b": -30.82853427459948
+          },
+          {
+            "t": 3.9999999999999885,
+            "a": 33.33514004346015,
+            "b": -31.309601314188253
+          },
+          {
+            "t": 4.099999999999993,
+            "a": 30.18013015653729,
+            "b": -31.790582155135972
+          },
+          {
+            "t": 4.199999999999998,
+            "a": 26.977026496692122,
+            "b": -32.2714767677127
+          },
+          {
+            "t": 4.300000000000003,
+            "a": 23.725837688248863,
+            "b": -32.75228512217311
+          },
+          {
+            "t": 4.400000000000008,
+            "a": 20.426572358507073,
+            "b": -33.233007188756496
+          },
+          {
+            "t": 4.500000000000013,
+            "a": 17.079239137743123,
+            "b": -33.71364293768675
+          },
+          {
+            "t": 4.600000000000018,
+            "a": 13.683846659211776,
+            "b": -34.19419233917234
+          },
+          {
+            "t": 4.700000000000023,
+            "a": 10.240403559147722,
+            "b": -34.67465536340631
+          },
+          {
+            "t": 4.800000000000028,
+            "a": 6.748918476767116,
+            "b": -35.15503198056624
+          },
+          {
+            "t": 4.900000000000033,
+            "a": 3.209400054269123,
+            "b": -35.63532216081432
+          },
+          {
+            "t": 4.989521444431114,
+            "a": 0,
+            "b": -36.06521146034248
+          }
+        ],
+        "running": false
+      },
+      "scene": {
+        "version": 1,
+        "id": "mass_compare_fix",
+        "layout": "compare",
+        "objects": [
+          {
+            "id": "run_light",
+            "kind": "node",
+            "content": "Original mass run: 1450 kg, +0.12 m/s²",
+            "revealed": true
+          },
+          {
+            "id": "run_heavy",
+            "kind": "node",
+            "content": "Doubled mass run: 2900 kg, -4.84 m/s²",
+            "revealed": true
+          },
+          {
+            "id": "same_thrust",
+            "kind": "node",
+            "content": "Thrust stays 14,400 N",
+            "revealed": true
+          },
+          {
+            "id": "trend",
+            "kind": "label",
+            "content": "More mass means less upward acceleration",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "same_thrust",
+            "toId": "run_light",
+            "relation": "causes"
+          },
+          {
+            "op": "connect",
+            "fromId": "same_thrust",
+            "toId": "run_heavy",
+            "relation": "causes"
+          },
+          {
+            "op": "connect",
+            "fromId": "run_light",
+            "toId": "run_heavy",
+            "relation": "compares"
+          }
+        ],
+        "marks": [
+          {
+            "targetId": "velocity",
+            "mode": "focus"
+          },
+          {
+            "targetId": "ground",
+            "mode": "circle"
+          },
+          {
+            "targetId": "altitude",
+            "mode": "underline"
+          }
+        ],
+        "annotations": [
+          {
+            "targetId": "velocity",
+            "text": "Impact speed was downward, so the rocket hit the ground after falling."
+          }
+        ],
+        "focus": "fuel"
+      },
+      "beats": [
+        {
+          "say": "Doubling the mass changed the rocket’s acceleration under the same 14,400 N thrust from +0.12 to -4.84 m/s². The heavier rocket could no longer climb; it started accelerating downward.",
+          "do": [
+            {
+              "op": "create_scene",
+              "sceneId": "mass_compare_fix",
+              "layout": "compare"
+            },
+            {
+              "op": "add",
+              "sceneId": "mass_compare_fix",
+              "object": {
+                "id": "run_light",
+                "kind": "node",
+                "content": "Original mass run: 1450 kg, +0.12 m/s²"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "mass_compare_fix",
+              "object": {
+                "id": "run_heavy",
+                "kind": "node",
+                "content": "Doubled mass run: 2900 kg, -4.84 m/s²"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "mass_compare_fix",
+              "object": {
+                "id": "same_thrust",
+                "kind": "node",
+                "content": "Thrust stays 14,400 N"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "mass_compare_fix",
+              "object": {
+                "id": "trend",
+                "kind": "label",
+                "content": "More mass means less upward acceleration"
+              }
+            },
+            {
+              "op": "connect",
+              "fromId": "same_thrust",
+              "toId": "run_light",
+              "relation": "causes"
+            },
+            {
+              "op": "connect",
+              "fromId": "same_thrust",
+              "toId": "run_heavy",
+              "relation": "causes"
+            },
+            {
+              "op": "connect",
+              "fromId": "run_light",
+              "toId": "run_heavy",
+              "relation": "compares"
+            },
+            {
+              "op": "focus_target",
+              "targetId": "rocket"
+            },
+            {
+              "op": "highlight",
+              "targetId": "velocity",
+              "mode": "focus"
+            }
+          ]
+        },
+        {
+          "say": "In the doubled-mass run, the rocket crashed after 4.99 s. At impact, its vertical speed was -36.07 m/s, and 425.21 kg of fuel remained.",
+          "do": [
+            {
+              "op": "annotate",
+              "targetId": "velocity",
+              "text": "Impact speed was downward, so the rocket hit the ground after falling.",
+              "placement": "auto"
+            },
+            {
+              "op": "highlight",
+              "targetId": "ground",
+              "mode": "circle"
+            },
+            {
+              "op": "focus_target",
+              "targetId": "fuel"
+            },
+            {
+              "op": "reveal",
+              "objectIds": [
+                "run_heavy",
+                "same_thrust",
+                "trend"
+              ]
+            }
+          ]
+        },
+        {
+          "say": "If mass increases again while thrust stays the same, will the rocket accelerate upward more, less, or downward sooner?",
+          "do": [
+            {
+              "op": "highlight",
+              "targetId": "altitude",
+              "mode": "underline"
+            }
+          ]
+        }
+      ],
+      "followup": "Would you like a fresh side-by-side comparison of the original and doubled-mass runs?",
+      "move": "demonstrate",
+      "assessment": "question",
+      "skill": "using a controlled numerical experiment to compare the landing after a mass change",
+      "observations": {
+        "primary": 0,
+        "secondary": -36.06521146034248,
+        "altitude": 0,
+        "velocity": -36.06521146034248,
+        "fuel": 425.21379310344264,
+        "mass": 2875.2137931034426,
+        "thrust": 14400,
+        "acceleration": -4.801676780857067,
+        "status": "crashed",
+        "flightTime": 4.989521444431114
+      },
+      "events": [
+        {
+          "tool": "sim_observe",
+          "args": "{}",
+          "before": {
+            "primary": 120,
+            "secondary": -12,
+            "altitude": 120,
+            "velocity": -12,
+            "fuel": 450,
+            "mass": 1450,
+            "thrust": 14400,
+            "acceleration": 0.1210344827586205,
+            "status": "flying",
+            "flightTime": 0
+          },
+          "after": {
+            "primary": 120,
+            "secondary": -12,
+            "altitude": 120,
+            "velocity": -12,
+            "fuel": 450,
+            "mass": 1450,
+            "thrust": 14400,
+            "acceleration": 0.1210344827586205,
+            "status": "flying",
+            "flightTime": 0
+          }
+        },
+        {
+          "tool": "sim_scale_mass",
+          "args": "{\"factor\":2}",
+          "before": {
+            "primary": 120,
+            "secondary": -12,
+            "altitude": 120,
+            "velocity": -12,
+            "fuel": 450,
+            "mass": 1450,
+            "thrust": 14400,
+            "acceleration": 0.1210344827586205,
+            "status": "flying",
+            "flightTime": 0
+          },
+          "after": {
+            "primary": 120,
+            "secondary": -12,
+            "altitude": 120,
+            "velocity": -12,
+            "fuel": 450,
+            "mass": 2900,
+            "thrust": 14400,
+            "acceleration": -4.84448275862069,
+            "status": "flying",
+            "flightTime": 0
+          }
+        },
+        {
+          "tool": "sim_experiment",
+          "args": "{\"patch\":{},\"seconds\":15,\"brake\":false}",
+          "before": {
+            "primary": 120,
+            "secondary": -12,
+            "altitude": 120,
+            "velocity": -12,
+            "fuel": 450,
+            "mass": 2900,
+            "thrust": 14400,
+            "acceleration": -4.84448275862069,
+            "status": "flying",
+            "flightTime": 0
+          },
+          "after": {
+            "primary": 0,
+            "secondary": -36.06521146034248,
+            "altitude": 0,
+            "velocity": -36.06521146034248,
+            "fuel": 425.21379310344264,
+            "mass": 2875.2137931034426,
+            "thrust": 14400,
+            "acceleration": -4.801676780857067,
+            "status": "crashed",
+            "flightTime": 4.989521444431114
+          },
+          "baseline": {
+            "primary": 0,
+            "secondary": -36.06521146034248,
+            "altitude": 0,
+            "velocity": -36.06521146034248,
+            "fuel": 425.21379310344264,
+            "mass": 2875.2137931034426,
+            "thrust": 14400,
+            "acceleration": -4.801676780857067,
+            "status": "crashed",
+            "flightTime": 4.989521444431114
+          }
+        }
+      ],
+      "provider": "openai"
+    },
+    "wrongAnswer": {
+      "state": {
+        "version": 1,
+        "id": "rocket",
+        "params": {
+          "dryMass": 2450,
+          "fuel": 450,
+          "throttle": 0.6,
+          "gravity": 9.81,
+          "altitude": 120
+        },
+        "time": 4.989521444431114,
+        "data": {
+          "rocket": {
+            "altitude": 0,
+            "velocity": -36.06521146034248,
+            "fuelMass": 425.21379310344264,
+            "time": 4.989521444431114,
+            "thrustFraction": 0.6,
+            "status": "crashed"
+          }
+        },
+        "history": [
+          {
+            "t": 0,
+            "a": 120,
+            "b": -12
+          },
+          {
+            "t": 0.09999999999999999,
+            "a": 118.77577900828119,
+            "b": -12.484405760049192
+          },
+          {
+            "t": 0.19999999999999998,
+            "a": 117.50312169286941,
+            "b": -12.96872646903783
+          },
+          {
+            "t": 0.3000000000000001,
+            "a": 116.1820365603275,
+            "b": -13.452962097827747
+          },
+          {
+            "t": 0.4000000000000004,
+            "a": 114.81253212013286,
+            "b": -13.937112617265798
+          },
+          {
+            "t": 0.5000000000000007,
+            "a": 113.39461688467898,
+            "b": -14.421177998183865
+          },
+          {
+            "t": 0.6000000000000003,
+            "a": 111.92829936927689,
+            "b": -14.905158211398822
+          },
+          {
+            "t": 0.7,
+            "a": 110.41358809215666,
+            "b": -15.389053227712532
+          },
+          {
+            "t": 0.7999999999999996,
+            "a": 108.85049157446893,
+            "b": -15.872863017911854
+          },
+          {
+            "t": 0.8999999999999992,
+            "a": 107.23901834028652,
+            "b": -16.35658755276861
+          },
+          {
+            "t": 0.9999999999999989,
+            "a": 105.57917691660563,
+            "b": -16.840226803039585
+          },
+          {
+            "t": 1.0999999999999985,
+            "a": 103.87097583334769,
+            "b": -17.323780739466518
+          },
+          {
+            "t": 1.1999999999999982,
+            "a": 102.1144236233606,
+            "b": -17.80724933277608
+          },
+          {
+            "t": 1.2999999999999978,
+            "a": 100.30952882242039,
+            "b": -18.290632553679885
+          },
+          {
+            "t": 1.3999999999999975,
+            "a": 98.4562999692327,
+            "b": -18.773930372874457
+          },
+          {
+            "t": 1.4999999999999971,
+            "a": 96.55474560543428,
+            "b": -19.257142761041234
+          },
+          {
+            "t": 1.5999999999999968,
+            "a": 94.60487427559441,
+            "b": -19.740269688846563
+          },
+          {
+            "t": 1.6999999999999964,
+            "a": 92.6066945272166,
+            "b": -20.223311126941674
+          },
+          {
+            "t": 1.799999999999996,
+            "a": 90.56021491073994,
+            "b": -20.706267045962672
+          },
+          {
+            "t": 1.8999999999999957,
+            "a": 88.46544397954061,
+            "b": -21.18913741653053
+          },
+          {
+            "t": 1.9999999999999953,
+            "a": 86.32239028993358,
+            "b": -21.67192220925108
+          },
+          {
+            "t": 2.099999999999995,
+            "a": 84.13106240117382,
+            "b": -22.154621394714997
+          },
+          {
+            "t": 2.199999999999995,
+            "a": 81.89146887545824,
+            "b": -22.63723494349782
+          },
+          {
+            "t": 2.2999999999999945,
+            "a": 79.6036182779267,
+            "b": -23.11976282615989
+          },
+          {
+            "t": 2.399999999999994,
+            "a": 77.26751917666391,
+            "b": -23.60220501324635
+          },
+          {
+            "t": 2.499999999999994,
+            "a": 74.8831801427008,
+            "b": -24.08456147528719
+          },
+          {
+            "t": 2.5999999999999934,
+            "a": 72.45060975001608,
+            "b": -24.566832182797175
+          },
+          {
+            "t": 2.699999999999993,
+            "a": 69.96981657553776,
+            "b": -25.04901710627584
+          },
+          {
+            "t": 2.7999999999999927,
+            "a": 67.44080919914458,
+            "b": -25.53111621620752
+          },
+          {
+            "t": 2.8999999999999924,
+            "a": 64.86359620366771,
+            "b": -26.013129483061302
+          },
+          {
+            "t": 2.999999999999992,
+            "a": 62.23818617489207,
+            "b": -26.495056877291024
+          },
+          {
+            "t": 3.0999999999999917,
+            "a": 59.56458770155805,
+            "b": -26.976898369335274
+          },
+          {
+            "t": 3.1999999999999913,
+            "a": 56.84280937536287,
+            "b": -27.458653929617377
+          },
+          {
+            "t": 3.299999999999991,
+            "a": 54.072859790962234,
+            "b": -27.940323528545363
+          },
+          {
+            "t": 3.3999999999999906,
+            "a": 51.25474754597181,
+            "b": -28.42190713651198
+          },
+          {
+            "t": 3.4999999999999902,
+            "a": 48.3884812409687,
+            "b": -28.903404723894692
+          },
+          {
+            "t": 3.59999999999999,
+            "a": 45.47406947949309,
+            "b": -29.384816261055647
+          },
+          {
+            "t": 3.6999999999999895,
+            "a": 42.511520868049665,
+            "b": -29.86614171834166
+          },
+          {
+            "t": 3.799999999999989,
+            "a": 39.50084401610924,
+            "b": -30.347381066084218
+          },
+          {
+            "t": 3.899999999999989,
+            "a": 36.442047536110216,
+            "b": -30.82853427459948
+          },
+          {
+            "t": 3.9999999999999885,
+            "a": 33.33514004346015,
+            "b": -31.309601314188253
+          },
+          {
+            "t": 4.099999999999993,
+            "a": 30.18013015653729,
+            "b": -31.790582155135972
+          },
+          {
+            "t": 4.199999999999998,
+            "a": 26.977026496692122,
+            "b": -32.2714767677127
+          },
+          {
+            "t": 4.300000000000003,
+            "a": 23.725837688248863,
+            "b": -32.75228512217311
+          },
+          {
+            "t": 4.400000000000008,
+            "a": 20.426572358507073,
+            "b": -33.233007188756496
+          },
+          {
+            "t": 4.500000000000013,
+            "a": 17.079239137743123,
+            "b": -33.71364293768675
+          },
+          {
+            "t": 4.600000000000018,
+            "a": 13.683846659211776,
+            "b": -34.19419233917234
+          },
+          {
+            "t": 4.700000000000023,
+            "a": 10.240403559147722,
+            "b": -34.67465536340631
+          },
+          {
+            "t": 4.800000000000028,
+            "a": 6.748918476767116,
+            "b": -35.15503198056624
+          },
+          {
+            "t": 4.900000000000033,
+            "a": 3.209400054269123,
+            "b": -35.63532216081432
+          },
+          {
+            "t": 4.989521444431114,
+            "a": 0,
+            "b": -36.06521146034248
+          }
+        ],
+        "running": false
+      },
+      "scene": {
+        "version": 1,
+        "id": "mass_accel_compare",
+        "layout": "compare",
+        "objects": [
+          {
+            "id": "obs_mass",
+            "kind": "node",
+            "content": "Mass 2875.21 kg",
+            "revealed": true
+          },
+          {
+            "id": "obs_accel",
+            "kind": "node",
+            "content": "Acceleration -4.80 m/s²",
+            "revealed": true
+          },
+          {
+            "id": "obs_thrust",
+            "kind": "node",
+            "content": "Thrust fixed: 14,400 N",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "obs_thrust",
+            "toId": "obs_accel",
+            "relation": "causes"
+          },
+          {
+            "op": "connect",
+            "fromId": "obs_mass",
+            "toId": "obs_accel",
+            "relation": "causes"
+          }
+        ],
+        "marks": [
+          {
+            "targetId": "rocket",
+            "mode": "focus"
+          }
+        ],
+        "annotations": [
+          {
+            "targetId": "rocket",
+            "text": "Observed: crashed after 4.99 s with -36.07 m/s."
+          }
+        ],
+        "focus": "rocket"
+      },
+      "beats": [
+        {
+          "say": "No. With thrust fixed at 14,400 N, increasing mass reduces upward acceleration; in the observed run the vehicle was already accelerating downward at -4.80 m/s² at mass 2875.21 kg, so it did not double to a higher climb.",
+          "do": [
+            {
+              "op": "create_scene",
+              "sceneId": "mass_accel_compare",
+              "layout": "compare"
+            },
+            {
+              "op": "add",
+              "sceneId": "mass_accel_compare",
+              "object": {
+                "id": "obs_mass",
+                "kind": "node",
+                "content": "Mass 2875.21 kg"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "mass_accel_compare",
+              "object": {
+                "id": "obs_accel",
+                "kind": "node",
+                "content": "Acceleration -4.80 m/s²"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "mass_accel_compare",
+              "object": {
+                "id": "obs_thrust",
+                "kind": "node",
+                "content": "Thrust fixed: 14,400 N"
+              }
+            },
+            {
+              "op": "connect",
+              "fromId": "obs_thrust",
+              "toId": "obs_accel",
+              "relation": "causes"
+            },
+            {
+              "op": "connect",
+              "fromId": "obs_mass",
+              "toId": "obs_accel",
+              "relation": "causes"
+            }
+          ]
+        },
+        {
+          "say": "The outcome to focus on is the crash: flight time 4.99 s, final velocity -36.07 m/s, and status crashed. That supports the point that more mass lowered the thrust-to-weight margin; it does not show doubled acceleration.",
+          "do": [
+            {
+              "op": "focus_target",
+              "targetId": "rocket"
+            },
+            {
+              "op": "highlight",
+              "targetId": "rocket",
+              "mode": "focus"
+            },
+            {
+              "op": "annotate",
+              "targetId": "rocket",
+              "text": "Observed: crashed after 4.99 s with -36.07 m/s.",
+              "placement": "auto"
+            }
+          ]
+        }
+      ],
+      "followup": "If thrust stayed at 14,400 N, what would happen to acceleration if the mass were reduced while gravity stayed the same?",
+      "move": "respond_to_misconception",
+      "assessment": "wrong",
+      "skill": "Newton's second law with changing mass in rocket flight",
+      "observations": {
+        "primary": 0,
+        "secondary": -36.06521146034248,
+        "altitude": 0,
+        "velocity": -36.06521146034248,
+        "fuel": 425.21379310344264,
+        "mass": 2875.2137931034426,
+        "thrust": 14400,
+        "acceleration": -4.801676780857067,
+        "status": "crashed",
+        "flightTime": 4.989521444431114
+      },
+      "events": [],
+      "provider": "openai"
+    },
+    "followup": {
+      "state": {
+        "version": 1,
+        "id": "rocket",
+        "params": {
+          "dryMass": 2450,
+          "fuel": 450,
+          "throttle": 0.6,
+          "gravity": 9.81,
+          "altitude": 120
+        },
+        "time": 4.989521444431114,
+        "data": {
+          "rocket": {
+            "altitude": 0,
+            "velocity": -36.06521146034248,
+            "fuelMass": 425.21379310344264,
+            "time": 4.989521444431114,
+            "thrustFraction": 0.6,
+            "status": "crashed"
+          }
+        },
+        "history": [
+          {
+            "t": 0,
+            "a": 120,
+            "b": -12
+          },
+          {
+            "t": 0.09999999999999999,
+            "a": 118.77577900828119,
+            "b": -12.484405760049192
+          },
+          {
+            "t": 0.19999999999999998,
+            "a": 117.50312169286941,
+            "b": -12.96872646903783
+          },
+          {
+            "t": 0.3000000000000001,
+            "a": 116.1820365603275,
+            "b": -13.452962097827747
+          },
+          {
+            "t": 0.4000000000000004,
+            "a": 114.81253212013286,
+            "b": -13.937112617265798
+          },
+          {
+            "t": 0.5000000000000007,
+            "a": 113.39461688467898,
+            "b": -14.421177998183865
+          },
+          {
+            "t": 0.6000000000000003,
+            "a": 111.92829936927689,
+            "b": -14.905158211398822
+          },
+          {
+            "t": 0.7,
+            "a": 110.41358809215666,
+            "b": -15.389053227712532
+          },
+          {
+            "t": 0.7999999999999996,
+            "a": 108.85049157446893,
+            "b": -15.872863017911854
+          },
+          {
+            "t": 0.8999999999999992,
+            "a": 107.23901834028652,
+            "b": -16.35658755276861
+          },
+          {
+            "t": 0.9999999999999989,
+            "a": 105.57917691660563,
+            "b": -16.840226803039585
+          },
+          {
+            "t": 1.0999999999999985,
+            "a": 103.87097583334769,
+            "b": -17.323780739466518
+          },
+          {
+            "t": 1.1999999999999982,
+            "a": 102.1144236233606,
+            "b": -17.80724933277608
+          },
+          {
+            "t": 1.2999999999999978,
+            "a": 100.30952882242039,
+            "b": -18.290632553679885
+          },
+          {
+            "t": 1.3999999999999975,
+            "a": 98.4562999692327,
+            "b": -18.773930372874457
+          },
+          {
+            "t": 1.4999999999999971,
+            "a": 96.55474560543428,
+            "b": -19.257142761041234
+          },
+          {
+            "t": 1.5999999999999968,
+            "a": 94.60487427559441,
+            "b": -19.740269688846563
+          },
+          {
+            "t": 1.6999999999999964,
+            "a": 92.6066945272166,
+            "b": -20.223311126941674
+          },
+          {
+            "t": 1.799999999999996,
+            "a": 90.56021491073994,
+            "b": -20.706267045962672
+          },
+          {
+            "t": 1.8999999999999957,
+            "a": 88.46544397954061,
+            "b": -21.18913741653053
+          },
+          {
+            "t": 1.9999999999999953,
+            "a": 86.32239028993358,
+            "b": -21.67192220925108
+          },
+          {
+            "t": 2.099999999999995,
+            "a": 84.13106240117382,
+            "b": -22.154621394714997
+          },
+          {
+            "t": 2.199999999999995,
+            "a": 81.89146887545824,
+            "b": -22.63723494349782
+          },
+          {
+            "t": 2.2999999999999945,
+            "a": 79.6036182779267,
+            "b": -23.11976282615989
+          },
+          {
+            "t": 2.399999999999994,
+            "a": 77.26751917666391,
+            "b": -23.60220501324635
+          },
+          {
+            "t": 2.499999999999994,
+            "a": 74.8831801427008,
+            "b": -24.08456147528719
+          },
+          {
+            "t": 2.5999999999999934,
+            "a": 72.45060975001608,
+            "b": -24.566832182797175
+          },
+          {
+            "t": 2.699999999999993,
+            "a": 69.96981657553776,
+            "b": -25.04901710627584
+          },
+          {
+            "t": 2.7999999999999927,
+            "a": 67.44080919914458,
+            "b": -25.53111621620752
+          },
+          {
+            "t": 2.8999999999999924,
+            "a": 64.86359620366771,
+            "b": -26.013129483061302
+          },
+          {
+            "t": 2.999999999999992,
+            "a": 62.23818617489207,
+            "b": -26.495056877291024
+          },
+          {
+            "t": 3.0999999999999917,
+            "a": 59.56458770155805,
+            "b": -26.976898369335274
+          },
+          {
+            "t": 3.1999999999999913,
+            "a": 56.84280937536287,
+            "b": -27.458653929617377
+          },
+          {
+            "t": 3.299999999999991,
+            "a": 54.072859790962234,
+            "b": -27.940323528545363
+          },
+          {
+            "t": 3.3999999999999906,
+            "a": 51.25474754597181,
+            "b": -28.42190713651198
+          },
+          {
+            "t": 3.4999999999999902,
+            "a": 48.3884812409687,
+            "b": -28.903404723894692
+          },
+          {
+            "t": 3.59999999999999,
+            "a": 45.47406947949309,
+            "b": -29.384816261055647
+          },
+          {
+            "t": 3.6999999999999895,
+            "a": 42.511520868049665,
+            "b": -29.86614171834166
+          },
+          {
+            "t": 3.799999999999989,
+            "a": 39.50084401610924,
+            "b": -30.347381066084218
+          },
+          {
+            "t": 3.899999999999989,
+            "a": 36.442047536110216,
+            "b": -30.82853427459948
+          },
+          {
+            "t": 3.9999999999999885,
+            "a": 33.33514004346015,
+            "b": -31.309601314188253
+          },
+          {
+            "t": 4.099999999999993,
+            "a": 30.18013015653729,
+            "b": -31.790582155135972
+          },
+          {
+            "t": 4.199999999999998,
+            "a": 26.977026496692122,
+            "b": -32.2714767677127
+          },
+          {
+            "t": 4.300000000000003,
+            "a": 23.725837688248863,
+            "b": -32.75228512217311
+          },
+          {
+            "t": 4.400000000000008,
+            "a": 20.426572358507073,
+            "b": -33.233007188756496
+          },
+          {
+            "t": 4.500000000000013,
+            "a": 17.079239137743123,
+            "b": -33.71364293768675
+          },
+          {
+            "t": 4.600000000000018,
+            "a": 13.683846659211776,
+            "b": -34.19419233917234
+          },
+          {
+            "t": 4.700000000000023,
+            "a": 10.240403559147722,
+            "b": -34.67465536340631
+          },
+          {
+            "t": 4.800000000000028,
+            "a": 6.748918476767116,
+            "b": -35.15503198056624
+          },
+          {
+            "t": 4.900000000000033,
+            "a": 3.209400054269123,
+            "b": -35.63532216081432
+          },
+          {
+            "t": 4.989521444431114,
+            "a": 0,
+            "b": -36.06521146034248
+          }
+        ],
+        "running": false
+      },
+      "scene": {
+        "version": 1,
+        "id": "force_balance",
+        "layout": "compare",
+        "objects": [
+          {
+            "id": "thrust",
+            "kind": "node",
+            "content": "Thrust: 14,400 N",
+            "revealed": true
+          },
+          {
+            "id": "mass",
+            "kind": "node",
+            "content": "Mass: 2,875 kg",
+            "revealed": true
+          },
+          {
+            "id": "accel",
+            "kind": "equation",
+            "content": "Acceleration: -4.80 m/s²",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "thrust",
+            "toId": "accel",
+            "relation": "causes"
+          },
+          {
+            "op": "connect",
+            "fromId": "mass",
+            "toId": "accel",
+            "relation": "causes"
+          }
+        ],
+        "marks": [
+          {
+            "targetId": "accel",
+            "mode": "focus"
+          }
+        ],
+        "annotations": [
+          {
+            "targetId": "accel",
+            "text": "Net force stayed downward, so acceleration was negative"
+          }
+        ],
+        "focus": "thrust"
+      },
+      "beats": [
+        {
+          "say": "The velocity stayed negative the whole time: it began at -12 m/s and reached a low of -36.07 m/s. So there was no upward motion; the rocket was already descending and then fell faster downward.",
+          "do": [
+            {
+              "op": "create_scene",
+              "sceneId": "velocity_history",
+              "layout": "timeline"
+            },
+            {
+              "op": "add",
+              "sceneId": "velocity_history",
+              "object": {
+                "id": "v0",
+                "kind": "node",
+                "content": "Start: -12 m/s"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "velocity_history",
+              "object": {
+                "id": "vmin",
+                "kind": "node",
+                "content": "Most negative: -36.07 m/s"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "velocity_history",
+              "object": {
+                "id": "vmax",
+                "kind": "node",
+                "content": "Highest value: -12 m/s"
+              }
+            },
+            {
+              "op": "connect",
+              "fromId": "vmax",
+              "toId": "v0",
+              "relation": "flows_to"
+            },
+            {
+              "op": "connect",
+              "fromId": "v0",
+              "toId": "vmin",
+              "relation": "flows_to"
+            },
+            {
+              "op": "highlight",
+              "targetId": "v0",
+              "mode": "circle"
+            },
+            {
+              "op": "annotate",
+              "targetId": "v0",
+              "text": "Negative from the start",
+              "placement": "auto"
+            },
+            {
+              "op": "highlight",
+              "targetId": "vmin",
+              "mode": "underline"
+            },
+            {
+              "op": "focus_target",
+              "targetId": "vmin"
+            }
+          ]
+        },
+        {
+          "say": "The net force was still downward: thrust was 14,400 N, while the mass was 2,875 kg, giving an acceleration of -4.80 m/s². That downward acceleration explains why the rocket crashed instead of turning upward.",
+          "do": [
+            {
+              "op": "create_scene",
+              "sceneId": "force_balance",
+              "layout": "compare"
+            },
+            {
+              "op": "add",
+              "sceneId": "force_balance",
+              "object": {
+                "id": "thrust",
+                "kind": "node",
+                "content": "Thrust: 14,400 N"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "force_balance",
+              "object": {
+                "id": "mass",
+                "kind": "node",
+                "content": "Mass: 2,875 kg"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "force_balance",
+              "object": {
+                "id": "accel",
+                "kind": "equation",
+                "content": "Acceleration: -4.80 m/s²"
+              }
+            },
+            {
+              "op": "connect",
+              "fromId": "thrust",
+              "toId": "accel",
+              "relation": "causes"
+            },
+            {
+              "op": "connect",
+              "fromId": "mass",
+              "toId": "accel",
+              "relation": "causes"
+            },
+            {
+              "op": "highlight",
+              "targetId": "accel",
+              "mode": "focus"
+            },
+            {
+              "op": "annotate",
+              "targetId": "accel",
+              "text": "Net force stayed downward, so acceleration was negative",
+              "placement": "auto"
+            }
+          ]
+        }
+      ],
+      "followup": "If the thrust stayed the same, what change in mass would make the acceleration less negative?",
+      "move": "explain_result",
+      "assessment": "correct",
+      "skill": "interpreting velocity history and net force",
+      "observations": {
+        "primary": 0,
+        "secondary": -36.06521146034248,
+        "altitude": 0,
+        "velocity": -36.06521146034248,
+        "fuel": 425.21379310344264,
+        "mass": 2875.2137931034426,
+        "thrust": 14400,
+        "acceleration": -4.801676780857067,
+        "status": "crashed",
+        "flightTime": 4.989521444431114
+      },
+      "events": [
+        {
+          "tool": "sim_observe",
+          "args": "{}",
+          "before": {
+            "primary": 0,
+            "secondary": -36.06521146034248,
+            "altitude": 0,
+            "velocity": -36.06521146034248,
+            "fuel": 425.21379310344264,
+            "mass": 2875.2137931034426,
+            "thrust": 14400,
+            "acceleration": -4.801676780857067,
+            "status": "crashed",
+            "flightTime": 4.989521444431114
+          },
+          "after": {
+            "primary": 0,
+            "secondary": -36.06521146034248,
+            "altitude": 0,
+            "velocity": -36.06521146034248,
+            "fuel": 425.21379310344264,
+            "mass": 2875.2137931034426,
+            "thrust": 14400,
+            "acceleration": -4.801676780857067,
+            "status": "crashed",
+            "flightTime": 4.989521444431114
+          }
+        }
+      ],
+      "provider": "openai"
+    },
+    "after": {
+      "topic": "rocket",
+      "params": {
+        "dryMass": 2450,
+        "fuel": 450,
+        "throttle": 0.6,
+        "gravity": 9.81,
+        "altitude": 120
+      },
+      "observations": {
+        "primary": 0,
+        "secondary": -36.06521146034248,
+        "altitude": 0,
+        "velocity": -36.06521146034248,
+        "fuel": 425.21379310344264,
+        "mass": 2875.2137931034426,
+        "thrust": 14400,
+        "acceleration": -4.801676780857067,
+        "status": "crashed",
+        "flightTime": 4.989521444431114
+      },
+      "activeQuestion": "Why did that change? Use our current experiment to explain.",
+      "revision": 14,
+      "scene": {
+        "version": 1,
+        "id": "force_balance",
+        "layout": "compare",
+        "objects": [
+          {
+            "id": "thrust",
+            "kind": "node",
+            "content": "Thrust = 14,400 N",
+            "revealed": true
+          },
+          {
+            "id": "mass",
+            "kind": "node",
+            "content": "Mass = 2,875.21 kg",
+            "revealed": true
+          },
+          {
+            "id": "accel",
+            "kind": "equation",
+            "content": "Acceleration = -4.80 m/s²",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "thrust",
+            "toId": "accel",
+            "relation": "causes"
+          },
+          {
+            "op": "connect",
+            "fromId": "mass",
+            "toId": "accel",
+            "relation": "causes"
+          }
+        ],
+        "marks": [
+          {
+            "targetId": "thrust",
+            "mode": "focus"
+          },
+          {
+            "targetId": "mass",
+            "mode": "focus"
+          },
+          {
+            "targetId": "accel",
+            "mode": "circle"
+          }
+        ],
+        "annotations": [
+          {
+            "targetId": "accel",
+            "text": "Negative acceleration means downward net force."
+          },
+          {
+            "targetId": "thrust",
+            "text": "Same thrust; compare it against the rocket’s weight."
+          },
+          {
+            "targetId": "mass",
+            "text": "This mass is still too large for the fixed thrust."
+          }
+        ],
+        "focus": "accel"
+      },
+      "stateHash": "3a091185",
+      "events": [
+        {
+          "at": 1793607463105,
+          "kind": "question",
+          "before": "36c7357b",
+          "after": "36c7357b",
+          "detail": "Double the mass and show how the landing changes."
+        },
+        {
+          "at": 1793607480018,
+          "kind": "teacher_tools",
+          "before": "36c7357b",
+          "after": "fac957cb",
+          "detail": "[{\"tool\":\"sim_observe\",\"args\":\"{}\",\"before\":{\"primary\":120,\"secondary\":-12,\"altitude\":120,\"velocity\":-12,\"fuel\":450,\"mass\":1450,\"thrust\":14400,\"acceleration\":0.1210344827586205,\"status\":\"flying\",\"flightTime\":0},\"after\":{\"primary\":120,\"secondary\":-12,\"altitude\":120,\"velocity\":-12,\"fuel\":450,\"mass\":1450,\"thrust\":14400,\"acceleration\":0.1210344827586205,\"status\":\"flying\",\"flightTime\":0}},{\"tool\":\"sim_"
+        },
+        {
+          "at": 1793607480018,
+          "kind": "teaching_beat",
+          "before": "fac957cb",
+          "after": "58d18e82",
+          "detail": "Doubling the mass changed the rocket’s acceleration under the same 14,400 N thrust from +0.12 to -4.84 m/s². The heavier rocket could no longer climb; it started accelerating downward."
+        },
+        {
+          "at": 1793607480083,
+          "kind": "teaching_beat",
+          "before": "58d18e82",
+          "after": "ecd34583",
+          "detail": "In the doubled-mass run, the rocket crashed after 4.99 s. At impact, its vertical speed was -36.07 m/s, and 425.21 kg of fuel remained."
+        },
+        {
+          "at": 1793607480131,
+          "kind": "teaching_beat",
+          "before": "ecd34583",
+          "after": "da080710",
+          "detail": "If mass increases again while thrust stays the same, will the rocket accelerate upward more, less, or downward sooner?"
+        },
+        {
+          "at": 1793607480494,
+          "kind": "question",
+          "before": "da080710",
+          "after": "da080710",
+          "detail": "Doubling total mass while holding thrust fixed doubles upward acceleration. Is that correct?"
+        },
+        {
+          "at": 1793607492745,
+          "kind": "teacher_tools",
+          "before": "da080710",
+          "after": "da080710",
+          "detail": "[]"
+        },
+        {
+          "at": 1793607492745,
+          "kind": "teaching_beat",
+          "before": "da080710",
+          "after": "64811c8a",
+          "detail": "No. With thrust fixed at 14,400 N, increasing mass reduces upward acceleration; in the observed run the vehicle was already accelerating downward at -4.80 m/s² at mass 2875.21 kg, so it did not double to a higher climb."
+        },
+        {
+          "at": 1793607492799,
+          "kind": "teaching_beat",
+          "before": "64811c8a",
+          "after": "8d5fef7a",
+          "detail": "The outcome to focus on is the crash: flight time 4.99 s, final velocity -36.07 m/s, and status crashed. That supports the point that more mass lowered the thrust-to-weight margin; it does not show doubled acceleration."
+        },
+        {
+          "at": 1793607492814,
+          "kind": "question",
+          "before": "8d5fef7a",
+          "after": "8d5fef7a",
+          "detail": "Why did that change? Use our current experiment to explain."
+        },
+        {
+          "at": 1793607503700,
+          "kind": "teacher_tools",
+          "before": "8d5fef7a",
+          "after": "8d5fef7a",
+          "detail": "[{\"tool\":\"sim_observe\",\"args\":\"{}\",\"before\":{\"primary\":0,\"secondary\":-36.06521146034248,\"altitude\":0,\"velocity\":-36.06521146034248,\"fuel\":425.21379310344264,\"mass\":2875.2137931034426,\"thrust\":14400,\"acceleration\":-4.801676780857067,\"status\":\"crashed\",\"flightTime\":4.989521444431114},\"after\":{\"primary\":0,\"secondary\":-36.06521146034248,\"altitude\":0,\"velocity\":-36.06521146034248,\"fuel\":425.21379310344"
+        },
+        {
+          "at": 1793607503700,
+          "kind": "teaching_beat",
+          "before": "8d5fef7a",
+          "after": "fbf8dc1b",
+          "detail": "The sim_observe check did not change the run. With thrust fixed at 14,400 N and mass at 2,875.21 kg, the rocket’s acceleration is still negative, -4.80 m/s². That means the net force is downward, so the rocket cannot keep speeding upward."
+        },
+        {
+          "at": 1793607503764,
+          "kind": "teaching_beat",
+          "before": "fbf8dc1b",
+          "after": "4ff41847",
+          "detail": "Because the acceleration stayed negative, the rocket slowed in its upward motion, then fell back and crashed after 4.99 s. The observed outcome is crash, not a successful lift-off."
+        },
+        {
+          "at": 1793607503813,
+          "kind": "teaching_beat",
+          "before": "4ff41847",
+          "after": "3a091185",
+          "detail": "Transfer question: with the same mass, what thrust would be needed to make the acceleration zero instead of negative?"
+        }
+      ]
+    }
+  },
+  {
+    "topic": "attention",
+    "question": "Replace the noun cat with dog; what changed?",
+    "result": {
+      "state": {
+        "version": 1,
+        "id": "attention",
+        "params": {
+          "tokens": "the dog chased the ball",
+          "causal": true,
+          "query": 4
+        },
+        "time": 0,
+        "data": {},
+        "history": [],
+        "running": false
+      },
+      "scene": {
+        "version": 1,
+        "id": "compare1",
+        "layout": "compare",
+        "objects": [
+          {
+            "id": "before",
+            "kind": "node",
+            "content": "Before: strongest token = cat; output = 0.2252",
+            "revealed": true
+          },
+          {
+            "id": "after",
+            "kind": "node",
+            "content": "After: strongest token = dog; output = 0.2261",
+            "revealed": true
+          },
+          {
+            "id": "ballq",
+            "kind": "node",
+            "content": "Query token: ball",
+            "revealed": true
+          },
+          {
+            "id": "ctx",
+            "kind": "node",
+            "content": "Context: [0.3897,0.2784,0.2652,0.0775] → [0.3678,0.2782,0.2878,0.1000]",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "before",
+            "toId": "after",
+            "relation": "compares"
+          },
+          {
+            "op": "connect",
+            "fromId": "after",
+            "toId": "ctx",
+            "relation": "causes"
+          }
+        ],
+        "marks": [
+          {
+            "targetId": "after",
+            "mode": "circle"
+          },
+          {
+            "targetId": "ctx",
+            "mode": "underline"
+          },
+          {
+            "targetId": "before",
+            "mode": "dim_others"
+          }
+        ],
+        "annotations": [
+          {
+            "targetId": "ctx",
+            "text": "Row sum stays 1; the mix of source values changes"
+          }
+        ],
+        "focus": "before"
+      },
+      "beats": [
+        {
+          "say": "Compared with cat, swapping in dog makes token-1 the strongest source for the ball query, and the output rises slightly from 0.2252 to 0.2261.",
+          "do": [
+            {
+              "op": "create_scene",
+              "sceneId": "compare1",
+              "layout": "compare"
+            },
+            {
+              "op": "add",
+              "sceneId": "compare1",
+              "object": {
+                "id": "before",
+                "kind": "node",
+                "content": "Before: strongest token = cat; output = 0.2252"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "compare1",
+              "object": {
+                "id": "after",
+                "kind": "node",
+                "content": "After: strongest token = dog; output = 0.2261"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "compare1",
+              "object": {
+                "id": "ballq",
+                "kind": "node",
+                "content": "Query token: ball"
+              }
+            },
+            {
+              "op": "connect",
+              "fromId": "before",
+              "toId": "after",
+              "relation": "compares"
+            },
+            {
+              "op": "focus_target",
+              "targetId": "after"
+            },
+            {
+              "op": "highlight",
+              "targetId": "after",
+              "mode": "circle"
+            }
+          ]
+        },
+        {
+          "say": "The attention row still sums to 1, so the change is in how weight is split across tokens, not in total mass. The context vector shifts from [0.3897, 0.2784, 0.2652, 0.0775] to [0.3678, 0.2782, 0.2878, 0.1000].",
+          "do": [
+            {
+              "op": "add",
+              "sceneId": "compare1",
+              "object": {
+                "id": "ctx",
+                "kind": "node",
+                "content": "Context: [0.3897,0.2784,0.2652,0.0775] → [0.3678,0.2782,0.2878,0.1000]"
+              }
+            },
+            {
+              "op": "connect",
+              "fromId": "after",
+              "toId": "ctx",
+              "relation": "causes"
+            },
+            {
+              "op": "highlight",
+              "targetId": "ctx",
+              "mode": "underline"
+            },
+            {
+              "op": "annotate",
+              "targetId": "ctx",
+              "text": "Row sum stays 1; the mix of source values changes",
+              "placement": "auto"
+            }
+          ]
+        },
+        {
+          "say": "For a transfer check: if the query token stays ball but the cat token is replaced by dog, which attended token changes most, and does the row sum change?",
+          "do": [
+            {
+              "op": "focus_target",
+              "targetId": "before"
+            },
+            {
+              "op": "highlight",
+              "targetId": "before",
+              "mode": "dim_others"
+            }
+          ]
+        }
+      ],
+      "followup": "If the query stays ball and cat becomes dog, which token gets the largest attention increase, and why doesn't the row sum change?",
+      "move": "demonstrate",
+      "assessment": "question",
+      "skill": "token replacement effects on attention weights",
+      "observations": {
+        "primary": 0.2260988544051125,
+        "secondary": 4,
+        "query": "ball",
+        "rowSum": 1,
+        "strongestToken": "dog",
+        "context": "[0.3677724401308384,0.27818777875746475,0.28777990289557254,0.1]",
+        "weights": "[[1,0,0,0,0],[0.4073334000459302,0.5926665999540698,0,0,0],[0.2869769423672859,0.30169056483709566,0.4113324927956184,0,0],[0.244374387324048,0.2569037300883711,0.25434749526353295,0.244374387324048,0],[0.18054360228539734,0.2260988544051125,0.19558054950722203,0.18054360228539734,0.21723339151687082]]",
+        "queries": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "keys": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "values": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "causal": true
+      },
+      "events": [
+        {
+          "tool": "sim_observe",
+          "args": "{}",
+          "before": {
+            "primary": 0.22522516193993086,
+            "secondary": 4,
+            "query": "ball",
+            "rowSum": 1,
+            "strongestToken": "cat",
+            "context": "[0.38969410024461165,0.27838894310587536,0.26524359087400545,0.07747748380600691]",
+            "weights": "[[1,0,0,0,0],[0.38936076605077796,0.610639233949222,0,0,0],[0.2878410040094023,0.2995880182273404,0.4125709777632572,0,0],[0.2450006665600173,0.25499933343998277,0.25499933343998277,0.2450006665600173,0],[0.1807474262309379,0.22522516193993086,0.19580134935150859,0.1807474262309379,0.21747863624668476]]",
+            "queries": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "keys": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "values": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "causal": true
+          },
+          "after": {
+            "primary": 0.22522516193993086,
+            "secondary": 4,
+            "query": "ball",
+            "rowSum": 1,
+            "strongestToken": "cat",
+            "context": "[0.38969410024461165,0.27838894310587536,0.26524359087400545,0.07747748380600691]",
+            "weights": "[[1,0,0,0,0],[0.38936076605077796,0.610639233949222,0,0,0],[0.2878410040094023,0.2995880182273404,0.4125709777632572,0,0],[0.2450006665600173,0.25499933343998277,0.25499933343998277,0.2450006665600173,0],[0.1807474262309379,0.22522516193993086,0.19580134935150859,0.1807474262309379,0.21747863624668476]]",
+            "queries": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "keys": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "values": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "causal": true
+          }
+        },
+        {
+          "tool": "sim_set_params",
+          "args": "{\"patch\":{\"tokens\":\"the dog chased the ball\"}}",
+          "before": {
+            "primary": 0.22522516193993086,
+            "secondary": 4,
+            "query": "ball",
+            "rowSum": 1,
+            "strongestToken": "cat",
+            "context": "[0.38969410024461165,0.27838894310587536,0.26524359087400545,0.07747748380600691]",
+            "weights": "[[1,0,0,0,0],[0.38936076605077796,0.610639233949222,0,0,0],[0.2878410040094023,0.2995880182273404,0.4125709777632572,0,0],[0.2450006665600173,0.25499933343998277,0.25499933343998277,0.2450006665600173,0],[0.1807474262309379,0.22522516193993086,0.19580134935150859,0.1807474262309379,0.21747863624668476]]",
+            "queries": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "keys": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "values": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "causal": true
+          },
+          "after": {
+            "primary": 0.2260988544051125,
+            "secondary": 4,
+            "query": "ball",
+            "rowSum": 1,
+            "strongestToken": "dog",
+            "context": "[0.3677724401308384,0.27818777875746475,0.28777990289557254,0.1]",
+            "weights": "[[1,0,0,0,0],[0.4073334000459302,0.5926665999540698,0,0,0],[0.2869769423672859,0.30169056483709566,0.4113324927956184,0,0],[0.244374387324048,0.2569037300883711,0.25434749526353295,0.244374387324048,0],[0.18054360228539734,0.2260988544051125,0.19558054950722203,0.18054360228539734,0.21723339151687082]]",
+            "queries": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "keys": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "values": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "causal": true
+          }
+        },
+        {
+          "tool": "sim_observe",
+          "args": "{}",
+          "before": {
+            "primary": 0.2260988544051125,
+            "secondary": 4,
+            "query": "ball",
+            "rowSum": 1,
+            "strongestToken": "dog",
+            "context": "[0.3677724401308384,0.27818777875746475,0.28777990289557254,0.1]",
+            "weights": "[[1,0,0,0,0],[0.4073334000459302,0.5926665999540698,0,0,0],[0.2869769423672859,0.30169056483709566,0.4113324927956184,0,0],[0.244374387324048,0.2569037300883711,0.25434749526353295,0.244374387324048,0],[0.18054360228539734,0.2260988544051125,0.19558054950722203,0.18054360228539734,0.21723339151687082]]",
+            "queries": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "keys": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "values": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "causal": true
+          },
+          "after": {
+            "primary": 0.2260988544051125,
+            "secondary": 4,
+            "query": "ball",
+            "rowSum": 1,
+            "strongestToken": "dog",
+            "context": "[0.3677724401308384,0.27818777875746475,0.28777990289557254,0.1]",
+            "weights": "[[1,0,0,0,0],[0.4073334000459302,0.5926665999540698,0,0,0],[0.2869769423672859,0.30169056483709566,0.4113324927956184,0,0],[0.244374387324048,0.2569037300883711,0.25434749526353295,0.244374387324048,0],[0.18054360228539734,0.2260988544051125,0.19558054950722203,0.18054360228539734,0.21723339151687082]]",
+            "queries": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "keys": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "values": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "causal": true
+          }
+        }
+      ],
+      "provider": "openai"
+    },
+    "wrongAnswer": {
+      "state": {
+        "version": 1,
+        "id": "attention",
+        "params": {
+          "tokens": "the dog chased the ball",
+          "causal": true,
+          "query": 4
+        },
+        "time": 0,
+        "data": {},
+        "history": [],
+        "running": false
+      },
+      "scene": {
+        "version": 1,
+        "id": "causal1",
+        "layout": "flow",
+        "objects": [
+          {
+            "id": "t0",
+            "kind": "node",
+            "content": "Token 0: self only",
+            "revealed": true
+          },
+          {
+            "id": "future",
+            "kind": "node",
+            "content": "Later tokens: masked for token 0",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "t0",
+            "toId": "future",
+            "relation": "flows_to"
+          }
+        ],
+        "marks": [
+          {
+            "targetId": "t0",
+            "mode": "focus"
+          },
+          {
+            "targetId": "future",
+            "mode": "underline"
+          }
+        ],
+        "annotations": [
+          {
+            "targetId": "future",
+            "text": "Future positions are removed from this row"
+          }
+        ],
+        "focus": "future"
+      },
+      "beats": [
+        {
+          "say": "Yes—the causal mask blocks future positions. For token 0, the attention row can only place weight on itself; later tokens are masked out.",
+          "do": [
+            {
+              "op": "create_scene",
+              "sceneId": "causal1",
+              "layout": "flow"
+            },
+            {
+              "op": "add",
+              "sceneId": "causal1",
+              "object": {
+                "id": "t0",
+                "kind": "node",
+                "content": "Token 0: self only"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "causal1",
+              "object": {
+                "id": "future",
+                "kind": "node",
+                "content": "Later tokens: masked for token 0"
+              }
+            },
+            {
+              "op": "connect",
+              "fromId": "t0",
+              "toId": "future",
+              "relation": "flows_to"
+            },
+            {
+              "op": "highlight",
+              "targetId": "t0",
+              "mode": "focus"
+            }
+          ]
+        },
+        {
+          "say": "The observation matches that rule: the attention row still sums to 1, but only allowed positions get weight. For the first row, that means [1, 0, 0, 0, 0].",
+          "do": [
+            {
+              "op": "annotate",
+              "targetId": "future",
+              "text": "Future positions are removed from this row",
+              "placement": "auto"
+            },
+            {
+              "op": "highlight",
+              "targetId": "future",
+              "mode": "underline"
+            },
+            {
+              "op": "focus_target",
+              "targetId": "future"
+            }
+          ]
+        }
+      ],
+      "followup": "What pattern would you predict for the first attention row under a causal mask: which positions can be nonzero?",
+      "move": "respond_to_misconception",
+      "assessment": "wrong",
+      "skill": "causal masking / attention weights",
+      "observations": {
+        "primary": 0.2260988544051125,
+        "secondary": 4,
+        "query": "ball",
+        "rowSum": 1,
+        "strongestToken": "dog",
+        "context": "[0.3677724401308384,0.27818777875746475,0.28777990289557254,0.1]",
+        "weights": "[[1,0,0,0,0],[0.4073334000459302,0.5926665999540698,0,0,0],[0.2869769423672859,0.30169056483709566,0.4113324927956184,0,0],[0.244374387324048,0.2569037300883711,0.25434749526353295,0.244374387324048,0],[0.18054360228539734,0.2260988544051125,0.19558054950722203,0.18054360228539734,0.21723339151687082]]",
+        "queries": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "keys": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "values": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "causal": true
+      },
+      "events": [
+        {
+          "tool": "sim_observe",
+          "args": "{}",
+          "before": {
+            "primary": 0.2260988544051125,
+            "secondary": 4,
+            "query": "ball",
+            "rowSum": 1,
+            "strongestToken": "dog",
+            "context": "[0.3677724401308384,0.27818777875746475,0.28777990289557254,0.1]",
+            "weights": "[[1,0,0,0,0],[0.4073334000459302,0.5926665999540698,0,0,0],[0.2869769423672859,0.30169056483709566,0.4113324927956184,0,0],[0.244374387324048,0.2569037300883711,0.25434749526353295,0.244374387324048,0],[0.18054360228539734,0.2260988544051125,0.19558054950722203,0.18054360228539734,0.21723339151687082]]",
+            "queries": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "keys": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "values": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "causal": true
+          },
+          "after": {
+            "primary": 0.2260988544051125,
+            "secondary": 4,
+            "query": "ball",
+            "rowSum": 1,
+            "strongestToken": "dog",
+            "context": "[0.3677724401308384,0.27818777875746475,0.28777990289557254,0.1]",
+            "weights": "[[1,0,0,0,0],[0.4073334000459302,0.5926665999540698,0,0,0],[0.2869769423672859,0.30169056483709566,0.4113324927956184,0,0],[0.244374387324048,0.2569037300883711,0.25434749526353295,0.244374387324048,0],[0.18054360228539734,0.2260988544051125,0.19558054950722203,0.18054360228539734,0.21723339151687082]]",
+            "queries": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "keys": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "values": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+            "causal": true
+          }
+        }
+      ],
+      "provider": "openai"
+    },
+    "followup": {
+      "state": {
+        "version": 1,
+        "id": "attention",
+        "params": {
+          "tokens": "the dog chased the ball",
+          "causal": true,
+          "query": 4
+        },
+        "time": 0,
+        "data": {},
+        "history": [],
+        "running": false
+      },
+      "scene": {
+        "version": 1,
+        "id": "attn_mask",
+        "layout": "compare",
+        "objects": [
+          {
+            "id": "row0",
+            "kind": "node",
+            "content": "Token 0 row: only self is allowed",
+            "revealed": true
+          },
+          {
+            "id": "row4",
+            "kind": "node",
+            "content": "Token 4 row: earlier tokens are allowed",
+            "revealed": true
+          },
+          {
+            "id": "mask",
+            "kind": "model",
+            "content": "Causal mask blocks future positions",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "mask",
+            "toId": "row0",
+            "relation": "causes"
+          },
+          {
+            "op": "connect",
+            "fromId": "mask",
+            "toId": "row4",
+            "relation": "causes"
+          }
+        ],
+        "marks": [
+          {
+            "targetId": "row0",
+            "mode": "circle"
+          },
+          {
+            "targetId": "row4",
+            "mode": "focus"
+          }
+        ],
+        "annotations": [
+          {
+            "targetId": "row4",
+            "text": "Allowed entries re-share total weight; masked entries stay at 0."
+          }
+        ],
+        "focus": "row0"
+      },
+      "beats": [
+        {
+          "say": "The causal mask blocks future positions, so each row can only place weight on earlier tokens and itself. That is why token 0 has only one nonzero weight, while token 4 can distribute weight across several earlier tokens.",
+          "do": [
+            {
+              "op": "create_scene",
+              "sceneId": "attn_mask",
+              "layout": "compare"
+            },
+            {
+              "op": "add",
+              "sceneId": "attn_mask",
+              "object": {
+                "id": "row0",
+                "kind": "node",
+                "content": "Token 0 row: only self is allowed"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "attn_mask",
+              "object": {
+                "id": "row4",
+                "kind": "node",
+                "content": "Token 4 row: earlier tokens are allowed"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "attn_mask",
+              "object": {
+                "id": "mask",
+                "kind": "model",
+                "content": "Causal mask blocks future positions"
+              }
+            },
+            {
+              "op": "connect",
+              "fromId": "mask",
+              "toId": "row0",
+              "relation": "causes"
+            },
+            {
+              "op": "connect",
+              "fromId": "mask",
+              "toId": "row4",
+              "relation": "causes"
+            },
+            {
+              "op": "highlight",
+              "targetId": "row0",
+              "mode": "circle"
+            }
+          ]
+        },
+        {
+          "say": "The row still renormalizes to sum to 1 over the allowed positions. So the total mass does not change; only the available weights are redistributed among the unmasked tokens. Transfer question: if we remove the causal mask, what changes in token 4’s attention row?",
+          "do": [
+            {
+              "op": "annotate",
+              "targetId": "row4",
+              "text": "Allowed entries re-share total weight; masked entries stay at 0.",
+              "placement": "auto"
+            },
+            {
+              "op": "highlight",
+              "targetId": "row4",
+              "mode": "focus"
+            }
+          ]
+        }
+      ],
+      "followup": "If the causal mask is removed, what happens to the zero entries in token 4’s attention row?",
+      "move": "respond_to_misconception",
+      "assessment": "question",
+      "skill": "causal attention masks and row normalization",
+      "observations": {
+        "primary": 0.2260988544051125,
+        "secondary": 4,
+        "query": "ball",
+        "rowSum": 1,
+        "strongestToken": "dog",
+        "context": "[0.3677724401308384,0.27818777875746475,0.28777990289557254,0.1]",
+        "weights": "[[1,0,0,0,0],[0.4073334000459302,0.5926665999540698,0,0,0],[0.2869769423672859,0.30169056483709566,0.4113324927956184,0,0],[0.244374387324048,0.2569037300883711,0.25434749526353295,0.244374387324048,0],[0.18054360228539734,0.2260988544051125,0.19558054950722203,0.18054360228539734,0.21723339151687082]]",
+        "queries": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "keys": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "values": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "causal": true
+      },
+      "events": [],
+      "provider": "openai"
+    },
+    "after": {
+      "topic": "attention",
+      "params": {
+        "tokens": "the dog chased the ball",
+        "causal": true,
+        "query": 4
+      },
+      "observations": {
+        "primary": 0.2260988544051125,
+        "secondary": 4,
+        "query": "ball",
+        "rowSum": 1,
+        "strongestToken": "dog",
+        "context": "[0.3677724401308384,0.27818777875746475,0.28777990289557254,0.1]",
+        "weights": "[[1,0,0,0,0],[0.4073334000459302,0.5926665999540697,0,0,0],[0.2869769423672859,0.30169056483709566,0.4113324927956184,0,0],[0.244374387324048,0.2569037300883711,0.25434749526353295,0.244374387324048,0],[0.18054360228539734,0.2260988544051125,0.19558054950722203,0.18054360228539734,0.21723339151687082]]",
+        "queries": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "keys": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "values": "[[0.1,0.1,0.2,0.1],[0.9,0.1,0.3,0.1],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+        "causal": true
+      },
+      "activeQuestion": "Why did that change? Use our current experiment to explain.",
+      "revision": 13,
+      "scene": {
+        "version": 1,
+        "id": "attn_mask",
+        "layout": "compare",
+        "objects": [
+          {
+            "id": "row0",
+            "kind": "node",
+            "content": "Token 0 row: only self is allowed",
+            "revealed": true
+          },
+          {
+            "id": "row4",
+            "kind": "node",
+            "content": "Token 4 row: earlier tokens are allowed",
+            "revealed": true
+          },
+          {
+            "id": "mask",
+            "kind": "model",
+            "content": "Causal mask blocks future positions",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "mask",
+            "toId": "row0",
+            "relation": "causes"
+          },
+          {
+            "op": "connect",
+            "fromId": "mask",
+            "toId": "row4",
+            "relation": "causes"
+          }
+        ],
+        "marks": [
+          {
+            "targetId": "row0",
+            "mode": "circle"
+          },
+          {
+            "targetId": "row4",
+            "mode": "focus"
+          }
+        ],
+        "annotations": [
+          {
+            "targetId": "row4",
+            "text": "Allowed entries re-share total weight; masked entries stay at 0."
+          }
+        ],
+        "focus": "row0"
+      },
+      "stateHash": "500a4c2b",
+      "events": [
+        {
+          "at": 1793607503873,
+          "kind": "question",
+          "before": "a75f252e",
+          "after": "a75f252e",
+          "detail": "Replace the noun cat with dog; what changed?"
+        },
+        {
+          "at": 1793607515396,
+          "kind": "teacher_tools",
+          "before": "a75f252e",
+          "after": "4a6bb228",
+          "detail": "[{\"tool\":\"sim_observe\",\"args\":\"{}\",\"before\":{\"primary\":0.22522516193993086,\"secondary\":4,\"query\":\"ball\",\"rowSum\":1,\"strongestToken\":\"cat\",\"context\":\"[0.38969410024461165,0.27838894310587536,0.26524359087400545,0.07747748380600691]\",\"weights\":\"[[1,0,0,0,0],[0.38936076605077796,0.610639233949222,0,0,0],[0.2878410040094023,0.2995880182273404,0.4125709777632572,0,0],[0.2450006665600173,0.2549993334399"
+        },
+        {
+          "at": 1793607515396,
+          "kind": "teaching_beat",
+          "before": "4a6bb228",
+          "after": "0e2e5576",
+          "detail": "Compared with cat, swapping in dog makes token-1 the strongest source for the ball query, and the output rises slightly from 0.2252 to 0.2261."
+        },
+        {
+          "at": 1793607515467,
+          "kind": "teaching_beat",
+          "before": "0e2e5576",
+          "after": "d0c3d5ad",
+          "detail": "The attention row still sums to 1, so the change is in how weight is split across tokens, not in total mass. The context vector shifts from [0.3897, 0.2784, 0.2652, 0.0775] to [0.3678, 0.2782, 0.2878, 0.1000]."
+        },
+        {
+          "at": 1793607515514,
+          "kind": "teaching_beat",
+          "before": "d0c3d5ad",
+          "after": "715ca548",
+          "detail": "For a transfer check: if the query token stays ball but the cat token is replaced by dog, which attended token changes most, and does the row sum change?"
+        },
+        {
+          "at": 1793607515857,
+          "kind": "question",
+          "before": "715ca548",
+          "after": "715ca548",
+          "detail": "With a causal mask the first token can attend to every future token. Is that correct?"
+        },
+        {
+          "at": 1793607526126,
+          "kind": "teacher_tools",
+          "before": "715ca548",
+          "after": "715ca548",
+          "detail": "[{\"tool\":\"sim_observe\",\"args\":\"{}\",\"before\":{\"primary\":0.2260988544051125,\"secondary\":4,\"query\":\"ball\",\"rowSum\":1,\"strongestToken\":\"dog\",\"context\":\"[0.3677724401308384,0.27818777875746475,0.28777990289557254,0.1]\",\"weights\":\"[[1,0,0,0,0],[0.4073334000459302,0.5926665999540698,0,0,0],[0.2869769423672859,0.30169056483709566,0.4113324927956184,0,0],[0.244374387324048,0.2569037300883711,0.254347495263"
+        },
+        {
+          "at": 1793607526127,
+          "kind": "teaching_beat",
+          "before": "715ca548",
+          "after": "6f75fc31",
+          "detail": "Yes—the causal mask blocks future positions. For token 0, the attention row can only place weight on itself; later tokens are masked out."
+        },
+        {
+          "at": 1793607526201,
+          "kind": "teaching_beat",
+          "before": "6f75fc31",
+          "after": "9ae1793f",
+          "detail": "The observation matches that rule: the attention row still sums to 1, but only allowed positions get weight. For the first row, that means [1, 0, 0, 0, 0]."
+        },
+        {
+          "at": 1793607526218,
+          "kind": "question",
+          "before": "9ae1793f",
+          "after": "9ae1793f",
+          "detail": "Why did that change? Use our current experiment to explain."
+        },
+        {
+          "at": 1793607536468,
+          "kind": "teacher_tools",
+          "before": "9ae1793f",
+          "after": "9ae1793f",
+          "detail": "[]"
+        },
+        {
+          "at": 1793607536469,
+          "kind": "teaching_beat",
+          "before": "9ae1793f",
+          "after": "1427e330",
+          "detail": "The causal mask blocks future positions, so each row can only place weight on earlier tokens and itself. That is why token 0 has only one nonzero weight, while token 4 can distribute weight across several earlier tokens."
+        },
+        {
+          "at": 1793607536533,
+          "kind": "teaching_beat",
+          "before": "1427e330",
+          "after": "500a4c2b",
+          "detail": "The row still renormalizes to sum to 1 over the allowed positions. So the total mass does not change; only the available weights are redistributed among the unmasked tokens. Transfer question: if we remove the causal mask, what changes in token 4’s attention row?"
+        }
+      ]
+    }
+  },
+  {
+    "topic": "traffic",
+    "question": "Brake one car and point to the jam front.",
+    "result": {
+      "state": {
+        "version": 1,
+        "id": "traffic",
+        "params": {
+          "count": 20,
+          "desiredSpeed": 22,
+          "headway": 1.2
+        },
+        "time": 1.9999999999999978,
+        "data": {
+          "traffic": {
+            "cars": [
+              {
+                "id": "car_0",
+                "position": 4.590914365891194,
+                "speed": 3.5761642930622566
+              },
+              {
+                "id": "car_1",
+                "position": 41.49689640615418,
+                "speed": 11.214499583963972
+              },
+              {
+                "id": "car_2",
+                "position": 58.99689640615304,
+                "speed": 11.214499583953264
+              },
+              {
+                "id": "car_3",
+                "position": 76.49689640613747,
+                "speed": 11.214499583834568
+              },
+              {
+                "id": "car_4",
+                "position": 93.99689640596245,
+                "speed": 11.21449958260093
+              },
+              {
+                "id": "car_5",
+                "position": 111.49689640415056,
+                "speed": 11.214499570626062
+              },
+              {
+                "id": "car_6",
+                "position": 128.996896386598,
+                "speed": 11.214499462510915
+              },
+              {
+                "id": "car_7",
+                "position": 146.4968962283018,
+                "speed": 11.21449855854447
+              },
+              {
+                "id": "car_8",
+                "position": 163.99689490472417,
+                "speed": 11.21449159456947
+              },
+              {
+                "id": "car_9",
+                "position": 181.4968846935824,
+                "speed": 11.214442460359688
+              },
+              {
+                "id": "car_10",
+                "position": 198.99681242035933,
+                "speed": 11.214127265342878
+              },
+              {
+                "id": "car_11",
+                "position": 216.49634630111166,
+                "speed": 11.212305322250772
+              },
+              {
+                "id": "car_12",
+                "position": 233.99363038257184,
+                "speed": 11.202927368017619
+              },
+              {
+                "id": "car_13",
+                "position": 251.47950245430138,
+                "speed": 11.160694574887367
+              },
+              {
+                "id": "car_14",
+                "position": 268.91514802777453,
+                "speed": 10.99935137715494
+              },
+              {
+                "id": "car_15",
+                "position": 286.1671080658123,
+                "speed": 10.505071814576224
+              },
+              {
+                "id": "car_16",
+                "position": 302.89717244050144,
+                "speed": 9.380403229363782
+              },
+              {
+                "id": "car_17",
+                "position": 318.5383702537425,
+                "speed": 7.55953953347087
+              },
+              {
+                "id": "car_18",
+                "position": 332.4962157959659,
+                "speed": 5.409343817842253
+              },
+              {
+                "id": "car_19",
+                "position": 344.4281704407572,
+                "speed": 3.6224402029364624
+              }
+            ],
+            "time": 1.9999999999999978
+          }
+        },
+        "history": [
+          {
+            "t": 0,
+            "a": 12.4,
+            "b": 1
+          },
+          {
+            "t": 0.09999999999999999,
+            "a": 12.23375384938815,
+            "b": 1.12713899061631
+          },
+          {
+            "t": 0.19999999999999998,
+            "a": 12.064736816654463,
+            "b": 1.2547182986082979
+          },
+          {
+            "t": 0.3,
+            "a": 11.892251670859112,
+            "b": 1.3826367336311385
+          },
+          {
+            "t": 0.39999999999999997,
+            "a": 11.716059693281972,
+            "b": 1.5108220974541526
+          },
+          {
+            "t": 0.49999999999999994,
+            "a": 11.548280516409786,
+            "b": 1.6392214048148708
+          },
+          {
+            "t": 0.6000000000000002,
+            "a": 11.393193964729546,
+            "b": 1.7677948143138833
+          },
+          {
+            "t": 0.7000000000000005,
+            "a": 11.247574935188378,
+            "b": 1.8965117222649437
+          },
+          {
+            "t": 0.8000000000000008,
+            "a": 11.109696462267204,
+            "b": 2.0253481688171817
+          },
+          {
+            "t": 0.9000000000000011,
+            "a": 10.978467138683419,
+            "b": 2.1542850680222205
+          },
+          {
+            "t": 1.0000000000000013,
+            "a": 10.85312565729619,
+            "b": 2.283306970914849
+          },
+          {
+            "t": 1.100000000000001,
+            "a": 10.733104731969604,
+            "b": 2.4124011825664056
+          },
+          {
+            "t": 1.2000000000000006,
+            "a": 10.617960732432211,
+            "b": 2.541557119736287
+          },
+          {
+            "t": 1.3000000000000003,
+            "a": 10.507333766997753,
+            "b": 2.670765835485718
+          },
+          {
+            "t": 1.4,
+            "a": 10.400923460561437,
+            "b": 2.8000196618316755
+          },
+          {
+            "t": 1.4999999999999996,
+            "a": 10.29847340521879,
+            "b": 2.9293119372688277
+          },
+          {
+            "t": 1.5999999999999992,
+            "a": 10.199760692728667,
+            "b": 3.05863679624826
+          },
+          {
+            "t": 1.6999999999999988,
+            "a": 10.104588594268431,
+            "b": 3.187989004521395
+          },
+          {
+            "t": 1.7999999999999985,
+            "a": 10.01278128763635,
+            "b": 3.3173638288730896
+          },
+          {
+            "t": 1.8999999999999981,
+            "a": 9.924179970272096,
+            "b": 3.446756932944084
+          },
+          {
+            "t": 1.9999999999999978,
+            "a": 9.83863993899344,
+            "b": 3.5761642930622566
+          }
+        ],
+        "running": false
+      },
+      "scene": {
+        "version": 1,
+        "id": "lesson2_fix",
+        "layout": "compare",
+        "objects": [
+          {
+            "id": "front",
+            "kind": "node",
+            "content": "Jam front: observed boundary at car_0",
+            "revealed": true
+          },
+          {
+            "id": "slow",
+            "kind": "node",
+            "content": "Slowest car: car_0 at 4.59 m",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "front",
+            "toId": "slow",
+            "relation": "compares"
+          }
+        ],
+        "marks": [
+          {
+            "targetId": "car_0",
+            "mode": "circle"
+          },
+          {
+            "targetId": "jam-front",
+            "mode": "underline"
+          }
+        ],
+        "annotations": [
+          {
+            "targetId": "car_0",
+            "text": "Observed jam-front car after braking"
+          },
+          {
+            "targetId": "jam-front",
+            "text": "Measured downstream speed boundary, not just the slowest car"
+          }
+        ],
+        "focus": "car_0"
+      },
+      "beats": [
+        {
+          "say": "Braking one car created a clear jam front. In this run, the measured jam-front boundary is at car_0, located at 4.59 m.",
+          "do": [
+            {
+              "op": "create_scene",
+              "sceneId": "lesson2_fix",
+              "layout": "compare"
+            },
+            {
+              "op": "add",
+              "sceneId": "lesson2_fix",
+              "object": {
+                "id": "front",
+                "kind": "node",
+                "content": "Jam front: observed boundary at car_0"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "lesson2_fix",
+              "object": {
+                "id": "slow",
+                "kind": "node",
+                "content": "Slowest car: car_0 at 4.59 m"
+              }
+            },
+            {
+              "op": "connect",
+              "fromId": "front",
+              "toId": "slow",
+              "relation": "compares"
+            },
+            {
+              "op": "highlight",
+              "targetId": "car_0",
+              "mode": "circle"
+            },
+            {
+              "op": "focus_target",
+              "targetId": "car_0"
+            },
+            {
+              "op": "annotate",
+              "targetId": "car_0",
+              "text": "Observed jam-front car after braking",
+              "placement": "auto"
+            }
+          ]
+        },
+        {
+          "say": "The speed spread is 7.64 m/s, from 11.21 m/s down to 3.58 m/s. That measures the traffic slowdown, not a doubling of speed.",
+          "do": [
+            {
+              "op": "highlight",
+              "targetId": "jam-front",
+              "mode": "underline"
+            },
+            {
+              "op": "annotate",
+              "targetId": "jam-front",
+              "text": "Measured downstream speed boundary, not just the slowest car",
+              "placement": "auto"
+            }
+          ]
+        }
+      ],
+      "followup": "If the brake lasts longer, does the jam front move backward around the ring or stay near car_0?",
+      "move": "demonstrate",
+      "assessment": "question",
+      "skill": "traffic jam fronts on a ring road",
+      "observations": {
+        "jamFrontCar": "car_0",
+        "jamFrontPosition": 4.590914365891194,
+        "jamFrontExists": true,
+        "jamFrontGradient": 7.638335290901716,
+        "primary": 9.83863993899344,
+        "secondary": 3.5761642930622566,
+        "meanSpeed": 9.83863993899344,
+        "minSpeed": 3.5761642930622566,
+        "maxSpeed": 11.214499583963972,
+        "density": 57.14285714285714,
+        "slowestCar": "car_0",
+        "slowestPosition": 4.590914365891194,
+        "speedSpread": 7.638335290901716,
+        "elapsed": 1.9999999999999978
+      },
+      "events": [
+        {
+          "tool": "sim_experiment",
+          "args": "{\"patch\":{},\"seconds\":2,\"brake\":true}",
+          "before": {
+            "jamFrontCar": "car_0",
+            "jamFrontPosition": 0,
+            "jamFrontExists": false,
+            "jamFrontGradient": 0,
+            "primary": 13,
+            "secondary": 13,
+            "meanSpeed": 13,
+            "minSpeed": 13,
+            "maxSpeed": 13,
+            "density": 57.14285714285714,
+            "slowestCar": "car_0",
+            "slowestPosition": 0,
+            "speedSpread": 0,
+            "elapsed": 0
+          },
+          "after": {
+            "jamFrontCar": "car_0",
+            "jamFrontPosition": 4.590914365891194,
+            "jamFrontExists": true,
+            "jamFrontGradient": 7.638335290901716,
+            "primary": 9.83863993899344,
+            "secondary": 3.5761642930622566,
+            "meanSpeed": 9.83863993899344,
+            "minSpeed": 3.5761642930622566,
+            "maxSpeed": 11.214499583963972,
+            "density": 57.14285714285714,
+            "slowestCar": "car_0",
+            "slowestPosition": 4.590914365891194,
+            "speedSpread": 7.638335290901716,
+            "elapsed": 1.9999999999999978
+          },
+          "baseline": {
+            "jamFrontCar": "car_7",
+            "jamFrontPosition": 146.496896406154,
+            "jamFrontExists": false,
+            "jamFrontGradient": 8.704148513061227e-14,
+            "primary": 11.214499583964928,
+            "secondary": 11.214499583964813,
+            "meanSpeed": 11.214499583964928,
+            "minSpeed": 11.214499583964813,
+            "maxSpeed": 11.21449958396501,
+            "density": 57.14285714285714,
+            "slowestCar": "car_19",
+            "slowestPosition": 6.496896406155258,
+            "speedSpread": 1.971756091734278e-13,
+            "elapsed": 1.9999999999999978
+          }
+        },
+        {
+          "tool": "sim_observe",
+          "args": "{}",
+          "before": {
+            "jamFrontCar": "car_0",
+            "jamFrontPosition": 4.590914365891194,
+            "jamFrontExists": true,
+            "jamFrontGradient": 7.638335290901716,
+            "primary": 9.83863993899344,
+            "secondary": 3.5761642930622566,
+            "meanSpeed": 9.83863993899344,
+            "minSpeed": 3.5761642930622566,
+            "maxSpeed": 11.214499583963972,
+            "density": 57.14285714285714,
+            "slowestCar": "car_0",
+            "slowestPosition": 4.590914365891194,
+            "speedSpread": 7.638335290901716,
+            "elapsed": 1.9999999999999978
+          },
+          "after": {
+            "jamFrontCar": "car_0",
+            "jamFrontPosition": 4.590914365891194,
+            "jamFrontExists": true,
+            "jamFrontGradient": 7.638335290901716,
+            "primary": 9.83863993899344,
+            "secondary": 3.5761642930622566,
+            "meanSpeed": 9.83863993899344,
+            "minSpeed": 3.5761642930622566,
+            "maxSpeed": 11.214499583963972,
+            "density": 57.14285714285714,
+            "slowestCar": "car_0",
+            "slowestPosition": 4.590914365891194,
+            "speedSpread": 7.638335290901716,
+            "elapsed": 1.9999999999999978
+          }
+        }
+      ],
+      "provider": "openai"
+    },
+    "wrongAnswer": {
+      "state": {
+        "version": 1,
+        "id": "traffic",
+        "params": {
+          "count": 20,
+          "desiredSpeed": 22,
+          "headway": 1.2
+        },
+        "time": 3.9999999999999907,
+        "data": {
+          "traffic": {
+            "cars": [
+              {
+                "id": "car_0",
+                "position": 9.205045056835672,
+                "speed": 3.593132362060135
+              },
+              {
+                "id": "car_1",
+                "position": 62.88678725521021,
+                "speed": 10.277091070429053
+              },
+              {
+                "id": "car_2",
+                "position": 80.38678718718853,
+                "speed": 10.277090834096022
+              },
+              {
+                "id": "car_3",
+                "position": 97.8867867764518,
+                "speed": 10.277089495352094
+              },
+              {
+                "id": "car_4",
+                "position": 115.38678443550168,
+                "speed": 10.277082368800961
+              },
+              {
+                "id": "car_5",
+                "position": 132.8867718809717,
+                "speed": 10.277046850559467
+              },
+              {
+                "id": "car_6",
+                "position": 150.38670874341324,
+                "speed": 10.276881821016552
+              },
+              {
+                "id": "car_7",
+                "position": 167.88641215722544,
+                "speed": 10.276170508942865
+              },
+              {
+                "id": "car_8",
+                "position": 185.3851167107881,
+                "speed": 10.273343146673621
+              },
+              {
+                "id": "car_9",
+                "position": 202.87988408375952,
+                "speed": 10.26305614030128
+              },
+              {
+                "id": "car_10",
+                "position": 220.36047695026082,
+                "speed": 10.229149380885772
+              },
+              {
+                "id": "car_11",
+                "position": 237.79506273412505,
+                "speed": 10.129518191751885
+              },
+              {
+                "id": "car_12",
+                "position": 255.097838109264,
+                "speed": 9.875197087838625
+              },
+              {
+                "id": "car_13",
+                "position": 272.07776410812335,
+                "speed": 9.331335083539162
+              },
+              {
+                "id": "car_14",
+                "position": 288.40560189485655,
+                "speed": 8.389089321881194
+              },
+              {
+                "id": "car_15",
+                "position": 303.66813546761387,
+                "speed": 7.074390847442001
+              },
+              {
+                "id": "car_16",
+                "position": 317.5023631604488,
+                "speed": 5.556188760460523
+              },
+              {
+                "id": "car_17",
+                "position": 329.7074632859442,
+                "speed": 4.067049328975358
+              },
+              {
+                "id": "car_18",
+                "position": 340.31258492069105,
+                "speed": 2.8945673847681475
+              },
+              {
+                "id": "car_19",
+                "position": 349.7253430744106,
+                "speed": 2.4961977309753687
+              }
+            ],
+            "time": 3.9999999999999907
+          }
+        },
+        "history": [
+          {
+            "t": 0,
+            "a": 12.4,
+            "b": 1
+          },
+          {
+            "t": 0.09999999999999999,
+            "a": 12.23375384938815,
+            "b": 1.12713899061631
+          },
+          {
+            "t": 0.19999999999999998,
+            "a": 12.064736816654463,
+            "b": 1.2547182986082979
+          },
+          {
+            "t": 0.3,
+            "a": 11.892251670859112,
+            "b": 1.3826367336311385
+          },
+          {
+            "t": 0.39999999999999997,
+            "a": 11.716059693281972,
+            "b": 1.5108220974541526
+          },
+          {
+            "t": 0.49999999999999994,
+            "a": 11.548280516409786,
+            "b": 1.6392214048148708
+          },
+          {
+            "t": 0.6000000000000002,
+            "a": 11.393193964729546,
+            "b": 1.7677948143138833
+          },
+          {
+            "t": 0.7000000000000005,
+            "a": 11.247574935188378,
+            "b": 1.8965117222649437
+          },
+          {
+            "t": 0.8000000000000008,
+            "a": 11.109696462267204,
+            "b": 2.0253481688171817
+          },
+          {
+            "t": 0.9000000000000011,
+            "a": 10.978467138683419,
+            "b": 2.1542850680222205
+          },
+          {
+            "t": 1.0000000000000013,
+            "a": 10.85312565729619,
+            "b": 2.283306970914849
+          },
+          {
+            "t": 1.100000000000001,
+            "a": 10.733104731969604,
+            "b": 2.4124011825664056
+          },
+          {
+            "t": 1.2000000000000006,
+            "a": 10.617960732432211,
+            "b": 2.541557119736287
+          },
+          {
+            "t": 1.3000000000000003,
+            "a": 10.507333766997753,
+            "b": 2.670765835485718
+          },
+          {
+            "t": 1.4,
+            "a": 10.400923460561437,
+            "b": 2.8000196618316755
+          },
+          {
+            "t": 1.4999999999999996,
+            "a": 10.29847340521879,
+            "b": 2.9293119372688277
+          },
+          {
+            "t": 1.5999999999999992,
+            "a": 10.199760692728667,
+            "b": 3.05863679624826
+          },
+          {
+            "t": 1.6999999999999988,
+            "a": 10.104588594268431,
+            "b": 3.187989004521395
+          },
+          {
+            "t": 1.7999999999999985,
+            "a": 10.01278128763635,
+            "b": 3.3173638288730896
+          },
+          {
+            "t": 1.8999999999999981,
+            "a": 9.924179970272096,
+            "b": 3.446756932944084
+          },
+          {
+            "t": 1.9999999999999978,
+            "a": 9.83863993899344,
+            "b": 3.5761642930622566
+          },
+          {
+            "t": 2.0999999999999974,
+            "a": 9.618064221787499,
+            "b": 1.1295166937374093
+          },
+          {
+            "t": 2.199999999999997,
+            "a": 9.529163824435418,
+            "b": 1.259061166284465
+          },
+          {
+            "t": 2.2999999999999967,
+            "a": 9.442968177836253,
+            "b": 1.3886303948819554
+          },
+          {
+            "t": 2.3999999999999964,
+            "a": 9.35934509297599,
+            "b": 1.5182217017125912
+          },
+          {
+            "t": 2.499999999999996,
+            "a": 9.278183067735476,
+            "b": 1.6478326879639973
+          },
+          {
+            "t": 2.5999999999999956,
+            "a": 9.199385256135411,
+            "b": 1.777461179732688
+          },
+          {
+            "t": 2.6999999999999953,
+            "a": 9.122865493845318,
+            "b": 1.9071051832102488
+          },
+          {
+            "t": 2.799999999999995,
+            "a": 9.048545595676647,
+            "b": 2.036762847207492
+          },
+          {
+            "t": 2.8999999999999946,
+            "a": 8.976353471917502,
+            "b": 2.16643243152557
+          },
+          {
+            "t": 2.9999999999999942,
+            "a": 8.906221793785154,
+            "b": 2.296112280020639
+          },
+          {
+            "t": 3.099999999999994,
+            "a": 8.83808704120376,
+            "b": 2.4241101268706755
+          },
+          {
+            "t": 3.1999999999999935,
+            "a": 8.771888824692203,
+            "b": 2.3987070494942064
+          },
+          {
+            "t": 3.299999999999993,
+            "a": 8.707569407199236,
+            "b": 2.3830017884707977
+          },
+          {
+            "t": 3.399999999999993,
+            "a": 8.645073372276972,
+            "b": 2.3763617135709714
+          },
+          {
+            "t": 3.4999999999999925,
+            "a": 8.584347398182539,
+            "b": 2.3781964577820656
+          },
+          {
+            "t": 3.599999999999992,
+            "a": 8.525340106713857,
+            "b": 2.387952145048702
+          },
+          {
+            "t": 3.6999999999999917,
+            "a": 8.468001962603136,
+            "b": 2.4051074859482577
+          },
+          {
+            "t": 3.7999999999999914,
+            "a": 8.412285204994202,
+            "b": 2.4291711521811403
+          },
+          {
+            "t": 3.899999999999991,
+            "a": 8.358143797311355,
+            "b": 2.4596799874535584
+          },
+          {
+            "t": 3.9999999999999907,
+            "a": 8.305533385837503,
+            "b": 2.4961977309753687
+          }
+        ],
+        "running": false
+      },
+      "scene": {
+        "version": 1,
+        "id": "idm_compare",
+        "layout": "compare",
+        "objects": [
+          {
+            "id": "before",
+            "kind": "node",
+            "content": "Before: mean speed 8.62 m/s; jam front at car_0",
+            "revealed": true
+          },
+          {
+            "id": "after",
+            "kind": "node",
+            "content": "After brake: mean speed 8.31 m/s; jam front at car_0",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "before",
+            "toId": "after",
+            "relation": "compares"
+          }
+        ],
+        "marks": [
+          {
+            "targetId": "jam-front",
+            "mode": "circle"
+          },
+          {
+            "targetId": "car_0",
+            "mode": "underline"
+          },
+          {
+            "targetId": "before",
+            "mode": "dim_others"
+          }
+        ],
+        "annotations": [
+          {
+            "targetId": "after",
+            "text": "Front still at car_0; mean speed is lower"
+          }
+        ],
+        "focus": "jam-front"
+      },
+      "beats": [
+        {
+          "say": "The brake did affect the traffic: mean speed fell from 8.62 to 8.31 m/s. The jam-front boundary was still detected at car_0, so the front did not disappear in this run.",
+          "do": [
+            {
+              "op": "create_scene",
+              "sceneId": "idm_compare",
+              "layout": "compare"
+            },
+            {
+              "op": "add",
+              "sceneId": "idm_compare",
+              "object": {
+                "id": "before",
+                "kind": "node",
+                "content": "Before: mean speed 8.62 m/s; jam front at car_0"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "idm_compare",
+              "object": {
+                "id": "after",
+                "kind": "node",
+                "content": "After brake: mean speed 8.31 m/s; jam front at car_0"
+              }
+            },
+            {
+              "op": "connect",
+              "fromId": "before",
+              "toId": "after",
+              "relation": "compares"
+            },
+            {
+              "op": "focus_target",
+              "targetId": "jam-front"
+            },
+            {
+              "op": "highlight",
+              "targetId": "jam-front",
+              "mode": "circle"
+            }
+          ]
+        },
+        {
+          "say": "The jam-front position stayed at car_0 here, so we should not claim it drifted around the ring from these observations alone. The speed spread remained large, which is consistent with a persistent disturbance.",
+          "do": [
+            {
+              "op": "annotate",
+              "targetId": "after",
+              "text": "Front still at car_0; mean speed is lower",
+              "placement": "auto"
+            },
+            {
+              "op": "highlight",
+              "targetId": "car_0",
+              "mode": "underline"
+            },
+            {
+              "op": "highlight",
+              "targetId": "before",
+              "mode": "dim_others"
+            }
+          ]
+        },
+        {
+          "say": "Transfer question: if we increase the brake duration, what happens to the mean speed and the jam-front location compared with this run?",
+          "do": [
+            {
+              "op": "reveal",
+              "objectIds": [
+                "before",
+                "after"
+              ]
+            }
+          ]
+        }
+      ],
+      "followup": "If the brake lasts longer, how do mean speed and the jam-front location change compared with this run?",
+      "move": "respond_to_misconception",
+      "assessment": "wrong",
+      "skill": "IDM car-following and jam-front propagation",
+      "observations": {
+        "jamFrontCar": "car_0",
+        "jamFrontPosition": 9.205045056835672,
+        "jamFrontExists": true,
+        "jamFrontGradient": 6.683958708368918,
+        "primary": 8.305533385837503,
+        "secondary": 2.4961977309753687,
+        "meanSpeed": 8.305533385837503,
+        "minSpeed": 2.4961977309753687,
+        "maxSpeed": 10.277091070429053,
+        "density": 57.14285714285714,
+        "slowestCar": "car_19",
+        "slowestPosition": 349.7253430744106,
+        "speedSpread": 7.7808933394536846,
+        "elapsed": 3.9999999999999907
+      },
+      "events": [
+        {
+          "tool": "sim_observe",
+          "args": "{}",
+          "before": {
+            "jamFrontCar": "car_0",
+            "jamFrontPosition": 4.590914365891194,
+            "jamFrontExists": true,
+            "jamFrontGradient": 7.638335290901716,
+            "primary": 9.83863993899344,
+            "secondary": 3.5761642930622566,
+            "meanSpeed": 9.83863993899344,
+            "minSpeed": 3.5761642930622566,
+            "maxSpeed": 11.214499583963972,
+            "density": 57.14285714285714,
+            "slowestCar": "car_0",
+            "slowestPosition": 4.590914365891194,
+            "speedSpread": 7.638335290901716,
+            "elapsed": 1.9999999999999978
+          },
+          "after": {
+            "jamFrontCar": "car_0",
+            "jamFrontPosition": 4.590914365891194,
+            "jamFrontExists": true,
+            "jamFrontGradient": 7.638335290901716,
+            "primary": 9.83863993899344,
+            "secondary": 3.5761642930622566,
+            "meanSpeed": 9.83863993899344,
+            "minSpeed": 3.5761642930622566,
+            "maxSpeed": 11.214499583963972,
+            "density": 57.14285714285714,
+            "slowestCar": "car_0",
+            "slowestPosition": 4.590914365891194,
+            "speedSpread": 7.638335290901716,
+            "elapsed": 1.9999999999999978
+          }
+        },
+        {
+          "tool": "sim_experiment",
+          "args": "{\"patch\":{},\"seconds\":2,\"brake\":true}",
+          "before": {
+            "jamFrontCar": "car_0",
+            "jamFrontPosition": 4.590914365891194,
+            "jamFrontExists": true,
+            "jamFrontGradient": 7.638335290901716,
+            "primary": 9.83863993899344,
+            "secondary": 3.5761642930622566,
+            "meanSpeed": 9.83863993899344,
+            "minSpeed": 3.5761642930622566,
+            "maxSpeed": 11.214499583963972,
+            "density": 57.14285714285714,
+            "slowestCar": "car_0",
+            "slowestPosition": 4.590914365891194,
+            "speedSpread": 7.638335290901716,
+            "elapsed": 1.9999999999999978
+          },
+          "after": {
+            "jamFrontCar": "car_0",
+            "jamFrontPosition": 9.205045056835672,
+            "jamFrontExists": true,
+            "jamFrontGradient": 6.683958708368918,
+            "primary": 8.305533385837503,
+            "secondary": 2.4961977309753687,
+            "meanSpeed": 8.305533385837503,
+            "minSpeed": 2.4961977309753687,
+            "maxSpeed": 10.277091070429053,
+            "density": 57.14285714285714,
+            "slowestCar": "car_19",
+            "slowestPosition": 349.7253430744106,
+            "speedSpread": 7.7808933394536846,
+            "elapsed": 3.9999999999999907
+          },
+          "baseline": {
+            "jamFrontCar": "car_0",
+            "jamFrontPosition": 14.352195928934805,
+            "jamFrontExists": true,
+            "jamFrontGradient": 4.115084743681121,
+            "primary": 8.617522209637094,
+            "secondary": 3.937121988565057,
+            "meanSpeed": 8.617522209637094,
+            "minSpeed": 3.937121988565057,
+            "maxSpeed": 10.27709107042907,
+            "density": 57.14285714285714,
+            "slowestCar": "car_18",
+            "slowestPosition": 341.22843505401613,
+            "speedSpread": 6.339969081864012,
+            "elapsed": 3.9999999999999907
+          }
+        }
+      ],
+      "provider": "openai"
+    },
+    "followup": {
+      "state": {
+        "version": 1,
+        "id": "traffic",
+        "params": {
+          "count": 20,
+          "desiredSpeed": 22,
+          "headway": 1.2
+        },
+        "time": 3.9999999999999907,
+        "data": {
+          "traffic": {
+            "cars": [
+              {
+                "id": "car_0",
+                "position": 9.205045056835672,
+                "speed": 3.593132362060135
+              },
+              {
+                "id": "car_1",
+                "position": 62.88678725521021,
+                "speed": 10.277091070429053
+              },
+              {
+                "id": "car_2",
+                "position": 80.38678718718853,
+                "speed": 10.277090834096022
+              },
+              {
+                "id": "car_3",
+                "position": 97.8867867764518,
+                "speed": 10.277089495352094
+              },
+              {
+                "id": "car_4",
+                "position": 115.38678443550168,
+                "speed": 10.277082368800961
+              },
+              {
+                "id": "car_5",
+                "position": 132.8867718809717,
+                "speed": 10.277046850559467
+              },
+              {
+                "id": "car_6",
+                "position": 150.38670874341324,
+                "speed": 10.276881821016552
+              },
+              {
+                "id": "car_7",
+                "position": 167.88641215722544,
+                "speed": 10.276170508942865
+              },
+              {
+                "id": "car_8",
+                "position": 185.3851167107881,
+                "speed": 10.273343146673621
+              },
+              {
+                "id": "car_9",
+                "position": 202.87988408375952,
+                "speed": 10.26305614030128
+              },
+              {
+                "id": "car_10",
+                "position": 220.36047695026082,
+                "speed": 10.229149380885772
+              },
+              {
+                "id": "car_11",
+                "position": 237.79506273412505,
+                "speed": 10.129518191751885
+              },
+              {
+                "id": "car_12",
+                "position": 255.097838109264,
+                "speed": 9.875197087838625
+              },
+              {
+                "id": "car_13",
+                "position": 272.07776410812335,
+                "speed": 9.331335083539162
+              },
+              {
+                "id": "car_14",
+                "position": 288.40560189485655,
+                "speed": 8.389089321881194
+              },
+              {
+                "id": "car_15",
+                "position": 303.66813546761387,
+                "speed": 7.074390847442001
+              },
+              {
+                "id": "car_16",
+                "position": 317.5023631604488,
+                "speed": 5.556188760460523
+              },
+              {
+                "id": "car_17",
+                "position": 329.7074632859442,
+                "speed": 4.067049328975358
+              },
+              {
+                "id": "car_18",
+                "position": 340.31258492069105,
+                "speed": 2.8945673847681475
+              },
+              {
+                "id": "car_19",
+                "position": 349.7253430744106,
+                "speed": 2.4961977309753687
+              }
+            ],
+            "time": 3.9999999999999907
+          }
+        },
+        "history": [
+          {
+            "t": 0,
+            "a": 12.4,
+            "b": 1
+          },
+          {
+            "t": 0.09999999999999999,
+            "a": 12.23375384938815,
+            "b": 1.12713899061631
+          },
+          {
+            "t": 0.19999999999999998,
+            "a": 12.064736816654463,
+            "b": 1.2547182986082979
+          },
+          {
+            "t": 0.3,
+            "a": 11.892251670859112,
+            "b": 1.3826367336311385
+          },
+          {
+            "t": 0.39999999999999997,
+            "a": 11.716059693281972,
+            "b": 1.5108220974541526
+          },
+          {
+            "t": 0.49999999999999994,
+            "a": 11.548280516409786,
+            "b": 1.6392214048148708
+          },
+          {
+            "t": 0.6000000000000002,
+            "a": 11.393193964729546,
+            "b": 1.7677948143138833
+          },
+          {
+            "t": 0.7000000000000005,
+            "a": 11.247574935188378,
+            "b": 1.8965117222649437
+          },
+          {
+            "t": 0.8000000000000008,
+            "a": 11.109696462267204,
+            "b": 2.0253481688171817
+          },
+          {
+            "t": 0.9000000000000011,
+            "a": 10.978467138683419,
+            "b": 2.1542850680222205
+          },
+          {
+            "t": 1.0000000000000013,
+            "a": 10.85312565729619,
+            "b": 2.283306970914849
+          },
+          {
+            "t": 1.100000000000001,
+            "a": 10.733104731969604,
+            "b": 2.4124011825664056
+          },
+          {
+            "t": 1.2000000000000006,
+            "a": 10.617960732432211,
+            "b": 2.541557119736287
+          },
+          {
+            "t": 1.3000000000000003,
+            "a": 10.507333766997753,
+            "b": 2.670765835485718
+          },
+          {
+            "t": 1.4,
+            "a": 10.400923460561437,
+            "b": 2.8000196618316755
+          },
+          {
+            "t": 1.4999999999999996,
+            "a": 10.29847340521879,
+            "b": 2.9293119372688277
+          },
+          {
+            "t": 1.5999999999999992,
+            "a": 10.199760692728667,
+            "b": 3.05863679624826
+          },
+          {
+            "t": 1.6999999999999988,
+            "a": 10.104588594268431,
+            "b": 3.187989004521395
+          },
+          {
+            "t": 1.7999999999999985,
+            "a": 10.01278128763635,
+            "b": 3.3173638288730896
+          },
+          {
+            "t": 1.8999999999999981,
+            "a": 9.924179970272096,
+            "b": 3.446756932944084
+          },
+          {
+            "t": 1.9999999999999978,
+            "a": 9.83863993899344,
+            "b": 3.5761642930622566
+          },
+          {
+            "t": 2.0999999999999974,
+            "a": 9.618064221787499,
+            "b": 1.1295166937374093
+          },
+          {
+            "t": 2.199999999999997,
+            "a": 9.529163824435418,
+            "b": 1.259061166284465
+          },
+          {
+            "t": 2.2999999999999967,
+            "a": 9.442968177836253,
+            "b": 1.3886303948819554
+          },
+          {
+            "t": 2.3999999999999964,
+            "a": 9.35934509297599,
+            "b": 1.5182217017125912
+          },
+          {
+            "t": 2.499999999999996,
+            "a": 9.278183067735476,
+            "b": 1.6478326879639973
+          },
+          {
+            "t": 2.5999999999999956,
+            "a": 9.199385256135411,
+            "b": 1.777461179732688
+          },
+          {
+            "t": 2.6999999999999953,
+            "a": 9.122865493845318,
+            "b": 1.9071051832102488
+          },
+          {
+            "t": 2.799999999999995,
+            "a": 9.048545595676647,
+            "b": 2.036762847207492
+          },
+          {
+            "t": 2.8999999999999946,
+            "a": 8.976353471917502,
+            "b": 2.16643243152557
+          },
+          {
+            "t": 2.9999999999999942,
+            "a": 8.906221793785154,
+            "b": 2.296112280020639
+          },
+          {
+            "t": 3.099999999999994,
+            "a": 8.83808704120376,
+            "b": 2.4241101268706755
+          },
+          {
+            "t": 3.1999999999999935,
+            "a": 8.771888824692203,
+            "b": 2.3987070494942064
+          },
+          {
+            "t": 3.299999999999993,
+            "a": 8.707569407199236,
+            "b": 2.3830017884707977
+          },
+          {
+            "t": 3.399999999999993,
+            "a": 8.645073372276972,
+            "b": 2.3763617135709714
+          },
+          {
+            "t": 3.4999999999999925,
+            "a": 8.584347398182539,
+            "b": 2.3781964577820656
+          },
+          {
+            "t": 3.599999999999992,
+            "a": 8.525340106713857,
+            "b": 2.387952145048702
+          },
+          {
+            "t": 3.6999999999999917,
+            "a": 8.468001962603136,
+            "b": 2.4051074859482577
+          },
+          {
+            "t": 3.7999999999999914,
+            "a": 8.412285204994202,
+            "b": 2.4291711521811403
+          },
+          {
+            "t": 3.899999999999991,
+            "a": 8.358143797311355,
+            "b": 2.4596799874535584
+          },
+          {
+            "t": 3.9999999999999907,
+            "a": 8.305533385837503,
+            "b": 2.4961977309753687
+          }
+        ],
+        "running": false
+      },
+      "scene": {
+        "version": 1,
+        "id": "front_vs_slowest",
+        "layout": "compare",
+        "objects": [
+          {
+            "id": "front_node",
+            "kind": "node",
+            "content": "Jam front: car_0",
+            "revealed": true
+          },
+          {
+            "id": "slowest_node",
+            "kind": "node",
+            "content": "Slowest car: car_19",
+            "revealed": true
+          },
+          {
+            "id": "speed_label",
+            "kind": "label",
+            "content": "Mean speed: 8.31 m/s",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "front_node",
+            "toId": "speed_label",
+            "relation": "part_of"
+          },
+          {
+            "op": "connect",
+            "fromId": "slowest_node",
+            "toId": "speed_label",
+            "relation": "part_of"
+          }
+        ],
+        "marks": [],
+        "annotations": [
+          {
+            "targetId": "jam-front",
+            "text": "Observed: mean speed unchanged; jam front still at car_0"
+          }
+        ],
+        "focus": "front_node"
+      },
+      "beats": [
+        {
+          "say": "The executed observation shows no measurable before/after change: mean speed is 8.31 m/s in both snapshots. The jam front is still detected at car_0, so there is no shifted front to report here.",
+          "do": [
+            {
+              "op": "focus_target",
+              "targetId": "jam-front"
+            },
+            {
+              "op": "highlight",
+              "targetId": "car_0",
+              "mode": "circle"
+            },
+            {
+              "op": "highlight",
+              "targetId": "jam-front",
+              "mode": "focus"
+            }
+          ]
+        },
+        {
+          "say": "The slowest car is car_19 at 2.50 m/s, but that is not the same as the jam front. Here, the measured front boundary stays at car_0 while one much slower car sits elsewhere in the ring.",
+          "do": [
+            {
+              "op": "create_scene",
+              "sceneId": "front_vs_slowest",
+              "layout": "compare"
+            },
+            {
+              "op": "add",
+              "sceneId": "front_vs_slowest",
+              "object": {
+                "id": "front_node",
+                "kind": "node",
+                "content": "Jam front: car_0"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "front_vs_slowest",
+              "object": {
+                "id": "slowest_node",
+                "kind": "node",
+                "content": "Slowest car: car_19"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "front_vs_slowest",
+              "object": {
+                "id": "speed_label",
+                "kind": "label",
+                "content": "Mean speed: 8.31 m/s"
+              }
+            },
+            {
+              "op": "connect",
+              "fromId": "front_node",
+              "toId": "speed_label",
+              "relation": "part_of"
+            },
+            {
+              "op": "connect",
+              "fromId": "slowest_node",
+              "toId": "speed_label",
+              "relation": "part_of"
+            }
+          ]
+        },
+        {
+          "say": "Transfer question: if the brake is removed and the model is run longer, what observation would tell you whether the jam front has moved away from car_0 or simply remained in place?",
+          "do": [
+            {
+              "op": "annotate",
+              "targetId": "jam-front",
+              "text": "Observed: mean speed unchanged; jam front still at car_0",
+              "placement": "auto"
+            }
+          ]
+        }
+      ],
+      "followup": "If the brake is removed and the model is run longer, what observation would tell you whether the jam front has moved away from car_0 or simply remained in place?",
+      "move": "respond_to_misconception",
+      "assessment": "wrong",
+      "skill": "interpreting jam fronts and braking effects in IDM traffic",
+      "observations": {
+        "jamFrontCar": "car_0",
+        "jamFrontPosition": 9.205045056835672,
+        "jamFrontExists": true,
+        "jamFrontGradient": 6.683958708368918,
+        "primary": 8.305533385837503,
+        "secondary": 2.4961977309753687,
+        "meanSpeed": 8.305533385837503,
+        "minSpeed": 2.4961977309753687,
+        "maxSpeed": 10.277091070429053,
+        "density": 57.14285714285714,
+        "slowestCar": "car_19",
+        "slowestPosition": 349.7253430744106,
+        "speedSpread": 7.7808933394536846,
+        "elapsed": 3.9999999999999907
+      },
+      "events": [
+        {
+          "tool": "sim_observe",
+          "args": "{}",
+          "before": {
+            "jamFrontCar": "car_0",
+            "jamFrontPosition": 9.205045056835672,
+            "jamFrontExists": true,
+            "jamFrontGradient": 6.683958708368918,
+            "primary": 8.305533385837503,
+            "secondary": 2.4961977309753687,
+            "meanSpeed": 8.305533385837503,
+            "minSpeed": 2.4961977309753687,
+            "maxSpeed": 10.277091070429053,
+            "density": 57.14285714285714,
+            "slowestCar": "car_19",
+            "slowestPosition": 349.7253430744106,
+            "speedSpread": 7.7808933394536846,
+            "elapsed": 3.9999999999999907
+          },
+          "after": {
+            "jamFrontCar": "car_0",
+            "jamFrontPosition": 9.205045056835672,
+            "jamFrontExists": true,
+            "jamFrontGradient": 6.683958708368918,
+            "primary": 8.305533385837503,
+            "secondary": 2.4961977309753687,
+            "meanSpeed": 8.305533385837503,
+            "minSpeed": 2.4961977309753687,
+            "maxSpeed": 10.277091070429053,
+            "density": 57.14285714285714,
+            "slowestCar": "car_19",
+            "slowestPosition": 349.7253430744106,
+            "speedSpread": 7.7808933394536846,
+            "elapsed": 3.9999999999999907
+          }
+        }
+      ],
+      "provider": "openai"
+    },
+    "after": {
+      "topic": "traffic",
+      "params": {
+        "count": 20,
+        "desiredSpeed": 22,
+        "headway": 1.2
+      },
+      "observations": {
+        "jamFrontCar": "car_0",
+        "jamFrontPosition": 9.205045056835672,
+        "jamFrontExists": true,
+        "jamFrontGradient": 6.683958708368918,
+        "primary": 8.305533385837503,
+        "secondary": 2.4961977309753687,
+        "meanSpeed": 8.305533385837503,
+        "minSpeed": 2.4961977309753687,
+        "maxSpeed": 10.277091070429053,
+        "density": 57.14285714285714,
+        "slowestCar": "car_19",
+        "slowestPosition": 349.7253430744106,
+        "speedSpread": 7.7808933394536846,
+        "elapsed": 3.9999999999999907
+      },
+      "activeQuestion": "Why did that change? Use our current experiment to explain.",
+      "revision": 14,
+      "scene": {
+        "version": 1,
+        "id": "front_vs_slowest",
+        "layout": "compare",
+        "objects": [
+          {
+            "id": "front_node",
+            "kind": "node",
+            "content": "Jam front: car_0",
+            "revealed": true
+          },
+          {
+            "id": "slowest_node",
+            "kind": "node",
+            "content": "Slowest car: car_19",
+            "revealed": true
+          },
+          {
+            "id": "speed_label",
+            "kind": "label",
+            "content": "Mean speed: 8.31 m/s",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "front_node",
+            "toId": "speed_label",
+            "relation": "part_of"
+          },
+          {
+            "op": "connect",
+            "fromId": "slowest_node",
+            "toId": "speed_label",
+            "relation": "part_of"
+          }
+        ],
+        "marks": [],
+        "annotations": [
+          {
+            "targetId": "jam-front",
+            "text": "Observed: mean speed unchanged; jam front still at car_0"
+          }
+        ],
+        "focus": "front_node"
+      },
+      "stateHash": "8231e407",
+      "events": [
+        {
+          "at": 1793607536589,
+          "kind": "question",
+          "before": "a6144aad",
+          "after": "a6144aad",
+          "detail": "Brake one car and point to the jam front."
+        },
+        {
+          "at": 1793607547938,
+          "kind": "teacher_tools",
+          "before": "a6144aad",
+          "after": "042d34c6",
+          "detail": "[{\"tool\":\"sim_experiment\",\"args\":\"{\\\"patch\\\":{},\\\"seconds\\\":2,\\\"brake\\\":true}\",\"before\":{\"jamFrontCar\":\"car_0\",\"jamFrontPosition\":0,\"jamFrontExists\":false,\"jamFrontGradient\":0,\"primary\":13,\"secondary\":13,\"meanSpeed\":13,\"minSpeed\":13,\"maxSpeed\":13,\"density\":57.14285714285714,\"slowestCar\":\"car_0\",\"slowestPosition\":0,\"speedSpread\":0,\"elapsed\":0},\"after\":{\"jamFrontCar\":\"car_0\",\"jamFrontPosition\":4.590"
+        },
+        {
+          "at": 1793607547939,
+          "kind": "teaching_beat",
+          "before": "042d34c6",
+          "after": "6b973a36",
+          "detail": "Braking one car created a clear jam front. In this run, the measured jam-front boundary is at car_0, located at 4.59 m."
+        },
+        {
+          "at": 1793607548002,
+          "kind": "teaching_beat",
+          "before": "6b973a36",
+          "after": "94b7e2c6",
+          "detail": "The speed spread is 7.64 m/s, from 11.21 m/s down to 3.58 m/s. That measures the traffic slowdown, not a doubling of speed."
+        },
+        {
+          "at": 1793607548359,
+          "kind": "question",
+          "before": "94b7e2c6",
+          "after": "94b7e2c6",
+          "detail": "Braking one car cannot affect any following car in the IDM model. Is that correct?"
+        },
+        {
+          "at": 1793607560426,
+          "kind": "teacher_tools",
+          "before": "94b7e2c6",
+          "after": "e59ed345",
+          "detail": "[{\"tool\":\"sim_observe\",\"args\":\"{}\",\"before\":{\"jamFrontCar\":\"car_0\",\"jamFrontPosition\":4.590914365891194,\"jamFrontExists\":true,\"jamFrontGradient\":7.638335290901716,\"primary\":9.83863993899344,\"secondary\":3.5761642930622566,\"meanSpeed\":9.83863993899344,\"minSpeed\":3.5761642930622566,\"maxSpeed\":11.214499583963972,\"density\":57.14285714285714,\"slowestCar\":\"car_0\",\"slowestPosition\":4.590914365891194,\"spee"
+        },
+        {
+          "at": 1793607560427,
+          "kind": "teaching_beat",
+          "before": "e59ed345",
+          "after": "c3c30c66",
+          "detail": "The brake did affect the traffic: mean speed fell from 8.62 to 8.31 m/s. The jam-front boundary was still detected at car_0, so the front did not disappear in this run."
+        },
+        {
+          "at": 1793607560480,
+          "kind": "teaching_beat",
+          "before": "c3c30c66",
+          "after": "c8b1707a",
+          "detail": "The jam-front position stayed at car_0 here, so we should not claim it drifted around the ring from these observations alone. The speed spread remained large, which is consistent with a persistent disturbance."
+        },
+        {
+          "at": 1793607560530,
+          "kind": "teaching_beat",
+          "before": "c8b1707a",
+          "after": "c8b1707a",
+          "detail": "Transfer question: if we increase the brake duration, what happens to the mean speed and the jam-front location compared with this run?"
+        },
+        {
+          "at": 1793607560545,
+          "kind": "question",
+          "before": "c8b1707a",
+          "after": "c8b1707a",
+          "detail": "Why did that change? Use our current experiment to explain."
+        },
+        {
+          "at": 1793607575358,
+          "kind": "teacher_tools",
+          "before": "c8b1707a",
+          "after": "c8b1707a",
+          "detail": "[{\"tool\":\"sim_observe\",\"args\":\"{}\",\"before\":{\"jamFrontCar\":\"car_0\",\"jamFrontPosition\":9.205045056835672,\"jamFrontExists\":true,\"jamFrontGradient\":6.683958708368918,\"primary\":8.305533385837503,\"secondary\":2.4961977309753687,\"meanSpeed\":8.305533385837503,\"minSpeed\":2.4961977309753687,\"maxSpeed\":10.277091070429053,\"density\":57.14285714285714,\"slowestCar\":\"car_19\",\"slowestPosition\":349.7253430744106,\"s"
+        },
+        {
+          "at": 1793607575359,
+          "kind": "teaching_beat",
+          "before": "c8b1707a",
+          "after": "ec2437dc",
+          "detail": "The executed observation shows no measurable before/after change: mean speed is 8.31 m/s in both snapshots. The jam front is still detected at car_0, so there is no shifted front to report here."
+        },
+        {
+          "at": 1793607575436,
+          "kind": "teaching_beat",
+          "before": "ec2437dc",
+          "after": "8921cfa5",
+          "detail": "The slowest car is car_19 at 2.50 m/s, but that is not the same as the jam front. Here, the measured front boundary stays at car_0 while one much slower car sits elsewhere in the ring."
+        },
+        {
+          "at": 1793607575481,
+          "kind": "teaching_beat",
+          "before": "8921cfa5",
+          "after": "8231e407",
+          "detail": "Transfer question: if the brake is removed and the model is run longer, what observation would tell you whether the jam front has moved away from car_0 or simply remained in place?"
+        }
+      ]
+    }
+  },
+  {
+    "topic": "relativity",
+    "question": "At 0.99c, how much time passes?",
+    "result": {
+      "state": {
+        "version": 1,
+        "id": "relativity",
+        "params": {
+          "beta": 0.99,
+          "duration": 10,
+          "frame": "earth"
+        },
+        "time": 0,
+        "data": {},
+        "history": [],
+        "running": false
+      },
+      "scene": {
+        "version": 1,
+        "id": "relativity_compare_v2",
+        "layout": "compare",
+        "objects": [
+          {
+            "id": "earth-interval-v2",
+            "kind": "node",
+            "content": "Earth interval: 10 s",
+            "revealed": true
+          },
+          {
+            "id": "ship-time-v2",
+            "kind": "node",
+            "content": "Ship proper time: 1.41 s",
+            "revealed": true
+          },
+          {
+            "id": "gamma-v2",
+            "kind": "equation",
+            "content": "gamma ≈ 7.09 at beta = 0.99",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "earth-interval-v2",
+            "toId": "ship-time-v2",
+            "relation": "compares"
+          }
+        ],
+        "marks": [
+          {
+            "targetId": "ship-clock",
+            "mode": "circle"
+          },
+          {
+            "targetId": "gamma",
+            "mode": "underline"
+          }
+        ],
+        "annotations": [
+          {
+            "targetId": "ship-clock",
+            "text": "Proper time is smaller than the Earth interval here."
+          }
+        ],
+        "focus": "ship-clock"
+      },
+      "beats": [
+        {
+          "say": "At beta = 0.99, the Earth interval is 10 s and the ship proper time is about 1.41 s. The comparison baseline is 10 s on Earth, and gamma ≈ 7.09 matches that dilation.",
+          "do": [
+            {
+              "op": "create_scene",
+              "sceneId": "relativity_compare_v2",
+              "layout": "compare"
+            },
+            {
+              "op": "add",
+              "sceneId": "relativity_compare_v2",
+              "object": {
+                "id": "earth-interval-v2",
+                "kind": "node",
+                "content": "Earth interval: 10 s"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "relativity_compare_v2",
+              "object": {
+                "id": "ship-time-v2",
+                "kind": "node",
+                "content": "Ship proper time: 1.41 s"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "relativity_compare_v2",
+              "object": {
+                "id": "gamma-v2",
+                "kind": "equation",
+                "content": "gamma ≈ 7.09 at beta = 0.99"
+              }
+            },
+            {
+              "op": "connect",
+              "fromId": "earth-interval-v2",
+              "toId": "ship-time-v2",
+              "relation": "compares"
+            },
+            {
+              "op": "focus_target",
+              "targetId": "ship-clock"
+            },
+            {
+              "op": "highlight",
+              "targetId": "ship-clock",
+              "mode": "circle"
+            }
+          ]
+        },
+        {
+          "say": "So the moving clock accumulates less time than the Earth clock: about 1.41 s on the ship versus 10 s on Earth.",
+          "do": [
+            {
+              "op": "annotate",
+              "targetId": "ship-clock",
+              "text": "Proper time is smaller than the Earth interval here.",
+              "placement": "auto"
+            },
+            {
+              "op": "highlight",
+              "targetId": "gamma",
+              "mode": "underline"
+            }
+          ]
+        }
+      ],
+      "followup": "If beta were increased even closer to 1, would the ship's proper time for the same 10 s Earth interval get larger, smaller, or stay the same?",
+      "move": "demonstrate",
+      "assessment": "question",
+      "skill": "relativity time dilation / gamma",
+      "observations": {
+        "primary": 7.088812050083356,
+        "secondary": 1.410673597966589,
+        "gamma": 7.088812050083356,
+        "beta": 0.99,
+        "earthSeconds": 10,
+        "shipSeconds": 1.410673597966589,
+        "properInterval": 1.410673597966589,
+        "earthClock": 0,
+        "shipClock": 0,
+        "frame": "earth"
+      },
+      "events": [
+        {
+          "tool": "sim_observe",
+          "args": "{}",
+          "before": {
+            "primary": 1.6666666666666667,
+            "secondary": 6,
+            "gamma": 1.6666666666666667,
+            "beta": 0.8,
+            "earthSeconds": 10,
+            "shipSeconds": 6,
+            "properInterval": 6,
+            "earthClock": 0,
+            "shipClock": 0,
+            "frame": "earth"
+          },
+          "after": {
+            "primary": 1.6666666666666667,
+            "secondary": 6,
+            "gamma": 1.6666666666666667,
+            "beta": 0.8,
+            "earthSeconds": 10,
+            "shipSeconds": 6,
+            "properInterval": 6,
+            "earthClock": 0,
+            "shipClock": 0,
+            "frame": "earth"
+          }
+        },
+        {
+          "tool": "sim_set_params",
+          "args": "{\"patch\":{\"beta\":0.99}}",
+          "before": {
+            "primary": 1.6666666666666667,
+            "secondary": 6,
+            "gamma": 1.6666666666666667,
+            "beta": 0.8,
+            "earthSeconds": 10,
+            "shipSeconds": 6,
+            "properInterval": 6,
+            "earthClock": 0,
+            "shipClock": 0,
+            "frame": "earth"
+          },
+          "after": {
+            "primary": 7.088812050083356,
+            "secondary": 1.410673597966589,
+            "gamma": 7.088812050083356,
+            "beta": 0.99,
+            "earthSeconds": 10,
+            "shipSeconds": 1.410673597966589,
+            "properInterval": 1.410673597966589,
+            "earthClock": 0,
+            "shipClock": 0,
+            "frame": "earth"
+          }
+        },
+        {
+          "tool": "sim_observe",
+          "args": "{}",
+          "before": {
+            "primary": 7.088812050083356,
+            "secondary": 1.410673597966589,
+            "gamma": 7.088812050083356,
+            "beta": 0.99,
+            "earthSeconds": 10,
+            "shipSeconds": 1.410673597966589,
+            "properInterval": 1.410673597966589,
+            "earthClock": 0,
+            "shipClock": 0,
+            "frame": "earth"
+          },
+          "after": {
+            "primary": 7.088812050083356,
+            "secondary": 1.410673597966589,
+            "gamma": 7.088812050083356,
+            "beta": 0.99,
+            "earthSeconds": 10,
+            "shipSeconds": 1.410673597966589,
+            "properInterval": 1.410673597966589,
+            "earthClock": 0,
+            "shipClock": 0,
+            "frame": "earth"
+          }
+        }
+      ],
+      "provider": "openai"
+    },
+    "wrongAnswer": {
+      "state": {
+        "version": 1,
+        "id": "relativity",
+        "params": {
+          "beta": 0.99,
+          "duration": 10,
+          "frame": "earth"
+        },
+        "time": 0,
+        "data": {},
+        "history": [],
+        "running": false
+      },
+      "scene": {
+        "version": 1,
+        "id": "relativity_time_compare",
+        "layout": "compare",
+        "objects": [
+          {
+            "id": "earth10",
+            "kind": "node",
+            "content": "Earth interval: 10 s",
+            "revealed": true
+          },
+          {
+            "id": "ship141",
+            "kind": "node",
+            "content": "Ship proper time: 1.41 s",
+            "revealed": true
+          },
+          {
+            "id": "gamma709",
+            "kind": "equation",
+            "content": "γ ≈ 7.09 at β = 0.99",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "earth10",
+            "toId": "ship141",
+            "relation": "compares"
+          }
+        ],
+        "marks": [],
+        "annotations": [],
+        "focus": "earth10"
+      },
+      "beats": [
+        {
+          "say": "No — the observed values show γ ≈ 7.09 at β = 0.99, not γ = 1. For the same 10 s Earth interval, the ship’s proper time is 1.41 s, so it is smaller than the Earth interval, not equal.",
+          "do": [
+            {
+              "op": "focus_target",
+              "targetId": "ship-clock"
+            },
+            {
+              "op": "highlight",
+              "targetId": "ship-clock",
+              "mode": "circle"
+            },
+            {
+              "op": "annotate",
+              "targetId": "ship-clock",
+              "text": "Proper time: 1.41 s vs Earth 10 s.",
+              "placement": "auto"
+            },
+            {
+              "op": "highlight",
+              "targetId": "gamma",
+              "mode": "underline"
+            }
+          ]
+        },
+        {
+          "say": "So the baseline is 10 s on Earth, compared with 1.41 s of ship proper time. If β were increased closer to 1, would the ship’s proper time for the same 10 s Earth interval get smaller or larger?",
+          "do": [
+            {
+              "op": "create_scene",
+              "sceneId": "relativity_time_compare",
+              "layout": "compare"
+            },
+            {
+              "op": "add",
+              "sceneId": "relativity_time_compare",
+              "object": {
+                "id": "earth10",
+                "kind": "node",
+                "content": "Earth interval: 10 s"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "relativity_time_compare",
+              "object": {
+                "id": "ship141",
+                "kind": "node",
+                "content": "Ship proper time: 1.41 s"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "relativity_time_compare",
+              "object": {
+                "id": "gamma709",
+                "kind": "equation",
+                "content": "γ ≈ 7.09 at β = 0.99"
+              }
+            },
+            {
+              "op": "connect",
+              "fromId": "earth10",
+              "toId": "ship141",
+              "relation": "compares"
+            }
+          ]
+        }
+      ],
+      "followup": "If β increases closer to 1, what happens to the ship’s proper time for the same 10 s Earth interval?",
+      "move": "respond_to_misconception",
+      "assessment": "wrong",
+      "skill": "special relativity: time dilation vs proper time",
+      "observations": {
+        "primary": 7.088812050083356,
+        "secondary": 1.410673597966589,
+        "gamma": 7.088812050083356,
+        "beta": 0.99,
+        "earthSeconds": 10,
+        "shipSeconds": 1.410673597966589,
+        "properInterval": 1.410673597966589,
+        "earthClock": 0,
+        "shipClock": 0,
+        "frame": "earth"
+      },
+      "events": [
+        {
+          "tool": "sim_observe",
+          "args": "{}",
+          "before": {
+            "primary": 7.088812050083356,
+            "secondary": 1.410673597966589,
+            "gamma": 7.088812050083356,
+            "beta": 0.99,
+            "earthSeconds": 10,
+            "shipSeconds": 1.410673597966589,
+            "properInterval": 1.410673597966589,
+            "earthClock": 0,
+            "shipClock": 0,
+            "frame": "earth"
+          },
+          "after": {
+            "primary": 7.088812050083356,
+            "secondary": 1.410673597966589,
+            "gamma": 7.088812050083356,
+            "beta": 0.99,
+            "earthSeconds": 10,
+            "shipSeconds": 1.410673597966589,
+            "properInterval": 1.410673597966589,
+            "earthClock": 0,
+            "shipClock": 0,
+            "frame": "earth"
+          }
+        }
+      ],
+      "provider": "openai"
+    },
+    "followup": {
+      "state": {
+        "version": 1,
+        "id": "relativity",
+        "params": {
+          "beta": 0.99,
+          "duration": 10,
+          "frame": "earth"
+        },
+        "time": 0,
+        "data": {},
+        "history": [],
+        "running": false
+      },
+      "scene": {
+        "version": 1,
+        "id": "relativity_time_flow_fix",
+        "layout": "flow",
+        "objects": [
+          {
+            "id": "beta_up",
+            "kind": "node",
+            "content": "β increases toward 1",
+            "revealed": true
+          },
+          {
+            "id": "gamma_up",
+            "kind": "equation",
+            "content": "γ increases",
+            "revealed": true
+          },
+          {
+            "id": "tau_down",
+            "kind": "node",
+            "content": "Ship proper time decreases",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "beta_up",
+            "toId": "gamma_up",
+            "relation": "flows_to"
+          },
+          {
+            "op": "connect",
+            "fromId": "gamma_up",
+            "toId": "tau_down",
+            "relation": "flows_to"
+          }
+        ],
+        "marks": [
+          {
+            "targetId": "gamma",
+            "mode": "circle"
+          },
+          {
+            "targetId": "ship-clock",
+            "mode": "focus"
+          },
+          {
+            "targetId": "earth-clock",
+            "mode": "underline"
+          }
+        ],
+        "annotations": [
+          {
+            "targetId": "gamma",
+            "text": "Higher β means larger γ, so time dilation gets stronger."
+          },
+          {
+            "targetId": "ship-clock",
+            "text": "Same Earth interval, less ship time when β is larger."
+          }
+        ],
+        "focus": "ship-clock"
+      },
+      "beats": [
+        {
+          "say": "Let’s switch to a flow view: increasing β raises γ, and that makes the ship’s proper time smaller for the same Earth interval.",
+          "do": [
+            {
+              "op": "create_scene",
+              "sceneId": "relativity_time_flow_fix",
+              "layout": "flow"
+            },
+            {
+              "op": "add",
+              "sceneId": "relativity_time_flow_fix",
+              "object": {
+                "id": "beta_up",
+                "kind": "node",
+                "content": "β increases toward 1"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "relativity_time_flow_fix",
+              "object": {
+                "id": "gamma_up",
+                "kind": "equation",
+                "content": "γ increases"
+              }
+            },
+            {
+              "op": "add",
+              "sceneId": "relativity_time_flow_fix",
+              "object": {
+                "id": "tau_down",
+                "kind": "node",
+                "content": "Ship proper time decreases"
+              }
+            },
+            {
+              "op": "connect",
+              "fromId": "beta_up",
+              "toId": "gamma_up",
+              "relation": "flows_to"
+            },
+            {
+              "op": "connect",
+              "fromId": "gamma_up",
+              "toId": "tau_down",
+              "relation": "flows_to"
+            },
+            {
+              "op": "focus_target",
+              "targetId": "gamma"
+            },
+            {
+              "op": "highlight",
+              "targetId": "gamma",
+              "mode": "circle"
+            },
+            {
+              "op": "annotate",
+              "targetId": "gamma",
+              "text": "Higher β means larger γ, so time dilation gets stronger.",
+              "placement": "auto"
+            }
+          ]
+        },
+        {
+          "say": "So for the same 10 s Earth interval, the ship’s elapsed proper time goes down as β rises from 0.99 to 0.995.",
+          "do": [
+            {
+              "op": "focus_target",
+              "targetId": "ship-clock"
+            },
+            {
+              "op": "highlight",
+              "targetId": "ship-clock",
+              "mode": "focus"
+            },
+            {
+              "op": "highlight",
+              "targetId": "earth-clock",
+              "mode": "underline"
+            },
+            {
+              "op": "annotate",
+              "targetId": "ship-clock",
+              "text": "Same Earth interval, less ship time when β is larger.",
+              "placement": "auto"
+            }
+          ]
+        }
+      ],
+      "followup": "For the same 10 s Earth interval, what happens to the ship’s proper time if β increases from 0.99 to 0.995?",
+      "move": "respond_to_misconception",
+      "assessment": "wrong",
+      "skill": "special relativity time dilation and proper time",
+      "observations": {
+        "primary": 7.088812050083356,
+        "secondary": 1.410673597966589,
+        "gamma": 7.088812050083356,
+        "beta": 0.99,
+        "earthSeconds": 10,
+        "shipSeconds": 1.410673597966589,
+        "properInterval": 1.410673597966589,
+        "earthClock": 0,
+        "shipClock": 0,
+        "frame": "earth"
+      },
+      "events": [
+        {
+          "tool": "sim_observe",
+          "args": "{}",
+          "before": {
+            "primary": 7.088812050083356,
+            "secondary": 1.410673597966589,
+            "gamma": 7.088812050083356,
+            "beta": 0.99,
+            "earthSeconds": 10,
+            "shipSeconds": 1.410673597966589,
+            "properInterval": 1.410673597966589,
+            "earthClock": 0,
+            "shipClock": 0,
+            "frame": "earth"
+          },
+          "after": {
+            "primary": 7.088812050083356,
+            "secondary": 1.410673597966589,
+            "gamma": 7.088812050083356,
+            "beta": 0.99,
+            "earthSeconds": 10,
+            "shipSeconds": 1.410673597966589,
+            "properInterval": 1.410673597966589,
+            "earthClock": 0,
+            "shipClock": 0,
+            "frame": "earth"
+          }
+        }
+      ],
+      "provider": "openai"
+    },
+    "after": {
+      "topic": "relativity",
+      "params": {
+        "beta": 0.99,
+        "duration": 10,
+        "frame": "earth"
+      },
+      "observations": {
+        "primary": 7.088812050083356,
+        "secondary": 1.410673597966589,
+        "gamma": 7.088812050083356,
+        "beta": 0.99,
+        "earthSeconds": 10,
+        "shipSeconds": 1.410673597966589,
+        "properInterval": 1.410673597966589,
+        "earthClock": 0,
+        "shipClock": 0,
+        "frame": "earth"
+      },
+      "activeQuestion": "Why did that change? Use our current experiment to explain.",
+      "revision": 12,
+      "scene": {
+        "version": 1,
+        "id": "relativity_time_flow_fix",
+        "layout": "flow",
+        "objects": [
+          {
+            "id": "beta_up",
+            "kind": "node",
+            "content": "β increases toward 1",
+            "revealed": true
+          },
+          {
+            "id": "gamma_up",
+            "kind": "equation",
+            "content": "γ increases",
+            "revealed": true
+          },
+          {
+            "id": "tau_down",
+            "kind": "node",
+            "content": "Ship proper time decreases",
+            "revealed": true
+          }
+        ],
+        "edges": [
+          {
+            "op": "connect",
+            "fromId": "beta_up",
+            "toId": "gamma_up",
+            "relation": "flows_to"
+          },
+          {
+            "op": "connect",
+            "fromId": "gamma_up",
+            "toId": "tau_down",
+            "relation": "flows_to"
+          }
+        ],
+        "marks": [
+          {
+            "targetId": "gamma",
+            "mode": "circle"
+          },
+          {
+            "targetId": "ship-clock",
+            "mode": "focus"
+          },
+          {
+            "targetId": "earth-clock",
+            "mode": "underline"
+          }
+        ],
+        "annotations": [
+          {
+            "targetId": "gamma",
+            "text": "Higher β means larger γ, so time dilation gets stronger."
+          },
+          {
+            "targetId": "ship-clock",
+            "text": "Same Earth interval, less ship time when β is larger."
+          }
+        ],
+        "focus": "ship-clock"
+      },
+      "stateHash": "e18fffae",
+      "events": [
+        {
+          "at": 1793607575533,
+          "kind": "question",
+          "before": "520a1461",
+          "after": "520a1461",
+          "detail": "At 0.99c, how much time passes?"
+        },
+        {
+          "at": 1793607590553,
+          "kind": "teacher_tools",
+          "before": "520a1461",
+          "after": "bee3cd87",
+          "detail": "[{\"tool\":\"sim_observe\",\"args\":\"{}\",\"before\":{\"primary\":1.6666666666666667,\"secondary\":6,\"gamma\":1.6666666666666667,\"beta\":0.8,\"earthSeconds\":10,\"shipSeconds\":6,\"properInterval\":6,\"earthClock\":0,\"shipClock\":0,\"frame\":\"earth\"},\"after\":{\"primary\":1.6666666666666667,\"secondary\":6,\"gamma\":1.6666666666666667,\"beta\":0.8,\"earthSeconds\":10,\"shipSeconds\":6,\"properInterval\":6,\"earthClock\":0,\"shipClock\":0,\"fr"
+        },
+        {
+          "at": 1793607590553,
+          "kind": "teaching_beat",
+          "before": "bee3cd87",
+          "after": "0035db48",
+          "detail": "At beta = 0.99, the Earth interval is 10 s and the ship proper time is about 1.41 s. The comparison baseline is 10 s on Earth, and gamma ≈ 7.09 matches that dilation."
+        },
+        {
+          "at": 1793607590611,
+          "kind": "teaching_beat",
+          "before": "0035db48",
+          "after": "460ef2e0",
+          "detail": "So the moving clock accumulates less time than the Earth clock: about 1.41 s on the ship versus 10 s on Earth."
+        },
+        {
+          "at": 1793607590954,
+          "kind": "question",
+          "before": "460ef2e0",
+          "after": "460ef2e0",
+          "detail": "At 0.99c the ship proper interval must equal the Earth interval, because gamma is 1. Is that correct?"
+        },
+        {
+          "at": 1793607602424,
+          "kind": "teacher_tools",
+          "before": "460ef2e0",
+          "after": "460ef2e0",
+          "detail": "[{\"tool\":\"sim_observe\",\"args\":\"{}\",\"before\":{\"primary\":7.088812050083356,\"secondary\":1.410673597966589,\"gamma\":7.088812050083356,\"beta\":0.99,\"earthSeconds\":10,\"shipSeconds\":1.410673597966589,\"properInterval\":1.410673597966589,\"earthClock\":0,\"shipClock\":0,\"frame\":\"earth\"},\"after\":{\"primary\":7.088812050083356,\"secondary\":1.410673597966589,\"gamma\":7.088812050083356,\"beta\":0.99,\"earthSeconds\":10,\"ship"
+        },
+        {
+          "at": 1793607602425,
+          "kind": "teaching_beat",
+          "before": "460ef2e0",
+          "after": "d05429f9",
+          "detail": "No — the observed values show γ ≈ 7.09 at β = 0.99, not γ = 1. For the same 10 s Earth interval, the ship’s proper time is 1.41 s, so it is smaller than the Earth interval, not equal."
+        },
+        {
+          "at": 1793607602478,
+          "kind": "teaching_beat",
+          "before": "d05429f9",
+          "after": "24ebcc3c",
+          "detail": "So the baseline is 10 s on Earth, compared with 1.41 s of ship proper time. If β were increased closer to 1, would the ship’s proper time for the same 10 s Earth interval get smaller or larger?"
+        },
+        {
+          "at": 1793607602494,
+          "kind": "question",
+          "before": "24ebcc3c",
+          "after": "24ebcc3c",
+          "detail": "Why did that change? Use our current experiment to explain."
+        },
+        {
+          "at": 1793607616648,
+          "kind": "teacher_tools",
+          "before": "24ebcc3c",
+          "after": "24ebcc3c",
+          "detail": "[{\"tool\":\"sim_observe\",\"args\":\"{}\",\"before\":{\"primary\":7.088812050083356,\"secondary\":1.410673597966589,\"gamma\":7.088812050083356,\"beta\":0.99,\"earthSeconds\":10,\"shipSeconds\":1.410673597966589,\"properInterval\":1.410673597966589,\"earthClock\":0,\"shipClock\":0,\"frame\":\"earth\"},\"after\":{\"primary\":7.088812050083356,\"secondary\":1.410673597966589,\"gamma\":7.088812050083356,\"beta\":0.99,\"earthSeconds\":10,\"ship"
+        },
+        {
+          "at": 1793607616648,
+          "kind": "teaching_beat",
+          "before": "24ebcc3c",
+          "after": "6849fd9a",
+          "detail": "Let’s switch to a flow view: increasing β raises γ, and that makes the ship’s proper time smaller for the same Earth interval."
+        },
+        {
+          "at": 1793607616711,
+          "kind": "teaching_beat",
+          "before": "6849fd9a",
+          "after": "e18fffae",
+          "detail": "So for the same 10 s Earth interval, the ship’s elapsed proper time goes down as β rises from 0.99 to 0.995."
+        }
+      ]
+    }
+  }
+]

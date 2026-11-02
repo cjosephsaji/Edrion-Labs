@@ -1,0 +1,155 @@
+{
+  "results": [
+    {
+      "topic": "neural",
+      "mode": "classic",
+      "opening": true,
+      "wrong": true,
+      "correct": true,
+      "transfer": true,
+      "modePreservation": true,
+      "reload": true,
+      "responsive": [
+        1440,
+        1366,
+        390
+      ]
+    },
+    {
+      "topic": "rocket",
+      "mode": "classic",
+      "opening": true,
+      "wrong": true,
+      "correct": true,
+      "transfer": true,
+      "modePreservation": true,
+      "reload": true,
+      "responsive": [
+        1440,
+        1366,
+        390
+      ]
+    },
+    {
+      "topic": "attention",
+      "mode": "classic",
+      "opening": true,
+      "wrong": true,
+      "correct": true,
+      "transfer": true,
+      "modePreservation": true,
+      "reload": true,
+      "responsive": [
+        1440,
+        1366,
+        390
+      ]
+    },
+    {
+      "topic": "traffic",
+      "mode": "classic",
+      "opening": true,
+      "wrong": true,
+      "correct": true,
+      "transfer": true,
+      "modePreservation": true,
+      "reload": true,
+      "responsive": [
+        1440,
+        1366,
+        390
+      ]
+    },
+    {
+      "topic": "relativity",
+      "mode": "classic",
+      "opening": true,
+      "wrong": true,
+      "correct": true,
+      "transfer": true,
+      "modePreservation": true,
+      "reload": true,
+      "responsive": [
+        1440,
+        1366,
+        390
+      ]
+    },
+    {
+      "topic": "neural",
+      "mode": "world",
+      "opening": true,
+      "wrong": true,
+      "correct": true,
+      "transfer": true,
+      "modePreservation": true,
+      "reload": true,
+      "responsive": [
+        1440,
+        1366,
+        390
+      ]
+    },
+    {
+      "topic": "rocket",
+      "mode": "world",
+      "opening": true,
+      "wrong": true,
+      "correct": true,
+      "transfer": true,
+      "modePreservation": true,
+      "reload": true,
+      "responsive": [
+        1440,
+        1366,
+        390
+      ]
+    },
+    {
+      "topic": "attention",
+      "mode": "world",
+      "opening": true,
+      "wrong": true,
+      "correct": true,
+      "transfer": true,
+      "modePreservation": true,
+      "reload": true,
+      "responsive": [
+        1440,
+        1366,
+        390
+      ]
+    },
+    {
+      "topic": "traffic",
+      "mode": "world",
+      "opening": true,
+      "wrong": true,
+      "correct": true,
+      "transfer": true,
+      "modePreservation": true,
+      "reload": true,
+      "responsive": [
+        1440,
+        1366,
+        390
+      ]
+    },
+    {
+      "topic": "relativity",
+      "mode": "world",
+      "opening": true,
+      "wrong": true,
+      "correct": true,
+      "transfer": true,
+      "modePreservation": true,
+      "reload": true,
+      "responsive": [
+        1440,
+        1366,
+        390
+      ]
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,7 @@
+{
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'the cat chased the ball'\n- 'the dog chased the ball'\n       ^\n",
+  "completed": [
+    "neural",
+    "rocket"
+  ]
+}

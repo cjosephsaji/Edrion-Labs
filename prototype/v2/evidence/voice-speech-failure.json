@@ -1,0 +1,63 @@
+{
+  "error": "TimeoutError: locator.waitFor: Timeout 45000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /Talk/ }) to be visible\u001b[22m\n",
+  "state": {
+    "topic": "relativity",
+    "params": {
+      "beta": 0.8,
+      "duration": 10,
+      "frame": "earth"
+    },
+    "observations": {
+      "primary": 1.6666666666666667,
+      "secondary": 6,
+      "gamma": 1.6666666666666667,
+      "beta": 0.8,
+      "earthSeconds": 10,
+      "shipSeconds": 6,
+      "properInterval": 6,
+      "earthClock": 0,
+      "shipClock": 0,
+      "frame": "earth"
+    },
+    "activeQuestion": "",
+    "revision": 0,
+    "scene": {
+      "version": 1,
+      "id": "lesson",
+      "layout": "flow",
+      "objects": [],
+      "edges": [],
+      "marks": [],
+      "annotations": [],
+      "focus": null
+    },
+    "guide": {
+      "started": false,
+      "phase": "ORIENT",
+      "openingIndex": 0,
+      "beatId": "",
+      "answer": "",
+      "transferAnswer": "",
+      "representation": "scene"
+    },
+    "history": [],
+    "evidence": [],
+    "mode": "classic",
+    "sim": {
+      "version": 1,
+      "id": "relativity",
+      "params": {
+        "beta": 0.8,
+        "duration": 10,
+        "frame": "earth"
+      },
+      "time": 0,
+      "data": {},
+      "history": [],
+      "running": false
+    },
+    "stateHash": "520a1461",
+    "events": []
+  },
+  "body": "p\npetros\na little curiosity goes a long way\nFocus\nExplore World ↗\n01Neural learning\n02Rocket landing\n03Attention\n04Traffic waves\n05Time dilation\n05 / SPECIAL RELATIVITY\nTwo clocks, one journey\nLIVE MODEL\n\nCompare the time measured on Earth and on a moving ship.\n\nEARTH\n0.800c →\nEARTH COORDINATE TIME\n10.00 s\nSHIP PROPER TIME\n6.00 s\nEarth frame · γ = 1.6667 · τ = t / γ\nPreview of the selected constant-velocity interval\nExperiment controls & live measurements\n＋\n\nInertial special relativity. No gravity, turnaround, or travel into the past. Spacetime axes use light-seconds.\n\nPetros\n●Here for your curiosity\nLET’S FIND OUT TOGETHER\n\nImagine the ship travels very fast. Will its clock tick the same amount as the clock on Earth?\n\nStart with voice →\nStart learning with captions\nPetros uses an AI-generated voice.\nTRY ASKING\nAt 0.99c, how much time passes?\n↗\n↑\n◉ Connect voice\nStop\n\nThe voice provider rejected the connection.\n\nAI teacher connected\nConversation & experiment log\nEDRION / LEARN BY EXPLORING\nSaved on this browser · no mastery inferred"
+}

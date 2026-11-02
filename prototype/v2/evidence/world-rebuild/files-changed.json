@@ -1,0 +1,398 @@
+{
+  "scope": "Files created or edited for the presentation rebuild; existing unrelated repository work is excluded. Evidence files live in evidence/world-rebuild. Prototype .env.local was edited to keep OPENAI_API_KEY blank; its contents are excluded.",
+  "files": [
+    {
+      "file": "ASSETS.md",
+      "bytes": 4688
+    },
+    {
+      "file": "PRESENTATION_AUDIT.md",
+      "bytes": 3842
+    },
+    {
+      "file": "WORLD_REBUILD_REVIEW.md",
+      "bytes": 11838
+    },
+    {
+      "file": "app/layout.tsx",
+      "bytes": 428
+    },
+    {
+      "file": "art/README.md",
+      "bytes": 1821
+    },
+    {
+      "file": "art/archipelago-ao-2k.png",
+      "bytes": 1477977
+    },
+    {
+      "file": "art/archipelago.blend",
+      "bytes": 14031391
+    },
+    {
+      "file": "art/asset_inventory.mjs",
+      "bytes": 1281
+    },
+    {
+      "file": "art/bake_environment.py",
+      "bytes": 1511
+    },
+    {
+      "file": "art/bake_hero.py",
+      "bytes": 3814
+    },
+    {
+      "file": "art/build_cloud.py",
+      "bytes": 1375
+    },
+    {
+      "file": "art/build_planet.py",
+      "bytes": 2603
+    },
+    {
+      "file": "art/build_world.py",
+      "bytes": 19188
+    },
+    {
+      "file": "art/car-ao-2k.png",
+      "bytes": 1335938
+    },
+    {
+      "file": "art/car.blend",
+      "bytes": 696803
+    },
+    {
+      "file": "art/exports/archipelago.glb",
+      "bytes": 8049568
+    },
+    {
+      "file": "art/exports/car.glb",
+      "bytes": 1509792
+    },
+    {
+      "file": "art/exports/cloud.glb",
+      "bytes": 103276
+    },
+    {
+      "file": "art/exports/light-clock.glb",
+      "bytes": 52240
+    },
+    {
+      "file": "art/exports/node.glb",
+      "bytes": 46360
+    },
+    {
+      "file": "art/exports/petros-untextured-reference.glb",
+      "bytes": 280568
+    },
+    {
+      "file": "art/exports/petros.glb",
+      "bytes": 4103832
+    },
+    {
+      "file": "art/exports/rocket.glb",
+      "bytes": 2238344
+    },
+    {
+      "file": "art/exports/ship.glb",
+      "bytes": 1046824
+    },
+    {
+      "file": "art/exports/word.glb",
+      "bytes": 7504
+    },
+    {
+      "file": "art/light-clock.blend",
+      "bytes": 535079
+    },
+    {
+      "file": "art/petros-ao-2k.png",
+      "bytes": 1611713
+    },
+    {
+      "file": "art/petros-guide.blend",
+      "bytes": 4971351
+    },
+    {
+      "file": "art/prepare_assets.py",
+      "bytes": 1571
+    },
+    {
+      "file": "art/proxies.mjs",
+      "bytes": 741
+    },
+    {
+      "file": "art/rebuild_environment.py",
+      "bytes": 204
+    },
+    {
+      "file": "art/rocket-ao-2k.png",
+      "bytes": 1788129
+    },
+    {
+      "file": "art/rocket.blend",
+      "bytes": 1140677
+    },
+    {
+      "file": "art/ship-ao-2k.png",
+      "bytes": 896731
+    },
+    {
+      "file": "art/ship.blend",
+      "bytes": 704143
+    },
+    {
+      "file": "components/LiveTeachingSurface.tsx",
+      "bytes": 43644
+    },
+    {
+      "file": "core/narration.ts",
+      "bytes": 2644
+    },
+    {
+      "file": "core/voice-provider.ts",
+      "bytes": 12302
+    },
+    {
+      "file": "package-lock.json",
+      "bytes": 180814
+    },
+    {
+      "file": "package.json",
+      "bytes": 2262
+    },
+    {
+      "file": "public/favicon.svg",
+      "bytes": 247
+    },
+    {
+      "file": "public/world-v3/archipelago.glb",
+      "bytes": 2200732
+    },
+    {
+      "file": "public/world-v3/basis/basis_transcoder.js",
+      "bytes": 57529
+    },
+    {
+      "file": "public/world-v3/basis/basis_transcoder.wasm",
+      "bytes": 527333
+    },
+    {
+      "file": "public/world-v3/car-low.glb",
+      "bytes": 512944
+    },
+    {
+      "file": "public/world-v3/car-proxy.glb",
+      "bytes": 18424
+    },
+    {
+      "file": "public/world-v3/car.glb",
+      "bytes": 1281456
+    },
+    {
+      "file": "public/world-v3/cloud.glb",
+      "bytes": 24076
+    },
+    {
+      "file": "public/world-v3/environment.hdr",
+      "bytes": 1686299
+    },
+    {
+      "file": "public/world-v3/fonts/DMSerifDisplay-OFL.txt",
+      "bytes": 4605
+    },
+    {
+      "file": "public/world-v3/fonts/Outfit-OFL.txt",
+      "bytes": 4389
+    },
+    {
+      "file": "public/world-v3/fonts/display.ttf",
+      "bytes": 76580
+    },
+    {
+      "file": "public/world-v3/fonts/ui-sdf.ttf",
+      "bytes": 55184
+    },
+    {
+      "file": "public/world-v3/fonts/ui.ttf",
+      "bytes": 110884
+    },
+    {
+      "file": "public/world-v3/licenses/basis-Apache-2.txt",
+      "bytes": 11347
+    },
+    {
+      "file": "public/world-v3/licenses/drei-MIT.txt",
+      "bytes": 1069
+    },
+    {
+      "file": "public/world-v3/licenses/gltf-transform-MIT.txt",
+      "bytes": 1078
+    },
+    {
+      "file": "public/world-v3/licenses/n8ao-MIT.txt",
+      "bytes": 7047
+    },
+    {
+      "file": "public/world-v3/licenses/postprocessing.txt",
+      "bytes": 858
+    },
+    {
+      "file": "public/world-v3/licenses/three-MIT.txt",
+      "bytes": 1081
+    },
+    {
+      "file": "public/world-v3/licenses/troika-MIT.txt",
+      "bytes": 1102
+    },
+    {
+      "file": "public/world-v3/light-clock.glb",
+      "bytes": 10252
+    },
+    {
+      "file": "public/world-v3/node.glb",
+      "bytes": 10184
+    },
+    {
+      "file": "public/world-v3/petros-low.glb",
+      "bytes": 900316
+    },
+    {
+      "file": "public/world-v3/petros.glb",
+      "bytes": 1826912
+    },
+    {
+      "file": "public/world-v3/planet.glb",
+      "bytes": 36884
+    },
+    {
+      "file": "public/world-v3/rocket-low.glb",
+      "bytes": 706488
+    },
+    {
+      "file": "public/world-v3/rocket-proxy.glb",
+      "bytes": 68620
+    },
+    {
+      "file": "public/world-v3/rocket.glb",
+      "bytes": 1757672
+    },
+    {
+      "file": "public/world-v3/ship-low.glb",
+      "bytes": 373576
+    },
+    {
+      "file": "public/world-v3/ship-proxy.glb",
+      "bytes": 24916
+    },
+    {
+      "file": "public/world-v3/ship.glb",
+      "bytes": 854816
+    },
+    {
+      "file": "public/world-v3/word.glb",
+      "bytes": 3316
+    },
+    {
+      "file": "scripts/dev.mjs",
+      "bytes": 1190
+    },
+    {
+      "file": "tests/presentation-audit.mts",
+      "bytes": 1839
+    },
+    {
+      "file": "tests/world-v3-capture.mts",
+      "bytes": 1627
+    },
+    {
+      "file": "tests/world-v3-dynamic.mts",
+      "bytes": 6574
+    },
+    {
+      "file": "tests/world-v3-learning.mts",
+      "bytes": 4175
+    },
+    {
+      "file": "tests/world-v3-performance.mts",
+      "bytes": 6044
+    },
+    {
+      "file": "tests/world-v3-review.mts",
+      "bytes": 1746
+    },
+    {
+      "file": "tests/world-v3-smoke.mts",
+      "bytes": 4968
+    },
+    {
+      "file": "tests/world-v3-tour.mts",
+      "bytes": 5015
+    },
+    {
+      "file": "tests/world-v3-voice.mts",
+      "bytes": 4823
+    },
+    {
+      "file": "world-v3/CameraRig.tsx",
+      "bytes": 4893
+    },
+    {
+      "file": "world-v3/Heroes.tsx",
+      "bytes": 20270
+    },
+    {
+      "file": "world-v3/Particles.tsx",
+      "bytes": 2957
+    },
+    {
+      "file": "world-v3/PetrosGuide.tsx",
+      "bytes": 6021
+    },
+    {
+      "file": "world-v3/PlacePreviews.tsx",
+      "bytes": 2233
+    },
+    {
+      "file": "world-v3/WorldExperience.tsx",
+      "bytes": 16686
+    },
+    {
+      "file": "world-v3/anchors.tsx",
+      "bytes": 2896
+    },
+    {
+      "file": "world-v3/assets.tsx",
+      "bytes": 4118
+    },
+    {
+      "file": "world-v3/audio.ts",
+      "bytes": 3393
+    },
+    {
+      "file": "world-v3/hud.module.css",
+      "bytes": 11716
+    },
+    {
+      "file": "world-v3/rendering.tsx",
+      "bytes": 6341
+    },
+    {
+      "file": "world-v3/store.ts",
+      "bytes": 2226
+    },
+    {
+      "file": "world-v3/world.module.css",
+      "bytes": 7146
+    },
+    {
+      "file": "../../apps/student-web/src/app/prototype/page.tsx",
+      "bytes": 3806,
+      "purpose": "Minimum Edrion /prototype entry forwarding only; existing page changes preserved."
+    },
+    {
+      "file": "tests/world-v3-route.mts",
+      "bytes": 1288
+    }
+  ]
+}

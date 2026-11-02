@@ -1,0 +1,24 @@
+{
+  "fixture": false,
+  "scope": "One live text/model mutation and one provider speech request through the regular tutor. No microphone/hardware-speaker acceptance.",
+  "configuration": {
+    "teacher": true,
+    "voice": true,
+    "provider": "openai"
+  },
+  "textHttpStatus": 429,
+  "textSucceeded": false,
+  "textError": "The AI provider is out of quota or busy. Your experiment is saved.",
+  "textErrorCode": "PROVIDER_429",
+  "speechHttpStatus": 503,
+  "speechContentType": "application/json",
+  "speechSucceeded": false,
+  "checkError": "Error: response.json: Target page, context or browser has been closed",
+  "providerDiagnostic": {
+    "status": 429,
+    "code": "credit_balance_exhausted",
+    "type": "insufficient_quota",
+    "completed": false
+  },
+  "checksStoppedAfterConfirmedCreditExhaustion": true
+}

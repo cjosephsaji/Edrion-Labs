@@ -1,0 +1,350 @@
+[
+  {
+    "file": "archipelago.glb",
+    "bytes": 2200732,
+    "meshes": 1,
+    "triangles": 124693,
+    "extensions": [
+      "EXT_meshopt_compression",
+      "KHR_mesh_quantization",
+      "KHR_texture_basisu"
+    ],
+    "images": [
+      {
+        "mime": "image/ktx2",
+        "bytes": 1273323,
+        "width": 2048,
+        "height": 2048,
+        "mipLevels": 12
+      }
+    ],
+    "animations": [],
+    "bones": 0,
+    "morphs": []
+  },
+  {
+    "file": "car-low.glb",
+    "bytes": 512944,
+    "meshes": 1,
+    "triangles": 2004,
+    "extensions": [
+      "EXT_meshopt_compression",
+      "KHR_mesh_quantization",
+      "KHR_texture_basisu"
+    ],
+    "images": [
+      {
+        "mime": "image/ktx2",
+        "bytes": 487650,
+        "width": 1024,
+        "height": 1024,
+        "mipLevels": 11
+      }
+    ],
+    "animations": [],
+    "bones": 0,
+    "morphs": []
+  },
+  {
+    "file": "car-proxy.glb",
+    "bytes": 18424,
+    "meshes": 1,
+    "triangles": 2004,
+    "extensions": [
+      "EXT_meshopt_compression",
+      "KHR_mesh_quantization",
+      "KHR_texture_basisu"
+    ],
+    "images": [],
+    "animations": [],
+    "bones": 0,
+    "morphs": []
+  },
+  {
+    "file": "car.glb",
+    "bytes": 1281456,
+    "meshes": 1,
+    "triangles": 2004,
+    "extensions": [
+      "EXT_meshopt_compression",
+      "KHR_mesh_quantization",
+      "KHR_texture_basisu"
+    ],
+    "images": [
+      {
+        "mime": "image/ktx2",
+        "bytes": 1256111,
+        "width": 2048,
+        "height": 2048,
+        "mipLevels": 12
+      }
+    ],
+    "animations": [],
+    "bones": 0,
+    "morphs": []
+  },
+  {
+    "file": "cloud.glb",
+    "bytes": 24076,
+    "meshes": 1,
+    "triangles": 4946,
+    "extensions": [
+      "EXT_meshopt_compression",
+      "KHR_mesh_quantization"
+    ],
+    "images": [],
+    "animations": [],
+    "bones": 0,
+    "morphs": []
+  },
+  {
+    "file": "light-clock.glb",
+    "bytes": 10252,
+    "meshes": 1,
+    "triangles": 1512,
+    "extensions": [
+      "EXT_meshopt_compression",
+      "KHR_mesh_quantization"
+    ],
+    "images": [],
+    "animations": [],
+    "bones": 0,
+    "morphs": []
+  },
+  {
+    "file": "node.glb",
+    "bytes": 10184,
+    "meshes": 1,
+    "triangles": 1472,
+    "extensions": [
+      "EXT_meshopt_compression",
+      "KHR_mesh_quantization"
+    ],
+    "images": [],
+    "animations": [],
+    "bones": 0,
+    "morphs": []
+  },
+  {
+    "file": "petros-low.glb",
+    "bytes": 900316,
+    "meshes": 4,
+    "triangles": 50808,
+    "extensions": [
+      "EXT_meshopt_compression",
+      "KHR_mesh_quantization",
+      "KHR_texture_basisu"
+    ],
+    "images": [
+      {
+        "mime": "image/ktx2",
+        "bytes": 521228,
+        "width": 1024,
+        "height": 1024,
+        "mipLevels": 11
+      }
+    ],
+    "animations": [
+      "Celebrate",
+      "Confused",
+      "Hover",
+      "Idle",
+      "Point",
+      "Speak",
+      "Think",
+      "Walk"
+    ],
+    "bones": 7,
+    "morphs": [
+      "Blink",
+      "Blink",
+      "MouthOpen"
+    ]
+  },
+  {
+    "file": "petros.glb",
+    "bytes": 1826912,
+    "meshes": 4,
+    "triangles": 50808,
+    "extensions": [
+      "EXT_meshopt_compression",
+      "KHR_mesh_quantization",
+      "KHR_texture_basisu"
+    ],
+    "images": [
+      {
+        "mime": "image/ktx2",
+        "bytes": 1447793,
+        "width": 2048,
+        "height": 2048,
+        "mipLevels": 12
+      }
+    ],
+    "animations": [
+      "Celebrate",
+      "Confused",
+      "Hover",
+      "Idle",
+      "Point",
+      "Speak",
+      "Think",
+      "Walk"
+    ],
+    "bones": 7,
+    "morphs": [
+      "Blink",
+      "Blink",
+      "MouthOpen"
+    ]
+  },
+  {
+    "file": "planet.glb",
+    "bytes": 36884,
+    "meshes": 1,
+    "triangles": 7080,
+    "extensions": [
+      "EXT_meshopt_compression",
+      "KHR_mesh_quantization"
+    ],
+    "images": [],
+    "animations": [],
+    "bones": 0,
+    "morphs": []
+  },
+  {
+    "file": "rocket-low.glb",
+    "bytes": 706488,
+    "meshes": 1,
+    "triangles": 12012,
+    "extensions": [
+      "EXT_meshopt_compression",
+      "KHR_mesh_quantization",
+      "KHR_texture_basisu"
+    ],
+    "images": [
+      {
+        "mime": "image/ktx2",
+        "bytes": 613759,
+        "width": 1024,
+        "height": 1024,
+        "mipLevels": 11
+      }
+    ],
+    "animations": [],
+    "bones": 0,
+    "morphs": []
+  },
+  {
+    "file": "rocket-proxy.glb",
+    "bytes": 68620,
+    "meshes": 1,
+    "triangles": 12012,
+    "extensions": [
+      "EXT_meshopt_compression",
+      "KHR_mesh_quantization",
+      "KHR_texture_basisu"
+    ],
+    "images": [],
+    "animations": [],
+    "bones": 0,
+    "morphs": []
+  },
+  {
+    "file": "rocket.glb",
+    "bytes": 1757672,
+    "meshes": 1,
+    "triangles": 12012,
+    "extensions": [
+      "EXT_meshopt_compression",
+      "KHR_mesh_quantization",
+      "KHR_texture_basisu"
+    ],
+    "images": [
+      {
+        "mime": "image/ktx2",
+        "bytes": 1664932,
+        "width": 2048,
+        "height": 2048,
+        "mipLevels": 12
+      }
+    ],
+    "animations": [],
+    "bones": 0,
+    "morphs": []
+  },
+  {
+    "file": "ship-low.glb",
+    "bytes": 373576,
+    "meshes": 1,
+    "triangles": 4336,
+    "extensions": [
+      "EXT_meshopt_compression",
+      "KHR_mesh_quantization",
+      "KHR_texture_basisu"
+    ],
+    "images": [
+      {
+        "mime": "image/ktx2",
+        "bytes": 339848,
+        "width": 1024,
+        "height": 1024,
+        "mipLevels": 11
+      }
+    ],
+    "animations": [],
+    "bones": 0,
+    "morphs": []
+  },
+  {
+    "file": "ship-proxy.glb",
+    "bytes": 24916,
+    "meshes": 1,
+    "triangles": 4336,
+    "extensions": [
+      "EXT_meshopt_compression",
+      "KHR_mesh_quantization",
+      "KHR_texture_basisu"
+    ],
+    "images": [],
+    "animations": [],
+    "bones": 0,
+    "morphs": []
+  },
+  {
+    "file": "ship.glb",
+    "bytes": 854816,
+    "meshes": 1,
+    "triangles": 4336,
+    "extensions": [
+      "EXT_meshopt_compression",
+      "KHR_mesh_quantization",
+      "KHR_texture_basisu"
+    ],
+    "images": [
+      {
+        "mime": "image/ktx2",
+        "bytes": 821081,
+        "width": 2048,
+        "height": 2048,
+        "mipLevels": 12
+      }
+    ],
+    "animations": [],
+    "bones": 0,
+    "morphs": []
+  },
+  {
+    "file": "word.glb",
+    "bytes": 3316,
+    "meshes": 1,
+    "triangles": 188,
+    "extensions": [
+      "EXT_meshopt_compression",
+      "KHR_mesh_quantization"
+    ],
+    "images": [],
+    "animations": [],
+    "bones": 0,
+    "morphs": []
+  }
+]

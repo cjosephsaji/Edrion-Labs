@@ -1,0 +1,29 @@
+{
+  "unitTestsPassed": 85,
+  "productionBuild": true,
+  "productionChecks": true,
+  "worldSmoke": true,
+  "teachingFiveTopics": true,
+  "speechFixtureCases": 10,
+  "providerVerified": false,
+  "tourSeconds": 120,
+  "DPR2Viewports": [
+    [
+      1440,
+      900
+    ],
+    [
+      390,
+      844
+    ]
+  ],
+  "performance": "High 27\u201331 fps; Balanced 56\u201360 fps; Low about 60 fps on this Mac",
+  "remaining": [
+    "High 60 fps target",
+    "Physical phone/Safari and hardware microphone acceptance",
+    "Live provider deliberately disabled",
+    "Legacy page-specific browser selector migration",
+    "Human learner and visual acceptance"
+  ],
+  "pushedOrDeployed": false
+}

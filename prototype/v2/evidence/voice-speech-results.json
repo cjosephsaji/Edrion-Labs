@@ -1,0 +1,307 @@
+{
+  "input": "AI_GENERATED_TEST_SPEECH",
+  "path": "WAV → browser microphone → real WebRTC → provider transcription → teach tool → numerical model → real provider audio",
+  "passed": true,
+  "result": {
+    "state": {
+      "version": 1,
+      "id": "relativity",
+      "params": {
+        "beta": 0.99,
+        "duration": 10,
+        "frame": "earth"
+      },
+      "time": 10,
+      "data": {},
+      "history": [
+        {
+          "t": 0,
+          "a": 0,
+          "b": 0
+        },
+        {
+          "t": 10,
+          "a": 10,
+          "b": 1.410673597966589
+        }
+      ],
+      "running": false
+    },
+    "scene": {
+      "version": 1,
+      "id": "time-dilation-compare",
+      "layout": "compare",
+      "objects": [
+        {
+          "id": "earth10",
+          "kind": "node",
+          "content": "Earth frame: 10 s",
+          "revealed": true
+        },
+        {
+          "id": "ship141",
+          "kind": "node",
+          "content": "Ship clock: 1.41 s",
+          "revealed": true
+        },
+        {
+          "id": "gamma709",
+          "kind": "equation",
+          "content": "gamma ≈ 7.09 at v = 0.99c",
+          "revealed": true
+        }
+      ],
+      "edges": [
+        {
+          "op": "connect",
+          "fromId": "earth10",
+          "toId": "ship141",
+          "relation": "compares"
+        }
+      ],
+      "marks": [
+        {
+          "targetId": "ship141",
+          "mode": "circle"
+        },
+        {
+          "targetId": "gamma",
+          "mode": "underline"
+        }
+      ],
+      "annotations": [
+        {
+          "targetId": "ship-clock",
+          "text": "Smaller proper time on the moving clock."
+        }
+      ],
+      "focus": "ship-clock"
+    },
+    "beats": [
+      {
+        "say": "At v = 0.99c, the Earth frame measures 10 s while the moving ship’s clock measures 1.41 s. The gamma factor is about 7.09, matching that dilation.",
+        "do": [
+          {
+            "op": "create_scene",
+            "sceneId": "time-dilation-compare",
+            "layout": "compare"
+          },
+          {
+            "op": "add",
+            "sceneId": "time-dilation-compare",
+            "object": {
+              "id": "earth10",
+              "kind": "node",
+              "content": "Earth frame: 10 s"
+            }
+          },
+          {
+            "op": "add",
+            "sceneId": "time-dilation-compare",
+            "object": {
+              "id": "ship141",
+              "kind": "node",
+              "content": "Ship clock: 1.41 s"
+            }
+          },
+          {
+            "op": "add",
+            "sceneId": "time-dilation-compare",
+            "object": {
+              "id": "gamma709",
+              "kind": "equation",
+              "content": "gamma ≈ 7.09 at v = 0.99c"
+            }
+          },
+          {
+            "op": "connect",
+            "fromId": "earth10",
+            "toId": "ship141",
+            "relation": "compares"
+          },
+          {
+            "op": "highlight",
+            "targetId": "ship141",
+            "mode": "circle"
+          }
+        ]
+      },
+      {
+        "say": "The ship clock is the key smaller interval. I’m emphasizing that moving clock because it shows the proper time for this run.",
+        "do": [
+          {
+            "op": "focus_target",
+            "targetId": "ship-clock"
+          },
+          {
+            "op": "annotate",
+            "targetId": "ship-clock",
+            "text": "Smaller proper time on the moving clock.",
+            "placement": "auto"
+          },
+          {
+            "op": "highlight",
+            "targetId": "gamma",
+            "mode": "underline"
+          }
+        ]
+      },
+      {
+        "say": "If the speed were reduced, gamma would drop and the ship’s elapsed time would increase. For this run, the result stays 10 s on Earth and 1.41 s on the ship.",
+        "do": [
+          {
+            "op": "reveal",
+            "objectIds": [
+              "earth10",
+              "ship141",
+              "gamma709"
+            ]
+          }
+        ]
+      }
+    ],
+    "followup": "If beta were reduced from 0.99 to 0.80, what would happen to gamma and the ship’s elapsed time?",
+    "move": "demonstrate",
+    "assessment": "question",
+    "skill": "special relativity time dilation",
+    "observations": {
+      "primary": 7.088812050083356,
+      "secondary": 1.410673597966589,
+      "gamma": 7.088812050083356,
+      "beta": 0.99,
+      "earthSeconds": 10,
+      "shipSeconds": 1.410673597966589,
+      "properInterval": 1.410673597966589,
+      "earthClock": 10,
+      "shipClock": 1.410673597966589,
+      "frame": "earth"
+    },
+    "events": [
+      {
+        "tool": "sim_observe",
+        "args": "{}",
+        "before": {
+          "primary": 1.6666666666666667,
+          "secondary": 6,
+          "gamma": 1.6666666666666667,
+          "beta": 0.8,
+          "earthSeconds": 10,
+          "shipSeconds": 6,
+          "properInterval": 6,
+          "earthClock": 0,
+          "shipClock": 0,
+          "frame": "earth"
+        },
+        "after": {
+          "primary": 1.6666666666666667,
+          "secondary": 6,
+          "gamma": 1.6666666666666667,
+          "beta": 0.8,
+          "earthSeconds": 10,
+          "shipSeconds": 6,
+          "properInterval": 6,
+          "earthClock": 0,
+          "shipClock": 0,
+          "frame": "earth"
+        }
+      },
+      {
+        "tool": "sim_set_params",
+        "args": "{\"patch\":{\"beta\":0.99}}",
+        "before": {
+          "primary": 1.6666666666666667,
+          "secondary": 6,
+          "gamma": 1.6666666666666667,
+          "beta": 0.8,
+          "earthSeconds": 10,
+          "shipSeconds": 6,
+          "properInterval": 6,
+          "earthClock": 0,
+          "shipClock": 0,
+          "frame": "earth"
+        },
+        "after": {
+          "primary": 7.088812050083356,
+          "secondary": 1.410673597966589,
+          "gamma": 7.088812050083356,
+          "beta": 0.99,
+          "earthSeconds": 10,
+          "shipSeconds": 1.410673597966589,
+          "properInterval": 1.410673597966589,
+          "earthClock": 0,
+          "shipClock": 0,
+          "frame": "earth"
+        }
+      },
+      {
+        "tool": "sim_experiment",
+        "args": "{\"patch\":{},\"seconds\":10,\"brake\":false}",
+        "before": {
+          "primary": 7.088812050083356,
+          "secondary": 1.410673597966589,
+          "gamma": 7.088812050083356,
+          "beta": 0.99,
+          "earthSeconds": 10,
+          "shipSeconds": 1.410673597966589,
+          "properInterval": 1.410673597966589,
+          "earthClock": 0,
+          "shipClock": 0,
+          "frame": "earth"
+        },
+        "after": {
+          "primary": 7.088812050083356,
+          "secondary": 1.410673597966589,
+          "gamma": 7.088812050083356,
+          "beta": 0.99,
+          "earthSeconds": 10,
+          "shipSeconds": 1.410673597966589,
+          "properInterval": 1.410673597966589,
+          "earthClock": 10,
+          "shipClock": 1.410673597966589,
+          "frame": "earth"
+        },
+        "baseline": {
+          "primary": 7.088812050083356,
+          "secondary": 1.410673597966589,
+          "gamma": 7.088812050083356,
+          "beta": 0.99,
+          "earthSeconds": 10,
+          "shipSeconds": 1.410673597966589,
+          "properInterval": 1.410673597966589,
+          "earthClock": 10,
+          "shipClock": 1.410673597966589,
+          "frame": "earth"
+        }
+      },
+      {
+        "tool": "sim_observe",
+        "args": "{}",
+        "before": {
+          "primary": 7.088812050083356,
+          "secondary": 1.410673597966589,
+          "gamma": 7.088812050083356,
+          "beta": 0.99,
+          "earthSeconds": 10,
+          "shipSeconds": 1.410673597966589,
+          "properInterval": 1.410673597966589,
+          "earthClock": 10,
+          "shipClock": 1.410673597966589,
+          "frame": "earth"
+        },
+        "after": {
+          "primary": 7.088812050083356,
+          "secondary": 1.410673597966589,
+          "gamma": 7.088812050083356,
+          "beta": 0.99,
+          "earthSeconds": 10,
+          "shipSeconds": 1.410673597966589,
+          "properInterval": 1.410673597966589,
+          "earthClock": 10,
+          "shipClock": 1.410673597966589,
+          "frame": "earth"
+        }
+      }
+    ],
+    "provider": "openai"
+  }
+}

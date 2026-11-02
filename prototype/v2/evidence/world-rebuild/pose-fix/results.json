@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "heldCursorSeconds": 40,
+  "qualitySwitches": [
+    "low",
+    "balanced"
+  ],
+  "samples": 225,
+  "maximumHeadTiltRadians": 0.1532,
+  "oversizedWorldHighlight": false,
+  "errors": []
+}

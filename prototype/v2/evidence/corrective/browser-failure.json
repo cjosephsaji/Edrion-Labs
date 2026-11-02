@@ -1,0 +1,81 @@
+{
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    learningRate: 0.1,\n    model: 'linear',\n    target: 4,\n+   weight: 1.3,\n+   x1: 2,\n-   weight: 0.5,\n-   x1: -2,\n    x2: 0.5\n  }\n",
+  "results": [
+    {
+      "topic": "neural",
+      "mode": "classic",
+      "opening": true,
+      "wrong": true,
+      "correct": true,
+      "transfer": true,
+      "modePreservation": true,
+      "reload": true,
+      "responsive": [
+        1440,
+        1366,
+        390
+      ]
+    },
+    {
+      "topic": "rocket",
+      "mode": "classic",
+      "opening": true,
+      "wrong": true,
+      "correct": true,
+      "transfer": true,
+      "modePreservation": true,
+      "reload": true,
+      "responsive": [
+        1440,
+        1366,
+        390
+      ]
+    },
+    {
+      "topic": "attention",
+      "mode": "classic",
+      "opening": true,
+      "wrong": true,
+      "correct": true,
+      "transfer": true,
+      "modePreservation": true,
+      "reload": true,
+      "responsive": [
+        1440,
+        1366,
+        390
+      ]
+    },
+    {
+      "topic": "traffic",
+      "mode": "classic",
+      "opening": true,
+      "wrong": true,
+      "correct": true,
+      "transfer": true,
+      "modePreservation": true,
+      "reload": true,
+      "responsive": [
+        1440,
+        1366,
+        390
+      ]
+    },
+    {
+      "topic": "relativity",
+      "mode": "classic",
+      "opening": true,
+      "wrong": true,
+      "correct": true,
+      "transfer": true,
+      "modePreservation": true,
+      "reload": true,
+      "responsive": [
+        1440,
+        1366,
+        390
+      ]
+    }
+  ],
+  "errors": []
+}

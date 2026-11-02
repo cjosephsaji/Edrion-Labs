@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "productionBuild": true,
+  "privatePage": true,
+  "unsignedApi": 401,
+  "signedApi": 200,
+  "missingSharedBudget": 429,
+  "crossOrigin": 403,
+  "clientJavaScriptFilesScanned": 31,
+  "secretsFound": 0,
+  "deployed": false
+}

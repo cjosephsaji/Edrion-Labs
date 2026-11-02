@@ -1,0 +1,52 @@
+{
+  "passed": true,
+  "topics": [
+    {
+      "topic": "Neural learning",
+      "questions": 4,
+      "validPreparedAnswers": true,
+      "noPageScrollForAnswers": true
+    },
+    {
+      "topic": "Rocket landing",
+      "questions": 4,
+      "validPreparedAnswers": true,
+      "noPageScrollForAnswers": true
+    },
+    {
+      "topic": "Attention",
+      "questions": 4,
+      "validPreparedAnswers": true,
+      "noPageScrollForAnswers": true
+    },
+    {
+      "topic": "Traffic waves",
+      "questions": 4,
+      "validPreparedAnswers": true,
+      "noPageScrollForAnswers": true
+    },
+    {
+      "topic": "Time dilation",
+      "questions": 4,
+      "validPreparedAnswers": true,
+      "noPageScrollForAnswers": true
+    }
+  ],
+  "aiRequests": [],
+  "assets3D": [],
+  "noWorldOption": true,
+  "default2D": true,
+  "typedQuestions": true,
+  "unknownQuestionHelp": true,
+  "controlsOnLeft": true,
+  "answersStayVisible": true,
+  "laptopSizes": [
+    "1440x900",
+    "1366x768",
+    "1280x800"
+  ],
+  "mobileTutorPane": true,
+  "tabletSideDrawer": true,
+  "guidedLessonPreserved": true,
+  "errors": []
+}

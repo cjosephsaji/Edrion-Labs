@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "topics": [
+    "Neural learning",
+    "Rocket landing",
+    "Attention",
+    "Traffic waves",
+    "Time dilation"
+  ],
+  "no3DCanvas": true,
+  "no3DAssetsInRegularView": true,
+  "roundTripPreservesLesson": true,
+  "errors": []
+}

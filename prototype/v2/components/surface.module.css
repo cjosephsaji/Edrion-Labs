@@ -1,0 +1,1517 @@
+.app {
+  --paper: #fffef7;
+  --bg: #f0f1e7;
+  --ink: #2d4c38;
+  --green: #42684b;
+  --muted: #7d8872;
+  --line: #dce1cf;
+  background: var(--bg);
+  color: var(--ink);
+  font-family:
+    Outfit, 'Avenir Next', Avenir, ui-sans-serif, system-ui, sans-serif;
+  min-height: 100vh;
+  padding: 0 5vw;
+  box-sizing: border-box;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.app * {
+  box-sizing: border-box;
+}
+.app button,
+.app select,
+.app input {
+  font-family: inherit;
+}
+.app button {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  background: transparent;
+  padding: 9px 13px;
+  border-radius: 9px;
+  transition: background 0.15s;
+}
+.app button:hover {
+  background: #e7ebdc;
+}
+.app button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.app button:focus-visible,
+.app input:focus-visible,
+.app select:focus-visible {
+  outline: 2px solid #b59042;
+  outline-offset: 3px;
+}
+.app a {
+  color: inherit;
+  text-decoration: none;
+}
+.header {
+  height: 94px;
+  max-width: 1350px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  gap: 12px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 23px;
+  letter-spacing: -1px;
+}
+.brandMark {
+  background: #3f6248;
+  color: #faf7e7;
+  border-radius: 11px 11px 11px 3px;
+  width: 31px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 30px;
+}
+.brandSub {
+  font-size: 11px;
+  letter-spacing: 0;
+  margin-left: 15px;
+  color: var(--muted);
+}
+.mode {
+  display: flex;
+  border: 1px solid #cfd7c0;
+  border-radius: 30px;
+  padding: 4px;
+  flex-shrink: 0;
+}
+.mode button {
+  border: 0;
+  border-radius: 22px;
+  padding: 7px 18px;
+  color: var(--muted);
+}
+.mode button[aria-pressed='true'] {
+  background: var(--paper);
+  color: var(--green);
+  box-shadow: 0 2px 4px #324a3210;
+}
+.intro {
+  text-align: center;
+  padding: 43px 0 30px;
+}
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.intro h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(27px, 3vw, 43px);
+  font-weight: 400;
+  letter-spacing: -1.4px;
+  margin: 13px 0 9px;
+  line-height: 1.2;
+}
+.intro h1 em {
+  color: #9b874d;
+  font-weight: 400;
+}
+.intro p {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+}
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 0 auto 26px;
+  max-width: 1220px;
+  overflow: auto;
+  padding: 5px 0;
+}
+.tabs button {
+  border-radius: 30px;
+  border-color: transparent;
+  color: var(--muted);
+  padding: 10px 17px;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.tabs button span {
+  font-size: 9px;
+  margin-right: 7px;
+  opacity: 0.7;
+}
+.tabs button[aria-current='page'] {
+  background: var(--green);
+  color: #fffef3;
+}
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 27px;
+  max-width: 1220px;
+  margin: auto;
+  align-items: start;
+}
+.notebook {
+  min-width: 0;
+  background: var(--paper);
+  border: 1px solid #d9decb;
+  border-radius: 22px;
+  box-shadow: 0 7px 28px #283c2810;
+  padding: 27px 32px 20px;
+  position: relative;
+}
+.notebook:before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 35px;
+  width: 3px;
+  height: 54px;
+  background: #c4ac67;
+  border-radius: 0 4px 4px 0;
+}
+.lessonHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.lessonHeading .eyebrow {
+  font-size: 9px;
+  letter-spacing: 1.7px;
+}
+.lessonHeading h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  font-size: 29px;
+  letter-spacing: -0.6px;
+  margin: 8px 0 0;
+  line-height: 1.2;
+}
+.live {
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: #7e9373;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.live i {
+  width: 5px;
+  height: 5px;
+  background: #6f925e;
+  border-radius: 50%;
+}
+.question {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 12px 0 15px;
+}
+.model {
+  min-height: 280px;
+  background-image: radial-gradient(#aebd9833 0.7px, transparent 0.7px);
+  background-size: 16px 16px;
+  border-radius: 14px;
+}
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 16px 0;
+  margin-top: 12px;
+  gap: 12px;
+}
+.metrics div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: center;
+}
+.metrics div + div {
+  border-left: 1px solid var(--line);
+}
+.metrics span {
+  font-size: 10px;
+  color: var(--muted);
+}
+.metrics strong {
+  font-size: 19px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.experimentBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 18px 0;
+  gap: 10px;
+}
+.actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.app .primary {
+  background: var(--green);
+  color: #fffcef;
+  border-color: var(--green);
+}
+.app .primary:hover {
+  background: #35563d;
+}
+.simTime {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 28px;
+  row-gap: 16px;
+}
+.control {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 7px;
+  padding: 5px 0 9px;
+}
+.control > span {
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  gap: 7px;
+}
+.control output {
+  color: var(--ink);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.control input[type='range'] {
+  accent-color: #628259;
+  width: 100%;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+}
+.control input[type='text'],
+.control select {
+  min-width: 0;
+  padding: 8px 10px;
+  font-size: 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.control input[type='checkbox'] {
+  accent-color: #628259;
+  align-self: start;
+  width: 17px;
+  height: 17px;
+}
+.moreControls {
+  border-top: 1px solid #edf0e5;
+  margin-top: 9px;
+  padding-top: 9px;
+}
+.moreControls summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 11px;
+  padding: 6px 0;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+}
+.moreControls summary span {
+  font-size: 13px;
+}
+.plot {
+  padding-top: 16px;
+  margin-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.disclosure {
+  font-size: 10px;
+  color: #90977f;
+  line-height: 1.6;
+  margin: 13px 0 0;
+}
+.tutor {
+  padding: 24px 0 0;
+  min-width: 0;
+  position: sticky;
+  top: 18px;
+}
+.tutorBody {
+  padding: 24px 0 20px;
+  border-bottom: 1px solid var(--line);
+  min-height: 180px;
+}
+.try {
+  padding: 20px 0;
+}
+.try > span {
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  color: var(--muted);
+}
+.try button {
+  border: 0;
+  padding: 11px 0 0;
+  font-size: 12px;
+  line-height: 1.7;
+  text-align: left;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.try button:hover {
+  background: transparent;
+  color: #a2843e;
+}
+.input {
+  background: var(--paper);
+  border: 1px solid #d7ddc7;
+  border-radius: 14px;
+  padding: 4px 8px 4px 12px;
+  box-shadow: 0 3px 12px #354b3510;
+}
+.voice {
+  padding: 14px 0 5px;
+}
+.prepared {
+  border-top: 1px solid var(--line);
+  padding: 9px 0 5px;
+  font-size: 11px;
+}
+.prepared summary {
+  cursor: pointer;
+  color: var(--green);
+  padding: 4px 0;
+}
+.prepared > div {
+  display: grid;
+  gap: 4px;
+  padding-top: 8px;
+}
+.prepared button {
+  width: 100%;
+  text-align: left;
+  font-size: 11px;
+  line-height: 1.5;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  padding: 7px 4px;
+}
+.prepared button:hover {
+  background: #dfe8d7;
+}
+.prepared .retryAi {
+  width: auto;
+  margin-top: 8px;
+  text-decoration: underline;
+}
+.voice button {
+  font-size: 10px;
+  padding: 7px 10px;
+}
+.connection {
+  font-size: 10px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 14px;
+}
+.connected,
+.offline {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #709064;
+}
+.offline {
+  background: #b79a6a;
+}
+.message {
+  font-size: 12px;
+  line-height: 1.6;
+  background: #f7ecd3;
+  border: 1px solid #e7d7ae;
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #7a6034;
+}
+.transcript {
+  margin-top: 20px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.transcript summary {
+  cursor: pointer;
+}
+.transcript p {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  max-height: 230px;
+  overflow: auto;
+}
+.app .continue {
+  margin-top: 16px;
+  background: #e9eedc;
+  border-color: #cbd6ba;
+}
+.footer {
+  max-width: 1220px;
+  margin: 28px auto 0;
+  padding-bottom: 25px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 9px;
+  color: #929b84;
+  letter-spacing: 0.4px;
+}
+.world {
+  --bg: #e7eadd;
+}
+.worldModel {
+  padding: 3px 0 16px;
+}
+.worldModel > span {
+  font-size: 10px;
+  color: var(--muted);
+  display: block;
+  text-align: center;
+  padding: 8px;
+}
+.world .model {
+  background: none;
+}
+@media (min-width: 1600px) {
+  .intro {
+    padding-top: 53px;
+  }
+  .workspace {
+    grid-template-columns: minmax(0, 1fr) 350px;
+    gap: 40px;
+  }
+}
+@media (max-width: 1000px) {
+  .app {
+    padding: 0 3vw;
+  }
+  .workspace {
+    gap: 22px;
+    grid-template-columns: minmax(0, 1fr) 290px;
+  }
+  .notebook {
+    padding: 23px;
+  }
+  .brandSub {
+    display: none;
+  }
+  .tabs {
+    gap: 3px;
+  }
+  .tabs button {
+    padding: 10px 13px;
+  }
+  .lessonHeading h2 {
+    font-size: 26px;
+  }
+  .metrics strong {
+    font-size: 17px;
+  }
+}
+@media (max-width: 760px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .tutor {
+    position: static;
+    padding: 20px 13px 10px;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .tutorBody {
+    min-height: 0;
+    padding: 18px 0;
+  }
+  .tabs {
+    justify-content: flex-start;
+    gap: 0;
+  }
+  .tabs button {
+    font-size: 11px;
+    padding: 9px 13px;
+  }
+  .intro {
+    padding: 28px 0 20px;
+  }
+  .intro p {
+    font-size: 11px;
+  }
+  .header {
+    height: 75px;
+  }
+  .brand {
+    font-size: 21px;
+  }
+  .mode button {
+    font-size: 10px;
+    padding: 7px 13px;
+  }
+  .footer {
+    font-size: 8px;
+    flex-direction: column;
+    margin-top: 12px;
+  }
+  .try {
+    padding: 15px 0;
+  }
+  .notebook {
+    padding: 22px 20px 17px;
+  }
+  .notebook .eyebrow {
+    font-size: 8px;
+  }
+  .lessonHeading h2 {
+    font-size: 25px;
+  }
+  .live {
+    font-size: 7px;
+  }
+  .controls {
+    column-gap: 18px;
+  }
+  .actions button {
+    font-size: 11px;
+    padding: 9px;
+  }
+  .metrics strong {
+    font-size: 17px;
+  }
+  .model {
+    min-height: 245px;
+  }
+  .plot {
+    padding-top: 12px;
+  }
+  .metrics {
+    margin-top: 6px;
+  }
+  .app {
+    padding: 0 12px;
+  }
+  .intro h1 {
+    letter-spacing: -1px;
+  }
+  .simTime {
+    font-size: 9px;
+  }
+  .experimentBar {
+    gap: 5px;
+  }
+  .disclosure {
+    font-size: 10px;
+  }
+  .control output {
+    max-width: 65px;
+  }
+  .connection {
+    margin-top: 9px;
+  }
+  .worldModel > div {
+    height: 290px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+.app [data-petros-id]:focus {
+  outline: none;
+}
+.app [data-petros-id]:focus-visible {
+  outline: 2px solid #bd9148;
+  outline-offset: 5px;
+}
+
+.annotationNotes {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0 8px;
+}
+.app .annotationNotes button {
+  text-align: left;
+  border: 0;
+  border-left: 2px solid #c5a45d;
+  border-radius: 0;
+  background: #fbf5e2;
+  padding: 9px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.annotationNotes span {
+  display: block;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #9a814c;
+  margin-bottom: 3px;
+}
+/* The active scene and current learner action share the first view. */
+.app {
+  padding: 0 3vw;
+  background: #f1f1e7;
+}
+.header {
+  height: 66px;
+  max-width: 1440px;
+}
+.tabs {
+  max-width: 1440px;
+  justify-content: flex-start;
+  margin: 10px auto 15px;
+  gap: 9px;
+}
+.tabs button {
+  padding: 9px 17px;
+}
+.workspace {
+  max-width: 1440px;
+  grid-template-columns: minmax(0, 1fr) minmax(270px, 24%);
+  gap: 24px;
+}
+.notebook {
+  padding: 23px 25px 17px;
+  border-radius: 20px;
+}
+.lessonHeading h2 {
+  font-size: 31px;
+}
+.question {
+  margin: 10px 0 18px;
+  font-size: 13px;
+  color: #71826c;
+}
+.model {
+  min-height: 0;
+  background: none;
+}
+.tutor {
+  padding-top: 12px;
+}
+.tutorBody {
+  min-height: 0;
+  padding: 19px 0 16px;
+}
+.teachingLabel {
+  font-size: 9px;
+  letter-spacing: 1.6px;
+  color: #9a874c;
+  margin-bottom: 12px;
+}
+.startActions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 20px;
+}
+.startActions button {
+  padding: 13px 11px;
+  font-size: 12px;
+}
+.startActions small {
+  color: var(--muted);
+  font-size: 9px;
+  text-align: center;
+}
+.choices {
+  display: grid;
+  gap: 8px;
+  margin-top: 19px;
+}
+.choices button {
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  background: #fffdf2;
+  padding: 13px;
+  font-size: 12px;
+  border-color: #cbd6bd;
+  line-height: 1.5;
+}
+.choices button:hover {
+  background: #e2ebd9;
+  border-color: #7f9c70;
+}
+.quietActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 13px;
+}
+.quietActions button {
+  border: 0;
+  border-bottom: 1px solid #cdd6be;
+  border-radius: 0;
+  font-size: 9px;
+  padding: 4px 0;
+  color: #7c8c72;
+}
+.sceneExplanation:empty {
+  display: none;
+}
+.sceneExplanation > div {
+  margin-top: 8px !important;
+}
+.sceneExplanation svg {
+  max-height: 150px;
+}
+.labDrawer {
+  border-top: 1px solid var(--line);
+  margin-top: 16px;
+}
+.labDrawer > summary,
+.mathDrawer > summary {
+  cursor: pointer;
+  padding: 14px 0;
+  font-size: 11px;
+  color: #71826b;
+  display: flex;
+  justify-content: space-between;
+  list-style: none;
+}
+.labDrawer[open] > summary {
+  color: var(--ink);
+}
+.mathDrawer {
+  border-top: 1px solid var(--line);
+  margin-top: 13px;
+}
+.try {
+  padding: 14px 0;
+}
+.try > span {
+  font-size: 8px;
+}
+.connection {
+  font-size: 9px;
+  margin-top: 9px;
+}
+.transcript {
+  margin-top: 15px;
+  font-size: 10px;
+}
+.footer {
+  max-width: 1440px;
+  margin-top: 18px;
+  padding-bottom: 15px;
+}
+.world .notebook {
+  padding: 18px 18px 14px;
+}
+.world .question {
+  margin-bottom: 12px;
+}
+@media (min-width: 1600px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+}
+@media (max-width: 1000px) and (min-width: 761px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr) 270px;
+    gap: 18px;
+  }
+  .notebook {
+    padding: 20px;
+  }
+}
+@media (max-width: 760px) {
+  .app {
+    padding: 0 12px;
+  }
+  .header {
+    height: 55px;
+  }
+  .brand {
+    font-size: 20px;
+    gap: 7px;
+  }
+  .brandMark {
+    width: 25px;
+    height: 29px;
+    font-size: 25px;
+  }
+  .mode {
+    padding: 3px;
+  }
+  .mode button {
+    font-size: 9px;
+    padding: 6px 10px;
+  }
+  .tabs {
+    margin: 6px 0 9px;
+    padding: 3px 0;
+    gap: 0;
+    scrollbar-width: none;
+  }
+  .tabs button {
+    padding: 8px 12px;
+    font-size: 10px;
+  }
+  .workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .notebook {
+    padding: 16px 13px 10px;
+    width: 100%;
+    border-radius: 16px;
+  }
+  .lessonHeading h2 {
+    font-size: 24px;
+    margin-top: 5px;
+  }
+  .question {
+    font-size: 11px;
+    margin: 8px 0 11px;
+    line-height: 1.45;
+  }
+  .model > div > svg {
+    max-height: 255px !important;
+  }
+  .labDrawer {
+    margin-top: 8px;
+  }
+  .labDrawer > summary {
+    padding: 10px 0;
+    font-size: 10px;
+  }
+  .disclosure {
+    font-size: 9px;
+    margin: 5px 0 0;
+  }
+  .tutor {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    padding: 0 6px;
+    position: static;
+  }
+  .tutor > div:first-child {
+    gap: 8px !important;
+  }
+  .tutor > div:first-child > div:first-child {
+    width: 34px !important;
+    height: 38px !important;
+  }
+  .tutor > div:first-child img {
+    width: 34px !important;
+    height: 45px !important;
+  }
+  .tutor > div:first-child strong {
+    font-size: 12px !important;
+  }
+  .tutor > div:first-child > div:nth-child(2) > div {
+    font-size: 9px !important;
+    margin-top: 1px !important;
+  }
+  .tutorBody {
+    padding: 9px 0 12px;
+    border-bottom: 0;
+  }
+  .teachingLabel {
+    margin-bottom: 7px;
+    font-size: 8px;
+  }
+  .tutorBody > div[aria-live] p {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+  .startActions {
+    margin-top: 11px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+  }
+  .startActions button {
+    font-size: 10px;
+    padding: 11px 8px;
+  }
+  .startActions small {
+    grid-column: 1 / -1;
+    font-size: 8px;
+  }
+  .choices {
+    margin-top: 10px;
+    gap: 6px;
+    grid-template-columns: 1fr 1fr;
+  }
+  .choices button {
+    font-size: 11px;
+    padding: 10px;
+  }
+  .try {
+    padding: 9px 0 12px;
+  }
+  .try > span {
+    display: none;
+  }
+  .try button {
+    padding-top: 0;
+    font-size: 11px;
+  }
+  .quietActions {
+    margin-top: 8px;
+    gap: 13px;
+  }
+  .voice {
+    padding: 10px 0 0;
+  }
+  .footer {
+    font-size: 8px;
+    margin-top: 14px;
+  }
+  .world .notebook {
+    padding: 15px 10px 10px;
+  }
+  .sceneExplanation svg {
+    max-height: 180px;
+  }
+}
+.prototypeBadge {
+  color: #6d815e;
+  border: 1px solid #d1dcc3;
+  background: #e8eedc;
+  border-radius: 20px;
+  padding: 7px 12px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+/* The regular tutor has room for visible questions and a compact illustrated explanation. */
+.app[data-presentation='2d'] .workspace {
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 31%);
+}
+.app[data-presentation='2d'] .tutor {
+  padding-top: 8px;
+}
+.app[data-presentation='2d'] .tutorBody {
+  padding-top: 0;
+  border-bottom: 0;
+}
+.app[data-presentation='2d'] .teachingLabel {
+  margin-bottom: 9px;
+  font-size: 8px;
+}
+.app[data-presentation='2d'] .startActions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+.app[data-presentation='2d'] .startActions button {
+  flex: 1;
+  font-size: 10px;
+  padding: 10px 8px;
+}
+.app[data-presentation='2d'] .startActions small {
+  width: 100%;
+}
+@media (max-width: 980px) {
+  .app[data-presentation='2d'] .workspace {
+    grid-template-columns: minmax(0, 1fr) minmax(290px, 39%);
+  }
+}
+@media (max-width: 640px) {
+  .prototypeBadge {
+    font-size: 8px;
+    padding: 6px 8px;
+  }
+  .app[data-presentation='2d'] .workspace {
+    display: flex;
+  }
+}
+@media (max-width: 760px) {
+  .world .workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px 10px 13px;
+  }
+  .world .notebook,
+  .world .tutor {
+    display: contents;
+  }
+  .world .notebook:before {
+    display: none;
+  }
+  .world .lessonHeading {
+    grid-row: 1;
+  }
+  .world .question {
+    grid-row: 2;
+    margin: 0 0 4px;
+  }
+  .world .tutor > div:first-child {
+    grid-row: 3;
+  }
+  .world .tutorBody {
+    grid-row: 4;
+    padding: 3px 0 5px;
+  }
+  .world .model {
+    grid-row: 5;
+  }
+  .world .sceneExplanation {
+    grid-row: 6;
+  }
+  .world .labDrawer {
+    grid-row: 7;
+  }
+  .world .disclosure {
+    grid-row: 8;
+  }
+  .world .try {
+    grid-row: 9;
+  }
+  .world .input {
+    grid-row: 10;
+  }
+  .world .voice {
+    grid-row: 11;
+  }
+  .world .message {
+    grid-row: 12;
+  }
+  .world .connection {
+    grid-row: 13;
+  }
+  .world .transcript {
+    grid-row: 14;
+  }
+}
+
+.mode a {
+  font-size: 12px;
+  border-radius: 22px;
+  padding: 7px 18px;
+  color: var(--muted);
+}
+.mode a[aria-current='page'] {
+  background: var(--paper);
+  color: var(--green);
+  box-shadow: 0 2px 4px #324a3210;
+}
+.mode a:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+}
+@media (max-width: 760px) {
+  .mode a {
+    font-size: 10px;
+    padding: 7px 10px;
+  }
+}
+
+/* A viewport workspace: controls and the tutor stay beside the experiment. */
+.app[data-presentation='2d'] {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 60px 56px minmax(0, 1fr) 28px;
+  padding: 0 22px;
+}
+.app[data-presentation='2d'] .header {
+  grid-row: 1;
+  width: 100%;
+  height: auto;
+}
+.app[data-presentation='2d'] .tabs {
+  grid-row: 2;
+  width: 100%;
+  min-width: 0;
+  margin: 5px 0;
+  padding: 3px 0;
+  align-items: center;
+}
+.app[data-presentation='2d'] .workspace {
+  grid-row: 3;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 205px minmax(0, 1fr) minmax(355px, 31%);
+  gap: 16px;
+  align-items: stretch;
+}
+.app[data-presentation='2d'] .notebook {
+  min-height: 0;
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 19px;
+  border-radius: 18px;
+}
+.app[data-presentation='2d'] .lessonHeading h2 {
+  font-size: clamp(23px, 2.3vw, 32px);
+}
+.app[data-presentation='2d'] .question {
+  font-size: 12px;
+  margin: 9px 0 12px;
+}
+.app[data-presentation='2d'] .model {
+  flex: 1;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.app[data-presentation='2d'] .model > div {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.app[data-presentation='2d'] .model > div > svg {
+  height: 100%;
+  width: 100%;
+  max-height: 100% !important;
+}
+.app[data-presentation='2d'] .sceneExplanation {
+  flex-shrink: 0;
+  max-height: 135px;
+  overflow: auto;
+}
+.app[data-presentation='2d'] .disclosure {
+  flex-shrink: 0;
+  margin: 10px 0 0;
+  font-size: 9px;
+}
+.experimentRail {
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 14px 12px;
+  border: 1px solid #d8dfc9;
+  border-radius: 16px;
+  background: #f9faef;
+  scrollbar-width: thin;
+}
+.railHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  color: #9a8857;
+}
+.app .closeRail,
+.app .railToggle,
+.mobileTabs {
+  display: none;
+}
+.experimentRail .labDrawer {
+  border: 0;
+  margin: 0;
+}
+.experimentRail .labDrawer > summary {
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 500;
+  color: #3b593e;
+  padding: 10px 0;
+}
+.experimentRail .metrics {
+  margin-top: 0;
+  padding: 12px 0;
+  gap: 4px;
+}
+.experimentRail .metrics span {
+  font-size: 8px;
+}
+.experimentRail .metrics strong {
+  font-size: 13px;
+}
+.experimentRail .controls {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 7px;
+}
+.experimentRail .control {
+  padding: 4px 0;
+  gap: 5px;
+}
+.experimentRail .control > span {
+  font-size: 10px;
+}
+.experimentRail .experimentBar {
+  display: block;
+  margin: 10px 0;
+}
+.experimentRail .actions {
+  gap: 5px;
+}
+.experimentRail .actions button {
+  font-size: 10px;
+  padding: 8px;
+}
+.experimentRail .simTime {
+  text-align: right;
+  margin-top: 6px;
+  font-size: 9px;
+}
+.app .quickExperiment {
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px;
+  font-size: 10px;
+  line-height: 1.5;
+  background: #e7eddb;
+  border-color: #c5d2b4;
+  text-align: left;
+}
+.experimentRail .plot {
+  margin-top: 12px;
+}
+.experimentRail .plot svg {
+  max-height: 100px;
+}
+.experimentRail .mathDrawer > summary {
+  font-size: 10px;
+  line-height: 1.4;
+}
+.experimentRail .transcript {
+  font-size: 9px;
+  margin-top: 10px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.experimentRail .transcript summary {
+  cursor: pointer;
+}
+.app[data-presentation='2d'] .tutor {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  padding: 0;
+  gap: 8px;
+}
+.app[data-presentation='2d'] .tutor > div:first-child {
+  flex-shrink: 0;
+}
+.app[data-presentation='2d'] .tutorBody {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding: 2px 5px 8px 0;
+  border: 0;
+}
+.app[data-presentation='2d'] .tutorBody:focus-visible {
+  outline: 2px solid #b59042;
+  outline-offset: -2px;
+  border-radius: 12px;
+}
+.app[data-presentation='2d'] .teachingLabel {
+  font-size: 8px;
+  margin: 0 0 8px;
+}
+.questionInput {
+  flex-shrink: 0;
+  padding: 0 10px 6px;
+  border-radius: 13px;
+  border: 1px solid #d2dcc2;
+  background: #fffef7;
+  box-shadow: 0 2px 8px #3e523408;
+}
+.questionInput small {
+  display: block;
+  font-size: 9px;
+  line-height: 1.4;
+  color: #839075;
+  padding: 0 2px;
+}
+.app[data-presentation='2d'] .connection {
+  display: none;
+}
+.app[data-presentation='2d'] .footer {
+  grid-row: 4;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  font-size: 8px;
+}
+@media (max-width: 1150px) {
+  .app[data-presentation='2d'] .workspace {
+    grid-template-columns: minmax(0, 1fr) minmax(330px, 39%);
+  }
+  .experimentRail {
+    display: none;
+    position: fixed;
+    top: 122px;
+    left: 16px;
+    bottom: 16px;
+    width: 275px;
+    z-index: 90;
+    box-shadow: 12px 6px 50px #24371f33;
+  }
+  .experimentRail[data-open='true'] {
+    display: block;
+  }
+  .app .closeRail {
+    display: block;
+    border: 0;
+    background: transparent;
+    padding: 4px 0;
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+  .app .railToggle {
+    display: block;
+    align-self: flex-start;
+    font-size: 10px;
+    padding: 7px 9px;
+    margin-bottom: 8px;
+    background: #e6eddc;
+  }
+}
+@media (max-width: 760px) {
+  .app[data-presentation='2d'] {
+    padding: 0 12px;
+    grid-template-rows: 54px 43px 38px minmax(0, 1fr) 22px;
+  }
+  .app[data-presentation='2d'] .header {
+    gap: 8px;
+  }
+  .app[data-presentation='2d'] .header .brandSub {
+    display: none;
+  }
+  .app[data-presentation='2d'] .tabs {
+    margin: 0;
+    scrollbar-width: none;
+  }
+  .app[data-presentation='2d'] .tabs button {
+    font-size: 10px;
+    padding: 8px 12px;
+  }
+  .mobileTabs {
+    grid-row: 3;
+    display: flex;
+    gap: 5px;
+    align-items: start;
+  }
+  .app .mobileTabs button {
+    font-size: 10px;
+    padding: 7px 12px;
+    border-radius: 20px;
+  }
+  .app .mobileTabs button[aria-pressed='true'] {
+    background: #42684b;
+    color: #f8f6e9;
+  }
+  .app .mobileTabs button:last-child {
+    margin-left: auto;
+  }
+  .app[data-presentation='2d'] .workspace {
+    grid-row: 4;
+    display: block;
+  }
+  .app[data-presentation='2d'] .notebook {
+    display: none;
+    padding: 15px;
+  }
+  .app[data-presentation='2d'][data-mobile-pane='model'] .notebook {
+    display: flex;
+  }
+  .app[data-presentation='2d'][data-mobile-pane='model'] .tutor {
+    display: none;
+  }
+  .app[data-presentation='2d'] .tutor {
+    padding: 2px 0 0;
+    gap: 7px;
+  }
+  .app[data-presentation='2d'] .tutor > div:first-child > div:first-child {
+    width: 34px !important;
+    height: 38px !important;
+  }
+  .app[data-presentation='2d'] .tutor > div:first-child img {
+    width: 34px !important;
+    height: 45px !important;
+  }
+  .app[data-presentation='2d'] .tutorBody {
+    padding-right: 2px;
+  }
+  .app[data-presentation='2d'] .footer {
+    grid-row: 5;
+    font-size: 7px;
+  }
+  .app[data-presentation='2d'] .footer span:first-child {
+    display: none;
+  }
+  .experimentRail {
+    top: 135px;
+  }
+}
+@media (min-width: 761px) {
+  .app[data-presentation='2d'] .tutor > div:first-child > div:first-child {
+    width: 43px !important;
+    height: 48px !important;
+  }
+  .app[data-presentation='2d'] .tutor > div:first-child img {
+    width: 43px !important;
+    height: 57px !important;
+  }
+}
