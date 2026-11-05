@@ -1277,6 +1277,9 @@ export function LiveTeachingSurface({
           <span className={s.brandSub}>a little curiosity goes a long way</span>
         </a>
         <div className={s.headerActions}>
+          {!isSpatial && (
+            <a href="/prototype?view=2d">Guided investigations ↗</a>
+          )}
           {prototypeFeatures.world ? (
             <nav className={s.mode} aria-label="Learning view">
               <a

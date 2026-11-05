@@ -9,6 +9,8 @@
     "test": "vitest run --config tests/vitest.config.ts",
     "typecheck": "tsc --noEmit -p tsconfig.check.json",
     "test:browser": "tsx tests/browser.mts",
+    "test:investigations": "tsx tests/investigation-browser.mts",
+    "test:resilience": "tsx tests/investigation-resilience.mts",
     "test:ai": "tsx tests/browser-ai.mts",
     "test:voice": "tsx tests/voice-browser.mts",
     "test:voice:all": "tsx tests/make-voice-fixtures.mts && tsx tests/voice-five-topics.mts",

@@ -1,5 +1,7 @@
 # Petros V2 — implemented prototype
 
+The default 2D experience now opens [guided investigations](INVESTIGATIONS.md): predict a controlled change, inspect computed comparisons, explain the cause, and try a different case. All five subjects include three cases, visual validation with a data-table fallback, and local learning evidence. Snapshot coaching, observation checkpoints, slower replay, personal reflections and repeat practice support the full learning loop. The original controls and tutor remain under **Open the free lab**. Current verification is recorded in [the investigation handoff](evidence/investigations/HANDOFF.md).
+
 Current demo configuration: the regular tutor uses prepared questions and live simulations; AI and the 3D world are paused. YC reviewers sign in with the dedicated shared username/password account. See [YC_PREVIEW_SETUP.md](YC_PREVIEW_SETUP.md) for Netlify settings and the credential-generation workflow. Private credential files are Git-ignored and must be imported separately into hosting.
 
 Isolated Next.js app and reusable route component. Development stays in `prototype/v2/`; the original Edrion apps, PDFs, academic APIs and uncommitted prototype changes are retained. The independent Claude review was not present in the supplied archive; `CODEX_BUILD_NOW.md` supplies the approved implementation decisions. Starter numerical modules were tested before adaptation; their rocket impact timestamp was corrected.
@@ -27,6 +29,8 @@ Connect voice, then tap Talk or hold V in a focused tab outside text fields. The
 npm test
 npm run typecheck
 npm run build
+npm run test:investigations # all 15 guided cases; local server required
+npm run test:resilience # transitions, practice, storage and display recovery
 npm run test:browser
 npm run test:ai
 npm run test:voice

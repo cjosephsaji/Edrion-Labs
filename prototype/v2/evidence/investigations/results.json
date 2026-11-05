@@ -1,0 +1,106 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "topic": "neural",
+      "caseIndex": 0,
+      "wrongPath": true,
+      "layout": "checked"
+    },
+    {
+      "topic": "neural",
+      "caseIndex": 1,
+      "wrongPath": false,
+      "layout": "checked"
+    },
+    {
+      "topic": "neural",
+      "caseIndex": 2,
+      "wrongPath": false,
+      "layout": "checked"
+    },
+    {
+      "topic": "rocket",
+      "caseIndex": 0,
+      "wrongPath": false,
+      "layout": "checked"
+    },
+    {
+      "topic": "rocket",
+      "caseIndex": 1,
+      "wrongPath": false,
+      "layout": "checked"
+    },
+    {
+      "topic": "rocket",
+      "caseIndex": 2,
+      "wrongPath": false,
+      "layout": "checked"
+    },
+    {
+      "topic": "attention",
+      "caseIndex": 0,
+      "wrongPath": false,
+      "layout": "checked"
+    },
+    {
+      "topic": "attention",
+      "caseIndex": 1,
+      "wrongPath": false,
+      "layout": "checked"
+    },
+    {
+      "topic": "attention",
+      "caseIndex": 2,
+      "wrongPath": false,
+      "layout": "checked"
+    },
+    {
+      "topic": "traffic",
+      "caseIndex": 0,
+      "wrongPath": false,
+      "layout": "checked"
+    },
+    {
+      "topic": "traffic",
+      "caseIndex": 1,
+      "wrongPath": false,
+      "layout": "checked"
+    },
+    {
+      "topic": "traffic",
+      "caseIndex": 2,
+      "wrongPath": false,
+      "layout": "checked"
+    },
+    {
+      "topic": "relativity",
+      "caseIndex": 0,
+      "wrongPath": false,
+      "layout": "checked"
+    },
+    {
+      "topic": "relativity",
+      "caseIndex": 1,
+      "wrongPath": false,
+      "layout": "checked"
+    },
+    {
+      "topic": "relativity",
+      "caseIndex": 2,
+      "wrongPath": false,
+      "layout": "checked"
+    },
+    {
+      "recovery": true,
+      "evidenceCount": 15
+    },
+    {
+      "reducedMotion": true
+    },
+    {
+      "freeLabPreserved": true
+    }
+  ],
+  "errors": []
+}

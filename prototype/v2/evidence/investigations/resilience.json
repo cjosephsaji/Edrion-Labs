@@ -1,0 +1,51 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "checkpointsAndLiveEvidence": true
+    },
+    {
+      "rapidTopicSwitchAndTimerIsolation": true
+    },
+    {
+      "remediationPracticeReflectionAndDoubleSubmit": true
+    },
+    {
+      "width": 320,
+      "visual": "checked"
+    },
+    {
+      "width": 360,
+      "visual": "checked"
+    },
+    {
+      "width": 390,
+      "visual": "checked"
+    },
+    {
+      "width": 768,
+      "visual": "checked"
+    },
+    {
+      "width": 1024,
+      "visual": "checked"
+    },
+    {
+      "width": 1920,
+      "visual": "checked"
+    },
+    {
+      "rejectedDiagramUsesLiveFallbackAndRecovers": true
+    },
+    {
+      "storageDeniedAndMobileFlow": true
+    },
+    {
+      "corruptProgressRecovery": true
+    },
+    {
+      "completedJourneyAndKeyboardPractice": true
+    }
+  ],
+  "errors": []
+}
