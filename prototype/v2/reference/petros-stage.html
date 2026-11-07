@@ -1,0 +1,633 @@
+<title>Petros Stage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one lit object on a seamless ink studio. Canvas is full-bleed; UI floats at the edges and never covers the object. */
+:root {
+  --bg: #090c1c;
+  --bg-2: #121a40;
+  --ink: #eceffa;
+  --mute: #8f98bd;
+  --line: rgba(170, 184, 255, .16);
+  --glass: rgba(14, 19, 48, .62);
+  --amber: #ffb35f;
+  --mint: #7df0c8;
+  --copper: #d49a6a;
+  --display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--sans); font-size: 14px; line-height: 1.45;
+  overflow: hidden; -webkit-font-smoothing: antialiased;
+}
+#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.vignette {
+  position: fixed; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 55% 45%, transparent 55%, rgba(4, 6, 16, .62) 100%),
+    linear-gradient(to bottom, rgba(9, 12, 28, .55), transparent 18%, transparent 70%, rgba(9, 12, 28, .7));
+}
+#leaders { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+#leaders line { stroke: rgba(236, 239, 250, .42); stroke-width: 1; }
+#leaders circle { fill: var(--bg); stroke: var(--ink); stroke-width: 1.25; }
+
+.tag {
+  position: fixed; left: 0; top: 0; pointer-events: none; white-space: nowrap;
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 6px 11px 6px 10px; border-radius: 999px;
+  background: rgba(14, 19, 48, .84); border: 1px solid var(--line);
+  backdrop-filter: blur(10px);
+  will-change: transform;
+}
+.tag i { font-style: normal; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+.tag b { font-family: var(--mono); font-weight: 500; font-size: 13px; font-variant-numeric: tabular-nums; }
+.tag.target b { color: var(--amber); }
+
+#ui { position: fixed; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: flex-start;
+  padding-top: max(18px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(18px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+#ui button, #ui input, #ui .panel, #ui .bar { pointer-events: auto; }
+
+.top { display: flex; align-items: center; gap: 22px; min-width: 0; }
+.brand { font-family: var(--display); font-size: 25px; font-weight: 400; letter-spacing: -.01em; flex: none; }
+.brand span { color: var(--amber); }
+.dock { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; min-width: 0; padding: 4px 0; }
+.dock::-webkit-scrollbar { display: none; }
+.lesson {
+  flex: none; appearance: none; border: 1px solid transparent; background: transparent; color: var(--mute);
+  font: 500 12.5px var(--sans); padding: 7px 13px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  transition: color .2s, background .2s, border-color .2s;
+}
+.lesson:hover:not(:disabled) { color: var(--ink); }
+.lesson[aria-current="true"] { color: var(--ink); background: rgba(170, 184, 255, .1); border-color: var(--line); }
+.lesson:disabled { opacity: .42; cursor: default; }
+.lesson:focus-visible, .btn:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+.panel { align-self: flex-start; max-width: 340px; margin-top: 4vh; display: flex; flex-direction: column; gap: 18px; pointer-events: none !important; }
+.panel > * { pointer-events: none; }
+.eyebrow { font: 500 11px var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--mute); }
+h1 { margin: 6px 0 0; font-family: var(--display); font-weight: 300; font-size: clamp(32px, 4.2vw, 56px); line-height: 1.02; letter-spacing: -.02em; text-wrap: balance; }
+.sub { margin: 0; color: var(--mute); max-width: 31ch; font-size: 14px; }
+.loss { padding: 14px 16px 12px; border-radius: 16px; background: var(--glass); border: 1px solid var(--line); backdrop-filter: blur(12px); width: 240px; }
+.loss .k { display: flex; justify-content: space-between; align-items: baseline; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+.loss .v { font-family: var(--mono); font-weight: 400; font-size: 40px; line-height: 1.1; margin: 4px 0 2px; font-variant-numeric: tabular-nums; letter-spacing: -.02em; transition: color .3s; }
+.loss .f { font-family: var(--mono); font-size: 11px; color: var(--mute); }
+#spark { width: 100%; height: 44px; display: block; margin-top: 8px; }
+
+.bottom { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.caption { margin: 0; text-align: center; max-width: 56ch; color: var(--ink); font-size: 15px; text-wrap: balance; text-shadow: 0 1px 12px rgba(5, 8, 20, .9); min-height: 1.45em; }
+.bar {
+  display: flex; align-items: center; gap: 18px; padding: 10px 10px 10px 20px; max-width: 100%;
+  border-radius: 999px; background: var(--glass); border: 1px solid var(--line); backdrop-filter: blur(14px) saturate(1.2);
+}
+.ctl { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.ctl label { font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+.ctl output { font-family: var(--mono); font-size: 13px; width: 3.4ch; text-align: right; font-variant-numeric: tabular-nums; }
+input[type=range] { -webkit-appearance: none; appearance: none; width: clamp(110px, 22vw, 230px); height: 22px; background: transparent; cursor: pointer; }
+input[type=range]::-webkit-slider-runnable-track { height: 2px; background: linear-gradient(90deg, var(--copper), rgba(170, 184, 255, .25)); border-radius: 2px; }
+input[type=range]::-moz-range-track { height: 2px; background: rgba(170, 184, 255, .3); border-radius: 2px; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--copper); border: 3px solid var(--bg); box-shadow: 0 0 0 1px var(--copper); margin-top: -7px; }
+input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--copper); border: 3px solid var(--bg); box-shadow: 0 0 0 1px var(--copper); }
+input[type=range]:focus-visible { outline: 2px solid var(--amber); outline-offset: 4px; border-radius: 4px; }
+.sep { width: 1px; align-self: stretch; background: var(--line); margin: 4px 0; }
+.btn { appearance: none; border: 0; cursor: pointer; font: 500 13px var(--sans); border-radius: 999px; padding: 11px 18px; white-space: nowrap; color: var(--ink); background: transparent; transition: background .2s, transform .1s; }
+.btn:hover { background: rgba(170, 184, 255, .1); }
+.btn:active { transform: scale(.97); }
+.btn.primary { background: var(--amber); color: #1a1006; }
+.btn.primary:hover { background: #ffc17c; }
+.btn[aria-pressed="true"] { background: rgba(125, 240, 200, .16); color: var(--mint); }
+.hint { font-size: 11px; color: var(--mute); letter-spacing: .02em; }
+
+#nogl[hidden] { display: none; }
+#nogl { position: fixed; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; color: var(--mute); }
+
+@media (max-width: 720px) {
+  .top { gap: 10px; }
+  .brand { font-size: 22px; }
+  .panel { margin-top: 14px; gap: 12px; max-width: 100%; }
+  .eyebrow { display: none; }
+  .sub { display: none; }
+  h1 { font-size: 28px; margin: 0; }
+  .panel { flex-direction: row; align-items: flex-end; justify-content: space-between; width: 100%; }
+  .loss { width: auto; padding: 8px 12px; border-radius: 12px; flex: none; }
+  .loss .v { font-size: 24px; margin: 2px 0 0; }
+  .loss .f, #spark, .loss .k span:last-child { display: none; }
+  .bar { flex-wrap: wrap; border-radius: 22px; padding: 12px; gap: 8px 12px; justify-content: center; }
+  .sep { display: none; }
+  .caption { font-size: 13.5px; }
+  .hint { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .btn, .lesson, .loss .v { transition: none; } }
+</style>
+
+<canvas id="c" aria-label="3D scene: a glass input sphere, a metal weight dial and a prediction sphere that rides a brass rail toward a target ring"></canvas>
+<div class="vignette"></div>
+<svg id="leaders" aria-hidden="true"></svg>
+<div class="tag" data-k="input"><i>Input</i><b>2.00</b></div>
+<div class="tag" data-k="weight"><i>Weight</i><b>1.00</b></div>
+<div class="tag" data-k="pred"><i>Prediction</i><b>2.00</b></div>
+<div class="tag target" data-k="target"><i>Target</i><b>4.00</b></div>
+<div id="nogl" hidden><p>This scene needs WebGL. Try a current Chrome, Safari, Edge or Firefox.</p></div>
+
+<div id="ui">
+  <header class="top">
+    <div class="brand">petros<span>.</span></div>
+    <nav class="dock" aria-label="Lessons">
+      <button class="lesson" id="replay" aria-current="true" title="Replay the assembly">Neural learning</button>
+      <button class="lesson" disabled title="Next stage in this direction">Rocket landing</button>
+      <button class="lesson" disabled title="Next stage in this direction">Attention</button>
+      <button class="lesson" disabled title="Next stage in this direction">Traffic waves</button>
+      <button class="lesson" disabled title="Next stage in this direction">Time dilation</button>
+    </nav>
+  </header>
+
+  <section class="panel" aria-label="Lesson summary">
+    <div>
+      <div class="eyebrow">Lesson 01 · Neural learning</div>
+      <h1>How a network learns</h1>
+    </div>
+    <p class="sub">One weight turns the input into a prediction. Change the weight and watch the error close in on the target.</p>
+    <div class="loss">
+      <div class="k"><span>Loss</span><span id="lossState">far</span></div>
+      <div class="v" id="lossV">2.000</div>
+      <div class="f" id="lossF">½ × (2.00 − 4.00)²</div>
+      <canvas id="spark" aria-hidden="true"></canvas>
+    </div>
+  </section>
+
+  <footer class="bottom">
+    <p class="caption" id="caption" aria-live="polite"></p>
+    <div class="bar">
+      <div class="ctl">
+        <label for="w">Weight</label>
+        <input id="w" type="range" min="0" max="2.7" step="0.01" value="1">
+        <output id="wOut" for="w">1.00</output>
+      </div>
+      <span class="sep"></span>
+      <button class="btn primary" id="step">Train one step</button>
+      <button class="btn" id="auto" aria-pressed="false">Auto-train</button>
+      <button class="btn" id="reset">Reset</button>
+    </div>
+    <div class="hint">Drag the dial or the scene. Scroll is not captured.</div>
+  </footer>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const $ = (s) => document.querySelector(s);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const still = location.hash === '#still';
+
+/* ---------- lesson model (matches the real neural lesson: one weight, target 4) ---------- */
+const INPUT = 2, TARGET = 4, LR = 0.1, W_MAX = 2.7, UNIT = 0.75, RAIL_Y0 = 0.2;
+let w = 1.0;           // true weight
+let wv = 1.0;          // smoothed weight used for drawing
+const predOf = (x) => INPUT * x;
+const lossOf = (x) => 0.5 * Math.pow(predOf(x) - TARGET, 2);
+const yOf = (v) => RAIL_Y0 + clamp(v, 0, 6.2) * UNIT;
+const history = [lossOf(w)];
+
+/* ---------- renderer ---------- */
+const canvas = $('#c');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+} catch (e) { $('#nogl').hidden = false; throw e; }
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.08;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+const BG = new THREE.Color(0x090c1c);
+scene.background = BG;
+scene.fog = new THREE.Fog(BG, 15, 34);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.6;
+
+const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+
+/* lights: warm key with soft shadow, cool rim from behind, small amber fill that follows the prediction */
+const key = new THREE.DirectionalLight(0xfff0dc, 2.6);
+key.position.set(4.5, 8, 6);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+Object.assign(key.shadow.camera, { left: -6, right: 6, top: 6, bottom: -6, near: 1, far: 24 });
+key.shadow.bias = -0.0004; key.shadow.normalBias = 0.03; key.shadow.radius = 5;
+scene.add(key);
+const rim = new THREE.DirectionalLight(0x7f9bff, 2.2);
+rim.position.set(-6, 3.5, -6);
+scene.add(rim);
+const fill = new THREE.PointLight(0xffb35f, 6, 6, 2);
+scene.add(fill);
+
+/* ---------- shared materials ---------- */
+const std = (o) => new THREE.MeshStandardMaterial(o);
+const M = {
+  dark: std({ color: 0x182044, metalness: 0.9, roughness: 0.36 }),
+  steel: std({ color: 0x2b3562, metalness: 1, roughness: 0.27 }),
+  copper: std({ color: 0xd49a6a, metalness: 1, roughness: 0.24 }),
+  inlay: std({ color: 0xd49a6a, metalness: 1, roughness: 0.3, emissive: 0xd49a6a, emissiveIntensity: 0.18 }),
+  tube: std({ color: 0xa5b5ff, roughness: 0.2, metalness: 0, emissive: 0x4f63ff, emissiveIntensity: 0.7, transparent: true, opacity: 0.55 }),
+  ring: std({ color: 0xffd1a0, metalness: 1, roughness: 0.2, emissive: 0xffb35f, emissiveIntensity: 2.2 }),
+  pointer: std({ color: 0xffb35f, emissive: 0xffb35f, emissiveIntensity: 2.4, roughness: 0.4 }),
+  coreIn: new THREE.MeshBasicMaterial({ color: new THREE.Color(0x6fb8ff).multiplyScalar(1.9) }),
+  corePred: new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffb35f).multiplyScalar(1.9) }),
+  beam: new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffb35f).multiplyScalar(2), transparent: true, opacity: 0.85 }),
+  pulse1: new THREE.MeshBasicMaterial({ color: new THREE.Color(0x8fc4ff).multiplyScalar(3) }),
+  pulse2: new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffc283).multiplyScalar(3) }),
+};
+const glassReal = new THREE.MeshPhysicalMaterial({
+  color: 0xffffff, roughness: 0.03, metalness: 0, transmission: 1, thickness: 0.9, ior: 1.45,
+  attenuationColor: new THREE.Color(0x9db8ff), attenuationDistance: 2.4, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 1.3,
+});
+// phones get a cheaper alpha-blended glass: no refraction pass, cores stay visible, far fewer pixels shaded
+const SMALL = matchMedia('(max-width: 900px)').matches;
+const glassSimple = new THREE.MeshPhysicalMaterial({
+  color: 0xc9d8ff, roughness: 0.04, metalness: 0, transparent: true, opacity: 0.3, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 1.8, depthWrite: false,
+});
+const glassMirror = std({ color: 0xbcd0ff, roughness: 0.08, metalness: 0, transparent: true, opacity: 0.3 });
+
+function radialTex() {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.35, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const RAD = radialTex();
+const glowMat = (hex, op) => new THREE.MeshBasicMaterial({
+  map: RAD, color: new THREE.Color(hex), transparent: true, opacity: op, blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+});
+const GLOW = { inp: glowMat(0x6fb8ff, 0.55), knob: glowMat(0xffb35f, 0.28), rail: glowMat(0xffb35f, 0.5), ring: glowMat(0xffb35f, 0.22) };
+
+/* ---------- shared geometry ---------- */
+const G = {
+  sphere: new THREE.SphereGeometry(1, 64, 48),
+  cyl: new THREE.CylinderGeometry(1, 1, 1, 64, 1),
+  torus: (r, t) => new THREE.TorusGeometry(r, t, 16, 160),
+};
+const curve1 = new THREE.CatmullRomCurve3([
+  new THREE.Vector3(-2.1, 0.62, 0), new THREE.Vector3(-1.5, 1.0, 0.1), new THREE.Vector3(-0.9, 0.64, 0.2), new THREE.Vector3(-0.5, 0.36, 0.2),
+]);
+const curve2 = new THREE.CatmullRomCurve3([
+  new THREE.Vector3(0.5, 0.36, 0.2), new THREE.Vector3(1.1, 0.88, 0.2), new THREE.Vector3(1.8, 0.7, 0.1), new THREE.Vector3(2.4, 0.2, 0),
+]);
+const SEG = 120, RAD_SEG = 10;
+const tube1 = new THREE.TubeGeometry(curve1, SEG, 0.03, RAD_SEG, false);
+const tube2 = new THREE.TubeGeometry(curve2, SEG, 0.03, RAD_SEG, false);
+const tubeIdx = SEG * RAD_SEG * 6;
+
+/* ---------- specimen builder: called twice, once for the real object and once for the floor reflection ---------- */
+function buildSpecimen(real) {
+  const P = {};
+  const root = new THREE.Group();
+  const mesh = (geo, mat, parent, cast = false) => {
+    const m = new THREE.Mesh(geo, mat); m.castShadow = real && cast; m.receiveShadow = real; parent.add(m); return m;
+  };
+
+  // plinth: machined disc with a copper rim, dial ticks and two inlaid rings
+  P.plinth = new THREE.Group(); root.add(P.plinth);
+  const body = mesh(G.cyl, M.dark, P.plinth); body.scale.set(3.3, 0.35, 3.3); body.position.y = -0.175;
+  const rimT = mesh(G.torus(3.27, 0.026), M.copper, P.plinth); rimT.rotation.x = Math.PI / 2;
+  for (const r of [2.75, 1.5]) { const t = mesh(G.torus(r, 0.007), M.inlay, P.plinth); t.rotation.x = Math.PI / 2; t.position.y = 0.003; }
+  const ticks = new THREE.InstancedMesh(new THREE.BoxGeometry(0.03, 0.012, 0.16), M.copper, 96);
+  const d = new THREE.Object3D();
+  for (let i = 0; i < 96; i++) {
+    const a = (i / 96) * Math.PI * 2, long = i % 8 === 0;
+    d.position.set(Math.sin(a) * 3.05, 0.004, Math.cos(a) * 3.05); d.rotation.set(0, a, 0); d.scale.set(1, 1, long ? 2.1 : 1); d.updateMatrix();
+    ticks.setMatrixAt(i, d.matrix);
+  }
+  P.plinth.add(ticks);
+
+  // input: glass sphere on a copper seat
+  P.inG = new THREE.Group(); P.inG.position.set(-2.6, 0, 0); root.add(P.inG);
+  const seat = mesh(G.torus(0.56, 0.03), M.copper, P.inG); seat.rotation.x = Math.PI / 2; seat.position.y = 0.04;
+  const seatBase = mesh(G.cyl, M.steel, P.inG, true); seatBase.scale.set(0.5, 0.06, 0.5); seatBase.position.y = 0.03;
+  P.inShell = mesh(G.sphere, real ? (SMALL ? glassSimple : glassReal) : glassMirror, P.inG); P.inShell.scale.setScalar(0.5); P.inShell.position.y = 0.66;
+  P.inCore = mesh(G.sphere, M.coreIn, P.inG); P.inCore.scale.setScalar(0.2); P.inCore.position.y = 0.66;
+  if (real) { const g = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), GLOW.inp); g.rotation.x = -Math.PI / 2; g.position.y = 0.012; P.inG.add(g); }
+
+  // weight: knurled steel dial with a glowing pointer
+  P.knobG = new THREE.Group(); P.knobG.position.set(0, 0, 0.2); root.add(P.knobG);
+  const kb = mesh(G.cyl, M.dark, P.knobG, true); kb.scale.set(0.66, 0.14, 0.66); kb.position.y = 0.07;
+  const kc = mesh(G.cyl, M.steel, P.knobG, true); kc.scale.set(0.5, 0.42, 0.5); kc.position.y = 0.35;
+  const kring = mesh(G.torus(0.66, 0.012), M.copper, P.knobG); kring.rotation.x = Math.PI / 2; kring.position.y = 0.14;
+  const ridges = new THREE.InstancedMesh(new THREE.BoxGeometry(0.028, 0.34, 0.05), M.dark, 44);
+  for (let i = 0; i < 44; i++) {
+    const a = (i / 44) * Math.PI * 2; d.position.set(Math.sin(a) * 0.5, 0.35, Math.cos(a) * 0.5); d.rotation.set(0, a, 0); d.scale.set(1, 1, 1); d.updateMatrix(); ridges.setMatrixAt(i, d.matrix);
+  }
+  P.knobG.add(ridges);
+  const cap = mesh(G.cyl, M.copper, P.knobG); cap.scale.set(0.43, 0.025, 0.43); cap.position.y = 0.572;
+  P.pivot = new THREE.Group(); P.pivot.position.y = 0.595; P.knobG.add(P.pivot);
+  const ptr = mesh(new THREE.BoxGeometry(0.05, 0.02, 0.3), M.pointer, P.pivot); ptr.position.z = -0.16;
+  const dot = mesh(G.sphere, M.pointer, P.pivot); dot.scale.setScalar(0.035); dot.position.z = -0.32;
+  if (real) { const g = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4), GLOW.knob); g.rotation.x = -Math.PI / 2; g.position.y = 0.012; P.knobG.add(g); }
+  P.knobHit = kc;
+
+  // tubes
+  P.t1 = mesh(tube1, M.tube, root); P.t2 = mesh(tube2, M.tube, root);
+  P.pulses1 = []; P.pulses2 = [];
+  for (let i = 0; i < 6; i++) {
+    const a = mesh(G.sphere, M.pulse1, root); a.scale.setScalar(0.05); P.pulses1.push({ m: a, t: i / 6 });
+    const b = mesh(G.sphere, M.pulse2, root); b.scale.setScalar(0.05); P.pulses2.push({ m: b, t: i / 6 });
+  }
+
+  // rail with scale ticks, target ring, prediction sphere
+  P.railG = new THREE.Group(); P.railG.position.set(2.6, 0, 0); root.add(P.railG);
+  const rb = mesh(G.cyl, M.dark, P.railG, true); rb.scale.set(0.24, 0.16, 0.24); rb.position.y = 0.08;
+  const rr = mesh(G.torus(0.24, 0.012), M.copper, P.railG); rr.rotation.x = Math.PI / 2; rr.position.y = 0.16;
+  const rail = mesh(G.cyl, M.copper, P.railG, true); rail.scale.set(0.028, 4.64, 0.028); rail.position.y = 0.16 + 2.32;
+  for (let v = 0; v <= 6; v++) {
+    const t = mesh(new THREE.BoxGeometry(v % 2 === 0 ? 0.34 : 0.2, 0.014, 0.014), M.copper, P.railG);
+    t.position.set(0, yOf(v), 0);
+  }
+  const cap2 = mesh(G.sphere, M.copper, P.railG); cap2.scale.setScalar(0.055); cap2.position.y = 4.8;
+  P.ring = mesh(G.torus(0.64, 0.024), M.ring, P.railG); P.ring.rotation.x = Math.PI / 2;
+  P.ringY = yOf(TARGET);
+  if (real) { P.ringGlow = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4), GLOW.ring); P.ringGlow.rotation.x = -Math.PI / 2; P.railG.add(P.ringGlow); }
+  P.predG = new THREE.Group(); P.railG.add(P.predG);
+  P.predShell = mesh(G.sphere, real ? (SMALL ? glassSimple : glassReal) : glassMirror, P.predG); P.predShell.scale.setScalar(0.44);
+  P.predCore = mesh(G.sphere, M.corePred, P.predG); P.predCore.scale.setScalar(0.2);
+  P.beam = mesh(G.cyl, M.beam, P.railG); P.beam.scale.set(0.012, 1, 0.012);
+  if (real) { P.railGlow = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4), GLOW.rail); P.railGlow.rotation.x = -Math.PI / 2; P.railGlow.position.y = 0.012; P.railG.add(P.railGlow); }
+
+  return { root, P };
+}
+
+const real = buildSpecimen(true);
+scene.add(real.root);
+const mirror = buildSpecimen(false);
+mirror.root.scale.y = -1; mirror.root.position.y = -0.7;   // reflects about the floor at y = -0.35
+scene.add(mirror.root);
+
+// floor: a dark veil over the mirror image, clearer near the plinth so the reflection fades with distance
+{
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(128, 128, 20, 128, 128, 128);
+  gr.addColorStop(0, '#9a9a9a'); gr.addColorStop(.35, '#b4b4b4'); gr.addColorStop(.7, '#707070'); gr.addColorStop(1, '#000000');
+  g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(9, 96), new THREE.MeshBasicMaterial({
+    color: 0x0a0e22, alphaMap: new THREE.CanvasTexture(c), transparent: true, depthWrite: false,
+  }));
+  floor.rotation.x = -Math.PI / 2; floor.position.y = -0.352; floor.renderOrder = 5;
+  scene.add(floor);
+  // subtle pool of light on the floor under the plinth
+  const pool = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), glowMat(0x4458ff, 0.22));
+  pool.rotation.x = -Math.PI / 2; pool.position.y = -0.349; pool.renderOrder = 6; scene.add(pool);
+}
+
+// studio backdrop: a wide soft glow behind the object gives the seamless-sweep depth
+{
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: RAD, color: 0x2b3dff, transparent: true, opacity: 0.38, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }));
+  m.scale.set(30, 17, 1); m.position.set(0, 3.2, -9); scene.add(m);
+  const m2 = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: RAD, color: 0xff9a5a, transparent: true, opacity: 0.07, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }));
+  m2.scale.set(16, 9, 1); m2.position.set(4, 2, -8.5); scene.add(m2);
+}
+
+// dust motes
+const dust = (() => {
+  const n = 260, pos = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) { pos[i * 3] = (Math.random() - .5) * 15; pos[i * 3 + 1] = Math.random() * 6.5; pos[i * 3 + 2] = (Math.random() - .5) * 9; }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const p = new THREE.Points(g, new THREE.PointsMaterial({ size: 0.028, color: 0xa9b6ff, transparent: true, opacity: 0.45, depthWrite: false, sizeAttenuation: true }));
+  scene.add(p); return p;
+})();
+
+/* ---------- post: MSAA target, restrained bloom, ACES output ---------- */
+const size = new THREE.Vector2();
+const rt = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, samples: 4 });
+const composer = new EffectComposer(renderer, rt);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(4, 4), 0.42, 0.7, 0.95);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+/* ---------- camera ---------- */
+const view = { az: 0, pol: 1.26, userAz: 0, userPol: 0, lastDrag: -99, dist: 11.5, tx: 0, ty: 2.15 };
+function fitCamera() {
+  const w2 = innerWidth, h2 = innerHeight, aspect = w2 / h2;
+  renderer.setSize(w2, h2, false); composer.setSize(w2, h2);
+  camera.aspect = aspect; camera.updateProjectionMatrix();
+  const vf = THREE.MathUtils.degToRad(camera.fov), hf = 2 * Math.atan(Math.tan(vf / 2) * aspect);
+  const needH = aspect > 1.2 ? 9.0 : 8.0, needW = aspect > 1.2 ? 10.6 : 7.8;
+  view.dist = Math.max(needH / 2 / Math.tan(vf / 2), needW / 2 / Math.tan(hf / 2));
+  view.tx = aspect > 1.2 ? -0.7 : 0;
+  view.ty = aspect > 1.2 ? 1.6 : 2.2;
+}
+addEventListener('resize', fitCamera); fitCamera();
+
+/* ---------- interaction: drag the dial, or orbit the scene ---------- */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let drag = null;
+function hitKnob(e) {
+  ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  return ray.intersectObject(real.P.knobG, true).length > 0;
+}
+canvas.addEventListener('pointerdown', (e) => {
+  canvas.setPointerCapture(e.pointerId);
+  drag = hitKnob(e) ? { type: 'knob', x: e.clientX, w0: w } : { type: 'orbit', x: e.clientX, y: e.clientY, az0: view.userAz, pol0: view.userPol };
+  canvas.style.cursor = 'grabbing';
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (!drag) { canvas.style.cursor = hitKnob(e) ? 'grab' : 'default'; return; }
+  if (drag.type === 'knob') { setWeight(clamp(drag.w0 + (e.clientX - drag.x) / 180, 0, W_MAX)); }
+  else {
+    view.userAz = clamp(drag.az0 - (e.clientX - drag.x) * 0.006, -0.9, 0.9);
+    view.userPol = clamp(drag.pol0 - (e.clientY - drag.y) * 0.004, -0.2, 0.28);
+    view.lastDrag = performance.now() / 1000;
+  }
+});
+const endDrag = () => { if (drag && drag.type === 'knob') pushHistory(); drag = null; canvas.style.cursor = 'default'; };
+canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
+
+/* ---------- UI wiring ---------- */
+const el = { w: $('#w'), wOut: $('#wOut'), step: $('#step'), auto: $('#auto'), reset: $('#reset'), caption: $('#caption'),
+  lossV: $('#lossV'), lossF: $('#lossF'), lossState: $('#lossState'), spark: $('#spark'), replay: $('#replay') };
+const tags = {}; document.querySelectorAll('.tag').forEach((t) => { tags[t.dataset.k] = { el: t, b: t.querySelector('b') }; });
+const svg = $('#leaders'); const NS = 'http://www.w3.org/2000/svg';
+for (const k of Object.keys(tags)) {
+  const l = document.createElementNS(NS, 'line'), c = document.createElementNS(NS, 'circle'); c.setAttribute('r', 3.5);
+  svg.append(l, c); tags[k].line = l; tags[k].dot = c;
+}
+function setWeight(x) { w = x; el.w.value = x; refresh(); }
+function pushHistory() { history.push(lossOf(w)); if (history.length > 80) history.shift(); drawSpark(); }
+el.w.addEventListener('input', () => { w = parseFloat(el.w.value); refresh(); });
+el.w.addEventListener('change', pushHistory);
+function trainStep() { setWeight(clamp(w - LR * (predOf(w) - TARGET) * INPUT, 0, W_MAX)); pushHistory(); }
+el.step.addEventListener('click', trainStep);
+let autoTimer = null;
+function setAuto(on) {
+  el.auto.setAttribute('aria-pressed', on);
+  clearInterval(autoTimer); autoTimer = null;
+  if (on) autoTimer = setInterval(() => { if (Math.abs(predOf(w) - TARGET) < 0.012) { setAuto(false); return; } trainStep(); }, 520);
+}
+el.auto.addEventListener('click', () => setAuto(el.auto.getAttribute('aria-pressed') !== 'true'));
+el.reset.addEventListener('click', () => { setAuto(false); history.length = 0; setWeight(1.0); pushHistory(); });
+el.replay.addEventListener('click', () => { introT = 0; });
+
+function refresh() {
+  const p = predOf(w), L = lossOf(w), err = TARGET - p;
+  el.wOut.textContent = w.toFixed(2);
+  el.lossV.textContent = L.toFixed(3);
+  el.lossF.textContent = `½ × (${p.toFixed(2)} − ${TARGET.toFixed(2)})²`;
+  const near = Math.abs(err) < 0.05;
+  el.lossState.textContent = near ? 'on target' : Math.abs(err) < 1 ? 'close' : 'far';
+  el.lossV.style.color = near ? 'var(--mint)' : '';
+  tags.weight.b.textContent = w.toFixed(2); tags.pred.b.textContent = p.toFixed(2);
+  el.caption.textContent = near
+    ? `On target. The prediction matches 4.00, so there is nothing left to correct.`
+    : err > 0
+      ? `The prediction is ${err.toFixed(2)} below the target. A larger weight lifts it.`
+      : `The prediction overshoots by ${(-err).toFixed(2)}. A smaller weight brings it down.`;
+}
+function drawSpark() {
+  const c = el.spark, dpr = Math.min(devicePixelRatio || 1, 2), W = c.clientWidth, H = c.clientHeight;
+  if (!W) return;
+  c.width = W * dpr; c.height = H * dpr;
+  const g = c.getContext('2d'); g.scale(dpr, dpr); g.clearRect(0, 0, W, H);
+  const max = Math.max(2.2, ...history), n = Math.max(history.length, 8);
+  const X = (i) => 3 + (i / (n - 1)) * (W - 8), Y = (v) => H - 4 - (v / max) * (H - 10);
+  g.strokeStyle = 'rgba(170,184,255,.18)'; g.lineWidth = 1; g.beginPath(); g.moveTo(0, H - 3.5); g.lineTo(W, H - 3.5); g.stroke();
+  const grad = g.createLinearGradient(0, 0, 0, H); grad.addColorStop(0, 'rgba(255,179,95,.28)'); grad.addColorStop(1, 'rgba(255,179,95,0)');
+  g.beginPath(); history.forEach((v, i) => (i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v))));
+  g.strokeStyle = '#ffb35f'; g.lineWidth = 1.75; g.lineJoin = 'round'; g.stroke();
+  g.lineTo(X(history.length - 1), H); g.lineTo(X(0), H); g.closePath(); g.fillStyle = grad; g.fill();
+  const li = history.length - 1; g.beginPath(); g.arc(X(li), Y(history[li]), 3, 0, 7); g.fillStyle = '#ffb35f'; g.fill();
+}
+
+/* ---------- animation ---------- */
+let introT = (reduced || still) ? 3 : 0;
+const ap = (t, delay, dur) => easeOut(clamp((t - delay) / dur));
+const cAmber = new THREE.Color(0xffb35f), cMint = new THREE.Color(0x7df0c8), tmp = new THREE.Color();
+const v3 = new THREE.Vector3();
+const clock = new THREE.Clock();
+
+function update(set, S) {
+  const P = set.P, t = introT;
+  const aPl = ap(t, 0, 0.8), aIn = ap(t, 0.3, 0.9), aKn = ap(t, 0.5, 0.9), aRl = ap(t, 0.7, 0.9), aRing = ap(t, 1.05, 0.8), aPr = ap(t, 0.95, 0.9), aTu = ap(t, 1.25, 0.8);
+  P.plinth.scale.set(0.35 + 0.65 * aPl, 1, 0.35 + 0.65 * aPl);
+  P.inG.position.y = (1 - aIn) * 2.6; P.inG.scale.setScalar(0.45 + 0.55 * aIn);
+  P.knobG.position.y = (1 - aKn) * 2.6; P.knobG.scale.setScalar(0.45 + 0.55 * aKn);
+  P.railG.scale.y = Math.max(0.001, aRl);
+  P.ring.position.y = P.ringY + (1 - aRing) * 2.6; if (P.ringGlow) P.ringGlow.position.y = P.ring.position.y;
+  P.predG.position.y = S.y + (1 - aPr) * 3; P.predG.scale.setScalar(0.45 + 0.55 * aPr);
+  P.t1.geometry.setDrawRange(0, Math.floor(aTu * SEG) * RAD_SEG * 6);
+  P.t2.geometry.setDrawRange(0, Math.floor(aTu * SEG) * RAD_SEG * 6);
+  P.pivot.rotation.y = -S.theta;
+  // error beam between the prediction and the target ring
+  const dy = P.ringY - S.y, ady = Math.abs(dy);
+  P.beam.visible = ady > 0.05 && aPr > 0.99; P.beam.scale.y = Math.max(ady, 0.001); P.beam.position.y = S.y + dy / 2;
+  // pulses ride the tubes once drawn
+  const live = aTu > 0.98 ? 1 : 0;
+  P.pulses1.forEach((p) => { p.m.visible = !!live; curve1.getPointAt(p.t, v3); p.m.position.copy(v3); p.m.scale.setScalar(0.045); });
+  P.pulses2.forEach((p) => { p.m.visible = !!live; curve2.getPointAt(p.t, v3); p.m.position.copy(v3); p.m.scale.setScalar(0.03 + 0.035 * clamp(S.wv / W_MAX * 1.4)); });
+}
+
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05), now = performance.now() / 1000;
+  introT += dt;
+  wv += (w - wv) * Math.min(1, dt * 7);
+  const pv = predOf(wv), yv = yOf(pv), theta = THREE.MathUtils.degToRad(-135 + (wv / W_MAX) * 270);
+  const err = Math.abs(TARGET - pv), closeness = 1 - clamp(err / 4);
+  const S = { y: yv, wv, theta };
+
+  // colour follows the error: amber when far, mint when close
+  tmp.copy(cAmber).lerp(cMint, closeness);
+  M.corePred.color.copy(tmp).multiplyScalar(1.9);
+  M.beam.color.copy(tmp).multiplyScalar(2);
+  GLOW.rail.color.copy(tmp);
+  fill.color.copy(tmp);
+  fill.position.set(2.6 - 0.9, yv + 0.2, 1.4);
+  GLOW.rail.opacity = 0.3 + 0.35 * closeness;
+
+  // pulse flow
+  const speed = dt * 0.2;
+  for (const set of [real, mirror]) {
+    set.P.pulses1.forEach((p, i) => { p.t = (p.t + speed) % 1; });
+    set.P.pulses2.forEach((p) => { p.t = (p.t + speed * (0.4 + 0.9 * clamp(wv / W_MAX))) % 1; });
+  }
+  update(real, S); update(mirror, S);
+  // keep mirrored pulses in sync with real (they advanced identically)
+
+  // camera: slow sway, intro dolly, drag offset that eases back
+  const idle = now - view.lastDrag > 3.5;
+  if (idle) { view.userAz *= 1 - Math.min(1, dt * 0.8); view.userPol *= 1 - Math.min(1, dt * 0.8); }
+  const sway = reduced ? 0 : Math.sin(now * 0.22) * 0.2;
+  const ci = clamp(introT / 2.4), ce = easeOut(ci);
+  const az = lerp(-0.55, 0.12, ce) + sway + view.userAz;
+  const pol = lerp(1.0, view.pol, ce) + view.userPol;
+  const dist = view.dist * lerp(1.32, 1, ce);
+  camera.position.set(
+    view.tx + dist * Math.sin(pol) * Math.sin(az),
+    view.ty + dist * Math.cos(pol),
+    dist * Math.sin(pol) * Math.cos(az),
+  );
+  camera.lookAt(view.tx, view.ty, 0);
+
+  dust.rotation.y += dt * 0.012; dust.position.y = Math.sin(now * 0.15) * 0.15;
+
+  composer.render();
+  placeLabels();
+  if (!window.__ready) window.__ready = true;
+  requestAnimationFrame(frame);
+}
+
+// labels: anchored to 3D points, offset in screen space so they sit beside the objects, never on them
+const anchor = new THREE.Vector3();
+function placeLabels() {
+  const W = innerWidth, H = innerHeight, s = W < 720 ? 0.72 : 1;
+  const pv = predOf(wv), yv = yOf(pv);
+  const defs = [
+    ['input', [-2.6, 1.22, 0], [-8, -88]],
+    ['weight', [0, 0.62, 0.2], [0, -128]],
+    ['pred', [2.6 + 0.42, yv, 0], [92, 44]],
+    ['target', [2.6 + 0.64, yOf(TARGET), 0], [96, -46]],
+  ];
+  const appear = clamp((introT - 1.6) / 0.6);
+  for (const [k, pos, off] of defs) {
+    const T = tags[k]; anchor.set(pos[0], pos[1], pos[2]).project(camera);
+    const ax = (anchor.x * 0.5 + 0.5) * W, ay = (-anchor.y * 0.5 + 0.5) * H;
+    const tw = T.el.offsetWidth, th = T.el.offsetHeight;
+    let px = ax + off[0] * s, py = ay + off[1] * s;
+    px = clamp(px, tw / 2 + 10, W - tw / 2 - 10); py = clamp(py, th / 2 + 70, H - th / 2 - 150);
+    T.el.style.transform = `translate(${px - tw / 2}px, ${py - th / 2}px)`;
+    T.el.style.opacity = appear;
+    T.line.setAttribute('x1', ax); T.line.setAttribute('y1', ay); T.line.setAttribute('x2', px); T.line.setAttribute('y2', py);
+    T.dot.setAttribute('cx', ax); T.dot.setAttribute('cy', ay);
+    T.line.style.opacity = appear; T.dot.style.opacity = appear;
+  }
+}
+
+refresh(); drawSpark();
+addEventListener('resize', drawSpark);
+document.fonts?.ready.then(drawSpark);
+frame();
+</script>

@@ -1,0 +1,25 @@
+{
+  "at": "2026-11-07T05:25:01.471Z",
+  "viewport": [
+    1440,
+    900
+  ],
+  "dpr": 2,
+  "reducedMotion": true,
+  "state": "same initial uniform flow and authored camera",
+  "comparison": "legacy vs 512px bloom and color SMAA without unused depth resolve; full scene DPR2 unchanged",
+  "rows": [
+    {
+      "view": "overview",
+      "mae8bit": 0.09495299639917695,
+      "channelsChangedOver3Percent": 0.5153935185185186,
+      "maxChannelDelta": 93
+    },
+    {
+      "view": "speed",
+      "mae8bit": 0.19044103652263375,
+      "channelsChangedOver3Percent": 0.61161908436214,
+      "maxChannelDelta": 59
+    }
+  ]
+}

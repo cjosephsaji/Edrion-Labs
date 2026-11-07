@@ -1,0 +1,146 @@
+[
+  {
+    "frame": 0,
+    "actualWallMs": 1530.2330419999926,
+    "earthClock": 1.5999999999999992,
+    "shipClock": 0.9599999999999995,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 1,
+    "actualWallMs": 2701.309666999994,
+    "earthClock": 2.799999999999995,
+    "shipClock": 1.6799999999999968,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 2,
+    "actualWallMs": 4048.475916999989,
+    "earthClock": 4.099999999999991,
+    "shipClock": 2.459999999999994,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 3,
+    "actualWallMs": 5134.83649999999,
+    "earthClock": 5.199999999999987,
+    "shipClock": 3.119999999999992,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 4,
+    "actualWallMs": 6200.963833999995,
+    "earthClock": 6.199999999999983,
+    "shipClock": 3.71999999999999,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 5,
+    "actualWallMs": 7220.201709000001,
+    "earthClock": 7.299999999999979,
+    "shipClock": 4.3799999999999875,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 6,
+    "actualWallMs": 8387.609916999994,
+    "earthClock": 8.399999999999997,
+    "shipClock": 5.039999999999998,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 7,
+    "actualWallMs": 9626.852041999999,
+    "earthClock": 9.600000000000056,
+    "shipClock": 5.7600000000000335,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 8,
+    "actualWallMs": 10753.720709000001,
+    "earthClock": 10.000000000000004,
+    "shipClock": 6.000000000000002,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 9,
+    "actualWallMs": 11868.937542,
+    "earthClock": 10.000000000000004,
+    "shipClock": 6.000000000000002,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 10,
+    "actualWallMs": 12890.157584,
+    "earthClock": 10.000000000000004,
+    "shipClock": 6.000000000000002,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 11,
+    "actualWallMs": 13900.949166999999,
+    "earthClock": 10.000000000000004,
+    "shipClock": 6.000000000000002,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 12,
+    "actualWallMs": 14923.014333999992,
+    "earthClock": 10.000000000000004,
+    "shipClock": 6.000000000000002,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 13,
+    "actualWallMs": 15923.573374999993,
+    "earthClock": 10.000000000000004,
+    "shipClock": 6.000000000000002,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 14,
+    "actualWallMs": 17025.176542,
+    "earthClock": 10.000000000000004,
+    "shipClock": 6.000000000000002,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 15,
+    "actualWallMs": 18031.025834,
+    "earthClock": 10.000000000000004,
+    "shipClock": 6.000000000000002,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  }
+]

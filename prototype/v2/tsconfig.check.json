@@ -1,6 +1,8 @@
 {
   "extends": "./tsconfig.json",
-  "compilerOptions": { "incremental": false },
+  "compilerOptions": {
+    "incremental": false
+  },
   "include": [
     "next-env.d.ts",
     "app/**/*.ts",
@@ -10,7 +12,16 @@
     "renderers/**/*.tsx",
     "server/**/*.ts",
     "simulations/**/*.ts",
-    "tests/**/*.test.ts"
+    "tests/**/*.test.ts",
+    "stage/**/*.ts",
+    "stage/**/*.tsx",
+    "world-v3/**/*.ts",
+    "world-v3/**/*.tsx"
   ],
-  "exclude": ["node_modules", "**/._*", ".next", ".next-dev"]
+  "exclude": [
+    "node_modules",
+    "**/._*",
+    ".next",
+    ".next-dev"
+  ]
 }

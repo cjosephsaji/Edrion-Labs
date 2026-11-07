@@ -1,0 +1,107 @@
+{
+  "at": "2026-11-06T10:49:10.534Z",
+  "hardware": "Apple M4",
+  "browser": "156.0.8078.80",
+  "rows": [
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "balanced",
+      "median_ms": 16.7,
+      "fps": 59.9,
+      "max_window_p95_ms": 17.5,
+      "peak_calls": 118,
+      "peak_triangles": 124163
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "balanced",
+      "focus": "r-thrust",
+      "median_ms": 16.7,
+      "fps": 59.9,
+      "max_window_p95_ms": 17.1,
+      "peak_calls": 89,
+      "peak_triangles": 91171
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "balanced",
+      "focus": "r-fuel",
+      "median_ms": 16.7,
+      "fps": 59.9,
+      "max_window_p95_ms": 17.4,
+      "peak_calls": 87,
+      "peak_triangles": 88099
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "balanced",
+      "focus": "r-landing",
+      "median_ms": 16.7,
+      "fps": 59.9,
+      "max_window_p95_ms": 17.6,
+      "peak_calls": 58,
+      "peak_triangles": 58027
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "balanced",
+      "state": "active flight",
+      "median_ms": 16.7,
+      "fps": 59.9,
+      "max_window_p95_ms": 17.5,
+      "peak_calls": 118,
+      "peak_triangles": 124163
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "high",
+      "median_ms": 31.1,
+      "fps": 32.2,
+      "max_window_p95_ms": 32.1,
+      "peak_calls": 126,
+      "peak_triangles": 124171
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "low",
+      "median_ms": 16.7,
+      "fps": 59.9,
+      "max_window_p95_ms": 17.1,
+      "peak_calls": 49,
+      "peak_triangles": 37232
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "quality": "low",
+      "median_ms": 16.7,
+      "fps": 59.9,
+      "max_window_p95_ms": 17.6,
+      "peak_calls": 49,
+      "peak_triangles": 37232
+    }
+  ]
+}

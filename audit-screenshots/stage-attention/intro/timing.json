@@ -1,0 +1,62 @@
+[
+  {
+    "file": "intro/frame-000.png",
+    "atMs": 887,
+    "query": 4
+  },
+  {
+    "file": "intro/frame-001.png",
+    "atMs": 1798,
+    "query": 4
+  },
+  {
+    "file": "intro/frame-002.png",
+    "atMs": 2713,
+    "query": 4
+  },
+  {
+    "file": "intro/frame-003.png",
+    "atMs": 3810,
+    "query": 4
+  },
+  {
+    "file": "intro/frame-004.png",
+    "atMs": 4828,
+    "query": 4
+  },
+  {
+    "file": "intro/frame-005.png",
+    "atMs": 6238,
+    "query": 4
+  },
+  {
+    "file": "intro/frame-006.png",
+    "atMs": 7353,
+    "query": 4
+  },
+  {
+    "file": "intro/frame-007.png",
+    "atMs": 8438,
+    "query": 4
+  },
+  {
+    "file": "intro/frame-008.png",
+    "atMs": 9420,
+    "query": 4
+  },
+  {
+    "file": "intro/frame-009.png",
+    "atMs": 10460,
+    "query": 4
+  },
+  {
+    "file": "intro/frame-010.png",
+    "atMs": 11554,
+    "query": 4
+  },
+  {
+    "file": "intro/frame-011.png",
+    "atMs": 12376,
+    "query": 4
+  }
+]

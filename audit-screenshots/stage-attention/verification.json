@@ -1,0 +1,19 @@
+{
+  "verified_on": "2026-11-06",
+  "unit_tests": {
+    "passed": 167,
+    "files": 13,
+    "attention_new_tests": 9
+  },
+  "typecheck": "pass",
+  "scoped_eslint": "pass: zero errors/warnings",
+  "optimized_build": "pass",
+  "attention_smoke": "pass: both DPR2 viewports and all nine focus cards",
+  "attention_teaching": "pass: original correction/transfer, glossary, cancellation, recovery and World restoration",
+  "neural_smoke": "pass",
+  "neural_teaching": "pass",
+  "rocket_smoke": "pass",
+  "rocket_teaching": "pass",
+  "provider_calls": 0,
+  "performance": "performance-production.json"
+}

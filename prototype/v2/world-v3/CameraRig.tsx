@@ -5,6 +5,7 @@ import { CameraControls } from '@react-three/drei';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { useWorld, placePosition } from './store';
+import { cameraSpline } from './camera-path';
 export function CameraRig() {
   const { camera, size } = useThree(),
     place = useWorld((s) => s.place),
@@ -54,16 +55,7 @@ export function CameraRig() {
     lookStart.current.copy(look.current);
     lookEnd.current.copy(target);
     const from = camera.position.clone();
-    const middle = from.clone().lerp(end, 0.5);
-    middle.y =
-      Math.max(from.y, end.y) + Math.min(5, from.distanceTo(end) * 0.12);
-    curve.current = new THREE.CatmullRomCurve3([
-      from,
-      from.clone().lerp(middle, 0.65),
-      middle,
-      end.clone().lerp(middle, 0.22),
-      end,
-    ]);
+    curve.current = cameraSpline(from, end);
     progress.current.t = 0;
     useWorld.getState().patch({ moving: true });
     flight.current = gsap.to(progress.current, {

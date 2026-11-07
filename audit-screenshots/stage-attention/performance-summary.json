@@ -1,0 +1,124 @@
+{
+  "at": "2026-11-06T11:35:18.002Z",
+  "hardware": "Apple M4",
+  "browser": "156.0.8078.80",
+  "rows": [
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "balanced",
+      "state": "overview",
+      "median_ms": 16.7,
+      "fps": 59.9,
+      "max_window_p95_ms": 18.3,
+      "peak_calls": 80,
+      "peak_triangles": 39255
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "balanced",
+      "state": "a-query",
+      "median_ms": 16.7,
+      "fps": 59.9,
+      "max_window_p95_ms": 17.8,
+      "peak_calls": 75,
+      "peak_triangles": 38205
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "balanced",
+      "state": "a-beams",
+      "median_ms": 16.7,
+      "fps": 59.9,
+      "max_window_p95_ms": 17.6,
+      "peak_calls": 80,
+      "peak_triangles": 39255
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "balanced",
+      "state": "a-context",
+      "median_ms": 16.7,
+      "fps": 59.9,
+      "max_window_p95_ms": 17.5,
+      "peak_calls": 80,
+      "peak_triangles": 39255
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "balanced",
+      "state": "scanning",
+      "median_ms": 16.7,
+      "fps": 59.9,
+      "max_window_p95_ms": 17.4,
+      "peak_calls": 84,
+      "peak_triangles": 39255
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "balanced",
+      "state": "twelveTokens",
+      "median_ms": 16.7,
+      "fps": 59.9,
+      "max_window_p95_ms": 17.8,
+      "peak_calls": 122,
+      "peak_triangles": 62101
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "high",
+      "state": "overview",
+      "median_ms": 30.55,
+      "fps": 32.7,
+      "max_window_p95_ms": 31.9,
+      "peak_calls": 88,
+      "peak_triangles": 39263
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "quality": "low",
+      "state": "overview",
+      "median_ms": 16.7,
+      "fps": 59.9,
+      "max_window_p95_ms": 18.6,
+      "peak_calls": 35,
+      "peak_triangles": 19984
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "quality": "low",
+      "state": "overview",
+      "median_ms": 16.7,
+      "fps": 59.9,
+      "max_window_p95_ms": 18.5,
+      "peak_calls": 35,
+      "peak_triangles": 19984
+    }
+  ]
+}

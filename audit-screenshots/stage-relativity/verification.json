@@ -1,0 +1,22 @@
+{
+  "verified_on": "2026-11-07",
+  "unit_tests": {
+    "passed": 196,
+    "files": 17,
+    "relativity_stage_tests": 9,
+    "command": "npm test"
+  },
+  "strict_typecheck": "pass",
+  "scoped_eslint": "pass: zero warnings/errors",
+  "optimized_build": "pass",
+  "smoke": "both DPR2 sizes, nine cards, real clock steps/playback/completion, 0c/0.99c/0.999c, 120 s sample, same-event coordinate switch, pointer dial and keyboard slider, cancellation, topic/reload recovery, reduced motion and blocked storage",
+  "teaching": "original opening, wrong-prediction correction, transfer, all four prepared answers, full-caption glossary, original World recovery",
+  "earlier_stages": "regression-results.json",
+  "world_smoke": "all five topics/both sizes; original evidence bytes restored",
+  "provider_calls": 0,
+  "fresh_png_count": 75,
+  "capture_at": "2026-11-07T08:04:18.712Z",
+  "performance": "performance-production.json",
+  "balanced_55fps_goal_met": true,
+  "balanced_geometry_budget_met": true
+}

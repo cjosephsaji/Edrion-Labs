@@ -1,0 +1,92 @@
+[
+  {
+    "file": "focus/frame-000.png",
+    "atMs": 936,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "focus/frame-001.png",
+    "atMs": 1605,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "focus/frame-002.png",
+    "atMs": 2454,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "focus/frame-003.png",
+    "atMs": 3316,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "focus/frame-004.png",
+    "atMs": 4139,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "focus/frame-005.png",
+    "atMs": 4932,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "focus/frame-006.png",
+    "atMs": 5740,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "focus/frame-007.png",
+    "atMs": 6554,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "focus/frame-008.png",
+    "atMs": 7317,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "focus/frame-009.png",
+    "atMs": 8280,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  }
+]

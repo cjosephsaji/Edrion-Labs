@@ -1,0 +1,1987 @@
+{
+  "supported": true,
+  "disjoint": false,
+  "rows": [
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 3.664958
+    },
+    {
+      "name": "drawElementsInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 2.300833
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 2.293291
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 2.782499
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 2.918
+    },
+    {
+      "name": "drawArraysInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 1.560375
+    },
+    {
+      "name": "drawElementsInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.024041
+    },
+    {
+      "name": "drawElementsInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.025208
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.11725
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.111249
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.114249
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.046125
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.136374
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.1355
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.116083
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.413166
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 1.017041
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 1.143416
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 3.456291
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 3.249125
+    },
+    {
+      "name": "drawElementsInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 2.470999
+    },
+    {
+      "name": "drawArraysInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 1.437625
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.384666
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.315374
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.314041
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.028833
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.079749
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.01925
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.025833
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.019125
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.017583
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.023375
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.016333
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.645958
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 0.639374
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.344375
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 7.610041
+    },
+    {
+      "name": "blitFramebuffer",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 10.068291
+    },
+    {
+      "name": "drawArrays",
+      "shader": "EdgeDetectionMaterial",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 10.032499
+    },
+    {
+      "name": "drawArrays",
+      "shader": "SMAAWeightsMaterial",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 9.800833
+    },
+    {
+      "name": "drawArrays",
+      "shader": "LuminanceMaterial",
+      "viewport": [
+        0,
+        0,
+        819,
+        512
+      ],
+      "ms": 9.245666
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        410,
+        256
+      ],
+      "ms": 7.478958
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        205,
+        128
+      ],
+      "ms": 7.218999
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        103,
+        64
+      ],
+      "ms": 5.90675
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        52,
+        32
+      ],
+      "ms": 4.6295
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        26,
+        16
+      ],
+      "ms": 3.634083
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        13,
+        8
+      ],
+      "ms": 3.027958
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        7,
+        4
+      ],
+      "ms": 0.115625
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        4,
+        2
+      ],
+      "ms": 0.095124
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        7,
+        4
+      ],
+      "ms": 0.023583
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        13,
+        8
+      ],
+      "ms": 0.01375
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        26,
+        16
+      ],
+      "ms": 0.014208
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        52,
+        32
+      ],
+      "ms": 0.014083
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        103,
+        64
+      ],
+      "ms": 0.021958
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        205,
+        128
+      ],
+      "ms": 0.025125
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        410,
+        256
+      ],
+      "ms": 0.031208
+    },
+    {
+      "name": "drawArrays",
+      "shader": "EffectMaterial",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 1.142374
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 3.889708
+    },
+    {
+      "name": "drawElementsInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 3.857874
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 3.969541
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.665041
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.862916
+    },
+    {
+      "name": "drawArraysInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.907083
+    },
+    {
+      "name": "drawElementsInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.91925
+    },
+    {
+      "name": "drawElementsInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.943125
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.067624
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.082833
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.1115
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.132166
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.038666
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.070749
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.163624
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.377541
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 3.064624
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 3.194458
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.2965
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.76
+    },
+    {
+      "name": "drawElementsInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.767666
+    },
+    {
+      "name": "drawArraysInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.735541
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.020125
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.056374
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.25675
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.270416
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.338749
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.329875
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.279624
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.260041
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.264291
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.068625
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.457499
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.861624
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 2.435125
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 6.018916
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 9.748333
+    },
+    {
+      "name": "blitFramebuffer",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 12.286791
+    },
+    {
+      "name": "drawArrays",
+      "shader": "EdgeDetectionMaterial",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 13.205416
+    },
+    {
+      "name": "drawArrays",
+      "shader": "SMAAWeightsMaterial",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 13.658624
+    },
+    {
+      "name": "drawArrays",
+      "shader": "LuminanceMaterial",
+      "viewport": [
+        0,
+        0,
+        819,
+        512
+      ],
+      "ms": 14.09275
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        410,
+        256
+      ],
+      "ms": 14.125374
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        205,
+        128
+      ],
+      "ms": 13.889166
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        103,
+        64
+      ],
+      "ms": 13.8905
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        52,
+        32
+      ],
+      "ms": 13.882625
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        26,
+        16
+      ],
+      "ms": 13.840958
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        13,
+        8
+      ],
+      "ms": 13.104458
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        7,
+        4
+      ],
+      "ms": 12.902
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        4,
+        2
+      ],
+      "ms": 12.088916
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        7,
+        4
+      ],
+      "ms": 11.974249
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        13,
+        8
+      ],
+      "ms": 11.861916
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        26,
+        16
+      ],
+      "ms": 11.768374
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        52,
+        32
+      ],
+      "ms": 11.628374
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        103,
+        64
+      ],
+      "ms": 11.606374
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        205,
+        128
+      ],
+      "ms": 0.076958
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        410,
+        256
+      ],
+      "ms": 0.05
+    },
+    {
+      "name": "drawArrays",
+      "shader": "EffectMaterial",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 1.207499
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 3.380958
+    },
+    {
+      "name": "drawElementsInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 3.285083
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 3.58175
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.234374
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.430375
+    },
+    {
+      "name": "drawArraysInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.685249
+    },
+    {
+      "name": "drawElementsInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.651333
+    },
+    {
+      "name": "drawElementsInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.632541
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.682375
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.618
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.597874
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.426874
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.425666
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.458874
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.405833
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.469749
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 3.52025
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 3.422
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.424541
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.918124
+    },
+    {
+      "name": "drawElementsInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.717874
+    },
+    {
+      "name": "drawArraysInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.446458
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.488749
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.515916
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.705708
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.721083
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.783166
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.771958
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.719624
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.701541
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.702999
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.511083
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 3.855666
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.227083
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 1.951249
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.527166
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 9.038416
+    },
+    {
+      "name": "blitFramebuffer",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 11.35575
+    },
+    {
+      "name": "drawArrays",
+      "shader": "EdgeDetectionMaterial",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 12.176583
+    },
+    {
+      "name": "drawArrays",
+      "shader": "SMAAWeightsMaterial",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 12.996
+    },
+    {
+      "name": "drawArrays",
+      "shader": "LuminanceMaterial",
+      "viewport": [
+        0,
+        0,
+        819,
+        512
+      ],
+      "ms": 13.440083
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        410,
+        256
+      ],
+      "ms": 13.468833
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        205,
+        128
+      ],
+      "ms": 13.480333
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        103,
+        64
+      ],
+      "ms": 13.473083
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        52,
+        32
+      ],
+      "ms": 13.45475
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        26,
+        16
+      ],
+      "ms": 13.437999
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        13,
+        8
+      ],
+      "ms": 12.612208
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        7,
+        4
+      ],
+      "ms": 12.590124
+    },
+    {
+      "name": "drawArrays",
+      "shader": "DownsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        4,
+        2
+      ],
+      "ms": 12.482166
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        7,
+        4
+      ],
+      "ms": 12.462
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        13,
+        8
+      ],
+      "ms": 11.884583
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        26,
+        16
+      ],
+      "ms": 11.550708
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        52,
+        32
+      ],
+      "ms": 10.430208
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        103,
+        64
+      ],
+      "ms": 9.507
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        205,
+        128
+      ],
+      "ms": 7.516875
+    },
+    {
+      "name": "drawArrays",
+      "shader": "UpsamplingMaterial",
+      "viewport": [
+        0,
+        0,
+        410,
+        256
+      ],
+      "ms": 2.090041
+    },
+    {
+      "name": "drawArrays",
+      "shader": "EffectMaterial",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 2.112083
+    },
+    {
+      "name": "drawArraysInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2048,
+        2048
+      ],
+      "ms": 2.436666
+    },
+    {
+      "name": "drawElements",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.51725
+    },
+    {
+      "name": "drawElementsInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.029625
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.239041
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.8765
+    },
+    {
+      "name": "drawArrays",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 6.069833
+    },
+    {
+      "name": "drawArraysInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 5.21775
+    },
+    {
+      "name": "drawElementsInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 4.988999
+    },
+    {
+      "name": "drawElementsInstanced",
+      "shader": "#version 300 es\n#define varying in\nlayout(location = 0) out highp vec4 pc_fragCo",
+      "viewport": [
+        0,
+        0,
+        2880,
+        1800
+      ],
+      "ms": 3.146958
+    }
+  ],
+  "interpretation": "Intrusive per-command GPU timer queries can flush tile-based rendering; do not sum these as normal frame times. They are diagnostic only. Use the independent RAF probes for actual rates."
+}

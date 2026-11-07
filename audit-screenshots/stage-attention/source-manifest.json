@@ -1,0 +1,173 @@
+{
+  "generatedAt": "2026-11-06T11:37:14.374855+00:00",
+  "screenshotRunAt": "2026-11-06T11:33:12.903Z",
+  "performanceRunAt": "2026-11-06T11:35:18.002Z",
+  "buildId": "RmKpmW9gXZA7AuqeALhnD",
+  "files": [
+    {
+      "path": "app/prototype/page.tsx",
+      "sha256": "168e269be24a892bc8f0c71796ee594415db91049a8169d84a00d1ad6668be25",
+      "modifiedAt": "2026-11-06T07:55:29.720000+00:00"
+    },
+    {
+      "path": "components/LiveTeachingSurface.tsx",
+      "sha256": "155e5bfc2106ecac0a465fb827c7584635f03bca6cdaa193203489ed3fbcbf59",
+      "modifiedAt": "2026-11-06T11:05:51.120000+00:00"
+    },
+    {
+      "path": "core/prepared-answers.ts",
+      "sha256": "76dd508716a8214bf8157c20275ae6571dabd37ae3bd3bbab8d97d19c1ac6d68",
+      "modifiedAt": "2026-11-05T06:06:01.870000+00:00"
+    },
+    {
+      "path": "core/teaching.ts",
+      "sha256": "f139b7793014f0d7df5f0f5d2722e21384bb96d00c2609e0946a6f731e55a005",
+      "modifiedAt": "2026-11-06T08:18:26.060000+00:00"
+    },
+    {
+      "path": "simulations/foundations/attention.ts",
+      "sha256": "305d2e3ed776c1a6d23af179fdf30a37787c6c1695a08ae54e3ef1768aaeff82",
+      "modifiedAt": "2026-11-05T06:06:02.860000+00:00"
+    },
+    {
+      "path": "simulations/runtime.ts",
+      "sha256": "699252c6baf4b8e1815db10a7c2f1532f00d845cd3c2267f3ef4d79397ae9089",
+      "modifiedAt": "2026-11-05T06:06:02.870000+00:00"
+    },
+    {
+      "path": "stage/AttentionSpecimen.tsx",
+      "sha256": "69ef8ef2dbb7b39eb0ffddd4cd4367fa2f50e2b51da0319c6552a88738e2cf52",
+      "modifiedAt": "2026-11-06T11:30:38.880000+00:00"
+    },
+    {
+      "path": "stage/AttentionStage.tsx",
+      "sha256": "794807b4ce0d38a0c575b380e7b79ab7382a3634aa915fcd64eaa4ee9cd36773",
+      "modifiedAt": "2026-11-06T11:05:50.840000+00:00"
+    },
+    {
+      "path": "stage/GlossaryCaption.tsx",
+      "sha256": "e20166bbf13045e288ee5e7326ca73ef93268cbcbae448de993a0910a5e53445",
+      "modifiedAt": "2026-11-06T06:14:00.580000+00:00"
+    },
+    {
+      "path": "stage/NeuralSpecimen.tsx",
+      "sha256": "e7da6026a5f0c298a5acb84474ac4e505554917af2a5051e32e4f60afcd9a230",
+      "modifiedAt": "2026-11-06T06:28:21.550000+00:00"
+    },
+    {
+      "path": "stage/NeuralStage.tsx",
+      "sha256": "43b9941d60859a37c5f5c60d46f74d040debe1fc808aa0b5023fed914a3c8017",
+      "modifiedAt": "2026-11-06T06:14:00.700000+00:00"
+    },
+    {
+      "path": "stage/RocketSpecimen.tsx",
+      "sha256": "bfba144168ae12edba83bdac4af199a3ed966c5be0596c72ce642c6731a75cc1",
+      "modifiedAt": "2026-11-06T08:18:26.030000+00:00"
+    },
+    {
+      "path": "stage/RocketStage.tsx",
+      "sha256": "37eb04c66f2644f46713a03f28974f05afd3bed526e3fa6f29ebf6c4d669c0ca",
+      "modifiedAt": "2026-11-06T07:55:29.550000+00:00"
+    },
+    {
+      "path": "stage/StageCamera.tsx",
+      "sha256": "5a59f467b16f5a5a55bb779fb0ced5d85db5650f0c9c141b1ac2aded83d09437",
+      "modifiedAt": "2026-11-06T11:20:17.380000+00:00"
+    },
+    {
+      "path": "stage/StageExperience.tsx",
+      "sha256": "f467c00f3c9ee521422cc85677c751661567fdca602fd8e88b278e0e1e0e48a4",
+      "modifiedAt": "2026-11-06T11:05:50.910000+00:00"
+    },
+    {
+      "path": "stage/StageHUD.tsx",
+      "sha256": "62a9748c53d08976d384474259150a40bf5e6811122fda1bf4566d0da11fc431",
+      "modifiedAt": "2026-11-06T11:05:51.020000+00:00"
+    },
+    {
+      "path": "stage/StageLabels.tsx",
+      "sha256": "8b4613bd6236c5dd5b73e4498bce4ed5bcb9ad9921c4af0cb41b695cdc23c0c0",
+      "modifiedAt": "2026-11-06T11:20:17.420000+00:00"
+    },
+    {
+      "path": "stage/StagePlinth.tsx",
+      "sha256": "55f73941a17619a9961ed93940a95c8ee9e9b1231a39d81b36db21afc354cf4a",
+      "modifiedAt": "2026-11-06T11:05:50.890000+00:00"
+    },
+    {
+      "path": "stage/Studio.tsx",
+      "sha256": "cc21431e95ad1a914feb818c942f4ada7216027605b902ca5bb03ee0123b7b5f",
+      "modifiedAt": "2026-11-06T06:36:47.170000+00:00"
+    },
+    {
+      "path": "stage/attention-logic.ts",
+      "sha256": "615fda822cfb5407123c184d44200e7517b724297fdd3f54f86822d17e044a35",
+      "modifiedAt": "2026-11-06T11:05:50.800000+00:00"
+    },
+    {
+      "path": "stage/lesson.ts",
+      "sha256": "a28a91b6c87819139246214080b0827a02d5d4d4b42693939ffbafee3fbd8f92",
+      "modifiedAt": "2026-11-06T11:05:50.780000+00:00"
+    },
+    {
+      "path": "stage/lessons/attention.ts",
+      "sha256": "17325c765f025fc457d480f325149688a1047b244c4134f9f0ee1652076406b5",
+      "modifiedAt": "2026-11-06T11:20:16.850000+00:00"
+    },
+    {
+      "path": "stage/lessons/neural.ts",
+      "sha256": "6cddd18842b16973bec0319c8a7aee1565ebe2a7ddff62ff51cd648090195443",
+      "modifiedAt": "2026-11-06T06:59:38.660000+00:00"
+    },
+    {
+      "path": "stage/lessons/rocket.ts",
+      "sha256": "101d3c8f04e3b9f8b30ebc923f9d39eab14990b7d2cc89f01aa76bf592e2627e",
+      "modifiedAt": "2026-11-06T08:19:06.530000+00:00"
+    },
+    {
+      "path": "stage/logic.ts",
+      "sha256": "477d4c21546c380940b92a952bbdf03424281fc847050f5b0c88e674630dabba",
+      "modifiedAt": "2026-11-06T07:55:29.370000+00:00"
+    },
+    {
+      "path": "stage/navigation.ts",
+      "sha256": "1cbf5362a17c545ec00defb5291489faee8431f055de44c5dcdb2e99cb8a2a0e",
+      "modifiedAt": "2026-11-06T11:05:51.040000+00:00"
+    },
+    {
+      "path": "stage/palette.ts",
+      "sha256": "947b7238ae599e043e799c8a4cf33f571461e4cacfb660650e452892d0d5f025",
+      "modifiedAt": "2026-11-06T06:28:22.010000+00:00"
+    },
+    {
+      "path": "stage/rocket-logic.ts",
+      "sha256": "24d8118ebe5cd5eef912570c3bb597457fcc276b210e923333ad53761a8e2ea7",
+      "modifiedAt": "2026-11-06T07:55:29.450000+00:00"
+    },
+    {
+      "path": "stage/stage.module.css",
+      "sha256": "9964822b077f7a38715fffdf8d4ed61d5062fabb471e02c72400109acfe027e1",
+      "modifiedAt": "2026-11-06T11:20:17.360000+00:00"
+    },
+    {
+      "path": "tests/attention-stage-smoke.mts",
+      "sha256": "9d3df2baa06754d93ec6ce562cd8f8789548e77700c39dd5740f98986b90ca6b",
+      "modifiedAt": "2026-11-06T11:20:17.520000+00:00"
+    },
+    {
+      "path": "tests/attention-stage-teaching.mts",
+      "sha256": "330e30a70409db4d96bd5be0969b9f33815465dd9368ea52ccab9ed8d888702b",
+      "modifiedAt": "2026-11-06T11:29:43.620000+00:00"
+    },
+    {
+      "path": "tests/attention-stage.test.ts",
+      "sha256": "fd9fccb13df37714c7a94155f2316035b172224602544105929462d4fec4ef76",
+      "modifiedAt": "2026-11-06T11:20:17.500000+00:00"
+    },
+    {
+      "path": "tests/stage-performance.mts",
+      "sha256": "6c85bd10ff7f436d8f144f6be988acbbeb4f035a0ba1249d7b820b034849c5ef",
+      "modifiedAt": "2026-11-06T11:20:17.540000+00:00"
+    }
+  ]
+}

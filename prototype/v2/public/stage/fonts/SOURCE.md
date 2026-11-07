@@ -1,0 +1,3 @@
+Fraunces (Undercase Type), Geist and Geist Mono (Vercel). SIL Open Font License 1.1. Latin subsets fetched once from Google Fonts on 2026-11-06; self-hosted at runtime. Source CSS: https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap
+
+Website-aligned Stage runtime: DM Serif Display and Outfit are reused from `/world-v3/fonts/` (see `ASSETS.md`). `website-mono.woff2` is copied without alteration from `apps/super-admin-web/public/fonts/jetbrains-mono-latin.woff2`; JetBrains Mono, SIL OFL 1.1, notice `JetBrainsMono-OFL.txt`. The three original reference fonts above are retained for the approved-reference capture.

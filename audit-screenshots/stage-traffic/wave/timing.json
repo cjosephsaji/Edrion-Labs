@@ -1,0 +1,182 @@
+[
+  {
+    "file": "wave/frame-000.png",
+    "atMs": 1141,
+    "modelTime": 17.999999999999936,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 157.86641481605557,
+    "boundaryExists": true,
+    "witnessPosition": 157.86641481605557
+  },
+  {
+    "file": "wave/frame-001.png",
+    "atMs": 2236,
+    "modelTime": 20.499999999999794,
+    "boundaryCar": "car_19",
+    "boundaryPosition": 158.73089292161893,
+    "boundaryExists": true,
+    "witnessPosition": 174.03766732237295
+  },
+  {
+    "file": "wave/frame-002.png",
+    "atMs": 3187,
+    "modelTime": 22.999999999999652,
+    "boundaryCar": "car_19",
+    "boundaryPosition": 176.78821355342984,
+    "boundaryExists": true,
+    "witnessPosition": 197.57757028823767
+  },
+  {
+    "file": "wave/frame-003.png",
+    "atMs": 4320,
+    "modelTime": 25.99999999999948,
+    "boundaryCar": "car_18",
+    "boundaryPosition": 185.0631133901826,
+    "boundaryExists": true,
+    "witnessPosition": 232.17764499787995
+  },
+  {
+    "file": "wave/frame-004.png",
+    "atMs": 5591,
+    "modelTime": 28.99999999999931,
+    "boundaryCar": "car_16",
+    "boundaryPosition": 174.88496559061093,
+    "boundaryExists": true,
+    "witnessPosition": 267.4304580726216
+  },
+  {
+    "file": "wave/frame-005.png",
+    "atMs": 6527,
+    "modelTime": 31.49999999999917,
+    "boundaryCar": "car_15",
+    "boundaryPosition": 179.3541177803785,
+    "boundaryExists": true,
+    "witnessPosition": 294.3184164385401
+  },
+  {
+    "file": "wave/frame-006.png",
+    "atMs": 7586,
+    "modelTime": 33.99999999999903,
+    "boundaryCar": "car_13",
+    "boundaryPosition": 165.1203935432012,
+    "boundaryExists": true,
+    "witnessPosition": 318.8061598624273
+  },
+  {
+    "file": "wave/frame-007.png",
+    "atMs": 8816,
+    "modelTime": 36.999999999998856,
+    "boundaryCar": "car_12",
+    "boundaryPosition": 174.63838844202473,
+    "boundaryExists": true,
+    "witnessPosition": 345.3568755745697
+  },
+  {
+    "file": "wave/frame-008.png",
+    "atMs": 9740,
+    "modelTime": 39.499999999998714,
+    "boundaryCar": "car_10",
+    "boundaryPosition": 160.38369512070165,
+    "boundaryExists": true,
+    "witnessPosition": 14.780230784175501
+  },
+  {
+    "file": "wave/frame-009.png",
+    "atMs": 11007,
+    "modelTime": 42.49999999999854,
+    "boundaryCar": "car_8",
+    "boundaryPosition": 151.19178864721,
+    "boundaryExists": true,
+    "witnessPosition": 34.66824186714149
+  },
+  {
+    "file": "wave/frame-010.png",
+    "atMs": 12056,
+    "modelTime": 44.9999999999984,
+    "boundaryCar": "car_7",
+    "boundaryPosition": 156.20909569098762,
+    "boundaryExists": true,
+    "witnessPosition": 49.348930803455005
+  },
+  {
+    "file": "wave/frame-011.png",
+    "atMs": 12990,
+    "modelTime": 44.9999999999984,
+    "boundaryCar": "car_7",
+    "boundaryPosition": 156.20909569098762,
+    "boundaryExists": true,
+    "witnessPosition": 49.348930803455005
+  },
+  {
+    "file": "wave/frame-012.png",
+    "atMs": 14048,
+    "modelTime": 44.9999999999984,
+    "boundaryCar": "car_7",
+    "boundaryPosition": 156.20909569098762,
+    "boundaryExists": true,
+    "witnessPosition": 49.348930803455005
+  },
+  {
+    "file": "wave/frame-013.png",
+    "atMs": 15058,
+    "modelTime": 44.9999999999984,
+    "boundaryCar": "car_7",
+    "boundaryPosition": 156.20909569098762,
+    "boundaryExists": true,
+    "witnessPosition": 49.348930803455005
+  },
+  {
+    "file": "wave/frame-014.png",
+    "atMs": 16847,
+    "modelTime": 44.9999999999984,
+    "boundaryCar": "car_7",
+    "boundaryPosition": 156.20909569098762,
+    "boundaryExists": true,
+    "witnessPosition": 49.348930803455005
+  },
+  {
+    "file": "wave/frame-015.png",
+    "atMs": 17952,
+    "modelTime": 44.9999999999984,
+    "boundaryCar": "car_7",
+    "boundaryPosition": 156.20909569098762,
+    "boundaryExists": true,
+    "witnessPosition": 49.348930803455005
+  },
+  {
+    "file": "wave/frame-016.png",
+    "atMs": 18907,
+    "modelTime": 44.9999999999984,
+    "boundaryCar": "car_7",
+    "boundaryPosition": 156.20909569098762,
+    "boundaryExists": true,
+    "witnessPosition": 49.348930803455005
+  },
+  {
+    "file": "wave/frame-017.png",
+    "atMs": 19706,
+    "modelTime": 44.9999999999984,
+    "boundaryCar": "car_7",
+    "boundaryPosition": 156.20909569098762,
+    "boundaryExists": true,
+    "witnessPosition": 49.348930803455005
+  },
+  {
+    "file": "wave/frame-018.png",
+    "atMs": 20588,
+    "modelTime": 44.9999999999984,
+    "boundaryCar": "car_7",
+    "boundaryPosition": 156.20909569098762,
+    "boundaryExists": true,
+    "witnessPosition": 49.348930803455005
+  },
+  {
+    "file": "wave/frame-019.png",
+    "atMs": 21462,
+    "modelTime": 44.9999999999984,
+    "boundaryCar": "car_7",
+    "boundaryPosition": 156.20909569098762,
+    "boundaryExists": true,
+    "witnessPosition": 49.348930803455005
+  }
+]

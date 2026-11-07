@@ -1,0 +1,110 @@
+[
+  {
+    "frame": 0,
+    "actualWallMs": 557.8594999999914,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 1,
+    "actualWallMs": 1124.0043749999895,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 2,
+    "actualWallMs": 2078.296749999994,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 3,
+    "actualWallMs": 2780.2292499999894,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 4,
+    "actualWallMs": 3381.265082999991,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 5,
+    "actualWallMs": 3965.1387079999986,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 6,
+    "actualWallMs": 4545.1842079999915,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 7,
+    "actualWallMs": 5102.819082999995,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 8,
+    "actualWallMs": 5642.532500000001,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 9,
+    "actualWallMs": 6167.570999999996,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 10,
+    "actualWallMs": 6685.43299999999,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 11,
+    "actualWallMs": 7218.449708,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "at": "2026-11-07T08:09:57.711Z",
+  "responseDelayMs": 180,
+  "delayedEditResponses": 5,
+  "autoIntervalMs": 100,
+  "beforeTime": 0.6000000000000002,
+  "editedTime": 1.4,
+  "rapidEditsFinalHeadway": 2.6,
+  "resetRemainsPaused": true,
+  "errors": [],
+  "paid": []
+}

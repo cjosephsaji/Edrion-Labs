@@ -1,0 +1,351 @@
+{
+  "at": "2026-11-07T08:09:41.886Z",
+  "correction": {
+    "topic": "attention",
+    "params": {
+      "tokens": "the cat chased the ball",
+      "causal": true,
+      "query": 0
+    },
+    "observations": {
+      "primary": 1,
+      "secondary": 0,
+      "query": "the",
+      "rowSum": 1,
+      "strongestToken": "the",
+      "context": "[0.1,0.1,0.2,0.1]",
+      "weights": "[[1,0,0,0,0],[0.3893607660507781,0.610639233949222,0,0,0],[0.2878410040094024,0.2995880182273404,0.4125709777632573,0,0],[0.2450006665600173,0.25499933343998277,0.25499933343998277,0.2450006665600173,0],[0.1807474262309379,0.22522516193993086,0.19580134935150859,0.1807474262309379,0.21747863624668476]]",
+      "queries": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+      "keys": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+      "values": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+      "causal": true
+    },
+    "caption": "Let’s compare your prediction with the measured result. The first query has weight 1 on itself and zero on every later token. The mask sets future scores out of reach before softmax. Similarity cannot override it.",
+    "revision": 6,
+    "scene": {
+      "version": 1,
+      "id": "guided-attention",
+      "layout": "compare",
+      "objects": [
+        {
+          "id": "explain-0",
+          "kind": "equation",
+          "content": "Unmasked past: scores → softmax",
+          "revealed": true
+        },
+        {
+          "id": "explain-1",
+          "kind": "equation",
+          "content": "Masked future: share = 0",
+          "revealed": true
+        }
+      ],
+      "edges": [
+        {
+          "op": "connect",
+          "fromId": "explain-0",
+          "toId": "explain-1",
+          "relation": "causes"
+        }
+      ],
+      "marks": [
+        {
+          "targetId": "token-0",
+          "mode": "circle"
+        }
+      ],
+      "annotations": [],
+      "focus": "token-0"
+    },
+    "guide": {
+      "started": true,
+      "phase": "RETEACH_OR_EXTEND",
+      "openingIndex": 3,
+      "beatId": "attention-RETEACH_OR_EXTEND-0-213",
+      "answer": "Yes, every word can use every other word",
+      "transferAnswer": "",
+      "representation": "compare"
+    },
+    "sim": {
+      "version": 1,
+      "id": "attention",
+      "params": {
+        "tokens": "the cat chased the ball",
+        "causal": true,
+        "query": 0
+      },
+      "time": 0,
+      "data": {},
+      "history": [],
+      "running": false
+    },
+    "history": [
+      {
+        "role": "assistant",
+        "text": "Look at “the cat chased the ball”. Which earlier words will “ball” draw information from? Let’s follow the connections."
+      },
+      {
+        "role": "assistant",
+        "text": "The gold word is our query. Each curved connection carries a computed share of information from a key word. These are toy vectors, with Q equal to K and V; this is not a view inside ChatGPT."
+      },
+      {
+        "role": "assistant",
+        "text": "For “ball”, the strongest connection is “cat”. Every share is recomputed by softmax, and the row adds to 1. A word can attend to itself; this toy is not a grammatical explanation."
+      },
+      {
+        "role": "assistant",
+        "text": "With the causal mask on, can the first word use a word that comes later?"
+      },
+      {
+        "role": "user",
+        "text": "Yes, every word can use every other word"
+      },
+      {
+        "role": "assistant",
+        "text": "Let’s compare your prediction with the measured result. The first query has weight 1 on itself and zero on every later token. The mask sets future scores out of reach before softmax. Similarity cannot override it."
+      }
+    ],
+    "evidence": [
+      {
+        "question": "With the causal mask on, can the first word use a word that comes later?",
+        "answer": "Yes, every word can use every other word",
+        "assessment": "wrong",
+        "move": "change_representation",
+        "assistance": 0,
+        "at": 1794038964420
+      }
+    ],
+    "events": [
+      {
+        "at": 1794038963492,
+        "kind": "visual_committed",
+        "before": "a75f252e",
+        "after": "207482dd",
+        "detail": "attention-ORIENT-0-119"
+      },
+      {
+        "at": 1794038963801,
+        "kind": "visual_committed",
+        "before": "207482dd",
+        "after": "207482dd",
+        "detail": "attention-EXPLAIN-0-190"
+      },
+      {
+        "at": 1794038964003,
+        "kind": "visual_committed",
+        "before": "207482dd",
+        "after": "207482dd",
+        "detail": "attention-DEMONSTRATE-0-179"
+      },
+      {
+        "at": 1794038964213,
+        "kind": "visual_committed",
+        "before": "207482dd",
+        "after": "207482dd",
+        "detail": "attention-PREDICT-0-72"
+      },
+      {
+        "at": 1794038964420,
+        "kind": "record_answer",
+        "before": "207482dd",
+        "after": "207482dd",
+        "detail": "Yes, every word can use every other word"
+      },
+      {
+        "at": 1794038964421,
+        "kind": "visual_committed",
+        "before": "207482dd",
+        "after": "4a7f91d1",
+        "detail": "attention-RETEACH_OR_EXTEND-0-213"
+      }
+    ],
+    "presentation": "stage",
+    "stateHash": "4a7f91d1"
+  },
+  "transfer": {
+    "topic": "attention",
+    "params": {
+      "tokens": "the cat chased the ball",
+      "causal": true,
+      "query": 1
+    },
+    "observations": {
+      "primary": 0.610639233949222,
+      "secondary": 1,
+      "query": "cat",
+      "rowSum": 1,
+      "strongestToken": "cat",
+      "context": "[0.6495753105542998,0.1,0.2,0.03893607660507781]",
+      "weights": "[[1,0,0,0,0],[0.3893607660507781,0.610639233949222,0,0,0],[0.2878410040094024,0.2995880182273404,0.4125709777632573,0,0],[0.2450006665600173,0.25499933343998277,0.25499933343998277,0.2450006665600173,0],[0.1807474262309379,0.22522516193993086,0.19580134935150859,0.1807474262309379,0.21747863624668476]]",
+      "queries": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+      "keys": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+      "values": "[[0.1,0.1,0.2,0.1],[1,0.1,0.2,0],[0.1,0.9,0.2,0.1],[0.1,0.1,0.2,0.1],[0.5,0.2,0.5,0.1]]",
+      "causal": true
+    },
+    "caption": "Here is the useful difference in this new case. For query “cat”, the first two words are eligible. All later weights are exactly zero. Eligibility comes from the mask, not which word sounds relevant. What would you like to investigate next?",
+    "revision": 9,
+    "scene": {
+      "version": 1,
+      "id": "guided-attention",
+      "layout": "flow",
+      "objects": [],
+      "edges": [],
+      "marks": [
+        {
+          "targetId": "token-1",
+          "mode": "circle"
+        }
+      ],
+      "annotations": [],
+      "focus": "token-1"
+    },
+    "guide": {
+      "started": true,
+      "phase": "EXPLORE",
+      "openingIndex": 3,
+      "beatId": "attention-EXPLORE-0-240",
+      "answer": "Yes, every word can use every other word",
+      "transferAnswer": "All five words",
+      "representation": "compare"
+    },
+    "sim": {
+      "version": 1,
+      "id": "attention",
+      "params": {
+        "tokens": "the cat chased the ball",
+        "causal": true,
+        "query": 1
+      },
+      "time": 0,
+      "data": {},
+      "history": [],
+      "running": false
+    },
+    "history": [
+      {
+        "role": "assistant",
+        "text": "Look at “the cat chased the ball”. Which earlier words will “ball” draw information from? Let’s follow the connections."
+      },
+      {
+        "role": "assistant",
+        "text": "The gold word is our query. Each curved connection carries a computed share of information from a key word. These are toy vectors, with Q equal to K and V; this is not a view inside ChatGPT."
+      },
+      {
+        "role": "assistant",
+        "text": "For “ball”, the strongest connection is “cat”. Every share is recomputed by softmax, and the row adds to 1. A word can attend to itself; this toy is not a grammatical explanation."
+      },
+      {
+        "role": "assistant",
+        "text": "With the causal mask on, can the first word use a word that comes later?"
+      },
+      {
+        "role": "user",
+        "text": "Yes, every word can use every other word"
+      },
+      {
+        "role": "assistant",
+        "text": "Let’s compare your prediction with the measured result. The first query has weight 1 on itself and zero on every later token. The mask sets future scores out of reach before softmax. Similarity cannot override it."
+      },
+      {
+        "role": "assistant",
+        "text": "Now query the second word with the mask on. How many words are eligible, including itself?"
+      },
+      {
+        "role": "user",
+        "text": "All five words"
+      },
+      {
+        "role": "assistant",
+        "text": "Here is the useful difference in this new case. For query “cat”, the first two words are eligible. All later weights are exactly zero. Eligibility comes from the mask, not which word sounds relevant. What would you like to investigate next?"
+      }
+    ],
+    "evidence": [
+      {
+        "question": "With the causal mask on, can the first word use a word that comes later?",
+        "answer": "Yes, every word can use every other word",
+        "assessment": "wrong",
+        "move": "change_representation",
+        "assistance": 0,
+        "at": 1794038964420
+      },
+      {
+        "question": "Now query the second word with the mask on. How many words are eligible, including itself?",
+        "answer": "All five words",
+        "assessment": "wrong",
+        "move": "change_representation",
+        "assistance": 0,
+        "at": 1794038965255
+      }
+    ],
+    "events": [
+      {
+        "at": 1794038963492,
+        "kind": "visual_committed",
+        "before": "a75f252e",
+        "after": "207482dd",
+        "detail": "attention-ORIENT-0-119"
+      },
+      {
+        "at": 1794038963801,
+        "kind": "visual_committed",
+        "before": "207482dd",
+        "after": "207482dd",
+        "detail": "attention-EXPLAIN-0-190"
+      },
+      {
+        "at": 1794038964003,
+        "kind": "visual_committed",
+        "before": "207482dd",
+        "after": "207482dd",
+        "detail": "attention-DEMONSTRATE-0-179"
+      },
+      {
+        "at": 1794038964213,
+        "kind": "visual_committed",
+        "before": "207482dd",
+        "after": "207482dd",
+        "detail": "attention-PREDICT-0-72"
+      },
+      {
+        "at": 1794038964420,
+        "kind": "record_answer",
+        "before": "207482dd",
+        "after": "207482dd",
+        "detail": "Yes, every word can use every other word"
+      },
+      {
+        "at": 1794038964421,
+        "kind": "visual_committed",
+        "before": "207482dd",
+        "after": "4a7f91d1",
+        "detail": "attention-RETEACH_OR_EXTEND-0-213"
+      },
+      {
+        "at": 1794038964878,
+        "kind": "visual_committed",
+        "before": "4a7f91d1",
+        "after": "e5eb4ff2",
+        "detail": "attention-TRANSFER_CHECK-0-90"
+      },
+      {
+        "at": 1794038965255,
+        "kind": "record_answer",
+        "before": "e5eb4ff2",
+        "after": "e5eb4ff2",
+        "detail": "All five words"
+      },
+      {
+        "at": 1794038965255,
+        "kind": "visual_committed",
+        "before": "e5eb4ff2",
+        "after": "e5eb4ff2",
+        "detail": "attention-EXPLORE-0-240"
+      }
+    ],
+    "presentation": "stage",
+    "stateHash": "e5eb4ff2"
+  },
+  "worldRestored": true,
+  "errors": [],
+  "paid": []
+}

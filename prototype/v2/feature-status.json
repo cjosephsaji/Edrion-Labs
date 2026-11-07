@@ -160,6 +160,183 @@
         "tests/quantities.test.ts",
         "evidence/mass-comparison-regression.json"
       ]
+    },
+    "neural_stage_phase1": {
+      "status": "TESTED",
+      "verified_on": "2026-11-06",
+      "scope": "Website-themed Neural Stage via ?view=stage; shared engine/session/prepared tutor; other topics preserved in World; no paid test calls.",
+      "evidence": [
+        "STAGE_NOTES.md",
+        "tests/stage.test.ts",
+        "tests/stage-smoke.mts",
+        "tests/stage-teaching.mts",
+        "../../audit-screenshots/stage/README.md",
+        "../../audit-screenshots/stage/results.json",
+        "../../audit-screenshots/stage/performance-production.json"
+      ],
+      "performance": {
+        "hardware": "Apple M4",
+        "renderer": "ANGLE Metal",
+        "balanced_median_ms": 16.7,
+        "balanced_peak_calls": 140,
+        "balanced_peak_triangles": 76845,
+        "dpr": 2
+      },
+      "limitations": "Phone viewport emulation only; High ~32fps; no human voice/Safari/novice acceptance. Website palette intentionally supersedes the original navy reference."
+    },
+    "rocket_stage": {
+      "status": "TESTED",
+      "verified_on": "2026-11-06",
+      "scope": "Website-themed Rocket Stage via ?view=stage&lesson=rocket; unchanged flight engine; eight static question cards, authored focus shots, physical quantities and controls; original prepared safe burn replay; Neural/World/session preservation; no provider calls.",
+      "evidence": [
+        "ROCKET_STAGE_NOTES.md",
+        "tests/rocket-stage.test.ts",
+        "tests/rocket-stage-smoke.mts",
+        "tests/rocket-stage-teaching.mts",
+        "../../audit-screenshots/stage-rocket/README.md",
+        "../../audit-screenshots/stage-rocket/smoke-results.json",
+        "../../audit-screenshots/stage-rocket/teaching-results.json",
+        "../../audit-screenshots/stage-rocket/world-regression-results.json",
+        "../../audit-screenshots/stage-rocket/performance-production.json"
+      ],
+      "performance": {
+        "hardware": "Apple M4",
+        "renderer": "ANGLE Metal",
+        "viewport": [
+          1440,
+          900
+        ],
+        "dpr": 2,
+        "balanced_median_ms": 16.7,
+        "balanced_fps": 59.9,
+        "balanced_peak_calls": 118,
+        "balanced_peak_triangles": 124163,
+        "active_flight_median_ms": 16.7,
+        "high_median_ms": 31.1,
+        "phone_viewport_low_median_ms": 16.7
+      },
+      "limitations": "Headless Chromium on local Apple M4, not a physical phone or all M-series laptops. High ~32 fps. No Safari, human speech playback or novice acceptance test. Eight-second replay is an explicitly labelled prepared burn. Display model is not a literal distance/size scale."
+    },
+    "attention_stage": {
+      "status": "TESTED",
+      "verified_on": "2026-11-06",
+      "scope": "Website-themed Attention Stage via ?view=stage&lesson=attention; existing deterministic attention engine; nine prepared explainers; query/mask/sentence controls; signed context mixer; original tutor/session/World preservation; no provider calls.",
+      "evidence": [
+        "ATTENTION_STAGE_NOTES.md",
+        "tests/attention-stage.test.ts",
+        "tests/attention-stage-smoke.mts",
+        "tests/attention-stage-teaching.mts",
+        "../../audit-screenshots/stage-attention/README.md",
+        "../../audit-screenshots/stage-attention/smoke-results.json",
+        "../../audit-screenshots/stage-attention/teaching-results.json",
+        "../../audit-screenshots/stage-attention/regression-results.json",
+        "../../audit-screenshots/stage-attention/performance-production.json"
+      ],
+      "performance": {
+        "hardware": "Apple M4",
+        "renderer": "ANGLE Metal",
+        "viewport": [
+          1440,
+          900
+        ],
+        "dpr": 2,
+        "balanced_median_ms": 16.7,
+        "balanced_fps": 59.9,
+        "balanced_overview_peak_calls": 80,
+        "balanced_scan_peak_calls": 84,
+        "balanced_twelve_token_peak_calls": 122,
+        "balanced_twelve_token_peak_triangles": 62101,
+        "high_median_ms": 30.55,
+        "phone_viewport_low_median_ms": 16.7
+      },
+      "limitations": "Local headless Chromium, not physical-phone or Safari coverage. High ~33 fps. Twelve tokens are visually denser; long tablet words shortened with full text in selector/heading. No human narration or novice study. Existing Q=K=V deterministic toy, no language generation."
+    },
+    "traffic_stage": {
+      "status": "TESTED",
+      "verified_on": "2026-11-07",
+      "scope": "Website-themed Traffic Stage via ?view=stage&lesson=traffic; unchanged IDM ring engine; nine prepared explainers; engine-derived cars/boundary/speed ribbon/gap; headway/count/desired-speed controls; DPR2 desktop hero canvas with preserved projection; bounded five-level bloom and unused-depth optimization; actual prepared comparison/playback; delayed-worker coordination; preserved earlier Stage/World/session/prepared teaching; no provider calls.",
+      "evidence": [
+        "TRAFFIC_STAGE_NOTES.md",
+        "tests/traffic-stage.test.ts",
+        "tests/traffic-stage-smoke.mts",
+        "tests/traffic-stage-teaching.mts",
+        "tests/stage-worker-coordination.mts",
+        "../../audit-screenshots/stage-traffic/README.md",
+        "../../audit-screenshots/stage-traffic/smoke-results.json",
+        "../../audit-screenshots/stage-traffic/teaching-results.json",
+        "../../audit-screenshots/stage-traffic/worker-coordination-results.json",
+        "../../audit-screenshots/stage-traffic/regression-results.json",
+        "../../audit-screenshots/stage-traffic/world-regression-results.json",
+        "../../audit-screenshots/stage-traffic/performance-production.json"
+      ],
+      "performance": {
+        "hardware": "Apple M4",
+        "renderer": "ANGLE Metal",
+        "viewport": [
+          1440,
+          900
+        ],
+        "dpr": 2,
+        "balanced_median_ms": 16.7,
+        "balanced_fps": 60.0,
+        "balanced_mean_ms": 16.67,
+        "canvas": {
+          "cssWidth": 1140,
+          "cssHeight": 620,
+          "bufferWidth": 2280,
+          "bufferHeight": 1240
+        },
+        "measurement": "test-side RAF average including stalls",
+        "balanced_lowest_view_fps": 60.0,
+        "active_road_median_ms": 16.7,
+        "forty_five_cars_median_ms": 16.7,
+        "balanced_peak_calls": 53,
+        "balanced_peak_triangles": 76361,
+        "balanced_55fps_goal_met": true,
+        "high_median_ms": 16.7,
+        "high_overview_fps": 60.0,
+        "phone_viewport_low_median_ms": 16.7
+      },
+      "limitations": "Local headless Chromium on Apple M4, normal desktop apps unchanged; no physical-phone/Safari/human voice/novice study. Balanced 55 fps goal met. High focus not benchmarked. Complete-ring phone focus is small while the sheet is open. Snapshot-relative colors are explained; boundary can disappear; no universal backward velocity is fabricated."
+    },
+    "relativity_stage": {
+      "status": "TESTED",
+      "verified_on": "2026-11-07",
+      "scope": "Fifth website-themed Stage at ?view=stage&lesson=relativity; original relativity engine; twin elapsed chronometers/common seconds scale; explicit selected totals; existing Lorentz transform/same-event coordinates; nine explainers and prepared demos; real worker playback; saved state/tutor/World retained. No installs/provider calls.",
+      "evidence": [
+        "TIME_DILATION_STAGE_NOTES.md",
+        "tests/relativity-stage.test.ts",
+        "tests/relativity-stage-smoke.mts",
+        "tests/relativity-stage-teaching.mts",
+        "../../audit-screenshots/stage-relativity/README.md",
+        "../../audit-screenshots/stage-relativity/verification.json",
+        "../../audit-screenshots/stage-relativity/performance-production.json",
+        "../../audit-screenshots/stage-relativity/source-manifest.json"
+      ],
+      "performance": {
+        "hardware": "Apple M4",
+        "browser": "157.0.8103.39",
+        "renderer": "ANGLE Metal",
+        "viewport": [
+          1440,
+          900
+        ],
+        "canvas": {
+          "cssWidth": 1140,
+          "cssHeight": 620,
+          "bufferWidth": 2280,
+          "bufferHeight": 1240
+        },
+        "dpr": 2,
+        "balanced_overview_fps": 60.0,
+        "balanced_mean_ms": 16.67,
+        "balanced_lowest_view_fps": 60,
+        "balanced_peak_calls": 84,
+        "balanced_peak_triangles": 41193,
+        "balanced_55fps_goal_met": true,
+        "geometry_budget_met": true
+      },
+      "limitations": "Local Apple M4 headless Chromium, not physical-phone hardware; Safari/human narration/novice learning not tested. No acceleration, gravity, turnaround or reunion in the preserved engine. Speed edits select separate constant-speed examples. Whole-object phone focus is small while its sheet is open; High refraction obscures small face lettering; HTML readings/common ruler remain readable. High focus FPS unmeasured."
     }
   },
   "checks": {

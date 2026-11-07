@@ -1,0 +1,33 @@
+{
+  "at": "2026-11-06T11:33:51.844060+00:00",
+  "checks": {
+    "neural_smoke": {
+      "source": "../stage/results.json",
+      "run_at": "2026-11-06T11:27:50.364Z",
+      "errors": [],
+      "consoleErrors": [],
+      "paid": []
+    },
+    "neural_teaching": {
+      "source": "../stage/teaching-results.json",
+      "run_at": "2026-11-06T11:29:27.297Z",
+      "errors": [],
+      "consoleErrors": [],
+      "paid": []
+    },
+    "rocket_smoke": {
+      "source": "../stage-rocket/smoke-results.json",
+      "run_at": "2026-11-06T11:33:02.840Z",
+      "errors": [],
+      "consoleErrors": [],
+      "paid": []
+    },
+    "rocket_teaching": {
+      "source": "../stage-rocket/teaching-results.json",
+      "run_at": "2026-11-06T11:33:15.885Z",
+      "errors": [],
+      "consoleErrors": [],
+      "paid": []
+    }
+  }
+}

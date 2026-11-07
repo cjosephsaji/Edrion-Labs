@@ -1,0 +1,110 @@
+[
+  {
+    "file": "intro/frame-000.png",
+    "atMs": 931,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "intro/frame-001.png",
+    "atMs": 4879,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "intro/frame-002.png",
+    "atMs": 5481,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "intro/frame-003.png",
+    "atMs": 6004,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "intro/frame-004.png",
+    "atMs": 6586,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "intro/frame-005.png",
+    "atMs": 7427,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "intro/frame-006.png",
+    "atMs": 8033,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "intro/frame-007.png",
+    "atMs": 8599,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "intro/frame-008.png",
+    "atMs": 9410,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "intro/frame-009.png",
+    "atMs": 9985,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "intro/frame-010.png",
+    "atMs": 10718,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  },
+  {
+    "file": "intro/frame-011.png",
+    "atMs": 11482,
+    "modelTime": 0,
+    "boundaryCar": "car_0",
+    "boundaryPosition": 0,
+    "boundaryExists": false,
+    "witnessPosition": 0
+  }
+]

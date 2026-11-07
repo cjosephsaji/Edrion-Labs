@@ -1,0 +1,91 @@
+{
+  "at": "2026-11-07T08:13:47.006Z",
+  "method": "Two independent functional browser groups; performance measured later with all automated browsers closed.",
+  "commands": [
+    {
+      "command": "npm run test:stage",
+      "startedAt": "2026-11-07T08:04:40.542Z",
+      "endedAt": "2026-11-07T08:07:24.606Z",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run test:stage:teaching",
+      "startedAt": "2026-11-07T08:07:24.606Z",
+      "endedAt": "2026-11-07T08:08:57.512Z",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run test:stage:attention",
+      "startedAt": "2026-11-07T08:04:40.546Z",
+      "endedAt": "2026-11-07T08:09:42.773Z",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run test:stage:rocket",
+      "startedAt": "2026-11-07T08:08:57.512Z",
+      "endedAt": "2026-11-07T08:13:02.922Z",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run test:stage:traffic",
+      "startedAt": "2026-11-07T08:09:42.773Z",
+      "endedAt": "2026-11-07T08:13:46.996Z",
+      "exitCode": 0
+    }
+  ],
+  "checks": {
+    "neural_smoke": {
+      "source": "../stage/results.json",
+      "status": "pass",
+      "runAt": "2026-11-07T08:07:24.340Z"
+    },
+    "neural_teaching": {
+      "source": "../stage/teaching-results.json",
+      "status": "pass",
+      "runAt": "2026-11-07T08:08:51.497Z"
+    },
+    "rocket_smoke": {
+      "source": "../stage-rocket/smoke-results.json",
+      "status": "pass",
+      "runAt": "2026-11-07T08:12:39.239Z"
+    },
+    "rocket_teaching": {
+      "source": "../stage-rocket/teaching-results.json",
+      "status": "pass",
+      "runAt": "2026-11-07T08:13:02.230Z"
+    },
+    "attention_smoke": {
+      "source": "../stage-attention/smoke-results.json",
+      "status": "pass",
+      "runAt": "2026-11-07T08:09:06.337Z"
+    },
+    "attention_teaching": {
+      "source": "../stage-attention/teaching-results.json",
+      "status": "pass",
+      "runAt": "2026-11-07T08:09:41.886Z"
+    },
+    "traffic_smoke": {
+      "source": "../stage-traffic/smoke-results.json",
+      "status": "pass",
+      "runAt": "2026-11-07T08:13:30.382Z"
+    },
+    "traffic_teaching": {
+      "source": "../stage-traffic/teaching-results.json",
+      "status": "pass",
+      "runAt": "2026-11-07T08:13:46.432Z"
+    },
+    "traffic_worker_coordination": {
+      "source": "../stage-traffic/worker-coordination-results.json",
+      "status": "pass",
+      "runAt": "2026-11-07T08:09:57.711Z"
+    }
+  },
+  "groups": [
+    {
+      "status": "fulfilled"
+    },
+    {
+      "status": "fulfilled"
+    }
+  ]
+}

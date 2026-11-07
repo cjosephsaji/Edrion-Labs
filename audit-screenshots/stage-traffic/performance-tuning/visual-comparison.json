@@ -1,0 +1,29 @@
+{
+  "at": "2026-11-07T06:14:34.097Z",
+  "viewport": [
+    1440,
+    900
+  ],
+  "dpr": 2,
+  "reducedMotion": true,
+  "state": "same initial uniform flow and authored camera",
+  "comparison": "legacy full-window renderer vs final five-level proportional capped bloom, unused-depth optimization and 1140x620 desktop hero canvas; subject perspective/pixel scale preserved; studio background and vignette coverage differ",
+  "errors": [],
+  "paid": [],
+  "rows": [
+    {
+      "view": "overview",
+      "scope": "entire page including changed empty studio/background coverage",
+      "mae8bit": 3.702077739197531,
+      "channelsChangedOver3Percent": 37.250591563786,
+      "maxChannelDelta": 99
+    },
+    {
+      "view": "speed",
+      "scope": "entire page including changed empty studio/background coverage",
+      "mae8bit": 3.644504050925926,
+      "channelsChangedOver3Percent": 24.732175925925926,
+      "maxChannelDelta": 190
+    }
+  ]
+}

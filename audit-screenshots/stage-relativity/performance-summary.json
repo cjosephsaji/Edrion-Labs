@@ -1,0 +1,299 @@
+{
+  "at": "2026-11-07T08:16:41.581Z",
+  "hardware": "Apple M4",
+  "browser": "157.0.8103.39",
+  "rows": [
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "canvas": {
+        "cssWidth": 1140,
+        "cssHeight": 620,
+        "bufferWidth": 2280,
+        "bufferHeight": 1240
+      },
+      "quality": "balanced",
+      "state": "overview",
+      "fps": 60.0,
+      "mean_ms": 16.67,
+      "p95_ms": 16.8,
+      "peak_calls": 84,
+      "peak_triangles": 41193,
+      "frame_probe": {
+        "fps": 60.00274440826816,
+        "meanMs": 16.665904365904364,
+        "p95Ms": 16.799999999999272,
+        "maxMs": 16.80000000000109,
+        "frames": 481,
+        "durationMs": 8016.299999999999
+      }
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "canvas": {
+        "cssWidth": 1140,
+        "cssHeight": 620,
+        "bufferWidth": 2280,
+        "bufferHeight": 1240
+      },
+      "quality": "balanced",
+      "state": "td-ship",
+      "fps": 60.0,
+      "mean_ms": 16.67,
+      "p95_ms": 16.8,
+      "peak_calls": 58,
+      "peak_triangles": 29073,
+      "frame_probe": {
+        "fps": 60.001243549089125,
+        "meanMs": 16.66632124352331,
+        "p95Ms": 16.799999999999272,
+        "maxMs": 16.80000000000291,
+        "frames": 193,
+        "durationMs": 3216.5999999999985
+      }
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "canvas": {
+        "cssWidth": 1140,
+        "cssHeight": 620,
+        "bufferWidth": 2280,
+        "bufferHeight": 1240
+      },
+      "quality": "balanced",
+      "state": "td-gamma",
+      "fps": 60.0,
+      "mean_ms": 16.67,
+      "p95_ms": 16.8,
+      "peak_calls": 36,
+      "peak_triangles": 14901,
+      "frame_probe": {
+        "fps": 60.001243549089125,
+        "meanMs": 16.66632124352331,
+        "p95Ms": 16.799999999999272,
+        "maxMs": 16.80000000000291,
+        "frames": 193,
+        "durationMs": 3216.5999999999985
+      }
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "canvas": {
+        "cssWidth": 1140,
+        "cssHeight": 620,
+        "bufferWidth": 2280,
+        "bufferHeight": 1240
+      },
+      "quality": "balanced",
+      "state": "td-frame",
+      "fps": 60.0,
+      "mean_ms": 16.67,
+      "p95_ms": 16.8,
+      "peak_calls": 70,
+      "peak_triangles": 39269,
+      "frame_probe": {
+        "fps": 60.00497450565854,
+        "meanMs": 16.665284974093254,
+        "p95Ms": 16.799999999999272,
+        "maxMs": 16.799999999999272,
+        "frames": 193,
+        "durationMs": 3216.399999999998
+      }
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "canvas": {
+        "cssWidth": 1140,
+        "cssHeight": 620,
+        "bufferWidth": 2280,
+        "bufferHeight": 1240
+      },
+      "quality": "balanced",
+      "state": "activeClocks",
+      "fps": 60.0,
+      "mean_ms": 16.67,
+      "p95_ms": 16.7,
+      "peak_calls": 84,
+      "peak_triangles": 41193,
+      "frame_probe": {
+        "fps": 60.00249361012404,
+        "meanMs": 16.66597402597403,
+        "p95Ms": 16.700000000004366,
+        "maxMs": 16.80000000000291,
+        "frames": 385,
+        "durationMs": 6416.4000000000015
+      }
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "canvas": {
+        "cssWidth": 1140,
+        "cssHeight": 620,
+        "bufferWidth": 2280,
+        "bufferHeight": 1240
+      },
+      "quality": "balanced",
+      "state": "nearLight",
+      "fps": 60.0,
+      "mean_ms": 16.67,
+      "p95_ms": 16.7,
+      "peak_calls": 84,
+      "peak_triangles": 41193,
+      "frame_probe": {
+        "fps": 60.000995867151346,
+        "meanMs": 16.66639004149377,
+        "p95Ms": 16.700000000004366,
+        "maxMs": 16.80000000000291,
+        "frames": 241,
+        "durationMs": 4016.5999999999985
+      }
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "canvas": {
+        "cssWidth": 1140,
+        "cssHeight": 620,
+        "bufferWidth": 2280,
+        "bufferHeight": 1240
+      },
+      "quality": "high",
+      "state": "overview",
+      "fps": 34.1,
+      "mean_ms": 29.36,
+      "p95_ms": 33.4,
+      "peak_calls": 126,
+      "peak_triangles": 60577,
+      "frame_probe": {
+        "fps": 34.05518686692281,
+        "meanMs": 29.364102564102563,
+        "p95Ms": 33.400000000001455,
+        "maxMs": 50,
+        "frames": 273,
+        "durationMs": 8016.4
+      }
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "canvas": {
+        "cssWidth": 1140,
+        "cssHeight": 620,
+        "bufferWidth": 2280,
+        "bufferHeight": 1240
+      },
+      "quality": "low",
+      "state": "overview",
+      "fps": 60.0,
+      "mean_ms": 16.67,
+      "p95_ms": 16.8,
+      "peak_calls": 55,
+      "peak_triangles": 24772,
+      "frame_probe": {
+        "fps": 60.0019959083878,
+        "meanMs": 16.66611226611227,
+        "p95Ms": 16.799999999999272,
+        "maxMs": 16.80000000000109,
+        "frames": 481,
+        "durationMs": 8016.400000000001
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "canvas": {
+        "cssWidth": 390,
+        "cssHeight": 844,
+        "bufferWidth": 780,
+        "bufferHeight": 1688
+      },
+      "quality": "low",
+      "state": "overview",
+      "fps": 60.0,
+      "mean_ms": 16.67,
+      "p95_ms": 16.7,
+      "peak_calls": 55,
+      "peak_triangles": 24772,
+      "frame_probe": {
+        "fps": 60.001995908387805,
+        "meanMs": 16.666112266112265,
+        "p95Ms": 16.700000000000728,
+        "maxMs": 16.80000000000109,
+        "frames": 481,
+        "durationMs": 8016.4
+      }
+    }
+  ],
+  "motion_rows": [
+    {
+      "state": "td-ship transition",
+      "probe": {
+        "fps": 60.00220191566662,
+        "meanMs": 16.666055045871563,
+        "p95Ms": 16.700000000000728,
+        "maxMs": 16.799999999999272,
+        "frames": 109,
+        "durationMs": 1816.6000000000004
+      }
+    },
+    {
+      "state": "td-gamma transition",
+      "probe": {
+        "fps": 60.00220191566668,
+        "meanMs": 16.666055045871545,
+        "p95Ms": 16.799999999999272,
+        "maxMs": 16.80000000000291,
+        "frames": 109,
+        "durationMs": 1816.5999999999985
+      }
+    },
+    {
+      "state": "td-frame transition",
+      "probe": {
+        "fps": 60,
+        "meanMs": 16.666666666666668,
+        "p95Ms": 16.700000000000728,
+        "maxMs": 16.799999999999272,
+        "frames": 108,
+        "durationMs": 1800
+      }
+    },
+    {
+      "state": "assembly",
+      "probe": {
+        "fps": 60.003550505947096,
+        "meanMs": 16.66568047337278,
+        "p95Ms": 16.700000000004366,
+        "maxMs": 16.799999999995634,
+        "frames": 169,
+        "durationMs": 2816.5
+      }
+    }
+  ],
+  "balanced_55fps_goal_met": true,
+  "balanced_geometry_budget_met": true,
+  "method": "Independent test-side RAF windows include every interval/stall; target acceptance uses actual average fps, not median-derived fps. Draw calls/triangles include all render passes, window peaks. Other automated test browsers closed, normal desktop apps unchanged. Not GPU timer queries or a physical-phone test."
+}

@@ -1,0 +1,1322 @@
+{
+  "capturedAt": "2026-11-07T08:07:24.331Z",
+  "source": "current working tree; stage-smoke.mts",
+  "browser": "157.0.8103.39",
+  "hardware": "Apple M4",
+  "errors": [],
+  "consoleErrors": [],
+  "results": [
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "dpr": 2,
+      "before": {
+        "topic": "neural",
+        "params": {
+          "model": "linear",
+          "weight": 0.5,
+          "x1": 2,
+          "x2": 0.5,
+          "target": 4,
+          "learningRate": 0.1
+        },
+        "observations": {
+          "primary": 4.5,
+          "secondary": 1,
+          "loss": 4.5,
+          "prediction": 1,
+          "target": 4,
+          "steps": 0,
+          "x1": 2,
+          "x2": 0.5,
+          "learningRate": 0.1,
+          "model": "linear",
+          "weight": 0.5,
+          "gradient": -6
+        },
+        "caption": "Our model wants to predict 4, but right now it predicts 1. Let’s find out why.",
+        "revision": 0,
+        "scene": {
+          "version": 1,
+          "id": "lesson",
+          "layout": "flow",
+          "objects": [],
+          "edges": [],
+          "marks": [],
+          "annotations": [],
+          "focus": null
+        },
+        "guide": {
+          "started": false,
+          "phase": "ORIENT",
+          "openingIndex": 0,
+          "beatId": "",
+          "answer": "",
+          "transferAnswer": "",
+          "representation": "scene"
+        },
+        "sim": {
+          "version": 1,
+          "id": "neural",
+          "params": {
+            "model": "linear",
+            "weight": 0.5,
+            "x1": 2,
+            "x2": 0.5,
+            "target": 4,
+            "learningRate": 0.1
+          },
+          "time": 0,
+          "data": {
+            "neural": {
+              "input": [
+                2,
+                0.5
+              ],
+              "target": 4,
+              "w1": [
+                [
+                  0.2,
+                  -0.1
+                ],
+                [
+                  -0.3,
+                  0.4
+                ],
+                [
+                  0.6,
+                  0.1
+                ]
+              ],
+              "b1": [
+                0.05,
+                -0.02,
+                0.01
+              ],
+              "w2": [
+                0.3,
+                -0.25,
+                0.4
+              ],
+              "b2": 0.1,
+              "steps": 0
+            }
+          },
+          "history": [],
+          "running": false
+        },
+        "history": [],
+        "evidence": [],
+        "events": [],
+        "presentation": "stage",
+        "stateHash": "dc5bc442"
+      },
+      "after": {
+        "topic": "neural",
+        "params": {
+          "model": "linear",
+          "weight": 1.676,
+          "x1": 2,
+          "x2": 0.5,
+          "target": 4,
+          "learningRate": 0.1
+        },
+        "observations": {
+          "primary": 0.20995200000000008,
+          "secondary": 3.352,
+          "loss": 0.20995200000000008,
+          "prediction": 3.352,
+          "target": 4,
+          "steps": 3,
+          "x1": 2,
+          "x2": 0.5,
+          "learningRate": 0.1,
+          "model": "linear",
+          "weight": 1.676,
+          "gradient": -1.2960000000000003
+        },
+        "caption": "The prediction is now 3.35 and half squared error is 0.21 (previously 0.58). Input 2.00 × weight 1.68 determines the output.",
+        "revision": 6,
+        "scene": {
+          "version": 1,
+          "id": "guided-neural",
+          "layout": "flow",
+          "objects": [],
+          "edges": [],
+          "marks": [
+            {
+              "targetId": "weight",
+              "mode": "circle"
+            }
+          ],
+          "annotations": [],
+          "focus": "weight"
+        },
+        "guide": {
+          "started": true,
+          "phase": "EXPLORE",
+          "openingIndex": 0,
+          "beatId": "",
+          "answer": "",
+          "transferAnswer": "",
+          "representation": "scene"
+        },
+        "sim": {
+          "version": 1,
+          "id": "neural",
+          "params": {
+            "model": "linear",
+            "weight": 1.676,
+            "x1": 2,
+            "x2": 0.5,
+            "target": 4,
+            "learningRate": 0.1
+          },
+          "time": 0.05,
+          "data": {
+            "neural": {
+              "input": [
+                2,
+                0.5
+              ],
+              "target": 4,
+              "w1": [
+                [
+                  0.2,
+                  -0.1
+                ],
+                [
+                  -0.3,
+                  0.4
+                ],
+                [
+                  0.6,
+                  0.1
+                ]
+              ],
+              "b1": [
+                0.05,
+                -0.02,
+                0.01
+              ],
+              "w2": [
+                0.3,
+                -0.25,
+                0.4
+              ],
+              "b2": 0.1,
+              "steps": 3
+            }
+          },
+          "history": [
+            {
+              "t": 0,
+              "a": 4.5,
+              "b": 1
+            },
+            {
+              "t": 0.016666666666666666,
+              "a": 1.6199999999999997,
+              "b": 2.2
+            },
+            {
+              "t": 0.03333333333333333,
+              "a": 0.5832,
+              "b": 2.92
+            },
+            {
+              "t": 0.05,
+              "a": 0.20995200000000008,
+              "b": 3.352
+            }
+          ],
+          "running": false
+        },
+        "history": [],
+        "evidence": [],
+        "events": [
+          {
+            "at": 1794038692129,
+            "kind": "sim_step",
+            "before": "dc5bc442",
+            "after": "32c181de",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038692857,
+            "kind": "sim_step",
+            "before": "32c181de",
+            "after": "83ea9175",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038693289,
+            "kind": "sim_step",
+            "before": "83ea9175",
+            "after": "f1187cee",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          }
+        ],
+        "presentation": "stage",
+        "stateHash": "f1187cee"
+      },
+      "solved": {
+        "topic": "neural",
+        "params": {
+          "model": "linear",
+          "weight": 1.99455804416,
+          "x1": 2,
+          "x2": 0.5,
+          "target": 4,
+          "learningRate": 0.1
+        },
+        "observations": {
+          "primary": 0.00005922976672902169,
+          "secondary": 3.98911608832,
+          "loss": 0.00005922976672902169,
+          "prediction": 3.98911608832,
+          "target": 4,
+          "steps": 11,
+          "x1": 2,
+          "x2": 0.5,
+          "learningRate": 0.1,
+          "model": "linear",
+          "weight": 1.99455804416,
+          "gradient": -0.02176782336000027
+        },
+        "caption": "The prediction is now 3.99 and half squared error is 0.00 (previously 0.00). Input 2.00 × weight 1.99 determines the output.",
+        "revision": 31,
+        "scene": {
+          "version": 1,
+          "id": "guided-neural",
+          "layout": "flow",
+          "objects": [],
+          "edges": [],
+          "marks": [
+            {
+              "targetId": "weight",
+              "mode": "circle"
+            }
+          ],
+          "annotations": [],
+          "focus": "weight"
+        },
+        "guide": {
+          "started": true,
+          "phase": "EXPLORE",
+          "openingIndex": 0,
+          "beatId": "",
+          "answer": "",
+          "transferAnswer": "",
+          "representation": "scene"
+        },
+        "sim": {
+          "version": 1,
+          "id": "neural",
+          "params": {
+            "model": "linear",
+            "weight": 1.99455804416,
+            "x1": 2,
+            "x2": 0.5,
+            "target": 4,
+            "learningRate": 0.1
+          },
+          "time": 0.18333333333333332,
+          "data": {
+            "neural": {
+              "input": [
+                2,
+                0.5
+              ],
+              "target": 4,
+              "w1": [
+                [
+                  0.2,
+                  -0.1
+                ],
+                [
+                  -0.3,
+                  0.4
+                ],
+                [
+                  0.6,
+                  0.1
+                ]
+              ],
+              "b1": [
+                0.05,
+                -0.02,
+                0.01
+              ],
+              "w2": [
+                0.3,
+                -0.25,
+                0.4
+              ],
+              "b2": 0.1,
+              "steps": 11
+            }
+          },
+          "history": [
+            {
+              "t": 0,
+              "a": 4.5,
+              "b": 1
+            },
+            {
+              "t": 0.016666666666666666,
+              "a": 1.6199999999999997,
+              "b": 2.2
+            },
+            {
+              "t": 0.03333333333333333,
+              "a": 0.5832,
+              "b": 2.92
+            },
+            {
+              "t": 0.05,
+              "a": 0.20995200000000008,
+              "b": 3.352
+            },
+            {
+              "t": 0.06666666666666667,
+              "a": 0.0755827200000001,
+              "b": 3.6111999999999997
+            },
+            {
+              "t": 0.08333333333333333,
+              "a": 0.027209779200000037,
+              "b": 3.76672
+            },
+            {
+              "t": 0.09999999999999999,
+              "a": 0.009795520512000012,
+              "b": 3.860032
+            },
+            {
+              "t": 0.11666666666666665,
+              "a": 0.003526387384319997,
+              "b": 3.9160192
+            },
+            {
+              "t": 0.13333333333333333,
+              "a": 0.0012694994583552035,
+              "b": 3.94961152
+            },
+            {
+              "t": 0.15,
+              "a": 0.0004570198050078759,
+              "b": 3.969766912
+            },
+            {
+              "t": 0.16666666666666666,
+              "a": 0.00016452712980283534,
+              "b": 3.9818601472
+            },
+            {
+              "t": 0.18333333333333332,
+              "a": 0.00005922976672902169,
+              "b": 3.98911608832
+            }
+          ],
+          "running": false
+        },
+        "history": [],
+        "evidence": [],
+        "events": [
+          {
+            "at": 1794038692129,
+            "kind": "sim_step",
+            "before": "dc5bc442",
+            "after": "32c181de",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038692857,
+            "kind": "sim_step",
+            "before": "32c181de",
+            "after": "83ea9175",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038693289,
+            "kind": "sim_step",
+            "before": "83ea9175",
+            "after": "f1187cee",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038695817,
+            "kind": "pointer",
+            "before": "f1187cee",
+            "after": "f1187cee",
+            "detail": "weight"
+          },
+          {
+            "at": 1794038695818,
+            "kind": "stage_explanation",
+            "before": "f1187cee",
+            "after": "f1187cee",
+            "detail": "weight"
+          },
+          {
+            "at": 1794038699083,
+            "kind": "interruption",
+            "before": "f1187cee",
+            "after": "f1187cee",
+            "detail": "Cancelled pending narration and model request; preserved committed scene."
+          },
+          {
+            "at": 1794038700496,
+            "kind": "pointer",
+            "before": "f1187cee",
+            "after": "f677b637",
+            "detail": "input-0"
+          },
+          {
+            "at": 1794038700496,
+            "kind": "stage_explanation",
+            "before": "f677b637",
+            "after": "f677b637",
+            "detail": "input-0"
+          },
+          {
+            "at": 1794038703079,
+            "kind": "interruption",
+            "before": "f677b637",
+            "after": "f677b637",
+            "detail": "Cancelled pending narration and model request; preserved committed scene."
+          },
+          {
+            "at": 1794038704505,
+            "kind": "pointer",
+            "before": "f677b637",
+            "after": "fb6a7b61",
+            "detail": "loss"
+          },
+          {
+            "at": 1794038704505,
+            "kind": "stage_explanation",
+            "before": "fb6a7b61",
+            "after": "fb6a7b61",
+            "detail": "loss"
+          },
+          {
+            "at": 1794038707593,
+            "kind": "interruption",
+            "before": "fb6a7b61",
+            "after": "fb6a7b61",
+            "detail": "Cancelled pending narration and model request; preserved committed scene."
+          },
+          {
+            "at": 1794038709616,
+            "kind": "sim_step",
+            "before": "fb6a7b61",
+            "after": "4693e8c9",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038710133,
+            "kind": "sim_step",
+            "before": "4693e8c9",
+            "after": "f7c397b8",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038710656,
+            "kind": "sim_step",
+            "before": "f7c397b8",
+            "after": "886019f4",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038711177,
+            "kind": "sim_step",
+            "before": "886019f4",
+            "after": "5e284ee4",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038711704,
+            "kind": "sim_step",
+            "before": "5e284ee4",
+            "after": "d0c1c26a",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038712251,
+            "kind": "sim_step",
+            "before": "d0c1c26a",
+            "after": "19271b47",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038712748,
+            "kind": "sim_step",
+            "before": "19271b47",
+            "after": "8bf76df4",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038713265,
+            "kind": "sim_step",
+            "before": "8bf76df4",
+            "after": "beb561ce",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          }
+        ],
+        "presentation": "stage",
+        "stateHash": "beb561ce"
+      },
+      "samples": [
+        {
+          "engine": "three.js r170",
+          "cameraPosition": "-1.5734,8.0928,19.8402",
+          "introComplete": "true",
+          "frameMs": "38.5",
+          "p95Ms": "57.19999998807907",
+          "drawCalls": "140",
+          "triangles": "76845",
+          "quality": "balanced",
+          "ready": "true"
+        },
+        {
+          "engine": "three.js r170",
+          "cameraPosition": "-1.4404,8.0928,19.8502",
+          "introComplete": "true",
+          "frameMs": "59.79999998211861",
+          "p95Ms": "74.80000001192093",
+          "drawCalls": "140",
+          "triangles": "76845",
+          "quality": "balanced",
+          "ready": "true"
+        },
+        {
+          "engine": "three.js r170",
+          "cameraPosition": "-1.1785,8.0928,19.8675",
+          "introComplete": "true",
+          "frameMs": "30.5",
+          "p95Ms": "48.39999997615814",
+          "drawCalls": "140",
+          "triangles": "76845",
+          "quality": "balanced",
+          "ready": "true"
+        },
+        {
+          "engine": "three.js r170",
+          "cameraPosition": "-0.7817,8.0928,19.8871",
+          "introComplete": "true",
+          "frameMs": "42.79999998211861",
+          "p95Ms": "64.7000000178814",
+          "drawCalls": "140",
+          "triangles": "76845",
+          "quality": "balanced",
+          "ready": "true"
+        },
+        {
+          "engine": "three.js r170",
+          "cameraPosition": "-0.2987,8.0928,19.9002",
+          "introComplete": "true",
+          "frameMs": "61.19999998807907",
+          "p95Ms": "79",
+          "drawCalls": "140",
+          "triangles": "76845",
+          "quality": "balanced",
+          "ready": "true"
+        },
+        {
+          "engine": "three.js r170",
+          "cameraPosition": "0.3136,8.0928,19.9000",
+          "introComplete": "true",
+          "frameMs": "51.099999994039536",
+          "p95Ms": "68.60000002384186",
+          "drawCalls": "140",
+          "triangles": "76845",
+          "quality": "balanced",
+          "ready": "true"
+        },
+        {
+          "engine": "three.js r170",
+          "cameraPosition": "0.9458,8.0928,19.8800",
+          "introComplete": "true",
+          "frameMs": "54.79999998211861",
+          "p95Ms": "65",
+          "drawCalls": "140",
+          "triangles": "76845",
+          "quality": "balanced",
+          "ready": "true"
+        },
+        {
+          "engine": "three.js r170",
+          "cameraPosition": "1.6504,8.0928,19.8339",
+          "introComplete": "true",
+          "frameMs": "56.599999994039536",
+          "p95Ms": "64.30000001192093",
+          "drawCalls": "140",
+          "triangles": "76845",
+          "quality": "balanced",
+          "ready": "true"
+        }
+      ],
+      "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)"
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "dpr": 2,
+      "before": {
+        "topic": "neural",
+        "params": {
+          "model": "linear",
+          "weight": 0.5,
+          "x1": 2,
+          "x2": 0.5,
+          "target": 4,
+          "learningRate": 0.1
+        },
+        "observations": {
+          "primary": 4.5,
+          "secondary": 1,
+          "loss": 4.5,
+          "prediction": 1,
+          "target": 4,
+          "steps": 0,
+          "x1": 2,
+          "x2": 0.5,
+          "learningRate": 0.1,
+          "model": "linear",
+          "weight": 0.5,
+          "gradient": -6
+        },
+        "caption": "Our model wants to predict 4, but right now it predicts 1. Let’s find out why.",
+        "revision": 0,
+        "scene": {
+          "version": 1,
+          "id": "lesson",
+          "layout": "flow",
+          "objects": [],
+          "edges": [],
+          "marks": [],
+          "annotations": [],
+          "focus": null
+        },
+        "guide": {
+          "started": false,
+          "phase": "ORIENT",
+          "openingIndex": 0,
+          "beatId": "",
+          "answer": "",
+          "transferAnswer": "",
+          "representation": "scene"
+        },
+        "sim": {
+          "version": 1,
+          "id": "neural",
+          "params": {
+            "model": "linear",
+            "weight": 0.5,
+            "x1": 2,
+            "x2": 0.5,
+            "target": 4,
+            "learningRate": 0.1
+          },
+          "time": 0,
+          "data": {
+            "neural": {
+              "input": [
+                2,
+                0.5
+              ],
+              "target": 4,
+              "w1": [
+                [
+                  0.2,
+                  -0.1
+                ],
+                [
+                  -0.3,
+                  0.4
+                ],
+                [
+                  0.6,
+                  0.1
+                ]
+              ],
+              "b1": [
+                0.05,
+                -0.02,
+                0.01
+              ],
+              "w2": [
+                0.3,
+                -0.25,
+                0.4
+              ],
+              "b2": 0.1,
+              "steps": 0
+            }
+          },
+          "history": [],
+          "running": false
+        },
+        "history": [],
+        "evidence": [],
+        "events": [],
+        "presentation": "stage",
+        "stateHash": "dc5bc442"
+      },
+      "after": {
+        "topic": "neural",
+        "params": {
+          "model": "linear",
+          "weight": 1.676,
+          "x1": 2,
+          "x2": 0.5,
+          "target": 4,
+          "learningRate": 0.1
+        },
+        "observations": {
+          "primary": 0.20995200000000008,
+          "secondary": 3.352,
+          "loss": 0.20995200000000008,
+          "prediction": 3.352,
+          "target": 4,
+          "steps": 3,
+          "x1": 2,
+          "x2": 0.5,
+          "learningRate": 0.1,
+          "model": "linear",
+          "weight": 1.676,
+          "gradient": -1.2960000000000003
+        },
+        "caption": "The prediction is now 3.35 and half squared error is 0.21 (previously 0.58). Input 2.00 × weight 1.68 determines the output.",
+        "revision": 6,
+        "scene": {
+          "version": 1,
+          "id": "guided-neural",
+          "layout": "flow",
+          "objects": [],
+          "edges": [],
+          "marks": [
+            {
+              "targetId": "weight",
+              "mode": "circle"
+            }
+          ],
+          "annotations": [],
+          "focus": "weight"
+        },
+        "guide": {
+          "started": true,
+          "phase": "EXPLORE",
+          "openingIndex": 0,
+          "beatId": "",
+          "answer": "",
+          "transferAnswer": "",
+          "representation": "scene"
+        },
+        "sim": {
+          "version": 1,
+          "id": "neural",
+          "params": {
+            "model": "linear",
+            "weight": 1.676,
+            "x1": 2,
+            "x2": 0.5,
+            "target": 4,
+            "learningRate": 0.1
+          },
+          "time": 0.05,
+          "data": {
+            "neural": {
+              "input": [
+                2,
+                0.5
+              ],
+              "target": 4,
+              "w1": [
+                [
+                  0.2,
+                  -0.1
+                ],
+                [
+                  -0.3,
+                  0.4
+                ],
+                [
+                  0.6,
+                  0.1
+                ]
+              ],
+              "b1": [
+                0.05,
+                -0.02,
+                0.01
+              ],
+              "w2": [
+                0.3,
+                -0.25,
+                0.4
+              ],
+              "b2": 0.1,
+              "steps": 3
+            }
+          },
+          "history": [
+            {
+              "t": 0,
+              "a": 4.5,
+              "b": 1
+            },
+            {
+              "t": 0.016666666666666666,
+              "a": 1.6199999999999997,
+              "b": 2.2
+            },
+            {
+              "t": 0.03333333333333333,
+              "a": 0.5832,
+              "b": 2.92
+            },
+            {
+              "t": 0.05,
+              "a": 0.20995200000000008,
+              "b": 3.352
+            }
+          ],
+          "running": false
+        },
+        "history": [],
+        "evidence": [],
+        "events": [
+          {
+            "at": 1794038790336,
+            "kind": "sim_step",
+            "before": "dc5bc442",
+            "after": "32c181de",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038790493,
+            "kind": "sim_step",
+            "before": "32c181de",
+            "after": "83ea9175",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038790656,
+            "kind": "sim_step",
+            "before": "83ea9175",
+            "after": "f1187cee",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          }
+        ],
+        "presentation": "stage",
+        "stateHash": "f1187cee"
+      },
+      "solved": {
+        "topic": "neural",
+        "params": {
+          "model": "linear",
+          "weight": 1.99455804416,
+          "x1": 2,
+          "x2": 0.5,
+          "target": 4,
+          "learningRate": 0.1
+        },
+        "observations": {
+          "primary": 0.00005922976672902169,
+          "secondary": 3.98911608832,
+          "loss": 0.00005922976672902169,
+          "prediction": 3.98911608832,
+          "target": 4,
+          "steps": 11,
+          "x1": 2,
+          "x2": 0.5,
+          "learningRate": 0.1,
+          "model": "linear",
+          "weight": 1.99455804416,
+          "gradient": -0.02176782336000027
+        },
+        "caption": "The prediction is now 3.99 and half squared error is 0.00 (previously 0.00). Input 2.00 × weight 1.99 determines the output.",
+        "revision": 31,
+        "scene": {
+          "version": 1,
+          "id": "guided-neural",
+          "layout": "flow",
+          "objects": [],
+          "edges": [],
+          "marks": [
+            {
+              "targetId": "weight",
+              "mode": "circle"
+            }
+          ],
+          "annotations": [],
+          "focus": "weight"
+        },
+        "guide": {
+          "started": true,
+          "phase": "EXPLORE",
+          "openingIndex": 0,
+          "beatId": "",
+          "answer": "",
+          "transferAnswer": "",
+          "representation": "scene"
+        },
+        "sim": {
+          "version": 1,
+          "id": "neural",
+          "params": {
+            "model": "linear",
+            "weight": 1.99455804416,
+            "x1": 2,
+            "x2": 0.5,
+            "target": 4,
+            "learningRate": 0.1
+          },
+          "time": 0.18333333333333332,
+          "data": {
+            "neural": {
+              "input": [
+                2,
+                0.5
+              ],
+              "target": 4,
+              "w1": [
+                [
+                  0.2,
+                  -0.1
+                ],
+                [
+                  -0.3,
+                  0.4
+                ],
+                [
+                  0.6,
+                  0.1
+                ]
+              ],
+              "b1": [
+                0.05,
+                -0.02,
+                0.01
+              ],
+              "w2": [
+                0.3,
+                -0.25,
+                0.4
+              ],
+              "b2": 0.1,
+              "steps": 11
+            }
+          },
+          "history": [
+            {
+              "t": 0,
+              "a": 4.5,
+              "b": 1
+            },
+            {
+              "t": 0.016666666666666666,
+              "a": 1.6199999999999997,
+              "b": 2.2
+            },
+            {
+              "t": 0.03333333333333333,
+              "a": 0.5832,
+              "b": 2.92
+            },
+            {
+              "t": 0.05,
+              "a": 0.20995200000000008,
+              "b": 3.352
+            },
+            {
+              "t": 0.06666666666666667,
+              "a": 0.0755827200000001,
+              "b": 3.6111999999999997
+            },
+            {
+              "t": 0.08333333333333333,
+              "a": 0.027209779200000037,
+              "b": 3.76672
+            },
+            {
+              "t": 0.09999999999999999,
+              "a": 0.009795520512000012,
+              "b": 3.860032
+            },
+            {
+              "t": 0.11666666666666665,
+              "a": 0.003526387384319997,
+              "b": 3.9160192
+            },
+            {
+              "t": 0.13333333333333333,
+              "a": 0.0012694994583552035,
+              "b": 3.94961152
+            },
+            {
+              "t": 0.15,
+              "a": 0.0004570198050078759,
+              "b": 3.969766912
+            },
+            {
+              "t": 0.16666666666666666,
+              "a": 0.00016452712980283534,
+              "b": 3.9818601472
+            },
+            {
+              "t": 0.18333333333333332,
+              "a": 0.00005922976672902169,
+              "b": 3.98911608832
+            }
+          ],
+          "running": false
+        },
+        "history": [],
+        "evidence": [],
+        "events": [
+          {
+            "at": 1794038790336,
+            "kind": "sim_step",
+            "before": "dc5bc442",
+            "after": "32c181de",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038790493,
+            "kind": "sim_step",
+            "before": "32c181de",
+            "after": "83ea9175",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038790656,
+            "kind": "sim_step",
+            "before": "83ea9175",
+            "after": "f1187cee",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038791842,
+            "kind": "pointer",
+            "before": "f1187cee",
+            "after": "f1187cee",
+            "detail": "weight"
+          },
+          {
+            "at": 1794038791842,
+            "kind": "stage_explanation",
+            "before": "f1187cee",
+            "after": "f1187cee",
+            "detail": "weight"
+          },
+          {
+            "at": 1794038793481,
+            "kind": "interruption",
+            "before": "f1187cee",
+            "after": "f1187cee",
+            "detail": "Cancelled pending narration and model request; preserved committed scene."
+          },
+          {
+            "at": 1794038794866,
+            "kind": "pointer",
+            "before": "f1187cee",
+            "after": "f677b637",
+            "detail": "input-0"
+          },
+          {
+            "at": 1794038794866,
+            "kind": "stage_explanation",
+            "before": "f677b637",
+            "after": "f677b637",
+            "detail": "input-0"
+          },
+          {
+            "at": 1794038797224,
+            "kind": "interruption",
+            "before": "f677b637",
+            "after": "f677b637",
+            "detail": "Cancelled pending narration and model request; preserved committed scene."
+          },
+          {
+            "at": 1794038798574,
+            "kind": "pointer",
+            "before": "f677b637",
+            "after": "fb6a7b61",
+            "detail": "loss"
+          },
+          {
+            "at": 1794038798575,
+            "kind": "stage_explanation",
+            "before": "fb6a7b61",
+            "after": "fb6a7b61",
+            "detail": "loss"
+          },
+          {
+            "at": 1794038800203,
+            "kind": "interruption",
+            "before": "fb6a7b61",
+            "after": "fb6a7b61",
+            "detail": "Cancelled pending narration and model request; preserved committed scene."
+          },
+          {
+            "at": 1794038802245,
+            "kind": "sim_step",
+            "before": "fb6a7b61",
+            "after": "4693e8c9",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038802738,
+            "kind": "sim_step",
+            "before": "4693e8c9",
+            "after": "f7c397b8",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038803243,
+            "kind": "sim_step",
+            "before": "f7c397b8",
+            "after": "886019f4",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038803761,
+            "kind": "sim_step",
+            "before": "886019f4",
+            "after": "5e284ee4",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038804278,
+            "kind": "sim_step",
+            "before": "5e284ee4",
+            "after": "d0c1c26a",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038804798,
+            "kind": "sim_step",
+            "before": "d0c1c26a",
+            "after": "19271b47",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038805322,
+            "kind": "sim_step",
+            "before": "19271b47",
+            "after": "8bf76df4",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          },
+          {
+            "at": 1794038805852,
+            "kind": "sim_step",
+            "before": "8bf76df4",
+            "after": "beb561ce",
+            "detail": "{\"seconds\":0.016666666666666666}"
+          }
+        ],
+        "presentation": "stage",
+        "stateHash": "beb561ce"
+      },
+      "samples": [
+        {
+          "engine": "three.js r170",
+          "cameraPosition": "-1.6982,11.4160,30.2009",
+          "introComplete": "true",
+          "frameMs": "16.69999998807907",
+          "p95Ms": "17",
+          "drawCalls": "49",
+          "triangles": "26534",
+          "quality": "low",
+          "ready": "true"
+        },
+        {
+          "engine": "three.js r170",
+          "cameraPosition": "-1.1151,11.4160,30.2280",
+          "introComplete": "true",
+          "frameMs": "16.69999998807907",
+          "p95Ms": "16.900000005960464",
+          "drawCalls": "49",
+          "triangles": "26534",
+          "quality": "low",
+          "ready": "true"
+        },
+        {
+          "engine": "three.js r170",
+          "cameraPosition": "-0.3680,11.4160,30.2463",
+          "introComplete": "true",
+          "frameMs": "16.69999998807907",
+          "p95Ms": "16.80000001192093",
+          "drawCalls": "49",
+          "triangles": "26534",
+          "quality": "low",
+          "ready": "true"
+        },
+        {
+          "engine": "three.js r170",
+          "cameraPosition": "0.4882,11.4160,30.2446",
+          "introComplete": "true",
+          "frameMs": "16.69999998807907",
+          "p95Ms": "17.399999976158142",
+          "drawCalls": "49",
+          "triangles": "26534",
+          "quality": "low",
+          "ready": "true"
+        },
+        {
+          "engine": "three.js r170",
+          "cameraPosition": "1.4415,11.4160,30.2142",
+          "introComplete": "true",
+          "frameMs": "16.69999998807907",
+          "p95Ms": "16.899999976158142",
+          "drawCalls": "49",
+          "triangles": "26534",
+          "quality": "low",
+          "ready": "true"
+        },
+        {
+          "engine": "three.js r170",
+          "cameraPosition": "2.4823,11.4160,30.1466",
+          "introComplete": "true",
+          "frameMs": "16.69999998807907",
+          "p95Ms": "17.100000023841858",
+          "drawCalls": "49",
+          "triangles": "26534",
+          "quality": "low",
+          "ready": "true"
+        },
+        {
+          "engine": "three.js r170",
+          "cameraPosition": "3.5349,11.4160,30.0413",
+          "introComplete": "true",
+          "frameMs": "16.69999998807907",
+          "p95Ms": "17.100000023841858",
+          "drawCalls": "49",
+          "triangles": "26534",
+          "quality": "low",
+          "ready": "true"
+        },
+        {
+          "engine": "three.js r170",
+          "cameraPosition": "4.6070,11.4160,29.8957",
+          "introComplete": "true",
+          "frameMs": "16.69999998807907",
+          "p95Ms": "17",
+          "drawCalls": "49",
+          "triangles": "26534",
+          "quality": "low",
+          "ready": "true"
+        }
+      ],
+      "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)"
+    }
+  ]
+}

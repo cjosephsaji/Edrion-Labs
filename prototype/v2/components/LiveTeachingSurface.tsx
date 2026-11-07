@@ -6,13 +6,11 @@ import {
   topicInfo,
   specs,
   observe,
-  initial,
   namedAnchors,
   restore,
   type Topic,
-  type Param,
-  type Params,
   type SimTool,
+  type Simulation,
 } from '../simulations/runtime';
 import { SimulationWorker } from '../simulations/worker-adapter';
 import {
@@ -28,7 +26,7 @@ import {
 import { compile } from '../core/scene-compiler';
 import { preparedAnswer, preparedQuestions } from '../core/prepared-answers';
 import { prototypeFeatures } from '../core/prototype-features';
-import { BeatScheduler, type Beat } from '../core/beat-scheduler';
+import { BeatScheduler } from '../core/beat-scheduler';
 import { RealtimeVoice, type VoiceStatus } from '../core/voice-provider';
 import type { teach } from '../server/teacher-planner';
 import { SimulationViewport } from './SimulationViewport';
@@ -61,9 +59,25 @@ import { PetrosPresence } from './PetrosPresence';
 import { PreparedQuestions } from './PreparedQuestions';
 import { TutorExplanation } from './TutorExplanation';
 import { useWorld } from '../world-v3/store';
+import { stageTarget, type StageTopic } from '../stage/navigation';
 const World = dynamic(() => import('../world-v3/WorldExperience'), {
   ssr: false,
   loading: () => <p>Opening the Learning Atelier…</p>,
+});
+const RelativityStage = dynamic(() => import('../stage/RelativityStage'), {
+  ssr: false,
+});
+const TrafficStage = dynamic(() => import('../stage/TrafficStage'), {
+  ssr: false,
+});
+const AttentionStage = dynamic(() => import('../stage/AttentionStage'), {
+  ssr: false,
+});
+const RocketStage = dynamic(() => import('../stage/RocketStage'), {
+  ssr: false,
+});
+const NeuralStage = dynamic(() => import('../stage/NeuralStage'), {
+  ssr: false,
 });
 type Result = Awaited<ReturnType<typeof teach>>;
 const tabLabels: Record<Topic, string> = {
@@ -77,20 +91,33 @@ export function LiveTeachingSurface({
   api = '/prototype/api',
   assetBase = '/petros',
   presentation = 'world',
+  stageLesson = 'neural',
   canSignOut = false,
 }: {
   api?: string;
   assetBase?: string;
-  presentation?: '2d' | 'world';
+  presentation?: '2d' | 'world' | 'stage';
+  stageLesson?: StageTopic;
   canSignOut?: boolean;
 }) {
-  const isSpatial = prototypeFeatures.world && presentation === 'world';
+  const isSpatial =
+    (prototypeFeatures.world && presentation === 'world') ||
+    presentation === 'stage';
   const s = isSpatial ? worldStyles : classicStyles;
   const worldOpening = useWorld((x) => x.opening),
     worldPlace = useWorld((x) => x.place),
     askOpen = useWorld((x) => x.askOpen),
     controlsOpen = useWorld((x) => x.controlsOpen);
-  const [session, setSession] = useState<Session>(freshSession),
+  const [session, setSession] = useState<Session>(() => {
+      const s = freshSession();
+      return presentation === 'stage'
+        ? {
+            ...s,
+            active: stageLesson,
+            topics: { ...s.topics, [stageLesson]: lesson(stageLesson) },
+          }
+        : s;
+    }),
     [hydrated, setHydrated] = useState(false),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(''),
@@ -176,11 +203,21 @@ export function LiveTeachingSurface({
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = parseSession(raw);
-        current.current = parsed;
-        setSession(parsed);
-      }
+      const parsed = raw ? parseSession(raw) : freshSession();
+      const restored =
+        presentation === 'stage'
+          ? {
+              ...parsed,
+              active: stageLesson,
+              topics: {
+                ...parsed.topics,
+                [stageLesson]:
+                  parsed.topics[stageLesson] ?? lesson(stageLesson),
+              },
+            }
+          : parsed;
+      current.current = restored;
+      setSession(restored);
     } catch {
       setMessage(
         'The saved session could not be restored. A fresh experiment is ready.',
@@ -205,7 +242,7 @@ export function LiveTeachingSurface({
       voice.current?.disconnect();
       narrator.current.cancel();
     };
-  }, [api]);
+  }, [api, presentation, stageLesson]);
   useEffect(() => {
     if (!hydrated) return;
     const timer = setTimeout(() => {
@@ -570,7 +607,7 @@ export function LiveTeachingSurface({
       const state = restore(data.state);
       setProvider(true);
       update((t) => {
-        let next = logChange(
+        const next = logChange(
           t,
           {
             ...t,
@@ -604,7 +641,7 @@ export function LiveTeachingSurface({
       setBusy(false);
       if (speak) present(data);
       return data;
-    } catch (e) {
+    } catch {
       if (token === epoch.current) {
         setBusy(false);
         setProvider(false);
@@ -678,7 +715,7 @@ export function LiveTeachingSurface({
     }
   };
   const applyBeat = (
-    state: import('../simulations/runtime').Simulation,
+    state: Simulation,
     beat: TeachingBeat,
     patch: Partial<LessonSession['guide']> = {},
   ) => {
@@ -1214,6 +1251,134 @@ export function LiveTeachingSurface({
       )}
     </details>
   );
+  if (
+    presentation === 'stage' &&
+    (t.sim.id === 'relativity' ||
+      t.sim.id === 'traffic' ||
+      t.sim.id === 'attention' ||
+      t.sim.id === 'rocket' ||
+      (t.sim.id === 'neural' && t.sim.params.model === 'linear'))
+  ) {
+    const LessonStage =
+      t.sim.id === 'relativity'
+        ? RelativityStage
+        : t.sim.id === 'traffic'
+          ? TrafficStage
+          : t.sim.id === 'attention'
+            ? AttentionStage
+            : t.sim.id === 'rocket'
+              ? RocketStage
+              : NeuralStage;
+    return (
+      <LessonStage
+        key={t.sim.id}
+        onTopic={(id) => {
+          const url = new URL(location.href);
+          url.searchParams.set('lesson', id);
+          window.history.replaceState(window.history.state, '', url);
+          changeTopic(id);
+        }}
+        sim={t.sim}
+        caption={t.caption}
+        teacherBeat={t.guide.beatId}
+        teacherFocus={t.scene.focus}
+        hydrated={hydrated}
+        message={message}
+        guide={t.guide}
+        preparedQuestions={preparedQuestions[t.sim.id]}
+        questions={
+          (t.guide.phase === 'TRANSFER_CHECK' ? transfers : predictions)[
+            t.sim.id
+          ]
+        }
+        onAction={(tool, args) => {
+          if (
+            t.sim.id === 'relativity' ||
+            t.sim.id === 'traffic' ||
+            t.sim.id === 'rocket' ||
+            t.sim.id === 'attention'
+          ) {
+            soundRef.current = false;
+            setSound(false);
+          }
+          return mutate(tool, args);
+        }}
+        onExplain={(text, id) => {
+          cancel();
+          voice.current?.interrupt(true);
+          const semantic = stageTarget(t.sim.id, id);
+          target(semantic);
+          update((old) =>
+            logChange(
+              old,
+              {
+                ...old,
+                sim: { ...old.sim, running: false },
+                caption: text,
+                captionSource: 'prepared',
+                followup: '',
+              },
+              'stage_explanation',
+              id,
+            ),
+          );
+        }}
+        onRead={(text) => {
+          cancel();
+          voice.current?.interrupt(true);
+          soundRef.current = true;
+          setSound(true);
+          update((old) =>
+            logChange(
+              old,
+              { ...old, caption: text, captionSource: 'prepared' },
+              'stage_read_aloud',
+              text,
+            ),
+          );
+          void speakBeat(makeBeat(t.sim, t.guide.phase, text), epoch.current);
+        }}
+        onPause={() => {
+          voice.current?.interrupt(true);
+          interrupt();
+        }}
+        onBegin={() => startLearning(false)}
+        onContinue={() => void advanceOpening(t.guide.openingIndex + 1)}
+        onChoose={(index) => void choose(index)}
+        onTransfer={nextTransfer}
+        onAsk={(question) => void ask(question, false, 'prepared')}
+        onReset={() =>
+          mutate('sim_restore', { snapshot: lessonModel(t.sim.id) })
+        }
+        observations={
+          hydrated ? (
+            <script
+              type="application/json"
+              id="petros-observations"
+              dangerouslySetInnerHTML={{
+                __html: JSON.stringify({
+                  topic: session.active,
+                  params: t.sim.params,
+                  observations,
+                  caption: t.caption,
+                  captionSource: t.captionSource,
+                  revision: t.revision,
+                  scene: t.scene,
+                  guide: t.guide,
+                  sim: t.sim,
+                  history: t.history,
+                  evidence: t.evidence,
+                  events: t.events,
+                  presentation: 'stage',
+                  stateHash: hash({ sim: t.sim, scene: t.scene }),
+                }).replace(/</g, '\\u003c'),
+              }}
+            />
+          ) : null
+        }
+      />
+    );
+  }
   return (
     <main
       className={s.app}

@@ -247,11 +247,12 @@ export const predictions: Record<
     correct: 0,
   },
 };
-export function rocketComparison() {
+export function rocketComparison(onTimedFrame?: (state: Simulation) => void) {
   const start = initial('rocket');
   const under = step(setParams(start, { throttle: 0 }), 20);
   const over = step(setParams(start, { throttle: 1 }), 10);
   let timed = start;
+  onTimedFrame?.(timed);
   for (let i = 0; i < 7200 && timed.data.rocket!.status === 'flying'; i++) {
     const r = timed.data.rocket!,
       desiredV = -Math.sqrt(1.6 * r.altitude + 1);
@@ -261,6 +262,12 @@ export function rocketComparison() {
       Math.min(1, ((a + 9.81) * (+timed.params.dryMass + r.fuelMass)) / 24000),
     );
     timed = step(setParams(timed, { throttle }), 1 / 120);
+    // Optional view sampling of this existing prepared burn. No control/physics change.
+    if (
+      onTimedFrame &&
+      (i % 24 === 23 || timed.data.rocket!.status !== 'flying')
+    )
+      onTimedFrame(timed);
   }
   return { under, timed, over };
 }
@@ -409,12 +416,15 @@ export function transferResult(sim: Simulation, choice: number) {
     ),
   };
 }
-export function interpret(sim: Simulation, before: Simulation, tool: SimTool) {
+export function interpret(sim: Simulation, before: Simulation, _tool: SimTool) {
   const o = observe(sim),
     b = observe(before);
   const texts: Record<Topic, string> = {
     neural: `The prediction is now ${f(o.prediction)} and half squared error is ${f(o.loss)} (previously ${f(b.loss)}). ${sim.params.model === 'linear' ? `Input ${f(sim.params.x1)} × weight ${f(sim.params.weight)} determines the output.` : 'The tanh network is active; its hidden units now determine the output.'}`,
-    rocket: `At ${f(o.altitude, 1)} metres, velocity is ${f(o.velocity, 1)} metres per second and acceleration ${f(o.acceleration)} metres per second squared. Total mass is ${f(o.mass, 0)} kilograms. ${+o.acceleration > 0 && +o.velocity < 0 ? 'The ship is still descending while upward acceleration slows it.' : 'Compare the force arrows with the direction of motion.'}`,
+    rocket:
+      o.status === 'landed' || o.status === 'crashed'
+        ? `${o.status === 'landed' ? 'Soft landing' : 'Hard impact'} at ${f(Math.abs(+o.velocity), 1)} metres per second. The craft is at rest now; ${f(o.velocity, 1)} metres per second is its recorded velocity at contact. A gentle landing needs a contact speed of 2 metres per second or less.`
+        : `At ${f(o.altitude, 1)} metres, velocity is ${f(o.velocity, 1)} metres per second and acceleration ${f(o.acceleration)} metres per second squared. Total mass is ${f(o.mass, 0)} kilograms. ${+o.acceleration > 0 && +o.velocity < 0 ? 'The ship is still descending while upward acceleration slows it.' : 'Compare the force arrows with the direction of motion.'}`,
     attention: `For query “${o.query}”, the strongest computed key is “${o.strongestToken}”; the weights add to ${f(o.rowSum, 0)}. ${sim.params.causal ? 'Future words remain masked.' : 'The causal mask is off, so later words are eligible.'}`,
     traffic: `Mean speed is ${f(o.meanSpeed, 1)} metres per second, the slowest car is at ${f(o.minSpeed, 1)}, and spread is ${f(o.speedSpread, 1)}. ${o.jamFrontExists ? 'The ring marks the measured slow-to-fast boundary.' : 'A strong congestion boundary is not present in this snapshot.'}`,
     relativity: `At ${f(sim.params.beta, 3)}c, gamma is ${f(o.gamma, 4)}. In Earth’s frame, ${f(o.earthSeconds, 0)} seconds corresponds to ${f(o.shipSeconds)} seconds of ship proper time for a constant-velocity interval.`,

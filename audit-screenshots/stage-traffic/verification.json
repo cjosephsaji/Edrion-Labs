@@ -1,0 +1,44 @@
+{
+  "verified_on": "2026-11-07",
+  "unit_tests": {
+    "passed": 187,
+    "files": 16,
+    "traffic_lesson_tests": 12,
+    "postprocessing_tests": 6,
+    "viewport_projection_tests": 2,
+    "command": "npm test"
+  },
+  "strict_typecheck": "pass",
+  "scoped_eslint": "pass: zero errors/warnings",
+  "optimized_build": "pass",
+  "visual_comparison": "performance-tuning/visual-comparison.json",
+  "traffic_smoke": "pass: both DPR2 viewports, all nine cards, immediate brake, evolving wave label checks, direct dial/slider, dense/sparse cases, cancellation, reduced motion, blocked storage, topic/reload recovery",
+  "traffic_teaching": "pass: original prediction/correction/transfer, prepared questions, glossary and World restore",
+  "worker_coordination": {
+    "status": "pass",
+    "response_delay_ms": 180,
+    "delayed_real_responses": 5,
+    "auto_interval_ms": 100,
+    "rapid_edits_persist": true,
+    "reset_stays_paused": true
+  },
+  "earlier_stage_suites": "Neural, Rocket and Attention smoke/prepared teaching passed; see regression-results.json",
+  "world_smoke": "pass: all five topics and both sizes, earlier evidence bytes restored",
+  "provider_calls": 0,
+  "performance": "performance-production.json",
+  "balanced_55fps_goal_met": true,
+  "balanced_geometry_budget_met": true,
+  "fresh_png_count": 77,
+  "capture_date": "2026-11-07T06:04:38.274Z",
+  "runtime_screenshot_sizes": [
+    [
+      2880,
+      1800
+    ],
+    [
+      780,
+      1688
+    ]
+  ],
+  "regression_dates": "regression-results.json and world-regression-results.json"
+}

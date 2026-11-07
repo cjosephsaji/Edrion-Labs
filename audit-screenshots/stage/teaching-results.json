@@ -1,0 +1,782 @@
+{
+  "at": "2026-11-07T08:08:51.497Z",
+  "demonstration": {
+    "topic": "neural",
+    "params": {
+      "model": "linear",
+      "weight": 1.1,
+      "x1": 2,
+      "x2": 0.5,
+      "target": 4,
+      "learningRate": 0.1
+    },
+    "observations": {
+      "primary": 1.6199999999999997,
+      "secondary": 2.2,
+      "loss": 1.6199999999999997,
+      "prediction": 2.2,
+      "target": 4,
+      "steps": 1,
+      "x1": 2,
+      "x2": 0.5,
+      "learningRate": 0.1,
+      "model": "linear",
+      "weight": 1.1,
+      "gradient": -3.5999999999999996
+    },
+    "caption": "One actual gradient step changes the weight to 1.10. The prediction is now 2.20, and loss falls from 4.50 to 1.62. We used the error to choose a direction.",
+    "revision": 3,
+    "scene": {
+      "version": 1,
+      "id": "guided-neural",
+      "layout": "flow",
+      "objects": [],
+      "edges": [],
+      "marks": [
+        {
+          "targetId": "weight",
+          "mode": "circle"
+        }
+      ],
+      "annotations": [],
+      "focus": "weight"
+    },
+    "guide": {
+      "started": true,
+      "phase": "DEMONSTRATE",
+      "openingIndex": 2,
+      "beatId": "neural-DEMONSTRATE-0.016666666666666666-155",
+      "answer": "",
+      "transferAnswer": "",
+      "representation": "scene"
+    },
+    "sim": {
+      "version": 1,
+      "id": "neural",
+      "params": {
+        "model": "linear",
+        "weight": 1.1,
+        "x1": 2,
+        "x2": 0.5,
+        "target": 4,
+        "learningRate": 0.1
+      },
+      "time": 0.016666666666666666,
+      "data": {
+        "neural": {
+          "input": [
+            2,
+            0.5
+          ],
+          "target": 4,
+          "w1": [
+            [
+              0.2,
+              -0.1
+            ],
+            [
+              -0.3,
+              0.4
+            ],
+            [
+              0.6,
+              0.1
+            ]
+          ],
+          "b1": [
+            0.05,
+            -0.02,
+            0.01
+          ],
+          "w2": [
+            0.3,
+            -0.25,
+            0.4
+          ],
+          "b2": 0.1,
+          "steps": 1
+        }
+      },
+      "history": [
+        {
+          "t": 0,
+          "a": 4.5,
+          "b": 1
+        },
+        {
+          "t": 0.016666666666666666,
+          "a": 1.6199999999999997,
+          "b": 2.2
+        }
+      ],
+      "running": false
+    },
+    "history": [
+      {
+        "role": "assistant",
+        "text": "Our model wants to predict 4, but right now it predicts 1. Let’s find out why."
+      },
+      {
+        "role": "assistant",
+        "text": "Follow the line: input 2 times weight 0.50 gives 1.00. The target is 4. Our half squared error is 4.50. The weight controls this prediction."
+      },
+      {
+        "role": "assistant",
+        "text": "One actual gradient step changes the weight to 1.10. The prediction is now 2.20, and loss falls from 4.50 to 1.62. We used the error to choose a direction."
+      }
+    ],
+    "evidence": [],
+    "events": [
+      {
+        "at": 1794038851513,
+        "kind": "visual_committed",
+        "before": "dc5bc442",
+        "after": "e3be8348",
+        "detail": "neural-ORIENT-0-78"
+      },
+      {
+        "at": 1794038851951,
+        "kind": "visual_committed",
+        "before": "e3be8348",
+        "after": "9ddd74a0",
+        "detail": "neural-EXPLAIN-0-140"
+      },
+      {
+        "at": 1794038852348,
+        "kind": "visual_committed",
+        "before": "9ddd74a0",
+        "after": "32c181de",
+        "detail": "neural-DEMONSTRATE-0.016666666666666666-155"
+      }
+    ],
+    "presentation": "stage",
+    "stateHash": "32c181de"
+  },
+  "transfer": {
+    "topic": "neural",
+    "params": {
+      "model": "linear",
+      "weight": 0.7,
+      "x1": -2,
+      "x2": 0.5,
+      "target": 4,
+      "learningRate": 0.1
+    },
+    "observations": {
+      "primary": 14.580000000000002,
+      "secondary": -1.4,
+      "loss": 14.580000000000002,
+      "prediction": -1.4,
+      "target": 4,
+      "steps": 1,
+      "x1": -2,
+      "x2": 0.5,
+      "learningRate": 0.1,
+      "model": "linear",
+      "weight": 0.7,
+      "gradient": 10.8
+    },
+    "caption": "You applied the idea to a new case. With a negative input, the larger weight makes the prediction -1.40. It moves farther from positive 4. The direction depends on the input sign. What would you like to investigate next?",
+    "revision": 9,
+    "scene": {
+      "version": 1,
+      "id": "guided-neural",
+      "layout": "flow",
+      "objects": [],
+      "edges": [],
+      "marks": [
+        {
+          "targetId": "weight",
+          "mode": "circle"
+        }
+      ],
+      "annotations": [],
+      "focus": "weight"
+    },
+    "guide": {
+      "started": true,
+      "phase": "EXPLORE",
+      "openingIndex": 3,
+      "beatId": "neural-EXPLORE-0.016666666666666666-220",
+      "answer": "Farther from 4",
+      "transferAnswer": "Farther away",
+      "representation": "scene"
+    },
+    "sim": {
+      "version": 1,
+      "id": "neural",
+      "params": {
+        "model": "linear",
+        "weight": 0.7,
+        "x1": -2,
+        "x2": 0.5,
+        "target": 4,
+        "learningRate": 0.1
+      },
+      "time": 0.016666666666666666,
+      "data": {
+        "neural": {
+          "input": [
+            -2,
+            0.5
+          ],
+          "target": 4,
+          "w1": [
+            [
+              0.2,
+              -0.1
+            ],
+            [
+              -0.3,
+              0.4
+            ],
+            [
+              0.6,
+              0.1
+            ]
+          ],
+          "b1": [
+            0.05,
+            -0.02,
+            0.01
+          ],
+          "w2": [
+            0.3,
+            -0.25,
+            0.4
+          ],
+          "b2": 0.1,
+          "steps": 1
+        }
+      },
+      "history": [
+        {
+          "t": 0,
+          "a": 4.5,
+          "b": 1
+        },
+        {
+          "t": 0.016666666666666666,
+          "a": 1.6199999999999997,
+          "b": 2.2
+        }
+      ],
+      "running": false
+    },
+    "history": [
+      {
+        "role": "assistant",
+        "text": "Our model wants to predict 4, but right now it predicts 1. Let’s find out why."
+      },
+      {
+        "role": "assistant",
+        "text": "Follow the line: input 2 times weight 0.50 gives 1.00. The target is 4. Our half squared error is 4.50. The weight controls this prediction."
+      },
+      {
+        "role": "assistant",
+        "text": "One actual gradient step changes the weight to 1.10. The prediction is now 2.20, and loss falls from 4.50 to 1.62. We used the error to choose a direction."
+      },
+      {
+        "role": "assistant",
+        "text": "If I increase this positive weight a little, will the prediction get closer to 4 or farther away?"
+      },
+      {
+        "role": "user",
+        "text": "Farther from 4"
+      },
+      {
+        "role": "assistant",
+        "text": "Let’s compare your prediction with the measured result. The engine gives 2.60 instead of 2.20; loss changes from 1.62 to 0.98. Multiplying a positive input by a larger weight raises the output. Here it moves toward 4."
+      },
+      {
+        "role": "assistant",
+        "text": "A fresh example: input −2, weight 0.5, target 4. Would increasing the weight to 0.7 move the prediction closer to 4?"
+      },
+      {
+        "role": "user",
+        "text": "Farther away"
+      },
+      {
+        "role": "assistant",
+        "text": "You applied the idea to a new case. With a negative input, the larger weight makes the prediction -1.40. It moves farther from positive 4. The direction depends on the input sign. What would you like to investigate next?"
+      }
+    ],
+    "evidence": [
+      {
+        "question": "If I increase this positive weight a little, will the prediction get closer to 4 or farther away?",
+        "answer": "Farther from 4",
+        "assessment": "wrong",
+        "move": "change_representation",
+        "assistance": 0,
+        "at": 1794038853395
+      },
+      {
+        "question": "A fresh example: input −2, weight 0.5, target 4. Would increasing the weight to 0.7 move the prediction closer to 4?",
+        "answer": "Farther away",
+        "assessment": "correct",
+        "move": "transfer_check",
+        "assistance": 0,
+        "at": 1794038854355
+      }
+    ],
+    "events": [
+      {
+        "at": 1794038851513,
+        "kind": "visual_committed",
+        "before": "dc5bc442",
+        "after": "e3be8348",
+        "detail": "neural-ORIENT-0-78"
+      },
+      {
+        "at": 1794038851951,
+        "kind": "visual_committed",
+        "before": "e3be8348",
+        "after": "9ddd74a0",
+        "detail": "neural-EXPLAIN-0-140"
+      },
+      {
+        "at": 1794038852348,
+        "kind": "visual_committed",
+        "before": "9ddd74a0",
+        "after": "32c181de",
+        "detail": "neural-DEMONSTRATE-0.016666666666666666-155"
+      },
+      {
+        "at": 1794038852601,
+        "kind": "visual_committed",
+        "before": "32c181de",
+        "after": "32c181de",
+        "detail": "neural-PREDICT-0.016666666666666666-97"
+      },
+      {
+        "at": 1794038853395,
+        "kind": "record_answer",
+        "before": "32c181de",
+        "after": "32c181de",
+        "detail": "Farther from 4"
+      },
+      {
+        "at": 1794038853396,
+        "kind": "visual_committed",
+        "before": "32c181de",
+        "after": "cd9ee0e1",
+        "detail": "neural-RETEACH_OR_EXTEND-0.016666666666666666-217"
+      },
+      {
+        "at": 1794038853868,
+        "kind": "visual_committed",
+        "before": "cd9ee0e1",
+        "after": "932732eb",
+        "detail": "neural-TRANSFER_CHECK-0.016666666666666666-116"
+      },
+      {
+        "at": 1794038854355,
+        "kind": "record_answer",
+        "before": "932732eb",
+        "after": "932732eb",
+        "detail": "Farther away"
+      },
+      {
+        "at": 1794038854356,
+        "kind": "visual_committed",
+        "before": "932732eb",
+        "after": "eb93ca7d",
+        "detail": "neural-EXPLORE-0.016666666666666666-220"
+      }
+    ],
+    "presentation": "stage",
+    "stateHash": "eb93ca7d"
+  },
+  "saved": {
+    "topic": "neural",
+    "params": {
+      "model": "linear",
+      "weight": 0.51,
+      "x1": 2,
+      "x2": 0.5,
+      "target": 4,
+      "learningRate": 0.1
+    },
+    "observations": {
+      "primary": 4.4402,
+      "secondary": 1.02,
+      "loss": 4.4402,
+      "prediction": 1.02,
+      "target": 4,
+      "steps": 0,
+      "x1": 2,
+      "x2": 0.5,
+      "learningRate": 0.1,
+      "model": "linear",
+      "weight": 0.51,
+      "gradient": -5.96
+    },
+    "caption": "The prediction is the network’s guess: input × weight. Here 2.00 × 0.51 = 1.02. Its height on the number line is the guess, so higher means a bigger number.",
+    "captionSource": "prepared",
+    "revision": 35,
+    "scene": {
+      "version": 1,
+      "id": "guided-neural",
+      "layout": "flow",
+      "objects": [],
+      "edges": [],
+      "marks": [
+        {
+          "targetId": "weight",
+          "mode": "circle"
+        },
+        {
+          "targetId": "prediction",
+          "mode": "circle"
+        }
+      ],
+      "annotations": [],
+      "focus": "prediction"
+    },
+    "guide": {
+      "started": true,
+      "phase": "EXPLORE",
+      "openingIndex": 3,
+      "beatId": "neural-EXPLORE-0.016666666666666666-220",
+      "answer": "Farther from 4",
+      "transferAnswer": "Farther away",
+      "representation": "scene"
+    },
+    "sim": {
+      "version": 1,
+      "id": "neural",
+      "params": {
+        "model": "linear",
+        "weight": 0.51,
+        "x1": 2,
+        "x2": 0.5,
+        "target": 4,
+        "learningRate": 0.1
+      },
+      "time": 0,
+      "data": {
+        "neural": {
+          "input": [
+            2,
+            0.5
+          ],
+          "target": 4,
+          "w1": [
+            [
+              0.2,
+              -0.1
+            ],
+            [
+              -0.3,
+              0.4
+            ],
+            [
+              0.6,
+              0.1
+            ]
+          ],
+          "b1": [
+            0.05,
+            -0.02,
+            0.01
+          ],
+          "w2": [
+            0.3,
+            -0.25,
+            0.4
+          ],
+          "b2": 0.1,
+          "steps": 0
+        }
+      },
+      "history": [],
+      "running": false
+    },
+    "history": [
+      {
+        "role": "assistant",
+        "text": "Our model wants to predict 4, but right now it predicts 1. Let’s find out why."
+      },
+      {
+        "role": "assistant",
+        "text": "Follow the line: input 2 times weight 0.50 gives 1.00. The target is 4. Our half squared error is 4.50. The weight controls this prediction."
+      },
+      {
+        "role": "assistant",
+        "text": "One actual gradient step changes the weight to 1.10. The prediction is now 2.20, and loss falls from 4.50 to 1.62. We used the error to choose a direction."
+      },
+      {
+        "role": "assistant",
+        "text": "If I increase this positive weight a little, will the prediction get closer to 4 or farther away?"
+      },
+      {
+        "role": "user",
+        "text": "Farther from 4"
+      },
+      {
+        "role": "assistant",
+        "text": "Let’s compare your prediction with the measured result. The engine gives 2.60 instead of 2.20; loss changes from 1.62 to 0.98. Multiplying a positive input by a larger weight raises the output. Here it moves toward 4."
+      },
+      {
+        "role": "assistant",
+        "text": "A fresh example: input −2, weight 0.5, target 4. Would increasing the weight to 0.7 move the prediction closer to 4?"
+      },
+      {
+        "role": "user",
+        "text": "Farther away"
+      },
+      {
+        "role": "assistant",
+        "text": "You applied the idea to a new case. With a negative input, the larger weight makes the prediction -1.40. It moves farther from positive 4. The direction depends on the input sign. What would you like to investigate next?"
+      }
+    ],
+    "evidence": [
+      {
+        "question": "If I increase this positive weight a little, will the prediction get closer to 4 or farther away?",
+        "answer": "Farther from 4",
+        "assessment": "wrong",
+        "move": "change_representation",
+        "assistance": 0,
+        "at": 1794038853395
+      },
+      {
+        "question": "A fresh example: input −2, weight 0.5, target 4. Would increasing the weight to 0.7 move the prediction closer to 4?",
+        "answer": "Farther away",
+        "assessment": "correct",
+        "move": "transfer_check",
+        "assistance": 0,
+        "at": 1794038854355
+      }
+    ],
+    "events": [
+      {
+        "at": 1794038851513,
+        "kind": "visual_committed",
+        "before": "dc5bc442",
+        "after": "e3be8348",
+        "detail": "neural-ORIENT-0-78"
+      },
+      {
+        "at": 1794038851951,
+        "kind": "visual_committed",
+        "before": "e3be8348",
+        "after": "9ddd74a0",
+        "detail": "neural-EXPLAIN-0-140"
+      },
+      {
+        "at": 1794038852348,
+        "kind": "visual_committed",
+        "before": "9ddd74a0",
+        "after": "32c181de",
+        "detail": "neural-DEMONSTRATE-0.016666666666666666-155"
+      },
+      {
+        "at": 1794038852601,
+        "kind": "visual_committed",
+        "before": "32c181de",
+        "after": "32c181de",
+        "detail": "neural-PREDICT-0.016666666666666666-97"
+      },
+      {
+        "at": 1794038853395,
+        "kind": "record_answer",
+        "before": "32c181de",
+        "after": "32c181de",
+        "detail": "Farther from 4"
+      },
+      {
+        "at": 1794038853396,
+        "kind": "visual_committed",
+        "before": "32c181de",
+        "after": "cd9ee0e1",
+        "detail": "neural-RETEACH_OR_EXTEND-0.016666666666666666-217"
+      },
+      {
+        "at": 1794038853868,
+        "kind": "visual_committed",
+        "before": "cd9ee0e1",
+        "after": "932732eb",
+        "detail": "neural-TRANSFER_CHECK-0.016666666666666666-116"
+      },
+      {
+        "at": 1794038854355,
+        "kind": "record_answer",
+        "before": "932732eb",
+        "after": "932732eb",
+        "detail": "Farther away"
+      },
+      {
+        "at": 1794038854356,
+        "kind": "visual_committed",
+        "before": "932732eb",
+        "after": "eb93ca7d",
+        "detail": "neural-EXPLORE-0.016666666666666666-220"
+      },
+      {
+        "at": 1794038854736,
+        "kind": "interruption",
+        "before": "eb93ca7d",
+        "after": "eb93ca7d",
+        "detail": "Cancelled pending narration and model request; preserved committed scene."
+      },
+      {
+        "at": 1794038854990,
+        "kind": "pointer",
+        "before": "eb93ca7d",
+        "after": "eb93ca7d",
+        "detail": "weight"
+      },
+      {
+        "at": 1794038854990,
+        "kind": "stage_explanation",
+        "before": "eb93ca7d",
+        "after": "eb93ca7d",
+        "detail": "weight"
+      },
+      {
+        "at": 1794038855515,
+        "kind": "interruption",
+        "before": "eb93ca7d",
+        "after": "eb93ca7d",
+        "detail": "Cancelled pending narration and model request; preserved committed scene."
+      },
+      {
+        "at": 1794038855599,
+        "kind": "sim_set_params",
+        "before": "eb93ca7d",
+        "after": "3dc4ea24",
+        "detail": "{\"patch\":{\"weight\":0}}"
+      },
+      {
+        "at": 1794038857201,
+        "kind": "sim_set_params",
+        "before": "3dc4ea24",
+        "after": "bd435b3d",
+        "detail": "{\"patch\":{\"weight\":-2}}"
+      },
+      {
+        "at": 1794038857394,
+        "kind": "interruption",
+        "before": "bd435b3d",
+        "after": "bd435b3d",
+        "detail": "Cancelled pending narration and model request; preserved committed scene."
+      },
+      {
+        "at": 1794038857484,
+        "kind": "sim_set_params",
+        "before": "bd435b3d",
+        "after": "3dc4ea24",
+        "detail": "{\"patch\":{\"weight\":0}}"
+      },
+      {
+        "at": 1794038857954,
+        "kind": "interruption",
+        "before": "3dc4ea24",
+        "after": "3dc4ea24",
+        "detail": "Cancelled pending narration and model request; preserved committed scene."
+      },
+      {
+        "at": 1794038867799,
+        "kind": "interruption",
+        "before": "3dc4ea24",
+        "after": "3dc4ea24",
+        "detail": "Cancelled pending narration and model request; preserved committed scene."
+      },
+      {
+        "at": 1794038867968,
+        "kind": "sim_restore",
+        "before": "3dc4ea24",
+        "after": "e3be8348",
+        "detail": "{\"snapshot\":{\"version\":1,\"id\":\"neural\",\"params\":{\"model\":\"linear\",\"weight\":0.5,\"x1\":2,\"x2\":0.5,\"target\":4,\"learningRate\":0.1},\"time\":0,\"data\":{\"neural\":{\"input\":[2,0.5],\"target\":4,\"w1\":[[0.2,-0.1],[-0.3,0.4],[0.6,0.1]],\"b1\":[0.05,-0.02,0.01],\"w2\":[0.3,-0.25,0.4],\"b2\":0.1,\"steps\":0}},\"history\":[],\"running\":false}}"
+      },
+      {
+        "at": 1794038868523,
+        "kind": "pointer",
+        "before": "e3be8348",
+        "after": "577a04fd",
+        "detail": "input-0"
+      },
+      {
+        "at": 1794038868523,
+        "kind": "stage_explanation",
+        "before": "577a04fd",
+        "after": "577a04fd",
+        "detail": "input-0"
+      },
+      {
+        "at": 1794038869038,
+        "kind": "interruption",
+        "before": "577a04fd",
+        "after": "577a04fd",
+        "detail": "Cancelled pending narration and model request; preserved committed scene."
+      },
+      {
+        "at": 1794038871920,
+        "kind": "pointer",
+        "before": "577a04fd",
+        "after": "a42fd303",
+        "detail": "loss"
+      },
+      {
+        "at": 1794038871920,
+        "kind": "stage_explanation",
+        "before": "a42fd303",
+        "after": "a42fd303",
+        "detail": "loss"
+      },
+      {
+        "at": 1794038872510,
+        "kind": "interruption",
+        "before": "a42fd303",
+        "after": "a42fd303",
+        "detail": "Cancelled pending narration and model request; preserved committed scene."
+      },
+      {
+        "at": 1794038873138,
+        "kind": "sim_set_params",
+        "before": "a42fd303",
+        "after": "7c2dd193",
+        "detail": "{\"patch\":{\"weight\":0.51}}"
+      },
+      {
+        "at": 1794038873577,
+        "kind": "interruption",
+        "before": "7c2dd193",
+        "after": "7c2dd193",
+        "detail": "Cancelled pending narration and model request; preserved committed scene."
+      },
+      {
+        "at": 1794038873822,
+        "kind": "pointer",
+        "before": "7c2dd193",
+        "after": "7a5a572a",
+        "detail": "prediction"
+      },
+      {
+        "at": 1794038873822,
+        "kind": "stage_explanation",
+        "before": "7a5a572a",
+        "after": "7a5a572a",
+        "detail": "prediction"
+      }
+    ],
+    "presentation": "stage",
+    "stateHash": "7a5a572a"
+  },
+  "errors": [],
+  "paid": [],
+  "checks": [
+    "guided camera focus",
+    "real demonstration .5→1.1",
+    "wrong-answer correction",
+    "negative transfer",
+    "negative matching-weight demo",
+    "demo cancellation",
+    "reload recovery",
+    "token counting without changing input",
+    "loss Try it slider focus",
+    "glossary inspection",
+    "World route with same session",
+    "Stage route selects Neural after visiting Rocket without losing its saved model"
+  ]
+}

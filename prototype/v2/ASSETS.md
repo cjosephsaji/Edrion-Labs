@@ -23,3 +23,28 @@ R3F/drei, Troika, Zustand, postprocessing, N8AO and glTF Transform use their inc
 `evidence/world-rebuild/assets.json` records actual runtime sizes, geometry counts, compression extensions, texture dimensions/mip levels, bones and animation clips. `*-proxy.glb` are geometry-only overview LODs, with detailed 2K/1K heroes loaded only on arrival. The older `public/atelier/ASSETS.md` remains the provenance for the previous presentation, whose models are preserved but no longer loaded here.
 
 The speech verification uses macOS `say` audio generated only in `/tmp/petros-world-speech` and intercepted by Playwright. No Apple voice recording is shipped. This is a local QA fixture, not provider acceptance evidence.
+
+## Neural Stage (Phase 1)
+
+`stage/NeuralSpecimen.tsx` builds its copper/glass/steel meshes procedurally; no new GLB, image service, sampled sound or paid asset is needed. `stage/Studio.tsx` generates neutral PMREM lighting from Three's bundled RoomEnvironment. The Stage reuses the existing Petros display/Outfit fonts above; `public/stage/fonts/website-mono.woff2` copies the website's JetBrains Mono Latin font (SIL OFL; notice alongside it).
+
+The approved source is archived unchanged at `reference/petros-stage.html`. `public/stage/fonts/{display,ui,mono}.ttf` are self-hosted Fraunces/Geist/Geist Mono used by the reference capture only, with their OFL notices and source in that folder. The Stage's actual website-aligned palette imports `packages/design-tokens/src/tokens.ts`. Fresh captures and measured quality results live at root `audit-screenshots/stage/`; see `STAGE_NOTES.md`.
+
+## Rocket landing Stage
+
+`stage/RocketSpecimen.tsx` creates the lander's rounded pressure vessel, porthole, tanks, nozzle, articulated legs, throttle lever, pad and height/force instruments procedurally. Static lander meshes are merged by four materials. The plume is a local additive shader; its UV is clamped before fractional powers to keep the HDR bloom pass finite. It uses the same fonts, shared website palette, PMREM studio and quality presets as Neural. No installed dependencies or external runtime assets were added. Evidence is at root `audit-screenshots/stage-rocket/`; decisions and measurement limits are in `ROCKET_STAGE_NOTES.md`.
+
+
+## Attention Stage
+
+`stage/AttentionSpecimen.tsx` renders procedural rounded glass word tablets, merged weighted tubes, instanced value-flow dots, a causal-mask marker and a signed four-value context mixer. Words, percentages and vector panels are local canvas print textures using the existing UI font. `stage/StagePlinth.tsx` supplies a reusable procedural pedestal. No new fonts, GLBs, dependencies, network assets or paid services were added. Captures are at root `audit-screenshots/stage-attention/`; see `ATTENTION_STAGE_NOTES.md`.
+
+## Traffic waves Stage
+
+`stage/TrafficSpecimen.tsx` builds a beveled copper-edged ring road, instanced rounded cars and lights, a vertex-colored speed ribbon, glass mean-speed gauge, following-time dial, measured gap bracket and actual-position traces. The road maps the existing 350 m simulation around a 2.48-unit radius. Colors interpolate committed car speeds; they do not simulate motion. `stage/print-texture.ts` creates instrument lettering from the existing local fonts. Balanced uses clear alpha physical glass and a restrained mirror; High uses native transmission. Key shadows fall on the road, with redundant shadow reception disabled on the plinth and mirror. No new packages, runtime downloads or external assets were added. Evidence: root `audit-screenshots/stage-traffic/`; decisions: `TRAFFIC_STAGE_NOTES.md`.
+
+Traffic’s `CappedBloomEffect` uses five blur levels and caps the luminance/blur buffers at the equivalent of 512 px across the full film height. At wide desktop sizes the canvas renders only the hero region, preserving the full-window camera projection and subject pixel scale at DPR2/HalfFloat/4× MSAA. At 1440×900 the canvas is 1140×620 CSS pixels; soft edge masks blend it into the studio. Phones and earlier lessons keep their full canvas. Balanced color SMAA omits an unused depth dependency and skips its MSAA depth resolve; depth testing remains on, with resolved depth restored for High AO. Both use the existing postprocessing integration and require no new assets or packages.
+
+## Time dilation Stage
+
+`stage/RelativitySpecimen.tsx` builds two procedural glass/copper chronometers, merged clock cases and dial ticks, common-scale time markers, a knurled speed dial and an etched light-cone/worldline instrument. Local print textures reuse the existing fonts, with optional rectangular canvas dimensions for wide plaques. No new package, asset download, paid service or external texture was added. Numerical readings and prepared frames use the existing relativity engine; the coordinate instrument calls its existing Lorentz transform. Balanced uses clear inexpensive glass and a faint flipped reflection; High uses transmission. The desktop hero-canvas/bounded-bloom policy is reused from Traffic. Evidence: root `audit-screenshots/stage-relativity/`; decisions: `TIME_DILATION_STAGE_NOTES.md`.

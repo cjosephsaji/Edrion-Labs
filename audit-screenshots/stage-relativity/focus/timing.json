@@ -1,0 +1,92 @@
+[
+  {
+    "frame": 0,
+    "actualWallMs": 515.872000000003,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 1,
+    "actualWallMs": 1059.466625000001,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 2,
+    "actualWallMs": 1640.5741249999992,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 3,
+    "actualWallMs": 2224.731792000006,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 4,
+    "actualWallMs": 2830.450917000009,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 5,
+    "actualWallMs": 3515.1878750000033,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 6,
+    "actualWallMs": 4111.385875000007,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 7,
+    "actualWallMs": 4747.0587499999965,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 8,
+    "actualWallMs": 5415.649707999997,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  },
+  {
+    "frame": 9,
+    "actualWallMs": 6152.330708000009,
+    "earthClock": 0,
+    "shipClock": 0,
+    "beta": 0.8,
+    "frameCoordinates": "earth",
+    "selectedEarthSeconds": 10
+  }
+]

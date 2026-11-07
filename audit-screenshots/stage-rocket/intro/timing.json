@@ -1,0 +1,62 @@
+[
+  {
+    "file": "intro/frame-000.png",
+    "atMs": 941,
+    "flightTime": 0
+  },
+  {
+    "file": "intro/frame-001.png",
+    "atMs": 1867,
+    "flightTime": 0
+  },
+  {
+    "file": "intro/frame-002.png",
+    "atMs": 2963,
+    "flightTime": 0
+  },
+  {
+    "file": "intro/frame-003.png",
+    "atMs": 3807,
+    "flightTime": 0
+  },
+  {
+    "file": "intro/frame-004.png",
+    "atMs": 4645,
+    "flightTime": 0
+  },
+  {
+    "file": "intro/frame-005.png",
+    "atMs": 5344,
+    "flightTime": 0
+  },
+  {
+    "file": "intro/frame-006.png",
+    "atMs": 6054,
+    "flightTime": 0
+  },
+  {
+    "file": "intro/frame-007.png",
+    "atMs": 6645,
+    "flightTime": 0
+  },
+  {
+    "file": "intro/frame-008.png",
+    "atMs": 7376,
+    "flightTime": 0
+  },
+  {
+    "file": "intro/frame-009.png",
+    "atMs": 8118,
+    "flightTime": 0
+  },
+  {
+    "file": "intro/frame-010.png",
+    "atMs": 9502,
+    "flightTime": 0
+  },
+  {
+    "file": "intro/frame-011.png",
+    "atMs": 11046,
+    "flightTime": 0
+  }
+]

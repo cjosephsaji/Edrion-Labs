@@ -1,0 +1,59 @@
+{
+  "at": "2026-11-07T06:14:22.250034+00:00",
+  "checks": {
+    "neural_smoke": {
+      "source": "../stage/results.json",
+      "status": "pass",
+      "run_at": "2026-11-07T06:06:53.750000+00:00",
+      "date_from": "result file modification time",
+      "errors": [],
+      "consoleErrors": [],
+      "paid": []
+    },
+    "neural_teaching": {
+      "source": "../stage/teaching-results.json",
+      "status": "pass",
+      "run_at": "2026-11-07T06:07:13.633Z",
+      "date_from": "report at field",
+      "errors": [],
+      "consoleErrors": [],
+      "paid": []
+    },
+    "rocket_smoke": {
+      "source": "../stage-rocket/smoke-results.json",
+      "status": "pass",
+      "run_at": "2026-11-07T06:09:36.955Z",
+      "date_from": "report at field",
+      "errors": [],
+      "consoleErrors": [],
+      "paid": []
+    },
+    "rocket_teaching": {
+      "source": "../stage-rocket/teaching-results.json",
+      "status": "pass",
+      "run_at": "2026-11-07T06:09:50.559Z",
+      "date_from": "report at field",
+      "errors": [],
+      "consoleErrors": [],
+      "paid": []
+    },
+    "attention_smoke": {
+      "source": "../stage-attention/smoke-results.json",
+      "status": "pass",
+      "run_at": "2026-11-07T06:12:25.453Z",
+      "date_from": "report at field",
+      "errors": [],
+      "consoleErrors": [],
+      "paid": []
+    },
+    "attention_teaching": {
+      "source": "../stage-attention/teaching-results.json",
+      "status": "pass",
+      "run_at": "2026-11-07T06:12:37.664Z",
+      "date_from": "report at field",
+      "errors": [],
+      "consoleErrors": [],
+      "paid": []
+    }
+  }
+}

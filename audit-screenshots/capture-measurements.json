@@ -1,0 +1,126 @@
+{
+  "scope": "Existing Nov 2 production build, not rebuilt; world disabled in this build, source differs. No live API calls.",
+  "date": "2026-11-05T06:25:18.337Z",
+  "build": "jfZCZdvvpPawuFsmrU9K-",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "dpr": 2
+  },
+  "browser": "156.0.8078.80",
+  "errors": [],
+  "shots": [
+    {
+      "topic": "neural",
+      "canvas": 0,
+      "caption": "Follow the line: input 2 times weight 0.50 gives 1.00. The target is 4. Our half squared error is 4.50. The weight controls this prediction."
+    },
+    {
+      "topic": "rocket",
+      "canvas": 0,
+      "caption": "The arrow down is gravity: 14225 newtons. The arrow up is thrust: 14400 newtons. Their difference changes velocity, not position instantly."
+    },
+    {
+      "topic": "attention",
+      "canvas": 0,
+      "caption": "The gold word is our query. Each curved connection carries a computed share of information from a key word. These are toy vectors, with Q equal to K and V; this is not a view inside ChatGPT."
+    },
+    {
+      "topic": "traffic",
+      "canvas": 0,
+      "caption": "Cars travel around this clear, one-lane road. Gold marks our lead car. Each driver reacts to the gap and speed of the car ahead. That reaction can pass a slowdown backward."
+    },
+    {
+      "topic": "relativity",
+      "canvas": 0,
+      "caption": "In Earth’s frame, the ship travels at 0.80 times light speed. Compare a 10 second Earth interval with 6.00 seconds of ship proper time. We assume constant velocity, with no turnaround."
+    }
+  ],
+  "resources": [
+    {
+      "path": "/petros/petros-idle.png",
+      "encoded": 255463,
+      "decoded": 255463,
+      "transfer": 255763
+    },
+    {
+      "path": "/petros/petros-thinking.png",
+      "encoded": 253550,
+      "decoded": 253550,
+      "transfer": 253850
+    },
+    {
+      "path": "/petros/petros-talking.png",
+      "encoded": 253201,
+      "decoded": 253201,
+      "transfer": 253501
+    },
+    {
+      "path": "/petros/petros-listening.png",
+      "encoded": 255698,
+      "decoded": 255698,
+      "transfer": 255998
+    },
+    {
+      "path": "/_next/static/css/ebbbb537824eb07f.css",
+      "encoded": 10313,
+      "decoded": 50522,
+      "transfer": 10613
+    },
+    {
+      "path": "/_next/static/chunks/webpack-22b5c0d7c10baa45.js",
+      "encoded": 2431,
+      "decoded": 4979,
+      "transfer": 2731
+    },
+    {
+      "path": "/_next/static/chunks/main-app-33261918f8f58d83.js",
+      "encoded": 513,
+      "decoded": 513,
+      "transfer": 813
+    },
+    {
+      "path": "/_next/static/chunks/app/prototype/page-e66457ac0d1cadce.js",
+      "encoded": 45108,
+      "decoded": 129069,
+      "transfer": 45408
+    },
+    {
+      "path": "/_next/static/chunks/4bd1b696-c7408084347438ae.js",
+      "encoded": 64057,
+      "decoded": 203721,
+      "transfer": 64357
+    },
+    {
+      "path": "/_next/static/chunks/794-216401842b802bd7.js",
+      "encoded": 67415,
+      "decoded": 242566,
+      "transfer": 67715
+    },
+    {
+      "path": "/prototype/api/status",
+      "encoded": 69,
+      "decoded": 69,
+      "transfer": 369
+    },
+    {
+      "path": "/favicon.svg",
+      "encoded": 247,
+      "decoded": 247,
+      "transfer": 547
+    },
+    {
+      "path": "/_next/static/chunks/757.952dae413e938fc7.js",
+      "encoded": 5511,
+      "decoded": 14943,
+      "transfer": 5811
+    }
+  ],
+  "navigation": [
+    {
+      "domContentLoaded": 56.5,
+      "loadEventEnd": 109.2000000178814,
+      "duration": 109.2000000178814
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "verified_on": "2026-11-06",
+  "unit_tests": {
+    "passed": 158,
+    "files": 12
+  },
+  "typecheck": "pass",
+  "scoped_eslint": "pass: 0 errors, 0 warnings",
+  "production_build": "pass",
+  "rocket_smoke": "pass: two DPR2 viewports, eight focus cards each, actual worker outcomes",
+  "rocket_teaching": "pass: correction, transfer, glossary, cancellation, recovery",
+  "neural_smoke": "pass",
+  "neural_teaching": "pass",
+  "world_smoke": "pass: five topics at desktop and phone DPR2",
+  "provider_calls": 0,
+  "legacy_world_evidence_restored": true,
+  "performance": "performance-production.json",
+  "source_manifest": "source-manifest.json"
+}

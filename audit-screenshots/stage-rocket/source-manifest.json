@@ -1,0 +1,133 @@
+{
+  "generatedAt": "2026-11-06T10:50:48.146091+00:00",
+  "screenshotRunAt": "2026-11-06T08:23:35.784Z",
+  "performanceRunAt": "2026-11-06T10:49:10.534Z",
+  "buildId": "8cHFm6uFyMgWdkGlG0Ww0",
+  "files": [
+    {
+      "path": "app/prototype/page.tsx",
+      "sha256": "168e269be24a892bc8f0c71796ee594415db91049a8169d84a00d1ad6668be25",
+      "modifiedAt": "2026-11-06T07:55:29.720000+00:00"
+    },
+    {
+      "path": "components/LiveTeachingSurface.tsx",
+      "sha256": "5eca0792742e824637d793141cbe0bb0837c338f0cdc935b7b6241477dbe960e",
+      "modifiedAt": "2026-11-06T07:55:29.770000+00:00"
+    },
+    {
+      "path": "core/teaching.ts",
+      "sha256": "f139b7793014f0d7df5f0f5d2722e21384bb96d00c2609e0946a6f731e55a005",
+      "modifiedAt": "2026-11-06T08:18:26.060000+00:00"
+    },
+    {
+      "path": "stage/GlossaryCaption.tsx",
+      "sha256": "e20166bbf13045e288ee5e7326ca73ef93268cbcbae448de993a0910a5e53445",
+      "modifiedAt": "2026-11-06T06:14:00.580000+00:00"
+    },
+    {
+      "path": "stage/NeuralSpecimen.tsx",
+      "sha256": "e7da6026a5f0c298a5acb84474ac4e505554917af2a5051e32e4f60afcd9a230",
+      "modifiedAt": "2026-11-06T06:28:21.550000+00:00"
+    },
+    {
+      "path": "stage/NeuralStage.tsx",
+      "sha256": "43b9941d60859a37c5f5c60d46f74d040debe1fc808aa0b5023fed914a3c8017",
+      "modifiedAt": "2026-11-06T06:14:00.700000+00:00"
+    },
+    {
+      "path": "stage/RocketSpecimen.tsx",
+      "sha256": "bfba144168ae12edba83bdac4af199a3ed966c5be0596c72ce642c6731a75cc1",
+      "modifiedAt": "2026-11-06T08:18:26.030000+00:00"
+    },
+    {
+      "path": "stage/RocketStage.tsx",
+      "sha256": "37eb04c66f2644f46713a03f28974f05afd3bed526e3fa6f29ebf6c4d669c0ca",
+      "modifiedAt": "2026-11-06T07:55:29.550000+00:00"
+    },
+    {
+      "path": "stage/StageCamera.tsx",
+      "sha256": "6c8f0242238b3bdead3b479cd107442f88846724ec3cbf6883bb6acbd03a2b3d",
+      "modifiedAt": "2026-11-06T06:24:36.010000+00:00"
+    },
+    {
+      "path": "stage/StageExperience.tsx",
+      "sha256": "1426456b73b581592143961af5aae28a42a97e89e632c18227852639b89f9e76",
+      "modifiedAt": "2026-11-06T08:18:26+00:00"
+    },
+    {
+      "path": "stage/StageHUD.tsx",
+      "sha256": "d6185ee7b3a08b813e8acd352e3bd70f8841eb130571f6603fc988be9ed04003",
+      "modifiedAt": "2026-11-06T08:18:25.500000+00:00"
+    },
+    {
+      "path": "stage/StageLabels.tsx",
+      "sha256": "0f7eabbee1a21344efe66fe72b5dc032e9f694d0ff3c88869c0909041a74ff36",
+      "modifiedAt": "2026-11-06T08:18:25.960000+00:00"
+    },
+    {
+      "path": "stage/Studio.tsx",
+      "sha256": "cc21431e95ad1a914feb818c942f4ada7216027605b902ca5bb03ee0123b7b5f",
+      "modifiedAt": "2026-11-06T06:36:47.170000+00:00"
+    },
+    {
+      "path": "stage/lesson.ts",
+      "sha256": "29c50d9f00705a5a34a0f190f57d6e39798525a9520e42b5119f6342c9f64552",
+      "modifiedAt": "2026-11-06T08:18:25.500000+00:00"
+    },
+    {
+      "path": "stage/lessons/neural.ts",
+      "sha256": "6cddd18842b16973bec0319c8a7aee1565ebe2a7ddff62ff51cd648090195443",
+      "modifiedAt": "2026-11-06T06:59:38.660000+00:00"
+    },
+    {
+      "path": "stage/lessons/rocket.ts",
+      "sha256": "101d3c8f04e3b9f8b30ebc923f9d39eab14990b7d2cc89f01aa76bf592e2627e",
+      "modifiedAt": "2026-11-06T08:19:06.530000+00:00"
+    },
+    {
+      "path": "stage/logic.ts",
+      "sha256": "477d4c21546c380940b92a952bbdf03424281fc847050f5b0c88e674630dabba",
+      "modifiedAt": "2026-11-06T07:55:29.370000+00:00"
+    },
+    {
+      "path": "stage/navigation.ts",
+      "sha256": "ea3f7d8fdd72e93b1d3cca8c67a1e9d5c8f40efd5b331b6313428a9f182ecfd6",
+      "modifiedAt": "2026-11-06T07:55:29.380000+00:00"
+    },
+    {
+      "path": "stage/palette.ts",
+      "sha256": "947b7238ae599e043e799c8a4cf33f571461e4cacfb660650e452892d0d5f025",
+      "modifiedAt": "2026-11-06T06:28:22.010000+00:00"
+    },
+    {
+      "path": "stage/rocket-logic.ts",
+      "sha256": "24d8118ebe5cd5eef912570c3bb597457fcc276b210e923333ad53761a8e2ea7",
+      "modifiedAt": "2026-11-06T07:55:29.450000+00:00"
+    },
+    {
+      "path": "stage/stage.module.css",
+      "sha256": "84d2f71a0341e0efb9978f32792307b73cdfc19f3aa83d76964a9dd91b26da0e",
+      "modifiedAt": "2026-11-06T08:11:07.680000+00:00"
+    },
+    {
+      "path": "tests/rocket-stage-smoke.mts",
+      "sha256": "45131283aab8cf71caac47f98de7828f3327f7b69453dc0a0578add41e71db67",
+      "modifiedAt": "2026-11-06T08:23:27.600000+00:00"
+    },
+    {
+      "path": "tests/rocket-stage-teaching.mts",
+      "sha256": "b81e8ff1695a67f88cafd7ca8c900a8fba9121dce2fc66426e44078c687522c5",
+      "modifiedAt": "2026-11-06T08:11:07.750000+00:00"
+    },
+    {
+      "path": "tests/rocket-stage.test.ts",
+      "sha256": "1c02b0bc44812de310a462297cf82043242e65b6a2bea65f88a0d72b2c0cbbf6",
+      "modifiedAt": "2026-11-06T08:18:26.080000+00:00"
+    },
+    {
+      "path": "tests/stage-performance.mts",
+      "sha256": "353dcab4dd6b98ccc06e321245ae7866f9c3741987c447d7300f17ce87c93a40",
+      "modifiedAt": "2026-11-06T08:23:27.620000+00:00"
+    }
+  ]
+}

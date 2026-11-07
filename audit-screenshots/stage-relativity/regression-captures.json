@@ -1,0 +1,2100 @@
+{
+  "at": "2026-11-07T08:17:53.539070+00:00",
+  "current_source_manifest": "source-manifest.json",
+  "folders": {
+    "stage": {
+      "fresh_regression_pngs": [
+        {
+          "path": "after-3-steps-1440-dpr2.png",
+          "sha256": "ca3ec4af03a0eee27c2256080ea3ed14faf0ea8827b75199b2ac5545b82bc5d6",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:04:55.660000+00:00"
+        },
+        {
+          "path": "after-3-steps-390-dpr2.png",
+          "sha256": "e42509d6bbadb66d17151b745f12043040f60b0cf836a3eafde3162900a8f846",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:06:31.780000+00:00"
+        },
+        {
+          "path": "motion/focus-00.png",
+          "sha256": "84a610625426a7f8e73649a0765a28b6fe0e5a963fccaacf7bd3c50686db3675",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:07.310000+00:00"
+        },
+        {
+          "path": "motion/focus-01.png",
+          "sha256": "ff2c194ef8841275690375c6ea1bcb4a9ffd5b3735dadad3f2901d94fd6e87be",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:08.700000+00:00"
+        },
+        {
+          "path": "motion/focus-02.png",
+          "sha256": "dc8794914b268d34916330aa3d5cf72eb57fb82453ff3f007651e4966994548e",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:10.400000+00:00"
+        },
+        {
+          "path": "motion/focus-03.png",
+          "sha256": "ce8514f16e566b59c40f22f867b431e897732bd5beb0f8fbd1d0b64472cdaaa2",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:11.610000+00:00"
+        },
+        {
+          "path": "motion/focus-04.png",
+          "sha256": "fa1175ba9b13891cf925061a55eb5fc51ac15d5458b17495fcb4fda58776b699",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:12.920000+00:00"
+        },
+        {
+          "path": "motion/focus-05.png",
+          "sha256": "4d5c9a68fd86aba781162286dec58ac33d721b0564a61e3cd12b61f3871b028f",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:14.470000+00:00"
+        },
+        {
+          "path": "motion/intro-00.png",
+          "sha256": "fec41ee0972c0f67376c7d04d2e3c28da756bba651801ba114f2fae49b1fa4ac",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:05:55.780000+00:00"
+        },
+        {
+          "path": "motion/intro-01.png",
+          "sha256": "460a1ef133832f19d3ad159bd250f22284fcae8893ee5d66d2990dfe7e9827d6",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:05:57.230000+00:00"
+        },
+        {
+          "path": "motion/intro-02.png",
+          "sha256": "c9cddcf0118f0ecdff957f8c25082b6f986893481768c3ce79863dc05b8c0fd5",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:05:58.740000+00:00"
+        },
+        {
+          "path": "motion/intro-03.png",
+          "sha256": "78d579976a6fb6e8fdce8827a466687ae2498cc9e0e2c2a2a91cd9ff809a852b",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:00.290000+00:00"
+        },
+        {
+          "path": "motion/intro-04.png",
+          "sha256": "3bf203d6fef10579ca0e769859bcb4640c48a5a919340a74c01cbfdd84d3908b",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:01.720000+00:00"
+        },
+        {
+          "path": "motion/intro-05.png",
+          "sha256": "1c1cc5a42fb19e41741dffc5802835a51f6e120e1b74ac3e18bca0111ef807fd",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:03.460000+00:00"
+        },
+        {
+          "path": "motion/intro-06.png",
+          "sha256": "0acea89dab102d027531cb238af7b4a8113524289fa22f018c5475214a27cbb0",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:04.460000+00:00"
+        },
+        {
+          "path": "motion/intro-07.png",
+          "sha256": "4e52fc829bcd653a5c765a0246c627e01d3d27546b0f26043f0a3d23161fe16a",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:05.830000+00:00"
+        },
+        {
+          "path": "negative-input-1440-dpr2.png",
+          "sha256": "f27ecf976da60369bd48198e32543f441b862c4c4f655c492fdb5d88c7f50c16",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:05:20.870000+00:00"
+        },
+        {
+          "path": "negative-input-390-dpr2.png",
+          "sha256": "be17a3a46c04788220f275db461afa43a9b59739fc2e4f268f44a465c2fb837d",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:06:50.990000+00:00"
+        },
+        {
+          "path": "overview-1440-dpr2.png",
+          "sha256": "f5d40fd860fa8bd26f59f3aa175d62477f84f38b353fdfa79a09edb2d3f07592",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:04:51.730000+00:00"
+        },
+        {
+          "path": "overview-390-dpr2.png",
+          "sha256": "3b1ec387e8664ed08e69f4313b6c8b0a045feb5b80941ef509d01a1ed21e241d",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:06:30.090000+00:00"
+        },
+        {
+          "path": "phone-layout-390-dpr2.png",
+          "sha256": "cbd859f16c342e7cf519af51aa4d68ff5fd6964b45e297dce716990ead73bb56",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:07:22.210000+00:00"
+        },
+        {
+          "path": "q-input-number-1440-dpr2.png",
+          "sha256": "276b64248d8236c92f36044b541b314d6145f3f2775910566de951ebae9fc2c9",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:05:03.060000+00:00"
+        },
+        {
+          "path": "q-input-number-390-dpr2.png",
+          "sha256": "f6002d300bfa50c00a6d84800e74084506668df0d3808f4872ed2e445e555703",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:06:37.160000+00:00"
+        },
+        {
+          "path": "q-loss-1440-dpr2.png",
+          "sha256": "5ca36076fb8fca6978825fd8f2ae9d7e5cff941e7babe7ee8d80f7532a4d904a",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:05:07.480000+00:00"
+        },
+        {
+          "path": "q-loss-390-dpr2.png",
+          "sha256": "814de41b813964c329e7c2c04e760c61a3d9e4106326452cafd13f162785fb54",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:06:40.180000+00:00"
+        },
+        {
+          "path": "q-weight-1440-dpr2.png",
+          "sha256": "11e639349e980fae5a382b383722969d782f7969cd332ec12af375394959b81b",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:04:59.060000+00:00"
+        },
+        {
+          "path": "q-weight-390-dpr2.png",
+          "sha256": "de485099083b8a94c45767bdbfa3c75ff2e60fd88ac177d5017ed08c43327b88",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:06:33.460000+00:00"
+        },
+        {
+          "path": "solved-1440-dpr2.png",
+          "sha256": "df5992bc3d4b4308efbd77d7907bd3cbb20265d32620e609f7445f5b09082a2d",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:05:16.400000+00:00"
+        },
+        {
+          "path": "solved-390-dpr2.png",
+          "sha256": "5b10b9d6447dde967a127c38dbcc4daf021af48e94c16871c11ee6c4e4b4cbc4",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:06:48.040000+00:00"
+        }
+      ],
+      "previous_source_manifest": "historical previous lesson pass; retained unchanged",
+      "performance": "existing performance report retained; these functional captures are not a new performance measurement"
+    },
+    "stage-rocket": {
+      "fresh_regression_pngs": [
+        {
+          "path": "after-3-steps-1440-dpr2.png",
+          "sha256": "7f698d52b73c49360680eb07b5cefc411d717dd3197b5babbf4b4ebc8b8e99f4",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:09:11.990000+00:00"
+        },
+        {
+          "path": "after-3-steps-390-dpr2.png",
+          "sha256": "7a802c9f5c764c6915ab18f045cea51b522f080577c32dc9b3f0024c1bc88cc8",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:11:25.880000+00:00"
+        },
+        {
+          "path": "braking-1440-dpr2.png",
+          "sha256": "b837c9f43a7032a770864277ea05109be868e458755b0e614712dd7584d36a8e",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:09:47.520000+00:00"
+        },
+        {
+          "path": "braking-390-dpr2.png",
+          "sha256": "0f668c9e6e9bebe60911a59fe0a30cf2784635d187ac06444c2387f9e85466be",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:11:54.950000+00:00"
+        },
+        {
+          "path": "empty-tank-1440-dpr2.png",
+          "sha256": "11ead79a6fa56aba91bf1b9842f43a06360817da6a642456e645edf38209371a",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:09:54.750000+00:00"
+        },
+        {
+          "path": "empty-tank-390-dpr2.png",
+          "sha256": "10f1beb6e0ef0d14c2b4f490ef6301734efd2b2c7f4ab593988231b2a4fe84d7",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:12:00.710000+00:00"
+        },
+        {
+          "path": "focus/frame-000.png",
+          "sha256": "22f2bfb17c5fe73039c17aa2ac8d8f30eb5fbb8486360ddc76198d5bdcf6b4d3",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:14.300000+00:00"
+        },
+        {
+          "path": "focus/frame-001.png",
+          "sha256": "c60812db8d71194fd4b61bac44d43f1e7c4554c6516860589285923e67d64a32",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:15.370000+00:00"
+        },
+        {
+          "path": "focus/frame-002.png",
+          "sha256": "7d62eb24754cace39a0f3428b259fc268274dfab2a8d72597ed6dad9cae9609e",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:16.430000+00:00"
+        },
+        {
+          "path": "focus/frame-003.png",
+          "sha256": "dabe233d486f0deb6b0c813c9ac74b450c45289b4919c9265c648386995f53f9",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:17.420000+00:00"
+        },
+        {
+          "path": "focus/frame-004.png",
+          "sha256": "3cded051129bc57ee68820ffdc9aa774359e9e742d24b3c62a3c93356d4a3368",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:18.560000+00:00"
+        },
+        {
+          "path": "focus/frame-005.png",
+          "sha256": "396ed54119de7c58dd76ae61a6fa24e98208c8ad3e2b1f538cc71f0a8384e32a",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:19.570000+00:00"
+        },
+        {
+          "path": "focus/frame-006.png",
+          "sha256": "85106683661395782274557cad303476b62bf8281f23527cdc844dd1e00a1f50",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:20.670000+00:00"
+        },
+        {
+          "path": "focus/frame-007.png",
+          "sha256": "bb779818834e9e2fd948684e088eebb776b6edb5d8b811b64fe352b10177f2e7",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:21.790000+00:00"
+        },
+        {
+          "path": "focus/frame-008.png",
+          "sha256": "a04200ae592d808f892ae41a70197ca50da99aef3b2766c3d85b9e53068d7f95",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:22.720000+00:00"
+        },
+        {
+          "path": "focus/frame-009.png",
+          "sha256": "4c94ed0cf2b9fa2097b98b475d5212fa3332c303c4d262fbd2d1687761f7ed4e",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:23.780000+00:00"
+        },
+        {
+          "path": "hard-impact-1440-dpr2.png",
+          "sha256": "cc0cdaa4b750efa1ac5aba8c32ee11407ccb18f287d531cdc17eaba6000faa5a",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:12:36.140000+00:00"
+        },
+        {
+          "path": "hard-impact-390-dpr2.png",
+          "sha256": "4736beacd57a7030651a7f68d81d692a6b7888af6866bf74f2267fd81dfcaeaa",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:12:04.460000+00:00"
+        },
+        {
+          "path": "intro/frame-000.png",
+          "sha256": "2cd736c6662497c740810c1c1cbe05dec030f14871d46b466d846ec6af98ffb6",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:02.830000+00:00"
+        },
+        {
+          "path": "intro/frame-001.png",
+          "sha256": "b638eb931651a8437b78706650ef3447ad741a9fdb173472a05362c7f8a5a9f1",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:03.760000+00:00"
+        },
+        {
+          "path": "intro/frame-002.png",
+          "sha256": "ecc300ed517f24a1fa8829c8e6b3c20421e9ea33ad9d4403bd6ddc34952a8b41",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:04.850000+00:00"
+        },
+        {
+          "path": "intro/frame-003.png",
+          "sha256": "cd54ea359dce7d5e9775497b7aa5ded3bade43fd362500469b0ef67fbefb0171",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:05.700000+00:00"
+        },
+        {
+          "path": "intro/frame-004.png",
+          "sha256": "101b142a847887a3d91a0064cabefc2264d4e1cc178cb06bec8574934a889384",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:06.540000+00:00"
+        },
+        {
+          "path": "intro/frame-005.png",
+          "sha256": "fca08169a0ff46f84978c4a9c975a3b8e57be71ed21f4256363710688df9a7f3",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:07.230000+00:00"
+        },
+        {
+          "path": "intro/frame-006.png",
+          "sha256": "02bc504714aea6f75c181417c3c1748c8c5eb41486a936815c260e179c54eb53",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:07.950000+00:00"
+        },
+        {
+          "path": "intro/frame-007.png",
+          "sha256": "45950c3204f4e2cb7f13e87d89fccf87354e32a5432beefb2210faa35012b68f",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:08.530000+00:00"
+        },
+        {
+          "path": "intro/frame-008.png",
+          "sha256": "09e617c155408120b7458e756231c37471aa3b174cb04f220e1672ef2a849a16",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:09.270000+00:00"
+        },
+        {
+          "path": "intro/frame-009.png",
+          "sha256": "0e4cdf1a92cd93d719f8a65ff9ccedcc16f02d5a807732718e15137f24439688",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:10.010000+00:00"
+        },
+        {
+          "path": "intro/frame-010.png",
+          "sha256": "ee64ec6c0af5bac567e25d506b2a8dc4c387c519502f997a5b4535600203b658",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:11.390000+00:00"
+        },
+        {
+          "path": "intro/frame-011.png",
+          "sha256": "114b7e816e699d7d03e2855a3cb44f988e49a9d8b47d934e35aa1b07dba595b9",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:12.940000+00:00"
+        },
+        {
+          "path": "overview-1440-dpr2.png",
+          "sha256": "633852cfa308439ca14ee90ed230ad3f07867143a19b63e5a625a3b74e20b1b4",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:09:09.490000+00:00"
+        },
+        {
+          "path": "overview-390-dpr2.png",
+          "sha256": "84422a6e314c25990765b51b4f6b4355295b3e6444e7ae6663a2fe9c1bc697a0",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:11:23.540000+00:00"
+        },
+        {
+          "path": "prepared-landing/frame-000.png",
+          "sha256": "57248aad8c72afc970d1cbcbbeb1379106df116a3a86796f1ae050e9f4581a22",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:29+00:00"
+        },
+        {
+          "path": "prepared-landing/frame-001.png",
+          "sha256": "b7a21b6dd3fd214abbd5ec254099474c217425289fcf38423bf1dd487e40b3ab",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:30.330000+00:00"
+        },
+        {
+          "path": "prepared-landing/frame-002.png",
+          "sha256": "db5529673589a455c066cc77afd3abf513cdb99cb2b549d126ebf56f26a9b00a",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:31.780000+00:00"
+        },
+        {
+          "path": "prepared-landing/frame-003.png",
+          "sha256": "c20c3aa86d49e664050e385ec7fee288372738c6d61f800856a0ee59b27f7fc3",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:33.570000+00:00"
+        },
+        {
+          "path": "prepared-landing/frame-004.png",
+          "sha256": "62a70b643e509c6538cb281312ec7645b23766913e323d306021c617bef57bfe",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:34.730000+00:00"
+        },
+        {
+          "path": "prepared-landing/frame-005.png",
+          "sha256": "0249ce8b13c1e941f75c6229423a905d30cdf93084374c83399504cc95bcda2b",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:36.050000+00:00"
+        },
+        {
+          "path": "prepared-landing/frame-006.png",
+          "sha256": "fa2a5130e403041bd117c096c434ee9e521a968fda30e0e54b4b81461f07c909",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:37.400000+00:00"
+        },
+        {
+          "path": "prepared-landing/frame-007.png",
+          "sha256": "42f0930be89caede3279ae1410bdaaa796d4d6db8a41e0e47c1104811777cee2",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:38.820000+00:00"
+        },
+        {
+          "path": "prepared-landing/frame-008.png",
+          "sha256": "7e319e21cce1d1a0558a2d878f103610469e3ea138522e0662aa274eb0d6d2cf",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:40.710000+00:00"
+        },
+        {
+          "path": "prepared-landing/frame-009.png",
+          "sha256": "d55ce4b971796cc4936427b7b3ffb3215552c5198f483eca6df65f1536742a11",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:42.150000+00:00"
+        },
+        {
+          "path": "prepared-landing/frame-010.png",
+          "sha256": "205f3d56d8407f51defb176c5fcace83314e6177728a72cb22a8e79f485323ba",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:43.860000+00:00"
+        },
+        {
+          "path": "prepared-landing/frame-011.png",
+          "sha256": "b3b6e8a4483ed54592207e3e27122532e81e6f42318acf347c74defb702bdef2",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:45.150000+00:00"
+        },
+        {
+          "path": "prepared-landing/frame-012.png",
+          "sha256": "d95d4d100ed9d007960e9143959b140cad9f349b0508b13b0caec6c1d5450c6a",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:46.410000+00:00"
+        },
+        {
+          "path": "prepared-landing/frame-013.png",
+          "sha256": "4b195a6defbc4169c0c3d75797b4d6272abe4ec69b71548c4e088ad1d98070d1",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:47.520000+00:00"
+        },
+        {
+          "path": "prepared-landing/frame-014.png",
+          "sha256": "c3918a198a7256f5e9c1a7dba1e1e9d18bc104af91bb0ea7bdd97bd453731612",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:48.700000+00:00"
+        },
+        {
+          "path": "prepared-landing/frame-015.png",
+          "sha256": "14f14e815566c0f6f487e493cfa784f42612db0264ebcd8f4e012f41b8873543",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:49.820000+00:00"
+        },
+        {
+          "path": "r-altitude-1440-dpr2.png",
+          "sha256": "08da76ca7abbe0524c72f6696c558ae42108161f0df9737d59b60c527b6af857",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:09:35.020000+00:00"
+        },
+        {
+          "path": "r-altitude-390-dpr2.png",
+          "sha256": "6e32f1ea5022af317f63be7a0489392e5bf306b628af156c8dabd4635c186881",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:11:45.220000+00:00"
+        },
+        {
+          "path": "r-falling-1440-dpr2.png",
+          "sha256": "96f10084e5b3e72cecb473f9c04b5f971a40ed659a061155f7453f980681beb7",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:09:38.460000+00:00"
+        },
+        {
+          "path": "r-falling-390-dpr2.png",
+          "sha256": "9b00c1e307cf6d8cbf933cc2dbf926705327a080bdd727a95fbcb1c52469cb8a",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:11:48.250000+00:00"
+        },
+        {
+          "path": "r-fuel-1440-dpr2.png",
+          "sha256": "e6671a90cb82ec078d26133710ef8f97d397ae7aa17ac8014fd6534b0982d74e",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:09:22.850000+00:00"
+        },
+        {
+          "path": "r-fuel-390-dpr2.png",
+          "sha256": "422deb4caee5ccbedc9d6627f9f3a827326a5128097d79238cefc79b1b861b2e",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:11:36.580000+00:00"
+        },
+        {
+          "path": "r-gravity-1440-dpr2.png",
+          "sha256": "a770713c5a30de8dc7aac2fc4d399e1ef094b9e63c905895261815b7b5513a18",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:09:31.170000+00:00"
+        },
+        {
+          "path": "r-gravity-390-dpr2.png",
+          "sha256": "f491b568686e28b2a423c550a244659218e0eb45cca3d3b0b281e8533a66055f",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:11:42.270000+00:00"
+        },
+        {
+          "path": "r-landing-1440-dpr2.png",
+          "sha256": "b379401224ce25985d1c2618f9a76d042d2bdfc04dd178a5a91829d1a2bee472",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:09:27.750000+00:00"
+        },
+        {
+          "path": "r-landing-390-dpr2.png",
+          "sha256": "456d2f3920527170f1c02b1a86c52df6f80730c123711ea96843c45068c26317",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:11:39.380000+00:00"
+        },
+        {
+          "path": "r-mass-1440-dpr2.png",
+          "sha256": "abf74a1897f005670c3442cac1de3e22fc336f377e95fece431f364338f90997",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:09:42.360000+00:00"
+        },
+        {
+          "path": "r-mass-390-dpr2.png",
+          "sha256": "e73dcfdf0bf52a60a57a38fe8a22011a3cb8211d2a40b236985f580633a75e7c",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:11:51.360000+00:00"
+        },
+        {
+          "path": "r-thrust-1440-dpr2.png",
+          "sha256": "1dd1e493a25d507461d2ba00901624b315d36ac15eb260674d2b6ec3e19911f0",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:09:14.640000+00:00"
+        },
+        {
+          "path": "r-thrust-390-dpr2.png",
+          "sha256": "219f1ea11acd387ef9450badc0606cb4a5adf914778caa5c15e0f078016fecde",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:11:30.780000+00:00"
+        },
+        {
+          "path": "r-velocity-1440-dpr2.png",
+          "sha256": "7e0977458b4508494c99646773f26730c61b811925ef793c00bf09270229a088",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:09:18.660000+00:00"
+        },
+        {
+          "path": "r-velocity-390-dpr2.png",
+          "sha256": "28f3e304f1746f0cc53bc8dcfc6b8df969ae9c07ece811630673f6a43a9b8266",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:11:33.650000+00:00"
+        },
+        {
+          "path": "soft-landing-1440-dpr2.png",
+          "sha256": "e0c5725801eb07aaf73da4bfed20eb9bcde6ec97738affbac7db4eb8aa3cf351",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:55.170000+00:00"
+        },
+        {
+          "path": "soft-landing-390-dpr2.png",
+          "sha256": "06311109f0c89ed012e45d95d7bc72e0935aa757fc71cf7b1a27163a55b651ef",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:12:19.730000+00:00"
+        },
+        {
+          "path": "soft-landing-focus-1440-dpr2.png",
+          "sha256": "93e86a8953cc16736f14649c8fa6509018c5ae5b1aeb8eb7c407896890ca1426",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:52.640000+00:00"
+        },
+        {
+          "path": "soft-landing-focus-390-dpr2.png",
+          "sha256": "d48412459f727ef8525d75e74ad912e35b26bc72cb7da732f9ab1a7926ee2e15",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:12:18.150000+00:00"
+        }
+      ],
+      "previous_source_manifest": "historical previous lesson pass; retained unchanged",
+      "performance": "existing performance report retained; these functional captures are not a new performance measurement"
+    },
+    "stage-attention": {
+      "fresh_regression_pngs": [
+        {
+          "path": "a-beams-1440-dpr2.png",
+          "sha256": "d35253e9c916adb08d7add57d25731d1307997b90c9e30f42ae424abcf0afb7d",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:05:06.590000+00:00"
+        },
+        {
+          "path": "a-beams-390-dpr2.png",
+          "sha256": "25bf4ac88ae1367e275f15c510b89cbe3ed0e964499cf7f8746fe19d2b3deeb7",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:07:08.590000+00:00"
+        },
+        {
+          "path": "a-chatgpt-1440-dpr2.png",
+          "sha256": "975fa23c995cddb63fc35129b7473874a9c72aa7c72dbc819463bc3363b56c5c",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:05:34.680000+00:00"
+        },
+        {
+          "path": "a-chatgpt-390-dpr2.png",
+          "sha256": "9674ed93e97266a76089b22eee33bdb00b37034d834433db6c2b73f2b8447bd7",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:07:24.780000+00:00"
+        },
+        {
+          "path": "a-context-1440-dpr2.png",
+          "sha256": "f053d58fe3e6a0065b6076b0c7b26b2f496596a11196daf01194f2d1b31095ed",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:05:26.490000+00:00"
+        },
+        {
+          "path": "a-context-390-dpr2.png",
+          "sha256": "496567623f4aad3c5f96bbbd47e28bb7143690feadc164ece212356cf5a48741",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:07:19.380000+00:00"
+        },
+        {
+          "path": "a-mask-1440-dpr2.png",
+          "sha256": "05fce6b7ac707e70c9f5b0a15cbb3751ef024a42ac38925a4c5375db56eecbe9",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:05:16.940000+00:00"
+        },
+        {
+          "path": "a-mask-390-dpr2.png",
+          "sha256": "f47d438977bc4969835edef0466fde691a69df1c882f6fefe413519c14190a8a",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:07:13.970000+00:00"
+        },
+        {
+          "path": "a-qkv-1440-dpr2.png",
+          "sha256": "f4b024841d84b7a60c4ea4ec4a19612e168a2a6c7f417aa23b7e88297c9ed8c4",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:05:22.070000+00:00"
+        },
+        {
+          "path": "a-qkv-390-dpr2.png",
+          "sha256": "3f126f6eabe408272b0eb86b40dcac710b209dee9cf246a105cf598c0fc3c9e1",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:07:16.690000+00:00"
+        },
+        {
+          "path": "a-query-1440-dpr2.png",
+          "sha256": "007ce53c595c68c57fd6169b9caac1357710c3abe5565ade7175a626becebbeb",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:04:57.920000+00:00"
+        },
+        {
+          "path": "a-query-390-dpr2.png",
+          "sha256": "5c1b83766cf053ef5faa77c218ba0d6313b38e281723329a71b8086352c4e723",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:07:03.170000+00:00"
+        },
+        {
+          "path": "a-swap-1440-dpr2.png",
+          "sha256": "85b42dc8e4c6539b058735266aa3d9eede3235c45639b50ad5ebd42b1368d6ad",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:05:30.780000+00:00"
+        },
+        {
+          "path": "a-swap-390-dpr2.png",
+          "sha256": "5ca8f229854c576bfbe27fdd4aac9041384be413965190ab487fea4454a74ba9",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:07:22.080000+00:00"
+        },
+        {
+          "path": "a-token-1440-dpr2.png",
+          "sha256": "465b2ab18d120c6bedceb2d25ca75aacd35aafe5c61ea8d978add912e5657775",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:05:01.800000+00:00"
+        },
+        {
+          "path": "a-token-390-dpr2.png",
+          "sha256": "ba95e59acf09425035c6ea90e7892b58bf9e8271d7d1d1461c9350e2c1a516bf",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:07:05.870000+00:00"
+        },
+        {
+          "path": "a-weights-1440-dpr2.png",
+          "sha256": "bfab44d8c3b537013eb757974290fe223add8c00e9f1ccfb68d2ba8cd995b7c0",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:05:12.660000+00:00"
+        },
+        {
+          "path": "a-weights-390-dpr2.png",
+          "sha256": "1ffc8a54f02b70cb825f81a82e4c110030ccc4e0857e44e0b2d0103309567820",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:07:11.280000+00:00"
+        },
+        {
+          "path": "after-3-query-changes-1440-dpr2.png",
+          "sha256": "822df4e70602f467b02fbee2a0cc4870e59322ea530bcd6f98a8eb28096f9468",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:04:55.130000+00:00"
+        },
+        {
+          "path": "after-3-query-changes-390-dpr2.png",
+          "sha256": "f4f7a02277ecfa2e8562621366f9eaafb664c792e6d6662d86ca5a15573efdf2",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:07:01.670000+00:00"
+        },
+        {
+          "path": "cat-to-dog-1440-dpr2.png",
+          "sha256": "d148182c8bf2770ab9d6b59a0bc980476f6ce78699220e2c7d311cae135badb6",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:05:58.380000+00:00"
+        },
+        {
+          "path": "cat-to-dog-390-dpr2.png",
+          "sha256": "4646421f6c90174ab668fbbe17aa1bebb08ccd28799849ebf2398e82e3ca5d81",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:07:45.560000+00:00"
+        },
+        {
+          "path": "first-word-masked-1440-dpr2.png",
+          "sha256": "891665a8c06719f7a797689238fe15eb3aa386c356aa89d01384c9787715211a",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:05:38.640000+00:00"
+        },
+        {
+          "path": "first-word-masked-390-dpr2.png",
+          "sha256": "d68aa780c072890a9c6ab325f5cc38eb30e72589ac2c63f107e72fdffc6c0b84",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:07:26.530000+00:00"
+        },
+        {
+          "path": "first-word-unmasked-1440-dpr2.png",
+          "sha256": "2078f13bcb9463fb757f0e0b449ccd32e16fd000ba3267c14de8107bb5fad976",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:05:40.310000+00:00"
+        },
+        {
+          "path": "first-word-unmasked-390-dpr2.png",
+          "sha256": "5f294578af073a35735913c1f67377f5bf3af5d583e1052ed3f0e2e277a53489",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:07:27.110000+00:00"
+        },
+        {
+          "path": "focus/frame-000.png",
+          "sha256": "e24bd5ddaa24cab02ec73a17a6d73c917bee135a6d24d4f1ed11f0b8fea81d72",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:24.980000+00:00"
+        },
+        {
+          "path": "focus/frame-001.png",
+          "sha256": "74aa195fd9668317bb0243b6884230beab505179ce8470dea6054c6f113e2654",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:25.810000+00:00"
+        },
+        {
+          "path": "focus/frame-002.png",
+          "sha256": "58be2b7ee1d1bc10bd9ad76f36992f12bf6e9faec05dad9ef7bdd3bc49a68778",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:26.690000+00:00"
+        },
+        {
+          "path": "focus/frame-003.png",
+          "sha256": "4f61c9997dec1d8c480c78f5fabe4b677a026e7323a1bc2da4754f0c69a0bd4d",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:27.650000+00:00"
+        },
+        {
+          "path": "focus/frame-004.png",
+          "sha256": "57ae59eba0183c35875f8a4949847f9ae23dc4e0536eae76a20e8db406580965",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:28.720000+00:00"
+        },
+        {
+          "path": "focus/frame-005.png",
+          "sha256": "772d7f47e6b32b166f72fc0034ff0d88cc373e06cb07d29f4f455ef0dbf1ee96",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:29.780000+00:00"
+        },
+        {
+          "path": "focus/frame-006.png",
+          "sha256": "3e915a015b9d633e190ffddd907a7e048d6556cbfeaaf6bf700b6acaad6bbb9c",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:30.830000+00:00"
+        },
+        {
+          "path": "focus/frame-007.png",
+          "sha256": "7bb641274bae71b333e89898aa7d4a19683c5653165f918df08eae432ffa4647",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:31.940000+00:00"
+        },
+        {
+          "path": "focus/frame-008.png",
+          "sha256": "a3c528ff8b047a2de6185e0eb95585fd2957df0c5222736a04d879e34dd24ac1",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:32.920000+00:00"
+        },
+        {
+          "path": "focus/frame-009.png",
+          "sha256": "3ba7c0c657659cccf544cd28407e013eabb3fe9181290018cf4c966ec71fb9bb",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:33.980000+00:00"
+        },
+        {
+          "path": "intro/frame-000.png",
+          "sha256": "83cc6cd8228660bc4519a47ef65b3b02b61bf6a48a11f16d9a256b2f795dad99",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:12.710000+00:00"
+        },
+        {
+          "path": "intro/frame-001.png",
+          "sha256": "2595a3d904ed699aab393004051c60da7d6d7e285367fbb5b0e28094bc1e8102",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:13.620000+00:00"
+        },
+        {
+          "path": "intro/frame-002.png",
+          "sha256": "d1613c55a1b97cd32e16d2a081173f1f311ea90ffff59589a0452079b4b0261f",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:14.530000+00:00"
+        },
+        {
+          "path": "intro/frame-003.png",
+          "sha256": "53b3a7b8403ee3fe74f805c3d507e965eb847c0929ed84df66e2feec8e9ef6a5",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:15.630000+00:00"
+        },
+        {
+          "path": "intro/frame-004.png",
+          "sha256": "08b0f3aa66df6cce482363c77b66ef706ee1adaecb32b6817b9f05b83ad6b2c9",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:16.640000+00:00"
+        },
+        {
+          "path": "intro/frame-005.png",
+          "sha256": "cde492df99510eca2902322b8fa53d8152ad38bdda890346e57caa251c5f2943",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:18.060000+00:00"
+        },
+        {
+          "path": "intro/frame-006.png",
+          "sha256": "405ce537e475e3120dbbc1fe71e5e3f73d9f347b5bbd40066b2f98c4b16fe574",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:19.170000+00:00"
+        },
+        {
+          "path": "intro/frame-007.png",
+          "sha256": "d97e033a5ccb896c9a3d57a9b06dd5fb39651ba65da932d8618e172cb02aceb3",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:20.260000+00:00"
+        },
+        {
+          "path": "intro/frame-008.png",
+          "sha256": "4ecc921bc31a8a6d1b425ae2c3874587ad05f0bff20aef53bc298c56d1036a3f",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:21.240000+00:00"
+        },
+        {
+          "path": "intro/frame-009.png",
+          "sha256": "01ab688432286107f7e50321a31cf7b2b6dcbe0c2600242330967335d810a72a",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:22.280000+00:00"
+        },
+        {
+          "path": "intro/frame-010.png",
+          "sha256": "86af7d039872212dcd6974f61903e9d59bc8b950f03477c5d7fa3b53d8798b60",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:23.370000+00:00"
+        },
+        {
+          "path": "intro/frame-011.png",
+          "sha256": "aa26757ec0be9e7a0efeee61e01f29077eb72db79002ac2055a0ce366554937d",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:24.200000+00:00"
+        },
+        {
+          "path": "overview-1440-dpr2.png",
+          "sha256": "01af88b95727da5214cc29a228c315ccc4fe385c7ec19b28e7b641c023c73055",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:04:51.950000+00:00"
+        },
+        {
+          "path": "overview-390-dpr2.png",
+          "sha256": "8ada1fd3b53fa8567870e1d56630d06f1248195235569a2fd5f0a4862ed342bf",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:07:00.930000+00:00"
+        },
+        {
+          "path": "signed-context-1440-dpr2.png",
+          "sha256": "9694fbaf81189ca825f2a5e1a4a66f1225d9be768455a495eca3a04827181170",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:02.330000+00:00"
+        },
+        {
+          "path": "signed-context-390-dpr2.png",
+          "sha256": "bdf646507bbd6f0c9fef87504f9032df70267b6f3376ae39ef2a92d24c94a602",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:07:49.030000+00:00"
+        },
+        {
+          "path": "single-token-1440-dpr2.png",
+          "sha256": "1a03fb52ab46204ca1b6cd2e97737cbeb4e003545a55a1d708fd62e6bbeaff67",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:10.100000+00:00"
+        },
+        {
+          "path": "single-token-390-dpr2.png",
+          "sha256": "a5933d051389c648bf695fa894e2798814be6d05af7fbf2bb143d47acdfc9c34",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:07:56.190000+00:00"
+        },
+        {
+          "path": "twelve-tokens-1440-dpr2.png",
+          "sha256": "92327064facdc57f362284541f7290878a5e1bc493d3155144e6a9ef21d31a49",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:06:06.760000+00:00"
+        },
+        {
+          "path": "twelve-tokens-390-dpr2.png",
+          "sha256": "be5375d38e6f6242e8185e824e83d39627ba59e03b58228f2e221b41dd2a4093",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:07:53.590000+00:00"
+        }
+      ],
+      "previous_source_manifest": "historical previous lesson pass; retained unchanged",
+      "performance": "existing performance report retained; these functional captures are not a new performance measurement"
+    },
+    "stage-traffic": {
+      "fresh_regression_pngs": [
+        {
+          "path": "braked-wave-1440-dpr2.png",
+          "sha256": "9ddfcc02adca85e487ba2576cff7869a13196d87f4ebe1a066a1ab91160a0440",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:19.830000+00:00"
+        },
+        {
+          "path": "braked-wave-390-dpr2.png",
+          "sha256": "ac72c1ee8342a8f3a0ae0a33b04e0d27d6e746512cea1de9f6c3d60af95d9274",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:12:36.050000+00:00"
+        },
+        {
+          "path": "dense-wave-1440-dpr2.png",
+          "sha256": "2cb734e00e8adb04be85d1b15c116f84516aa16de8caf5e936e70e7d87ea1015",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:07.710000+00:00"
+        },
+        {
+          "path": "dense-wave-390-dpr2.png",
+          "sha256": "b4dcb91ec25e54e60732987ccccda7a2c7b238db45748a6ca6d1f29cb32da20e",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:13:07.860000+00:00"
+        },
+        {
+          "path": "five-cars-no-front-1440-dpr2.png",
+          "sha256": "70de84e8f0e0005d400ff0936884c46db74f91659418409f2fbc6b8c6e06e750",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:11.030000+00:00"
+        },
+        {
+          "path": "five-cars-no-front-390-dpr2.png",
+          "sha256": "42b095959205ab008447444fde504c4d7a60eb9325de7b3902ea39ccb3393fdb",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:13:10.120000+00:00"
+        },
+        {
+          "path": "focus/frame-000.png",
+          "sha256": "ef4baa889e9eb204b5a89b5085a9a48a89af5d6dc97b0fcacb9ea0ec41d71595",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:36.520000+00:00"
+        },
+        {
+          "path": "focus/frame-001.png",
+          "sha256": "5b6a3306d1ef32dc54091929e15a399d1d6d1f4e9c718d0cc912d43d906f91f6",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:37.190000+00:00"
+        },
+        {
+          "path": "focus/frame-002.png",
+          "sha256": "22c602a8e93887499efe2f847a7e58fbee345b73329750d0a2352420706c27ea",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:38.040000+00:00"
+        },
+        {
+          "path": "focus/frame-003.png",
+          "sha256": "890851b6024c71810100181ac93431b95f2a464b28c675b5c8af4705541a59fa",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:38.910000+00:00"
+        },
+        {
+          "path": "focus/frame-004.png",
+          "sha256": "0135181e5159ec41e03086cae29945a04b98eacba4b1d7145b8b3d8325481df4",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:39.730000+00:00"
+        },
+        {
+          "path": "focus/frame-005.png",
+          "sha256": "c0edca7b2f310462c264041cd538fef57b207829397e215154b633625263fd17",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:40.520000+00:00"
+        },
+        {
+          "path": "focus/frame-006.png",
+          "sha256": "a962a09d392c09b80798446ff5b9977574a650cb829dc1136186e8cff4106f53",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:41.330000+00:00"
+        },
+        {
+          "path": "focus/frame-007.png",
+          "sha256": "d6b7a217c837b0b71fca0428b3f2bc82e63d32776191a04be091621756ca60a2",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:42.140000+00:00"
+        },
+        {
+          "path": "focus/frame-008.png",
+          "sha256": "370f9c7ddfebd2c6a950d5f26e02cbbd656bc51c289e0a1e247563ad4e537936",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:42.910000+00:00"
+        },
+        {
+          "path": "focus/frame-009.png",
+          "sha256": "d6181f1e9fd281a88e6c3b6bf7a8fdb7c5ff3f2692b3a0382490b601fa31caaa",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:43.850000+00:00"
+        },
+        {
+          "path": "forty-five-cars-1440-dpr2.png",
+          "sha256": "9406b38b8f6bb114265d7fd26a6f3205fbbb6b31be1eb263fb5404124fa68677",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:03.470000+00:00"
+        },
+        {
+          "path": "forty-five-cars-390-dpr2.png",
+          "sha256": "58a914437761505433a6af42b390041f5aecb5c7d4ddf84c47eb78be9f33df91",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:13:06.430000+00:00"
+        },
+        {
+          "path": "immediate-brake-1440-dpr2.png",
+          "sha256": "e4ef90c6fef575f74086fedc95a0c9814a1f37cfc1e74bce8a68824719aae34d",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:14.590000+00:00"
+        },
+        {
+          "path": "immediate-brake-390-dpr2.png",
+          "sha256": "68b84fb8b69f41e70d08c4177422f571b1bf6b95b99326c06e9eb496323802e0",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:12:30.120000+00:00"
+        },
+        {
+          "path": "intro/frame-000.png",
+          "sha256": "3bea55197efb50b691da293ac2ca0d2e690521c88869e12f7bea1941dbafb65c",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:24.780000+00:00"
+        },
+        {
+          "path": "intro/frame-001.png",
+          "sha256": "cb0d43ece02818ae6e720d23182a8d2206442f7dbe7273512b8eff2e60efb1b6",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:28.700000+00:00"
+        },
+        {
+          "path": "intro/frame-002.png",
+          "sha256": "4fa453570b1ab9b593236acca389f83e9634871aac78d20519287d9189b099d5",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:29.330000+00:00"
+        },
+        {
+          "path": "intro/frame-003.png",
+          "sha256": "1ef7a20d9ea56ac7740d17fe2ec91b289d54e5acf106bef0d681bcf05ebc4a1d",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:29.850000+00:00"
+        },
+        {
+          "path": "intro/frame-004.png",
+          "sha256": "caec6972d20323613f03f6dfbe0bede2aea9fcb3e7bfadf85a85fd5346869b06",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:30.440000+00:00"
+        },
+        {
+          "path": "intro/frame-005.png",
+          "sha256": "a676e53a4363c259ce7f203da245679397dabb3c709603eb6c7bf24791f06690",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:31.270000+00:00"
+        },
+        {
+          "path": "intro/frame-006.png",
+          "sha256": "113b49a901810a1d5d4d5ca53509b7fa82f26ec516d06841b34a9cfe251e08eb",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:31.870000+00:00"
+        },
+        {
+          "path": "intro/frame-007.png",
+          "sha256": "6864712df06e8f84597a3ef57eea7de1676cc4d4a115ee5fdf0a155a9e7bb958",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:32.450000+00:00"
+        },
+        {
+          "path": "intro/frame-008.png",
+          "sha256": "a6db01253aa37de19d285e6da4d9382a6f58d28602e271cabf7079d5abe8e4ef",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:33.250000+00:00"
+        },
+        {
+          "path": "intro/frame-009.png",
+          "sha256": "958c850e96260a11505ad80049446072b2498fc1da02afca2cc2801f134001b3",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:33.840000+00:00"
+        },
+        {
+          "path": "intro/frame-010.png",
+          "sha256": "1d4ba2cb9386e6556a760f85f8c50a130e7dd2672f6d613876e2c2adf59f751f",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:34.570000+00:00"
+        },
+        {
+          "path": "intro/frame-011.png",
+          "sha256": "5564976a56900fb75061230ade0a470b84b3779fc356fe4df22c00e14a62c3fb",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:35.330000+00:00"
+        },
+        {
+          "path": "more-following-time-1440-dpr2.png",
+          "sha256": "aa0000a642737670e657cb893d3c0424e75de9be8c1e5d5c3d1d0d3f4a8f0f46",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:17.700000+00:00"
+        },
+        {
+          "path": "more-following-time-390-dpr2.png",
+          "sha256": "bfcdea07db7d666cf8cace90ac80dd3e1ce42109247fb82c1d22ad515c4e6cb7",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:13:15.450000+00:00"
+        },
+        {
+          "path": "overview-1440-dpr2.png",
+          "sha256": "ca5bf01b112a404bec36052a3d17a108bba4c795dc46ce9caf79a779732e4913",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:13.110000+00:00"
+        },
+        {
+          "path": "overview-390-dpr2.png",
+          "sha256": "2b3d0d23689d89b38f5bbd8fca1221a90eb734834aa8692af7f112c6f2e452a4",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:12:29.510000+00:00"
+        },
+        {
+          "path": "prepared-wave-final-1440-dpr2.png",
+          "sha256": "8714991247cec3a98674dadaa9a1584000c6528bf47a5d27874b267d2a721543",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:12:08.570000+00:00"
+        },
+        {
+          "path": "quality-high-1440-dpr2.png",
+          "sha256": "947582488bc5fa837be7d9bc3c8c9d316fb6d00d612a53d332cf95389fb88c74",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:12:21.940000+00:00"
+        },
+        {
+          "path": "quality-low-1440-dpr2.png",
+          "sha256": "ceccc6a69f90d5682a883899d6a3a7d30c20514c023aa6f58b61f757a872d1ec",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:12:23.500000+00:00"
+        },
+        {
+          "path": "t-brake-1440-dpr2.png",
+          "sha256": "4a454a18e25a9f6183fa537d38fd6e95e580021c64867ba5cb2e9775896983e5",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:26.040000+00:00"
+        },
+        {
+          "path": "t-brake-390-dpr2.png",
+          "sha256": "9115905b81ae22e2cb5903d92b56d87e06314ee7e719301a444d328659895138",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:12:40.430000+00:00"
+        },
+        {
+          "path": "t-cars-1440-dpr2.png",
+          "sha256": "6dd9f69236d2e0243e0023758b8a21a3ce21b94634af04954b3194e7e944f7f7",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:22.230000+00:00"
+        },
+        {
+          "path": "t-cars-390-dpr2.png",
+          "sha256": "55f71471bc3aa7332f1acd9cf8f76b6429e53eef1c5b1a2f80e273bf8286c0ca",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:12:37.680000+00:00"
+        },
+        {
+          "path": "t-density-1440-dpr2.png",
+          "sha256": "27dac676f03fb7840cc4f4494c6a5217b3c775183a1ac328db1dd307c715b4f1",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:48.010000+00:00"
+        },
+        {
+          "path": "t-density-390-dpr2.png",
+          "sha256": "7578854726235c664cb9b5da64afda9f01d01b6aec23d7eaa3eea7f67f83e388",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:12:58.560000+00:00"
+        },
+        {
+          "path": "t-gap-1440-dpr2.png",
+          "sha256": "033e0478312f97e7c00027ed750f695af983fcd29aa43cca75d4a29e27718366",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:41.330000+00:00"
+        },
+        {
+          "path": "t-gap-390-dpr2.png",
+          "sha256": "e2cc443b3a3d884d3e2c44bc40ac41de110de78d4f771e9ffadaa1857ce7605b",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:12:52.170000+00:00"
+        },
+        {
+          "path": "t-headway-1440-dpr2.png",
+          "sha256": "0459a8e9ffed12702312e81ec14abeccdbbe17240ad635d2db0780eb0ac5897b",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:44.870000+00:00"
+        },
+        {
+          "path": "t-headway-390-dpr2.png",
+          "sha256": "70ec0960d8e41d16adc874e999ea539ad85de965665818a8357b28c6e0c63d1e",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:12:55.320000+00:00"
+        },
+        {
+          "path": "t-identity-1440-dpr2.png",
+          "sha256": "9aa7398b8fa1f9cddf7ff3bad97c1b3b598c4a3186c16cc3fa72686df6b8d4e5",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:51.360000+00:00"
+        },
+        {
+          "path": "t-identity-390-dpr2.png",
+          "sha256": "108c6514a19aac39dd6851692924bf82cc5c33ce240f95459175375849848492",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:13:01.390000+00:00"
+        },
+        {
+          "path": "t-ribbon-1440-dpr2.png",
+          "sha256": "d0673c6d04ae84d0a6e5c5412513da8db4d6fc52bd541342722481b3c80810f5",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:33.930000+00:00"
+        },
+        {
+          "path": "t-ribbon-390-dpr2.png",
+          "sha256": "b4d639a8882d328a0ceaad07f02ab1c20cbb292d9d1c3a396f218c777cd96289",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:12:46.290000+00:00"
+        },
+        {
+          "path": "t-speed-1440-dpr2.png",
+          "sha256": "865be8a4044596c7183eac87f2860dd77ef6a2b460317ac4022f796d2aa87d98",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:37.600000+00:00"
+        },
+        {
+          "path": "t-speed-390-dpr2.png",
+          "sha256": "942f16f5ab8256eb1aacfe1527d699b646c6081cac1623606c207307f0bbe097",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:12:49.010000+00:00"
+        },
+        {
+          "path": "t-wave-1440-dpr2.png",
+          "sha256": "2dfc67d30b1ce64775cda935c50c62d5b22563edf0bc7fce67e2c55513693bfc",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:10:30.260000+00:00"
+        },
+        {
+          "path": "t-wave-390-dpr2.png",
+          "sha256": "7365172eca55bcdbefc720ba11ffb4205840abfdac447d23b846167b66cdb51a",
+          "size": [
+            780,
+            1688
+          ],
+          "captured_at": "2026-11-07T08:12:43.220000+00:00"
+        },
+        {
+          "path": "wave/frame-000.png",
+          "sha256": "c519299bb129406954be991d589d6ffa53c9f32beaee322ca56a9f7b537a433f",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:47.110000+00:00"
+        },
+        {
+          "path": "wave/frame-001.png",
+          "sha256": "5f537bae3340f40876438b56aac82091df2d09f8016c1752d4b384aced0ffafe",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:48.200000+00:00"
+        },
+        {
+          "path": "wave/frame-002.png",
+          "sha256": "5a537054e7a6072229f5dc8a9eb28956b9e84162f16a922e9542e8f7a0d0260a",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:49.140000+00:00"
+        },
+        {
+          "path": "wave/frame-003.png",
+          "sha256": "48c2d7a9118d48727eeaea608408156596d7941bb5e8d53f036b44254db0c3b1",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:50.280000+00:00"
+        },
+        {
+          "path": "wave/frame-004.png",
+          "sha256": "569143061193c2bbf8142b3ff7d4896e34aeb41b8ac72836c5e91a719794e2ce",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:51.560000+00:00"
+        },
+        {
+          "path": "wave/frame-005.png",
+          "sha256": "ef6af80c0086126af02d41329e3d3343b9ad6a867dd065b630dc234be5490005",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:52.500000+00:00"
+        },
+        {
+          "path": "wave/frame-006.png",
+          "sha256": "b32768f873553536eff75f32394adf2a9a5ea02e49596d668405acfa91c80276",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:53.510000+00:00"
+        },
+        {
+          "path": "wave/frame-007.png",
+          "sha256": "2fb0b8734f92ef63d1a5047fe30a9e300cbd3cbda403da71f9b9811fc9a613d4",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:54.790000+00:00"
+        },
+        {
+          "path": "wave/frame-008.png",
+          "sha256": "1c9138af7da55fe8fe4ec877579fcf3cdbe3a5bdf6d38e7a8c629f4be2ea3737",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:55.690000+00:00"
+        },
+        {
+          "path": "wave/frame-009.png",
+          "sha256": "99978149bdf46bbc438f5ec04a50e27d45d4026d62cdd71dbdb2b570ab84c1eb",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:56.920000+00:00"
+        },
+        {
+          "path": "wave/frame-010.png",
+          "sha256": "4f59ba4250097153c5cc6bc0ac397ea47b76593a1fe6b2d555e4589fe1bbf4e7",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:58.010000+00:00"
+        },
+        {
+          "path": "wave/frame-011.png",
+          "sha256": "55240d87e3731617262f16b6cf93f94c572f214c40739460b43672b3fa94e0d2",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:58.950000+00:00"
+        },
+        {
+          "path": "wave/frame-012.png",
+          "sha256": "a1910d70797401ec0580be63a5b675490538be1b1f34853b13d8f25f5114fb8a",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:11:59.960000+00:00"
+        },
+        {
+          "path": "wave/frame-013.png",
+          "sha256": "d6adc8ae4b30bfc90635e40e3751fd282fe8384da674a0fa600bce70f3d1cf60",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:12:01.020000+00:00"
+        },
+        {
+          "path": "wave/frame-014.png",
+          "sha256": "eae3cb7233f8cfc157e1fe3c25fdf40e1cbce01e0a7ff39a10d22b00c5d2a4e9",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:12:02.810000+00:00"
+        },
+        {
+          "path": "wave/frame-015.png",
+          "sha256": "ab8a7f3ce32965af689d26e881545c25910447e46a4788f86810e758ed63d086",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:12:03.910000+00:00"
+        },
+        {
+          "path": "wave/frame-016.png",
+          "sha256": "9b958af9386ffc3e97cea7a871b3a063e3255938ea51f431ed5d06076b7c42b1",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:12:04.870000+00:00"
+        },
+        {
+          "path": "wave/frame-017.png",
+          "sha256": "ec071cc66a08e935e9cc690451a681a7b4209760dbead8caedcfdee787306e0a",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:12:05.680000+00:00"
+        },
+        {
+          "path": "wave/frame-018.png",
+          "sha256": "e6ed398001f822e1fe4ad049dc5d661fd440452594cd683bd760f528295c174f",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:12:06.560000+00:00"
+        },
+        {
+          "path": "wave/frame-019.png",
+          "sha256": "175d8dbbb383c15ceabd917a1ac09a3aebb22644815a855190ec727e8ba06d2b",
+          "size": [
+            2880,
+            1800
+          ],
+          "captured_at": "2026-11-07T08:12:07.430000+00:00"
+        }
+      ],
+      "previous_source_manifest": "historical previous lesson pass; retained unchanged",
+      "performance": "existing performance report retained; these functional captures are not a new performance measurement"
+    }
+  }
+}

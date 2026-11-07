@@ -150,3 +150,104 @@ These are test prompts and expected behaviors, not a claim that each has passed 
 ## 7. Pick the final clip
 
 Use a take that clearly contains one incorrect prediction, a model-grounded correction, a fresh transfer answer, one real what-if mutation, and a clean interruption. Leave enough time to see the changed numbers. Preserve natural errors you want to report in the QA take; avoid describing an unsuccessful API interaction as a successful live demonstration.
+
+## Neural Stage — Phase 1 (6 November 2026)
+
+Open `http://127.0.0.1:3022/prototype?view=stage` for the new website-themed studio. Original World remains at `?view=world`. This was the initial Neural phase. Rocket is now available through its pill or the route below; restored tanh models still use World. The Stage route without a lesson selects Neural without clearing other topic sessions.
+
+For a short clip: click the Neural learning pill to replay assembly; inspect “What is a weight?” and use Try it; return to overview; Reset; Train one step three times; Auto-train to convergence. “Lesson & settings” retains the prepared guided lesson, prediction choices and negative transfer. Story units are on by default; the negative example is labeled abstract numbers. Read aloud uses the existing optional device narration while live AI is paused. No provider call is needed.
+
+Regenerate DPR2 stills and the intro/focus frame sequences with `npm run capture:stage` from `prototype/v2`. Build first and run `npm run test:stage:performance` for optimized local GPU measurements. Detailed decisions and verification limits are in `STAGE_NOTES.md`.
+
+## Rocket landing Stage — Lesson 02 (6 November 2026)
+
+Open `http://127.0.0.1:3022/prototype?view=stage&lesson=rocket`. Neural and Rocket now share the website-themed Stage; the other three lessons remain in World. The lesson pill replays the assembly, while switching pills preserves each lesson's state.
+
+For a 20–30 second clip: Reset; replay assembly; set Throttle to 80%; Step ½ s. The craft is descending (negative velocity) while upward acceleration slows it. Inspect “Falling with the engine on?” or “What does thrust do?”, then return to the whole thing. Inspect “How do I land gently?” and choose Try it: the existing prepared burn plays over eight seconds, labelled accelerated playback, and touches down at about 1.2 m/s. After contact the HUD shows recorded contact velocity, not ongoing motion.
+
+For a failure comparison, inspect “What if fuel runs out?”, Try it, Escape, then Run flight. It has zero thrust even at 100% throttle and ends in a hard impact. Reset before the next recording. Manual controls, inspection, Escape, backgrounding and topic changes cancel a pending prepared replay.
+
+The accessible throttle slider and the 3D lever stay synchronized. Run flight accepts throttle changes while running. “Lesson & settings” retains the original prepared lesson, full caption transcript, prediction and doubled-mass transfer. Captions have glossary links; Read aloud uses the existing optional local narration when live AI is paused. The safe flight is a prepared demonstration, not a general autopilot.
+
+From `prototype/v2`:
+
+```sh
+npm run dev
+npm run test:stage:rocket
+npm run capture:stage:rocket
+npm run build
+npm run test:stage:rocket:performance
+```
+
+Evidence: root `audit-screenshots/stage-rocket/`, including DPR2 stills at 1440×900 and 390×844, intro/focus/landing PNG frame sequences with actual timing JSON, browser results and optimized GPU samples. Regeneration requires an installed Chromium browser; override `PETROS_BROWSER` if needed. The performance runner starts an isolated production server on 3024 with ephemeral local test authentication and no provider key. See `ROCKET_STAGE_NOTES.md` for exact limits and results.
+
+
+## Attention Stage — Lesson 03
+
+Open `http://127.0.0.1:3022/prototype?view=stage&lesson=attention`. The first three lesson pills now work on Stage, with independent saved state.
+
+For a short clip: Reset; click the Attention pill to replay assembly. Select query 1 · the: only its own share survives. Turn Causal mask off so later words contribute; turn it back on. Select 5 · ball to see the full mixture. Inspect “What do the beams mean?” and “What is the context?”; Try it changes the query while the actual context updates. Inspect “What if cat becomes dog?” and Try it for the prepared comparison. It resets the default sentence, changes only cat to dog and recomputes the engine output. Escape cancels a pending demonstration.
+
+Scan sentence cycles the selected query without inventing training or changing simulation time. Click a 3D tablet to select and inspect that word. Lesson & settings retains the original guided prediction/correction, second-query transfer, Q/K/V explanation, full-caption glossary and sentence editor. The toy uses deterministic four-number vectors and Q = K = V; present it as a teaching calculation, not language understanding or real ChatGPT internals.
+
+From `prototype/v2`:
+
+```sh
+npm run dev
+npm run test:stage:attention
+npm run capture:stage:attention
+npm run build
+npm run test:stage:attention:performance
+```
+
+DPR2 stills at 1440×900 and 390×844, intro/focus PNG frames, browser results and production GPU samples live at root `audit-screenshots/stage-attention/`. The phone viewport uses Low; physical-device coverage and final measurements are listed in `ATTENTION_STAGE_NOTES.md`. Existing Neural/Rocket evidence is preserved.
+
+## Traffic waves Stage — Lesson 04
+
+Open `http://127.0.0.1:3022/prototype?view=stage&lesson=traffic`. The fourth pill is active; Time dilation remains in World. Traffic uses the same website palette, fonts and studio as the earlier lessons.
+
+For a short clip: Reset, click the Traffic waves pill to replay assembly, then Brake & watch. Gold stays with car 01; blue marks the computed slow-to-fast boundary while it exists. The outer speed ribbon shows slower amber and faster mint, using this snapshot's speed range when there is a clear spread. Absolute speeds remain in m/s. Pause after a few seconds; inspect “Why can the wave go backward?” and “Is the wave one slow car?”. Their Try it plays 30 simulated seconds after a 15-second settling period, at an explicitly labelled 2.5× rate. Actual vehicle and boundary positions leave gold and blue traces. The boundary can jump between cars or disappear; it is not animated at a fictional constant backward speed.
+
+Inspect “Does more room help?” and Try it for the original prepared comparison: identical initial conditions, 40-second settling, one brake, then eight seconds at current following time versus 2.4 seconds. Both actual speed spreads are shown. More following time also changes mean speed; avoid claiming every denser or tighter configuration inevitably jams. Direct Run road / Brake & watch is 2× model time. Original guided teaching retains its own shared clock. Escape, parameter edits, backgrounding and lesson switches cancel pending prepared playback.
+
+The copper dial and keyboard slider set the same following time. Lesson & settings adds 5–45 cars and desired speed controls; changing the number of cars resets the road, while headway and desired-speed changes preserve current cars. The original prepared prediction/correction, transfer and glossary remain available there.
+
+From `prototype/v2`:
+
+```sh
+npm run dev
+npm run test:stage:traffic
+npm run capture:stage:traffic
+npm run build
+npm run test:stage:traffic:performance
+```
+
+On the 7 November local Apple M4/DPR2 production run, Balanced averaged 60 fps across overview, three focus shots, playback and 45 cars, using test-side RAF windows that include every interval and stall. At a 1440×900 page size, its hero canvas is 1140×620 CSS pixels (2280×1240 buffer): the full-window virtual camera and subject pixel scale are preserved while pixels beneath the edge HUD are omitted. Phone uses full-canvas Low. High overview is measured separately; its close-up performance is not benchmarked. Balanced is the verified recording preset. Whole-ring phone focus uses a small complete view above its card.
+
+Captures and measurements: root `audit-screenshots/stage-traffic/`. The capture command uses a running server on 3022 (`PETROS_BASE_URL` overrides it); `PETROS_BROWSER` can select an installed Chromium executable. The performance runner starts isolated production port 3024 with temporary local test authentication and an empty provider key. See `TRAFFIC_STAGE_NOTES.md` for results and verification limits.
+
+## Time dilation Stage — Lesson 05
+
+All five lesson pills now work on Stage. Open `http://127.0.0.1:3022/prototype?view=stage&lesson=relativity`.
+
+For a short clip: Reset, replay the Time dilation pill assembly, then Run clocks. At 0.8c the identical clocks end at 10 Earth seconds and 6 ship seconds. The round Earth marker and diamond ship marker share one seconds scale. Bright markers show elapsed readings; faint rings preview the selected interval. Pause, inspect “Why does it tick slower?” and “Elapsed or selected time?”. Read aloud reuses optional local narration; no live provider is needed.
+
+Inspect “What is gamma?” and Try it for three **separate** 10-Earth-second coasting examples: 0c, 0.8c and 0.99c. The speed dial/slider selects a new constant-speed example; it does not integrate acceleration or a round trip. “Can we reach light speed?” uses 0.999c, never c.
+
+“Which clock is really slow?” and its Try it switch diagram coordinates while keeping the same endpoint events and clock readings. The diagram uses the existing Lorentz transform, with position in light-seconds and time in seconds. Earth-coordinate simultaneous endpoints need not remain simultaneous in ship coordinates. The ship's own clock feels normal aboard. The model has no gravity, turnaround or reunion.
+
+Lesson & settings keeps the original guided prediction/correction, 0.99c transfer, prepared questions and full caption glossary. It also exposes a 1–120 s selected interval and coordinate choices. Changing the selected interval does not advance elapsed clocks. Step 1 s and Run clocks advance actual worker state; prepared playback is explicitly labelled with its playback factor. Escape, edits, reset, backgrounding and topic switches cancel pending playback.
+
+From `prototype/v2`:
+
+```sh
+npm run dev
+npm run test:stage:relativity
+npm run capture:stage:relativity
+npm run build
+npm run test:stage:relativity:performance
+```
+
+Evidence and measurement limits: root `audit-screenshots/stage-relativity/README.md` and `TIME_DILATION_STAGE_NOTES.md`. Phone uses Low; a browser viewport is not physical-phone hardware evidence.
+
+Time dilation recording measurement (7 November, actual Apple M4 / Chromium / ANGLE Metal, DPR2): Balanced averaged 60 fps (16.67 ms mean interval) across the tested views, running clocks, 0.999c/120 s case, assembly and three focus transitions. Peak sampled totals were 84 calls / 41,193 triangles. High overview averaged 34.1 fps and its native refraction obscures fine face print; choose Balanced for the clip. The phone-sized Low viewport averaged 60 fps on this Mac, not on physical-phone hardware. Detailed buffers, timing windows and limitations are in the Time dilation evidence report.
