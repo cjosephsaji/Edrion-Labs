@@ -1,0 +1,20 @@
+{
+  "desktop": [
+    "orbit",
+    "flight",
+    "form"
+  ],
+  "mobile": [
+    "orbit",
+    "flight",
+    "form"
+  ],
+  "notebookReload": true,
+  "reference": true,
+  "replay": true,
+  "csv": true,
+  "obj": true,
+  "contextRecovery": true,
+  "twoDNavigation": true,
+  "errors": []
+}

@@ -501,6 +501,20 @@ export const freshInvestigationSession = (): InvestigationSession => ({
   active: 'neural',
   topics: {},
 });
+/** Opening a topic is not evidence of learning; preserve all existing checkpoints. */
+export function openInvestigation(
+  session: InvestigationSession,
+  topic = session.active,
+): InvestigationSession {
+  return {
+    ...session,
+    active: topic,
+    topics: {
+      ...session.topics,
+      [topic]: session.topics[topic] ?? freshProgress(),
+    },
+  };
+}
 export type LearningAction =
   | { type: 'predict'; id: string }
   | { type: 'hint' }
@@ -592,7 +606,8 @@ function retainAttempts(attempts: Attempt[]): Attempt[] {
     if (!cases.has(attempt.caseId)) first.add(index);
     cases.add(attempt.caseId);
   });
-  for (let index = attempts.length - 1; first.size < 30; index--) first.add(index);
+  for (let index = attempts.length - 1; first.size < 30; index--)
+    first.add(index);
   return attempts.filter((_, index) => first.has(index));
 }
 /** Restore only valid transitions; recompute results rather than trusting saved scores. */

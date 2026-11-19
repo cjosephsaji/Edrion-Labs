@@ -7,6 +7,7 @@ import {
   evidenceLabel,
   freshInvestigationSession,
   freshProgress,
+  openInvestigation,
   parseInvestigationSession,
   INVESTIGATION_STORAGE,
   type InvestigationSession,
@@ -20,6 +21,13 @@ import {
   frameMeasurements,
 } from '../core/investigation-playback';
 import s from './learning-studio.module.css';
+import {
+  ConceptPrimer,
+  LearningSupport,
+  ModelReading,
+} from './LearningSupport';
+import { nextMove, type ModelFocus } from '../core/learning-guide';
+import { observationJourney, viewGuidance } from '../core/learning-journey';
 
 const topics: Record<Topic, { name: string; subject: string; symbol: string }> =
   {
@@ -46,14 +54,19 @@ const topics: Record<Topic, { name: string; subject: string; symbol: string }> =
     },
   };
 const stages = ['predict', 'observe', 'explain', 'reflect'] as const;
-const stageNames = ['Predict', 'Experiment', 'Explain', 'Take it further'];
+const stageNames = ['Predict', 'Compare', 'Explain', 'Take it further'];
 const fmt = (n: number) => Number(n.toFixed(2)).toString();
 
 export function LearningStudio({
   canSignOut = false,
+  initialTopic,
 }: {
   canSignOut?: boolean;
+  initialTopic?: Topic;
 }) {
+  const presentation = '2d' as const;
+  const [modelFocus, setModelFocus] = useState<ModelFocus | null>(null);
+  const [viewMessage, setViewMessage] = useState('');
   const [session, setSession] = useState<InvestigationSession>(
     freshInvestigationSession,
   );
@@ -82,6 +95,7 @@ export function LearningStudio({
   const latest = useRef(session),
     notes = useRef<HTMLElement>(null),
     stageHeading = useRef<HTMLHeadingElement>(null),
+    observationHeading = useRef<HTMLHeadingElement>(null),
     workbench = useRef<HTMLElement>(null);
   const progress = session.topics[session.active] ?? freshProgress();
   const task = useMemo(
@@ -122,6 +136,8 @@ export function LearningStudio({
     [task, frameIndex],
   );
   const moments = useMemo(() => checkpoints(task), [task]);
+  const journey = observationJourney(task, frameIndex);
+  const move = nextMove(progress.stage, task);
   const selected = selection?.caseId === task.id ? selection.id : null;
   const selectedReason = reason?.caseId === task.id ? reason.id : null;
   const lastAttempt =
@@ -161,14 +177,18 @@ export function LearningStudio({
   latest.current = session;
 
   useEffect(() => {
+    let restored = freshInvestigationSession();
     try {
       const raw = localStorage.getItem(INVESTIGATION_STORAGE);
-      if (raw) setSession(parseInvestigationSession(raw));
+      if (raw) restored = parseInvestigationSession(raw);
     } catch {
       setStorageMessage(
         'Saved progress could not be restored. This visit starts with a fresh investigation.',
       );
     }
+    const opened = openInvestigation(restored, initialTopic);
+    latest.current = opened;
+    setSession(opened);
     setReady(true);
     const media = matchMedia('(prefers-reduced-motion: reduce)');
     const update = () => {
@@ -192,7 +212,7 @@ export function LearningStudio({
       media.removeEventListener('change', update);
       window.removeEventListener('pagehide', save);
     };
-  }, []);
+  }, [initialTopic]);
   useEffect(() => {
     if (!ready) return;
     const timer = setTimeout(() => {
@@ -207,10 +227,18 @@ export function LearningStudio({
     return () => clearTimeout(timer);
   }, [ready, session]);
   useEffect(() => {
+    if (!ready) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('view', presentation);
+    url.searchParams.set('lesson', session.active);
+    window.history.replaceState(window.history.state, '', url);
+  }, [ready, presentation, session.active]);
+  useEffect(() => {
     setHelpOpen(false);
   }, [playbackKey]);
   useEffect(() => {
     setReview(null);
+    setModelFocus(null);
   }, [task.id]);
   useEffect(() => {
     if (!playing || reducedMotion || !revealed) return;
@@ -268,7 +296,8 @@ export function LearningStudio({
     setSelection(null);
     setReason(null);
     setHelpOpen(false);
-    setSession((previous) => ({ ...previous, active: topic }));
+    setSession((previous) => openInvestigation(previous, topic));
+    requestAnimationFrame(() => stageHeading.current?.focus());
   };
   const practiseCase = (topic: Topic, caseIndex: number) => {
     setPlayback({ key: '', frame: 0, playing: false });
@@ -298,6 +327,7 @@ export function LearningStudio({
     setFrameIndex(index);
   };
   const followCause = () => {
+    setHelpOpen(true);
     inspectMoment(0);
     requestAnimationFrame(() =>
       workbench.current?.scrollIntoView({
@@ -309,19 +339,23 @@ export function LearningStudio({
   const testPrediction = () => {
     if (!selected || !ready) return;
     dispatch({ type: 'predict', id: selected });
-    setFrameIndex(reducedMotion ? task.frames.length - 1 : 0);
-    setPlaying(!reducedMotion);
-    if (window.innerWidth <= 740)
-      requestAnimationFrame(() =>
-        workbench.current?.scrollIntoView({
-          behavior: 'instant',
-          block: 'start',
-        }),
-      );
+    setFrameIndex(0);
+    setPlaying(false);
+    requestAnimationFrame(() => observationHeading.current?.focus());
   };
   const showHint = () => {
+    setPlaying(false);
     dispatch({ type: 'hint' });
     setHelpOpen(true);
+  };
+  const switchPresentation = (value: '2d' | '3d') => {
+    setPlaying(false);
+    if (value === '3d') {
+      window.location.assign('/prototype?view=3d');
+      return;
+    }
+    setModelFocus(null);
+    setViewMessage(`${viewGuidance[value].title} opened. Your answers, step and comparison moment are unchanged.`);
   };
   const finishObservation = () => {
     setPlaying(false);
@@ -393,15 +427,23 @@ export function LearningStudio({
       data-ready={ready}
       data-topic={session.active}
       data-stage={progress.stage}
+      data-presentation={presentation}
     >
       <header className={s.header}>
-        <a href="/prototype?view=2d" className={s.brand}>
+        <a
+          href="/prototype"
+          className={s.brand}
+          aria-label="Petros learning home"
+        >
           <span className={s.brandMark}>p</span>petros
           <span className={s.brandNote}>
             a little curiosity goes a long way
           </span>
         </a>
         <div className={s.headerActions}>
+          <a href="/prototype" className={s.homeLink}>
+            ← My learning
+          </a>
           <span className={s.localBadge}>
             <i />
             Interactive learning lab
@@ -430,56 +472,70 @@ export function LearningStudio({
       </header>
       <div className={s.layout}>
         <aside className={s.sidebar}>
-          <div className={s.railEyebrow}>A PLACE TO FIGURE THINGS OUT</div>
-          <nav className={s.topicNav} aria-label="Investigations">
-            {TOPICS.map((topic, i) => (
-              <button
-                key={topic}
-                aria-current={topic === session.active ? 'page' : undefined}
-                onClick={() => chooseTopic(topic)}
-              >
-                <span className={s.topicSymbol} aria-hidden="true">
-                  {topics[topic].symbol}
-                </span>
-                <span>
-                  <small>
-                    0{i + 1} / {topics[topic].subject}
-                  </small>
-                  <strong>{topics[topic].name}</strong>
-                  {!!session.topics[topic]?.attempts.length && (
-                    <span className={s.topicProgress}>
-                      {
-                        new Set(
-                          session.topics[topic]!.attempts.map((a) => a.caseId),
-                        ).size
-                      }
-                      /3 cases explored
-                    </span>
-                  )}
-                </span>
-                <span className={s.topicArrow} aria-hidden="true">
-                  ↗
-                </span>
-              </button>
-            ))}
-          </nav>
-          <div className={s.railNote}>
-            <span aria-hidden="true">✳</span>
-            <p>
-              Understanding starts with
-              <br />
-              <em>“what if?”</em>
-            </p>
-            <small>
-              Make a guess. Change one thing.
-              <br />
-              Follow what happens.
-            </small>
-          </div>
-          <a className={s.freeLab} href="/prototype?view=2d&mode=explore">
-            Open the free lab <span>↗</span>
-            <small>All controls & prepared questions</small>
-          </a>
+          <details className={s.questionDrawer}>
+            <summary>
+              Choose another question <span>＋</span>
+            </summary>
+            <nav className={s.topicNav} aria-label="Investigations">
+              {TOPICS.map((topic, i) => (
+                <button
+                  key={topic}
+                  aria-current={topic === session.active ? 'page' : undefined}
+                  onClick={(event) => {
+                    chooseTopic(topic);
+                    event.currentTarget
+                      .closest('details')
+                      ?.removeAttribute('open');
+                  }}
+                >
+                  <span className={s.topicSymbol} aria-hidden="true">
+                    {topics[topic].symbol}
+                  </span>
+                  <span>
+                    <small>
+                      0{i + 1} / {topics[topic].subject}
+                    </small>
+                    <strong>{topics[topic].name}</strong>
+                    {!!session.topics[topic]?.attempts.length && (
+                      <span className={s.topicProgress}>
+                        {
+                          new Set(
+                            session.topics[topic]!.attempts.map(
+                              (a) => a.caseId,
+                            ),
+                          ).size
+                        }
+                        /3 cases explored
+                      </span>
+                    )}
+                  </span>
+                  <span className={s.topicArrow} aria-hidden="true">
+                    ↗
+                  </span>
+                </button>
+              ))}
+            </nav>
+            <div className={s.railNote}>
+              <span aria-hidden="true">✳</span>
+              <p>
+                Understanding starts with
+                <br />
+                <em>“what if?”</em>
+              </p>
+              <small>
+                Make a guess. Change one thing.
+                <br />
+                Follow what happens.
+              </small>
+            </div>
+            <a className={s.freeLab} href="/prototype?view=2d&mode=explore">
+              Open the free lab <span>↗</span>
+              <small>All controls & prepared questions</small>
+            </a>
+          </details>
+          <span className={s.currentQuestion}>
+            YOUR QUESTION / {topics[session.active].subject}
+          </span>
         </aside>
 
         <div className={s.mainContent}>
@@ -503,6 +559,10 @@ export function LearningStudio({
               <span> / 03</span>
             </div>
           </section>
+          <div className={s.journeyHeading}>
+            <p><strong>Your goal</strong> {move.goal}</p>
+            <span>Case {progress.caseIndex + 1} of 3</span>
+          </div>
           <ol className={s.steps} aria-label="Investigation steps">
             {stages.map((stage, i) => (
               <li
@@ -522,451 +582,161 @@ export function LearningStudio({
             </div>
           )}
 
+          <section className={s.viewPicker} aria-label="Choose how to see the experiment">
+            <div>
+              <strong>Choose your learning workspace.</strong>
+              <p>The 3D workshop opens an editable project for building, shaping and testing ideas. Your 2D progress is saved here.</p>
+            </div>
+            <div className={s.viewOptions} role="group" aria-label="View the same experiment">
+              {(['2d', '3d'] as const).map((view) => (
+                <button key={view} aria-pressed={presentation === view} onClick={() => switchPresentation(view)}>
+                  <span aria-hidden="true">{view === '2d' ? '▱' : '◇'}</span>
+                  <span><strong>{viewGuidance[view].title}</strong><small>{viewGuidance[view].purpose}</small></span>
+                  <span aria-hidden="true">{presentation === view ? '✓' : ''}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+          <p className={s.srOnly} role="status">{viewMessage}</p>
+          <a className={s.skipToTask} href="#current-learning-step">Go to my current learning step ↓</a>
           <div className={s.lessonGrid}>
-            <section
-              ref={workbench}
-              className={s.workbench}
-              aria-label="Experiment workbench"
-            >
-              <div className={s.boardHeader}>
-                <div>
-                  <span className={s.eyebrow}>
-                    {revealed ? 'THE COMPARISON' : 'MEET YOUR MODEL'}
-                  </span>
-                  <h2>{task.focus}</h2>
-                </div>
-                <span className={s.modelTag}>
-                  <i />
-                  Computed model
-                </span>
-              </div>
-              <div className={s.intervention}>
-                <span className={s.changeIcon} aria-hidden="true">
-                  ↗
-                </span>
-                <div>
-                  <small>CHANGE ONE THING</small>
-                  <strong>{task.change}</strong>
-                </div>
-                <div className={s.held}>
-                  <small>KEEP THE REST FIXED</small>
-                  <span>{task.held}</span>
-                </div>
-              </div>
-              <div className={s.legend}>
-                <span>
-                  <i className={s.referenceDot} />
-                  Reference
-                </span>
-                <span>
-                  <i className={s.changedDot} />
-                  {revealed ? 'Changed run' : 'Your experiment'}
-                </span>
-                {!revealed && (
-                  <small>Make your prediction to reveal the comparison.</small>
-                )}
-              </div>
-              <InvestigationVisual
-                key={task.id}
-                task={task}
-                revealed={revealed}
-                frameIndex={frameIndex}
-                onReview={receiveReview}
-              />
-              <div className={s.transport}>
-                <button
-                  className={s.playButton}
-                  onClick={replay}
-                  disabled={!revealed}
-                  aria-label={
-                    reducedMotion
-                      ? 'Toggle reference and final snapshot'
-                      : playing
-                        ? 'Pause experiment replay'
-                        : 'Replay experiment'
-                  }
-                >
-                  {reducedMotion ? '↔' : playing ? 'Ⅱ' : '▷'}
-                </button>
-                <div className={s.timeline}>
-                  <div>
-                    <span>
-                      {revealed
-                        ? task.playbackLabel
-                        : 'The result waits for your prediction'}
-                    </span>
-                    <small>
-                      {task.duration > 0
-                        ? `${fmt(shownTime || 0)} s`
-                        : `snapshot ${frameIndex + 1} / ${task.frames.length}`}
-                    </small>
-                  </div>
-                  <input
-                    type="range"
-                    aria-label="Experiment replay position"
-                    min="0"
-                    max={task.frames.length - 1}
-                    step="1"
-                    value={frameIndex}
-                    disabled={!revealed}
-                    onChange={(event) => {
-                      setPlaying(false);
-                      setFrameIndex(+event.target.value);
-                    }}
-                  />
-                </div>
-                <button
-                  className={s.speedButton}
-                  aria-label="Replay speed"
-                  disabled={!revealed || reducedMotion}
-                  onClick={() => setSpeed((old) => (old === 1 ? 0.5 : 1))}
-                >
-                  {speed}×
-                </button>
-                <button
-                  className={s.endButton}
-                  disabled={!revealed}
-                  onClick={() => {
-                    setPlaying(false);
-                    setFrameIndex(task.frames.length - 1);
-                  }}
-                >
-                  Final frame ↗
-                </button>
-              </div>
-              {revealed && (
-                <div className={s.observationDeck}>
-                  <nav
-                    aria-label="Experiment checkpoints"
-                    className={s.checkpoints}
-                  >
-                    {moments.map((moment, i) => (
-                      <button
-                        key={moment.index}
-                        aria-pressed={frameIndex === moment.index}
-                        onClick={() => inspectMoment(moment.index)}
-                      >
-                        <span>0{i + 1}</span>
-                        {moment.label}
-                      </button>
-                    ))}
-                  </nav>
-                  <div className={s.insight} data-testid="frame-insight">
-                    <span aria-hidden="true">✳</span>
-                    <div>
-                      <strong>{insight.title}</strong>
-                      <p>{insight.text}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {progress.stage === 'observe' && (
-                <button
-                  className={s.mobileContinue}
-                  onClick={finishObservation}
-                >
-                  I’ve compared the runs · explain →
-                </button>
-              )}
-              {revealed && (
-                <div
-                  className={s.measurements}
-                  aria-label="Current snapshot measurements"
-                >
-                  <div className={s.resultLabel}>
-                    {frameIndex === task.frames.length - 1
-                      ? 'AT THE END OF THE EXPERIMENT'
-                      : 'AT THIS SNAPSHOT · MOVE THE TIMELINE TO COMPARE'}
-                  </div>
-                  {liveMeasures.map((m, i) => (
-                    <div
-                      key={m.id}
-                      className={i === 0 ? s.mainMeasure : undefined}
-                      data-measure-id={m.id}
-                    >
-                      <span>{m.label}</span>
-                      <strong>
-                        <del data-value="reference">{fmt(m.reference)}</del>
-                        <b aria-hidden="true">→</b>
-                        <span data-value="changed">{fmt(m.changed)}</span>{' '}
-                        <small>{m.unit}</small>
-                      </strong>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <details className={s.modelDetails}>
-                <summary>
-                  Inside this model <span>+</span>
-                </summary>
-                <p>{task.limitation}</p>
-                {revealed && <EvidenceTable task={task} revealed />}
-              </details>
-            </section>
-
             <aside className={s.guide} aria-label="Learning guide">
               <div className={s.petros}>
                 <img src="/petros/petros-idle.png" alt="Petros" />
-                <div>
-                  <strong>A thought from Petros</strong>
-                  <span>Let’s figure it out together.</span>
-                </div>
-                <span className={s.spark} aria-hidden="true">
-                  ✳
-                </span>
+                <div><strong>One step at a time</strong><span>Let's figure it out together.</span></div>
               </div>
               <div className={s.guideContent}>
-                <div className={s.eyebrow}>
-                  {progress.stage === 'predict'
-                    ? 'BEFORE WE TRY IT'
-                    : progress.stage === 'observe'
-                      ? 'LOOK CLOSELY'
-                      : progress.stage === 'explain'
-                        ? 'MAKE THE CONNECTION'
-                        : 'YOUR FIELD NOTE'}
-                </div>
-                <h2 ref={stageHeading} tabIndex={-1}>
-                  {progress.stage === 'predict'
-                    ? 'What do you think will happen?'
-                    : progress.stage === 'observe'
-                      ? 'Hold your guess next to the evidence.'
-                      : progress.stage === 'explain'
-                        ? 'What caused that result?'
-                        : resultHeading}
+                <div className={s.eyebrow}>STEP {stageNumber + 1} OF 4 · {stageNames[stageNumber].toUpperCase()}</div>
+                <h2 id="current-learning-step" ref={stageHeading} tabIndex={-1}>
+                  {progress.stage === 'predict' ? 'What do you think will happen?' : progress.stage === 'observe' ? 'Look for the difference.' : progress.stage === 'explain' ? 'What caused that result?' : resultHeading}
                 </h2>
-                {progress.stage === 'predict' && (
-                  <>
-                    <p className={s.question}>{task.question}</p>
-                    <fieldset className={s.choices}>
-                      <legend>Your prediction</legend>
-                      {task.prediction.map((choice, i) => (
-                        <label
-                          key={choice.id}
-                          data-selected={selected === choice.id}
-                        >
-                          <input
-                            type="radio"
-                            name="prediction"
-                            value={choice.id}
-                            checked={selected === choice.id}
-                            onChange={() =>
-                              setSelection({ caseId: task.id, id: choice.id })
-                            }
-                          />
-                          <span className={s.choiceLetter}>
-                            {String.fromCharCode(65 + i)}
-                          </span>
-                          <span>{choice.text}</span>
-                        </label>
-                      ))}
-                    </fieldset>
-                    <button
-                      className={s.primaryButton}
-                      disabled={!selected || !ready}
-                      onClick={testPrediction}
-                    >
-                      Test my prediction <span>↗</span>
+                {progress.stage === 'predict' && <>
+                  <div className={s.primerIntro}><ConceptPrimer task={task} /></div>
+                  <p className={s.question}>{task.question}</p>
+                  <fieldset className={s.choices}>
+                    <legend>Your prediction</legend>
+                    {task.prediction.map((choice, i) => <label key={choice.id} data-selected={selected === choice.id}>
+                      <input type="radio" name="prediction" value={choice.id} checked={selected === choice.id} onChange={() => setSelection({ caseId: task.id, id: choice.id })} />
+                      <span className={s.choiceLetter}>{String.fromCharCode(65 + i)}</span><span>{choice.text}</span>
+                    </label>)}
+                  </fieldset>
+                  <button className={s.primaryButton} disabled={!selected || !ready} onClick={testPrediction}>Test my prediction <span>→</span></button>
+                  <p className={s.smallNote}>{selected ? 'Ready when you are. We will compare the result together.' : 'Choose one answer above to begin. A guess is not a grade.'}</p>
+                </>}
+                {progress.stage === 'observe' && <>
+                  <div className={s.committedPrediction}><small>YOU PREDICTED</small><p>“{predictionText}”</p></div>
+                  <p className={s.question}>Compare <strong>{task.focus.toLowerCase()}</strong> in both runs at the same moment.</p>
+                  <p className={s.quietNote}>Use <strong>Next</strong> below the model to move through {moments.length} key moments. Then explain what changed.</p>
+                  <button className={s.evidenceLink} onClick={() => observationHeading.current?.focus()}>Go to the comparison ↓</button>
+                </>}
+                {progress.stage === 'explain' && <>
+                  <p className={s.question}>Which explanation connects the change to the evidence?</p>
+                  <button className={s.evidenceLink} onClick={() => observationHeading.current?.focus()}>Look at the evidence again ↓</button>
+                  <fieldset className={s.choices}>
+                    <legend>Your explanation</legend>
+                    {task.reasons.map((choice, i) => <label key={choice.id} data-selected={selectedReason === choice.id}>
+                      <input type="radio" name="reason" value={choice.id} checked={selectedReason === choice.id} onChange={() => setReason({ caseId: task.id, id: choice.id })} />
+                      <span className={s.choiceLetter}>{String.fromCharCode(65 + i)}</span><span>{choice.text}</span>
+                    </label>)}
+                  </fieldset>
+                  <button className={s.primaryButton} disabled={!selectedReason} onClick={inspectReason}>Check my explanation <span>→</span></button>
+                  {!selectedReason && <p className={s.smallNote}>Choose one explanation above to continue.</p>}
+                </>}
+                {lastAttempt && <>
+                  <div className={s.evidenceStamp} data-revisit={!lastAttempt.reasonCorrect}><span>{lastAttempt.reasonCorrect ? '✓' : '↺'}</span>{evidenceLabel(lastAttempt)}</div>
+                  {!lastAttempt.reasonCorrect && <div className={s.feedback}>
+                    <p>{task.reasons.find((c) => c.id === lastAttempt.reason)?.feedback}</p>
+                    <button onClick={followCause}>Show me the cause, step by step ↗</button>
+                  </div>}
+                  <p className={s.takeaway}>{task.takeaway}</p>
+                  <details className={s.reasonDetails} open={!lastAttempt.reasonCorrect}>
+                    <summary>Why this happens</summary>
+                    <ol className={s.causalTrace}>{task.mechanism.map((line, i) => <li key={i}><span>{i + 1}</span>{line}</li>)}</ol>
+                  </details>
+                  {!lastAttempt.reasonCorrect && <button className={s.primaryButton} onClick={() => practiseCase(task.topic, progress.caseIndex)}>Try this case again, with that idea →</button>}
+                  {progress.caseIndex < 2 ? <button className={lastAttempt.reasonCorrect ? s.primaryButton : s.retryButton} onClick={nextCase}>
+                    {lastAttempt.reasonCorrect ? 'Try a different case' : 'Test that idea in a new case'} <span>→</span>
+                  </button> : <>
+                    <div className={s.closingNote}><strong>Three cases, one idea to carry.</strong><p>Your record shows what you predicted and explained. It does not certify mastery.</p></div>
+                    <button className={lastAttempt.reasonCorrect ? s.primaryButton : s.retryButton} onClick={() => nextTopic ? chooseTopic(nextTopic) : (setNotesOpen(true), requestAnimationFrame(() => notes.current?.scrollIntoView({ block: 'start' })))}>
+                      {nextTopic ? 'Explore another question' : 'Review my learning journey'} <span>→</span>
                     </button>
-                    <p className={s.smallNote}>
-                      A guess is a starting point, not a grade.
-                    </p>
-                  </>
-                )}
-                {progress.stage === 'observe' && (
-                  <>
-                    <div className={s.committedPrediction}>
-                      <small>YOU PREDICTED</small>
-                      <p>“{predictionText}”</p>
-                    </div>
-                    <p className={s.question}>
-                      Follow <strong>{task.focus.toLowerCase()}</strong>. The
-                      reference stays visible while the changed run plays.
-                    </p>
-                    <p className={s.quietNote}>
-                      Use the checkpoints, or slow the replay. The numbers
-                      and explanation follow the snapshot you’re viewing.
-                    </p>
-                    <button
-                      className={s.primaryButton}
-                      onClick={finishObservation}
-                    >
-                      Explain what changed <span>→</span>
-                    </button>
-                  </>
-                )}
-                {progress.stage === 'explain' && (
-                  <>
-                    <p className={s.question}>
-                      Choose the explanation that connects the change to the
-                      evidence.
-                    </p>
-                    <fieldset className={s.choices}>
-                      <legend>Your explanation</legend>
-                      {task.reasons.map((choice, i) => (
-                        <label
-                          key={choice.id}
-                          data-selected={selectedReason === choice.id}
-                        >
-                          <input
-                            type="radio"
-                            name="reason"
-                            value={choice.id}
-                            checked={selectedReason === choice.id}
-                            onChange={() =>
-                              setReason({ caseId: task.id, id: choice.id })
-                            }
-                          />
-                          <span className={s.choiceLetter}>
-                            {String.fromCharCode(65 + i)}
-                          </span>
-                          <span>{choice.text}</span>
-                        </label>
-                      ))}
-                    </fieldset>
-                    <button
-                      className={s.primaryButton}
-                      disabled={!selectedReason}
-                      onClick={inspectReason}
-                    >
-                      Check my explanation <span>→</span>
-                    </button>
-                  </>
-                )}
-                {lastAttempt && (
-                  <>
-                    <div
-                      className={s.evidenceStamp}
-                      data-revisit={!lastAttempt.reasonCorrect}
-                    >
-                      <span>{lastAttempt.reasonCorrect ? '↗' : '↺'}</span>
-                      {evidenceLabel(lastAttempt)}
-                    </div>
-                    {!lastAttempt.reasonCorrect && (
-                      <div className={s.feedback}>
-                        <p>
-                          {
-                            task.reasons.find(
-                              (c) => c.id === lastAttempt.reason,
-                            )?.feedback
-                          }
-                        </p>
-                        <button onClick={followCause}>
-                          Show me the cause, step by step ↗
-                        </button>
-                      </div>
-                    )}
-                    <p className={s.takeaway}>{task.takeaway}</p>
-                    <ol className={s.causalTrace}>
-                      {task.mechanism.map((line, i) => (
-                        <li key={i}>
-                          <span>{i + 1}</span>
-                          {line}
-                        </li>
-                      ))}
-                    </ol>
+                  </>}
+                  <details className={s.reasonDetails}>
+                    <summary>Add a reflection or revisit a case</summary>
                     <div className={s.reflection}>
-                      <label htmlFor="reflection-note">
-                        {lastAttempt.predictionCorrect
-                          ? 'Where would this rule stop working?'
-                          : 'What changed your mind?'}
-                      </label>
-                      <textarea
-                        id="reflection-note"
-                        maxLength={1000}
-                        rows={3}
-                        value={lastAttempt.reflection ?? ''}
-                        onChange={(event) =>
-                          dispatch({
-                            type: 'reflect',
-                            text: event.target.value,
-                          })
-                        }
-                        placeholder="Put the idea in your own words…"
-                        aria-describedby="reflection-help"
-                      />
-                      <small id="reflection-help">
-                        Optional · saved with this attempt · not automatically
-                        graded
-                      </small>
+                      <label htmlFor="reflection-note">{lastAttempt.predictionCorrect ? 'Where would this rule stop working?' : 'What changed your mind?'}</label>
+                      <textarea id="reflection-note" maxLength={1000} rows={3} value={lastAttempt.reflection ?? ''} onChange={(event) => dispatch({ type: 'reflect', text: event.target.value })} placeholder="Put the idea in your own words…" aria-describedby="reflection-help" />
+                      <small id="reflection-help">Optional · saved with this attempt · not automatically graded</small>
                     </div>
-                    {progress.caseIndex < 2 ? (
-                      <button className={s.primaryButton} onClick={nextCase}>
-                        {lastAttempt.reasonCorrect
-                          ? 'Try a different case'
-                          : 'Test that idea in a new case'}{' '}
-                        <span>→</span>
-                      </button>
-                    ) : (
-                      <>
-                        <div className={s.closingNote}>
-                          <strong>Three cases, one idea to carry.</strong>
-                          <p>
-                            Your record shows what you predicted and explained.
-                            It does not certify mastery.
-                          </p>
-                        </div>
-                        <button
-                          className={s.primaryButton}
-                          onClick={() =>
-                            nextTopic
-                              ? chooseTopic(nextTopic)
-                              : (setNotesOpen(true),
-                                requestAnimationFrame(() =>
-                                  notes.current?.scrollIntoView({
-                                    block: 'start',
-                                  }),
-                                ))
-                          }
-                        >
-                          {nextTopic
-                            ? 'Explore another question'
-                            : 'Review my learning journey'}{' '}
-                          <span>↗</span>
-                        </button>
-                      </>
-                    )}
-                    <div className={s.caseRevisit}>
-                      <small>REVISIT AN EXPLORED CASE</small>
-                      <div>
-                        {[0, 1, 2]
-                          .filter((index) =>
-                            progress.attempts.some(
-                              (a) => a.caseId === `${task.topic}:${index}:v1`,
-                            ),
-                          )
-                          .map((index) => (
-                            <button
-                              key={index}
-                              onClick={() => practiseCase(task.topic, index)}
-                            >
-                              Case {index + 1} ↺
-                            </button>
-                          ))}
-                      </div>
-                    </div>
-                  </>
-                )}
-                {progress.stage !== 'reflect' && (
-                  <div className={s.hintArea}>
-                    <button onClick={showHint} aria-expanded={helpOpen}>
-                      ✳ {helpOpen ? 'Your hint' : 'Give me a foothold'}
-                    </button>
-                    {helpOpen && (
-                      <div role="note">
-                        <p>{task.hint}</p>
-                        <small>
-                          This attempt will be recorded as assisted.
-                        </small>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className={s.guideFooter}>
-                <span className={s.eyebrow}>WHAT YOU’RE LEARNING</span>
-                <p>{task.objective}</p>
+                    <div className={s.caseRevisit}><small>REVISIT AN EXPLORED CASE</small><div>
+                      {[0, 1, 2].filter((index) => progress.attempts.some((a) => a.caseId === `${task.topic}:${index}:v1`)).map((index) => <button key={index} onClick={() => practiseCase(task.topic, index)}>Case {index + 1} ↺</button>)}
+                    </div></div>
+                  </details>
+                  <a className={s.pauseLink} href="/prototype">This is a good place to pause. Return to my learning ↗</a>
+                </>}
+                <div className={s.hintArea}>
+                  <button onClick={() => helpOpen ? setHelpOpen(false) : showHint()} aria-expanded={helpOpen}>✳ {helpOpen ? 'Close learning help' : 'Help me make sense of this'}</button>
+                </div>
+                {helpOpen && <LearningSupport key={`${task.id}:${progress.attempts.length}`} task={task} frameIndex={frameIndex} revealed={revealed} onHelp={() => dispatch({ type: 'hint' })} onInspect={inspectMoment} onClose={() => { setHelpOpen(false); requestAnimationFrame(() => stageHeading.current?.focus()); }} />}
               </div>
             </aside>
+
+            <section ref={workbench} className={s.workbench} aria-label="Experiment workbench">
+              <div className={s.boardHeader}>
+                <div><span className={s.eyebrow}>{revealed ? 'YOUR COMPARISON' : 'THE EXPERIMENT YOU WILL TRY'}</span><h2>{task.focus}</h2></div>
+                <span className={s.modeBadge}>{viewGuidance[presentation].title}</span>
+              </div>
+              <p className={s.viewInstruction}>{viewGuidance[presentation].instruction}</p>
+              <div className={s.intervention}>
+                <span className={s.changeIcon} aria-hidden="true">↗</span>
+                <div><small>CHANGE ONE THING</small><strong>{task.change}</strong></div>
+                <div className={s.held}><small>KEEP THE REST FIXED</small><span>{task.held}</span></div>
+              </div>
+              <div className={s.legend}>
+                <span><i className={s.referenceDot} />Reference</span><span><i className={s.changedDot} />{revealed ? 'Changed run' : 'Your experiment'}</span>
+                {!revealed && <small>Choose your prediction to reveal the result.</small>}
+              </div>
+              {revealed && <div className={s.observationPrompt}>
+                <span className={s.eyebrow}>MOMENT {journey.current + 1} OF {journey.stops.length}</span>
+                <h3 ref={observationHeading} tabIndex={-1}>{journey.stops[journey.current].label}</h3>
+                <p>Watch <strong>{task.focus.toLowerCase()}</strong>. Both runs show the same moment.</p>
+              </div>}
+              <InvestigationVisual key={task.id} task={task} revealed={revealed} frameIndex={frameIndex} onReview={receiveReview} focus={modelFocus} onFocus={setModelFocus} />
+              {revealed && <>
+                <div className={s.observationDeck}>
+                  <nav aria-label="Experiment checkpoints" className={s.checkpoints}>{moments.map((moment, i) => <button key={moment.index} aria-pressed={frameIndex === moment.index} onClick={() => inspectMoment(moment.index)}><span>0{i + 1}</span>{moment.label}</button>)}</nav>
+                  <div className={s.insight} data-testid="frame-insight"><span aria-hidden="true">✳</span><div><strong>{insight.title}</strong><p>{insight.text}</p></div></div>
+                </div>
+                <div className={s.measurements} aria-label="Current snapshot measurements">
+                  <div className={s.resultLabel}>{journey.atEnd ? 'AT THE END OF THE EXPERIMENT' : 'AT THIS MOMENT'} · REFERENCE → CHANGED</div>
+                  {liveMeasures.map((m, i) => <div key={m.id} className={i === 0 ? s.mainMeasure : undefined} data-measure-id={m.id}>
+                    <span>{m.label}</span><strong><span data-value="reference">{fmt(m.reference)}</span><b aria-hidden="true">→</b><span data-value="changed">{fmt(m.changed)}</span> <small>{m.unit}</small></strong>
+                  </div>)}
+                </div>
+                <div className={s.observationActions} aria-label="Continue the comparison">
+                  <button className={s.evidenceLink} disabled={!journey.previous} onClick={() => journey.previous && inspectMoment(journey.previous.index)}>← Previous moment</button>
+                  {journey.next ? <button className={s.primaryButton} onClick={() => { inspectMoment(journey.next!.index); requestAnimationFrame(() => observationHeading.current?.focus()); }}>Next: {journey.next.label} →</button> : progress.stage === 'observe' ? <button className={s.primaryButton} onClick={finishObservation}>Explain what changed →</button> : <button className={s.evidenceLink} onClick={() => stageHeading.current?.focus()}>Return to {progress.stage === 'explain' ? 'my explanation' : 'my next step'} ↑</button>}
+                </div>
+              </>}
+              <details className={s.readingDetails}>
+                <summary>Read the model <span>Labels, parts and what to watch</span></summary>
+                <ModelReading task={task} focus={modelFocus} onFocus={setModelFocus} />
+              </details>
+              {revealed && <details className={s.replayDetails}>
+                <summary>Replay & timeline <span>Play, slow down or choose any moment</span></summary>
+                <div className={s.transport}>
+                  <button className={s.playButton} onClick={replay} aria-label={reducedMotion ? 'Toggle reference and final snapshot' : playing ? 'Pause experiment replay' : 'Replay experiment'}>{reducedMotion ? '↔' : playing ? 'Ⅱ' : '▷'}</button>
+                  <div className={s.timeline}>
+                    <div><span>{task.playbackLabel}</span><small>{task.duration > 0 ? `${fmt(shownTime || 0)} s` : `snapshot ${frameIndex + 1} / ${task.frames.length}`}</small></div>
+                    <input type="range" aria-label="Experiment replay position" min="0" max={task.frames.length - 1} step="1" value={frameIndex} onChange={(event) => { setPlaying(false); setFrameIndex(+event.target.value); }} />
+                  </div>
+                  <button className={s.speedButton} aria-label="Replay speed" disabled={reducedMotion} onClick={() => setSpeed((old) => old === 1 ? 0.5 : 1)}>{speed}×</button>
+                  <button className={s.endButton} onClick={() => inspectMoment(task.frames.length - 1)}>Final frame ↗</button>
+                </div>
+              </details>}
+              <details className={s.modelDetails}><summary>Inside this model <span>+</span></summary><p>{task.limitation}</p>{revealed && <EvidenceTable task={task} revealed />}</details>
+            </section>
           </div>
 
           <div className={s.belowBoard}>
@@ -974,43 +744,45 @@ export function LearningStudio({
               <i className={s.smallStar}>✳</i> Small experiments. Better
               questions.
             </span>
-            <details className={s.review}>
-              <summary>
-                {!review
-                  ? 'Checking the visual…'
-                  : goodVisual
-                    ? 'Visual checks passed'
-                    : 'Using a checked data fallback'}{' '}
-                <span>⌄</span>
-              </summary>
-              <div>
-                <strong>What we can check automatically</strong>
-                {review?.report.checks.map((check) => (
-                  <p key={check.name}>
-                    <b>{check.ok ? '✓' : '!'}</b>
+            {presentation === '2d' && (
+              <details className={s.review}>
+                <summary>
+                  {!review
+                    ? 'Checking the visual…'
+                    : goodVisual
+                      ? 'Visual checks passed'
+                      : 'Using a checked data fallback'}{' '}
+                  <span>⌄</span>
+                </summary>
+                <div>
+                  <strong>What we can check automatically</strong>
+                  {review?.report.checks.map((check) => (
+                    <p key={check.name}>
+                      <b>{check.ok ? '✓' : '!'}</b>
+                      <span>
+                        {check.name}
+                        <small>{check.detail}</small>
+                      </span>
+                    </p>
+                  ))}
+                  <p>
+                    <b>{review && !review.layout.length ? '✓' : '!'}</b>
                     <span>
-                      {check.name}
-                      <small>{check.detail}</small>
+                      Label legibility
+                      <small>
+                        Rendered text is checked for size, overlap and clipping
+                        at this viewport.
+                      </small>
                     </span>
                   </p>
-                ))}
-                <p>
-                  <b>{review && !review.layout.length ? '✓' : '!'}</b>
-                  <span>
-                    Label legibility
-                    <small>
-                      Rendered text is checked for size, overlap and clipping at
-                      this viewport.
-                    </small>
-                  </span>
-                </p>
-                <small>
-                  These checks detect specific visual failures. They do not
-                  replace teacher review or demonstrate that a student has
-                  learned.
-                </small>
-              </div>
-            </details>
+                  <small>
+                    These checks detect specific visual failures. They do not
+                    replace teacher review or demonstrate that a student has
+                    learned.
+                  </small>
+                </div>
+              </details>
+            )}
           </div>
 
           <section

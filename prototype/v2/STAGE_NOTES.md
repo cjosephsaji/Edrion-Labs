@@ -1,5 +1,7 @@
 # Stage discovery and implementation notes
 
+Historical implementation notes. The current 3D routes now use the editable [3D workshop](MAKER_WORKSHOP.md); `view=stage` and `view=world` are compatibility links into that experience.
+
 ## Discovery (before implementation, 2026-11-06)
 
 Read the complete approved `reference/petros-stage.html` and the requested World renderer, camera, Heroes/assets, previews, guide, WorldExperience, LiveTeachingSurface, smoke test, feature register, asset authoring script, asset register, presentation audit, and recording playbook. Read the local Next lazy-loading guide as required by AGENTS.md. Existing uncommitted `core/prototype-features.ts`, root audit and screenshots belong to the owner and will be preserved.
@@ -16,7 +18,7 @@ Read the complete approved `reference/petros-stage.html` and the requested World
 
 ## Integration plan
 
-1. `?view=stage` and server env `PETROS_V2_STAGE_DEFAULT=1`; explicit `?view=world` preserves archipelago access. Other lessons and tanh retain World. Do not change feature pause flags.
+1. Use explicit `?view=stage`; `?view=world` preserves archipelago access. The question-led learning home is now the default entrance, and the historical `PETROS_V2_STAGE_DEFAULT` flag no longer overrides it. Do not change feature pause flags.
 2. Typed lesson definition (story, parts, chips, per-part shots, glossary), state adapter/pure range/color helpers, one procedural Neural specimen. Shell receives lesson data plus specimen; no numerical engine in shell.
 3. Shared cancelable spline path utility extracted from World camera, Stage camera with viewport bounds framing, clamped idle-return orbit and reduced motion.
 4. Studio plinth/metals/glass, local environment, radial pools/dust, mirror clone, MSAA/HalfFloat composer. Instance repeated ticks/ridges/pulses. Measure complete render passes, including shadow/transmission/reflection/post.
@@ -45,7 +47,7 @@ npm run dev
 # Stage: http://127.0.0.1:3022/prototype?view=stage
 # World: http://127.0.0.1:3022/prototype?view=world
 # To make Stage the default on a fresh launch:
-PETROS_V2_STAGE_DEFAULT=1 npm run dev
+npm run dev # open /prototype?view=stage for the stage
 npm run typecheck
 npm test
 npm run test:world

@@ -52,6 +52,7 @@ try {
     fullPage: true,
   });
   for (const [topicIndex, topic] of TOPICS.entries()) {
+    await page.getByText('Choose another question', { exact: false }).click();
     await page
       .getByRole('navigation', { name: 'Investigations' })
       .getByRole('button')
@@ -61,7 +62,9 @@ try {
       const task = buildInvestigation(topic, caseIndex);
       const wrong = topic === 'neural' && caseIndex === 0;
       if (wrong)
-        await page.getByRole('button', { name: 'Give me a foothold' }).click();
+        await page
+          .getByRole('button', { name: 'Help me make sense of this' })
+          .click();
       const options = page
         .getByRole('group', { name: 'Your prediction' })
         .getByRole('radio');
@@ -73,6 +76,7 @@ try {
         )
         .check();
       await page.getByRole('button', { name: 'Test my prediction' }).click();
+      await page.getByText('Replay & timeline', { exact: false }).click();
       await page.getByRole('button', { name: 'Final frame' }).click();
       await checkLayout();
       await page.getByRole('button', { name: 'Explain what changed' }).click();
@@ -189,11 +193,12 @@ try {
     .first()
     .check();
   await reducedPage.getByRole('button', { name: 'Test my prediction' }).click();
+  await reducedPage.getByText('Replay & timeline', { exact: false }).click();
   assert.equal(
     await reducedPage
       .getByRole('slider', { name: 'Experiment replay position' })
       .inputValue(),
-    '24',
+    '0',
   );
   await reducedPage
     .getByRole('button', { name: 'Toggle reference and final snapshot' })
@@ -202,7 +207,7 @@ try {
     await reducedPage
       .getByRole('slider', { name: 'Experiment replay position' })
       .inputValue(),
-    '0',
+    '24',
   );
   // A fresh predict phase must not move itself forward just because time passes.
   await reducedPage.reload({ waitUntil: 'networkidle' });

@@ -1,0 +1,20 @@
+{
+  "directEdits": true,
+  "undoRedo": true,
+  "localPromptCreateAndEdit": true,
+  "proposalDiscardAndApply": true,
+  "attachment": true,
+  "duplicateDelete": true,
+  "visibleMotion": true,
+  "section": true,
+  "parametricCode": true,
+  "invalidCodeAtomic": true,
+  "objExport": true,
+  "jsonRoundtrip": true,
+  "experimentSnapshots": true,
+  "reload": true,
+  "mobile": true,
+  "contextRecovery": true,
+  "liveAI": false,
+  "errors": []
+}

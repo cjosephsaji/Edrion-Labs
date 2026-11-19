@@ -1435,7 +1435,7 @@ export function LiveTeachingSurface({
       )}
       <header className={s.header}>
         <a
-          href={isSpatial ? '/prototype' : '/prototype?view=2d'}
+          href="/prototype"
           className={s.brand}
         >
           <span className={s.brandMark}>p</span>petros
@@ -1454,7 +1454,7 @@ export function LiveTeachingSurface({
                 2D tutor
               </a>
               <a
-                href="/prototype"
+                href="/prototype?view=world"
                 aria-current={isSpatial ? 'page' : undefined}
               >
                 3D world ↗

@@ -1,0 +1,110 @@
+{
+  "results": [
+    {
+      "topic": "neural",
+      "caseIndex": 0,
+      "independentLabPreservesSaved2DProgress": true,
+      "guidedComparison": true,
+      "reload": true
+    },
+    {
+      "topic": "neural",
+      "caseIndex": 1,
+      "independentLabPreservesSaved2DProgress": true,
+      "guidedComparison": true,
+      "reload": true
+    },
+    {
+      "topic": "neural",
+      "caseIndex": 2,
+      "independentLabPreservesSaved2DProgress": true,
+      "guidedComparison": true,
+      "reload": true
+    },
+    {
+      "topic": "rocket",
+      "caseIndex": 0,
+      "independentLabPreservesSaved2DProgress": true,
+      "guidedComparison": true,
+      "reload": true
+    },
+    {
+      "topic": "rocket",
+      "caseIndex": 1,
+      "independentLabPreservesSaved2DProgress": true,
+      "guidedComparison": true,
+      "reload": true
+    },
+    {
+      "topic": "rocket",
+      "caseIndex": 2,
+      "independentLabPreservesSaved2DProgress": true,
+      "guidedComparison": true,
+      "reload": true
+    },
+    {
+      "topic": "attention",
+      "caseIndex": 0,
+      "independentLabPreservesSaved2DProgress": true,
+      "guidedComparison": true,
+      "reload": true
+    },
+    {
+      "topic": "attention",
+      "caseIndex": 1,
+      "independentLabPreservesSaved2DProgress": true,
+      "guidedComparison": true,
+      "reload": true
+    },
+    {
+      "topic": "attention",
+      "caseIndex": 2,
+      "independentLabPreservesSaved2DProgress": true,
+      "guidedComparison": true,
+      "reload": true
+    },
+    {
+      "topic": "traffic",
+      "caseIndex": 0,
+      "independentLabPreservesSaved2DProgress": true,
+      "guidedComparison": true,
+      "reload": true
+    },
+    {
+      "topic": "traffic",
+      "caseIndex": 1,
+      "independentLabPreservesSaved2DProgress": true,
+      "guidedComparison": true,
+      "reload": true
+    },
+    {
+      "topic": "traffic",
+      "caseIndex": 2,
+      "independentLabPreservesSaved2DProgress": true,
+      "guidedComparison": true,
+      "reload": true
+    },
+    {
+      "topic": "relativity",
+      "caseIndex": 0,
+      "independentLabPreservesSaved2DProgress": true,
+      "guidedComparison": true,
+      "reload": true
+    },
+    {
+      "topic": "relativity",
+      "caseIndex": 1,
+      "independentLabPreservesSaved2DProgress": true,
+      "guidedComparison": true,
+      "reload": true
+    },
+    {
+      "topic": "relativity",
+      "caseIndex": 2,
+      "independentLabPreservesSaved2DProgress": true,
+      "guidedComparison": true,
+      "reload": true
+    }
+  ],
+  "errors": []
+}

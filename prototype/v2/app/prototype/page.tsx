@@ -5,6 +5,8 @@ import { prototypeFeatures } from '../../core/prototype-features';
 import { PreviewLogin } from '../../components/PreviewLogin';
 import { isStageTopic } from '../../stage/navigation';
 import { LearningStudio } from '../../components/LearningStudio';
+import { LearningHome } from '../../components/LearningHome';
+import { MakerStudio } from '../../components/MakerStudio';
 export const dynamic = 'force-dynamic';
 export default async function Page({
   searchParams,
@@ -14,32 +16,31 @@ export default async function Page({
     view?: string;
     mode?: string;
     lesson?: string;
+    lab?: string;
   }>;
 }) {
   const query = await searchParams;
-  const stage =
-    query.view === 'stage' ||
-    (!query.view && process.env.PETROS_V2_STAGE_DEFAULT === '1');
+  const stage = query.view === 'stage';
   const user = identity(new Headers(await headers()));
-  if (
-    user &&
-    !stage &&
-    (!prototypeFeatures.world || query.view === '2d') &&
-    query.mode !== 'explore'
-  )
-    return <LearningStudio canSignOut={user !== 'local-development'} />;
+  if (user && (stage || query.view === 'world' || query.view === '3d'))
+    return <MakerStudio canSignOut={user !== 'local-development'} />;
+  // The entrance is goal-led. Existing lesson/view deep links remain available.
+  if (user && !query.view && query.mode !== 'explore')
+    return <LearningHome canSignOut={user !== 'local-development'} />;
+  if (user && query.mode !== 'explore')
+    return (
+      <LearningStudio
+        key={query.lesson ?? 'saved'}
+        initialTopic={isStageTopic(query.lesson) ? query.lesson : undefined}
+        canSignOut={user !== 'local-development'}
+      />
+    );
   if (user)
     return (
       <LiveTeachingSurface
         stageLesson={isStageTopic(query.lesson) ? query.lesson : 'neural'}
         canSignOut={user !== 'local-development'}
-        presentation={
-          stage
-            ? 'stage'
-            : prototypeFeatures.world && query.view !== '2d'
-              ? 'world'
-              : '2d'
-        }
+        presentation="2d"
       />
     );
   const redisReady =

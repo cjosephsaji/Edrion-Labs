@@ -40,6 +40,7 @@ try {
     .first()
     .check();
   await page.getByRole('button', { name: 'Test my prediction' }).dblclick();
+  await page.getByText('Replay & timeline', { exact: false }).click();
   await page
     .getByRole('navigation', { name: 'Experiment checkpoints' })
     .getByRole('button')
@@ -73,18 +74,23 @@ try {
   const nav = page
     .getByRole('navigation', { name: 'Investigations' })
     .getByRole('button');
-  for (const index of [2, 4, 1, 3, 2]) await nav.nth(index).click();
-  assert.equal(await page.getByRole('slider').inputValue(), '0');
+  for (const index of [2, 4, 1, 3, 2]) {
+    await page.getByText('Choose another question', { exact: false }).click();
+    await nav.nth(index).click();
+  }
+  assert.equal(await page.locator('input[type=range]').count(), 0);
   await page.waitForTimeout(500);
-  assert.equal(await page.getByRole('slider').inputValue(), '0');
+  assert.equal(await page.locator('input[type=range]').count(), 0);
   assert.ok(
     !/NaN|snapshot 25 \/ 2/.test(await page.locator('body').innerText()),
   );
+  await page.getByText('Choose another question', { exact: false }).click();
   await nav.first().click();
   assert.equal(
     await page.getByTestId('learning-studio').getAttribute('data-stage'),
     'observe',
   );
+  await page.getByText('Replay & timeline', { exact: false }).click();
   assert.equal(await page.getByRole('slider').inputValue(), '24');
   results.push({ rapidTopicSwitchAndTimerIsolation: true });
 
@@ -95,6 +101,7 @@ try {
     .nth(1)
     .check();
   await page.getByRole('button', { name: 'Check my explanation' }).dblclick();
+  await page.getByText('Add a reflection or revisit a case', { exact: true }).click();
   await page
     .getByLabel('Where would this rule stop working?')
     .fill('A negative input reverses the direction.');
@@ -103,12 +110,13 @@ try {
   await page.waitForTimeout(180);
   await page.reload();
   await page.locator('[data-ready=true]').waitFor();
+  await page.getByText('Add a reflection or revisit a case', { exact: true }).click();
   assert.equal(
     await page.getByLabel('Where would this rule stop working?').inputValue(),
     'A negative input reverses the direction.',
   );
   await page.getByRole('button', { name: 'Case 1', exact: false }).click();
-  assert.equal(await page.getByRole('slider').inputValue(), '0');
+  assert.equal(await page.locator('input[type=range]').count(), 0);
   assert.equal(
     await page.getByTestId('learning-studio').getAttribute('data-stage'),
     'predict',
@@ -119,6 +127,7 @@ try {
     .first()
     .check();
   await page.getByRole('button', { name: 'Test my prediction' }).click();
+  await page.getByRole('navigation', { name: 'Experiment checkpoints' }).getByRole('button').last().click();
   await page.getByRole('button', { name: 'Explain what changed' }).click();
   await page
     .getByRole('group', { name: 'Your explanation' })
@@ -184,15 +193,43 @@ try {
     results.push({ width, visual: status });
   }
   // If display checks reject a diagram, its fallback must follow the same snapshot.
-  const enlargedLabels = await page.addStyleTag({ content: 'svg[role=img] text { font-size: 80px !important; }' });
-  await page.getByRole('navigation', { name: 'Experiment checkpoints' }).getByRole('button').nth(1).click();
+  const enlargedLabels = await page.addStyleTag({
+    content: 'svg[role=img] text { font-size: 80px !important; }',
+  });
+  await page
+    .getByRole('navigation', { name: 'Experiment checkpoints' })
+    .getByRole('button')
+    .nth(1)
+    .click();
   await page.locator('[data-visual-status=fallback]').waitFor();
-  const fallbackTable = page.getByRole('table', { name: 'Current snapshot measurements' });
+  const fallbackTable = page.getByRole('table', {
+    name: 'Current snapshot measurements',
+  });
   await fallbackTable.waitFor();
-  assert.equal(await fallbackTable.locator('tbody tr').first().locator('td').nth(1).innerText(), '1.6');
-  await page.getByRole('navigation', { name: 'Experiment checkpoints' }).getByRole('button').first().click();
+  assert.equal(
+    await fallbackTable
+      .locator('tbody tr')
+      .first()
+      .locator('td')
+      .nth(1)
+      .innerText(),
+    '1.6',
+  );
+  await page
+    .getByRole('navigation', { name: 'Experiment checkpoints' })
+    .getByRole('button')
+    .first()
+    .click();
   await page.waitForTimeout(150);
-  assert.equal(await fallbackTable.locator('tbody tr').first().locator('td').nth(1).innerText(), '1');
+  assert.equal(
+    await fallbackTable
+      .locator('tbody tr')
+      .first()
+      .locator('td')
+      .nth(1)
+      .innerText(),
+    '1',
+  );
   await enlargedLabels.evaluate((element) => element.remove());
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.locator('[data-visual-status=checked]').waitFor();
@@ -246,22 +283,37 @@ try {
   results.push({ corruptProgressRecovery: true });
 
   // A restored complete journey must have a useful, keyboard-accessible destination.
-  const finished: InvestigationSession = { version: 1, active: 'relativity', topics: {} };
+  const finished: InvestigationSession = {
+    version: 1,
+    active: 'relativity',
+    topics: {},
+  };
   for (const topic of TOPICS) {
     let progress = freshProgress();
     for (let index = 0; index < 3; index++) {
       const task = buildInvestigation(topic, index);
-      progress = advanceInvestigation(progress, task, { type: 'predict', id: task.correctPrediction });
+      progress = advanceInvestigation(progress, task, {
+        type: 'predict',
+        id: task.correctPrediction,
+      });
       progress = advanceInvestigation(progress, task, { type: 'inspect' });
-      progress = advanceInvestigation(progress, task, { type: 'explain', id: task.correctReason });
-      if (index < 2) progress = advanceInvestigation(progress, task, { type: 'next' });
+      progress = advanceInvestigation(progress, task, {
+        type: 'explain',
+        id: task.correctReason,
+      });
+      if (index < 2)
+        progress = advanceInvestigation(progress, task, { type: 'next' });
     }
     finished.topics[topic] = progress;
   }
   const completed = await browser.newContext();
-  await completed.addInitScript(({ key, value }) => localStorage.setItem(key, value), {
-    key: INVESTIGATION_STORAGE, value: JSON.stringify(finished),
-  });
+  await completed.addInitScript(
+    ({ key, value }) => localStorage.setItem(key, value),
+    {
+      key: INVESTIGATION_STORAGE,
+      value: JSON.stringify(finished),
+    },
+  );
   const fp = await completed.newPage();
   fp.on('pageerror', (e) => errors.push(e.message));
   await fp.goto(`${origin}/prototype?view=2d`);
@@ -271,14 +323,24 @@ try {
   const record = fp.getByRole('region', { name: 'Learning field notes' });
   await record.waitFor();
   assert.equal(await record.locator('article').count(), 15);
-  await record.getByRole('button', { name: 'Practise this case' }).first().focus();
+  await record
+    .getByRole('button', { name: 'Practise this case' })
+    .first()
+    .focus();
   await fp.keyboard.press('Enter');
   await fp.getByRole('group', { name: 'Your prediction' }).waitFor();
-  await fp.getByRole('group', { name: 'Your prediction' }).getByRole('radio').first().focus();
+  await fp
+    .getByRole('group', { name: 'Your prediction' })
+    .getByRole('radio')
+    .first()
+    .focus();
   await fp.keyboard.press('Space');
   await fp.getByRole('button', { name: 'Test my prediction' }).focus();
   await fp.keyboard.press('Enter');
-  assert.equal(await fp.getByTestId('learning-studio').getAttribute('data-stage'), 'observe');
+  assert.equal(
+    await fp.getByTestId('learning-studio').getAttribute('data-stage'),
+    'observe',
+  );
   results.push({ completedJourneyAndKeyboardPractice: true });
   assert.deepEqual(errors, []);
   await writeFile(

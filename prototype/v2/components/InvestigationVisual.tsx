@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { attentionOf, observe } from '../simulations/runtime';
 import type { Investigation } from '../core/investigation';
+import type { ModelFocus } from '../core/learning-guide';
 import { frameMeasurements } from '../core/investigation-playback';
 import {
   composeVisual,
@@ -40,8 +41,11 @@ export function EvidenceTable({
     <div className={s.tableWrap}>
       <table className={s.dataTable}>
         <caption>
-          {!revealed ? 'Reference starting measurements' : frameIndex === undefined
-            ? 'Final experiment measurements' : 'Current snapshot measurements'}
+          {!revealed
+            ? 'Reference starting measurements'
+            : frameIndex === undefined
+              ? 'Final experiment measurements'
+              : 'Current snapshot measurements'}
         </caption>
         <thead>
           <tr>
@@ -72,12 +76,16 @@ export function InvestigationVisual({
   revealed,
   onReview,
   draft,
+  focus = null,
+  onFocus,
 }: {
   task: Investigation;
   frameIndex: number;
   revealed: boolean;
   onReview: (report: Review, layout: string[]) => void;
   draft?: VisualSpec;
+  focus?: ModelFocus | null;
+  onFocus?: (focus: ModelFocus) => void;
 }) {
   const root = useRef<HTMLDivElement>(null),
     svg = useRef<SVGSVGElement>(null);
@@ -183,22 +191,38 @@ export function InvestigationVisual({
     size = compact ? 13 : 16,
     color = ink,
     anchor: 'middle' | 'start' | 'end' = 'middle',
-  ) => (
-    <text
-      key={key}
-      x={x}
-      y={y}
-      textAnchor={anchor}
-      fontSize={
-        compact
-          ? Math.max(size, (11.8 * 360) / Math.max(240, availableWidth))
-          : size
-      }
-      fill={color}
-    >
-      {value}
-    </text>
-  );
+  ) => {
+    const labelFocus: ModelFocus = /weight|query|eligibility|car-legend/.test(
+      key,
+    )
+      ? 'change'
+      : /target|earth|clock-label|road-title|r-label/.test(key)
+        ? 'compare'
+        : 'measure';
+    return (
+      <text
+        key={key}
+        x={x}
+        y={y}
+        textAnchor={anchor}
+        data-model-focus={labelFocus}
+        onClick={() => onFocus?.(labelFocus)}
+        style={{
+          cursor: onFocus ? 'pointer' : undefined,
+          textDecoration: focus === labelFocus ? 'underline' : undefined,
+          textUnderlineOffset: '4px',
+        }}
+        fontSize={
+          compact
+            ? Math.max(size, (11.8 * 360) / Math.max(240, availableWidth))
+            : size
+        }
+        fill={color}
+      >
+        {value}
+      </text>
+    );
+  };
   const scale = (id: string, value: number, start: number, end: number) => {
     const domain = spec.scales[id];
     return (
@@ -586,11 +610,11 @@ export function InvestigationVisual({
                       rx="3"
                       fill={
                         car.id === 'car_0'
-                          ? gold
+                          ? orange
                           : car.id === focusId
-                            ? orange
+                            ? green
                             : index
-                              ? green
+                              ? '#8b9d85'
                               : faded
                       }
                     />
@@ -601,7 +625,7 @@ export function InvestigationVisual({
                         width="18"
                         height="26"
                         rx="6"
-                        stroke={orange}
+                        stroke={gold}
                         fill="none"
                         strokeWidth="2"
                       />
@@ -615,7 +639,7 @@ export function InvestigationVisual({
                 cy,
                 `${fmt(marked.speed, 1)}`,
                 compact ? 27 : 38,
-                index ? orange : '#6e7c67',
+                index ? green : '#6e7c67',
               )}
               {text(
                 `speed-unit-${index}`,
@@ -640,7 +664,7 @@ export function InvestigationVisual({
           'car-legend',
           w / 2,
           337,
-          'Gold: car 1 · orange: measured driver',
+          'Copper: brake · outline: measured car',
           compact ? 13 : 16,
           '#6b6e4f',
         )}
@@ -791,7 +815,11 @@ export function InvestigationVisual({
             This diagram did not pass its display checks. The computed
             comparison is available as a table.
           </p>
-          <EvidenceTable task={task} revealed={revealed} frameIndex={frameIndex} />
+          <EvidenceTable
+            task={task}
+            revealed={revealed}
+            frameIndex={frameIndex}
+          />
         </div>
       )}
     </div>

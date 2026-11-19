@@ -3,6 +3,7 @@ import { teach, type TeacherInput } from './teacher-planner';
 import { ProviderError } from './provider-adapter';
 import { createVoiceSession } from './voice-session';
 import { prototypeFeatures } from '../core/prototype-features';
+import { makerAvailable, planMaker } from './maker-planner';
 const headers = {
   'Cache-Control': 'private, no-store',
   'X-Content-Type-Options': 'nosniff',
@@ -71,12 +72,27 @@ export async function handleV2(
           !!process.env.OPENAI_API_KEY?.startsWith('sk-'),
         provider: prototypeFeatures.liveAI ? 'openai' : 'prepared',
         aiPaused: !prototypeFeatures.liveAI,
+        maker: makerAvailable(),
       },
       { headers },
     );
   if (r.method !== 'POST') return new Response(null, { status: 405, headers });
   if (!sameOrigin(r)) return new Response(null, { status: 403, headers });
   try {
+    if (route === 'maker') {
+      if (!makerAvailable())
+        return Response.json(
+          {
+            error:
+              'Generative prompts need a configured server API key. Direct editing, build scripts and local commands remain available.',
+            code: 'MAKER_UNAVAILABLE',
+          },
+          { status: 503, headers },
+        );
+      const input = await body(r);
+      await consume(user, 'teacher');
+      return Response.json(await planMaker(input, r.signal), { headers });
+    }
     if (
       !prototypeFeatures.liveAI &&
       ['teacher', 'speech', 'voice'].includes(route)
